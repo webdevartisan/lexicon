@@ -769,12 +769,6 @@ parameters:
 			path: src/App/Models/CommentModel.php
 
 		-
-			message: '#^Property App\\Models\\PermissionModel\:\:\$table has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: src/App/Models/PermissionModel.php
-
-		-
 			message: '#^Method App\\Models\\PostModel\:\:author\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
