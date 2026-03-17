@@ -1,0 +1,7 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    excludePaths:
+        - vendor
+    phpVersion: 80300
