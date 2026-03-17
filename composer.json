@@ -16,8 +16,8 @@
     "pestphp/pest": "^3.8",
     "pestphp/pest-plugin": "^3.0",
     "pestphp/pest-plugin-faker": "^3.0",
-    "phpstan/phpstan": "^2.1",
-    "phpstan/phpstan-strict-rules": "^2.0",
+    "phpstan/phpstan": "*",
+    "phpstan/phpstan-strict-rules": "*",
     "symfony/var-dumper": "^7.4"
   },
   "autoload": {

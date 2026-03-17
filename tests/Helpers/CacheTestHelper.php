@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Helpers;
+
 class CacheTestHelper
 {
     /**
