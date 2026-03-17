@@ -8,5 +8,5 @@ parameters:
     excludePaths:
         - vendor
     phpVersion: 80300
-    constants:
+    dynamicConstantNames:
         - ROOT_PATH
