@@ -20,7 +20,7 @@ declare(strict_types=1);
 /**
  * Extract namespace declaration from PHP source file.
  *
- * @param string $file File path
+ * @param  string  $file  File path
  * @return string|null Namespace or null if not found
  */
 function getNamespaceFromFile(string $file): ?string
@@ -44,7 +44,7 @@ function getNamespaceFromFile(string $file): ?string
  * Shows caller context (class/method), file location, and line number
  * for easier debugging. Used by dd(), dump(), and d() helpers.
  *
- * @param array $vars Variables to dump
+ * @param  array  $vars  Variables to dump
  */
 function dumpVars(array $vars): void
 {
@@ -69,7 +69,7 @@ function dumpVars(array $vars): void
         }
     }
     if (isset($callerFrame['function'])) {
-        $context .= $callerFrame['function'] . '()';
+        $context .= $callerFrame['function'].'()';
     }
 
     echo "{$context} - {$file}:{$line} \n";
@@ -85,14 +85,14 @@ function dumpVars(array $vars): void
 /**
  * Truncate string to specified length with ellipsis.
  *
- * @param string $string String to truncate
- * @param int $limit Maximum length (default: 50)
+ * @param  string  $string  String to truncate
+ * @param  int  $limit  Maximum length (default: 50)
  * @return string Truncated string with ellipsis if needed
  */
 function truncate(string $string, int $limit = 50): string
 {
     return strlen($string) > $limit
-        ? mb_substr($string, 0, $limit, 'UTF-8') . '...'
+        ? mb_substr($string, 0, $limit, 'UTF-8').'...'
         : $string;
 }
 
@@ -103,7 +103,7 @@ if (!function_exists('dd')) {
      * Output formatted variable dump with context and terminate execution.
      * Primary debugging tool - use liberally during development.
      *
-     * @param mixed ...$vars Variables to dump
+     * @param  mixed  ...$vars  Variables to dump
      */
     function dd(...$vars): void
     {
@@ -119,7 +119,7 @@ if (!function_exists('dump')) {
      * Output formatted variable dump with context and continue execution.
      * Use when you need to inspect variables mid-request.
      *
-     * @param mixed ...$vars Variables to dump
+     * @param  mixed  ...$vars  Variables to dump
      */
     function dump(...$vars): void
     {
@@ -133,7 +133,7 @@ if (!function_exists('d')) {
      *
      * Shorter alternative to dump() for quick debugging.
      *
-     * @param mixed ...$vars Variables to dump
+     * @param  mixed  ...$vars  Variables to dump
      */
     function d(...$vars): void
     {
@@ -143,8 +143,6 @@ if (!function_exists('d')) {
 
 /**
  * Get the shared Auth service.
- *
- * @return \App\Auth
  */
 function auth(): \App\Auth
 {
@@ -156,8 +154,6 @@ function auth(): \App\Auth
 
 /**
  * Get the shared CSRF service.
- *
- * @return \Framework\Security\Csrf
  */
 function csrf(): \Framework\Security\Csrf
 {
@@ -184,7 +180,7 @@ function csrf_token(): string
  */
 function csrf_field(): string
 {
-    return '<input type="hidden" name="_token" value="' . e(csrf_token()) . '">';
+    return '<input type="hidden" name="_token" value="'.e(csrf_token()).'">';
 }
 
 /**
@@ -192,7 +188,7 @@ function csrf_field(): string
  *
  * Examples: "January 3rd, 2025", "December 21st, 2025"
  *
- * @param DateTime $date Date to format
+ * @param  DateTime  $date  Date to format
  * @return string Formatted date with ordinal suffix
  */
 function formatWithOrdinal(DateTime $date): string
@@ -227,19 +223,19 @@ function formatWithOrdinal(DateTime $date): string
  * Converts '/blogs' to '/{locale}/blogs' using current or specified locale.
  * Respects supported/default locales enforced by LocalePrefixIntake.
  *
- * @param string $path Path to prefix (e.g., '/blogs', 'blogs')
- * @param string|null $locale Locale code (defaults to current)
+ * @param  string  $path  Path to prefix (e.g., '/blogs', 'blogs')
+ * @param  string|null  $locale  Locale code (defaults to current)
  * @return string Locale-prefixed URL
  */
 function lurl(string $path, ?string $locale = null): string
 {
-    $path = '/' . ltrim($path, '/');
+    $path = '/'.ltrim($path, '/');
 
     // Resolve locale from session/cookie if not provided
     $current = $locale
         ?? strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
 
-    return '/' . $current . $path;
+    return '/'.$current.$path;
 }
 
 /**
@@ -248,8 +244,8 @@ function lurl(string $path, ?string $locale = null): string
  * - GET/HEAD: prefix with current locale unless already prefixed or absolute
  * - POST/PUT/PATCH/DELETE: unprefixed (API-style)
  *
- * @param string $target Target URL
- * @param bool $skipMethodCheck Skip HTTP method check (force localization)
+ * @param  string  $target  Target URL
+ * @param  bool  $skipMethodCheck  Skip HTTP method check (force localization)
  * @return string Localized URL
  */
 function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): string
@@ -259,7 +255,7 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
         return $target;
     }
 
-    $target = '/' . ltrim($target, '/');
+    $target = '/'.ltrim($target, '/');
 
     if (!$skipMethodCheck) {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -279,7 +275,7 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
     $locale = strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
 
     // Avoid double slashes when target is '/'
-    return '/' . $locale . ($target === '/' ? '' : $target);
+    return '/'.$locale.($target === '/' ? '' : $target);
 }
 
 /**
@@ -298,7 +294,7 @@ function locale(): string
  * Convert special characters to HTML entities to prevent XSS attacks.
  * Use for all user-controlled text displayed in HTML.
  *
- * @param string|null $value String to escape
+ * @param  string|null  $value  String to escape
  * @return string Escaped string
  */
 function e(?string $value): string
@@ -358,8 +354,8 @@ function errors(): array
  * Retrieve previous form input after validation failures so users
  * don't re-enter data. Loaded once per request and cached in memory.
  *
- * @param string|null $key Specific field name, or null for all input
- * @param mixed $default Default value if key doesn't exist
+ * @param  string|null  $key  Specific field name, or null for all input
+ * @param  mixed  $default  Default value if key doesn't exist
  * @return mixed Old input value or default
  */
 function old(?string $key = null, mixed $default = null): mixed
@@ -392,7 +388,7 @@ function old(?string $key = null, mixed $default = null): mixed
  * - 'alpha_num' = 'AlphaNum'
  * - 'email' = 'Email'
  *
- * @param string $value Snake_case string
+ * @param  string  $value  Snake_case string
  * @return string CamelCase string
  */
 function snakeToCamel(string $value): string
@@ -402,8 +398,6 @@ function snakeToCamel(string $value): string
 
 /**
  * Get the shared MailService instance.
- *
- * @return \App\Services\MailService
  */
 function mailer(): \App\Services\MailService
 {
@@ -415,8 +409,6 @@ function mailer(): \App\Services\MailService
 
 /**
  * Get the shared BreadcrumbService instance.
- *
- * @return \App\Services\BreadcrumbService
  */
 function breadcrumbs(): \App\Services\BreadcrumbService
 {
@@ -442,8 +434,8 @@ function base_url(): string
  * Compare arrays and return only fields with different values.
  * Used for efficient database updates (update only changed fields).
  *
- * @param array $newData New data
- * @param array $existing Existing data
+ * @param  array  $newData  New data
+ * @param  array  $existing  Existing data
  * @return array Changed fields only
  */
 function changedFields(array $newData, array $existing): array
@@ -463,7 +455,7 @@ function changedFields(array $newData, array $existing): array
  *
  * Converts 'image/jpeg,image/png,image/gif' to 'JPEG/PNG/GIF'.
  *
- * @param string $accepts Comma-separated MIME types
+ * @param  string  $accepts  Comma-separated MIME types
  * @return string Formatted type list
  */
 function formatAcceptedTypes(string $accepts): string
@@ -471,6 +463,7 @@ function formatAcceptedTypes(string $accepts): string
     $types = explode(',', $accepts);
     $readable = array_map(function (string $type): string {
         $parts = explode('/', $type);
+
         return strtoupper(end($parts));
     }, $types);
 
@@ -488,8 +481,6 @@ function formatAcceptedTypes(string $accepts): string
  * - cache()->delete('user_profile_' . $userId)
  * - cache()->deletePattern('blog/*')
  * - cache()->clear()
- *
- * @return \Framework\Cache\CacheService
  */
 function cache(): \Framework\Cache\CacheService
 {
@@ -503,8 +494,6 @@ function cache(): \Framework\Cache\CacheService
  * Get the fragment cache instance.
  *
  * Used for caching parts of pages (widgets, sidebars, expensive queries).
- *
- * @return \Framework\Cache\FragmentCache
  */
 function fragment(): \Framework\Cache\FragmentCache
 {
@@ -516,7 +505,7 @@ function fragment(): \Framework\Cache\FragmentCache
  *
  * Shorthand for accessing services from dependency injection container.
  *
- * @param string|null $service Service class name
+ * @param  string|null  $service  Service class name
  * @return mixed Container instance or resolved service
  */
 function app(?string $service = null): mixed
@@ -536,22 +525,23 @@ function app(?string $service = null): mixed
  * Resolve view paths relative to views directory.
  * Supports both .php and .lex.php extensions.
  *
- * @param string $view View name (e.g., 'layouts/main')
+ * @param  string  $view  View name (e.g., 'layouts/main')
  * @return string Full path to view file
+ *
  * @throws \RuntimeException If view file not found
  */
 function view_path(string $view): string
 {
-    $basePath = dirname(__DIR__, 2) . '/views';
+    $basePath = dirname(__DIR__, 2).'/views';
     $view = str_replace('.', '/', $view);
 
     // Try .php extension first, then .lex.php
-    if (file_exists($basePath . '/' . $view . '.php')) {
-        return $basePath . '/' . $view . '.php';
+    if (file_exists($basePath.'/'.$view.'.php')) {
+        return $basePath.'/'.$view.'.php';
     }
 
-    if (file_exists($basePath . '/' . $view . '.lex.php')) {
-        return $basePath . '/' . $view . '.lex.php';
+    if (file_exists($basePath.'/'.$view.'.lex.php')) {
+        return $basePath.'/'.$view.'.lex.php';
     }
 
     throw new \RuntimeException("View file not found: {$view}");
@@ -559,8 +549,6 @@ function view_path(string $view): string
 
 /**
  * Get the AuditService instance.
- *
- * @return \App\Services\AuditService
  */
 function audit(): \App\Services\AuditService
 {
@@ -575,10 +563,10 @@ function geo(): App\Services\GeoLocationService
     return app(App\Services\GeoLocationService::class);
 }
 
-function rateLimiter(): \Framework\Helpers\RateLimiter {
+function rateLimiter(): \Framework\Helpers\RateLimiter
+{
     return app(\Framework\Helpers\RateLimiter::class);
 }
-
 
 if (!function_exists('env')) {
     /**

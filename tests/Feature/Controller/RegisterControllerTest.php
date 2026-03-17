@@ -3,36 +3,35 @@
 declare(strict_types=1);
 
 use App\Controllers\Auth\RegisterController;
+use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
+use App\Models\UserProfileModel;
 use Framework\Core\Request;
 use Framework\Core\Response;
-use App\Models\UserModel;
-use App\Models\UserProfileModel;
-use App\Models\UserPreferencesModel;
 use Tests\Factories\UserFactory;
 
 /**
  * Feature tests for RegisterController.
- * 
+ *
  * Tests user registration workflow including validation, CSRF protection,
  * database persistence, role assignment, and profile creation.
  */
-
 beforeEach(function () {
     $_SESSION = [];
-    
+
     // Generate isolated CSRF token for tests
     $this->csrfToken = csrf()->getToken();
-    
+
     expect($this->db->getConnection())->toHaveActiveTransaction();
-    
+
     // Create models
     $this->userModel = new UserModel($this->db);
     $this->profileModel = new UserProfileModel($this->db);
     $this->preferencesModel = new UserPreferencesModel($this->db);
-    
+
     // Get auth from container (already wired)
     $this->auth = auth();
-    
+
     // Create controller with all dependencies
     $this->controller = new RegisterController(
         $this->auth,
@@ -40,12 +39,14 @@ beforeEach(function () {
         $this->profileModel,
         $this->preferencesModel
     );
-    
-    $this->mockViewer = new class implements \Framework\Interfaces\TemplateViewerInterface {
-        public function render(string|array|null $template, array $data = []): string {
+
+    $this->mockViewer = new class() implements \Framework\Interfaces\TemplateViewerInterface
+    {
+        public function render(string|array|null $template, array $data = []): string
+        {
             return 'mocked view';
         }
-        
+
         public function addGlobals(array $vars): void {}
     };
 });
@@ -60,18 +61,18 @@ afterEach(function () {
 
 /**
  * Test successful user registration with all required fields.
- * 
+ *
  * Verifies complete registration flow: validation, user creation,
  * role assignment, profile creation, preferences, and auto-login.
  */
 it('registers user with valid credentials', function () {
     $email = faker()->unique()->safeEmail();
-    
+
     // Generate alphanumeric-only username (no dots, underscores, etc.)
-    $username = 'user' . faker()->unique()->numberBetween(10000, 99999);
-    
+    $username = 'user'.faker()->unique()->numberBetween(10000, 99999);
+
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => $email,
@@ -81,44 +82,38 @@ it('registers user with valid credentials', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     // Verify user was created
     $user = $this->userModel->findByEmail($email);
     expect($user)->toBeArray()
         ->and($user['email'])->toBe($email)
         ->and($user['username'])->toBe($username);
-    
+
     // Verify password was hashed
     expect(password_verify($password, $user['password']))->toBeTrue();
-    
+
     // Verify role was assigned
     $roles = $this->userModel->getUserRoles($user['id']);
     expect($roles)->toContain('blog_owner');
-    
+
     // Verify profile was created
     $profile = $this->profileModel->findOrCreate($user['id']);
     expect($profile)->toBeArray()
         ->and($profile['slug'])->not->toBeNull()
         ->and($profile['is_public'])->toBe(1);
-    
+
     // Verify preferences were created
     $preferences = $this->preferencesModel->findOrCreate($user['id']);
     expect($preferences)->toBeArray();
-    
+
     // Verify response is redirect to dashboard
     expect($response)->toBeInstanceOf(Framework\Core\Response::class)
         ->and($response->getHeader('Location'))->toContain('/dashboard');
 });
-
-
-
-
-
-
 
 // ============================================================================
 // CSRF PROTECTION
@@ -134,10 +129,10 @@ it('requires CSRF token on registration', function () {
         'password' => 'SecurePass123!',
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
-    expect(fn() => $this->controller->submit())
+
+    expect(fn () => $this->controller->submit())
         ->toThrow(RuntimeException::class, 'Invalid CSRF token.');
 });
 
@@ -152,10 +147,10 @@ it('rejects invalid CSRF token', function () {
         'password' => 'SecurePass123!',
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
-    expect(fn() => $this->controller->submit())
+
+    expect(fn () => $this->controller->submit())
         ->toThrow(RuntimeException::class, 'Invalid CSRF token.');
 });
 
@@ -175,11 +170,11 @@ it('requires email on registration', function () {
         'password' => 'SecurePass123!',
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -196,11 +191,11 @@ it('validates email format', function (string $invalidEmail) {
         'password' => 'SecurePass123!',
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 })->with([
     'invalid-email',
@@ -214,26 +209,26 @@ it('validates email format', function (string $invalidEmail) {
  */
 it('rejects duplicate email', function () {
     $email = faker()->unique()->safeEmail();
-    
+
     UserFactory::new($this->userModel)
         ->withAttributes(['email' => $email])
         ->create();
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => $email,
-        'username' => 'user' . faker()->unique()->numberBetween(10000, 99999),
+        'username' => 'user'.faker()->unique()->numberBetween(10000, 99999),
         'first_name' => faker()->firstName(),
         'last_name' => faker()->lastName(),
         'password' => 'SecurePass123!',
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     // Should fail - either validation error or database exception
     $failed = false;
-    
+
     try {
         $response = callController($this->controller, 'submit', $request);
         // If we got here, check there were validation errors
@@ -255,7 +250,7 @@ it('rejects duplicate email', function () {
  */
 it('requires username on registration', function () {
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => faker()->safeEmail(),
@@ -264,11 +259,11 @@ it('requires username on registration', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -277,7 +272,7 @@ it('requires username on registration', function () {
  */
 it('requires alphanumeric username', function (string $invalidUsername) {
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => faker()->safeEmail(),
@@ -287,11 +282,11 @@ it('requires alphanumeric username', function (string $invalidUsername) {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 })->with([
     'user name',  // Contains space
@@ -305,7 +300,7 @@ it('requires alphanumeric username', function (string $invalidUsername) {
  */
 it('enforces username length constraints', function (string $invalidUsername) {
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => faker()->safeEmail(),
@@ -315,11 +310,11 @@ it('enforces username length constraints', function (string $invalidUsername) {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 })->with([
     'ab',  // Too short (min 3)
@@ -335,7 +330,7 @@ it('enforces username length constraints', function (string $invalidUsername) {
  */
 it('requires first name', function () {
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => faker()->safeEmail(),
@@ -344,11 +339,11 @@ it('requires first name', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -357,7 +352,7 @@ it('requires first name', function () {
  */
 it('requires last name', function () {
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => faker()->safeEmail(),
@@ -366,11 +361,11 @@ it('requires last name', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -390,11 +385,11 @@ it('requires password on registration', function () {
         'last_name' => faker()->lastName(),
         'confirm_password' => 'SecurePass123!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -411,11 +406,11 @@ it('requires matching password confirmation', function () {
         'password' => 'SecurePass123!',
         'confirm_password' => 'DifferentPass456!',
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     $response = callController($this->controller, 'submit', $request);
-    
+
     expect($response)->toBeInstanceOf(Framework\Core\Response::class);
 });
 
@@ -428,9 +423,9 @@ it('requires matching password confirmation', function () {
  */
 it('creates profile slug from username', function () {
     $email = faker()->unique()->safeEmail();
-    $username = 'testuser' . faker()->unique()->numberBetween(1000, 9999);
+    $username = 'testuser'.faker()->unique()->numberBetween(1000, 9999);
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => $email,
@@ -440,14 +435,14 @@ it('creates profile slug from username', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     callController($this->controller, 'submit', $request);
-    
+
     $user = $this->userModel->findByEmail($email);
     $profile = $this->profileModel->findOrCreate($user['id']);
-    
+
     expect($profile['slug'])->toBe($username);
 });
 
@@ -455,24 +450,24 @@ it('creates profile slug from username', function () {
  * Test that duplicate slug gets unique suffix.
  */
 it('generates unique slug when username taken', function () {
-    $username = 'duplicateuser' . faker()->unique()->numberBetween(1000, 9999);
-    
+    $username = 'duplicateuser'.faker()->unique()->numberBetween(1000, 9999);
+
     // Create existing user with this username
     $existingUserId = UserFactory::new($this->userModel)
         ->withAttributes(['username' => $username])
         ->create();
-    
+
     $this->profileModel->upsert($existingUserId, [
         'slug' => $username,
         'is_public' => 1,
     ]);
-    
+
     // Try to register new user with same username (will fail validation)
     // So test with different username but same slug preference
     $email = faker()->unique()->safeEmail();
-    $newUsername = $username . '2';
+    $newUsername = $username.'2';
     $password = 'SecurePass123!';
-    
+
     $request = new Request('/register', 'POST', [], [
         '_token' => $this->csrfToken,
         'email' => $email,
@@ -482,13 +477,13 @@ it('generates unique slug when username taken', function () {
         'password' => $password,
         'confirm_password' => $password,
     ], [], [], [], []);
-    
+
     setupController($this->controller, $request, $this->mockViewer);
-    
+
     callController($this->controller, 'submit', $request);
-    
+
     $user = $this->userModel->findByEmail($email);
     $profile = $this->profileModel->findOrCreate($user['id']);
-    
+
     expect($profile['slug'])->toBe($newUsername);
 });

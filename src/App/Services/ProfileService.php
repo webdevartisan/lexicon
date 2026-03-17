@@ -33,8 +33,9 @@ class ProfileService
      * public posts enriched with blog slugs. Throws NotFoundException
      * for both missing and private profiles to avoid information disclosure.
      *
-     * @param string $slug Public profile slug
+     * @param  string  $slug  Public profile slug
      * @return array Profile data with keys: profile, socialLinks, posts
+     *
      * @throws NotFoundException If profile not found or not public
      */
     public function getPublicProfile(string $slug): array
@@ -66,7 +67,7 @@ class ProfileService
      * others use standard Font Awesome naming. Falls back to generic icon
      * for unknown networks.
      *
-     * @param array $socialLinks Raw social link data
+     * @param  array  $socialLinks  Raw social link data
      * @return array Social links with icon field added
      */
     private function enrichSocialLinksWithIcons(array $socialLinks): array
@@ -79,8 +80,9 @@ class ProfileService
                 'linkedin' => 'fa-brands fa-linkedin',
                 'github' => 'fa-brands fa-github',
                 'youtube' => 'fa-brands fa-youtube',
-                default => 'fa fa-' . $link['network']
+                default => 'fa fa-'.$link['network']
             };
+
             return $link;
         }, $socialLinks);
     }
@@ -91,7 +93,7 @@ class ProfileService
      * Fetches recent public posts and enriches them with blog slugs
      * needed for URL generation. Uses bulk blog lookup to avoid N+1 queries.
      *
-     * @param int $userId Author user ID
+     * @param  int  $userId  Author user ID
      * @return array Posts with blog_slug field
      */
     private function getPublicPostsWithBlogSlugs(int $userId): array
@@ -110,6 +112,7 @@ class ProfileService
 
         return array_map(function ($post) use ($blogSlugs) {
             $post['blog_slug'] = $blogSlugs[$post['blog_id']] ?? null;
+
             return $post;
         }, $posts);
     }

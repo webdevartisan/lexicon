@@ -8,7 +8,7 @@ use Framework\Core\Dotenv;
  * Load application bootstrap for all tests.
  * Defines ROOT_PATH, autoloader, environment, and services.
  */
-require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__.'/bootstrap.php';
 
 $dotenvPath = ROOT_PATH.'/tests/.env.testing';
 
@@ -24,16 +24,12 @@ if (!$dotenv->has('DB_HOST') || !$dotenv->has('DB_NAME') || !$dotenv->has('DB_US
     throw new RuntimeException('Missing DB_HOST, DB_NAME, or DB_USER in .env.testing');
 }
 
-
-
 /**
  * Global Pest configuration.
- * 
+ *
  * Configures different test environments for Unit, Integration, and Feature tests
  * with appropriate setup/teardown hooks and isolation strategies.
  */
-
-
 uses()->beforeEach(function () {
     $this->faker = \Faker\Factory::create();
 })->in('Unit', 'Integration', 'Feature');
@@ -64,8 +60,8 @@ uses()
 uses()
     ->beforeEach(function () {
         // Load test database config (will use .env.testing variables)
-        $dbConfig = require __DIR__ . '/config/database.php';
-        
+        $dbConfig = require __DIR__.'/config/database.php';
+
         $this->db = new \Framework\Database($dbConfig);
         // Verify connection is established
         if (!$this->db->getConnection()) {
@@ -84,7 +80,7 @@ uses()
             \Tests\Helpers\DatabaseHelper::cleanDatabase($this->db);
 
         } catch (\Exception $e) {
-            error_log("Test cleanup failed: " . $e->getMessage());
+            error_log('Test cleanup failed: '.$e->getMessage());
         }
     })
     ->in('Integration');
@@ -96,27 +92,27 @@ uses()
 uses()
     ->beforeEach(function () {
         // Load test database config (will use .env.testing variables)
-        $dbConfig = require __DIR__ . '/config/database.php';
-        
+        $dbConfig = require __DIR__.'/config/database.php';
+
         $this->db = new \Framework\Database($dbConfig);
         // Verify connection is established
         if (!$this->db->getConnection()) {
             throw new RuntimeException('Failed to establish database connection for tests');
         }
-        
+
         // Use transaction for cleanup instead of migrations to preserve test speed
         $this->db->getConnection()->beginTransaction();
-        
+
         // Destroy existing session to prevent state leakage between feature tests
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }
-        
+
         // Clear cache to prevent stale data affecting HTTP response tests
         if (function_exists('cache_clear')) {
             cache_clear();
         }
-        
+
         \Faker\Factory::create()->unique(true);
     })
     ->afterEach(function () {
@@ -125,9 +121,9 @@ uses()
                 $this->db->getConnection()->rollBack();
             }
         } catch (\Exception $e) {
-            error_log("Feature test rollback failed: " . $e->getMessage());
+            error_log('Feature test rollback failed: '.$e->getMessage());
         }
-        
+
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }
@@ -143,9 +139,9 @@ uses()
  */
 expect()->extend('toBeValidEmail', function () {
     $pattern = '/^[^\s@]+@[^\s@]+\.[^\s@]+$/';
-    
+
     expect($this->value)->toMatch($pattern);
-    
+
     return $this;
 });
 
@@ -154,9 +150,9 @@ expect()->extend('toBeValidEmail', function () {
  */
 expect()->extend('toBeValidSlug', function () {
     $pattern = '/^[a-z0-9]+(?:-[a-z0-9]+)*$/';
-    
+
     expect($this->value)->toMatch($pattern);
-    
+
     return $this;
 });
 
@@ -165,12 +161,12 @@ expect()->extend('toBeValidSlug', function () {
  */
 expect()->extend('toBeSecurePassword', function () {
     $value = $this->value;
-    
+
     expect(strlen($value))->toBeGreaterThanOrEqual(8)
         ->and($value)->toMatch('/[A-Z]/')  // Has uppercase
         ->and($value)->toMatch('/[a-z]/')  // Has lowercase
         ->and($value)->toMatch('/[0-9]/'); // Has number
-    
+
     return $this;
 });
 
@@ -181,7 +177,7 @@ expect()->extend('toBeSanitized', function () {
     expect($this->value)->not->toMatch('/<[^>]*>/')
         ->and($this->value)->not->toContain('<script')
         ->and($this->value)->not->toContain('javascript:');
-    
+
     return $this;
 });
 
@@ -190,24 +186,24 @@ expect()->extend('toBeSanitized', function () {
  */
 expect()->extend('toHaveActiveTransaction', function () {
     expect($this->value->inTransaction())->toBeTrue();
-    
+
     return $this;
 });
 
 /**
  * Verify cache key matches wildcard pattern.
- * 
+ *
  * Converts pattern with asterisks to regex for case-insensitive matching.
  */
 expect()->extend('toMatchCachePattern', function (string $pattern) {
     $key = $this->value;
-    $regex = '/^' . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/i';
+    $regex = '/^'.str_replace('*', '.*', preg_quote($pattern, '/')).'$/i';
+
     return test()->assertTrue(
         (bool) preg_match($regex, $key),
         "Expected '{$key}' to match pattern '{$pattern}'"
     );
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -221,7 +217,7 @@ expect()->extend('toMatchCachePattern', function (string $pattern) {
 function setupController($controller, $request, $mockViewer): void
 {
     $container = \Framework\Core\App::container();
-    
+
     $controller->setRequest($request);
     $controller->setResponse(new \Framework\Core\Response());
     $controller->setViewer($mockViewer);
@@ -231,7 +227,7 @@ function setupController($controller, $request, $mockViewer): void
 
 /**
  * Call controller method and catch validation exceptions.
- * 
+ *
  * We simulate middleware behavior by catching ValidationException
  * and returning the redirect response automatically.
  */
@@ -242,17 +238,18 @@ function callController($controller, $method, $request, ...$args): \Framework\Co
     } catch (\Framework\Exceptions\ValidationException $e) {
         // Simulate what middleware does
         $session = \Framework\Core\App::container()->get(\Framework\Session::class);
-        
+
         $session->set('_errors', $e->errors());
         $oldInput = $request->all();
         unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
         $session->set('_old_input', $oldInput);
-        
+
         $flash = $session->get('_flash', []);
         $flash['error'][] = 'Please correct the errors and try again.';
         $session->set('_flash', $flash);
-        
+
         $referer = $request->header('referer') ?? '/';
+
         return (new \Framework\Core\Response())->redirect($referer);
     }
 }
@@ -266,10 +263,10 @@ function callController($controller, $method, $request, ...$args): \Framework\Co
 function faker(): Faker\Generator
 {
     static $faker = null;
-    
+
     if ($faker === null) {
         $faker = Faker\Factory::create();
     }
-    
+
     return $faker;
 }

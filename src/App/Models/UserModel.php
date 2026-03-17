@@ -28,7 +28,7 @@ class UserModel extends AppModel
      *
      * Exclude soft-deleted users from authentication attempts.
      *
-     * @param string $email Email address to search
+     * @param  string  $email  Email address to search
      * @return array<string,mixed>|null User data or null if not found
      */
     public function findByEmail(string $email): ?array
@@ -39,7 +39,7 @@ class UserModel extends AppModel
 
         $stmt = $this->database->query($sql, [$email]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
+
         return $result ?: null;
     }
 
@@ -48,7 +48,7 @@ class UserModel extends AppModel
      *
      * Return UserResource instead of raw array to enable Gate authorization.
      *
-     * @param string|int $id User ID
+     * @param  string|int  $id  User ID
      * @return UserResource|false User resource or false if not found
      */
     public function findResource(string|int $id): UserResource|false
@@ -68,7 +68,7 @@ class UserModel extends AppModel
      *
      * Override parent to add soft delete filtering.
      *
-     * @param int $id User ID
+     * @param  int  $id  User ID
      * @return array<string,mixed>|null User data or null if not found
      */
     public function findById(int $id): ?array
@@ -79,7 +79,7 @@ class UserModel extends AppModel
 
         $stmt = $this->database->query($sql, [$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
+
         return $result ?: null;
     }
 
@@ -103,7 +103,7 @@ class UserModel extends AppModel
      *
      * Clear the deleted_at timestamp to reactivate the account.
      *
-     * @param int $userId User ID to restore
+     * @param  int  $userId  User ID to restore
      * @return bool True if user was restored
      */
     public function restoreDeleted(int $userId): bool
@@ -113,6 +113,7 @@ class UserModel extends AppModel
                 WHERE id = ? AND deleted_at IS NOT NULL';
 
         $rowCount = $this->database->execute($sql, [$userId]);
+
         return $rowCount > 0;
     }
 
@@ -122,8 +123,8 @@ class UserModel extends AppModel
      * Returns true on success, false on failure.
      * Errors are logged instead of being sent to the browser.
      *
-     * @param int $userId User ID
-     * @param array $roles Array of role IDs to assign
+     * @param  int  $userId  User ID
+     * @param  array  $roles  Array of role IDs to assign
      * @return bool True on success
      */
     public function insertUserRoles(int $userId, array $roles): bool
@@ -144,20 +145,22 @@ class UserModel extends AppModel
             return true;
         } catch (\PDOException $e) {
             error_log('insertUserRoles PDOException: '.$e->getMessage());
+
             return false;
         } catch (\Exception $e) {
             error_log('insertUserRoles Exception: '.$e->getMessage());
+
             return false;
         }
     }
 
     /**
      * Update user roles by replacing existing assignments.
-     * 
+     *
      * Caller is responsible for wrapping in transaction if atomicity is required.
-     * 
-     * @param int $userId User ID
-     * @param array $newRoles Array of new role IDs
+     *
+     * @param  int  $userId  User ID
+     * @param  array  $newRoles  Array of new role IDs
      * @return bool True on success
      */
     public function updateUserRoles(int $userId, array $newRoles): bool
@@ -166,18 +169,18 @@ class UserModel extends AppModel
             // Step 1: Get current role assignments to compute changes
             $stmt = $this->database->query('SELECT role_id FROM user_roles WHERE user_id = ?', [$userId]);
             $currentRoles = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-            
+
             // Step 2: Calculate roles to add and remove
             $toAdd = array_diff($newRoles, $currentRoles);
             $toRemove = array_diff($currentRoles, $newRoles);
-            
+
             // Step 3: Delete removed roles (batch)
             if (!empty($toRemove)) {
                 $placeholders = implode(',', array_fill(0, count($toRemove), '?'));
                 $sql = "DELETE FROM user_roles WHERE user_id = ? AND role_id IN ($placeholders)";
                 $this->database->execute($sql, array_merge([$userId], $toRemove));
             }
-            
+
             // Step 4: Insert new roles (batch)
             if (!empty($toAdd)) {
                 $values = [];
@@ -187,14 +190,15 @@ class UserModel extends AppModel
                     $params[] = $userId;
                     $params[] = $roleId;
                 }
-                
+
                 $sql = 'INSERT INTO user_roles (user_id, role_id) VALUES '.implode(',', $values);
                 $this->database->execute($sql, $params);
             }
-            
+
             return true;
         } catch (\Throwable $e) {
             error_log('updateUserRoles failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -204,7 +208,7 @@ class UserModel extends AppModel
      *
      * Example return: ['administrator', 'author'].
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return string[] Array of role slugs
      */
     public function getUserRoles(int $userId): array
@@ -227,7 +231,7 @@ class UserModel extends AppModel
      *
      * Example return: ['edit_post', 'delete_comment'].
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return string[] Array of permission slugs
      */
     public function getUserPermissions(int $userId): array
@@ -249,7 +253,7 @@ class UserModel extends AppModel
     /**
      * Convenience wrapper: find users by username.
      *
-     * @param string $userName Username to search
+     * @param  string  $userName  Username to search
      * @return array<int,array<string,mixed>>
      */
     public function findByUsername(string $userName): array
@@ -263,9 +267,10 @@ class UserModel extends AppModel
      * Returns true on success, false on failure.
      * Column names are validated before being interpolated into SQL.
      *
-     * @param int $id User ID
-     * @param array $data Associative array of column => value pairs
+     * @param  int  $id  User ID
+     * @param  array  $data  Associative array of column => value pairs
      * @return bool True on success
+     *
      * @throws Exception If invalid column name provided
      */
     public function updateById(int $id, array $data): bool
@@ -292,15 +297,16 @@ class UserModel extends AppModel
         $params[] = $id;
 
         $sql = 'UPDATE '.$this->getTable().' SET '.implode(', ', $sets).' WHERE id = ?';
-        
+
         $rowCount = $this->database->execute($sql, $params);
+
         return $rowCount > 0;
     }
 
     /**
      * Count how many posts a user has authored.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return int Post count
      */
     public function countPosts(int $userId): int
@@ -314,7 +320,7 @@ class UserModel extends AppModel
     /**
      * Count how many blogs a user owns.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return int Blog count
      */
     public function countBlogs(int $userId): int
@@ -328,7 +334,7 @@ class UserModel extends AppModel
     /**
      * Count how many comments a user's posts have received.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return int Comment count
      */
     public function countCommentsReceived(int $userId): int
@@ -367,15 +373,16 @@ class UserModel extends AppModel
     /**
      * Update user password hash.
      *
-     * @param int $userId User ID
-     * @param string $hash Password hash from password_hash()
+     * @param  int  $userId  User ID
+     * @param  string  $hash  Password hash from password_hash()
      * @return bool True if password was updated
      */
     public function updatePasswordHashById(int $userId, string $hash): bool
     {
         $sql = 'UPDATE users SET password = ? WHERE id = ?';
-        
+
         $rowCount = $this->database->execute($sql, [$hash, $userId]);
+
         return $rowCount > 0;
     }
 
@@ -386,7 +393,7 @@ class UserModel extends AppModel
      * This is a simple data query, not complex business logic.
      * For full business rule validation, use UserDeletionService::canDeleteUser().
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return bool True if user has no posts
      */
     public function canDelete(int $userId): bool
@@ -401,26 +408,26 @@ class UserModel extends AppModel
      * like account/blog deletion. Uses constant-time comparison
      * via password_verify() to prevent timing attacks.
      *
-     * @param int $userId User ID
-     * @param string $password Plain text password to verify
+     * @param  int  $userId  User ID
+     * @param  string  $password  Plain text password to verify
      * @return bool True if password matches stored hash
      */
     public function verifyPassword(int $userId, string $password): bool
     {
         $user = $this->findById($userId);
-        
+
         if (!$user || empty($user['password'])) {
             return false;
         }
-        
+
         return password_verify($password, $user['password']);
     }
 
     /**
      * Check if username is unique among existing users.
      *
-     * @param string $username Username to check
-     * @param int|null $ignoreUserId User ID to exclude from check (for profile updates)
+     * @param  string  $username  Username to check
+     * @param  int|null  $ignoreUserId  User ID to exclude from check (for profile updates)
      * @return bool True if unique
      */
     public function isUsernameUnique(string $username, ?int $ignoreUserId = null): bool

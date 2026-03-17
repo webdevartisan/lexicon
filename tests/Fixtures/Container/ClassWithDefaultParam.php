@@ -6,7 +6,7 @@ namespace Tests\Fixtures\Container;
 
 /**
  * Class with default parameter value.
- * 
+ *
  * We use this to verify the container respects default values when no explicit
  * binding exists for optional parameters.
  */

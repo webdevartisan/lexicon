@@ -19,9 +19,9 @@ final class PasswordResetModel extends AppModel
      * Only one active token per email - older links immediately invalidated.
      * Uses transaction to ensure atomicity across deletion and insertion.
      *
-     * @param string $email User email
-     * @param string $tokenHash Hashed token
-     * @param string $expiresAt ISO 8601 datetime
+     * @param  string  $email  User email
+     * @param  string  $tokenHash  Hashed token
+     * @param  string  $expiresAt  ISO 8601 datetime
      * @return bool Success
      */
     public function replaceForEmail(string $email, string $tokenHash, string $expiresAt): bool
@@ -33,9 +33,9 @@ final class PasswordResetModel extends AppModel
 
             $insertSql = "INSERT INTO {$this->table} (email, token, expires_at, created_at)
                           VALUES (?, ?, ?, UTC_TIMESTAMP())";
-            
+
             $rowCount = $this->database->execute($insertSql, [$email, $tokenHash, $expiresAt]);
-            
+
             return $rowCount > 0;
         });
     }
@@ -43,7 +43,7 @@ final class PasswordResetModel extends AppModel
     /**
      * Find valid (non-expired) reset token by hash.
      *
-     * @param string $tokenHash Token hash
+     * @param  string  $tokenHash  Token hash
      * @return array{email: string, token: string, expires_at: string}|false Valid token or false
      */
     public function findValidByTokenHash(string $tokenHash): array|false
@@ -62,14 +62,15 @@ final class PasswordResetModel extends AppModel
     /**
      * Delete reset token by hash.
      *
-     * @param string $tokenHash Token hash
+     * @param  string  $tokenHash  Token hash
      * @return bool True if token was deleted
      */
     public function deleteByTokenHash(string $tokenHash): bool
     {
         $sql = "DELETE FROM {$this->table} WHERE token = ?";
-        
+
         $rowCount = $this->database->execute($sql, [$tokenHash]);
+
         return $rowCount > 0;
     }
 
@@ -81,7 +82,7 @@ final class PasswordResetModel extends AppModel
     public function deleteExpired(): int
     {
         $sql = "DELETE FROM {$this->table} WHERE expires_at <= UTC_TIMESTAMP()";
-        
+
         return $this->database->execute($sql);
     }
 }

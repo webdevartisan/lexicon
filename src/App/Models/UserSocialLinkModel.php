@@ -20,7 +20,7 @@ class UserSocialLinkModel extends AppModel
      * Returns links ordered by priority (website, github, twitter, etc.)
      * with custom networks sorted alphabetically at the end.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array Array of social links
      */
     public function listByUser(int $userId): array
@@ -42,7 +42,7 @@ class UserSocialLinkModel extends AppModel
             ELSE 100
           END ASC,
           network ASC';
-        
+
         $stmt = $this->database->query($sql, [$userId]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -53,7 +53,7 @@ class UserSocialLinkModel extends AppModel
      *
      * Returns network => url mapping for easy template access.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array Associative array of network => url
      */
     public function getKeyValueArrayLinks(int $userId): array
@@ -73,10 +73,9 @@ class UserSocialLinkModel extends AppModel
      *
      * Insert or update a social link. Deletes the link if URL is empty.
      *
-     * @param int $userId User ID
-     * @param string $network Network name (e.g., 'github', 'twitter')
-     * @param string|null $url URL to the profile (null to delete)
-     * @return void
+     * @param  int  $userId  User ID
+     * @param  string  $network  Network name (e.g., 'github', 'twitter')
+     * @param  string|null  $url  URL to the profile (null to delete)
      */
     public function upsertLink(int $userId, string $network, ?string $url): void
     {
@@ -87,7 +86,7 @@ class UserSocialLinkModel extends AppModel
 
             return;
         }
-        
+
         // insert or update link using ON DUPLICATE KEY to handle race conditions
         $sql = 'INSERT INTO user_social_links (user_id, network, url)
                 VALUES (?, ?, ?)
@@ -100,7 +99,7 @@ class UserSocialLinkModel extends AppModel
      *
      * Used during account deletion to remove PII.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return bool True on success
      */
     public function deleteByUserId(int $userId): bool

@@ -77,6 +77,7 @@ final class RegisterController extends AppController
         if (!$this->usernameValidator->isAvailable($validated['username'])) {
             $this->flash('error', 'Please correct the errors and try again.');
             $this->session->set('_errors', ['username' => ['This username is already taken or reserved.']]);
+
             return $this->redirectBack();
         }
 

@@ -19,8 +19,8 @@ use Framework\Interfaces\TemplateViewerInterface;
 class CacheClearCommand
 {
     /**
-     * @param CacheService     $cache    HTTP response / fragment cache service.
-     * @param TemplateViewerInterface $renderer Template renderer with compiled view management.
+     * @param  CacheService  $cache  HTTP response / fragment cache service.
+     * @param  TemplateViewerInterface  $renderer  Template renderer with compiled view management.
      */
     public function __construct(
         private CacheService $cache,
@@ -61,6 +61,7 @@ class CacheClearCommand
 
             if ($hasFailures) {
                 echo "⚠ WARNING: Some files could not be deleted — check permissions.\n";
+
                 return 1;
             }
 
@@ -69,6 +70,7 @@ class CacheClearCommand
         } catch (\Exception $e) {
             echo "✗ Error clearing cache: {$e->getMessage()}\n";
             echo "Stack trace:\n{$e->getTraceAsString()}\n";
+
             return 1;
         }
     }

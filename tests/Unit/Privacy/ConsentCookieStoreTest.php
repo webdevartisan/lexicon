@@ -13,7 +13,6 @@ use App\Privacy\ConsentCookieStore;
  * - Tampered cookies are rejected.
  * - HttpOnly, SameSite and secure flags are set as expected.
  */
-
 beforeEach(function () {
     $_COOKIE = [];
     $_SERVER = [];
@@ -71,10 +70,9 @@ test('tampered consent cookie is rejected', function () {
         'categories' => ['necessary' => false],
     ], JSON_UNESCAPED_SLASHES);
 
-    $_COOKIE['app_consent_test'] = base64_encode($tamperedPayload) . '.' . $sig;
+    $_COOKIE['app_consent_test'] = base64_encode($tamperedPayload).'.'.$sig;
 
     $read = $store->read();
 
     expect($read)->toBeNull();
 });
-

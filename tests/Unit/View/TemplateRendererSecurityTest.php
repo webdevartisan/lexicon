@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Framework\View\TemplateRenderer;
-use Framework\View\RouteContext;
-use Framework\View\ViewNameResolverInterface;
 use App\Services\ThemeService;
+use Framework\View\RouteContext;
+use Framework\View\TemplateRenderer;
+use Framework\View\ViewNameResolverInterface;
 
 /**
  * Security-focused tests for TemplateRenderer.
@@ -17,14 +17,13 @@ use App\Services\ThemeService;
  * NOTE: We do not test every directive here; the goal is to lock in the
  * non-eval execution model and a basic XSS-safety expectation.
  */
-
 test('template renderer compiles templates to disk without using eval', function () {
     // Arrange: create a minimal stub ThemeService and ViewNameResolverInterface
     $themes = Mockery::mock(ThemeService::class);
     $resolver = Mockery::mock(ViewNameResolverInterface::class);
     $routeContext = new RouteContext();
 
-    $templatePath = ROOT_PATH . '/tests/Fixtures/views/security_test.lex.php';
+    $templatePath = ROOT_PATH.'/tests/Fixtures/views/security_test.lex.php';
 
     // Ensure fixture directory exists
     if (!is_dir(dirname($templatePath))) {
@@ -55,7 +54,7 @@ test('template renderer treats raw php tags as text when escaped', function () {
     $resolver = Mockery::mock(ViewNameResolverInterface::class);
     $routeContext = new RouteContext();
 
-    $templatePath = ROOT_PATH . '/tests/Fixtures/views/security_php_tag.lex.php';
+    $templatePath = ROOT_PATH.'/tests/Fixtures/views/security_php_tag.lex.php';
 
     if (!is_dir(dirname($templatePath))) {
         mkdir(dirname($templatePath), 0755, true);
@@ -79,4 +78,3 @@ test('template renderer treats raw php tags as text when escaped', function () {
     expect($output)->toContain('Escaped tag: &lt;?php echo "evil"; ?&gt;');
 }
 );
-

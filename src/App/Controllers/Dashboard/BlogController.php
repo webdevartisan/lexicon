@@ -45,8 +45,6 @@ final class BlogController extends AppController
 
     /**
      * List user's blogs with stats.
-     *
-     * @return Response
      */
     public function index(): Response
     {
@@ -57,6 +55,7 @@ final class BlogController extends AppController
         // Merge settings into each blog
         $blogs = array_map(function (array $blog): array {
             $settings = $this->settings->findByBlogId((int) $blog['id']);
+
             return array_merge($blog, $settings ?? []);
         }, $blogs);
 
@@ -69,8 +68,6 @@ final class BlogController extends AppController
 
     /**
      * Show blog creation form.
-     *
-     * @return Response
      */
     public function new(): Response
     {
@@ -86,8 +83,6 @@ final class BlogController extends AppController
 
     /**
      * Create new blog.
-     *
-     * @return Response
      */
     public function create(): Response
     {
@@ -173,8 +168,7 @@ final class BlogController extends AppController
     /**
      * Show blog edit form.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function edit(string $id): Response
     {
@@ -206,8 +200,7 @@ final class BlogController extends AppController
     /**
      * Update blog.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function update(string $id): Response
     {
@@ -298,11 +291,11 @@ final class BlogController extends AppController
         foreach (['remove_banner', 'remove_logo', 'remove_favicon'] as $removeKey) {
             if (!empty($validated[$removeKey])) {
                 $type = explode('_', $removeKey)[1]; // banner, logo, favicon
-                $filePathKey = $type . '_path';
+                $filePathKey = $type.'_path';
 
                 // Delete physical file
                 if (!empty($currentSettings[$filePathKey])) {
-                    $oldFile = ROOT_PATH . '/public' . $currentSettings[$filePathKey];
+                    $oldFile = ROOT_PATH.'/public'.$currentSettings[$filePathKey];
                     if (file_exists($oldFile)) {
                         @unlink($oldFile);
                     }
@@ -334,14 +327,13 @@ final class BlogController extends AppController
 
         $this->flash('success', 'Blog updated successfully.');
 
-        return $this->redirect('/dashboard/blog/' . $blogId . '/edit');
+        return $this->redirect('/dashboard/blog/'.$blogId.'/edit');
     }
 
     /**
      * Show blog details.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function show(string $id): Response
     {
@@ -363,8 +355,7 @@ final class BlogController extends AppController
     /**
      * Show blog deletion confirmation.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function delete(string $id): Response
     {
@@ -394,8 +385,7 @@ final class BlogController extends AppController
      * Requires password confirmation for security. Delegates to BlogDeletionService
      * for cascading deletion across 6 tables and file cleanup.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function destroy(string $id): Response
     {
@@ -414,6 +404,7 @@ final class BlogController extends AppController
         $password = $this->request->post['password'] ?? '';
         if (!$this->user->verifyPassword($userId, $password)) {
             $this->flash('error', 'Incorrect password. Blog deletion cancelled.');
+
             return $this->redirect("/dashboard/blog/{$blogId}/edit");
         }
 
@@ -435,12 +426,12 @@ final class BlogController extends AppController
                 $this->request->ip()
             );
 
-            $this->flash('success', 'Blog "' . ($blogArray['blog_name'] ?? 'Unnamed') . '" has been permanently deleted.');
+            $this->flash('success', 'Blog "'.($blogArray['blog_name'] ?? 'Unnamed').'" has been permanently deleted.');
 
             return $this->redirect('/dashboard');
 
         } catch (\Exception $e) {
-            error_log("Blog deletion failed for blog {$blogId}: " . $e->getMessage());
+            error_log("Blog deletion failed for blog {$blogId}: ".$e->getMessage());
             $this->flash('error', 'Failed to delete blog. Please try again or contact support.');
 
             return $this->redirect("/dashboard/blog/{$blogId}/edit");
@@ -450,8 +441,7 @@ final class BlogController extends AppController
     /**
      * Unpublish blog.
      *
-     * @param string $id Blog ID (from route)
-     * @return Response
+     * @param  string  $id  Blog ID (from route)
      */
     public function unpublish(string $id): Response
     {
@@ -479,8 +469,7 @@ final class BlogController extends AppController
     /**
      * Publish blog.
      *
-     * @param string $id Blog ID (from route)
-     * @return Response
+     * @param  string  $id  Blog ID (from route)
      */
     public function publish(string $id): Response
     {
@@ -510,8 +499,7 @@ final class BlogController extends AppController
      *
      * Requires manageUsers permission to prevent privilege escalation.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function users(string $id): Response
     {
@@ -535,8 +523,7 @@ final class BlogController extends AppController
      *
      * Validates role against whitelist. Uses CSRF protection.
      *
-     * @param string $id Blog ID
-     * @return Response
+     * @param  string  $id  Blog ID
      */
     public function updateUsers(string $id): Response
     {
@@ -584,8 +571,8 @@ final class BlogController extends AppController
     /**
      * Get blog resource or throw 404.
      *
-     * @param string|int $id Blog ID
-     * @return BlogResource
+     * @param  string|int  $id  Blog ID
+     *
      * @throws PageNotFoundException
      */
     private function getBlog(string|int $id): BlogResource
@@ -605,9 +592,9 @@ final class BlogController extends AppController
      * Extracts uploaded files from POST, moves from temp to branding directory,
      * and returns path array for settings merge.
      *
-     * @param int $userId User ID (for temp cleanup)
-     * @param int $blogId Blog ID
-     * @param int|null $ownerId Owner ID (defaults to userId)
+     * @param  int  $userId  User ID (for temp cleanup)
+     * @param  int  $blogId  Blog ID
+     * @param  int|null  $ownerId  Owner ID (defaults to userId)
      * @return array<string, string> Paths keyed by 'banner_path', 'logo_path', 'favicon_path'
      */
     private function handleBrandingUploads(int $userId, int $blogId, ?int $ownerId = null): array
@@ -636,7 +623,7 @@ final class BlogController extends AppController
             $type = $parts[1];
 
             try {
-                $paths[$type . '_path'] = $this->uploader->moveTempToBranding(
+                $paths[$type.'_path'] = $this->uploader->moveTempToBranding(
                     $fileName,
                     $ownerId,
                     $blogId,
@@ -645,8 +632,8 @@ final class BlogController extends AppController
                     $baseUrl
                 );
             } catch (\Throwable $e) {
-                error_log("{$type} upload failed for blog {$blogId}: " . $e->getMessage());
-                $this->flash('error', ucfirst($type) . ' upload failed: ' . $e->getMessage());
+                error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());
+                $this->flash('error', ucfirst($type).' upload failed: '.$e->getMessage());
             }
         }
 

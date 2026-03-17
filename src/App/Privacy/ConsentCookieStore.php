@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Privacy;
 
-    /**
-     * Signed, HttpOnly consent cookie store.
-     *
-     * The consent cookie is:
-     * - Signed with HMAC (SHA-256) using a secret (APP_KEY-backed)
-     * - HttpOnly to prevent JavaScript access
-     * - Marked SameSite=Lax by default to reduce CSRF risk
-     */
+/**
+ * Signed, HttpOnly consent cookie store.
+ *
+ * The consent cookie is:
+ * - Signed with HMAC (SHA-256) using a secret (APP_KEY-backed)
+ * - HttpOnly to prevent JavaScript access
+ * - Marked SameSite=Lax by default to reduce CSRF risk
+ */
 final class ConsentCookieStore
 {
     public function __construct(

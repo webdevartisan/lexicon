@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Framework\Http\Middleware;
 
-use Framework\Interfaces\AuthInterface;
 use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Exceptions\UnauthorizedException;
+use Framework\Interfaces\AuthInterface;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\View\Traits;
 
 use Framework\Exceptions\NotFoundException;

@@ -13,14 +13,12 @@ declare(strict_types=1);
  *
  * This script is safe to run multiple times; it detects existing .env and migrations.
  */
-
 define('ROOT_PATH', dirname(dirname(__DIR__)));
 
-require_once ROOT_PATH . '/vendor/autoload.php';
+require_once ROOT_PATH.'/vendor/autoload.php';
 
 use Framework\Core\Dotenv;
 use Framework\Helpers\KeyGenerator;
-
 
 // ============================================================================
 // SIGNAL HANDLING (Graceful Ctrl+C handling)
@@ -51,7 +49,6 @@ if (function_exists('pcntl_async_signals')) {
     pcntl_async_signals(true);
 }
 
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -63,7 +60,7 @@ if (function_exists('pcntl_async_signals')) {
  * On Windows, input is visible (cmd.exe limitation).
  *
  * @param  string  $prompt  Prompt text to show.
- * @return string           Password entered by user.
+ * @return string Password entered by user.
  *
  * @throws \RuntimeException If user cancels input (Ctrl+C).
  */
@@ -98,9 +95,9 @@ function promptSilent(string $prompt = 'Enter Password:'): string
 /**
  * Prompt for generic input, optionally with a default.
  *
- * @param  string      $prompt  Prompt text.
- * @param  string|null $default Optional default value.
- * @return string               User input or default.
+ * @param  string  $prompt  Prompt text.
+ * @param  string|null  $default  Optional default value.
+ * @return string User input or default.
  *
  * @throws \RuntimeException If user cancels input (Ctrl+C).
  */
@@ -127,9 +124,9 @@ function promptInput(string $prompt, ?string $default = null): string
 /**
  * Prompt yes/no confirmation with default.
  *
- * @param  string $prompt  Question text.
- * @param  bool   $default Default answer (true = yes, false = no).
- * @return bool           True if user agrees, false otherwise.
+ * @param  string  $prompt  Question text.
+ * @param  bool  $default  Default answer (true = yes, false = no).
+ * @return bool True if user agrees, false otherwise.
  *
  * @throws \RuntimeException If user cancels input (Ctrl+C).
  */
@@ -184,8 +181,8 @@ function isFirstRun(): bool
  *
  * Outputs a consistent .env structure for dev and production settings.
  *
- * @param  array<string, mixed> $config Configuration values.
- * @return string               Complete .env content.
+ * @param  array<string, mixed>  $config  Configuration values.
+ * @return string Complete .env content.
  */
 function generateEnvFile(array $config): string
 {
@@ -243,13 +240,12 @@ DB_SLOW_QUERY_THRESHOLD=1.0
 ENV;
 }
 
-
 // ============================================================================
 // MAIN EXECUTION
 // ============================================================================
 
 try {
-    $envPath = ROOT_PATH . '/.env';
+    $envPath = ROOT_PATH.'/.env';
     $firstRun = isFirstRun();
 
     // ------------------------------------------------------------------------
@@ -470,7 +466,7 @@ try {
     $stmt = $pdo->query('SELECT filename FROM migrations ORDER BY filename');
     $applied = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    $migrationDir = ROOT_PATH . '/database/migrations';
+    $migrationDir = ROOT_PATH.'/database/migrations';
 
     if (!is_dir($migrationDir)) {
         echo "⚠️  No migrations directory found\n";
@@ -478,7 +474,7 @@ try {
         mkdir($migrationDir, 0755, true);
     }
 
-    $files = glob($migrationDir . '/*.sql');
+    $files = glob($migrationDir.'/*.sql');
 
     if (empty($files)) {
         echo "⚠️  No migration files found\n";

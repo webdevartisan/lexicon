@@ -1,20 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Test datasets for blog-related tests.
- * 
+ *
  * Provides reusable data for blog collaborator roles, statuses,
  * and edge cases for blog operations.
  */
 
 /**
  * Valid collaborative roles for blog users.
- * 
+ *
  * These roles are independent from global user roles.
  */
 dataset('blog_collaborator_roles', [
     'editor',
-    'author', 
+    'author',
     'contributor',
     'reviewer',
     'viewer',
@@ -22,7 +24,7 @@ dataset('blog_collaborator_roles', [
 
 /**
  * Invalid collaborative roles that should be rejected.
- * 
+ *
  * Tests role validation in addUserToBlog method.
  */
 dataset('invalid_blog_roles', [

@@ -18,7 +18,7 @@ final class BlogSettingsModel extends AppModel
     /**
      * Find settings for a specific blog.
      *
-     * @param int $blogId Blog identifier
+     * @param  int  $blogId  Blog identifier
      * @return array|null Blog settings or null if not found
      */
     public function findByBlogId(int $blogId): ?array
@@ -28,7 +28,7 @@ final class BlogSettingsModel extends AppModel
                         banner_path, logo_path, favicon_path,
                         comments_enabled 
                 FROM blog_settings WHERE blog_id = ? LIMIT 1';
-        
+
         $stmt = $this->database->query($sql, [$blogId]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -41,8 +41,8 @@ final class BlogSettingsModel extends AppModel
      * Applies sensible defaults for theme, locale, timezone, and features.
      * Comments are enabled by default unless explicitly disabled.
      *
-     * @param int $blogId Blog identifier
-     * @param array $data Optional overrides for default settings
+     * @param  int  $blogId  Blog identifier
+     * @param  array  $data  Optional overrides for default settings
      * @return bool True on success
      */
     public function createDefaultForBlog(int $blogId, array $data): bool
@@ -74,6 +74,7 @@ final class BlogSettingsModel extends AppModel
         ];
 
         $rowCount = $this->database->execute($sql, $params);
+
         return $rowCount > 0;
     }
 
@@ -83,8 +84,8 @@ final class BlogSettingsModel extends AppModel
      * Only allows whitelisted columns to prevent mass-assignment vulnerabilities.
      * Validates and normalizes boolean fields (indexable, comments_enabled).
      *
-     * @param int $blogId Blog identifier
-     * @param array $data Settings to update
+     * @param  int  $blogId  Blog identifier
+     * @param  array  $data  Settings to update
      * @return bool True on success
      */
     public function updateForBlog(int $blogId, array $data): bool
@@ -126,8 +127,9 @@ final class BlogSettingsModel extends AppModel
         $params[] = $blogId;
 
         $sql = 'UPDATE blog_settings SET '.implode(', ', $set).' WHERE blog_id = ?';
-        
+
         $rowCount = $this->database->execute($sql, $params);
+
         return $rowCount > 0;
     }
 
@@ -137,8 +139,8 @@ final class BlogSettingsModel extends AppModel
      * Used for route: /{username}/b/{blog_slug}
      * Joins users and blogs tables to resolve theme from URL path.
      *
-     * @param string $username User's username
-     * @param string $blogSlug Blog URL slug
+     * @param  string  $username  User's username
+     * @param  string  $blogSlug  Blog URL slug
      * @return string|null Theme name or null if not found
      */
     public function findThemeByUsernameAndBlogSlug(string $username, string $blogSlug): ?string
@@ -151,7 +153,7 @@ final class BlogSettingsModel extends AppModel
           WHERE u.username = ? AND b.blog_slug = ?
           LIMIT 1
         ';
-        
+
         $stmt = $this->database->query($sql, [$username, $blogSlug]);
         $theme = $stmt->fetchColumn();
 
@@ -164,7 +166,7 @@ final class BlogSettingsModel extends AppModel
      * Used for route: /{username}
      * Prioritizes blog marked as primary, falls back to oldest blog.
      *
-     * @param string $username User's username
+     * @param  string  $username  User's username
      * @return string|null Theme name or null if not found
      */
     public function findPrimaryThemeByUsername(string $username): ?string
@@ -178,7 +180,7 @@ final class BlogSettingsModel extends AppModel
           ORDER BY (bs.is_primary = 1) DESC, b.created_at ASC
           LIMIT 1
         ';
-        
+
         $stmt = $this->database->query($sql, [$username]);
         $theme = $stmt->fetchColumn();
 
@@ -190,7 +192,7 @@ final class BlogSettingsModel extends AppModel
      *
      * Utility method for direct blog slug lookups without username context.
      *
-     * @param string $blogSlug Blog URL slug
+     * @param  string  $blogSlug  Blog URL slug
      * @return string|null Theme name or null if not found
      */
     public function findThemeByBlogSlug(string $blogSlug): ?string
@@ -202,7 +204,7 @@ final class BlogSettingsModel extends AppModel
           WHERE b.blog_slug = ?
           LIMIT 1
         ';
-        
+
         $stmt = $this->database->query($sql, [$blogSlug]);
         $theme = $stmt->fetchColumn();
 
@@ -214,14 +216,15 @@ final class BlogSettingsModel extends AppModel
      *
      * Called during blog deletion to clean up associated configuration.
      *
-     * @param int $blogId Blog identifier
+     * @param  int  $blogId  Blog identifier
      * @return bool True on success
      */
     public function deleteByBlogId(int $blogId): bool
     {
         $sql = 'DELETE FROM blog_settings WHERE blog_id = ? LIMIT 1';
-        
+
         $rowCount = $this->database->execute($sql, [$blogId]);
+
         return $rowCount > 0;
     }
 }

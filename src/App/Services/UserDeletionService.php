@@ -6,9 +6,9 @@ namespace App\Services;
 
 use App\Interfaces\UploadServiceInterface;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
-use App\Models\UserPreferencesModel;
 use Exception;
 
 /**
@@ -37,8 +37,9 @@ class UserDeletionService
      * Replaces all PII with anonymous values across all user-related tables
      * while preserving content attribution. Deletes uploaded files.
      *
-     * @param int $userId User ID to pseudonymize
+     * @param  int  $userId  User ID to pseudonymize
      * @return bool True on success
+     *
      * @throws Exception If pseudonymization fails
      */
     public function pseudonymizeUser(int $userId): bool
@@ -49,8 +50,8 @@ class UserDeletionService
         $anonymousUsername = "deleted_user_{$userId}";
         $anonymousSlug = "deleted_{$userId}";
 
-        return $this->users->transaction(function() use ($userId, $anonymousEmail, $anonymousUsername, $anonymousSlug) {
-            
+        return $this->users->transaction(function () use ($userId, $anonymousEmail, $anonymousUsername, $anonymousSlug) {
+
             // Step 1: Anonymize core user record
             $this->users->updateById($userId, [
                 'email' => $anonymousEmail,
@@ -58,7 +59,7 @@ class UserDeletionService
                 'first_name' => 'Deleted',
                 'last_name' => 'User',
                 'password' => '',
-                'last_login' => null
+                'last_login' => null,
             ]);
 
             // Step 2: Clear user profile PII
@@ -67,7 +68,7 @@ class UserDeletionService
                 'bio' => null,
                 'occupation' => null,
                 'location' => null,
-                'avatar_url' => null
+                'avatar_url' => null,
             ]);
 
             // Step 3: Delete social links (contain external PII)
@@ -77,7 +78,7 @@ class UserDeletionService
             $this->preferences->updateByUserId($userId, [
                 'timezone' => 'UTC',
                 'notify_comments' => 0,
-                'notify_likes' => 0
+                'notify_likes' => 0,
             ]);
 
             // Step 5: Delete uploaded files
@@ -93,13 +94,13 @@ class UserDeletionService
      * Applies business rules before allowing deletion, such as
      * preventing deletion of the last administrator account.
      *
-     * @param int $userId User ID to check
+     * @param  int  $userId  User ID to check
      * @return array{canDelete: bool, reason: string}
      */
     public function canDeleteUser(int $userId): array
     {
         $user = $this->users->findById($userId);
-        
+
         if (!$user) {
             return [
                 'canDelete' => false,
@@ -133,14 +134,15 @@ class UserDeletionService
      * Pseudonymizes data and performs soft delete with transaction safety.
      * Caller is responsible for audit logging and session management.
      *
-     * @param int $userId User ID to delete
+     * @param  int  $userId  User ID to delete
      * @return bool True on success
+     *
      * @throws Exception If deletion fails
      */
     public function deleteUser(int $userId): bool
     {
-        return $this->users->transaction(function() use ($userId) {
-            
+        return $this->users->transaction(function () use ($userId) {
+
             // Step 1: Pseudonymize all PII
             $this->pseudonymizeUserInTransaction($userId);
 
@@ -157,7 +159,7 @@ class UserDeletionService
      * Used within deleteUser() which already manages the transaction.
      * Separated to avoid nested transaction issues.
      *
-     * @param int $userId User ID to pseudonymize
+     * @param  int  $userId  User ID to pseudonymize
      */
     private function pseudonymizeUserInTransaction(int $userId): void
     {
@@ -173,7 +175,7 @@ class UserDeletionService
             'first_name' => 'Deleted',
             'last_name' => 'User',
             'password' => '',
-            'last_login' => null
+            'last_login' => null,
         ]);
 
         // Clear user profile PII
@@ -182,7 +184,7 @@ class UserDeletionService
             'bio' => null,
             'occupation' => null,
             'location' => null,
-            'avatar_url' => null
+            'avatar_url' => null,
         ]);
 
         // Delete social links
@@ -192,7 +194,7 @@ class UserDeletionService
         $this->preferences->updateByUserId($userId, [
             'timezone' => 'UTC',
             'notify_comments' => 0,
-            'notify_likes' => 0
+            'notify_likes' => 0,
         ]);
 
         // Delete uploaded files

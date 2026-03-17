@@ -15,8 +15,7 @@ interface UploadServiceInterface
     /**
      * Delete all uploaded files for a user.
      *
-     * @param int $userId User ID
-     * @return void
+     * @param  int  $userId  User ID
      */
     public function deleteUserUploads(int $userId): void;
 }

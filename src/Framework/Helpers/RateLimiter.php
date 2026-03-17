@@ -9,6 +9,7 @@ use Framework\Cache\CacheService;
 final class RateLimiter
 {
     private CacheService $cache;
+
     private int $defaultDecaySeconds;
 
     public function __construct(CacheService $cache, int $defaultDecaySeconds = 900)
@@ -19,69 +20,68 @@ final class RateLimiter
 
     /**
      * Increment the rate limit counter for a key.
-     * 
+     *
      * Use this to record an attempt after it has been validated/processed.
-     * 
-     * @param string $key Rate limit key
-     * @param int|null $decaySeconds Decay window (defaults to constructor value)
-     * @return void
+     *
+     * @param  string  $key  Rate limit key
+     * @param  int|null  $decaySeconds  Decay window (defaults to constructor value)
      */
     public function hit(string $key, ?int $decaySeconds = null): void
     {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
-        $now   = time();
-        
+        $now = time();
+
         $state = $this->getState($key, $now);
-        
-        $score   = $state['score'];
+
+        $score = $state['score'];
         $updated = $state['updated'];
-        
+
         // Apply exponential decay
         $age = max(0, $now - $updated);
         if ($age > 0 && $score > 0.0) {
             $k = \log(2) / $decay;
             $score *= \exp(-$k * $age);
         }
-        
+
         // Increment
         $score += 1.0;
-        
+
         $this->storeState($key, $score, $now, $decay);
     }
 
     public function tooManyAttempts(string $key, int $maxAttempts, ?int $decaySeconds = null): bool
     {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
-        $now   = time();
-        
+        $now = time();
+
         $state = $this->getState($key, $now);
-        
-        $score   = $state['score'];
+
+        $score = $state['score'];
         $updated = $state['updated'];
-        
+
         // Apply exponential decay
         $age = max(0, $now - $updated);
         if ($age > 0 && $score > 0.0) {
             $k = \log(2) / $decay;
             $score *= \exp(-$k * $age);
         }
-        
+
         return $score >= $maxAttempts;
     }
 
     public function availableIn(string $key, int $maxAttempts, ?int $decaySeconds = null): int
     {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
-        $data  = $this->cache->get($key);
+        $data = $this->cache->get($key);
 
         if (!$data) {
             return 0;
         }
 
-        $state   = json_decode($data, true);
-        $score   = (float) ($state['score'] ?? 0.0);
-        $updated = (int)   ($state['updated'] ?? time());
-        $now     = time();
+        $state = json_decode($data, true);
+        $score = (float) ($state['score'] ?? 0.0);
+        $updated = (int) ($state['updated'] ?? time());
+        $now = time();
 
         if ($score <= $maxAttempts) {
             return 0;
@@ -132,15 +132,15 @@ final class RateLimiter
         $state = json_decode($data, true);
 
         return [
-            'score'   => (float) ($state['score'] ?? 0.0),
-            'updated' => (int)   ($state['updated'] ?? $now),
+            'score' => (float) ($state['score'] ?? 0.0),
+            'updated' => (int) ($state['updated'] ?? $now),
         ];
     }
 
     private function storeState(string $key, float $score, int $updated, int $ttl): void
     {
         $this->cache->set($key, json_encode([
-            'score'   => $score,
+            'score' => $score,
             'updated' => $updated,
         ]), $ttl);
     }

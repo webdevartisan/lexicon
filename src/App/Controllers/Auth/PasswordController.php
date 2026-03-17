@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
-use App\Services\PasswordResetRateLimiter;
 use App\Mail\PasswordResetEmail;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Services\PasswordResetRateLimiter;
 use Exception;
 use Framework\Core\Response;
 
@@ -59,6 +59,7 @@ final class PasswordController extends AppController
         // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->flash('error', 'Please enter a valid email address.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -68,6 +69,7 @@ final class PasswordController extends AppController
             $waitFormatted = $this->formatWaitTime($wait);
 
             $this->flash('error', "Too many password reset attempts. Try again in {$waitFormatted}.");
+
             return $this->redirect('/password/forgot');
         }
 
@@ -90,6 +92,7 @@ final class PasswordController extends AppController
 
             // Same success message as if email existed
             $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -101,9 +104,10 @@ final class PasswordController extends AppController
         // Store token (replaces any existing for this email)
         if (!$this->passwordResets->replaceForEmail($email, $tokenHash, $expiresAt)) {
             error_log("Failed to store password reset token for {$email}");
-            
+
             // Still show success to prevent enumeration
             $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -111,14 +115,15 @@ final class PasswordController extends AppController
         try {
             if (env('MAIL_ENABLED', false) === false) {
                 error_log("MAIL_ENABLED is false. Skipping password reset email to {$email}");
-                
+
                 // Show success anyway to prevent enumeration
                 $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+
                 return $this->redirect('/password/forgot');
             }
-            
+
             mailer()->send(new PasswordResetEmail($user, $token, 60));
-            
+
             // Audit successful email send
             audit()->log(
                 (int) $user['id'],
@@ -129,15 +134,17 @@ final class PasswordController extends AppController
                 $ip
             );
         } catch (Exception $e) {
-            error_log('Failed to send password reset email: ' . $e->getMessage());
-            
+            error_log('Failed to send password reset email: '.$e->getMessage());
+
             // Still show success to prevent enumeration
             $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+
             return $this->redirect('/password/forgot');
         }
 
         // Generic success message
         $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+
         return $this->redirect('/password/forgot');
     }
 
@@ -155,7 +162,7 @@ final class PasswordController extends AppController
 
         $ip = $this->request->ip();
         $tokenHash = hash('sha256', $token);
-        
+
         // Look up token to get associated email
         $resetData = $this->passwordResets->findValidByTokenHash($tokenHash);
 
@@ -168,8 +175,9 @@ final class PasswordController extends AppController
                 ['token_hash_prefix' => substr($tokenHash, 0, 8)],
                 $ip
             );
-            
+
             $this->flash('error', 'Invalid or expired password reset link.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -199,6 +207,7 @@ final class PasswordController extends AppController
         // Basic validation
         if ($token === '' || $email === '') {
             $this->flash('error', 'Invalid reset request.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -208,6 +217,7 @@ final class PasswordController extends AppController
             $waitFormatted = $this->formatWaitTime($wait);
 
             $this->flash('error', "Too many password reset attempts. Try again in {$waitFormatted}.");
+
             return $this->redirect('/password/forgot');
         }
 
@@ -231,7 +241,7 @@ final class PasswordController extends AppController
         if (!$resetData || $resetData['email'] !== $email) {
             // Increment rate limit on failed token validation
             $this->limiter->hit($ip, $email);
-            
+
             audit()->log(
                 0,
                 'password_reset.failed_token_validation',
@@ -240,8 +250,9 @@ final class PasswordController extends AppController
                 ['email' => $email, 'token_hash_prefix' => substr($tokenHash, 0, 8)],
                 $ip
             );
-            
+
             $this->flash('error', 'Invalid or expired password reset link.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -249,8 +260,9 @@ final class PasswordController extends AppController
         $user = $this->users->findByEmail($email);
         if (!$user) {
             $this->limiter->hit($ip, $email);
-            
+
             $this->flash('error', 'User not found.');
+
             return $this->redirect('/password/forgot');
         }
 
@@ -258,9 +270,10 @@ final class PasswordController extends AppController
         $newHash = password_hash($validated['password'], PASSWORD_DEFAULT);
         if (!$this->users->updatePasswordHashById((int) $user['id'], $newHash)) {
             error_log("Failed to update password for user {$user['id']}");
-            
+
             $this->flash('error', 'Failed to reset password. Please try again.');
-            return $this->redirect('/password/reset/' . $token);
+
+            return $this->redirect('/password/reset/'.$token);
         }
 
         // Invalidate token
@@ -280,23 +293,24 @@ final class PasswordController extends AppController
         );
 
         $this->flash('success', 'Your password has been reset successfully. Please log in.');
+
         return $this->redirect('/login');
     }
 
     /**
      * Format wait time for user-friendly display.
-     * 
+     *
      * Converts seconds to "X minutes" or "X seconds" for better UX.
-     * 
-     * @param int $seconds Seconds to wait
+     *
+     * @param  int  $seconds  Seconds to wait
      * @return string Formatted wait time
      */
     private function formatWaitTime(int $seconds): string
     {
         if ($seconds > 120) {
-            return ceil($seconds / 60) . ' minutes';
+            return ceil($seconds / 60).' minutes';
         }
-        
-        return $seconds . ' seconds';
+
+        return $seconds.' seconds';
     }
 }

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Helpers;
 
 use App\Auth;
-use Framework\Session;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use Framework\Session;
 use Mockery;
 
 class AuthTestHelper
@@ -21,9 +23,9 @@ class AuthTestHelper
         $session = Mockery::mock(Session::class);
         $userModel = Mockery::mock(UserModel::class);
         $profileModel = Mockery::mock(UserProfileModel::class);
-        
+
         $auth = new Auth($session, $userModel, $profileModel);
-        
+
         return [
             'auth' => $auth,
             'session' => $session,
@@ -31,12 +33,12 @@ class AuthTestHelper
             'profileModel' => $profileModel,
         ];
     }
-    
+
     /**
      * Creates a sample user array matching typical database structure.
      * Used for mocking UserModel return values in unit tests.
      *
-     * @param array $overrides Custom field values to override defaults
+     * @param  array  $overrides  Custom field values to override defaults
      * @return array User data array with common fields
      */
     public static function mockUserData(array $overrides = []): array

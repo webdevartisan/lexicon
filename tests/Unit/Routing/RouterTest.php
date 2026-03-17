@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 /**
  * Unit tests for Router class.
- * 
+ *
  * Tests route registration, matching, parameter extraction, and HTTP method filtering
  * without any external dependencies.
  */
 
-use Framework\Core\Router;
 use Faker\Factory as Faker;
+use Framework\Core\Router;
 
 beforeEach(function () {
     $this->faker = Faker::create();
@@ -19,13 +19,13 @@ beforeEach(function () {
 
 /**
  * Tests basic route registration and matching without parameters.
- * 
+ *
  * Verifies that simple static routes can be added and matched correctly.
  */
 test('registers and matches simple routes', function () {
     $controller = $this->faker->word();
     $action = $this->faker->word();
-    
+
     $this->router->add('/users', [
         'controller' => $controller,
         'action' => $action,
@@ -38,15 +38,14 @@ test('registers and matches simple routes', function () {
         ->and($result['action'])->toBe($action);
 });
 
-
 /**
  * Tests dynamic parameter extraction from URL segments.
- * 
+ *
  * Verifies that {param} placeholders are captured as named groups.
  */
 test('extracts route parameters', function () {
     $userId = (string) $this->faker->numberBetween(1, 1000);
-    
+
     $this->router->add('/users/{id}', [
         'controller' => 'Users',
         'action' => 'show',
@@ -59,13 +58,13 @@ test('extracts route parameters', function () {
 
 /**
  * Tests regex constraint validation in route parameters.
- * 
+ *
  * Verifies that {param:regex} patterns enforce type constraints.
  */
 test('enforces regex constraints', function () {
     $validId = (string) $this->faker->numberBetween(1, 1000);
     $invalidId = $this->faker->word();
-    
+
     $this->router->add('/posts/{id:\d+}', [
         'controller' => 'Posts',
         'action' => 'show',
@@ -77,7 +76,7 @@ test('enforces regex constraints', function () {
 
 /**
  * Tests HTTP method-based route filtering.
- * 
+ *
  * Verifies that routes with 'method' param only match specified HTTP verbs.
  */
 test('filters by HTTP method', function () {
@@ -102,7 +101,7 @@ test('filters by HTTP method', function () {
 
 /**
  * Tests route grouping with prefix attribute.
- * 
+ *
  * Verifies that group prefix is prepended to all routes in the group.
  */
 test('applies group prefix', function () {
@@ -116,7 +115,7 @@ test('applies group prefix', function () {
 
 /**
  * Tests negative case for unmatched routes.
- * 
+ *
  * Verifies that router returns false when no route pattern matches.
  */
 test('returns false for unmatched routes', function () {
@@ -131,7 +130,7 @@ test('returns false for unmatched routes', function () {
 
 /**
  * Tests namespace merging in nested route groups.
- * 
+ *
  * Verifies that child namespaces are appended to parent with backslash separator.
  */
 test('merges namespaces in nested groups', function () {
@@ -149,7 +148,7 @@ test('merges namespaces in nested groups', function () {
 
 /**
  * Tests middleware merging with pipe-separated syntax.
- * 
+ *
  * Verifies that 'auth|role:admin' is split into separate middleware entries.
  */
 test('normalizes pipe-separated middleware', function () {
@@ -167,7 +166,7 @@ test('normalizes pipe-separated middleware', function () {
 
 /**
  * Tests middleware inheritance in route groups.
- * 
+ *
  * Verifies that child routes inherit parent middleware and can add their own.
  */
 test('merges group and route middleware', function () {
@@ -186,12 +185,12 @@ test('merges group and route middleware', function () {
 
 /**
  * Tests parameter extraction in group prefixes.
- * 
+ *
  * Verifies that parameters in group prefix are properly extracted and merged.
  */
 test('extracts parameters from group prefix', function () {
     $blogSlug = 'tech-blog';
-    
+
     $router = new Router();
     $router->group([
         'prefix' => '/blog/{blogSlug:[A-Za-z0-9_-]+}',
@@ -212,7 +211,7 @@ test('extracts parameters from group prefix', function () {
 
 /**
  * Tests index action fallback for dynamic controller/action routes.
- * 
+ *
  * Verifies that /admin/users maps to /admin/users/index when namespace is set.
  */
 test('applies index action fallback for namespaced routes', function () {
@@ -229,7 +228,7 @@ test('applies index action fallback for namespaced routes', function () {
 
 /**
  * Tests multiple HTTP methods using 'methods' array.
- * 
+ *
  * Verifies that routes can accept multiple verbs via 'methods' parameter.
  */
 test('matches multiple HTTP methods with methods array', function () {
@@ -246,13 +245,13 @@ test('matches multiple HTTP methods with methods array', function () {
 
 /**
  * Tests URL decoding in route matching.
- * 
+ *
  * Verifies that encoded characters are properly decoded before matching.
  */
 test('decodes URL-encoded paths before matching', function () {
     $slug = 'hello world';
     $encodedSlug = 'hello%20world';
-    
+
     $this->router->add('/posts/{slug}', [
         'controller' => 'Posts',
         'action' => 'show',
@@ -266,7 +265,7 @@ test('decodes URL-encoded paths before matching', function () {
 
 /**
  * Tests trailing slash normalization.
- * 
+ *
  * Verifies that routes match regardless of trailing slashes.
  */
 test('normalizes trailing slashes in paths', function () {
@@ -279,7 +278,7 @@ test('normalizes trailing slashes in paths', function () {
 
 /**
  * Tests root path handling.
- * 
+ *
  * Verifies that empty/root path routes work correctly.
  */
 test('handles root path correctly', function () {
@@ -294,7 +293,7 @@ test('handles root path correctly', function () {
 
 /**
  * Tests nested group prefix concatenation.
- * 
+ *
  * Verifies that nested groups properly chain prefixes.
  */
 test('concatenates nested group prefixes', function () {
@@ -311,7 +310,7 @@ test('concatenates nested group prefixes', function () {
 
 /**
  * Tests case-insensitive regex matching.
- * 
+ *
  * Verifies that route patterns use case-insensitive matching (unicode flag).
  */
 test('performs case-insensitive pattern matching', function () {
@@ -324,12 +323,12 @@ test('performs case-insensitive pattern matching', function () {
 
 /**
  * Tests parameter names with underscores and hyphens.
- * 
+ *
  * Verifies that {user_id} and {post-slug} are correctly extracted.
  */
 test('extracts parameters with underscores and hyphens', function () {
     $userId = (string) $this->faker->numberBetween(1, 1000);
-    
+
     $this->router->add('/user/{user_id}/posts', [
         'controller' => 'UserPosts',
     ]);
@@ -343,7 +342,7 @@ test('extracts parameters with underscores and hyphens', function () {
 
 /**
  * Tests that route params override matched URL params.
- * 
+ *
  * Verifies merge order: URL matches first, then route params override.
  */
 test('route params override URL parameter matches', function () {
@@ -360,7 +359,7 @@ test('route params override URL parameter matches', function () {
 
 /**
  * Tests HTTP method case insensitivity.
- * 
+ *
  * Verifies that method matching is case-insensitive (GET = get = Get).
  */
 test('matches HTTP methods case-insensitively', function () {
@@ -376,7 +375,7 @@ test('matches HTTP methods case-insensitively', function () {
 
 /**
  * Tests middleware deduplication in nested groups.
- * 
+ *
  * Verifies that duplicate middleware entries are removed via array_unique.
  */
 test('removes duplicate middleware in nested groups', function () {
@@ -394,12 +393,12 @@ test('removes duplicate middleware in nested groups', function () {
 
 /**
  * Tests complex regex patterns with character classes.
- * 
+ *
  * Verifies that custom regex like [a-z0-9-]+ works in route constraints.
  */
 test('supports complex regex patterns in constraints', function () {
     $slug = $this->faker->slug();
-    
+
     $this->router->add('/category/{slug:[a-z0-9-]+}', [
         'controller' => 'Category',
     ]);

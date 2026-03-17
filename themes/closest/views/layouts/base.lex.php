@@ -45,13 +45,13 @@
 	<div class="container mt-3">
 		<?php foreach ($flashes as $type => $messages) { ?>
 		<?php
-            // Map logical types to Bootstrap classes
-            $class = match ($type) {
-                'success' => 'alert-success',
-                'error' => 'alert-danger',
-                'warning' => 'alert-warning',
-                default => 'alert-info',
-            };
+	        // Map logical types to Bootstrap classes
+	        $class = match ($type) {
+	            'success' => 'alert-success',
+	            'error' => 'alert-danger',
+	            'warning' => 'alert-warning',
+	            default => 'alert-info',
+	        };
 		    ?>
 		<?php foreach ($messages as $message) { ?>
 			<div class="alert <?= $class ?>" role="alert">

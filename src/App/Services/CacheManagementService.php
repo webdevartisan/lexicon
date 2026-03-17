@@ -17,8 +17,8 @@ use Framework\Interfaces\TemplateViewerInterface;
 class CacheManagementService
 {
     /**
-     * @param CacheService     $cache    HTTP response and fragment cache.
-     * @param TemplateViewerInterface $renderer Compiled view cache management.
+     * @param  CacheService  $cache  HTTP response and fragment cache.
+     * @param  TemplateViewerInterface  $renderer  Compiled view cache management.
      */
     public function __construct(
         private CacheService $cache,
@@ -36,7 +36,7 @@ class CacheManagementService
 
         // Merge compiled view stats so the admin dashboard shows both layers.
         $compiledStats = $this->renderer->compiledViewStats();
-        $stats['compiled_views_count']      = $compiledStats['count'];
+        $stats['compiled_views_count'] = $compiledStats['count'];
         $stats['compiled_views_size_bytes'] = $compiledStats['size_bytes'];
 
         return $stats;
@@ -49,28 +49,28 @@ class CacheManagementService
      * Compiled views: removes .php files older than 7 days (orphans left
      * behind when a template is edited and a new compiled file is generated).
      *
-     * @param  string $userIp IP address of the admin performing the action.
+     * @param  string  $userIp  IP address of the admin performing the action.
      * @return array{deleted: int, compiled_views_pruned: int, duration_ms: float}
      */
     public function prune(string $userIp): array
     {
         $startTime = microtime(true);
 
-        $deleted      = $this->cache->pruneExpired();
+        $deleted = $this->cache->pruneExpired();
         $deletedViews = $this->renderer->pruneCompiledViews(604800);
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
 
         $this->audit('cache.pruned', [
-            'deleted_files'         => $deleted,
+            'deleted_files' => $deleted,
             'compiled_views_pruned' => $deletedViews,
-            'duration_ms'           => $duration,
+            'duration_ms' => $duration,
         ], $userIp);
 
         return [
-            'deleted'               => $deleted,
+            'deleted' => $deleted,
             'compiled_views_pruned' => $deletedViews,
-            'duration_ms'           => $duration,
+            'duration_ms' => $duration,
         ];
     }
 
@@ -80,32 +80,32 @@ class CacheManagementService
      * More aggressive than prune — deletes everything regardless of expiry.
      * Compiled views are regenerated automatically on the next request.
      *
-     * @param  string $userIp IP address of the admin performing the action.
+     * @param  string  $userIp  IP address of the admin performing the action.
      * @return array{deleted: int, compiled_views_deleted: int, size_mb: float, duration_ms: float}
      */
     public function clear(string $userIp): array
     {
         $statsBefore = $this->cache->stats();
-        $startTime   = microtime(true);
+        $startTime = microtime(true);
 
         $this->cache->clear();
         $compiledResult = $this->renderer->clearCompiledViews();
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
-        $sizeMb   = round($statsBefore['total_size_bytes'] / 1024 / 1024, 2);
+        $sizeMb = round($statsBefore['total_size_bytes'] / 1024 / 1024, 2);
 
         $this->audit('cache.cleared', [
-            'deleted_files'           => $statsBefore['total_files'],
-            'compiled_views_deleted'  => $compiledResult['deleted'],
-            'size_freed_mb'           => $sizeMb,
-            'duration_ms'             => $duration,
+            'deleted_files' => $statsBefore['total_files'],
+            'compiled_views_deleted' => $compiledResult['deleted'],
+            'size_freed_mb' => $sizeMb,
+            'duration_ms' => $duration,
         ], $userIp);
 
         return [
-            'deleted'                => $statsBefore['total_files'],
+            'deleted' => $statsBefore['total_files'],
             'compiled_views_deleted' => $compiledResult['deleted'],
-            'size_mb'                => $sizeMb,
-            'duration_ms'            => $duration,
+            'size_mb' => $sizeMb,
+            'duration_ms' => $duration,
         ];
     }
 
@@ -115,8 +115,8 @@ class CacheManagementService
      * Only affects the response/fragment cache — compiled views are
      * invalidated automatically via mtime-based hashing, not by pattern.
      *
-     * @param  string $pattern  Glob-style pattern (e.g. 'en:GET:/blogs*').
-     * @param  string $userIp   IP address of the admin performing the action.
+     * @param  string  $pattern  Glob-style pattern (e.g. 'en:GET:/blogs*').
+     * @param  string  $userIp  IP address of the admin performing the action.
      * @return array{deleted: int, pattern: string, duration_ms: float}
      *
      * @throws \InvalidArgumentException If pattern is empty or contains invalid characters.
@@ -131,18 +131,18 @@ class CacheManagementService
         }
 
         $startTime = microtime(true);
-        $deleted   = $this->cache->deletePattern($pattern);
-        $duration  = round((microtime(true) - $startTime) * 1000, 2);
+        $deleted = $this->cache->deletePattern($pattern);
+        $duration = round((microtime(true) - $startTime) * 1000, 2);
 
         $this->audit('cache.pattern_deleted', [
-            'pattern'       => $pattern,
+            'pattern' => $pattern,
             'deleted_files' => $deleted,
-            'duration_ms'   => $duration,
+            'duration_ms' => $duration,
         ], $userIp);
 
         return [
-            'deleted'     => $deleted,
-            'pattern'     => $pattern,
+            'deleted' => $deleted,
+            'pattern' => $pattern,
             'duration_ms' => $duration,
         ];
     }

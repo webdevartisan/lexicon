@@ -52,13 +52,13 @@ class TemplateRenderer implements TemplateViewerInterface
     private array $compilationDependencies = [];
 
     /**
-     * @param ThemeResolverInterface    $themes       Resolves themed template paths.
-     * @param ViewNameResolverInterface $viewResolver Maps template names to relative paths.
-     * @param RouteContext              $routeContext  Current route context for view resolution.
-     * @param string|null               $compiledViewPath
-     *        Override the default compiled view cache directory.
-     *        When null, defaults to ROOT_PATH/storage/cache/views.
-     *        Pass via config/cache.php 'compiled_views_path' for consistency.
+     * @param  ThemeResolverInterface  $themes  Resolves themed template paths.
+     * @param  ViewNameResolverInterface  $viewResolver  Maps template names to relative paths.
+     * @param  RouteContext  $routeContext  Current route context for view resolution.
+     * @param  string|null  $compiledViewPath
+     *                                         Override the default compiled view cache directory.
+     *                                         When null, defaults to ROOT_PATH/storage/cache/views.
+     *                                         Pass via config/cache.php 'compiled_views_path' for consistency.
      */
     public function __construct(
         private ThemeResolverInterface $themes,
@@ -67,7 +67,7 @@ class TemplateRenderer implements TemplateViewerInterface
         ?string $compiledViewPath = null,
     ) {
         // Fall back to the conventional path if no override is provided.
-        $this->compiledViewPath = $compiledViewPath ?? ROOT_PATH . '/storage/cache/views';
+        $this->compiledViewPath = $compiledViewPath ?? ROOT_PATH.'/storage/cache/views';
     }
 
     // ============================================================
@@ -82,12 +82,12 @@ class TemplateRenderer implements TemplateViewerInterface
     /**
      * Render a template file and return the resulting HTML string.
      *
-     * @param string|null $template Template identifier (resolved via ViewNameResolver).
-     * @param array       $data     Variables to expose inside the template.
-     * @return string               Rendered HTML output.
+     * @param  string|null  $template  Template identifier (resolved via ViewNameResolver).
+     * @param  array  $data  Variables to expose inside the template.
+     * @return string Rendered HTML output.
      *
-     * @throws NotFoundException        If the template or any include cannot be found.
-     * @throws TemplateRenderException  If the compiled template throws at runtime.
+     * @throws NotFoundException If the template or any include cannot be found.
+     * @throws TemplateRenderException If the compiled template throws at runtime.
      */
     public function render(?string $template, array $data = []): string
     {
@@ -120,9 +120,9 @@ class TemplateRenderer implements TemplateViewerInterface
      */
     public function clearCompiledViews(): array
     {
-        $files   = glob($this->compiledViewPath . '/*.php') ?: [];
+        $files = glob($this->compiledViewPath.'/*.php') ?: [];
         $deleted = 0;
-        $failed  = 0;
+        $failed = 0;
 
         foreach ($files as $file) {
             @unlink($file) ? $deleted++ : $failed++;
@@ -138,13 +138,13 @@ class TemplateRenderer implements TemplateViewerInterface
      * mtime-based invalidation (e.g., files from deleted templates).
      * Called from CacheController::prune() alongside CacheService::pruneExpired().
      *
-     * @param  int $maxAgeSeconds Files older than this are removed (default: 7 days).
-     * @return int                Number of files deleted.
+     * @param  int  $maxAgeSeconds  Files older than this are removed (default: 7 days).
+     * @return int Number of files deleted.
      */
     public function pruneCompiledViews(int $maxAgeSeconds = 604800): int
     {
-        $files   = glob($this->compiledViewPath . '/*.php') ?: [];
-        $cutoff  = time() - $maxAgeSeconds;
+        $files = glob($this->compiledViewPath.'/*.php') ?: [];
+        $cutoff = time() - $maxAgeSeconds;
         $deleted = 0;
 
         foreach ($files as $file) {
@@ -204,12 +204,12 @@ class TemplateRenderer implements TemplateViewerInterface
      * Processes nested includes by looping until no directives remain.
      * A depth counter prevents infinite loops caused by circular includes.
      *
-     * @param  string $code     The raw template code to process.
-     * @param  int    $maxDepth Maximum allowed nesting depth (default: 10).
-     * @return string           Template code with all includes inlined.
+     * @param  string  $code  The raw template code to process.
+     * @param  int  $maxDepth  Maximum allowed nesting depth (default: 10).
+     * @return string Template code with all includes inlined.
      *
-     * @throws NotFoundException  If an included template file cannot be found.
-     * @throws \RuntimeException  If the maximum include depth is exceeded.
+     * @throws NotFoundException If an included template file cannot be found.
+     * @throws \RuntimeException If the maximum include depth is exceeded.
      */
     private function loadIncludesThemed(string $code, int $maxDepth = 10): string
     {
@@ -220,17 +220,17 @@ class TemplateRenderer implements TemplateViewerInterface
 
             if ($depth >= $maxDepth) {
                 throw new \RuntimeException(
-                    "Maximum include depth of {$maxDepth} exceeded. " .
-                    "Check for circular {% include %} references in your templates."
+                    "Maximum include depth of {$maxDepth} exceeded. ".
+                    'Check for circular {% include %} references in your templates.'
                 );
             }
 
             preg_match_all('#\{%\s*include\s+"(?<template>.*?)"\s*%\}#', $code, $matches, PREG_SET_ORDER);
 
             foreach ($matches as $match) {
-                $tpl          = $match['template'];
+                $tpl = $match['template'];
                 $relativePath = $this->viewResolver->resolveToRelativePath($tpl, $this->routeContext);
-                $incPath      = $this->themes->resolveView($relativePath);
+                $incPath = $this->themes->resolveView($relativePath);
 
                 if (!$incPath) {
                     throw new NotFoundException("Included template '$tpl' not found.");
@@ -241,8 +241,8 @@ class TemplateRenderer implements TemplateViewerInterface
                 $this->compilationDependencies[] = $incPath;
 
                 $contents = file_get_contents($incPath);
-                $pattern  = '#\{\%\s*include\s+"' . preg_quote($tpl, '#') . '"\s*\%\}#';
-                $code     = preg_replace($pattern, $contents, $code, 1);
+                $pattern = '#\{\%\s*include\s+"'.preg_quote($tpl, '#').'"\s*\%\}#';
+                $code = preg_replace($pattern, $contents, $code, 1);
             }
 
             $depth++;
@@ -299,10 +299,10 @@ class TemplateRenderer implements TemplateViewerInterface
      * internals ($compiledFile, $data, $prev, etc.) are never visible
      * to the template's variable scope.
      *
-     * @param  string $compiledFile Absolute path to the compiled PHP file.
-     * @param  array  $data         Variables to expose inside the template.
-     * @param  string $originalFile Original source template path (for error reporting).
-     * @return string               Rendered HTML output.
+     * @param  string  $compiledFile  Absolute path to the compiled PHP file.
+     * @param  array  $data  Variables to expose inside the template.
+     * @param  string  $originalFile  Original source template path (for error reporting).
+     * @return string Rendered HTML output.
      *
      * @throws TemplateRenderException On any error or exception during rendering.
      */
@@ -331,7 +331,7 @@ class TemplateRenderer implements TemplateViewerInterface
             return ob_get_clean();
         } catch (\Throwable $e) {
             ob_end_clean();
-            throw new TemplateRenderException($originalFile, $e->getLine(), 'Compiled view: ' . $compiledFile, $e);
+            throw new TemplateRenderException($originalFile, $e->getLine(), 'Compiled view: '.$compiledFile, $e);
         } finally {
             set_error_handler($prev);
         }
@@ -345,9 +345,9 @@ class TemplateRenderer implements TemplateViewerInterface
      * This guarantees that editing any dependency triggers automatic recompilation
      * without leaving orphaned files behind (one compiled file per unique dependency set).
      *
-     * @param  string $sourceFile   Absolute path to the root template source.
-     * @param  string $compiledCode Fully compiled PHP/HTML code to persist.
-     * @return string               Absolute path to the compiled cache file.
+     * @param  string  $sourceFile  Absolute path to the root template source.
+     * @param  string  $compiledCode  Fully compiled PHP/HTML code to persist.
+     * @return string Absolute path to the compiled cache file.
      */
     private function cacheCompiledTemplate(string $sourceFile, string $compiledCode): string
     {
@@ -360,26 +360,26 @@ class TemplateRenderer implements TemplateViewerInterface
         // causing a new compiled file to be written and the stale one to be
         // naturally abandoned (pruned by pruneCompiledViews() or clearCompiledViews()).
         $dependencies = array_unique($this->compilationDependencies);
-        $mtimeKey     = implode(':', array_map(
-            fn(string $f) => $f . '@' . (int) filemtime($f),
+        $mtimeKey = implode(':', array_map(
+            fn (string $f) => $f.'@'.(int) filemtime($f),
             $dependencies
         ));
-        $hash         = sha1($sourceFile . ':' . $mtimeKey);
-        $compiledFile = $this->compiledViewPath . '/' . $hash . '.php';
+        $hash = sha1($sourceFile.':'.$mtimeKey);
+        $compiledFile = $this->compiledViewPath.'/'.$hash.'.php';
 
         if (!is_file($compiledFile)) {
             $header = "<?php\n"
-                . "// Compiled view generated by TemplateRenderer\n"
-                . "// Source:    {$sourceFile}\n"
-                . "// Dependencies: " . implode(', ', $dependencies) . "\n"
-                . "// Compiled:  " . date('Y-m-d H:i:s') . "\n"
-                . "?>\n"; // Trailing newline prevents compiled code fusing to the closing tag.
+                ."// Compiled view generated by TemplateRenderer\n"
+                ."// Source:    {$sourceFile}\n"
+                .'// Dependencies: '.implode(', ', $dependencies)."\n"
+                .'// Compiled:  '.date('Y-m-d H:i:s')."\n"
+                ."?>\n"; // Trailing newline prevents compiled code fusing to the closing tag.
 
             // Atomic write: write to a PID-unique tmp file then rename.
             // rename() is atomic on most filesystems, preventing partial reads
             // from concurrent requests hitting the cache simultaneously.
-            $tmpFile = $compiledFile . '.tmp.' . getmypid();
-            file_put_contents($tmpFile, $header . $compiledCode, LOCK_EX);
+            $tmpFile = $compiledFile.'.tmp.'.getmypid();
+            file_put_contents($tmpFile, $header.$compiledCode, LOCK_EX);
             rename($tmpFile, $compiledFile);
         }
 
@@ -396,12 +396,11 @@ class TemplateRenderer implements TemplateViewerInterface
      */
     public function compiledViewStats(): array
     {
-        $files = glob($this->compiledViewPath . '/*.php') ?: [];
+        $files = glob($this->compiledViewPath.'/*.php') ?: [];
 
         return [
-            'count'      => count($files),
+            'count' => count($files),
             'size_bytes' => (int) array_sum(array_map('filesize', $files)),
         ];
     }
-
 }

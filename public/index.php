@@ -47,8 +47,6 @@ $dispatcher = new Dispatcher(
 // create a Request object from PHP superglobals
 $request = Request::createFromGlobals();
 
-
-
 // run any pre-routing logic (HTTPS redirects, maintenance mode, etc.)
 $preRoutingRunner = new PipelineRunner();
 $preRoutingRunner->run($request);

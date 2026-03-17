@@ -15,9 +15,11 @@ use Framework\Cache\CacheService;
 class GeoLocationService
 {
     private const API_URL = 'http://ip-api.com/json/';
+
     private const TIMEOUT = 3;
+
     private const CACHE_TTL = 3600; // 1 hour
-    
+
     private const FIELDS = [
         'status',
         'message',
@@ -39,7 +41,7 @@ class GeoLocationService
     public function getTimezoneData(): array
     {
         $ip = $this->getClientIp();
-        
+
         $cacheKey = "geo:timezone:{$ip}";
         $cached = $this->cache->get($cacheKey);
 
@@ -53,13 +55,13 @@ class GeoLocationService
 
         // Fetch from API
         $data = $this->fetchFromApi();
-        
+
         // Cache successful responses only
         if (isset($data['status']) && $data['status'] === 'success') {
             // Serialize to JSON for caching
             $this->cache->set($cacheKey, json_encode($data), self::CACHE_TTL);
         }
-        
+
         return $data;
     }
 
@@ -71,7 +73,7 @@ class GeoLocationService
     private function fetchFromApi(): array
     {
         $fields = implode(',', self::FIELDS);
-        $url = self::API_URL . '?fields=' . $fields;
+        $url = self::API_URL.'?fields='.$fields;
 
         $context = stream_context_create([
             'http' => [
@@ -86,6 +88,7 @@ class GeoLocationService
 
         if ($raw === false) {
             error_log('GeoLocationService: Failed to fetch from ip-api.com');
+
             return ['status' => 'fail', 'message' => 'GeoIP lookup failed'];
         }
 
@@ -93,6 +96,7 @@ class GeoLocationService
 
         if (!is_array($data)) {
             error_log('GeoLocationService: Invalid JSON response from ip-api.com');
+
             return ['status' => 'fail', 'message' => 'Invalid API response'];
         }
 
@@ -111,6 +115,7 @@ class GeoLocationService
         // Check for IP from reverse proxy
         if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+
             return trim($ips[0]);
         }
 

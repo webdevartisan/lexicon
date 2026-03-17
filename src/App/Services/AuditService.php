@@ -22,12 +22,12 @@ class AuditService
     /**
      * Log an action to the audit trail.
      *
-     * @param int|null $userId User performing the action (null for system actions)
-     * @param string $action Action performed (e.g., 'user.deleted', 'post.published')
-     * @param string $resourceType Resource type (e.g., 'user', 'post', 'comment')
-     * @param int|null $resourceId ID of affected resource
-     * @param array $details Additional context (old/new values, metadata)
-     * @param string|null $ipAddress Client IP address for security tracking
+     * @param  int|null  $userId  User performing the action (null for system actions)
+     * @param  string  $action  Action performed (e.g., 'user.deleted', 'post.published')
+     * @param  string  $resourceType  Resource type (e.g., 'user', 'post', 'comment')
+     * @param  int|null  $resourceId  ID of affected resource
+     * @param  array  $details  Additional context (old/new values, metadata)
+     * @param  string|null  $ipAddress  Client IP address for security tracking
      * @return bool True on success, false on failure
      */
     public function log(
@@ -58,7 +58,8 @@ class AuditService
             return $rowCount > 0;
         } catch (\Throwable $e) {
             // Swallow exceptions to prevent audit failures from breaking operations
-            error_log('Audit log failed: ' . $e->getMessage());
+            error_log('Audit log failed: '.$e->getMessage());
+
             return false;
         }
     }

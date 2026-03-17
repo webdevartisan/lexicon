@@ -35,8 +35,6 @@ final class PostController extends AppController
 
     /**
      * List user's posts with filters.
-     *
-     * @return Response
      */
     public function index(): Response
     {
@@ -74,8 +72,7 @@ final class PostController extends AppController
     /**
      * Show single post with relationships.
      *
-     * @param string $slug Post slug
-     * @return Response
+     * @param  string  $slug  Post slug
      */
     public function show(string $slug): Response
     {
@@ -92,8 +89,6 @@ final class PostController extends AppController
 
     /**
      * Show post creation form.
-     *
-     * @return Response
      */
     public function new(): Response
     {
@@ -103,6 +98,7 @@ final class PostController extends AppController
 
         if (empty($defaultBlogId)) {
             $this->flash('error', 'Default blog has not been set');
+
             return $this->redirect('/dashboard');
         }
 
@@ -116,8 +112,6 @@ final class PostController extends AppController
 
     /**
      * Create new post.
-     *
-     * @return Response
      */
     public function create(): Response
     {
@@ -132,7 +126,7 @@ final class PostController extends AppController
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:posts,slug',
-            'status' => 'in:' . implode(',', PostModel::STATUSES),
+            'status' => 'in:'.implode(',', PostModel::STATUSES),
             'content' => 'required|max:10000',
             'excerpt' => 'required|max:200',
             'timezone' => 'timezone',
@@ -174,6 +168,7 @@ final class PostController extends AppController
             );
 
             $this->flash('success', 'Post draft saved.');
+
             return $this->redirect("/dashboard/post/{$postId}/edit");
         }
 
@@ -185,8 +180,7 @@ final class PostController extends AppController
     /**
      * Show post edit form.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function edit(string $id): Response
     {
@@ -208,9 +202,9 @@ final class PostController extends AppController
         $workflowState = $post->workflowState() ?? 'draft';
         $status = $post->status();
 
-        $postUrl = base_url() . '/blog/' . $blog->toArray()['blog_slug'] . '/' . $post->toArray()['slug'];
+        $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
 
-        breadcrumbs()->replaceLast('Edit Post: ' . $post->id());
+        breadcrumbs()->replaceLast('Edit Post: '.$post->id());
 
         $postArray = $post->toArray();
         if ($displayDate) {
@@ -230,8 +224,7 @@ final class PostController extends AppController
     /**
      * Show post review screen with workflow permissions.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function review(string $id): Response
     {
@@ -278,8 +271,7 @@ final class PostController extends AppController
     /**
      * Update post.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function update(string $id): Response
     {
@@ -292,7 +284,7 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:50',
-            'status' => 'in:' . implode(',', PostModel::STATUSES),
+            'status' => 'in:'.implode(',', PostModel::STATUSES),
             'content' => 'required|max:10000',
             'excerpt' => 'required|max:200',
             'timezone' => 'timezone',
@@ -329,9 +321,10 @@ final class PostController extends AppController
         $newStatus = $newData['status'];
 
         if ($oldStatus !== $newStatus) {
-            if (!isset(PostModel::STATUS_TRANSITIONS[$oldStatus]) 
+            if (!isset(PostModel::STATUS_TRANSITIONS[$oldStatus])
                 || !in_array($newStatus, PostModel::STATUS_TRANSITIONS[$oldStatus], true)) {
                 $this->flash('error', "Cannot change status from '{$oldStatus}' to '{$newStatus}'.");
+
                 return $this->redirectBack();
             }
         }
@@ -358,7 +351,7 @@ final class PostController extends AppController
             // Delete physical file
             $oldImagePath = $post->toArray()['featured_image'] ?? null;
             if ($oldImagePath) {
-                $fullPath = ROOT_PATH . '/public' . $oldImagePath;
+                $fullPath = ROOT_PATH.'/public'.$oldImagePath;
                 if (file_exists($fullPath)) {
                     @unlink($fullPath);
                 }
@@ -407,11 +400,10 @@ final class PostController extends AppController
             return $this->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
-        $slugRule = 'slug|min:2|max:50|unique:posts,slug'; 
+        $slugRule = 'slug|min:2|max:50|unique:posts,slug';
         if (!empty($this->request->post['id'])) {
-            $slugRule .= ',' . (int) $this->request->post['id'];
+            $slugRule .= ','.(int) $this->request->post['id'];
         }
-        
 
         try {
             $validator = $this->validator($this->request->post);
@@ -419,7 +411,7 @@ final class PostController extends AppController
                 'id' => 'integer',
                 'title' => 'required|title|min:2|max:50',
                 'slug' => $slugRule,
-                'status' => 'in:' . implode(',', PostModel::STATUSES),
+                'status' => 'in:'.implode(',', PostModel::STATUSES),
                 'content' => 'required|max:10000',
                 'excerpt' => 'required|max:200',
                 'timezone' => 'timezone',
@@ -441,6 +433,7 @@ final class PostController extends AppController
             $result = $this->autosaveService->save($validated, (int) $user['id'], $postId);
 
             $statusCode = $result['success'] ? 200 : 400;
+
             return $this->json($result, $statusCode);
 
         } catch (\Exception $e) {
@@ -454,8 +447,7 @@ final class PostController extends AppController
     /**
      * Show post deletion confirmation.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function delete(string $id): Response
     {
@@ -473,8 +465,7 @@ final class PostController extends AppController
     /**
      * Delete post permanently.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function destroy(string $id): Response
     {
@@ -505,8 +496,7 @@ final class PostController extends AppController
     /**
      * Publish post (requires approved workflow state).
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function publish(string $id): Response
     {
@@ -519,6 +509,7 @@ final class PostController extends AppController
         // Enforce workflow precondition
         if (!in_array($post->workflowState(), ['approved'], true)) {
             $this->flash('error', 'Post must be approved before publishing.');
+
             return $this->redirect('/dashboard');
         }
 
@@ -541,8 +532,7 @@ final class PostController extends AppController
     /**
      * Unpublish post (revert to approved state).
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function unpublish(string $id): Response
     {
@@ -572,8 +562,7 @@ final class PostController extends AppController
     /**
      * Revert post to draft status.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function draft(string $id): Response
     {
@@ -602,8 +591,7 @@ final class PostController extends AppController
     /**
      * Archive post.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function archive(string $id): Response
     {
@@ -632,8 +620,7 @@ final class PostController extends AppController
     /**
      * Request review (author/contributor → reviewer).
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function requestReview(string $id): Response
     {
@@ -663,8 +650,7 @@ final class PostController extends AppController
     /**
      * Approve post (reviewer/editor).
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function approve(string $id): Response
     {
@@ -694,8 +680,7 @@ final class PostController extends AppController
     /**
      * Mark post as needing changes.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function markNeedsChanges(string $id): Response
     {
@@ -725,8 +710,7 @@ final class PostController extends AppController
     /**
      * Reset workflow to draft.
      *
-     * @param string $id Post ID
-     * @return Response
+     * @param  string  $id  Post ID
      */
     public function resetWorkflowToDraft(string $id): Response
     {
@@ -756,8 +740,8 @@ final class PostController extends AppController
     /**
      * Get post resource or throw 404.
      *
-     * @param int $id Post ID
-     * @return PostResource
+     * @param  int  $id  Post ID
+     *
      * @throws PageNotFoundException
      */
     private function getPost(int $id): PostResource
@@ -774,8 +758,9 @@ final class PostController extends AppController
     /**
      * Get post by slug or throw 404.
      *
-     * @param string $slug Post slug
+     * @param  string  $slug  Post slug
      * @return array Post data
+     *
      * @throws PageNotFoundException
      */
     private function getPostBySlug(string $slug): array
@@ -792,8 +777,8 @@ final class PostController extends AppController
     /**
      * Get blog resource or throw 404.
      *
-     * @param int $id Blog ID
-     * @return \App\Resources\BlogResource
+     * @param  int  $id  Blog ID
+     *
      * @throws PageNotFoundException
      */
     private function getBlog(int $id): \App\Resources\BlogResource
@@ -810,8 +795,8 @@ final class PostController extends AppController
     /**
      * Handle featured image upload.
      *
-     * @param int $userId User ID (for temp cleanup)
-     * @param \App\Resources\BlogResource $blog Blog resource
+     * @param  int  $userId  User ID (for temp cleanup)
+     * @param  \App\Resources\BlogResource  $blog  Blog resource
      * @return string|null Featured image path or null
      */
     private function handleFeaturedImageUpload(int $userId, \App\Resources\BlogResource $blog): ?string
@@ -842,8 +827,9 @@ final class PostController extends AppController
             return $path;
 
         } catch (\Throwable $e) {
-            error_log("Featured image upload failed for blog {$blog->id()}: " . $e->getMessage());
-            $this->flash('error', 'Featured image upload failed: ' . $e->getMessage());
+            error_log("Featured image upload failed for blog {$blog->id()}: ".$e->getMessage());
+            $this->flash('error', 'Featured image upload failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -854,8 +840,8 @@ final class PostController extends AppController
      * Convert user-inputted datetime (in their timezone) to UTC for database storage.
      * Ensures accurate change detection when comparing old and new data.
      *
-     * @param string $publishedAt Datetime in format 'd.m.y H:i'
-     * @param string $timezone User's timezone (e.g., 'Europe/Athens')
+     * @param  string  $publishedAt  Datetime in format 'd.m.y H:i'
+     * @param  string  $timezone  User's timezone (e.g., 'Europe/Athens')
      * @return string Normalized datetime in UTC 'Y-m-d H:i:s'
      */
     private function normalizePublishedAt(string $publishedAt, string $timezone): string
@@ -866,14 +852,17 @@ final class PostController extends AppController
 
             if ($dt === false) {
                 error_log("Failed to parse published_at: {$publishedAt}");
+
                 return $publishedAt;
             }
 
             $dt->setTimezone(new DateTimeZone('UTC'));
+
             return $dt->format('Y-m-d H:i:s');
 
         } catch (\Exception $e) {
-            error_log('Timezone conversion error: ' . $e->getMessage());
+            error_log('Timezone conversion error: '.$e->getMessage());
+
             return $publishedAt;
         }
     }

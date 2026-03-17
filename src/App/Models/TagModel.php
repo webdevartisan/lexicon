@@ -18,7 +18,7 @@ class TagModel extends AppModel
     /**
      * Find a tag by slug.
      *
-     * @param string $slug Tag URL slug
+     * @param  string  $slug  Tag URL slug
      * @return array|null Tag data or null if not found
      */
     public function findBySlug(string $slug): ?array
@@ -27,6 +27,7 @@ class TagModel extends AppModel
         $stmt = $this->database->query($sql, [':slug' => $slug]);
 
         $result = $stmt->fetch();
+
         return $result ?: null;
     }
 
@@ -36,7 +37,7 @@ class TagModel extends AppModel
      * Join through post_tags pivot table to fetch posts tagged
      * with the specified tag.
      *
-     * @param int $tagId Tag identifier
+     * @param  int  $tagId  Tag identifier
      * @return array List of published posts, newest first
      */
     public function posts(int $tagId): array
@@ -58,8 +59,8 @@ class TagModel extends AppModel
      * Creates a many-to-many relationship in the post_tags pivot table.
      * Uses INSERT IGNORE to prevent duplicate associations.
      *
-     * @param int $postId Post identifier
-     * @param int $tagId Tag identifier
+     * @param  int  $postId  Post identifier
+     * @param  int  $tagId  Tag identifier
      * @return bool True if attached (or already exists), false on error
      */
     public function attachToPost(int $postId, int $tagId): bool
@@ -67,8 +68,9 @@ class TagModel extends AppModel
         $sql = 'INSERT IGNORE INTO post_tags (post_id, tag_id) VALUES (:post_id, :tag_id)';
         $affected = $this->database->execute($sql, [
             ':post_id' => $postId,
-            ':tag_id' => $tagId
+            ':tag_id' => $tagId,
         ]);
+
         // 0 = already exists, 1 = newly inserted, both are success
         return $affected >= 0;
     }
@@ -78,8 +80,8 @@ class TagModel extends AppModel
      *
      * Removes the many-to-many relationship from the post_tags pivot table.
      *
-     * @param int $postId Post identifier
-     * @param int $tagId Tag identifier
+     * @param  int  $postId  Post identifier
+     * @param  int  $tagId  Tag identifier
      * @return bool True if detached, false if didn't exist or error
      */
     public function detachFromPost(int $postId, int $tagId): bool
@@ -87,8 +89,9 @@ class TagModel extends AppModel
         $sql = 'DELETE FROM post_tags WHERE post_id = :post_id AND tag_id = :tag_id';
         $affected = $this->database->execute($sql, [
             ':post_id' => $postId,
-            ':tag_id' => $tagId
+            ':tag_id' => $tagId,
         ]);
+
         return $affected > 0; // Only true if actually removed
     }
 }

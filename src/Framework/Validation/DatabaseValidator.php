@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Validation;
 
 use Framework\Database;
@@ -15,8 +17,8 @@ class DatabaseValidator extends Validator
     /**
      * Create a new database validator instance.
      *
-     * @param array $data The data to validate
-     * @param Database $database The database connection for validation queries
+     * @param  array  $data  The data to validate
+     * @param  Database  $database  The database connection for validation queries
      */
     public function __construct(
         array $data,
@@ -34,10 +36,11 @@ class DatabaseValidator extends Validator
      * - 'email' => 'unique:users,email'        // Must be unique in users.email
      * - 'email' => 'unique:users,email,5'      // Must be unique except for id=5
      *
-     * @param mixed $value The value to check for uniqueness
-     * @param string|null $param The rule parameter (table,column,exceptId)
-     * @param string $field The field name being validated
+     * @param  mixed  $value  The value to check for uniqueness
+     * @param  string|null  $param  The rule parameter (table,column,exceptId)
+     * @param  string  $field  The field name being validated
      * @return bool True if unique (or value is empty), false if duplicate exists
+     *
      * @throws \InvalidArgumentException If table or column names contain invalid characters
      */
     protected function validateUnique(mixed $value, ?string $param, string $field): bool
@@ -79,10 +82,11 @@ class DatabaseValidator extends Validator
      *
      * Example: 'category_id' => 'exists:categories,id'
      *
-     * @param mixed $value The value to check for existence
-     * @param string|null $param The rule parameter (table,column)
-     * @param string $field The field name being validated
+     * @param  mixed  $value  The value to check for existence
+     * @param  string|null  $param  The rule parameter (table,column)
+     * @param  string  $field  The field name being validated
      * @return bool True if exists (or value is empty), false if not found
+     *
      * @throws \InvalidArgumentException If table or column names contain invalid characters
      */
     protected function validateExists(mixed $value, ?string $param, string $field): bool

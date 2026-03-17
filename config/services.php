@@ -49,11 +49,10 @@ if (!env('APP_DEBUG', false)) {
     if ($appKey === null || $appKey === '' || $appKey === 'change-me') {
         throw new \RuntimeException(
             'APP_KEY must be set to a strong, random value in production. '
-            . 'Update your environment configuration before running the application.'
+            .'Update your environment configuration before running the application.'
         );
     }
 }
-
 
 // ============================================================================
 // CONTAINER SELF-REGISTRATION
@@ -70,8 +69,7 @@ if (!env('APP_DEBUG', false)) {
  * WARNING: Avoid injecting Container into regular services - prefer
  * constructor injection of specific dependencies.
  */
-$container->setShared(Framework\Core\Container::class, fn($c) => $c);
-
+$container->setShared(Framework\Core\Container::class, fn ($c) => $c);
 
 // ============================================================================
 // CORE FRAMEWORK SERVICES (Shared Singletons)
@@ -84,7 +82,8 @@ $container->setShared(Framework\Core\Container::class, fn($c) => $c);
  * the request lifecycle, improving performance and resource usage.
  */
 $container->setShared(Framework\Database::class, function ($c) {
-    $dbConfig = require ROOT_PATH . '/config/database.php';
+    $dbConfig = require ROOT_PATH.'/config/database.php';
+
     return new Framework\Database($dbConfig);
 });
 
@@ -97,7 +96,6 @@ $container->setShared(Framework\Database::class, function ($c) {
 $container->setShared(Framework\Session::class, function ($c) {
     return new Framework\Session();
 });
-
 
 // ============================================================================
 // AUTHENTICATION & SECURITY (Shared Singletons)
@@ -133,7 +131,6 @@ $container->setShared(Framework\Security\Csrf::class, function ($c) {
     );
 });
 
-
 // ============================================================================
 // VIEW & TEMPLATE SERVICES (Shared Singletons)
 // ============================================================================
@@ -160,7 +157,7 @@ $container->setShared(Framework\View\ViewNameResolverInterface::class, function 
         namespaceAreaMap: [
             'Admin' => 'admin',
             'Dashboard' => 'dashboard',
-            'Auth' => 'auth'
+            'Auth' => 'auth',
         ],
         defaultArea: 'public'
     );
@@ -173,7 +170,7 @@ $container->setShared(Framework\View\ViewNameResolverInterface::class, function 
  * filesystem access when resolving theme assets.
  */
 $container->setShared(App\Services\ThemeService::class, function ($c) {
-    return new App\Services\ThemeService(ROOT_PATH . '/themes');
+    return new App\Services\ThemeService(ROOT_PATH.'/themes');
 });
 
 /**
@@ -191,7 +188,6 @@ $container->setShared(Framework\Interfaces\TemplateViewerInterface::class, funct
     );
 });
 
-
 // ============================================================================
 // APPLICATION SERVICES (Shared Singletons)
 // ============================================================================
@@ -204,7 +200,8 @@ $container->setShared(Framework\Interfaces\TemplateViewerInterface::class, funct
  * runtime changes.
  */
 $container->setShared(App\Services\NavigationService::class, function ($c) {
-    $config = require ROOT_PATH . '/config/navigation.php';
+    $config = require ROOT_PATH.'/config/navigation.php';
+
     return new App\Services\NavigationService($config, $c->get(App\Auth::class));
 });
 
@@ -230,7 +227,7 @@ $container->set(App\Services\TranslationService::class, function ($c) {
  * Singleton ensures consistent consent state throughout request.
  */
 $container->setShared(App\Services\ConsentService::class, function ($c) {
-    $config = require ROOT_PATH . '/config/consent.php';
+    $config = require ROOT_PATH.'/config/consent.php';
 
     // Use APP_KEY from environment for cookie signing.
     // A non-debug environment will refuse to boot if APP_KEY is missing or weak.
@@ -252,7 +249,8 @@ $container->setShared(App\Services\ConsentService::class, function ($c) {
  * template caching across multiple email sends in the same request.
  */
 $container->setShared(App\Services\MailService::class, function ($c) {
-    $config = require ROOT_PATH . '/config/mail.php';
+    $config = require ROOT_PATH.'/config/mail.php';
+
     return new App\Services\MailService($config);
 });
 
@@ -288,7 +286,6 @@ $container->setShared(App\Services\AuditService::class, function ($c) {
     );
 });
 
-
 // ============================================================================
 // CACHE SERVICES (Shared Singletons)
 // ============================================================================
@@ -300,7 +297,7 @@ $container->setShared(App\Services\AuditService::class, function ($c) {
  * configuration loading. GC runs probabilistically based on config.
  */
 $container->setShared(Framework\Cache\CacheService::class, function ($c) {
-    $config = require ROOT_PATH . '/config/cache.php';
+    $config = require ROOT_PATH.'/config/cache.php';
 
     return new Framework\Cache\CacheService(
         cachePath: $config['path'],
@@ -318,7 +315,7 @@ $container->setShared(Framework\Cache\CacheService::class, function ($c) {
  * regardless of parameter order or tracking parameters.
  */
 $container->setShared(Framework\Cache\CacheKey::class, function ($c) {
-    $config = require ROOT_PATH . '/config/cache.php';
+    $config = require ROOT_PATH.'/config/cache.php';
 
     return new Framework\Cache\CacheKey(
         queryWhitelist: $config['query_whitelist']
@@ -332,7 +329,7 @@ $container->setShared(Framework\Cache\CacheKey::class, function ($c) {
  * per request. Each request needs its own instance with clean state.
  */
 $container->set(Framework\Cache\CacheMiddleware::class, function ($c) {
-    $config = require ROOT_PATH . '/config/cache.php';
+    $config = require ROOT_PATH.'/config/cache.php';
 
     return new Framework\Cache\CacheMiddleware(
         cache: $c->get(Framework\Cache\CacheService::class),
@@ -368,7 +365,6 @@ $container->setShared(Framework\Cache\FragmentCache::class, function ($c) {
         renderer: $c->get(Framework\Interfaces\TemplateViewerInterface::class),
     );
 });*/
-
 
 // ============================================================================
 // VALIDATION SERVICES
@@ -417,7 +413,6 @@ $container->set('validator.factory', function ($c) {
     };
 });
 
-
 // ============================================================================
 // MODELS (Factories - Fresh Instance Per Resolution)
 // ============================================================================
@@ -435,7 +430,6 @@ $container->set('validator.factory', function ($c) {
  * - State conflicts in long-running processes
  * - Unexpected behavior when the same Model is used multiple times
  */
-
 $container->set(App\Models\UserModel::class, function ($c) {
     return new App\Models\UserModel(
         $c->get(Framework\Database::class)
@@ -477,7 +471,6 @@ $container->set(App\Models\BlogSettingsModel::class, function ($c) {
         $c->get(Framework\Database::class)
     );
 });
-
 
 // ============================================================================
 // RATE LIMITING SERVICES
@@ -523,7 +516,6 @@ $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
     );
 });
 
-
 // ============================================================================
 // RESOURCES & DTOs
 // ============================================================================
@@ -545,10 +537,9 @@ $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
 $container->set(App\Resources\UserResource::class, function ($c) {
     throw new \LogicException(
         'UserResource should be instantiated directly with data, not resolved from container. '
-        . 'Usage: new UserResource($userData)'
+        .'Usage: new UserResource($userData)'
     );
 });
-
 
 // ============================================================================
 // OPTIONAL SERVICES (Commented - Auto-Discovery via Constructor Injection)
@@ -640,7 +631,6 @@ $container->set(App\Controllers\Dashboard\AccountDeletionController::class, func
     );
 });
 */
-
 
 // ============================================================================
 // RETURN CONFIGURED CONTAINER

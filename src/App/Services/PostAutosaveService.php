@@ -25,9 +25,9 @@ final class PostAutosaveService
     /**
      * Save post draft via autosave (create or update).
      *
-     * @param array $data Validated post data
-     * @param int $userId User ID
-     * @param int|null $postId Post ID (null for new draft)
+     * @param  array  $data  Validated post data
+     * @param  int  $userId  User ID
+     * @param  int|null  $postId  Post ID (null for new draft)
      * @return array{success: bool, id?: int, saved_at?: string, error?: string, errors?: array}
      */
     public function save(array $data, int $userId, ?int $postId = null): array

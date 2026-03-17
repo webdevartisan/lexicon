@@ -3,15 +3,14 @@
 declare(strict_types=1);
 
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
-use App\Models\UserPreferencesModel;
-use App\Services\UserDeletionService;
 use App\Services\UploadService;
+use App\Services\UserDeletionService;
 use Framework\Database;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\UserRelationsHelper;
-use Tests\Helpers\DatabaseHelper;
 
 /**
  * Integration tests for UserDeletionService.
@@ -20,14 +19,14 @@ use Tests\Helpers\DatabaseHelper;
  * Transaction rollback ensures no data persists between tests.
  */
 describe('UserDeletionService Integration', function () {
-    
+
     beforeEach(function () {
         $this->userModel = new UserModel($this->db);
         $this->profileModel = new UserProfileModel($this->db);
         $this->socialLinksModel = new UserSocialLinkModel($this->db);
         $this->preferencesModel = new UserPreferencesModel($this->db);
         $this->uploadService = new UploadService();
-        
+
         $this->service = new UserDeletionService(
             $this->userModel,
             $this->profileModel,
@@ -35,12 +34,12 @@ describe('UserDeletionService Integration', function () {
             $this->preferencesModel,
             $this->uploadService
         );
-        
+
         $this->userFactory = UserFactory::new($this->userModel);
     });
 
     describe('pseudonymizeUser()', function () {
-        
+
         it('anonymizes user data across all related tables', function () {
             // Create user with complete profile data
             $userId = $this->userFactory
@@ -76,7 +75,7 @@ describe('UserDeletionService Integration', function () {
             $result = $this->service->pseudonymizeUser($userId);
 
             expect($result)->toBeTrue();
-            
+
             // Verify anonymization using helper
             UserRelationsHelper::assertUserAnonymized($this->db, $userId);
         });
@@ -93,7 +92,7 @@ describe('UserDeletionService Integration', function () {
             $this->service->pseudonymizeUser($userId2);
 
             // Fetch anonymized emails
-            $stmt = $this->db->query("SELECT email FROM users WHERE id IN (?, ?)", [$userId1, $userId2]);
+            $stmt = $this->db->query('SELECT email FROM users WHERE id IN (?, ?)', [$userId1, $userId2]);
             $emails = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             expect($emails[0])->not->toBe($emails[1]);
@@ -132,7 +131,7 @@ describe('UserDeletionService Integration', function () {
 
             // Check preferences reset
             $stmt = $this->db->query(
-                "SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?",
+                'SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?',
                 [$userId]
             );
             $prefs = $stmt->fetch();
@@ -149,7 +148,7 @@ describe('UserDeletionService Integration', function () {
             $this->service->pseudonymizeUser($userId);
 
             // Verify data persisted (not rolled back)
-            $stmt = $this->db->query("SELECT username FROM users WHERE id = ?", [$userId]);
+            $stmt = $this->db->query('SELECT username FROM users WHERE id = ?', [$userId]);
             $user = $stmt->fetch();
 
             expect($user['username'])->toBe("deleted_user_{$userId}");
@@ -157,7 +156,7 @@ describe('UserDeletionService Integration', function () {
 
         it('rolls back transaction when operation fails', function () {
             $userId = $this->userFactory->create();
-            
+
             UserRelationsHelper::createUserProfile($this->db, $userId, [
                 'slug' => 'original-slug',
             ]);
@@ -165,7 +164,7 @@ describe('UserDeletionService Integration', function () {
             // Force failure by using invalid user ID in the service
             // expect transaction to roll back any changes
             $originalSlug = $this->db->query(
-                "SELECT slug FROM user_profiles WHERE user_id = ?",
+                'SELECT slug FROM user_profiles WHERE user_id = ?',
                 [$userId]
             )->fetch()['slug'];
 
@@ -175,7 +174,8 @@ describe('UserDeletionService Integration', function () {
                     $this->userModel,
                     $this->profileModel,
                     $this->socialLinksModel,
-                    new class($this->db) extends UserPreferencesModel {
+                    new class($this->db) extends UserPreferencesModel
+                    {
                         public function updateByUserId(int $userId, array $data): bool
                         {
                             throw new Exception('Simulated failure');
@@ -190,7 +190,7 @@ describe('UserDeletionService Integration', function () {
             }
 
             // Verify data NOT changed (rolled back)
-            $stmt = $this->db->query("SELECT slug FROM user_profiles WHERE user_id = ?", [$userId]);
+            $stmt = $this->db->query('SELECT slug FROM user_profiles WHERE user_id = ?', [$userId]);
             $profile = $stmt->fetch();
 
             expect($profile['slug'])->toBe($originalSlug);
@@ -198,7 +198,7 @@ describe('UserDeletionService Integration', function () {
     });
 
     describe('canDeleteUser()', function () {
-        
+
         it('returns false when user does not exist', function () {
             $result = $this->service->canDeleteUser(99999);
 
@@ -238,7 +238,7 @@ describe('UserDeletionService Integration', function () {
     });
 
     describe('deleteUser()', function () {
-        
+
         it('pseudonymizes and soft deletes user in transaction', function () {
             $userId = $this->userFactory
                 ->withAttributes([
@@ -257,7 +257,7 @@ describe('UserDeletionService Integration', function () {
             UserRelationsHelper::assertUserAnonymized($this->db, $userId);
 
             // Verify soft delete
-            $stmt = $this->db->query("SELECT deleted_at FROM users WHERE id = ?", [$userId]);
+            $stmt = $this->db->query('SELECT deleted_at FROM users WHERE id = ?', [$userId]);
             $user = $stmt->fetch();
 
             expect($user['deleted_at'])->not->toBeNull();
@@ -274,7 +274,7 @@ describe('UserDeletionService Integration', function () {
 
             // Verify all operations completed atomically
             $stmt = $this->db->query(
-                "SELECT email, username, deleted_at FROM users WHERE id = ?",
+                'SELECT email, username, deleted_at FROM users WHERE id = ?',
                 [$userId]
             );
             $user = $stmt->fetch();
@@ -297,7 +297,7 @@ describe('UserDeletionService Integration', function () {
 
             // Both users should be soft deleted and anonymized
             $stmt = $this->db->query(
-                "SELECT id, deleted_at FROM users WHERE id IN (?, ?) AND deleted_at IS NOT NULL",
+                'SELECT id, deleted_at FROM users WHERE id IN (?, ?) AND deleted_at IS NOT NULL',
                 [$user1, $user2]
             );
 
@@ -306,7 +306,7 @@ describe('UserDeletionService Integration', function () {
     });
 
     describe('GDPR Compliance', function () {
-        
+
         it('removes all personally identifiable information', function () {
             $userId = $this->userFactory
                 ->withAttributes([
@@ -334,7 +334,7 @@ describe('UserDeletionService Integration', function () {
 
             // Verify NO PII remains
             $stmt = $this->db->query(
-                "SELECT email, first_name, last_name, password FROM users WHERE id = ?",
+                'SELECT email, first_name, last_name, password FROM users WHERE id = ?',
                 [$userId]
             );
             $user = $stmt->fetch();
@@ -345,7 +345,7 @@ describe('UserDeletionService Integration', function () {
             expect($user['password'])->toBe('');
 
             $stmt = $this->db->query(
-                "SELECT bio, location, avatar_url FROM user_profiles WHERE user_id = ?",
+                'SELECT bio, location, avatar_url FROM user_profiles WHERE user_id = ?',
                 [$userId]
             );
             $profile = $stmt->fetch();

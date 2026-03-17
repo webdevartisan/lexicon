@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 dataset('cache_key_patterns', [
     'blog routes' => ['*:GET:/blogs*', ['user123:GET:/blogs', 'user456:GET:/blogs/popular']],
     'locale prefix' => ['en:*', ['en:GET:/home', 'en:GET:/about']],

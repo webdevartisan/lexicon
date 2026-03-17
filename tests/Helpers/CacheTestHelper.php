@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Helpers;
 
 class CacheTestHelper
@@ -11,7 +13,7 @@ class CacheTestHelper
     {
         // Mock implementation that doesn't touch filesystem
     }
-    
+
     /**
      * We assert cache contains exactly the expected keys
      */
@@ -21,16 +23,17 @@ class CacheTestHelper
             expect($cache->get($key))->toBe($expectedValue);
         }
     }
-    
+
     /**
      * We create a real cache directory for integration tests
      */
     public static function createTestCacheDir(): string
     {
-        $path = ROOT_PATH . '/storage/cache/tests/cache_' . uniqid();
+        $path = ROOT_PATH.'/storage/cache/tests/cache_'.uniqid();
         if (!is_dir($path)) {
             mkdir($path, 0755, true);
         }
+
         return $path;
     }
 }

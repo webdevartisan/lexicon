@@ -21,7 +21,7 @@ class UserProfileModel extends AppModel
      *
      * Ensures every user has a profile record, creating one if missing.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array Profile data
      */
     public function findOrCreate(int $userId): array
@@ -29,7 +29,7 @@ class UserProfileModel extends AppModel
         $sql = 'SELECT * FROM user_profiles WHERE user_id = ?';
         $stmt = $this->database->query($sql, [$userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        
+
         if ($row) {
             return $row;
         }
@@ -37,7 +37,7 @@ class UserProfileModel extends AppModel
         // create a default profile if none exists using INSERT IGNORE to handle race conditions
         $insertSql = 'INSERT IGNORE INTO user_profiles (user_id) VALUES (?)';
         $this->database->execute($insertSql, [$userId]);
-        
+
         $stmt = $this->database->query($sql, [$userId]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -46,7 +46,7 @@ class UserProfileModel extends AppModel
     /**
      * Get user's avatar URL.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array Avatar data or empty array
      */
     public function getProfileAvatar(int $userId): array
@@ -64,9 +64,9 @@ class UserProfileModel extends AppModel
      * Insert or update profile fields dynamically based on provided data.
      * Column names are validated to prevent SQL injection.
      *
-     * @param int $userId User ID
-     * @param array $data Associative array of column => value pairs
-     * @return void
+     * @param  int  $userId  User ID
+     * @param  array  $data  Associative array of column => value pairs
+     *
      * @throws Exception If invalid column name provided
      */
     public function upsert(int $userId, array $data): void
@@ -79,13 +79,13 @@ class UserProfileModel extends AppModel
         $placeholders = [];
         $updates = [];
         $params = [$userId]; // start with user_id as first parameter
-        
+
         foreach ($data as $k => $v) {
             // validate column names to prevent SQL injection via dynamic keys
             if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $k)) {
                 throw new Exception("Invalid column name '{$k}' in upsert.");
             }
-            
+
             $columns[] = $k;
             $placeholders[] = '?';
             $updates[] = "{$k} = VALUES({$k})";
@@ -95,7 +95,7 @@ class UserProfileModel extends AppModel
         $sql = 'INSERT INTO user_profiles (user_id, '.implode(', ', $columns).')
             VALUES (?'.str_repeat(', ?', count($columns)).')
             ON DUPLICATE KEY UPDATE '.implode(', ', $updates);
-        
+
         $this->database->execute($sql, $params);
     }
 
@@ -105,9 +105,10 @@ class UserProfileModel extends AppModel
      * Updates specific profile fields for a user. Used by deletion service
      * to clear PII during pseudonymization.
      *
-     * @param int $userId User ID
-     * @param array $data Associative array of column => value pairs
+     * @param  int  $userId  User ID
+     * @param  array  $data  Associative array of column => value pairs
      * @return bool True on success
+     *
      * @throws Exception If invalid column name provided
      */
     public function updateByUserId(int $userId, array $data): bool
@@ -133,8 +134,9 @@ class UserProfileModel extends AppModel
         $params[] = $userId;
 
         $sql = 'UPDATE user_profiles SET '.implode(', ', $sets).' WHERE user_id = ?';
-        
+
         $rowCount = $this->database->execute($sql, $params);
+
         return $rowCount > 0;
     }
 
@@ -144,7 +146,7 @@ class UserProfileModel extends AppModel
      * Joins user, profile, and preferences data for public display.
      * Returns null if profile not found.
      *
-     * @param string $slug Profile slug
+     * @param  string  $slug  Profile slug
      * @return UserProfileResource|null Profile resource or null
      */
     public function findBySlug(string $slug): ?UserProfileResource
@@ -178,7 +180,7 @@ class UserProfileModel extends AppModel
 
         $stmt = $this->database->query($sql, [$slug]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($row === false) {
             return null;
         }
@@ -193,8 +195,8 @@ class UserProfileModel extends AppModel
      * Validates against reserved slugs table and existing user profiles.
      * Used during account settings validation.
      *
-     * @param string $slug Slug to check
-     * @param int|null $ignoreUserId User ID whose current slug should be ignored
+     * @param  string  $slug  Slug to check
+     * @param  int|null  $ignoreUserId  User ID whose current slug should be ignored
      * @return bool True if available
      */
     public function isSlugAvailable(string $slug, ?int $ignoreUserId = null): bool
@@ -217,11 +219,11 @@ class UserProfileModel extends AppModel
         ';
 
         $params = [$slug];
-        
+
         if ($ignoreUserId !== null) {
             $params[] = $ignoreUserId;
         }
-        
+
         $stmt = $this->database->query($sql, $params);
 
         return $stmt->fetchColumn() === false;
@@ -232,8 +234,8 @@ class UserProfileModel extends AppModel
      *
      * Simple persistence layer for profile updates from account settings.
      *
-     * @param int $userId User ID
-     * @param array $data Profile data (slug, bio, avatar_url, is_public)
+     * @param  int  $userId  User ID
+     * @param  array  $data  Profile data (slug, bio, avatar_url, is_public)
      * @return bool True on success
      */
     public function updateProfile(int $userId, array $data): bool
@@ -252,10 +254,11 @@ class UserProfileModel extends AppModel
             $data['bio'] ?? null,
             $data['avatar_url'] ?? null,
             !empty($data['is_public']) ? 1 : 0,
-            $userId
+            $userId,
         ];
 
         $rowCount = $this->database->execute($sql, $params);
+
         return $rowCount > 0;
     }
 }

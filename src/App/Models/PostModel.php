@@ -41,7 +41,7 @@ class PostModel extends AppModel
      *
      * Invalidates blog listings so visitors see the new post immediately.
      *
-     * @param array $data Post data
+     * @param  array  $data  Post data
      * @return int Newly created post ID
      */
     public function create(array $data): int
@@ -62,8 +62,8 @@ class PostModel extends AppModel
      * Invalidates both the specific post page and all listings.
      * Fetches the post before updating to get the current slug in case it changes.
      *
-     * @param int|string $id Post ID
-     * @param array $data Updated post data
+     * @param  int|string  $id  Post ID
+     * @param  array  $data  Updated post data
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -100,7 +100,7 @@ class PostModel extends AppModel
      *
      * Invalidates both the specific post page and all listings.
      *
-     * @param int|string $id Post ID
+     * @param  int|string  $id  Post ID
      * @return bool True on success
      */
     public function delete(int|string $id): bool
@@ -126,7 +126,7 @@ class PostModel extends AppModel
     /**
      * Find posts by author ID.
      *
-     * @param int $authorId Author user ID
+     * @param  int  $authorId  Author user ID
      * @return array Array of post records
      */
     public function findByAuthorId(int $authorId): array
@@ -152,7 +152,7 @@ class PostModel extends AppModel
     /**
      * Find a post by slug.
      *
-     * @param string $slug Post slug
+     * @param  string  $slug  Post slug
      * @return array|null Post record, or null if not found
      */
     public function findBySlug(string $slug): ?array
@@ -166,7 +166,7 @@ class PostModel extends AppModel
     /**
      * Get the author (User) of a post.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array|null User record, or null if not found
      */
     public function author(int $userId): ?array
@@ -179,7 +179,7 @@ class PostModel extends AppModel
     /**
      * Get the category of a post.
      *
-     * @param int|null $categoryId Category ID
+     * @param  int|null  $categoryId  Category ID
      * @return array|null Category record, or null if not found or no category
      */
     public function category(?int $categoryId): ?array
@@ -195,7 +195,7 @@ class PostModel extends AppModel
     /**
      * Get tags for a post.
      *
-     * @param int $postId Post ID
+     * @param  int  $postId  Post ID
      * @return array Array of tag records
      */
     public function tags(int $postId): array
@@ -212,7 +212,7 @@ class PostModel extends AppModel
     /**
      * Get comments for a post.
      *
-     * @param int $postId Post ID
+     * @param  int  $postId  Post ID
      * @return array Array of comment records
      */
     public function comments(int $postId): array
@@ -225,7 +225,7 @@ class PostModel extends AppModel
     /**
      * Get random published posts.
      *
-     * @param int $limit Maximum number of posts to return
+     * @param  int  $limit  Maximum number of posts to return
      * @return array Array of published post records
      */
     public function findRandomPublicPosts(int $limit = 6): array
@@ -243,9 +243,9 @@ class PostModel extends AppModel
     /**
      * List published posts by author filtered by visibility.
      *
-     * @param int $authorId Author user ID
-     * @param array $visibilities Array of visibility values to include
-     * @param int $limit Maximum number of posts
+     * @param  int  $authorId  Author user ID
+     * @param  array  $visibilities  Array of visibility values to include
+     * @param  int  $limit  Maximum number of posts
      * @return array Array of post records
      */
     public function listByAuthorVisibility(int $authorId, array $visibilities, int $limit = 10): array
@@ -253,13 +253,13 @@ class PostModel extends AppModel
         // Build IN list with named params (convert array to multiple params)
         $params = [':author_id' => $authorId];
         $placeholders = [];
-        
+
         foreach ($visibilities as $index => $visibility) {
             $key = ":visibility_{$index}";
             $placeholders[] = $key;
             $params[$key] = $visibility;
         }
-        
+
         $inClause = implode(',', $placeholders);
         $params[':limit'] = $limit;
 
@@ -279,8 +279,8 @@ class PostModel extends AppModel
     /**
      * Find previous published post for an author before a given UTC timestamp.
      *
-     * @param int $authorId Author user ID
-     * @param string $publishedAtUtc UTC timestamp
+     * @param  int  $authorId  Author user ID
+     * @param  string  $publishedAtUtc  UTC timestamp
      * @return array|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findPreviousByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
@@ -294,7 +294,7 @@ class PostModel extends AppModel
                 LIMIT 1";
         $stmt = $this->database->query($sql, [
             ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc
+            ':ts' => $publishedAtUtc,
         ]);
         $row = $stmt->fetch();
 
@@ -304,8 +304,8 @@ class PostModel extends AppModel
     /**
      * Find previous published post for a blog before a given UTC timestamp.
      *
-     * @param int $blogId Blog ID
-     * @param string $publishedAtUtc UTC timestamp
+     * @param  int  $blogId  Blog ID
+     * @param  string  $publishedAtUtc  UTC timestamp
      * @return array|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findPreviousByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
@@ -319,7 +319,7 @@ class PostModel extends AppModel
                 LIMIT 1";
         $stmt = $this->database->query($sql, [
             ':blog_id' => $blogId,
-            ':ts' => $publishedAtUtc
+            ':ts' => $publishedAtUtc,
         ]);
         $row = $stmt->fetch();
 
@@ -329,8 +329,8 @@ class PostModel extends AppModel
     /**
      * Find next published post for an author after a given UTC timestamp.
      *
-     * @param int $authorId Author user ID
-     * @param string $publishedAtUtc UTC timestamp
+     * @param  int  $authorId  Author user ID
+     * @param  string  $publishedAtUtc  UTC timestamp
      * @return array|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findNextByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
@@ -344,7 +344,7 @@ class PostModel extends AppModel
                 LIMIT 1";
         $stmt = $this->database->query($sql, [
             ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc
+            ':ts' => $publishedAtUtc,
         ]);
         $row = $stmt->fetch();
 
@@ -354,8 +354,8 @@ class PostModel extends AppModel
     /**
      * Find next published post for a blog after a given UTC timestamp.
      *
-     * @param int $blogId Blog ID
-     * @param string $publishedAtUtc UTC timestamp
+     * @param  int  $blogId  Blog ID
+     * @param  string  $publishedAtUtc  UTC timestamp
      * @return array|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findNextByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
@@ -369,7 +369,7 @@ class PostModel extends AppModel
                 LIMIT 1";
         $stmt = $this->database->query($sql, [
             ':blog_id' => $blogId,
-            ':ts' => $publishedAtUtc
+            ':ts' => $publishedAtUtc,
         ]);
         $row = $stmt->fetch();
 
@@ -379,9 +379,9 @@ class PostModel extends AppModel
     /**
      * Find recent published posts by author excluding a specific slug.
      *
-     * @param int $authorId Author user ID
-     * @param string $excludeSlug Slug to exclude from results
-     * @param int $limit Maximum number of posts
+     * @param  int  $authorId  Author user ID
+     * @param  string  $excludeSlug  Slug to exclude from results
+     * @param  int  $limit  Maximum number of posts
      * @return array Array of post records
      */
     public function findRecentByAuthorExcludingSlug(int $authorId, string $excludeSlug, int $limit = 4): array
@@ -396,7 +396,7 @@ class PostModel extends AppModel
         $stmt = $this->database->query($sql, [
             ':author_id' => $authorId,
             ':slug' => $excludeSlug,
-            ':limit' => $limit
+            ':limit' => $limit,
         ]);
 
         return $stmt->fetchAll() ?: [];
@@ -405,9 +405,9 @@ class PostModel extends AppModel
     /**
      * Find recent published posts by blog excluding a specific slug.
      *
-     * @param int $blogId Blog ID
-     * @param string $excludeSlug Slug to exclude from results
-     * @param int $limit Maximum number of posts
+     * @param  int  $blogId  Blog ID
+     * @param  string  $excludeSlug  Slug to exclude from results
+     * @param  int  $limit  Maximum number of posts
      * @return array Array of post records
      */
     public function findRecentByBlogIdExcludingSlug(int $blogId, string $excludeSlug, int $limit = 4): array
@@ -422,7 +422,7 @@ class PostModel extends AppModel
         $stmt = $this->database->query($sql, [
             ':blog_id' => $blogId,
             ':slug' => $excludeSlug,
-            ':limit' => $limit
+            ':limit' => $limit,
         ]);
 
         return $stmt->fetchAll() ?: [];
@@ -431,9 +431,9 @@ class PostModel extends AppModel
     /**
      * Get published posts by blog ID with pagination.
      *
-     * @param int $blogId Blog ID to filter by
-     * @param int $page Page number (starting from 1)
-     * @param int $perPage Number of posts per page
+     * @param  int  $blogId  Blog ID to filter by
+     * @param  int  $page  Page number (starting from 1)
+     * @param  int  $perPage  Number of posts per page
      * @return array Array with 'data' (posts) and pagination metadata
      */
     public function findPublishedByBlogIdWithPagination(int $blogId, int $page = 1, int $perPage = 5): array
@@ -456,7 +456,7 @@ class PostModel extends AppModel
         $stmt = $this->database->query($sql, [
             ':blog_id' => $blogId,
             ':limit' => $perPage,
-            ':offset' => $offset
+            ':offset' => $offset,
         ]);
         $posts = $stmt->fetchAll();
 
@@ -472,10 +472,10 @@ class PostModel extends AppModel
     /**
      * Find posts by author with optional filters.
      *
-     * @param int $authorId Author user ID
-     * @param int|null $blogId Optional blog ID filter
-     * @param string $status Optional status filter
-     * @param string $searchQuery Optional search term for title/content
+     * @param  int  $authorId  Author user ID
+     * @param  int|null  $blogId  Optional blog ID filter
+     * @param  string  $status  Optional status filter
+     * @param  string  $searchQuery  Optional search term for title/content
      * @return array Array of post records with blog_name
      */
     public function findByAuthorWithFilters(int $authorId, ?int $blogId = null, string $status = '', string $searchQuery = ''): array
@@ -517,10 +517,10 @@ class PostModel extends AppModel
     /**
      * Search published posts with pagination and optional category filter.
      *
-     * @param string $query Search term
-     * @param int $page Page number
-     * @param int $perPage Posts per page
-     * @param int|null $categoryId Optional category filter
+     * @param  string  $query  Search term
+     * @param  int  $page  Page number
+     * @param  int  $perPage  Posts per page
+     * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
     public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?int $categoryId = null): array
@@ -533,9 +533,9 @@ class PostModel extends AppModel
         $params = [
             ':title' => $likeQuery,
             ':content' => $likeQuery,
-            ':blog_name' => $likeQuery
+            ':blog_name' => $likeQuery,
         ];
-        
+
         if ($categoryId !== null) {
             $categoryClause = ' AND p.category_id = :categoryId ';
             $params[':categoryId'] = $categoryId;
@@ -586,9 +586,9 @@ class PostModel extends AppModel
     /**
      * Get recent published posts with pagination and optional category filter.
      *
-     * @param int $page Page number
-     * @param int $perPage Posts per page
-     * @param int|null $categoryId Optional category filter
+     * @param  int  $page  Page number
+     * @param  int  $perPage  Posts per page
+     * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
     public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?int $categoryId = null): array
@@ -597,7 +597,7 @@ class PostModel extends AppModel
 
         $categoryClause = '';
         $params = [];
-        
+
         if ($categoryId !== null) {
             $categoryClause = ' AND p.category_id = :categoryId ';
             $params[':categoryId'] = $categoryId;
@@ -644,7 +644,7 @@ class PostModel extends AppModel
      *
      * Delegates to search or recent listing based on query parameter.
      *
-     * @param array $options Options array with page, perPage, categoryId, query keys
+     * @param  array  $options  Options array with page, perPage, categoryId, query keys
      * @return array Array with 'data' (posts) and pagination metadata
      */
     public function getIndexFeed(array $options = []): array
@@ -664,7 +664,7 @@ class PostModel extends AppModel
     /**
      * Change post status to draft.
      *
-     * @param int $id Post ID
+     * @param  int  $id  Post ID
      * @return bool True on success
      */
     public function unpublishPost(int $id): bool
@@ -678,7 +678,7 @@ class PostModel extends AppModel
     /**
      * Change post status to published.
      *
-     * @param int $id Post ID
+     * @param  int  $id  Post ID
      * @return bool True on success
      */
     public function publishPost(int $id): bool
@@ -692,8 +692,8 @@ class PostModel extends AppModel
     /**
      * Update post status.
      *
-     * @param int $id Post ID
-     * @param string $status New status value
+     * @param  int  $id  Post ID
+     * @param  string  $status  New status value
      * @return bool True on success
      */
     public function updateStatus(int $id, string $status): bool
@@ -701,7 +701,7 @@ class PostModel extends AppModel
         $sql = 'UPDATE posts SET status = :status WHERE id = :id';
         $affected = $this->database->execute($sql, [
             ':status' => $status,
-            ':id' => $id
+            ':id' => $id,
         ]);
 
         return $affected > 0;
@@ -712,7 +712,7 @@ class PostModel extends AppModel
      *
      * Resolves the blog relationship and returns a resource object.
      *
-     * @param string|int $id Post ID
+     * @param  string|int  $id  Post ID
      * @return PostResource|false PostResource instance, or false if not found
      */
     public function findResource(string|int $id): PostResource|false
@@ -743,10 +743,11 @@ class PostModel extends AppModel
      *
      * Keeps this logic in the model so controllers stay thin and transitions are audited.
      *
-     * @param int $postId Post ID
-     * @param string $newState New workflow state (must be in WORKFLOW_STATES constant)
-     * @param int $byUserId User ID performing the transition
+     * @param  int  $postId  Post ID
+     * @param  string  $newState  New workflow state (must be in WORKFLOW_STATES constant)
+     * @param  int  $byUserId  User ID performing the transition
      * @return bool True on success
+     *
      * @throws \InvalidArgumentException If workflow state is invalid
      */
     public function transitionWorkflow(int $postId, string $newState, int $byUserId): bool
@@ -764,7 +765,7 @@ class PostModel extends AppModel
         $affected = $this->database->execute($sql, [
             ':state' => $newState,
             ':by' => $byUserId,
-            ':id' => $postId
+            ':id' => $postId,
         ]);
 
         $ok = $affected > 0;
@@ -789,12 +790,12 @@ class PostModel extends AppModel
      * Separates data retrieval from count query for efficiency and clarity.
      * Returns both paginated results and metadata for navigation.
      *
-     * @param int $authorId Author user ID
-     * @param int $page Current page number (1-based indexing)
-     * @param int $perPage Number of records per page
-     * @param int|null $blogId Optional blog ID filter
-     * @param string $status Optional status filter
-     * @param string $searchQuery Optional search term for title/content
+     * @param  int  $authorId  Author user ID
+     * @param  int  $page  Current page number (1-based indexing)
+     * @param  int  $perPage  Number of records per page
+     * @param  int|null  $blogId  Optional blog ID filter
+     * @param  string  $status  Optional status filter
+     * @param  string  $searchQuery  Optional search term for title/content
      * @return array Array with 'data' (posts) and 'pagination' metadata
      */
     public function findByAuthorWithFiltersPagination(
@@ -853,7 +854,7 @@ class PostModel extends AppModel
      *
      * Use this to show deletion impact before removing a blog.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of posts
      */
     public function countByBlogId(int $blogId): int
@@ -870,7 +871,7 @@ class PostModel extends AppModel
      *
      * Used to find all uploaded files before deletion.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return array Array of post records
      */
     public function getAllByBlogId(int $blogId): array
@@ -886,12 +887,13 @@ class PostModel extends AppModel
      *
      * Cascade delete when removing a blog.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of rows deleted
      */
     public function deleteByBlogId(int $blogId): int
     {
         $sql = "DELETE FROM {$this->getTable()} WHERE blog_id = :blog_id";
+
         return $this->database->execute($sql, [':blog_id' => $blogId]);
     }
 
@@ -900,7 +902,7 @@ class PostModel extends AppModel
      *
      * Use this to show deletion impact before removing a blog.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of comments
      */
     public function countCommentsByBlogId(int $blogId): int
@@ -919,7 +921,7 @@ class PostModel extends AppModel
      *
      * Cascade delete comments before deleting posts.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of rows deleted
      */
     public function deleteCommentsByBlogId(int $blogId): int
@@ -927,6 +929,7 @@ class PostModel extends AppModel
         $sql = "DELETE c FROM comments c 
                 INNER JOIN {$this->getTable()} p ON c.post_id = p.id 
                 WHERE p.blog_id = :blog_id";
+
         return $this->database->execute($sql, [':blog_id' => $blogId]);
     }
 
@@ -935,7 +938,7 @@ class PostModel extends AppModel
      *
      * Cascade delete post_tags before deleting posts.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of rows deleted
      */
     public function deletePostTagsByBlogId(int $blogId): int
@@ -943,6 +946,7 @@ class PostModel extends AppModel
         $sql = "DELETE pt FROM post_tags pt 
                 INNER JOIN {$this->getTable()} p ON pt.post_id = p.id 
                 WHERE p.blog_id = :blog_id";
+
         return $this->database->execute($sql, [':blog_id' => $blogId]);
     }
 
@@ -952,10 +956,10 @@ class PostModel extends AppModel
      * Extracted to a separate method following SRP (Single Responsibility Principle)
      * and to enable reuse between count and data queries.
      *
-     * @param int $authorId Author ID to filter by
-     * @param int|null $blogId Optional blog ID filter
-     * @param string $status Optional status filter
-     * @param string $searchQuery Optional search term
+     * @param  int  $authorId  Author ID to filter by
+     * @param  int|null  $blogId  Optional blog ID filter
+     * @param  string  $status  Optional status filter
+     * @param  string  $searchQuery  Optional search term
      * @return array Tuple of [WHERE clause, parameters]
      */
     private function buildFilterClauses(
@@ -997,8 +1001,8 @@ class PostModel extends AppModel
      * Uses a separate COUNT query instead of SQL_CALC_FOUND_ROWS for better performance
      * in modern MySQL versions (5.7+) per MySQL documentation.
      *
-     * @param string $whereClause WHERE clause built by buildFilterClauses
-     * @param array $params Parameter bindings for the WHERE clause
+     * @param  string  $whereClause  WHERE clause built by buildFilterClauses
+     * @param  array  $params  Parameter bindings for the WHERE clause
      * @return int Total number of matching records
      */
     private function getTotalCount(string $whereClause, array $params): int

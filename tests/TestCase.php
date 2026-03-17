@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
 use Mockery;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
 /**
- * Base test case providing common setup and helper methods. 
+ * Base test case providing common setup and helper methods.
  *
  * All test classes should extend this base case to inherit shared functionality.
  *
- * 
+ *
  * @property \Framework\Database $db
  * @property \Framework\Session $session
  * @property \App\Models\UserModel $userModel
@@ -21,7 +23,9 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
  * @property \App\Models\CategoryModel $categoryModel
  * @property \App\Models\CommentModel $commentModel
  * @property \App\Models\TagModel $tagModel
+ *
  * @method void cleanDatabase()
+ *
  * @var string $mockCachePath
  */
 abstract class TestCase extends BaseTestCase

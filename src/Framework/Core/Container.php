@@ -65,7 +65,9 @@ final class Container
 
     // Debug tracking
     private array $instantiationLog = [];
+
     private bool $debugMode = false;
+
     private ?float $startTime = null;
 
     /**
@@ -73,8 +75,6 @@ final class Container
      *
      * We capture timing and memory metrics for each resolution to identify
      * performance bottlenecks. This should be disabled in production.
-     *
-     * @return void
      */
     public function enableDebug(): void
     {
@@ -84,8 +84,6 @@ final class Container
 
     /**
      * Disable debug mode to stop tracking resolutions.
-     *
-     * @return void
      */
     public function disableDebug(): void
     {
@@ -109,9 +107,8 @@ final class Container
      * allowing fresh instances to be created each time. The factory receives the
      * container as its first parameter for resolving dependencies.
      *
-     * @param string $name Service identifier (typically a class name or interface)
-     * @param Closure(self): object $factory Closure that receives container and returns service instance
-     * @return void
+     * @param  string  $name  Service identifier (typically a class name or interface)
+     * @param  Closure(self): object  $factory  Closure that receives container and returns service instance
      *
      * @example
      * $container->set(LoggerInterface::class, function ($c) {
@@ -132,9 +129,8 @@ final class Container
      * ensuring the factory is only executed once. The factory receives the
      * container as its first parameter.
      *
-     * @param string $name Service identifier (typically a class name or interface)
-     * @param Closure(self): object $factory Closure that receives container and returns service instance
-     * @return void
+     * @param  string  $name  Service identifier (typically a class name or interface)
+     * @param  Closure(self): object  $factory  Closure that receives container and returns service instance
      *
      * @example
      * $container->setShared(Database::class, function ($c) {
@@ -164,7 +160,7 @@ final class Container
      * We check if a factory exists in the registry. This does not guarantee that
      * get() will succeed, as the factory might throw exceptions.
      *
-     * @param string $name Service identifier to check
+     * @param  string  $name  Service identifier to check
      * @return bool True if a factory is registered
      */
     public function has(string $name): bool
@@ -183,7 +179,7 @@ final class Container
      * We cache reflection results and track circular dependencies to prevent
      * infinite recursion.
      *
-     * @param string $className Service identifier or class name to resolve
+     * @param  string  $className  Service identifier or class name to resolve
      * @return object The resolved service instance
      *
      * @throws InvalidArgumentException If circular dependency detected or autowiring fails
@@ -210,8 +206,8 @@ final class Container
             // Validate factory returned an object
             if (!is_object($instance)) {
                 throw new InvalidArgumentException(
-                    "Factory for '{$className}' must return an object, " 
-                    . gettype($instance) . ' returned.'
+                    "Factory for '{$className}' must return an object, "
+                    .gettype($instance).' returned.'
                 );
             }
 
@@ -225,7 +221,7 @@ final class Container
 
         // Check for circular dependency before attempting autowire
         if (isset($this->resolving[$className])) {
-            $chain = implode(' -> ', array_keys($this->resolving)) . " -> {$className}";
+            $chain = implode(' -> ', array_keys($this->resolving))." -> {$className}";
             throw new InvalidArgumentException(
                 "Circular dependency detected: {$chain}"
             );
@@ -283,7 +279,7 @@ final class Container
      * We cache reflection instances to avoid the overhead of repeated reflection
      * on the same class during the request lifecycle.
      *
-     * @param string $className Class name to reflect
+     * @param  string  $className  Class name to reflect
      * @return ReflectionClass<object> Cached or new reflection instance
      *
      * @throws InvalidArgumentException If class does not exist or reflection fails
@@ -317,8 +313,8 @@ final class Container
      * We iterate through constructor parameters and recursively resolve typed
      * dependencies using the container. Built-in types must have default values.
      *
-     * @param array<ReflectionParameter> $parameters Constructor parameters to resolve
-     * @param string $className Class name being autowired (for error messages)
+     * @param  array<ReflectionParameter>  $parameters  Constructor parameters to resolve
+     * @param  string  $className  Class name being autowired (for error messages)
      * @return array<mixed> Resolved dependency instances
      *
      * @throws InvalidArgumentException If a parameter cannot be resolved
@@ -339,7 +335,7 @@ final class Container
 
                 throw new InvalidArgumentException(
                     "Cannot autowire parameter '\${$parameter->getName()}' in '{$className}': "
-                    . 'no type declaration and no default value.'
+                    .'no type declaration and no default value.'
                 );
             }
 
@@ -347,7 +343,7 @@ final class Container
             if (!($type instanceof ReflectionNamedType)) {
                 throw new InvalidArgumentException(
                     "Cannot autowire parameter '\${$parameter->getName()}' in '{$className}': "
-                    . 'union types and intersection types are not supported.'
+                    .'union types and intersection types are not supported.'
                 );
             }
 
@@ -360,7 +356,7 @@ final class Container
 
                 throw new InvalidArgumentException(
                     "Cannot autowire parameter '\${$parameter->getName()}' of built-in type "
-                    . "'{$type->getName()}' in '{$className}': no default value provided."
+                    ."'{$type->getName()}' in '{$className}': no default value provided."
                 );
             }
 
@@ -378,12 +374,11 @@ final class Container
      * We record timing and memory metrics to help identify performance bottlenecks
      * during development and testing.
      *
-     * @param string $className Class name that was resolved
-     * @param string $method Resolution method ('registered' or 'autowired')
-     * @param string $type Service type ('factory' or 'singleton')
-     * @param float $startTime Timestamp when resolution started
-     * @param int $startMemory Memory usage when resolution started
-     * @return void
+     * @param  string  $className  Class name that was resolved
+     * @param  string  $method  Resolution method ('registered' or 'autowired')
+     * @param  string  $type  Service type ('factory' or 'singleton')
+     * @param  float  $startTime  Timestamp when resolution started
+     * @param  int  $startMemory  Memory usage when resolution started
      */
     private function logInstantiation(
         string $className,
@@ -408,7 +403,7 @@ final class Container
      * We check the cached result first, then inspect the factory's static variables
      * to detect if it uses the singleton pattern (has an $instances static variable).
      *
-     * @param string $name Service identifier to check
+     * @param  string  $name  Service identifier to check
      * @return string 'singleton' if shared, 'factory' if not
      */
     private function getRegistrationType(string $name): string
@@ -484,7 +479,7 @@ final class Container
         }
 
         // Sort by count descending to show most frequently resolved services first
-        uasort($grouped, fn($a, $b) => $b['count'] <=> $a['count']);
+        uasort($grouped, fn ($a, $b) => $b['count'] <=> $a['count']);
 
         return [
             'total_registered' => count($this->registry),
@@ -501,8 +496,6 @@ final class Container
      *
      * We provide this method for testing or when you need to reset the container
      * state without creating a new instance.
-     *
-     * @return void
      */
     public function clearCaches(): void
     {

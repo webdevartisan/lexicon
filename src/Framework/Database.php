@@ -18,13 +18,15 @@ use RuntimeException;
 class Database
 {
     private ?PDO $pdo = null;
+
     private array $queryLog = [];
+
     private readonly array $config;
 
     /**
      * Create a new Database instance.
      *
-     * @param array $config Database configuration array
+     * @param  array  $config  Database configuration array
      */
     public function __construct(array $config)
     {
@@ -36,7 +38,6 @@ class Database
      *
      * Lazy-initializes the connection to avoid overhead when not needed.
      *
-     * @return PDO
      * @throws RuntimeException If connection fails
      */
     public function getConnection(): PDO
@@ -82,9 +83,9 @@ class Database
     /**
      * Execute a SQL query with optional parameters.
      *
-     * @param string $sql SQL query string
-     * @param array $params Query parameters for prepared statement
-     * @return PDOStatement
+     * @param  string  $sql  SQL query string
+     * @param  array  $params  Query parameters for prepared statement
+     *
      * @throws RuntimeException If query fails
      */
     public function query(string $sql, array $params = []): PDOStatement
@@ -120,13 +121,14 @@ class Database
     /**
      * Execute a non-SELECT query (INSERT, UPDATE, DELETE).
      *
-     * @param string $sql SQL query string
-     * @param array $params Query parameters
+     * @param  string  $sql  SQL query string
+     * @param  array  $params  Query parameters
      * @return int Number of affected rows
      */
     public function execute(string $sql, array $params = []): int
     {
         $stmt = $this->query($sql, $params);
+
         return $stmt->rowCount();
     }
 
@@ -144,6 +146,7 @@ class Database
      * Begin a database transaction.
      *
      * @return bool True on success
+     *
      * @throws RuntimeException If transaction cannot be started or already active
      */
     public function beginTransaction(): bool
@@ -167,6 +170,7 @@ class Database
      * Commit the current transaction.
      *
      * @return bool True on success
+     *
      * @throws RuntimeException If commit fails
      */
     public function commit(): bool
@@ -188,6 +192,7 @@ class Database
      * Use when an error occurs to maintain data integrity.
      *
      * @return bool True on success
+     *
      * @throws RuntimeException If rollback fails
      */
     public function rollback(): bool
@@ -205,8 +210,6 @@ class Database
 
     /**
      * Check if currently in a transaction.
-     *
-     * @return bool
      */
     public function inTransaction(): bool
     {
@@ -219,8 +222,9 @@ class Database
      * Automatically commits on success or rolls back on exception.
      * Prevents nested transactions by checking active transaction state.
      *
-     * @param callable $callback Function to execute within transaction
+     * @param  callable  $callback  Function to execute within transaction
      * @return mixed Return value from callback
+     *
      * @throws \Throwable If callback fails (after rollback)
      */
     public function transaction(callable $callback): mixed
@@ -243,10 +247,9 @@ class Database
      *
      * Only logs when DB_LOG_QUERIES=true or query exceeds slow threshold.
      *
-     * @param string $sql SQL query
-     * @param array $params Query parameters
-     * @param float $startTime Query start time (microtime)
-     * @return void
+     * @param  string  $sql  SQL query
+     * @param  array  $params  Query parameters
+     * @param  float  $startTime  Query start time (microtime)
      */
     private function logQuery(string $sql, array $params, float $startTime): void
     {
@@ -280,17 +283,17 @@ class Database
     /**
      * Write query log entry to file.
      * TODO: Must revisit this to use a proper logging library for better performance and features.
-     * @param array $logEntry Log entry data
-     * @return void
+     *
+     * @param  array  $logEntry  Log entry data
      */
     private function writeQueryLog(array $logEntry): void
     {
-        $logDir = ROOT_PATH . '/storage/logs';
+        $logDir = ROOT_PATH.'/storage/logs';
         if (!is_dir($logDir)) {
             mkdir($logDir, 0755, true);
         }
 
-        $logFile = $logDir . '/queries.log';
+        $logFile = $logDir.'/queries.log';
 
         $message = sprintf(
             "[%s] %s | Time: %sms | SQL: %s | Params: %s\n",
@@ -308,8 +311,6 @@ class Database
      * Get all logged queries for current request.
      *
      * Useful for debugging and profiling.
-     *
-     * @return array
      */
     public function getQueryLog(): array
     {
@@ -318,8 +319,6 @@ class Database
 
     /**
      * Clear the query log.
-     *
-     * @return void
      */
     public function clearQueryLog(): void
     {
@@ -332,7 +331,7 @@ class Database
      * We use explicit type binding for booleans, integers, and nulls
      * to ensure MySQL receives the correct data types.
      *
-     * @param mixed $value Value to detect type for
+     * @param  mixed  $value  Value to detect type for
      * @return int PDO::PARAM_* constant
      */
     private function detectType(mixed $value): int

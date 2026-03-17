@@ -35,15 +35,15 @@ class ContainerDebugMiddleware implements MiddlewareInterface
 
         // Enable debug tracking
         $this->container->enableDebug();
-        
+
         // Process request
-        $response =  $next->handle($request);
-        
+        $response = $next->handle($request);
+
         // Only inject toolbar for HTML responses in debug mode
         if ($this->shouldInjectToolbar($response)) {
             $this->injectDebugToolbar($response);
         }
-        
+
         return $response;
     }
 
@@ -62,6 +62,7 @@ class ContainerDebugMiddleware implements MiddlewareInterface
         if (stripos($contentType, 'text/html') === false && empty($contentType)) {
             // Assume HTML if no content type set
             $body = $response->getBody();
+
             return stripos($body, '<html') !== false || stripos($body, '<!DOCTYPE') !== false;
         }
 
@@ -76,16 +77,16 @@ class ContainerDebugMiddleware implements MiddlewareInterface
         $report = $this->container->getDebugReport();
 
         $toolbar = $this->renderToolbar($report);
-        
+
         $body = $response->getBody();
-        
+
         // Try to inject before </body>, otherwise append
         if (stripos($body, '</body>') !== false) {
-            $body = str_ireplace('</body>', $toolbar . '</body>', $body);
+            $body = str_ireplace('</body>', $toolbar.'</body>', $body);
         } else {
             $body .= $toolbar;
         }
-        
+
         $response->setBody($body);
     }
 
@@ -98,38 +99,38 @@ class ContainerDebugMiddleware implements MiddlewareInterface
         $html .= '<div id="container-debug-toolbar">';
         $html .= '<div class="debug-toolbar-toggle" onclick="this.parentElement.classList.toggle(\'expanded\')">📦 Container Debug</div>';
         $html .= '<div class="debug-toolbar-content">';
-        
+
         // Summary stats
         $html .= '<div class="debug-stats">';
-        $html .= '<div class="stat"><strong>Registered:</strong> ' . $report['total_registered'] . '</div>';
-        $html .= '<div class="stat"><strong>Resolutions:</strong> ' . $report['total_resolutions'] . '</div>';
-        $html .= '<div class="stat"><strong>Duration:</strong> ' . number_format($report['total_duration'], 2) . 'ms</div>';
-        $html .= '<div class="stat"><strong>Memory:</strong> ' . $this->formatBytes($report['total_memory']) . '</div>';
+        $html .= '<div class="stat"><strong>Registered:</strong> '.$report['total_registered'].'</div>';
+        $html .= '<div class="stat"><strong>Resolutions:</strong> '.$report['total_resolutions'].'</div>';
+        $html .= '<div class="stat"><strong>Duration:</strong> '.number_format($report['total_duration'], 2).'ms</div>';
+        $html .= '<div class="stat"><strong>Memory:</strong> '.$this->formatBytes($report['total_memory']).'</div>';
         $html .= '</div>';
-        
+
         // Resolution table
         $html .= '<table class="debug-table">';
         $html .= '<thead><tr><th>Class</th><th>Count</th><th>Method</th><th>Type</th><th>Time</th><th>Memory</th></tr></thead>';
         $html .= '<tbody>';
-        
+
         foreach ($report['resolutions'] as $class => $data) {
             $shortClass = $this->getShortClassName($class);
             $rowClass = $data['count'] > 1 ? 'warning' : '';
             $typeClass = $data['type'] === 'singleton' ? 'singleton' : 'factory';
-            
+
             $html .= "<tr class='{$rowClass}'>";
             $html .= "<td title='{$class}'>{$shortClass}</td>";
             $html .= "<td>{$data['count']}</td>";
             $html .= "<td>{$data['method']}</td>";
             $html .= "<td class='{$typeClass}'>{$data['type']}</td>";
-            $html .= "<td>" . number_format($data['total_duration'], 2) . "ms</td>";
-            $html .= "<td>" . $this->formatBytes($data['total_memory']) . "</td>";
+            $html .= '<td>'.number_format($data['total_duration'], 2).'ms</td>';
+            $html .= '<td>'.$this->formatBytes($data['total_memory']).'</td>';
             $html .= '</tr>';
         }
-        
+
         $html .= '</tbody></table>';
         $html .= '</div></div>';
-        
+
         return $html;
     }
 
@@ -238,6 +239,7 @@ HTML;
     private function getShortClassName(string $class): string
     {
         $parts = explode('\\', $class);
+
         return end($parts);
     }
 
@@ -247,11 +249,11 @@ HTML;
     private function formatBytes(int $bytes): string
     {
         if ($bytes < 1024) {
-            return $bytes . 'B';
+            return $bytes.'B';
         } elseif ($bytes < 1048576) {
-            return round($bytes / 1024, 2) . 'KB';
+            return round($bytes / 1024, 2).'KB';
         } else {
-            return round($bytes / 1048576, 2) . 'MB';
+            return round($bytes / 1048576, 2).'MB';
         }
     }
 }

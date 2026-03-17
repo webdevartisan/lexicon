@@ -17,7 +17,7 @@ class KeyGenerateCommand
     /**
      * Execute the key generation command.
      *
-     * @param array<int, string> $args Command arguments
+     * @param  array<int, string>  $args  Command arguments
      * @return int Exit code (0 = success, 1 = failure)
      */
     public function execute(array $args): int

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
@@ -30,8 +32,6 @@ class AccountDeletionController extends AppController
      * Display account deletion confirmation page.
      *
      * Show what will be deleted and require explicit confirmation.
-     *
-     * @return Response
      */
     public function confirm(): Response
     {
@@ -67,8 +67,6 @@ class AccountDeletionController extends AppController
      * Process account deletion request.
      *
      * Implement GDPR-compliant deletion with full audit trail.
-     *
-     * @return Response
      */
     public function destroy(): Response
     {
@@ -135,7 +133,7 @@ class AccountDeletionController extends AppController
             return $this->redirect('/');
 
         } catch (Exception $e) {
-            error_log("Account deletion failed for user {$userId}: " . $e->getMessage());
+            error_log("Account deletion failed for user {$userId}: ".$e->getMessage());
             $this->flash('error', 'Failed to delete account. Please contact support.');
 
             return $this->redirect('/dashboard/profile');

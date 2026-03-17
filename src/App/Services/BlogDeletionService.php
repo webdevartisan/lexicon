@@ -33,10 +33,11 @@ final class BlogDeletionService
      * 2. Database records (comments → post_tags → posts → collaborators → settings → blog)
      * 3. Default preference reassignment (if needed)
      *
-     * @param int $blogId Blog ID to delete
-     * @param int $userId Owner user ID
-     * @param int $ownerId Blog owner ID (may differ from deleting user if admin)
+     * @param  int  $blogId  Blog ID to delete
+     * @param  int  $userId  Owner user ID
+     * @param  int  $ownerId  Blog owner ID (may differ from deleting user if admin)
      * @return array{deleted_posts: int, deleted_comments: int, deleted_collaborators: int} Deletion stats
+     *
      * @throws \Exception If deletion fails
      */
     public function deleteBlog(int $blogId, int $userId, int $ownerId): array
@@ -92,8 +93,8 @@ final class BlogDeletionService
      * Includes branding (banner, logo, favicon), post images, and entire blog directory.
      * File deletion failures are logged but don't block database deletion.
      *
-     * @param int $blogId Blog ID
-     * @param int $ownerId Blog owner user ID
+     * @param  int  $blogId  Blog ID
+     * @param  int  $ownerId  Blog owner user ID
      */
     private function deleteAllBlogFiles(int $blogId, int $ownerId): void
     {
@@ -131,19 +132,19 @@ final class BlogDeletionService
 
         } catch (\Exception $e) {
             // Log but don't throw - file cleanup can happen later via maintenance
-            error_log("File deletion failed for blog {$blogId}: " . $e->getMessage());
+            error_log("File deletion failed for blog {$blogId}: ".$e->getMessage());
         }
     }
 
     /**
      * Extract and delete images embedded in post content.
      *
-     * @param string $content Post HTML content
-     * @param int $blogId Blog ID for path validation
+     * @param  string  $content  Post HTML content
+     * @param  int  $blogId  Blog ID for path validation
      */
     private function deleteContentImages(string $content, int $blogId): void
     {
-        $pattern = '#/uploads/blogs/' . $blogId . '/[^\s"\'<>]+#';
+        $pattern = '#/uploads/blogs/'.$blogId.'/[^\s"\'<>]+#';
         preg_match_all($pattern, $content, $matches);
 
         foreach ($matches[0] as $relativePath) {
@@ -154,11 +155,11 @@ final class BlogDeletionService
     /**
      * Delete single uploaded file.
      *
-     * @param string $filePathOrUrl Relative URL or path
+     * @param  string  $filePathOrUrl  Relative URL or path
      */
     private function deleteFile(string $filePathOrUrl): void
     {
-        $filePath = ROOT_PATH . '/public/' . ltrim($filePathOrUrl, '/');
+        $filePath = ROOT_PATH.'/public/'.ltrim($filePathOrUrl, '/');
 
         if (file_exists($filePath) && is_file($filePath)) {
             @unlink($filePath);
@@ -168,7 +169,7 @@ final class BlogDeletionService
     /**
      * Recursively delete directory and contents.
      *
-     * @param string $dir Directory path
+     * @param  string  $dir  Directory path
      */
     private function deleteDirectory(string $dir): void
     {
@@ -182,7 +183,7 @@ final class BlogDeletionService
                 continue;
             }
 
-            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            $path = $dir.DIRECTORY_SEPARATOR.$item;
 
             if (is_dir($path)) {
                 $this->deleteDirectory($path);
@@ -199,9 +200,8 @@ final class BlogDeletionService
      *
      * Must check BEFORE deletion due to ON DELETE SET NULL constraint.
      *
-     * @param int $userId User ID
-     * @param int $blogId Blog ID
-     * @return bool
+     * @param  int  $userId  User ID
+     * @param  int  $blogId  Blog ID
      */
     private function isUserDefaultBlog(int $userId, int $blogId): bool
     {
@@ -214,8 +214,8 @@ final class BlogDeletionService
      * If user has remaining blogs, assign most recent as default.
      * If no blogs remain, preference already NULL from ON DELETE SET NULL.
      *
-     * @param int $userId User ID
-     * @param int $deletedBlogId Deleted blog ID
+     * @param  int  $userId  User ID
+     * @param  int  $deletedBlogId  Deleted blog ID
      */
     private function reassignDefaultBlog(int $userId, int $deletedBlogId): void
     {
@@ -233,7 +233,7 @@ final class BlogDeletionService
 
         } catch (\Exception $e) {
             // Log but don't throw - preference failure shouldn't block deletion
-            error_log("Default blog reassignment failed for user {$userId}: " . $e->getMessage());
+            error_log("Default blog reassignment failed for user {$userId}: ".$e->getMessage());
         }
     }
 }

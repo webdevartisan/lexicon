@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'aliases' => [
         'auth' => App\Middleware\AuthMiddleware::class,
@@ -19,7 +21,7 @@ return [
         Framework\Cache\CacheMiddleware::class,
         Framework\Http\Middleware\ContainerDebugMiddleware::class,
         App\Middleware\NavigationActiveMiddleware::class,
-        App\Middleware\HandleValidationExceptionMiddleware::class
+        App\Middleware\HandleValidationExceptionMiddleware::class,
         // App\Middleware\CsrfMiddleware::class,
         // App\Middleware\LocaleMiddleware::class,
     ],

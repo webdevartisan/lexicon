@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\UserModel;
-use App\Models\ReservedSlugModel;
 use App\Helpers\UsernameHelper;
+use App\Models\ReservedSlugModel;
+use App\Models\UserModel;
 
 /**
  * UsernameValidationService
@@ -41,8 +41,8 @@ class UsernameValidationService
      * 3. Levenshtein distance to catch typos within 2 characters
      * 4. Check against existing usernames
      *
-     * @param string $username Username to check
-     * @param int|null $ignoreUserId User ID to exclude from check (for profile updates)
+     * @param  string  $username  Username to check
+     * @param  int|null  $ignoreUserId  User ID to exclude from check (for profile updates)
      * @return bool True if available
      */
     public function isAvailable(string $username, ?int $ignoreUserId = null): bool
@@ -75,7 +75,7 @@ class UsernameValidationService
      * - Substring matching: Catches "theadmin", "superadmin", "admin_user"
      * - Levenshtein distance ≤2: Catches "adm1n", "admln", "adminm"
      *
-     * @param string $normalized Normalized username
+     * @param  string  $normalized  Normalized username
      * @return bool True if fuzzy match found
      */
     private function isFuzzyMatch(string $normalized): bool

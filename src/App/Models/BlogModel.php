@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Resources\BlogResource;
@@ -21,7 +23,7 @@ class BlogModel extends AppModel
 
     /**
      * Valid collaborative roles for blog_users.
-     * 
+     *
      * These are per-blog roles independent of global user roles.
      */
     public const ROLES = ['editor', 'author', 'contributor', 'reviewer', 'viewer'];
@@ -32,8 +34,8 @@ class BlogModel extends AppModel
      * Invalidates all cached blog URLs and post listings when blog data changes.
      * If slug changes, invalidates both old and new URLs.
      *
-     * @param int|string $id Blog ID
-     * @param array $data Updated blog data
+     * @param  int|string  $id  Blog ID
+     * @param  array  $data  Updated blog data
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -65,7 +67,7 @@ class BlogModel extends AppModel
     /**
      * Get all posts belonging to a blog.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return array Array of post records
      */
     public function getBlogPosts(int $blogId): array
@@ -101,7 +103,7 @@ class BlogModel extends AppModel
     /**
      * Get all blogs owned by a user with aggregate counts.
      *
-     * @param int $ownerId User ID
+     * @param  int  $ownerId  User ID
      * @return array Array of blog records with owner_name, post_count, author_count
      */
     public function getBlogsByOwnerWithCounts(int $ownerId): array
@@ -121,7 +123,7 @@ class BlogModel extends AppModel
     /**
      * Get a single blog by ID with owner info and counts.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return array|null Blog record with owner_name, post_count, author_count, or null if not found
      */
     public function getBlogByIdWithCounts(int $blogId): ?array
@@ -142,7 +144,7 @@ class BlogModel extends AppModel
      *
      * Returns the most recently published blog for the owner.
      *
-     * @param int $ownerId User ID
+     * @param  int  $ownerId  User ID
      * @return int Blog ID
      */
     public function getBlogIdByOwnerId(int $ownerId): int
@@ -163,7 +165,7 @@ class BlogModel extends AppModel
      *
      * Returns the most recently published blog name for the owner.
      *
-     * @param int $ownerId User ID
+     * @param  int  $ownerId  User ID
      * @return string Blog name
      */
     public function getBlogNameByOwnerId(int $ownerId): string
@@ -182,7 +184,7 @@ class BlogModel extends AppModel
     /**
      * Create a new blog.
      *
-     * @param array $data Blog data (blog_name, blog_slug, description, owner_id)
+     * @param  array  $data  Blog data (blog_name, blog_slug, description, owner_id)
      * @return int Newly created blog ID
      */
     public function createBlog(array $data): int
@@ -201,7 +203,7 @@ class BlogModel extends AppModel
     /**
      * Get a blog by ID with owner username.
      *
-     * @param int $id Blog ID
+     * @param  int  $id  Blog ID
      * @return array|null Blog record with owner_name, or null if not found
      */
     public function getBlogById(int $id): ?array
@@ -218,7 +220,7 @@ class BlogModel extends AppModel
     /**
      * Get all blogs owned by a user.
      *
-     * @param int $ownerId User ID
+     * @param  int  $ownerId  User ID
      * @return array Array of blog records
      */
     public function getBlogsByOwnerId(int $ownerId): array
@@ -237,7 +239,7 @@ class BlogModel extends AppModel
      *
      * Returns users assigned to the blog with their role and contact info.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return array Array of blog_users records with username and email
      */
     public function getBlogUsers(int $blogId): array
@@ -258,7 +260,7 @@ class BlogModel extends AppModel
      * Returns users available for assignment, excluding those already active on the blog.
      * Global user roles do not affect per-blog role eligibility.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return array Array of user records with id, username, email
      */
     public function getAvailableUsers(int $blogId): array
@@ -284,11 +286,12 @@ class BlogModel extends AppModel
      * Uses UNIQUE(blog_id, user_id) constraint to prevent duplicates.
      * Re-adding a previously revoked user reactivates them with the new role.
      *
-     * @param int $blogId Blog ID
-     * @param int $userId User ID to assign
-     * @param string $role Collaborative role (must be one of ROLES constants)
-     * @param int $assignedBy User ID performing the assignment
+     * @param  int  $blogId  Blog ID
+     * @param  int  $userId  User ID to assign
+     * @param  string  $role  Collaborative role (must be one of ROLES constants)
+     * @param  int  $assignedBy  User ID performing the assignment
      * @return bool True on success
+     *
      * @throws \InvalidArgumentException If role is not in ROLES constant
      */
     public function addUserToBlog(int $blogId, int $userId, string $role, int $assignedBy): bool
@@ -330,8 +333,8 @@ class BlogModel extends AppModel
      * Performs soft delete by setting is_active=0 and recording revoked_at timestamp.
      * Preserves record for audit trail and potential restoration.
      *
-     * @param int $blogId Blog ID
-     * @param int $userId User ID to revoke
+     * @param  int  $blogId  Blog ID
+     * @param  int  $userId  User ID to revoke
      * @return bool True on success
      */
     public function revokeUserFromBlog(int $blogId, int $userId): bool
@@ -360,7 +363,7 @@ class BlogModel extends AppModel
     /**
      * Change blog status to draft.
      *
-     * @param int $id Blog ID
+     * @param  int  $id  Blog ID
      * @return bool True on success
      */
     public function unpublishBlog(int $id): bool
@@ -373,7 +376,7 @@ class BlogModel extends AppModel
     /**
      * Change blog status to published.
      *
-     * @param int $id Blog ID
+     * @param  int  $id  Blog ID
      * @return bool True on success
      */
     public function publishBlog(int $id): bool
@@ -386,7 +389,7 @@ class BlogModel extends AppModel
     /**
      * Get a blog by its slug.
      *
-     * @param string $slug Blog slug
+     * @param  string  $slug  Blog slug
      * @return array|null Blog record, or null if not found
      */
     public function getBlogBySlug(string $slug): ?array
@@ -403,7 +406,7 @@ class BlogModel extends AppModel
      * Returns minimal blog data (id, blog_slug) for efficient slug lookups.
      * Used to enrich posts with blog slugs without N+1 queries.
      *
-     * @param array<int> $ids Blog IDs to fetch
+     * @param  array<int>  $ids  Blog IDs to fetch
      * @return array Array of blog records with id and blog_slug
      */
     public function findByIds(array $ids): array
@@ -413,7 +416,7 @@ class BlogModel extends AppModel
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        
+
         $sql = "SELECT id, blog_slug FROM blogs WHERE id IN ($placeholders)";
         $stmt = $this->database->query($sql, $ids);
 
@@ -425,7 +428,7 @@ class BlogModel extends AppModel
      *
      * Returns blogs with the most published posts for homepage or discovery features.
      *
-     * @param int $limit Maximum number of creators to return
+     * @param  int  $limit  Maximum number of creators to return
      * @return array Array of blog records with ownername and postcount
      */
     public function getFeaturedCreators(int $limit = 4): array
@@ -446,7 +449,7 @@ class BlogModel extends AppModel
     /**
      * Get a blog wrapped in BlogResource.
      *
-     * @param string|int $id Blog ID
+     * @param  string|int  $id  Blog ID
      * @return BlogResource|false BlogResource instance, or false if not found
      */
     public function getBlog(string|int $id): BlogResource|false
@@ -461,7 +464,7 @@ class BlogModel extends AppModel
     /**
      * Get all blogs for a user as BlogResource array.
      *
-     * @param string|int $owner_id User ID
+     * @param  string|int  $owner_id  User ID
      * @return array Array of BlogResource instances, or empty array if none found
      */
     public function resource(string|int $owner_id): array
@@ -483,7 +486,7 @@ class BlogModel extends AppModel
      * Performs hard delete from database. Cascading deletes should be handled
      * at application level for audit trail (posts, collaborators, etc.).
      *
-     * @param int|string $id Blog ID
+     * @param  int|string  $id  Blog ID
      * @return bool True on success
      */
     public function delete(int|string $id): bool
@@ -508,7 +511,7 @@ class BlogModel extends AppModel
      *
      * Use this to show deletion impact before removing a blog.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of active collaborators
      */
     public function countCollaborators(int $blogId): int
@@ -527,13 +530,13 @@ class BlogModel extends AppModel
      * Removes all user-blog relationships when deleting a blog.
      * Uses hard delete since the parent blog is being deleted.
      *
-     * @param int $blogId Blog ID
+     * @param  int  $blogId  Blog ID
      * @return int Number of rows deleted
      */
     public function deleteCollaboratorsByBlogId(int $blogId): int
     {
         $sql = 'DELETE FROM blog_users WHERE blog_id = ?';
-        
+
         return $this->database->execute($sql, [$blogId]);
     }
 }

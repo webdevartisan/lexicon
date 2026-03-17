@@ -22,7 +22,7 @@ class CommentModel extends AppModel
      * falling back to full name or username. Anonymous comments show NULL
      * for user_name when user_id is NULL.
      *
-     * @param int $postId Post identifier
+     * @param  int  $postId  Post identifier
      * @return array List of comments ordered chronologically
      */
     public function forPost(int $postId): array
@@ -52,7 +52,7 @@ class CommentModel extends AppModel
      * Includes post titles to provide context for each comment.
      * Useful for user profile pages or comment management dashboards.
      *
-     * @param int $userId User identifier
+     * @param  int  $userId  User identifier
      * @return array List of user's comments with post titles, newest first
      */
     public function byUser(int $userId): array
@@ -71,22 +71,23 @@ class CommentModel extends AppModel
     /**
      * Find a comment by ID.
      *
-     * @param int $id Comment identifier
+     * @param  int  $id  Comment identifier
      * @return array|null Comment data or null if not found
      */
     public function findById(int $id): ?array
     {
         $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? LIMIT 1";
         $stmt = $this->database->query($sql, [$id]);
-        
+
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         return $result ?: null;
     }
 
     /**
      * Create a new comment.
      *
-     * @param array $data Comment data (post_id, user_id, content)
+     * @param  array  $data  Comment data (post_id, user_id, content)
      * @return int|false Inserted comment ID or false on failure
      */
     public function create(array $data): int|false
@@ -97,7 +98,7 @@ class CommentModel extends AppModel
     /**
      * Count comments for a post.
      *
-     * @param int $postId Post identifier
+     * @param  int  $postId  Post identifier
      * @return int Total number of comments on the post
      */
     public function countForPost(int $postId): int
@@ -114,7 +115,7 @@ class CommentModel extends AppModel
      * Join comments with posts to count only comments belonging
      * to posts within the specified blog.
      *
-     * @param int $blogId Blog identifier
+     * @param  int  $blogId  Blog identifier
      * @return int Total number of comments across all blog posts
      */
     public function countByBlogId(int $blogId): int
@@ -136,14 +137,15 @@ class CommentModel extends AppModel
      * Database CASCADE constraint handles this automatically on post deletion,
      * but explicit method allows manual cleanup or soft-delete scenarios.
      *
-     * @param int $postId Post identifier
+     * @param  int  $postId  Post identifier
      * @return bool True if rows were deleted
      */
     public function deleteByPostId(int $postId): bool
     {
         $sql = "DELETE FROM {$this->getTable()} WHERE post_id = ?";
-        
+
         $rowCount = $this->database->execute($sql, [$postId]);
+
         return $rowCount > 0;
     }
 }

@@ -65,7 +65,7 @@ class Session
 
         // Reject uninitialized session IDs to prevent fixation attacks
         ini_set('session.use_strict_mode', '1');
-        
+
         // Prevent session IDs in URLs
         ini_set('session.use_only_cookies', '1');
         ini_set('session.use_trans_sid', '0');
@@ -77,8 +77,8 @@ class Session
     /**
      * Store a value in the session.
      *
-     * @param string $key Session key
-     * @param mixed $value Value to store
+     * @param  string  $key  Session key
+     * @param  mixed  $value  Value to store
      */
     public function set(string $key, mixed $value): void
     {
@@ -88,8 +88,8 @@ class Session
     /**
      * Retrieve a session value.
      *
-     * @param string $key Session key
-     * @param mixed $default Default value if key doesn't exist
+     * @param  string  $key  Session key
+     * @param  mixed  $default  Default value if key doesn't exist
      * @return mixed The session value or default
      */
     public function get(string $key, mixed $default = null): mixed
@@ -102,7 +102,7 @@ class Session
      *
      * Uses array_key_exists to differentiate between non-existent and null values.
      *
-     * @param string $key Session key
+     * @param  string  $key  Session key
      * @return bool True if key exists
      */
     public function has(string $key): bool
@@ -113,7 +113,7 @@ class Session
     /**
      * Remove a session value.
      *
-     * @param string $key Session key to remove
+     * @param  string  $key  Session key to remove
      */
     public function remove(string $key): void
     {
@@ -125,7 +125,7 @@ class Session
      *
      * Alias for remove() to provide Laravel-like API consistency.
      *
-     * @param string $key Session key to remove
+     * @param  string  $key  Session key to remove
      */
     public function delete(string $key): void
     {
@@ -137,8 +137,8 @@ class Session
      *
      * Useful for flash messages and temporary data that should only be read once.
      *
-     * @param string $key Session key
-     * @param mixed $default Default value if key doesn't exist
+     * @param  string  $key  Session key
+     * @param  mixed  $default  Default value if key doesn't exist
      * @return mixed The session value or default
      */
     public function pull(string $key, mixed $default = null): mixed
@@ -194,7 +194,7 @@ class Session
      * Call this after authentication state changes such as login, logout,
      * or privilege escalation.
      *
-     * @param bool $deleteOldSession Whether to delete the old session file
+     * @param  bool  $deleteOldSession  Whether to delete the old session file
      */
     public function regenerate(bool $deleteOldSession = true): void
     {
@@ -230,8 +230,8 @@ class Session
      *
      * Flash data is automatically removed after being retrieved once.
      *
-     * @param string $key Flash key
-     * @param mixed $value Flash value
+     * @param  string  $key  Flash key
+     * @param  mixed  $value  Flash value
      */
     public function flash(string $key, mixed $value): void
     {
@@ -243,8 +243,8 @@ class Session
      *
      * Checks both old flash (from previous request) and new flash (from current request).
      *
-     * @param string $key Flash key
-     * @param mixed $default Default value if key doesn't exist
+     * @param  string  $key  Flash key
+     * @param  mixed  $default  Default value if key doesn't exist
      * @return mixed The flash value or default
      */
     public function getFlash(string $key, mixed $default = null): mixed

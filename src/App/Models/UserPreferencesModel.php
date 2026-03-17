@@ -19,14 +19,14 @@ class UserPreferencesModel extends AppModel
      *
      * Ensures every user has a preferences record, creating one if missing.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return array Preferences data
      */
     public function findOrCreate(int $userId): array
     {
         $stmt = $this->database->query('SELECT * FROM user_preferences WHERE user_id = ?', [$userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        
+
         if ($row) {
             return $row;
         }
@@ -34,7 +34,7 @@ class UserPreferencesModel extends AppModel
         // create default preferences if none exist
         // INSERT IGNORE silently skips if record already exists (race condition safety)
         $this->database->execute('INSERT IGNORE INTO user_preferences (user_id) VALUES (?)', [$userId]);
-        
+
         $stmt = $this->database->query('SELECT * FROM user_preferences WHERE user_id = ?', [$userId]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -45,9 +45,8 @@ class UserPreferencesModel extends AppModel
      *
      * Insert or update all preference fields with provided values.
      *
-     * @param int $userId User ID
-     * @param array $data Preferences data
-     * @return void
+     * @param  int  $userId  User ID
+     * @param  array  $data  Preferences data
      */
     public function upsert(int $userId, array $data): void
     {
@@ -60,7 +59,7 @@ class UserPreferencesModel extends AppModel
                   timezone = VALUES(timezone),
                   notify_comments = VALUES(notify_comments),
                   notify_likes = VALUES(notify_likes)';
-        
+
         $this->database->execute($sql, [
             $userId,
             $data['display_name_preference'] ?? 'username',
@@ -77,8 +76,8 @@ class UserPreferencesModel extends AppModel
      * Updates specific preference fields for a user. Used by deletion service
      * to reset preferences during pseudonymization.
      *
-     * @param int $userId User ID
-     * @param array $data Associative array of column => value pairs
+     * @param  int  $userId  User ID
+     * @param  array  $data  Associative array of column => value pairs
      * @return bool True on success
      */
     public function updateByUserId(int $userId, array $data): bool
@@ -116,8 +115,8 @@ class UserPreferencesModel extends AppModel
      * Store the user's preferred blog for quick access in dashboard navigation.
      * Invalidates navigation cache when blog preference changes.
      *
-     * @param int $userId User ID
-     * @param int $blogId Blog ID to set as default
+     * @param  int  $userId  User ID
+     * @param  int  $blogId  Blog ID to set as default
      * @return bool True on success
      */
     public function setDefaultBlogId(int $userId, int $blogId): bool
@@ -143,7 +142,7 @@ class UserPreferencesModel extends AppModel
      *
      * Retrieve the user's preferred default blog for dashboard navigation.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return int|null Blog ID or null if not set
      */
     public function getDefaultBlogId(int $userId): ?int
@@ -165,7 +164,7 @@ class UserPreferencesModel extends AppModel
      *
      * Used when a user deletes their last blog or needs to reset preference.
      *
-     * @param int $userId User ID
+     * @param  int  $userId  User ID
      * @return bool True on success
      */
     public function clearDefaultBlogId(int $userId): bool
@@ -182,14 +181,13 @@ class UserPreferencesModel extends AppModel
     /**
      * Check if blog is user's default.
      *
-     * @param int $userId User ID
-     * @param int $blogId Blog ID
-     * @return bool
+     * @param  int  $userId  User ID
+     * @param  int  $blogId  Blog ID
      */
     public function isDefaultBlog(int $userId, int $blogId): bool
     {
         $currentDefaultBlogId = $this->getDefaultBlogId($userId);
+
         return $currentDefaultBlogId !== null && (int) $currentDefaultBlogId === $blogId;
     }
-
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 it('escapes HTML entities', function () {
     $html = '<script>alert("XSS")</script>';
 

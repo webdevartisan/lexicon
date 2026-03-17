@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Framework;
 
-use Framework\Database;
 use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use InvalidArgumentException;
@@ -31,7 +30,7 @@ abstract class Model
     /**
      * Initialize the model with a database connection.
      *
-     * @param Database $database Database service instance
+     * @param  Database  $database  Database service instance
      */
     public function __construct(Database $database)
     {
@@ -81,7 +80,7 @@ abstract class Model
      */
     public function findAll(): array
     {
-        $sql = 'SELECT * FROM ' . $this->getTable();
+        $sql = 'SELECT * FROM '.$this->getTable();
         $stmt = $this->database->query($sql);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -90,23 +89,24 @@ abstract class Model
     /**
      * Fetch a single row by primary key.
      *
-     * @param string|int $id Primary key value
+     * @param  string|int  $id  Primary key value
      * @return array|null Row data or null if not found
      */
     public function find(string|int $id): ?array
     {
-        $sql = 'SELECT * FROM ' . $this->getTable() . ' WHERE id = ?';
+        $sql = 'SELECT * FROM '.$this->getTable().' WHERE id = ?';
         $stmt = $this->database->query($sql, [(int) $id]);
 
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         return $result ?: null;
     }
 
     /**
      * Fetch rows matching a column/value pair.
      *
-     * @param string $column Column name to filter by
-     * @param mixed $value Value to match
+     * @param  string  $column  Column name to filter by
+     * @param  mixed  $value  Value to match
      * @return array<int, array<string, mixed>> Matching rows
      *
      * @throws InvalidArgumentException If column name fails validation
@@ -118,7 +118,7 @@ abstract class Model
             throw new InvalidArgumentException("Invalid column name '{$column}'.");
         }
 
-        $sql = 'SELECT * FROM ' . $this->getTable() . " WHERE {$column} = ?";
+        $sql = 'SELECT * FROM '.$this->getTable()." WHERE {$column} = ?";
         $stmt = $this->database->query($sql, [$value]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -127,8 +127,9 @@ abstract class Model
     /**
      * Insert a new row into the table.
      *
-     * @param array<string, mixed> $data Column => value pairs to insert
+     * @param  array<string, mixed>  $data  Column => value pairs to insert
      * @return bool|int Last insert ID on success, false on failure
+     *
      * @throws InvalidArgumentException If data array is empty
      */
     public function insert(array $data): bool|int
@@ -139,7 +140,7 @@ abstract class Model
 
         $columns = array_keys($data);
         $placeholders = array_fill(0, count($columns), '?');
-        
+
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $this->getTable(),
@@ -159,8 +160,8 @@ abstract class Model
     /**
      * Update an existing row by primary key.
      *
-     * @param int|string $id Primary key value
-     * @param array<string, mixed> $data Column => value pairs to update
+     * @param  int|string  $id  Primary key value
+     * @param  array<string, mixed>  $data  Column => value pairs to update
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -179,7 +180,7 @@ abstract class Model
             static fn (string $col): string => "{$col} = ?",
             $columns
         );
-        
+
         $sql = sprintf(
             'UPDATE %s SET %s WHERE id = ?',
             $this->getTable(),
@@ -196,12 +197,12 @@ abstract class Model
     /**
      * Delete a row by primary key.
      *
-     * @param int|string $id Primary key value
+     * @param  int|string  $id  Primary key value
      * @return bool True on success
      */
     public function delete(int|string $id): bool
     {
-        $sql = 'DELETE FROM ' . $this->getTable() . ' WHERE id = ?';
+        $sql = 'DELETE FROM '.$this->getTable().' WHERE id = ?';
         $rowCount = $this->database->execute($sql, [(int) $id]);
 
         return $rowCount > 0;
@@ -214,7 +215,7 @@ abstract class Model
      */
     public function count(): int
     {
-        $sql = 'SELECT COUNT(*) FROM ' . $this->getTable();
+        $sql = 'SELECT COUNT(*) FROM '.$this->getTable();
         $stmt = $this->database->query($sql);
 
         return (int) $stmt->fetchColumn();
@@ -223,12 +224,12 @@ abstract class Model
     /**
      * Fetch the most recent rows ordered by creation time.
      *
-     * @param int $limit Maximum number of rows to return
+     * @param  int  $limit  Maximum number of rows to return
      * @return array<int, array<string, mixed>> Latest rows
      */
     public function latest(int $limit = 5): array
     {
-        $sql = 'SELECT * FROM ' . $this->getTable() . ' ORDER BY created_at DESC LIMIT ?';
+        $sql = 'SELECT * FROM '.$this->getTable().' ORDER BY created_at DESC LIMIT ?';
         $stmt = $this->database->query($sql, [$limit]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -239,7 +240,7 @@ abstract class Model
      *
      * Automatically commits on success or rolls back on exception.
      *
-     * @param callable $callback Function to execute within transaction
+     * @param  callable  $callback  Function to execute within transaction
      * @return mixed Return value from callback
      *
      * @throws \Throwable If callback fails

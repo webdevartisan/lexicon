@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Models\CommentModel;
@@ -42,6 +44,7 @@ class CommentController extends AppController
         // Validate required fields
         if ($postId <= 0 || $content === '') {
             $this->flash('error', 'Comment content is required.');
+
             return $this->redirectBack();
         }
 
@@ -50,12 +53,14 @@ class CommentController extends AppController
 
         if (!$post) {
             $this->flash('error', 'Post not found.');
+
             return $this->redirect('/');
         }
 
         // Enforce business rules: only published public posts allow comments
         if ($post['status'] !== 'published' || $post['visibility'] !== 'public') {
             $this->flash('error', 'Comments are not available for this post.');
+
             return $this->redirectBack();
         }
 
@@ -69,6 +74,7 @@ class CommentController extends AppController
         // Insert comment - ErrorHandler catches database exceptions
         if (!$this->commentModel->insert($data)) {
             $this->flash('error', 'Failed to create comment. Please try again.');
+
             return $this->redirectBack();
         }
 
@@ -86,6 +92,7 @@ class CommentController extends AppController
         );
 
         $this->flash('success', 'Comment added successfully.');
+
         return $this->redirectBack();
     }
 }

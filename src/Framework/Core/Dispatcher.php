@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
-use Framework\Interfaces\AuthInterface;
-use Framework\Http\Middleware\RequireRoleMiddleware;
 use Framework\BaseController;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Handlers\ControllerRequestHandler;
 use Framework\Handlers\MiddlewareRequestHandler;
+use Framework\Http\Middleware\RequireRoleMiddleware;
+use Framework\Interfaces\AuthInterface;
 use Framework\Interfaces\RequestHandlerInterface;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\View\RouteContext;
 use UnexpectedValueException;
-use Whoops\Exception\Frame;
 
 final class Dispatcher implements RequestHandlerInterface
 {

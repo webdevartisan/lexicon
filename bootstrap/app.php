@@ -21,7 +21,6 @@ use Framework\Core\ErrorHandler;
  *
  * CLI-specific components (console kernel) are initialized by the CLI entry point.
  */
-
 if (!defined('ROOT_PATH')) {
     throw new RuntimeException('ROOT_PATH must be defined before bootstrapping');
 }

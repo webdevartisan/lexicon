@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Interfaces\UploadServiceInterface;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
-use App\Models\UserPreferencesModel;
-use App\Interfaces\UploadServiceInterface;
 use App\Services\UserDeletionService;
 use Mockery as m;
 
@@ -17,14 +17,14 @@ use Mockery as m;
  * No database connections are made - tests run in milliseconds.
  */
 describe('UserDeletionService', function () {
-    
+
     beforeEach(function () {
         $this->userModel = m::mock(UserModel::class);
         $this->profileModel = m::mock(UserProfileModel::class);
         $this->socialLinksModel = m::mock(UserSocialLinkModel::class);
         $this->preferencesModel = m::mock(UserPreferencesModel::class);
         $this->uploadService = m::mock(UploadServiceInterface::class);
-        
+
         $this->service = new UserDeletionService(
             $this->userModel,
             $this->profileModel,
@@ -39,10 +39,10 @@ describe('UserDeletionService', function () {
     });
 
     describe('pseudonymizeUser()', function () {
-        
+
         it('anonymizes user data across all tables within transaction', function () {
             $userId = 123;
-            
+
             // Mock transaction wrapper - execute callback immediately
             $this->userModel->shouldReceive('transaction')
                 ->once()
@@ -115,6 +115,7 @@ describe('UserDeletionService', function () {
                 ->twice()
                 ->andReturnUsing(function ($id, $data) use (&$capturedEmails) {
                     $capturedEmails[] = $data['email'];
+
                     return true;
                 });
 
@@ -151,13 +152,13 @@ describe('UserDeletionService', function () {
                 ->once()
                 ->andThrow(new Exception('Transaction failed'));
 
-            expect(fn() => $this->service->pseudonymizeUser($userId))
+            expect(fn () => $this->service->pseudonymizeUser($userId))
                 ->toThrow(Exception::class, 'Transaction failed');
         });
     });
 
     describe('canDeleteUser()', function () {
-        
+
         it('returns false when user does not exist', function () {
             $userId = 404;
 
@@ -270,7 +271,7 @@ describe('UserDeletionService', function () {
     });
 
     describe('deleteUser()', function () {
-        
+
         it('executes complete deletion workflow within transaction', function () {
             $userId = 50;
 
@@ -321,6 +322,7 @@ describe('UserDeletionService', function () {
                 ->with($userId)
                 ->andReturnUsing(function () use (&$deleteCalled) {
                     $deleteCalled = true;
+
                     return true;
                 });
 
@@ -336,7 +338,7 @@ describe('UserDeletionService', function () {
                 ->once()
                 ->andThrow(new Exception('Deletion failed'));
 
-            expect(fn() => $this->service->deleteUser($userId))
+            expect(fn () => $this->service->deleteUser($userId))
                 ->toThrow(Exception::class, 'Deletion failed');
         });
 
@@ -350,7 +352,7 @@ describe('UserDeletionService', function () {
                     throw new Exception('Soft delete failed');
                 });
 
-            expect(fn() => $this->service->deleteUser($userId))
+            expect(fn () => $this->service->deleteUser($userId))
                 ->toThrow(Exception::class);
         });
     });

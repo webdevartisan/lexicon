@@ -23,8 +23,6 @@ class CommentController extends AppController
 
     /**
      * Display all comments for moderation.
-     *
-     * @return Response
      */
     public function index(): Response
     {
@@ -38,8 +36,7 @@ class CommentController extends AppController
     /**
      * Display single comment details.
      *
-     * @param string $id Comment ID
-     * @return Response
+     * @param  string  $id  Comment ID
      */
     public function show(string $id): Response
     {
@@ -55,8 +52,7 @@ class CommentController extends AppController
      *
      * Updates comment status to 'approved' and logs the action.
      *
-     * @param string $id Comment ID
-     * @return Response
+     * @param  string  $id  Comment ID
      */
     public function approve(string $id): Response
     {
@@ -88,8 +84,7 @@ class CommentController extends AppController
     /**
      * Display comment deletion confirmation page.
      *
-     * @param string $id Comment ID
-     * @return Response
+     * @param  string  $id  Comment ID
      */
     public function delete(string $id): Response
     {
@@ -105,8 +100,7 @@ class CommentController extends AppController
      *
      * Removes comment from database and logs the deletion for audit trail.
      *
-     * @param string $id Comment ID
-     * @return Response
+     * @param  string  $id  Comment ID
      */
     public function destroy(string $id): Response
     {
@@ -138,8 +132,9 @@ class CommentController extends AppController
     /**
      * Retrieve comment by ID or throw 404.
      *
-     * @param string $id Comment ID
+     * @param  string  $id  Comment ID
      * @return array Comment data
+     *
      * @throws PageNotFoundException If comment not found
      */
     private function getComment(string $id): array

@@ -18,9 +18,9 @@ class UserRelationsHelper
     /**
      * Insert user profile data.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID
-     * @param array $data Profile data (slug, bio, occupation, location, avatar_url)
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID
+     * @param  array  $data  Profile data (slug, bio, occupation, location, avatar_url)
      * @return int Profile ID (user_id)
      */
     public static function createUserProfile(Database $db, int $userId, array $data = []): int
@@ -36,10 +36,10 @@ class UserRelationsHelper
 
         $profileData = array_merge($defaults, $data);
 
-        $db->query("
+        $db->query('
             INSERT INTO user_profiles (user_id, slug, bio, occupation, location, avatar_url, is_public)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ", [
+        ', [
             $userId,
             $profileData['slug'],
             $profileData['bio'],
@@ -55,9 +55,9 @@ class UserRelationsHelper
     /**
      * Insert user social links.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID
-     * @param array $links Array of ['network' => 'url'] pairs
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID
+     * @param  array  $links  Array of ['network' => 'url'] pairs
      * @return array Array of inserted link IDs
      */
     public static function createUserSocialLinks(Database $db, int $userId, array $links = []): array
@@ -74,11 +74,11 @@ class UserRelationsHelper
         $ids = [];
 
         foreach ($links as $network => $url) {
-            $db->query("
+            $db->query('
                 INSERT INTO user_social_links (user_id, network, url)
                 VALUES (?, ?, ?)
-            ", [$userId, $network, $url]);
-            
+            ', [$userId, $network, $url]);
+
             $ids[] = (int) $db->lastInsertId();
         }
 
@@ -88,9 +88,9 @@ class UserRelationsHelper
     /**
      * Insert user preferences.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID
-     * @param array $preferences Preference data
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID
+     * @param  array  $preferences  Preference data
      * @return int Preferences ID (user_id)
      */
     public static function createUserPreferences(Database $db, int $userId, array $preferences = []): int
@@ -105,7 +105,7 @@ class UserRelationsHelper
 
         $prefData = array_merge($defaults, $preferences);
 
-        $db->query("
+        $db->query('
             INSERT INTO user_preferences (
                 user_id, 
                 timezone, 
@@ -115,7 +115,7 @@ class UserRelationsHelper
                 default_post_visibility
             )
             VALUES (?, ?, ?, ?, ?, ?)
-        ", [
+        ', [
             $userId,
             $prefData['timezone'],
             $prefData['notify_comments'],
@@ -133,11 +133,11 @@ class UserRelationsHelper
      * Convenience method that creates profile, social links, and preferences
      * for a user in one call.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID (from UserFactory)
-     * @param array $profileData Optional profile overrides
-     * @param array $socialLinks Optional social links
-     * @param array $preferences Optional preferences overrides
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID (from UserFactory)
+     * @param  array  $profileData  Optional profile overrides
+     * @param  array  $socialLinks  Optional social links
+     * @param  array  $preferences  Optional preferences overrides
      * @return array{profileId: int, linkIds: array, preferencesId: int}
      */
     public static function createCompleteUserData(
@@ -160,14 +160,13 @@ class UserRelationsHelper
      * Verifies that PII has been replaced with anonymous values across
      * all user-related tables.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID
-     * @return void
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID
      */
     public static function assertUserAnonymized(Database $db, int $userId): void
     {
         // Check core user record
-        $stmt = $db->query("SELECT email, username, first_name, last_name, password FROM users WHERE id = ?", [$userId]);
+        $stmt = $db->query('SELECT email, username, first_name, last_name, password FROM users WHERE id = ?', [$userId]);
         $user = $stmt->fetch();
 
         expect($user['email'])->toStartWith('deleted_user_');
@@ -177,7 +176,7 @@ class UserRelationsHelper
         expect($user['password'])->toBe('');
 
         // Check profile anonymization
-        $stmt = $db->query("SELECT slug, bio, occupation, location, avatar_url FROM user_profiles WHERE user_id = ?", [$userId]);
+        $stmt = $db->query('SELECT slug, bio, occupation, location, avatar_url FROM user_profiles WHERE user_id = ?', [$userId]);
         $profile = $stmt->fetch();
 
         expect($profile['slug'])->toBe("deleted_{$userId}");
@@ -187,12 +186,12 @@ class UserRelationsHelper
         expect($profile['avatar_url'])->toBeNull();
 
         // Check social links deleted
-        $stmt = $db->query("SELECT COUNT(*) as count FROM user_social_links WHERE user_id = ?", [$userId]);
+        $stmt = $db->query('SELECT COUNT(*) as count FROM user_social_links WHERE user_id = ?', [$userId]);
         $count = $stmt->fetch()['count'];
         expect($count)->toBe(0);
 
         // Check preferences reset to defaults
-        $stmt = $db->query("SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?", [$userId]);
+        $stmt = $db->query('SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?', [$userId]);
         $prefs = $stmt->fetch();
 
         expect($prefs['timezone'])->toBe('UTC');
@@ -203,13 +202,14 @@ class UserRelationsHelper
     /**
      * Get social link count for a user.
      *
-     * @param Database $db Database connection
-     * @param int $userId User ID
+     * @param  Database  $db  Database connection
+     * @param  int  $userId  User ID
      * @return int Number of social links
      */
     public static function getSocialLinkCount(Database $db, int $userId): int
     {
-        $stmt = $db->query("SELECT COUNT(*) as count FROM user_social_links WHERE user_id = ?", [$userId]);
+        $stmt = $db->query('SELECT COUNT(*) as count FROM user_social_links WHERE user_id = ?', [$userId]);
+
         return (int) $stmt->fetch()['count'];
     }
 }

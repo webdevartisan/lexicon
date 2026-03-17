@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Framework\Core\Router;
 
 $router = new Router();
@@ -173,7 +175,7 @@ $router->group([
     $r->add('/email-test/render-html', ['controller' => 'EmailTestController', 'action' => 'renderHtml', 'method' => 'GET']);
     $r->add('/email-test/send-test', ['controller' => 'EmailTestController', 'action' => 'sendTest', 'method' => 'POST']);
     $r->add('/email-test/test-config', ['controller' => 'EmailTestController', 'action' => 'testConfig', 'method' => 'POST']);
-    
+
     // Comment moderation custom routes (before generic patterns)
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
 

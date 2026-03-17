@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
-use Framework\Interfaces\SessionAwareInterface;
-use Framework\Session;
 use Framework\BaseController;
 use Framework\Core\Response;
 use Framework\Exceptions\UnauthorizedException;
+use Framework\Interfaces\SessionAwareInterface;
+use Framework\Session;
 use Framework\Validation\DatabaseValidator;
 
 /**
@@ -34,15 +36,14 @@ abstract class AppController extends BaseController implements SessionAwareInter
 
     // ============== Authentication Helpers ==============
 
-
     /**
      * Require specific permission or throw 403.
      *
      * @deprecated Use Gate::authorize() instead for proper policy-based authorization
      * @see Gate::authorize()
      *
-     * @param string $permission Permission name to check
-     * @return void
+     * @param  string  $permission  Permission name to check
+     *
      * @throws UnauthorizedException If user lacks the permission
      */
     protected function requirePermission(string $permission): void
@@ -62,8 +63,8 @@ abstract class AppController extends BaseController implements SessionAwareInter
      * @deprecated Use Gate::authorize() with policies or 'role:name' middleware instead
      * @see Gate::authorize()
      *
-     * @param string|string[] $roles Role name(s) to check
-     * @return void
+     * @param  string|string[]  $roles  Role name(s) to check
+     *
      * @throws UnauthorizedException If user has none of the specified roles
      */
     protected function requireRole(string|array $roles): void
@@ -86,9 +87,8 @@ abstract class AppController extends BaseController implements SessionAwareInter
      *
      * We use the Session service to ensure proper session handling.
      *
-     * @param string $type Message type: 'success', 'error', 'warning', 'info'
-     * @param string $message The message content
-     * @return void
+     * @param  string  $type  Message type: 'success', 'error', 'warning', 'info'
+     * @param  string  $message  The message content
      */
     protected function flash(string $type, string $message): void
     {
@@ -119,33 +119,31 @@ abstract class AppController extends BaseController implements SessionAwareInter
 
     /**
      * Validate request and return to previous page with errors on failure.
-     * 
-     * @param array<string,string|array<string>> $rules
-     * @param array<string,string> $messages Custom error messages
+     *
+     * @param  array<string,string|array<string>>  $rules
+     * @param  array<string,string>  $messages  Custom error messages
      * @return DatabaseValidator|Response Validator instance if passes, Response if fails
      */
     protected function validateOrFail(array $rules, array $messages = []): DatabaseValidator|Response
     {
         $validator = $this->validate($rules, $messages);
-        
+
         if ($validator->fails()) {
             // Just throw - middleware will catch and redirect
             throw new \Framework\Exceptions\ValidationException($validator);
         }
-        
+
         return $validator;
     }
 
     /**
      * Redirect back to previous page with old input preserved.
-     * 
-     * @return Response
      */
     protected function redirectBack(): Response
     {
         // Preserve old input for form repopulation
         $this->session->set('_old_input', $this->request->all());
-        
+
         // Redirect back to previous page
         $referer = $this->request->header('Referer') ?? '/';
 
@@ -153,7 +151,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
         if ($referer && !str_starts_with($referer, base_url())) {
             $referer = '/';
         }
-        
+
         // Return Response instead of sending and exiting
         return $this->redirect($referer);
     }
@@ -163,8 +161,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
     /**
      * Render 404 Not Found page.
      *
-     * @param string $message Error message to display
-     * @return Response
+     * @param  string  $message  Error message to display
      */
     protected function notFound(string $message = 'Page not found'): Response
     {
@@ -176,8 +173,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
     /**
      * Render 403 Forbidden page.
      *
-     * @param string $message Error message to display
-     * @return Response
+     * @param  string  $message  Error message to display
      */
     protected function forbidden(string $message = 'Access denied'): Response
     {
@@ -197,7 +193,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
      * We convert database format [['network' => 'twitter', 'url' => '...']]
      * to form input format ['twitter' => '...', 'github' => '...'].
      *
-     * @param array<int, array{network: string, url: string}> $links Social links from database
+     * @param  array<int, array{network: string, url: string}>  $links  Social links from database
      * @return array<string, string> Flat array keyed by network name
      */
     protected function linksToFlatInputs(array $links): array

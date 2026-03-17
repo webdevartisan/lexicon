@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 /**
  * Database Configuration
- *
  */
 return [
     'host' => $_ENV['DB_HOST'],

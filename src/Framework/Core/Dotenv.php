@@ -32,14 +32,14 @@ class Dotenv
 {
     /**
      * Maximum allowed .env file size (1MB)
-     * 
+     *
      * Enforced to prevent memory exhaustion attacks
      */
     private const MAX_FILE_SIZE = 1048576;
 
     /**
      * Maximum variable expansion depth
-     * 
+     *
      * Used to detect and prevent circular reference infinite loops
      */
     private const MAX_EXPANSION_DEPTH = 10;
@@ -110,14 +110,14 @@ class Dotenv
     {
         if (preg_match('#(\.\./|\.\.\\\\)#', $path)) {
             throw new \InvalidArgumentException(
-                "Invalid .env path: directory traversal detected"
+                'Invalid .env path: directory traversal detected'
             );
         }
 
         $realPath = realpath(dirname($path));
         if ($realPath === false) {
             throw new \InvalidArgumentException(
-                "Invalid .env path: directory does not exist"
+                'Invalid .env path: directory does not exist'
             );
         }
     }
@@ -149,14 +149,16 @@ class Dotenv
 
         if ($parsed === null) {
             // Log but don't fail entire process for invalid lines
-            error_log("Invalid .env line " . ($lineNumber + 1) . ": {$line}");
+            error_log('Invalid .env line '.($lineNumber + 1).": {$line}");
+
             return;
         }
 
         [$name, $value] = $parsed;
 
         if (!$this->isValidKey($name)) {
-            error_log("Invalid .env key on line " . ($lineNumber + 1) . ": {$name}");
+            error_log('Invalid .env key on line '.($lineNumber + 1).": {$name}");
+
             return;
         }
 
@@ -326,7 +328,7 @@ class Dotenv
         // Prevent infinite loops from circular variable references
         if ($this->expansionDepth >= self::MAX_EXPANSION_DEPTH) {
             throw new \RuntimeException(
-                "Circular reference detected in environment variable expansion"
+                'Circular reference detected in environment variable expansion'
             );
         }
 
@@ -334,11 +336,13 @@ class Dotenv
 
         $value = preg_replace_callback('/\$\{([A-Z0-9_]+)\}/', function ($matches) {
             $varName = $matches[1];
+
             return $_ENV[$varName] ?? '';
         }, $value);
 
         $value = preg_replace_callback('/\$([A-Z0-9_]+)\b/', function ($matches) {
             $varName = $matches[1];
+
             return $_ENV[$varName] ?? '';
         }, $value);
 
@@ -426,8 +430,8 @@ class Dotenv
         if (strlen($value) >= 2) {
             $firstChar = $value[0];
             $lastChar = $value[strlen($value) - 1];
-            
-            if (($firstChar === '"' && $lastChar === '"') || 
+
+            if (($firstChar === '"' && $lastChar === '"') ||
                 ($firstChar === "'" && $lastChar === "'")) {
                 return substr($value, 1, -1);
             }
@@ -438,6 +442,7 @@ class Dotenv
             if (str_contains($value, '.') || stripos($value, 'e') !== false) {
                 return (float) $value;
             }
+
             return (int) $value;
         }
 
@@ -493,6 +498,7 @@ class Dotenv
 
         if (is_string($value)) {
             $lower = strtolower($value);
+
             return in_array($lower, ['true', '(true)', '1', 'yes', 'on'], true);
         }
 
@@ -509,7 +515,7 @@ class Dotenv
     public static function getInt(string $key, int $default = 0): int
     {
         $value = self::get($key);
-        
+
         return $value === null ? $default : (int) $value;
     }
 
@@ -523,7 +529,7 @@ class Dotenv
     public static function getFloat(string $key, float $default = 0.0): float
     {
         $value = self::get($key);
-        
+
         return $value === null ? $default : (float) $value;
     }
 }

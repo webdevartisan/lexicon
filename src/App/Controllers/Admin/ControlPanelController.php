@@ -16,7 +16,7 @@ class ControlPanelController extends AppController
     public function __construct(
         private PostModel $posts,
         private CommentModel $comments,
-        private UserModel $users, 
+        private UserModel $users,
         private CacheManagementService $cacheService
     ) {}
 
@@ -34,7 +34,7 @@ class ControlPanelController extends AppController
         // $recentComments = $this->comments->latest(5);
 
         // fetch cache statistics for the control panel overview.
-        //$cacheStats = cache()->stats();
+        // $cacheStats = cache()->stats();
         $cacheStats = $this->cacheService->getStats();
 
         return $this->view('controlpanel.index', [

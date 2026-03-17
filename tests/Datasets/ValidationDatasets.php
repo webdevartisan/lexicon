@@ -6,7 +6,6 @@ declare(strict_types=1);
  * Validation edge cases for comprehensive testing.
  * We test boundary conditions and attack vectors.
  */
-
 dataset('xss_payloads', [
     'script tag' => '<script>alert("XSS")</script>',
     'img onerror' => '<img src=x onerror=alert(1)>',
@@ -27,5 +26,5 @@ dataset('unicode_edge_cases', [
     'emoji' => '👨‍💻 Test User 🚀',
     'rtl override' => "\u{202E}Reversed",
     'zero width' => "Test\u{200B}User",
-    'combining chars' => "é́́́́",
+    'combining chars' => 'é́́́́',
 ]);

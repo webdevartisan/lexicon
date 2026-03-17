@@ -6,7 +6,7 @@ namespace Tests\Fixtures\Container;
 
 /**
  * Class that depends on SimpleClass.
- * 
+ *
  * We use this to verify the container can resolve and inject dependencies automatically.
  */
 class ClassWithDependency

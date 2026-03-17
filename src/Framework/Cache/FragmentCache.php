@@ -17,6 +17,7 @@ class FragmentCache
     private ?string $currentLocale = null;
 
     private bool $enabled;
+
     private bool $debug;
 
     public function __construct(CacheService $cache)
@@ -148,7 +149,7 @@ class FragmentCache
             if ($this->debug) {
                 $sizeKb = strlen($cached) / 1024;
                 error_log(sprintf(
-                    "Fragment cache HIT: %s (%.2f KB)",
+                    'Fragment cache HIT: %s (%.2f KB)',
                     $cacheKey,
                     $sizeKb
                 ));
@@ -176,7 +177,7 @@ class FragmentCache
             if ($this->debug) {
                 $sizeKb = strlen($result) / 1024;
                 error_log(sprintf(
-                    "Fragment cached: %s (%.2f KB, TTL: %ds)",
+                    'Fragment cached: %s (%.2f KB, TTL: %ds)',
                     $cacheKey,
                     $sizeKb,
                     $ttl
@@ -188,6 +189,7 @@ class FragmentCache
         if ($this->debug) {
             error_log("Fragment cache SKIP (non-string result): {$cacheKey}");
         }
+
         return '';
     }
 

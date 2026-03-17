@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Models\BlogModel;
@@ -128,7 +130,7 @@ class BlogController extends AppController
         // Post
         $post = $this->postModel->findBySlug($postSlug);
         if (!$post) {
-           throw new PageNotFoundException('Post not be found', 404);
+            throw new PageNotFoundException('Post not be found', 404);
         }
 
         if ($post['status'] !== 'published') {

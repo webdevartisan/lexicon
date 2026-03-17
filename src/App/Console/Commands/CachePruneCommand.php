@@ -20,8 +20,8 @@ use Framework\Interfaces\TemplateViewerInterface;
 class CachePruneCommand
 {
     /**
-     * @param CacheService     $cache    HTTP response / fragment cache service.
-     * @param TemplateViewerInterface $renderer Template renderer with compiled view management.
+     * @param  CacheService  $cache  HTTP response / fragment cache service.
+     * @param  TemplateViewerInterface  $renderer  Template renderer with compiled view management.
      */
     public function __construct(
         private CacheService $cache,
@@ -47,7 +47,7 @@ class CachePruneCommand
             // ── Response / fragment cache ─────────────────────────────
             $statsBefore = $this->cache->stats();
             echo "Response cache before: {$statsBefore['total_files']} total, "
-               . "{$statsBefore['expired_files']} expired\n";
+               ."{$statsBefore['expired_files']} expired\n";
 
             $deletedResponse = $this->cache->pruneExpired();
 
@@ -65,7 +65,7 @@ class CachePruneCommand
             echo "  Response cache  — deleted: {$deletedResponse} expired files\n";
             echo "  Compiled views  — deleted: {$deletedViews} orphaned files\n";
             echo "  Remaining response files: {$statsAfter['total_files']} "
-               . '(' . round($statsAfter['total_size_bytes'] / 1024 / 1024, 2) . " MB)\n";
+               .'('.round($statsAfter['total_size_bytes'] / 1024 / 1024, 2)." MB)\n";
 
             if ($statsAfter['files_over_limit'] > 0) {
                 echo "⚠ WARNING: {$statsAfter['files_over_limit']} response cache files over configured limit.\n";
@@ -77,6 +77,7 @@ class CachePruneCommand
         } catch (\Exception $e) {
             echo "✗ Error during cache pruning: {$e->getMessage()}\n";
             echo "Stack trace:\n{$e->getTraceAsString()}\n";
+
             return 1;
         }
     }

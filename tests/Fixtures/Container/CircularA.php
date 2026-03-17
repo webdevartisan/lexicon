@@ -6,7 +6,7 @@ namespace Tests\Fixtures\Container;
 
 /**
  * CircularA depends on CircularB.
- * 
+ *
  * We use this pair to test circular dependency detection.
  */
 class CircularA

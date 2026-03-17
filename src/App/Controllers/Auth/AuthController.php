@@ -39,7 +39,7 @@ final class AuthController extends AppController
 
     /**
      * Handle login form submission.
-     * 
+     *
      * Validates basic input, delegates authentication to the Auth service,
      * and returns the appropriate response.
      */
@@ -47,25 +47,25 @@ final class AuthController extends AppController
     {
         // Enforce CSRF token for login POST
         csrf()->assertValid($this->request->post['_token'] ?? null);
-        
+
         // Safely read and normalize input
         $email = trim((string) ($this->request->post['email'] ?? ''));
         $password = (string) ($this->request->post['password'] ?? '');
         $ip = $this->request->ip();
-        
+
         // Basic validation before attempting login
         $errors = [];
-        
+
         if ($email === '') {
             $errors[] = 'Email is required.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Please enter a valid email address.';
         }
-        
+
         if ($password === '') {
             $errors[] = 'Password is required.';
         }
-        
+
         if ($errors !== []) {
             // Re-render the form with validation errors and keep the email field filled
             return $this->view('auth.login.index', [
@@ -85,12 +85,13 @@ final class AuthController extends AppController
             $wait = $limiter->availableIn($ip, $email);
 
             if ($wait > 120) {
-                $wait = ceil($wait / 60) . ' minutes';
+                $wait = ceil($wait / 60).' minutes';
             } else {
-                $wait = $wait . ' seconds';
+                $wait = $wait.' seconds';
             }
 
             $this->flash('error', "Too many login attempts. Try again in {$wait}.");
+
             return $this->redirect('/login');
         }
 
@@ -103,10 +104,10 @@ final class AuthController extends AppController
 
             // Retrieve intended URL with fallback to dashboard
             $intendedUrl = $this->session->get('intended_url', '/dashboard');
-            
+
             // Clear the stored URL
             $this->session->remove('intended_url');
-            
+
             return $this->redirect($intendedUrl);
         }
 
@@ -118,7 +119,7 @@ final class AuthController extends AppController
 
         // Authentication failed - flash error and redirect back
         $this->flash('error', 'Invalid credentials');
-        
+
         // Return Response
         return $this->redirectBack();
     }

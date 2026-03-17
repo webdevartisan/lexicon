@@ -6,9 +6,6 @@ declare(strict_types=1);
  * Reusable datasets for user testing.
  * We define common test scenarios to eliminate duplication.
  */
-
-use function Pest\Faker\fake;
-
 dataset('invalid_emails', [
     'missing @' => 'notanemail',
     'missing domain' => 'test@',

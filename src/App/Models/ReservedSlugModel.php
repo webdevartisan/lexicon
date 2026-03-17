@@ -18,7 +18,7 @@ class ReservedSlugModel extends AppModel
     /**
      * Check if a normalized slug exists in reserved list.
      *
-     * @param string $slug Normalized slug to check
+     * @param  string  $slug  Normalized slug to check
      * @return bool True if reserved
      */
     public function isReserved(string $slug): bool
@@ -50,7 +50,7 @@ class ReservedSlugModel extends AppModel
      *
      * Slug should already be normalized before insertion.
      *
-     * @param string $slug Normalized slug to reserve
+     * @param  string  $slug  Normalized slug to reserve
      * @return bool True if inserted, false if already exists
      */
     public function add(string $slug): bool
@@ -64,7 +64,7 @@ class ReservedSlugModel extends AppModel
     /**
      * Remove a reserved slug.
      *
-     * @param string $slug Slug to unreserve
+     * @param  string  $slug  Slug to unreserve
      * @return bool True if removed, false if didn't exist
      */
     public function remove(string $slug): bool

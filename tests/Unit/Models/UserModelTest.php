@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 /**
  * Unit tests for UserModel business logic.
- * 
+ *
  * Mocks all database interactions to test model logic in complete isolation.
  * Verifies SQL construction, validation, and optimization without real database.
  */
 
 use App\Models\UserModel;
-use Framework\Database;
 use Faker\Factory as Faker;
+use Framework\Database;
 
 beforeEach(function () {
     $this->faker = Faker::create();
@@ -24,11 +24,11 @@ beforeEach(function () {
 
 /**
  * Verifies that updateById rejects invalid column names before database interaction.
- * 
+ *
  * Ensures SQL injection prevention through column name validation.
  */
 test('updateById validates column names before database call', function () {
-    expect(fn() => $this->userModel->updateById(
+    expect(fn () => $this->userModel->updateById(
         $this->faker->numberBetween(1, 1000),
         ['invalid-column!' => 'value']
     ))->toThrow(Exception::class, 'Invalid column name');
@@ -39,13 +39,13 @@ test('updateById validates column names before database call', function () {
 
 /**
  * Tests that updateById blocks common SQL injection patterns in column names.
- * 
+ *
  * Uses invalid_column_names dataset to verify validation occurs before any database call.
  *
- * @param string $maliciousColumn SQL injection attempt pattern
+ * @param  string  $maliciousColumn  SQL injection attempt pattern
  */
 test('updateById rejects SQL injection attempts', function (string $maliciousColumn) {
-    expect(fn() => $this->userModel->updateById(
+    expect(fn () => $this->userModel->updateById(
         $this->faker->numberBetween(1, 1000),
         [$maliciousColumn => 'value']
     ))->toThrow(Exception::class);
@@ -57,7 +57,7 @@ test('updateById rejects SQL injection attempts', function (string $maliciousCol
 
 /**
  * Tests early return optimization for empty role arrays.
- * 
+ *
  * Verifies that insertUserRoles skips database operations when no roles provided.
  */
 test('insertUserRoles returns true for empty array without database call', function () {
@@ -75,7 +75,7 @@ test('insertUserRoles returns true for empty array without database call', funct
 
 /**
  * Verifies that softDelete constructs proper UPDATE SQL with NOW() function.
- * 
+ *
  * Tests SQL query structure and returns true when row is affected.
  */
 test('softDelete constructs correct SQL with timestamp', function () {
@@ -102,7 +102,7 @@ test('softDelete constructs correct SQL with timestamp', function () {
 
 /**
  * Tests that findByEmail query excludes soft-deleted users.
- * 
+ *
  * Verifies WHERE clause includes deleted_at IS NULL condition.
  */
 test('findByEmail excludes soft-deleted users in SQL query', function () {
@@ -134,7 +134,7 @@ test('findByEmail excludes soft-deleted users in SQL query', function () {
 
 /**
  * Tests that findById excludes soft-deleted users in SQL query.
- * 
+ *
  * Verifies WHERE clause includes deleted_at IS NULL condition.
  */
 test('findById excludes soft-deleted users in SQL query', function () {
@@ -164,7 +164,7 @@ test('findById excludes soft-deleted users in SQL query', function () {
 
 /**
  * Tests that findAll excludes soft-deleted users in SQL query.
- * 
+ *
  * Verifies WHERE clause includes deleted_at IS NULL condition.
  */
 test('findAll excludes soft-deleted users in SQL query', function () {
@@ -189,7 +189,7 @@ test('findAll excludes soft-deleted users in SQL query', function () {
 
 /**
  * Tests that restoreDeleted constructs proper SQL to clear deleted_at.
- * 
+ *
  * Verifies SQL sets deleted_at to NULL only for soft-deleted users.
  */
 test('restoreDeleted constructs correct SQL to clear timestamp', function () {
@@ -216,7 +216,7 @@ test('restoreDeleted constructs correct SQL to clear timestamp', function () {
 
 /**
  * Tests that getUserRoles constructs proper JOIN query.
- * 
+ *
  * Verifies SQL joins user_roles with roles table to fetch role slugs.
  */
 test('getUserRoles constructs correct JOIN query', function () {
@@ -247,7 +247,7 @@ test('getUserRoles constructs correct JOIN query', function () {
 
 /**
  * Tests that getUserRoles returns empty array when no roles found.
- * 
+ *
  * Verifies graceful handling of users without role assignments.
  */
 test('getUserRoles returns empty array when no roles found', function () {
@@ -271,7 +271,7 @@ test('getUserRoles returns empty array when no roles found', function () {
 
 /**
  * Tests that getUserPermissions constructs complex JOIN query.
- * 
+ *
  * Verifies SQL joins through user_roles, role_permissions, and permissions tables.
  */
 test('getUserPermissions constructs correct multi-JOIN query', function () {
@@ -303,7 +303,7 @@ test('getUserPermissions constructs correct multi-JOIN query', function () {
 
 /**
  * Tests that updatePasswordHashById constructs proper UPDATE query.
- * 
+ *
  * Verifies SQL updates only password field with proper parameter binding.
  */
 test('updatePasswordHashById constructs correct SQL', function () {
@@ -329,7 +329,7 @@ test('updatePasswordHashById constructs correct SQL', function () {
 
 /**
  * Tests that countPosts constructs correct COUNT query.
- * 
+ *
  * Verifies SQL counts posts authored by specific user.
  */
 test('countPosts constructs correct COUNT query', function () {
@@ -359,7 +359,7 @@ test('countPosts constructs correct COUNT query', function () {
 
 /**
  * Tests that countBlogs constructs correct COUNT query.
- * 
+ *
  * Verifies SQL counts blogs owned by specific user.
  */
 test('countBlogs constructs correct COUNT query', function () {
@@ -389,7 +389,7 @@ test('countBlogs constructs correct COUNT query', function () {
 
 /**
  * Tests that countCommentsReceived constructs correct JOIN COUNT query.
- * 
+ *
  * Verifies SQL counts comments on user\'s posts via JOIN.
  */
 test('countCommentsReceived constructs correct JOIN COUNT query', function () {
@@ -420,7 +420,7 @@ test('countCommentsReceived constructs correct JOIN COUNT query', function () {
 
 /**
  * Tests that canDelete returns false when user has posts.
- * 
+ *
  * Verifies business rule preventing deletion of users with content.
  */
 test('canDelete returns false when user has posts', function () {
@@ -442,7 +442,7 @@ test('canDelete returns false when user has posts', function () {
 
 /**
  * Tests that canDelete returns true when user has no posts.
- * 
+ *
  * Verifies business rule allows deletion of users without content.
  */
 test('canDelete returns true when user has zero posts', function () {
@@ -464,7 +464,7 @@ test('canDelete returns true when user has zero posts', function () {
 
 /**
  * Tests that updateById returns true for empty data array.
- * 
+ *
  * Verifies early return optimization without database call.
  */
 test('updateById returns true for empty data without database call', function () {
@@ -482,7 +482,7 @@ test('updateById returns true for empty data without database call', function ()
 
 /**
  * Tests that updateById constructs dynamic UPDATE with positional parameters.
- * 
+ *
  * Verifies SQL builds correctly with multiple columns.
  */
 test('updateById constructs dynamic UPDATE with positional parameters', function () {
@@ -512,7 +512,7 @@ test('updateById constructs dynamic UPDATE with positional parameters', function
 
 /**
  * Tests that insertUserRoles executes multiple INSERT statements.
- * 
+ *
  * Verifies each role gets its own parameterized INSERT query.
  */
 test('insertUserRoles executes INSERT for each role', function () {
@@ -540,7 +540,7 @@ test('insertUserRoles executes INSERT for each role', function () {
 
 /**
  * Tests that updateUserRoles synchronizes role assignments correctly.
- * 
+ *
  * Verifies differential updates: delete removed roles, insert new roles.
  */
 test('updateUserRoles synchronizes roles with differential updates', function () {
@@ -595,38 +595,38 @@ test('updateUserRoles synchronizes roles with differential updates', function ()
 
 /**
  * Tests that countAdministrators constructs correct query without parameters.
- * 
+ *
  * Verifies SQL counts distinct active admin users.
  */
 test('countAdministrators constructs correct parameterless query', function () {
     $adminCount = $this->faker->numberBetween(1, 5);
-    
+
     $this->dbMock->shouldReceive('query')
         ->once()
         ->withArgs(function ($sql, $params = null) {
             $sqlValid = str_contains($sql, 'SELECT COUNT(DISTINCT u.id)')
                 && str_contains($sql, "r.role_slug = 'administrator'")
                 && str_contains($sql, 'u.deleted_at IS NULL');
-            
+
             // accept either no second param or empty array/null
             $paramsValid = $params === null || $params === [] || !isset($params);
-            
+
             return $sqlValid;
         })
         ->andReturn($this->stmtMock);
-    
+
     $this->stmtMock->shouldReceive('fetchColumn')
         ->once()
         ->andReturn($adminCount);
-    
+
     $result = $this->userModel->countAdministrators();
-    
+
     expect($result)->toBeInt()->toBe($adminCount);
 });
 
 /**
  * Tests that verifyPassword returns false for non-existent user.
- * 
+ *
  * Verifies password verification handles missing users gracefully.
  */
 test('verifyPassword returns false when user not found', function () {
@@ -650,7 +650,7 @@ test('verifyPassword returns false when user not found', function () {
 
 /**
  * Tests that verifyPassword validates correct password hash.
- * 
+ *
  * Verifies password_verify integration for authentication.
  */
 test('verifyPassword returns true for correct password', function () {
@@ -675,7 +675,7 @@ test('verifyPassword returns true for correct password', function () {
 
 /**
  * Tests that verifyPassword rejects incorrect password.
- * 
+ *
  * Verifies password_verify fails for wrong password.
  */
 test('verifyPassword returns false for incorrect password', function () {

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
-use Framework\Database;
 use App\Models\RoleModel;
 use App\Models\UserModel;
 use Framework\Core\Response;
+use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
 
 class UserController extends AppController

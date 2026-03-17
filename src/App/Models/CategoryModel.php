@@ -21,8 +21,8 @@ class CategoryModel extends AppModel
      * Invalidates blog listings since categories appear in sidebars,
      * filters, and navigation menus.
      *
-     * @param int|string $id Category identifier
-     * @param array $data Fields to update
+     * @param  int|string  $id  Category identifier
+     * @param  array  $data  Fields to update
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -42,7 +42,7 @@ class CategoryModel extends AppModel
      *
      * Invalidates all blog cache since posts in this category need updates.
      *
-     * @param int|string $id Category identifier
+     * @param  int|string  $id  Category identifier
      * @return bool True on success
      */
     public function delete(int|string $id): bool
@@ -60,7 +60,7 @@ class CategoryModel extends AppModel
     /**
      * Find a category by slug.
      *
-     * @param string $slug Category URL slug
+     * @param  string  $slug  Category URL slug
      * @return array|null Category data or null if not found
      */
     public function findBySlug(string $slug): ?array
@@ -69,6 +69,7 @@ class CategoryModel extends AppModel
         $stmt = $this->database->query($sql, [$slug]);
 
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         return $result ?: null;
     }
 
@@ -78,15 +79,17 @@ class CategoryModel extends AppModel
         $stmt = $this->database->query($sql, [$id]);
 
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         return $result ?: null;
     }
+
     /**
      * Get all published posts in this category.
      *
      * Cross-table query is pragmatic here since categories and posts
      * are tightly coupled in the domain model.
      *
-     * @param int $categoryId Category identifier
+     * @param  int  $categoryId  Category identifier
      * @return array List of published posts, newest first
      */
     public function posts(int $categoryId): array
@@ -95,7 +98,7 @@ class CategoryModel extends AppModel
                 WHERE category_id = ? 
                 AND status = 'published'
                 ORDER BY created_at DESC";
-        
+
         $stmt = $this->database->query($sql, [$categoryId]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -117,7 +120,7 @@ class CategoryModel extends AppModel
     /**
      * Create a new category.
      *
-     * @param array $data Category data (name, slug, description, etc.)
+     * @param  array  $data  Category data (name, slug, description, etc.)
      * @return bool|int Inserted category ID on success, false on failure
      */
     public function create(array $data): bool|int

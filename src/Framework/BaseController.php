@@ -23,8 +23,11 @@ use Framework\Validation\DatabaseValidator;
 abstract class BaseController
 {
     protected Request $request;
+
     protected Response $response;
+
     protected TemplateViewerInterface $viewer;
+
     /**
      * @var callable Factory function that creates DatabaseValidator instances
      */
@@ -33,8 +36,7 @@ abstract class BaseController
     /**
      * Inject the current Request.
      *
-     * @param Request $request The HTTP request instance
-     * @return void
+     * @param  Request  $request  The HTTP request instance
      */
     public function setRequest(Request $request): void
     {
@@ -44,8 +46,7 @@ abstract class BaseController
     /**
      * Inject a Response instance to be used by this controller.
      *
-     * @param Response $response The HTTP response instance
-     * @return void
+     * @param  Response  $response  The HTTP response instance
      */
     public function setResponse(Response $response): void
     {
@@ -55,8 +56,7 @@ abstract class BaseController
     /**
      * Inject the template viewer/renderer.
      *
-     * @param TemplateViewerInterface $viewer The template rendering engine
-     * @return void
+     * @param  TemplateViewerInterface  $viewer  The template rendering engine
      */
     public function setViewer(TemplateViewerInterface $viewer): void
     {
@@ -68,8 +68,7 @@ abstract class BaseController
      *
      * We use a factory closure so we can create validators with different data sets.
      *
-     * @param callable $factory Factory function that creates DatabaseValidator instances
-     * @return void
+     * @param  callable  $factory  Factory function that creates DatabaseValidator instances
      */
     public function setValidatorFactory(callable $factory): void
     {
@@ -81,8 +80,7 @@ abstract class BaseController
      *
      * We provide a fluent interface for validation in controllers.
      *
-     * @param array<string,mixed> $data Data to validate (defaults to all request data)
-     * @return DatabaseValidator
+     * @param  array<string,mixed>  $data  Data to validate (defaults to all request data)
      */
     protected function validator(array $data = []): DatabaseValidator
     {
@@ -96,8 +94,8 @@ abstract class BaseController
      *
      * We provide a convenience method that executes validation and returns the validator.
      *
-     * @param array<string, array<string>|string> $rules Validation rules
-     * @param array<string, string> $messages Custom error messages
+     * @param  array<string, array<string>|string>  $rules  Validation rules
+     * @param  array<string, string>  $messages  Custom error messages
      * @return DatabaseValidator The validator instance after validation runs
      */
     protected function validate(array $rules, array $messages = []): DatabaseValidator
@@ -113,8 +111,6 @@ abstract class BaseController
 
     /**
      * Convenience accessor for the current Request.
-     *
-     * @return Request
      */
     protected function request(): Request
     {
@@ -123,8 +119,6 @@ abstract class BaseController
 
     /**
      * Convenience accessor for the Response.
-     *
-     * @return Response
      */
     protected function response(): Response
     {
@@ -133,8 +127,6 @@ abstract class BaseController
 
     /**
      * Convenience accessor for the template viewer.
-     *
-     * @return TemplateViewerInterface
      */
     protected function viewer(): TemplateViewerInterface
     {
@@ -147,9 +139,8 @@ abstract class BaseController
      * We set the Content-Type header and delegate rendering to the template viewer.
      * The TemplateViewerInterface handles escaping to prevent XSS.
      *
-     * @param string|array<string,mixed>|null $template Template name or data array
-     * @param array<string,mixed> $data Template variables
-     * @return Response
+     * @param  string|array<string,mixed>|null  $template  Template name or data array
+     * @param  array<string,mixed>  $data  Template variables
      */
     public function view(string|array|null $template = null, array $data = []): Response
     {
@@ -173,9 +164,8 @@ abstract class BaseController
      * We use Response::redirect(), which normalizes localized URLs
      * and sets the Location header with the appropriate status code.
      *
-     * @param string $url Target URL
-     * @param int $status HTTP redirect status code (default 302 Found)
-     * @return Response
+     * @param  string  $url  Target URL
+     * @param  int  $status  HTTP redirect status code (default 302 Found)
      */
     public function redirect(string $url, int $status = 302): Response
     {
@@ -189,9 +179,9 @@ abstract class BaseController
      *
      * We use Response::setJson() to set Content-Type and encode payload.
      *
-     * @param array<string,mixed> $data Data to encode as JSON
-     * @param int $status HTTP status code (default 200 OK)
-     * @return Response
+     * @param  array<string,mixed>  $data  Data to encode as JSON
+     * @param  int  $status  HTTP status code (default 200 OK)
+     *
      * @throws \JsonException If JSON encoding fails
      */
     public function json(array $data, int $status = 200): Response
@@ -207,16 +197,16 @@ abstract class BaseController
      *
      * We wrap the data in a consistent success envelope for API clients.
      *
-     * @param mixed $data The payload to return
-     * @param int $statusCode HTTP status code (default 200 OK)
-     * @return Response
+     * @param  mixed  $data  The payload to return
+     * @param  int  $statusCode  HTTP status code (default 200 OK)
+     *
      * @throws \JsonException If JSON encoding fails
      */
     public function jsonSuccess(mixed $data, int $statusCode = 200): Response
     {
         return $this->json([
             'success' => true,
-            'data' => $data
+            'data' => $data,
         ], $statusCode);
     }
 
@@ -225,16 +215,16 @@ abstract class BaseController
      *
      * We wrap the error in a consistent envelope for API clients.
      *
-     * @param string $message Error message to return
-     * @param int $statusCode HTTP status code (default 400 Bad Request)
-     * @return Response
+     * @param  string  $message  Error message to return
+     * @param  int  $statusCode  HTTP status code (default 400 Bad Request)
+     *
      * @throws \JsonException If JSON encoding fails
      */
     public function jsonError(string $message, int $statusCode = 400): Response
     {
         return $this->json([
             'success' => false,
-            'error' => $message
+            'error' => $message,
         ], $statusCode);
     }
 }

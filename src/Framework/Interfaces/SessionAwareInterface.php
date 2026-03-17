@@ -17,8 +17,7 @@ interface SessionAwareInterface
     /**
      * Set the session service.
      *
-     * @param Session $session The session service instance
-     * @return void
+     * @param  Session  $session  The session service instance
      */
     public function setSession(Session $session): void;
 }

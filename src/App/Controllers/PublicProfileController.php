@@ -26,8 +26,9 @@ final class PublicProfileController extends AppController
      * Returns 404 for both nonexistent and private profiles to avoid
      * information disclosure about profile existence or privacy status.
      *
-     * @param string $slug Public profile slug from URL
+     * @param  string  $slug  Public profile slug from URL
      * @return Response Rendered profile view
+     *
      * @throws \Framework\Exceptions\NotFoundException If profile not found or not public
      */
     public function show(string $slug): Response

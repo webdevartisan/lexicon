@@ -101,6 +101,7 @@ class SettingModel extends AppModel
         // invalidate cache after updating so next get() fetches fresh data
         if ($rowCount >= 0) {
             $this->cache = null;
+
             return true;
         }
 

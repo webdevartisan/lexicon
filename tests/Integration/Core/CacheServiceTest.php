@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Framework\Cache\CacheService;
 use Faker\Factory as Faker;
+use Framework\Cache\CacheService;
 
 /**
  * CacheService Integration Test Suite
@@ -19,27 +19,25 @@ use Faker\Factory as Faker;
  * - Index persistence across operations
  *
  * Test directories are isolated per-test and cleaned up automatically.
- * 
+ *
  * @property string $testCachePath Test cache directory path
  * @property CacheService $cache Cache service instance under test
  * @property \Faker\Generator $faker Faker instance for generating test data
- * 
  */
-
 beforeEach(function () {
     $this->faker = Faker::create();
-    
+
     // Use project storage for test cache (Laravel-style)
-    $baseTestPath = ROOT_PATH . '/storage/cache/tests';
-    
+    $baseTestPath = ROOT_PATH.'/storage/cache/tests';
+
     // Ensure base test directory exists
     if (!is_dir($baseTestPath)) {
         mkdir($baseTestPath, 0755, true);
     }
-    
+
     // Create unique cache directory for each test to prevent interference
-    $this->testCachePath = $baseTestPath . '/cache_' . uniqid();
-    
+    $this->testCachePath = $baseTestPath.'/cache_'.uniqid();
+
     $this->cache = new CacheService(
         cachePath: $this->testCachePath,
         enabled: true,
@@ -52,7 +50,7 @@ beforeEach(function () {
 afterEach(function () {
     // Clean up test cache directory after each test
     if (is_dir($this->testCachePath)) {
-        $files = glob($this->testCachePath . '/*');
+        $files = glob($this->testCachePath.'/*');
         foreach ($files as $file) {
             if (is_file($file)) {
                 unlink($file);
@@ -64,10 +62,10 @@ afterEach(function () {
 
 afterAll(function () {
     // Remove base test directory once all tests complete
-    $base = ROOT_PATH . '/storage/cache/tests';
+    $base = ROOT_PATH.'/storage/cache/tests';
 
     if (is_dir($base)) {
-        foreach (glob($base . '/*') as $dir) {
+        foreach (glob($base.'/*') as $dir) {
             if (is_dir($dir)) {
                 rmdir($dir);
             }
@@ -88,9 +86,9 @@ afterAll(function () {
 test('set and get cache entry successfully', function () {
     $key = $this->faker->slug();
     $content = $this->faker->text(200);
-    
+
     $result = $this->cache->set($key, $content, 3600);
-    
+
     expect($result)->toBeTrue();
     expect($this->cache->get($key))->toBe($content);
 });
@@ -102,7 +100,7 @@ test('set and get cache entry successfully', function () {
  */
 test('get returns null for non-existent key', function () {
     $nonExistentKey = $this->faker->uuid();
-    
+
     expect($this->cache->get($nonExistentKey))->toBeNull();
 });
 
@@ -111,9 +109,9 @@ test('get returns null for non-existent key', function () {
  */
 test('has returns true for existing key', function () {
     $key = $this->faker->slug();
-    
+
     $this->cache->set($key, $this->faker->sentence(), 3600);
-    
+
     expect($this->cache->has($key))->toBeTrue();
 });
 
@@ -131,12 +129,12 @@ test('has returns false for non-existent key', function () {
  */
 test('delete removes cache entry', function () {
     $key = $this->faker->slug();
-    
+
     $this->cache->set($key, $this->faker->text(), 3600);
     expect($this->cache->has($key))->toBeTrue();
-    
+
     $result = $this->cache->delete($key);
-    
+
     expect($result)->toBeTrue();
     expect($this->cache->has($key))->toBeFalse();
 });
@@ -148,7 +146,7 @@ test('delete removes cache entry', function () {
  */
 test('delete returns true for non-existent key', function () {
     $neverExisted = $this->faker->uuid();
-    
+
     expect($this->cache->delete($neverExisted))->toBeTrue();
 });
 
@@ -159,12 +157,12 @@ test('delete returns true for non-existent key', function () {
  */
 test('disabled cache does not store data', function () {
     $disabledCache = new CacheService(
-        cachePath: $this->testCachePath . '_disabled',
+        cachePath: $this->testCachePath.'_disabled',
         enabled: false
     );
-    
+
     $result = $disabledCache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     expect($result)->toBeFalse();
     expect($disabledCache->get($this->faker->slug()))->toBeNull();
 });
@@ -183,14 +181,14 @@ test('deletePattern with wildcard prefix matches correctly', function () {
     $userId2 = $this->faker->uuid();
     $userId3 = $this->faker->uuid();
     $userId4 = $this->faker->uuid();
-    
+
     $this->cache->set("{$userId1}:GET:/blogs", $this->faker->sentence(), 3600);
     $this->cache->set("{$userId2}:GET:/blogs/popular", $this->faker->sentence(), 3600);
     $this->cache->set("{$userId3}:GET:/posts", $this->faker->paragraph(), 3600);
     $this->cache->set("{$userId4}:GET:/users", $this->faker->paragraph(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('*:GET:/blogs*');
-    
+
     // Only blog routes should be deleted
     expect($deleted)->toBe(2)
         ->and($this->cache->get("{$userId1}:GET:/blogs"))->toBeNull()
@@ -209,9 +207,9 @@ test('deletePattern with wildcard suffix matches correctly', function () {
     $this->cache->set('en:GET:/about', $this->faker->sentence(), 3600);
     $this->cache->set('fr:GET:/home', $this->faker->sentence(), 3600);
     $this->cache->set('de:GET:/home', $this->faker->sentence(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('en:*');
-    
+
     expect($deleted)->toBe(2)
         ->and($this->cache->get('en:GET:/home'))->toBeNull()
         ->and($this->cache->get('en:GET:/about'))->toBeNull()
@@ -229,14 +227,14 @@ test('deletePattern with middle wildcard matches correctly', function () {
     $sessionId2 = $this->faker->uuid();
     $sessionId3 = $this->faker->uuid();
     $cacheId = $this->faker->uuid();
-    
+
     $this->cache->set("session:{$sessionId1}:data", $this->faker->text(), 3600);
     $this->cache->set("session:{$sessionId2}:data", $this->faker->text(), 3600);
     $this->cache->set("session:{$sessionId3}:meta", $this->faker->text(), 3600);
     $this->cache->set("cache:{$cacheId}:data", $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('session:*:data');
-    
+
     // Only session data entries (not meta, not cache prefix)
     expect($deleted)->toBe(2)
         ->and($this->cache->get("session:{$sessionId1}:data"))->toBeNull()
@@ -252,12 +250,12 @@ test('deletePattern with middle wildcard matches correctly', function () {
  */
 test('deletePattern with exact match deletes single entry', function () {
     $baseKey = $this->faker->slug();
-    
+
     $this->cache->set($baseKey, $this->faker->text(), 3600);
     $this->cache->set("{$baseKey}2", $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern($baseKey);
-    
+
     expect($deleted)->toBe(1)
         ->and($this->cache->get($baseKey))->toBeNull()
         ->and($this->cache->get("{$baseKey}2"))->not->toBeNull();
@@ -268,9 +266,9 @@ test('deletePattern with exact match deletes single entry', function () {
  */
 test('deletePattern with no matches returns zero', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('non:matching:*');
-    
+
     expect($deleted)->toBe(0);
 });
 
@@ -282,12 +280,12 @@ test('deletePattern with no matches returns zero', function () {
 test('deletePattern is case-insensitive', function () {
     $id1 = $this->faker->randomNumber();
     $id2 = $this->faker->randomNumber();
-    
+
     $this->cache->set("User:Profile:{$id1}", $this->faker->text(), 3600);
     $this->cache->set("user:settings:{$id2}", $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('user:*');
-    
+
     // Both mixed-case and lowercase keys should match
     expect($deleted)->toBe(2)
         ->and($this->cache->get("User:Profile:{$id1}"))->toBeNull()
@@ -303,13 +301,13 @@ test('deletePattern with asterisk only clears all cache', function () {
     $key1 = $this->faker->slug();
     $key2 = $this->faker->slug();
     $key3 = $this->faker->slug();
-    
+
     $this->cache->set($key1, $this->faker->text(), 3600);
     $this->cache->set($key2, $this->faker->text(), 3600);
     $this->cache->set($key3, $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('*');
-    
+
     expect($deleted)->toBe(3)
         ->and($this->cache->get($key1))->toBeNull()
         ->and($this->cache->get($key2))->toBeNull()
@@ -325,13 +323,13 @@ test('deletePattern handles special characters safely', function () {
     $id1 = $this->faker->randomNumber();
     $id2 = $this->faker->randomNumber();
     $id3 = $this->faker->randomNumber();
-    
+
     $this->cache->set("blog:post-{$id1}", $this->faker->text(), 3600);
     $this->cache->set("blog:post_{$id2}", $this->faker->text(), 3600);
     $this->cache->set("blog:page.{$id3}", $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('blog:post-*');
-    
+
     // Only hyphen variant should match
     expect($deleted)->toBe(1)
         ->and($this->cache->get("blog:post-{$id1}"))->toBeNull()
@@ -348,17 +346,17 @@ test('deletePattern with overlapping patterns works correctly', function () {
     $blogId = $this->faker->randomNumber();
     $pageId = $this->faker->randomNumber();
     $productId = $this->faker->randomNumber();
-    
+
     $this->cache->set("blog:post:{$blogId}", $this->faker->text(), 3600);
     $this->cache->set("blog:page:{$pageId}", $this->faker->text(), 3600);
     $this->cache->set("shop:product:{$productId}", $this->faker->text(), 3600);
-    
+
     $deleted1 = $this->cache->deletePattern('blog:*');
     expect($deleted1)->toBe(2);
-    
+
     $deleted2 = $this->cache->deletePattern('shop:*');
     expect($deleted2)->toBe(1);
-    
+
     expect($this->cache->get("blog:post:{$blogId}"))->toBeNull()
         ->and($this->cache->get("shop:product:{$productId}"))->toBeNull();
 });
@@ -368,10 +366,10 @@ test('deletePattern with overlapping patterns works correctly', function () {
  */
 test('deletePattern on disabled cache returns zero', function () {
     $disabledCache = new CacheService(
-        cachePath: $this->testCachePath . '_disabled',
+        cachePath: $this->testCachePath.'_disabled',
         enabled: false
     );
-    
+
     expect($disabledCache->deletePattern('*'))->toBe(0);
 });
 
@@ -387,9 +385,9 @@ test('deletePattern on disabled cache returns zero', function () {
 test('cache index tracks new entries', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     $stats = $this->cache->stats();
-    
+
     expect($stats['index_entries'])->toBe(2);
 });
 
@@ -399,14 +397,14 @@ test('cache index tracks new entries', function () {
 test('cache index removes deleted entries', function () {
     $key1 = $this->faker->slug();
     $key2 = $this->faker->slug();
-    
+
     $this->cache->set($key1, $this->faker->text(), 3600);
     $this->cache->set($key2, $this->faker->text(), 3600);
-    
+
     $this->cache->delete($key1);
-    
+
     $stats = $this->cache->stats();
-    
+
     expect($stats['index_entries'])->toBe(1);
 });
 
@@ -417,15 +415,15 @@ test('cache index updates on pattern deletion', function () {
     $key1 = $this->faker->slug();
     $key2 = $this->faker->slug();
     $key3 = $this->faker->slug();
-    
+
     $this->cache->set("pattern:test:{$key1}", $this->faker->text(), 3600);
     $this->cache->set("pattern:test:{$key2}", $this->faker->text(), 3600);
     $this->cache->set("other:{$key3}", $this->faker->text(), 3600);
-    
+
     $this->cache->deletePattern('pattern:*');
-    
+
     $stats = $this->cache->stats();
-    
+
     expect($stats['index_entries'])->toBe(1);
 });
 
@@ -435,11 +433,11 @@ test('cache index updates on pattern deletion', function () {
 test('cache index is rebuilt on clear', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     $this->cache->clear();
-    
+
     $stats = $this->cache->stats();
-    
+
     expect($stats['index_entries'])->toBe(0);
 });
 
@@ -454,14 +452,14 @@ test('cache index is rebuilt on clear', function () {
  */
 test('expired cache returns null', function () {
     $key = $this->faker->slug();
-    
+
     $this->cache->set($key, $this->faker->text(), 1);
-    
+
     expect($this->cache->get($key))->not->toBeNull();
-    
+
     // Wait for actual expiration
     sleep(2);
-    
+
     expect($this->cache->get($key))->toBeNull();
 });
 
@@ -470,13 +468,13 @@ test('expired cache returns null', function () {
  */
 test('has returns false for expired cache', function () {
     $key = $this->faker->slug();
-    
+
     $this->cache->set($key, $this->faker->text(), 1);
-    
+
     expect($this->cache->has($key))->toBeTrue();
-    
+
     sleep(2);
-    
+
     expect($this->cache->has($key))->toBeFalse();
 });
 
@@ -488,14 +486,14 @@ test('has returns false for expired cache', function () {
 test('pruneExpired removes only expired entries', function () {
     $expiredKey = $this->faker->slug();
     $validKey = $this->faker->slug();
-    
+
     $this->cache->set($expiredKey, $this->faker->text(), 1);
     $this->cache->set($validKey, $this->faker->text(), 3600);
-    
+
     sleep(2);
-    
+
     $deleted = $this->cache->pruneExpired();
-    
+
     expect($deleted)->toBe(1)
         ->and($this->cache->get($expiredKey))->toBeNull()
         ->and($this->cache->get($validKey))->not->toBeNull();
@@ -506,7 +504,7 @@ test('pruneExpired removes only expired entries', function () {
  */
 test('stats shows correct TTL remaining', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     $stats = $this->cache->stats();
 
     // TTL should be approximately 3600 (allowing for execution time)
@@ -519,11 +517,11 @@ test('stats shows correct TTL remaining', function () {
  */
 test('stats shows TTL decreases over time', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 10);
-    
+
     $stats1 = $this->cache->stats();
     sleep(2);
     $stats2 = $this->cache->stats();
-    
+
     expect($stats2['avg_ttl_remaining'])->toBeLessThan($stats1['avg_ttl_remaining']);
 });
 
@@ -538,13 +536,13 @@ test('clear removes all cache files', function () {
     $key1 = $this->faker->slug();
     $key2 = $this->faker->slug();
     $key3 = $this->faker->slug();
-    
+
     $this->cache->set($key1, $this->faker->text(), 3600);
     $this->cache->set($key2, $this->faker->text(), 3600);
     $this->cache->set($key3, $this->faker->text(), 3600);
-    
+
     $result = $this->cache->clear();
-    
+
     expect($result['deleted'])->toBe(3)
         ->and($result['failed'])->toBe(0)
         ->and($result['total'])->toBe(3)
@@ -557,10 +555,10 @@ test('clear removes all cache files', function () {
 test('stats returns accurate cache information', function () {
     $key1 = $this->faker->slug();
     $key2 = $this->faker->slug();
-    
+
     $this->cache->set($key1, $this->faker->text(), 3600);
     $this->cache->set($key2, $this->faker->text(), 1);
-    
+
     sleep(2); // Let one entry expire
 
     $stats = $this->cache->stats();
@@ -577,7 +575,7 @@ test('stats returns accurate cache information', function () {
  */
 test('getCachePath returns configured path', function () {
     $path = $this->cache->getCachePath();
-    
+
     // Normalize paths for cross-platform comparison
     expect(str_replace('\\', '/', $path))
         ->toBe(str_replace('\\', '/', $this->testCachePath));
@@ -588,7 +586,7 @@ test('getCachePath returns configured path', function () {
  */
 test('clear on empty cache returns zero deletions', function () {
     $result = $this->cache->clear();
-    
+
     expect($result['deleted'])->toBe(0)
         ->and($result['total'])->toBe(0);
 });
@@ -602,9 +600,9 @@ test('clear on empty cache returns zero deletions', function () {
  */
 test('set handles empty content', function () {
     $key = $this->faker->slug();
-    
+
     $result = $this->cache->set($key, '', 3600);
-    
+
     expect($result)->toBeTrue();
     expect($this->cache->get($key))->toBe('');
 });
@@ -617,9 +615,9 @@ test('set handles empty content', function () {
 test('set handles large content', function () {
     $largeContent = str_repeat('x', 100000); // 100KB
     $key = $this->faker->slug();
-    
+
     $result = $this->cache->set($key, $largeContent, 3600);
-    
+
     expect($result)->toBeTrue();
     expect($this->cache->get($key))->toBe($largeContent);
 });
@@ -633,9 +631,9 @@ test('set handles large content', function () {
 test('cache key with special characters is handled safely', function () {
     // Characters that could cause filesystem issues on Windows/Unix
     $specialKey = 'special:key/with\\chars<>?*|:"';
-    
+
     $result = $this->cache->set($specialKey, $this->faker->text(), 3600);
-    
+
     expect($result)->toBeTrue();
     expect($this->cache->get($specialKey))->not->toBeNull();
 });
@@ -647,11 +645,11 @@ test('cache key with special characters is handled safely', function () {
  */
 test('concurrent set operations do not corrupt cache', function () {
     $key = $this->faker->slug();
-    
+
     $this->cache->set($key, 'first', 3600);
     $this->cache->set($key, 'second', 3600);
     $this->cache->set($key, 'third', 3600);
-    
+
     // Last write wins
     expect($this->cache->get($key))->toBe('third');
 });
@@ -661,9 +659,9 @@ test('concurrent set operations do not corrupt cache', function () {
  */
 test('deletePattern with empty pattern returns zero', function () {
     $this->cache->set($this->faker->slug(), $this->faker->text(), 3600);
-    
+
     $deleted = $this->cache->deletePattern('');
-    
+
     expect($deleted)->toBe(0);
 });
 
@@ -672,12 +670,12 @@ test('deletePattern with empty pattern returns zero', function () {
  */
 test('stats on disabled cache returns zeros', function () {
     $disabledCache = new CacheService(
-        cachePath: $this->testCachePath . '_disabled',
+        cachePath: $this->testCachePath.'_disabled',
         enabled: false
     );
-    
+
     $stats = $disabledCache->stats();
-    
+
     expect($stats['total_files'])->toBe(0);
 });
 
@@ -695,24 +693,24 @@ test('stats on disabled cache returns zeros', function () {
  */
 test('real-world blog cache invalidation scenario', function () {
     $blogSlug = $this->faker->slug();
-    
+
     $this->cache->set("en:GET:/blog/{$blogSlug}", $this->faker->paragraph(), 3600);
     $this->cache->set("en:GET:/blog/{$blogSlug}/post-1", $this->faker->paragraph(), 3600);
     $this->cache->set("en:GET:/blog/{$blogSlug}/post-2", $this->faker->paragraph(), 3600);
     $this->cache->set('en:GET:/blogs', $this->faker->paragraph(), 3600);
     $this->cache->set('en:GET:/posts', $this->faker->paragraph(), 3600);
-    
+
     // Invalidate single blog (including all its posts)
     $deleted1 = $this->cache->deletePattern("*:GET:/blog/{$blogSlug}*");
-    
+
     expect($deleted1)->toBe(3)
         ->and($this->cache->get("en:GET:/blog/{$blogSlug}"))->toBeNull()
         ->and($this->cache->get('en:GET:/blogs'))->not->toBeNull()
         ->and($this->cache->get('en:GET:/posts'))->not->toBeNull();
-    
+
     // Invalidate blog listing page
     $deleted2 = $this->cache->deletePattern('*:GET:/blogs*');
-    
+
     expect($deleted2)->toBe(1)
         ->and($this->cache->get('en:GET:/posts'))->not->toBeNull();
 });

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Helpers;
 
 /**
@@ -12,12 +14,13 @@ class UsernameHelper
      *
      * Removes common separators spammers use to bypass reserved word checks.
      *
-     * @param string $username Username to normalize
+     * @param  string  $username  Username to normalize
      * @return string Normalized username
      */
     public static function normalize(string $username): string
     {
         $normalized = strtolower($username);
+
         return str_replace(['-', '_', '.', ' '], '', $normalized);
     }
 }

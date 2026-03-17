@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Cache configuration.
  *
@@ -128,7 +130,7 @@ return [
     'max_files' => (int) ($_ENV['CACHE_MAX_FILES'] ?? 5000),
 
     // Path for compiled template PHP files (separate from response cache)
-    'compiled_views_path' => ROOT_PATH . '/storage/cache/views',
+    'compiled_views_path' => ROOT_PATH.'/storage/cache/views',
 
     // Maximum age (seconds) before compiled view files are pruned
     'compiled_views_max_age' => (int) ($_ENV['COMPILED_VIEWS_MAX_AGE'] ?? 604800), // 7 days
