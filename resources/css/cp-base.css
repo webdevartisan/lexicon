@@ -1,0 +1,107 @@
+@layer base {
+    input[type=range]::-webkit-slider-thumb {
+        height: 1rem;
+        width: 1rem;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border-radius: 9999px;
+        --tw-bg-opacity: 1;
+        background-color: rgb(59 130 246 / var(--tw-bg-opacity))
+    }
+
+    input[type=range]:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #1d4ed8;
+        box-shadow: 0 0 3px #1d4ed8
+    }
+
+    input[type=range].range-green::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(36 151 130 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-green:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #1C7767;
+        box-shadow: 0 0 3px #1c7767
+    }
+
+    input[type=range].range-orange::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(249 115 22 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-orange:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #c2410c;
+        box-shadow: 0 0 3px #c2410c
+    }
+
+    input[type=range].range-sky::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(14 165 233 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-sky:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #0369a1;
+        box-shadow: 0 0 3px #0369a1
+    }
+
+    input[type=range].range-yellow::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(234 179 8 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-yellow:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #a16207;
+        box-shadow: 0 0 3px #a16207
+    }
+
+    input[type=range].range-red::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(239 68 68 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-red:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #b91c1c;
+        box-shadow: 0 0 3px #b91c1c
+    }
+
+    input[type=range].range-purple::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(168 85 247 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-purple:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #7e22ce;
+        box-shadow: 0 0 3px #7e22ce
+    }
+
+    input[type=range].range-dark::-webkit-slider-thumb {
+        --tw-bg-opacity: 1;
+        background-color: rgb(71 85 105 / var(--tw-bg-opacity))
+    }
+
+    input[type=range].range-dark:focus::-webkit-slider-thumb {
+        -webkit-box-shadow: 0 0 3px #334155;
+        box-shadow: 0 0 3px #334155
+    }
+
+    [type=checkbox]:checked {
+        background-repeat: no-repeat;
+        background-image: url(../images/check-arrow.svg);
+        background-size: .9rem .9rem;
+        background-position: 50%
+    }
+
+    [type=radio]:checked {
+        background-repeat: no-repeat;
+        background-image: url(../images/radio-arrow.svg);
+        background-size: .75rem .75rem;
+        background-position: 58%
+    }
+
+    [type=checkbox].arrow-none:checked,
+    [type=radio].arrow-none:checked {
+        background-repeat: no-repeat
+    }
+}

@@ -1,0 +1,31 @@
+# Testing
+.phpunit.cache/
+infection.log
+infection-report.html
+coverage/
+.coverage/
+junit.xml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Logs
+*.log
+
+*.bak.php
+*.old.php
+*.bak
+*.old
+/backup_files/
+/storage/

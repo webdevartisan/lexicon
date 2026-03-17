@@ -1,0 +1,49 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * CLI Entry Point
+ *
+ * Boots the framework for console execution and dispatches commands
+ * to the appropriate handlers. This file is used exclusively for
+ * command‑line operations.
+ *
+ * Usage examples:
+ *   php cli [command] [options]
+ *   php cli cache:prune
+ *   php cli cache:clear
+ *   php cli --help
+ *
+ * For HTTP requests, see public/index.php.
+ */
+
+// Restrict execution to CLI environments
+if (PHP_SAPI !== 'cli' && PHP_SAPI !== 'phpdbg') {
+    echo 'This script can only be run from the command line.' . PHP_EOL;
+    exit(1);
+}
+
+// Enable full error visibility for CLI execution
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
+// Define the application root path
+define('ROOT_PATH', __DIR__);
+
+// Bootstrap shared application components
+$container = require ROOT_PATH . '/bootstrap/app.php';
+
+// ========================================================================
+// CLI-SPECIFIC INITIALIZATION
+// ========================================================================
+
+// Initialize the console kernel
+$kernel = $container->get(\App\Console\Kernel::class);
+
+// Parse CLI arguments and execute the command
+$status = $kernel->handle($argv);
+
+$kernel->terminate($status);
+exit($status);

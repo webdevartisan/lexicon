@@ -1,0 +1,23 @@
+parameters:
+    level: 6
+    paths:
+        - src
+        - tests
+    
+    excludePaths:
+        - src/Framework/Core/helpers.php
+        - tests/Fixtures/*
+    
+    ignoreErrors:
+        # We suppress errors for dynamic property access in legacy code
+        - '#Access to an undefined property#'
+    
+    strictRules:
+        allRules: false
+        # We enable specific strict rules gradually
+        noImplicitWildcard: true
+        strictCalls: true
+        
+    reportUnmatchedIgnoredErrors: false
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false

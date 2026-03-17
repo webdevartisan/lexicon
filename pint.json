@@ -1,0 +1,29 @@
+{
+    "$schema": "vendor/laravel/pint/resources/schemas/pint-schema.json",
+    "preset": "laravel",
+    "rules": {
+        "simplified_null_return": true,
+        "declare_strict_types": true,
+        "new_with_braces": true,
+        "ordered_imports": {
+            "sort_algorithm": "alpha"
+        },
+        "no_unused_imports": true,
+        "not_operator_with_successor_space": false,
+        "trailing_comma_in_multiline": true,
+        "phpdoc_scalar": true,
+        "unary_operator_spaces": true,
+        "binary_operator_spaces": true,
+        "blank_line_before_statement": {
+            "statements": ["return"]
+        },
+        "phpdoc_single_line_var_spacing": true,
+        "phpdoc_var_without_name": true
+    },
+    "exclude": [
+        "vendor",
+        "node_modules",
+        "storage",
+        "bootstrap/cache"
+    ]
+}

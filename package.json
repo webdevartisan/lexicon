@@ -1,0 +1,32 @@
+{
+  "name": "lexicon",
+  "version": "0.1.0-alpha",
+  "private": true,
+  "description": "A custom PHP MVC blogging platform.",
+  "author": "webdevartisan",
+  "license": "GPL-2.0-or-later",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "postinstall": "npm run copy:tinymce",
+    "copy:tinymce": "shx cp -r node_modules/tinymce public/vendor/tinymce",
+    "dev:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css --watch --verbose",
+    "build:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css"
+  },
+  "keywords": [],
+  "dependencies": {
+    "tinymce": "^8.2.1",
+    "lucide": "^0.344.0",
+    "jsdom": "^23.0.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "postcss-import": "^16.1.1",
+    "shx": "^0.3.4",
+    "tailwindcss": "^3.4.19"
+  }
+}

@@ -1,0 +1,18 @@
+@import"https://fonts.googleapis.com/css2?family=Public+Sans:wght@200;300;400;500;600;700&display=swap";
+
+/* We intentionally keep fonts separate so Tailwind rebuilds never pull remote resources. */
+@font-face {
+  font-family: "remixicon";
+  src: url("/cp-assets/css/remixicon.woff2") format("woff2"),
+       url("/cp-assets/css/remixicon.woff") format("woff");
+  font-display: swap;
+}
+
+[class^="ri-"], [class*=" ri-"] {
+  font-family: "remixicon" !important;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* We should self-host Public Sans here (woff2) instead of @import from Google. */

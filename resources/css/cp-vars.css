@@ -1,0 +1,61 @@
+/* Define semantic color tokens as RGB triplets for use with Tailwind opacity utilities. */
+:root {
+  --sc-custom-50: 239 246 255;
+  --sc-custom-100: 219 234 254;
+  --sc-custom-200: 191 219 254;
+  --sc-custom-500: 59 130 246;
+  --sc-custom-600: 37 99 235;
+
+  --sc-zink-50: 248 250 252;
+  --sc-zink-100: 200 215 233;
+  --sc-zink-200: 146 175 211;
+  --sc-zink-300: 203 213 225;
+  --sc-zink-400: 148 163 184;
+  --sc-zink-500: 35 58 87;
+  --sc-zink-600: 28 46 69;
+  --sc-zink-700: 19 35 55;
+  --sc-zink-800: 15 24 36;
+
+  --sc-body-bg: 248 250 252;
+  --sc-body-bordered: 241 245 249;
+
+  --sc-topbar-bg: 255 255 255;
+  --sc-topbar-border: 226 232 240;
+  --sc-topbar-item: 51 65 85;
+  --sc-topbar-item-dark: 15 23 42;
+  --sc-topbar-item-hover: 59 130 246;
+  --sc-topbar-item-bg-hover: 241 245 249;
+
+  --sc-topbar-bg-dark: 15 23 42;
+  --sc-topbar-border-dark: 51 65 85;
+
+  --sc-topbar-bg-brand: 59 130 246;
+  --sc-topbar-border-brand: 37 99 235;
+
+  --sc-vertical-menu-bg: 255 255 255;
+  --sc-vertical-menu-border: 226 232 240;
+
+  --sc-vertical-menu-bg-dark: 15 23 42;
+  --sc-vertical-menu-border-dark: 51 65 85;
+
+  --sc-vertical-menu-bg-brand: 59 130 246;
+  --sc-vertical-menu-border-brand: 37 99 235;
+
+  --sc-vertical-menu-item: 15 23 42;
+  --sc-vertical-menu-item-hover: 59 130 246;
+
+  --sc-vertical-menu-item-bg-hover: 241 245 249;
+
+  --sc-vertical-menu-item-active: 59 130 246;
+  --sc-vertical-menu-item-bg-active: 219 234 254;
+}
+
+[data-mode="dark"] {
+  --sc-vertical-menu-item: 146 175 211;
+  --sc-vertical-menu-item-hover: 226 232 240;
+
+  --sc-vertical-menu-item-bg-hover: 28 46 69;
+
+  --sc-vertical-menu-item-active: 255 255 255;
+  --sc-vertical-menu-item-bg-active: 28 46 69;
+}

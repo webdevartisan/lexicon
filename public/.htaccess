@@ -1,0 +1,68 @@
+# ========================================
+# SECURITY: HIDE SERVER INFORMATION
+# ========================================
+
+<IfModule mod_headers.c>
+    # Obfuscate server identification and remove PHP footprints.
+    Header unset Server
+    Header unset X-Powered-By
+    Header always set Server "WebServer"
+
+    # Add foundational security headers.
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Optional: modern CSP header (uncomment when you have a real policy).
+    # Header always set Content-Security-Policy "default-src 'self';"
+</IfModule>
+
+
+# ========================================
+# CACHE CONTROL FOR STATIC ASSETS
+# ========================================
+
+<IfModule mod_headers.c>
+    # Remove legacy caching headers.
+    Header unset Pragma
+    Header unset Expires
+
+    # CSS & JavaScript
+    <FilesMatch "\.(css|js)$">
+        # Mark versioned files (e.g., assets/app.[hash].css/js) for long‑term caching.
+        SetEnvIf Request_URI "\.[0-9a-f]{8,}\.(css|js)$" VERSIONED
+        SetEnvIf Query_String "v=" VERSIONED
+
+        # Use long cache + immutable for versioned assets.
+        Header set Cache-Control "public, max-age=31536000, immutable" env=VERSIONED
+        # Short cache for unversioned assets (fallback during dev).
+        Header set Cache-Control "public, max-age=600" env=!VERSIONED
+    </FilesMatch>
+
+    # Images
+    <FilesMatch "\.(jpg|jpeg|png|gif|svg|webp|ico)$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+
+    # Fonts
+    <FilesMatch "\.(woff|woff2|ttf|eot)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+
+# ========================================
+# REWRITE RULES (FRONT CONTROLLER)
+# ========================================
+
+RewriteEngine On
+
+# If the request is not for an existing file, directory, or symlink,
+# pass it to the front controller (index.php).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+
+# Route all unmatched requests to index.php (QSA preserves query string).
+RewriteRule ^ index.php [QSA,L]

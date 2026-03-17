@@ -1,0 +1,337 @@
+
+[data-simplebar] {
+    position: relative;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap
+}
+
+[data-simplebar]:where([dir=ltr], [dir=ltr] *) {
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start
+}
+
+[data-simplebar]:where([dir=rtl], [dir=rtl] *) {
+    -ms-flex-line-pack: end;
+    align-content: flex-end;
+    -webkit-box-align: end;
+    -ms-flex-align: end;
+    align-items: flex-end
+}
+
+.simplebar-wrapper {
+    overflow: hidden;
+    width: inherit;
+    height: inherit;
+    max-width: inherit;
+    max-height: inherit
+}
+
+.simplebar-mask {
+    direction: inherit;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    margin: 0;
+    height: auto !important;
+    width: auto !important;
+    overflow: hidden;
+    padding: 0
+}
+
+.simplebar-offset {
+    direction: inherit !important;
+    -webkit-box-sizing: inherit !important;
+    box-sizing: inherit !important;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0;
+    resize: none !important;
+    padding: 0;
+    -webkit-overflow-scrolling: touch
+}
+
+.simplebar-content-wrapper {
+    direction: inherit;
+    /* visibility: visible; */
+    position: relative;
+    -webkit-box-sizing: border-box !important;
+    box-sizing: border-box !important;
+    display: block;
+    height: 100%;
+    max-height: 100%;
+    width: auto;
+    max-width: 100%;
+    overflow: auto;
+    padding: 0 !important;
+    scrollbar-width: none
+}
+
+.simplebar-content-wrapper::-webkit-scrollbar,
+.simplebar-hide-scrollbar::-webkit-scrollbar {
+    display: none
+}
+
+
+.simplebar-content:before,
+.simplebar-content:after {
+    content: " ";
+    display: table
+}
+
+.simplebar-placeholder {
+    pointer-events: none;
+    max-height: 100%;
+    width: 100%;
+    max-width: 100%
+}
+
+.simplebar-height-auto-observer-wrapper {
+    -webkit-box-sizing: inherit !important;
+    box-sizing: inherit !important;
+    pointer-events: none;
+    position: relative;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+    -ms-flex-preferred-size: 0px;
+    flex-basis: 0px;
+    overflow: hidden;
+    padding: 0
+}
+
+.simplebar-height-auto-observer-wrapper:where([dir=ltr], [dir=ltr] *) {
+    float: left
+}
+
+.simplebar-height-auto-observer-wrapper:where([dir=rtl], [dir=rtl] *) {
+    float: right
+}
+
+.simplebar-height-auto-observer-wrapper {
+    max-width: 1px;
+    max-height: 1px;
+    z-index: -1;
+    -webkit-box-flex: inherit;
+    -ms-flex-positive: inherit;
+    flex-grow: inherit
+}
+
+.simplebar-height-auto-observer {
+    -webkit-box-sizing: inherit;
+    box-sizing: inherit;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    display: block;
+    overflow: hidden;
+    opacity: 0
+}
+
+.simplebar-height-auto-observer:where([dir=ltr], [dir=ltr] *) {
+    left: 0
+}
+
+.simplebar-height-auto-observer:where([dir=rtl], [dir=rtl] *) {
+    right: 0
+}
+
+.simplebar-height-auto-observer {
+    height: 1000%;
+    width: 1000%;
+    min-height: 1px;
+    min-width: 1px;
+    z-index: -1
+}
+
+.simplebar-track {
+    pointer-events: none;
+    position: absolute;
+    bottom: 0;
+    overflow: hidden
+}
+
+.simplebar-track:where([dir=ltr], [dir=ltr] *) {
+    right: 0
+}
+
+.simplebar-track:where([dir=rtl], [dir=rtl] *) {
+    left: 0
+}
+
+.simplebar-track {
+    z-index: 1
+}
+
+[data-simplebar].simplebar-dragging .simplebar-content {
+    pointer-events: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none
+}
+
+[data-simplebar].simplebar-dragging .simplebar-track {
+    pointer-events: all
+}
+
+.simplebar-scrollbar {
+    position: absolute;
+    width: .375rem
+}
+
+.simplebar-scrollbar:before {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-radius: .375rem;
+    --tw-bg-opacity: 1;
+    background-color: rgb(100 116 139 / var(--tw-bg-opacity));
+    content: var(--tw-content);
+    opacity: 0
+}
+
+.simplebar-scrollbar:where([dir=ltr], [dir=ltr] *) {
+    right: 1px
+}
+
+.simplebar-scrollbar:where([dir=rtl], [dir=rtl] *) {
+    left: 1px
+}
+
+.simplebar-scrollbar {
+    min-height: 10px
+}
+
+.simplebar-scrollbar:before {
+    content: " ";
+    -webkit-transition: opacity .2s linear;
+    transition: opacity .2s linear
+}
+
+.simplebar-scrollbar.simplebar-visible:before {
+    opacity: .5;
+    -webkit-transition: opacity 0s linear;
+    transition: opacity 0s linear
+}
+
+.simplebar-track.simplebar-vertical {
+    top: 0;
+    width: .625rem
+}
+
+.simplebar-track.simplebar-vertical .simplebar-scrollbar:before {
+    top: .125rem;
+    bottom: .125rem
+}
+
+.simplebar-track.simplebar-horizontal {
+    height: .75rem
+}
+
+.simplebar-track.simplebar-horizontal:where([dir=ltr], [dir=ltr] *) {
+    left: 0
+}
+
+.simplebar-track.simplebar-horizontal:where([dir=rtl], [dir=rtl] *) {
+    right: 0
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar:before {
+    left: .125rem;
+    right: .125rem;
+    height: 100%
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar {
+    top: .125rem;
+    height: .5rem;
+    min-height: 0px;
+    width: auto
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar:where([dir=ltr], [dir=ltr] *) {
+    right: auto;
+    left: 0
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar:where([dir=rtl], [dir=rtl] *) {
+    left: auto;
+    right: 0
+}
+
+.simplebar-track.simplebar-horizontal .simplebar-scrollbar {
+    min-width: 10px
+}
+
+[data-simplebar-direction=rtl] .simplebar-track.simplebar-vertical:where([dir=ltr], [dir=ltr] *) {
+    right: auto;
+    left: 0
+}
+
+[data-simplebar-direction=rtl] .simplebar-track.simplebar-vertical:where([dir=rtl], [dir=rtl] *) {
+    left: auto;
+    right: 0
+}
+
+.simplebar-hide-scrollbar {
+    visibility: hidden;
+    position: fixed;
+    overflow-y: scroll
+}
+
+.simplebar-hide-scrollbar:where([dir=ltr], [dir=ltr] *) {
+    left: 0
+}
+
+.simplebar-hide-scrollbar:where([dir=rtl], [dir=rtl] *) {
+    right: 0
+}
+
+.simplebar-hide-scrollbar {
+    scrollbar-width: none
+}
+
+[data-simplebar-track=custom] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(59 130 246 / var(--tw-bg-opacity))
+}
+
+[data-simplebar-track=green] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(36 151 130 / var(--tw-bg-opacity))
+}
+
+[data-simplebar-track=yellow] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(234 179 8 / var(--tw-bg-opacity))
+}
+
+[data-simplebar-track=orange] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(249 115 22 / var(--tw-bg-opacity))
+}
+
+[data-simplebar-track=sky] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(14 165 233 / var(--tw-bg-opacity))
+}
+
+[data-simplebar-track=red] .simplebar-scrollbar:before {
+    --tw-bg-opacity: 1;
+    background-color: rgb(239 68 68 / var(--tw-bg-opacity))
+}

@@ -1,0 +1,8 @@
+@import "./cp-vars.css";
+@import "./cp-base.css";
+@import "./cp-components.css";
+@import "./cp-utilities.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

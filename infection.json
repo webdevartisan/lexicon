@@ -1,0 +1,37 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    
+    "source": {
+        "directories": [
+            "src/App",
+            "src/Framework"
+        ],
+        "excludes": [
+            "src/views",
+            "src/public"
+        ]
+    },
+    
+    "logs": {
+        "text": "infection.log",
+        "html": "infection-report.html"
+    },
+    
+    "mutators": {
+        "@default": true,
+        "@function_signature": false
+    },
+    
+    "minMsi": 60,
+    "minCoveredMsi": 70,
+    
+    "threads": 4,
+    "timeout": 10,
+    
+    "testFramework": "phpunit",
+    "testFrameworkOptions": "--testsuite=Unit,Feature",
+    "phpUnit": {
+        "customPath": "vendor/bin/pest"
+    },
+    "bootstrap": "vendor/autoload.php"
+}

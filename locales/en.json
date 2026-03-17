@@ -1,0 +1,490 @@
+{
+  "_comment_structure": "Hierarchical translation structure for better organization",
+
+    "layout": {
+    "search": {
+      "placeholder": "Search for ..."
+    },
+    "profileDropdown": {
+      "signedInAs": "Signed in as",
+      "links": {
+        "dashboard": "Dashboard",
+        "controlPanel": "Control Panel",
+        "editProfile": "Edit Profile",
+        "signOut": "Sign Out"
+      }
+    }
+  },
+
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "createBlog": "Create a Blog",
+    "exploreBlogs": "Explore Blogs",
+    "admin": "Admin",
+    "createNewBlog": "Create New Blog",
+    "allBlogs": "All Blogs",
+    "accountSettings": "Account Settings",
+    "blogSection": "Blog Section",
+    "blogOverview": "Blog Overview",
+    "editBlogSettings": "Edit Blog Settings",
+    "appearanceTheme": "Appearance / Theme",
+    "collaborators": "Collaborators",
+    "contentSection": "Content Section",
+    "newPost": "New Post",
+    "allPosts": "All Posts",
+    "categoriesTags": "Categories / Tags",
+    "mediaLibrary": "Media Library",
+    "analyticsSection": "Analytics Section",
+    "traffic": "Traffic",
+    "comments": "Comments",
+    "users": "Users",
+    "blogs": "Blogs",
+    "posts": "Posts",
+    "categories": "Categories",
+    "tags": "Tags",
+    "roles": "Roles",
+    "emailTest": "Email Test",
+    "settings": "Settings",
+    "cacheManagement": "Cache Management"
+  },
+
+  "breadcrumbs": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "allBlogs": "All Blogs",
+    "allPosts": "All Posts",
+    "editBlog": "Edit Blog",
+    "editPost": "Edit Post",
+    "blogOverview": "Blog Overview",
+    "reviewPost": "Review Post",
+    "createNewPost": "Create New Post",
+    "collaborators": "Collaborators",
+    "appearance": "Appearance",
+    "categoriesTags": "Categories / Tags",
+    "mediaLibrary": "Media Library",
+    "editUser": "Edit User",
+    "viewBlog": "View Blog",
+    "createNew": "Create New",
+    "edit": "Edit",
+    "viewDetails": "View Details",
+    "manageUsers": "Manage Users",
+    "settings": "Settings",
+    "myProfile": "My Profile",
+    "users": "Users",
+    "blogs": "Blogs",
+    "posts": "Posts"
+  },
+
+ "dashboard": {
+    "pageTitle": "Dashboard",
+    "blogSelector": {
+      "label": "Blog"
+    },
+    "emptyState": {
+      "title": "Welcome to Your Dashboard!",
+      "description": "You don't have any blogs yet. Create your first blog to start publishing amazing content.",
+      "actions": {
+        "createFirstBlog": "Create Your First Blog",
+        "gettingStarted": "Getting Started Guide"
+      },
+      "quickTips": {
+        "title": "Quick Tips",
+        "tip1": "A blog is a collection of posts organized under one name",
+        "tip2": "You can create multiple blogs for different topics",
+        "tip3": "Each blog can have its own settings and customization"
+      }
+    },
+    "tabs": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "actions": {
+      "newPost": "New Post"
+    },
+    "sections": {
+      "posts": "Posts"
+    }
+  },
+
+  "components": {
+    "postCard": {
+      "actions": {
+        "preview": "Preview"
+      },
+      "tooltips": {
+        "edit": "Edit",
+        "publish": "Publish",
+        "draft": "Draft It",
+        "archive": "Archive",
+        "delete": "Delete"
+      }
+    },
+    "paginator": {
+      "ariaLabels": {
+        "pagination": "Posts pagination",
+        "previousPage": "Go to previous page",
+        "previousUnavailable": "Previous page unavailable",
+        "nextPage": "Go to next page",
+        "nextUnavailable": "Next page unavailable",
+        "currentPage": "Current page, page",
+        "goToPage": "Go to page"
+      },
+      "info": {
+        "showing": "Showing",
+        "to": "to",
+        "of": "of",
+        "postSingular": "post",
+        "postPlural": "posts"
+      }
+    },
+    "dropzone": {
+      "actions": {
+        "change": "Change",
+        "remove": "Remove",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "drop": "Drop",
+        "or": "or",
+        "browse": "browse",
+        "upTo": "up to"
+      },
+      "altText": {
+        "current": "Current",
+        "preview": "Preview"
+      }
+    }
+  },
+
+  "common": {
+    "navigation": "Navigation",
+    "blogManagement": "Blog Management",
+    "selectBlog": "Select a blog to see more options",
+    "welcome": "Welcome",
+    "signOut": "Sign Out",
+    "signedInAs": "Signed in as",
+    "editProfile": "Edit Profile",
+    "myBlogs": "My Blogs",
+    "myPosts": "My Posts",
+    "newBlog": "New Blog",
+    "newPost": "New Post",
+    "brand": "Lexicon",
+    "more": "More",
+    "search": "Search"
+  },
+
+  "meta": {
+    "title": "Welcome to Lexicon"
+  },
+
+  "header": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "dashboard": "Dashboard",
+    "logoTagline": "Your ideas, your audience, your blog.",
+    "social": {
+      "twitter": "Twitter",
+      "facebook": "Facebook",
+      "snapchat": "Snapchat",
+      "instagram": "Instagram",
+      "medium": "Medium"
+    }
+  },
+
+  "banner": {
+    "title": "Start Blogging Smarter.",
+    "subtitle": "Build your blog in minutes — no code, no clutter, just your voice and our tools.",
+    "body": "Lexicon is a brand-new platform designed for creators who want simplicity, speed, and full creative control. Whether you're starting your first blog or looking for a fresh space to share your ideas, we make it easy to get started. Choose a beautiful theme, write in a clean editor, and publish instantly. Be among the first to shape the future of blogging.",
+    "cta": "Create Your Blog",
+    "svgTitle": "Clean blog editor window with publish highlight"
+  },
+
+  "features": {
+    "title": "Why Start Your Blog Here?",
+    "items": {
+      "creators": {
+        "title": "Designed for Creators",
+        "body": "Lexicon is built from scratch with simplicity and flexibility in mind — no clutter, no distractions, just you and your ideas."
+      },
+      "instantSetup": {
+        "title": "Instant Setup",
+        "body": "Create your blog in minutes. No technical skills required. Just pick a theme, start writing, and hit publish."
+      },
+      "growth": {
+        "title": "Built to Grow With You",
+        "body": "Whether you're writing for fun or building a brand, Lexicon gives you the tools to evolve — from posts to pages to your own domain."
+      },
+      "earlyVoice": {
+        "title": "Be an Early Voice",
+        "body": "You're not joining a crowd — you're helping shape a new platform. Your feedback matters, and your blog will stand out from day one."
+      }
+    }
+  },
+
+  "posts": {
+    "title": "See What You Can Create",
+    "items": {
+      "post1": {
+        "imageAlt": "Person typing on a laptop with coffee beside them",
+        "title": "How I Wrote My First Blog Post",
+        "excerpt": "A fictional creator shares their journey from blank page to published post — and how easy it was with Lexicon."
+      },
+      "post2": {
+        "imageAlt": "Screenshot of a clean blog layout with white space",
+        "title": "The Power of a Clean Theme",
+        "excerpt": "See how a minimalist layout can make your words shine. A sample post using one of Lexicon's starter themes."
+      },
+      "post3": {
+        "imageAlt": "Open road with mountains in the background and a journal on a dashboard",
+        "title": "A Day in the Life of a Travel Blogger",
+        "excerpt": "A sample travel blog entry showing how storytelling and visuals come together beautifully on Lexicon."
+      },
+      "post4": {
+        "imageAlt": "Illustration of a blog setup wizard on a laptop screen",
+        "title": "How to Create a Blog on Lexicon",
+        "excerpt": "A step-by-step guide to setting up your blog, choosing a theme, and publishing your first post."
+      },
+      "post5": {
+        "imageAlt": "Notebook with brainstorming sketches and a pen",
+        "title": "What Should I Blog About?",
+        "excerpt": "Stuck on ideas? Here are 5 blog formats that work for any niche — from personal stories to tutorials."
+      },
+      "post6": {
+        "imageAlt": "Whiteboard with sticky notes and feature ideas",
+        "title": "What's Coming to Lexicon",
+        "excerpt": "A transparent look at our roadmap — and how early users can help shape the future of the platform."
+      }
+    }
+  },
+
+  "sidebar": {
+    "search": {
+      "placeholder": "Search"
+    },
+    "menu": {
+      "title": "Navigate",
+      "items": {
+        "home": "Home",
+        "create": "Create a Blog",
+        "explore": "Explore Blogs",
+        "pricing": "Pricing",
+        "help": "Help Center",
+        "about": "About Lexicon",
+        "dashboard": "Dashboard2",
+        "logout": "Logout"
+      }
+    },
+    "gettingStarted": {
+      "title": "Getting Started",
+      "items": {
+        "tip1": "New to blogging? Here's how to launch your first post in under 10 minutes.",
+        "tip2": "Why Lexicon was built: a note from the creator on simplicity and creative freedom.",
+        "tip3": "Coming soon: custom domains, monetization tools, and more — help shape what's next."
+      },
+      "actionMore": "More"
+    }
+  },
+
+  "about": {
+    "title": "About",
+    "body": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started — and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace."
+  },
+
+  "contact": {
+    "title": "Get in touch",
+    "body": "Have questions, ideas, or feedback? We'd love to hear from you. Lexicon is built for creators — and shaped by them.",
+    "email": "hello@Lexicon.dev",
+    "phone": "(000) 000-0000",
+    "addressLine1": "1234 Somewhere Road #8254",
+    "addressLine2": "Nashville, TN 00000-0000"
+  },
+
+  "footer": {
+    "rightsReserved": "All rights reserved.",
+    "aboutTitle": "About Lexicon",
+    "aboutText": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started — and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace.",
+    "quickLinksTitle": "Quick Links",
+    "linkHome": "Home",
+    "linkBlog": "Blog",
+    "linkAbout": "About",
+    "linkContact": "Contact",
+    "legalTitle": "Policies",
+    "linkPrivacy": "Privacy Policy",
+    "linkTerms": "Terms of Service",
+    "linkCookies": "Cookie Policy",
+    "socialAria": "Social",
+    "socialTwitterAria": "Follow us on Twitter",
+    "socialFacebookAria": "Follow us on Facebook",
+    "socialInstagramAria": "Follow us on Instagram"
+  }, 
+
+  "blog": {
+    "create": {
+      "pageTitle": "Create New Blog",
+      "pageSubtitle": "Fill in details to set up your new blog."
+    },
+    "update": {
+      "pageTitle": "Edit Blog Settings",
+      "pageSubtitle": "Update details, localization, theme, SEO, and comments settings."
+    },
+    "form": {
+      "errors": {
+        "title": "Please fix the following errors:"
+      },
+      "sections": {
+        "identity": {
+          "title": "Identity",
+          "description": "Basic information used publicly for your blog."
+        },
+        "theme": {
+          "title": "Theme",
+          "description": "Choose the visual style for your blog."
+        },
+        "localization": {
+          "title": "Localization",
+          "description": "Default language and time zone."
+        },
+        "seo": {
+          "title": "SEO",
+          "description": "Configure meta information and search engine visibility."
+        }
+      },
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "My Awesome Blog"
+        },
+        "slug": {
+          "label": "Slug",
+          "underlabel": "Slug cannot be changed after creation."
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Short summary of what this blog is about."
+        },
+        "theme": {
+          "label": "Select Theme"
+        },
+        "locale": {
+          "label": "Select Locale"
+        },
+        "timezone": {
+          "label": "Select Timezone"
+        },
+        "metaTitle": {
+          "label": "Meta Title",
+          "placeholder": "Title shown in browser and search results"
+        },
+        "metaDescription": {
+          "label": "Meta Description",
+          "placeholder": "Short summary for search engines."
+        },
+        "visibility": {
+          "label": "Visibility",
+          "options": {
+            "draft": {
+              "title": "Draft",
+              "description": "Not public; visible only to you and your team."
+            },
+            "published": {
+              "title": "Published",
+                "description": "Publicly accessible and indexable."
+            },
+            "archived": {
+              "title": "Archived",
+              "description": "Hidden from the public but kept for reference."
+            }
+          }
+        },
+        "allowIndexing": {
+          "label": "Allow search engines to index"
+        },
+        "allowComments": {
+          "label": "Allow comments on posts",
+          "help": "Can be disabled per post."
+        },
+        "banner": {
+          "label": "Banner"
+        },
+        "logo": {
+          "label": "Logo"
+        },
+        "favicon": {
+          "label": "Favicon"
+        }
+      },
+      "actions": {
+        "update": "Update",
+        "saveDraft": "Save Draft",
+        "back": "Back"
+      },
+      "sidebar": {
+        "tips": {
+          "title": "Tips",
+          "content": "Use a concise name and description. Keep your slug simple and memorable. Large images should be optimized to improve load time."
+        }
+      }
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "description": "Once you delete this blog, there is no going back. All posts, comments, settings, and uploaded files will be permanently removed.",
+      "deleteButton": "Delete This Blog"
+    }
+  },
+
+  "modals": {
+    "deleteBlog": {
+      "title": "Delete Blog Permanently?",
+      "warning": {
+        "title": "Critical Warning:",
+        "message": "You are about to permanently delete",
+        "irreversible": "This action cannot be undone!"
+      },
+      "impact": {
+        "title": "Deletion Impact:",
+        "loading": "Loading stats...",
+        "error": "Failed to load stats. Please try again.",
+        "stats": {
+          "posts": "Posts",
+          "comments": "Comments",
+          "collaborators": "Collaborators"
+        }
+      },
+      "deletionList": {
+        "title": "What will be permanently deleted:",
+        "items": {
+          "posts": "All {count} posts and their content",
+          "comments": "All {count} comments from readers",
+          "settings": "Blog settings, theme, and customizations",
+          "images": "Uploaded images (banner, logo, favicon, post images)",
+          "collaborators": "Collaborator access ({count} users will lose access)",
+          "url": "Blog URL and slug",
+          "seo": "SEO metadata and search engine indexing"
+        }
+      },
+      "dataProtection": {
+        "title": "Data Protection Notice:",
+        "message": "All blog content, settings, and uploaded files will be permanently removed from our servers. This action is irreversible and cannot be recovered after deletion."
+      },
+      "form": {
+        "passwordLabel": "Confirm Your Password",
+        "passwordPlaceholder": "Enter your current password",
+        "passwordUnderlabel": "Password confirmation is required for security.",
+        "confirmationText": {
+          "part1": "I understand that",
+          "part2": "and all its content will be",
+          "permanentlyDeleted": "permanently deleted",
+          "part3": "and cannot be recovered"
+        }
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "confirmDelete": "Yes, Permanently Delete"
+      }
+    }
+  }
+}
