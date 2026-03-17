@@ -6,5 +6,7 @@ namespace App\Models;
 
 class PermissionModel extends AppModel
 {
-    protected $table = 'permissions';
+    /** @var string|null */
+    protected string|null $table = 'permissions';
+
 }
