@@ -76,21 +76,39 @@ test('insertUserRoles returns true for empty array without database call', funct
 /**
  * Verifies that softDelete constructs proper UPDATE SQL with NOW() function.
  *
- * Tests SQL query structure and returns true when row is affected.
+ * Mocks both the idempotency SELECT check and the UPDATE execute call.
+ * The SELECT returns an active record (deleted_at = null) to allow the UPDATE to proceed.
  */
 test('softDelete constructs correct SQL with timestamp', function () {
     $userId = $this->faker->numberBetween(1, 1000);
 
-    // mock execute() to return 1 (row affected)
+    // Step 1: Mock the idempotency SELECT — record exists and is active
+    $this->dbMock->shouldReceive('query')
+        ->once()
+        ->with(
+            Mockery::on(fn(string $sql): bool =>
+                str_contains($sql, 'SELECT id, deleted_at FROM users') &&
+                str_contains($sql, 'WHERE id = ?')
+            ),
+            [$userId]
+        )
+        ->andReturn($this->stmtMock);
+
+    $this->stmtMock->shouldReceive('fetch')
+        ->once()
+        ->with(\PDO::FETCH_ASSOC)
+        ->andReturn(['id' => $userId, 'deleted_at' => null]); // active record
+
+    // Step 2: Mock the UPDATE soft delete
     $this->dbMock->shouldReceive('execute')
         ->once()
         ->with(
-            Mockery::on(function ($sql) {
-                return str_contains($sql, 'UPDATE users')
-                    && str_contains($sql, 'deleted_at = NOW()')
-                    && str_contains($sql, 'WHERE id = ?')
-                    && str_contains($sql, 'deleted_at IS NULL');
-            }),
+            Mockery::on(fn(string $sql): bool =>
+                str_contains($sql, 'UPDATE users') &&
+                str_contains($sql, 'deleted_at = NOW()') &&
+                str_contains($sql, 'WHERE id = ?') &&
+                str_contains($sql, 'deleted_at IS NULL')
+            ),
             [$userId]
         )
         ->andReturn(1);
@@ -99,6 +117,75 @@ test('softDelete constructs correct SQL with timestamp', function () {
 
     expect($result)->toBeTrue();
 });
+
+/**
+ * Verifies softDelete returns false when record does not exist.
+ *
+ * The SELECT idempotency check finds no record, so no UPDATE is issued.
+ */
+test('softDelete returns false when record does not exist', function () {
+    $userId = $this->faker->numberBetween(1, 1000);
+
+    $this->dbMock->shouldReceive('query')
+        ->once()
+        ->with(Mockery::any(), [$userId])
+        ->andReturn($this->stmtMock);
+
+    $this->stmtMock->shouldReceive('fetch')
+        ->once()
+        ->with(\PDO::FETCH_ASSOC)
+        ->andReturn(false); // record not found
+
+    // No UPDATE should be issued for non-existent records
+    $this->dbMock->shouldNotHaveReceived('execute');
+
+    $result = $this->userModel->softDelete($userId);
+
+    expect($result)->toBeFalse();
+});
+
+/**
+ * Verifies softDelete returns true when record is already soft-deleted (idempotency).
+ *
+ * Confirms idempotent behavior: deleting an already-deleted record returns true
+ * without issuing a redundant UPDATE query.
+ */
+test('softDelete returns true when record is already soft-deleted', function () {
+    $userId = $this->faker->numberBetween(1, 1000);
+
+    $this->dbMock->shouldReceive('query')
+        ->once()
+        ->with(Mockery::any(), [$userId])
+        ->andReturn($this->stmtMock);
+
+    $this->stmtMock->shouldReceive('fetch')
+        ->once()
+        ->with(\PDO::FETCH_ASSOC)
+        ->andReturn(['id' => $userId, 'deleted_at' => '2025-01-01 00:00:00']); // already deleted
+
+    // No UPDATE should be issued — idempotent early return
+    $this->dbMock->shouldNotHaveReceived('execute');
+
+    $result = $this->userModel->softDelete($userId);
+
+    expect($result)->toBeTrue();
+});
+
+/**
+ * Verifies softDelete throws InvalidArgumentException for invalid IDs.
+ *
+ * Ensures validation fires before any database interaction.
+ */
+test('softDelete throws InvalidArgumentException for non-positive ID', function (int $invalidId) {
+    expect(fn() => $this->userModel->softDelete($invalidId))
+        ->toThrow(\InvalidArgumentException::class, 'ID must be a positive integer');
+
+    $this->dbMock->shouldNotHaveReceived('query');
+    $this->dbMock->shouldNotHaveReceived('execute');
+})->with([
+    'zero'     => [0],
+    'negative' => [-1],
+]);
 
 /**
  * Tests that findByEmail query excludes soft-deleted users.
