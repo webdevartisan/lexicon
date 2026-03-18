@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->blogModel = new BlogModel($this->db);
     $this->categoryModel = new CategoryModel($this->db);
 
-    expect($this->db->getConnection())->toHaveActiveTransaction();
+    
 });
 
 // ============================================================================

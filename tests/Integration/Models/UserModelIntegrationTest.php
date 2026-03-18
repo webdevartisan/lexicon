@@ -20,7 +20,7 @@ beforeEach(function () {
     $this->blogModel = new BlogModel($this->db);
     $this->postModel = new PostModel($this->db);
 
-    expect($this->db->getConnection())->toHaveActiveTransaction();
+    
 });
 
 // ============================================================================

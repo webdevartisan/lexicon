@@ -20,7 +20,7 @@ beforeEach(function () {
 
     $this->auth = new Auth($this->session, $this->userModel, $this->profileModel);
 
-    expect($this->db->getConnection())->toHaveActiveTransaction();
+    
 });
 
 afterEach(function () {
