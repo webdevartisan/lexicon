@@ -1,12 +1,12 @@
 ## Getting Started
 
-Lexicon is a Laravel‑inspired blogging platform built on a custom PHP 8.1+ framework. This guide summarizes the fastest way to get a local environment running and points you to deeper documentation.
+Lexicon is a Laravel‑inspired blogging platform built on a custom framework. This guide summarizes the fastest way to get a local environment running and points you to deeper documentation.
 
 ---
 
 ## Requirements
 
-- **PHP**: 8.1+ with `pdo_mysql`, `mbstring`, `json`
+- **PHP**: 8.3+ with `pdo_mysql`, `mbstring`, `json`
 - **Database**: MySQL 5.7+ or MariaDB 10.3+
 - **Composer**: 2.0+
 - **Node.js**: 18+ and npm 9+ (for control‑panel/frontend assets)
@@ -20,7 +20,7 @@ See `docs/setup/install-composer.md` if you need help installing Composer.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/lexicon.git
+git clone https://github.com/webdevartisan/lexicon.git
 cd lexicon
 ```
 
