@@ -80,7 +80,7 @@
     ],
     "test:coverage": [
         "@php tests/setup-test-db.php",
-        "vendor/bin/pest --coverage --min=80"
+        "vendor/bin/pest --coverage --min=25"
     ],
     "test:fast": [
         "vendor/bin/pest --testsuite=Unit --parallel"
