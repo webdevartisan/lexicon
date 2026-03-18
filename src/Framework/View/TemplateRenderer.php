@@ -310,7 +310,7 @@ class TemplateRenderer implements TemplateViewerInterface
     {
         ob_start();
 
-        $prev = set_error_handler(function (int $severity, string $message, string $errfile, int $errline) use ($originalFile) {
+        set_error_handler(function (int $severity, string $message, string $errfile, int $errline) use ($originalFile) {
             if (!(error_reporting() & $severity)) {
                 return false;
             }
@@ -333,7 +333,7 @@ class TemplateRenderer implements TemplateViewerInterface
             ob_end_clean();
             throw new TemplateRenderException($originalFile, $e->getLine(), 'Compiled view: '.$compiledFile, $e);
         } finally {
-            set_error_handler($prev);
+            restore_error_handler();
         }
     }
 
