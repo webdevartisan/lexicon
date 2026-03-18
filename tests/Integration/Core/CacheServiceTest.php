@@ -35,8 +35,13 @@ beforeEach(function () {
         mkdir($baseTestPath, 0755, true);
     }
 
-    // Create unique cache directory for each test to prevent interference
-    $this->testCachePath = $baseTestPath.'/cache_'.uniqid();
+    $this->testCachePath = $baseTestPath.'/cache_'.uniqid('', true).'_'.bin2hex(random_bytes(4));
+
+    mkdir($this->testCachePath, 0755, true);
+
+    if (!is_dir($this->testCachePath)) {
+        throw new \RuntimeException("Could not create test cache directory: {$this->testCachePath}");
+    }
 
     $this->cache = new CacheService(
         cachePath: $this->testCachePath,

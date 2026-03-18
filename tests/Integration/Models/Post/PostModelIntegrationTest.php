@@ -20,7 +20,6 @@ beforeEach(function () {
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
 
-    
 });
 
 // ============================================================================

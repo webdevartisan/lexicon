@@ -28,7 +28,6 @@ beforeEach(function () {
     $this->commentModel = new CommentModel($this->db);
     $this->tagModel = new TagModel($this->db);
 
-    
 });
 
 // ============================================================================

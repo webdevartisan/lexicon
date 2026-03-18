@@ -20,7 +20,6 @@ beforeEach(function () {
 
     $this->auth = new Auth($this->session, $this->userModel, $this->profileModel);
 
-    
 });
 
 afterEach(function () {

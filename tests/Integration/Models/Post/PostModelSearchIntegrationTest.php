@@ -23,7 +23,6 @@ beforeEach(function () {
     $this->blogModel = new BlogModel($this->db);
     $this->categoryModel = new CategoryModel($this->db);
 
-    
 });
 
 // ============================================================================
