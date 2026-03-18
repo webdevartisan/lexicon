@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Auth\RegisterController;
+use App\Models\ReservedSlugModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
@@ -18,6 +19,8 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $_SESSION = [];
+    // clear stale Auth singleton cache from previous test
+    auth()->logout();
 
     $this->csrfToken = csrf()->getToken();
 
@@ -28,8 +31,10 @@ beforeEach(function () {
     $this->preferencesModel = new UserPreferencesModel($this->db);
     $this->auth = auth();
 
-    // Resolve from container — already wired in services.php
-    $this->usernameValidator = app(UsernameValidationService::class);
+    $this->usernameValidator = new UsernameValidationService(
+        $this->userModel,
+        new ReservedSlugModel($this->db)
+    );
 
     $this->controller = new RegisterController(
         $this->auth,

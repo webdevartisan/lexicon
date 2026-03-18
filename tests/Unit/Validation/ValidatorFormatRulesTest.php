@@ -362,10 +362,7 @@ describe('Validator Format Rules', function () {
      * Test integer rule fails for float string.
      */
     test('integer fails for float string', function () {
-        // Generate a float with guaranteed non-zero decimal part
-        $floatValue = faker()->randomFloat(1, 1, 99) + 0.5;
-        $age = (string) $floatValue;
-        $validator = new Validator(['age' => $age]);
+        $validator = new Validator(['age' => '1.5']);
         $validator->rules(['age' => 'integer']);
 
         expect($validator->fails())->toBeTrue();

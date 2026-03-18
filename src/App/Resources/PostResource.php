@@ -11,7 +11,7 @@ use App\Models\PostModel;
  *
  * We wrap a raw post row and give policies/controllers a clean, typed API.
  */
-final class PostResource
+class PostResource
 {
     public function __construct(
         private array $data,

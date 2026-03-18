@@ -91,6 +91,10 @@ uses()
 
 uses()
     ->beforeEach(function () {
+        // Clear Auth singleton cache and session before every Feature test
+        $_SESSION = [];
+        auth()->logout();
+
         // Load test database config (will use .env.testing variables)
         $dbConfig = require __DIR__.'/config/database.php';
 
