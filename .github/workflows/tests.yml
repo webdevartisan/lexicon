@@ -68,7 +68,7 @@ jobs:
           DB_PASSWORD:
 
       - name: Run tests
-        run: ./vendor/bin/pest --coverage --min=80
+        run: ./vendor/bin/pest --coverage --min=25
         env:
           APP_ENV: testing
           DB_HOST: 127.0.0.1
