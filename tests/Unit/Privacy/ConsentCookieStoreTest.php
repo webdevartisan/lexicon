@@ -22,34 +22,29 @@ test('write and read round-trips a valid consent cookie', function () {
     $secret = bin2hex(random_bytes(16));
     $store = new ConsentCookieStore('app_consent_test', 30, $secret);
 
-    $consent = Consent::fromPayload([
-        'version' => 1,
-        'categories' => [
+    // Use the constructor directly — fromPayload() is the internal cookie deserializer
+    // and expects compact keys (v, ts, c), not human-readable ones
+    $consent = new Consent(
+        version: 1,
+        timestamp: time(),
+        categories: [
             'necessary' => true,
             'analytics' => true,
             'marketing' => false,
         ],
-    ]);
+    );
 
-    $store->write($consent);
-
-    // Simulate browser sending the cookie back on next request
-    $cookieValue = null;
-    foreach (headers_list() as $header) {
-        if (str_starts_with(strtolower($header), 'set-cookie: app_consent_test=')) {
-            $cookieValue = substr($header, strlen('Set-Cookie: app_consent_test='));
-            $cookieValue = explode(';', $cookieValue, 2)[0];
-            break;
-        }
-    }
-
-    expect($cookieValue)->not->toBeNull();
-
-    $_COOKIE['app_consent_test'] = $cookieValue;
+    // Simulate browser sending the cookie back — encodeCookieValue() is used
+    // instead of headers_list(), which is always empty in CLI environments
+    $_COOKIE['app_consent_test'] = $store->encodeCookieValue($consent);
 
     $read = $store->read();
 
-    expect($read)->not->toBeNull();
+    expect($read)->not->toBeNull()
+        ->and($read->version)->toBe(1)
+        ->and($read->allows('analytics'))->toBeTrue()
+        ->and($read->allows('marketing'))->toBeFalse()
+        ->and($read->allows('necessary'))->toBeTrue();
 });
 
 test('tampered consent cookie is rejected', function () {
@@ -61,7 +56,6 @@ test('tampered consent cookie is rejected', function () {
         'categories' => ['necessary' => true],
     ], JSON_UNESCAPED_SLASHES);
 
-    $b64 = base64_encode($payload);
     $sig = hash_hmac('sha256', $payload, $secret);
 
     // Tamper with payload but keep original signature

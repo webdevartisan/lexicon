@@ -50,16 +50,26 @@ final class ConsentCookieStore
         return Consent::fromPayload($payload);
     }
 
-    public function write(Consent $consent): void
+    /**
+     * Encode a Consent object into a signed cookie value.
+     *
+     * Extracted from write() to allow direct testing without relying on
+     * headers_list(), which is unavailable in CLI environments.
+     *
+     * @param  Consent  $consent  Consent object to encode
+     * @return string Signed cookie value in format: base64(json).hmac
+     */
+    public function encodeCookieValue(Consent $consent): string
     {
         $json = json_encode($consent->toPayload(), JSON_UNESCAPED_SLASHES);
-        if (!is_string($json)) {
-            return;
-        }
-
         $sig = hash_hmac('sha256', $json, $this->secret);
-        $value = base64_encode($json).'.'.$sig;
 
+        return base64_encode($json).'.'.$sig;
+    }
+
+    public function write(Consent $consent): void
+    {
+        $value = $this->encodeCookieValue($consent);
         $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 
         setcookie($this->cookieName, $value, [

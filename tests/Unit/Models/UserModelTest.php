@@ -86,8 +86,7 @@ test('softDelete constructs correct SQL with timestamp', function () {
     $this->dbMock->shouldReceive('query')
         ->once()
         ->with(
-            Mockery::on(fn(string $sql): bool =>
-                str_contains($sql, 'SELECT id, deleted_at FROM users') &&
+            Mockery::on(fn (string $sql): bool => str_contains($sql, 'SELECT id, deleted_at FROM users') &&
                 str_contains($sql, 'WHERE id = ?')
             ),
             [$userId]
@@ -103,8 +102,7 @@ test('softDelete constructs correct SQL with timestamp', function () {
     $this->dbMock->shouldReceive('execute')
         ->once()
         ->with(
-            Mockery::on(fn(string $sql): bool =>
-                str_contains($sql, 'UPDATE users') &&
+            Mockery::on(fn (string $sql): bool => str_contains($sql, 'UPDATE users') &&
                 str_contains($sql, 'deleted_at = NOW()') &&
                 str_contains($sql, 'WHERE id = ?') &&
                 str_contains($sql, 'deleted_at IS NULL')
@@ -177,13 +175,13 @@ test('softDelete returns true when record is already soft-deleted', function () 
  * Ensures validation fires before any database interaction.
  */
 test('softDelete throws InvalidArgumentException for non-positive ID', function (int $invalidId) {
-    expect(fn() => $this->userModel->softDelete($invalidId))
+    expect(fn () => $this->userModel->softDelete($invalidId))
         ->toThrow(\InvalidArgumentException::class, 'ID must be a positive integer');
 
     $this->dbMock->shouldNotHaveReceived('query');
     $this->dbMock->shouldNotHaveReceived('execute');
 })->with([
-    'zero'     => [0],
+    'zero' => [0],
     'negative' => [-1],
 ]);
 
