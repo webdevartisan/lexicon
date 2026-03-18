@@ -351,7 +351,7 @@ describe('Validator Format Rules', function () {
      * Reject decimals to ensure strict integer validation.
      */
     test('integer fails for float', function () {
-        $validator = new Validator(['age' => faker()->randomFloat(1, 1, 100)]);
+        $validator = new Validator(['age' => 1.5]);
         $validator->rules(['age' => 'integer']);
 
         expect($validator->fails())->toBeTrue()
