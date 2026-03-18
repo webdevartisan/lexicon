@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Controllers\Auth\AuthController;
 use App\Models\UserModel;
-use Framework\Core\Request;
 use Framework\Core\Response;
 use Tests\Factories\UserFactory;
 
@@ -22,12 +21,27 @@ beforeEach(function () {
 
     $this->mockViewer = new class() implements \Framework\Interfaces\TemplateViewerInterface
     {
-        public function render(string|array|null $template, array $data = []): string
+        public function render(string $template, array $data = []): string
         {
             return 'mocked view';
         }
 
         public function addGlobals(array $vars): void {}
+
+        public function compiledViewStats(): array
+        {
+            return [];
+        }
+
+        public function pruneCompiledViews(int $maxAgeSeconds): int
+        {
+            return 0;
+        }
+
+        public function clearCompiledViews(): array
+        {
+            return [];
+        }
     };
 });
 
@@ -52,12 +66,11 @@ it('requires CSRF token on submit', function () {
         ])
         ->create();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         'email' => faker()->safeEmail(),
         'password' => 'password123',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     expect(fn () => $controller->submit())
@@ -72,17 +85,17 @@ it('requires CSRF token on submit', function () {
 it('accepts valid CSRF token and validates', function () {
     $token = csrf()->getToken();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'email' => '',
         'password' => 'password123',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     $response = $controller->submit();
-    expect($response)->toBeInstanceOf(Framework\Core\Response::class);
+
+    expect($response)->toBeInstanceOf(Response::class);
 });
 
 // ============================================================================
@@ -97,17 +110,16 @@ it('accepts valid CSRF token and validates', function () {
 it('requires email on submit', function () {
     $token = csrf()->getToken();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'password' => 'password123',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     $response = $controller->submit();
 
-    expect($response)->toBeInstanceOf(Framework\Core\Response::class);
+    expect($response)->toBeInstanceOf(Response::class);
 });
 
 /**
@@ -118,17 +130,17 @@ it('requires email on submit', function () {
 it('validates email format', function () {
     $token = csrf()->getToken();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'email' => 'invalid-email',
         'password' => 'password123',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
+
     $response = $controller->submit();
 
-    expect($response)->toBeInstanceOf(Framework\Core\Response::class);
+    expect($response)->toBeInstanceOf(Response::class);
 });
 
 /**
@@ -147,13 +159,12 @@ it('trims email whitespace', function () {
         ])
         ->create();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'email' => "  {$email}  ",
         'password' => 'password123',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     try {
@@ -177,16 +188,16 @@ it('trims email whitespace', function () {
 it('requires password on submit', function () {
     $token = csrf()->getToken();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'email' => faker()->safeEmail(),
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
+
     $response = $controller->submit();
 
-    expect($response)->toBeInstanceOf(Framework\Core\Response::class);
+    expect($response)->toBeInstanceOf(Response::class);
 });
 
 /**
@@ -197,13 +208,12 @@ it('requires password on submit', function () {
 it('accepts empty password string without throwing', function () {
     $token = csrf()->getToken();
 
-    $request = new Request('/login', 'POST', [], [
+    $request = makeRequest('/login', 'POST', [
         '_token' => $token,
         'email' => faker()->safeEmail(),
         'password' => '',
-    ], [], [], [], []);
-
-    $controller = new AuthController($request);
+    ]);
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     expect(fn () => $controller->submit())->not->toThrow(Exception::class);
@@ -222,11 +232,11 @@ it('clears session on logout', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $_SESSION['user_id'] = $userId;
 
-    $request = new Request('/logout', 'POST', [], [], [], [], [], []);
-    $controller = new AuthController($request);
+    $request = makeRequest('/logout', 'POST');
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
-    $response = $controller->logout();
+    $controller->logout();
 
     expect($_SESSION)->not->toHaveKey('user_id');
 });
@@ -237,8 +247,8 @@ it('clears session on logout', function () {
  * Verifies logout() returns redirect response.
  */
 it('redirects to homepage after logout', function () {
-    $request = new Request('/logout', 'POST', [], [], [], [], [], []);
-    $controller = new AuthController($request);
+    $request = makeRequest('/logout', 'POST');
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     $response = $controller->logout();
@@ -252,8 +262,8 @@ it('redirects to homepage after logout', function () {
  * Verifies logout() handles missing session gracefully.
  */
 it('handles logout when not authenticated', function () {
-    $request = new Request('/logout', 'POST', [], [], [], [], [], []);
-    $controller = new AuthController($request);
+    $request = makeRequest('/logout', 'POST');
+    $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     expect(fn () => $controller->logout())->not->toThrow(Exception::class);

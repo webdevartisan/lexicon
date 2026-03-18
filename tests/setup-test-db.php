@@ -42,7 +42,7 @@ try {
 $pdo->exec("USE `{$testDbName}`");
 
 // Import schema
-$schemaFile = __DIR__.'/../database/migrations/2026_02_02_install.sql';
+$schemaFile = __DIR__.'/../database/schema.sql';
 if (!file_exists($schemaFile)) {
     echo "❌ Schema file not found: {$schemaFile}\n";
     exit(1);
@@ -57,4 +57,4 @@ try {
     exit(1);
 }
 
-echo "\n🎉 Test database ready!\n\n";
+echo "\n Test database ready!\n\n";

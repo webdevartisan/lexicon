@@ -68,8 +68,8 @@
         "./vendor/bin/pest"
     ],
     "test:unit": "@php tests/scripts/test-unit.php",
-    "test:integration": "@php tests/scripts/test-integration.php",
-    "test:feature": "@php tests/scripts/test-feature.php",
+    "test:integration": ["@php tests/setup-test-db.php","@php tests/scripts/test-integration.php"],
+    "test:feature": ["@php tests/setup-test-db.php","@php tests/scripts/test-feature.php"],
     "test:coverage": [
         "@php -r \"echo '\\n📊 Running tests with coverage report...\\n\\n';\"",
         "./vendor/bin/pest --coverage --min=80"

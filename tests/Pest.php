@@ -212,6 +212,37 @@ expect()->extend('toMatchCachePattern', function (string $pattern) {
 */
 
 /**
+ * Creates a real Request instance with sane test defaults.
+ *
+ * Always injects REMOTE_ADDR so ip()-dependent services (e.g. rate limiters)
+ * receive a string instead of null.
+ *
+ * @param  array<string, mixed>  $post
+ * @param  array<string, mixed>  $get
+ * @param  array<string, mixed>  $server  Override or extend default server params
+ */
+function makeRequest(
+    string $uri = '/',
+    string $method = 'GET',
+    array $post = [],
+    array $get = [],
+    array $server = []
+): \Framework\Core\Request {
+    $defaultServer = ['REMOTE_ADDR' => '127.0.0.1'];
+
+    return new \Framework\Core\Request(
+        $uri,
+        $method,
+        $get,
+        $post,
+        [],
+        [],
+        array_merge($defaultServer, $server), // caller can override if needed
+        []
+    );
+}
+
+/**
  * Setup controller with dependencies for testing.
  */
 function setupController($controller, $request, $mockViewer): void
