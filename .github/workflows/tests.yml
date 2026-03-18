@@ -59,7 +59,7 @@ jobs:
           done
 
       - name: Setup test database
-        run: mysql -h 127.0.0.1 -P 3306 -u root -proot blog_test < database/schema.sql
+        run: mysql -h 127.0.0.1 -P 3306 -u root blog_test < database/schema.sql
         env:
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
