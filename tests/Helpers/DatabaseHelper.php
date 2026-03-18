@@ -109,8 +109,7 @@ class DatabaseHelper
      * Verify all expected tables were cleaned.
      * Fail loudly if a table is missing from the cleanup list.
      *
-     * @param  Database  $db
-     * @param  array     $cleaned  List of tables that were truncated
+     * @param  array  $cleaned  List of tables that were truncated
      */
     public static function assertAllTablesClean(Database $db, array $cleaned): void
     {
@@ -122,13 +121,12 @@ class DatabaseHelper
         ");
 
         $allTables = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-        $missing   = array_diff($allTables, $cleaned);
+        $missing = array_diff($allTables, $cleaned);
 
         if (!empty($missing)) {
             throw new \RuntimeException(
-                'cleanDatabase() is missing these tables: ' . implode(', ', $missing)
+                'cleanDatabase() is missing these tables: '.implode(', ', $missing)
             );
         }
     }
-
 }
