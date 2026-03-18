@@ -64,32 +64,41 @@
       "@php cli cache:warm"
     ],
     "test": [
-        "@php -r \"echo '\\n🧪 Running all tests...\\n\\n';\"",
-        "./vendor/bin/pest"
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest"
     ],
-    "test:unit": "@php tests/scripts/test-unit.php",
-    "test:integration": ["@php tests/setup-test-db.php","@php tests/scripts/test-integration.php"],
-    "test:feature": ["@php tests/setup-test-db.php","@php tests/scripts/test-feature.php"],
+    "test:unit": [
+        "vendor/bin/pest --testsuite=Unit"
+    ],
+    "test:integration": [
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --testsuite=Integration"
+    ],
+    "test:feature": [
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --testsuite=Feature"
+    ],
     "test:coverage": [
-        "@php -r \"echo '\\n📊 Running tests with coverage report...\\n\\n';\"",
-        "./vendor/bin/pest --coverage --min=80"
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --coverage --min=80"
     ],
     "test:fast": [
-        "@php -r \"echo '\\n⚡ Running fast tests only...\\n\\n';\"",
-        "./vendor/bin/pest tests/Unit --parallel"
+        "vendor/bin/pest --testsuite=Unit --parallel"
     ],
     "test:slow": [
-        "@php -r \"echo '\\n🐢 Running slow tests (integration + feature)...\\n\\n';\"",
-        "./vendor/bin/pest tests/Integration tests/Feature"
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --testsuite=Integration --testsuite=Feature"
     ],
     "test:watch": [
-        "./vendor/bin/pest --watch"
+        "vendor/bin/pest --watch"
     ],
     "test:coverage-html": [
-        "./vendor/bin/pest --coverage-html=storage/coverage"
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --coverage-html=storage/coverage"
     ],
     "test:parallel": [
-      "./vendor/bin/pest --parallel"
+        "@php tests/setup-test-db.php",
+        "vendor/bin/pest --parallel"
     ],
     "analyse": [
       "./vendor/bin/phpstan analyse --memory-limit=512M"
