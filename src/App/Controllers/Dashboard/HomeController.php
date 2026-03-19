@@ -186,8 +186,7 @@ class HomeController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
-        $selectedBlogId = $this->request()->all()['blog'];
-
+        $selectedBlogId = (int) $this->request()->all()['blog'];
         $this->preference->setDefaultBlogId($user['id'], $selectedBlogId);
 
         return $this->redirect('/dashboard');
