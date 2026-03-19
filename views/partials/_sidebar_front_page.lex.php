@@ -1,12 +1,5 @@
 <div id="sidebar">
     <div class="inner">
-        <!-- Search -->
-            <section id="search" class="alt">
-                <form method="get" action="/search">
-                    <input type="text" name="q" id="query" placeholder="Search" />
-                </form>
-            </section>
-
         <!-- Menu -->
             <nav id="menu">
                 <header class="major">
