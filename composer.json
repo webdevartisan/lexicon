@@ -9,6 +9,8 @@
     "phpmailer/phpmailer": "^7.0"
   },
   "require-dev": {
+    "captainhook/captainhook": "^5.28",
+    "captainhook/hook-installer": "^1.0",
     "fakerphp/faker": "^1.24",
     "infection/infection": "^0.32.3",
     "laravel/pint": "^1.27",
@@ -145,8 +147,9 @@
     "preferred-install": "dist",
     "sort-packages": true,
     "allow-plugins": {
-      "pestphp/pest-plugin": true,
-      "infection/extension-installer": true
+      "captainhook/hook-installer": true,
+      "infection/extension-installer": true,
+      "pestphp/pest-plugin": true
     },
     "platform": {
       "php": "8.3"
