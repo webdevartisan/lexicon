@@ -34,7 +34,7 @@ final class ConsentController extends AppController
         $this->csrf->assertValid($this->readCsrfToken());
 
         $action = (string) ($this->request()->postParam('action', ''));
-        if (!is_string($action) || !in_array($action, self::VALID_ACTIONS, true)) {
+        if (!in_array($action, self::VALID_ACTIONS, true)) {
             return $this->json(['ok' => false, 'error' => 'Invalid action'], 422);
         }
 
