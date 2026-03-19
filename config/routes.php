@@ -135,23 +135,23 @@ $router->group([
     ]);
 
     // Generic CRUD routes for dashboard.
-    //if (env('APP_DEBUG', false)) {
-        $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/workflow/request-review', ['action' => 'requestReview', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
-    //}
+    // if (env('APP_DEBUG', false)) {
+    $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
+    $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+    $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+    $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/request-review', ['action' => 'requestReview', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
+    // }
 });
 
 // Admin route group with authentication and admin role enforced
