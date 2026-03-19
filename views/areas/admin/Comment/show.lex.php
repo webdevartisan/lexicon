@@ -5,10 +5,10 @@
 {% block body %}
 <h1>Comment #<?= $comment['id'] ?></h1>
 
-<p><strong>Author:</strong> <?= htmlspecialchars($comment['author_name']) ?></p>
-<p><strong>Email:</strong> <?= htmlspecialchars($comment['author_email']) ?></p>
+<p><strong>Author:</strong> <?= e($comment['author_name']) ?></p>
+<p><strong>Email:</strong> <?= e($comment['author_email']) ?></p>
 <p><strong>Content:</strong></p>
-<div><?= nl2br(htmlspecialchars($comment['content'])) ?></div>
+<div><?= nl2br(e($comment['content'])) ?></div>
 <p><strong>Status:</strong> <?= $comment['status'] ?></p>
 
 <p>

@@ -41,7 +41,7 @@ final class SettingController extends AppController
     public function update(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         // validate all form input using the validation framework
         $validator = $this->validateOrFail([
@@ -79,7 +79,7 @@ final class SettingController extends AppController
     public function testEmail(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $validator = $this->validateOrFail([
             'test_recipient' => 'required|email',

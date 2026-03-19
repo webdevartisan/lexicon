@@ -71,7 +71,7 @@ class AccountDeletionController extends AppController
     public function destroy(): Response
     {
         // Enforce CSRF protection on destructive actions
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
 

@@ -46,7 +46,7 @@ final class AuthController extends AppController
     public function submit(): Response
     {
         // Enforce CSRF token for login POST
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         // Safely read and normalize input
         $email = trim((string) ($this->request->post['email'] ?? ''));

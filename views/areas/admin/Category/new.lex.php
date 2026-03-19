@@ -8,7 +8,7 @@
 {% if errors|isset %}
     <ul>
     {% foreach ($errors as $error): %}
-        <li><?= htmlspecialchars($error) ?></li>
+        <li><?= e($error) ?></li>
     {% endforeach; %}
     </ul>
 {% endif %}

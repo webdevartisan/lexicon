@@ -304,7 +304,7 @@
                                         if (!empty($current_user['last_name'])) {
                                             $initials .= strtoupper(substr($current_user['last_name'], 0, 1));
                                         }
-                                        echo htmlspecialchars($initials ?: 'U', ENT_QUOTES, 'UTF-8');
+                                        echo e($initials ?: 'U');
                                         ?>
                                             </div>
                                         {% endif %}

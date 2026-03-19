@@ -125,7 +125,7 @@ class EmailTestController extends AppController
     public function sendTest(): Response
     {
         // enforce CSRF protection for all state-changing operations
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $templateKey = $this->request->post['template'] ?? '';
         $recipient = $this->request->post['recipient'] ?? '';
@@ -171,7 +171,7 @@ class EmailTestController extends AppController
     public function testConfig(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $recipient = $this->request->post['recipient'] ?? '';
 

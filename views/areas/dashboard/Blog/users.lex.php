@@ -43,10 +43,10 @@
                 <td>
                   <div class="d-flex align-items-center">
                     <i class="fas fa-user-circle text-muted me-2"></i>
-                    <strong><?= htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    <strong><?= e($u['username']) ?></strong>
                   </div>
                 </td>
-                <td><?= htmlspecialchars($u['email'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= e($u['email']) ?></td>
                 <td>
                   <?php
                   // should use color-coded badges for visual hierarchy.
@@ -60,15 +60,15 @@
                       default => 'bg-secondary'
                   };
                     ?>
-                  <span class="badge <?= $badgeClass ?> text-capitalize"><?= htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8') ?></span>
+                  <span class="badge <?= $badgeClass ?> text-capitalize"><?= e($u['role']) ?></span>
                 </td>
                 <td>
-                  <small class="text-muted"><?= htmlspecialchars($u['assigned_at'] ?? 'Unknown', ENT_QUOTES, 'UTF-8') ?></small>
+                  <small class="text-muted"><?= e($u['assigned_at'] ?? 'Unknown') ?></small>
                 </td>
                 <td class="text-end">
                   <form method="post" action="/dashboard/blogs/{{ blog.id }}/users" class="d-inline" 
-                        onsubmit="return confirm('Remove <?= htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8') ?> from this blog?');">
-                    <input type="hidden" name="_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+                        onsubmit="return confirm('Remove <?= e($u['username']) ?> from this blog?');">
+                    {{ csrf_field() }}
                     <input type="hidden" name="action" value="remove">
                     <input type="hidden" name="user_id" value="<?= (int) $u['user_id'] ?>">
                     <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -92,7 +92,7 @@
     </div>
     <div class="card-body">
       <form method="post" action="/dashboard/blogs/{{ blog.id }}/users" class="row g-3" id="addUserForm">
-        <input type="hidden" name="_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+        {{ csrf_field() }}
         <input type="hidden" name="action" value="add">
 
         <div class="col-12 col-md-6">
@@ -106,8 +106,8 @@
                 foreach ($availableUsers as $au) {
                     ?>
               <option value="<?= (int) $au['id'] ?>">
-                <?= htmlspecialchars($au['username'], ENT_QUOTES, 'UTF-8') ?> 
-                (<?= htmlspecialchars($au['email'], ENT_QUOTES, 'UTF-8') ?>)
+                <?= e($au['username']) ?> 
+                (<?= e($au['email']) ?>)
               </option>
             <?php
                 }
@@ -122,7 +122,7 @@
           <select id="role" name="role" class="form-select" required>
             {% foreach ($assignableRoles as $role): %}
               <option value="{{ role }}">
-                <?= ucfirst(htmlspecialchars($role, ENT_QUOTES, 'UTF-8')) ?>
+                <?= ucfirst(e($role)) ?>
               </option>
             {% endforeach %}
           </select>

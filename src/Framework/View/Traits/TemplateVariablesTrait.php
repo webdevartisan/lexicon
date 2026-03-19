@@ -35,7 +35,7 @@ trait TemplateVariablesTrait
 
         return $filter === 'raw'
             ? $raw
-            : "<?= htmlspecialchars(\$$variable ?? '') ?>";
+            : "<?= e(\$$variable ?? '') ?>";
     }
 
     private function dotNotationToArrayAccess(string $variable): string

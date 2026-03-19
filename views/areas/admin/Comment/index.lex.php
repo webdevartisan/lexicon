@@ -21,8 +21,8 @@
         <tr>
             <td><?= $comment['id'] ?></td>
             <td><?= $comment['post_id'] ?></td>
-            <td><?= htmlspecialchars($comment['author_name']) ?></td>
-            <td><?= htmlspecialchars($comment['content']) ?></td>
+            <td><?= e($comment['author_name']) ?></td>
+            <td><?= e($comment['content']) ?></td>
             <td><?= $comment['status'] ?></td>
             <td>
                 <a href="/admin/comments/<?= $comment['id'] ?>/show">View</a> |

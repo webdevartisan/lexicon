@@ -61,16 +61,16 @@
                         <div>
                             <dt class="font-medium text-slate-500 dark:text-zink-300">Subject</dt>
                             <dd class="mt-1 text-slate-900 dark:text-zink-100">
-                                <?= htmlspecialchars($preview['subject']) ?>
+                                <?= e($preview['subject']) ?>
                             </dd>
                         </div>
                         
                         <div>
                             <dt class="font-medium text-slate-500 dark:text-zink-300">From</dt>
                             <dd class="mt-1 text-slate-900 dark:text-zink-100">
-                                <?= htmlspecialchars($preview['from']['name']) ?><br>
+                                <?= e($preview['from']['name']) ?><br>
                                 <span class="text-xs text-slate-500 dark:text-zink-400">
-                                    &lt;<?= htmlspecialchars($preview['from']['address']) ?>&gt;
+                                    &lt;<?= e($preview['from']['address']) ?>&gt;
                                 </span>
                             </dd>
                         </div>
@@ -79,9 +79,9 @@
                             <dt class="font-medium text-slate-500 dark:text-zink-300">To (Sample)</dt>
                             <dd class="mt-1 text-slate-900 dark:text-zink-100">
                                 <?php foreach ($preview['to'] as $email => $name) { ?>
-                                    <?= htmlspecialchars($name ?: $email) ?><br>
+                                    <?= e($name ?: $email) ?><br>
                                     <span class="text-xs text-slate-500 dark:text-zink-400">
-                                        &lt;<?= htmlspecialchars($email) ?>&gt;
+                                        &lt;<?= e($email) ?>&gt;
                                     </span>
                                 <?php } ?>
                             </dd>
@@ -116,7 +116,7 @@
                     
                     <form method="POST" action="/admin/email-test/send-test">
                         {{ csrf_field() }}
-                        <input type="hidden" name="template" value="<?= htmlspecialchars($templateKey) ?>">
+                        <input type="hidden" name="template" value="<?= e($templateKey) ?>">
                         
                         <div class="mb-3">
                             <input 
@@ -145,7 +145,7 @@
                 <div class="card-body">
                     <h3 class="mb-3 text-sm font-semibold text-slate-900 dark:text-zink-100">Plain Text Version</h3>
                     <div class="p-3 bg-slate-100 dark:bg-zink-600 rounded-lg overflow-x-auto">
-                        <pre class="text-xs text-slate-700 dark:text-zink-200 whitespace-pre-wrap font-mono"><?= htmlspecialchars($preview['text_body']) ?></pre>
+                        <pre class="text-xs text-slate-700 dark:text-zink-200 whitespace-pre-wrap font-mono"><?= e($preview['text_body']) ?></pre>
                     </div>
                 </div>
             </div>

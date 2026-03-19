@@ -5,7 +5,7 @@
 {% block body %}
 <h1>Delete Tag</h1>
 
-<p>Are you sure you want to delete <strong><?= htmlspecialchars($tag['name']) ?></strong>?</p>
+<p>Are you sure you want to delete <strong><?= e($tag['name']) ?></strong>?</p>
 
 <form method="post" action="/admin/tags/<?= $tag['id'] ?>/destroy">
     <button type="submit">Yes, delete</button>

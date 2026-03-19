@@ -19,9 +19,9 @@
     <tbody>
     {% foreach ($tags as $tag): %}
         <tr>
-            <td><?= htmlspecialchars($tag['id']) ?></td>
-            <td><?= htmlspecialchars($tag['name']) ?></td>
-            <td><?= htmlspecialchars($tag['slug']) ?></td>
+            <td><?= e($tag['id']) ?></td>
+            <td><?= e($tag['name']) ?></td>
+            <td><?= e($tag['slug']) ?></td>
             <td>
                 <a href="/admin/tags/<?= $tag['id'] ?>/edit">Edit</a> |
                 <a href="/admin/tags/<?= $tag['id'] ?>/delete">Delete</a>

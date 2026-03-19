@@ -2,9 +2,9 @@
 
 {% block "content" %}
   <header class="page-header">
-    <h1><?= htmlspecialchars($blog['title'] ?? ($username."'s Blog")) ?></h1>
+    <h1><?= e($blog['title'] ?? ($username."'s Blog")) ?></h1>
     <?php if (!empty($blog['subtitle'])) { ?>
-      <p class="subtitle"><?= htmlspecialchars($blog['subtitle']) ?></p>
+      <p class="subtitle"><?= e($blog['subtitle']) ?></p>
     <?php } ?>
   </header>
 
@@ -13,10 +13,10 @@
       <?php foreach ($posts as $post) { ?>
         <li>
           <a href="/<?= urlencode($username) ?>/<?= urlencode($post['slug']) ?>">
-            <?= htmlspecialchars($post['title']) ?>
+            <?= e($post['title']) ?>
           </a>
-          <time datetime="<?= htmlspecialchars($post['published_at']) ?>">
-            <?= htmlspecialchars($post['published_at']) ?>
+          <time datetime="<?= e($post['published_at']) ?>">
+            <?= e($post['published_at']) ?>
           </time>
         </li>
       <?php } ?>

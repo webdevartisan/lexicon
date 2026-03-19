@@ -7,11 +7,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<?php
       // per-page description if you pass $meta['description']
-      $desc = htmlspecialchars($meta['description'] ?? ($user['blog_name'] ?? 'Blog'), ENT_QUOTES);
+      $desc = e($meta['description'] ?? ($user['blog_name'] ?? 'Blog'));
 	?>
     <meta name="description" content="<?= $desc ?>">
 	<meta name="keywords" content="blog, posts">
-	<meta name="author" content="<?= htmlspecialchars($user['display_name_cached'] ?? $user['username'] ?? 'Author', ENT_QUOTES) ?>">
+	<meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>">
 
   	<!-- Facebook and Twitter integration -->
 	<meta property="og:title" content=""/>
@@ -39,7 +39,7 @@
 
 
 	</head>
-	<body class="theme-<?= htmlspecialchars($theme ?? 'default', ENT_QUOTES) ?>">
+	<body class="theme-<?= e($theme ?? 'default') ?>">
 
 	<?php if (!empty($flashes ?? [])) { ?>
 	<div class="container mt-3">
@@ -55,7 +55,7 @@
 		    ?>
 		<?php foreach ($messages as $message) { ?>
 			<div class="alert <?= $class ?>" role="alert">
-			<?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
+			<?= e($message) ?>
 			</div>
 		<?php } ?>
 		<?php } ?>
@@ -71,7 +71,7 @@
 							<div class="fh5co-navbar-brand">
 								<a class="fh5co-logo" href="<?= '/blog/'.urlencode($blog['blog_slug']) ?>">
 								<img src="<?= $logo ?: $asset('images/brand-nav.png') ?>"
-									alt="<?= htmlspecialchars($user['blog_name'] ?? 'Blog', ENT_QUOTES) ?>"
+									alt="<?= e($user['blog_name'] ?? 'Blog') ?>"
 									style="max-height:56px; height:auto; width:auto; object-fit:contain;">
 								</a>
 							</div>
@@ -103,9 +103,9 @@
 				<div class="row">
 					<div class="col-md-12 text-center">
 	              	<div class="footer-widget border">
-						<p class="pull-left"><small>&copy; <?= date('Y') ?> <?= htmlspecialchars($user['blog_name'] ?? 'Blog', ENT_QUOTES) ?>.</small></p>
+						<p class="pull-left"><small>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Blog') ?>.</small></p>
 						<p class="pull-right"><small>
-							Published & hosted by <a href="/"><?= htmlspecialchars($_ENV['APP_NAME'] ?? 'bloghub.example', ENT_QUOTES) ?></a>
+							Published & hosted by <a href="/"><?= e($_ENV['APP_NAME'] ?? 'bloghub.example') ?></a>
 						</small></p>
 					</div>
 					</div>

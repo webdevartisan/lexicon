@@ -115,7 +115,7 @@ final class PostController extends AppController
      */
     public function create(): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $defaultBlogId = $this->preference->getDefaultBlogId($user['id']);
@@ -275,7 +275,7 @@ final class PostController extends AppController
      */
     public function update(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -451,7 +451,7 @@ final class PostController extends AppController
      */
     public function delete(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -469,7 +469,7 @@ final class PostController extends AppController
      */
     public function destroy(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -500,7 +500,7 @@ final class PostController extends AppController
      */
     public function publish(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -536,7 +536,7 @@ final class PostController extends AppController
      */
     public function unpublish(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -566,7 +566,7 @@ final class PostController extends AppController
      */
     public function draft(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -595,7 +595,7 @@ final class PostController extends AppController
      */
     public function archive(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -624,7 +624,7 @@ final class PostController extends AppController
      */
     public function requestReview(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -654,7 +654,7 @@ final class PostController extends AppController
      */
     public function approve(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);
@@ -684,7 +684,7 @@ final class PostController extends AppController
      */
     public function markNeedsChanges(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $post = $this->getPost((int) $id);

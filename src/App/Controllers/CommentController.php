@@ -32,7 +32,7 @@ class CommentController extends AppController
     public function create(): Response
     {
         // Enforce CSRF protection on comment submission
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         // Normalize input
         $postId = (int) ($this->request->post['post_id'] ?? 0);

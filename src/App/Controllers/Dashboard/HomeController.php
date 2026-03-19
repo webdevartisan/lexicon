@@ -183,7 +183,7 @@ class HomeController extends AppController
      */
     public function setDefaultBlog()
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $selectedBlogId = $this->request()->all()['blog'];

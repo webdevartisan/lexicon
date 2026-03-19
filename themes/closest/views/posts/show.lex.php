@@ -2,13 +2,13 @@
 
 {% block content %}
 <?php
-$title = htmlspecialchars($post['title'] ?? 'Untitled', ENT_QUOTES);
-$date = htmlspecialchars($post['published_at'] ?? '', ENT_QUOTES);
-$author = htmlspecialchars(($user['display_name_cached'] ?? $user['username'] ?? ''), ENT_QUOTES);
+$title = e($post['title'] ?? 'Untitled');
+$date = e($post['published_at'] ?? '');
+$author = e(($user['display_name_cached'] ?? $user['username'] ?? ''));
 
 // Featured cover from schema (featured_image), else theme fallback
 $cover = $post['featured_image'] ?? ($post['cover_url'] ?? null);
-$heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2.jpg');
+$heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
 ?>
 
 <!-- Hero / Intro -->
@@ -67,7 +67,7 @@ $heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2
       <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
         <p class="mt-4">
           <?php foreach ($post['tags'] as $tag) { ?>
-            <a class="btn btn-sm btn-outline-secondary" href="#"><?= htmlspecialchars($tag, ENT_QUOTES) ?></a>
+            <a class="btn btn-sm btn-outline-secondary" href="#"><?= e($tag) ?></a>
           <?php } ?>
         </p>
       <?php } ?>
@@ -77,7 +77,7 @@ $heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2
         <?php if (!empty($prev_post)) { ?>
           <a class="btn btn-outline-primary"
             href="/blog/<?= urlencode($blog['blog_slug']) ?>/<?= urlencode($prev_post['slug']) ?>">&larr;
-            <?= htmlspecialchars($prev_post['title'] ?? 'Previous', ENT_QUOTES) ?>
+            <?= e($prev_post['title'] ?? 'Previous') ?>
           </a>
         <?php } else { ?>
           <span></span>
@@ -86,7 +86,7 @@ $heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2
         <?php if (!empty($next_post)) { ?>
           <a class="btn btn-outline-primary"
             href="/blog/<?= urlencode($blog['blog_slug']) ?>/<?= urlencode($next_post['slug']) ?>">
-            <?= htmlspecialchars($next_post['title'] ?? 'Next', ENT_QUOTES) ?> &rarr;
+            <?= e($next_post['title'] ?? 'Next') ?> &rarr;
           </a>
         <?php } ?>
       </nav>
@@ -109,15 +109,15 @@ $heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2
                 <li class="media mb-3">
                   <div class="media-body">
                     <h5 class="mt-0 mb-1">
-                      <?= htmlspecialchars($comment['user_name'] ?? 'Guest', ENT_QUOTES) ?>
+                      <?= e($comment['user_name'] ?? 'Guest') ?>
                       <?php if (!empty($comment['created_at'])) { ?>
                         <small class="text-muted">
                           &middot;
-                          <?= htmlspecialchars($comment['created_at'], ENT_QUOTES) ?>
+                          <?= e($comment['created_at']) ?>
                         </small>
                       <?php } ?>
                     </h5>
-                    <p><?= nl2br(htmlspecialchars($comment['content'] ?? '', ENT_QUOTES)) ?></p>
+                    <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
                   </div>
                 </li>
               <?php } ?>
@@ -178,13 +178,13 @@ $heroImg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-2
       <div class="row post-entry">
         <?php foreach ($related as $rel) { ?>
           <?php
-          $rTitle = htmlspecialchars($rel['title'] ?? 'Post', ENT_QUOTES);
+          $rTitle = e($rel['title'] ?? 'Post');
             $rSlug = urlencode($rel['slug'] ?? '');
             $rUrl = '/blog/'.urlencode($blog['blog_slug']).'/'.$rSlug;
             // Use featured_image if present (aliased to cover_url in model), else fallback
             $rCover = $rel['featured_image'] ?? ($rel['cover_url'] ?? null);
-            $rImg = $rCover ? htmlspecialchars($rCover, ENT_QUOTES) : $asset('images/work-1.jpg');
-            $rExcerpt = htmlspecialchars($rel['excerpt'] ?? '', ENT_QUOTES);
+            $rImg = $rCover ? e($rCover) : $asset('images/work-1.jpg');
+            $rExcerpt = e($rel['excerpt'] ?? '');
             ?>
           <div class="col-md-6">
             <div class="post animate-box">

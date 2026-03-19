@@ -51,7 +51,7 @@ final class PasswordController extends AppController
      */
     public function submit(): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $email = trim($this->request->post['email'] ?? '');
         $ip = $this->request->ip();
@@ -196,7 +196,7 @@ final class PasswordController extends AppController
      */
     public function resetPassword(): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $token = trim($this->request->post['token'] ?? '');
         $email = trim($this->request->post['email'] ?? '');

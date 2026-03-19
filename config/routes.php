@@ -135,9 +135,7 @@ $router->group([
     ]);
 
     // Generic CRUD routes for dashboard.
-    // These are powerful catch-alls and are only enabled in debug mode to
-    // avoid accidentally exposing new controller actions in production.
-    if (env('APP_DEBUG', false)) {
+    //if (env('APP_DEBUG', false)) {
         $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
         $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
         $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
@@ -153,7 +151,7 @@ $router->group([
         $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
         $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
         $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
-    }
+    //}
 });
 
 // Admin route group with authentication and admin role enforced

@@ -4,14 +4,14 @@
 
 <?php
 $banner = $settings['banner_path'] ?? null;
-$blogTitle = htmlspecialchars($blog['blog_name'] ?? ($username."'s Blog"), ENT_QUOTES);
+$blogTitle = e($blog['blog_name'] ?? ($username."'s Blog"));
 ?>
 
 <?php if (!empty($banner)) { ?>
   <section id="banner" class="hero">
     <figure class="hero-media" style="margin:0">
       <img
-        src="<?= htmlspecialchars($banner, ENT_QUOTES) ?>"
+        src="<?= e($banner) ?>"
         alt="<?= $blogTitle ?> banner"
         loading="lazy"
         decoding="async"
@@ -31,7 +31,7 @@ $blogTitle = htmlspecialchars($blog['blog_name'] ?? ($username."'s Blog"), ENT_Q
           <div class="intro animate-box style=" >
             <h2> {{ blog.blog_name }} </h2>
             <?php if (!empty($blog['subtitle'])) { ?>
-              <p class="subtitle"><?= htmlspecialchars($blog['subtitle']) ?></p>
+              <p class="subtitle"><?= e($blog['subtitle']) ?></p>
             <?php } ?>
           </div>
         </div>
@@ -47,11 +47,11 @@ $blogTitle = htmlspecialchars($blog['blog_name'] ?? ($username."'s Blog"), ENT_Q
           <?php foreach ($posts as $i => $post) { ?>
             <?php
               $cover = $post['featured_image'] ?? null;
-              $bg = $cover ? htmlspecialchars($cover, ENT_QUOTES) : $asset('images/work-1.jpg');
+              $bg = $cover ? e($cover) : $asset('images/work-1.jpg');
               $url = '/blog/'.urlencode($blog['blog_slug']).'/'.urlencode($post['slug']);
-              $title = htmlspecialchars($post['title'] ?? 'Untitled');
-              $cat = htmlspecialchars($post['category'] ?? 'Post');
-              $date = htmlspecialchars($post['published_at'] ?? '');
+              $title = e($post['title'] ?? 'Untitled');
+              $cat = e($post['category'] ?? 'Post');
+              $date = e($post['published_at'] ?? '');
               ?>
             <div class="col-md-<?= ($i % 3 === 2) ? 12 : 6; ?>">
               <div class="fh5co-grid animate-box" style="background-image: url(<?= $bg ?>);">

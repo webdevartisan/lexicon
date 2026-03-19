@@ -33,7 +33,7 @@ final class ConsentController extends AppController
     {
         $this->csrf->assertValid($this->readCsrfToken());
 
-        $action = $_POST['action'] ?? '';
+        $action = (string) ($this->request()->postParam('action', ''));
         if (!is_string($action) || !in_array($action, self::VALID_ACTIONS, true)) {
             return $this->json(['ok' => false, 'error' => 'Invalid action'], 422);
         }
@@ -52,9 +52,9 @@ final class ConsentController extends AppController
             ]);
         } else { // action === 'save'
             $saved = $this->consent->save([
-                'preferences' => !empty($_POST['preferences']),
-                'analytics' => !empty($_POST['analytics']),
-                'marketing' => !empty($_POST['marketing']),
+                'preferences' => (bool) $this->request()->postParam('preferences', false),
+                'analytics' => (bool) $this->request()->postParam('analytics', false),
+                'marketing' => (bool) $this->request()->postParam('marketing', false),
             ]);
         }
 
@@ -84,13 +84,13 @@ final class ConsentController extends AppController
     private function readCsrfToken(): ?string
     {
         // Check POST body first
-        $bodyToken = $_POST['_token'] ?? null;
+        $bodyToken = $this->request()->postParam('_token');
         if (is_string($bodyToken) && $bodyToken !== '') {
             return $bodyToken;
         }
 
         // Fall back to X-CSRF-TOKEN header for fetch() requests
-        $headerToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+        $headerToken = $this->request()->header('X-CSRF-TOKEN');
 
         return (is_string($headerToken) && $headerToken !== '') ? $headerToken : null;
     }

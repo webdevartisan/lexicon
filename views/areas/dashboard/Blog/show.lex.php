@@ -249,14 +249,14 @@
 
                 <!-- Published / Updated -->
                 <td class="px-4 py-2 align-top text-[11px] text-slate-600 dark:text-zink-300">
-                  <?= htmlspecialchars($post['published_at'] ?? $post['updated_at'], ENT_QUOTES, 'UTF-8') ?>
+                  <?= e($post['published_at'] ?? $post['updated_at']) ?>
                 </td>
 
 
                 <!-- Excerpt -->
                 <td class="px-4 py-2 align-top max-w-xs">
                   <p class="text-[11px] text-slate-600 line-clamp-3 dark:text-zink-200">
-                    <?= htmlspecialchars($post['excerpt'] ?? $post['summary'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                    <?= e($post['excerpt'] ?? $post['summary'] ?? '') ?>
                   </p>
                 </td>
 
@@ -272,7 +272,7 @@
 
 
                     <?php if ($post['status'] === 'published') { ?>
-                    <form method="post" action="/dashboard/posts/<?= htmlspecialchars($post['id'], ENT_QUOTES, 'UTF-8') ?>/unpublish">
+                    <form method="post" action="/dashboard/posts/<?= e((string) $post['id']) ?>/unpublish">
                       <input type="hidden" name="_method" value="POST">
                       <input type="hidden" name="_token" value="{{ csrf_token }}">
                       <button
@@ -283,7 +283,7 @@
                       </button>
                     </form>
                     <?php } else { ?>
-                    <form method="post" action="/dashboard/posts/<?= htmlspecialchars($post['id'], ENT_QUOTES, 'UTF-8') ?>/publish">
+                    <form method="post" action="/dashboard/posts/<?= e((string) $post['id']) ?>/publish">
                       <input type="hidden" name="_method" value="POST">
                       <input type="hidden" name="_token" value="{{ csrf_token }}">
                       <button

@@ -57,7 +57,7 @@ class CommentController extends AppController
     public function approve(string $id): Response
     {
         // Enforce CSRF protection on state-changing actions
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $comment = $this->getComment($id);
 
@@ -105,7 +105,7 @@ class CommentController extends AppController
     public function destroy(string $id): Response
     {
         // Enforce CSRF protection on destructive actions
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $comment = $this->getComment($id);
 

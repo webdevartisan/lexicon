@@ -6,7 +6,7 @@
 <h1>Delete Comment</h1>
 
 <p>Are you sure you want to delete this comment?</p>
-<blockquote><?= htmlspecialchars($comment['content']) ?></blockquote>
+<blockquote><?= e($comment['content']) ?></blockquote>
 
 <form method="post" action="/admin/comments/<?= $comment['id'] ?>/destroy">
     <button type="submit">Yes, delete</button>

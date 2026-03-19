@@ -20,10 +20,10 @@
     <tbody>
     {% foreach ($users as $user): %}
         <tr>
-            <td><?= htmlspecialchars($user['id']) ?></td>
-            <td><?= htmlspecialchars($user['username']) ?></td>
-            <td><?= htmlspecialchars($user['email']) ?></td>
-            <td><?= htmlspecialchars($user['roles']) ?></td>
+            <td><?= e($user['id']) ?></td>
+            <td><?= e($user['username']) ?></td>
+            <td><?= e($user['email']) ?></td>
+            <td><?= e($user['roles']) ?></td>
             <td>
                 <a href="/admin/users/<?= $user['id'] ?>/edit">Edit</a> |
                 <a href="/admin/users/<?= $user['id'] ?>/delete">Delete</a>

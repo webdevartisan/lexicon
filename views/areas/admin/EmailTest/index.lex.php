@@ -80,7 +80,7 @@
                             </div>
                         </summary>
                         <div class="px-4 py-3 bg-slate-50 dark:bg-zink-800">
-                            <pre class="p-3 bg-slate-100 dark:bg-zink-700 rounded text-xs overflow-x-auto text-slate-700 dark:text-zink-200"><?= htmlspecialchars(json_encode($template['sample_data'], JSON_PRETTY_PRINT)) ?></pre>
+                            <pre class="p-3 bg-slate-100 dark:bg-zink-700 rounded text-xs overflow-x-auto text-slate-700 dark:text-zink-200"><?= e(json_encode($template['sample_data'], JSON_PRETTY_PRINT)) ?></pre>
                         </div>
                     </details>
                 </div>

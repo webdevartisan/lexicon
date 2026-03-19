@@ -51,7 +51,7 @@ class ProfileController extends AppController
     public function update(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
 
@@ -157,7 +157,7 @@ class ProfileController extends AppController
     public function uploadAvatar(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
         $avatarFile = $this->request->files['avatar'] ?? null;
@@ -212,7 +212,7 @@ class ProfileController extends AppController
     public function removeAvatar(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
         $profile = $this->profiles->findOrCreate($userId);
@@ -233,7 +233,7 @@ class ProfileController extends AppController
     public function updatePassword(): Response
     {
         // enforce CSRF protection
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
 

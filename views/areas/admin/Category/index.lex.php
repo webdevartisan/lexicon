@@ -19,9 +19,9 @@
     <tbody>
     {% foreach ($categories as $category): %}
         <tr>
-            <td><?= htmlspecialchars($category['id']) ?></td>
-            <td><?= htmlspecialchars($category['name']) ?></td>
-            <td><?= htmlspecialchars($category['slug']) ?></td>
+            <td><?= e($category['id']) ?></td>
+            <td><?= e($category['name']) ?></td>
+            <td><?= e($category['slug']) ?></td>
             <td>
                 <a href="/admin/categories/<?= $category['id'] ?>/edit">Edit</a> |
                 <a href="/admin/categories/<?= $category['id'] ?>/delete">Delete</a>

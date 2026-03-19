@@ -5,7 +5,7 @@
 {% block body %}
 <h1>Delete User</h1>
 
-<p>Are you sure you want to delete <strong><?= htmlspecialchars($user['username']) ?></strong>?</p>
+<p>Are you sure you want to delete <strong><?= e($user['username']) ?></strong>?</p>
 
 <form method="post" action="/admin/users/<?= $user['id'] ?>/destroy">
     <button type="submit">Yes, delete</button>

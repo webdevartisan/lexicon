@@ -86,7 +86,7 @@ final class BlogController extends AppController
      */
     public function create(): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $userId = $user['id'];
@@ -204,7 +204,7 @@ final class BlogController extends AppController
      */
     public function update(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $blog = $this->getBlog($id);
@@ -389,7 +389,7 @@ final class BlogController extends AppController
      */
     public function destroy(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $blog = $this->getBlog($id);
@@ -445,7 +445,7 @@ final class BlogController extends AppController
      */
     public function unpublish(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $blogId = (int) $id;
@@ -473,7 +473,7 @@ final class BlogController extends AppController
      */
     public function publish(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
         $blogId = (int) $id;

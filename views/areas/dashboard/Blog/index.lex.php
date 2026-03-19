@@ -129,7 +129,7 @@
 
               {% if blog.description|isset %}
               <p class="mt-2 text-sm leading-5 text-slate-600 line-clamp-3 dark:text-zink-200">
-                <?= htmlspecialchars(truncate(strip_tags($blog['description']), 160), ENT_QUOTES, 'UTF-8'); ?>
+                <?= e(truncate(strip_tags($blog['description']), 160)); ?>
               </p>
               {% endif %}
 

@@ -1,24 +1,24 @@
 <p>
     <label>Username<br>
-        <input type="text" name="username" value="<?= htmlspecialchars($user['username'] ?? '') ?>">
+        <input type="text" name="username" value="<?= e($user['username'] ?? '') ?>">
     </label>
 </p>
 
 <p>
     <label>First Name<br>
-        <input type="text" name="first_name" value="<?= htmlspecialchars($user['first_name'] ?? '') ?>">
+        <input type="text" name="first_name" value="<?= e($user['first_name'] ?? '') ?>">
     </label>
 </p>
 
 <p>
     <label>Last Name<br>
-        <input type="text" name="last_name" value="<?= htmlspecialchars($user['last_name'] ?? '') ?>">
+        <input type="text" name="last_name" value="<?= e($user['last_name'] ?? '') ?>">
     </label>
 </p>
 
 <p>
     <label>Email<br>
-        <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>">
+        <input type="email" name="email" value="<?= e($user['email'] ?? '') ?>">
     </label>
 </p>
 

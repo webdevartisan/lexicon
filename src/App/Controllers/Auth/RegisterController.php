@@ -52,7 +52,7 @@ final class RegisterController extends AppController
     public function submit(): Response
     {
         // Enforce CSRF token for registration POST.
-        csrf()->assertValid($this->request->post['_token'] ?? null);
+        csrf()->assertValid($this->request->postParam('_token'));
         // Define validation rules using the fluent validator
         $validator = $this->validateOrFail([
             'first_name' => 'required|alpha|min:2|max:50',

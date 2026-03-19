@@ -19,7 +19,7 @@
                             type="text"
                             name="q"
                             id="q"
-                            value="<?= htmlspecialchars($searchQuery ?? '') ?>"
+                            value="<?= e($searchQuery ?? '') ?>"
                             placeholder="Search posts or blogs..."
                         />
                     </div>
@@ -35,7 +35,7 @@
                                     value="<?= (int) $cat['id']; ?>"
                                     <?= $isActive ? 'selected' : ''; ?>
                                 >
-                                    <?= htmlspecialchars($cat['name']); ?>
+                                    <?= e($cat['name']); ?>
                                 </option>
                             <?php } ?>
                         </select>
@@ -55,7 +55,7 @@
                         Showing
                         <strong><?= (int) ($pagination['totalPosts'] ?? 0); ?></strong>
                         result(s) for
-                        <strong>"<?= htmlspecialchars($searchQuery); ?>"</strong>
+                        <strong>"<?= e($searchQuery); ?>"</strong>
                     </p>
                 <?php } ?>
             </form>
@@ -87,42 +87,42 @@
                     <article>
                       <?php $blogSlugs = array_column($blogs, 'blog_slug', 'id'); ?>
                         <?php if (!empty($post['featured_image'])) { ?>
-                            <a href="/blog/<?= htmlspecialchars($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= htmlspecialchars($post['slug']); ?>"
+                            <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>"
                                class="image">
-                                <img src="<?= htmlspecialchars($post['featured_image']); ?>"
-                                     alt="<?= htmlspecialchars($post['title']); ?>" />
+                                <img src="<?= e($post['featured_image']); ?>"
+                                     alt="<?= e($post['title']); ?>" />
                             </a>
                         <?php } ?>
 
                         <h3>
-                            <a href="/blog/<?= htmlspecialchars($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= htmlspecialchars($post['slug']); ?>">
-                                <?= htmlspecialchars($post['title'] ?? 'Untitled'); ?>
+                            <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>">
+                                <?= e($post['title'] ?? 'Untitled'); ?>
                             </a>
                         </h3>
 
                         <p class="meta">
-                            <?= htmlspecialchars($post['blog_name'] ?? 'Blog'); ?>
+                            <?= e($post['blog_name'] ?? 'Blog'); ?>
                             <?php if (!empty($post['category_name'])) { ?>
                                 &middot;
                                 <a href="?category=<?= (int) ($post['category_id'] ?? 0); ?>">
-                                    <?= htmlspecialchars($post['category_name']); ?>
+                                    <?= e($post['category_name']); ?>
                                 </a>
                             <?php } ?>
                             <?php if (!empty($post['published_at'])) { ?>
                                 &middot;
-                                <time datetime="<?= htmlspecialchars($post['published_at']); ?>">
-                                    <?= htmlspecialchars($post['published_at']); ?>
+                                <time datetime="<?= e($post['published_at']); ?>">
+                                    <?= e($post['published_at']); ?>
                                 </time>
                             <?php } ?>
                         </p>
 
                         <p>
-                            <?= htmlspecialchars($post['excerpt'] ?? mb_substr(strip_tags($post['content'] ?? ''), 0, 180).'…'); ?>
+                            <?= e($post['excerpt'] ?? mb_substr(strip_tags($post['content'] ?? ''), 0, 180).'…'); ?>
                         </p>
 
                         <ul class="actions">
                             <li>
-                                <a href="/blog/<?= htmlspecialchars($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= htmlspecialchars($post['slug']); ?>"
+                                <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>"
                                    class="button">
                                     Read more
                                 </a>
@@ -169,8 +169,8 @@
                         <span class="icon solid fa-user"></span>
                         <div class="content">
                             <h3>
-                                <a href="/blog/<?= htmlspecialchars($creatorBlog['blog_slug'] ?? $creatorBlog['id']); ?>">
-                                    <?= htmlspecialchars($creatorBlog['blog_name'] ?? $creatorBlog['ownername']); ?>
+                                <a href="/blog/<?= e($creatorBlog['blog_slug'] ?? $creatorBlog['id']); ?>">
+                                    <?= e($creatorBlog['blog_name'] ?? $creatorBlog['ownername']); ?>
                                 </a>
                             </h3>
                             <p>
@@ -179,7 +179,7 @@
                                 Authors: <?= (int) ($creatorBlog['authorcount'] ?? 1); ?>
                             </p>
                             <p>
-                                <?= htmlspecialchars($creatorBlog['description'] ?? ''); ?>
+                                <?= e($creatorBlog['description'] ?? ''); ?>
                             </p>
                         </div>
                     </article>
@@ -198,8 +198,8 @@
                 <?php foreach ($categories as $cat) { ?>
                     <div class="col-3 col-6-medium col-12-small">
                         <a href="?category=<?= (int) $cat['id']; ?>"
-                           class="button fit <?= isset($activeCategory) && (int) $activeCategory === (int) $cat['id'] ? 'primary' : 'alt'; ?>">
-                            <?= htmlspecialchars($cat['name']); ?>
+                            class="button fit <?= isset($activeCategory) && (int) $activeCategory === (int) $cat['id'] ? 'primary' : 'alt'; ?>">
+                            <?= e($cat['name']); ?>
                         </a>
                     </div>
                 <?php } ?>
