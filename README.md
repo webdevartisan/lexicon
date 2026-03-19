@@ -20,7 +20,7 @@ clean routing system, a custom template engine, role-based access, and CSRF/secu
 
 | Dependency | Minimum version |
 |---|---|
-| PHP | 8.1+ with `PDO`, `pdo_mysql`, `mbstring`, `json` |
+| PHP | 8.3+ with `PDO`, `pdo_mysql`, `mbstring`, `json` |
 | MySQL / MariaDB | MySQL 5.7+ or MariaDB 10.3+ |
 | Composer | 2.0+ |
 | Node.js | 18+ |
