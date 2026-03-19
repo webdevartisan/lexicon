@@ -2,8 +2,8 @@
     "pre-push": {
         "enabled": true,
         "actions": [
-            { "action": "./vendor/bin/pint --test" },
-            { "action": "./vendor/bin/phpstan analyse --memory-limit=2G" }
+            { "action": "php vendor/bin/pint --test" },
+            { "action": "php vendor/bin/phpstan analyse --memory-limit=2G" }
         ]
     }
 }
