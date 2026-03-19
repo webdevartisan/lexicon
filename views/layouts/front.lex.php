@@ -174,7 +174,7 @@ $old = old();
                             </div>
 
                             <p class="footer-copy copyright">
-                                &copy; <?= date('Y') ?> BlogHub.
+                                &copy; <?= date('Y') ?> Lexicon.
                                 {{ t('footer.rightsReserved') }}
                             </p>
 

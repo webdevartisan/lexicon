@@ -105,7 +105,7 @@
 	              	<div class="footer-widget border">
 						<p class="pull-left"><small>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Blog') ?>.</small></p>
 						<p class="pull-right"><small>
-							Published & hosted by <a href="/"><?= e($_ENV['APP_NAME'] ?? 'bloghub.example') ?></a>
+							Published & hosted by <a href="/"><?= e($_ENV['APP_NAME']) ?></a>
 						</small></p>
 					</div>
 					</div>

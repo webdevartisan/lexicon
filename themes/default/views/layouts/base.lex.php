@@ -13,6 +13,6 @@
     <main class="container">
       {% yield content %}
     </main>
-    <footer class="footer">© <?= date('Y') ?> BlogHub 2</footer>
+    <footer class="footer">© <?= date('Y') ?> Lexicon 2</footer>
   </body>
 </html>

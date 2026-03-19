@@ -1,6 +1,6 @@
 {% extends "front.lex.php" %}
 
-{% block title %}BlogHub — Discover blogs{% endblock %}
+{% block title %}Lexicon — Discover blogs{% endblock %}
 
 {% block body %}
 
@@ -61,7 +61,7 @@
             </form>
         </div>
         <span class="image">
-            <img src="images/DiscoverGreatWritingsIlustration.webp" alt="BlogHub" />
+            <img src="images/DiscoverGreatWritingsIlustration.webp" alt="Lexicon" />
         </span>
     </section>
 

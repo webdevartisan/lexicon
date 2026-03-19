@@ -81,7 +81,7 @@
             <span class="icon fa fa-gem"></span>
             <div class="content">
                 <h3>Designed for Creators</h3>
-                <p>BlogHub is built from scratch with simplicity and flexibility in mind — no clutter, no distractions, just you and your ideas.</p>
+                <p>Lexicon is built from scratch with simplicity and flexibility in mind — no clutter, no distractions, just you and your ideas.</p>
             </div>
         </article>
         <article>
@@ -95,7 +95,7 @@
             <span class="icon solid fa fa-rocket"></span>
             <div class="content">
                 <h3>Built to Grow With You</h3>
-                <p>Whether you're writing for fun or building a brand, BlogHub gives you the tools to evolve — from posts to pages to your own domain.</p>
+                <p>Whether you're writing for fun or building a brand, Lexicon gives you the tools to evolve — from posts to pages to your own domain.</p>
             </div>
         </article>
         <article>
@@ -117,7 +117,7 @@
         <article>
             <a href="#" class="image"><img src="/images/pic01.jpg" alt="Person typing on a laptop with coffee beside them" /></a>
             <h3>How I Wrote My First Blog Post</h3>
-            <p>A fictional creator shares their journey from blank page to published post — and how easy it was with BlogHub.</p>
+            <p>A fictional creator shares their journey from blank page to published post — and how easy it was with Lexicon.</p>
             <ul class="actions">
                 <li><a href="#" class="button">More</a></li>
             </ul>
@@ -125,7 +125,7 @@
         <article>
             <a href="#" class="image"><img src="/images/pic02.jpg" alt="Screenshot of a clean blog layout with white space" /></a>
             <h3>The Power of a Clean Theme</h3>
-            <p>See how a minimalist layout can make your words shine. A sample post using one of BlogHub’s starter themes.</p>
+            <p>See how a minimalist layout can make your words shine. A sample post using one of Lexicon’s starter themes.</p>
             <ul class="actions">
                 <li><a href="#" class="button">More</a></li>
             </ul>
@@ -133,14 +133,14 @@
         <article>
             <a href="#" class="image"><img src="/images/pic03.jpg" alt="Open road with mountains in the background and a journal on a dashboard" /></a>
             <h3>A Day in the Life of a Travel Blogger</h3>
-            <p>A sample travel blog entry showing how storytelling and visuals come together beautifully on BlogHub.</p>
+            <p>A sample travel blog entry showing how storytelling and visuals come together beautifully on Lexicon.</p>
             <ul class="actions">
                 <li><a href="#" class="button">More</a></li>
             </ul>
         </article>
         <article>
             <a href="#" class="image"><img src="/images/pic04.jpg" alt="Illustration of a blog setup wizard on a laptop screen" /></a>
-            <h3>How to Create a Blog on BlogHub</h3>
+            <h3>How to Create a Blog on Lexicon</h3>
             <p>A step-by-step guide to setting up your blog, choosing a theme, and publishing your first post.</p>
             <ul class="actions">
                 <li><a href="#" class="button">More</a></li>
@@ -156,7 +156,7 @@
         </article>
         <article>
             <a href="#" class="image"><img src="/images/pic06.jpg" alt="Whiteboard with sticky notes and feature ideas" /></a>
-            <h3>What’s Coming to BlogHub</h3>
+            <h3>What’s Coming to Lexicon</h3>
             <p>A transparent look at our roadmap — and how early users can help shape the future of the platform.</p>
             <ul class="actions">
                 <li><a href="#" class="button">More</a></li>

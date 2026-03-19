@@ -33,7 +33,7 @@
                     </article>
                     <article>
                         <a href="#" class="image"><img src="/images/pic08.jpg" alt="" /></a>
-                        <p>Why BlogHub was built: a note from the creator on simplicity and creative freedom.</p>
+                        <p>Why Lexicon was built: a note from the creator on simplicity and creative freedom.</p>
                     </article>
                     <article>
                         <a href="#" class="image"><img src="/images/pic09.jpg" alt="" /></a>
@@ -52,7 +52,7 @@
                 </header>
                 <p>Have questions, ideas, or feedback? We'd love to hear from you.</p>
                 <ul class="contact">
-                    <li class="icon solid fa fa-envelope"><a href="#">hello@bloghub.dev</a></li>
+                    <li class="icon solid fa fa-envelope"><a href="#">hello@lexicon.dev</a></li>
                     <li class="icon solid fa fa-phone">(000) 000-0000</li>
                     <li class="icon solid fa fa-home">1234 Somewhere Road #8254<br />
                     Nashville, TN 00000-0000</li>
