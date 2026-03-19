@@ -20,7 +20,7 @@ clean routing system, a custom template engine, role-based access, and CSRF/secu
 
 | Dependency | Minimum version |
 |---|---|
-| PHP | 8.1+ with `PDO`, `pdo_mysql`, `mbstring`, `json` |
+| PHP | 8.3+ with `PDO`, `pdo_mysql`, `mbstring`, `json` |
 | MySQL / MariaDB | MySQL 5.7+ or MariaDB 10.3+ |
 | Composer | 2.0+ |
 | Node.js | 18+ |
@@ -81,31 +81,9 @@ composer fresh
 
 ---
 
-## Developer Documentation
-
-All architecture, API, database, and security documentation lives under
-`docs/`. Start here:
-
-[`docs/README.md`](docs/README.md) — full index and onboarding guide.
-
-Key sections:
-
-- [`docs/getting-started.md`](docs/getting-started.md) — environment setup
-- [`docs/architecture.md`](docs/architecture.md) — framework layers and request lifecycle
-- [`docs/api/security-and-csrf.md`](docs/api/security-and-csrf.md) — CSRF strategy
-- [`docs/database/schema.md`](docs/database/schema.md) — database schema
-
----
-
 ## Contributing
 
-Since Lexicon is in **alpha**, please:
-
-- **Read [`docs/README.md`](docs/README.md) before contributing** — it maps all
-subsystems and their current stability.
-- **Open an issue or discussion before large structural changes.**
-- **Do not assume API stability** — always check the relevant `docs/api/` file
-  before building on top of any subsystem.
+See [`docs/contributing.md`](docs/contributing.md).
 
 ---
 

@@ -64,9 +64,7 @@ contributors and developers working on the project.
 
 ## Contributing
 
-Since Lexicon is in alpha, please:
-- **Open an issue or discussion before making large structural changes.**
-- **Do not assume API stability** - always check the relevant `docs/api/` file
-  before building on top of any subsystem.
+See [`docs/contributing.md`](docs/contributing.md) for the full contribution guide,
+branch workflow, commit conventions, and code quality requirements.
 
 ---
