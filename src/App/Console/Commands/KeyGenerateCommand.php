@@ -17,12 +17,11 @@ class KeyGenerateCommand
     /**
      * Execute the key generation command.
      *
-     * @param  array<int, string>  $args  Command arguments
      * @return int Exit code (0 = success, 1 = failure)
      */
-    public function execute(array $args): int
+    public function handle(): int
     {
-        echo "🔐 Generating application key...\n\n";
+        echo "Generating application key...\n\n";
 
         $key = KeyGenerator::generateForEnv(32);
 
@@ -32,8 +31,8 @@ class KeyGenerateCommand
         $envPath = ROOT_PATH.'/.env';
 
         if (!file_exists($envPath)) {
-            echo "⚠️  No .env file found\n";
-            echo "   Run 'php setup.php' for first-time setup\n";
+            echo "No .env file found\n";
+            echo "Run 'php setup.php' for first-time setup\n";
 
             return 1;
         }
