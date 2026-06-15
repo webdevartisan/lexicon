@@ -5,7 +5,7 @@
 
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Version](https://img.shields.io/badge/version-0.1.0--alpha-blue)
-![PHP](https://img.shields.io/badge/PHP-8.1+-777BB4?logo=php)
+![PHP](https://img.shields.io/badge/PHP-8.3+-777BB4?logo=php)
 ![License](https://img.shields.io/badge/license-GPL--v2-green)
 
 A custom Laravel-inspired MVC blogging platform built from scratch in PHP 8.1+.
