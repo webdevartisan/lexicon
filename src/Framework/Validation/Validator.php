@@ -410,11 +410,11 @@ class Validator
 
     protected function validateAlpha(mixed $value, ?string $param, string $field): bool
     {
-        if (!is_string($value) || trim($value) === '') {
+        if ($this->isEmptyValue($value)) {
             return true;
         }
 
-        return ctype_alpha($value);
+        return preg_match('/^[\p{L}\p{M}]+$/u', $value) === 1;
     }
 
     protected function validateTitle(mixed $value, ?string $param, string $field): bool
@@ -496,11 +496,11 @@ class Validator
 
     protected function validateAlphaNum(mixed $value, ?string $param, string $field): bool
     {
-        if (!is_string($value) || trim($value) === '') {
+        if ($this->isEmptyValue($value)) {
             return true;
         }
 
-        return ctype_alnum($value);
+        return preg_match('/^[\p{L}\p{M}\p{N}]+$/u', $value) === 1;
     }
 
     protected function validateIn(mixed $value, ?string $param, string $field): bool
@@ -773,5 +773,10 @@ class Validator
         }
 
         return $requirements;
+    }
+
+    protected function isEmptyValue(mixed $value): bool
+    {
+        return $value === null || (is_string($value) && trim($value) === '');
     }
 }
