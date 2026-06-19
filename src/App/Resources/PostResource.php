@@ -75,7 +75,7 @@ class PostResource
         return $this->data['status'];
     }
 
-    public function comments_enabled(): string
+    public function comments_enabled(): int
     {
         return $this->data['comments_enabled'];
     }
