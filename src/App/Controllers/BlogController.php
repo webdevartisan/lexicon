@@ -9,6 +9,7 @@ use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 class BlogController extends AppController
@@ -82,33 +83,35 @@ class BlogController extends AppController
         ]);
     }
 
-    public function showBlog(string $blogSlug)
+    public function showBlog(string $blogSlug): Response
     {
-        try {
-            $ctx = $this->loadBlogContext($blogSlug);
-        } catch (\RuntimeException $e) {
-            http_response_code(404);
-
-            return $this->view('errors/404.lex.php');
-        }
-
+        $ctx = $this->loadBlogContext($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
         if ($blogId === 0) {
-            http_response_code(404);
-
-            return $this->view('errors/404.lex.php');
+            throw new PageNotFoundException('Blog not found.');
         }
 
-        // Determine current page from query param (default 1)
-        $page = (int) ($this->request->get['page'] ?? 1);
-        if ($page < 1) {
-            $page = 1;
-        }
-
-        // Fetch paginated published posts for this blog
-        $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 5);
+        $landingData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 7);
 
         return $this->view('Blogs/show.lex.php', $ctx + [
+            'posts' => $landingData['data'],
+            'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
+        ]);
+    }
+
+    public function archiveBlog(string $blogSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        if ($blogId === 0) {
+            throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
+        $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $postsData['data'],
             'pagination' => [
                 'totalPages' => $postsData['totalPages'],
@@ -121,11 +124,7 @@ class BlogController extends AppController
 
     public function showBlogPost(string $blogSlug, string $postSlug)
     {
-        try {
-            $ctx = $this->loadBlogContext($blogSlug);
-        } catch (\RuntimeException $e) {
-            throw new PageNotFoundException('Post not be found', 404);
-        }
+        $ctx = $this->loadBlogContext($blogSlug);
 
         // Post
         $post = $this->postModel->findBySlug($postSlug);
@@ -202,18 +201,18 @@ class BlogController extends AppController
         // 1) Blog
         $blog = $this->model->getBlogBySlug($blogSlug);
         if (!$blog) {
-            throw new \RuntimeException('Blog not found');
+            throw new PageNotFoundException('Blog not found', 404);
         }
 
         if (isset($blog['status']) && $blog['status'] !== 'published') {
-            throw new \RuntimeException('Blog inactive or missing');
+            throw new PageNotFoundException('Blog not found', 404);
         }
 
         // 2) Owner
         $user = $this->userModel->findById($blog['owner_id']);
 
         if (!$user) {
-            throw new \RuntimeException('User not found');
+            throw new PageNotFoundException('Blog not found', 404);
         }
 
         // 3) Settings + meta defaults
