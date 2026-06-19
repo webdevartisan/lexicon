@@ -34,38 +34,74 @@ final class PostController extends AppController
     ) {}
 
     /**
-     * List user's posts with filters.
+     * List user's posts with filters, search, and pagination.
      */
     public function index(): Response
     {
         $user = auth()->user();
 
-        // Fetch user's blogs for filter dropdown
         $blogs = $this->blogModel->getBlogsByOwnerId($user['id']);
         $blogSlugs = array_column($blogs, 'blog_slug', 'id');
-
-        // Extract filters from query parameters
-        $blogId = isset($this->request->get['blog_id']) ? (int) $this->request->get['blog_id'] : null;
-        $status = $this->request->get['status'] ?? '';
-        $q = trim($this->request->get['q'] ?? '');
-
-        // Validate blogId belongs to user
         $validBlogIds = array_column($blogs, 'id');
+
+        $blogId = isset($this->request->get['blog_id']) ? (int) $this->request->get['blog_id'] : null;
         if ($blogId !== null && !in_array($blogId, $validBlogIds, true)) {
             $blogId = null;
         }
 
-        // Fetch filtered posts
-        $posts = $this->model->findByAuthorWithFilters($user['id'], $blogId, $status, $q);
+        // Fall back to the user's default blog when none is selected via query.
+        if ($blogId === null) {
+            $defaultBlogId = $this->preference->getDefaultBlogId($user['id']);
+            if ($defaultBlogId && in_array($defaultBlogId, $validBlogIds, true)) {
+                $blogId = $defaultBlogId;
+            }
+        }
+
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $q = trim((string) ($this->request->get['q'] ?? ''));
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
+        $perPage = 12;
+
+        $result = $this->model->findByAuthorWithFiltersPagination(
+            authorId: $user['id'],
+            page: $page,
+            perPage: $perPage,
+            blogId: $blogId,
+            status: $status,
+            searchQuery: $q
+        );
+
+        // Per-status totals power the filter chip badges.
+        $counts = [
+            'all' => 0,
+            'published' => 0,
+            'draft' => 0,
+            'pending' => 0,
+            'archived' => 0,
+        ];
+        foreach (array_keys($counts) as $s) {
+            if ($s === 'all') {
+                continue;
+            }
+            $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
+                authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q
+            )['pagination']['total_records'];
+        }
+        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+
+        $activeBlogSlug = ($blogId !== null && isset($blogSlugs[$blogId])) ? $blogSlugs[$blogId] : '';
 
         return $this->view([
-            'posts' => $posts,
+            'posts' => $result['data'],
+            'pagination' => $result['pagination'],
             'user' => $user,
             'blogs' => $blogs,
             'blog_id' => $blogId,
             'blog_slug' => $blogSlugs,
+            'activeBlogSlug' => $activeBlogSlug,
             'status' => $status,
             'q' => $q,
+            'counts' => $counts,
         ]);
     }
 

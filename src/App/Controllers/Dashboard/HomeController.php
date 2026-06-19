@@ -12,10 +12,9 @@ use App\Models\UserPreferencesModel;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
- * HomeController manages the dashboard index with client-side tabbed views.
- *
- * handle the empty state when users have no blogs yet and provide
- * clear onboarding for first-time users.
+ * HomeController renders the dashboard overview: a true at-a-glance summary
+ * (stats, needs-attention queues, recent activity, quick actions) — not a
+ * filtered post list. The post-list-with-tabs role lives on All Posts.
  */
 class HomeController extends AppController
 {
@@ -26,55 +25,25 @@ class HomeController extends AppController
     ) {}
 
     /**
-     * Display dashboard index with paginated posts for each status tab.
-     *
-     * load separate pagination for published, draft, and archived posts.
-     * URL pattern: /dashboard?publishedPage=1&draftPage=2&archivedPage=1
-     *
-     * @return mixed View response with posts and pagination data
+     * Dashboard overview for the active blog context.
      */
     public function index()
     {
         $user = auth()->user();
         $selectedBlogId = $this->preference->getDefaultBlogId($user['id']) ?? 0;
 
-        // get pagination parameters for each tab from query string
-        $publishedPage = max(1, (int) ($this->request->get['publishedPage'] ?? 1));
-        $draftPage = max(1, (int) ($this->request->get['draftPage'] ?? 1));
-        $pendingPage = max(1, (int) ($this->request->get['pending'] ?? 1));
-        $archivedPage = max(1, (int) ($this->request->get['archivedPage'] ?? 1));
-        $perPage = 6;
-
-        // get search parameters
-        $searchQuery = trim($this->request->get['query'] ?? '');
-        $searchStatus = trim($this->request->get['status'] ?? '');
-        $isSearch = !empty($searchQuery);
-
-        // get blog metadata for navigation
         $blogs = $this->blogModel->resource($user['id']);
 
-        // check if blogs result is valid (could be false if no blogs exist)
         if (empty($blogs)) {
-            // show a helpful message for first-time users
-            // $this->flash('info', 'Welcome! Create your first blog to get started.');
-
             return $this->view([
                 'blogIds' => [],
                 'blogSlug' => '',
-                'posts' => [
-                    'published' => [],
-                    'draft' => [],
-                    'archived' => [],
-                ],
                 'selectedBlogId' => 0,
-                'searchQuery' => '',
-                'searchStatus' => '',
-                'isSearch' => false,
-                'publishedPagination' => $this->getEmptyPagination($perPage),
-                'pendingPagination' => $this->getEmptyPagination($perPage),
-                'draftPagination' => $this->getEmptyPagination($perPage),
-                'archivedPagination' => $this->getEmptyPagination($perPage),
-                'hasNoBlogs' => true, // flag this for the view to show onboarding
+                'hasNoBlogs' => true,
+                'stats' => $this->emptyStats(),
+                'recent' => [],
+                'needsAttention' => [],
+                'blogsSummary' => [],
             ]);
         }
 
@@ -86,101 +55,68 @@ class HomeController extends AppController
             $blogSlugs[$blog->id()] = $blog->slug();
         }
 
-        // handle case where no valid blog is selected
         if ($selectedBlogId <= 0 || !isset($blogSlugs[$selectedBlogId])) {
             return $this->view([
                 'blogIds' => $blogIds,
                 'blogSlug' => '',
-                'posts' => [
-                    'published' => [],
-                    'draft' => [],
-                    'archived' => [],
-                ],
                 'selectedBlogId' => $selectedBlogId,
-                'searchQuery' => $searchQuery,
-                'searchStatus' => $searchStatus,
-                'isSearch' => $isSearch,
-                'publishedPagination' => $this->getEmptyPagination($perPage),
-                'pendingPagination' => $this->getEmptyPagination($perPage),
-                'draftPagination' => $this->getEmptyPagination($perPage),
-                'archivedPagination' => $this->getEmptyPagination($perPage),
                 'hasNoBlogs' => false,
+                'stats' => $this->emptyStats(),
+                'recent' => [],
+                'needsAttention' => [],
+                'blogsSummary' => $this->buildBlogsSummary($user['id']),
             ]);
         }
 
-        // authorize access to the selected blog
         $blog = $this->getBlog($selectedBlogId);
         Gate::authorize('view', $blog, $user);
 
-        // load paginated posts for each status tab
+        // Pull each status bucket once: we use the pagination total for stats,
+        // and the first few rows as the "what's in this bucket" preview.
         $publishedResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
-            page: $publishedPage,
-            perPage: $perPage,
-            blogId: $selectedBlogId,
-            status: 'published',
-            searchQuery: $searchQuery
+            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'published'
         );
-
-        $pendingResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
-            page: $pendingPage,
-            perPage: $perPage,
-            blogId: $selectedBlogId,
-            status: 'pending',
-            searchQuery: $searchQuery
-        );
-
         $draftResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
-            page: $draftPage,
-            perPage: $perPage,
-            blogId: $selectedBlogId,
-            status: 'draft',
-            searchQuery: $searchQuery
+            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'draft'
         );
-
+        $pendingResult = $this->post->findByAuthorWithFiltersPagination(
+            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
+        );
         $archivedResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
-            page: $archivedPage,
-            perPage: $perPage,
-            blogId: $selectedBlogId,
-            status: 'archived',
-            searchQuery: $searchQuery
+            authorId: $user['id'], page: 1, perPage: 1, blogId: $selectedBlogId, status: 'archived'
         );
 
-        // show info message if search returned no results across all tabs
-        if ($isSearch && empty($publishedResult['data']) && empty($draftResult['data']) && empty($archivedResult['data'])) {
-            $this->flash('info', 'No posts found matching your search.');
-        }
+        $stats = [
+            'published' => (int) $publishedResult['pagination']['total_records'],
+            'draft' => (int) $draftResult['pagination']['total_records'],
+            'pending' => (int) $pendingResult['pagination']['total_records'],
+            'archived' => (int) $archivedResult['pagination']['total_records'],
+            'comments' => $this->post->countCommentsByBlogId($selectedBlogId),
+        ];
+        $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
+
+        // "Needs attention" = drafts + pending. We surface them so the creator
+        // sees unfinished work the moment they land, before anything else.
+        $needsAttention = array_slice(
+            array_merge($draftResult['data'], $pendingResult['data']),
+            0,
+            4
+        );
+
         breadcrumbs()->clear();
 
         return $this->view([
             'blogIds' => $blogIds,
             'blogSlug' => $blogSlugs[$selectedBlogId],
-            'posts' => [
-                'pending' => $pendingResult['data'],
-                'published' => $publishedResult['data'],
-                'draft' => $draftResult['data'],
-                'archived' => $archivedResult['data'],
-            ],
             'selectedBlogId' => $selectedBlogId,
-            'searchQuery' => $searchQuery,
-            'searchStatus' => $searchStatus,
-            'isSearch' => $isSearch,
-            'draftPagination' => $draftResult['pagination'],
-            'pendingPagination' => $pendingResult['pagination'],
-            'publishedPagination' => $publishedResult['pagination'],
-            'archivedPagination' => $archivedResult['pagination'],
             'hasNoBlogs' => false,
+            'stats' => $stats,
+            'recent' => $publishedResult['data'],
+            'needsAttention' => $needsAttention,
+            'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id']) : [],
         ]);
     }
 
-    /**
-     * Handle default blog selection change.
-     *
-     * @return mixed Redirect response
-     */
     public function setDefaultBlog()
     {
         csrf()->assertValid($this->request->postParam('_token'));
@@ -193,33 +129,36 @@ class HomeController extends AppController
     }
 
     /**
-     * Generate empty pagination structure.
+     * Per-blog summary cards (only relevant when the user has 2+ blogs).
      *
-     * use this when no blog is selected or no data is available.
-     *
-     * @param  int  $perPage  Posts per page
-     * @return array Empty pagination metadata
+     * @return array<int, array{id:int,name:string,slug:string,post_count:int}>
      */
-    private function getEmptyPagination(int $perPage): array
+    private function buildBlogsSummary(int $userId): array
+    {
+        $rows = $this->blogModel->getBlogsByOwnerWithCounts($userId);
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'name' => (string) ($row['blog_name'] ?? ''),
+            'slug' => (string) ($row['blog_slug'] ?? ''),
+            'post_count' => (int) ($row['post_count'] ?? 0),
+            'status' => (string) ($row['status'] ?? 'draft'),
+        ], $rows);
+    }
+
+    /** @return array<string,int> */
+    private function emptyStats(): array
     {
         return [
-            'current_page' => 1,
-            'per_page' => $perPage,
-            'total_records' => 0,
-            'total_pages' => 0,
-            'has_previous' => false,
-            'has_next' => false,
+            'published' => 0,
+            'draft' => 0,
+            'pending' => 0,
+            'archived' => 0,
+            'comments' => 0,
+            'total' => 0,
         ];
     }
 
-    /**
-     * Retrieve blog by ID or throw exception.
-     *
-     * @param  int  $id  Blog ID to retrieve
-     * @return mixed Blog resource object
-     *
-     * @throws PageNotFoundException If blog doesn't exist
-     */
     private function getBlog(int $id)
     {
         $blog = $this->blogModel->getBlog((string) $id);

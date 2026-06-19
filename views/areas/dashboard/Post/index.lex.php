@@ -1,145 +1,116 @@
-{% extends "base_dashboard.lex.php" %}
-
-{% block title %}{{ user.username }} · Posts{% endblock %}
-
+{% extends "back.lex.php" %}
+{% block title %}{{ t('navigation.allPosts') }}{% endblock %}
 {% block body %}
-<main class="container-fluid px-4">
-  <div class="d-flex align-items-center justify-content-between mt-4 mb-3">
-    <div>
-      <h1 class="h3 mb-0">Your Posts</h1>
-      <small class="text-muted">Manage, preview, and publish your posts.</small>
+<?php
+$statusFilters = [
+    ['key' => '',         'label' => 'All',       'count' => $counts['all']],
+    ['key' => 'published', 'label' => 'Published', 'count' => $counts['published']],
+    ['key' => 'draft',    'label' => 'Drafts',    'count' => $counts['draft']],
+    ['key' => 'pending',  'label' => 'Pending',   'count' => $counts['pending']],
+    ['key' => 'archived', 'label' => 'Archived',  'count' => $counts['archived']],
+];
+
+$buildQuery = static function (array $overrides) use ($q, $status, $blog_id): string {
+    $params = array_filter([
+        'q' => $overrides['q'] ?? $q,
+        'status' => $overrides['status'] ?? $status,
+        'blog_id' => $overrides['blog_id'] ?? $blog_id,
+        'page' => $overrides['page'] ?? null,
+    ], static fn ($v) => $v !== '' && $v !== null);
+
+    return $params ? '?'.http_build_query($params) : '';
+};
+?>
+
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
+
+    <div class="flex justify-end mb-4">
+        {% set newPostLabel = t('dashboard.actions.newPost') %}
+        {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="{$newPostLabel}" %}
     </div>
-    <div class="d-flex gap-2">
-      {% if blog_id|isset %}
-      <a href="/dashboard/blogs/{{ blog_id }}/show" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Blog
-      </a>
-      <a href="/dashboard/posts/new?blog_id={{ blog_id }}" class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i>New Post
-      </a>
-      {% else %}
-      <a href="/dashboard/blogs" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Back to Blogs
-      </a>
-      <a href="/dashboard/posts/new" class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i>New Post
-      </a>
-      {% endif %}
 
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <section class="card mb-4">
-    <div class="card-body">
-      <form method="get" action="" class="row g-2 align-items-end">
-        <div class="col-12 col-md-6 col-lg-4">
-          <label for="q" class="form-label">Search</label>
-          <input id="q" name="q" type="text" value="{{ q|default('') }}" class="form-control" placeholder="Search by title or content">
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label for="blog" class="form-label">Blog</label>
-          <select id="blog" name="blog_id" class="form-select">
-            <option value="">All Blogs</option>
-            {% foreach ($blogs as $blog): %}
-              <option value="{{ blog.id }}" <?php if ($blog['id'] == $blog_id) { ?>selected<?php } ?>>{{ blog.blog_name }}</option>
-            {% endforeach %}
-          </select>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label for="status" class="form-label">Status</label>
-          <select id="status" name="status" class="form-select">
-            <option value="">Any</option>
-            <option value="draft" {% if ($status == 'draft'): %}selected{% endif %}>Draft</option>
-            <option value="published" {% if ($status == 'published'): %}selected{% endif %}>Published</option>
-            <option value="archived" {% if ($status == 'archived'): %}selected{% endif %}>Archived</option>
-          </select>
-        </div>
-        <div class="col-12 col-lg-3 d-grid">
-          <button type="submit" class="btn btn-outline-secondary">Apply</button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  {% if posts|empty %}
-    <section class="text-center py-5">
-      <div class="mb-3">
-        <span class="display-6 d-block">No posts yet</span>
-        <p class="text-muted mb-0">Create your first post to start publishing.</p>
-      </div>
-      <a href="/dashboard/posts/new" class="btn btn-primary btn-lg">
-        <i class="fas fa-plus me-2"></i>New Post
-      </a>
-    </section>
-
-  {% else %}
-    <!-- Results -->
-    <section class="mb-4">
-      <div class="row g-4">
-        {% foreach ($posts as $post): %}
-          <div class="col-12 col-md-6 col-xl-4">
-            <article class="card h-100">
-                {% if post.featured_image|empty %}
-                  <?php $post['featured_image'] = '/images/pic08.jpg' ?>
-                {% endif %}
-              <a href="/dashboard/posts/{{ post.id }}/edit" class="card-img-top d-block ratio ratio-21x9">
-                <img src="{{ post.featured_image }}" alt="{{ post.title }} cover" class="w-100 h-100 object-fit-cover">
-              </a>
-              <div class="card-body">
-                <div class="d-flex align-items-start justify-content-between gap-2">
-                  <div>
-                    <h2 class="h5 mb-1">
-                      <a href="/dashboard/posts/{{ post.id }}/edit" class="text-decoration-none">{{ post.title }}</a>
-                    </h2>
-                    <div class="small text-muted">In 
-                      <a href="/dashboard/blogs/{{ post.blog_id }}/show">
-                        {{ post.blog_name|default('Uncategorized') }}
-                      </a>
+    <!-- Filters: search + blog scope + status. Submits via GET so links/back work. -->
+    <form method="GET" action="/dashboard/post" class="card mb-4">
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div class="md:col-span-7">
+                    <label for="q" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Search</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        <input id="q" name="q" type="text" value="{{ q }}"
+                            placeholder="Search by title or content..."
+                            class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
                     </div>
-                  </div>
-                  <div>
-                    <?php if ($post['status'] == 'published') { ?>
-                      <span class="badge bg-success">Published</span>
-                    <?php } elseif ($post['status'] == 'draft') { ?>
-                      <span class="badge bg-secondary">Draft</span>
-                    <?php } elseif ($post['status'] == 'archived') { ?>
-                      <span class="badge bg-dark">Archived</span>
-                    <?php } ?>
-                  </div>
                 </div>
+                <div class="md:col-span-3">
+                    <label for="blog" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Blog</label>
+                    <select id="blog" name="blog_id" class="form-input w-full border-slate-200 dark:border-zink-500">
+                        <option value="">All blogs</option>
+                        {% foreach ($blogs as $b): %}
+                            <option value="<?= e((string) $b['id']) ?>" <?= ((int) $b['id'] === (int) ($blog_id ?? 0)) ? 'selected' : '' ?>>
+                                <?= e($b['blog_name']) ?>
+                            </option>
+                        {% endforeach %}
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
+                        <i data-lucide="filter" class="size-4"></i>
+                        Apply
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" name="status" value="{{ status }}">
+        </div>
+    </form>
 
-                <div class="mt-2">
-                  <small class="text-muted">Published on {{ post.created_at }}</small>
-                </div>
-                <p class="mt-2 text-muted"><?= truncate(strip_tags($post['content']), 100) ?></p>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                  <a class="btn btn-outline-secondary btn-sm" href="/dashboard/posts/{{ post.id }}/edit">
-                    <i class="fas fa-pen me-1"></i>Edit
-                  </a>
-                  <a class="btn btn-outline-primary btn-sm" target="_blank" href="/blog/<?= $blog_slug[$post['blog_id']]; ?>/{{ post.slug }}">
-                    <i class="fas fa-external-link-alt me-2"></i></i>Open Public View
-                  </a>
-                  <a class="btn btn-outline-danger btn-sm" href="/dashboard/posts/{{ post.id }}/delete" onclick="return confirm('Delete this post?');">
-                    <i class="fas fa-trash me-1"></i>Delete
-                  </a>
-                </div>
-              </div>
-              <div class="card-footer d-flex justify-content-between align-items-center">
-                <div class="small text-muted">Updated {{ post.updated_at }}</div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge bg-primary">{{ post.comment_count }} comments</span>
-                  {% if post.follower_count|isset %}
-                    <span class="badge bg-info text-dark">{{ post.follower_count }} followers</span>
-                  {% endif %}
-                </div>
-              </div>
-            </article>
-          </div>
+    <!-- Status chips: filter without losing search/blog scope. -->
+    <div class="flex flex-wrap gap-2 mb-5">
+        <?php foreach ($statusFilters as $f) {
+            $isActive = ((string) $status === (string) $f['key']);
+            $href = '/dashboard/post'.$buildQuery(['status' => $f['key'], 'page' => null]);
+            ?>
+        <a href="<?= e($href) ?>"
+            class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors <?= $isActive
+                    ? 'bg-custom-500 text-white border-custom-500'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500 dark:hover:border-zink-400' ?>">
+            <?= e($f['label']) ?>
+            <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold rounded-full <?= $isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200' ?>">
+                <?= (int) $f['count'] ?>
+            </span>
+        </a>
+        <?php } ?>
+    </div>
+
+    {% if posts|empty %}
+    <div class="card">
+        <div class="card-body text-center py-12">
+            <i data-lucide="files" class="size-12 text-slate-400 mx-auto mb-3"></i>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">No posts found</h3>
+            <p class="text-sm text-slate-500 dark:text-zink-300 mb-5">
+                <?php if ($q !== '' || $status !== '') { ?>
+                    Try adjusting your search or filters.
+                <?php } else { ?>
+                    You haven't published anything yet. Start with your first post.
+                <?php } ?>
+            </p>
+            {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="New post" %}
+        </div>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {% foreach ($posts as $post): %}
+            {% cmp="post-card" post="{$post}" blogSlug="{$activeBlogSlug}" %}
         {% endforeach %}
-      </div>
-    </section>
-    <!-- Pagination (placeholder) -->
-  {% endif %}
-</main>
+    </div>
+
+    <div class="mt-6">
+        {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="/dashboard/post" %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script src='/cp-assets/js/tooltip.js'></script>
 {% endblock %}

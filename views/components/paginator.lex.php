@@ -14,6 +14,7 @@
 $pagination = $pagination ?? [];
 $pageParam = $pageParam ?? 'page';
 $query = $query ?? '';
+$basePath = $basePath ?? '/dashboard';
 ?>
 {% set paginationLabel = t('components.paginator.ariaLabels.pagination') %}
 {% set previousPageLabel = t('components.paginator.ariaLabels.previousPage') %}
@@ -40,19 +41,15 @@ $query = $query ?? '';
          * @param  int  $page  Page number to link to
          * @return string Complete URL with query string
          */
-        $buildPaginationUrl = function (int $page) use ($pageParam, $query): string {
-            // preserve all existing query parameters
+        $buildPaginationUrl = function (int $page) use ($pageParam, $query, $basePath): string {
             $params = $_GET ?? [];
-
-            // update the specific page parameter for this tab
             $params[$pageParam] = $page;
 
-            // add search query if exists
             if (!empty($query)) {
                 $params['query'] = $query;
             }
 
-            return '/dashboard?'.http_build_query($params);
+            return $basePath.'?'.http_build_query($params);
         };
 
     /**

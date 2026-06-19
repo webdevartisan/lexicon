@@ -344,11 +344,35 @@ final class BlogController extends AppController
 
         $settings = $this->settings->findByBlogId((int) $id);
 
+        // Per-status counts so the overview can show what's where without
+        // requiring the user to click through to All Posts.
+        $statusCount = fn (string $status): int => (int) $this->post
+            ->findByAuthorWithFiltersPagination(
+                authorId: (int) $user['id'], page: 1, perPage: 1,
+                blogId: (int) $id, status: $status
+            )['pagination']['total_records'];
+
+        $stats = [
+            'published' => $statusCount('published'),
+            'draft' => $statusCount('draft'),
+            'pending' => $statusCount('pending'),
+            'archived' => $statusCount('archived'),
+            'comments' => $this->post->countCommentsByBlogId((int) $id),
+        ];
+        $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
+
+        // Recent posts in THIS blog only.
+        $recent = $this->post->findByAuthorWithFiltersPagination(
+            authorId: (int) $user['id'], page: 1, perPage: 6,
+            blogId: (int) $id, status: 'published'
+        )['data'];
+
         return $this->view([
             'user' => $user,
             'blog' => $blog->toArray(),
-            'posts' => $blog->posts(),
             'settings' => $settings,
+            'stats' => $stats,
+            'recent' => $recent,
         ]);
     }
 

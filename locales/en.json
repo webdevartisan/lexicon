@@ -25,17 +25,17 @@
     "createNewBlog": "Create New Blog",
     "allBlogs": "All Blogs",
     "accountSettings": "Account Settings",
-    "blogSection": "Blog Section",
+    "blogSection": "Manage Blog",
     "blogOverview": "Blog Overview",
     "editBlogSettings": "Edit Blog Settings",
     "appearanceTheme": "Appearance / Theme",
     "collaborators": "Collaborators",
-    "contentSection": "Content Section",
+    "contentSection": "Content",
     "newPost": "New Post",
     "allPosts": "All Posts",
     "categoriesTags": "Categories / Tags",
     "mediaLibrary": "Media Library",
-    "analyticsSection": "Analytics Section",
+    "analyticsSection": "Insights",
     "traffic": "Traffic",
     "comments": "Comments",
     "users": "Users",
@@ -103,10 +103,26 @@
       "archived": "Archived"
     },
     "actions": {
-      "newPost": "New Post"
+      "newPost": "New Post",
+      "managePosts": "Manage all posts",
+      "viewLive": "View blog"
     },
     "sections": {
-      "posts": "Posts"
+      "posts": "Posts",
+      "needsAttention": "Needs your attention",
+      "recent": "Recently published",
+      "quickActions": "Quick actions",
+      "yourBlogs": "Your blogs"
+    },
+    "stats": {
+      "published": "Published",
+      "drafts": "Drafts",
+      "pending": "Pending review",
+      "comments": "Comments"
+    },
+    "empty": {
+      "noDrafts": "Nothing waiting. You're all caught up.",
+      "noRecent": "No published posts yet. Hit \"New post\" to write your first."
     }
   },
 
