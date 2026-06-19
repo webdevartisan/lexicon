@@ -96,6 +96,19 @@ function truncate(string $string, int $limit = 50): string
         : $string;
 }
 
+/**
+ * Estimated reading time in minutes for a chunk of HTML or text.
+ *
+ * @param  string|null  $content  Raw HTML or text
+ * @param  int  $wpm  Words per minute (default 220)
+ */
+function reading_time(?string $content, int $wpm = 220): int
+{
+    $words = str_word_count(strip_tags((string) $content));
+
+    return max(1, (int) ceil($words / $wpm));
+}
+
 if (!function_exists('dd')) {
     /**
      * Dump variables and die.

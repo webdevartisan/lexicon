@@ -187,12 +187,6 @@ parameters:
 			path: src/App/Controllers/BlogController.php
 
 		-
-			message: '#^Method App\\Controllers\\BlogController\:\:showBlog\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/App/Controllers/BlogController.php
-
-		-
 			message: '#^Method App\\Controllers\\BlogController\:\:showBlogPost\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1

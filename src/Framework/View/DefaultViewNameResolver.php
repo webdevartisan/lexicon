@@ -121,8 +121,7 @@ final class DefaultViewNameResolver implements ViewNameResolverInterface
 
         // Optional: enforce extension for view files
         if (!str_ends_with($relative, $this->extension)) {
-            // d($relative);
-            throw new InvalidArgumentException('Template must end with '.$this->extension);
+            throw new InvalidArgumentException("Template ({$relative}) must end with ".$this->extension);
         }
 
         return ltrim($relative, '/');

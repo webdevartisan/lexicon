@@ -18,12 +18,6 @@ $router->add('/geo', [
     'method' => 'GET',
 ]);
 
-$router->add('/debug-cache', [
-    'controller' => 'HomeController',
-    'action' => 'debugCache',
-    'method' => 'GET',
-]);
-
 $router->add('/consent', [
     'controller' => 'ConsentController',
     'action' => 'store',
@@ -194,6 +188,7 @@ $router->group([
     'middleware' => ['theme'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'BlogController', 'action' => 'showBlog', 'method' => 'GET']);
+    $r->add('/archive', ['controller' => 'BlogController', 'action' => 'archiveBlog', 'method' => 'GET']);
     $r->add('/{postSlug}', ['controller' => 'BlogController', 'action' => 'showBlogPost', 'method' => 'GET']);
 });
 
@@ -201,6 +196,12 @@ $router->group([
 // exposing new controllers/actions via automatic routing in production.
 if (env('APP_DEBUG', false)) {
     $router->add('/{controller}/{action}');
+
+    $router->add('/debug-cache', [
+        'controller' => 'HomeController',
+        'action' => 'debugCache',
+        'method' => 'GET',
+    ]);
 }
 
 return $router;
