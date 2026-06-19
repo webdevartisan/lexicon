@@ -22,7 +22,5 @@ return [
         Framework\Http\Middleware\ContainerDebugMiddleware::class,
         App\Middleware\NavigationActiveMiddleware::class,
         App\Middleware\HandleValidationExceptionMiddleware::class,
-        // App\Middleware\CsrfMiddleware::class,
-        // App\Middleware\LocaleMiddleware::class,
     ],
 ];
