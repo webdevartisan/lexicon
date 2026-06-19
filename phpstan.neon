@@ -8,5 +8,5 @@ parameters:
     excludePaths:
         - vendor
     phpVersion: 80300
-    dynamicConstantNames:
-        - ROOT_PATH
+    bootstrapFiles:
+        - bootstrap/constants.php
