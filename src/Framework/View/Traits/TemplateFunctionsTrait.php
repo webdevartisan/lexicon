@@ -15,6 +15,8 @@ trait TemplateFunctionsTrait
      */
     private array $allowedTemplateFunctions = [
         't' => ['type' => 'helper_var'],
+        'lurl' => ['type' => 'helper_var'],
+        'date' => ['type' => 'php_function'],
         'base_url' => ['type' => 'php_function'],
         'locale' => ['type' => 'php_function'],
         'old' => ['type' => 'php_function'],
