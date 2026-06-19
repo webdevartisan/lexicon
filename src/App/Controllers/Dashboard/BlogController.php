@@ -75,7 +75,7 @@ final class BlogController extends AppController
         Gate::authorize('create', BlogResource::class, $user);
 
         return $this->view([
-            'themes' => ['default', 'light', 'dark', 'closest'],
+            'themes' => self::getAvailableThemes(),
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
@@ -192,7 +192,7 @@ final class BlogController extends AppController
             'settings' => $settings,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
-            'themes' => ['default', 'light', 'dark', 'closest'],
+            'themes' => self::getAvailableThemes(),
             'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
     }
@@ -641,5 +641,24 @@ final class BlogController extends AppController
         $this->uploader->cleanupTempFiles($userId);
 
         return $paths;
+    }
+
+    /** @return array<string, string> */
+    private static function getAvailableThemes(): array
+    {
+        $themesPath = ROOT_PATH.'/themes';
+        $themes = [];
+
+        foreach (glob($themesPath.'/*/theme.json') as $file) {
+            $meta = json_decode(file_get_contents($file), true);
+
+            if (!empty($meta['key'])) {
+                $themes[$meta['key']] = $meta['name'];
+            }
+        }
+
+        asort($themes, SORT_STRING);
+
+        return $themes;
     }
 }
