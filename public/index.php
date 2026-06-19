@@ -16,8 +16,7 @@ use Framework\Core\Request;
  * For CLI commands, see the /cli entry point instead.
  */
 
-// define the root path relative to the public directory
-define('ROOT_PATH', dirname(__DIR__));
+require dirname(__DIR__).'/bootstrap/constants.php';
 
 // bootstrap the shared application components (autoloader, env, container, error handling)
 $container = require ROOT_PATH.'/bootstrap/app.php';

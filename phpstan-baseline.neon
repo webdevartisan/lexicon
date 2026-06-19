@@ -25,12 +25,6 @@ parameters:
 			path: src/App/Auth.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 4
-			path: src/App/Console/Commands/CacheWarmCommand.php
-
-		-
 			message: '#^Property App\\Console\\Commands\\CacheWarmCommand\:\:\$config type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -41,12 +35,6 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/App/Console/Commands/CacheWarmCommand.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Console/Commands/KeyGenerateCommand.php
 
 		-
 			message: '#^Call to an undefined method App\\Models\\BlogModel\:\:findResource\(\)\.$#'
@@ -229,12 +217,6 @@ parameters:
 			path: src/App/Controllers/CategoryController.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Controllers/Dashboard/BlogController.php
-
-		-
 			message: '#^Method App\\Controllers\\Dashboard\\FileUploadController\:\:upload\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1
@@ -245,12 +227,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Controllers/Dashboard/HomeController.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
 
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
@@ -319,12 +295,6 @@ parameters:
 			path: src/App/Gate.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Http/PreRouting/CacheControlHint.php
-
-		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
 			count: 1
@@ -343,18 +313,6 @@ parameters:
 			path: src/App/Http/PreRouting/LegacyUrlRewriter.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 2
-			path: src/App/Http/PreRouting/LocaleAwareStaticBypass.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Http/PreRouting/LocalePrefixIntake.php
-
-		-
 			message: '#^Method App\\Http\\PreRouting\\LocalePrefixIntake\:\:pickFromAcceptLanguage\(\) has parameter \$supported with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -365,12 +323,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/App/Http/PreRouting/LocalePrefixIntake.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Http/PreRouting/MaintenanceModeGate.php
 
 		-
 			message: '#^Method App\\Http\\PreRouting\\MaintenanceModeGate\:\:isIpAllowed\(\) has parameter \$allowed with no value type specified in iterable type array\.$#'
@@ -463,12 +415,6 @@ parameters:
 			path: src/App/Mail/WelcomeEmail.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 2
-			path: src/App/Middleware/BreadcrumbMiddleware.php
-
-		-
 			message: '#^Method App\\Middleware\\BreadcrumbMiddleware\:\:addRemainingSegments\(\) has parameter \$matchedItems with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -529,18 +475,6 @@ parameters:
 			path: src/App/Middleware/HeadI18nGlobals.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Middleware/HeadI18nGlobals.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Middleware/LocaleMiddleware.php
-
-		-
 			message: '#^Method App\\Middleware\\LocaleMiddleware\:\:pickPreferred\(\) has parameter \$supported with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -567,12 +501,6 @@ parameters:
 		-
 			message: '#^Call to function method_exists\(\) with Framework\\Core\\Response and ''getHeader'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/App/Middleware/LocalizeAnchorHrefs.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
 			count: 1
 			path: src/App/Middleware/LocalizeAnchorHrefs.php
 
@@ -1243,12 +1171,6 @@ parameters:
 			path: src/App/Services/AuditService.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Services/BlogDeletionService.php
-
-		-
 			message: '#^Method App\\Services\\CacheManagementService\:\:audit\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1357,22 +1279,10 @@ parameters:
 			path: src/App/Services/ProfileService.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Services/ThemeService.php
-
-		-
 			message: '#^Method App\\Services\\ThemeService\:\:viewRoots\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Services/ThemeService.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/App/Services/TranslationService.php
 
 		-
 			message: '#^Method App\\Services\\TranslationService\:\:getByPath\(\) has no return type specified\.$#'
@@ -1409,12 +1319,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Services/TranslationService.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 8
-			path: src/App/Services/UploadService.php
 
 		-
 			message: '#^Method App\\Services\\UploadService\:\:getUploadedFiles\(\) has parameter \$fieldNames with no value type specified in iterable type array\.$#'
@@ -1503,12 +1407,6 @@ parameters:
 		-
 			message: '#^Call to preg_quote\(\) is missing delimiter / to be effective\.$#'
 			identifier: argument.invalidPregQuote
-			count: 1
-			path: src/Framework/Cache/FragmentCache.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
 			count: 1
 			path: src/Framework/Cache/FragmentCache.php
 
@@ -1747,12 +1645,6 @@ parameters:
 			path: src/Framework/Core/helpers.php
 
 		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: src/Framework/Database.php
-
-		-
 			message: '#^Method Framework\\Database\:\:__construct\(\) has parameter \$config with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1925,12 +1817,6 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Framework/Validation/Validator.php
-
-		-
-			message: '#^Constant ROOT_PATH not found\.$#'
-			identifier: constant.notFound
-			count: 2
-			path: src/Framework/View/TemplateRenderer.php
 
 		-
 			message: '#^Method Framework\\View\\TemplateRenderer\:\:addGlobals\(\) has parameter \$vars with no value type specified in iterable type array\.$#'
