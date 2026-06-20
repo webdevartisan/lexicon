@@ -984,6 +984,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .mt-auto {
   margin-top: auto;
 }
+.ml-0\.5 {
+  margin-left: 0.125rem;
+}
 .line-clamp-1 {
   overflow: hidden;
   display: -webkit-box;
@@ -1977,6 +1980,10 @@ input[type=range]:focus::-webkit-slider-thumb {
   padding-top: 2rem;
   padding-bottom: 2rem;
 }
+.py-2\.5 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
 .pb-2 {
   padding-bottom: 0.5rem;
 }
@@ -2122,6 +2129,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .leading-relaxed {
   line-height: 1.625;
+}
+.leading-none {
+  line-height: 1;
 }
 .tracking-wide {
   letter-spacing: 0.025em;
@@ -2499,6 +2509,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .ring-offset-2 {
   --tw-ring-offset-width: 2px;
+}
+.blur {
+  --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .grayscale {
   --tw-grayscale: grayscale(100%);
@@ -3488,6 +3502,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
   .md\:col-span-7 {
     grid-column: span 7 / span 7;
+  }
+  .md\:col-span-5 {
+    grid-column: span 5 / span 5;
   }
   .md\:block {
     display: block;

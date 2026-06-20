@@ -94,4 +94,118 @@ class TagModel extends AppModel
 
         return $affected > 0; // Only true if actually removed
     }
+
+    /**
+     * Tags belonging to a blog, with how many posts use each.
+     */
+    public function getByBlogId(int $blogId): array
+    {
+        $sql = 'SELECT t.*, (SELECT COUNT(*) FROM post_tags WHERE tag_id = t.id) AS post_count
+                FROM tags t
+                WHERE t.blog_id = ?
+                ORDER BY t.name ASC';
+        $stmt = $this->database->query($sql, [$blogId]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Look up a tag by slug within a blog.
+     */
+    public function findBySlugInBlog(int $blogId, string $slug): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE blog_id = ? AND slug = ? LIMIT 1";
+        $stmt = $this->database->query($sql, [$blogId, $slug]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function findForBlog(int $id, int $blogId): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? AND blog_id = ? LIMIT 1";
+        $stmt = $this->database->query($sql, [$id, $blogId]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Find a tag by name in a blog, creating it if it doesn't exist.
+     */
+    public function findOrCreateForBlog(int $blogId, string $name): ?int
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+
+        $slug = slugify($name) ?: 'tag';
+
+        $existing = $this->findBySlugInBlog($blogId, $slug);
+        if ($existing) {
+            return (int) $existing['id'];
+        }
+
+        $this->insert(['blog_id' => $blogId, 'name' => $name, 'slug' => $slug]);
+
+        return $this->getInsertID();
+    }
+
+    /**
+     * Replace a post's tag set with the given names (find-or-create per blog).
+     *
+     * This is what the post editor calls on save: it diffs the desired tags
+     * against what's attached and only touches what changed.
+     *
+     * @param  string[]  $names  Tag names typed by the author
+     * @return bool True if the post's tag set actually changed
+     */
+    public function syncForPost(int $postId, int $blogId, array $names): bool
+    {
+        // Resolve names to ids, de-duped, ignoring blanks.
+        $wanted = [];
+        foreach ($names as $name) {
+            $id = $this->findOrCreateForBlog($blogId, (string) $name);
+            if ($id !== null) {
+                $wanted[$id] = true;
+            }
+        }
+        $wantedIds = array_keys($wanted);
+
+        $current = array_map(
+            static fn (array $row): int => (int) $row['tag_id'],
+            $this->database->query('SELECT tag_id FROM post_tags WHERE post_id = ?', [$postId])->fetchAll(\PDO::FETCH_ASSOC)
+        );
+
+        $toAdd = array_diff($wantedIds, $current);
+        $toRemove = array_diff($current, $wantedIds);
+
+        foreach ($toAdd as $tagId) {
+            $this->attachToPost($postId, (int) $tagId);
+        }
+        foreach ($toRemove as $tagId) {
+            $this->detachFromPost($postId, (int) $tagId);
+        }
+
+        return $toAdd !== [] || $toRemove !== [];
+    }
+
+    /**
+     * Rename a tag (and re-slug it) within its blog.
+     */
+    public function renameForBlog(int $id, int $blogId, string $name): bool
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return false;
+        }
+
+        $slug = slugify($name) ?: 'tag';
+
+        $clash = $this->findBySlugInBlog($blogId, $slug);
+        if ($clash && (int) $clash['id'] !== $id) {
+            return false;
+        }
+
+        return $this->update($id, ['name' => $name, 'slug' => $slug]);
+    }
 }

@@ -102,8 +102,6 @@ return [
             'replace_blog_id' => true,
             'policy' => 'update',
             'key' => 'navigation.categoriesTags',
-            'disabled' => true,
-            'badge' => 'Soon',
         ],
         [
             'label' => 'Media Library',

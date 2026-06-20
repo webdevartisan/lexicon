@@ -212,6 +212,43 @@ $isArchived = $postStatus === 'archived';
           </div>
         </section>
 
+        <!-- Categories & Tags -->
+        <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
+          <div class="p-4 space-y-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Organize</h3>
+
+            <div>
+              <label for="category_id" class="block mb-1.5 text-xs font-medium text-slate-500 dark:text-zink-300">Category</label>
+              <?php $currentCategory = (int) (old('category_id') ?? $post['category_id'] ?? 0); ?>
+              <select id="category_id" name="category_id"
+                class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
+                <option value="">— None —</option>
+                <?php foreach (($categories ?? []) as $cat) { ?>
+                <option value="<?= (int) $cat['id'] ?>" <?= $currentCategory === (int) $cat['id'] ? 'selected' : '' ?>>
+                  <?= e($cat['name']) ?>
+                </option>
+                <?php } ?>
+              </select>
+              <p class="mt-1 text-[11px] text-slate-400 dark:text-zink-400">Optional. Manage the list on the Categories &amp; Tags page.</p>
+            </div>
+
+            <div>
+              <label for="tagInput" class="block mb-1.5 text-xs font-medium text-slate-500 dark:text-zink-300">Tags</label>
+              <div id="tagChips" class="flex flex-wrap gap-1.5 mb-1.5"></div>
+              <input id="tagInput" type="text" list="tagSuggestions" autocomplete="off"
+                placeholder="Type a tag, press Enter"
+                class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 dark:placeholder:text-zink-400">
+              <datalist id="tagSuggestions">
+                <?php foreach (($allTags ?? []) as $t) { ?>
+                <option value="<?= e($t['name']) ?>"></option>
+                <?php } ?>
+              </datalist>
+              <input type="hidden" name="tags" id="tagsField" value="<?= e(implode(',', $postTags ?? [])) ?>">
+              <p class="mt-1 text-[11px] text-slate-400 dark:text-zink-400">Optional. New tags are created as you type.</p>
+            </div>
+          </div>
+        </section>
+
         <!-- Featured Image -->
         {% cmp="dropzone2" label="Featured Image" resource="{$post}" %}
 
@@ -524,3 +561,51 @@ $isArchived = $postStatus === 'archived';
 
       </aside>
     </div>
+
+<script>
+(function () {
+    var field = document.getElementById('tagsField');
+    var chips = document.getElementById('tagChips');
+    var input = document.getElementById('tagInput');
+    if (!field || !chips || !input) return;
+
+    var tags = field.value ? field.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+
+    function sync() {
+        field.value = tags.join(',');
+        chips.innerHTML = '';
+        tags.forEach(function (name, i) {
+            var chip = document.createElement('span');
+            chip.className = 'inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-custom-50 text-custom-700 border border-custom-100 dark:bg-custom-500/20 dark:text-custom-300';
+            chip.textContent = name;
+            var x = document.createElement('button');
+            x.type = 'button';
+            x.className = 'leading-none text-sm hover:text-red-600';
+            x.innerHTML = '&times;';
+            x.addEventListener('click', function () { tags.splice(i, 1); sync(); });
+            chip.appendChild(x);
+            chips.appendChild(chip);
+        });
+    }
+
+    function add(value) {
+        value = value.trim().replace(/,+$/, '').trim();
+        if (value && tags.indexOf(value) === -1) tags.push(value);
+        input.value = '';
+        sync();
+    }
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            add(input.value);
+        } else if (e.key === 'Backspace' && input.value === '' && tags.length) {
+            tags.pop();
+            sync();
+        }
+    });
+    input.addEventListener('blur', function () { if (input.value.trim()) add(input.value); });
+
+    sync();
+})();
+</script>

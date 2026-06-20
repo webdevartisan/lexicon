@@ -10,12 +10,14 @@ $tabs = [
     ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']],
 ];
 
-$makeQuery = static function (array $overrides = []) use ($q, $status, $blog_id, $sort): string {
+$makeQuery = static function (array $overrides = []) use ($q, $status, $blog_id, $sort, $categoryId, $tagId): string {
     $params = [
         'q' => $overrides['q'] ?? $q,
         'status' => array_key_exists('status', $overrides) ? $overrides['status'] : $status,
         'blog_id' => array_key_exists('blog_id', $overrides) ? $overrides['blog_id'] : $blog_id,
         'sort' => array_key_exists('sort', $overrides) ? $overrides['sort'] : $sort,
+        'category' => array_key_exists('category', $overrides) ? $overrides['category'] : $categoryId,
+        'tag' => array_key_exists('tag', $overrides) ? $overrides['tag'] : $tagId,
         'page' => $overrides['page'] ?? null,
     ];
 
@@ -46,7 +48,7 @@ $sortOptions = [
     <form method="GET" action="/dashboard/post" class="card mb-4">
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div class="md:col-span-7">
+                <div class="md:col-span-5">
                     <label for="q" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Search</label>
                     <div class="relative">
                         <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -73,6 +75,18 @@ $sortOptions = [
                     </select>
                 </div>
 
+                <div class="md:col-span-2">
+                    <label for="category" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Category</label>
+                    <select id="category" name="category" class="form-input w-full border-slate-200 dark:border-zink-500" <?= empty($blogCategories) ? 'disabled' : '' ?>>
+                        <option value="">All</option>
+                        <?php foreach (($blogCategories ?? []) as $cat) { ?>
+                        <option value="<?= (int) $cat['id'] ?>" <?= (int) ($categoryId ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>>
+                            <?= e($cat['name']) ?>
+                        </option>
+                        <?php } ?>
+                    </select>
+                </div>
+
                 <div class="md:col-span-2 flex items-end">
                     <button
                         type="submit"
@@ -85,8 +99,20 @@ $sortOptions = [
             </div>
 
             <input type="hidden" name="status" value="{{ status }}">
+            <?php if (!empty($tagId)) { ?><input type="hidden" name="tag" value="<?= (int) $tagId ?>"><?php } ?>
         </div>
     </form>
+
+    <?php if (!empty($activeTag)) { ?>
+    <div class="flex items-center gap-2 mb-4 text-sm">
+        <span class="text-slate-500 dark:text-zink-300">Filtering by tag:</span>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-custom-50 text-custom-700 border border-custom-100 dark:bg-custom-500/20 dark:text-custom-300">
+            <i data-lucide="tag" class="size-3"></i>
+            <?= e($activeTag['name']) ?>
+            <a href="/dashboard/post<?= e($makeQuery(['tag' => null, 'page' => null])) ?>" class="ml-0.5 hover:text-red-600" title="Clear tag filter">&times;</a>
+        </span>
+    </div>
+    <?php } ?>
 
     <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div class="flex flex-wrap gap-2">
@@ -115,7 +141,7 @@ $sortOptions = [
         </div>
 
         <form method="GET" action="/dashboard/post" class="flex items-center gap-2">
-            <?php foreach (['q' => $q, 'status' => $status, 'blog_id' => $blog_id] as $key => $value) { ?>
+            <?php foreach (['q' => $q, 'status' => $status, 'blog_id' => $blog_id, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
                 <?php if ($value !== '' && $value !== null) { ?>
                     <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
                 <?php } ?>

@@ -96,24 +96,28 @@ COMMENT='Permission definitions using resource-action pattern';
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    slug VARCHAR(120) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_slug (slug)
+    UNIQUE KEY uq_categories_blog_slug (blog_id, slug),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Post categories for content organization';
+COMMENT='Post categories for content organization (scoped per blog)';
 
 -- ----------------------------------------------------------------------------
 -- Tags Table
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    slug VARCHAR(120) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_slug (slug)
+    UNIQUE KEY uq_tags_blog_slug (blog_id, slug),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Post tags for flexible content labeling';
+COMMENT='Post tags for flexible content labeling (scoped per blog)';
 
 -- ----------------------------------------------------------------------------
 -- Settings Table

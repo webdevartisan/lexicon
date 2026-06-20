@@ -7,7 +7,9 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\PostResource;
 use App\Services\PostAutosaveService;
@@ -30,7 +32,9 @@ final class PostController extends AppController
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
         private UploadService $uploader,
-        private PostAutosaveService $autosaveService
+        private PostAutosaveService $autosaveService,
+        private CategoryModel $categoryModel,
+        private TagModel $tagModel
     ) {}
 
     /**
@@ -68,6 +72,25 @@ final class PostController extends AppController
             $sort = 'newest';
         }
 
+        // Category/tag filters only make sense inside one blog (they're per-blog).
+        // Validate the ids belong to the active blog, otherwise drop them.
+        $categoryId = null;
+        $tagId = null;
+        $blogCategories = [];
+        if ($blogId !== null) {
+            $blogCategories = $this->categoryModel->getByBlogId($blogId);
+
+            $rawCat = (int) ($this->request->get['category'] ?? 0);
+            if ($rawCat > 0 && $this->categoryModel->findForBlog($rawCat, $blogId)) {
+                $categoryId = $rawCat;
+            }
+
+            $rawTag = (int) ($this->request->get['tag'] ?? 0);
+            if ($rawTag > 0 && $this->tagModel->findForBlog($rawTag, $blogId)) {
+                $tagId = $rawTag;
+            }
+        }
+
         $result = $this->model->findByAuthorWithFiltersPagination(
             authorId: $user['id'],
             page: $page,
@@ -75,10 +98,13 @@ final class PostController extends AppController
             blogId: $blogId,
             status: $status,
             searchQuery: $q,
-            sort: $sort
+            sort: $sort,
+            categoryId: $categoryId,
+            tagId: $tagId
         );
 
-        // Per-status totals power the filter chip badges.
+        // Per-status totals power the filter chip badges (respecting the active
+        // category/tag filter so the numbers match what's shown).
         $counts = [
             'all' => 0,
             'published' => 0,
@@ -91,12 +117,16 @@ final class PostController extends AppController
                 continue;
             }
             $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
-                authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q
+                authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q,
+                categoryId: $categoryId, tagId: $tagId
             )['pagination']['total_records'];
         }
         $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
 
         $activeBlogSlug = ($blogId !== null && isset($blogSlugs[$blogId])) ? $blogSlugs[$blogId] : '';
+
+        // If a tag filter is active, surface its name for the "filtering by" pill.
+        $activeTag = ($tagId !== null) ? $this->tagModel->findForBlog($tagId, (int) $blogId) : null;
 
         return $this->view([
             'posts' => $result['data'],
@@ -110,6 +140,10 @@ final class PostController extends AppController
             'q' => $q,
             'sort' => $sort,
             'counts' => $counts,
+            'blogCategories' => $blogCategories,
+            'categoryId' => $categoryId,
+            'tagId' => $tagId,
+            'activeTag' => $activeTag,
         ]);
     }
 
@@ -151,6 +185,9 @@ final class PostController extends AppController
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
+            'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
+            'postTags' => [],
         ]);
     }
 
@@ -191,6 +228,7 @@ final class PostController extends AppController
 
         $data['blog_id'] = $blog->id();
         $data['author_id'] = $user['id'];
+        $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
         // Handle featured image upload
         $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
@@ -202,6 +240,8 @@ final class PostController extends AppController
         $postId = $this->model->getInsertID();
 
         if ($okInsert) {
+            $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
+
             audit()->log(
                 $user['id'],
                 'post.created',
@@ -255,6 +295,11 @@ final class PostController extends AppController
             $postArray['published_at'] = $displayDate;
         }
 
+        $postTags = array_map(
+            static fn (array $t): string => (string) $t['name'],
+            $this->model->tags((int) $post->id())
+        );
+
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
@@ -262,6 +307,9 @@ final class PostController extends AppController
             'workflowState' => $workflowState,
             'status' => $status,
             'blogRole' => $blogRole,
+            'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
+            'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
+            'postTags' => $postTags,
         ]);
     }
 
@@ -408,6 +456,18 @@ final class PostController extends AppController
             $data['published_at'] = $utcNow->format('Y-m-d H:i:s');
         }
 
+        $blogId = (int) $post->blogId();
+
+        // Category — only write it when it actually changed.
+        $newCategoryId = $this->resolveCategoryId($blogId);
+        $currentCategoryId = isset($post->toArray()['category_id']) ? (int) $post->toArray()['category_id'] : null;
+        if ($newCategoryId !== $currentCategoryId) {
+            $data['category_id'] = $newCategoryId;
+        }
+
+        // Tags sync independently of the field diff above.
+        $tagsChanged = $this->tagModel->syncForPost((int) $id, $blogId, $this->parsePostTags());
+
         // Update if changes detected
         if (!empty($data)) {
             $this->model->update((int) $id, $data);
@@ -422,11 +482,45 @@ final class PostController extends AppController
             );
 
             $this->flash('success', 'Post updated successfully.');
+        } elseif ($tagsChanged) {
+            $this->flash('success', 'Post updated successfully.');
         } else {
             $this->flash('info', 'No changes detected.');
         }
 
         return $this->redirect("/dashboard/post/{$id}/edit");
+    }
+
+    /**
+     * Resolve the submitted category_id, but only if it belongs to this blog.
+     *
+     * Returns null for "no category" or anything that isn't a real category of
+     * the blog — so you can't slip in another blog's category id.
+     */
+    private function resolveCategoryId(int $blogId): ?int
+    {
+        $raw = $this->request->post['category_id'] ?? '';
+        if ($raw === '' || $raw === null) {
+            return null;
+        }
+
+        $id = (int) $raw;
+
+        return $this->categoryModel->findForBlog($id, $blogId) ? $id : null;
+    }
+
+    /**
+     * Split the comma-separated tags field into trimmed names.
+     *
+     * @return string[]
+     */
+    private function parsePostTags(): array
+    {
+        $raw = (string) ($this->request->post['tags'] ?? '');
+
+        $names = array_map('trim', explode(',', $raw));
+
+        return array_values(array_filter($names, static fn (string $n): bool => $n !== ''));
     }
 
     /**

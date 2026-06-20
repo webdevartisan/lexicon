@@ -111,6 +111,10 @@ $router->group([
     // Comment moderation (blog-scoped).
     $r->add('/blog/{blogId:\d+}/comments', ['controller' => 'CommentController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/comment/bulk', ['controller' => 'CommentController', 'action' => 'bulk', 'method' => 'POST']);
+
+    // Categories & tags management (blog-scoped).
+    $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);

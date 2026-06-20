@@ -805,14 +805,16 @@ class PostModel extends AppModel
         ?int $blogId = null,
         string $status = '',
         string $searchQuery = '',
-        string $sort = 'newest'
+        string $sort = 'newest',
+        ?int $categoryId = null,
+        ?int $tagId = null
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
 
         // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery);
+        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId);
 
         // Get total count first for pagination metadata
         $totalRecords = $this->getTotalCount($whereClause, $params);
@@ -990,7 +992,9 @@ class PostModel extends AppModel
         int $authorId,
         ?int $blogId,
         string $status,
-        string $searchQuery
+        string $searchQuery,
+        ?int $categoryId = null,
+        ?int $tagId = null
     ): array {
         $whereClause = 'WHERE p.author_id = :author_id';
         $params = [':author_id' => $authorId];
@@ -1005,6 +1009,16 @@ class PostModel extends AppModel
         if ($status !== '' && in_array($status, self::STATUSES, true)) {
             $whereClause .= ' AND p.status = :status';
             $params[':status'] = $status;
+        }
+
+        if ($categoryId !== null) {
+            $whereClause .= ' AND p.category_id = :category_id';
+            $params[':category_id'] = $categoryId;
+        }
+
+        if ($tagId !== null) {
+            $whereClause .= ' AND EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.tag_id = :tag_id)';
+            $params[':tag_id'] = $tagId;
         }
 
         // Use LIKE for flexible search but be aware this prevents index usage on large tables
