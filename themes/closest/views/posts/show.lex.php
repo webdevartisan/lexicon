@@ -140,6 +140,7 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
                   name="content"
                   class="form-control"
                   rows="4"
+                  maxlength="2000"
                   placeholder="Write your comment..."
                   required></textarea>
               </div>

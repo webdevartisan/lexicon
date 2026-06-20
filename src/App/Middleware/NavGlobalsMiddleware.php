@@ -7,6 +7,7 @@ namespace App\Middleware;
 use App\Auth;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\CommentModel;
 use App\Models\UserPreferencesModel;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -56,18 +57,22 @@ class NavGlobalsMiddleware
      * @param  UserPreferencesModel  $preferencesModel  User preferences model
      * @param  BlogModel  $blogModel  Blog model
      */
+    private CommentModel $commentModel;
+
     public function __construct(
         NavigationService $nav,
         Auth $auth,
         TemplateViewerInterface $viewer,
         UserPreferencesModel $preferencesModel,
-        BlogModel $blogModel
+        BlogModel $blogModel,
+        CommentModel $commentModel
     ) {
         $this->nav = $nav;
         $this->auth = $auth;
         $this->viewer = $viewer;
         $this->preferencesModel = $preferencesModel;
         $this->blogModel = $blogModel;
+        $this->commentModel = $commentModel;
     }
 
     /**
@@ -89,11 +94,23 @@ class NavGlobalsMiddleware
             : (str_starts_with($path, '/dashboard') ? 'back' : 'front');
 
         $selectedBlog = null;
+        $userBlogs = []; // id => name, for the topbar blog switcher
+        $selectedBlogId = 0;
 
         // fetch the selected blog for dashboard area if user is authenticated
         if ($area === 'back' && $this->auth->check()) {
             $userId = $this->auth->user()['id'];
             $defaultBlogId = $this->preferencesModel->getDefaultBlogId($userId);
+            $selectedBlogId = (int) ($defaultBlogId ?? 0);
+
+            // List of the user's blogs for the topbar switcher.
+            try {
+                foreach ($this->blogModel->getBlogsByOwnerId((int) $userId) as $b) {
+                    $userBlogs[(int) $b['id']] = (string) ($b['blog_name'] ?? 'Untitled blog');
+                }
+            } catch (\Throwable $e) {
+                error_log('Blog switcher list failed: '.$e->getMessage());
+            }
 
             if ($defaultBlogId !== null && $defaultBlogId > 0) {
                 try {
@@ -127,6 +144,21 @@ class NavGlobalsMiddleware
         $items = $this->nav->for($area, $path, $selectedBlog);
         $user = $this->auth->user();
 
+        // Build notifications payload for the topbar bell (back area only).
+        $notifications = ['enabled' => false, 'items' => [], 'count' => 0];
+        if ($area === 'back' && $user !== null) {
+            try {
+                $recent = $this->commentModel->recentForAuthor((int) $user['id'], 8);
+                $notifications = [
+                    'enabled' => true,
+                    'items' => $recent,
+                    'count' => count($recent),
+                ];
+            } catch (\Throwable $e) {
+                error_log('Notifications query failed: '.$e->getMessage());
+            }
+        }
+
         // add navigation globals to all templates
         if (method_exists($this->viewer, 'addGlobals')) {
             $this->viewer->addGlobals([
@@ -136,6 +168,9 @@ class NavGlobalsMiddleware
                 'selected_blog' => $selectedBlog, // BlogResource or null
                 'has_blog_context' => $selectedBlog !== null, // Convenient boolean flag
                 'area' => $area,
+                'notifications' => $notifications,
+                'user_blogs' => $userBlogs, // id => name, for topbar switcher
+                'selected_blog_id' => $selectedBlogId,
             ]);
         }
 

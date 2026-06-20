@@ -411,6 +411,7 @@ CREATE TABLE IF NOT EXISTS comments (
     post_id INT NOT NULL,
     user_id INT DEFAULT NULL COMMENT 'NULL allows for anonymous comments if enabled',
     content TEXT NOT NULL,
+    status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -418,7 +419,9 @@ CREATE TABLE IF NOT EXISTS comments (
     INDEX idx_post (post_id),
     INDEX idx_user (user_id),
     INDEX idx_comment_post_created (post_id, created_at),
-    INDEX idx_comment_user_created (user_id, created_at)
+    INDEX idx_comment_user_created (user_id, created_at),
+    INDEX idx_comment_status (status),
+    INDEX idx_comment_post_status (post_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User comments on published posts';
 

@@ -109,7 +109,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.pending }}</div>
             </div>
         </a>
-        <div class="card">
+        <a href="/dashboard/blog/{{ selectedBlogId }}/comments?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.comments') }}</span>
@@ -117,9 +117,16 @@
                         <i data-lucide="message-square" class="size-4"></i>
                     </span>
                 </div>
-                <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.comments }}</div>
+                <div class="flex items-end gap-2">
+                    <span class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.comments }}</span>
+                    <?php if (!empty($stats['comments_pending'])) { ?>
+                    <span class="inline-flex items-center gap-1 mb-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:border-amber-800">
+                        <?= (int) $stats['comments_pending'] ?> pending
+                    </span>
+                    <?php } ?>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

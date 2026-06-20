@@ -91,7 +91,8 @@ class HomeController extends AppController
             'draft' => (int) $draftResult['pagination']['total_records'],
             'pending' => (int) $pendingResult['pagination']['total_records'],
             'archived' => (int) $archivedResult['pagination']['total_records'],
-            'comments' => $this->post->countCommentsByBlogId($selectedBlogId),
+            'comments' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'approved'),
+            'comments_pending' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'pending'),
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
@@ -155,6 +156,7 @@ class HomeController extends AppController
             'pending' => 0,
             'archived' => 0,
             'comments' => 0,
+            'comments_pending' => 0,
             'total' => 0,
         ];
     }

@@ -109,7 +109,7 @@ $title = e($post['title'] ?? 'Untitled');
           <?= csrf_field() ?>
           <div class="form-field">
             <label for="comment_content">Your comment</label>
-            <textarea id="comment_content" name="content" rows="5" placeholder="Write something thoughtful…" required></textarea>
+            <textarea id="comment_content" name="content" rows="5" maxlength="2000" placeholder="Write something thoughtful…" required></textarea>
           </div>
           <button type="submit" class="btn-submit">
             Post comment
