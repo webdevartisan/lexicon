@@ -50,6 +50,13 @@ $router->add('/profile/{slug:[A-Za-z0-9_\-]+}', [
     'method' => 'GET',
 ]);
 
+// Public comment submission
+$router->add('/comments/create', [
+    'controller' => 'CommentController',
+    'action' => 'create',
+    'method' => 'POST',
+]);
+
 $router->group([
     'prefix' => '/',
     'namespace' => 'Auth',
@@ -95,10 +102,20 @@ $router->group([
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/new', ['controller' => 'PostController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post/create', ['controller' => 'PostController', 'action' => 'create', 'method' => 'POST']);
     $r->add('/posts/image-upload', ['controller' => 'UploadController', 'action' => 'tinymceImage', 'method' => 'POST']);
+
+    // Comment moderation (blog-scoped).
+    $r->add('/blog/{blogId:\d+}/comments', ['controller' => 'CommentController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/comment/bulk', ['controller' => 'CommentController', 'action' => 'bulk', 'method' => 'POST']);
+    $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
+    $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
+    $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
+    $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+
     $r->add('/export', ['controller' => 'DataExport', 'action' => 'start', 'method' => 'GET']);
     $r->add('/delete-account', [
         'controller' => 'AccountDeletionController',
