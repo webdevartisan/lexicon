@@ -42,6 +42,11 @@ $isArchived = $postStatus === 'archived';
                 rows="14"
                 class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 js-post-editor"
                 placeholder="Write your post content here...">{{ content }}</textarea>
+                <?php if (!empty($errors['content'])) { ?>
+                  <?php foreach ($errors['content'] as $msg) { ?>
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400"> <?= $msg ?> </p>
+                  <?php } ?>
+                <?php } ?>
             </div>
 
             <!-- Excerpt / summary -->
