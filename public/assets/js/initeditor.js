@@ -23,7 +23,7 @@ tinymce.init({
   paste_data_images: true, // allow paste & drag-drop images which will be uploaded
 
     images_upload_handler: (blobInfo, progress) => {
-    const blogSelect = document.getElementById('blog_id')
+    const blogSelect = document.getElementById('blog_id') // TODO: Fix this to get the blog ID from the form or context
     const blogId = blogSelect ? blogSelect.value : ''
 
     return new Promise((resolve, reject) => {
@@ -65,3 +65,4 @@ tinymce.init({
         });
   }
 });
+console.log('editor end');
