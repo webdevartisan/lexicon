@@ -29,7 +29,7 @@ return [
      * Dashboard navigation (authenticated users)
      */
     'back' => [
-        // === GLOBAL ITEMS - Always visible ===
+        // === GLOBAL ITEMS ===
         [
             'label' => 'Dashboard',
             'href' => '/dashboard',
@@ -38,6 +38,13 @@ return [
             'key' => 'navigation.dashboard',
         ],
         [
+            'label' => 'All Blogs',
+            'href' => '/dashboard/blog',
+            'auth' => true,
+            'scope' => 'global',
+            'key' => 'navigation.allBlogs',
+        ],/*
+        [
             'label' => 'Create New Blog',
             'href' => '/dashboard/blog/new',
             'auth' => true,
@@ -45,70 +52,17 @@ return [
             'key' => 'navigation.createNewBlog',
         ],
         [
-            'label' => 'All Blogs',
-            'href' => '/dashboard/blog',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.allBlogs',
-        ],
-        [
             'label' => 'Account Settings',
             'href' => '/account/settings',
             'auth' => true,
             'scope' => 'global',
             'key' => 'navigation.accountSettings',
-        ],
+        ],*/
 
-        // === CONTEXTUAL ITEMS - Only when blog selected ===
-        // Blog Management Section
-        [
-            'label' => 'Blog Section',
-            'href' => '#',
-            'auth' => true,
-            'scope' => 'contextual',
-            'type' => 'section_header',
-            'key' => 'navigation.blogSection',
-        ],
-        [
-            'label' => 'Blog Overview',
-            'href' => '/dashboard/blog/{blogId}/show',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'view',
-            'key' => 'navigation.blogOverview',
-        ],
-        [
-            'label' => 'Edit Blog Settings',
-            'href' => '/dashboard/blog/{blogId}/edit',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'update',
-            'key' => 'navigation.editBlogSettings',
-        ],
-        [
-            'label' => 'Appearance / Theme',
-            'href' => '/dashboard/blog/{blogId}/theme',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'update',
-            'key' => 'navigation.appearanceTheme',
-        ],
-        [
-            'label' => 'Collaborators',
-            'href' => '/dashboard/blog/{blogId}/users',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'manageUsers',
-            'key' => 'navigation.collaborators',
-        ],
+        // === CONTEXTUAL ITEMS ===
 
-        // Content Management Section
         [
-            'label' => 'Content Section',
+            'label' => 'Content',
             'href' => '#',
             'auth' => true,
             'scope' => 'contextual',
@@ -132,6 +86,15 @@ return [
             'key' => 'navigation.allPosts',
         ],
         [
+            'label' => 'Comments',
+            'href' => '/dashboard/blog/{blogId}/comments',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'update',
+            'key' => 'navigation.comments',
+        ],
+        [
             'label' => 'Categories / Tags',
             'href' => '/dashboard/blog/{blogId}/categories',
             'auth' => true,
@@ -139,6 +102,8 @@ return [
             'replace_blog_id' => true,
             'policy' => 'update',
             'key' => 'navigation.categoriesTags',
+            'disabled' => true,
+            'badge' => 'Soon',
         ],
         [
             'label' => 'Media Library',
@@ -148,11 +113,57 @@ return [
             'replace_blog_id' => true,
             'policy' => 'view',
             'key' => 'navigation.mediaLibrary',
+            'disabled' => true,
+            'badge' => 'Soon',
         ],
-
-        // Analytics Section
         [
-            'label' => 'Analytics Section',
+            'label' => 'Manage Blog',
+            'href' => '#',
+            'auth' => true,
+            'scope' => 'contextual',
+            'type' => 'section_header',
+            'key' => 'navigation.blogSection',
+        ],
+        [
+            'label' => 'Blog Overview',
+            'href' => '/dashboard/blog/{blogId}/show',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'view',
+            'key' => 'navigation.blogOverview',
+        ],
+        [
+            'label' => 'Blog Settings',
+            'href' => '/dashboard/blog/{blogId}/edit',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'update',
+            'key' => 'navigation.editBlogSettings',
+        ],
+        [
+            'label' => 'Collaborators',
+            'href' => '/dashboard/blog/{blogId}/users',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'manageUsers',
+            'key' => 'navigation.collaborators',
+        ],
+        [
+            'label' => 'Appearance / Theme',
+            'href' => '/dashboard/blog/{blogId}/theme',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'update',
+            'key' => 'navigation.appearanceTheme',
+            'disabled' => true,
+            'badge' => 'Soon',
+        ],
+        [
+            'label' => 'Insights',
             'href' => '#',
             'auth' => true,
             'scope' => 'contextual',
@@ -167,15 +178,8 @@ return [
             'replace_blog_id' => true,
             'policy' => 'view',
             'key' => 'navigation.traffic',
-        ],
-        [
-            'label' => 'Comments',
-            'href' => '/dashboard/blog/{blogId}/analytics/comments',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'view',
-            'key' => 'navigation.comments',
+            'disabled' => true,
+            'badge' => 'Soon',
         ],
     ],
 
