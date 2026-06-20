@@ -43,7 +43,7 @@ return [
             'auth' => true,
             'scope' => 'global',
             'key' => 'navigation.allBlogs',
-        ],/*
+        ], /*
         [
             'label' => 'Create New Blog',
             'href' => '/dashboard/blog/new',

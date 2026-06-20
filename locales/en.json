@@ -3,7 +3,7 @@
 
     "layout": {
     "search": {
-      "placeholder": "Search for ..."
+      "placeholder": "Search your posts..."
     },
     "profileDropdown": {
       "signedInAs": "Signed in as",
@@ -27,7 +27,7 @@
     "accountSettings": "Account Settings",
     "blogSection": "Manage Blog",
     "blogOverview": "Blog Overview",
-    "editBlogSettings": "Edit Blog Settings",
+    "editBlogSettings": "Blog Settings",
     "appearanceTheme": "Appearance / Theme",
     "collaborators": "Collaborators",
     "contentSection": "Content",

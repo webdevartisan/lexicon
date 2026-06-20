@@ -47,6 +47,27 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
             {% endif %}
         </p>
 
+        <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-[11px] text-slate-500 dark:text-zink-300">
+            <?php if (!empty($post['category_name'])) { ?>
+            <span class="inline-flex items-center gap-1">
+                <i data-lucide="folder" class="size-3"></i>
+                <?= e((string) $post['category_name']) ?>
+            </span>
+            <?php } ?>
+            <?php if (isset($post['comment_count'])) { ?>
+            <span class="inline-flex items-center gap-1" title="<?= (int) $post['comment_count'] ?> comments">
+                <i data-lucide="message-square" class="size-3"></i>
+                <?= (int) $post['comment_count'] ?>
+            </span>
+            <?php } ?>
+            <?php if (!empty($post['blog_name'])) { ?>
+            <span class="inline-flex items-center gap-1">
+                <i data-lucide="book-open" class="size-3"></i>
+                <?= e((string) $post['blog_name']) ?>
+            </span>
+            <?php } ?>
+        </div>
+
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
             <form method="GET" action="/dashboard/post/{{ post.id }}/edit" class="m-0">
                 <button type="submit"
@@ -62,7 +83,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 {% if ($post['status'] === 'published'): %}
                 <a href="/blog/{{ blogSlug }}/{{ post.slug }}" target="_blank" rel="noopener"
                     data-tooltip="default" data-tooltip-content="{{ previewText }}" data-tooltip-follow-cursor="true"
-                    class="p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600"
+                    class="p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500"
                     title="{{ previewText }}">
                     {% cache 'lucide:external-link' ttl=3600 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                 </a>
@@ -72,7 +93,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
                     {{ csrf_field() }}
                     <button data-tooltip="default" data-tooltip-content="{{ publishTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600"
+                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                         title="{{ publishTooltip }}">
                         {% cache 'lucide:send' ttl=3600 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
                     </button>
@@ -83,7 +104,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
                     {{ csrf_field() }}
                     <button data-tooltip="default" data-tooltip-content="{{ draftTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600"
+                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                         title="{{ draftTooltip }}">
                         {% cache 'lucide:pencil-ruler' ttl=3600 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
                     </button>
@@ -94,7 +115,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <form method="POST" action="/dashboard/post/{{ post.id }}/archive" class="m-0">
                     {{ csrf_field() }}
                     <button data-tooltip="default" data-tooltip-content="{{ archiveTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-orange-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600"
+                        class="p-2 text-slate-500 hover:text-orange-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                         title="{{ archiveTooltip }}">
                         {% cache 'lucide:archive' ttl=3600 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
                     </button>
@@ -107,7 +128,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     onsubmit="return confirm('Permanently delete this post? This cannot be undone.');">
                     {{ csrf_field() }}
                     <button data-tooltip="default" data-tooltip-content="{{ deleteTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-red-600 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/30"
+                        class="p-2 text-slate-500 hover:text-red-600 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                         title="{{ deleteTooltip }}">
                         {% cache 'lucide:trash-2' ttl=3600 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                     </button>

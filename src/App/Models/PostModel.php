@@ -804,7 +804,8 @@ class PostModel extends AppModel
         int $perPage = 10,
         ?int $blogId = null,
         string $status = '',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        string $sort = 'newest'
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
@@ -819,12 +820,21 @@ class PostModel extends AppModel
         // Calculate offset for LIMIT clause
         $offset = ($page - 1) * $perPage;
 
-        // Build the main query with pagination
-        $sql = "SELECT p.*, b.blog_name
+        // Whitelist sort options
+        $orderBy = match ($sort) {
+            'oldest' => 'p.published_at ASC',
+            'title_asc' => 'p.title ASC',
+            'title_desc' => 'p.title DESC',
+            default => 'p.published_at DESC',
+        };
+
+        $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
                 {$whereClause}
-                ORDER BY p.published_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;
@@ -907,10 +917,24 @@ class PostModel extends AppModel
      */
     public function countCommentsByBlogId(int $blogId): int
     {
-        $sql = "SELECT COUNT(*) as count FROM comments c 
-                INNER JOIN {$this->getTable()} p ON c.post_id = p.id 
+        $sql = "SELECT COUNT(*) as count FROM comments c
+                INNER JOIN {$this->getTable()} p ON c.post_id = p.id
                 WHERE p.blog_id = :blog_id";
         $stmt = $this->database->query($sql, [':blog_id' => $blogId]);
+        $result = $stmt->fetch();
+
+        return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Count comments by moderation status across a blog's posts.
+     */
+    public function countCommentsByBlogIdAndStatus(int $blogId, string $status): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM comments c
+                INNER JOIN {$this->getTable()} p ON c.post_id = p.id
+                WHERE p.blog_id = :blog_id AND c.status = :status";
+        $stmt = $this->database->query($sql, [':blog_id' => $blogId, ':status' => $status]);
         $result = $stmt->fetch();
 
         return (int) ($result['count'] ?? 0);

@@ -62,13 +62,20 @@ final class PostController extends AppController
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
         $perPage = 12;
 
+        $allowedSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
+        $sort = (string) ($this->request->get['sort'] ?? 'newest');
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'newest';
+        }
+
         $result = $this->model->findByAuthorWithFiltersPagination(
             authorId: $user['id'],
             page: $page,
             perPage: $perPage,
             blogId: $blogId,
             status: $status,
-            searchQuery: $q
+            searchQuery: $q,
+            sort: $sort
         );
 
         // Per-status totals power the filter chip badges.
@@ -101,6 +108,7 @@ final class PostController extends AppController
             'activeBlogSlug' => $activeBlogSlug,
             'status' => $status,
             'q' => $q,
+            'sort' => $sort,
             'counts' => $counts,
         ]);
     }
@@ -163,7 +171,7 @@ final class PostController extends AppController
             'title' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:posts,slug',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:10000',
+            'content' => 'required|max:30000',
             'excerpt' => 'required|max:200',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
@@ -321,7 +329,7 @@ final class PostController extends AppController
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:50',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:10000',
+            'content' => 'required|max:30000',
             'excerpt' => 'required|max:200',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
@@ -527,6 +535,71 @@ final class PostController extends AppController
         $this->flash('success', 'Post deleted successfully.');
 
         return $this->redirect('/dashboard');
+    }
+
+    /**
+     * Apply a bulk action (publish / draft / archive / delete) to many posts.
+     *
+     * Each post is authorized individually. Unauthorized or missing posts are
+     * silently skipped so a single bad id doesn't break the whole batch.
+     */
+    public function bulk(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $action = (string) ($this->request->post['bulk_action'] ?? '');
+        $ids = array_filter(array_map('intval', (array) ($this->request->post['post_ids'] ?? [])));
+
+        $allowed = ['publish', 'draft', 'archive', 'delete'];
+        if (!in_array($action, $allowed, true) || empty($ids)) {
+            $this->flash('error', 'No posts selected or invalid action.');
+
+            return $this->redirect('/dashboard/post');
+        }
+
+        $applied = 0;
+        $skipped = 0;
+
+        foreach ($ids as $id) {
+            $post = $this->model->findResource($id);
+            if ($post === false) {
+                $skipped++;
+                continue;
+            }
+
+            $gateAction = $action === 'delete' ? 'delete' : 'publish';
+            if (!Gate::allows($gateAction, $post, $user)) {
+                $skipped++;
+                continue;
+            }
+
+            match ($action) {
+                'publish' => $this->model->updateStatus($id, 'published'),
+                'draft' => $this->model->updateStatus($id, 'draft'),
+                'archive' => $this->model->updateStatus($id, 'archived'),
+                'delete' => $this->model->delete($id),
+            };
+
+            audit()->log(
+                $user['id'],
+                "post.bulk_{$action}",
+                'post',
+                $id,
+                null,
+                $this->request->ip()
+            );
+
+            $applied++;
+        }
+
+        $msg = "{$applied} post(s) updated";
+        if ($skipped > 0) {
+            $msg .= ", {$skipped} skipped";
+        }
+        $this->flash('success', $msg.'.');
+
+        return $this->redirect('/dashboard/post');
     }
 
     /**

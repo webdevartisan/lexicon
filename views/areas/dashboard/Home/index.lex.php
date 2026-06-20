@@ -76,7 +76,7 @@
 
     <!-- KPI cards: the four numbers a creator wants on landing. -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group">
+        <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.published') }}</span>
@@ -87,7 +87,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.published }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=draft" class="card hover:border-custom-500 transition-colors group">
+        <a href="/dashboard/post?status=draft" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.drafts') }}</span>
@@ -98,7 +98,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.draft }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=pending" class="card hover:border-custom-500 transition-colors group">
+        <a href="/dashboard/post?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.pending') }}</span>

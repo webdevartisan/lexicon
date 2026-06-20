@@ -56,7 +56,7 @@
 
     <!-- Stats row: at-a-glance numbers for THIS blog. -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <a href="/dashboard/post?status=published&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors">
+        <a href="/dashboard/post?status=published&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">Published</span>
@@ -65,7 +65,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.published }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=draft&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors">
+        <a href="/dashboard/post?status=draft&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">Drafts</span>
@@ -74,7 +74,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.draft }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=pending&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors">
+        <a href="/dashboard/post?status=pending&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">Pending</span>
@@ -83,7 +83,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.pending }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=archived&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors">
+        <a href="/dashboard/post?status=archived&blog_id={{ blog.id }}" class="card hover:border-custom-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">Archived</span>
@@ -92,15 +92,22 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.archived }}</div>
             </div>
         </a>
-        <div class="card">
+        <a href="/dashboard/blog/{{ blog.id }}/comments?status=pending" class="card hover:border-custom-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">Comments</span>
                     <i data-lucide="message-square" class="size-4 text-sky-500"></i>
                 </div>
-                <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.comments }}</div>
+                <div class="flex items-end gap-2">
+                    <span class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.comments }}</span>
+                    <?php if (!empty($stats['comments_pending'])) { ?>
+                    <span class="inline-flex items-center mb-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:border-amber-800">
+                        <?= (int) $stats['comments_pending'] ?> pending
+                    </span>
+                    <?php } ?>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

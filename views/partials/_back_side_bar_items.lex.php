@@ -135,7 +135,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
                         <?php
                             echo !empty($it['key']) ? $t($it['key']) : e($it['label']);
-                        ?>
+            ?>
                     </span>
                 </a>
             </li>
