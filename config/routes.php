@@ -104,6 +104,7 @@ $router->group([
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostController', 'action' => 'review', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
     $r->add('/post/new', ['controller' => 'PostController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post/create', ['controller' => 'PostController', 'action' => 'create', 'method' => 'POST']);
     $r->add('/posts/image-upload', ['controller' => 'UploadController', 'action' => 'tinymceImage', 'method' => 'POST']);

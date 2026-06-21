@@ -93,10 +93,21 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found.');
         }
 
+        $featured = $this->postModel->findFeaturedByBlogId($blogId);
         $landingData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 7);
+        $posts = $landingData['data'];
+
+        // Put the chosen headline first without duplicating it in the grid below.
+        if ($featured !== null) {
+            $posts = array_values(array_filter(
+                $posts,
+                static fn (array $p): bool => (int) $p['id'] !== (int) $featured['id']
+            ));
+            array_unshift($posts, $featured);
+        }
 
         return $this->view('Blogs/show.lex.php', $ctx + [
-            'posts' => $landingData['data'],
+            'posts' => $posts,
             'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
         ]);
     }

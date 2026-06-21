@@ -241,6 +241,7 @@ final class PostController extends AppController
 
         if ($okInsert) {
             $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
+            $this->model->setFeatured($postId, (int) $blog->id(), !empty($this->request->post['is_featured']));
 
             audit()->log(
                 $user['id'],
@@ -361,6 +362,37 @@ final class PostController extends AppController
     }
 
     /**
+     * Toggle a post as its blog's featured headline (one per blog).
+     *
+     * @param  string  $id  Post ID
+     */
+    public function feature(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $post = $this->getPost((int) $id);
+
+        Gate::authorize('update', $post, $user);
+
+        $isFeatured = (bool) ($post->toArray()['is_featured'] ?? false);
+        $this->model->setFeatured((int) $id, (int) $post->blogId(), !$isFeatured);
+
+        audit()->log(
+            $user['id'],
+            $isFeatured ? 'post.unfeatured' : 'post.featured',
+            'post',
+            (int) $id,
+            null,
+            $this->request->ip()
+        );
+
+        $this->flash('success', $isFeatured ? 'Removed from the homepage.' : 'Featured on the homepage.');
+
+        return $this->redirectBack();
+    }
+
+    /**
      * Update post.
      *
      * @param  string  $id  Post ID
@@ -467,6 +499,7 @@ final class PostController extends AppController
 
         // Tags sync independently of the field diff above.
         $tagsChanged = $this->tagModel->syncForPost((int) $id, $blogId, $this->parsePostTags());
+        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured']));
 
         // Update if changes detected
         if (!empty($data)) {

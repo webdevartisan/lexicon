@@ -640,6 +640,60 @@ class PostModel extends AppModel
     }
 
     /**
+     * The blog's featured headline: a featured, published post.
+     *
+     * Newest wins if more than one is somehow flagged — a safety net on top of
+     * the one-per-blog rule kept by setFeatured().
+     */
+    public function findFeaturedByBlogId(int $blogId): ?array
+    {
+        $sql = "SELECT * FROM posts
+                WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
+                ORDER BY published_at DESC, id DESC
+                LIMIT 1";
+
+        return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Toggle a post's featured flag, keeping at most one featured post per blog.
+     *
+     * Turning a post on clears the flag from the blog's other posts in the same
+     * transaction, so two posts can never end up featured at once.
+     */
+    public function setFeatured(int $postId, int $blogId, bool $on): bool
+    {
+        if (!$on) {
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 0 WHERE id = ? AND blog_id = ?',
+                [$postId, $blogId]
+            );
+
+            return true;
+        }
+
+        $this->database->beginTransaction();
+        try {
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 0 WHERE blog_id = ? AND id <> ?',
+                [$blogId, $postId]
+            );
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 1 WHERE id = ? AND blog_id = ?',
+                [$postId, $blogId]
+            );
+            $this->database->commit();
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->database->rollback();
+            error_log('setFeatured failed: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
      * Get index feed with search or recent posts.
      *
      * Delegates to search or recent listing based on query parameter.

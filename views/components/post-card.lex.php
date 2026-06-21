@@ -122,6 +122,16 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 </form>
                 {% endif %}
 
+                <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">
+                    {{ csrf_field() }}
+                    <button type="submit"
+                        data-tooltip="default" data-tooltip-content="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>" data-tooltip-follow-cursor="true"
+                        class="p-2 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 <?= !empty($post['is_featured']) ? 'text-amber-500' : 'text-slate-500 hover:text-amber-500' ?>"
+                        title="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>">
+                        <i data-lucide="star" class="size-4 <?= !empty($post['is_featured']) ? 'fill-amber-400' : '' ?>"></i>
+                    </button>
+                </form>
+
                 <span class="mx-1 h-4 w-px bg-slate-200 dark:bg-zink-500" aria-hidden="true"></span>
 
                 <form method="POST" action="/dashboard/post/{{ post.id }}/delete" class="m-0"

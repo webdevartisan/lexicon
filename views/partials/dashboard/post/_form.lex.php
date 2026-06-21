@@ -163,6 +163,18 @@ $isArchived = $postStatus === 'archived';
                   Allow comments
                 </span>
               </label>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  name="is_featured"
+                  value="1"
+                  <?= !empty($post['is_featured']) ? 'checked' : '' ?>
+                  class="text-custom-500 border-slate-300 rounded focus:ring-custom-500 dark:border-zink-600">
+                <span class="text-xs text-slate-700 dark:text-zink-200">
+                  Feature on homepage
+                </span>
+              </label>
+              <p class="text-[11px] text-slate-400 dark:text-zink-400">Shows this post as the blog's headline. Only one post can be featured; takes effect once published.</p>
             </div>
 
             {% if (($postStatus !== 'published') && ($postStatus !== 'archived')): %}

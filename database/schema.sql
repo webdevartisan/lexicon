@@ -325,6 +325,7 @@ CREATE TABLE IF NOT EXISTS posts (
     workflow_state ENUM('idea','draft','in_review','needs_changes','approved','ready_to_publish') NOT NULL DEFAULT 'draft',
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
+    is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Headlines the blog landing; one per blog',
     published_at TIMESTAMP NULL,
     timezone VARCHAR(50) DEFAULT 'UTC' COMMENT 'Timezone for scheduled publishing',
     last_workflow_by INT DEFAULT NULL COMMENT 'Last user to change workflow state',
@@ -345,7 +346,8 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_published (published_at),
     INDEX idx_status_published (status, published_at),
     INDEX idx_author_created (author_id, created_at),
-    INDEX idx_blog_published (blog_id, published_at)
+    INDEX idx_blog_published (blog_id, published_at),
+    INDEX idx_blog_featured (blog_id, is_featured)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog posts with workflow state and visibility controls';
 
