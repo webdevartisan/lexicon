@@ -21,17 +21,24 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   $validImg = '#^(https?://|/|data:)#i';
   ?>
 
+<?php
+  // Headings are overridable so this same layout backs the full archive and the
+  // category/tag listings. Defaults keep the plain "/archive" page unchanged.
+  $kicker = $archiveKicker ?? ('The Archive &mdash; '.$blogTitle);
+  $heading = $archiveTitle ?? 'The Full Index.';
+  $dek = $archiveDek ?? ('Every post from <em>'.$blogTitle.'</em>, arranged in reverse chronological order.');
+?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
-      <span>The Archive &mdash; <?= $blogTitle ?></span>
+      <span><?= $kicker ?></span>
       <span><?= $totalPosts ?> Post<?= $totalPosts === 1 ? '' : 's' ?></span>
     </div>
 
-    <h1 class="archive-title">The Full Index.</h1>
+    <h1 class="archive-title"><?= $heading ?></h1>
 
     <p class="archive-dek">
-      Every post from <em><?= $blogTitle ?></em>, arranged in reverse chronological order.
+      <?= $dek ?>
     </p>
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">

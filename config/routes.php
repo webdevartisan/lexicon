@@ -210,6 +210,8 @@ $router->group([
 ], function (Router $r) {
     $r->add('/', ['controller' => 'BlogController', 'action' => 'showBlog', 'method' => 'GET']);
     $r->add('/archive', ['controller' => 'BlogController', 'action' => 'archiveBlog', 'method' => 'GET']);
+    $r->add('/category/{categorySlug:[A-Za-z0-9_-]+}', ['controller' => 'BlogController', 'action' => 'showCategory', 'method' => 'GET']);
+    $r->add('/tag/{tagSlug:[A-Za-z0-9_-]+}', ['controller' => 'BlogController', 'action' => 'showTag', 'method' => 'GET']);
     $r->add('/{postSlug}', ['controller' => 'BlogController', 'action' => 'showBlogPost', 'method' => 'GET']);
 });
 

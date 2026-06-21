@@ -52,6 +52,9 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
           <?php if ($author) { ?><span><?= $author ?></span><?php } ?>
           <?php if ($author && $date) { ?> · <?php } ?>
           <?php if ($date) { ?><time datetime="<?= $date ?>"><?= $date ?></time><?php } ?>
+          <?php if (!empty($post['category']) && !empty($post['category_slug'])) { ?>
+            · in <a href="/blog/<?= urlencode($blog['blog_slug']) ?>/category/<?= urlencode((string) $post['category_slug']) ?>"><?= e($post['category']) ?></a>
+          <?php } ?>
         </p>
       </header>
 
@@ -67,7 +70,7 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
       <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
         <p class="mt-4">
           <?php foreach ($post['tags'] as $tag) { ?>
-            <a class="btn btn-sm btn-outline-secondary" href="#"><?= e($tag) ?></a>
+            <a class="btn btn-sm btn-outline-secondary" href="/blog/<?= urlencode($blog['blog_slug']) ?>/tag/<?= urlencode((string) $tag['slug']) ?>"><?= e($tag['name']) ?></a>
           <?php } ?>
         </p>
       <?php } ?>

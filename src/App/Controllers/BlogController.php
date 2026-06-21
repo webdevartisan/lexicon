@@ -8,6 +8,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\TagModel;
 use App\Models\UserModel;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -19,7 +20,8 @@ class BlogController extends AppController
         private UserModel $userModel,
         private PostModel $postModel,
         private CategoryModel $categoryModel,
-        private BlogSettingsModel $settings
+        private BlogSettingsModel $settings,
+        private TagModel $tagModel
     ) {}
 
     public function index()
@@ -122,6 +124,71 @@ class BlogController extends AppController
         ]);
     }
 
+    /**
+     * Published posts in a blog filed under one category.
+     */
+    public function showCategory(string $blogSlug, string $categorySlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        $category = $this->categoryModel->findBySlugInBlog($blogId, $categorySlug);
+        if (!$category) {
+            throw new PageNotFoundException('Category not found.', 404);
+        }
+
+        $posts = $this->categoryModel->posts((int) $category['id']);
+        $name = e($category['name']);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
+            'posts' => $posts,
+            'pagination' => $this->taxonomyPagination(count($posts)),
+            'archiveKicker' => 'Category &mdash; '.$name,
+            'archiveTitle' => $name,
+            'archiveDek' => 'Posts filed under <em>'.$name.'</em>.',
+        ]);
+    }
+
+    /**
+     * Published posts in a blog carrying one tag.
+     */
+    public function showTag(string $blogSlug, string $tagSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        $tag = $this->tagModel->findBySlugInBlog($blogId, $tagSlug);
+        if (!$tag) {
+            throw new PageNotFoundException('Tag not found.', 404);
+        }
+
+        $posts = $this->tagModel->posts((int) $tag['id']);
+        $name = e($tag['name']);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
+            'posts' => $posts,
+            'pagination' => $this->taxonomyPagination(count($posts)),
+            'archiveKicker' => 'Tagged &mdash; '.$name,
+            'archiveTitle' => '#'.$name,
+            'archiveDek' => 'Posts tagged <em>'.$name.'</em>.',
+        ]);
+    }
+
+    /**
+     * Single-page pagination shape for taxonomy listings (no paging for now).
+     *
+     * @return array{totalPages:int,currentPage:int,perPage:int,totalPosts:int}
+     */
+    private function taxonomyPagination(int $count): array
+    {
+        return [
+            'totalPages' => 1,
+            'currentPage' => 1,
+            'perPage' => max(1, $count),
+            'totalPosts' => $count,
+        ];
+    }
+
     public function showBlogPost(string $blogSlug, string $postSlug)
     {
         $ctx = $this->loadBlogContext($blogSlug);
@@ -177,6 +244,18 @@ class BlogController extends AppController
         $prev_post = $this->postModel->findPreviousByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $next_post = $this->postModel->findNextByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $related = $this->postModel->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4);
+
+        // Taxonomy for display: category name + slug, and tags as name/slug pairs.
+        $category = !empty($post['category_id'])
+            ? $this->categoryModel->findById((int) $post['category_id'])
+            : null;
+        $post['category'] = $category['name'] ?? null;
+        $post['category_slug'] = $category['slug'] ?? null;
+
+        $post['tags'] = array_map(
+            static fn (array $t): array => ['name' => $t['name'], 'slug' => $t['slug']],
+            $this->postModel->tags((int) $post['id'])
+        );
 
         // Merge meta: post > blog > settings defaults
         $meta = [
