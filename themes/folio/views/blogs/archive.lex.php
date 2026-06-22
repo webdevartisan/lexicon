@@ -27,7 +27,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   $kicker = $archiveKicker ?? ('The Archive &mdash; '.$blogTitle);
   $heading = $archiveTitle ?? 'The Full Index.';
   $dek = $archiveDek ?? ('Every post from <em>'.$blogTitle.'</em>, arranged in reverse chronological order.');
-?>
+  ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">

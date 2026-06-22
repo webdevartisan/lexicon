@@ -79,8 +79,8 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <?php
         $panel('category', 'Categories', 'folder-tree', $categories, 'New category name…', 'No categories yet. A post can have one category.', $blog);
-        $panel('tag', 'Tags', 'tags', $tags, 'New tag name…', 'No tags yet. You can also add tags straight from the post editor.', $blog);
-        ?>
+$panel('tag', 'Tags', 'tags', $tags, 'New tag name…', 'No tags yet. You can also add tags straight from the post editor.', $blog);
+?>
     </div>
 
     <!-- Shared rename form, filled in by the rename buttons. -->

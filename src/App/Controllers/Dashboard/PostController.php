@@ -427,7 +427,7 @@ final class PostController extends AppController
         ]);
 
         $newData = $validator->validated();
-        $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0; 
+        $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
 
         $timezone = $newData['timezone'] ?? 'UTC';
 
@@ -512,7 +512,7 @@ final class PostController extends AppController
         // Tags sync independently of the field diff above.
         $tagsChanged = $this->tagModel->syncForPost((int) $id, $blogId, $this->parsePostTags());
 
-        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); //TODO: optimize security
+        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); // TODO: optimize security
 
         // Update if changes detected
         if (!empty($data)) {
