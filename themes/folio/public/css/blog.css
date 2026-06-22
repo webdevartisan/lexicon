@@ -143,3 +143,7 @@
     .news-input input { font-size: 1.25rem; }
     .news-input button { padding: 0.7em 1em; font-size: 0.7rem; letter-spacing: 0.1em; }
   }
+/* Tag links on index cards */
+.article-tags { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.article-tag { font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; color: #8a8a8a; text-decoration: none; transition: color .2s ease; }
+.article-tag:hover { color: currentColor; }

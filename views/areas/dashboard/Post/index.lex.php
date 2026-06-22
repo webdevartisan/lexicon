@@ -48,7 +48,7 @@ $sortOptions = [
     <form method="GET" action="/dashboard/post" class="card mb-4">
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div class="md:col-span-5">
+                <div class="md:col-span-3">
                     <label for="q" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Search</label>
                     <div class="relative">
                         <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -87,6 +87,18 @@ $sortOptions = [
                     </select>
                 </div>
 
+                <div class="md:col-span-2">
+                    <label for="tag" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Tag</label>
+                    <select id="tag" name="tag" class="form-input w-full border-slate-200 dark:border-zink-500" <?= empty($blogTags) ? 'disabled' : '' ?>>
+                        <option value="">All</option>
+                        <?php foreach (($blogTags ?? []) as $tg) { ?>
+                        <option value="<?= (int) $tg['id'] ?>" <?= (int) ($tagId ?? 0) === (int) $tg['id'] ? 'selected' : '' ?>>
+                            <?= e($tg['name']) ?>
+                        </option>
+                        <?php } ?>
+                    </select>
+                </div>
+
                 <div class="md:col-span-2 flex items-end">
                     <button
                         type="submit"
@@ -99,7 +111,6 @@ $sortOptions = [
             </div>
 
             <input type="hidden" name="status" value="{{ status }}">
-            <?php if (!empty($tagId)) { ?><input type="hidden" name="tag" value="<?= (int) $tagId ?>"><?php } ?>
         </div>
     </form>
 

@@ -66,6 +66,15 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <?= e((string) $post['blog_name']) ?>
             </span>
             <?php } ?>
+            <?php if (!empty($post['tags'])) { ?>
+                <?php foreach (array_slice($post['tags'], 0, 3) as $tg) { ?>
+                <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>&blog_id=<?= (int) ($post['blog_id'] ?? 0) ?>"
+                   class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
+                    <i data-lucide="tag" class="size-3"></i>
+                    <?= e((string) $tg['name']) ?>
+                </a>
+                <?php } ?>
+            <?php } ?>
         </div>
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">

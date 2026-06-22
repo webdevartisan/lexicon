@@ -28,7 +28,7 @@ class BlogController extends AppController
     {
         // 1. Core collections for the sidebar / discovery sections
         $blogs = $this->model->getAllBlogsWithOwnerAndCounts();
-        $categories = $this->categoryModel->getCategories();
+        $categories = $this->categoryModel->getPublishedTopics();
         $featuredCreators = $this->model->getFeaturedCreators();
 
         // 2. Read filters from query string
@@ -38,10 +38,11 @@ class BlogController extends AppController
             $page = 1;
         }
 
-        // Optional numeric category filter, e.g. ?category=3
-        $categoryId = isset($this->request->get['category'])
-            ? (int) $this->request->get['category']
-            : null;
+        // Optional topic filter by category name, e.g. ?category=Guides
+        $categoryName = trim((string) ($this->request->get['category'] ?? ''));
+        if ($categoryName === '') {
+            $categoryName = null;
+        }
 
         $perPage = 8;
 
@@ -52,7 +53,7 @@ class BlogController extends AppController
                 $searchQuery,
                 $page,
                 $perPage,
-                $categoryId // <-- uses the existing optional parameter
+                $categoryName
             );
             $mode = 'search';
         } else {
@@ -60,7 +61,7 @@ class BlogController extends AppController
             $postsData = $this->postModel->getRecentPublishedWithPagination(
                 $page,
                 $perPage,
-                $categoryId
+                $categoryName
             );
             $mode = 'recent';
         }
@@ -80,7 +81,7 @@ class BlogController extends AppController
             'posts' => $postsData['data'] ?? [],
             'pagination' => $pagination,
             'searchQuery' => $searchQuery,
-            'activeCategory' => $categoryId,
+            'activeCategory' => $categoryName,
             'mode' => $mode,
         ]);
     }
@@ -107,9 +108,77 @@ class BlogController extends AppController
         }
 
         return $this->view('Blogs/show.lex.php', $ctx + [
-            'posts' => $posts,
+            'posts' => $this->enrichCardPosts($posts),
+            'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
             'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
         ]);
+    }
+
+    /**
+     * AJAX: the landing's card grid for a category (or recent for "All").
+     *
+     * Returns just the cards as an HTML fragment, rendered through the active
+     * theme so each theme keeps its own card markup. The headline post is
+     * excluded — same rule as showBlog — so it never doubles in the grid.
+     */
+    public function indexFeed(string $blogSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+        if ($blogId === 0) {
+            throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        // Headline = featured post, else newest — mirror showBlog so "All" matches.
+        $featured = $this->postModel->findFeaturedByBlogId($blogId);
+        if ($featured !== null) {
+            $headlineId = (int) $featured['id'];
+        } else {
+            $newest = $this->postModel->findPublishedByBlogAndCategory($blogId, null, 1);
+            $headlineId = isset($newest[0]['id']) ? (int) $newest[0]['id'] : null;
+        }
+
+        $categoryId = null;
+        $slug = trim((string) ($this->request->get['category'] ?? ''));
+        if ($slug !== '') {
+            $category = $this->categoryModel->findBySlugInBlog($blogId, $slug);
+            if (!$category) {
+                throw new PageNotFoundException('Category not found.', 404);
+            }
+            $categoryId = (int) $category['id'];
+        }
+
+        $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
+
+        return $this->view('Blogs/_index_cards.lex.php', [
+            'cards' => $this->enrichCardPosts($cards),
+            'blog' => $ctx['blog'],
+            'user' => $ctx['user'],
+        ]);
+    }
+
+    /**
+     * Attach display taxonomy (category name + slug, tag name/slug pairs) to a
+     * list of post rows, so the card markup can render it. Shared by the landing
+     * and the AJAX feed.
+     */
+    private function enrichCardPosts(array $posts): array
+    {
+        foreach ($posts as &$post) {
+            $category = !empty($post['category_id'])
+                ? $this->categoryModel->findById((int) $post['category_id'])
+                : null;
+            $post['category'] = $category['name'] ?? null;
+            $post['category_slug'] = $category['slug'] ?? null;
+
+            $post['tags'] = array_map(
+                static fn (array $t): array => ['name' => $t['name'], 'slug' => $t['slug']],
+                $this->postModel->tags((int) $post['id'])
+            );
+        }
+        unset($post);
+
+        return $posts;
     }
 
     public function archiveBlog(string $blogSlug): Response

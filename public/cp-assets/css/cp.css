@@ -1851,6 +1851,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(234 179 8 / var(--tw-bg-opacity, 1));
 }
+.fill-amber-400 {
+  fill: #fbbf24;
+}
 .fill-slate-100 {
   fill: #f1f5f9;
 }
@@ -1862,9 +1865,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .fill-topbar-item-dark {
   fill: rgb(var(--sc-topbar-item-dark) / 1);
-}
-.fill-amber-400 {
-  fill: #fbbf24;
 }
 .stroke-1 {
   stroke-width: 1;
@@ -2834,6 +2834,10 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(202 138 4 / var(--tw-bg-opacity, 1));
 }
+.hover\:text-amber-500:hover {
+  --tw-text-opacity: 1;
+  color: rgb(245 158 11 / var(--tw-text-opacity, 1));
+}
 .hover\:text-amber-600:hover {
   --tw-text-opacity: 1;
   color: rgb(217 119 6 / var(--tw-text-opacity, 1));
@@ -2908,10 +2912,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .hover\:text-white\/80:hover {
   color: rgb(255 255 255 / 0.8);
-}
-.hover\:text-amber-500:hover {
-  --tw-text-opacity: 1;
-  color: rgb(245 158 11 / var(--tw-text-opacity, 1));
 }
 .hover\:shadow-md:hover {
   --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -3506,9 +3506,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
   .md\:col-span-3 {
     grid-column: span 3 / span 3;
-  }
-  .md\:col-span-5 {
-    grid-column: span 5 / span 5;
   }
   .md\:block {
     display: block;

@@ -523,7 +523,7 @@ class PostModel extends AppModel
      * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
-    public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?int $categoryId = null): array
+    public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
         $offset = ($page - 1) * $perPage;
         $likeQuery = '%'.$query.'%';
@@ -536,9 +536,10 @@ class PostModel extends AppModel
             ':blog_name' => $likeQuery,
         ];
 
-        if ($categoryId !== null) {
-            $categoryClause = ' AND p.category_id = :categoryId ';
-            $params[':categoryId'] = $categoryId;
+        if ($categoryName !== null && $categoryName !== '') {
+            // Topic filter: match by category name across all blogs.
+            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
+            $params[':categoryName'] = $categoryName;
         }
 
         // Count query
@@ -591,16 +592,17 @@ class PostModel extends AppModel
      * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
-    public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?int $categoryId = null): array
+    public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
         $offset = ($page - 1) * $perPage;
 
         $categoryClause = '';
         $params = [];
 
-        if ($categoryId !== null) {
-            $categoryClause = ' AND p.category_id = :categoryId ';
-            $params[':categoryId'] = $categoryId;
+        if ($categoryName !== null && $categoryName !== '') {
+            // Topic filter: match by category name across all blogs.
+            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
+            $params[':categoryName'] = $categoryName;
         }
 
         // Count total published posts with optional category filter
@@ -618,10 +620,7 @@ class PostModel extends AppModel
             WHERE p.status = 'published'
         ";
 
-        if ($categoryId !== null) {
-            $sql .= ' AND p.category_id = :categoryId ';
-        }
-
+        $sql .= $categoryClause;
         $sql .= ' ORDER BY p.published_at DESC LIMIT :limit OFFSET :offset';
 
         $params[':limit'] = $perPage;
@@ -694,6 +693,35 @@ class PostModel extends AppModel
     }
 
     /**
+     * Published posts for a blog, optionally within one category, newest first.
+     *
+     * Powers the folio landing's "index" grid and its AJAX category swap. Pass
+     * $excludeId to drop the headline post so it never shows up twice.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function findPublishedByBlogAndCategory(int $blogId, ?int $categoryId, int $limit = 6, ?int $excludeId = null): array
+    {
+        $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
+        $params = [':blog_id' => $blogId];
+
+        if ($categoryId !== null) {
+            $sql .= ' AND category_id = :category_id';
+            $params[':category_id'] = $categoryId;
+        }
+
+        if ($excludeId !== null) {
+            $sql .= ' AND id <> :exclude_id';
+            $params[':exclude_id'] = $excludeId;
+        }
+
+        $sql .= ' ORDER BY published_at DESC, id DESC LIMIT :limit';
+        $params[':limit'] = $limit;
+
+        return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get index feed with search or recent posts.
      *
      * Delegates to search or recent listing based on query parameter.
@@ -705,14 +733,14 @@ class PostModel extends AppModel
     {
         $page = $options['page'] ?? 1;
         $perPage = $options['perPage'] ?? 8;
-        $categoryId = $options['categoryId'] ?? null;
+        $categoryName = $options['categoryName'] ?? null;
         $query = $options['query'] ?? '';
 
         if ($query !== '') {
-            return $this->searchPublishedPosts($query, $page, $perPage, $categoryId);
+            return $this->searchPublishedPosts($query, $page, $perPage, $categoryName);
         }
 
-        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryId);
+        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryName);
     }
 
     /**

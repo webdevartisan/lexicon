@@ -27,13 +27,9 @@
                         <select name="category" id="category">
                             <option value="">All categories</option>
                             <?php foreach ($categories as $cat) { ?>
-                                <?php
-                                    $isActive = isset($activeCategory)
-                                        && (int) $activeCategory === (int) $cat['id'];
-                                ?>
                                 <option
-                                    value="<?= (int) $cat['id']; ?>"
-                                    <?= $isActive ? 'selected' : ''; ?>
+                                    value="<?= e($cat['name']); ?>"
+                                    <?= (($activeCategory ?? '') === $cat['name']) ? 'selected' : ''; ?>
                                 >
                                     <?= e($cat['name']); ?>
                                 </option>
@@ -72,7 +68,7 @@
                 <?php if (($mode ?? '') === 'search' && $searchQuery !== '') { ?>
                     Search results
                 <?php } elseif (!empty($activeCategory)) { ?>
-                    Latest in category
+                    Latest in <?= e($activeCategory); ?>
                 <?php } else { ?>
                     Latest posts
                 <?php } ?>
@@ -104,7 +100,7 @@
                             <?= e($post['blog_name'] ?? 'Blog'); ?>
                             <?php if (!empty($post['category_name'])) { ?>
                                 &middot;
-                                <a href="?category=<?= (int) ($post['category_id'] ?? 0); ?>">
+                                <a href="?category=<?= urlencode($post['category_name']); ?>">
                                     <?= e($post['category_name']); ?>
                                 </a>
                             <?php } ?>
@@ -197,8 +193,8 @@
             <div class="row gtr-50">
                 <?php foreach ($categories as $cat) { ?>
                     <div class="col-3 col-6-medium col-12-small">
-                        <a href="?category=<?= (int) $cat['id']; ?>"
-                            class="button fit <?= isset($activeCategory) && (int) $activeCategory === (int) $cat['id'] ? 'primary' : 'alt'; ?>">
+                        <a href="?category=<?= urlencode($cat['name']); ?>"
+                            class="button fit <?= (($activeCategory ?? '') === $cat['name']) ? 'primary' : 'alt'; ?>">
                             <?= e($cat['name']); ?>
                         </a>
                     </div>

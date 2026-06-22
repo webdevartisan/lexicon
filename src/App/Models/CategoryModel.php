@@ -118,6 +118,24 @@ class CategoryModel extends AppModel
     }
 
     /**
+     * Distinct category names that have published posts, with a combined count.
+     *
+     * Categories are per-blog, so the same name can exist in several blogs. On
+     * the cross-blog discovery page we treat a category as a topic: one entry
+     * per name, spanning every blog that uses it.
+     */
+    public function getPublishedTopics(): array
+    {
+        $sql = "SELECT c.name, COUNT(p.id) AS post_count
+                FROM categories c
+                JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                GROUP BY c.name
+                ORDER BY c.name ASC";
+
+        return $this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Create a new category.
      *
      * @param  array  $data  Category data (name, slug, description, etc.)
@@ -137,6 +155,25 @@ class CategoryModel extends AppModel
                 FROM categories c
                 WHERE c.blog_id = ?
                 ORDER BY c.name ASC';
+        $stmt = $this->database->query($sql, [$blogId]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Categories in a blog that have at least one published post, with that count.
+     *
+     * Used for the public pill filters, where a category with no published posts
+     * would just be a dead end.
+     */
+    public function getPublishedByBlogId(int $blogId): array
+    {
+        $sql = "SELECT c.*, COUNT(p.id) AS post_count
+                FROM categories c
+                JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                WHERE c.blog_id = ?
+                GROUP BY c.id
+                ORDER BY c.name ASC";
         $stmt = $this->database->query($sql, [$blogId]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);

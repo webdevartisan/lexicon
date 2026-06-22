@@ -77,8 +77,10 @@ final class PostController extends AppController
         $categoryId = null;
         $tagId = null;
         $blogCategories = [];
+        $blogTags = [];
         if ($blogId !== null) {
             $blogCategories = $this->categoryModel->getByBlogId($blogId);
+            $blogTags = $this->tagModel->getByBlogId($blogId);
 
             $rawCat = (int) ($this->request->get['category'] ?? 0);
             if ($rawCat > 0 && $this->categoryModel->findForBlog($rawCat, $blogId)) {
@@ -102,6 +104,12 @@ final class PostController extends AppController
             categoryId: $categoryId,
             tagId: $tagId
         );
+
+        // Each card shows a few of its tags as quick filters.
+        foreach ($result['data'] as &$p) {
+            $p['tags'] = $this->model->tags((int) $p['id']);
+        }
+        unset($p);
 
         // Per-status totals power the filter chip badges (respecting the active
         // category/tag filter so the numbers match what's shown).
@@ -141,6 +149,7 @@ final class PostController extends AppController
             'sort' => $sort,
             'counts' => $counts,
             'blogCategories' => $blogCategories,
+            'blogTags' => $blogTags,
             'categoryId' => $categoryId,
             'tagId' => $tagId,
             'activeTag' => $activeTag,
@@ -383,7 +392,7 @@ final class PostController extends AppController
             $isFeatured ? 'post.unfeatured' : 'post.featured',
             'post',
             (int) $id,
-            null,
+            [],
             $this->request->ip()
         );
 
@@ -713,7 +722,7 @@ final class PostController extends AppController
                 "post.bulk_{$action}",
                 'post',
                 $id,
-                null,
+                [],
                 $this->request->ip()
             );
 
@@ -844,7 +853,7 @@ final class PostController extends AppController
             'post.archived',
             'post',
             (int) $id,
-            null,
+            [],
             $this->request->ip()
         );
 
