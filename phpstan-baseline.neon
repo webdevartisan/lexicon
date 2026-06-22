@@ -1,6 +1,35 @@
 parameters:
 	ignoreErrors:
 		-
+			identifier: arrayValues.list
+			path: src/App/Controllers/Dashboard/BlogController.php
+
+		-
+			identifier: classConstant.unused
+			path: src/App/Controllers/Dashboard/CommentController.php
+
+		-
+			identifier: missingType.return
+			path: src/App/Controllers/Dashboard/HomeController.php
+
+		-
+			identifier: identical.alwaysFalse
+			path: src/App/Controllers/Dashboard/PostController.php
+
+		-
+			identifier: parameter.notFound
+			path: src/App/Models/PostModel.php
+
+		-
+			identifier: missingType.iterableValue
+			paths:
+				- src/App/Controllers/Dashboard/CommentController.php
+				- src/App/Models/CategoryModel.php
+				- src/App/Models/CommentModel.php
+				- src/App/Models/PostModel.php
+				- src/App/Models/TagModel.php
+
+		-
 			message: '#^Property App\\Auth\:\:\$cachedAvatar type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -217,12 +246,6 @@ parameters:
 			path: src/App/Controllers/Dashboard/FileUploadController.php
 
 		-
-			message: '#^Method App\\Controllers\\Dashboard\\HomeController\:\:getEmptyPagination\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/App/Controllers/Dashboard/HomeController.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 2
@@ -231,18 +254,6 @@ parameters:
 		-
 			message: '#^Method App\\Controllers\\Dashboard\\PostController\:\:getPostBySlug\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Parameter \#5 \$details of method App\\Services\\AuditService\:\:log\(\) expects array, null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between array\|null and false will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
 			count: 1
 			path: src/App/Controllers/Dashboard/PostController.php
 

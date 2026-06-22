@@ -100,10 +100,12 @@ class BlogController extends AppController
 
         // Put the chosen headline first without duplicating it in the grid below.
         if ($featured !== null) {
-            $posts = array_values(array_filter(
+            $filtered = array_filter(
                 $posts,
                 static fn (array $p): bool => (int) $p['id'] !== (int) $featured['id']
-            ));
+            );
+
+            $posts = array_values($filtered);
             array_unshift($posts, $featured);
         }
 
@@ -166,6 +168,7 @@ class BlogController extends AppController
 
         $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
 
+        dd($cards);
         return $this->view('Blogs/_index_cards.lex.php', [
             'cards' => $this->enrichCardPosts($cards),
             'blog' => $ctx['blog'],
@@ -177,6 +180,10 @@ class BlogController extends AppController
      * Attach display taxonomy (category name + slug, tag name/slug pairs) to a
      * list of post rows, so the card markup can render it. Shared by the landing
      * and the AJAX feed.
+     * 
+     * @param array<int, array<string, mixed>> $posts
+     * @return array<int, array<string, mixed>>
+     *
      */
     private function enrichCardPosts(array $posts): array
     {
