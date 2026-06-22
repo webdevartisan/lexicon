@@ -118,6 +118,24 @@ class CategoryModel extends AppModel
     }
 
     /**
+     * Distinct category names that have published posts, with a combined count.
+     *
+     * Categories are per-blog, so the same name can exist in several blogs. On
+     * the cross-blog discovery page we treat a category as a topic: one entry
+     * per name, spanning every blog that uses it.
+     */
+    public function getPublishedTopics(): array
+    {
+        $sql = "SELECT c.name, COUNT(p.id) AS post_count
+                FROM categories c
+                JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                GROUP BY c.name
+                ORDER BY c.name ASC";
+
+        return $this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Create a new category.
      *
      * @param  array  $data  Category data (name, slug, description, etc.)
@@ -126,5 +144,108 @@ class CategoryModel extends AppModel
     public function create(array $data): bool|int
     {
         return parent::insert($data);
+    }
+
+    /**
+     * Categories belonging to a blog, with how many posts use each.
+     */
+    public function getByBlogId(int $blogId): array
+    {
+        $sql = 'SELECT c.*, (SELECT COUNT(*) FROM posts WHERE category_id = c.id) AS post_count
+                FROM categories c
+                WHERE c.blog_id = ?
+                ORDER BY c.name ASC';
+        $stmt = $this->database->query($sql, [$blogId]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Categories in a blog that have at least one published post, with that count.
+     *
+     * Used for the public pill filters, where a category with no published posts
+     * would just be a dead end.
+     */
+    public function getPublishedByBlogId(int $blogId): array
+    {
+        $sql = "SELECT c.*, COUNT(p.id) AS post_count
+                FROM categories c
+                JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                WHERE c.blog_id = ?
+                GROUP BY c.id
+                ORDER BY c.name ASC";
+        $stmt = $this->database->query($sql, [$blogId]);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Look up a category by slug within a blog.
+     */
+    public function findBySlugInBlog(int $blogId, string $slug): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE blog_id = ? AND slug = ? LIMIT 1";
+        $stmt = $this->database->query($sql, [$blogId, $slug]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Look up a category by id, but only if it belongs to the given blog.
+     *
+     * Used to authorize edits/assignment so a category from another blog
+     * can't be touched.
+     */
+    public function findForBlog(int $id, int $blogId): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? AND blog_id = ? LIMIT 1";
+        $stmt = $this->database->query($sql, [$id, $blogId]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Find a category by name in a blog, creating it if it doesn't exist.
+     *
+     * Returns the category id, or null if the name is blank.
+     */
+    public function findOrCreateForBlog(int $blogId, string $name): ?int
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+
+        $slug = slugify($name) ?: 'category';
+
+        $existing = $this->findBySlugInBlog($blogId, $slug);
+        if ($existing) {
+            return (int) $existing['id'];
+        }
+
+        $this->create(['blog_id' => $blogId, 'name' => $name, 'slug' => $slug]);
+
+        return $this->getInsertID();
+    }
+
+    /**
+     * Rename a category (and re-slug it) within its blog.
+     */
+    public function renameForBlog(int $id, int $blogId, string $name): bool
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return false;
+        }
+
+        $slug = slugify($name) ?: 'category';
+
+        // Don't collide with another category in the same blog.
+        $clash = $this->findBySlugInBlog($blogId, $slug);
+        if ($clash && (int) $clash['id'] !== $id) {
+            return false;
+        }
+
+        return $this->update($id, ['name' => $name, 'slug' => $slug]);
     }
 }

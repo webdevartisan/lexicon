@@ -97,6 +97,30 @@ function truncate(string $string, int $limit = 50): string
 }
 
 /**
+ * Turn a label into a URL-friendly slug.
+ *
+ * Lowercases, strips accents where possible, and collapses anything that
+ * isn't a letter/number into single hyphens.
+ */
+function slugify(string $value): string
+{
+    $value = trim($value);
+
+    // Drop accents when the intl/iconv path is available, otherwise carry on.
+    if (function_exists('iconv')) {
+        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if ($converted !== false) {
+            $value = $converted;
+        }
+    }
+
+    $value = strtolower($value);
+    $value = preg_replace('/[^a-z0-9]+/', '-', $value) ?? '';
+
+    return trim($value, '-');
+}
+
+/**
  * Estimated reading time in minutes for a chunk of HTML or text.
  *
  * @param  string|null  $content  Raw HTML or text

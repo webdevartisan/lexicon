@@ -157,6 +157,8 @@ class NavigationService
                 // precompute attributes to avoid PHP logic in templates
                 'current_attr' => $current ? 'aria-current="page"' : '',
                 'tag' => $tag,
+                'disabled' => !empty($it['disabled']),
+                'badge' => $it['badge'] ?? null,
             ];
         }
 

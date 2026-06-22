@@ -22,22 +22,91 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(function () { headline.classList.add("is-ready"); }, 1400);
   }
 
-  document.querySelectorAll(".filter-list li").forEach(function (li, _, pills) {
-    li.addEventListener("click", function () {
-      var btn = li.querySelector("button");
-      if (!btn) return;
-      var filter = btn.getAttribute("data-filter") || "*";
-      pills.forEach(function (other) {
-        other.classList.toggle("is-active", other === li);
-        var b = other.querySelector("button");
-        if (b) b.setAttribute("aria-selected", other === li ? "true" : "false");
-      });
-      document.querySelectorAll(".articles-grid .article").forEach(function (a) {
-        var cat = a.getAttribute("data-category") || "";
-        a.style.display = (filter === "*" || cat === filter) ? "" : "none";
+  var filterList = document.querySelector(".filter-list");
+  var grid = document.querySelector(".articles-grid");
+  if (filterList && grid) {
+    var countEl = document.getElementById("filter-count");
+    var pills = filterList.querySelectorAll("li");
+
+    // "See all" footer: the whole archive for "All", or a category's own archive
+    // when that category has more posts than the six the grid shows.
+    var footer = document.getElementById("index-footer");
+    var footerCount = document.getElementById("index-footer-count");
+    var footerLink = document.getElementById("index-footer-link");
+    var footerLabel = document.getElementById("index-footer-label");
+    var allCountHtml = footerCount ? footerCount.innerHTML : "";
+    var allArchive = footer ? footer.getAttribute("data-archive") : "";
+    var allMore = footer ? footer.getAttribute("data-allmore") === "1" : false;
+
+    function updateFooter(li) {
+      if (!footer || !footerLink) return;
+      var b = li.querySelector("a");
+      var filter = b ? (b.getAttribute("data-filter") || "") : "";
+      var count = b ? parseInt(b.getAttribute("data-count") || "0", 10) : 0;
+      var name = b ? b.textContent.trim() : "";
+
+      if (!filter) {
+        if (footerCount) footerCount.innerHTML = allCountHtml;
+        footerLink.setAttribute("href", allArchive);
+        if (footerLabel) footerLabel.textContent = "Open the full archive";
+        footer.style.display = allMore ? "" : "none";
+      } else if (count > 6) {
+        var base = window.location.pathname.replace(/\/+$/, "");
+        if (footerCount) footerCount.textContent = count + " posts in " + name;
+        footerLink.setAttribute("href", base + "/category/" + encodeURIComponent(filter));
+        if (footerLabel) footerLabel.textContent = "View all";
+        footer.style.display = "";
+      } else {
+        footer.style.display = "none";
+      }
+    }
+
+    pills.forEach(function (li) {
+      li.addEventListener("click", function (e) {
+        var btn = li.querySelector("a");
+        if (!btn) return;
+        e.preventDefault();
+        if (li.classList.contains("is-active")) return;
+        var filter = btn.getAttribute("data-filter") || "";
+
+        pills.forEach(function (other) {
+          other.classList.toggle("is-active", other === li);
+          var b = other.querySelector("a");
+          if (b) b.setAttribute("aria-selected", other === li ? "true" : "false");
+        });
+
+        // Swap in this category's cards (or recent for "All") without a reload.
+        var base = window.location.pathname.replace(/\/+$/, "");
+        var url = base + "/index-feed" + (filter ? "?category=" + encodeURIComponent(filter) : "");
+
+        // Reflect the filter in the address bar so it's shareable and the back button works.
+        window.history.pushState({ category: filter }, "", base + (filter ? "?category=" + encodeURIComponent(filter) : ""));
+
+        grid.style.opacity = "0.35";
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+          .then(function (r) { return r.text(); })
+          .then(function (html) {
+            grid.innerHTML = html;
+            grid.style.opacity = "";
+            // Newly injected cards start hidden (.reveal/.img-mask) — show them.
+            grid.querySelectorAll(".reveal, .img-mask").forEach(function (el) { el.classList.add("is-in"); });
+            if (countEl) {
+              var n = grid.querySelectorAll(".article").length;
+              countEl.textContent = n + " post" + (n === 1 ? "" : "s");
+            }
+            updateFooter(li);
+          })
+          .catch(function () { grid.style.opacity = ""; });
       });
     });
-  });
+
+    // Keep the grid in step with the URL on back/forward.
+    window.addEventListener("popstate", function () { window.location.reload(); });
+
+    // Arrived with ?category= already applied — sync the "see all" footer to the active pill.
+    var initialActive = filterList.querySelector("li.is-active");
+    if (initialActive) updateFooter(initialActive);
+  }
 
   if (window.gsap && !reduce) {
     gsap.registerPlugin(window.ScrollTrigger);

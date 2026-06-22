@@ -523,7 +523,7 @@ class PostModel extends AppModel
      * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
-    public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?int $categoryId = null): array
+    public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
         $offset = ($page - 1) * $perPage;
         $likeQuery = '%'.$query.'%';
@@ -536,9 +536,10 @@ class PostModel extends AppModel
             ':blog_name' => $likeQuery,
         ];
 
-        if ($categoryId !== null) {
-            $categoryClause = ' AND p.category_id = :categoryId ';
-            $params[':categoryId'] = $categoryId;
+        if ($categoryName !== null && $categoryName !== '') {
+            // Topic filter: match by category name across all blogs.
+            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
+            $params[':categoryName'] = $categoryName;
         }
 
         // Count query
@@ -591,16 +592,17 @@ class PostModel extends AppModel
      * @param  int|null  $categoryId  Optional category filter
      * @return array Array with 'data' (posts) and pagination metadata
      */
-    public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?int $categoryId = null): array
+    public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
         $offset = ($page - 1) * $perPage;
 
         $categoryClause = '';
         $params = [];
 
-        if ($categoryId !== null) {
-            $categoryClause = ' AND p.category_id = :categoryId ';
-            $params[':categoryId'] = $categoryId;
+        if ($categoryName !== null && $categoryName !== '') {
+            // Topic filter: match by category name across all blogs.
+            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
+            $params[':categoryName'] = $categoryName;
         }
 
         // Count total published posts with optional category filter
@@ -618,10 +620,7 @@ class PostModel extends AppModel
             WHERE p.status = 'published'
         ";
 
-        if ($categoryId !== null) {
-            $sql .= ' AND p.category_id = :categoryId ';
-        }
-
+        $sql .= $categoryClause;
         $sql .= ' ORDER BY p.published_at DESC LIMIT :limit OFFSET :offset';
 
         $params[':limit'] = $perPage;
@@ -640,6 +639,89 @@ class PostModel extends AppModel
     }
 
     /**
+     * The blog's featured headline: a featured, published post.
+     *
+     * Newest wins if more than one is somehow flagged — a safety net on top of
+     * the one-per-blog rule kept by setFeatured().
+     */
+    public function findFeaturedByBlogId(int $blogId): ?array
+    {
+        $sql = "SELECT * FROM posts
+                WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
+                ORDER BY published_at DESC, id DESC
+                LIMIT 1";
+
+        return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Toggle a post's featured flag, keeping at most one featured post per blog.
+     *
+     * Turning a post on clears the flag from the blog's other posts in the same
+     * transaction, so two posts can never end up featured at once.
+     */
+    public function setFeatured(int $postId, int $blogId, bool $on): bool
+    {
+        if (!$on) {
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 0 WHERE id = ? AND blog_id = ?',
+                [$postId, $blogId]
+            );
+
+            return true;
+        }
+
+        $this->database->beginTransaction();
+        try {
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 0 WHERE blog_id = ? AND id <> ?',
+                [$blogId, $postId]
+            );
+            $this->database->execute(
+                'UPDATE posts SET is_featured = 1 WHERE id = ? AND blog_id = ?',
+                [$postId, $blogId]
+            );
+            $this->database->commit();
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->database->rollback();
+            error_log('setFeatured failed: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Published posts for a blog, optionally within one category, newest first.
+     *
+     * Powers the folio landing's "index" grid and its AJAX category swap. Pass
+     * $excludeId to drop the headline post so it never shows up twice.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function findPublishedByBlogAndCategory(int $blogId, ?int $categoryId, int $limit = 6, ?int $excludeId = null): array
+    {
+        $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
+        $params = [':blog_id' => $blogId];
+
+        if ($categoryId !== null) {
+            $sql .= ' AND category_id = :category_id';
+            $params[':category_id'] = $categoryId;
+        }
+
+        if ($excludeId !== null) {
+            $sql .= ' AND id <> :exclude_id';
+            $params[':exclude_id'] = $excludeId;
+        }
+
+        $sql .= ' ORDER BY published_at DESC, id DESC LIMIT :limit';
+        $params[':limit'] = $limit;
+
+        return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get index feed with search or recent posts.
      *
      * Delegates to search or recent listing based on query parameter.
@@ -651,14 +733,14 @@ class PostModel extends AppModel
     {
         $page = $options['page'] ?? 1;
         $perPage = $options['perPage'] ?? 8;
-        $categoryId = $options['categoryId'] ?? null;
+        $categoryName = $options['categoryName'] ?? null;
         $query = $options['query'] ?? '';
 
         if ($query !== '') {
-            return $this->searchPublishedPosts($query, $page, $perPage, $categoryId);
+            return $this->searchPublishedPosts($query, $page, $perPage, $categoryName);
         }
 
-        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryId);
+        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryName);
     }
 
     /**
@@ -804,14 +886,17 @@ class PostModel extends AppModel
         int $perPage = 10,
         ?int $blogId = null,
         string $status = '',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        string $sort = 'newest',
+        ?int $categoryId = null,
+        ?int $tagId = null
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
 
         // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery);
+        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId);
 
         // Get total count first for pagination metadata
         $totalRecords = $this->getTotalCount($whereClause, $params);
@@ -819,12 +904,21 @@ class PostModel extends AppModel
         // Calculate offset for LIMIT clause
         $offset = ($page - 1) * $perPage;
 
-        // Build the main query with pagination
-        $sql = "SELECT p.*, b.blog_name
+        // Whitelist sort options
+        $orderBy = match ($sort) {
+            'oldest' => 'p.published_at ASC',
+            'title_asc' => 'p.title ASC',
+            'title_desc' => 'p.title DESC',
+            default => 'p.published_at DESC',
+        };
+
+        $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN categories c ON p.category_id = c.id
                 {$whereClause}
-                ORDER BY p.published_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;
@@ -907,10 +1001,24 @@ class PostModel extends AppModel
      */
     public function countCommentsByBlogId(int $blogId): int
     {
-        $sql = "SELECT COUNT(*) as count FROM comments c 
-                INNER JOIN {$this->getTable()} p ON c.post_id = p.id 
+        $sql = "SELECT COUNT(*) as count FROM comments c
+                INNER JOIN {$this->getTable()} p ON c.post_id = p.id
                 WHERE p.blog_id = :blog_id";
         $stmt = $this->database->query($sql, [':blog_id' => $blogId]);
+        $result = $stmt->fetch();
+
+        return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Count comments by moderation status across a blog's posts.
+     */
+    public function countCommentsByBlogIdAndStatus(int $blogId, string $status): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM comments c
+                INNER JOIN {$this->getTable()} p ON c.post_id = p.id
+                WHERE p.blog_id = :blog_id AND c.status = :status";
+        $stmt = $this->database->query($sql, [':blog_id' => $blogId, ':status' => $status]);
         $result = $stmt->fetch();
 
         return (int) ($result['count'] ?? 0);
@@ -966,7 +1074,9 @@ class PostModel extends AppModel
         int $authorId,
         ?int $blogId,
         string $status,
-        string $searchQuery
+        string $searchQuery,
+        ?int $categoryId = null,
+        ?int $tagId = null
     ): array {
         $whereClause = 'WHERE p.author_id = :author_id';
         $params = [':author_id' => $authorId];
@@ -981,6 +1091,16 @@ class PostModel extends AppModel
         if ($status !== '' && in_array($status, self::STATUSES, true)) {
             $whereClause .= ' AND p.status = :status';
             $params[':status'] = $status;
+        }
+
+        if ($categoryId !== null) {
+            $whereClause .= ' AND p.category_id = :category_id';
+            $params[':category_id'] = $categoryId;
+        }
+
+        if ($tagId !== null) {
+            $whereClause .= ' AND EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.tag_id = :tag_id)';
+            $params[':tag_id'] = $tagId;
         }
 
         // Use LIKE for flexible search but be aware this prevents index usage on large tables

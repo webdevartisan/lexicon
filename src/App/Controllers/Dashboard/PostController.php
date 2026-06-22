@@ -7,7 +7,9 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\PostResource;
 use App\Services\PostAutosaveService;
@@ -30,42 +32,127 @@ final class PostController extends AppController
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
         private UploadService $uploader,
-        private PostAutosaveService $autosaveService
+        private PostAutosaveService $autosaveService,
+        private CategoryModel $categoryModel,
+        private TagModel $tagModel
     ) {}
 
     /**
-     * List user's posts with filters.
+     * List user's posts with filters, search, and pagination.
      */
     public function index(): Response
     {
         $user = auth()->user();
 
-        // Fetch user's blogs for filter dropdown
         $blogs = $this->blogModel->getBlogsByOwnerId($user['id']);
         $blogSlugs = array_column($blogs, 'blog_slug', 'id');
-
-        // Extract filters from query parameters
-        $blogId = isset($this->request->get['blog_id']) ? (int) $this->request->get['blog_id'] : null;
-        $status = $this->request->get['status'] ?? '';
-        $q = trim($this->request->get['q'] ?? '');
-
-        // Validate blogId belongs to user
         $validBlogIds = array_column($blogs, 'id');
+
+        $blogId = isset($this->request->get['blog_id']) ? (int) $this->request->get['blog_id'] : null;
         if ($blogId !== null && !in_array($blogId, $validBlogIds, true)) {
             $blogId = null;
         }
 
-        // Fetch filtered posts
-        $posts = $this->model->findByAuthorWithFilters($user['id'], $blogId, $status, $q);
+        // Fall back to the user's default blog when none is selected via query.
+        if ($blogId === null) {
+            $defaultBlogId = $this->preference->getDefaultBlogId($user['id']);
+            if ($defaultBlogId && in_array($defaultBlogId, $validBlogIds, true)) {
+                $blogId = $defaultBlogId;
+            }
+        }
+
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $q = trim((string) ($this->request->get['q'] ?? ''));
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
+        $perPage = 12;
+
+        $allowedSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
+        $sort = (string) ($this->request->get['sort'] ?? 'newest');
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'newest';
+        }
+
+        // Category/tag filters only make sense inside one blog (they're per-blog).
+        // Validate the ids belong to the active blog, otherwise drop them.
+        $categoryId = null;
+        $tagId = null;
+        $blogCategories = [];
+        $blogTags = [];
+        if ($blogId !== null) {
+            $blogCategories = $this->categoryModel->getByBlogId($blogId);
+            $blogTags = $this->tagModel->getByBlogId($blogId);
+
+            $rawCat = (int) ($this->request->get['category'] ?? 0);
+            if ($rawCat > 0 && $this->categoryModel->findForBlog($rawCat, $blogId)) {
+                $categoryId = $rawCat;
+            }
+
+            $rawTag = (int) ($this->request->get['tag'] ?? 0);
+            if ($rawTag > 0 && $this->tagModel->findForBlog($rawTag, $blogId)) {
+                $tagId = $rawTag;
+            }
+        }
+
+        $result = $this->model->findByAuthorWithFiltersPagination(
+            authorId: $user['id'],
+            page: $page,
+            perPage: $perPage,
+            blogId: $blogId,
+            status: $status,
+            searchQuery: $q,
+            sort: $sort,
+            categoryId: $categoryId,
+            tagId: $tagId
+        );
+
+        // Each card shows a few of its tags as quick filters.
+        foreach ($result['data'] as &$p) {
+            $p['tags'] = $this->model->tags((int) $p['id']);
+        }
+        unset($p);
+
+        // Per-status totals power the filter chip badges (respecting the active
+        // category/tag filter so the numbers match what's shown).
+        $counts = [
+            'all' => 0,
+            'published' => 0,
+            'draft' => 0,
+            'pending' => 0,
+            'archived' => 0,
+        ];
+        foreach (array_keys($counts) as $s) {
+            if ($s === 'all') {
+                continue;
+            }
+            $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
+                authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q,
+                categoryId: $categoryId, tagId: $tagId
+            )['pagination']['total_records'];
+        }
+        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+
+        $activeBlogSlug = ($blogId !== null && isset($blogSlugs[$blogId])) ? $blogSlugs[$blogId] : '';
+
+        // If a tag filter is active, surface its name for the "filtering by" pill.
+        $activeTag = ($tagId !== null) ? $this->tagModel->findForBlog($tagId, (int) $blogId) : null;
 
         return $this->view([
-            'posts' => $posts,
+            'posts' => $result['data'],
+            'pagination' => $result['pagination'],
             'user' => $user,
             'blogs' => $blogs,
             'blog_id' => $blogId,
             'blog_slug' => $blogSlugs,
+            'activeBlogSlug' => $activeBlogSlug,
             'status' => $status,
             'q' => $q,
+            'sort' => $sort,
+            'counts' => $counts,
+            'blogCategories' => $blogCategories,
+            'blogTags' => $blogTags,
+            'categoryId' => $categoryId,
+            'tagId' => $tagId,
+            'activeTag' => $activeTag,
         ]);
     }
 
@@ -107,6 +194,9 @@ final class PostController extends AppController
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
+            'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
+            'postTags' => [],
         ]);
     }
 
@@ -124,11 +214,11 @@ final class PostController extends AppController
         Gate::authorize('createPost', $blog, $user);
 
         $validator = $this->validateOrFail([
-            'title' => 'required|title|min:2|max:50',
-            'slug' => 'required|slug|min:2|max:50|unique:posts,slug',
+            'title' => 'required|title|min:2|max:100',
+            'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:10000',
-            'excerpt' => 'required|max:200',
+            'content' => 'required|max:60000',
+            'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
         ]);
@@ -147,6 +237,7 @@ final class PostController extends AppController
 
         $data['blog_id'] = $blog->id();
         $data['author_id'] = $user['id'];
+        $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
         // Handle featured image upload
         $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
@@ -158,6 +249,9 @@ final class PostController extends AppController
         $postId = $this->model->getInsertID();
 
         if ($okInsert) {
+            $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
+            $this->model->setFeatured($postId, (int) $blog->id(), !empty($this->request->post['is_featured']));
+
             audit()->log(
                 $user['id'],
                 'post.created',
@@ -211,6 +305,11 @@ final class PostController extends AppController
             $postArray['published_at'] = $displayDate;
         }
 
+        $postTags = array_map(
+            static fn (array $t): string => (string) $t['name'],
+            $this->model->tags((int) $post->id())
+        );
+
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
@@ -218,6 +317,9 @@ final class PostController extends AppController
             'workflowState' => $workflowState,
             'status' => $status,
             'blogRole' => $blogRole,
+            'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
+            'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
+            'postTags' => $postTags,
         ]);
     }
 
@@ -269,6 +371,37 @@ final class PostController extends AppController
     }
 
     /**
+     * Toggle a post as its blog's featured headline (one per blog).
+     *
+     * @param  string  $id  Post ID
+     */
+    public function feature(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $post = $this->getPost((int) $id);
+
+        Gate::authorize('update', $post, $user);
+
+        $isFeatured = (bool) ($post->toArray()['is_featured'] ?? false);
+        $this->model->setFeatured((int) $id, (int) $post->blogId(), !$isFeatured);
+
+        audit()->log(
+            $user['id'],
+            $isFeatured ? 'post.unfeatured' : 'post.featured',
+            'post',
+            (int) $id,
+            [],
+            $this->request->ip()
+        );
+
+        $this->flash('success', $isFeatured ? 'Removed from the homepage.' : 'Featured on the homepage.');
+
+        return $this->redirectBack();
+    }
+
+    /**
      * Update post.
      *
      * @param  string  $id  Post ID
@@ -283,16 +416,19 @@ final class PostController extends AppController
         Gate::authorize('update', $post, $user);
 
         $validator = $this->validateOrFail([
-            'title' => 'required|title|min:2|max:50',
+            'title' => 'required|title|min:2|max:100',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:10000',
-            'excerpt' => 'required|max:200',
+            'content' => 'required|max:60000',
+            'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
             'remove_featured_image' => 'boolean',
+            'comments_enabled' => 'boolean',
         ]);
 
         $newData = $validator->validated();
+        $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
+
         $timezone = $newData['timezone'] ?? 'UTC';
 
         // Normalize published_at to UTC for comparison
@@ -364,6 +500,20 @@ final class PostController extends AppController
             $data['published_at'] = $utcNow->format('Y-m-d H:i:s');
         }
 
+        $blogId = (int) $post->blogId();
+
+        // Category — only write it when it actually changed.
+        $newCategoryId = $this->resolveCategoryId($blogId);
+        $currentCategoryId = isset($post->toArray()['category_id']) ? (int) $post->toArray()['category_id'] : null;
+        if ($newCategoryId !== $currentCategoryId) {
+            $data['category_id'] = $newCategoryId;
+        }
+
+        // Tags sync independently of the field diff above.
+        $tagsChanged = $this->tagModel->syncForPost((int) $id, $blogId, $this->parsePostTags());
+
+        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); // TODO: optimize security
+
         // Update if changes detected
         if (!empty($data)) {
             $this->model->update((int) $id, $data);
@@ -378,11 +528,45 @@ final class PostController extends AppController
             );
 
             $this->flash('success', 'Post updated successfully.');
+        } elseif ($tagsChanged) {
+            $this->flash('success', 'Post updated successfully.');
         } else {
             $this->flash('info', 'No changes detected.');
         }
 
         return $this->redirect("/dashboard/post/{$id}/edit");
+    }
+
+    /**
+     * Resolve the submitted category_id, but only if it belongs to this blog.
+     *
+     * Returns null for "no category" or anything that isn't a real category of
+     * the blog — so you can't slip in another blog's category id.
+     */
+    private function resolveCategoryId(int $blogId): ?int
+    {
+        $raw = $this->request->post['category_id'] ?? '';
+        if ($raw === '' || $raw === null) {
+            return null;
+        }
+
+        $id = (int) $raw;
+
+        return $this->categoryModel->findForBlog($id, $blogId) ? $id : null;
+    }
+
+    /**
+     * Split the comma-separated tags field into trimmed names.
+     *
+     * @return string[]
+     */
+    private function parsePostTags(): array
+    {
+        $raw = (string) ($this->request->post['tags'] ?? '');
+
+        $names = array_map('trim', explode(',', $raw));
+
+        return array_values(array_filter($names, static fn (string $n): bool => $n !== ''));
     }
 
     /**
@@ -400,7 +584,7 @@ final class PostController extends AppController
             return $this->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
-        $slugRule = 'slug|min:2|max:50|unique:posts,slug';
+        $slugRule = 'slug|min:2|max:100|unique:posts,slug';
         if (!empty($this->request->post['id'])) {
             $slugRule .= ','.(int) $this->request->post['id'];
         }
@@ -409,11 +593,11 @@ final class PostController extends AppController
             $validator = $this->validator($this->request->post);
             $validator->rules([
                 'id' => 'integer',
-                'title' => 'required|title|min:2|max:50',
+                'title' => 'required|title|min:2|max:100',
                 'slug' => $slugRule,
                 'status' => 'in:'.implode(',', PostModel::STATUSES),
-                'content' => 'required|max:10000',
-                'excerpt' => 'required|max:200',
+                'content' => 'required|max:60000',
+                'excerpt' => 'required|max:300',
                 'timezone' => 'timezone',
                 'published_at' => 'datetime:d.m.y H:i',
             ]);
@@ -491,6 +675,71 @@ final class PostController extends AppController
         $this->flash('success', 'Post deleted successfully.');
 
         return $this->redirect('/dashboard');
+    }
+
+    /**
+     * Apply a bulk action (publish / draft / archive / delete) to many posts.
+     *
+     * Each post is authorized individually. Unauthorized or missing posts are
+     * silently skipped so a single bad id doesn't break the whole batch.
+     */
+    public function bulk(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $action = (string) ($this->request->post['bulk_action'] ?? '');
+        $ids = array_filter(array_map('intval', (array) ($this->request->post['post_ids'] ?? [])));
+
+        $allowed = ['publish', 'draft', 'archive', 'delete'];
+        if (!in_array($action, $allowed, true) || empty($ids)) {
+            $this->flash('error', 'No posts selected or invalid action.');
+
+            return $this->redirect('/dashboard/post');
+        }
+
+        $applied = 0;
+        $skipped = 0;
+
+        foreach ($ids as $id) {
+            $post = $this->model->findResource($id);
+            if ($post === false) {
+                $skipped++;
+                continue;
+            }
+
+            $gateAction = $action === 'delete' ? 'delete' : 'publish';
+            if (!Gate::allows($gateAction, $post, $user)) {
+                $skipped++;
+                continue;
+            }
+
+            match ($action) {
+                'publish' => $this->model->updateStatus($id, 'published'),
+                'draft' => $this->model->updateStatus($id, 'draft'),
+                'archive' => $this->model->updateStatus($id, 'archived'),
+                'delete' => $this->model->delete($id),
+            };
+
+            audit()->log(
+                $user['id'],
+                "post.bulk_{$action}",
+                'post',
+                $id,
+                [],
+                $this->request->ip()
+            );
+
+            $applied++;
+        }
+
+        $msg = "{$applied} post(s) updated";
+        if ($skipped > 0) {
+            $msg .= ", {$skipped} skipped";
+        }
+        $this->flash('success', $msg.'.');
+
+        return $this->redirect('/dashboard/post');
     }
 
     /**
@@ -608,7 +857,7 @@ final class PostController extends AppController
             'post.archived',
             'post',
             (int) $id,
-            null,
+            [],
             $this->request->ip()
         );
 

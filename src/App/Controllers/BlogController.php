@@ -8,6 +8,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\TagModel;
 use App\Models\UserModel;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -19,14 +20,15 @@ class BlogController extends AppController
         private UserModel $userModel,
         private PostModel $postModel,
         private CategoryModel $categoryModel,
-        private BlogSettingsModel $settings
+        private BlogSettingsModel $settings,
+        private TagModel $tagModel
     ) {}
 
     public function index()
     {
         // 1. Core collections for the sidebar / discovery sections
         $blogs = $this->model->getAllBlogsWithOwnerAndCounts();
-        $categories = $this->categoryModel->getCategories();
+        $categories = $this->categoryModel->getPublishedTopics();
         $featuredCreators = $this->model->getFeaturedCreators();
 
         // 2. Read filters from query string
@@ -36,10 +38,11 @@ class BlogController extends AppController
             $page = 1;
         }
 
-        // Optional numeric category filter, e.g. ?category=3
-        $categoryId = isset($this->request->get['category'])
-            ? (int) $this->request->get['category']
-            : null;
+        // Optional topic filter by category name, e.g. ?category=Guides
+        $categoryName = trim((string) ($this->request->get['category'] ?? ''));
+        if ($categoryName === '') {
+            $categoryName = null;
+        }
 
         $perPage = 8;
 
@@ -50,7 +53,7 @@ class BlogController extends AppController
                 $searchQuery,
                 $page,
                 $perPage,
-                $categoryId // <-- uses the existing optional parameter
+                $categoryName
             );
             $mode = 'search';
         } else {
@@ -58,7 +61,7 @@ class BlogController extends AppController
             $postsData = $this->postModel->getRecentPublishedWithPagination(
                 $page,
                 $perPage,
-                $categoryId
+                $categoryName
             );
             $mode = 'recent';
         }
@@ -78,7 +81,7 @@ class BlogController extends AppController
             'posts' => $postsData['data'] ?? [],
             'pagination' => $pagination,
             'searchQuery' => $searchQuery,
-            'activeCategory' => $categoryId,
+            'activeCategory' => $categoryName,
             'mode' => $mode,
         ]);
     }
@@ -91,12 +94,114 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found.');
         }
 
+        $featured = $this->postModel->findFeaturedByBlogId($blogId);
         $landingData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 7);
+        $posts = $landingData['data'];
+
+        // Put the chosen headline first without duplicating it in the grid below.
+        if ($featured !== null) {
+            $filtered = array_filter(
+                $posts,
+                static fn (array $p): bool => (int) $p['id'] !== (int) $featured['id']
+            );
+
+            $posts = array_values($filtered);
+            array_unshift($posts, $featured);
+        }
+
+        // Optional ?category= filter so a filtered grid is bookmarkable and reload-safe.
+        // The headline stays put; only the grid below reacts.
+        $activeCategory = trim((string) ($this->request->get['category'] ?? ''));
+        if ($activeCategory !== '') {
+            $category = $this->categoryModel->findBySlugInBlog($blogId, $activeCategory);
+            if ($category) {
+                $headline = $posts[0] ?? null;
+                $headlineId = isset($headline['id']) ? (int) $headline['id'] : null;
+                $grid = $this->postModel->findPublishedByBlogAndCategory($blogId, (int) $category['id'], 6, $headlineId);
+                $posts = $headline !== null ? array_merge([$headline], $grid) : $grid;
+            } else {
+                $activeCategory = '';
+            }
+        }
 
         return $this->view('Blogs/show.lex.php', $ctx + [
-            'posts' => $landingData['data'],
+            'posts' => $this->enrichCardPosts($posts),
+            'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
             'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
+            'activeCategory' => $activeCategory,
         ]);
+    }
+
+    /**
+     * AJAX: the landing's card grid for a category (or recent for "All").
+     *
+     * Returns just the cards as an HTML fragment, rendered through the active
+     * theme so each theme keeps its own card markup. The headline post is
+     * excluded — same rule as showBlog — so it never doubles in the grid.
+     */
+    public function indexFeed(string $blogSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+        if ($blogId === 0) {
+            throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        // Headline = featured post, else newest — mirror showBlog so "All" matches.
+        $featured = $this->postModel->findFeaturedByBlogId($blogId);
+        if ($featured !== null) {
+            $headlineId = (int) $featured['id'];
+        } else {
+            $newest = $this->postModel->findPublishedByBlogAndCategory($blogId, null, 1);
+            $headlineId = isset($newest[0]['id']) ? (int) $newest[0]['id'] : null;
+        }
+
+        $categoryId = null;
+        $slug = trim((string) ($this->request->get['category'] ?? ''));
+        if ($slug !== '') {
+            $category = $this->categoryModel->findBySlugInBlog($blogId, $slug);
+            if (!$category) {
+                throw new PageNotFoundException('Category not found.', 404);
+            }
+            $categoryId = (int) $category['id'];
+        }
+
+        $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
+
+        dd($cards);
+
+        return $this->view('Blogs/_index_cards.lex.php', [
+            'cards' => $this->enrichCardPosts($cards),
+            'blog' => $ctx['blog'],
+            'user' => $ctx['user'],
+        ]);
+    }
+
+    /**
+     * Attach display taxonomy (category name + slug, tag name/slug pairs) to a
+     * list of post rows, so the card markup can render it. Shared by the landing
+     * and the AJAX feed.
+     *
+     * @param  array<int, array<string, mixed>>  $posts
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichCardPosts(array $posts): array
+    {
+        foreach ($posts as &$post) {
+            $category = !empty($post['category_id'])
+                ? $this->categoryModel->findById((int) $post['category_id'])
+                : null;
+            $post['category'] = $category['name'] ?? null;
+            $post['category_slug'] = $category['slug'] ?? null;
+
+            $post['tags'] = array_map(
+                static fn (array $t): array => ['name' => $t['name'], 'slug' => $t['slug']],
+                $this->postModel->tags((int) $post['id'])
+            );
+        }
+        unset($post);
+
+        return $posts;
     }
 
     public function archiveBlog(string $blogSlug): Response
@@ -120,6 +225,71 @@ class BlogController extends AppController
                 'totalPosts' => $postsData['totalPosts'],
             ],
         ]);
+    }
+
+    /**
+     * Published posts in a blog filed under one category.
+     */
+    public function showCategory(string $blogSlug, string $categorySlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        $category = $this->categoryModel->findBySlugInBlog($blogId, $categorySlug);
+        if (!$category) {
+            throw new PageNotFoundException('Category not found.', 404);
+        }
+
+        $posts = $this->categoryModel->posts((int) $category['id']);
+        $name = e($category['name']);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
+            'posts' => $posts,
+            'pagination' => $this->taxonomyPagination(count($posts)),
+            'archiveKicker' => 'Category &mdash; '.$name,
+            'archiveTitle' => $name,
+            'archiveDek' => 'Posts filed under <em>'.$name.'</em>.',
+        ]);
+    }
+
+    /**
+     * Published posts in a blog carrying one tag.
+     */
+    public function showTag(string $blogSlug, string $tagSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        $tag = $this->tagModel->findBySlugInBlog($blogId, $tagSlug);
+        if (!$tag) {
+            throw new PageNotFoundException('Tag not found.', 404);
+        }
+
+        $posts = $this->tagModel->posts((int) $tag['id']);
+        $name = e($tag['name']);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
+            'posts' => $posts,
+            'pagination' => $this->taxonomyPagination(count($posts)),
+            'archiveKicker' => 'Tagged &mdash; '.$name,
+            'archiveTitle' => '#'.$name,
+            'archiveDek' => 'Posts tagged <em>'.$name.'</em>.',
+        ]);
+    }
+
+    /**
+     * Single-page pagination shape for taxonomy listings (no paging for now).
+     *
+     * @return array{totalPages:int,currentPage:int,perPage:int,totalPosts:int}
+     */
+    private function taxonomyPagination(int $count): array
+    {
+        return [
+            'totalPages' => 1,
+            'currentPage' => 1,
+            'perPage' => max(1, $count),
+            'totalPosts' => $count,
+        ];
     }
 
     public function showBlogPost(string $blogSlug, string $postSlug)
@@ -177,6 +347,18 @@ class BlogController extends AppController
         $prev_post = $this->postModel->findPreviousByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $next_post = $this->postModel->findNextByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $related = $this->postModel->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4);
+
+        // Taxonomy for display: category name + slug, and tags as name/slug pairs.
+        $category = !empty($post['category_id'])
+            ? $this->categoryModel->findById((int) $post['category_id'])
+            : null;
+        $post['category'] = $category['name'] ?? null;
+        $post['category_slug'] = $category['slug'] ?? null;
+
+        $post['tags'] = array_map(
+            static fn (array $t): array => ['name' => $t['name'], 'slug' => $t['slug']],
+            $this->postModel->tags((int) $post['id'])
+        );
 
         // Merge meta: post > blog > settings defaults
         $meta = [

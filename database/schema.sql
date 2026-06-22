@@ -96,24 +96,28 @@ COMMENT='Permission definitions using resource-action pattern';
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    slug VARCHAR(120) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_slug (slug)
+    UNIQUE KEY uq_categories_blog_slug (blog_id, slug),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Post categories for content organization';
+COMMENT='Post categories for content organization (scoped per blog)';
 
 -- ----------------------------------------------------------------------------
 -- Tags Table
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    slug VARCHAR(120) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_slug (slug)
+    UNIQUE KEY uq_tags_blog_slug (blog_id, slug),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Post tags for flexible content labeling';
+COMMENT='Post tags for flexible content labeling (scoped per blog)';
 
 -- ----------------------------------------------------------------------------
 -- Settings Table
@@ -321,6 +325,7 @@ CREATE TABLE IF NOT EXISTS posts (
     workflow_state ENUM('idea','draft','in_review','needs_changes','approved','ready_to_publish') NOT NULL DEFAULT 'draft',
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
+    is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Headlines the blog landing; one per blog',
     published_at TIMESTAMP NULL,
     timezone VARCHAR(50) DEFAULT 'UTC' COMMENT 'Timezone for scheduled publishing',
     last_workflow_by INT DEFAULT NULL COMMENT 'Last user to change workflow state',
@@ -341,7 +346,8 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_published (published_at),
     INDEX idx_status_published (status, published_at),
     INDEX idx_author_created (author_id, created_at),
-    INDEX idx_blog_published (blog_id, published_at)
+    INDEX idx_blog_published (blog_id, published_at),
+    INDEX idx_blog_featured (blog_id, is_featured)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog posts with workflow state and visibility controls';
 
@@ -411,6 +417,7 @@ CREATE TABLE IF NOT EXISTS comments (
     post_id INT NOT NULL,
     user_id INT DEFAULT NULL COMMENT 'NULL allows for anonymous comments if enabled',
     content TEXT NOT NULL,
+    status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -418,7 +425,9 @@ CREATE TABLE IF NOT EXISTS comments (
     INDEX idx_post (post_id),
     INDEX idx_user (user_id),
     INDEX idx_comment_post_created (post_id, created_at),
-    INDEX idx_comment_user_created (user_id, created_at)
+    INDEX idx_comment_user_created (user_id, created_at),
+    INDEX idx_comment_status (status),
+    INDEX idx_comment_post_status (post_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User comments on published posts';
 

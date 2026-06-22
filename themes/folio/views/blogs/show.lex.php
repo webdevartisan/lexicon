@@ -97,25 +97,23 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <?php } ?>
 
 <?php if (!empty($gridPosts)) {
-    $cats = [];
-    foreach ($gridPosts as $gp) {
-        $c = trim((string) ($gp['category'] ?? ''));
-        if ($c !== '' && !in_array($c, $cats, true)) {
-            $cats[] = $c;
-        }
-    }
+    $cards = $gridPosts;
     ?>
 <section class="filters" id="index">
   <div class="container">
     <div class="row">
       <h2 class="filter-title reveal">The Index</h2>
-      <span class="filter-count reveal"><?= count($gridPosts) ?> post<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <span class="filter-count reveal" id="filter-count"><?= count($gridPosts) ?> post<?= count($gridPosts) === 1 ? '' : 's' ?></span>
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
-      <li class="is-active"><button type="button" data-filter="*" role="tab" aria-selected="true">All</button></li>
-      <?php foreach ($cats as $c) { ?>
-        <li><button type="button" data-filter="<?= e(strtolower($c)) ?>" role="tab" aria-selected="false"><?= e($c) ?></button></li>
+      <?php $allActive = ($activeCategory ?? '') === ''; ?>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All</a></li>
+      <?php foreach (($categories ?? []) as $c) {
+          $cSlug = (string) ($c['slug'] ?? '');
+          $catActive = ($activeCategory ?? '') === $cSlug;
+          ?>
+        <li class="<?= $catActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode($cSlug)) ?>" data-filter="<?= e($cSlug) ?>" data-count="<?= (int) ($c['post_count'] ?? 0) ?>" role="tab" aria-selected="<?= $catActive ? 'true' : 'false' ?>"><?= e($c['name']) ?></a></li>
       <?php } ?>
     </ul>
   </div>
@@ -124,45 +122,17 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <section class="articles">
   <div class="container">
     <div class="articles-grid">
-      <?php foreach ($gridPosts as $i => $post) {
-          $cover = (string) ($post['featured_image'] ?? '');
-          $img = preg_match($validImg, $cover) ? e($cover) : 'https://picsum.photos/seed/folio-card-'.($i + 1).'/900/1080';
-          $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
-          $title = e($post['title'] ?? 'Untitled');
-          $cat = trim((string) ($post['category'] ?? 'Post'));
-          $date = e($post['published_at'] ?? '');
-          $author = e($post['author_name'] ?? $ownerName);
-          $minutes = reading_time($post['content'] ?? '');
-          ?>
-      <article class="article reveal" data-category="<?= e(strtolower($cat)) ?>" onclick="location.href='<?= $url ?>'">
-        <div class="article-meta">
-          <span class="cat"><?= sprintf('%02d', $i + 1) ?> &mdash; <?= e($cat) ?></span>
-          <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-        </div>
-        <div class="article-image img-mask">
-          <img src="<?= $img ?>" alt="<?= $title ?>" loading="lazy" />
-          <span class="article-arrow" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </span>
-        </div>
-        <h3 class="article-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
-        <div class="article-byline">
-          <span><?= $author ?></span>
-          <span><?= $minutes ?> Min</span>
-        </div>
-      </article>
-      <?php } ?>
+      {% include "blogs/_index_cards.lex.php" %}
     </div>
 
-    <?php if ($hasMore) { ?>
-    <div class="articles-footer reveal">
-      <span class="filter-count">Showing <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
-      <a href="<?= lurl('/blog/'.$blogSlug.'/archive') ?>" class="link-arrow">
-        Open the full archive
+    <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
+    <div class="articles-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
+      <span class="filter-count" id="index-footer-count">Showing <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
+      <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
+        <span id="index-footer-label">Open the full archive</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
-    <?php } ?>
   </div>
 </section>
 <?php } ?>

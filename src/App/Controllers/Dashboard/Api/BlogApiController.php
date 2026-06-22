@@ -43,6 +43,7 @@ class BlogApiController extends AppController
      */
     public function getDeletionStats(int|string $id): Response
     {
+        $id = (int) $id;
         // fetch the blog
         $blog = $this->blogModel->getBlog($id);
 

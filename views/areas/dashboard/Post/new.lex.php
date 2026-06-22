@@ -24,6 +24,7 @@
 
 {% block scripts %}
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
+<script>window.editorBlogId = <?= (int) ($selected_blog_id ?? 0) ?>;</script>
 <script src="/assets/js/initeditor.js" referrerpolicy="origin"></script>
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="/cp-assets/libs/flatpickr/flatpickr.min.js"></script>
@@ -49,5 +50,72 @@
       });
     }
   });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const excerptField = document.getElementById('excerpt');
+
+  if (!excerptField || typeof tinymce === 'undefined') {
+    return;
+  }
+
+  let isExcerptEdited = false;
+
+  excerptField.addEventListener('input', function () {
+    isExcerptEdited = excerptField.value.trim().length > 0;
+  });
+
+  function getAutoExcerpt(html) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+
+    let element = wrapper.firstElementChild;
+
+    while (element && (element.tagName === 'H1' || element.tagName === 'H2')) {
+      element = element.nextElementSibling;
+    }
+
+    while (element && element.tagName !== 'P') {
+      element = element.nextElementSibling;
+    }
+
+    if (!element) {
+      return '';
+    }
+
+    const text = element.textContent.trim();
+    return text.length > 180 ? text.slice(0, 180).trimEnd() + '...' : text;
+  }
+
+  function syncExcerpt() {
+    if (isExcerptEdited) {
+      return;
+    }
+
+    const editor = tinymce.get('content');
+
+    if (!editor) {
+      return;
+    }
+
+    excerptField.value = getAutoExcerpt(editor.getContent());
+  }
+
+  const bindWhenReady = function () {
+    const editor = tinymce.get('content');
+
+    if (!editor) {
+      setTimeout(bindWhenReady, 100);
+      return;
+    }
+
+    editor.on('keyup change input SetContent', syncExcerpt);
+    editor.on('init', syncExcerpt);
+    syncExcerpt();
+  };
+
+  bindWhenReady();
+});
 </script>
 {% endblock %}

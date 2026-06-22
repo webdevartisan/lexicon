@@ -10,7 +10,8 @@
 $title = e($post['title'] ?? 'Untitled');
   $date = e($post['published_at'] ?? '');
   $author = e($post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''));
-  $cat = e($post['category'] ?? 'Post');
+  $cat = $post['category'] ?? null;
+  $catSlug = $post['category_slug'] ?? null;
   $cover = $post['featured_image'] ?? ($post['cover_url'] ?? null);
   $heroImg = $cover ? e($cover) : null;
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
@@ -19,7 +20,9 @@ $title = e($post['title'] ?? 'Untitled');
 <section class="post-hero">
   <div class="container">
     <div class="post-hero-meta">
-      <span><?= $cat ?></span>
+      <?php if ($cat) { ?>
+        <a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
+      <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
     </div>
 
@@ -50,7 +53,7 @@ $title = e($post['title'] ?? 'Untitled');
     <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
     <div class="post-tags reveal">
       <?php foreach ($post['tags'] as $tag) { ?>
-        <span class="post-tag"><?= e($tag) ?></span>
+        <a class="post-tag" href="<?= lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) $tag['slug'])) ?>"><?= e($tag['name']) ?></a>
       <?php } ?>
     </div>
     <?php } ?>
@@ -109,7 +112,7 @@ $title = e($post['title'] ?? 'Untitled');
           <?= csrf_field() ?>
           <div class="form-field">
             <label for="comment_content">Your comment</label>
-            <textarea id="comment_content" name="content" rows="5" placeholder="Write something thoughtful…" required></textarea>
+            <textarea id="comment_content" name="content" rows="5" maxlength="2000" placeholder="Write something thoughtful…" required></textarea>
           </div>
           <button type="submit" class="btn-submit">
             Post comment

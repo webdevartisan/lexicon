@@ -1,4 +1,4 @@
-{% cache $area . ':sidebar:nav-structure' ttl=3600 %}
+{% cache $area . ':sidebar:nav-structure:' . $selected_blog_id ttl=3600 %}
 <?php
 /**
  * Dashboard Sidebar Navigation
@@ -90,43 +90,51 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
 
 <!-- Contextual Navigation Section - Only shown when blog is selected -->
 <?php if (!empty($contextualItems) && $has_blog_context) { ?>
-    <li class="px-4 py-3 mt-3 text-vertical-menu-item  group-data-[sidebar=brand]:text-vertical-menu-item-brand group-data-[sidebar=modern]:text-vertical-menu-item-modern uppercase font-medium text-[11px] cursor-default tracking-wider group-data-[sidebar-size=sm]:hidden inline-block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:underline group-data-[sidebar-size=md]:text-center">
-        <span>
-            <?php if ($selected_blog) { ?>
-                <?= e($selected_blog->name()) ?>
-            <?php } else { ?>
-                <?= $t('common.blogManagement') ?>
-            <?php } ?>
-        </span>
-    </li>
-
     <?php foreach ($contextualItems as $it) { ?>
         <?php if (($it['type'] ?? 'link') === 'section_header') { ?>
             <!-- Section Header -->
-            <li class="px-4 py-2 mt-2 text-vertical-menu-item  group-data-[sidebar=brand]:text-vertical-menu-item-brand group-data-[sidebar=modern]:text-vertical-menu-item-modern uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden inline-block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
+            <li class="px-4 py-2 mt-2 text-vertical-menu-item  group-data-[sidebar=brand]:text-vertical-menu-item-brand group-data-[sidebar=modern]:text-vertical-menu-item-modern uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
                 <span>
                     <?php
-        // render server-side translation with fallback to label
-        echo !empty($it['key']) ? $t($it['key']) : e($it['label']);
+                        // render server-side translation with fallback to label
+                        echo !empty($it['key']) ? $t($it['key']) : e($it['label']);
             ?>
+                </span>
+            </li>
+        <?php } elseif (!empty($it['disabled'])) { ?>
+            <li class="relative group/sm">
+                <span class="sidebar-menu-item cursor-default opacity-40 select-none"
+                      aria-disabled="true"
+                      title="Coming soon">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>"
+                           class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 fill-slate-100 group-data-[sidebar=dark]:fill-vertical-menu-item-bg-active-dark group-data-[sidebar=dark]:dark:fill-zink-600 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
+                    </span>
+                    <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden inline-flex items-center gap-2">
+                        <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
+                        <?php if (!empty($it['badge'])) { ?>
+                        <span class="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-zink-600 dark:text-zink-200 group-data-[sidebar-size=md]:hidden group-data-[sidebar-size=sm]:hidden">
+                            <?= e($it['badge']) ?>
+                        </span>
+                        <?php } ?>
+                    </span>
                 </span>
             </li>
         <?php } else { ?>
             <!-- Regular Navigation Link -->
             <li class="relative group/sm">
-                <a class="sidebar-menu-item group/menu-link" 
-                   href="<?= e($it['href']) ?>" 
+                <a class="sidebar-menu-item group/menu-link"
+                   href="<?= e($it['href']) ?>"
                    data-nav-path="<?= e(lurl($it['href'])) ?>"
                    >
-                    
+
                     <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
-                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>" 
+                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>"
                            class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 transition group-hover/menu-link:animate-icons fill-slate-100 group-hover/menu-link:fill-blue-200 group-data-[sidebar=dark]:fill-vertical-menu-item-bg-active-dark group-data-[sidebar=dark]:dark:fill-zink-600 group-data-[sidebar=brand]:fill-vertical-menu-item-bg-active-brand group-data-[sidebar=modern]:fill-vertical-menu-item-bg-active-modern group-data-[sidebar=dark]:group-hover/menu-link:fill-vertical-menu-item-bg-active-dark group-data-[sidebar=dark]:group-hover/menu-link:dark:fill-custom-500/20 group-data-[sidebar=brand]:group-hover/menu-link:fill-vertical-menu-item-bg-active-brand group-data-[sidebar=modern]:group-hover/menu-link:fill-vertical-menu-item-bg-active-modern group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
                         <?php
-                // render server-side translation with fallback to label
-                echo !empty($it['key']) ? $t($it['key']) : e($it['label']);
+                            echo !empty($it['key']) ? $t($it['key']) : e($it['label']);
             ?>
                     </span>
                 </a>

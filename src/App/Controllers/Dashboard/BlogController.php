@@ -50,19 +50,51 @@ final class BlogController extends AppController
     {
         $user = auth()->user();
 
+        $q = trim((string) ($this->request->get['q'] ?? ''));
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $sort = (string) ($this->request->get['sort'] ?? 'updated');
+        if (!in_array($sort, ['updated', 'created', 'posts', 'name'], true)) {
+            $sort = 'updated';
+        }
+
         $blogs = $this->blogModel->getBlogsByOwnerWithCounts($user['id']);
 
-        // Merge settings into each blog
+        // Merge settings into each blog (banner/logo/theme/locale live there)
         $blogs = array_map(function (array $blog): array {
             $settings = $this->settings->findByBlogId((int) $blog['id']);
 
             return array_merge($blog, $settings ?? []);
         }, $blogs);
 
+        // Owner's blogs are few, so filter/sort in PHP rather than re-querying.
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $blogs = array_filter($blogs, static function (array $b) use ($needle): bool {
+                return str_contains(mb_strtolower((string) ($b['blog_name'] ?? '')), $needle)
+                    || str_contains(mb_strtolower((string) ($b['blog_slug'] ?? '')), $needle)
+                    || str_contains(mb_strtolower((string) ($b['description'] ?? '')), $needle);
+            });
+        }
+
+        if (in_array($status, ['draft', 'published', 'archived'], true)) {
+            $blogs = array_filter($blogs, static fn (array $b): bool => ($b['status'] ?? '') === $status);
+        }
+
+        usort($blogs, static function (array $a, array $b) use ($sort): int {
+            return match ($sort) {
+                'created' => strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? '')),
+                'posts' => ((int) ($b['post_count'] ?? 0)) <=> ((int) ($a['post_count'] ?? 0)),
+                'name' => strcasecmp((string) ($a['blog_name'] ?? ''), (string) ($b['blog_name'] ?? '')),
+                default => strcmp((string) ($b['updated_at'] ?? ''), (string) ($a['updated_at'] ?? '')),
+            };
+        });
+
         return $this->view([
-            'blogs' => $blogs,
-            'status' => 'draft',
-            'sort' => 'created',
+            'blogs' => array_values($blogs),
+            'q' => $q,
+            'status' => $status,
+            'sort' => $sort,
+            'selectedBlogId' => (int) ($this->preference->getDefaultBlogId((int) $user['id']) ?? 0),
         ]);
     }
 
@@ -344,11 +376,37 @@ final class BlogController extends AppController
 
         $settings = $this->settings->findByBlogId((int) $id);
 
+        // Per-status counts so the overview can show what's where without
+        // requiring the user to click through to All Posts.
+        $statusCount = fn (string $status): int => (int) $this->post
+            ->findByAuthorWithFiltersPagination(
+                authorId: (int) $user['id'], page: 1, perPage: 1,
+                blogId: (int) $id, status: $status
+            )['pagination']['total_records'];
+
+        $stats = [
+            'published' => $statusCount('published'),
+            'draft' => $statusCount('draft'),
+            'pending' => $statusCount('pending'),
+            'archived' => $statusCount('archived'),
+            // Approved = public engagement; pending = actionable moderation queue.
+            'comments' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'approved'),
+            'comments_pending' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'pending'),
+        ];
+        $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
+
+        // Recent posts in THIS blog only.
+        $recent = $this->post->findByAuthorWithFiltersPagination(
+            authorId: (int) $user['id'], page: 1, perPage: 6,
+            blogId: (int) $id, status: 'published'
+        )['data'];
+
         return $this->view([
             'user' => $user,
             'blog' => $blog->toArray(),
-            'posts' => $blog->posts(),
             'settings' => $settings,
+            'stats' => $stats,
+            'recent' => $recent,
         ]);
     }
 

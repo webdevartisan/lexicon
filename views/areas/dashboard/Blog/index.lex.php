@@ -1,207 +1,169 @@
 {% extends "back.lex.php" %}
-
-{% block title %}My Blogs{% endblock %}
-{% block subtitle %}Manage, preview, and publish your blogs.{% endblock %}
-
+{% block title %}All Blogs{% endblock %}
+{% block subtitle %}Create, manage, and switch between your blogs.{% endblock %}
 {% block body %}
-<div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
-  <!-- Filters -->
-  <section class="mb-4">
-    <div class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
-      <div class="p-4 md:p-5">
-        <form method="get" action="" class="grid gap-3 md:grid-cols-4 md:items-end">
-          <div class="md:col-span-2">
-            <label for="q" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
-              Search
-            </label>
-            <input
-              id="q"
-              name="q"
-              type="text"
-              value="{{ q }}"
-              class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100"
-              placeholder="Search by name or URL">
-          </div>
+<?php
+$statusBadge = [
+    'published' => ['bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800', 'Published'],
+    'draft' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'Draft'],
+    'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', 'Archived'],
+];
+?>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
-          <div>
-            <label for="status" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 bg-white text-slate-900 focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
-              <option value="">Any</option>
-              <option value="draft" {% if ($status === 'draft'): %}selected{% endif %}>Draft</option>
-              <option value="published" {% if ($status === 'published'): %}selected{% endif %}>Published</option>
-              <option value="archived" {% if ($status === 'archived'): %}selected{% endif %}>Archived</option>
+    <!-- Toolbar: filters + create -->
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between mb-5">
+        <form method="GET" action="/dashboard/blog" class="grid grid-cols-1 sm:grid-cols-3 gap-3 grow max-w-2xl">
+            <div class="sm:col-span-3 lg:col-span-1 relative">
+                <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                <input id="q" name="q" type="text" value="{{ q }}"
+                    placeholder="Search blogs..."
+                    class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+            </div>
+            <select name="status" class="form-input border-slate-200 dark:border-zink-500" onchange="this.form.submit()">
+                <option value="">Any status</option>
+                <option value="published" <?= $status === 'published' ? 'selected' : '' ?>>Published</option>
+                <option value="draft" <?= $status === 'draft' ? 'selected' : '' ?>>Draft</option>
+                <option value="archived" <?= $status === 'archived' ? 'selected' : '' ?>>Archived</option>
             </select>
-          </div>
-
-          <div>
-            <label for="sort" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
-              Sort
-            </label>
-            <select
-              id="sort"
-              name="sort"
-              class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 bg-white text-slate-900 focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
-              <option value="updated" {% if ($sort === 'updated'): %}selected{% endif %}>Last updated</option>
-              <option value="created" {% if ($sort === 'created'): %}selected{% endif %}>Date created</option>
-              <option value="posts" {% if ($sort === 'posts'): %}selected{% endif %}>Post count</option>
+            <select name="sort" class="form-input border-slate-200 dark:border-zink-500" onchange="this.form.submit()">
+                <option value="updated" <?= $sort === 'updated' ? 'selected' : '' ?>>Last updated</option>
+                <option value="created" <?= $sort === 'created' ? 'selected' : '' ?>>Date created</option>
+                <option value="posts" <?= $sort === 'posts' ? 'selected' : '' ?>>Most posts</option>
+                <option value="name" <?= $sort === 'name' ? 'selected' : '' ?>>Name (A–Z)</option>
             </select>
-          </div>
-
-          <div class="md:col-span-4 flex justify-end">
-            <button
-              type="submit"
-              class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium transition-all duration-150 ease-linear border rounded-md md:w-auto text-slate-700 bg-slate-100 border-slate-200 hover:bg-slate-200 hover:text-slate-800 focus:outline-none focus:ring focus:ring-slate-100 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600 dark:hover:bg-zink-700">
-              Apply
-            </button>
-          </div>
         </form>
-      </div>
+
+        <div class="shrink-0">
+            {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="Create New Blog" %}
+        </div>
     </div>
-  </section>
 
-  <!-- Empty state -->
-  {% if blogs|empty %}
-    <section class="flex flex-col items-center justify-center py-16 text-center bg-white border border-dashed rounded-lg border-slate-200 dark:bg-zink-700 dark:border-zink-600">
-      <div class="mb-4">
-        <p class="mb-1 text-lg font-semibold text-slate-900 dark:text-zink-100">No blogs yet</p>
-        <p class="text-sm text-slate-500 dark:text-zink-300">
-          Create your first blog to start publishing.
-        </p>
-      </div>
-      <a href="/dashboard/blogs/new"
-         class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 ease-linear bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 hover:border-custom-600 focus:outline-none focus:ring focus:ring-custom-100">
-        <i class="fas fa-plus text-xs"></i>
-        <span>Create Blog</span>
-      </a>
-    </section>
-
-  {% else %}
-    <!-- Results -->
-    <section class="mb-6">
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    {% if blogs|empty %}
+    <div class="card">
+        <div class="card-body text-center py-16">
+            <i data-lucide="book-open" class="size-12 text-slate-400 mx-auto mb-3"></i>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">
+                <?php if ($q !== '' || $status !== '') { ?>
+                    No blogs match your filters
+                <?php } else { ?>
+                    No blogs yet
+                <?php } ?>
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-zink-300 mb-5">
+                <?php if ($q !== '' || $status !== '') { ?>
+                    Try a different search or clear the status filter.
+                <?php } else { ?>
+                    Create your first blog to start publishing.
+                <?php } ?>
+            </p>
+            <div class="flex items-center justify-center gap-2">
+                {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="Create New Blog" %}
+                <?php if ($q !== '' || $status !== '') { ?>
+                <a href="/dashboard/blog" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                    <i data-lucide="x" class="size-4"></i> Clear filters
+                </a>
+                <?php } ?>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {% foreach ($blogs as $blog): %}
-        <div>
-          <article class="flex flex-col h-full overflow-hidden bg-white border rounded-lg shadow-sm border-slate-200 dark:bg-zink-700 dark:border-zink-600">
-            {% if blog.banner_path|isset %}
-            <a href="/dashboard/blogs/{{ blog.id }}/show" class="relative block overflow-hidden aspect-[21/9]">
-              <img
-                src="{{ blog.banner_path }}"
-                alt="{{ blog.blog_name }} cover"
-                class="object-cover w-full h-full">
+        <?php
+            $bid = (int) $blog['id'];
+$isActive = ($bid === (int) $selectedBlogId);
+$bStatus = $blog['status'] ?? 'draft';
+[$badgeClass, $badgeLabel] = $statusBadge[$bStatus] ?? $statusBadge['draft'];
+?>
+        <div class="card flex flex-col h-full <?= $isActive ? 'ring-1 ring-custom-500 border-custom-500' : '' ?>">
+            <!-- Banner / placeholder -->
+            <a href="/dashboard/blog/<?= $bid ?>/show" class="relative block overflow-hidden rounded-t-md aspect-[21/8] bg-slate-100 dark:bg-zink-600">
+                <?php if (!empty($blog['banner_path'])) { ?>
+                <img src="<?= e($blog['banner_path']) ?>" alt="<?= e($blog['blog_name']) ?> banner" class="object-cover w-full h-full">
+                <?php } else { ?>
+                <span class="flex items-center justify-center w-full h-full text-slate-300 dark:text-zink-500">
+                    <i data-lucide="image" class="size-8"></i>
+                </span>
+                <?php } ?>
+                <?php if ($isActive) { ?>
+                <span class="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-custom-500 text-white shadow">
+                    <i data-lucide="check" class="size-3"></i> Active
+                </span>
+                <?php } ?>
+                <span class="absolute top-2 right-2 inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
+                    <?= e($badgeLabel) ?>
+                </span>
             </a>
-            {% endif %}
 
-            <div class="flex-1 p-4 md:p-5">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <h2 class="mb-1 text-sm font-semibold leading-5 text-slate-900 dark:text-zink-100">
-                    <a href="/dashboard/blogs/{{ blog.id }}/show"
-                       class="transition-colors duration-150 hover:text-custom-500">
-                      {{ blog.blog_name }}
+            <div class="card-body flex flex-col flex-1">
+                <h2 class="text-15 font-semibold mb-1">
+                    <a href="/dashboard/blog/<?= $bid ?>/show" class="hover:text-custom-500 transition-colors">
+                        <?= e($blog['blog_name']) ?>
                     </a>
-                  </h2>
-                  <p class="text-xs text-slate-500 truncate dark:text-zink-300">
-                    {{ blog.url }}
-                  </p>
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-zink-300 mb-2 truncate">
+                    /blog/<?= e($blog['blog_slug'] ?? '') ?>
+                </p>
+
+                <?php if (!empty($blog['description'])) { ?>
+                <p class="text-sm text-slate-500 dark:text-zink-200 line-clamp-2 flex-1">
+                    <?= e(truncate(strip_tags((string) $blog['description']), 140)) ?>
+                </p>
+                <?php } else { ?>
+                <p class="text-sm italic text-slate-400 dark:text-zink-300 flex-1">No description yet.</p>
+                <?php } ?>
+
+                <!-- Meta -->
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[11px] text-slate-500 dark:text-zink-300">
+                    <span class="inline-flex items-center gap-1"><i data-lucide="files" class="size-3"></i> <?= (int) ($blog['post_count'] ?? 0) ?> posts</span>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="users" class="size-3"></i> <?= (int) ($blog['author_count'] ?? 0) ?> collaborators</span>
+                    <?php if (!empty($blog['updated_at'])) { ?>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="size-3"></i> <?= e(date('M j, Y', strtotime((string) $blog['updated_at']))) ?></span>
+                    <?php } ?>
                 </div>
 
-                <div class="shrink-0">
-                  <?php if ($blog['status'] === 'published') { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/40 dark:border-green-800">
-                      Published
-                    </span>
-                  <?php } elseif ($blog['status'] === 'draft') { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600">
-                      Draft
-                    </span>
-                  <?php } elseif ($blog['status'] === 'archived') { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-slate-800 text-slate-100 border border-slate-900">
-                      Archived
-                    </span>
-                  <?php } ?>
+                <!-- Actions -->
+                <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
+                    <div class="flex items-center gap-1">
+                        <a href="/dashboard/blog/<?= $bid ?>/show" title="Overview"
+                            class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
+                            <i data-lucide="layout-grid" class="size-4"></i> Open
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-0.5">
+                        <?php if (!$isActive) { ?>
+                        <form method="POST" action="/dashboard/setDefaultBlog" class="m-0">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="blog" value="<?= $bid ?>">
+                            <button type="submit" title="Set as active blog"
+                                class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+                                <i data-lucide="check-circle-2" class="size-4"></i>
+                            </button>
+                        </form>
+                        <?php } ?>
+                        <a href="/dashboard/blog/<?= $bid ?>/edit" title="Blog settings"
+                            class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
+                            <i data-lucide="sliders" class="size-4"></i>
+                        </a>
+                        <a href="/dashboard/blog/<?= $bid ?>/users" title="Collaborators"
+                            class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
+                            <i data-lucide="users" class="size-4"></i>
+                        </a>
+                        <a href="/blog/<?= e($blog['blog_slug'] ?? '') ?>" target="_blank" rel="noopener" title="View live"
+                            class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
+                            <i data-lucide="external-link" class="size-4"></i>
+                        </a>
+                    </div>
                 </div>
-              </div>
-
-              {% if blog.description|isset %}
-              <p class="mt-2 text-sm leading-5 text-slate-600 line-clamp-3 dark:text-zink-200">
-                <?= e(truncate(strip_tags($blog['description']), 160)); ?>
-              </p>
-              {% endif %}
-
-              <div class="flex flex-wrap gap-2 mt-4">
-                <a href="/dashboard/blogs/{{ blog.id }}/edit"
-                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-linear border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring focus:ring-slate-100 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600 dark:hover:bg-zink-700">
-                  <i class="fas fa-pen text-[11px]"></i>
-                  <span>Edit</span>
-                </a>
-
-                <a href="/dashboard/blogs/{{ blog.id }}/show"
-                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-linear border rounded-md text-custom-600 bg-custom-50 border-custom-100 hover:bg-custom-100 hover:text-custom-700 focus:outline-none focus:ring focus:ring-custom-100">
-                  <i class="fas fa-eye text-[11px]"></i>
-                  <span>View</span>
-                </a>
-
-                <a href="/dashboard/blogs/{{ blog.id }}/users"
-                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-linear border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring focus:ring-slate-100 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600 dark:hover:bg-zink-700">
-                  <i class="fas fa-users text-[11px]"></i>
-                  <span>Manage Team</span>
-                </a>
-
-                <form
-                  method="post"
-                  action="/dashboard/blogs/{{ blog.id }}/delete"
-                  onsubmit="return confirm('Delete this blog?');">
-                  <input type="hidden" name="_method" value="DELETE">
-                  <input type="hidden" name="_token" value="{{ csrf_token }}">
-                  <button
-                    type="submit"
-                    class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 transition-all duration-150 ease-linear bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring focus:ring-red-100">
-                    <i class="fas fa-trash text-[11px]"></i>
-                    <span>Delete</span>
-                  </button>
-                </form>
-              </div>
             </div>
-
-            <div class="flex items-center justify-between px-4 py-3 text-xs border-t bg-slate-50 border-slate-200 dark:bg-zink-800 dark:border-zink-600">
-              <span class="text-slate-500 dark:text-zink-300">
-                Updated {{ blog.updated_at }}
-              </span>
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-custom-50 text-custom-700 border border-custom-100">
-                  {{ blog.post_count }} posts
-                </span>
-                {% if blog.follower_count|isset %}
-                <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200">
-                  {{ blog.follower_count }} followers
-                </span>
-                {% endif %}
-              </div>
-            </div>
-          </article>
         </div>
         {% endforeach %}
-      </div>
-
-      <!-- Pagination placeholder -->
-      <!-- Dev note: We should replace this with a shared pagination partial so we do not duplicate pagination markup across views. -->
-    </section>
-  {% endif %}
-
-  <div class="flex flex-col gap-2 py-4 md:flex-row md:items-center">
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="/dashboard/blogs/new"
-         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-all duration-150 ease-linear bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 hover:border-custom-600 focus:outline-none focus:ring focus:ring-custom-100">
-        <i data-lucide="book-plus"></i>
-        <span>Create New Blog</span>
-      </a>
     </div>
-  </div>
+    {% endif %}
 
 </div>
+{% endblock %}
+{% block scripts %}
+<script src='/cp-assets/js/tooltip.js'></script>
 {% endblock %}
