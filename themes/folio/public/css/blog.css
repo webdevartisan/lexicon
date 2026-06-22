@@ -70,9 +70,9 @@
   .filter-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h2); margin: 0; }
   .filter-count { font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
   .filter-list { list-style: none; margin: var(--step-3) 0 0; padding: 0; display: flex; gap: var(--step-2); flex-wrap: wrap; }
-  .filter-list button { font-family: var(--sans); font-size: var(--type-small); letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; padding: 0.65rem 1.1rem; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-soft); transition: color 0.4s, border-color 0.4s, background 0.4s; cursor: pointer; }
-  .filter-list li.is-active button { color: var(--bone); background: var(--ink); border-color: var(--ink); }
-  .filter-list button:hover { border-color: var(--ink); }
+  .filter-list li a { display: inline-block; text-decoration: none; font-family: var(--sans); font-size: var(--type-small); letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; padding: 0.65rem 1.1rem; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-soft); transition: color 0.4s, border-color 0.4s, background 0.4s; cursor: pointer; }
+  .filter-list li.is-active a { color: var(--bone); background: var(--ink); border-color: var(--ink); }
+  .filter-list li a:hover { border-color: var(--ink); }
 
   .longread { padding: var(--step-7) 0; border-top: 1px solid var(--ink); background: var(--bone); }
   .longread .grid-12 { row-gap: var(--step-5); align-items: start; }

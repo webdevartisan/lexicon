@@ -269,6 +269,7 @@ if ($q !== '') {
                     <input
                         type="checkbox"
                         name="post_ids[]"
+                        form="bulk-form"
                         value="<?= e((string) $post['id']) ?>"
                         aria-label="Select post: <?= e((string) ($post['title'] ?? '')) ?>"
                         class="bulk-checkbox form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-2 focus:ring-custom-500 focus:ring-offset-1"

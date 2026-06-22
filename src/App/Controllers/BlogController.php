@@ -107,10 +107,26 @@ class BlogController extends AppController
             array_unshift($posts, $featured);
         }
 
+        // Optional ?category= filter so a filtered grid is bookmarkable and reload-safe.
+        // The headline stays put; only the grid below reacts.
+        $activeCategory = trim((string) ($this->request->get['category'] ?? ''));
+        if ($activeCategory !== '') {
+            $category = $this->categoryModel->findBySlugInBlog($blogId, $activeCategory);
+            if ($category) {
+                $headline = $posts[0] ?? null;
+                $headlineId = isset($headline['id']) ? (int) $headline['id'] : null;
+                $grid = $this->postModel->findPublishedByBlogAndCategory($blogId, (int) $category['id'], 6, $headlineId);
+                $posts = $headline !== null ? array_merge([$headline], $grid) : $grid;
+            } else {
+                $activeCategory = '';
+            }
+        }
+
         return $this->view('Blogs/show.lex.php', $ctx + [
             'posts' => $this->enrichCardPosts($posts),
             'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
             'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
+            'activeCategory' => $activeCategory,
         ]);
     }
 

@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function updateFooter(li) {
       if (!footer || !footerLink) return;
-      var b = li.querySelector("button");
+      var b = li.querySelector("a");
       var filter = b ? (b.getAttribute("data-filter") || "") : "";
       var count = b ? parseInt(b.getAttribute("data-count") || "0", 10) : 0;
       var name = b ? b.textContent.trim() : "";
@@ -62,20 +62,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     pills.forEach(function (li) {
-      li.addEventListener("click", function () {
-        var btn = li.querySelector("button");
-        if (!btn || li.classList.contains("is-active")) return;
+      li.addEventListener("click", function (e) {
+        var btn = li.querySelector("a");
+        if (!btn) return;
+        e.preventDefault();
+        if (li.classList.contains("is-active")) return;
         var filter = btn.getAttribute("data-filter") || "";
 
         pills.forEach(function (other) {
           other.classList.toggle("is-active", other === li);
-          var b = other.querySelector("button");
+          var b = other.querySelector("a");
           if (b) b.setAttribute("aria-selected", other === li ? "true" : "false");
         });
 
         // Swap in this category's cards (or recent for "All") without a reload.
         var base = window.location.pathname.replace(/\/+$/, "");
         var url = base + "/index-feed" + (filter ? "?category=" + encodeURIComponent(filter) : "");
+
+        // Reflect the filter in the address bar so it's shareable and the back button works.
+        window.history.pushState({ category: filter }, "", base + (filter ? "?category=" + encodeURIComponent(filter) : ""));
 
         grid.style.opacity = "0.35";
         fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
@@ -94,6 +99,13 @@ document.addEventListener("DOMContentLoaded", function () {
           .catch(function () { grid.style.opacity = ""; });
       });
     });
+
+    // Keep the grid in step with the URL on back/forward.
+    window.addEventListener("popstate", function () { window.location.reload(); });
+
+    // Arrived with ?category= already applied — sync the "see all" footer to the active pill.
+    var initialActive = filterList.querySelector("li.is-active");
+    if (initialActive) updateFooter(initialActive);
   }
 
   if (window.gsap && !reduce) {

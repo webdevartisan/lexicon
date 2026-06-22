@@ -107,9 +107,13 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
-      <li class="is-active"><button type="button" data-filter="" role="tab" aria-selected="true">All</button></li>
-      <?php foreach (($categories ?? []) as $c) { ?>
-        <li><button type="button" data-filter="<?= e((string) ($c['slug'] ?? '')) ?>" data-count="<?= (int) ($c['post_count'] ?? 0) ?>" role="tab" aria-selected="false"><?= e($c['name']) ?></button></li>
+      <?php $allActive = ($activeCategory ?? '') === ''; ?>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All</a></li>
+      <?php foreach (($categories ?? []) as $c) {
+          $cSlug = (string) ($c['slug'] ?? '');
+          $catActive = ($activeCategory ?? '') === $cSlug;
+          ?>
+        <li class="<?= $catActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode($cSlug)) ?>" data-filter="<?= e($cSlug) ?>" data-count="<?= (int) ($c['post_count'] ?? 0) ?>" role="tab" aria-selected="<?= $catActive ? 'true' : 'false' ?>"><?= e($c['name']) ?></a></li>
       <?php } ?>
     </ul>
   </div>
