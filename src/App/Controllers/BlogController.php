@@ -169,6 +169,7 @@ class BlogController extends AppController
         $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
 
         dd($cards);
+
         return $this->view('Blogs/_index_cards.lex.php', [
             'cards' => $this->enrichCardPosts($cards),
             'blog' => $ctx['blog'],
@@ -180,10 +181,9 @@ class BlogController extends AppController
      * Attach display taxonomy (category name + slug, tag name/slug pairs) to a
      * list of post rows, so the card markup can render it. Shared by the landing
      * and the AJAX feed.
-     * 
-     * @param array<int, array<string, mixed>> $posts
-     * @return array<int, array<string, mixed>>
      *
+     * @param  array<int, array<string, mixed>>  $posts
+     * @return array<int, array<string, mixed>>
      */
     private function enrichCardPosts(array $posts): array
     {
