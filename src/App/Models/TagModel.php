@@ -153,9 +153,6 @@ class TagModel extends AppModel
     /**
      * Replace a post's tag set with the given names (find-or-create per blog).
      *
-     * This is what the post editor calls on save: it diffs the desired tags
-     * against what's attached and only touches what changed.
-     *
      * @param  string[]  $names  Tag names typed by the author
      * @return bool True if the post's tag set actually changed
      */

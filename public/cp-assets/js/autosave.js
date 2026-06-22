@@ -13,12 +13,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('[data-autosave-form]');
         if (!form) {
-            log('⚠️ No autosave form found');
+            log('No autosave form found');
             return;
         }
         
         if (form.action.includes('/delete') || form.action.includes('/destroy')) {
-            log('⏭️ Skipping autosave on delete page');
+            log('Skipping autosave on delete page');
             return;
         }
         
@@ -39,14 +39,14 @@
         autosaveFields.forEach(fieldName => {
             const field = form.querySelector(`[name="${fieldName}"]`);
             if (!field) {
-                log(`⚠️ Field "${fieldName}" not found`);
+                log(`Field "${fieldName}" not found`);
                 return;
             }
             
             const eventType = field.readOnly ? 'change' : 'input';
             
             field.addEventListener(eventType, () => {
-                log(`📝 Field "${fieldName}" changed`);
+                log(`Field "${fieldName}" changed`);
                 clearFieldError(fieldName);
                 clearTimeout(autosaveTimer);
                 autosaveTimer = setTimeout(() => {
@@ -56,7 +56,7 @@
                             isSaving = false;
                         });
                     } else {
-                        log('⏸️ Save already in progress, skipping');
+                        log('Save already in progress, skipping');
                     }
                 }, AUTOSAVE_DELAY);
             });
@@ -66,7 +66,7 @@
         const statusRadios = form.querySelectorAll('[name="status"]');
         statusRadios.forEach(radio => {
             radio.addEventListener('change', () => {
-                log('📝 Status changed to:', radio.value);
+                log('Status changed to:', radio.value);
                 clearTimeout(autosaveTimer);
                 autosaveTimer = setTimeout(() => {
                     if (!isSaving) {
@@ -86,31 +86,31 @@
                     isSaving = false;
                 });
             } else {
-                log('⏸️ Save already in progress, skipping');
+                log('Save already in progress, skipping');
             }
         });
         
-        log('✅ Autosave enabled');
+        log('Autosave enabled');
     }
 
     function setupTinyMCEAutosave(form, saveCallback) {
-        log('🔍 Looking for TinyMCE...');
+        log('Looking for TinyMCE...');
         
         const checkTinyMCE = setInterval(() => {
             if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
                 const editor = tinymce.get('content');
                 
                 editor.on('KeyUp', function() {
-                    log('⌨️ TinyMCE KeyUp event');
+                    log('TinyMCE KeyUp event');
                     clearTimeout(autosaveTimer);
                     autosaveTimer = setTimeout(() => {
                         editor.save();
-                        log('💾 TinyMCE content synced to textarea');
+                        log('TinyMCE content synced to textarea');
                         saveCallback();
                     }, AUTOSAVE_DELAY);
                 });
                 
-                log('✅ TinyMCE autosave enabled');
+                log('TinyMCE autosave enabled');
                 clearInterval(checkTinyMCE);
             }
         }, 100);
@@ -118,7 +118,7 @@
         setTimeout(() => {
             clearInterval(checkTinyMCE);
             if (typeof tinymce === 'undefined' || !tinymce.get('content')) {
-                log('⚠️ TinyMCE not found after 5 seconds');
+                log('TinyMCE not found after 5 seconds');
             }
         }, 5000);
     }
@@ -130,12 +130,12 @@
         const urlMatch = actionUrl.match(/\/post\/(\d+)\//);
         const postId = urlMatch ? urlMatch[1] : null;
         
-        log('🔍 Form action:', actionUrl);
-        log('🔍 Extracted post ID:', postId);
+        log('Form action:', actionUrl);
+        log('Extracted post ID:', postId);
         
         if (postId) {
             formData.append('id', postId);
-            log('📤 Sending id:', postId);
+            log('Sending id:', postId);
         }
         
         // Regular text/textarea fields
@@ -145,7 +145,7 @@
             const field = form.querySelector(`[name="${fieldName}"]`);
             if (field && field.value) {
                 formData.append(fieldName, field.value);
-                log(`📤 Sending ${fieldName}:`, field.value.substring(0, 50));
+                log(`Sending ${fieldName}:`, field.value.substring(0, 50));
             }
         });
 
@@ -153,15 +153,15 @@
         const statusRadio = form.querySelector('[name="status"]:checked');
         if (statusRadio) {
             formData.append('status', statusRadio.value);
-            log('📤 Sending status:', statusRadio.value);
+            log('Sending status:', statusRadio.value);
         }
 
         if (!formData.get('title') && !formData.get('content')) {
-            log('⏭️ Skipping autosave - no title or content');
+            log('Skipping autosave - no title or content');
             return Promise.resolve();
         }
         
-        log('🚀 Starting autosave request...');
+        log('Starting autosave request...');
         showSaveIndicator('Saving...', 'pending');
         
         return fetch('/dashboard/post/autosave', {
@@ -172,8 +172,8 @@
             }
         })
         .then(res => {
-            log('📥 Response status:', res.status);
-            log('📥 Response URL:', res.url);
+            log('Response status:', res.status);
+            log('Response URL:', res.url);
             
             const clonedRes = res.clone();
             
@@ -195,7 +195,7 @@
             });
         })
         .then(data => {
-            log('✅ Response data:', data);
+            log('Response data:', data);
             
             if (data.success) {
                 showSaveIndicator('Auto-saved at ' + data.saved_at, 'success');
@@ -204,10 +204,10 @@
                 if (data.id && !postId) {
                     const newAction = form.action.replace('/create', '/' + data.id + '/update');
                     form.action = newAction;
-                    log('🔄 Form action updated to:', newAction);
+                    log('Form action updated to:', newAction);
                 }
             } else {
-                console.error('❌ Not Saved:', data.error);
+                console.error('Not Saved:', data.error);
                 
                 if (data.errors) {
                     log('📝 Showing field errors:', data.errors);
@@ -218,7 +218,7 @@
             }
         })
         .catch(err => {
-            console.error('❌ Autosave error:', err);
+            console.error('Autosave error:', err);
             showSaveIndicator('Save failed', 'error');
         });
     }
@@ -252,12 +252,12 @@
     function showFieldErrors(errors) {
         clearFieldErrors();
         
-        log('📝 Showing validation errors:', errors);
+        log('Showing validation errors:', errors);
         
         Object.keys(errors).forEach(fieldName => {
             const field = document.querySelector(`[name="${fieldName}"]`);
             if (!field) {
-                log(`⚠️ Field "${fieldName}" not found for error display`);
+                log(`Field "${fieldName}" not found for error display`);
                 return;
             }
             
@@ -274,7 +274,7 @@
             
             field.parentNode.insertBefore(errorDiv, field.nextSibling);
             
-            log(`✅ Error shown for field "${fieldName}":`, firstError);
+            log(`Error shown for field "${fieldName}":`, firstError);
         });
     }
 
@@ -310,7 +310,7 @@
             if (indicator) {
                 indicator.style.display = 'none';
             }
-            log('🔄 Page restored - autosave reset');
+            log('Page restored - autosave reset');
         }
     });
 })();

@@ -214,11 +214,11 @@ final class PostController extends AppController
         Gate::authorize('createPost', $blog, $user);
 
         $validator = $this->validateOrFail([
-            'title' => 'required|title|min:2|max:50',
-            'slug' => 'required|slug|min:2|max:50|unique:posts,slug',
+            'title' => 'required|title|min:2|max:100',
+            'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:30000',
-            'excerpt' => 'required|max:200',
+            'content' => 'required|max:60000',
+            'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
         ]);
@@ -416,16 +416,19 @@ final class PostController extends AppController
         Gate::authorize('update', $post, $user);
 
         $validator = $this->validateOrFail([
-            'title' => 'required|title|min:2|max:50',
+            'title' => 'required|title|min:2|max:100',
             'status' => 'in:'.implode(',', PostModel::STATUSES),
-            'content' => 'required|max:30000',
-            'excerpt' => 'required|max:200',
+            'content' => 'required|max:60000',
+            'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
             'remove_featured_image' => 'boolean',
+            'comments_enabled' => 'boolean',
         ]);
 
         $newData = $validator->validated();
+        $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0; 
+
         $timezone = $newData['timezone'] ?? 'UTC';
 
         // Normalize published_at to UTC for comparison
@@ -508,7 +511,8 @@ final class PostController extends AppController
 
         // Tags sync independently of the field diff above.
         $tagsChanged = $this->tagModel->syncForPost((int) $id, $blogId, $this->parsePostTags());
-        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured']));
+
+        $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); //TODO: optimize security
 
         // Update if changes detected
         if (!empty($data)) {
@@ -580,7 +584,7 @@ final class PostController extends AppController
             return $this->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
-        $slugRule = 'slug|min:2|max:50|unique:posts,slug';
+        $slugRule = 'slug|min:2|max:100|unique:posts,slug';
         if (!empty($this->request->post['id'])) {
             $slugRule .= ','.(int) $this->request->post['id'];
         }
@@ -589,11 +593,11 @@ final class PostController extends AppController
             $validator = $this->validator($this->request->post);
             $validator->rules([
                 'id' => 'integer',
-                'title' => 'required|title|min:2|max:50',
+                'title' => 'required|title|min:2|max:100',
                 'slug' => $slugRule,
                 'status' => 'in:'.implode(',', PostModel::STATUSES),
-                'content' => 'required|max:10000',
-                'excerpt' => 'required|max:200',
+                'content' => 'required|max:60000',
+                'excerpt' => 'required|max:300',
                 'timezone' => 'timezone',
                 'published_at' => 'datetime:d.m.y H:i',
             ]);
