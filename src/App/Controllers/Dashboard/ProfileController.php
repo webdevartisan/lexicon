@@ -72,8 +72,11 @@ class ProfileController extends AppController
             'display_name' => 'in:name,username',
             'default_visibility' => 'in:public,private,unlisted',
             'timezone' => 'in:'.implode(',', DateTimeZone::listIdentifiers()),
-            'notify_comments' => 'boolean',
-            'notify_likes' => 'boolean',
+            'notify_comments'    => 'boolean',
+            'notify_likes'       => 'boolean',
+            'notify_post_status' => 'boolean',
+            'notify_role_changes' => 'boolean',
+            'notify_invites'     => 'boolean',
         ], [
             'email.unique' => 'This email address is already in use.',
             'timezone.in' => 'Please select a valid timezone.',
@@ -110,9 +113,12 @@ class ProfileController extends AppController
         $prefData = [
             'display_name_preference' => $validated['display_name'] ?? 'username',
             'default_post_visibility' => $validated['default_visibility'] ?? 'public',
-            'timezone' => $validated['timezone'] ?? null,
-            'notify_comments' => isset($validated['notify_comments']) ? 1 : 0,
-            'notify_likes' => isset($validated['notify_likes']) ? 1 : 0,
+            'timezone'                => $validated['timezone'] ?? null,
+            'notify_comments'         => isset($validated['notify_comments']) ? 1 : 0,
+            'notify_likes'            => isset($validated['notify_likes']) ? 1 : 0,
+            'notify_post_status'      => (int) (bool) ($this->request->postParam('notify_post_status') ?? 0),
+            'notify_role_changes'     => (int) (bool) ($this->request->postParam('notify_role_changes') ?? 0),
+            'notify_invites'          => (int) (bool) ($this->request->postParam('notify_invites') ?? 0),
         ];
         $this->prefs->upsert($userId, $prefData);
 
@@ -368,12 +374,11 @@ class ProfileController extends AppController
         $enriched['timezone'] = $data['timezone'] ?? 'UTC';
 
         // default notification preferences to enabled
-        $enriched['notify_comments'] = isset($data['notify_comments'])
-            ? (int) $data['notify_comments']
-            : 1;
-        $enriched['notify_likes'] = isset($data['notify_likes'])
-            ? (int) $data['notify_likes']
-            : 1;
+        $enriched['notify_comments']    = isset($data['notify_comments'])    ? (int) $data['notify_comments']    : 1;
+        $enriched['notify_likes']       = isset($data['notify_likes'])       ? (int) $data['notify_likes']       : 1;
+        $enriched['notify_post_status'] = isset($data['notify_post_status']) ? (int) $data['notify_post_status'] : 1;
+        $enriched['notify_role_changes'] = isset($data['notify_role_changes']) ? (int) $data['notify_role_changes'] : 1;
+        $enriched['notify_invites']     = isset($data['notify_invites'])     ? (int) $data['notify_invites']     : 1;
 
         // use denormalized counts if available, otherwise compute them
         $enriched['post_count'] = $data['posts_count']

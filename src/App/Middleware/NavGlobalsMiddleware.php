@@ -7,7 +7,7 @@ namespace App\Middleware;
 use App\Auth;
 use App\Gate;
 use App\Models\BlogModel;
-use App\Models\CommentModel;
+use App\Models\NotificationModel;
 use App\Models\UserPreferencesModel;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -47,6 +47,11 @@ class NavGlobalsMiddleware
     private BlogModel $blogModel;
 
     /**
+     * @var NotificationModel Notification model
+     */
+    private NotificationModel $notificationModel;
+
+    /**
      * Constructor
      *
      * inject all dependencies needed to determine navigation context.
@@ -56,23 +61,22 @@ class NavGlobalsMiddleware
      * @param  TemplateViewerInterface  $viewer  Template viewer
      * @param  UserPreferencesModel  $preferencesModel  User preferences model
      * @param  BlogModel  $blogModel  Blog model
+     * @param  NotificationModel  $notificationModel  Notification model
      */
-    private CommentModel $commentModel;
-
     public function __construct(
         NavigationService $nav,
         Auth $auth,
         TemplateViewerInterface $viewer,
         UserPreferencesModel $preferencesModel,
         BlogModel $blogModel,
-        CommentModel $commentModel
+        NotificationModel $notificationModel
     ) {
         $this->nav = $nav;
         $this->auth = $auth;
         $this->viewer = $viewer;
         $this->preferencesModel = $preferencesModel;
         $this->blogModel = $blogModel;
-        $this->commentModel = $commentModel;
+        $this->notificationModel = $notificationModel;
     }
 
     /**
@@ -148,11 +152,12 @@ class NavGlobalsMiddleware
         $notifications = ['enabled' => false, 'items' => [], 'count' => 0];
         if ($area === 'back' && $user !== null) {
             try {
-                $recent = $this->commentModel->recentForAuthor((int) $user['id'], 8);
+                $unreadCount = $this->notificationModel->unreadCount((int) $user['id']);
+                $items = $this->notificationModel->findForUser((int) $user['id'], 8);
                 $notifications = [
                     'enabled' => true,
-                    'items' => $recent,
-                    'count' => count($recent),
+                    'items'   => $items,
+                    'count'   => $unreadCount,
                 ];
             } catch (\Throwable $e) {
                 error_log('Notifications query failed: '.$e->getMessage());

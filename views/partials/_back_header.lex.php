@@ -171,7 +171,7 @@
                                     <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium rounded-full text-white bg-custom-500"><?= (int) $notifications['count'] ?></span>
                                     <?php } ?>
                                 </h6>
-                                <p class="text-xs text-slate-500 dark:text-zink-300">Recent comments on your posts.</p>
+                                <p class="text-xs text-slate-500 dark:text-zink-300">Recent activity on your posts and collaborations.</p>
                             </div>
                             <div data-simplebar="" class="max-h-[350px] border-t border-slate-100 dark:border-zink-500">
                                 <?php if (empty($notifications['items'])) { ?>
@@ -181,31 +181,14 @@
                                 </div>
                                 <?php } else { ?>
                                 <div class="flex flex-col">
-                                    <?php foreach ($notifications['items'] as $n) { ?>
-                                    <a href="/blog/<?= e((string) ($n['blog_slug'] ?? '')) ?>/<?= e((string) ($n['post_slug'] ?? '')) ?>#comment-<?= e((string) $n['id']) ?>"
-                                        class="flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 border-b border-slate-100 dark:border-zink-500 last:border-b-0">
-                                        <div class="flex items-center justify-center size-9 rounded-md bg-sky-50 dark:bg-sky-900/30 text-sky-500 shrink-0">
-                                            <i data-lucide="message-square" class="size-4"></i>
-                                        </div>
-                                        <div class="grow min-w-0">
-                                            <p class="text-sm text-slate-900 dark:text-zink-50 truncate">
-                                                <span class="font-medium"><?= e((string) ($n['user_name'] ?? 'Anonymous')) ?></span> on <span class="font-medium"><?= e((string) ($n['post_title'] ?? 'a post')) ?></span>
-                                            </p>
-                                            <p class="text-xs text-slate-500 dark:text-zink-300 line-clamp-2 mt-0.5">
-                                                <?= e(mb_substr((string) ($n['content'] ?? ''), 0, 100)) ?>
-                                            </p>
-                                            <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
-                                                <i data-lucide="clock" class="inline-block size-3 mr-1"></i>
-                                                <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
-                                            </p>
-                                        </div>
-                                    </a>
-                                    <?php } ?>
+                                    <?php foreach ($notifications['items'] as $n): ?>
+                                        {% include "partials/_notification_item.lex.php" with { n: $n } %}
+                                    <?php endforeach; ?>
                                 </div>
                                 <?php } ?>
                             </div>
                             <div class="flex items-center justify-end p-3 border-t border-slate-100 dark:border-zink-500">
-                                <a href="/dashboard/post" class="text-xs font-medium text-custom-500 hover:text-custom-600">Open all posts</a>
+                                <a href="/dashboard/notifications" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all notifications</a>
                             </div>
                         </div>
                     </div>
