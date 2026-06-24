@@ -112,10 +112,10 @@ class NotificationModel extends AppModel
             ->query(
                 'SELECT id, type, data, read_at, created_at
                  FROM notifications
-                 WHERE user_id = :user_id
+                 WHERE user_id = ?
                  ORDER BY created_at DESC
-                 LIMIT :limit OFFSET :offset',
-                [':user_id' => $userId, ':limit' => $perPage, ':offset' => $offset]
+                 LIMIT '.(int) $perPage.' OFFSET '.(int) $offset,
+                [$userId]
             )
             ->fetchAll(\PDO::FETCH_ASSOC);
 

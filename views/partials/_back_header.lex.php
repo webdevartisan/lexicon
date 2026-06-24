@@ -182,7 +182,7 @@
                                 <?php } else { ?>
                                 <div class="flex flex-col">
                                     <?php foreach ($notifications['items'] as $n): ?>
-                                        {% include "partials/_notification_item.lex.php" with { n: $n } %}
+                                        {% include "partials/_notification_item.lex.php" %}
                                     <?php endforeach; ?>
                                 </div>
                                 <?php } ?>

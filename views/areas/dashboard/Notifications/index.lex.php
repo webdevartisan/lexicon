@@ -22,15 +22,15 @@
                 <?php endif; ?>
             </div>
 
-            <?php if (empty($items)): ?>
+            <?php if (empty($notificationRows)): ?>
             <div class="text-center py-12 px-4">
                 <i data-lucide="bell-off" class="size-10 text-slate-400 mx-auto mb-3"></i>
                 <p class="text-sm text-slate-500 dark:text-zink-300">No notifications yet.</p>
             </div>
             <?php else: ?>
             <div class="divide-y divide-slate-100 dark:divide-zink-500">
-                <?php foreach ($items as $n): ?>
-                    {% include "partials/_notification_item.lex.php" with { n: $n } %}
+                <?php foreach ($notificationRows as $n): ?>
+                    {% include "partials/_notification_item.lex.php" %}
                 <?php endforeach; ?>
             </div>
 

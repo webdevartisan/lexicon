@@ -153,10 +153,10 @@ class NavGlobalsMiddleware
         if ($area === 'back' && $user !== null) {
             try {
                 $unreadCount = $this->notificationModel->unreadCount((int) $user['id']);
-                $items = $this->notificationModel->findForUser((int) $user['id'], 8);
+                $notifItems  = $this->notificationModel->findForUser((int) $user['id'], 8);
                 $notifications = [
                     'enabled' => true,
-                    'items'   => $items,
+                    'items'   => $notifItems,
                     'count'   => $unreadCount,
                 ];
             } catch (\Throwable $e) {

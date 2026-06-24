@@ -32,12 +32,12 @@ class NotificationController extends AppController
 
         $result = $this->notifications->findPageForUser((int) $user['id'], perPage: 20, page: $page);
 
-        return $this->view('dashboard/Notifications/index', [
-            'items'       => $result['items'],
-            'total'       => $result['total'],
-            'page'        => $result['page'],
-            'perPage'     => $result['perPage'],
-            'unreadCount' => $this->notifications->unreadCount((int) $user['id']),
+        return $this->view('notifications.index', [
+            'notificationRows' => $result['items'],
+            'total'            => $result['total'],
+            'page'             => $result['page'],
+            'perPage'          => $result['perPage'],
+            'unreadCount'      => $this->notifications->unreadCount((int) $user['id']),
         ]);
     }
 
