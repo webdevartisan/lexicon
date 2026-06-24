@@ -213,7 +213,7 @@ class WorkflowService
             $this->post->transitionWorkflow((int) $row['id'], 'draft', $actorId);
 
             $postRes = $this->post->findResource((int) $row['id']);
-            $blog    = $postRes?->blog();
+            $blog = $postRes ? $postRes->blog() : null;
 
             $this->notifications->dispatch((int) $row['author_id'], 'post.workflow_disabled', [
                 'post_id'    => (int) $row['id'],
