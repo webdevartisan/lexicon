@@ -57,6 +57,11 @@ $router->add('/comments/create', [
     'method' => 'POST',
 ]);
 
+// Public blog invitation landing (reached from the email link; no auth required)
+$router->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
+$router->add('/invite/{token:[a-f0-9]+}/accept', ['controller' => 'InviteController', 'action' => 'accept', 'method' => 'POST']);
+$router->add('/invite/{token:[a-f0-9]+}/decline', ['controller' => 'InviteController', 'action' => 'decline', 'method' => 'POST']);
+
 $router->group([
     'prefix' => '/',
     'namespace' => 'Auth',
@@ -116,6 +121,14 @@ $router->group([
     // Categories & tags management (blog-scoped).
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
+
+    // Team / collaborator management (owner-only actions; leave is self-service).
+    $r->add('/blog/{blogId:\d+}/team', ['controller' => 'CollaboratorController', 'action' => 'team', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/team/invite', ['controller' => 'CollaboratorController', 'action' => 'invite', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/cancel-invite', ['controller' => 'CollaboratorController', 'action' => 'cancelInvite', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/leave', ['controller' => 'CollaboratorController', 'action' => 'leave', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/role', ['controller' => 'CollaboratorController', 'action' => 'changeRole', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/revoke', ['controller' => 'CollaboratorController', 'action' => 'revoke', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
@@ -138,6 +151,12 @@ $router->group([
         'action' => 'upload',
         'method' => 'POST',
     ]);
+
+    // Notifications
+    $r->add('/notifications',               ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
+    $r->add('/notifications/unread-count',  ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
+    $r->add('/notifications/read-all',      ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
+    $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
     // API Routes - Blog deletion stats for confirmation modal
     $r->add('/api/blog/{id:\d+}/deletion-stats', [
         'controller' => 'Api\BlogApiController',
@@ -163,10 +182,12 @@ $router->group([
     $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/review-decision', ['action' => 'reviewDecision', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/request-review', ['action' => 'requestReview', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/assign-reviewer', ['action' => 'assignReviewer', 'method' => 'POST']);
     // }
 });
 
