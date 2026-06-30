@@ -42,7 +42,13 @@ class NotificationController extends AppController
     }
 
     /**
-     * Mark a single notification as read, then redirect to the list.
+     * Mark a single notification as read, then redirect to the originating link
+     * if supplied — otherwise to the notifications list.
+     *
+     * The optional `target` POST field is the click-through URL embedded in the
+     * notification item. Only local paths are honored (must start with a single
+     * `/`, no `//` or `://`) — anything else falls back to the list to avoid an
+     * open-redirect.
      *
      * POST /dashboard/notifications/{id}/read
      */
@@ -50,6 +56,12 @@ class NotificationController extends AppController
     {
         $user = auth()->user();
         $this->notifications->markRead((int) $id, (int) $user['id']);
+
+        $target = (string) $this->request->postParam('target', '');
+
+        if ($this->isLocalPath($target)) {
+            return $this->redirect($target);
+        }
 
         return $this->redirect(lurl('/dashboard/notifications'));
     }
@@ -82,5 +94,23 @@ class NotificationController extends AppController
         $count = $this->notifications->unreadCount((int) $user['id']);
 
         return $this->json(['count' => $count]);
+    }
+
+    /**
+     * Whether a URL is a same-origin path that's safe to redirect to without
+     * a host check — must start with a single `/` and contain no scheme or
+     * protocol-relative prefix.
+     */
+    private function isLocalPath(string $target): bool
+    {
+        if ($target === '' || $target[0] !== '/') {
+            return false;
+        }
+
+        if (str_starts_with($target, '//')) {
+            return false;
+        }
+
+        return !str_contains($target, '://');
     }
 }

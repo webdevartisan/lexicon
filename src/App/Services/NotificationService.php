@@ -79,6 +79,10 @@ class NotificationService
             return;
         }
 
+        if (env('MAIL_ENABLED', false) === false) {
+            return;
+        }
+
         $mailable = $this->buildMailable($type, (string) $user['email'], $data);
         if ($mailable !== null) {
             $this->mail->send($mailable);

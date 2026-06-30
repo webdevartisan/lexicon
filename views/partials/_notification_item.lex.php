@@ -41,10 +41,12 @@ $color = match (true) {
 
 $href = match ($type) {
     'post.submitted', 'post.submitted_unassigned', 'post.reviewer_assigned',
-    'post.reviewer_stale', 'post.approved', 'post.needs_changes'
-        => '/dashboard/posts/' . (int) ($payload['post_id'] ?? 0) . '/review',
+    'post.reviewer_stale'
+        => '/dashboard/post/' . (int) ($payload['post_id'] ?? 0) . '/review',
+    'post.approved', 'post.needs_changes' 
+        => '/dashboard/post/' . (int) ($payload['post_id'] ?? 0) . '/edit',   
     'post.workflow_disabled'
-        => '/dashboard/posts/' . (int) ($payload['post_id'] ?? 0) . '/edit',
+        => '/dashboard/post/' . (int) ($payload['post_id'] ?? 0) . '/edit',
     'post.published'
         => '/blog/' . rawurlencode((string) ($payload['blog_slug'] ?? '')) . '/' . rawurlencode((string) ($payload['post_slug'] ?? '')),
     'blog.invite'
@@ -53,18 +55,22 @@ $href = match ($type) {
         => '/dashboard/notifications',
 };
 ?>
-<a href="<?= e($href) ?>" class="flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 border-b border-slate-100 dark:border-zink-500 last:border-b-0 <?= $isUnread ? 'bg-sky-50/40 dark:bg-sky-900/10' : '' ?>">
-    <div class="flex items-center justify-center size-9 rounded-md <?= $color ?> shrink-0">
-        <i data-lucide="<?= e($icon) ?>" class="size-4"></i>
-    </div>
-    <div class="grow min-w-0">
-        <p class="text-sm text-slate-900 dark:text-zink-50 truncate"><?= e($label) ?></p>
-        <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
-            <i data-lucide="clock" class="inline-block size-3 mr-1"></i>
-            <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
-        </p>
-    </div>
-    <?php if ($isUnread): ?>
-    <span class="inline-block size-2 rounded-full bg-sky-500 self-center shrink-0" title="Unread"></span>
-    <?php endif; ?>
-</a>
+<form method="post" action="/dashboard/notifications/<?= (int) $n['id'] ?>/read" class="block border-b border-slate-100 dark:border-zink-500 last:border-b-0">
+    {{ csrf_field() }}
+    <input type="hidden" name="target" value="<?= e($href) ?>">
+    <button type="submit" class="w-full text-left flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 <?= $isUnread ? 'bg-sky-50/40 dark:bg-sky-900/10' : '' ?>">
+        <div class="flex items-center justify-center size-9 rounded-md <?= $color ?> shrink-0">
+            <i data-lucide="<?= e($icon) ?>" class="size-4"></i>
+        </div>
+        <div class="grow min-w-0">
+            <p class="text-sm text-slate-900 dark:text-zink-50 truncate"><?= e($label) ?></p>
+            <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
+                <i data-lucide="clock" class="inline-block size-3 mr-1"></i>
+                <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
+            </p>
+        </div>
+        <?php if ($isUnread): ?>
+        <span class="inline-block size-2 rounded-full bg-sky-500 self-center shrink-0" title="Unread"></span>
+        <?php endif; ?>
+    </button>
+</form>

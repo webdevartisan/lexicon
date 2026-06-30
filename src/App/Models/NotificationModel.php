@@ -34,13 +34,15 @@ class NotificationModel extends AppModel
      *
      * @param  int  $userId  Recipient
      * @param  int  $limit  Max rows
+     * @param  bool  $onlyUnread  Limit to rows where read_at is NULL
      * @return array List of notifications
      */
-    public function findForUser(int $userId, int $limit = 20): array
+    public function findForUser(int $userId, int $limit = 20, bool $onlyUnread = false): array
     {
         $sql = 'SELECT id, type, data, read_at, created_at
                 FROM notifications
-                WHERE user_id = :user_id
+                WHERE user_id = :user_id'
+                .($onlyUnread ? ' AND read_at IS NULL' : '').'
                 ORDER BY created_at DESC
                 LIMIT :limit';
 
