@@ -8,6 +8,7 @@ use App\Mail\BlogInviteMail;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Services\NotificationService;
 
 /**
@@ -25,7 +26,8 @@ class InvitationService
         private readonly BlogModel $blogModel,
         private readonly UserModel $userModel,
         private readonly NotificationService $notifications,
-        private readonly MailService $mailService
+        private readonly MailService $mailService,
+        private readonly UserPreferencesModel $preferences,
     ) {}
 
     /**
@@ -98,6 +100,13 @@ class InvitationService
             $invite['role'],
             (int) $invite['invited_by']
         );
+
+        // First-blog convenience: if the new collaborator has no default blog
+        // set, land them inside this one on their next dashboard visit. They
+        // can still switch via the topbar. Owners keep their own default.
+        if ($this->preferences->getDefaultBlogId($acceptingUserId) === null) {
+            $this->preferences->setDefaultBlogId($acceptingUserId, (int) $invite['blog_id']);
+        }
 
         audit()->log($acceptingUserId, 'blog.invite_accepted', 'blog_invitation', (int) $invite['blog_id'],
             ['role' => $invite['role']], $_SERVER['REMOTE_ADDR'] ?? null);
