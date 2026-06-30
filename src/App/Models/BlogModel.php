@@ -26,7 +26,7 @@ class BlogModel extends AppModel
      *
      * These are per-blog roles independent of global user roles.
      */
-    public const ROLES = ['editor', 'author', 'contributor', 'reviewer', 'viewer'];
+    public const ROLES = ['editor', 'author', 'contributor', 'reviewer'];
 
     /**
      * Update a blog and invalidate related caches.
@@ -481,6 +481,41 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Get all blogs accessible to a user — both owned and collaborated.
+     *
+     * Returns the same shape as getBlogsByOwnerWithCounts() plus a `user_role`
+     * column: 'owner' for owned blogs, or the collaborative role from blog_users.
+     * Used by the dashboard to surface blogs for non-owner collaborators.
+     */
+    public function getAccessibleBlogs(int $userId): array
+    {
+        $sql = "
+            SELECT b.*, u.username AS owner_name,
+                (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) AS post_count,
+                (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) AS author_count,
+                'owner' AS user_role
+            FROM blogs b
+            INNER JOIN users u ON b.owner_id = u.id
+            WHERE b.owner_id = ?
+
+            UNION
+
+            SELECT b.*, u.username AS owner_name,
+                (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) AS post_count,
+                (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) AS author_count,
+                bu.role AS user_role
+            FROM blogs b
+            INNER JOIN users u ON b.owner_id = u.id
+            INNER JOIN blog_users bu ON bu.blog_id = b.id AND bu.user_id = ? AND bu.is_active = 1
+            WHERE b.owner_id != ?
+
+            ORDER BY updated_at DESC
+        ";
+
+        return $this->database->query($sql, [$userId, $userId, $userId])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Delete a blog and invalidate related caches.
      *
      * Performs hard delete from database. Cascading deletes should be handled
@@ -504,6 +539,155 @@ class BlogModel extends AppModel
         }
 
         return $result;
+    }
+
+    /**
+     * Get active users on a blog who hold any of the given roles.
+     *
+     * Returns rows of user_id + username + role, including the owner when
+     * 'owner' is in the role list (owner data lives on the blog row, not
+     * blog_users). Used by workflow notifications to find recipients.
+     *
+     * @param  int  $blogId
+     * @param  array<int,string>  $roles  e.g. ['owner','editor','reviewer']
+     * @return array<int,array{user_id:int,username:string,email:string,role:string}>
+     */
+    public function getActiveUsersWithRoles(int $blogId, array $roles): array
+    {
+        $roles = array_values(array_unique(array_filter($roles, 'is_string')));
+        if (empty($roles)) {
+            return [];
+        }
+
+        $rows = [];
+
+        $includeOwner = in_array('owner', $roles, true);
+        $collabRoles = array_values(array_diff($roles, ['owner']));
+
+        if ($includeOwner) {
+            $sql = 'SELECT u.id AS user_id, u.username, u.email, ? AS role
+                    FROM blogs b
+                    INNER JOIN users u ON u.id = b.owner_id
+                    WHERE b.id = ?';
+            $rows = array_merge($rows, $this->database->query($sql, ['owner', $blogId])->fetchAll(\PDO::FETCH_ASSOC));
+        }
+
+        if (!empty($collabRoles)) {
+            $placeholders = implode(',', array_fill(0, count($collabRoles), '?'));
+            $sql = "SELECT u.id AS user_id, u.username, u.email, bu.role AS role
+                    FROM blog_users bu
+                    INNER JOIN users u ON u.id = bu.user_id
+                    WHERE bu.blog_id = ?
+                      AND bu.is_active = 1
+                      AND bu.role IN ({$placeholders})";
+            $params = array_merge([$blogId], $collabRoles);
+            $rows = array_merge($rows, $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC));
+        }
+
+        // De-dup: an owner who also has a blog_users row shouldn't get the notification twice.
+        $byUser = [];
+        foreach ($rows as $r) {
+            $uid = (int) $r['user_id'];
+            if (!isset($byUser[$uid])) {
+                $byUser[$uid] = $r;
+            }
+        }
+
+        return array_values($byUser);
+    }
+
+    /**
+     * Count active editors on a blog.
+     *
+     * Drives the "you're about to revoke the only editor" guard on the team page.
+     */
+    public function countActiveByRole(int $blogId, string $role): int
+    {
+        $sql = 'SELECT COUNT(*) AS c FROM blog_users
+                WHERE blog_id = ? AND role = ? AND is_active = 1';
+        $stmt = $this->database->query($sql, [$blogId, $role]);
+
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /**
+     * Check if a user is an active collaborator on any blog they don't own.
+     *
+     * Drives the global "Shared" nav item — visible only when the user has
+     * inbound access on someone else's blog.
+     *
+     * @param  int  $userId  User ID
+     * @return bool True if the user has at least one active blog_users row
+     */
+    public function userIsCollaborator(int $userId): bool
+    {
+        $sql = 'SELECT 1 FROM blog_users
+                WHERE user_id = ? AND is_active = 1
+                LIMIT 1';
+
+        return (bool) $this->database->query($sql, [$userId])->fetch(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Get blogs shared with a user (excludes blogs they own).
+     *
+     * Returns the per-blog role the user holds via blog_users plus a few
+     * lightweight fields needed by the Shared landing page.
+     *
+     * @param  int  $userId  User ID
+     * @return array<int,array<string,mixed>>
+     */
+    public function getSharedBlogsForUser(int $userId): array
+    {
+        $sql = "SELECT b.id, b.blog_name, b.blog_slug, b.status, b.owner_id,
+                       u.username AS owner_name,
+                       bu.role AS user_role
+                FROM blogs b
+                INNER JOIN users u ON u.id = b.owner_id
+                INNER JOIN blog_users bu ON bu.blog_id = b.id
+                WHERE bu.user_id = ?
+                  AND bu.is_active = 1
+                  AND b.owner_id != ?
+                ORDER BY b.updated_at DESC";
+
+        return $this->database->query($sql, [$userId, $userId])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Check if a user has a reviewer-capable role on any active blog.
+     *
+     * Used to decide whether to show the review queue panel on the dashboard.
+     *
+     * @param  int  $userId  User ID
+     * @return bool True if the user has reviewer, editor, or owner role on any blog
+     */
+    public function userHasReviewerRole(int $userId): bool
+    {
+        $sql = 'SELECT 1 FROM blog_users
+                WHERE user_id = ? AND is_active = 1
+                  AND role IN (\'reviewer\', \'editor\', \'owner\')
+                LIMIT 1';
+
+        return (bool) $this->database->query($sql, [$userId])->fetch(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Check whether a user can access a specific blog (owner or active collaborator).
+     *
+     * Used to gate preview of unpublished posts for authenticated blog members.
+     *
+     * @param  int  $userId  User to check
+     * @param  int  $blogId  Blog to check against
+     * @return bool True if the user owns the blog or is an active collaborator
+     */
+    public function userCanAccessBlog(int $userId, int $blogId): bool
+    {
+        $sql = 'SELECT 1 FROM blogs WHERE id = ? AND owner_id = ?
+                UNION
+                SELECT 1 FROM blog_users WHERE blog_id = ? AND user_id = ? AND is_active = 1
+                LIMIT 1';
+
+        return (bool) $this->database->query($sql, [$blogId, $userId, $blogId, $userId])->fetch(\PDO::FETCH_COLUMN);
     }
 
     /**

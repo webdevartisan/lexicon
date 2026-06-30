@@ -98,8 +98,9 @@ class NavGlobalsMiddleware
             : (str_starts_with($path, '/dashboard') ? 'back' : 'front');
 
         $selectedBlog = null;
-        $userBlogs = []; // id => name, for the topbar blog switcher
+        $userBlogs = []; // id => ['name','status'] for the topbar blog switcher (owned only)
         $selectedBlogId = 0;
+        $isCollaborator = false;
 
         // fetch the selected blog for dashboard area if user is authenticated
         if ($area === 'back' && $this->auth->check()) {
@@ -107,13 +108,25 @@ class NavGlobalsMiddleware
             $defaultBlogId = $this->preferencesModel->getDefaultBlogId($userId);
             $selectedBlogId = (int) ($defaultBlogId ?? 0);
 
-            // List of the user's blogs for the topbar switcher.
+            // Topbar switcher is the "active owned workspace" selector. Shared
+            // blogs have their own surface at /dashboard/shared — mixing them
+            // here would re-create the confusion the Shared/Team split fixed.
             try {
                 foreach ($this->blogModel->getBlogsByOwnerId((int) $userId) as $b) {
-                    $userBlogs[(int) $b['id']] = (string) ($b['blog_name'] ?? 'Untitled blog');
+                    $userBlogs[(int) $b['id']] = [
+                        'name'   => (string) ($b['blog_name'] ?? 'Untitled blog'),
+                        'status' => (string) ($b['status'] ?? 'draft'),
+                    ];
                 }
             } catch (\Throwable $e) {
                 error_log('Blog switcher list failed: '.$e->getMessage());
+            }
+
+            // Drives visibility of the global "Shared" nav item.
+            try {
+                $isCollaborator = $this->blogModel->userIsCollaborator((int) $userId);
+            } catch (\Throwable $e) {
+                error_log('isCollaborator check failed: '.$e->getMessage());
             }
 
             if ($defaultBlogId !== null && $defaultBlogId > 0) {
@@ -144,8 +157,10 @@ class NavGlobalsMiddleware
             }
         }
 
-        // generate navigation items with blog context and policy awareness
-        $items = $this->nav->for($area, $path, $selectedBlog);
+        // generate navigation items with blog context and per-user predicates
+        $items = $this->nav->for($area, $path, $selectedBlog, [
+            'isCollaborator' => $isCollaborator,
+        ]);
         $user = $this->auth->user();
 
         // Build notifications payload for the topbar bell (back area only).
@@ -153,7 +168,7 @@ class NavGlobalsMiddleware
         if ($area === 'back' && $user !== null) {
             try {
                 $unreadCount = $this->notificationModel->unreadCount((int) $user['id']);
-                $notifItems  = $this->notificationModel->findForUser((int) $user['id'], 8);
+                $notifItems  = $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true);
                 $notifications = [
                     'enabled' => true,
                     'items'   => $notifItems,
@@ -163,6 +178,10 @@ class NavGlobalsMiddleware
                 error_log('Notifications query failed: '.$e->getMessage());
             }
         }
+
+        // Per-user sidebar cache key — keeps the Shared item visibility correct
+        // when a user gains/loses collaborator access mid-cache-window.
+        $sidebarCacheKey = $area . ':sidebar:nav-structure:u-' . (int) ($user['id'] ?? 0) . ':b-' . $selectedBlogId;
 
         // add navigation globals to all templates
         if (method_exists($this->viewer, 'addGlobals')) {
@@ -174,8 +193,10 @@ class NavGlobalsMiddleware
                 'has_blog_context' => $selectedBlog !== null, // Convenient boolean flag
                 'area' => $area,
                 'notifications' => $notifications,
-                'user_blogs' => $userBlogs, // id => name, for topbar switcher
+                'user_blogs' => $userBlogs, // id => ['name','status','role'] for topbar switcher
                 'selected_blog_id' => $selectedBlogId,
+                'is_collaborator' => $isCollaborator, // user has any shared blog access
+                'sidebar_cache_key' => $sidebarCacheKey,
             ]);
         }
 

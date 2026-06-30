@@ -18,22 +18,27 @@ class PostModel extends AppModel
 
     /**
      * Valid post status values.
+     *
+     * 'pending' = awaiting reviewer action (the canonical "needs review" signal).
      */
-    public const STATUSES = ['draft', 'pending', 'published', 'archived', 'rejected', 'approved', 'pending_review'];
+    public const STATUSES = ['draft', 'pending', 'published', 'archived'];
 
     /**
-     * Valid workflow state values for collaborative editing.
+     * Valid workflow state values for the editorial pipeline.
      */
-    public const WORKFLOW_STATES = ['idea', 'draft', 'in_review', 'needs_changes', 'approved', 'ready_to_publish'];
+    public const WORKFLOW_STATES = ['draft', 'in_review', 'needs_changes', 'approved'];
 
     /**
-     * Allowed status transitions.
+     * Allowed public-lifecycle status transitions.
+     *
+     * Authors push draft→pending; reviewers/editors push pending→published.
+     * 'needs_changes' feedback drops the post back from pending→draft.
      */
     public const STATUS_TRANSITIONS = [
-        'draft' => ['pending'],
-        'pending' => ['published', 'draft', 'rejected'],
-        'published' => ['archived'],
-        'archived' => ['published'],
+        'draft' => ['pending', 'published'],
+        'pending' => ['draft', 'published', 'archived'],
+        'published' => ['archived', 'draft'],
+        'archived' => ['published', 'draft'],
     ];
 
     /**
@@ -889,14 +894,15 @@ class PostModel extends AppModel
         string $searchQuery = '',
         string $sort = 'newest',
         ?int $categoryId = null,
-        ?int $tagId = null
+        ?int $tagId = null,
+        string $workflowState = ''
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
 
         // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId);
+        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState);
 
         // Get total count first for pagination metadata
         $totalRecords = $this->getTotalCount($whereClause, $params);
@@ -912,11 +918,17 @@ class PostModel extends AppModel
             default => 'p.published_at DESC',
         };
 
+        // v1 enforces single reviewer per post, so a plain LEFT JOIN is safe (no row multiplication).
         $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
-                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+                       pr.reviewer_id AS reviewer_id,
+                       pr.assigned_at AS reviewer_assigned_at,
+                       ru.username AS reviewer_username
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
+                LEFT JOIN users ru ON ru.id = pr.reviewer_id
                 {$whereClause}
                 ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
@@ -1013,6 +1025,21 @@ class PostModel extends AppModel
     /**
      * Count comments by moderation status across a blog's posts.
      */
+    /**
+     * Count all posts in a blog by status, across all authors.
+     *
+     * @param  int  $blogId  Blog ID
+     * @param  string  $status  Post status ('draft', 'published', etc.)
+     * @return int Number of posts
+     */
+    public function countByBlogIdAndStatus(int $blogId, string $status): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = :status";
+        $stmt = $this->database->query($sql, [':blog_id' => $blogId, ':status' => $status]);
+
+        return (int) ($stmt->fetch()['count'] ?? 0);
+    }
+
     public function countCommentsByBlogIdAndStatus(int $blogId, string $status): int
     {
         $sql = "SELECT COUNT(*) as count FROM comments c
@@ -1022,6 +1049,91 @@ class PostModel extends AppModel
         $result = $stmt->fetch();
 
         return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Count posts in a blog authored by a specific user with a given status.
+     *
+     * Used by the Shared landing page to show "my drafts on this blog" etc.
+     */
+    public function countByBlogAndAuthorAndStatus(int $blogId, int $authorId, string $status): int
+    {
+        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
+                WHERE blog_id = ? AND author_id = ? AND status = ?";
+        $stmt = $this->database->query($sql, [$blogId, $authorId, $status]);
+
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /**
+     * Count posts in a blog authored by a specific user with a given workflow_state.
+     *
+     * Used for the author/contributor "needs revision" badge on the Shared page.
+     */
+    public function countByBlogAndAuthorAndWorkflow(int $blogId, int $authorId, string $workflowState): int
+    {
+        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
+                WHERE blog_id = ? AND author_id = ? AND workflow_state = ?";
+        $stmt = $this->database->query($sql, [$blogId, $authorId, $workflowState]);
+
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /**
+     * Count posts in a blog by workflow_state (any author).
+     *
+     * Used for editor/owner Team-page workflow-health and Shared-page editor cards.
+     */
+    public function countByBlogAndWorkflow(int $blogId, string $workflowState): int
+    {
+        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
+                WHERE blog_id = ? AND workflow_state = ?";
+        $stmt = $this->database->query($sql, [$blogId, $workflowState]);
+
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /**
+     * Posts on a blog awaiting reviewer action, in display order.
+     *
+     * Unassigned items sort first (someone needs to pick them up), then by
+     * recency. Each row carries the assigned reviewer's username (or null)
+     * so the view can render "Assigned to / Pick up" inline.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function findReviewQueueForBlog(int $blogId): array
+    {
+        $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,
+                       au.username AS author_username,
+                       pr.reviewer_id, ru.username AS reviewer_username,
+                       pr.assigned_at
+                FROM {$this->getTable()} p
+                INNER JOIN users au ON au.id = p.author_id
+                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
+                LEFT JOIN users ru ON ru.id = pr.reviewer_id
+                WHERE p.blog_id = ?
+                  AND p.workflow_state IN ('in_review', 'needs_changes')
+                ORDER BY (pr.reviewer_id IS NULL) DESC, p.updated_at DESC";
+
+        return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Count in_review posts on a blog that have no reviewer assigned.
+     *
+     * The single number that tells an editor/owner whether someone needs to
+     * pick up an unattended submission.
+     */
+    public function countInReviewUnassigned(int $blogId): int
+    {
+        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()} p
+                WHERE p.blog_id = ?
+                  AND p.workflow_state = 'in_review'
+                  AND NOT EXISTS (SELECT 1 FROM post_reviewers pr WHERE pr.post_id = p.id)";
+        $stmt = $this->database->query($sql, [$blogId]);
+
+        return (int) ($stmt->fetch()['c'] ?? 0);
     }
 
     /**
@@ -1076,7 +1188,8 @@ class PostModel extends AppModel
         string $status,
         string $searchQuery,
         ?int $categoryId = null,
-        ?int $tagId = null
+        ?int $tagId = null,
+        string $workflowState = ''
     ): array {
         $whereClause = 'WHERE p.author_id = :author_id';
         $params = [':author_id' => $authorId];
@@ -1091,6 +1204,14 @@ class PostModel extends AppModel
         if ($status !== '' && in_array($status, self::STATUSES, true)) {
             $whereClause .= ' AND p.status = :status';
             $params[':status'] = $status;
+        }
+
+        // Workflow state filter is independent of post status (a 'needs_changes'
+        // workflow_state lives on a draft-status post). Validated against the
+        // WORKFLOW_STATES whitelist before reaching SQL.
+        if ($workflowState !== '' && in_array($workflowState, self::WORKFLOW_STATES, true)) {
+            $whereClause .= ' AND p.workflow_state = :workflow_state';
+            $params[':workflow_state'] = $workflowState;
         }
 
         if ($categoryId !== null) {
@@ -1134,5 +1255,24 @@ class PostModel extends AppModel
         $stmt = $this->database->query($countSql, $params);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Find posts for a blog that are currently in the review pipeline.
+     *
+     * Used by WorkflowService::disableWorkflow to reset in-flight posts
+     * back to draft when the owner turns off the workflow toggle.
+     *
+     * @param  int  $blogId  Blog identifier
+     * @return array<int, array{id:int,author_id:int,workflow_state:string}>
+     */
+    public function findInFlightByBlogId(int $blogId): array
+    {
+        $sql = "SELECT id, author_id, workflow_state
+                FROM posts
+                WHERE blog_id = ?
+                  AND workflow_state IN ('in_review', 'needs_changes')";
+
+        return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }
 }

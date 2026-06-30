@@ -21,7 +21,7 @@ class HomeController extends AppController
     public function __construct(
         private PostModel $post,
         private BlogModel $blogModel,
-        private UserPreferencesModel $preference
+        private UserPreferencesModel $preference,
     ) {}
 
     /**
@@ -32,9 +32,11 @@ class HomeController extends AppController
         $user = auth()->user();
         $selectedBlogId = $this->preference->getDefaultBlogId($user['id']) ?? 0;
 
-        $blogs = $this->blogModel->resource($user['id']);
+        $accessibleBlogs = $this->blogModel->getAccessibleBlogs($user['id']);
+        $isAdmin = auth()->hasRole('administrator');
 
-        if (empty($blogs)) {
+        if (empty($accessibleBlogs)) {
+            // First-time user with neither owned nor shared blogs — show onboarding.
             return $this->view([
                 'blogIds' => [],
                 'blogSlug' => '',
@@ -44,15 +46,34 @@ class HomeController extends AppController
                 'recent' => [],
                 'needsAttention' => [],
                 'blogsSummary' => [],
+                'isAdmin' => $isAdmin,
+                'blogRole' => 'none',
+                'noBreadcrumb' => true,
+                'hideTitle' => true,
             ]);
+        }
+
+        // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is
+        // the natural landing — sending them through the owner-style dashboard
+        // is confusing. Single-blog pure collaborators just get pushed into the
+        // blog they were invited to instead of a "pick" screen.
+        $ownsAny = false;
+        foreach ($accessibleBlogs as $b) {
+            if (($b['user_role'] ?? '') === 'owner') {
+                $ownsAny = true;
+                break;
+            }
+        }
+        if (!$ownsAny && $selectedBlogId <= 0) {
+            return $this->redirect('/dashboard/shared');
         }
 
         $blogIds = [];
         $blogSlugs = [];
 
-        foreach ($blogs as $blog) {
-            $blogIds[$blog->id()] = $blog->name();
-            $blogSlugs[$blog->id()] = $blog->slug();
+        foreach ($accessibleBlogs as $blog) {
+            $blogIds[(int) $blog['id']] = (string) $blog['blog_name'];
+            $blogSlugs[(int) $blog['id']] = (string) $blog['blog_slug'];
         }
 
         if ($selectedBlogId <= 0 || !isset($blogSlugs[$selectedBlogId])) {
@@ -65,11 +86,14 @@ class HomeController extends AppController
                 'recent' => [],
                 'needsAttention' => [],
                 'blogsSummary' => $this->buildBlogsSummary($user['id']),
+                'isAdmin' => $isAdmin,
+                'blogRole' => 'none',
             ]);
         }
 
         $blog = $this->getBlog($selectedBlogId);
         Gate::authorize('view', $blog, $user);
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
 
         // Pull each status bucket once: we use the pagination total for stats,
         // and the first few rows as the "what's in this bucket" preview.
@@ -115,6 +139,9 @@ class HomeController extends AppController
             'recent' => $publishedResult['data'],
             'needsAttention' => $needsAttention,
             'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id']) : [],
+            'isAdmin' => $isAdmin,
+            'blogRole' => $blogRole,
+            'hideTitle' => true,
         ]);
     }
 
@@ -124,6 +151,23 @@ class HomeController extends AppController
 
         $user = auth()->user();
         $selectedBlogId = (int) $this->request()->all()['blog'];
+
+        // Default-blog is the OWNER workspace context. Shared blogs are accessed
+        // via /dashboard/shared and dedicated per-action URLs — not by switching
+        // the global context, which would re-mix the surfaces we just split.
+        $blog = $this->blogModel->getBlog($selectedBlogId);
+        if (!$blog) {
+            $this->flash('error', 'That blog no longer exists.');
+
+            return $this->redirect('/dashboard');
+        }
+
+        if ((int) $blog->ownerId() !== (int) $user['id']) {
+            $this->flash('error', 'You can only set blogs you own as your default. Shared work lives on the Shared page.');
+
+            return $this->redirect('/dashboard');
+        }
+
         $this->preference->setDefaultBlogId($user['id'], $selectedBlogId);
 
         return $this->redirect('/dashboard');
@@ -136,6 +180,7 @@ class HomeController extends AppController
      */
     private function buildBlogsSummary(int $userId): array
     {
+        // "Your blogs" means blogs you OWN — shared blogs live on /dashboard/shared.
         $rows = $this->blogModel->getBlogsByOwnerWithCounts($userId);
 
         return array_map(static fn (array $row): array => [

@@ -8,6 +8,8 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
+use App\Models\PostModel;
+use App\Models\PostReviewerModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
 use App\Services\InvitationService;
@@ -29,10 +31,16 @@ final class CollaboratorController extends AppController
         private InvitationService $invitationService,
         private readonly UserModel $userModel,
         private readonly NotificationService $notifications,
+        private readonly PostModel $postModel,
+        private readonly PostReviewerModel $postReviewerModel,
     ) {}
 
     /**
      * Show the team management page (owner only).
+     *
+     * Renders three concerns: the roster, the invite form (plus pending/expired
+     * invites), and a per-blog workflow health snapshot so the owner sees in
+     * one place what's queued, returned, or approved-not-published.
      *
      * @param  string  $blogId  Blog ID
      */
@@ -41,11 +49,39 @@ final class CollaboratorController extends AppController
         $blog = $this->getBlog($blogId);
         Gate::authorize('manageUsers', $blog, auth()->user());
 
+        $blogIdInt = (int) $blog->id();
+        $user = auth()->user();
+        $isAdmin = auth()->hasRole('administrator');
+
+        $inReviewTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
+        $inReviewUnassigned = $this->postModel->countInReviewUnassigned($blogIdInt);
+        $needsChangesTotal  = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
+        $approvedTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
+
+        // Most recent in-review items so the owner can act inline rather than
+        // hunting through the posts list.
+        $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
+            userId: (int) $user['id'],
+            isAdmin: $isAdmin,
+            blogId: $blogIdInt,
+        );
+
+        $workflowHealth = [
+            'in_review_total'      => $inReviewTotal,
+            'in_review_unassigned' => $inReviewUnassigned,
+            'in_review_assigned'   => max(0, $inReviewTotal - $inReviewUnassigned),
+            'needs_changes'        => $needsChangesTotal,
+            'approved'             => $approvedTotal,
+            'recent'               => $inReviewRecent,
+        ];
+
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
             'members' => $blog->users(),
-            'pendingInvites' => $this->invitationModel->getPendingForBlog($blog->id()),
+            'pendingInvites' => $this->invitationModel->getPendingForBlog($blogIdInt),
+            'expiredInvites' => $this->invitationModel->getExpiredForBlog($blogIdInt),
             'roles' => BlogModel::ROLES,
+            'workflowHealth' => $workflowHealth,
         ]);
     }
 
@@ -118,6 +154,14 @@ final class CollaboratorController extends AppController
         ]);
         $role = $validator->validated()['role'];
 
+        // Guard against demoting the only editor — leaves the blog without an
+        // operational lead and silently strands in-flight workflow items.
+        if ($role !== 'editor' && $this->isLastWithRole((int) $blog->id(), (int) $userId, 'editor')) {
+            $this->flash('error', 'This is the only editor on the blog. Promote someone else to editor first.');
+
+            return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
+        }
+
         // addUserToBlog handles role change via ON DUPLICATE KEY UPDATE.
         $this->blogModel->addUserToBlog($blog->id(), (int) $userId, $role, (int) auth()->user()['id']);
 
@@ -148,6 +192,13 @@ final class CollaboratorController extends AppController
 
         $blog = $this->getBlog($blogId);
         Gate::authorize('manageUsers', $blog, auth()->user());
+
+        // Same guard as changeRole — never strand the blog without an editor.
+        if ($this->isLastWithRole((int) $blog->id(), (int) $userId, 'editor')) {
+            $this->flash('error', 'This is the only editor on the blog. Promote someone else first, then revoke.');
+
+            return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
+        }
 
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $userId);
 
@@ -184,14 +235,42 @@ final class CollaboratorController extends AppController
             return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
         }
 
+        // Refuse to leave if you're the only editor — otherwise the owner is
+        // stranded without anyone to move workflow items through.
+        if ($this->isLastWithRole((int) $blog->id(), (int) $user['id'], 'editor')) {
+            $this->flash('error', 'You are the only editor on this blog. Ask the owner to promote someone before you leave.');
+
+            return $this->redirect(lurl('/dashboard/shared'));
+        }
+
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $user['id']);
 
         audit()->log((int) $user['id'], 'blog.self_removed', 'blog_user', $blog->id(),
             [], $this->request->ip());
 
-        $this->flash('success', 'You have left the blog.');
+        $this->flash('success', 'You have left the blog. You will need a new invitation to rejoin.');
 
-        return $this->redirect(lurl('/dashboard/blog'));
+        return $this->redirect(lurl('/dashboard/shared'));
+    }
+
+    /**
+     * Would removing/demoting this user leave the blog with zero people in $role?
+     *
+     * Centralized so leave, revoke, and changeRole share the same check.
+     */
+    private function isLastWithRole(int $blogId, int $userIdLosing, string $role): bool
+    {
+        $members = $this->blogModel->getActiveUsersWithRoles($blogId, [$role]);
+        if (count($members) > 1) {
+            return false;
+        }
+        foreach ($members as $m) {
+            if ((int) ($m['user_id'] ?? 0) === $userIdLosing) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
