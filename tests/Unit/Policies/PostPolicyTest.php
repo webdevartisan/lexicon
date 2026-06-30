@@ -28,16 +28,22 @@ function mockPostBlog(int $ownerId, string $role = ''): object
 }
 
 /**
- * Build a mock PostResource with controllable blog, authorId, and status.
+ * Build a mock PostResource with controllable blog, authorId, status, and workflowState.
  */
-function mockPost(int $blogOwnerId, string $blogRole = '', int $authorId = 0, string $status = 'draft'): PostResource
-{
+function mockPost(
+    int $blogOwnerId,
+    string $blogRole = '',
+    int $authorId = 0,
+    string $status = 'draft',
+    string $workflowState = 'draft'
+): PostResource {
     $blog = mockPostBlog($blogOwnerId, $blogRole);
 
     $post = Mockery::mock(PostResource::class);
     $post->shouldReceive('blog')->andReturn($blog);
     $post->shouldReceive('authorId')->andReturn($authorId);
     $post->shouldReceive('status')->andReturn($status);
+    $post->shouldReceive('workflowState')->andReturn($workflowState);
 
     return $post;
 }
@@ -62,7 +68,7 @@ describe('PostPolicy::view', function () {
         $post = mockPost(blogOwnerId: 1, blogRole: $role);
 
         expect($policy->view(['id' => 2], $post))->toBeTrue();
-    })->with(['editor', 'author', 'contributor', 'reviewer', 'viewer']);
+    })->with(['editor', 'author', 'contributor', 'reviewer']);
 
     test('non-owner with no blog role cannot view post', function () {
         $policy = new PostPolicy();
@@ -74,6 +80,13 @@ describe('PostPolicy::view', function () {
     test('non-owner with unknown blog role cannot view post', function () {
         $policy = new PostPolicy();
         $post = mockPost(blogOwnerId: 1, blogRole: 'guest');
+
+        expect($policy->view(['id' => 2], $post))->toBeFalse();
+    });
+
+    test('viewer role cannot view post (role removed from system)', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'viewer');
 
         expect($policy->view(['id' => 2], $post))->toBeFalse();
     });
@@ -125,6 +138,48 @@ describe('PostPolicy::update', function () {
         $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 2);
 
         expect($policy->update(['id' => 2], $post))->toBeFalse();
+    });
+});
+
+// ============================================================================
+// update() — in-review lock
+// ============================================================================
+
+describe('PostPolicy::update — in-review lock', function () {
+
+    test('author cannot edit their own post when it is in_review', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, workflowState: 'in_review');
+
+        expect($policy->update(['id' => 2], $post))->toBeFalse();
+    });
+
+    test('contributor cannot edit their own post when it is in_review', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor', authorId: 2, workflowState: 'in_review');
+
+        expect($policy->update(['id' => 2], $post))->toBeFalse();
+    });
+
+    test('editor can edit any post even when in_review', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'editor', authorId: 3, workflowState: 'in_review');
+
+        expect($policy->update(['id' => 2], $post))->toBeTrue();
+    });
+
+    test('owner can edit any post even when in_review', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 3, workflowState: 'in_review');
+
+        expect($policy->update(['id' => 1], $post))->toBeTrue();
+    });
+
+    test('author can edit their own post when in needs_changes (not locked)', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, workflowState: 'needs_changes');
+
+        expect($policy->update(['id' => 2], $post))->toBeTrue();
     });
 });
 
@@ -232,11 +287,11 @@ describe('PostPolicy::markAsNeedsChanges', function () {
         expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeTrue();
     });
 
-    test('editor cannot mark post as needs changes', function () {
+    test('editor can mark post as needs changes', function () {
         $policy = new PostPolicy();
         $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
 
-        expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeFalse();
+        expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeTrue();
     });
 
     test('author cannot mark post as needs changes', function () {
@@ -267,11 +322,11 @@ describe('PostPolicy::approve', function () {
         expect($policy->approve(['id' => 2], $post))->toBeTrue();
     });
 
-    test('editor cannot approve a post', function () {
+    test('editor can approve a post', function () {
         $policy = new PostPolicy();
         $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
 
-        expect($policy->approve(['id' => 2], $post))->toBeFalse();
+        expect($policy->approve(['id' => 2], $post))->toBeTrue();
     });
 
     test('author cannot approve a post', function () {
@@ -279,5 +334,89 @@ describe('PostPolicy::approve', function () {
         $post = mockPost(blogOwnerId: 1, blogRole: 'author');
 
         expect($policy->approve(['id' => 2], $post))->toBeFalse();
+    });
+});
+
+// ============================================================================
+// assignReviewer()
+// ============================================================================
+
+describe('PostPolicy::assignReviewer', function () {
+
+    test('owner can assign a reviewer', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1);
+
+        expect($policy->assignReviewer(['id' => 1], $post))->toBeTrue();
+    });
+
+    test('editor can assign a reviewer', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
+
+        expect($policy->assignReviewer(['id' => 2], $post))->toBeTrue();
+    });
+
+    test('reviewer can assign (self-assign enforced by controller not policy)', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
+
+        expect($policy->assignReviewer(['id' => 2], $post))->toBeTrue();
+    });
+
+    test('author cannot assign a reviewer', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
+
+        expect($policy->assignReviewer(['id' => 2], $post))->toBeFalse();
+    });
+
+    test('contributor cannot assign a reviewer', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor');
+
+        expect($policy->assignReviewer(['id' => 2], $post))->toBeFalse();
+    });
+});
+
+// ============================================================================
+// reviewPost()
+// ============================================================================
+
+describe('PostPolicy::reviewPost', function () {
+
+    test('owner can review a post', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1);
+
+        expect($policy->reviewPost(['id' => 1], $post))->toBeTrue();
+    });
+
+    test('editor can review a post', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
+
+        expect($policy->reviewPost(['id' => 2], $post))->toBeTrue();
+    });
+
+    test('reviewer can review a post', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
+
+        expect($policy->reviewPost(['id' => 2], $post))->toBeTrue();
+    });
+
+    test('author cannot review a post', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
+
+        expect($policy->reviewPost(['id' => 2], $post))->toBeFalse();
+    });
+
+    test('contributor cannot review a post', function () {
+        $policy = new PostPolicy();
+        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor');
+
+        expect($policy->reviewPost(['id' => 2], $post))->toBeFalse();
     });
 });

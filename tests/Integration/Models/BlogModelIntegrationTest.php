@@ -617,7 +617,7 @@ it('deletes all collaborators when deleting blog', function () {
     $collaborators = UserFactory::new($this->userModel)->count(4);
 
     foreach ($collaborators as $collaboratorId) {
-        $this->blogModel->addUserToBlog($blogId, $collaboratorId, 'viewer', $ownerId);
+        $this->blogModel->addUserToBlog($blogId, $collaboratorId, 'author', $ownerId);
     }
 
     $deletedCount = $this->blogModel->deleteCollaboratorsByBlogId($blogId);
