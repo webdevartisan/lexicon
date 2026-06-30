@@ -91,7 +91,7 @@ class BlogController extends AppController
         $ctx = $this->loadBlogContext($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
         if ($blogId === 0) {
-            throw new PageNotFoundException('Blog not found.');
+            throw new PageNotFoundException('Blog not found.', 404);
         }
 
         $featured = $this->postModel->findFeaturedByBlogId($blogId);
@@ -167,8 +167,6 @@ class BlogController extends AppController
         }
 
         $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
-
-        dd($cards);
 
         return $this->view('Blogs/_index_cards.lex.php', [
             'cards' => $this->enrichCardPosts($cards),
@@ -302,15 +300,16 @@ class BlogController extends AppController
             throw new PageNotFoundException('Post not be found', 404);
         }
 
-        if ($post['status'] !== 'published') {
+        $canPreview = auth()->check()
+            && $this->model->userCanAccessBlog((int) auth()->user()['id'], (int) $ctx['blog']['id']);
+
+        if (!$canPreview && $post['status'] !== 'published') {
             throw new PageNotFoundException('Post not be found', 404);
         }
 
         // Guard: post must belong to the resolved author
         if (!empty($post['author_id']) && (int) $post['author_id'] !== (int) $ctx['user']['id']) {
-            http_response_code(404);
-
-            return $this->view('errors/404.lex.php');
+            throw new PageNotFoundException('Post not be found.', 404);
         }
 
         // Normalize timestamps

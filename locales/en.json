@@ -30,6 +30,8 @@
     "editBlogSettings": "Blog Settings",
     "appearanceTheme": "Appearance / Theme",
     "collaborators": "Collaborators",
+    "team": "Team",
+    "shared": "Shared",
     "contentSection": "Content",
     "newPost": "New Post",
     "allPosts": "All Posts",
@@ -60,7 +62,7 @@
     "blogOverview": "Blog Overview",
     "reviewPost": "Review Post",
     "createNewPost": "Create New Post",
-    "collaborators": "Collaborators",
+    "collaborators": "Team",
     "appearance": "Appearance",
     "categoriesTags": "Categories / Tags",
     "mediaLibrary": "Media Library",
@@ -98,7 +100,8 @@
     },
     "tabs": {
       "draft": "Draft",
-      "pending": "Pending",
+      "pending": "In Review",
+      "needsChanges": "Needs Changes",
       "published": "Published",
       "archived": "Archived"
     },
@@ -117,7 +120,7 @@
     "stats": {
       "published": "Published",
       "drafts": "Drafts",
-      "pending": "Pending review",
+      "pending": "In Review",
       "comments": "Comments"
     },
     "empty": {

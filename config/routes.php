@@ -99,6 +99,7 @@ $router->group([
     $r->add('/', ['controller' => 'HomeController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
+    $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);
@@ -121,6 +122,9 @@ $router->group([
     // Categories & tags management (blog-scoped).
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
+
+    // Per-blog review queue (anyone with reviewer-capable role on the blog).
+    $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
 
     // Team / collaborator management (owner-only actions; leave is self-service).
     $r->add('/blog/{blogId:\d+}/team', ['controller' => 'CollaboratorController', 'action' => 'team', 'method' => 'GET']);
@@ -188,6 +192,7 @@ $router->group([
     $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/assign-reviewer', ['action' => 'assignReviewer', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/unassign-reviewer', ['action' => 'unassignReviewer', 'method' => 'POST']);
     // }
 });
 
