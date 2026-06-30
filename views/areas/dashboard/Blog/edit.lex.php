@@ -78,6 +78,7 @@
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="/cp-assets/js/timezone.init.js"></script>
 <script src="/cp-assets/js/dropzone.init.js"></script>
+<script src="/cp-assets/js/media-picker.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
 <script src="/cp-assets/js/delete-blog-modal.js"></script>
 <!-- JavaScript for Modal and Final Confirmation -->

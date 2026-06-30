@@ -14,6 +14,7 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
+use App\Services\MediaService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
@@ -36,6 +37,7 @@ final class BlogController extends AppController
         private UserPreferencesModel $preference,
         private BlogDeletionService $blogDeletion,
         private WorkflowService $workflowService,
+        private MediaService $mediaService,
     ) {}
 
     /**
@@ -611,6 +613,18 @@ final class BlogController extends AppController
     {
         $ownerId ??= $userId;
 
+        $paths = [];
+
+        // Library picks beat freshly-uploaded files — if the user selected an
+        // existing image, drop it straight into the corresponding _path slot.
+        foreach (['banner', 'logo', 'favicon'] as $type) {
+            $picked = trim((string) ($this->request->post[$type . '_library_url'] ?? ''));
+            if ($picked !== '') {
+                $paths[$type . '_path'] = $picked;
+                $this->mediaService->register($blogId, $userId, $picked, 'branding');
+            }
+        }
+
         $uploadedFiles = [
             'uploaded_banner_files' => $this->request->post['uploaded_banner_files'] ?? '',
             'uploaded_logo_files' => $this->request->post['uploaded_logo_files'] ?? '',
@@ -621,8 +635,6 @@ final class BlogController extends AppController
 
         [$dir, $baseUrl] = $this->uploader->blogBrandingPath($ownerId, $blogId);
 
-        $paths = [];
-
         foreach ($uploadedFileNames as $fieldName => $fileName) {
             if (empty($fileName)) {
                 continue;
@@ -632,8 +644,13 @@ final class BlogController extends AppController
             $parts = explode('_', $fieldName);
             $type = $parts[1];
 
+            // Library pick already filled this slot — don't clobber it.
+            if (isset($paths[$type . '_path'])) {
+                continue;
+            }
+
             try {
-                $paths[$type.'_path'] = $this->uploader->moveTempToBranding(
+                $path = $this->uploader->moveTempToBranding(
                     $fileName,
                     $ownerId,
                     $blogId,
@@ -641,6 +658,11 @@ final class BlogController extends AppController
                     $dir,
                     $baseUrl
                 );
+                $paths[$type.'_path'] = $path;
+
+                if ($path) {
+                    $this->mediaService->register($blogId, $userId, $path, 'branding');
+                }
             } catch (\Throwable $e) {
                 error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());
                 $this->flash('error', ucfirst($type).' upload failed: '.$e->getMessage());

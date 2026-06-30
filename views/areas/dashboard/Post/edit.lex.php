@@ -46,5 +46,6 @@
 <script src="/cp-assets/js/flatpickr.init.js"></script>
 <script src="/cp-assets/js/autosave.js"></script>
 <script src="/cp-assets/js/pages/post.js"></script>
+<script src="/cp-assets/js/media-picker.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
 {% endblock %}

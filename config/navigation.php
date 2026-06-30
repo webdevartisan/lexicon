@@ -122,8 +122,6 @@ return [
             'policy' => 'view',
             'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.mediaLibrary',
-            'disabled' => true,
-            'badge' => 'Soon',
         ],
         [
             'label' => 'Manage Blog',

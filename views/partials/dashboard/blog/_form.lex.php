@@ -252,9 +252,10 @@ $isArchived = $blogStatus === 'archived';
           </div>
       </section>
 
-      {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" %}
-      {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" %}
-      {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" %}
+      <?php $blogIdForLibrary = (string) ($blog['id'] ?? ''); ?>
+      {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" library="{$blogIdForLibrary}" %}
+      {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" library="{$blogIdForLibrary}" %}
+      {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" library="{$blogIdForLibrary}" %}
 
       <div class="p-4 text-xs bg-slate-50 border border-dashed border-slate-200 rounded-lg dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
           <h3 class="mb-1 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sidebar.tips.title') }}</h3>

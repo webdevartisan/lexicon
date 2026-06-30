@@ -123,6 +123,12 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
 
+    // Media library (blog-scoped).
+    $r->add('/blog/{blogId:\d+}/media',                    ['controller' => 'MediaController', 'action' => 'index',   'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/list',               ['controller' => 'MediaController', 'action' => 'list',    'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media',                    ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy',   ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
+
     // Per-blog review queue (anyone with reviewer-capable role on the blog).
     $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
 

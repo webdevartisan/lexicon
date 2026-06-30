@@ -303,7 +303,8 @@ $hintEligible = !empty($workflowEnabled)
         </section>
 
         <!-- Featured Image -->
-        {% cmp="dropzone2" label="Featured Image" resource="{$post}" %}
+        <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
+        {% cmp="dropzone2" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" %}
 
         <!-- SEO Settings Card -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">

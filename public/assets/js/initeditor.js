@@ -15,7 +15,7 @@ tinymce.init({
 
   toolbar: [
     'undo redo | styles | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify',
-    '| emoticons codesample charmap accordion | bullist numlist outdent indent | link image media table | visualblocks preview code fullscreen'
+    '| emoticons codesample charmap accordion | bullist numlist outdent indent | link image media medialibrary table | visualblocks preview code fullscreen'
   ],
 
   image_class_list: [
@@ -87,6 +87,34 @@ tinymce.init({
   setup: function (editor) {
     editor.on('change', function () {
       tinymce.triggerSave();
+    });
+
+    // Custom toolbar button — opens the per-blog Media Library picker
+    // and inserts the chosen image at the cursor.
+    editor.ui.registry.addButton('medialibrary', {
+      icon: 'gallery',
+      tooltip: 'Insert from Media Library',
+      onAction: function () {
+        if (!window.MediaPicker) {
+          editor.notificationManager.open({ text: 'Media library not loaded.', type: 'error' });
+          return;
+        }
+        var blogId = window.editorBlogId ? String(window.editorBlogId) : '';
+        if (!blogId) {
+          editor.notificationManager.open({ text: 'Pick a blog before inserting images.', type: 'warning' });
+          return;
+        }
+        var postForm = document.querySelector('form[data-autosave-form]');
+        var tokenInput = postForm && postForm.querySelector('input[name="_token"]');
+        var token = tokenInput ? tokenInput.value : '';
+
+        window.MediaPicker.open(blogId, {
+          csrfToken: token,
+          onSelect: function (picked) {
+            editor.insertContent('<img src="' + picked.url + '" alt="">');
+          },
+        });
+      },
     });
   }
 });

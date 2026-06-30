@@ -16,6 +16,7 @@ use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\PostResource;
+use App\Services\MediaService;
 use App\Services\NotificationService;
 use App\Services\PostAutosaveService;
 use App\Services\UploadService;
@@ -47,6 +48,7 @@ final class PostController extends AppController
         private BlogSettingsModel $blogSettingsModel,
         private NotificationService $notifications,
         private UserModel $userModel,
+        private MediaService $mediaService,
     ) {}
 
     /**
@@ -786,7 +788,7 @@ final class PostController extends AppController
             }
 
             $validated = $validator->validated();
-            $postId = $validated['id'] ?? null;
+            $postId = (int) $validated['id'] ?? null;
 
             // Delegate to service
             $result = $this->autosaveService->save($validated, (int) $user['id'], $postId);
@@ -1492,6 +1494,17 @@ final class PostController extends AppController
      */
     private function handleFeaturedImageUpload(int $userId, \App\Resources\BlogResource $blog): ?string
     {
+        // If the user picked from the media library, prefer that — the file
+        // already lives at a permanent URL and is already indexed.
+        $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
+        if ($picked !== '') {
+            // Make sure brand-new picks (e.g. someone pasted a URL by hand)
+            // end up in the library.
+            $this->mediaService->register((int) $blog->id(), $userId, $picked, 'post_image');
+
+            return $picked;
+        }
+
         $uploadedFiles = $this->uploader->getUploadedFiles(
             $this->request->post['uploaded_featured_image_files'] ?? []
         );
@@ -1514,6 +1527,10 @@ final class PostController extends AppController
             );
 
             $this->uploader->cleanupTempFiles($userId);
+
+            if ($path) {
+                $this->mediaService->register((int) $blog->id(), $userId, $path, 'post_image');
+            }
 
             return $path;
 
