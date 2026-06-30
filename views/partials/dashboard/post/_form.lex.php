@@ -58,6 +58,26 @@ $isArchived = $postStatus === 'archived';
         </section>
       </main>
       <aside class="sticky top-4 space-y-4 shrink-0 w-full sm:w-64">
+
+        <!-- Reviewer feedback — shown to the author when a reviewer has requested changes -->
+        <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
+        <section class="border border-amber-200 bg-amber-50 rounded-lg dark:bg-amber-500/10 dark:border-amber-500/30">
+            <div class="p-4 border-b border-amber-200 dark:border-amber-500/30 flex items-center gap-2">
+                <i data-lucide="message-square-warning" class="size-4 text-amber-600 dark:text-amber-400 shrink-0"></i>
+                <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Reviewer feedback</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                <p class="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                    <?= e($latestReview['feedback']) ?>
+                </p>
+                <p class="text-[11px] text-amber-600 dark:text-amber-400">
+                    — <?= e($latestReview['reviewer_username'] ?? 'Reviewer') ?>,
+                    <?= e(date('M j, Y', strtotime((string) ($latestReview['reviewed_at'] ?? 'now')))) ?>
+                </p>
+            </div>
+        </section>
+        <?php } ?>
+
         <!-- Publishing Actions Card -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
           <div class="p-4 space-y-4">
@@ -65,8 +85,29 @@ $isArchived = $postStatus === 'archived';
             <div class="flex w-full gap-2">
               <?php $label = $isPublished ? 'Update' : 'Save Draft' ?>
               {% cmp="btn" type="submit" variant="blue" icon="save" label="{$label}" addClass="flex-1 " %}
-              {% cmp="btn" href="/dashboard" variant="slate" icon="step-back" label="Back" %}
+              {% cmp="btn" href="/dashboard/post" variant="slate" icon="step-back" label="Back" %}
             </div>
+
+            <?php
+              $hintRole = $blogRole ?? '';
+$hintEligible = !empty($workflowEnabled)
+    && in_array($hintRole, ['author', 'contributor', 'owner', 'editor'], true)
+    && (
+        $postStatus === 'draft'
+        || ($postStatus === 'pending' && ($workflowState ?? '') === 'needs_changes')
+    );
+?>
+            <?php if ($hintEligible) { ?>
+            <!-- Hint replacing the old standalone button — pending status now drives the review pipeline. -->
+            <div class="text-[11px] text-slate-500 dark:text-zink-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-md p-2.5 leading-relaxed">
+              <i data-lucide="info" class="size-3.5 inline -mt-0.5 text-amber-600 dark:text-amber-400"></i>
+              <?php if (($workflowState ?? '') === 'needs_changes') { ?>
+                After addressing the feedback, keep <strong>Visibility</strong> on <strong>Pending</strong> and save — the post will be sent back to the reviewer automatically.
+              <?php } else { ?>
+                Ready for review? Switch <strong>Visibility</strong> below to <strong>Pending</strong> and save — reviewers will pick it up automatically.
+              <?php } ?>
+            </div>
+            <?php } ?>
 
             <!-- Auto-save Status -->
             <div id="autosave-indicator" class="flex items-center gap-2 text-xs text-slate-500 dark:text-zink-400" style="display: none;">
@@ -187,7 +228,7 @@ $isArchived = $postStatus === 'archived';
                   Publish Date & Time
                 </label>
                 <?php
-                  $publishedAt = old('published_at') ?? $post['published_at'] ?? null;
+      $publishedAt = old('published_at') ?? $post['published_at'] ?? null;
 ?>
                 <input type="hidden" name="timezone" id="timezone">
                 <input 

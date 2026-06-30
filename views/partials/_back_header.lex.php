@@ -38,17 +38,24 @@
                 {% endcache %}
                 <?php if (!empty($user_blogs)) { ?>
                 <!-- Blog switcher: the topbar control for the active blog context.
-                     The left nav and dashboard pages are all scoped to this blog,
-                     so the switcher lives here as the single, persistent selector. -->
+                     Lists every blog the user can act on (owned + shared) so a
+                     reviewer/editor can flip into a colleague's blog from anywhere. -->
                 <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         {{ csrf_field() }}
                         <i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>
                         <select name="blog" onchange="this.form.submit()" aria-label="Switch active blog"
-                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[240px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
-                            <?php foreach ($user_blogs as $bid => $bname) { ?>
+                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
+                            <?php foreach ($user_blogs as $bid => $b) {
+                                $bname   = is_array($b) ? (string) ($b['name']   ?? 'Untitled') : (string) $b;
+                                $bstatus = is_array($b) ? (string) ($b['status'] ?? '')        : '';
+                                // Owned-only switcher — surface status when it's not the everyday "published".
+                                $suffixText = ($bstatus !== '' && $bstatus !== 'published')
+                                    ? ' — '.ucfirst($bstatus)
+                                    : '';
+                            ?>
                             <option value="<?= e((string) $bid) ?>" <?= ((int) $bid === (int) ($selected_blog_id ?? 0)) ? 'selected' : '' ?>>
-                                <?= e($bname) ?>
+                                <?= e($bname.$suffixText) ?>
                             </option>
                             <?php } ?>
                         </select>

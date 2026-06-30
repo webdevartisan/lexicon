@@ -44,21 +44,23 @@ class NavigationService
      * Get navigation items for a specific area
      *
      * filter navigation items based on authentication state, roles,
-     * blog context (global vs contextual), and policy-based permissions.
+     * blog context (global vs contextual), policy-based permissions, and
+     * named per-user predicates passed in via $context (e.g. 'isCollaborator').
      *
      * @param  string  $area  Navigation area (front, back, admin)
      * @param  string|null  $currentPath  Current request path for active state
      * @param  BlogResource|null  $selectedBlog  Selected blog resource for contextual navigation
+     * @param  array<string,bool>  $context  Named boolean flags used by 'show_if' filter
      * @return array Filtered and processed navigation items with translation keys
      */
-    public function for(string $area, ?string $currentPath = null, ?BlogResource $selectedBlog = null): array
+    public function for(string $area, ?string $currentPath = null, ?BlogResource $selectedBlog = null, array $context = []): array
     {
         $defs = $this->config[$area] ?? [];
         $isLogged = $this->auth->check();
         $user = $isLogged ? $this->auth->user() : null;
 
         // filter items based on authentication, authorization, scope, and policies
-        $visible = array_filter($defs, function (array $it) use ($isLogged, $user, $selectedBlog) {
+        $visible = array_filter($defs, function (array $it) use ($isLogged, $user, $selectedBlog, $context) {
             // check basic authentication requirement
             if (array_key_exists('auth', $it)) {
                 if ($it['auth'] === true && !$isLogged) {
@@ -115,6 +117,22 @@ class NavigationService
                     // log policy resolution errors but don't break navigation
                     error_log('Navigation policy check failed: '.$e->getMessage());
 
+                    return false;
+                }
+            }
+
+            // check blog-role restrictions (e.g. hide Blog Overview from pure reviewers)
+            if (!empty($it['blog_roles']) && $selectedBlog !== null && $user !== null) {
+                $effectiveRole = $selectedBlog->effectiveRoleForUser((int) $user['id']);
+                if (!in_array($effectiveRole, $it['blog_roles'], true)) {
+                    return false;
+                }
+            }
+
+            // named user-context predicate (e.g. show_if=isCollaborator → only when user has shared blogs)
+            if (!empty($it['show_if'])) {
+                $flag = (string) $it['show_if'];
+                if (empty($context[$flag])) {
                     return false;
                 }
             }

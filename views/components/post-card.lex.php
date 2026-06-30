@@ -21,18 +21,49 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
 {% set archiveTooltip = t('components.postCard.tooltips.archive') %}
 {% set deleteTooltip = t('components.postCard.tooltips.delete') %}
 
-<div class="card flex flex-col h-full gap-2">
+<div class="card flex flex-col h-full gap-2 transition border border-slate-200 dark:border-zink-600 rounded-lg peer-checked:border-custom-500 peer-checked:bg-slate-100 dark:peer-checked:bg-zink-800/60">
     <div class="card-body flex flex-col flex-1">
         <div class="flex items-start justify-between gap-2 mb-3">
             <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
                 <?= e($badgeLabel) ?>
             </span>
+
+        <?php
+        // Reviewer chip — only meaningful while a post is in the review pipeline.
+        if ($status === 'pending') {
+            if (!empty($post['reviewer_username'])) {
+                $claimedAgo = !empty($post['reviewer_assigned_at'])
+                    ? date('M j', strtotime((string) $post['reviewer_assigned_at']))
+                    : '';
+                ?>
+                <div class="mb-2">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
+                          title="Currently under review">
+                        <i data-lucide="lock" class="size-3"></i>
+                        Reviewed by <?= e($post['reviewer_username']) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
+                    </span>
+                </div>
+                <?php
+            } else {
+                ?>
+                <div class="mb-2">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30"
+                          title="No reviewer has claimed this post yet">
+                        <i data-lucide="user-plus" class="size-3"></i>
+                        Awaiting reviewer
+                    </span>
+                </div>
+                <?php
+            }
+        }
+?>
             <?php if ($dateDisplay) { ?>
             <span class="text-[11px] text-slate-500 dark:text-zink-300 whitespace-nowrap">
                 <?= e($dateDisplay) ?>
             </span>
             <?php } ?>
         </div>
+
 
         <h6 class="mb-2 text-15 line-clamp-2">
             <a href="/dashboard/post/{{ post.id }}/edit" class="hover:text-custom-500 transition-colors">

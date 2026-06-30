@@ -11,12 +11,13 @@
 
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
-  <form 
+  <form
     method="post"
     action="/dashboard/post/create"
     enctype="multipart/form-data"
     data-dropzone-form
     class="space-y-3" data-autosave-form>
+    <input type="hidden" name="blog_id" value="<?= (int) ($blog['id'] ?? 0) ?>">
     {% include "partials/dashboard/post/_form.lex.php" %}
   </form>
 </div>

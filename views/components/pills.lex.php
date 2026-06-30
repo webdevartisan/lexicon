@@ -45,7 +45,6 @@
                     'in_review' => $badgeBase.' bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/20 dark:text-sky-200 dark:ring-sky-500/30',
                     'needs_changes' => $badgeBase.' bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/30',
                     'approved' => $badgeBase.' bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30',
-                    'ready_to_publish' => $badgeBase.' bg-indigo-50 text-indigo-700 ring-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-200 dark:ring-indigo-500/30',
                     default => $badgeBase.' bg-slate-100 text-slate-700 ring-slate-200 dark:bg-zink-600/30 dark:text-zink-100 dark:ring-zink-500/30',
                 };
                 ?>

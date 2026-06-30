@@ -1,6 +1,6 @@
 <?php
 $classSelect = 'form-select appearance-none border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 disabled:bg-slate-100 dark:disabled:bg-zink-600 disabled:border-slate-300 dark:disabled:border-zink-500 dark:disabled:text-zink-200 disabled:text-slate-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
-$label = $label ?? 'Label';
+$label = $label ?? '';
 $options = $options ?? [];
 $name = $name ?? '';
 $selectedKey = $selectedKey ?? '';
@@ -15,25 +15,31 @@ if (!empty($name)) {
 }
 
 if (!function_exists('is_assoc')) {
+
     function is_assoc(array $arr): bool
     {
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
+   
 }
 
 if (!is_assoc($options)) {
+
     $assoc = [];
     foreach ($options as $value) {
         $assoc[$value] = ucfirst($value);
     }
     $options = $assoc;
 }
+
 ?>
 <?php if (empty($groups)) { ?>
 <div class="relative">
-    <label for="<?= $elementName ?>" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
-        <?= e($label) ?>
-    </label>
+    <?php if (!empty($label)) { ?>
+        <label for="<?= $elementName ?>" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
+            <?= e($label) ?>
+        </label>
+    <?php } ?>
     <select 
         style="background-image: none;"
         class="<?= $classSelect ?>" 

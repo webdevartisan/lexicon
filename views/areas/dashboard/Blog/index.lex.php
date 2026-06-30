@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 {% block title %}All Blogs{% endblock %}
-{% block subtitle %}Create, manage, and switch between your blogs.{% endblock %}
+{% block subtitle %}Create, manage, and switch between blogs.{% endblock %}
 {% block body %}
 <?php
 $statusBadge = [
@@ -8,30 +8,26 @@ $statusBadge = [
     'draft' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'Draft'],
     'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', 'Archived'],
 ];
+$sortOptions = [
+    'updated' => 'Last updated',
+    'created' => 'Date created',
+    'posts' => 'Most posts',
+    'name' => 'Name (A–Z)',
+];
+$statusOptions = [
+    'published' => 'Published',
+    'draft' => 'Draft',
+    'archived' => 'Archived'
+];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <!-- Toolbar: filters + create -->
     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between mb-5">
         <form method="GET" action="/dashboard/blog" class="grid grid-cols-1 sm:grid-cols-3 gap-3 grow max-w-2xl">
-            <div class="sm:col-span-3 lg:col-span-1 relative">
-                <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-                <input id="q" name="q" type="text" value="{{ q }}"
-                    placeholder="Search blogs..."
-                    class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-            </div>
-            <select name="status" class="form-input border-slate-200 dark:border-zink-500" onchange="this.form.submit()">
-                <option value="">Any status</option>
-                <option value="published" <?= $status === 'published' ? 'selected' : '' ?>>Published</option>
-                <option value="draft" <?= $status === 'draft' ? 'selected' : '' ?>>Draft</option>
-                <option value="archived" <?= $status === 'archived' ? 'selected' : '' ?>>Archived</option>
-            </select>
-            <select name="sort" class="form-input border-slate-200 dark:border-zink-500" onchange="this.form.submit()">
-                <option value="updated" <?= $sort === 'updated' ? 'selected' : '' ?>>Last updated</option>
-                <option value="created" <?= $sort === 'created' ? 'selected' : '' ?>>Date created</option>
-                <option value="posts" <?= $sort === 'posts' ? 'selected' : '' ?>>Most posts</option>
-                <option value="name" <?= $sort === 'name' ? 'selected' : '' ?>>Name (A–Z)</option>
-            </select>
+            {% cmp="input" type="text" icon="search" name="q" value="{$q}" placeholder="Search blogs..." %}
+            {% cmp="select" name="status" options="{$statusOptions}" selectedKey="{$status}" onchange="this.form.submit()" %}
+            {% cmp="select" name="sort" options="{$sortOptions}" selectedKey="{$sort}" onchange="this.form.submit()" %}
         </form>
 
         <div class="shrink-0">
@@ -75,10 +71,16 @@ $statusBadge = [
 $isActive = ($bid === (int) $selectedBlogId);
 $bStatus = $blog['status'] ?? 'draft';
 [$badgeClass, $badgeLabel] = $statusBadge[$bStatus] ?? $statusBadge['draft'];
+$isOwner = ($blog['user_role'] ?? 'owner') === 'owner';
+$collaboratorRole = $isOwner ? null : ($blog['user_role'] ?? null);
+
+$blogCardHref = "/dashboard/blog/<?= $bid ?>/show";
+
+
 ?>
         <div class="card flex flex-col h-full <?= $isActive ? 'ring-1 ring-custom-500 border-custom-500' : '' ?>">
             <!-- Banner / placeholder -->
-            <a href="/dashboard/blog/<?= $bid ?>/show" class="relative block overflow-hidden rounded-t-md aspect-[21/8] bg-slate-100 dark:bg-zink-600">
+            <a href="<?= $blogCardHref ?>" class="relative block overflow-hidden rounded-t-md aspect-[21/8] bg-slate-100 dark:bg-zink-600">
                 <?php if (!empty($blog['banner_path'])) { ?>
                 <img src="<?= e($blog['banner_path']) ?>" alt="<?= e($blog['blog_name']) ?> banner" class="object-cover w-full h-full">
                 <?php } else { ?>
@@ -91,14 +93,21 @@ $bStatus = $blog['status'] ?? 'draft';
                     <i data-lucide="check" class="size-3"></i> Active
                 </span>
                 <?php } ?>
-                <span class="absolute top-2 right-2 inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
-                    <?= e($badgeLabel) ?>
+                <span class="absolute top-2 right-2 inline-flex items-center gap-1.5">
+                    <?php if ($collaboratorRole !== null) { ?>
+                    <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800">
+                        <?= e(ucfirst($collaboratorRole)) ?>
+                    </span>
+                    <?php } ?>
+                    <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
+                        <?= e($badgeLabel) ?>
+                    </span>
                 </span>
             </a>
 
             <div class="card-body flex flex-col flex-1">
                 <h2 class="text-15 font-semibold mb-1">
-                    <a href="/dashboard/blog/<?= $bid ?>/show" class="hover:text-custom-500 transition-colors">
+                    <a href="<?= $blogCardHref ?>" class="hover:text-custom-500 transition-colors">
                         <?= e($blog['blog_name']) ?>
                     </a>
                 </h2>
@@ -126,7 +135,7 @@ $bStatus = $blog['status'] ?? 'draft';
                 <!-- Actions -->
                 <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
                     <div class="flex items-center gap-1">
-                        <a href="/dashboard/blog/<?= $bid ?>/show" title="Overview"
+                        <a href="<?= $blogCardHref ?>" title="Overview"
                             class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
                             <i data-lucide="layout-grid" class="size-4"></i> Open
                         </a>
@@ -142,14 +151,16 @@ $bStatus = $blog['status'] ?? 'draft';
                             </button>
                         </form>
                         <?php } ?>
+                        <?php if ($isOwner) { ?>
                         <a href="/dashboard/blog/<?= $bid ?>/edit" title="Blog settings"
                             class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
                             <i data-lucide="sliders" class="size-4"></i>
                         </a>
-                        <a href="/dashboard/blog/<?= $bid ?>/users" title="Collaborators"
+                        <a href="/dashboard/blog/<?= $bid ?>/team" title="Collaborators"
                             class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
                             <i data-lucide="users" class="size-4"></i>
                         </a>
+                        <?php } ?>
                         <a href="/blog/<?= e($blog['blog_slug'] ?? '') ?>" target="_blank" rel="noopener" title="View live"
                             class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
                             <i data-lucide="external-link" class="size-4"></i>

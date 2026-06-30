@@ -45,12 +45,14 @@
                 <i data-lucide="external-link" class="size-4"></i>
                 <span>View live</span>
             </a>
+            <?php if (in_array($blogRole ?? 'none', ['owner', 'editor'], true)) { ?>
             <a href="/dashboard/blog/{{ blog.id }}/edit"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                 <i data-lucide="settings" class="size-4"></i>
                 <span>Settings</span>
             </a>
             {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="New post" %}
+            <?php } ?>
         </div>
     </div>
 
@@ -149,11 +151,15 @@
             </div>
         </section>
 
-        <!-- Quick actions for this blog -->
+        <!-- Quick actions — content varies by role -->
         <aside class="card">
             <div class="card-body">
-                <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-3">Manage this blog</h2>
+                <?php $isEditorOrOwner = in_array($blogRole ?? 'none', ['owner', 'editor'], true); ?>
+                <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-3">
+                    <?= $isEditorOrOwner ? 'Manage this blog' : 'Quick links' ?>
+                </h2>
                 <div class="flex flex-col gap-2">
+                    <?php if ($isEditorOrOwner) { ?>
                     <a href="/dashboard/blog/{{ blog.id }}/edit" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
                         <i data-lucide="sliders" class="size-4 text-slate-400"></i>
                         <span>Blog settings</span>
@@ -162,14 +168,21 @@
                         <i data-lucide="palette" class="size-4 text-slate-400"></i>
                         <span>Appearance / Theme</span>
                     </a>
-                    <a href="/dashboard/blog/{{ blog.id }}/users" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
+                    <a href="/dashboard/blog/{{ blog.id }}/team" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
                         <i data-lucide="users" class="size-4 text-slate-400"></i>
                         <span>Collaborators</span>
                     </a>
+                    <?php } ?>
                     <a href="/dashboard/post?blog_id={{ blog.id }}" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
                         <i data-lucide="files" class="size-4 text-slate-400"></i>
                         <span>All posts in this blog</span>
                     </a>
+                    <?php if (($blogRole ?? 'none') === 'reviewer') { ?>
+                    <a href="/dashboard" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
+                        <i data-lucide="clipboard-check" class="size-4 text-amber-500"></i>
+                        <span>Review queue</span>
+                    </a>
+                    <?php } ?>
                 </div>
             </div>
         </aside>
@@ -187,7 +200,9 @@
             <div class="text-center py-10">
                 <i data-lucide="feather" class="size-10 text-slate-400 mx-auto mb-2"></i>
                 <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">No posts published yet in this blog.</p>
+                <?php if (in_array($blogRole ?? 'none', ['owner', 'editor', 'author', 'contributor'], true)) { ?>
                 {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="Write the first post" %}
+                <?php } ?>
             </div>
             {% else %}
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">

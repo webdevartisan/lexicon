@@ -32,8 +32,8 @@
     <label>Status<br>
         <select name="status">
             <option value="draft" <?= ($post['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
-            <option value="pending_review" <?= ($post['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>>Pending Review</option>
             <option value="published" <?= ($post['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
+            <option value="archived" <?= ($post['status'] ?? '') === 'archived' ? 'selected' : '' ?>>Archived</option>
         </select>
     </label>
 </p>

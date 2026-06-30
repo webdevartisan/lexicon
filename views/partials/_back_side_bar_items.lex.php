@@ -1,4 +1,4 @@
-{% cache $area . ':sidebar:nav-structure:' . $selected_blog_id ttl=3600 %}
+{% cache $sidebar_cache_key ttl=3600 %}
 <?php
 /**
  * Dashboard Sidebar Navigation
@@ -21,6 +21,7 @@ $icons = [
     'create-new-blog' => 'file-plus',
     'new-blog' => 'file-plus',
     'all-blogs' => 'book-open',
+    'shared' => 'inbox',
     'my-blogs' => 'book-open',
     'account-settings' => 'settings',
 
@@ -29,6 +30,7 @@ $icons = [
     'edit-blog-settings' => 'sliders',
     'appearance-/-theme' => 'palette',
     'collaborators' => 'users',
+    'team' => 'users',
 
     // Content Management Icons
     'new-post' => 'pen',

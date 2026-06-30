@@ -1,7 +1,7 @@
 <?php
 $errors = errors();
 $type = $type ?? 'text';
-$label = $label ?? 'label';
+$label = $label ?? '';
 $value = $value ?? '';
 $name = $name ?? '';
 $placeholder = $placeholder ?? '';
@@ -29,7 +29,7 @@ $old = old($elementName);
 <?php if ($type !== 'textarea') { ?>
 
 <div>
-    <?php if ($type !== 'hidden') { ?>
+    <?php if (($type !== 'hidden') && !empty($label)) { ?>
         <label for="<?= $elementName ?>" class="<?= $classLabel ?>">
             <p class="first-letter:uppercase">
                 <?= $label ?>

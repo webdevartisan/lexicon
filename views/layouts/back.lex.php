@@ -60,7 +60,11 @@ $old = old();
                 {% if noBreadcrumb|empty %}
                 <div class="flex flex-col gap-2 py-4 md:flex-row md:items-center print:hidden">
                     <div class="grow">
-                        <h5 class="text-2xl font-semibold">{% yield title %}</h5>
+                        <h5 class="text-2xl font-semibold">
+                            {% if (empty($hideTitle)): %}
+                                {% yield title %}
+                            {% endif; %}
+                        </h5>
                         <p class="text-sm text-slate-500 dark:text-zink-300">
                             {% yield subtitle %}
                         </p>
