@@ -169,7 +169,7 @@
                 <div class="p-4 border-b border-slate-200 dark:border-zink-600">
                     <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Workflow actions</h2>
                 </div>
-                <div class="p-4 space-y-2"><?php /* canRequestReview is no longer surfaced — pending status auto-triggers the review pipeline. */ ?>
+                <div class="p-4 space-y-2"><?php /* canRequestReview is no longer surfaced. Pending status auto-triggers the review pipeline. */ ?>
 
                     <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/review-decision">
                         {{ csrf_field() }}
@@ -195,7 +195,7 @@
                     </form>
                     <?php } ?>
 
-                    <?php if (!empty($post['status']) && $post['status'] === 'published') { ?>
+                    <?php if (!empty($canUnpublish)) { ?>
                     <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/unpublish">
                         {{ csrf_field() }}
                         <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">

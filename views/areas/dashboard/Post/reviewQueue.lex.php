@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 {% block title %}{{ blog.blog_name }} · Review queue{% endblock %}
-{% block subtitle %}Posts waiting on a reviewer — yours to claim or pass along.{% endblock %}
+{% block subtitle %}Posts waiting on a reviewer: yours to claim or pass along.{% endblock %}
 {% block body %}
 <?php
 $workflowBadge = [
@@ -49,6 +49,8 @@ $workflowLabel = [
                     $state = (string) ($p['workflow_state'] ?? 'in_review');
                     $assignedToMe = (int) ($p['reviewer_id'] ?? 0) === (int) ($currentUserId ?? 0);
                     $unassigned = empty($p['reviewer_id']);
+                    $postId = (int) $p['id'];
+                    $reviewHref = "/dashboard/post/{$postId}/review";
                 ?>
                 <li class="py-3 first:pt-0 last:pb-0 flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center justify-center size-9 rounded-md shrink-0
@@ -96,7 +98,7 @@ $workflowLabel = [
                             {% cmp="btn" type="submit" variant="slate" icon="user-minus" label="Unassign" %}
                         </form>
                         <?php } ?>
-                        {% cmp="btn" href="/dashboard/post/{$p['id']}/review" variant="blue" icon="eye" label="Open" %}
+                        {% cmp="btn" href="{$reviewHref}" variant="blue" icon="eye" label="Open" %}
                     </div>
                 </li>
                 {% endforeach %}

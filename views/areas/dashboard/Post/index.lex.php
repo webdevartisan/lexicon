@@ -2,14 +2,22 @@
 {% block title %}{{ t('navigation.allPosts') }}{% endblock %}
 {% block body %}
 <?php
+// Review-stage pills only make sense when the active blog has editorial workflow on.
+// In "All blogs" mode we keep them because individual blogs may still use the pipeline.
+$showReviewPills = !empty($workflowEnabled);
+
 $tabs = [
     ['key' => '', 'label' => 'All', 'count' => $counts['all']],
     ['key' => 'published', 'label' => 'Published', 'count' => $counts['published']],
     ['key' => 'draft', 'label' => 'Drafts', 'count' => $counts['draft']],
-    ['key' => 'pending', 'label' => 'In Review', 'count' => $counts['pending']],
-    ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0],
-    ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']],
 ];
+
+if ($showReviewPills) {
+    $tabs[] = ['key' => 'pending', 'label' => 'In Review', 'count' => $counts['pending']];
+    $tabs[] = ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0];
+}
+
+$tabs[] = ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']];
 
 // Use the stringified $blogIdView ('all' or numeric) so the choice survives pill clicks.
 $blogIdForUrl = $blogIdView ?? null;
@@ -266,9 +274,11 @@ if ($q !== '') {
                     <i data-lucide="pencil-ruler" class="size-3.5"></i> Move to draft
                 </button>
 
+                <?php if ($showReviewPills) { ?>
                 <button type="button" data-bulk="review" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-600/50 transition-colors">
                     <i data-lucide="pencil-ruler" class="size-3.5"></i> Send for review
                 </button>
+                <?php } ?>
 
                 <button type="button" data-bulk="archive" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-orange-600/30 transition-colors">
                     <i data-lucide="archive" class="size-3.5"></i> Archive
@@ -343,6 +353,7 @@ if ($q !== '') {
                 archive: 'Archive ' + selected + ' post(s)?',
                 publish: 'Publish ' + selected + ' post(s)?',
                 draft: 'Move ' + selected + ' post(s) to draft?',
+                review: 'Send ' + selected + ' post(s) for review?',
             };
 
             if (!confirm(messages[action])) {
