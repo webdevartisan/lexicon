@@ -54,7 +54,7 @@ final class BlogController extends AppController
             $sort = 'updated';
         }
 
-        // "All Blogs" is the owner workspace listing — shared blogs live on
+        // "All Blogs" is the owner workspace listing. Shared blogs live on
         // /dashboard/shared and shouldn't appear here.
         $blogs = $this->blogModel->getBlogsByOwnerWithCounts((int) $user['id']);
 
@@ -205,7 +205,16 @@ final class BlogController extends AppController
     {
         $user = auth()->user();
         $blog = $this->getBlog($id);
-        Gate::authorize('view', $blog, $user);
+        Gate::authorize('update', $blog, $user);
+
+        if ($blog->effectiveRoleForUser((int) $user['id']) === 'editor') {
+            breadcrumbs()->set([
+                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+                ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
+                ['label' => 'Edit Blog', 'url' => null, 'key' => 'breadcrumbs.editBlog'],
+            ], true);
+        }
 
         // Load settings with defaults
         $settings = $this->settings->findByBlogId((int) $id) ?? [
@@ -384,8 +393,24 @@ final class BlogController extends AppController
 
         Gate::authorize('view', $blog, $user);
 
-        $settings = $this->settings->findByBlogId((int) $id);
+        // Overview is the admin surface. Reviewers, authors and contributors
+        // have role-specific landings on /dashboard/shared and shouldn't drop
+        // into blog configuration by URL.
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+        if (!in_array($blogRole, ['owner', 'editor'], true)) {
+            throw new PageNotFoundException("Blog overview not available for role: {$blogRole}.");
+        }
+
+        // Editors arrive through Shared; the static pattern assumes All Blogs.
+        if ($blogRole === 'editor') {
+            breadcrumbs()->set([
+                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+                ['label' => 'Blog Overview', 'url' => null, 'key' => 'breadcrumbs.blogOverview'],
+            ], true);
+        }
+
+        $settings = $this->settings->findByBlogId((int) $id);
 
         // Blog overview shows all posts in the blog, not just the viewer's own.
         $stats = [

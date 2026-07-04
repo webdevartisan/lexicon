@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\PostReviewerModel;
 use App\Models\UserModel;
@@ -33,6 +34,7 @@ final class CollaboratorController extends AppController
         private readonly NotificationService $notifications,
         private readonly PostModel $postModel,
         private readonly PostReviewerModel $postReviewerModel,
+        private readonly BlogSettingsModel $blogSettingsModel,
     ) {}
 
     /**
@@ -53,34 +55,46 @@ final class CollaboratorController extends AppController
         $user = auth()->user();
         $isAdmin = auth()->hasRole('administrator');
 
-        $inReviewTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
-        $inReviewUnassigned = $this->postModel->countInReviewUnassigned($blogIdInt);
-        $needsChangesTotal  = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
-        $approvedTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
+        // Workflow health only makes sense for blogs that opted into the review pipeline.
+        // Skip the count queries entirely otherwise. The stats would all be zero and just clutter the page.
+        $settings = $this->blogSettingsModel->findByBlogId($blogIdInt);
+        $workflowEnabled = !empty($settings['workflow_enabled']);
 
-        // Most recent in-review items so the owner can act inline rather than
-        // hunting through the posts list.
-        $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
-            userId: (int) $user['id'],
-            isAdmin: $isAdmin,
-            blogId: $blogIdInt,
-        );
+        $workflowHealth = null;
+        if ($workflowEnabled) {
+            $inReviewTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
+            $inReviewUnassigned = $this->postModel->countInReviewUnassigned($blogIdInt);
+            $needsChangesTotal  = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
+            $approvedTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
 
-        $workflowHealth = [
-            'in_review_total'      => $inReviewTotal,
-            'in_review_unassigned' => $inReviewUnassigned,
-            'in_review_assigned'   => max(0, $inReviewTotal - $inReviewUnassigned),
-            'needs_changes'        => $needsChangesTotal,
-            'approved'             => $approvedTotal,
-            'recent'               => $inReviewRecent,
-        ];
+            $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
+                userId: (int) $user['id'],
+                isAdmin: $isAdmin,
+                blogId: $blogIdInt,
+            );
+
+            $workflowHealth = [
+                'in_review_total'      => $inReviewTotal,
+                'in_review_unassigned' => $inReviewUnassigned,
+                'in_review_assigned'   => max(0, $inReviewTotal - $inReviewUnassigned),
+                'needs_changes'        => $needsChangesTotal,
+                'approved'             => $approvedTotal,
+                'recent'               => $inReviewRecent,
+            ];
+        }
+
+        // With the workflow off the reviewer role has nothing to do, so don't offer it on the invite form.
+        $availableRoles = $workflowEnabled
+            ? BlogModel::ROLES
+            : array_values(array_filter(BlogModel::ROLES, static fn (string $r): bool => $r !== 'reviewer'));
 
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
             'members' => $blog->users(),
             'pendingInvites' => $this->invitationModel->getPendingForBlog($blogIdInt),
             'expiredInvites' => $this->invitationModel->getExpiredForBlog($blogIdInt),
-            'roles' => BlogModel::ROLES,
+            'roles' => $availableRoles,
+            'workflowEnabled' => $workflowEnabled,
             'workflowHealth' => $workflowHealth,
         ]);
     }
