@@ -156,6 +156,16 @@ abstract class AppController extends BaseController implements SessionAwareInter
         return $this->redirect($referer);
     }
 
+    protected function backUrlPath()
+    {
+        $referer = $this->request->header('Referer') ?? '/';
+        if ($referer && !str_starts_with($referer, base_url())) {
+            $referer = '/';
+        }
+
+        return $referer;
+    }
+
     // ============== Error Response Helpers ==============
 
     /**
