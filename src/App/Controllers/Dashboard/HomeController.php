@@ -7,13 +7,14 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
  * HomeController renders the dashboard overview: a true at-a-glance summary
- * (stats, needs-attention queues, recent activity, quick actions) — not a
+ * (stats, needs-attention queues, recent activity, quick actions). Not a
  * filtered post list. The post-list-with-tabs role lives on All Posts.
  */
 class HomeController extends AppController
@@ -22,6 +23,7 @@ class HomeController extends AppController
         private PostModel $post,
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
+        private BlogSettingsModel $blogSettings,
     ) {}
 
     /**
@@ -95,6 +97,11 @@ class HomeController extends AppController
         Gate::authorize('view', $blog, $user);
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
 
+        // Editorial pipeline determines whether "Pending" is a live bucket for this blog.
+        // With workflow off it's not part of the normal flow. hide the tile and drop it from Needs Attention.
+        $settings = $this->blogSettings->findByBlogId($selectedBlogId);
+        $workflowEnabled = !empty($settings['workflow_enabled']);
+
         // Pull each status bucket once: we use the pagination total for stats,
         // and the first few rows as the "what's in this bucket" preview.
         $publishedResult = $this->post->findByAuthorWithFiltersPagination(
@@ -103,9 +110,11 @@ class HomeController extends AppController
         $draftResult = $this->post->findByAuthorWithFiltersPagination(
             authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'draft'
         );
-        $pendingResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
-        );
+        $pendingResult = $workflowEnabled
+            ? $this->post->findByAuthorWithFiltersPagination(
+                authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
+            )
+            : ['data' => [], 'pagination' => ['total_records' => 0]];
         $archivedResult = $this->post->findByAuthorWithFiltersPagination(
             authorId: $user['id'], page: 1, perPage: 1, blogId: $selectedBlogId, status: 'archived'
         );
@@ -120,10 +129,12 @@ class HomeController extends AppController
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
-        // "Needs attention" = drafts + pending. We surface them so the creator
-        // sees unfinished work the moment they land, before anything else.
+        // "Needs attention" = drafts (+ pending when the review pipeline is on).
+        // We surface them so the creator sees unfinished work the moment they land.
         $needsAttention = array_slice(
-            array_merge($draftResult['data'], $pendingResult['data']),
+            $workflowEnabled
+                ? array_merge($draftResult['data'], $pendingResult['data'])
+                : $draftResult['data'],
             0,
             4
         );
@@ -141,6 +152,7 @@ class HomeController extends AppController
             'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id']) : [],
             'isAdmin' => $isAdmin,
             'blogRole' => $blogRole,
+            'workflowEnabled' => $workflowEnabled,
             'hideTitle' => true,
         ]);
     }

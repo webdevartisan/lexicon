@@ -132,6 +132,13 @@ $router->group([
     // Per-blog review queue (anyone with reviewer-capable role on the blog).
     $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
 
+    // Per-blog posts index for owners and editors. Kept separate from the
+    // personal /dashboard/post surface so the two contexts never mix.
+    $r->add('/blog/{blogId:\d+}/posts', ['controller' => 'PostController', 'action' => 'blogPosts', 'method' => 'GET']);
+
+    // Author/contributor workspace: their own writing inside one shared blog.
+    $r->add('/blog/{blogId:\d+}/workspace', ['controller' => 'PostController', 'action' => 'workspace', 'method' => 'GET']);
+
     // Team / collaborator management (owner-only actions; leave is self-service).
     $r->add('/blog/{blogId:\d+}/team', ['controller' => 'CollaboratorController', 'action' => 'team', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/team/invite', ['controller' => 'CollaboratorController', 'action' => 'invite', 'method' => 'POST']);

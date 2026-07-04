@@ -151,53 +151,71 @@ final class SharedController extends AppController
     }
 
     /**
-     * Per-role action set — primary plus a secondary "Open blog" so every card
-     * has both a job-to-do path and an at-a-glance overview path.
+     * One card, one door. Editors are the only role that lands on Blog
+     * Overview. everyone else goes straight to the surface they can act on.
      *
-     * @return array{primary:array{label:string,href:string,icon:string,variant:string},secondary:array{label:string,href:string,icon:string}}
+     * @return array{primary:array{label:string,href:string,icon:string,variant:string},secondary:?array{label:string,href:string,icon:string}}
      */
     private function actionsForRole(string $role, int $blogId): array
     {
-        $primary = match ($role) {
+        return match ($role) {
             'editor' => [
-                'label'   => 'Open review queue',
-                'href'    => "/dashboard/blog/{$blogId}/review-queue",
-                'icon'    => 'clipboard-check',
-                'variant' => 'blue',
+                'primary' => [
+                    'label'   => 'Open overview',
+                    'href'    => "/dashboard/blog/{$blogId}/show",
+                    'icon'    => 'layout-grid',
+                    'variant' => 'blue',
+                ],
+                'secondary' => [
+                    'label' => 'Review queue',
+                    'href'  => "/dashboard/blog/{$blogId}/review-queue",
+                    'icon'  => 'clipboard-check',
+                ],
             ],
             'reviewer' => [
-                'label'   => 'Open review queue',
-                'href'    => "/dashboard/blog/{$blogId}/review-queue",
-                'icon'    => 'clipboard-check',
-                'variant' => 'blue',
+                'primary' => [
+                    'label'   => 'Open review queue',
+                    'href'    => "/dashboard/blog/{$blogId}/review-queue",
+                    'icon'    => 'clipboard-check',
+                    'variant' => 'blue',
+                ],
+                'secondary' => null,
             ],
             'author' => [
-                'label'   => 'Write a post',
-                'href'    => "/dashboard/post/new?blog_id={$blogId}",
-                'icon'    => 'pen',
-                'variant' => 'blue',
+                'primary' => [
+                    'label'   => 'Open my work',
+                    'href'    => "/dashboard/blog/{$blogId}/workspace",
+                    'icon'    => 'notebook-pen',
+                    'variant' => 'blue',
+                ],
+                'secondary' => [
+                    'label' => 'Write a post',
+                    'href'  => "/dashboard/post/new?blog_id={$blogId}",
+                    'icon'  => 'pen',
+                ],
             ],
             'contributor' => [
-                'label'   => 'Draft a post',
-                'href'    => "/dashboard/post/new?blog_id={$blogId}",
-                'icon'    => 'pen',
-                'variant' => 'blue',
+                'primary' => [
+                    'label'   => 'Open my work',
+                    'href'    => "/dashboard/blog/{$blogId}/workspace",
+                    'icon'    => 'notebook-pen',
+                    'variant' => 'blue',
+                ],
+                'secondary' => [
+                    'label' => 'Draft a post',
+                    'href'  => "/dashboard/post/new?blog_id={$blogId}",
+                    'icon'  => 'pen',
+                ],
             ],
             default => [
-                'label'   => 'Open blog',
-                'href'    => "/dashboard/blog/{$blogId}/show",
-                'icon'    => 'arrow-right',
-                'variant' => 'blue',
+                'primary' => [
+                    'label'   => 'Open blog',
+                    'href'    => "/dashboard/blog/{$blogId}/show",
+                    'icon'    => 'arrow-right',
+                    'variant' => 'blue',
+                ],
+                'secondary' => null,
             ],
         };
-
-        return [
-            'primary' => $primary,
-            'secondary' => [
-                'label' => 'Blog overview',
-                'href'  => "/dashboard/blog/{$blogId}/show",
-                'icon'  => 'layout-grid',
-            ],
-        ];
     }
 }
