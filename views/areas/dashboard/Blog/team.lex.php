@@ -17,6 +17,12 @@ $roleDocs = [
     'contributor' => 'Lightest write access — draft and submit posts for review. Cannot publish or approve.',
     'reviewer' => 'Quality gate — review submissions, request changes, and approve. Cannot publish or manage the roster.',
 ];
+
+// Reviewer role is workflow-only. Drop it from the doc grid when the pipeline is off so we don't promise something the blog can't deliver.
+if (empty($workflowEnabled)) {
+    unset($roleDocs['reviewer']);
+}
+
 $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 dark:text-zink-200 dark:border-zink-500';
 $initials = static function (string $name): string {
     $parts = preg_split('/[\s_.-]+/', trim($name)) ?: [];
@@ -35,6 +41,16 @@ $initials = static function (string $name): string {
             <span>Back to blog</span>
         </a>
     </div>
+
+    <?php if (empty($workflowEnabled)) { ?>
+    <div class="mb-5 p-3 rounded-md border border-slate-200 bg-slate-50 dark:bg-zink-700 dark:border-zink-600 flex items-start gap-2 text-xs text-slate-600 dark:text-zink-200">
+        <i data-lucide="info" class="size-4 shrink-0 mt-0.5 text-slate-400"></i>
+        <span>
+            Editorial workflow is off for this blog, so reviewer-related controls (review queue, reviewer role, workflow health) are hidden.
+            Turn it on in <a href="/dashboard/blog/{{ blog.id }}/edit" class="font-medium text-custom-500 hover:text-custom-600 underline">Blog Settings</a> if you want submissions to go through a review pipeline before publishing.
+        </span>
+    </div>
+    <?php } ?>
 
     <?php if (!empty($workflowHealth)) {
         $wh = $workflowHealth;

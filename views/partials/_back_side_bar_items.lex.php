@@ -145,11 +145,31 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <?php } ?>
 <?php } ?>
 
-<!-- Empty State - Show helpful message when no blog is selected -->
+<!-- Empty state - what to say depends on why there's no blog context -->
 <?php if (empty($contextualItems) || !$has_blog_context) { ?>
-    <li class="px-4 py-3 mt-3 text-vertical-menu-item  opacity-50 text-center text-xs italic group-data-[sidebar-size=sm]:hidden">
-        <span><?= $t('common.selectBlog') ?></span>
-    </li>
+    <?php if (empty($user_blogs) && !empty($is_collaborator)) { ?>
+        <!-- Collaborator without own blogs: their work is on the Shared page -->
+        <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
+            <span class="block opacity-50 italic mb-2"><?= $t('common.sharedOnlyHint') ?></span>
+            <a href="/dashboard/shared" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+                <i data-lucide="inbox" class="size-3.5"></i>
+                <?= $t('common.openShared') ?>
+            </a>
+        </li>
+    <?php } elseif (empty($user_blogs)) { ?>
+        <!-- Brand new account: nothing owned, nothing shared -->
+        <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
+            <span class="block opacity-50 italic mb-2"><?= $t('common.createFirstBlogHint') ?></span>
+            <a href="/dashboard/blog/new" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+                <i data-lucide="file-plus" class="size-3.5"></i>
+                <?= $t('common.createFirstBlog') ?>
+            </a>
+        </li>
+    <?php } else { ?>
+        <li class="px-4 py-3 mt-3 text-vertical-menu-item  opacity-50 text-center text-xs italic group-data-[sidebar-size=sm]:hidden">
+            <span><?= $t('common.selectBlog') ?></span>
+        </li>
+    <?php } ?>
 <?php } ?>
 
 {% endcache %}
