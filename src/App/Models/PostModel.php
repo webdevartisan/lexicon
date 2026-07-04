@@ -895,14 +895,15 @@ class PostModel extends AppModel
         string $sort = 'newest',
         ?int $categoryId = null,
         ?int $tagId = null,
-        string $workflowState = ''
+        string $workflowState = '',
+        ?int $blogOwnerId = null
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
 
         // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState);
+        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState, $blogOwnerId);
 
         // Get total count first for pagination metadata
         $totalRecords = $this->getTotalCount($whereClause, $params);
@@ -1094,14 +1095,97 @@ class PostModel extends AppModel
     }
 
     /**
-     * Posts on a blog awaiting reviewer action, in display order.
+     * Every post in a blog with the usual dashboard filters (status, workflow,
+     * search, sort) and pagination. Author scope is deliberately absent. The
+     * caller is expected to be an owner or editor and the surface (per-blog
+     * posts index) already gates on that.
      *
-     * Unassigned items sort first (someone needs to pick them up), then by
-     * recency. Each row carries the assigned reviewer's username (or null)
-     * so the view can render "Assigned to / Pick up" inline.
-     *
-     * @return array<int,array<string,mixed>>
+     * @return array{data: array<int,array<string,mixed>>, pagination: array<string,mixed>}
      */
+    public function findAllInBlogWithFilters(
+        int $blogId,
+        int $page = 1,
+        int $perPage = 12,
+        string $status = '',
+        string $searchQuery = '',
+        string $sort = 'newest',
+        string $workflowState = ''
+    ): array {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = 'WHERE p.blog_id = :blog_id';
+        $params = [':blog_id' => $blogId];
+
+        if ($status !== '' && in_array($status, self::STATUSES, true)) {
+            $where .= ' AND p.status = :status';
+            $params[':status'] = $status;
+        }
+
+        if ($workflowState !== '' && in_array($workflowState, self::WORKFLOW_STATES, true)) {
+            $where .= ' AND p.workflow_state = :workflow_state';
+            $params[':workflow_state'] = $workflowState;
+        }
+
+        if ($searchQuery !== '') {
+            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
+            $term = '%'.$searchQuery.'%';
+            $params[':search_title'] = $term;
+            $params[':search_content'] = $term;
+        }
+
+        $orderBy = match ($sort) {
+            'oldest' => 'p.published_at ASC',
+            'title_asc' => 'p.title ASC',
+            'title_desc' => 'p.title DESC',
+            default => 'p.published_at DESC',
+        };
+
+        $countStmt = $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()} p {$where}",
+            $params
+        );
+        $totalRecords = (int) $countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
+                       au.username AS author_username,
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+                       pr.reviewer_id AS reviewer_id,
+                       pr.assigned_at AS reviewer_assigned_at,
+                       ru.username AS reviewer_username
+                FROM {$this->getTable()} p
+                LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN users au ON au.id = p.author_id
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
+                LEFT JOIN users ru ON ru.id = pr.reviewer_id
+                {$where}
+                ORDER BY {$orderBy}
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = $offset;
+
+        $stmt = $this->database->query($sql, $params);
+        $data = $stmt->fetchAll() ?: [];
+
+        $totalPages = (int) ceil($totalRecords / $perPage);
+
+        return [
+            'data' => $data,
+            'pagination' => [
+                'current_page'  => $page,
+                'per_page'      => $perPage,
+                'total_records' => $totalRecords,
+                'total_pages'   => $totalPages,
+                'has_previous'  => $page > 1,
+                'has_next'      => $page < $totalPages,
+            ],
+        ];
+    }
+
     public function findReviewQueueForBlog(int $blogId): array
     {
         $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,
@@ -1189,7 +1273,8 @@ class PostModel extends AppModel
         string $searchQuery,
         ?int $categoryId = null,
         ?int $tagId = null,
-        string $workflowState = ''
+        string $workflowState = '',
+        ?int $blogOwnerId = null
     ): array {
         $whereClause = 'WHERE p.author_id = :author_id';
         $params = [':author_id' => $authorId];
@@ -1198,6 +1283,14 @@ class PostModel extends AppModel
         if ($blogId !== null) {
             $whereClause .= ' AND p.blog_id = :blog_id';
             $params[':blog_id'] = $blogId;
+        }
+
+        // Constrain to blogs owned by the given user. Used by the personal
+        // "All Posts" view so posts drafted on shared blogs never leak into
+        // the owned surface.
+        if ($blogOwnerId !== null) {
+            $whereClause .= ' AND p.blog_id IN (SELECT id FROM blogs WHERE owner_id = :blog_owner_id)';
+            $params[':blog_owner_id'] = $blogOwnerId;
         }
 
         // Validate status against whitelist to prevent invalid database queries

@@ -126,6 +126,11 @@ final class PostController extends AppController
             }
         }
 
+        // Personal surface: only posts living in blogs the user owns. Anything
+        // they wrote on someone else's blog belongs to that blog's shared
+        // context, not here.
+        $ownedScope = (int) $user['id'];
+
         $result = $this->model->findByAuthorWithFiltersPagination(
             authorId: $user['id'],
             page: $page,
@@ -136,7 +141,8 @@ final class PostController extends AppController
             sort: $sort,
             categoryId: $categoryId,
             tagId: $tagId,
-            workflowState: $workflowFilter
+            workflowState: $workflowFilter,
+            blogOwnerId: $ownedScope
         );
 
         // Each card shows a few of its tags as quick filters.
@@ -158,13 +164,13 @@ final class PostController extends AppController
         foreach (['published', 'draft', 'pending', 'archived'] as $s) {
             $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
                 authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q,
-                categoryId: $categoryId, tagId: $tagId
+                categoryId: $categoryId, tagId: $tagId, blogOwnerId: $ownedScope
             )['pagination']['total_records'];
         }
         // needs_changes is workflow-state, not status — distinct count.
         $counts['needs_changes'] = (int) $this->model->findByAuthorWithFiltersPagination(
             authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: '', searchQuery: $q,
-            categoryId: $categoryId, tagId: $tagId, workflowState: 'needs_changes'
+            categoryId: $categoryId, tagId: $tagId, workflowState: 'needs_changes', blogOwnerId: $ownedScope
         )['pagination']['total_records'];
         $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
 
@@ -175,6 +181,14 @@ final class PostController extends AppController
 
         // Tag filter context only resolves a name when scoped to a blog (tags are per-blog).
         $activeTag = ($tagId !== null && $blogId !== null) ? $this->tagModel->findForBlog($tagId, $blogId) : null;
+
+        // Workflow-aware UI: hide review-specific pills/actions when the scoped blog has it off.
+        // In "All blogs" mode we keep everything visible because blogs may differ.
+        $workflowEnabled = true;
+        if ($blogId !== null) {
+            $settings = $this->blogSettingsModel->findByBlogId($blogId);
+            $workflowEnabled = !empty($settings['workflow_enabled']);
+        }
 
         return $this->view([
             'posts' => $result['data'],
@@ -195,6 +209,7 @@ final class PostController extends AppController
             'categoryId' => $categoryId,
             'tagId' => $tagId,
             'activeTag' => $activeTag,
+            'workflowEnabled' => $workflowEnabled,
         ]);
     }
 
@@ -241,11 +256,33 @@ final class PostController extends AppController
         $blog = $this->getBlog($blogId);
         Gate::authorize('createPost', $blog, $user);
 
+        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
+        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
+
+        $blogRole = $blog->effectiveRoleForUser($userId);
+
+        // Writing into a shared blog starts from Shared, not the personal
+        // All Posts the static pattern assumes.
+        if (in_array($blogRole, ['editor', 'author', 'contributor'], true)) {
+            $trail =[
+                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+                $blogRole === 'editor'
+                    ? ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts']
+                    : ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'],
+                ['label' => 'Create New Post', 'url' => null, 'key' => 'breadcrumbs.createNewPost'],
+            ];
+            breadcrumbs()->set($trail, true);
+        }
+
         return $this->view([
             'blog' => $blog->toArray(),
+            'blogRole' => $blogRole,
+            'backUrl' => $this->backUrlPath() ?? '/dashboard',
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
+            'workflowEnabled' => $workflowEnabled,
         ]);
     }
 
@@ -280,6 +317,13 @@ final class PostController extends AppController
         ]);
 
         $data = $validator->validated();
+
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+        $data['status'] = $this->constrainStatusForRole(
+            (string) ($data['status'] ?? 'draft'),
+            $blogRole,
+            (int) $blog->id()
+        );
 
         // Convert published_at to UTC
         if (!empty($data['timezone']) && !empty($data['published_at'])) {
@@ -317,7 +361,7 @@ final class PostController extends AppController
                 $this->request->ip()
             );
 
-            $this->flash('success', 'Post draft saved.');
+            $this->flash('success', 'Post saved.');
 
             return $this->redirect("/dashboard/post/{$postId}/edit");
         }
@@ -354,7 +398,20 @@ final class PostController extends AppController
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
 
-        breadcrumbs()->replaceLast('Edit Post: '.$post->id());
+        // The way back differs per role: owners live in the personal All
+        // Posts, editors in the per-blog index, writers in their workspace.
+        $trail = [['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard']];
+        if (in_array($blogRole, ['editor', 'author', 'contributor'], true)) {
+            $trail[] = ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'];
+            $trail[] = $blogRole === 'editor'
+                ? ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts']
+                : ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'];
+        } else {
+            $trail[] = ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'];
+        }
+        $trail[] = ['label' => 'Edit Post', 'url' => null, 'key' => 'breadcrumbs.editPost'];
+
+        breadcrumbs()->set($trail, true);
 
         $postArray = $post->toArray();
         if ($displayDate) {
@@ -380,6 +437,7 @@ final class PostController extends AppController
             'post' => $postArray,
             'blog' => $blog->toArray(),
             'postUrl' => $postUrl,
+            'backUrl' => $this->backUrlPath() ?? '/dashboard',
             'workflowState' => $workflowState,
             'status' => $status,
             'blogRole' => $blogRole,
@@ -479,6 +537,10 @@ final class PostController extends AppController
             && in_array($blogRole, ['editor', 'owner'], true)
             && in_array($workflowState, ['approved'], true);
 
+        $canUnpublish = !$reviewerLocked
+            && in_array($blogRole, ['editor', 'owner'], true)
+            && $status === 'published';
+
         $canResetToDraft = !$reviewerLocked
             && in_array($blogRole, ['editor', 'owner'], true)
             && in_array($workflowState, ['approved'], true);
@@ -500,6 +562,15 @@ final class PostController extends AppController
             }
         }
 
+        breadcrumbs()->set([
+            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+            $blogRole === 'owner'
+                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
+                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+            ['label' => 'Review Queue', 'url' => '/dashboard/blog/'.$blog->id().'/review-queue', 'key' => 'breadcrumbs.reviewQueue'],
+            ['label' => 'Review Post', 'url' => null, 'key' => 'breadcrumbs.reviewPost'],
+        ], true);
+
         return $this->view([
             'post' => $post->toArray(),
             'blog' => $blog->toArray(),
@@ -512,6 +583,7 @@ final class PostController extends AppController
             'canMarkNeedsChanges' => $canMarkNeedsChanges,
             'canApprove' => $canApprove,
             'canPublish' => $canPublish,
+            'canUnpublish' => $canUnpublish,
             'canResetToDraft' => $canResetToDraft,
             'canAssignReviewer' => $canAssignReviewer,
             'canSelfAssign' => $canSelfAssign,
@@ -605,6 +677,14 @@ final class PostController extends AppController
             'comments_enabled' => $post->comments_enabled(),
             'blog_id' => $post->blogId(),
         ];
+
+        $blogRole = $post->blog()->effectiveRoleForUser((int) $user['id']);
+        $newData['status'] = $this->constrainStatusForRole(
+            (string) ($newData['status'] ?? $originalData['status']),
+            $blogRole,
+            (int) $post->blogId(),
+            $originalData['status']
+        );
 
         // Validate status transitions
         $oldStatus = $originalData['status'];
@@ -788,7 +868,7 @@ final class PostController extends AppController
             }
 
             $validated = $validator->validated();
-            $postId = (int) $validated['id'] ?? null;
+            $postId = !empty($validated['id']) ? (int) $validated['id'] : null;
 
             // Delegate to service
             $result = $this->autosaveService->save($validated, (int) $user['id'], $postId);
@@ -943,11 +1023,15 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
         Gate::authorize('publish', $post, $user);
 
-        // Enforce workflow precondition
-        if (!in_array($post->workflowState(), ['approved'], true)) {
+        // Workflow precondition only applies when the blog opted into the review pipeline.
+        // Without it there is no "approved" state to wait for a draft is publishable on demand.
+        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $post->blogId());
+        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
+
+        if ($workflowEnabled && !in_array($post->workflowState(), ['approved'], true)) {
             $this->flash('error', 'Post must be approved before publishing.');
 
-            return $this->redirect('/dashboard');
+            return $this->redirectBack();
         }
 
         $this->model->updateStatus((int) $id, 'published');
@@ -963,7 +1047,7 @@ final class PostController extends AppController
 
         $this->flash('success', 'Post published successfully.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirectBack();
     }
 
     /**
@@ -1022,7 +1106,7 @@ final class PostController extends AppController
 
         $this->flash('success', 'Post reverted to draft.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirectBack();
     }
 
     /**
@@ -1051,7 +1135,7 @@ final class PostController extends AppController
 
         $this->flash('success', 'Post archived successfully.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirectBack();
     }
 
     /**
@@ -1367,12 +1451,182 @@ final class PostController extends AppController
 
         $posts = $this->model->findReviewQueueForBlog((int) $blog->id());
 
+        // Trail roots where the user came from: owners browse their blogs,
+        // collaborators arrive through Shared.
+        breadcrumbs()->set([
+            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+            $blogRole === 'owner'
+                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
+                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+            ['label' => 'Review Queue', 'url' => null, 'key' => 'breadcrumbs.reviewQueue'],
+        ], true);
+
         return $this->view('post.reviewQueue', [
             'blog'  => $blog->toArray(),
             'posts' => $posts,
             'blogRole' => $blogRole,
             'isAdmin'  => $isAdmin,
             'currentUserId' => (int) $user['id'],
+        ]);
+    }
+
+    /**
+     * Every post in a single blog. Owner + editor only; other roles have
+     * role-scoped surfaces (queue for reviewers, write flow for authors).
+     *
+     * @param  string  $blogId  Target blog
+     */
+    public function blogPosts(string $blogId): Response
+    {
+        $user = auth()->user();
+        $blog = $this->getBlog((int) $blogId);
+
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+        if (!in_array($blogRole, ['owner', 'editor'], true)) {
+            throw new PageNotFoundException('Posts index not available for this role.');
+        }
+
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $q      = trim((string) ($this->request->get['q'] ?? ''));
+        $page   = max(1, (int) ($this->request->get['page'] ?? 1));
+        $perPage = 12;
+
+        $workflowFilter = '';
+        if ($status === 'needs_changes') {
+            $workflowFilter = 'needs_changes';
+            $status = '';
+        }
+
+        $allowedSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
+        $sort = (string) ($this->request->get['sort'] ?? 'newest');
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'newest';
+        }
+
+        $rows = $this->model->findAllInBlogWithFilters(
+            blogId: (int) $blog->id(),
+            page: $page,
+            perPage: $perPage,
+            status: $status,
+            searchQuery: $q,
+            sort: $sort,
+            workflowState: $workflowFilter,
+        );
+
+        foreach ($rows['data'] as &$p) {
+            $p['tags'] = $this->model->tags((int) $p['id']);
+        }
+        unset($p);
+
+        $counts = [
+            'all' => 0,
+            'published' => 0,
+            'draft' => 0,
+            'pending' => 0,
+            'needs_changes' => 0,
+            'archived' => 0,
+        ];
+        foreach (['published', 'draft', 'pending', 'archived'] as $s) {
+            $counts[$s] = (int) $this->model->findAllInBlogWithFilters(
+                blogId: (int) $blog->id(), page: 1, perPage: 1, status: $s, searchQuery: $q,
+            )['pagination']['total_records'];
+        }
+        $counts['needs_changes'] = (int) $this->model->findAllInBlogWithFilters(
+            blogId: (int) $blog->id(), page: 1, perPage: 1, searchQuery: $q, workflowState: 'needs_changes',
+        )['pagination']['total_records'];
+        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+
+        $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
+        $workflowEnabled = !empty($settings['workflow_enabled']);
+
+        breadcrumbs()->set([
+            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+            $blogRole === 'owner'
+                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
+                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+            ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
+            ['label' => 'Posts', 'url' => null, 'key' => 'breadcrumbs.blogPosts'],
+        ], true);
+
+        return $this->view('post.blogPosts', [
+            'blog'            => $blog->toArray(),
+            'blogRole'        => $blogRole,
+            'posts'           => $rows['data'],
+            'pagination'      => $rows['pagination'],
+            'status'          => $workflowFilter !== '' ? $workflowFilter : $status,
+            'q'               => $q,
+            'sort'            => $sort,
+            'counts'          => $counts,
+            'workflowEnabled' => $workflowEnabled,
+        ]);
+    }
+
+    /**
+     * A collaborator's own writing inside one shared blog.
+     *
+     * This is the author/contributor landing: their drafts, what they've
+     * handed to review, what came back, what got published. Nothing here
+     * belongs to other people, the wider blog is not their surface.
+     *
+     * @param  string  $blogId  Target blog
+     */
+    public function workspace(string $blogId): Response
+    {
+        $user = auth()->user();
+        $userId = (int) $user['id'];
+        $blog = $this->getBlog((int) $blogId);
+
+        $blogRole = $blog->effectiveRoleForUser($userId);
+        if (!in_array($blogRole, ['author', 'contributor'], true)) {
+            throw new PageNotFoundException('Workspace not available for this role.');
+        }
+
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
+
+        $workflowFilter = '';
+        if ($status === 'needs_changes') {
+            $workflowFilter = 'needs_changes';
+            $status = '';
+        }
+
+        $rows = $this->model->findByAuthorWithFiltersPagination(
+            authorId: $userId,
+            page: $page,
+            perPage: 12,
+            blogId: (int) $blog->id(),
+            status: $status,
+            workflowState: $workflowFilter
+        );
+
+        $counts = ['all' => 0, 'draft' => 0, 'pending' => 0, 'needs_changes' => 0, 'published' => 0];
+        foreach (['draft', 'pending', 'published'] as $s) {
+            $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
+                authorId: $userId, page: 1, perPage: 1, blogId: (int) $blog->id(), status: $s
+            )['pagination']['total_records'];
+        }
+        $counts['needs_changes'] = (int) $this->model->findByAuthorWithFiltersPagination(
+            authorId: $userId, page: 1, perPage: 1, blogId: (int) $blog->id(), workflowState: 'needs_changes'
+        )['pagination']['total_records'];
+        $counts['all'] = $counts['draft'] + $counts['pending'] + $counts['published'];
+
+        $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
+        $workflowEnabled = !empty($settings['workflow_enabled']);
+
+        breadcrumbs()->set([
+            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+            ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+            ['label' => 'My Work', 'url' => null, 'key' => 'breadcrumbs.myWork'],
+        ], true);
+
+        return $this->view('post.workspace', [
+            'blog'            => $blog->toArray(),
+            'blogRole'        => $blogRole,
+            'posts'           => $rows['data'],
+            'pagination'      => $rows['pagination'],
+            'status'          => $workflowFilter !== '' ? $workflowFilter : $status,
+            'counts'          => $counts,
+            'workflowEnabled' => $workflowEnabled,
         ]);
     }
 
@@ -1483,6 +1737,53 @@ final class PostController extends AppController
         }
 
         return $blog;
+    }
+
+    /**
+     * Clamp a requested post status to what the user's blog role may set.
+     *
+     * Publishing (and archiving, which is the same authority) belongs to
+     * owners and editors. Authors keep it only while the blog runs without
+     * the review pipeline, publish_own is meaningless once every post has
+     * to pass review. Contributors never publish; their ceiling is handing
+     * a draft to the pipeline.
+     *
+     * @param  string  $requested  Status coming from the form
+     * @param  string|null  $role  Effective blog role of the acting user
+     * @param  int  $blogId  Blog the post belongs to
+     * @param  string|null  $current  Current status when updating, null on create
+     * @return string The status the role is actually allowed to persist
+     */
+    private function constrainStatusForRole(string $requested, ?string $role, int $blogId, ?string $current = null): string
+    {
+        if (in_array($role, ['owner', 'editor'], true)) {
+            return $requested;
+        }
+
+        $settings = $this->blogSettingsModel->findByBlogId($blogId);
+        $workflowOn = !empty($settings['workflow_enabled']);
+
+        $canPublish = $role === 'author' && !$workflowOn;
+        if ($canPublish) {
+            return $requested;
+        }
+
+        // No change to a state the post already holds. an editor put it
+        // there, saving content edits shouldn't undo that decision.
+        if ($requested === $current) {
+            return $requested;
+        }
+
+        if (in_array($requested, ['published', 'archived'], true)) {
+            return $workflowOn ? 'pending' : 'draft';
+        }
+
+        // The reverse move is an unpublish; same authority as publishing.
+        if (in_array($current, ['published', 'archived'], true)) {
+            return $current;
+        }
+
+        return $requested;
     }
 
     /**
