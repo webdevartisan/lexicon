@@ -119,10 +119,12 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
                             <i data-lucide="<?= e((string) ($primary['icon'] ?? 'arrow-right')) ?>" class="inline-block size-4" aria-hidden="true"></i>
                             <?= e((string) ($primary['label'] ?? '')) ?>
                         </a>
-                        <a href="<?= e((string) ($secondary['href'] ?? '#')) ?>" class="text-xs font-medium text-slate-500 hover:text-custom-500 dark:text-zink-300 inline-flex items-center gap-1">
-                            <i data-lucide="<?= e((string) ($secondary['icon'] ?? '')) ?>" class="size-3.5"></i>
-                            <?= e((string) ($secondary['label'] ?? '')) ?>
+                        <?php if ($secondary) { ?>
+                        <a href="<?= e((string) $secondary['href']) ?>" class="text-xs font-medium text-slate-500 hover:text-custom-500 dark:text-zink-300 inline-flex items-center gap-1">
+                            <i data-lucide="<?= e((string) $secondary['icon']) ?>" class="size-3.5"></i>
+                            <?= e((string) $secondary['label']) ?>
                         </a>
+                        <?php } ?>
                     </div>
                     <form method="POST" action="/dashboard/blog/<?= (int) $b['id'] ?>/team/leave" class="m-0"
                           onsubmit="return confirm('Leave “<?= e(addslashes($b['name'])) ?>”? You will need a new invitation to rejoin.');">

@@ -76,11 +76,13 @@
         </div>
     </div>
 
-    <!-- KPI cards: the four numbers a creator wants on landing. The dashboard
+    <!-- KPI cards: the numbers a creator wants on landing. The dashboard
          is now strictly the active OWNED-blog workspace, so there's no
          reviewer-context branch here — that case is impossible by construction
-         since the default blog must be one the user owns. -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+         since the default blog must be one the user owns.
+         The Pending tile only renders when this blog uses the editorial pipeline. -->
+    <?php $kpiCols = !empty($workflowEnabled) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'; ?>
+    <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
         <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -103,6 +105,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.draft }}</div>
             </div>
         </a>
+        <?php if (!empty($workflowEnabled)) { ?>
         <a href="/dashboard/post?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -114,6 +117,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.pending }}</div>
             </div>
         </a>
+        <?php } ?>
         <a href="/dashboard/blog/{{ selectedBlogId }}/comments?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
