@@ -22,6 +22,9 @@ use Framework\Core\Response;
  */
 class EmailTestController extends AppController
 {
+    // Enforced for every action by AppController::beforeAction()
+    protected ?string $areaAbility = 'manageSettings';
+
     public function __construct(
         private MailService $mailService,
         private EmailTemplateRegistry $registry,
@@ -35,13 +38,30 @@ class EmailTestController extends AppController
      */
     public function index(): Response
     {
-        // fetch all registered email templates
-        $templates = $this->registry->getAll();
-
         return $this->view([
-            'templates' => $templates,
-            'pageTitle' => 'Email Template Testing',
+            'groupedTemplates' => $this->registry->getGrouped(),
+            'unregistered' => $this->registry->unregisteredClasses(),
+            'mailConfig' => $this->getMailConfigSummary(),
+            'pageTitle' => 'Email Templates',
         ]);
+    }
+
+    /**
+     * Mail configuration facts for read-only display.
+     *
+     * We never expose SMTP credentials in the UI for security.
+     */
+    private function getMailConfigSummary(): array
+    {
+        return [
+            'enabled' => (bool) env('MAIL_ENABLED', false),
+            'driver' => (string) env('MAIL_DRIVER', 'not set'),
+            'host' => (string) env('MAIL_HOST', 'not set'),
+            'port' => (string) env('MAIL_PORT', 'not set'),
+            'from_address' => (string) env('MAIL_FROM_ADDRESS', 'not set'),
+            'from_name' => (string) env('MAIL_FROM_NAME', 'not set'),
+            'encryption' => (string) env('MAIL_ENCRYPTION', 'tls'),
+        ];
     }
 
     /**
@@ -52,7 +72,7 @@ class EmailTestController extends AppController
      */
     public function preview(): Response
     {
-        $templateKey = $this->request->get['template'] ?? '';
+        $templateKey = (string) $this->request->getParam('template', '');
 
         if (!$templateKey) {
             $this->flash('error', 'No template specified');
@@ -93,7 +113,7 @@ class EmailTestController extends AppController
      */
     public function renderHtml(): Response
     {
-        $templateKey = $this->request->get['template'] ?? '';
+        $templateKey = (string) $this->request->getParam('template', '');
 
         if (!$templateKey) {
             return $this->response->html('<p>Template not specified</p>');
@@ -111,7 +131,7 @@ class EmailTestController extends AppController
             error_log('Email HTML render failed: '.$e->getMessage());
 
             return $this->response->html(
-                '<p style="color:red;">Error: '.htmlspecialchars($e->getMessage()).'</p>'
+                '<p style="color:red;">Error: '.e($e->getMessage()).'</p>'
             );
         }
     }
@@ -127,8 +147,8 @@ class EmailTestController extends AppController
         // enforce CSRF protection for all state-changing operations
         csrf()->assertValid($this->request->postParam('_token'));
 
-        $templateKey = $this->request->post['template'] ?? '';
-        $recipient = $this->request->post['recipient'] ?? '';
+        $templateKey = (string) $this->request->postParam('template', '');
+        $recipient = (string) $this->request->postParam('recipient', '');
 
         // validate inputs before attempting to send
         if (!$templateKey || !$recipient) {
@@ -173,7 +193,7 @@ class EmailTestController extends AppController
         // enforce CSRF protection
         csrf()->assertValid($this->request->postParam('_token'));
 
-        $recipient = $this->request->post['recipient'] ?? '';
+        $recipient = (string) $this->request->postParam('recipient', '');
 
         if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             $this->flash('error', 'Invalid email address');
