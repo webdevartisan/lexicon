@@ -13,25 +13,23 @@ use Framework\Core\Response;
  *
  * Thin HTTP layer delegating to CacheManagementService.
  * Handles authorization, input validation, and view rendering.
+ *
  */
 class CacheController extends AppController
 {
-    private bool $enabled = false;
+    // Enforced for every action by AppController::beforeAction()
+    protected ?string $areaAbility = 'manageCache';
 
     public function __construct(
         protected Response $response,
         private CacheManagementService $cacheService
-    ) {
-        $this->enabled = filter_var($_ENV['CACHE_ENABLED'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
-    }
+    ) {}
 
     /**
      * Display cache management dashboard.
      */
     public function index(): Response
     {
-        // Gate::authorize('manageCache', auth()->user());
-
         $cacheStats = $this->cacheService->getStats();
 
         return $this->view('admin.cache.index', [
@@ -44,13 +42,8 @@ class CacheController extends AppController
      */
     public function prune(): Response
     {
-        if (!$this->enabled) {
-            $this->flash('info', 'Cache management is disabled.');
+        csrf()->assertValid($this->request->postParam('_token'));
 
-            return $this->redirect('/admin/cache');
-        }
-
-        // Gate::authorize('manageCache', auth()->user());
         $result = $this->cacheService->prune($this->request->ip());
 
         $this->flash('success',
@@ -67,13 +60,8 @@ class CacheController extends AppController
      */
     public function clear(): Response
     {
-        if (!$this->enabled) {
-            $this->flash('info', 'Cache management is disabled.');
+        csrf()->assertValid($this->request->postParam('_token'));
 
-            return $this->redirect('/admin/cache');
-        }
-
-        // Gate::authorize('manageCache', auth()->user());
         $result = $this->cacheService->clear($this->request->ip());
 
         $this->flash('success',
@@ -90,14 +78,9 @@ class CacheController extends AppController
      */
     public function deletePattern(): Response
     {
-        if (!$this->enabled) {
-            $this->flash('info', 'Cache management is disabled.');
+        csrf()->assertValid($this->request->postParam('_token'));
 
-            return $this->redirect('/admin/cache');
-        }
-
-        // Gate::authorize('manageCache', auth()->user());
-        $pattern = trim($this->request->post['pattern'] ?? '');
+        $pattern = trim((string) $this->request->postParam('pattern'));
 
         try {
             $result = $this->cacheService->deletePattern($pattern, $this->request->ip());

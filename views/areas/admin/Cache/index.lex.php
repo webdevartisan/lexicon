@@ -6,6 +6,16 @@
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
+    {% if cacheStats.enabled == false %}
+    <div class="mb-5 px-4 py-3 rounded-md border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/40 dark:border-amber-800 dark:text-amber-100 flex items-start gap-3">
+        <i data-lucide="info" class="size-4 mt-0.5 shrink-0"></i>
+        <div class="text-sm">
+            <p class="font-medium">Response caching is off (CACHE_ENABLED=false).</p>
+            <p class="mt-0.5">Pages are rendered fresh on every request. Compiled views below are still generated because templates must compile to run; the maintenance actions on this page keep working so you can clean up leftover files.</p>
+        </div>
+    </div>
+    {% endif %}
+
     <?php /* Cache Statistics Card */ ?>
     <div class="mb-5">
         {% cmp="cache-stats-card" stats="{$cacheStats}" isAdmin="true" %}
