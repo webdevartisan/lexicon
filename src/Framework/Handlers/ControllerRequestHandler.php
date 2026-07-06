@@ -51,6 +51,12 @@ final class ControllerRequestHandler implements RequestHandlerInterface
             );
         }
 
+        // Give controllers a cross-cutting checkpoint (authorization) that
+        // runs after the middleware stack but before any action code.
+        if (method_exists($this->controller, 'beforeAction')) {
+            $this->controller->beforeAction($this->action);
+        }
+
         // Call the controller action with the provided args.
         $response = $this->controller->{$this->action}(...$this->args);
 

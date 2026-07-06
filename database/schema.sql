@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS roles (
     role_name VARCHAR(50) NOT NULL UNIQUE,
     role_slug VARCHAR(50) NOT NULL UNIQUE,
     description TEXT DEFAULT NULL,
+    scope ENUM('system', 'blog') NOT NULL DEFAULT 'blog' COMMENT 'system = control panel role, blog = per-blog collaboration role',
+    is_system TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Shipped role referenced by code; cannot be deleted',
     level INT NOT NULL DEFAULT 0 COMMENT 'Hierarchical level (higher = more authority)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_slug (role_slug),
@@ -642,13 +644,13 @@ ALTER TABLE user_preferences
 -- We define a hierarchical role structure from Administrator (level 100) down
 -- to Contributor (level 20) to enable role-based access control.
 -- ----------------------------------------------------------------------------
-INSERT INTO roles (role_name, role_slug, description, level) VALUES
-('Administrator', 'administrator', 'Full site-wide access including user management and site settings', 100),
-('Content Manager', 'content_manager', 'Can edit and manage all posts across the entire site', 80),
-('Blog Owner', 'blog_owner', 'Owns and manages a specific blog, can assign Authors', 60),
-('Author', 'author', 'Can create and edit posts within assigned blog(s)', 40),
-('Reviewer', 'reviewer', 'Can review drafts and provide feedback, cannot edit or publish', 30),
-('Contributor', 'contributor', 'Can submit drafts or ideas for review', 20);
+INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) VALUES
+('Administrator', 'administrator', 'Full site-wide access including user management and site settings', 'system', 1, 100),
+('Content Manager', 'content_manager', 'Can edit and manage all posts across the entire site', 'system', 1, 80),
+('Blog Owner', 'blog_owner', 'Owns and manages a specific blog, can assign Authors', 'blog', 1, 60),
+('Author', 'author', 'Can create and edit posts within assigned blog(s)', 'blog', 1, 40),
+('Reviewer', 'reviewer', 'Can review drafts and provide feedback, cannot edit or publish', 'blog', 1, 30),
+('Contributor', 'contributor', 'Can submit drafts or ideas for review', 'blog', 1, 20);
 
 -- ----------------------------------------------------------------------------
 -- Seed Permissions
@@ -699,7 +701,19 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 -- Submissions Permissions
 ('Submit Ideas', 'submit_ideas', 'submissions', 'create', 'Submit content ideas for review'),
 ('View Own Submissions', 'view_own_submissions', 'submissions', 'read_own', 'View your own submissions'),
-('Review Submissions', 'review_submissions', 'submissions', 'review', 'Review and approve/reject submissions');
+('Review Submissions', 'review_submissions', 'submissions', 'review', 'Review and approve/reject submissions'),
+
+-- Control Panel Area Permissions
+-- Administrators pass every Gate check by role; these let other roles be
+-- granted individual admin areas (e.g. a moderator holding moderate_comments).
+('Access Control Panel', 'access_control_panel', 'admin', 'read', 'Open the control panel dashboard'),
+('Manage All Blogs', 'manage_all_blogs', 'blogs', 'manage', 'Full blog management in the control panel'),
+('Moderate Comments', 'moderate_comments', 'comments', 'manage', 'Approve, unapprove, mark spam, and delete comments'),
+('Manage Taxonomy', 'manage_taxonomy', 'taxonomy', 'manage', 'Manage categories and tags in the control panel'),
+('Manage Roles', 'manage_roles', 'roles', 'manage', 'Create custom roles and edit role permissions'),
+('View Audit Log', 'view_audit_log', 'audit', 'read', 'Read the audit trail'),
+('View System Health', 'view_system_health', 'system', 'read', 'View system diagnostics'),
+('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

@@ -209,11 +209,13 @@ $router->group([
     // }
 });
 
-// Admin route group with authentication and admin role enforced
+// Admin route group. Authentication is middleware; authorization is enforced
+// per controller via AppController::beforeAction() + SystemPolicy abilities,
+// so individual areas can be opened to non-admin roles through permissions.
 $router->group([
     'prefix' => '/admin',
     'namespace' => 'Admin',
-    'middleware' => ['auth', 'role:administrator'],
+    'middleware' => ['auth'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ControlPanelController', 'action' => 'index', 'method' => 'GET']);
 
@@ -229,8 +231,80 @@ $router->group([
     $r->add('/email-test/send-test', ['controller' => 'EmailTestController', 'action' => 'sendTest', 'method' => 'POST']);
     $r->add('/email-test/test-config', ['controller' => 'EmailTestController', 'action' => 'testConfig', 'method' => 'POST']);
 
-    // Comment moderation custom routes (before generic patterns)
-    $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
+    // User management
+    $r->add('/users', ['controller' => 'UserController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/users/new', ['controller' => 'UserController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/users/create', ['controller' => 'UserController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/edit', ['controller' => 'UserController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/update', ['controller' => 'UserController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/delete', ['controller' => 'UserController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/destroy', ['controller' => 'UserController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Blog management
+    $r->add('/blogs', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blogs/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/blogs/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/show', ['controller' => 'BlogController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/blogs/{id:\d+}/edit', ['controller' => 'BlogController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/blogs/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Post management
+    $r->add('/posts', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/posts/new', ['controller' => 'PostController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/posts/create', ['controller' => 'PostController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/show', ['controller' => 'PostController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/posts/{id:\d+}/edit', ['controller' => 'PostController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/posts/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Taxonomy management
+    $r->add('/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/categories/new', ['controller' => 'CategoryController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/categories/create', ['controller' => 'CategoryController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/categories/{id:\d+}/edit', ['controller' => 'CategoryController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/categories/{id:\d+}/update', ['controller' => 'CategoryController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/categories/{id:\d+}/delete', ['controller' => 'CategoryController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/categories/{id:\d+}/destroy', ['controller' => 'CategoryController', 'action' => 'destroy', 'method' => 'POST']);
+
+    $r->add('/tags', ['controller' => 'TagController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/tags/new', ['controller' => 'TagController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/tags/create', ['controller' => 'TagController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/tags/{id:\d+}/edit', ['controller' => 'TagController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/tags/{id:\d+}/update', ['controller' => 'TagController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/tags/{id:\d+}/delete', ['controller' => 'TagController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/tags/{id:\d+}/destroy', ['controller' => 'TagController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Comment moderation
+    $r->add('/comments', ['controller' => 'CommentController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/comments/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
+    $r->add('/comments/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
+    $r->add('/comments/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
+    $r->add('/comments/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/comments/bulk', ['controller' => 'CommentController', 'action' => 'bulk', 'method' => 'POST']);
+
+    // Roles and permissions
+    $r->add('/roles', ['controller' => 'RoleController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/roles/new', ['controller' => 'RoleController', 'action' => 'new', 'method' => 'GET']);
+    $r->add('/roles/create', ['controller' => 'RoleController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/roles/{id:\d+}/show', ['controller' => 'RoleController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/roles/{id:\d+}/edit', ['controller' => 'RoleController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/roles/{id:\d+}/update', ['controller' => 'RoleController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/roles/{id:\d+}/delete', ['controller' => 'RoleController', 'action' => 'delete', 'method' => 'GET']);
+    $r->add('/roles/{id:\d+}/destroy', ['controller' => 'RoleController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/roles/{id:\d+}/permissions', ['controller' => 'RoleController', 'action' => 'updatePermissions', 'method' => 'POST']);
+
+    // Site settings
+    $r->add('/settings', ['controller' => 'SettingController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/settings', ['controller' => 'SettingController', 'action' => 'update', 'method' => 'POST']);
+
+    // Audit trail
+    $r->add('/audit-log', ['controller' => 'AuditLogController', 'action' => 'index', 'method' => 'GET']);
+
+    // System diagnostics
+    $r->add('/system', ['controller' => 'SystemController', 'action' => 'index', 'method' => 'GET']);
 
     // Generic admin routes are powerful and should not be exposed in production.
     if (env('APP_DEBUG', false)) {

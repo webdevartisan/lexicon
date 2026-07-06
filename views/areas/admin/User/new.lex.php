@@ -1,20 +1,18 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
 {% block title %}New User{% endblock %}
+{% block subtitle %}Create an account and assign roles.{% endblock %}
 
 {% block body %}
-<h1>Create New User</h1>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-3xl">
+    {% include "areas/admin/_errors.lex.php" %}
 
-{% if errors|isset %}
-    <ul>
-    {% foreach ($errors as $error): %}
-        <li><?= e($error) ?></li>
-    {% endforeach; %}
-    </ul>
-{% endif %}
-
-<form method="post" action="/admin/users/create">
-    {% include "Admin/Users/form.lex.php" %}
-    <button type="submit">Save</button>
-</form>
+    <form method="post" action="/admin/users/create" class="card">
+        {{ csrf_field() }}
+        <div class="card-body">
+            {% include "areas/admin/User/form.lex.php" %}
+        </div>
+        {% cmp="form-footer" cancelHref="/admin/users" submitLabel="Create User" submitIcon="user-plus" %}
+    </form>
+</div>
 {% endblock %}

@@ -27,11 +27,32 @@ abstract class AppController extends BaseController implements SessionAwareInter
     protected Session $session;
 
     /**
+     * Control panel ability every action in this controller requires.
+     *
+     * Set to a SystemPolicy ability (e.g. 'manageUsers') in admin
+     * controllers; enforced by beforeAction() for every action so a newly
+     * added action can never ship without an authorization check. Leave
+     * null outside the admin area.
+     */
+    protected ?string $areaAbility = null;
+
+    /**
      * Inject Session service via setter (called by Dispatcher).
      */
     public function setSession(Session $session): void
     {
         $this->session = $session;
+    }
+
+    /**
+     * Cross-cutting checkpoint invoked by ControllerRequestHandler after
+     * middleware has run and before the action executes.
+     */
+    public function beforeAction(string $action): void
+    {
+        if ($this->areaAbility !== null) {
+            \App\Gate::authorize($this->areaAbility, \App\Resources\SystemResource::class, auth()->user() ?? []);
+        }
     }
 
     // ============== Authentication Helpers ==============

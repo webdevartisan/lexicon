@@ -1,20 +1,18 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
 {% block title %}Edit User{% endblock %}
+{% block subtitle %}Update account details and role assignments.{% endblock %}
 
 {% block body %}
-<h1>Edit User</h1>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-3xl">
+    {% include "areas/admin/_errors.lex.php" %}
 
-{% if errors|isset %}
-    <ul>
-    {% for error in errors %}
-        <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-{% endif %}
-
-<form method="post" action="/admin/users/<?= $user['id'] ?>/update">
-    {% include "Admin/Users/form.lex.php" %}
-    <button type="submit">Update</button>
-</form>
+    <form method="post" action="/admin/users/<?= e((string) $user['id']) ?>/update" class="card">
+        {{ csrf_field() }}
+        <div class="card-body">
+            {% include "areas/admin/User/form.lex.php" %}
+        </div>
+        {% cmp="form-footer" cancelHref="/admin/users" submitLabel="Save Changes" submitIcon="save" %}
+    </form>
+</div>
 {% endblock %}
