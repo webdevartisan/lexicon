@@ -159,7 +159,10 @@ final class BlogDeletionService
      */
     private function deleteFile(string $filePathOrUrl): void
     {
-        $filePath = ROOT_PATH.'/public/'.ltrim($filePathOrUrl, '/');
+        $relative = ltrim($filePathOrUrl, '/');
+
+        $base = str_starts_with($relative, 'uploads/') ? '/storage/' : '/public/';
+        $filePath = ROOT_PATH.$base.$relative;
 
         if (file_exists($filePath) && is_file($filePath)) {
             @unlink($filePath);

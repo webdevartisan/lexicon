@@ -90,7 +90,8 @@ final class MediaService
             return false;
         }
 
-        $absPath = ROOT_PATH . '/public/' . ltrim((string) $row['disk_path'], '/');
+        // disk_path is relative to storage/ (uploads/...)
+        $absPath = ROOT_PATH . '/storage/' . ltrim((string) $row['disk_path'], '/');
         if (is_file($absPath)) {
             @unlink($absPath);
         }
@@ -149,7 +150,7 @@ final class MediaService
 
     public function blogMediaPath(int $userId, int $blogId): array
     {
-        $dir = ROOT_PATH . '/public/uploads/users/' . $userId . '/blogs/' . $blogId . '/media';
+        $dir = ROOT_PATH . '/storage/uploads/users/' . $userId . '/blogs/' . $blogId . '/media';
         $url = '/uploads/users/' . $userId . '/blogs/' . $blogId . '/media';
 
         return [$dir, $url];
@@ -165,7 +166,7 @@ final class MediaService
             throw new \RuntimeException('Could not resolve file path for: ' . $url);
         }
 
-        $absPath = ROOT_PATH . '/public/' . $diskPath;
+        $absPath = ROOT_PATH . '/storage/' . $diskPath;
         if (!is_file($absPath)) {
             throw new \RuntimeException('File not found at: ' . $absPath);
         }

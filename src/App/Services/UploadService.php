@@ -103,7 +103,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function userBlogPostPath(int $userId, int $blogId): array
     {
-        $dir = ROOT_PATH.'/public/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
+        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
         $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
 
         return [$dir, $url];
@@ -117,7 +117,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function userProfilePath(int $userId): array
     {
-        $dir = ROOT_PATH.'/public/uploads/users/'.$userId.'/profile';
+        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/profile';
         $url = '/uploads/users/'.$userId.'/profile';
 
         return [$dir, $url];
@@ -132,7 +132,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function blogBrandingPath(int $userId, int $blogId): array
     {
-        $dir = ROOT_PATH.'/public/uploads/users/'.$userId.'/blogs/'.$blogId.'/branding';
+        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/branding';
         $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/branding';
 
         return [$dir, $url];
@@ -152,7 +152,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function storeTempImage(array $file, int $userId): array
     {
-        $tempDir = ROOT_PATH.'/public/uploads/temp/'.$userId;
+        $tempDir = ROOT_PATH.'/storage/uploads/temp/'.$userId;
         $tempUrl = '/uploads/temp/'.$userId;
 
         $url = $this->storeImage($file, [
@@ -183,7 +183,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function moveTempToPermanent(string $tempFilename, int $userId, int $blogId): ?string
     {
-        $tempPath = ROOT_PATH.'/public/uploads/temp/'.$userId.'/'.$tempFilename;
+        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
 
         if (!file_exists($tempPath)) {
             return null;
@@ -265,7 +265,7 @@ final class UploadService implements UploadServiceInterface
         string $dir,
         string $baseUrl
     ): ?string {
-        $tempPath = ROOT_PATH.'/public/uploads/temp/'.$userId.'/'.$tempFilename;
+        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
 
         if (!file_exists($tempPath)) {
             throw new InvalidArgumentException("Temporary file not found: $tempFilename");
@@ -301,7 +301,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function cleanupTempFiles(int $userId): void
     {
-        $folderPath = ROOT_PATH.'/public/uploads/temp/'.$userId;
+        $folderPath = ROOT_PATH.'/storage/uploads/temp/'.$userId;
 
         if (is_dir($folderPath)) {
             $this->deleteDirectory($folderPath);
@@ -328,7 +328,7 @@ final class UploadService implements UploadServiceInterface
             }
 
             // Also clean up blogs directory if exists
-            $userBlogsDir = ROOT_PATH.'/public/uploads/users/'.$userId.'/blogs';
+            $userBlogsDir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs';
             if (is_dir($userBlogsDir)) {
                 $this->deleteDirectory($userBlogsDir);
             }
