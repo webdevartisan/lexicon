@@ -1186,6 +1186,97 @@ class PostModel extends AppModel
         ];
     }
 
+    /**
+     * Site-wide post counts keyed by status, for the admin overview.
+     *
+     * @return array<string, int> status => count
+     */
+    public function countsByStatus(): array
+    {
+        $counts = [];
+        $sql = "SELECT status, COUNT(*) AS cnt FROM {$this->getTable()} GROUP BY status";
+        foreach ($this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $counts[(string) $row['status']] = (int) $row['cnt'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Paginated site-wide post listing for the admin control panel.
+     *
+     * Same shape as findAllInBlogWithFilters but without the blog constraint,
+     * so administrators can search and filter across every blog.
+     *
+     * @param int $page Current page (1-based)
+     * @param int $perPage Rows per page (capped at 100)
+     * @param string $status Optional status filter
+     * @param string $searchQuery Optional title/content search term
+     * @return array{data: array, pagination: array}
+     */
+    public function findAllForAdmin(
+        int $page = 1,
+        int $perPage = 20,
+        string $status = '',
+        string $searchQuery = ''
+    ): array {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = 'WHERE 1=1';
+        $params = [];
+
+        if ($status !== '' && in_array($status, self::STATUSES, true)) {
+            $where .= ' AND p.status = :status';
+            $params[':status'] = $status;
+        }
+
+        if ($searchQuery !== '') {
+            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
+            $term = '%'.$searchQuery.'%';
+            $params[':search_title'] = $term;
+            $params[':search_content'] = $term;
+        }
+
+        $countStmt = $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()} p {$where}",
+            $params
+        );
+        $totalRecords = (int) $countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
+                       b.blog_name, b.blog_slug,
+                       au.username AS author_username
+                FROM {$this->getTable()} p
+                LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN users au ON au.id = p.author_id
+                {$where}
+                ORDER BY p.updated_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = $offset;
+
+        $stmt = $this->database->query($sql, $params);
+        $data = $stmt->fetchAll() ?: [];
+
+        $totalPages = (int) ceil($totalRecords / $perPage);
+
+        return [
+            'data' => $data,
+            'pagination' => [
+                'current_page'  => $page,
+                'per_page'      => $perPage,
+                'total_records' => $totalRecords,
+                'total_pages'   => $totalPages,
+                'has_previous'  => $page > 1,
+                'has_next'      => $page < $totalPages,
+            ],
+        ];
+    }
+
     public function findReviewQueueForBlog(int $blogId): array
     {
         $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,

@@ -11,56 +11,62 @@ use Framework\Exceptions\PageNotFoundException;
 
 class BlogController extends AppController
 {
+    // Enforced for every action by AppController::beforeAction()
+    protected ?string $areaAbility = 'manageBlogs';
+
     public function __construct(private BlogModel $blogModel) {}
 
     public function index(): Response
     {
-        if (auth()->hasRole('administrator')) {
-            $blogs = $this->blogModel->getAllBlogsWithOwnerAndCounts();
-        } else {
+        $q = trim((string) $this->request->getParam('q', ''));
+        $page = max(1, (int) $this->request->getParam('page', 1));
 
-        }
+        $result = $this->blogModel->findAllForAdmin($page, 20, $q);
 
-        return $this->view('blog.index', ['blogs' => $blogs]);
+        return $this->view('blog.index', [
+            'blogs' => $result['data'],
+            'pagination' => $result['pagination'],
+            'q' => $q,
+        ]);
     }
 
     public function new(): Response
     {
-        $this->requirePermission('create_blogs');
-
         return $this->view('blog.new');
     }
 
     public function create(): Response
     {
-        $this->requirePermission('create_blogs');
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $blogName = $this->request->post['blog_name'] ?? '';
         $description = $this->request->post['description'] ?? '';
-        $blogSlug = $this->generateSlug($blogName);
+        $blogSlug = trim((string) ($this->request->post['blog_slug'] ?? '')) ?: $this->generateSlug($blogName);
 
         try {
             $this->blogModel->insert([
                 'blog_name' => $blogName,
                 'blog_slug' => $blogSlug,
                 'description' => $description,
+                'is_active' => !empty($this->request->post['is_active']) ? 1 : 0,
                 'owner_id' => auth()->user()['id'],
             ]);
 
             $blogId = $this->blogModel->getInsertID();
 
-            $this->blogModel->logActivity(
-                auth()->user()['id'],
-                'create_blog',
+            audit()->log(
+                (int) auth()->user()['id'],
+                'blog.created',
                 'blog',
-                $blogId,
-                "Created blog: $blogName",
-                $_SERVER['REMOTE_ADDR'] ?? null
+                (int) $blogId,
+                ['blog_name' => $blogName],
+                $this->request->ip()
             );
 
-            return $this->redirect("/blogs/$blogId/show");
+            $this->flash('success', 'Blog created.');
+
+            return $this->redirect("/admin/blogs/$blogId/show");
         } catch (\PDOException $e) {
-            // dd($e);
             return $this->view('blog.new', [
                 'error' => 'Blog slug already exists or database error',
                 'old' => $this->request->post,
@@ -73,8 +79,6 @@ class BlogController extends AppController
      */
     public function edit(string $id): Response
     {
-        $this->requireRole(['author', 'editor', 'administrator']);
-
         $blog = $this->getBlog($id);
 
         return $this->view('blog.edit', [
@@ -87,7 +91,7 @@ class BlogController extends AppController
      */
     public function update(string $id): Response
     {
-        $this->requireRole(['author', 'editor', 'administrator']);
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $blog = $this->getBlog($id);
 
@@ -95,11 +99,14 @@ class BlogController extends AppController
             'blog_name' => $this->request->post['blog_name'] ?? $blog['blog_name'],
             'blog_slug' => $this->request->post['blog_slug'] ?? $blog['blog_slug'],
             'description' => $this->request->post['description'] ?? $blog['description'],
-            'is_active' => $this->request->post['is_active'] ?? $blog['is_active'],
+            // Unchecked checkboxes are absent from the payload, so absence means deactivate
+            'is_active' => !empty($this->request->post['is_active']) ? 1 : 0,
         ];
 
         if ($this->blogModel->update($id, $data)) {
-            return $this->redirect('/blogs');
+            $this->flash('success', 'Blog updated.');
+
+            return $this->redirect('/admin/blogs');
         }
 
         return $this->view('blog.edit', [
@@ -108,12 +115,17 @@ class BlogController extends AppController
         ]);
     }
 
-    public function show($id)
+    public function show(string $id): Response
     {
-        $blog = $this->blogModel->getBlog($id);
-        $posts = $this->blogModel->getBlogPosts($id);
-        $blogUsers = $this->blogModel->getBlogUsers($id);
-        $availableUsers = $this->blogModel->getAvailableUsers($id);
+        $blog = $this->blogModel->getBlog((int) $id);
+
+        if ($blog === false) {
+            throw new PageNotFoundException("Blog with ID '$id' not found.");
+        }
+
+        $posts = $this->blogModel->getBlogPosts((int) $id);
+        $blogUsers = $this->blogModel->getBlogUsers((int) $id);
+        $availableUsers = $this->blogModel->getAvailableUsers((int) $id);
 
         return $this->view('blog.show', [
             'blog' => $blog->toArray(),
@@ -128,8 +140,6 @@ class BlogController extends AppController
      */
     public function delete(string $id): Response
     {
-        $this->requireRole(['author', 'editor', 'administrator']);
-
         $blog = $this->getBlog($id);
 
         return $this->view('blog.delete', [
@@ -142,58 +152,36 @@ class BlogController extends AppController
      */
     public function destroy(string $id): Response
     {
-        $this->requireRole(['author', 'editor', 'administrator']);
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->getBlog($id);
 
         $this->blogModel->delete($id);
 
-        return $this->redirect('/blogs');
+        audit()->log(
+            (int) auth()->user()['id'],
+            'blog.deleted',
+            'blog',
+            (int) $id,
+            ['blog_name' => $blog['blog_name'] ?? null],
+            $this->request->ip()
+        );
+
+        $this->flash('success', 'Blog deleted.');
+
+        return $this->redirect('/admin/blogs');
     }
 
-    private function getBlog(string $id): object
+    private function getBlog(string $id): array
     {
-        $blog = $this->blogModel->findResource($id);
+        $blog = $this->blogModel->getBlog((int) $id);
 
-        if (!$blog) {
+        if ($blog === false) {
             throw new PageNotFoundException("Blog with ID '$id' not found.");
         }
 
-        return $blog;
+        return $blog->toArray();
     }
-
-    /*
-        public function assignAuthor($blogId)
-        {
-            $this->requireAuth();
-            if (!auth()->ownsBlog($blogId) && !auth()->hasRole('administrator')) {
-                return $this->json(['error' => 'Not authorized']);
-            }
-            $authorId = $this->request->post['author_id'] ?? null;
-            if (!$authorId) {
-                return $this->json(['error' => 'Author ID required'], 400);
-            }
-
-            $success = $this->blogModel->assignAuthor($blogId, $authorId, auth()->user()['id']);
-            if ($success) {
-                $this->logActivity('assign_author', 'blog', $blogId, "Assigned author ID: $authorId");
-                return $this->json(['success' => true]);
-            }
-            return $this->json(['error' => 'Could not assign author'], 500);
-        }
-
-        public function removeAuthor($blogId, $authorId)
-        {
-            $this->requireAuth();
-            if (!auth()->ownsBlog($blogId) && !auth()->hasRole('administrator')) {
-                return $this->json(['error' => 'Not authorized']);
-            }
-
-            $success = $this->blogModel->removeAuthor($blogId, $authorId);
-            if ($success) {
-                //$this->logActivity('remove_author', 'blog', $blogId, "Removed author ID: $authorId");
-                return $this->json(['success' => true]);
-            }
-            return $this->json(['error' => 'Could not remove author'], 500);
-        }*/
 
     private function generateSlug($name)
     {

@@ -1,51 +1,26 @@
-<p>
-    <label>Title<br>
-        <input class="responsive-input" type="text" name="title" value="{{ post.title }}">
-    </label>
-</p>
+<?php
+$title = $post['title'] ?? '';
+$slug = $post['slug'] ?? '';
+$content = $post['content'] ?? '';
+$excerpt = $post['excerpt'] ?? '';
+$featuredImage = $post['featured_image'] ?? '';
+$statusOptions = ['draft' => 'Draft', 'published' => 'Published', 'archived' => 'Archived'];
+$selectedStatus = $post['status'] ?? 'draft';
+$blogOptions = array_column($blogs ?? [], 'blog_name', 'id');
+$selectedBlog = (string) ($post['blog_id'] ?? '');
+?>
+<div class="grid grid-cols-1 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {% cmp="input" type="text" label="Title" name="title" value="{$title}" required %}
+        {% cmp="input" type="text" label="Slug" name="slug" value="{$slug}" placeholder="lowercase-with-dashes" %}
+    </div>
 
-<p>
-    <label>Slug<br>
-        <input class="responsive-input" type="text" name="slug" value="{{ post.slug }}">
-    </label>
-</p>
+    {% cmp="input" type="textarea" label="Content" name="content" value="{$content}" rows="12" %}
+    {% cmp="input" type="textarea" label="Excerpt" name="excerpt" value="{$excerpt}" rows="2" %}
 
-<p>
-    <label>Content<br>
-        <textarea class="responsive-input" name="content" rows="10" cols="60">{{ post.content }}</textarea>
-    </label>
-</p>
-
-<p>
-    <label>Excerpt<br>
-        <textarea class="responsive-input" name="excerpt" rows="2" cols="60">{{ post.excerpt }}</textarea>
-    </label>
-</p>
-
-<p>
-    <label>Featured Image URL<br>
-        <input class="responsive-input" type="text" name="featured_image" value="{{ post.featured_image }}">
-    </label>
-</p>
-
-<p>
-    <label>Status<br>
-        <select name="status">
-            <option value="draft" <?= ($post['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
-            <option value="published" <?= ($post['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
-            <option value="archived" <?= ($post['status'] ?? '') === 'archived' ? 'selected' : '' ?>>Archived</option>
-        </select>
-    </label>
-</p>
-
-<p>
-    <label>Blog<br>
-        <select name="blog_id">
-            {% for blog in blogs %}
-                <option value="<?= $blog['id'] ?>" <?= ($post['blog_id'] ?? '') == $blog['id'] ? 'selected' : '' ?>>
-                    {{ blog.blog_name }}
-                </option>
-            {% endfor %}
-        </select>
-    </label>
-</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+        {% cmp="input" type="text" label="Featured Image URL" name="featured_image" value="{$featuredImage}" %}
+        {% cmp="select" label="Status" name="status" options="{$statusOptions}" selectedKey="{$selectedStatus}" %}
+        {% cmp="searchable-select" name="blog_id" label="Blog" options="{$blogOptions}" selectedKey="{$selectedBlog}" placeholder="Choose a blog..." required %}
+    </div>
+</div>

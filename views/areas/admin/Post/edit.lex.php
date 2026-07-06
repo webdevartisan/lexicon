@@ -1,20 +1,27 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
 {% block title %}Edit Post{% endblock %}
+{% block subtitle %}Update content, status, or blog assignment.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
+{% endblock %}
 
 {% block body %}
-<h1>Edit Post</h1>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-4xl">
+    {% include "areas/admin/_errors.lex.php" %}
 
-{% if errors|notempty %}
-    <ul>
-    {% for error in errors %}
-        <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-{% endif %}
+    <form method="post" action="/admin/posts/<?= e((string) ($post['id'] ?? '')) ?>/update" class="card">
+        {{ csrf_field() }}
+        <div class="card-body">
+            {% include "areas/admin/Post/form.lex.php" %}
+        </div>
+        {% cmp="form-footer" cancelHref="/admin/posts" submitLabel="Save Changes" submitIcon="save" %}
+    </form>
+</div>
+{% endblock %}
 
-<form method="post" action="/admin/posts/{{ post.id }}/update">
-    {% include "areas/admin/posts/form.lex.php" %}
-    <button type="submit">Update</button>
-</form>
+{% block scripts %}
+<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="/cp-assets/js/searchable-select.init.js"></script>
 {% endblock %}

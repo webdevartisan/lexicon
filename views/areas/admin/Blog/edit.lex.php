@@ -1,20 +1,18 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
 {% block title %}Edit Blog{% endblock %}
+{% block subtitle %}Update the blog's identity and visibility.{% endblock %}
 
 {% block body %}
-<h1>Edit Blog</h1>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-3xl">
+    {% include "areas/admin/_errors.lex.php" %}
 
-{% if errors|notempty %}
-    <ul>
-    {% for error in errors %}
-        <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-{% endif %}
-
-<form method="post" action="/admin/blogs/{{ blog.id }}/update">
-    {% include "Admin/Blogs/form.lex.php" %}
-    <button type="submit">Update</button>
-</form>
+    <form method="post" action="/admin/blogs/<?= e((string) ($blog['id'] ?? '')) ?>/update" class="card">
+        {{ csrf_field() }}
+        <div class="card-body">
+            {% include "areas/admin/Blog/form.lex.php" %}
+        </div>
+        {% cmp="form-footer" cancelHref="/admin/blogs" submitLabel="Save Changes" submitIcon="save" %}
+    </form>
+</div>
 {% endblock %}

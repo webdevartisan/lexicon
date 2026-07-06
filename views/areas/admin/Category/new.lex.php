@@ -1,20 +1,27 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
 {% block title %}New Category{% endblock %}
+{% block subtitle %}Add a category scoped to one blog.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
+{% endblock %}
 
 {% block body %}
-<h1>Create New Category</h1>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-2xl">
+    {% include "areas/admin/_errors.lex.php" %}
 
-{% if errors|isset %}
-    <ul>
-    {% foreach ($errors as $error): %}
-        <li><?= e($error) ?></li>
-    {% endforeach; %}
-    </ul>
-{% endif %}
+    <form method="post" action="/admin/categories/create" class="card">
+        {{ csrf_field() }}
+        <div class="card-body">
+            {% include "areas/admin/Category/form.lex.php" %}
+        </div>
+        {% cmp="form-footer" cancelHref="/admin/categories" submitLabel="Create Category" submitIcon="plus" %}
+    </form>
+</div>
+{% endblock %}
 
-<form method="post" action="/admin/categories/create">
-    {% include "Admin/Categories/form.lex.php" %}
-    <button type="submit">Save</button>
-</form>
+{% block scripts %}
+<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="/cp-assets/js/searchable-select.init.js"></script>
 {% endblock %}

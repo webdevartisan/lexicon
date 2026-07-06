@@ -1,34 +1,22 @@
+<?php
+$blogName = $blog['blog_name'] ?? '';
+$blogSlug = $blog['blog_slug'] ?? '';
+$description = $blog['description'] ?? '';
+?>
+<div class="grid grid-cols-1 gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {% cmp="input" type="text" label="Name" name="blog_name" value="{$blogName}" required %}
+        {% cmp="input" type="text" label="Slug" name="blog_slug" value="{$blogSlug}" placeholder="generated-from-name-if-blank" %}
+    </div>
 
-    <p>
-        <label for="blog_name">Name</label><br>
-        <input class="responsive-input" type="text" name="blog_name" id="blog_name" value="{{ blog['blog_name'] }}">
-        {% if (isset($errors['blog_name'])) : %}
-            <p class="error">{{ errors['blog_name'] }}</p>
-        {% endif; %}
-    </p>
+    {% cmp="input" type="textarea" label="Description" name="description" value="{$description}" rows="4" %}
 
-    <p>
-        <label for="blog_slug">Slug</label><br>
-        <input class="responsive-input" type="text" name="blog_slug" id="blog_slug" value="{{ blog['blog_slug'] }}">
-        {% if (isset($errors['blog_slug'])) : %}
-            <p class="error">{{ errors['blog_slug'] }}</p>
-        {% endif; %}
-    </p>
-
-    <p>
-        <label for="description">Description</label><br>
-        <textarea class="responsive-input" name="description" id="description" rows="5" cols="60">{{ blog['description'] }}</textarea>
-        {% if (isset($errors['description'])) : %}
-            <p class="error">{{ errors['description'] }}</p>
-        {% endif; %}
-    </p>
-
-    <p>
-        <label for="is_active">
-            <input type="checkbox" name="is_active" id="is_active" value="1" {% if (!isset($blog['is_active']) || $blog['is_active']): %} checked {% endif; %}>
-            Active
+    <div>
+        <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" name="is_active" value="1"
+                   class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500"
+                {% if (!isset($blog['is_active']) || $blog['is_active']): %} checked {% endif; %}>
+            Active (visible to readers)
         </label>
-        {% if (isset($errors['is_active'])) : %}
-            <p class="error">{{ errors['is_active'] }}</p>
-        {% endif; %}
-    </p>
+    </div>
+</div>

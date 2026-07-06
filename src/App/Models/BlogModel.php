@@ -101,6 +101,60 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Paginated admin listing with optional name/slug/owner search.
+     *
+     * @return array{data: array, pagination: array} Same shape as UserModel::findAllForAdmin()
+     */
+    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
+    {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = '';
+        $params = [];
+
+        if ($q !== '') {
+            $where = 'WHERE (b.blog_name LIKE :q_name OR b.blog_slug LIKE :q_slug OR u.username LIKE :q_owner)';
+            $term = '%'.$q.'%';
+            $params[':q_name'] = $term;
+            $params[':q_slug'] = $term;
+            $params[':q_owner'] = $term;
+        }
+
+        $total = (int) $this->database->query(
+            "SELECT COUNT(*) FROM blogs b INNER JOIN users u ON b.owner_id = u.id {$where}",
+            $params
+        )->fetchColumn();
+
+        $sql = "SELECT b.*, u.username as owner_name,
+                    (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
+                    (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
+                FROM blogs b
+                INNER JOIN users u ON b.owner_id = u.id
+                {$where}
+                ORDER BY b.published_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = ($page - 1) * $perPage;
+
+        $rows = $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+        $totalPages = (int) ceil($total / $perPage);
+
+        return [
+            'data' => $rows,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_records' => $total,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
+            ],
+        ];
+    }
+
+    /**
      * Get all blogs owned by a user with aggregate counts.
      *
      * @param  int  $ownerId  User ID

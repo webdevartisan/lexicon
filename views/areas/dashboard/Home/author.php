@@ -83,10 +83,10 @@
                                     <?php foreach ($assignedBlogs as $blog) { ?>
                                     <a href="/posts?blog=<?= $blog['id'] ?>" class="list-group-item list-group-item-action">
                                         <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1"><?= htmlspecialchars($blog['blog_name']) ?></h6>
+                                            <h6 class="mb-1"><?= e($blog['blog_name']) ?></h6>
                                             <small>Assigned: <?= date('M d, Y', strtotime($blog['assigned_at'])) ?></small>
                                         </div>
-                                        <p class="mb-1 text-muted"><?= htmlspecialchars($blog['description']) ?></p>
+                                        <p class="mb-1 text-muted"><?= e($blog['description']) ?></p>
                                     </a>
                                     <?php } ?>
                                 </div>
@@ -117,8 +117,8 @@
                                         <tbody>
                                             <?php foreach ($myPosts as $post) { ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($post['title']) ?></td>
-                                                <td><?= htmlspecialchars($post['blog_name']) ?></td>
+                                                <td><?= e($post['title']) ?></td>
+                                                <td><?= e($post['blog_name']) ?></td>
                                                 <td>
                                                     <?php
                                                     $statusClass = [

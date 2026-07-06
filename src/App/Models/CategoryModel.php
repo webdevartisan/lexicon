@@ -16,6 +16,73 @@ class CategoryModel extends AppModel
     protected ?string $table = 'categories';
 
     /**
+     * All categories with their blog name, for the admin listing.
+     *
+     * @return array Rows with blog_name joined in
+     */
+    public function allWithBlog(): array
+    {
+        $sql = "SELECT c.*, b.blog_name
+                FROM {$this->getTable()} c
+                LEFT JOIN blogs b ON b.id = c.blog_id
+                ORDER BY b.blog_name, c.name";
+
+        return $this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Paginated admin listing with optional name/slug/blog search.
+     *
+     * @return array{data: array, pagination: array} Same shape as UserModel::findAllForAdmin()
+     */
+    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
+    {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = '';
+        $params = [];
+
+        if ($q !== '') {
+            $where = 'WHERE (c.name LIKE :q_name OR c.slug LIKE :q_slug OR b.blog_name LIKE :q_blog)';
+            $term = '%'.$q.'%';
+            $params[':q_name'] = $term;
+            $params[':q_slug'] = $term;
+            $params[':q_blog'] = $term;
+        }
+
+        $total = (int) $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()} c LEFT JOIN blogs b ON b.id = c.blog_id {$where}",
+            $params
+        )->fetchColumn();
+
+        $sql = "SELECT c.*, b.blog_name
+                FROM {$this->getTable()} c
+                LEFT JOIN blogs b ON b.id = c.blog_id
+                {$where}
+                ORDER BY b.blog_name, c.name
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = ($page - 1) * $perPage;
+
+        $rows = $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+        $totalPages = (int) ceil($total / $perPage);
+
+        return [
+            'data' => $rows,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_records' => $total,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
+            ],
+        ];
+    }
+
+    /**
      * Update a category and invalidate related cache.
      *
      * Invalidates blog listings since categories appear in sidebars,

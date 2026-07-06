@@ -119,6 +119,110 @@ class CommentModel extends AppModel
         ];
     }
 
+    /**
+     * Site-wide comment listing with filters for the admin moderation queue.
+     *
+     * Mirrors findByBlogIdWithFilters but spans every blog, so administrators
+     * can moderate the whole site from one screen.
+     *
+     * @return array{data: array, pagination: array}
+     */
+    public function findAllWithFilters(
+        string $status = '',
+        string $q = '',
+        int $page = 1,
+        int $perPage = 20
+    ): array {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = [];
+        $params = [];
+
+        if ($status !== '') {
+            $where[] = 'c.status = :status';
+            $params[':status'] = $status;
+        }
+
+        if ($q !== '') {
+            $where[] = '(c.content LIKE :q_content OR p.title LIKE :q_title)';
+            $params[':q_content'] = '%'.$q.'%';
+            $params[':q_title'] = '%'.$q.'%';
+        }
+
+        $whereSql = $where ? 'WHERE '.implode(' AND ', $where) : '';
+
+        $countSql = "SELECT COUNT(*)
+                     FROM {$this->getTable()} c
+                     INNER JOIN posts p ON c.post_id = p.id
+                     {$whereSql}";
+
+        $total = (int) $this->database->query($countSql, $params)->fetchColumn();
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT
+                    c.*,
+                    p.title AS post_title,
+                    p.slug AS post_slug,
+                    p.blog_id,
+                    b.blog_name,
+                    b.blog_slug,
+                    COALESCE(
+                        u.display_name_cached,
+                        NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
+                        u.username,
+                        'Anonymous'
+                    ) AS user_name,
+                    u.email AS user_email
+                FROM {$this->getTable()} c
+                INNER JOIN posts p ON c.post_id = p.id
+                LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN users u ON c.user_id = u.id
+                {$whereSql}
+                ORDER BY c.created_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = $offset;
+
+        $rows = $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $totalPages = (int) ceil($total / $perPage);
+
+        return [
+            'data' => $rows,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_records' => $total,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
+            ],
+        ];
+    }
+
+    /**
+     * Site-wide comment counts keyed by status, plus an 'all' total.
+     *
+     * @return array{all: int, pending: int, approved: int, spam: int}
+     */
+    public function countsByStatus(): array
+    {
+        $counts = ['all' => 0, 'pending' => 0, 'approved' => 0, 'spam' => 0];
+
+        $sql = "SELECT status, COUNT(*) AS cnt FROM {$this->getTable()} GROUP BY status";
+        foreach ($this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            if (isset($counts[$row['status']])) {
+                $counts[$row['status']] = (int) $row['cnt'];
+            }
+            $counts['all'] += (int) $row['cnt'];
+        }
+
+        return $counts;
+    }
+
     public function updateStatus(int $id, string $status): bool
     {
         $this->assertValidStatus($status);
