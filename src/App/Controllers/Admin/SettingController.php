@@ -6,8 +6,9 @@ namespace App\Controllers\Admin;
 
 use App\Auth;
 use App\Controllers\AppController;
+use App\Models\RoleModel;
 use App\Models\SettingModel;
-use App\Services\MailService;
+use App\Services\MaintenanceMode;
 use Framework\Core\Response;
 
 /**
@@ -18,10 +19,14 @@ use Framework\Core\Response;
  */
 final class SettingController extends AppController
 {
+    // Enforced for every action by AppController::beforeAction()
+    protected ?string $areaAbility = 'manageSettings';
+
     public function __construct(
         protected Auth $auth,
         private SettingModel $settings,
-        private MailService $mail,
+        private RoleModel $roles,
+        private MaintenanceMode $maintenance,
     ) {}
 
     /**
@@ -32,19 +37,24 @@ final class SettingController extends AppController
         return $this->view([
             'settings' => $this->settings->all(),
             'mail_config' => $this->getMailConfig(),
+            'roles' => $this->roles->findAll(),
+            'maintenance_active' => MaintenanceMode::active(),
         ]);
     }
 
     /**
-     * Save general settings (identity, content, users).
+     * Save site settings.
+     *
+     * The settings screen is split into section forms that each post only
+     * their own fields, so we validate and persist just the keys that were
+     * actually submitted.
      */
     public function update(): Response
     {
         // enforce CSRF protection
         csrf()->assertValid($this->request->postParam('_token'));
 
-        // validate all form input using the validation framework
-        $validator = $this->validateOrFail([
+        $rules = [
             // site identity
             'site_name' => 'required|min:2|max:100',
             'site_description' => 'max:255',
@@ -58,15 +68,31 @@ final class SettingController extends AppController
             'date_format' => 'required',
             'allow_comments' => 'boolean',
 
-            // registration
+            // registration and availability
             'registration_enabled' => 'boolean',
             'default_user_role' => 'required|integer',
-        ]);
+            'require_email_verification' => 'boolean',
+            'maintenance_mode' => 'boolean',
+        ];
+
+        // only validate fields this section form actually posted
+        $rules = array_intersect_key($rules, $this->request->post);
+
+        $validator = $this->validateOrFail($rules);
 
         $data = $validator->validated();
 
+        // Maintenance lives in a flag file, not the settings table, so the
+        // gate keeps working when the database is down (see MaintenanceMode)
+        if (array_key_exists('maintenance_mode', $data)) {
+            $this->applyMaintenanceToggle(!empty($data['maintenance_mode']));
+            unset($data['maintenance_mode']);
+        }
+
         // persist each setting using batch update for better performance
-        $this->settings->setMany($data);
+        if ($data !== []) {
+            $this->settings->setMany($data);
+        }
 
         $this->flash('success', 'Settings saved successfully.');
 
@@ -74,38 +100,37 @@ final class SettingController extends AppController
     }
 
     /**
-     * Send test email to verify mail configuration.
+     * Flip the maintenance flag file when the submitted state differs.
+     *
+     * Silently flipping the whole site on or off is exactly what an audit
+     * trail is for, so every actual change is logged.
      */
-    public function testEmail(): Response
+    private function applyMaintenanceToggle(bool $wanted): void
     {
-        // enforce CSRF protection
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $validator = $this->validateOrFail([
-            'test_recipient' => 'required|email',
-        ]);
-
-        $recipient = $validator->validated()['test_recipient'];
-
-        // throttle to prevent abuse
-        $now = time();
-        $last = (int) ($this->session->get('_mail_test_last') ?? 0);
-        if (($now - $last) < 30) {
-            $this->flash('error', 'Please wait 30 seconds between tests.');
-
-            return $this->redirect('/admin/settings');
-        }
-        $this->session->set('_mail_test_last', $now);
-
-        $ok = $this->mail->test($recipient);
-
-        if ($ok) {
-            $this->flash('success', "Test email sent to {$recipient}.");
-        } else {
-            $this->flash('error', 'Test failed. Check server logs.');
+        if ($wanted === MaintenanceMode::active()) {
+            return;
         }
 
-        return $this->redirect('/admin/settings');
+        $changed = $wanted
+            ? $this->maintenance->enable([
+                'site_name' => (string) $this->settings->get('site_name', 'Lexicon'),
+            ])
+            : $this->maintenance->disable();
+
+        if (!$changed) {
+            $this->flash('error', 'Could not update the maintenance flag file. Check storage permissions.');
+
+            return;
+        }
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            $wanted ? 'site.maintenance_on' : 'site.maintenance_off',
+            'setting',
+            null,
+            [],
+            $this->request->ip()
+        );
     }
 
     /**
@@ -116,13 +141,13 @@ final class SettingController extends AppController
     private function getMailConfig(): array
     {
         return [
-            'driver' => $_ENV['MAIL_DRIVER'] ?? 'not set',
-            'host' => $_ENV['MAIL_HOST'] ?? 'not set',
-            'port' => $_ENV['MAIL_PORT'] ?? 'not set',
-            'from_address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'not set',
-            'from_name' => $_ENV['MAIL_FROM_NAME'] ?? 'not set',
-            'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? 'tls',
-            'debug' => filter_var($_ENV['MAIL_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'driver' => (string) env('MAIL_DRIVER', 'not set'),
+            'host' => (string) env('MAIL_HOST', 'not set'),
+            'port' => (string) env('MAIL_PORT', 'not set'),
+            'from_address' => (string) env('MAIL_FROM_ADDRESS', 'not set'),
+            'from_name' => (string) env('MAIL_FROM_NAME', 'not set'),
+            'encryption' => (string) env('MAIL_ENCRYPTION', 'tls'),
+            'debug' => (bool) env('MAIL_DEBUG', false),
         ];
     }
 }
