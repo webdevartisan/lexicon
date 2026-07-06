@@ -50,6 +50,10 @@ $icons = [
     'categories' => 'folder-tree',
     'tags' => 'tags',
     'roles' => 'shield',
+    'moderation' => 'shield-check',
+    'audit-log' => 'history',
+    'system' => 'server',
+    'cache-management' => 'database-zap',
     'email-test' => 'mail-warning',
     'settings' => 'settings',
 ];
@@ -69,9 +73,16 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     </li>
 
     <?php foreach (array_merge($legacyItems, $globalItems) as $it) { ?>
+        <?php if (($it['type'] ?? 'link') === 'section_header') { ?>
+        <li class="px-4 py-2 mt-2 text-vertical-menu-item  group-data-[sidebar=brand]:text-vertical-menu-item-brand group-data-[sidebar=modern]:text-vertical-menu-item-modern uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
+            <span>
+                <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
+            </span>
+        </li>
+        <?php continue; } ?>
         <li class="relative group/sm">
-            <a class="sidebar-menu-item group/menu-link" 
-               href="<?= e($it['href']) ?>" 
+            <a class="sidebar-menu-item group/menu-link"
+               href="<?= e($it['href']) ?>"
                data-nav-path="<?= e(lurl($it['href'])) ?>"
                >
                 
@@ -145,8 +156,9 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <?php } ?>
 <?php } ?>
 
-<!-- Empty state - what to say depends on why there's no blog context -->
-<?php if (empty($contextualItems) || !$has_blog_context) { ?>
+<!-- Empty state - what to say depends on why there's no blog context.
+     Only meaningful in the dashboard; admin navigation is complete on its own. -->
+<?php if (($area ?? '') === 'back' && (empty($contextualItems) || !$has_blog_context)) { ?>
     <?php if (empty($user_blogs) && !empty($is_collaborator)) { ?>
         <!-- Collaborator without own blogs: their work is on the Shared page -->
         <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">

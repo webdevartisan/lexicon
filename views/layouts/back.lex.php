@@ -57,6 +57,15 @@ $old = old();
         <div class="flex-1 group-data-[sidebar-size=lg]:ltr:md:ml-vertical-menu group-data-[sidebar-size=lg]:rtl:md:mr-vertical-menu group-data-[sidebar-size=md]:ltr:ml-vertical-menu-md group-data-[sidebar-size=md]:rtl:mr-vertical-menu-md group-data-[sidebar-size=sm]:ltr:ml-vertical-menu-sm group-data-[sidebar-size=sm]:rtl:mr-vertical-menu-sm pt-[calc(theme('spacing.header')_*_1)] pb-[calc(theme('spacing.header')_*_0.8)] px-4">        
             <div class="container group-data-[content=boxed]:max-w-boxed mx-auto">
 
+                <?php /* Only admins see this, and only while the site is offline for visitors */ ?>
+                <?php if (auth()->check() && auth()->hasRole('administrator') && \App\Services\MaintenanceMode::active()) { ?>
+                <div class="flex items-center gap-2 px-4 py-2.5 mt-4 text-sm rounded-md border border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200 print:hidden">
+                    <i data-lucide="hard-hat" class="size-4 shrink-0"></i>
+                    <span class="grow">Maintenance mode is on. Visitors currently see the maintenance page.</span>
+                    <a href="/admin/settings" class="font-medium underline hover:no-underline">Turn off</a>
+                </div>
+                <?php } ?>
+
                 {% if noBreadcrumb|empty %}
                 <div class="flex flex-col gap-2 py-4 md:flex-row md:items-center print:hidden">
                     <div class="grow">

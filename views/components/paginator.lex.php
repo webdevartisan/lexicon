@@ -15,6 +15,10 @@ $pagination = $pagination ?? [];
 $pageParam = $pageParam ?? 'page';
 $query = $query ?? '';
 $basePath = $basePath ?? '/dashboard';
+// What the rows are called in the "showing X of Y" line; defaults to the
+// translated post labels for backward compatibility.
+$itemSingular = $itemSingular ?? null;
+$itemPlural = $itemPlural ?? null;
 ?>
 {% set paginationLabel = t('components.paginator.ariaLabels.pagination') %}
 {% set previousPageLabel = t('components.paginator.ariaLabels.previousPage') %}
@@ -144,7 +148,7 @@ $basePath = $basePath ?? '/dashboard';
             <span class="font-semibold mx-1">
                 <?= $pagination['total_records'] ?>
             </span>
-            <?= e($pagination['total_records'] === 1 ? $postSingular : $postPlural) ?>
+            <?= e($pagination['total_records'] === 1 ? ($itemSingular ?: $postSingular) : ($itemPlural ?: $postPlural)) ?>
         </div>
     </nav>
 <?php } ?>
