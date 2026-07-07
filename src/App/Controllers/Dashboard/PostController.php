@@ -372,7 +372,7 @@ final class PostController extends AppController
         }
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $workflowState = $post->workflowState() ?? 'draft';
+        $workflowState = $post->workflowState();
         $status = $post->status();
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
@@ -636,7 +636,7 @@ final class PostController extends AppController
     private function resolveCategoryId(int $blogId): ?int
     {
         $raw = $this->request->post['category_id'] ?? '';
-        if ($raw === '' || $raw === null) {
+        if ($raw === '') {
             return null;
         }
 
@@ -1130,7 +1130,7 @@ final class PostController extends AppController
      * Get post by slug or throw 404.
      *
      * @param  string  $slug  Post slug
-     * @return array Post data
+     * @return array<string, mixed> Post data
      *
      * @throws PageNotFoundException
      */
@@ -1138,7 +1138,7 @@ final class PostController extends AppController
     {
         $post = $this->model->findBySlug($slug);
 
-        if ($post === false) {
+        if ($post === null) {
             throw new PageNotFoundException("Post with slug: '$slug' not found.");
         }
 

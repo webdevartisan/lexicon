@@ -1253,7 +1253,7 @@ class PostModel extends AppModel
      * is summed across the groups rather than counted as its own status.
      *
      * @param  string  $whereClause  Prepared WHERE clause (aliased as p)
-     * @param  array  $params  Bindings for the WHERE clause
+     * @param  array<string, mixed>  $params  Bindings for the WHERE clause
      * @return array<string, int>
      */
     private function groupedStatusCounts(string $whereClause, array $params): array

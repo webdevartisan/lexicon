@@ -63,16 +63,16 @@ final class MediaService
      * Files land under the blog owner's directory tree no matter which
      * collaborator uploaded, same as branding and inline post images.
      *
-     * @param  array  $uploadedFile  Temp file descriptor from UploadService::getUploadedFiles()
+     * @param  string  $tempFilename  Temp filename from UploadService::getUploadedFiles()
      * @param  int  $uploaderId  Acting user, for temp cleanup and the library row
      * @return string|null Public URL of the stored image, or null if the move failed
      */
-    public function storeFeaturedImage(array $uploadedFile, BlogResource $blog, int $uploaderId): ?string
+    public function storeFeaturedImage(string $tempFilename, BlogResource $blog, int $uploaderId): ?string
     {
         [$dir, $baseUrl] = $this->uploads->userBlogPostPath($blog->ownerId(), $blog->id());
 
         $path = $this->uploads->moveTempToBranding(
-            $uploadedFile,
+            $tempFilename,
             $blog->ownerId(),
             $blog->id(),
             'featured_image',

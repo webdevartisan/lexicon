@@ -50,7 +50,7 @@ final class PostReviewController extends AppController
         Gate::authorize('reviewPost', $post, $user);
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $workflowState = $post->workflowState() ?? 'draft';
+        $workflowState = $post->workflowState();
         $status = $post->status();
         $currentUserId = (int) $user['id'];
 

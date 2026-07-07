@@ -46,6 +46,8 @@ class WorkflowService
     /**
      * Common notification payload: enough post + blog context for the
      * notification item to render a title and build links.
+     *
+     * @return array<string, mixed>
      */
     private function postPayload(PostResource $post): array
     {
