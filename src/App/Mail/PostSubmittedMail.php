@@ -12,10 +12,10 @@ class PostSubmittedMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $authorUsername,
-        private bool   $unassigned
+        private bool $unassigned
     ) {
         parent::__construct();
     }
@@ -38,10 +38,10 @@ class PostSubmittedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $appName = htmlspecialchars((string) ($_ENV['APP_NAME'] ?? 'Blog Platform'));
-        $title   = htmlspecialchars($this->postTitle);
-        $author  = htmlspecialchars($this->authorUsername);
-        $url     = htmlspecialchars($this->reviewUrl());
-        $intro   = $this->unassigned
+        $title = htmlspecialchars($this->postTitle);
+        $author = htmlspecialchars($this->authorUsername);
+        $url = htmlspecialchars($this->reviewUrl());
+        $intro = $this->unassigned
             ? '<p><em>No reviewer is assigned yet. Any reviewer on this blog can claim it.</em></p>'
             : '';
 

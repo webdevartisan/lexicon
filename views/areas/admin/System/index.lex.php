@@ -31,7 +31,7 @@ $fmtBytes = static function ($bytes): string {
                         'max_execution_time' => 'Max execution', 'upload_max_filesize' => 'Upload max',
                         'post_max_size' => 'POST max', 'opcache' => 'OPcache', 'extensions' => 'Extensions',
                     ];
-                    foreach ($phpLabels as $key => $label) { ?>
+foreach ($phpLabels as $key => $label) { ?>
                     <div>
                         <dt class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300 mb-1"><?= e($label) ?></dt>
                         <dd class="text-slate-900 dark:text-zink-50"><?= e((string) $php[$key]) ?></dd>

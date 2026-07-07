@@ -13,7 +13,6 @@ use Framework\Core\Response;
  *
  * Thin HTTP layer delegating to CacheManagementService.
  * Handles authorization, input validation, and view rendering.
- *
  */
 class CacheController extends AppController
 {

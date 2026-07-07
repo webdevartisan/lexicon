@@ -79,7 +79,8 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                 <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
             </span>
         </li>
-        <?php continue; } ?>
+        <?php continue;
+        } ?>
         <li class="relative group/sm">
             <a class="sidebar-menu-item group/menu-link"
                href="<?= e($it['href']) ?>"

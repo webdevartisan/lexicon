@@ -8,7 +8,7 @@ class ReviewerAssignedMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $assignedByUsername
     ) {
@@ -32,9 +32,9 @@ class ReviewerAssignedMail extends Mailable
 
     private function buildHtmlBody(): string
     {
-        $title  = htmlspecialchars($this->postTitle);
-        $by     = htmlspecialchars($this->assignedByUsername);
-        $url    = htmlspecialchars($this->reviewUrl());
+        $title = htmlspecialchars($this->postTitle);
+        $by = htmlspecialchars($this->assignedByUsername);
+        $url = htmlspecialchars($this->reviewUrl());
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

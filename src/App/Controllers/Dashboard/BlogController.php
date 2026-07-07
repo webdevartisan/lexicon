@@ -643,9 +643,9 @@ final class BlogController extends AppController
         // Library picks beat freshly-uploaded files — if the user selected an
         // existing image, drop it straight into the corresponding _path slot.
         foreach (['banner', 'logo', 'favicon'] as $type) {
-            $picked = trim((string) ($this->request->post[$type . '_library_url'] ?? ''));
+            $picked = trim((string) ($this->request->post[$type.'_library_url'] ?? ''));
             if ($picked !== '') {
-                $paths[$type . '_path'] = $picked;
+                $paths[$type.'_path'] = $picked;
                 $this->mediaService->register($blogId, $userId, $picked, 'branding');
             }
         }
@@ -670,7 +670,7 @@ final class BlogController extends AppController
             $type = $parts[1];
 
             // Library pick already filled this slot — don't clobber it.
-            if (isset($paths[$type . '_path'])) {
+            if (isset($paths[$type.'_path'])) {
                 continue;
             }
 

@@ -60,14 +60,14 @@ final class SharedController extends AppController
     private function buildCard(array $blog, int $userId): array
     {
         $blogId = (int) $blog['id'];
-        $role   = (string) ($blog['user_role'] ?? 'reviewer');
+        $role = (string) ($blog['user_role'] ?? 'reviewer');
 
         $stats = match ($role) {
-            'editor'      => $this->statsForEditor($blogId),
-            'reviewer'    => $this->statsForReviewer($blogId, $userId),
-            'author'      => $this->statsForAuthor($blogId, $userId),
+            'editor' => $this->statsForEditor($blogId),
+            'reviewer' => $this->statsForReviewer($blogId, $userId),
+            'author' => $this->statsForAuthor($blogId, $userId),
             'contributor' => $this->statsForContributor($blogId, $userId),
-            default       => [],
+            default => [],
         };
 
         // A short preview of items the user can actually act on, so the card
@@ -75,18 +75,18 @@ final class SharedController extends AppController
         // see their own in-flight work on this blog.
         $items = match ($role) {
             'reviewer', 'editor' => array_slice($this->postModel->findReviewQueueForBlog($blogId), 0, 3),
-            default              => [],
+            default => [],
         };
 
         return [
-            'blog'  => [
-                'id'         => $blogId,
-                'name'       => (string) ($blog['blog_name'] ?? 'Untitled'),
-                'slug'       => (string) ($blog['blog_slug'] ?? ''),
-                'status'     => (string) ($blog['status'] ?? 'draft'),
+            'blog' => [
+                'id' => $blogId,
+                'name' => (string) ($blog['blog_name'] ?? 'Untitled'),
+                'slug' => (string) ($blog['blog_slug'] ?? ''),
+                'status' => (string) ($blog['status'] ?? 'draft'),
                 'owner_name' => (string) ($blog['owner_name'] ?? ''),
             ],
-            'role'  => $role,
+            'role' => $role,
             'stats' => $stats,
             'items' => $items,
             'actions' => $this->actionsForRole($role, $blogId),
@@ -161,57 +161,57 @@ final class SharedController extends AppController
         return match ($role) {
             'editor' => [
                 'primary' => [
-                    'label'   => 'Open overview',
-                    'href'    => "/dashboard/blog/{$blogId}/show",
-                    'icon'    => 'layout-grid',
+                    'label' => 'Open overview',
+                    'href' => "/dashboard/blog/{$blogId}/show",
+                    'icon' => 'layout-grid',
                     'variant' => 'blue',
                 ],
                 'secondary' => [
                     'label' => 'Review queue',
-                    'href'  => "/dashboard/blog/{$blogId}/review-queue",
-                    'icon'  => 'clipboard-check',
+                    'href' => "/dashboard/blog/{$blogId}/review-queue",
+                    'icon' => 'clipboard-check',
                 ],
             ],
             'reviewer' => [
                 'primary' => [
-                    'label'   => 'Open review queue',
-                    'href'    => "/dashboard/blog/{$blogId}/review-queue",
-                    'icon'    => 'clipboard-check',
+                    'label' => 'Open review queue',
+                    'href' => "/dashboard/blog/{$blogId}/review-queue",
+                    'icon' => 'clipboard-check',
                     'variant' => 'blue',
                 ],
                 'secondary' => null,
             ],
             'author' => [
                 'primary' => [
-                    'label'   => 'Open my work',
-                    'href'    => "/dashboard/blog/{$blogId}/workspace",
-                    'icon'    => 'notebook-pen',
+                    'label' => 'Open my work',
+                    'href' => "/dashboard/blog/{$blogId}/workspace",
+                    'icon' => 'notebook-pen',
                     'variant' => 'blue',
                 ],
                 'secondary' => [
                     'label' => 'Write a post',
-                    'href'  => "/dashboard/post/new?blog_id={$blogId}",
-                    'icon'  => 'pen',
+                    'href' => "/dashboard/post/new?blog_id={$blogId}",
+                    'icon' => 'pen',
                 ],
             ],
             'contributor' => [
                 'primary' => [
-                    'label'   => 'Open my work',
-                    'href'    => "/dashboard/blog/{$blogId}/workspace",
-                    'icon'    => 'notebook-pen',
+                    'label' => 'Open my work',
+                    'href' => "/dashboard/blog/{$blogId}/workspace",
+                    'icon' => 'notebook-pen',
                     'variant' => 'blue',
                 ],
                 'secondary' => [
                     'label' => 'Draft a post',
-                    'href'  => "/dashboard/post/new?blog_id={$blogId}",
-                    'icon'  => 'pen',
+                    'href' => "/dashboard/post/new?blog_id={$blogId}",
+                    'icon' => 'pen',
                 ],
             ],
             default => [
                 'primary' => [
-                    'label'   => 'Open blog',
-                    'href'    => "/dashboard/blog/{$blogId}/show",
-                    'icon'    => 'arrow-right',
+                    'label' => 'Open blog',
+                    'href' => "/dashboard/blog/{$blogId}/show",
+                    'icon' => 'arrow-right',
                     'variant' => 'blue',
                 ],
                 'secondary' => null,

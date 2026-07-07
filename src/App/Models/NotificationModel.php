@@ -68,7 +68,6 @@ class NotificationModel extends AppModel
      * Count unread notifications for a user.
      *
      * @param  int  $userId  Recipient
-     * @return int
      */
     public function unreadCount(int $userId): int
     {
@@ -96,15 +95,15 @@ class NotificationModel extends AppModel
      * Return paginated notifications for a user with total count.
      *
      * @param  int  $userId  Recipient
-     * @param  int  $perPage Page size
-     * @param  int  $page    1-based page index
+     * @param  int  $perPage  Page size
+     * @param  int  $page  1-based page index
      * @return array{items: array<int, array>, total: int, page: int, perPage: int}
      */
     public function findPageForUser(int $userId, int $perPage = 20, int $page = 1): array
     {
         $perPage = max(1, min(100, $perPage));
-        $page    = max(1, $page);
-        $offset  = ($page - 1) * $perPage;
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
 
         $countRow = $this->database
             ->query('SELECT COUNT(*) AS c FROM notifications WHERE user_id = ?', [$userId])
@@ -122,9 +121,9 @@ class NotificationModel extends AppModel
             ->fetchAll(\PDO::FETCH_ASSOC);
 
         return [
-            'items'   => $items,
-            'total'   => (int) ($countRow['c'] ?? 0),
-            'page'    => $page,
+            'items' => $items,
+            'total' => (int) ($countRow['c'] ?? 0),
+            'page' => $page,
             'perPage' => $perPage,
         ];
     }
@@ -155,7 +154,7 @@ class NotificationModel extends AppModel
 
         return [
             'read_pruned' => (int) $readPruned,
-            'old_pruned'  => (int) $oldPruned,
+            'old_pruned' => (int) $oldPruned,
         ];
     }
 }

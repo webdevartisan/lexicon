@@ -55,7 +55,7 @@ $initials = static function (string $name): string {
     <?php if (!empty($workflowHealth)) {
         $wh = $workflowHealth;
         $hasUnassigned = (int) ($wh['in_review_unassigned'] ?? 0) > 0;
-    ?>
+        ?>
     <section class="card mb-6 <?= $hasUnassigned ? 'border-amber-200 dark:border-amber-500/30' : '' ?>">
         <div class="card-body">
             <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-4 flex items-center gap-2">

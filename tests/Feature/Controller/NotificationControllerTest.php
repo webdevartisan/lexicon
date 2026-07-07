@@ -40,10 +40,10 @@ beforeEach(function () {
     $this->notifications = new NotificationModel($this->db);
 
     $password = 'password123';
-    $email    = faker()->unique()->safeEmail();
+    $email = faker()->unique()->safeEmail();
     $this->userId = UserFactory::new($this->userModel)
         ->withAttributes([
-            'email'    => $email,
+            'email' => $email,
             'password' => password_hash($password, PASSWORD_DEFAULT),
         ])
         ->create();
@@ -62,7 +62,7 @@ beforeEach(function () {
         public function render(string $template, array $data = []): string
         {
             $this->capturedTemplate = $template;
-            $this->capturedData     = $data;
+            $this->capturedData = $data;
 
             return 'mocked view';
         }
@@ -116,8 +116,8 @@ it('renders the notifications index for the authenticated user', function () {
 it('only shows notifications belonging to the authenticated user', function () {
     $otherUserId = UserFactory::new($this->userModel)->create();
 
-    $this->notifications->create($this->userId,   'blog.invite',   ['blog_id' => 1]);
-    $this->notifications->create($otherUserId,    'post.approved', ['post_id' => 99]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
+    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 99]);
 
     $request = makeRequest('/dashboard/notifications', 'GET');
     setupController($this->controller, $request, $this->mockViewer);
@@ -151,7 +151,7 @@ it('marks the notification as read and redirects to a local target', function ()
     $this->notifications->create($this->userId, 'post.approved', ['post_id' => 42]);
     $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
 
-    $target  = '/dashboard/post/42/edit';
+    $target = '/dashboard/post/42/edit';
     $request = makeRequest('/dashboard/notifications/'.$id.'/read', 'POST', [
         'target' => $target,
     ]);
@@ -217,7 +217,7 @@ it('cannot mark a notification belonging to another user', function () {
 // ============================================================================
 
 it('marks every unread notification for the user as read', function () {
-    $this->notifications->create($this->userId, 'blog.invite',   ['blog_id' => 1]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
     $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2]);
     $this->notifications->create($this->userId, 'post.published', ['post_id' => 3]);
 
@@ -252,7 +252,7 @@ it('does not touch another user\'s notifications when marking all read', functio
 // ============================================================================
 
 it('returns the unread count as JSON', function () {
-    $this->notifications->create($this->userId, 'blog.invite',   ['blog_id' => 1]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
     $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2]);
 
     $request = makeRequest('/dashboard/notifications/unread-count', 'GET');

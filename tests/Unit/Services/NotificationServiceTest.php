@@ -29,7 +29,7 @@ function makeNotificationService(
         $notif ?? Mockery::mock(NotificationModel::class),
         $users ?? Mockery::mock(UserModel::class),
         $prefs ?? Mockery::mock(UserPreferencesModel::class),
-        $mail  ?? Mockery::mock(MailService::class),
+        $mail ?? Mockery::mock(MailService::class),
     );
 }
 

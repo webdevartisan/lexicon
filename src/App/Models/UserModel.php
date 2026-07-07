@@ -247,9 +247,9 @@ class UserModel extends AppModel
      * Paginated user listing for the admin panel, roles aggregated in one
      * query instead of one lookup per row.
      *
-     * @param int $page Current page (1-based)
-     * @param int $perPage Rows per page (capped at 100)
-     * @param string $q Optional username/email/name search term
+     * @param  int  $page  Current page (1-based)
+     * @param  int  $perPage  Rows per page (capped at 100)
+     * @param  string  $q  Optional username/email/name search term
      * @return array{data: array, pagination: array}
      */
     public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array

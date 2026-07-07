@@ -1176,12 +1176,12 @@ class PostModel extends AppModel
         return [
             'data' => $data,
             'pagination' => [
-                'current_page'  => $page,
-                'per_page'      => $perPage,
+                'current_page' => $page,
+                'per_page' => $perPage,
                 'total_records' => $totalRecords,
-                'total_pages'   => $totalPages,
-                'has_previous'  => $page > 1,
-                'has_next'      => $page < $totalPages,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
             ],
         ];
     }
@@ -1208,10 +1208,10 @@ class PostModel extends AppModel
      * Same shape as findAllInBlogWithFilters but without the blog constraint,
      * so administrators can search and filter across every blog.
      *
-     * @param int $page Current page (1-based)
-     * @param int $perPage Rows per page (capped at 100)
-     * @param string $status Optional status filter
-     * @param string $searchQuery Optional title/content search term
+     * @param  int  $page  Current page (1-based)
+     * @param  int  $perPage  Rows per page (capped at 100)
+     * @param  string  $status  Optional status filter
+     * @param  string  $searchQuery  Optional title/content search term
      * @return array{data: array, pagination: array}
      */
     public function findAllForAdmin(
@@ -1267,12 +1267,12 @@ class PostModel extends AppModel
         return [
             'data' => $data,
             'pagination' => [
-                'current_page'  => $page,
-                'per_page'      => $perPage,
+                'current_page' => $page,
+                'per_page' => $perPage,
                 'total_records' => $totalRecords,
-                'total_pages'   => $totalPages,
-                'has_previous'  => $page > 1,
-                'has_next'      => $page < $totalPages,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
             ],
         ];
     }

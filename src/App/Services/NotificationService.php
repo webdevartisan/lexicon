@@ -34,24 +34,24 @@ class NotificationService
      * Types absent from this map are written in-app but never email.
      */
     public const TYPE_TO_PREFERENCE = [
-        'blog.invite_declined'      => 'notify_invites',
-        'post.submitted'            => 'notify_post_status',
+        'blog.invite_declined' => 'notify_invites',
+        'post.submitted' => 'notify_post_status',
         'post.submitted_unassigned' => 'notify_post_status',
-        'post.approved'             => 'notify_post_status',
-        'post.needs_changes'        => 'notify_post_status',
-        'post.published'            => 'notify_post_status',
-        'post.reviewer_assigned'    => 'notify_post_status',
-        'post.reviewer_stale'       => 'notify_post_status',
-        'post.workflow_disabled'    => 'notify_post_status',
+        'post.approved' => 'notify_post_status',
+        'post.needs_changes' => 'notify_post_status',
+        'post.published' => 'notify_post_status',
+        'post.reviewer_assigned' => 'notify_post_status',
+        'post.reviewer_stale' => 'notify_post_status',
+        'post.workflow_disabled' => 'notify_post_status',
         'collaborator.role_changed' => 'notify_role_changes',
-        'collaborator.removed'      => 'notify_role_changes',
+        'collaborator.removed' => 'notify_role_changes',
     ];
 
     public function __construct(
-        private NotificationModel    $notifications,
-        private UserModel            $users,
+        private NotificationModel $notifications,
+        private UserModel $users,
         private UserPreferencesModel $preferences,
-        private MailService          $mail,
+        private MailService $mail,
     ) {}
 
     /**

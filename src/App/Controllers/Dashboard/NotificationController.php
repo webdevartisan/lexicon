@@ -34,10 +34,10 @@ class NotificationController extends AppController
 
         return $this->view('notifications.index', [
             'notificationRows' => $result['items'],
-            'total'            => $result['total'],
-            'page'             => $result['page'],
-            'perPage'          => $result['perPage'],
-            'unreadCount'      => $this->notifications->unreadCount((int) $user['id']),
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'perPage' => $result['perPage'],
+            'unreadCount' => $this->notifications->unreadCount((int) $user['id']),
         ]);
     }
 

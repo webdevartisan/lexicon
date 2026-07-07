@@ -9,7 +9,6 @@ use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
-use App\Services\NotificationService;
 
 /**
  * Orchestrates the full blog invitation lifecycle.
@@ -62,10 +61,10 @@ class InvitationService
         $existingUser = $this->userModel->findByEmail($email);
         if ($existingUser) {
             $this->notifications->dispatch((int) $existingUser['id'], 'blog.invite', [
-                'blog_id'    => $blogId,
-                'role'       => $role,
+                'blog_id' => $blogId,
+                'role' => $role,
                 'invited_by' => $invitedBy,
-                'token'      => $rawToken,
+                'token' => $rawToken,
             ]);
         }
 
@@ -133,8 +132,8 @@ class InvitationService
         $blog = $this->blogModel->getBlog((int) $invite['blog_id']);
         if ($blog) {
             $this->notifications->dispatch($blog->ownerId(), 'blog.invite_declined', [
-                'blog_id'        => (int) $invite['blog_id'],
-                'blog_name'      => $blog->name(),
+                'blog_id' => (int) $invite['blog_id'],
+                'blog_name' => $blog->name(),
                 'declined_email' => $invite['email'],
             ]);
         }

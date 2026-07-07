@@ -46,10 +46,10 @@ $emptyMessage = ($q !== '' || $status !== '') ? 'Try a different search or clear
                     {% foreach ($posts as $post): %}
                     <?php
                         $postStatus = (string) $post['status'];
-                        $showUrl = '/admin/posts/'.$post['id'].'/show';
-                        $editUrl = '/admin/posts/'.$post['id'].'/edit';
-                        $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
-                    ?>
+$showUrl = '/admin/posts/'.$post['id'].'/show';
+$editUrl = '/admin/posts/'.$post['id'].'/edit';
+$deleteUrl = '/admin/posts/'.$post['id'].'/delete';
+?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['id']) ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50 max-w-xs truncate">

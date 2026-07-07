@@ -18,6 +18,7 @@ class SystemController extends AppController
     protected ?string $areaAbility = 'viewSystem';
 
     private const LOG_DIR = 'storage/logs';
+
     private const LOG_TAIL_LINES = 200;
 
     public function __construct(

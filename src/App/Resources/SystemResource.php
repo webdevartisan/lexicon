@@ -12,6 +12,4 @@ namespace App\Resources;
  *
  *     Gate::authorize('manageCache', SystemResource::class, $user);
  */
-class SystemResource
-{
-}
+class SystemResource {}

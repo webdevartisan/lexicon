@@ -297,6 +297,7 @@ describe('WorkflowService::disableWorkflow', function () {
             $r = Mockery::mock(\App\Resources\PostResource::class);
             $r->shouldReceive('title')->andReturn('')->byDefault();
             $r->shouldReceive('blog')->andReturn($blog)->byDefault();
+
             return $r;
         })->byDefault();
 

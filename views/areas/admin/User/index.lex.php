@@ -45,10 +45,10 @@ $emptyMessage = $q !== '' ? 'Try a different name, username, or email.' : 'Creat
                     {% foreach ($users as $user): %}
                     <?php
                         $editUrl = '/admin/users/'.$user['id'].'/edit';
-                        $deleteUrl = '/admin/users/'.$user['id'].'/delete';
-                        $activeStatus = !empty($user['is_active']) ? 'active' : 'inactive';
-                        $activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
-                    ?>
+$deleteUrl = '/admin/users/'.$user['id'].'/delete';
+$activeStatus = !empty($user['is_active']) ? 'active' : 'inactive';
+$activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
+?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">{{ user['username'] }}</td>

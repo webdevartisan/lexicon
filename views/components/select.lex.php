@@ -20,7 +20,7 @@ if (!function_exists('is_assoc')) {
     {
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
-   
+
 }
 
 if (!is_assoc($options)) {

@@ -12,7 +12,7 @@ class ReviewerStaleMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $formerReviewerUsername
     ) {
@@ -36,9 +36,9 @@ class ReviewerStaleMail extends Mailable
 
     private function buildHtmlBody(): string
     {
-        $title  = htmlspecialchars($this->postTitle);
+        $title = htmlspecialchars($this->postTitle);
         $former = htmlspecialchars($this->formerReviewerUsername);
-        $url    = htmlspecialchars($this->reviewUrl());
+        $url = htmlspecialchars($this->reviewUrl());
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

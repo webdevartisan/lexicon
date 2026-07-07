@@ -42,8 +42,8 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or blog.' : 'Create one
                     {% foreach ($tags as $tag): %}
                     <?php
                         $editUrl = '/admin/tags/'.$tag['id'].'/edit';
-                        $deleteUrl = '/admin/tags/'.$tag['id'].'/delete';
-                    ?>
+$deleteUrl = '/admin/tags/'.$tag['id'].'/delete';
+?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $tag['id']) ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50"><?= e($tag['name']) ?></td>

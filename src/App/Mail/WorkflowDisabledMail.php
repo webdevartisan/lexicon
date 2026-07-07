@@ -12,7 +12,7 @@ class WorkflowDisabledMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $blogName
     ) {
@@ -37,8 +37,8 @@ class WorkflowDisabledMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $blog  = htmlspecialchars($this->blogName);
-        $url   = htmlspecialchars($this->editUrl());
+        $blog = htmlspecialchars($this->blogName);
+        $url = htmlspecialchars($this->editUrl());
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

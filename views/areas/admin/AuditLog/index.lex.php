@@ -87,14 +87,14 @@ $actionColor = static function (string $action): string {
                         <td class="px-3.5 py-2.5 text-xs text-slate-500 dark:text-zink-300 whitespace-normal max-w-md break-words">
                             <?php
                             $details = json_decode((string) ($entry['details'] ?? ''), true);
-                            if (is_array($details)) {
-                                $pairs = [];
-                                foreach ($details as $k => $v) {
-                                    $pairs[] = $k.': '.(is_scalar($v) ? (string) $v : json_encode($v));
-                                }
-                                echo e(truncate(implode(' · ', $pairs), 160));
-                            }
-                            ?>
+if (is_array($details)) {
+    $pairs = [];
+    foreach ($details as $k => $v) {
+        $pairs[] = $k.': '.(is_scalar($v) ? (string) $v : json_encode($v));
+    }
+    echo e(truncate(implode(' · ', $pairs), 160));
+}
+?>
                         </td>
                         <td class="px-3.5 py-2.5 text-xs text-slate-400 dark:text-zink-300"><?= e((string) ($entry['ip_address'] ?? '')) ?></td>
                     </tr>

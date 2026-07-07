@@ -91,7 +91,7 @@ final class MediaService
         }
 
         // disk_path is relative to storage/ (uploads/...)
-        $absPath = ROOT_PATH . '/storage/' . ltrim((string) $row['disk_path'], '/');
+        $absPath = ROOT_PATH.'/storage/'.ltrim((string) $row['disk_path'], '/');
         if (is_file($absPath)) {
             @unlink($absPath);
         }
@@ -129,7 +129,7 @@ final class MediaService
                 if ($name === '.' || $name === '..') {
                     continue;
                 }
-                $absPath = $dir . '/' . $name;
+                $absPath = $dir.'/'.$name;
                 if (!is_file($absPath)) {
                     continue;
                 }
@@ -138,7 +138,7 @@ final class MediaService
                     continue;
                 }
 
-                $url = $baseUrl . '/' . $name;
+                $url = $baseUrl.'/'.$name;
                 if ($this->register($blogId, $uploaderId, $url, $source) !== null) {
                     $added++;
                 }
@@ -150,8 +150,8 @@ final class MediaService
 
     public function blogMediaPath(int $userId, int $blogId): array
     {
-        $dir = ROOT_PATH . '/storage/uploads/users/' . $userId . '/blogs/' . $blogId . '/media';
-        $url = '/uploads/users/' . $userId . '/blogs/' . $blogId . '/media';
+        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/media';
+        $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/media';
 
         return [$dir, $url];
     }
@@ -163,12 +163,12 @@ final class MediaService
     {
         $diskPath = $this->urlToDiskPath($url);
         if ($diskPath === null) {
-            throw new \RuntimeException('Could not resolve file path for: ' . $url);
+            throw new \RuntimeException('Could not resolve file path for: '.$url);
         }
 
-        $absPath = ROOT_PATH . '/storage/' . $diskPath;
+        $absPath = ROOT_PATH.'/storage/'.$diskPath;
         if (!is_file($absPath)) {
-            throw new \RuntimeException('File not found at: ' . $absPath);
+            throw new \RuntimeException('File not found at: '.$absPath);
         }
 
         $filename = basename($diskPath);

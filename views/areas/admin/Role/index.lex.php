@@ -44,7 +44,7 @@ foreach ($roles as $r) {
                             $editUrl = '/admin/roles/'.$role['id'].'/edit';
                             $deleteUrl = '/admin/roles/'.$role['id'].'/delete';
                             $isSystem = !empty($role['is_system']);
-                        ?>
+                            ?>
                         <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                             <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
                                 <?= e($role['role_name']) ?>

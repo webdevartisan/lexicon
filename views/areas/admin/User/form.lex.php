@@ -20,14 +20,16 @@ $passwordHint = !empty($user['id']) ? 'Leave blank to keep the current password.
             'system' => ['Control panel roles', 'Unlock admin areas through their permissions'],
             'blog' => ['Blog roles', 'Site-wide content roles used for blog collaboration'],
         ];
-        $rolesByScope = ['system' => [], 'blog' => []];
-        foreach ($roles as $r) {
-            $rolesByScope[$r['scope'] ?? 'blog'][] = $r;
-        }
-        ?>
+$rolesByScope = ['system' => [], 'blog' => []];
+foreach ($roles as $r) {
+    $rolesByScope[$r['scope'] ?? 'blog'][] = $r;
+}
+?>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <?php foreach ($roleGroups as $scope => [$groupLabel, $groupHint]) { ?>
-            <?php if (empty($rolesByScope[$scope])) { continue; } ?>
+            <?php if (empty($rolesByScope[$scope])) {
+                continue;
+            } ?>
             <div class="p-3 rounded-md border border-slate-200 dark:border-zink-500">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zink-300"><?= e($groupLabel) ?></p>
                 <p class="text-xs text-slate-400 dark:text-zink-400 mb-2"><?= e($groupHint) ?></p>

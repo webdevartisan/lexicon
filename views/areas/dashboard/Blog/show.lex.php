@@ -51,7 +51,8 @@
                 <i data-lucide="settings" class="size-4"></i>
                 <span>Settings</span>
             </a>
-            <?php $blogId = (int) $blog['id']; $newPostHref = "/dashboard/post/new?blog_id={$blogId}"; ?>
+            <?php $blogId = (int) $blog['id'];
+                $newPostHref = "/dashboard/post/new?blog_id={$blogId}"; ?>
             {% cmp="btn" href="{$newPostHref}" variant="blue" icon="plus" label="New post" %}
             <?php } ?>
         </div>
@@ -134,12 +135,12 @@
 
                 <!-- Configuration snapshot: on/off facts unique to this page (Dashboard has activity, this has identity + config). -->
                 <?php
-                $configOn  = 'inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:border-green-800 dark:text-green-300';
-                $configOff = 'inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md bg-slate-50 text-slate-500 border border-slate-200 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-300';
-                $workflowOn  = !empty($settings['workflow_enabled']);
-                $commentsOn  = !empty($settings['comments_enabled']);
-                $indexableOn = !empty($settings['indexable']);
-                ?>
+                    $configOn = 'inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:border-green-800 dark:text-green-300';
+                    $configOff = 'inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md bg-slate-50 text-slate-500 border border-slate-200 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-300';
+                    $workflowOn = !empty($settings['workflow_enabled']);
+                    $commentsOn = !empty($settings['comments_enabled']);
+                    $indexableOn = !empty($settings['indexable']);
+                    ?>
                 <div class="pt-3 mt-3 border-t border-slate-100 dark:border-zink-600">
                     <p class="mb-2 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">Configuration</p>
                     <div class="flex flex-wrap gap-2">

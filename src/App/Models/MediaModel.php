@@ -30,7 +30,7 @@ class MediaModel extends AppModel
 
         if (!empty($filters['q'])) {
             $where[] = '(filename LIKE ? OR original_name LIKE ?)';
-            $like = '%' . $filters['q'] . '%';
+            $like = '%'.$filters['q'].'%';
             $params[] = $like;
             $params[] = $like;
         }
@@ -49,10 +49,10 @@ class MediaModel extends AppModel
         $limit = max(1, min(100, (int) ($filters['limit'] ?? 24)));
         $offset = max(0, (int) ($filters['offset'] ?? 0));
 
-        $sql = 'SELECT * FROM ' . $this->getTable()
-            . ' WHERE ' . implode(' AND ', $where)
-            . ' ORDER BY ' . $order
-            . ' LIMIT ' . $limit . ' OFFSET ' . $offset;
+        $sql = 'SELECT * FROM '.$this->getTable()
+            .' WHERE '.implode(' AND ', $where)
+            .' ORDER BY '.$order
+            .' LIMIT '.$limit.' OFFSET '.$offset;
 
         $stmt = $this->database->query($sql, $params);
 
@@ -66,7 +66,7 @@ class MediaModel extends AppModel
 
         if (!empty($filters['q'])) {
             $where[] = '(filename LIKE ? OR original_name LIKE ?)';
-            $like = '%' . $filters['q'] . '%';
+            $like = '%'.$filters['q'].'%';
             $params[] = $like;
             $params[] = $like;
         }
@@ -76,8 +76,8 @@ class MediaModel extends AppModel
             $params[] = $filters['source'];
         }
 
-        $sql = 'SELECT COUNT(*) FROM ' . $this->getTable()
-            . ' WHERE ' . implode(' AND ', $where);
+        $sql = 'SELECT COUNT(*) FROM '.$this->getTable()
+            .' WHERE '.implode(' AND ', $where);
 
         return (int) $this->database->query($sql, $params)->fetchColumn();
     }
@@ -88,7 +88,7 @@ class MediaModel extends AppModel
      */
     public function findForBlog(int $id, int $blogId): ?array
     {
-        $sql = 'SELECT * FROM ' . $this->getTable() . ' WHERE id = ? AND blog_id = ? LIMIT 1';
+        $sql = 'SELECT * FROM '.$this->getTable().' WHERE id = ? AND blog_id = ? LIMIT 1';
         $stmt = $this->database->query($sql, [$id, $blogId]);
 
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
@@ -103,7 +103,7 @@ class MediaModel extends AppModel
      */
     public function existsByPath(int $blogId, string $diskPath): bool
     {
-        $sql = 'SELECT 1 FROM ' . $this->getTable() . ' WHERE blog_id = ? AND disk_path = ? LIMIT 1';
+        $sql = 'SELECT 1 FROM '.$this->getTable().' WHERE blog_id = ? AND disk_path = ? LIMIT 1';
 
         return (bool) $this->database->query($sql, [$blogId, $diskPath])->fetchColumn();
     }
@@ -117,7 +117,7 @@ class MediaModel extends AppModel
 
     public function deleteForBlog(int $id, int $blogId): bool
     {
-        $sql = 'DELETE FROM ' . $this->getTable() . ' WHERE id = ? AND blog_id = ?';
+        $sql = 'DELETE FROM '.$this->getTable().' WHERE id = ? AND blog_id = ?';
         $stmt = $this->database->query($sql, [$id, $blogId]);
 
         return $stmt->rowCount() > 0;

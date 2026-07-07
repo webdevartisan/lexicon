@@ -8,7 +8,7 @@ class PostNeedsChangesMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $reviewerUsername,
         private string $feedback
@@ -33,10 +33,10 @@ class PostNeedsChangesMail extends Mailable
 
     private function buildHtmlBody(): string
     {
-        $title    = htmlspecialchars($this->postTitle);
+        $title = htmlspecialchars($this->postTitle);
         $reviewer = htmlspecialchars($this->reviewerUsername);
         $feedback = nl2br(htmlspecialchars($this->feedback));
-        $url      = htmlspecialchars($this->editUrl());
+        $url = htmlspecialchars($this->editUrl());
 
         $feedbackBlock = $feedback !== ''
             ? "<blockquote style=\"border-left:3px solid #F59E0B;margin:16px 0;padding:8px 16px;background:#FFFBEB;\">{$feedback}</blockquote>"

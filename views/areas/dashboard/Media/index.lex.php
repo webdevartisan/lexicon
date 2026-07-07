@@ -13,7 +13,7 @@ $humanSize = static function (int $bytes): string {
     $i = (int) floor(log($bytes, 1024));
     $i = min($i, count($units) - 1);
 
-    return number_format($bytes / (1024 ** $i), $i === 0 ? 0 : 1) . ' ' . $units[$i];
+    return number_format($bytes / (1024 ** $i), $i === 0 ? 0 : 1).' '.$units[$i];
 };
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto"

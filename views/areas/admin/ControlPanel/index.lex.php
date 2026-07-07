@@ -110,16 +110,17 @@ $statusBadge = [
                 <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-4">Content breakdown</h3>
                 <?php
                 $postTotal = max(1, array_sum($postCounts));
-                $rows = [
-                    ['label' => 'Published', 'count' => $postCounts['published'] ?? 0, 'bar' => 'bg-green-500'],
-                    ['label' => 'Drafts', 'count' => $postCounts['draft'] ?? 0, 'bar' => 'bg-slate-400'],
-                    ['label' => 'Archived', 'count' => $postCounts['archived'] ?? 0, 'bar' => 'bg-slate-700'],
-                    ['label' => 'Comments pending', 'count' => $commentCounts['pending'], 'bar' => 'bg-amber-500', 'total' => max(1, $commentCounts['all'])],
-                    ['label' => 'Comments spam', 'count' => $commentCounts['spam'], 'bar' => 'bg-red-500', 'total' => max(1, $commentCounts['all'])],
-                ];
-                ?>
+$rows = [
+    ['label' => 'Published', 'count' => $postCounts['published'] ?? 0, 'bar' => 'bg-green-500'],
+    ['label' => 'Drafts', 'count' => $postCounts['draft'] ?? 0, 'bar' => 'bg-slate-400'],
+    ['label' => 'Archived', 'count' => $postCounts['archived'] ?? 0, 'bar' => 'bg-slate-700'],
+    ['label' => 'Comments pending', 'count' => $commentCounts['pending'], 'bar' => 'bg-amber-500', 'total' => max(1, $commentCounts['all'])],
+    ['label' => 'Comments spam', 'count' => $commentCounts['spam'], 'bar' => 'bg-red-500', 'total' => max(1, $commentCounts['all'])],
+];
+?>
                 <div class="space-y-3">
-                    <?php foreach ($rows as $row) { $den = $row['total'] ?? $postTotal; ?>
+                    <?php foreach ($rows as $row) {
+                        $den = $row['total'] ?? $postTotal; ?>
                     <div>
                         <div class="flex items-center justify-between text-xs mb-1">
                             <span class="text-slate-600 dark:text-zink-200"><?= e($row['label']) ?></span>

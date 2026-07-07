@@ -20,7 +20,7 @@ use App\Mail\WorkflowDisabledMail;
  * and body content. No database or mail transport involved.
  */
 beforeEach(function () {
-    $_ENV['APP_URL']  = 'https://example.test';
+    $_ENV['APP_URL'] = 'https://example.test';
     $_ENV['APP_NAME'] = 'Lexicon';
 });
 

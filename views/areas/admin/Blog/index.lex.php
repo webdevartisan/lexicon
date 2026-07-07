@@ -44,11 +44,11 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or owner.' : 'Create th
                     {% foreach ($blogs as $blog): %}
                     <?php
                         $activeStatus = !empty($blog['is_active']) ? 'active' : 'inactive';
-                        $activeLabel = !empty($blog['is_active']) ? 'Active' : 'Inactive';
-                        $showUrl = '/admin/blogs/'.$blog['id'].'/show';
-                        $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
-                        $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
-                    ?>
+$activeLabel = !empty($blog['is_active']) ? 'Active' : 'Inactive';
+$showUrl = '/admin/blogs/'.$blog['id'].'/show';
+$editUrl = '/admin/blogs/'.$blog['id'].'/edit';
+$deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
+?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $blog['id']) ?></td>
                         <td class="px-3.5 py-2.5">

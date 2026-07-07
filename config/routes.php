@@ -124,10 +124,10 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
 
     // Media library (blog-scoped).
-    $r->add('/blog/{blogId:\d+}/media',                    ['controller' => 'MediaController', 'action' => 'index',   'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/media/list',               ['controller' => 'MediaController', 'action' => 'list',    'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/media',                    ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
-    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy',   ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'index',   'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/list', ['controller' => 'MediaController', 'action' => 'list',    'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 
     // Per-blog review queue (anyone with reviewer-capable role on the blog).
     $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
@@ -170,9 +170,9 @@ $router->group([
     ]);
 
     // Notifications
-    $r->add('/notifications',               ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
-    $r->add('/notifications/unread-count',  ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
-    $r->add('/notifications/read-all',      ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
+    $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
+    $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
+    $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
     $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
     // API Routes - Blog deletion stats for confirmation modal
     $r->add('/api/blog/{id:\d+}/deletion-stats', [

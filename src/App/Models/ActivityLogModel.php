@@ -17,10 +17,10 @@ class ActivityLogModel extends AppModel
     /**
      * Paginated audit trail with optional action and resource-type filters.
      *
-     * @param string $action Exact action filter (e.g. 'comment.deleted')
-     * @param string $resourceType Resource type filter (e.g. 'user', 'post')
-     * @param int $page Current page (1-based)
-     * @param int $perPage Rows per page (capped at 100)
+     * @param  string  $action  Exact action filter (e.g. 'comment.deleted')
+     * @param  string  $resourceType  Resource type filter (e.g. 'user', 'post')
+     * @param  int  $page  Current page (1-based)
+     * @param  int  $perPage  Rows per page (capped at 100)
      * @return array{data: array, pagination: array}
      */
     public function findWithFilters(

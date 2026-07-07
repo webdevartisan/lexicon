@@ -62,10 +62,10 @@ final class CollaboratorController extends AppController
 
         $workflowHealth = null;
         if ($workflowEnabled) {
-            $inReviewTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
+            $inReviewTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
             $inReviewUnassigned = $this->postModel->countInReviewUnassigned($blogIdInt);
-            $needsChangesTotal  = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
-            $approvedTotal      = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
+            $needsChangesTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
+            $approvedTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
 
             $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
                 userId: (int) $user['id'],
@@ -74,12 +74,12 @@ final class CollaboratorController extends AppController
             );
 
             $workflowHealth = [
-                'in_review_total'      => $inReviewTotal,
+                'in_review_total' => $inReviewTotal,
                 'in_review_unassigned' => $inReviewUnassigned,
-                'in_review_assigned'   => max(0, $inReviewTotal - $inReviewUnassigned),
-                'needs_changes'        => $needsChangesTotal,
-                'approved'             => $approvedTotal,
-                'recent'               => $inReviewRecent,
+                'in_review_assigned' => max(0, $inReviewTotal - $inReviewUnassigned),
+                'needs_changes' => $needsChangesTotal,
+                'approved' => $approvedTotal,
+                'recent' => $inReviewRecent,
             ];
         }
 
@@ -180,11 +180,11 @@ final class CollaboratorController extends AppController
         $this->blogModel->addUserToBlog($blog->id(), (int) $userId, $role, (int) auth()->user()['id']);
 
         $target = $this->userModel->findById((int) $userId);
-        $actor  = auth()->user();
+        $actor = auth()->user();
         if ($target && !empty($target['email'])) {
             $this->notifications->dispatch((int) $userId, 'collaborator.role_changed', [
-                'blog_name'           => $blog->name(),
-                'new_role'            => $role,
+                'blog_name' => $blog->name(),
+                'new_role' => $role,
                 'changed_by_username' => (string) ($actor['username'] ?? ''),
             ]);
         }
@@ -217,10 +217,10 @@ final class CollaboratorController extends AppController
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $userId);
 
         $target = $this->userModel->findById((int) $userId);
-        $actor  = auth()->user();
+        $actor = auth()->user();
         if ($target && !empty($target['email'])) {
             $this->notifications->dispatch((int) $userId, 'collaborator.removed', [
-                'blog_name'           => $blog->name(),
+                'blog_name' => $blog->name(),
                 'removed_by_username' => (string) ($actor['username'] ?? ''),
             ]);
         }

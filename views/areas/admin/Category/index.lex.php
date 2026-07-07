@@ -42,8 +42,8 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or blog.' : 'Create one
                     {% foreach ($categories as $category): %}
                     <?php
                         $editUrl = '/admin/categories/'.$category['id'].'/edit';
-                        $deleteUrl = '/admin/categories/'.$category['id'].'/delete';
-                    ?>
+$deleteUrl = '/admin/categories/'.$category['id'].'/delete';
+?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $category['id']) ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50"><?= e($category['name']) ?></td>
