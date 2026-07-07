@@ -27,8 +27,8 @@ class InviteDeclinedMail extends Mailable
 
     private function buildHtmlBody(): string
     {
-        $blog    = htmlspecialchars($this->blogName);
-        $email   = htmlspecialchars($this->declinedEmail);
+        $blog = htmlspecialchars($this->blogName);
+        $email = htmlspecialchars($this->declinedEmail);
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

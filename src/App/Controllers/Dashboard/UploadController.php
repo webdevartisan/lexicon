@@ -19,7 +19,7 @@ class UploadController extends AppController
     public function tinymceImage(): Response
     {
         csrf()->assertValid($this->request->headers['x-csrf-token']);
-        
+
         $user = auth()->user();
         $userId = (int) $user['id'];
 

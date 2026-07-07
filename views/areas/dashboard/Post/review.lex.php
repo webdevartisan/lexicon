@@ -230,7 +230,7 @@
                                 || in_array($blogRole, ['owner', 'editor'], true)
                                 || !empty($isAdmin);
                             $unassignLabel = $isSelf ? 'Release' : 'Unassign';
-                        ?>
+                            ?>
                         <div class="flex items-center justify-between gap-2 text-slate-600 dark:text-zink-200">
                             <div class="flex items-center gap-2 min-w-0">
                                 <i data-lucide="user-check" class="size-3.5 text-emerald-500 shrink-0"></i>
@@ -268,7 +268,7 @@
                           class="pt-2 border-t border-dashed border-slate-200 dark:border-zink-600">
                         {{ csrf_field() }}
                         <?php
-                            $reviewerOptions = [];
+                                $reviewerOptions = [];
                         foreach ($availableReviewers as $reviewer) {
                             $reviewerOptions[(int) $reviewer['user_id']] = e($reviewer['username']).' ('.ucfirst((string) $reviewer['role']).')';
                         }

@@ -114,7 +114,7 @@ class NavGlobalsMiddleware
             try {
                 foreach ($this->blogModel->getBlogsByOwnerId((int) $userId) as $b) {
                     $userBlogs[(int) $b['id']] = [
-                        'name'   => (string) ($b['blog_name'] ?? 'Untitled blog'),
+                        'name' => (string) ($b['blog_name'] ?? 'Untitled blog'),
                         'status' => (string) ($b['status'] ?? 'draft'),
                     ];
                 }
@@ -168,11 +168,11 @@ class NavGlobalsMiddleware
         if ($area === 'back' && $user !== null) {
             try {
                 $unreadCount = $this->notificationModel->unreadCount((int) $user['id']);
-                $notifItems  = $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true);
+                $notifItems = $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true);
                 $notifications = [
                     'enabled' => true,
-                    'items'   => $notifItems,
-                    'count'   => $unreadCount,
+                    'items' => $notifItems,
+                    'count' => $unreadCount,
                 ];
             } catch (\Throwable $e) {
                 error_log('Notifications query failed: '.$e->getMessage());
@@ -181,7 +181,7 @@ class NavGlobalsMiddleware
 
         // Per-user sidebar cache key — keeps the Shared item visibility correct
         // when a user gains/loses collaborator access mid-cache-window.
-        $sidebarCacheKey = $area . ':sidebar:nav-structure:u-' . (int) ($user['id'] ?? 0) . ':b-' . $selectedBlogId;
+        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId;
 
         // add navigation globals to all templates
         if (method_exists($this->viewer, 'addGlobals')) {

@@ -40,7 +40,7 @@ test('findForUser scopes to the given user', function () {
 });
 
 test('findForUser with onlyUnread excludes read notifications', function () {
-    $this->model->create($this->userId, 'blog.invite',   ['blog_id' => 1]);
+    $this->model->create($this->userId, 'blog.invite', ['blog_id' => 1]);
     $this->model->create($this->userId, 'post.approved', ['post_id' => 5]);
 
     $rows = $this->model->findForUser($this->userId);
@@ -109,7 +109,7 @@ test('markAllRead does not affect other users notifications', function () {
 test('pruneStale deletes read notifications older than 30 days', function () {
     $this->model->create($this->userId, 'post.approved', ['post_id' => 1]);
     $rows = $this->model->findForUser($this->userId);
-    $id   = (int) $rows[0]['id'];
+    $id = (int) $rows[0]['id'];
 
     // Backdate to 31 days ago and mark read
     $this->db->execute(
@@ -128,7 +128,7 @@ test('pruneStale deletes read notifications older than 30 days', function () {
 test('pruneStale deletes any notification older than 90 days even if unread', function () {
     $this->model->create($this->userId, 'blog.invite', ['blog_id' => 1]);
     $rows = $this->model->findForUser($this->userId);
-    $id   = (int) $rows[0]['id'];
+    $id = (int) $rows[0]['id'];
 
     $this->db->execute(
         'UPDATE notifications SET created_at = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 91 DAY) WHERE id = ?',

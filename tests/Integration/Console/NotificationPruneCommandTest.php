@@ -16,9 +16,9 @@ use Tests\Factories\UserFactory;
 beforeEach(function () {
     // Integration beforeEach only provides $this->db — set up models here
     $this->userModel = new UserModel($this->db);
-    $this->userId    = UserFactory::new($this->userModel)->create();
-    $this->notifs    = new NotificationModel($this->db);
-    $this->command   = new NotificationPruneCommand($this->notifs);
+    $this->userId = UserFactory::new($this->userModel)->create();
+    $this->notifs = new NotificationModel($this->db);
+    $this->command = new NotificationPruneCommand($this->notifs);
 });
 
 test('handle returns 0 when nothing to prune', function () {

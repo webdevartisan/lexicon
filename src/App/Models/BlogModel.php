@@ -548,7 +548,6 @@ class BlogModel extends AppModel
      * 'owner' is in the role list (owner data lives on the blog row, not
      * blog_users). Used by workflow notifications to find recipients.
      *
-     * @param  int  $blogId
      * @param  array<int,string>  $roles  e.g. ['owner','editor','reviewer']
      * @return array<int,array{user_id:int,username:string,email:string,role:string}>
      */
@@ -639,7 +638,7 @@ class BlogModel extends AppModel
      */
     public function getSharedBlogsForUser(int $userId): array
     {
-        $sql = "SELECT b.id, b.blog_name, b.blog_slug, b.status, b.owner_id,
+        $sql = 'SELECT b.id, b.blog_name, b.blog_slug, b.status, b.owner_id,
                        u.username AS owner_name,
                        bu.role AS user_role
                 FROM blogs b
@@ -648,7 +647,7 @@ class BlogModel extends AppModel
                 WHERE bu.user_id = ?
                   AND bu.is_active = 1
                   AND b.owner_id != ?
-                ORDER BY b.updated_at DESC";
+                ORDER BY b.updated_at DESC';
 
         return $this->database->query($sql, [$userId, $userId])->fetchAll(\PDO::FETCH_ASSOC);
     }

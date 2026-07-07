@@ -25,7 +25,7 @@ class CollaboratorRemovedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $blog = htmlspecialchars($this->blogName);
-        $by   = htmlspecialchars($this->removedByUsername);
+        $by = htmlspecialchars($this->removedByUsername);
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

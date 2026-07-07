@@ -17,7 +17,7 @@ $sortOptions = [
 $statusOptions = [
     'published' => 'Published',
     'draft' => 'Draft',
-    'archived' => 'Archived'
+    'archived' => 'Archived',
 ];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
@@ -75,7 +75,6 @@ $isOwner = ($blog['user_role'] ?? 'owner') === 'owner';
 $collaboratorRole = $isOwner ? null : ($blog['user_role'] ?? null);
 
 $blogCardHref = "/dashboard/blog/<?= $bid ?>/show";
-
 
 ?>
         <div class="card flex flex-col h-full <?= $isActive ? 'ring-1 ring-custom-500 border-custom-500' : '' ?>">

@@ -128,57 +128,57 @@ $hintEligible = !empty($workflowEnabled)
               // With workflow ON, Pending is the mandatory bridge from Draft to Published.
               // With workflow OFF, Draft can go straight to Published (backend already allows it).
               $workflowOn = !empty($workflowEnabled);
-              $transitionMap = $workflowOn
-                  ? [
-                      'draft'     => ['draft', 'pending'],
-                      'pending'   => ['draft', 'pending', 'published'],
-                      'published' => ['draft', 'published', 'archived'],
-                      'archived'  => ['draft', 'published', 'archived'],
-                  ]
-                  : [
-                      'draft'     => ['draft', 'published'],
-                      'pending'   => ['draft', 'published', 'archived'],
-                      'published' => ['draft', 'published', 'archived'],
-                      'archived'  => ['draft', 'published', 'archived'],
-                  ];
+$transitionMap = $workflowOn
+    ? [
+        'draft' => ['draft', 'pending'],
+        'pending' => ['draft', 'pending', 'published'],
+        'published' => ['draft', 'published', 'archived'],
+        'archived' => ['draft', 'published', 'archived'],
+    ]
+    : [
+        'draft' => ['draft', 'published'],
+        'pending' => ['draft', 'published', 'archived'],
+        'published' => ['draft', 'published', 'archived'],
+        'archived' => ['draft', 'published', 'archived'],
+    ];
 
-              $allowed = $transitionMap[$postStatus] ?? ['draft'];
+$allowed = $transitionMap[$postStatus] ?? ['draft'];
 
-              // Publishing rights mirror the backend rule: owner/editor always,
-              // author only while the review pipeline is off, contributor never.
-              $canPublishHere = in_array($blogRole ?? '', ['owner', 'editor'], true)
-                  || (($blogRole ?? '') === 'author' && !$workflowOn);
+// Publishing rights mirror the backend rule: owner/editor always,
+// author only while the review pipeline is off, contributor never.
+$canPublishHere = in_array($blogRole ?? '', ['owner', 'editor'], true)
+    || (($blogRole ?? '') === 'author' && !$workflowOn);
 
-              $visibilityLocked = false;
-              if (!$canPublishHere) {
-                  if (in_array($postStatus, ['published', 'archived'], true)) {
-                      // An editor put it here; this user can't move it out.
-                      $allowed = [$postStatus];
-                      $visibilityLocked = true;
-                  } else {
-                      $allowed = array_values(array_diff($allowed, ['published', 'archived']));
-                  }
-              }
+$visibilityLocked = false;
+if (!$canPublishHere) {
+    if (in_array($postStatus, ['published', 'archived'], true)) {
+        // An editor put it here; this user can't move it out.
+        $allowed = [$postStatus];
+        $visibilityLocked = true;
+    } else {
+        $allowed = array_values(array_diff($allowed, ['published', 'archived']));
+    }
+}
 
-              $optionMeta = [
-                  'draft'     => ['label' => 'Draft',     'checked' => 'peer-checked:bg-slate-500 peer-checked:border-slate-500 dark:peer-checked:bg-slate-400 dark:peer-checked:border-slate-400'],
-                  'pending'   => ['label' => 'Pending',   'checked' => 'peer-checked:bg-amber-500 peer-checked:border-amber-500 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500'],
-                  'published' => ['label' => 'Published', 'checked' => 'peer-checked:bg-emerald-500 peer-checked:border-emerald-500 dark:peer-checked:bg-emerald-500 dark:peer-checked:border-emerald-500'],
-                  'archived'  => ['label' => 'Archived',  'checked' => 'peer-checked:bg-slate-800 peer-checked:border-slate-800 dark:peer-checked:bg-slate-800 dark:peer-checked:border-slate-800'],
-              ];
+$optionMeta = [
+    'draft' => ['label' => 'Draft',     'checked' => 'peer-checked:bg-slate-500 peer-checked:border-slate-500 dark:peer-checked:bg-slate-400 dark:peer-checked:border-slate-400'],
+    'pending' => ['label' => 'Pending',   'checked' => 'peer-checked:bg-amber-500 peer-checked:border-amber-500 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500'],
+    'published' => ['label' => 'Published', 'checked' => 'peer-checked:bg-emerald-500 peer-checked:border-emerald-500 dark:peer-checked:bg-emerald-500 dark:peer-checked:border-emerald-500'],
+    'archived' => ['label' => 'Archived',  'checked' => 'peer-checked:bg-slate-800 peer-checked:border-slate-800 dark:peer-checked:bg-slate-800 dark:peer-checked:border-slate-800'],
+];
 
-              $lastIdx = count($allowed) - 1;
-              ?>
+$lastIdx = count($allowed) - 1;
+?>
               <div class="flex flex-col sm:flex-row w-full border rounded-md border-slate-200 dark:border-zink-600">
                 <?php foreach ($allowed as $idx => $value) {
                     $meta = $optionMeta[$value];
                     $isFirst = $idx === 0;
-                    $isLast  = $idx === $lastIdx;
-                    $radius  = $isFirst && $isLast
+                    $isLast = $idx === $lastIdx;
+                    $radius = $isFirst && $isLast
                         ? 'rounded-md'
                         : ($isFirst ? 'rounded-l-md' : ($isLast ? 'rounded-r-md' : ''));
                     $borderR = $isLast ? '' : 'border-r';
-                ?>
+                    ?>
                 <label class="flex-1 text-center cursor-pointer group">
                   <input
                     type="radio"

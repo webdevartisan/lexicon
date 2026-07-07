@@ -1176,12 +1176,12 @@ class PostModel extends AppModel
         return [
             'data' => $data,
             'pagination' => [
-                'current_page'  => $page,
-                'per_page'      => $perPage,
+                'current_page' => $page,
+                'per_page' => $perPage,
                 'total_records' => $totalRecords,
-                'total_pages'   => $totalPages,
-                'has_previous'  => $page > 1,
-                'has_next'      => $page < $totalPages,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
             ],
         ];
     }

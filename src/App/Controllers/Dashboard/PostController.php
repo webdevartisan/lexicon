@@ -264,7 +264,7 @@ final class PostController extends AppController
         // Writing into a shared blog starts from Shared, not the personal
         // All Posts the static pattern assumes.
         if (in_array($blogRole, ['editor', 'author', 'contributor'], true)) {
-            $trail =[
+            $trail = [
                 ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
                 ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
                 $blogRole === 'editor'
@@ -1227,7 +1227,7 @@ final class PostController extends AppController
 
         $this->flash('success', 'Post approved.');
 
-        return $this->redirect("/dashboard");
+        return $this->redirect('/dashboard');
     }
 
     /**
@@ -1276,12 +1276,12 @@ final class PostController extends AppController
         try {
             $blog = $post->blog();
             $payload = [
-                'post_id'         => $post->id(),
-                'post_title'      => $post->title(),
-                'post_slug'       => $post->slug(),
-                'blog_id'         => $blog->id(),
-                'blog_name'       => $blog->name(),
-                'blog_slug'       => $blog->slug(),
+                'post_id' => $post->id(),
+                'post_title' => $post->title(),
+                'post_slug' => $post->slug(),
+                'blog_id' => $blog->id(),
+                'blog_name' => $blog->name(),
+                'blog_slug' => $blog->slug(),
                 'author_username' => $authorUsername,
             ];
 
@@ -1328,14 +1328,14 @@ final class PostController extends AppController
 
             $blog = $post->blog();
             $payload = [
-                'post_id'           => $post->id(),
-                'post_title'        => $post->title(),
-                'post_slug'         => $post->slug(),
-                'blog_id'           => $blog->id(),
-                'blog_name'         => $blog->name(),
-                'blog_slug'         => $blog->slug(),
+                'post_id' => $post->id(),
+                'post_title' => $post->title(),
+                'post_slug' => $post->slug(),
+                'blog_id' => $blog->id(),
+                'blog_name' => $blog->name(),
+                'blog_slug' => $blog->slug(),
                 'reviewer_username' => $reviewerUsername,
-                'feedback'          => $feedback,
+                'feedback' => $feedback,
             ];
 
             $this->notifications->dispatch($authorId, $type, $payload);
@@ -1444,7 +1444,7 @@ final class PostController extends AppController
         $blog = $this->getBlog((int) $blogId);
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $isAdmin  = auth()->hasRole('administrator');
+        $isAdmin = auth()->hasRole('administrator');
         if (!$isAdmin && !in_array($blogRole, ['reviewer', 'editor', 'owner'], true)) {
             throw new PageNotFoundException('Review queue not available.');
         }
@@ -1462,10 +1462,10 @@ final class PostController extends AppController
         ], true);
 
         return $this->view('post.reviewQueue', [
-            'blog'  => $blog->toArray(),
+            'blog' => $blog->toArray(),
             'posts' => $posts,
             'blogRole' => $blogRole,
-            'isAdmin'  => $isAdmin,
+            'isAdmin' => $isAdmin,
             'currentUserId' => (int) $user['id'],
         ]);
     }
@@ -1487,8 +1487,8 @@ final class PostController extends AppController
         }
 
         $status = trim((string) ($this->request->get['status'] ?? ''));
-        $q      = trim((string) ($this->request->get['q'] ?? ''));
-        $page   = max(1, (int) ($this->request->get['page'] ?? 1));
+        $q = trim((string) ($this->request->get['q'] ?? ''));
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
         $perPage = 12;
 
         $workflowFilter = '';
@@ -1549,14 +1549,14 @@ final class PostController extends AppController
         ], true);
 
         return $this->view('post.blogPosts', [
-            'blog'            => $blog->toArray(),
-            'blogRole'        => $blogRole,
-            'posts'           => $rows['data'],
-            'pagination'      => $rows['pagination'],
-            'status'          => $workflowFilter !== '' ? $workflowFilter : $status,
-            'q'               => $q,
-            'sort'            => $sort,
-            'counts'          => $counts,
+            'blog' => $blog->toArray(),
+            'blogRole' => $blogRole,
+            'posts' => $rows['data'],
+            'pagination' => $rows['pagination'],
+            'status' => $workflowFilter !== '' ? $workflowFilter : $status,
+            'q' => $q,
+            'sort' => $sort,
+            'counts' => $counts,
             'workflowEnabled' => $workflowEnabled,
         ]);
     }
@@ -1620,12 +1620,12 @@ final class PostController extends AppController
         ], true);
 
         return $this->view('post.workspace', [
-            'blog'            => $blog->toArray(),
-            'blogRole'        => $blogRole,
-            'posts'           => $rows['data'],
-            'pagination'      => $rows['pagination'],
-            'status'          => $workflowFilter !== '' ? $workflowFilter : $status,
-            'counts'          => $counts,
+            'blog' => $blog->toArray(),
+            'blogRole' => $blogRole,
+            'posts' => $rows['data'],
+            'pagination' => $rows['pagination'],
+            'status' => $workflowFilter !== '' ? $workflowFilter : $status,
+            'counts' => $counts,
             'workflowEnabled' => $workflowEnabled,
         ]);
     }

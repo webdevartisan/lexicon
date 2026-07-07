@@ -8,7 +8,7 @@ class PostPublishedMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int    $postId,
+        private int $postId,
         private string $postTitle,
         private string $blogSlug,
         private string $postSlug
@@ -34,7 +34,7 @@ class PostPublishedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $url   = htmlspecialchars($this->publicUrl());
+        $url = htmlspecialchars($this->publicUrl());
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">

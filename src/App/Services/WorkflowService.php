@@ -10,7 +10,6 @@ use App\Models\ReviewModel;
 use App\Models\UserModel;
 use App\Policies\PostPolicy;
 use App\Resources\PostResource;
-use App\Services\NotificationService;
 
 /**
  * WorkflowService owns all editorial pipeline state transitions.
@@ -54,23 +53,24 @@ class WorkflowService
         }
 
         $assignments = $this->postReviewer->findByPost($postId);
-        $resource    = $this->post->findResource($postId);
-        $postTitle   = $resource ? $resource->title() : '';
-        $authorName  = $this->username($userId);
+        $resource = $this->post->findResource($postId);
+        $postTitle = $resource ? $resource->title() : '';
+        $authorName = $this->username($userId);
 
         if (empty($assignments)) {
             $this->notifications->dispatch($userId, 'post.submitted_unassigned', [
-                'post_id'         => $postId,
-                'post_title'      => $postTitle,
+                'post_id' => $postId,
+                'post_title' => $postTitle,
                 'author_username' => $authorName,
             ]);
+
             return;
         }
 
         foreach ($assignments as $a) {
             $this->notifications->dispatch((int) $a['reviewer_id'], 'post.submitted', [
-                'post_id'         => $postId,
-                'post_title'      => $postTitle,
+                'post_id' => $postId,
+                'post_title' => $postTitle,
                 'author_username' => $authorName,
             ]);
         }
@@ -96,8 +96,8 @@ class WorkflowService
 
         if ($post) {
             $this->notifications->dispatch((int) $post->authorId(), 'post.approved', [
-                'post_id'           => $postId,
-                'post_title'        => $post->title(),
+                'post_id' => $postId,
+                'post_title' => $post->title(),
                 'reviewer_username' => $this->username($reviewerId),
             ]);
         }
@@ -124,10 +124,10 @@ class WorkflowService
 
         if ($post) {
             $this->notifications->dispatch((int) $post->authorId(), 'post.needs_changes', [
-                'post_id'           => $postId,
-                'post_title'        => $post->title(),
+                'post_id' => $postId,
+                'post_title' => $post->title(),
                 'reviewer_username' => $this->username($reviewerId),
-                'feedback'          => $feedback,
+                'feedback' => $feedback,
             ]);
         }
     }
@@ -156,8 +156,8 @@ class WorkflowService
 
         $resource = $this->post->findResource($postId);
         $this->notifications->dispatch($reviewerId, 'post.reviewer_assigned', [
-            'post_id'              => $postId,
-            'post_title'           => $resource ? $resource->title() : '',
+            'post_id' => $postId,
+            'post_title' => $resource ? $resource->title() : '',
             'assigned_by_username' => $this->username($assignedBy),
         ]);
     }
@@ -187,8 +187,8 @@ class WorkflowService
                 $this->postReviewer->clearByPost($postId);
 
                 $this->notifications->dispatch($ownerId, 'post.reviewer_stale', [
-                    'post_id'                  => $postId,
-                    'post_title'               => $post->title(),
+                    'post_id' => $postId,
+                    'post_title' => $post->title(),
                     'former_reviewer_username' => (string) ($assignment['reviewer_username'] ?? ''),
                 ]);
 
@@ -216,9 +216,9 @@ class WorkflowService
             $blog = $postRes ? $postRes->blog() : null;
 
             $this->notifications->dispatch((int) $row['author_id'], 'post.workflow_disabled', [
-                'post_id'    => (int) $row['id'],
+                'post_id' => (int) $row['id'],
                 'post_title' => $postRes ? $postRes->title() : '',
-                'blog_name'  => $blog ? $blog->name() : '',
+                'blog_name' => $blog ? $blog->name() : '',
             ]);
         }
     }

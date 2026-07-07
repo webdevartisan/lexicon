@@ -4,11 +4,11 @@
 {% block body %}
 <?php
 $workflowBadge = [
-    'in_review'     => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
+    'in_review' => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
     'needs_changes' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
 ];
 $workflowLabel = [
-    'in_review'     => 'In review',
+    'in_review' => 'In review',
     'needs_changes' => 'Needs changes',
 ];
 ?>
@@ -47,11 +47,11 @@ $workflowLabel = [
                 {% foreach ($posts as $p): %}
                 <?php
                     $state = (string) ($p['workflow_state'] ?? 'in_review');
-                    $assignedToMe = (int) ($p['reviewer_id'] ?? 0) === (int) ($currentUserId ?? 0);
-                    $unassigned = empty($p['reviewer_id']);
-                    $postId = (int) $p['id'];
-                    $reviewHref = "/dashboard/post/{$postId}/review";
-                ?>
+$assignedToMe = (int) ($p['reviewer_id'] ?? 0) === (int) ($currentUserId ?? 0);
+$unassigned = empty($p['reviewer_id']);
+$postId = (int) $p['id'];
+$reviewHref = "/dashboard/post/{$postId}/review";
+?>
                 <li class="py-3 first:pt-0 last:pb-0 flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center justify-center size-9 rounded-md shrink-0
                         <?= $state === 'needs_changes' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/30 dark:text-amber-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' ?>">

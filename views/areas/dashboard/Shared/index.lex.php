@@ -3,18 +3,18 @@
 {% block body %}
 <?php
 $roleBadge = [
-    'editor'      => 'bg-custom-50 text-custom-700 border-custom-100 dark:bg-custom-500/20 dark:border-custom-800 dark:text-custom-300',
-    'author'      => 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800',
+    'editor' => 'bg-custom-50 text-custom-700 border-custom-100 dark:bg-custom-500/20 dark:border-custom-800 dark:text-custom-300',
+    'author' => 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800',
     'contributor' => 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:border-sky-800',
-    'reviewer'    => 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800',
+    'reviewer' => 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800',
 ];
 $toneClasses = [
     'amber' => 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    'sky'   => 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+    'sky' => 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
     'slate' => 'bg-slate-100 text-slate-700 dark:bg-zink-600 dark:text-zink-200',
 ];
 $workflowDot = [
-    'in_review'     => 'bg-sky-500',
+    'in_review' => 'bg-sky-500',
     'needs_changes' => 'bg-amber-500',
 ];
 $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 dark:text-zink-200 dark:border-zink-500';
@@ -50,13 +50,13 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
 
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         <?php foreach ($cards as $c) {
-            $b       = $c['blog'];
-            $role    = (string) $c['role'];
-            $stats   = (array) $c['stats'];
-            $items   = (array) ($c['items'] ?? []);
-            $primary   = $c['actions']['primary'];
+            $b = $c['blog'];
+            $role = (string) $c['role'];
+            $stats = (array) $c['stats'];
+            $items = (array) ($c['items'] ?? []);
+            $primary = $c['actions']['primary'];
             $secondary = $c['actions']['secondary'];
-        ?>
+            ?>
         <article class="card flex flex-col">
             <div class="card-body flex flex-col grow">
 
@@ -84,7 +84,7 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
                     <?php foreach ($stats as $s) {
                         $tone = (string) ($s['tone'] ?? 'slate');
                         $toneClass = $toneClasses[$tone] ?? $toneClasses['slate'];
-                    ?>
+                        ?>
                     <li class="rounded-md px-2 py-2 text-center <?= $toneClass ?>">
                         <div class="text-lg font-semibold leading-tight"><?= (int) $s['value'] ?></div>
                         <div class="text-[10px] uppercase tracking-wide opacity-80 mt-0.5"><?= e((string) $s['label']) ?></div>
@@ -98,7 +98,7 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
                     <?php foreach ($items as $it) {
                         $state = (string) ($it['workflow_state'] ?? 'in_review');
                         $unassigned = empty($it['reviewer_id']);
-                    ?>
+                        ?>
                     <li>
                         <a href="/dashboard/post/<?= (int) $it['id'] ?>/review" class="flex items-center gap-2 text-xs py-1 hover:text-custom-500 group">
                             <span class="inline-block size-1.5 rounded-full shrink-0 <?= $workflowDot[$state] ?? 'bg-slate-400' ?>"></span>

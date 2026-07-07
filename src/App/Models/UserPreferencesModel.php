@@ -70,11 +70,11 @@ class UserPreferencesModel extends AppModel
             $data['display_name_preference'] ?? 'username',
             $data['default_post_visibility'] ?? 'public',
             $data['timezone'] ?? null,
-            (int) ($data['notify_comments']     ?? 1),
-            (int) ($data['notify_likes']        ?? 1),
-            (int) ($data['notify_post_status']  ?? 1),
+            (int) ($data['notify_comments'] ?? 1),
+            (int) ($data['notify_likes'] ?? 1),
+            (int) ($data['notify_post_status'] ?? 1),
             (int) ($data['notify_role_changes'] ?? 1),
-            (int) ($data['notify_invites']      ?? 1),
+            (int) ($data['notify_invites'] ?? 1),
         ]);
     }
 

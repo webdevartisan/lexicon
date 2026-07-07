@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\UserPreferencesModel;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use Tests\Factories\UserFactory;
 
 /**
@@ -14,8 +14,8 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->userModel = new UserModel($this->db);
-    $this->prefs     = new UserPreferencesModel($this->db);
-    $this->userId    = UserFactory::new($this->userModel)->create();
+    $this->prefs = new UserPreferencesModel($this->db);
+    $this->userId = UserFactory::new($this->userModel)->create();
 });
 
 test('findOrCreate returns row with new notification preference columns', function () {
@@ -33,9 +33,9 @@ test('findOrCreate returns row with new notification preference columns', functi
 
 test('upsert persists new notification preference values', function () {
     $this->prefs->upsert($this->userId, [
-        'notify_post_status'  => 0,
+        'notify_post_status' => 0,
         'notify_role_changes' => 1,
-        'notify_invites'      => 0,
+        'notify_invites' => 0,
     ]);
 
     $row = $this->prefs->findOrCreate($this->userId);

@@ -47,13 +47,13 @@
                         <select name="blog" onchange="this.form.submit()" aria-label="Switch active blog"
                             class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
                             <?php foreach ($user_blogs as $bid => $b) {
-                                $bname   = is_array($b) ? (string) ($b['name']   ?? 'Untitled') : (string) $b;
-                                $bstatus = is_array($b) ? (string) ($b['status'] ?? '')        : '';
+                                $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
+                                $bstatus = is_array($b) ? (string) ($b['status'] ?? '') : '';
                                 // Owned-only switcher — surface status when it's not the everyday "published".
                                 $suffixText = ($bstatus !== '' && $bstatus !== 'published')
                                     ? ' — '.ucfirst($bstatus)
                                     : '';
-                            ?>
+                                ?>
                             <option value="<?= e((string) $bid) ?>" <?= ((int) $bid === (int) ($selected_blog_id ?? 0)) ? 'selected' : '' ?>>
                                 <?= e($bname.$suffixText) ?>
                             </option>
@@ -188,9 +188,9 @@
                                 </div>
                                 <?php } else { ?>
                                 <div class="flex flex-col">
-                                    <?php foreach ($notifications['items'] as $n): ?>
+                                    <?php foreach ($notifications['items'] as $n) { ?>
                                         {% include "partials/_notification_item.lex.php" %}
-                                    <?php endforeach; ?>
+                                    <?php } ?>
                                 </div>
                                 <?php } ?>
                             </div>
@@ -216,8 +216,8 @@
                                 {% else %}
                                     <div class="flex items-center justify-center rounded-full size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                         <?php
-                                        // generate user initials from first and last name
-                                        $initials = '';
+                                            // generate user initials from first and last name
+                                            $initials = '';
                 if (!empty($current_user['first_name'])) {
                     $initials .= strtoupper(substr($current_user['first_name'], 0, 1));
                 }

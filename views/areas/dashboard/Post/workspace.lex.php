@@ -19,19 +19,19 @@ $tabs[] = ['key' => 'published', 'label' => 'Published', 'count' => $counts['pub
 
 $statusBadge = [
     'published' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    'draft'     => 'bg-slate-100 text-slate-700 dark:bg-zink-600 dark:text-zink-200',
-    'pending'   => 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
-    'archived'  => 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-300',
+    'draft' => 'bg-slate-100 text-slate-700 dark:bg-zink-600 dark:text-zink-200',
+    'pending' => 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+    'archived' => 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-300',
 ];
 $workflowBadge = [
-    'in_review'     => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
+    'in_review' => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
     'needs_changes' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
-    'approved'      => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
+    'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
 ];
 $workflowLabel = [
-    'in_review'     => 'In review',
+    'in_review' => 'In review',
     'needs_changes' => 'Needs changes',
-    'approved'      => 'Approved',
+    'approved' => 'Approved',
 ];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
@@ -68,12 +68,12 @@ $workflowLabel = [
                 <?php foreach ($tabs as $tab) {
                     $isActive = (string) $status === (string) $tab['key'];
                     $href = $basePath.($tab['key'] !== '' ? '?status='.$tab['key'] : '');
-                ?>
+                    ?>
                 <a href="<?= e($href) ?>"
                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-full transition-colors
                           <?= $isActive
-                                ? 'bg-custom-500 text-white border-custom-500'
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500 dark:hover:bg-zink-600' ?>">
+                                    ? 'bg-custom-500 text-white border-custom-500'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500 dark:hover:bg-zink-600' ?>">
                     <span><?= e((string) $tab['label']) ?></span>
                     <span class="inline-flex items-center justify-center text-[10px] font-semibold rounded-full px-1.5 py-0.5
                           <?= $isActive ? 'bg-white/20' : 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-300' ?>">
@@ -98,7 +98,7 @@ $workflowLabel = [
                     $wfState = (string) ($post['workflow_state'] ?? '');
                     $showWf = $workflowOn && in_array($wfState, ['in_review', 'needs_changes', 'approved'], true);
                     $inReviewLock = $wfState === 'in_review';
-                ?>
+                    ?>
                 <li class="py-3 first:pt-0 last:pb-0 flex flex-wrap items-center gap-3">
                     <div class="min-w-0 flex-1">
                         <a href="<?= e($editHref) ?>" class="block text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 truncate">
