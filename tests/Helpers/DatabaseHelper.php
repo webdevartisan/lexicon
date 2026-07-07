@@ -30,6 +30,7 @@ class DatabaseHelper
             'account_deletion_requests',
             'data_export_requests',
             'password_resets',
+            'notifications',
             'activity_log',
             'user_social_links',
             'user_preferences',
@@ -46,6 +47,7 @@ class DatabaseHelper
             'comments',
 
             // Blog-related
+            'blog_invitations',
             'blog_settings',
             'blog_users',
             'blogs',

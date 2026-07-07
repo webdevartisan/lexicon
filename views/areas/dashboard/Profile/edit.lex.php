@@ -342,6 +342,36 @@
                   <span class="font-medium">Email me when someone likes a post</span>
                 </span>
               </label>
+
+              <label class="flex items-start gap-2">
+                <input type="checkbox" name="notify_post_status" value="1"
+                  class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600" {{
+                  user.notify_post_status ? 'checked' : '' }}>
+                <span>
+                  <span class="font-medium">Email me on post review activity</span><br>
+                  <span class="text-[11px] text-slate-500 dark:text-zink-300">Submissions, approvals, changes requested, and publish events.</span>
+                </span>
+              </label>
+
+              <label class="flex items-start gap-2">
+                <input type="checkbox" name="notify_role_changes" value="1"
+                  class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600" {{
+                  user.notify_role_changes ? 'checked' : '' }}>
+                <span>
+                  <span class="font-medium">Email me on collaborator role changes</span><br>
+                  <span class="text-[11px] text-slate-500 dark:text-zink-300">When your role is updated or your access is revoked.</span>
+                </span>
+              </label>
+
+              <label class="flex items-start gap-2">
+                <input type="checkbox" name="notify_invites" value="1"
+                  class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600" {{
+                  user.notify_invites ? 'checked' : '' }}>
+                <span>
+                  <span class="font-medium">Email me on blog invite activity</span><br>
+                  <span class="text-[11px] text-slate-500 dark:text-zink-300">New invites you receive and invites you sent being declined.</span>
+                </span>
+              </label>
             </div>
 
             <div class="flex justify-center mt-4">

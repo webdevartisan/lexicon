@@ -11,12 +11,13 @@
 
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
-  <form 
+  <form
     method="post"
     action="/dashboard/post/create"
     enctype="multipart/form-data"
     data-dropzone-form
     class="space-y-3" data-autosave-form>
+    <input type="hidden" name="blog_id" value="<?= (int) ($blog['id'] ?? 0) ?>">
     {% include "partials/dashboard/post/_form.lex.php" %}
   </form>
 </div>
@@ -32,11 +33,13 @@
 <script src="/cp-assets/js/flatpickr.init.js"></script>
 <script src="/cp-assets/js/autosave.js"></script>
 <script src="/cp-assets/js/pages/post.js"></script>
+<script src="/cp-assets/js/media-picker.js"></script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const NameInput = document.getElementById('title');
     const SlugInput = document.getElementById('slug');
+    const excerptField = document.getElementById('excerpt');
 
     if (NameInput && SlugInput) {
       NameInput.addEventListener('input', function () {
@@ -49,12 +52,6 @@
         SlugInput.value = slug;
       });
     }
-  });
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const excerptField = document.getElementById('excerpt');
 
   if (!excerptField || typeof tinymce === 'undefined') {
     return;

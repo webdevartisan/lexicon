@@ -7,13 +7,14 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
  * HomeController renders the dashboard overview: a true at-a-glance summary
- * (stats, needs-attention queues, recent activity, quick actions) — not a
+ * (stats, needs-attention queues, recent activity, quick actions). Not a
  * filtered post list. The post-list-with-tabs role lives on All Posts.
  */
 class HomeController extends AppController
@@ -21,7 +22,8 @@ class HomeController extends AppController
     public function __construct(
         private PostModel $post,
         private BlogModel $blogModel,
-        private UserPreferencesModel $preference
+        private UserPreferencesModel $preference,
+        private BlogSettingsModel $blogSettings,
     ) {}
 
     /**
@@ -32,9 +34,11 @@ class HomeController extends AppController
         $user = auth()->user();
         $selectedBlogId = $this->preference->getDefaultBlogId($user['id']) ?? 0;
 
-        $blogs = $this->blogModel->resource($user['id']);
+        $accessibleBlogs = $this->blogModel->getAccessibleBlogs($user['id']);
+        $isAdmin = auth()->hasRole('administrator');
 
-        if (empty($blogs)) {
+        if (empty($accessibleBlogs)) {
+            // First-time user with neither owned nor shared blogs — show onboarding.
             return $this->view([
                 'blogIds' => [],
                 'blogSlug' => '',
@@ -44,15 +48,34 @@ class HomeController extends AppController
                 'recent' => [],
                 'needsAttention' => [],
                 'blogsSummary' => [],
+                'isAdmin' => $isAdmin,
+                'blogRole' => 'none',
+                'noBreadcrumb' => true,
+                'hideTitle' => true,
             ]);
+        }
+
+        // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is
+        // the natural landing — sending them through the owner-style dashboard
+        // is confusing. Single-blog pure collaborators just get pushed into the
+        // blog they were invited to instead of a "pick" screen.
+        $ownsAny = false;
+        foreach ($accessibleBlogs as $b) {
+            if (($b['user_role'] ?? '') === 'owner') {
+                $ownsAny = true;
+                break;
+            }
+        }
+        if (!$ownsAny && $selectedBlogId <= 0) {
+            return $this->redirect('/dashboard/shared');
         }
 
         $blogIds = [];
         $blogSlugs = [];
 
-        foreach ($blogs as $blog) {
-            $blogIds[$blog->id()] = $blog->name();
-            $blogSlugs[$blog->id()] = $blog->slug();
+        foreach ($accessibleBlogs as $blog) {
+            $blogIds[(int) $blog['id']] = (string) $blog['blog_name'];
+            $blogSlugs[(int) $blog['id']] = (string) $blog['blog_slug'];
         }
 
         if ($selectedBlogId <= 0 || !isset($blogSlugs[$selectedBlogId])) {
@@ -65,11 +88,19 @@ class HomeController extends AppController
                 'recent' => [],
                 'needsAttention' => [],
                 'blogsSummary' => $this->buildBlogsSummary($user['id']),
+                'isAdmin' => $isAdmin,
+                'blogRole' => 'none',
             ]);
         }
 
         $blog = $this->getBlog($selectedBlogId);
         Gate::authorize('view', $blog, $user);
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+
+        // Editorial pipeline determines whether "Pending" is a live bucket for this blog.
+        // With workflow off it's not part of the normal flow. hide the tile and drop it from Needs Attention.
+        $settings = $this->blogSettings->findByBlogId($selectedBlogId);
+        $workflowEnabled = !empty($settings['workflow_enabled']);
 
         // Pull each status bucket once: we use the pagination total for stats,
         // and the first few rows as the "what's in this bucket" preview.
@@ -79,9 +110,11 @@ class HomeController extends AppController
         $draftResult = $this->post->findByAuthorWithFiltersPagination(
             authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'draft'
         );
-        $pendingResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
-        );
+        $pendingResult = $workflowEnabled
+            ? $this->post->findByAuthorWithFiltersPagination(
+                authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
+            )
+            : ['data' => [], 'pagination' => ['total_records' => 0]];
         $archivedResult = $this->post->findByAuthorWithFiltersPagination(
             authorId: $user['id'], page: 1, perPage: 1, blogId: $selectedBlogId, status: 'archived'
         );
@@ -96,10 +129,12 @@ class HomeController extends AppController
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
-        // "Needs attention" = drafts + pending. We surface them so the creator
-        // sees unfinished work the moment they land, before anything else.
+        // "Needs attention" = drafts (+ pending when the review pipeline is on).
+        // We surface them so the creator sees unfinished work the moment they land.
         $needsAttention = array_slice(
-            array_merge($draftResult['data'], $pendingResult['data']),
+            $workflowEnabled
+                ? array_merge($draftResult['data'], $pendingResult['data'])
+                : $draftResult['data'],
             0,
             4
         );
@@ -115,6 +150,10 @@ class HomeController extends AppController
             'recent' => $publishedResult['data'],
             'needsAttention' => $needsAttention,
             'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id']) : [],
+            'isAdmin' => $isAdmin,
+            'blogRole' => $blogRole,
+            'workflowEnabled' => $workflowEnabled,
+            'hideTitle' => true,
         ]);
     }
 
@@ -124,6 +163,23 @@ class HomeController extends AppController
 
         $user = auth()->user();
         $selectedBlogId = (int) $this->request()->all()['blog'];
+
+        // Default-blog is the OWNER workspace context. Shared blogs are accessed
+        // via /dashboard/shared and dedicated per-action URLs — not by switching
+        // the global context, which would re-mix the surfaces we just split.
+        $blog = $this->blogModel->getBlog($selectedBlogId);
+        if (!$blog) {
+            $this->flash('error', 'That blog no longer exists.');
+
+            return $this->redirect('/dashboard');
+        }
+
+        if ((int) $blog->ownerId() !== (int) $user['id']) {
+            $this->flash('error', 'You can only set blogs you own as your default. Shared work lives on the Shared page.');
+
+            return $this->redirect('/dashboard');
+        }
+
         $this->preference->setDefaultBlogId($user['id'], $selectedBlogId);
 
         return $this->redirect('/dashboard');
@@ -136,6 +192,7 @@ class HomeController extends AppController
      */
     private function buildBlogsSummary(int $userId): array
     {
+        // "Your blogs" means blogs you OWN — shared blogs live on /dashboard/shared.
         $rows = $this->blogModel->getBlogsByOwnerWithCounts($userId);
 
         return array_map(static fn (array $row): array => [

@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
+use App\Services\MediaService;
 use App\Services\UploadService;
 use Framework\Core\Response;
 
 class UploadController extends AppController
 {
     public function __construct(
-        private UploadService $uploader
+        private UploadService $uploader,
+        private MediaService $mediaService,
     ) {}
 
     public function tinymceImage(): Response
     {
+        csrf()->assertValid($this->request->headers['x-csrf-token']);
+
         $user = auth()->user();
         $userId = (int) $user['id'];
 
@@ -50,6 +54,10 @@ class UploadController extends AppController
         if (!$url) {
             return $this->json(['error' => 'Upload failed'], 500);
         }
+
+        // Record the new file in the per-blog library so it shows up in the
+        // grid and the picker the next time someone needs to reuse it.
+        $this->mediaService->register($blogId, $userId, $url, 'post_image');
 
         // TinyMCE expects { location: "<url>" }
         return $this->json(['location' => $url], 200);

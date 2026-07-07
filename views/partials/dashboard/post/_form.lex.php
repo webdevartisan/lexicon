@@ -58,15 +58,56 @@ $isArchived = $postStatus === 'archived';
         </section>
       </main>
       <aside class="sticky top-4 space-y-4 shrink-0 w-full sm:w-64">
+
+        <!-- Reviewer feedback — shown to the author when a reviewer has requested changes -->
+        <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
+        <section class="border border-amber-200 bg-amber-50 rounded-lg dark:bg-amber-500/10 dark:border-amber-500/30">
+            <div class="p-4 border-b border-amber-200 dark:border-amber-500/30 flex items-center gap-2">
+                <i data-lucide="message-square-warning" class="size-4 text-amber-600 dark:text-amber-400 shrink-0"></i>
+                <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Reviewer feedback</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                <p class="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                    <?= e($latestReview['feedback']) ?>
+                </p>
+                <p class="text-[11px] text-amber-600 dark:text-amber-400">
+                    — <?= e($latestReview['reviewer_username'] ?? 'Reviewer') ?>,
+                    <?= e(date('M j, Y', strtotime((string) ($latestReview['reviewed_at'] ?? 'now')))) ?>
+                </p>
+            </div>
+        </section>
+        <?php } ?>
+
         <!-- Publishing Actions Card -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
           <div class="p-4 space-y-4">
             <!-- Primary Action Buttons -->
             <div class="flex w-full gap-2">
-              <?php $label = $isPublished ? 'Update' : 'Save Draft' ?>
+              <?php $label = $isPublished ? 'Update' : 'Save' ?>
               {% cmp="btn" type="submit" variant="blue" icon="save" label="{$label}" addClass="flex-1 " %}
-              {% cmp="btn" href="/dashboard" variant="slate" icon="step-back" label="Back" %}
+              {% cmp="btn" href="{$backUrl}" variant="slate" icon="step-back" label="Back" %}
             </div>
+
+            <?php
+              $hintRole = $blogRole ?? '';
+$hintEligible = !empty($workflowEnabled)
+    && in_array($hintRole, ['author', 'contributor', 'owner', 'editor'], true)
+    && (
+        $postStatus === 'draft'
+        || ($postStatus === 'pending' && ($workflowState ?? '') === 'needs_changes')
+    );
+?>
+            <?php if ($hintEligible) { ?>
+            <!-- Hint replacing the old standalone button — pending status now drives the review pipeline. -->
+            <div class="text-[11px] text-slate-500 dark:text-zink-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-md p-2.5 leading-relaxed">
+              <i data-lucide="info" class="size-3.5 inline -mt-0.5 text-amber-600 dark:text-amber-400"></i>
+              <?php if (($workflowState ?? '') === 'needs_changes') { ?>
+                After addressing the feedback, keep <strong>Visibility</strong> on <strong>Pending</strong> and save — the post will be sent back to the reviewer automatically.
+              <?php } else { ?>
+                Ready for review? Switch <strong>Visibility</strong> below to <strong>Pending</strong> and save — reviewers will pick it up automatically.
+              <?php } ?>
+            </div>
+            <?php } ?>
 
             <!-- Auto-save Status -->
             <div id="autosave-indicator" class="flex items-center gap-2 text-xs text-slate-500 dark:text-zink-400" style="display: none;">
@@ -82,71 +123,89 @@ $isArchived = $postStatus === 'archived';
             <!-- Visibility with Horizontal Button-Style Radios -->
             <div>
               <p class="mb-2 text-xs font-medium text-slate-500 dark:text-zink-300">Visibility</p>
-              <div class="flex flex-col sm:flex-row w-full border rounded-md border-slate-200 dark:border-zink-600">
-                
-              {% if (($postStatus !== 'published') && ($postStatus !== 'archived')): %}
-                <label class="flex-1 text-center cursor-pointer group <?= $isPublished ? 'opacity-50 cursor-not-allowed' : '' ?>">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="draft"
-                    class="sr-only peer"
-                    <?= $postStatus === 'draft' ? 'checked' : '' ?>
-                    <?= $isPublished ? 'disabled' : '' ?>>
-                  <span class="block px-3 py-2 text-xs font-medium transition-colors border-r text-slate-700 bg-slate-50 border-slate-200 peer-checked:bg-slate-500 peer-checked:text-white peer-checked:border-slate-500  dark:bg-zink-600 dark:text-zink-200 dark:border-zink-600 dark:peer-checked:bg-slate-400 dark:peer-checked:border-slate-400  rounded-l-md">
-                    Draft
-                  </span>
-                </label>
+              <?php
+              // Which transitions we offer depends on whether the blog uses the review pipeline.
+              // With workflow ON, Pending is the mandatory bridge from Draft to Published.
+              // With workflow OFF, Draft can go straight to Published (backend already allows it).
+              $workflowOn = !empty($workflowEnabled);
+$transitionMap = $workflowOn
+    ? [
+        'draft' => ['draft', 'pending'],
+        'pending' => ['draft', 'pending', 'published'],
+        'published' => ['draft', 'published', 'archived'],
+        'archived' => ['draft', 'published', 'archived'],
+    ]
+    : [
+        'draft' => ['draft', 'published'],
+        'pending' => ['draft', 'published', 'archived'],
+        'published' => ['draft', 'published', 'archived'],
+        'archived' => ['draft', 'published', 'archived'],
+    ];
 
-                <label class="flex-1 text-center cursor-pointer group <?= $isPublished ? 'opacity-50 cursor-not-allowed' : '' ?>">
+$allowed = $transitionMap[$postStatus] ?? ['draft'];
+
+// Publishing rights mirror the backend rule: owner/editor always,
+// author only while the review pipeline is off, contributor never.
+$canPublishHere = in_array($blogRole ?? '', ['owner', 'editor'], true)
+    || (($blogRole ?? '') === 'author' && !$workflowOn);
+
+$visibilityLocked = false;
+if (!$canPublishHere) {
+    if (in_array($postStatus, ['published', 'archived'], true)) {
+        // An editor put it here; this user can't move it out.
+        $allowed = [$postStatus];
+        $visibilityLocked = true;
+    } else {
+        $allowed = array_values(array_diff($allowed, ['published', 'archived']));
+    }
+}
+
+$optionMeta = [
+    'draft' => ['label' => 'Draft',     'checked' => 'peer-checked:bg-slate-500 peer-checked:border-slate-500 dark:peer-checked:bg-slate-400 dark:peer-checked:border-slate-400'],
+    'pending' => ['label' => 'Pending',   'checked' => 'peer-checked:bg-amber-500 peer-checked:border-amber-500 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500'],
+    'published' => ['label' => 'Published', 'checked' => 'peer-checked:bg-emerald-500 peer-checked:border-emerald-500 dark:peer-checked:bg-emerald-500 dark:peer-checked:border-emerald-500'],
+    'archived' => ['label' => 'Archived',  'checked' => 'peer-checked:bg-slate-800 peer-checked:border-slate-800 dark:peer-checked:bg-slate-800 dark:peer-checked:border-slate-800'],
+];
+
+$lastIdx = count($allowed) - 1;
+?>
+              <div class="flex flex-col sm:flex-row w-full border rounded-md border-slate-200 dark:border-zink-600">
+                <?php foreach ($allowed as $idx => $value) {
+                    $meta = $optionMeta[$value];
+                    $isFirst = $idx === 0;
+                    $isLast = $idx === $lastIdx;
+                    $radius = $isFirst && $isLast
+                        ? 'rounded-md'
+                        : ($isFirst ? 'rounded-l-md' : ($isLast ? 'rounded-r-md' : ''));
+                    $borderR = $isLast ? '' : 'border-r';
+                    ?>
+                <label class="flex-1 text-center cursor-pointer group">
                   <input
                     type="radio"
                     name="status"
-                    value="pending"
+                    value="<?= e($value) ?>"
                     class="sr-only peer"
-                    <?= $postStatus === 'pending' ? 'checked' : '' ?>
-                    <?= $isPublished ? 'disabled' : '' ?>>
-                  <span class="block px-3 py-2 text-xs font-medium transition-colors text-slate-700 bg-slate-50 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500  dark:bg-zink-600 dark:text-zink-200 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500 <?= $isDraft ? 'rounded-r-md' : '' ?>">
-                    Pending
+                    <?= $postStatus === $value ? 'checked' : '' ?>>
+                  <span class="block px-3 py-2 text-xs font-medium transition-colors text-slate-700 bg-slate-50 border-slate-200 dark:bg-zink-600 dark:text-zink-200 dark:border-zink-600 peer-checked:text-white <?= $borderR ?> <?= $meta['checked'] ?> <?= $radius ?>">
+                    <?= e($meta['label']) ?>
                   </span>
                 </label>
-                {% endif %}
-                {% if isDraft|empty %}
-                <label class="flex-1 text-center cursor-pointer group <?= $isDraft ? 'opacity-50 cursor-not-allowed' : '' ?>">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="published"
-                    class="sr-only peer"
-                    <?= $postStatus === 'published' ? 'checked' : '' ?>
-                    <?= $isDraft ? 'disabled' : '' ?>>
-                  <span class="block px-3 py-2 text-xs font-medium transition-colors border-r text-slate-700 bg-slate-50 border-slate-200 peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:border-emerald-500  dark:bg-zink-600 dark:text-zink-200 dark:border-zink-600 dark:peer-checked:bg-emerald-500 dark:peer-checked:border-emerald-500 <?= ($isPublished || $isArchived) ? 'rounded-l-md' : '' ?>">
-                    Published
-                  </span>
-                </label>
-                {% endif %}
-                
-                {% if isDraft|empty %}
-                {% if isPending|empty %}
-                <label class="flex-1 text-center cursor-pointer group <?= $isDraft ? 'opacity-50 cursor-not-allowed' : '' ?>">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="archived"
-                    class="sr-only peer"
-                    <?= $postStatus === 'archived' ? 'checked' : '' ?>>
-                  <span class="block px-3 py-2 text-xs font-medium transition-colors text-slate-700 bg-slate-50 peer-checked:bg-slate-800 peer-checked:text-white peer-checked:border-slate-800  dark:bg-zink-600 dark:text-zink-200 dark:peer-checked:bg-slate-800 dark:peer-checked:border-slate-800  rounded-r-md">
-                    Archived
-                  </span>
-                </label>
-                {% endif %}{% endif %}
+                <?php } ?>
               </div>
 
-                <?php if ($isPublished) { ?>
-                <p class="mt-2 text-[11px] text-slate-500 dark:text-zink-400">
-                ℹ️ Published posts cannot be reverted to Draft or Pending. Use "Archived" to hide from public.
-                </p>
-                <?php } ?>
+              <?php if ($visibilityLocked) { ?>
+              <p class="mt-2 text-[11px] text-slate-500 dark:text-zink-400">
+                Visibility of a published post is managed by the blog's editor or owner.
+              </p>
+              <?php } elseif (!$canPublishHere && !$workflowOn) { ?>
+              <p class="mt-2 text-[11px] text-slate-500 dark:text-zink-400">
+                Drafts on this blog are published by its editor or owner.
+              </p>
+              <?php } elseif ($isPublished && $workflowOn) { ?>
+              <p class="mt-2 text-[11px] text-slate-500 dark:text-zink-400">
+                ℹ️ Move back to Draft to keep editing privately, or use Archived to hide from the public site.
+              </p>
+              <?php } ?>
             </div>
 
 
@@ -187,7 +246,7 @@ $isArchived = $postStatus === 'archived';
                   Publish Date & Time
                 </label>
                 <?php
-                  $publishedAt = old('published_at') ?? $post['published_at'] ?? null;
+      $publishedAt = old('published_at') ?? $post['published_at'] ?? null;
 ?>
                 <input type="hidden" name="timezone" id="timezone">
                 <input 
@@ -262,7 +321,8 @@ $isArchived = $postStatus === 'archived';
         </section>
 
         <!-- Featured Image -->
-        {% cmp="dropzone2" label="Featured Image" resource="{$post}" %}
+        <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
+        {% cmp="dropzone2" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" %}
 
         <!-- SEO Settings Card -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">

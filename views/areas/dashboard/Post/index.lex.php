@@ -2,19 +2,31 @@
 {% block title %}{{ t('navigation.allPosts') }}{% endblock %}
 {% block body %}
 <?php
+// Review-stage pills only make sense when the active blog has editorial workflow on.
+// In "All blogs" mode we keep them because individual blogs may still use the pipeline.
+$showReviewPills = !empty($workflowEnabled);
+
 $tabs = [
     ['key' => '', 'label' => 'All', 'count' => $counts['all']],
     ['key' => 'published', 'label' => 'Published', 'count' => $counts['published']],
     ['key' => 'draft', 'label' => 'Drafts', 'count' => $counts['draft']],
-    ['key' => 'pending', 'label' => 'Pending', 'count' => $counts['pending']],
-    ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']],
 ];
 
-$makeQuery = static function (array $overrides = []) use ($q, $status, $blog_id, $sort, $categoryId, $tagId): string {
+if ($showReviewPills) {
+    $tabs[] = ['key' => 'pending', 'label' => 'In Review', 'count' => $counts['pending']];
+    $tabs[] = ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0];
+}
+
+$tabs[] = ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']];
+
+// Use the stringified $blogIdView ('all' or numeric) so the choice survives pill clicks.
+$blogIdForUrl = $blogIdView ?? null;
+
+$makeQuery = static function (array $overrides = []) use ($q, $status, $blogIdForUrl, $sort, $categoryId, $tagId): string {
     $params = [
         'q' => $overrides['q'] ?? $q,
         'status' => array_key_exists('status', $overrides) ? $overrides['status'] : $status,
-        'blog_id' => array_key_exists('blog_id', $overrides) ? $overrides['blog_id'] : $blog_id,
+        'blog_id' => array_key_exists('blog_id', $overrides) ? $overrides['blog_id'] : $blogIdForUrl,
         'sort' => array_key_exists('sort', $overrides) ? $overrides['sort'] : $sort,
         'category' => array_key_exists('category', $overrides) ? $overrides['category'] : $categoryId,
         'tag' => array_key_exists('tag', $overrides) ? $overrides['tag'] : $tagId,
@@ -36,6 +48,27 @@ $sortOptions = [
     'title_asc' => 'Title A → Z',
     'title_desc' => 'Title Z → A',
 ];
+
+// Build option maps for the select component
+$blogOptions = ['all' => 'All blogs'];
+foreach (($blogs ?? []) as $b) {
+    $blogOptions[(string) $b['id']] = (string) $b['blog_name'];
+}
+
+$categoryOptions = ['' => 'All'];
+foreach (($blogCategories ?? []) as $cat) {
+    $categoryOptions[(string) $cat['id']] = (string) $cat['name'];
+}
+
+$tagOptions = ['' => 'All'];
+foreach (($blogTags ?? []) as $tg) {
+    $tagOptions[(string) $tg['id']] = (string) $tg['name'];
+}
+
+$selectedBlogKey = (string) ($blogIdView ?? '');
+$selectedCategoryKey = (string) ($categoryId ?? '');
+$selectedTagKey = (string) ($tagId ?? '');
+$selectedSortKey = (string) ($sort ?? '');
 ?>
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
@@ -47,66 +80,25 @@ $sortOptions = [
 
     <form method="GET" action="/dashboard/post" class="card mb-4">
         <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                 <div class="md:col-span-3">
-                    <label for="q" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Search</label>
-                    <div class="relative">
-                        <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-                        <input
-                            id="q"
-                            name="q"
-                            type="text"
-                            value="{{ q }}"
-                            placeholder="Search by title or content..."
-                            class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500"
-                        >
-                    </div>
+                    {% cmp="input" type="text" label="Search" name="q" value="{$q}" placeholder="Search by title or content..." %}
                 </div>
 
                 <div class="md:col-span-3">
-                    <label for="blog" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Blog</label>
-                    <select id="blog" name="blog_id" class="form-input w-full border-slate-200 dark:border-zink-500">
-                        <option value="">All blogs</option>
-                        {% foreach ($blogs as $b): %}
-                            <option value="<?= e((string) $b['id']) ?>" <?= (int) $b['id'] === (int) ($blog_id ?? 0) ? 'selected' : '' ?>>
-                                <?= e($b['blog_name']) ?>
-                            </option>
-                        {% endforeach %}
-                    </select>
+                    {% cmp="select" label="Blog" name="blog_id" options="{$blogOptions}" selectedKey="{$selectedBlogKey}" %}
                 </div>
 
                 <div class="md:col-span-2">
-                    <label for="category" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Category</label>
-                    <select id="category" name="category" class="form-input w-full border-slate-200 dark:border-zink-500" <?= empty($blogCategories) ? 'disabled' : '' ?>>
-                        <option value="">All</option>
-                        <?php foreach (($blogCategories ?? []) as $cat) { ?>
-                        <option value="<?= (int) $cat['id'] ?>" <?= (int) ($categoryId ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>>
-                            <?= e($cat['name']) ?>
-                        </option>
-                        <?php } ?>
-                    </select>
+                    {% cmp="select" label="Category" name="category" options="{$categoryOptions}" selectedKey="{$selectedCategoryKey}" %}
                 </div>
 
                 <div class="md:col-span-2">
-                    <label for="tag" class="form-label text-xs font-medium text-slate-600 dark:text-zink-200 mb-1">Tag</label>
-                    <select id="tag" name="tag" class="form-input w-full border-slate-200 dark:border-zink-500" <?= empty($blogTags) ? 'disabled' : '' ?>>
-                        <option value="">All</option>
-                        <?php foreach (($blogTags ?? []) as $tg) { ?>
-                        <option value="<?= (int) $tg['id'] ?>" <?= (int) ($tagId ?? 0) === (int) $tg['id'] ? 'selected' : '' ?>>
-                            <?= e($tg['name']) ?>
-                        </option>
-                        <?php } ?>
-                    </select>
+                    {% cmp="select" label="Tag" name="tag" options="{$tagOptions}" selectedKey="{$selectedTagKey}" %}
                 </div>
 
-                <div class="md:col-span-2 flex items-end">
-                    <button
-                        type="submit"
-                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors"
-                    >
-                        <i data-lucide="filter" class="size-4"></i>
-                        Apply
-                    </button>
+                <div class="md:col-span-2">
+                    {% cmp="btn" type="submit" variant="blue" icon="filter" label="Apply" addClass="w-full" %}
                 </div>
             </div>
 
@@ -152,25 +144,13 @@ $sortOptions = [
         </div>
 
         <form method="GET" action="/dashboard/post" class="flex items-center gap-2">
-            <?php foreach (['q' => $q, 'status' => $status, 'blog_id' => $blog_id, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
+            <?php foreach (['q' => $q, 'status' => $status, 'blog_id' => $blogIdView, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
                 <?php if ($value !== '' && $value !== null) { ?>
                     <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
                 <?php } ?>
             <?php } ?>
 
-            <label for="sort" class="text-xs font-medium text-slate-500 dark:text-zink-300">Sort:</label>
-            <select
-                id="sort"
-                name="sort"
-                onchange="this.form.submit()"
-                class="form-input text-xs py-1.5 pl-2 pr-8 border-slate-200 dark:border-zink-500 rounded-md min-w-[140px]"
-            >
-                <?php foreach ($sortOptions as $key => $label) { ?>
-                    <option value="<?= e($key) ?>" <?= $sort === $key ? 'selected' : '' ?>>
-                        <?= e($label) ?>
-                    </option>
-                <?php } ?>
-            </select>
+            {% cmp="select" label="Sort" name="sort" options="{$sortOptions}" selectedKey="{$selectedSortKey}" onchange="this.form.submit()" %}
         </form>
     </div>
 
@@ -264,19 +244,17 @@ if ($q !== '') {
 
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {% foreach ($posts as $post): %}
-            <div class="relative bulk-item">
-                <label class="absolute top-3 left-3 z-10 inline-flex items-center justify-center w-6 h-6 rounded-md bg-white/90 border border-slate-200 cursor-pointer hover:border-custom-500 dark:bg-zink-700/90 dark:border-zink-500">
-                    <input
-                        type="checkbox"
-                        name="post_ids[]"
-                        form="bulk-form"
-                        value="<?= e((string) $post['id']) ?>"
-                        aria-label="Select post: <?= e((string) ($post['title'] ?? '')) ?>"
-                        class="bulk-checkbox form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-2 focus:ring-custom-500 focus:ring-offset-1"
-                    >
-                </label>
+            <label class="relative block cursor-pointer bulk-item">
+                <input
+                    type="checkbox"
+                    name="post_ids[]"
+                    form="bulk-form"
+                    value="<?= e((string) $post['id']) ?>"
+                    aria-label="Select post: <?= e((string) ($post['title'] ?? '')) ?>"
+                    class="peer sr-only bulk-checkbox"
+                >
                 {% cmp="post-card" post="{$post}" blogSlug="{$activeBlogSlug}" %}
-            </div>
+            </label>
             {% endforeach %}
         </div>
 
@@ -295,6 +273,12 @@ if ($q !== '') {
                 <button type="button" data-bulk="draft" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-600/50 transition-colors">
                     <i data-lucide="pencil-ruler" class="size-3.5"></i> Move to draft
                 </button>
+
+                <?php if ($showReviewPills) { ?>
+                <button type="button" data-bulk="review" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-600/50 transition-colors">
+                    <i data-lucide="pencil-ruler" class="size-3.5"></i> Send for review
+                </button>
+                <?php } ?>
 
                 <button type="button" data-bulk="archive" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-orange-600/30 transition-colors">
                     <i data-lucide="archive" class="size-3.5"></i> Archive
@@ -369,6 +353,7 @@ if ($q !== '') {
                 archive: 'Archive ' + selected + ' post(s)?',
                 publish: 'Publish ' + selected + ' post(s)?',
                 draft: 'Move ' + selected + ' post(s) to draft?',
+                review: 'Send ' + selected + ' post(s) for review?',
             };
 
             if (!confirm(messages[action])) {

@@ -77,16 +77,20 @@ class BlogPolicy implements PolicyInterface
 
     /**
      * Manage users attached to this blog.
-     * Owner or editor per-blog.
+     * Owner only — editors no longer manage the collaborator roster.
      */
     public function manageUsers(array $user, object $blog): bool
     {
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-        $blogRole = $blog->roleForUser((int) $user['id']);
+        return $blog->ownerId() === $user['id'];
+    }
 
-        return $blogRole === 'editor';
+    /**
+     * Invite a new collaborator to this blog.
+     * Owner only.
+     */
+    public function invite(array $user, object $blog): bool
+    {
+        return $blog->ownerId() === $user['id'];
     }
 
     /**

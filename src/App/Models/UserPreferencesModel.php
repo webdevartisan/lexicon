@@ -51,14 +51,19 @@ class UserPreferencesModel extends AppModel
     public function upsert(int $userId, array $data): void
     {
         $sql = 'INSERT INTO user_preferences
-                (user_id, display_name_preference, default_post_visibility, timezone, notify_comments, notify_likes)
-                VALUES (?, ?, ?, ?, ?, ?)
+                (user_id, display_name_preference, default_post_visibility, timezone,
+                 notify_comments, notify_likes,
+                 notify_post_status, notify_role_changes, notify_invites)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                   display_name_preference = VALUES(display_name_preference),
                   default_post_visibility = VALUES(default_post_visibility),
-                  timezone = VALUES(timezone),
-                  notify_comments = VALUES(notify_comments),
-                  notify_likes = VALUES(notify_likes)';
+                  timezone                = VALUES(timezone),
+                  notify_comments         = VALUES(notify_comments),
+                  notify_likes            = VALUES(notify_likes),
+                  notify_post_status      = VALUES(notify_post_status),
+                  notify_role_changes     = VALUES(notify_role_changes),
+                  notify_invites          = VALUES(notify_invites)';
 
         $this->database->execute($sql, [
             $userId,
@@ -67,6 +72,9 @@ class UserPreferencesModel extends AppModel
             $data['timezone'] ?? null,
             (int) ($data['notify_comments'] ?? 1),
             (int) ($data['notify_likes'] ?? 1),
+            (int) ($data['notify_post_status'] ?? 1),
+            (int) ($data['notify_role_changes'] ?? 1),
+            (int) ($data['notify_invites'] ?? 1),
         ]);
     }
 
@@ -189,5 +197,46 @@ class UserPreferencesModel extends AppModel
         $currentDefaultBlogId = $this->getDefaultBlogId($userId);
 
         return $currentDefaultBlogId !== null && (int) $currentDefaultBlogId === $blogId;
+    }
+
+    /**
+     * Notification preference keys gated by this accessor.
+     *
+     * Kept as an allowlist so unknown column names cannot be queried.
+     */
+    public const NOTIFY_KEYS = [
+        'notify_comments',
+        'notify_likes',
+        'notify_post_status',
+        'notify_role_changes',
+        'notify_invites',
+    ];
+
+    /**
+     * Read a single notification preference for a user.
+     *
+     * Returns true when no preference row exists yet — every notify column
+     * defaults to TRUE at the schema level, so absence means opted-in.
+     *
+     * @param  int  $userId  User ID
+     * @param  string  $key  One of self::NOTIFY_KEYS
+     * @return bool Whether email delivery for this event family is enabled
+     *
+     * @throws \InvalidArgumentException If $key is not in NOTIFY_KEYS
+     */
+    public function notificationPreference(int $userId, string $key): bool
+    {
+        if (!in_array($key, self::NOTIFY_KEYS, true)) {
+            throw new \InvalidArgumentException("Unknown notification preference key: {$key}");
+        }
+
+        $sql = "SELECT {$key} FROM user_preferences WHERE user_id = ? LIMIT 1";
+        $row = $this->database->query($sql, [$userId])->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return true;
+        }
+
+        return (bool) $row[$key];
     }
 }

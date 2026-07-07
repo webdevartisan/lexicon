@@ -43,6 +43,14 @@ return [
             'auth' => true,
             'scope' => 'global',
             'key' => 'navigation.allBlogs',
+        ],
+        [
+            'label' => 'Shared',
+            'href' => '/dashboard/shared',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isCollaborator',
+            'key' => 'navigation.shared',
         ], /*
         [
             'label' => 'Create New Blog',
@@ -67,6 +75,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.contentSection',
         ],
         [
@@ -83,6 +92,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'policy' => 'view',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.allPosts',
         ],
         [
@@ -110,9 +120,8 @@ return [
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'view',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.mediaLibrary',
-            'disabled' => true,
-            'badge' => 'Soon',
         ],
         [
             'label' => 'Manage Blog',
@@ -120,6 +129,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.blogSection',
         ],
         [
@@ -129,6 +139,7 @@ return [
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'view',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.blogOverview',
         ],
         [
@@ -141,13 +152,13 @@ return [
             'key' => 'navigation.editBlogSettings',
         ],
         [
-            'label' => 'Collaborators',
-            'href' => '/dashboard/blog/{blogId}/users',
+            'label' => 'Team',
+            'href' => '/dashboard/blog/{blogId}/team',
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'manageUsers',
-            'key' => 'navigation.collaborators',
+            'key' => 'navigation.team',
         ],
         [
             'label' => 'Appearance / Theme',
@@ -166,6 +177,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.analyticsSection',
         ],
         [
@@ -175,6 +187,7 @@ return [
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'view',
+            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.traffic',
             'disabled' => true,
             'badge' => 'Soon',

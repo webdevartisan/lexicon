@@ -38,17 +38,24 @@
                 {% endcache %}
                 <?php if (!empty($user_blogs)) { ?>
                 <!-- Blog switcher: the topbar control for the active blog context.
-                     The left nav and dashboard pages are all scoped to this blog,
-                     so the switcher lives here as the single, persistent selector. -->
+                     Lists every blog the user can act on (owned + shared) so a
+                     reviewer/editor can flip into a colleague's blog from anywhere. -->
                 <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         {{ csrf_field() }}
                         <i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>
                         <select name="blog" onchange="this.form.submit()" aria-label="Switch active blog"
-                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[240px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
-                            <?php foreach ($user_blogs as $bid => $bname) { ?>
+                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
+                            <?php foreach ($user_blogs as $bid => $b) {
+                                $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
+                                $bstatus = is_array($b) ? (string) ($b['status'] ?? '') : '';
+                                // Owned-only switcher — surface status when it's not the everyday "published".
+                                $suffixText = ($bstatus !== '' && $bstatus !== 'published')
+                                    ? ' — '.ucfirst($bstatus)
+                                    : '';
+                                ?>
                             <option value="<?= e((string) $bid) ?>" <?= ((int) $bid === (int) ($selected_blog_id ?? 0)) ? 'selected' : '' ?>>
-                                <?= e($bname) ?>
+                                <?= e($bname.$suffixText) ?>
                             </option>
                             <?php } ?>
                         </select>
@@ -171,7 +178,7 @@
                                     <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium rounded-full text-white bg-custom-500"><?= (int) $notifications['count'] ?></span>
                                     <?php } ?>
                                 </h6>
-                                <p class="text-xs text-slate-500 dark:text-zink-300">Recent comments on your posts.</p>
+                                <p class="text-xs text-slate-500 dark:text-zink-300">Recent activity on your posts and collaborations.</p>
                             </div>
                             <div data-simplebar="" class="max-h-[350px] border-t border-slate-100 dark:border-zink-500">
                                 <?php if (empty($notifications['items'])) { ?>
@@ -182,30 +189,13 @@
                                 <?php } else { ?>
                                 <div class="flex flex-col">
                                     <?php foreach ($notifications['items'] as $n) { ?>
-                                    <a href="/blog/<?= e((string) ($n['blog_slug'] ?? '')) ?>/<?= e((string) ($n['post_slug'] ?? '')) ?>#comment-<?= e((string) $n['id']) ?>"
-                                        class="flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 border-b border-slate-100 dark:border-zink-500 last:border-b-0">
-                                        <div class="flex items-center justify-center size-9 rounded-md bg-sky-50 dark:bg-sky-900/30 text-sky-500 shrink-0">
-                                            <i data-lucide="message-square" class="size-4"></i>
-                                        </div>
-                                        <div class="grow min-w-0">
-                                            <p class="text-sm text-slate-900 dark:text-zink-50 truncate">
-                                                <span class="font-medium"><?= e((string) ($n['user_name'] ?? 'Anonymous')) ?></span> on <span class="font-medium"><?= e((string) ($n['post_title'] ?? 'a post')) ?></span>
-                                            </p>
-                                            <p class="text-xs text-slate-500 dark:text-zink-300 line-clamp-2 mt-0.5">
-                                                <?= e(mb_substr((string) ($n['content'] ?? ''), 0, 100)) ?>
-                                            </p>
-                                            <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
-                                                <i data-lucide="clock" class="inline-block size-3 mr-1"></i>
-                                                <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
-                                            </p>
-                                        </div>
-                                    </a>
+                                        {% include "partials/_notification_item.lex.php" %}
                                     <?php } ?>
                                 </div>
                                 <?php } ?>
                             </div>
                             <div class="flex items-center justify-end p-3 border-t border-slate-100 dark:border-zink-500">
-                                <a href="/dashboard/post" class="text-xs font-medium text-custom-500 hover:text-custom-600">Open all posts</a>
+                                <a href="/dashboard/notifications" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all notifications</a>
                             </div>
                         </div>
                     </div>
@@ -226,8 +216,8 @@
                                 {% else %}
                                     <div class="flex items-center justify-center rounded-full size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                         <?php
-                                        // generate user initials from first and last name
-                                        $initials = '';
+                                            // generate user initials from first and last name
+                                            $initials = '';
                 if (!empty($current_user['first_name'])) {
                     $initials .= strtoupper(substr($current_user['first_name'], 0, 1));
                 }

@@ -26,7 +26,7 @@ final class BlogSettingsModel extends AppModel
         $sql = 'SELECT blog_id, theme, default_locale, timezone, 
                         meta_title, meta_description, indexable, 
                         banner_path, logo_path, favicon_path,
-                        comments_enabled 
+                        comments_enabled, workflow_enabled 
                 FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
         $stmt = $this->database->query($sql, [$blogId]);
@@ -102,6 +102,7 @@ final class BlogSettingsModel extends AppModel
             'logo_path',
             'favicon_path',
             'comments_enabled',
+            'workflow_enabled',
         ];
 
         $set = [];
@@ -111,7 +112,7 @@ final class BlogSettingsModel extends AppModel
             if (array_key_exists($col, $data)) {
                 $set[] = "$col = ?";
 
-                if ($col === 'indexable' || $col === 'comments_enabled') {
+                if (in_array($col, ['indexable', 'comments_enabled', 'workflow_enabled'], true)) {
                     $params[] = (int) (bool) $data[$col];
                 } else {
                     $params[] = $data[$col];

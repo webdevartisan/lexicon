@@ -216,6 +216,26 @@ $isArchived = $blogStatus === 'archived';
               </div>
             </div>
           </div>
+
+          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
+            <div class="flex items-start gap-2">
+              <input
+                id="workflow_enabled"
+                name="workflow_enabled"
+                type="checkbox"
+                value="1"
+                class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
+                {% if settings.workflow_enabled|notempty %}checked{% endif %}>
+              <div>
+                <label for="workflow_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
+                  Editorial workflow
+                </label>
+                <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
+                  When enabled, posts require review and approval before they can be published. Disabling resets any in-progress reviews to draft.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
   </main>
@@ -232,9 +252,10 @@ $isArchived = $blogStatus === 'archived';
           </div>
       </section>
 
-      {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" %}
-      {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" %}
-      {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" %}
+      <?php $blogIdForLibrary = (string) ($blog['id'] ?? ''); ?>
+      {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" library="{$blogIdForLibrary}" %}
+      {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" library="{$blogIdForLibrary}" %}
+      {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" library="{$blogIdForLibrary}" %}
 
       <div class="p-4 text-xs bg-slate-50 border border-dashed border-slate-200 rounded-lg dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
           <h3 class="mb-1 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sidebar.tips.title') }}</h3>

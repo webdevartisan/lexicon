@@ -4,6 +4,8 @@ $variant = $variant ?? 'slate';
 $label = $label ?? 'Button';
 $icon = $icon ?? null;
 $href = $href ?? null;
+$name = $name ?? null;
+$value = $value ?? null;
 
 $dataBtn = $dataBtn ?? '';
 
@@ -33,6 +35,13 @@ $class = $variants[$variant] ?? $variants['slate'];
             data-target="<?= ($dataTarget) ?>"
           <?php } ?>
           <?= $dataBtn ?>
+
+          <?php if ($name) { ?>
+            name="<?= e($name) ?>"
+          <?php } ?>
+          <?php if ($value) { ?>
+            value="<?= e($value) ?>"
+          <?php } ?>
           >
     <?php if ($icon) { ?>
       <i data-lucide="<?= e($icon) ?>"

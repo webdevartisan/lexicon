@@ -123,8 +123,8 @@
                                                     <?php
                                                     $statusClass = [
                                                         'draft' => 'secondary',
-                                                        'pending_review' => 'warning',
                                                         'published' => 'success',
+                                                        'archived' => 'light',
                                                     ];
                                                 $class = $statusClass[$post['status']] ?? 'light';
                                                 ?>

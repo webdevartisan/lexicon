@@ -158,12 +158,12 @@ describe('BlogPolicy::manageUsers', function () {
         expect($policy->manageUsers($user, $blog))->toBeTrue();
     });
 
-    test('per-blog editor can manage users', function () {
+    test('per-blog editor cannot manage users (owner-only now)', function () {
         $policy = new BlogPolicy();
         $user = makeUser(2);
         $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
 
-        expect($policy->manageUsers($user, $blog))->toBeTrue();
+        expect($policy->manageUsers($user, $blog))->toBeFalse();
     });
 
     test('per-blog author cannot manage users', function () {
@@ -180,6 +180,37 @@ describe('BlogPolicy::manageUsers', function () {
         $blog = mockBlog(ownerId: 1, roleForUser: '');
 
         expect($policy->manageUsers($user, $blog))->toBeFalse();
+    });
+});
+
+// ============================================================================
+// invite()
+// ============================================================================
+
+describe('BlogPolicy::invite', function () {
+
+    test('owner can invite', function () {
+        $policy = new BlogPolicy();
+        $user = makeUser(1);
+        $blog = mockBlog(ownerId: 1);
+
+        expect($policy->invite($user, $blog))->toBeTrue();
+    });
+
+    test('per-blog editor cannot invite', function () {
+        $policy = new BlogPolicy();
+        $user = makeUser(2);
+        $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
+
+        expect($policy->invite($user, $blog))->toBeFalse();
+    });
+
+    test('non-member cannot invite', function () {
+        $policy = new BlogPolicy();
+        $user = makeUser(99);
+        $blog = mockBlog(ownerId: 1, roleForUser: '');
+
+        expect($policy->invite($user, $blog))->toBeFalse();
     });
 });
 

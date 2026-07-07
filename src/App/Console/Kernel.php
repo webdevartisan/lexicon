@@ -8,6 +8,7 @@ use App\Console\Commands\CacheClearCommand;
 use App\Console\Commands\CachePruneCommand;
 use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
+use App\Console\Commands\NotificationPruneCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -37,6 +38,9 @@ class Kernel extends ConsoleKernel
             'cache:prune' => CachePruneCommand::class,
             'cache:warm' => CacheWarmCommand::class,
             'key:generate' => KeyGenerateCommand::class,
+
+            // Notification management
+            'notifications:prune' => NotificationPruneCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'db:seed'       => SeedCommand::class,

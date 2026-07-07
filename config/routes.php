@@ -57,6 +57,11 @@ $router->add('/comments/create', [
     'method' => 'POST',
 ]);
 
+// Public blog invitation landing (reached from the email link; no auth required)
+$router->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
+$router->add('/invite/{token:[a-f0-9]+}/accept', ['controller' => 'InviteController', 'action' => 'accept', 'method' => 'POST']);
+$router->add('/invite/{token:[a-f0-9]+}/decline', ['controller' => 'InviteController', 'action' => 'decline', 'method' => 'POST']);
+
 $router->group([
     'prefix' => '/',
     'namespace' => 'Auth',
@@ -94,6 +99,7 @@ $router->group([
     $r->add('/', ['controller' => 'HomeController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
+    $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);
@@ -116,6 +122,30 @@ $router->group([
     // Categories & tags management (blog-scoped).
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/categories', ['controller' => 'CategoryController', 'action' => 'handle', 'method' => 'POST']);
+
+    // Media library (blog-scoped).
+    $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'index',   'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/list', ['controller' => 'MediaController', 'action' => 'list',    'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Per-blog review queue (anyone with reviewer-capable role on the blog).
+    $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
+
+    // Per-blog posts index for owners and editors. Kept separate from the
+    // personal /dashboard/post surface so the two contexts never mix.
+    $r->add('/blog/{blogId:\d+}/posts', ['controller' => 'PostController', 'action' => 'blogPosts', 'method' => 'GET']);
+
+    // Author/contributor workspace: their own writing inside one shared blog.
+    $r->add('/blog/{blogId:\d+}/workspace', ['controller' => 'PostController', 'action' => 'workspace', 'method' => 'GET']);
+
+    // Team / collaborator management (owner-only actions; leave is self-service).
+    $r->add('/blog/{blogId:\d+}/team', ['controller' => 'CollaboratorController', 'action' => 'team', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/team/invite', ['controller' => 'CollaboratorController', 'action' => 'invite', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/cancel-invite', ['controller' => 'CollaboratorController', 'action' => 'cancelInvite', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/leave', ['controller' => 'CollaboratorController', 'action' => 'leave', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/role', ['controller' => 'CollaboratorController', 'action' => 'changeRole', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/revoke', ['controller' => 'CollaboratorController', 'action' => 'revoke', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
@@ -138,6 +168,12 @@ $router->group([
         'action' => 'upload',
         'method' => 'POST',
     ]);
+
+    // Notifications
+    $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
+    $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
+    $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
+    $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
     // API Routes - Blog deletion stats for confirmation modal
     $r->add('/api/blog/{id:\d+}/deletion-stats', [
         'controller' => 'Api\BlogApiController',
@@ -163,10 +199,13 @@ $router->group([
     $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/review-decision', ['action' => 'reviewDecision', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/request-review', ['action' => 'requestReview', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/assign-reviewer', ['action' => 'assignReviewer', 'method' => 'POST']);
+    $r->add('/{controller}/{id:\d+}/workflow/unassign-reviewer', ['action' => 'unassignReviewer', 'method' => 'POST']);
     // }
 });
 

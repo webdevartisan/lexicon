@@ -220,6 +220,9 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone identifier (e.g., Europe/Athens)',
     notify_comments BOOLEAN NOT NULL DEFAULT TRUE,
     notify_likes BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_post_status BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me on post review/approve/publish events',
+    notify_role_changes BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when my collaborator role changes or I am removed',
+    notify_invites BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when invited to a blog or when an invite I sent is declined',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -271,6 +274,7 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     logo_path VARCHAR(255) DEFAULT NULL,
     favicon_path VARCHAR(255) DEFAULT NULL,
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
+    workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
@@ -306,10 +310,55 @@ CREATE TABLE IF NOT EXISTS blog_users (
 COMMENT='Blog membership and role assignments for multi-user blogs';
 
 -- ----------------------------------------------------------------------------
+-- Blog Invitations Table
+-- ----------------------------------------------------------------------------
+-- Pending collaboration invites. Tokens are stored as sha256 hashes; the raw
+-- token travels only in the email link. One pending invite per email+blog.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS blog_invitations (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id     INT NOT NULL,
+    email       VARCHAR(255) NOT NULL,
+    role        VARCHAR(32) NOT NULL,
+    token       VARCHAR(64) NOT NULL UNIQUE COMMENT 'sha256 hash of raw token',
+    invited_by  INT NOT NULL,
+    expires_at  TIMESTAMP NOT NULL,
+    accepted_at TIMESTAMP NULL DEFAULT NULL,
+    declined_at TIMESTAMP NULL DEFAULT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_token (token),
+    INDEX idx_email_blog (email, blog_id),
+    INDEX idx_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Pending blog collaboration invitations';
+
+-- ----------------------------------------------------------------------------
+-- Notifications Table
+-- ----------------------------------------------------------------------------
+-- In-app notifications for workflow and collaboration events. The `data`
+-- column holds a JSON payload keyed by `type`.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    type       VARCHAR(64) NOT NULL,
+    data       JSON NOT NULL,
+    read_at    TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_read (user_id, read_at),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='In-app notifications for workflow and collaboration events';
+
+-- ----------------------------------------------------------------------------
 -- Posts Table
 -- ----------------------------------------------------------------------------
--- We maintain both legacy status and workflow_state to support gradual
--- migration from simple status to more sophisticated workflow management.
+-- `status` is the public lifecycle (draft/published/archived); `workflow_state`
+-- is the editorial pipeline (draft/in_review/needs_changes/approved). Publishing
+-- is a status concern and never mutates workflow_state.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -321,8 +370,8 @@ CREATE TABLE IF NOT EXISTS posts (
     content LONGTEXT DEFAULT NULL,
     excerpt TEXT DEFAULT NULL,
     featured_image VARCHAR(255) DEFAULT NULL,
-    status ENUM('draft','pending','pending_review','approved','published','rejected','archived') DEFAULT 'draft',
-    workflow_state ENUM('idea','draft','in_review','needs_changes','approved','ready_to_publish') NOT NULL DEFAULT 'draft',
+    status ENUM('draft','pending','published','archived') NOT NULL DEFAULT 'draft',
+    workflow_state ENUM('draft','in_review','needs_changes','approved') NOT NULL DEFAULT 'draft',
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
     is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Headlines the blog landing; one per blog',

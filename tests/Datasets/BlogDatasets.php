@@ -19,7 +19,6 @@ dataset('blog_collaborator_roles', [
     'author',
     'contributor',
     'reviewer',
-    'viewer',
 ]);
 
 /**

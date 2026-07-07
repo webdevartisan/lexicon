@@ -7,9 +7,11 @@ namespace App\Controllers\Auth;
 use App\Auth;
 use App\Controllers\AppController;
 use App\Mail\WelcomeEmail;
+use App\Models\BlogInvitationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
+use App\Services\InvitationService;
 use App\Services\UsernameValidationService;
 use Exception;
 use Framework\Core\Response;
@@ -34,6 +36,8 @@ final class RegisterController extends AppController
         private UserProfileModel $profiles,
         private UserPreferencesModel $user_preferences,
         private UsernameValidationService $usernameValidator,
+        private BlogInvitationModel $invitationModel,
+        private InvitationService $invitationService,
     ) {}
 
     /**
@@ -116,6 +120,26 @@ final class RegisterController extends AppController
 
         // log the user in automatically after successful registration
         $this->auth->login($validated['email'], $this->request->post['password']);
+
+        // If the user got here from a blog invitation link, auto-accept it so
+        // they land directly on the blog they were invited to.
+        $pendingToken = (string) $this->session->get('pending_invite_token', '');
+        if ($pendingToken !== '') {
+            $invite = $this->invitationModel->findValidByToken(hash('sha256', $pendingToken));
+            if ($invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0) {
+                try {
+                    $this->invitationService->accept($pendingToken, $userId);
+                    $this->session->remove('pending_invite_token');
+                    $this->flash('success', "Welcome! You've joined the blog as {$invite['role']}.");
+
+                    return $this->redirect(lurl("/dashboard/blog/{$invite['blog_id']}/show"));
+                } catch (\RuntimeException) {
+                    // Fall through to the default welcome flow if the token expired.
+                }
+            }
+            // Stale or mismatched token — discard so it can't surface later.
+            $this->session->remove('pending_invite_token');
+        }
 
         // redirect to dashboard
         $this->flash('success', 'Welcome! Create your first blog to get started.');

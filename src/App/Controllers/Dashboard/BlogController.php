@@ -14,7 +14,9 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
+use App\Services\MediaService;
 use App\Services\UploadService;
+use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -26,13 +28,6 @@ use Framework\Exceptions\PageNotFoundException;
  */
 final class BlogController extends AppController
 {
-    /**
-     * Assignable blog roles for team management.
-     *
-     * Excludes owner/administrator - those are system-level roles.
-     */
-    private const ASSIGNABLE_ROLES = ['editor', 'author', 'contributor', 'reviewer', 'viewer'];
-
     public function __construct(
         private BlogModel $blogModel,
         private PostModel $post,
@@ -40,7 +35,9 @@ final class BlogController extends AppController
         private BlogSettingsModel $settings,
         private UploadService $uploader,
         private UserPreferencesModel $preference,
-        private BlogDeletionService $blogDeletion
+        private BlogDeletionService $blogDeletion,
+        private WorkflowService $workflowService,
+        private MediaService $mediaService,
     ) {}
 
     /**
@@ -57,7 +54,9 @@ final class BlogController extends AppController
             $sort = 'updated';
         }
 
-        $blogs = $this->blogModel->getBlogsByOwnerWithCounts($user['id']);
+        // "All Blogs" is the owner workspace listing. Shared blogs live on
+        // /dashboard/shared and shouldn't appear here.
+        $blogs = $this->blogModel->getBlogsByOwnerWithCounts((int) $user['id']);
 
         // Merge settings into each blog (banner/logo/theme/locale live there)
         $blogs = array_map(function (array $blog): array {
@@ -128,7 +127,7 @@ final class BlogController extends AppController
         $validator = $this->validateOrFail([
             'name' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:blogs,blog_slug',
-            'status' => 'in:draft,published,archived,rejected,approved,pending_review',
+            'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
             'locale' => 'max:200',
             'timezone' => 'max:200',
@@ -206,17 +205,28 @@ final class BlogController extends AppController
     {
         $user = auth()->user();
         $blog = $this->getBlog($id);
-        Gate::authorize('view', $blog, $user);
+        Gate::authorize('update', $blog, $user);
+
+        if ($blog->effectiveRoleForUser((int) $user['id']) === 'editor') {
+            breadcrumbs()->set([
+                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+                ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
+                ['label' => 'Edit Blog', 'url' => null, 'key' => 'breadcrumbs.editBlog'],
+            ], true);
+        }
 
         // Load settings with defaults
         $settings = $this->settings->findByBlogId((int) $id) ?? [
-            'theme' => 'default',
+            'theme' => 'folio',
             'banner_path' => '',
             'default_locale' => strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en'),
             'meta_title' => '',
             'meta_description' => '',
             'indexable' => 1,
             'timezone' => 'UTC',
+            'comments_enabled' => 1,
+            'workflow_enabled' => 0,
         ];
 
         return $this->view([
@@ -260,6 +270,7 @@ final class BlogController extends AppController
             'remove_banner' => 'boolean',
             'remove_logo' => 'boolean',
             'remove_favicon' => 'boolean',
+            'workflow_enabled' => 'boolean',
         ], [
             'name.required' => 'Blog name is required.',
             'name.title' => 'Blog name contains invalid characters.',
@@ -313,6 +324,7 @@ final class BlogController extends AppController
             'meta_description' => $validated['meta_description'] ?? '',
             'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
             'comments_enabled' => isset($validated['allow_comments']) ? 1 : 0,
+            'workflow_enabled' => isset($validated['workflow_enabled']) ? 1 : 0,
         ];
 
         // Handle branding uploads
@@ -348,6 +360,13 @@ final class BlogController extends AppController
             }
         }
 
+        // When the owner disables the workflow mid-flight, reset any in-review/needs_changes posts to draft.
+        $workflowWasEnabled = (bool) ($currentSettings['workflow_enabled'] ?? false);
+        $workflowNowEnabled = (bool) ($settingsData['workflow_enabled'] ?? false);
+        if ($workflowWasEnabled && !$workflowNowEnabled) {
+            $this->workflowService->disableWorkflow($blogId, $userId);
+        }
+
         audit()->log(
             $userId,
             'blog.updated',
@@ -374,28 +393,37 @@ final class BlogController extends AppController
 
         Gate::authorize('view', $blog, $user);
 
+        // Overview is the admin surface. Reviewers, authors and contributors
+        // have role-specific landings on /dashboard/shared and shouldn't drop
+        // into blog configuration by URL.
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+        if (!in_array($blogRole, ['owner', 'editor'], true)) {
+            throw new PageNotFoundException("Blog overview not available for role: {$blogRole}.");
+        }
+
+        // Editors arrive through Shared; the static pattern assumes All Blogs.
+        if ($blogRole === 'editor') {
+            breadcrumbs()->set([
+                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+                ['label' => 'Blog Overview', 'url' => null, 'key' => 'breadcrumbs.blogOverview'],
+            ], true);
+        }
+
         $settings = $this->settings->findByBlogId((int) $id);
 
-        // Per-status counts so the overview can show what's where without
-        // requiring the user to click through to All Posts.
-        $statusCount = fn (string $status): int => (int) $this->post
-            ->findByAuthorWithFiltersPagination(
-                authorId: (int) $user['id'], page: 1, perPage: 1,
-                blogId: (int) $id, status: $status
-            )['pagination']['total_records'];
-
+        // Blog overview shows all posts in the blog, not just the viewer's own.
         $stats = [
-            'published' => $statusCount('published'),
-            'draft' => $statusCount('draft'),
-            'pending' => $statusCount('pending'),
-            'archived' => $statusCount('archived'),
-            // Approved = public engagement; pending = actionable moderation queue.
+            'published' => $this->post->countByBlogIdAndStatus((int) $id, 'published'),
+            'draft' => $this->post->countByBlogIdAndStatus((int) $id, 'draft'),
+            'pending' => $this->post->countByBlogIdAndStatus((int) $id, 'pending'),
+            'archived' => $this->post->countByBlogIdAndStatus((int) $id, 'archived'),
             'comments' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'approved'),
             'comments_pending' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'pending'),
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
-        // Recent posts in THIS blog only.
+        // Recent published posts blog-wide (all authors).
         $recent = $this->post->findByAuthorWithFiltersPagination(
             authorId: (int) $user['id'], page: 1, perPage: 6,
             blogId: (int) $id, status: 'published'
@@ -407,6 +435,7 @@ final class BlogController extends AppController
             'settings' => $settings,
             'stats' => $stats,
             'recent' => $recent,
+            'blogRole' => $blogRole,
         ]);
     }
 
@@ -561,69 +590,19 @@ final class BlogController extends AppController
      */
     public function users(string $id): Response
     {
-        $user = auth()->user();
-        $blog = $this->getBlog($id);
-        Gate::authorize('manageUsers', $blog, $user);
-
-        $assigned = $this->blogModel->getBlogUsers((int) $id);
-        $availableUsers = $this->blogModel->getAvailableUsers((int) $id);
-
-        return $this->view('blog.users', [
-            'blog' => $blog->toArray(),
-            'assigned' => $assigned,
-            'availableUsers' => $availableUsers,
-            'assignableRoles' => self::ASSIGNABLE_ROLES,
-        ]);
+        // Collaborator management was consolidated into CollaboratorController.
+        // Redirect the legacy route to the canonical team page.
+        return $this->redirect(lurl("/dashboard/blog/{$id}/team"));
     }
 
     /**
-     * Add/remove blog team members.
-     *
-     * Validates role against whitelist. Uses CSRF protection.
+     * Legacy team-update endpoint — superseded by CollaboratorController.
      *
      * @param  string  $id  Blog ID
      */
     public function updateUsers(string $id): Response
     {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
-
-        $user = auth()->user();
-        $blog = $this->getBlog($id);
-        Gate::authorize('manageUsers', $blog, $user);
-
-        $action = $this->request->post['action'] ?? '';
-        $targetUserId = (int) ($this->request->post['user_id'] ?? 0);
-        $role = trim($this->request->post['role'] ?? '');
-
-        if ($action === 'add') {
-            if (!in_array($role, self::ASSIGNABLE_ROLES, true)) {
-                throw new \InvalidArgumentException('Invalid role.');
-            }
-            $this->blogModel->addUserToBlog((int) $id, $targetUserId, $role, $user['id']);
-
-            audit()->log(
-                $user['id'],
-                'blog.user_added',
-                'blog',
-                (int) $id,
-                ['target_user_id' => $targetUserId, 'role' => $role],
-                $this->request->ip()
-            );
-
-        } elseif ($action === 'remove') {
-            $this->blogModel->revokeUserFromBlog((int) $id, $targetUserId);
-
-            audit()->log(
-                $user['id'],
-                'blog.user_removed',
-                'blog',
-                (int) $id,
-                ['target_user_id' => $targetUserId],
-                $this->request->ip()
-            );
-        }
-
-        return $this->redirect("/dashboard/blogs/{$id}/users");
+        return $this->redirect(lurl("/dashboard/blog/{$id}/team"));
     }
 
     /**
@@ -659,6 +638,18 @@ final class BlogController extends AppController
     {
         $ownerId ??= $userId;
 
+        $paths = [];
+
+        // Library picks beat freshly-uploaded files — if the user selected an
+        // existing image, drop it straight into the corresponding _path slot.
+        foreach (['banner', 'logo', 'favicon'] as $type) {
+            $picked = trim((string) ($this->request->post[$type.'_library_url'] ?? ''));
+            if ($picked !== '') {
+                $paths[$type.'_path'] = $picked;
+                $this->mediaService->register($blogId, $userId, $picked, 'branding');
+            }
+        }
+
         $uploadedFiles = [
             'uploaded_banner_files' => $this->request->post['uploaded_banner_files'] ?? '',
             'uploaded_logo_files' => $this->request->post['uploaded_logo_files'] ?? '',
@@ -669,8 +660,6 @@ final class BlogController extends AppController
 
         [$dir, $baseUrl] = $this->uploader->blogBrandingPath($ownerId, $blogId);
 
-        $paths = [];
-
         foreach ($uploadedFileNames as $fieldName => $fileName) {
             if (empty($fileName)) {
                 continue;
@@ -680,8 +669,13 @@ final class BlogController extends AppController
             $parts = explode('_', $fieldName);
             $type = $parts[1];
 
+            // Library pick already filled this slot — don't clobber it.
+            if (isset($paths[$type.'_path'])) {
+                continue;
+            }
+
             try {
-                $paths[$type.'_path'] = $this->uploader->moveTempToBranding(
+                $path = $this->uploader->moveTempToBranding(
                     $fileName,
                     $ownerId,
                     $blogId,
@@ -689,6 +683,11 @@ final class BlogController extends AppController
                     $dir,
                     $baseUrl
                 );
+                $paths[$type.'_path'] = $path;
+
+                if ($path) {
+                    $this->mediaService->register($blogId, $userId, $path, 'branding');
+                }
             } catch (\Throwable $e) {
                 error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());
                 $this->flash('error', ucfirst($type).' upload failed: '.$e->getMessage());

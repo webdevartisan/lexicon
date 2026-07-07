@@ -69,13 +69,20 @@
                 <i data-lucide="external-link" class="size-4"></i>
                 <span>{{ t('dashboard.actions.viewLive') }}</span>
             </a>
+            <?php if (!in_array($blogRole ?? 'none', ['reviewer'], true)) { ?>
             {% set newPostLabel = t('dashboard.actions.newPost') %}
             {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="{$newPostLabel}" %}
+            <?php } ?>
         </div>
     </div>
 
-    <!-- KPI cards: the four numbers a creator wants on landing. -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- KPI cards: the numbers a creator wants on landing. The dashboard
+         is now strictly the active OWNED-blog workspace, so there's no
+         reviewer-context branch here — that case is impossible by construction
+         since the default blog must be one the user owns.
+         The Pending tile only renders when this blog uses the editorial pipeline. -->
+    <?php $kpiCols = !empty($workflowEnabled) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'; ?>
+    <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
         <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -98,6 +105,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.draft }}</div>
             </div>
         </a>
+        <?php if (!empty($workflowEnabled)) { ?>
         <a href="/dashboard/post?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -109,6 +117,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.pending }}</div>
             </div>
         </a>
+        <?php } ?>
         <a href="/dashboard/blog/{{ selectedBlogId }}/comments?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -152,19 +161,20 @@
                 <ul class="divide-y divide-slate-100 dark:divide-zink-600">
                     {% foreach ($needsAttention as $post): %}
                     <li class="py-3 first:pt-0 last:pb-0">
-                        <a href="/dashboard/post/<?= e((string) $post['id']) ?>/edit" class="flex items-start gap-3 group">
+                        <a href="/dashboard/post/<?= e((string) $post['id']) ?>/edit" 
+                            class="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:border-custom-500 hover:bg-slate-50 dark:border-zink-600 dark:hover:bg-zink-600 transition-colors">
                             <span class="inline-flex items-center justify-center size-8 rounded-md bg-slate-100 dark:bg-zink-600 text-slate-500 dark:text-zink-200 shrink-0 mt-0.5">
                                 <i data-lucide="<?= $post['status'] === 'pending' ? 'clock' : 'pencil' ?>" class="size-4"></i>
                             </span>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate group-hover:text-custom-500 transition-colors">
+                                <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate transition-colors">
                                     <?= e($post['title']) ?>
                                 </p>
                                 <p class="text-xs text-slate-500 dark:text-zink-300 mt-0.5">
                                     <?= e(ucfirst((string) $post['status'])) ?> · Updated <?= e(date('M j', strtotime((string) ($post['updated_at'] ?? $post['created_at'] ?? 'now')))) ?>
                                 </p>
                             </div>
-                            <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 mt-2 group-hover:text-custom-500 transition-colors"></i>
+                            <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 mt-3 transition-colors"></i>
                         </a>
                     </li>
                     {% endforeach %}
@@ -196,9 +206,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {% foreach ($recent as $post): %}
                     <a href="/dashboard/post/<?= e((string) $post['id']) ?>/edit"
-                       class="flex flex-col gap-1 p-3 rounded-lg border border-slate-100 hover:border-custom-500 hover:bg-slate-50 dark:border-zink-600 dark:hover:bg-zink-700 transition-colors group">
+                       class="flex flex-col gap-1 p-3 rounded-lg border border-slate-100 hover:border-custom-500 hover:bg-slate-50 dark:border-zink-600 dark:hover:bg-zink-600 transition-colors">
                         <div class="flex items-start justify-between gap-2">
-                            <p class="text-sm font-medium text-slate-900 dark:text-zink-50 line-clamp-2 group-hover:text-custom-500 transition-colors">
+                            <p class="text-sm font-medium text-slate-900 dark:text-zink-50 line-clamp-2 transition-colors">
                                 <?= e($post['title']) ?>
                             </p>
                         </div>
