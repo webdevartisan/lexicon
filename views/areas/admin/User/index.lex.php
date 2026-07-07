@@ -1,35 +1,92 @@
-{% extends "base_dashboard.lex.php" %}
+{% extends "back.lex.php" %}
 
-{% block title %}Manage Users{% endblock %}
+{% block title %}Users{% endblock %}
+{% block subtitle %}Manage accounts, roles, and access across the site.{% endblock %}
 
 {% block body %}
-<h1>Users</h1>
+<?php
+$basePath = '/admin/users';
+$emptyTitle = $q !== '' ? 'No users match your search' : 'No users yet';
+$emptyMessage = $q !== '' ? 'Try a different name, username, or email.' : 'Create the first account to get started.';
+?>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
-<p><a href="/admin/users/new">+ New User</a></p>
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
+        <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-xl">
+            {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search username, email, or name..." %}
+            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
+                <i data-lucide="search" class="size-4"></i> Search
+            </button>
+        </form>
+        <div class="shrink-0">
+            {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
+        </div>
+    </div>
 
-<table border="1" cellpadding="6" cellspacing="0">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Roles</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% foreach ($users as $user): %}
-        <tr>
-            <td><?= e($user['id']) ?></td>
-            <td><?= e($user['username']) ?></td>
-            <td><?= e($user['email']) ?></td>
-            <td><?= e($user['roles']) ?></td>
-            <td>
-                <a href="/admin/users/<?= $user['id'] ?>/edit">Edit</a> |
-                <a href="/admin/users/<?= $user['id'] ?>/delete">Delete</a>
-            </td>
-        </tr>
-    {% endforeach; %}
-    </tbody>
-</table>
+    {% if users|empty %}
+        {% cmp="empty-state" icon="users" title="{$emptyTitle}" message="{$emptyMessage}" %}
+    {% else %}
+    <div class="card">
+        <div class="card-body p-0 overflow-x-auto">
+            <table class="w-full whitespace-nowrap">
+                <thead class="text-left bg-slate-100 dark:bg-zink-600">
+                    <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
+                        <th class="px-3.5 py-2.5 font-semibold">ID</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Username</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Name</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Email</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Roles</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Status</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Joined</th>
+                        <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
+                    {% foreach ($users as $user): %}
+                    <?php
+                        $editUrl = '/admin/users/'.$user['id'].'/edit';
+$deleteUrl = '/admin/users/'.$user['id'].'/delete';
+$activeStatus = !empty($user['is_active']) ? 'active' : 'inactive';
+$activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
+?>
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
+                        <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">{{ user['username'] }}</td>
+                        <td class="px-3.5 py-2.5">
+                            <?= e(trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')) ?: '—') ?>
+                        </td>
+                        <td class="px-3.5 py-2.5">{{ user['email'] }}</td>
+                        <td class="px-3.5 py-2.5">
+                            <?php foreach (array_filter(explode(',', (string) $user['roles'])) as $roleName) { ?>
+                            <span class="inline-flex items-center px-2 py-0.5 mr-1 text-[10px] font-medium rounded-full border bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500">
+                                <?= e($roleName) ?>
+                            </span>
+                            <?php } ?>
+                        </td>
+                        <td class="px-3.5 py-2.5">
+                            {% cmp="status-badge" status="{$activeStatus}" label="{$activeLabel}" %}
+                        </td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $user['created_at']))) ?></td>
+                        <td class="px-3.5 py-2.5">
+                            <div class="flex items-center justify-end gap-1">
+                                {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit user" %}
+                                {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete user" danger %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endforeach; %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" itemSingular="user" itemPlural="users" %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/cp-assets/js/tooltip.js"></script>
 {% endblock %}

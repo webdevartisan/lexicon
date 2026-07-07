@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Resources\SystemResource;
 use App\Resources\UserResource;
 use Framework\Interfaces\PolicyInterface;
 
@@ -15,6 +16,7 @@ class PolicyResolver
         BlogResource::class => BlogPolicy::class,
         PostResource::class => PostPolicy::class,
         UserResource::class => UserPolicy::class,
+        SystemResource::class => SystemPolicy::class,
     ];
 
     public static function for(object|string $resource): PolicyInterface

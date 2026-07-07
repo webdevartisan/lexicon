@@ -719,3 +719,52 @@ test('real-world blog cache invalidation scenario', function () {
     expect($deleted2)->toBe(1)
         ->and($this->cache->get('en:GET:/posts'))->not->toBeNull();
 });
+
+/**
+ * Maintenance operations must keep working while caching is disabled.
+ *
+ * The enabled flag only gates serving (get/set/has). Admins and CLI
+ * commands still need clear/prune/delete to remove leftover files after
+ * CACHE_ENABLED is switched off, otherwise stale files linger on disk
+ * with no way to remove them from the panel.
+ */
+test('maintenance operations work while caching is disabled', function () {
+    // Seed files while enabled so there is something on disk
+    $this->cache->set('en:GET:/page-1', 'content-1', 3600);
+    $this->cache->set('en:GET:/page-2', 'content-2', 3600);
+
+    $disabled = new CacheService(
+        cachePath: $this->testCachePath,
+        enabled: false,
+        gcProbability: 0,
+        gcDivisor: 100,
+        maxFiles: 1000
+    );
+
+    // Serving stays off
+    expect($disabled->get('en:GET:/page-1'))->toBeNull()
+        ->and($disabled->has('en:GET:/page-1'))->toBeFalse()
+        ->and($disabled->set('en:GET:/page-3', 'content-3', 3600))->toBeFalse();
+
+    // Maintenance still acts on the files left behind
+    expect($disabled->deletePattern('*page-1*'))->toBe(1);
+
+    $result = $disabled->clear();
+    expect($result['deleted'])->toBe(1)
+        ->and(glob($this->testCachePath.'/*.cache'))->toBeEmpty();
+});
+
+test('stats report the enabled flag', function () {
+    expect($this->cache->stats()['enabled'])->toBeTrue();
+
+    $disabled = new CacheService(
+        cachePath: $this->testCachePath,
+        enabled: false,
+        gcProbability: 0,
+        gcDivisor: 100,
+        maxFiles: 1000
+    );
+
+    expect($disabled->stats()['enabled'])->toBeFalse()
+        ->and($disabled->isEnabled())->toBeFalse();
+});

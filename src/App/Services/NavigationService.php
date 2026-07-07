@@ -71,16 +71,26 @@ class NavigationService
                 }
             }
 
-            // check global role requirements
-            if (!empty($it['roles'])) {
-                $hasRole = false;
-                foreach ($it['roles'] as $role) {
+            // Role and permission gates: any listed role or any listed
+            // permission unlocks the item, so admin areas can be opened to
+            // non-admin roles by granting the matching permission slug
+            if (!empty($it['roles']) || !empty($it['permissions'])) {
+                $allowed = false;
+                foreach ($it['roles'] ?? [] as $role) {
                     if ($this->auth->hasRole($role)) {
-                        $hasRole = true;
+                        $allowed = true;
                         break;
                     }
                 }
-                if (!$hasRole) {
+                if (!$allowed) {
+                    foreach ($it['permissions'] ?? [] as $permission) {
+                        if ($this->auth->hasPermission($permission)) {
+                            $allowed = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$allowed) {
                     return false;
                 }
             }

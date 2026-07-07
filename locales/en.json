@@ -33,6 +33,8 @@
     "team": "Team",
     "shared": "Shared",
     "contentSection": "Content",
+    "peopleSection": "People",
+    "systemSection": "System",
     "newPost": "New Post",
     "allPosts": "All Posts",
     "categoriesTags": "Categories / Tags",
@@ -46,9 +48,12 @@
     "categories": "Categories",
     "tags": "Tags",
     "roles": "Roles",
-    "emailTest": "Email Test",
+    "emailTest": "Email Templates",
     "settings": "Settings",
-    "cacheManagement": "Cache Management"
+    "cacheManagement": "Cache Management",
+    "auditLog": "Audit Log",
+    "moderation": "Moderation",
+    "system": "System"
   },
 
   "breadcrumbs": {

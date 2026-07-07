@@ -24,6 +24,38 @@ class UserModel extends AppModel
     protected ?string $table = 'users';
 
     /**
+     * Daily signup counts for the last N days, for the admin overview chart.
+     *
+     * Days with no signups are filled with zero so the chart has a bar
+     * for every day in the window.
+     *
+     * @param  int  $days  Window size in days
+     * @return array<string, int> Y-m-d date => signups
+     */
+    public function signupsByDay(int $days = 30): array
+    {
+        $days = max(1, min(90, $days));
+
+        $sql = "SELECT DATE(created_at) AS day, COUNT(*) AS cnt
+                FROM {$this->getTable()}
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                GROUP BY DATE(created_at)";
+
+        $rows = [];
+        foreach ($this->database->query($sql, [$days - 1])->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $rows[(string) $row['day']] = (int) $row['cnt'];
+        }
+
+        $series = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = date('Y-m-d', strtotime("-{$i} days"));
+            $series[$day] = $rows[$day] ?? 0;
+        }
+
+        return $series;
+    }
+
+    /**
      * Find a single user by email address.
      *
      * Exclude soft-deleted users from authentication attempts.
@@ -211,6 +243,70 @@ class UserModel extends AppModel
      * @param  int  $userId  User ID
      * @return string[] Array of role slugs
      */
+    /**
+     * Paginated user listing for the admin panel, roles aggregated in one
+     * query instead of one lookup per row.
+     *
+     * @param  int  $page  Current page (1-based)
+     * @param  int  $perPage  Rows per page (capped at 100)
+     * @param  string  $q  Optional username/email/name search term
+     * @return array{data: array, pagination: array}
+     */
+    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
+    {
+        $page = max(1, $page);
+        $perPage = min(max(1, $perPage), 100);
+
+        $where = 'WHERE u.deleted_at IS NULL';
+        $params = [];
+
+        if ($q !== '') {
+            $where .= " AND (u.username LIKE :q_username OR u.email LIKE :q_email
+                        OR CONCAT_WS(' ', u.first_name, u.last_name) LIKE :q_name)";
+            $term = '%'.$q.'%';
+            $params[':q_username'] = $term;
+            $params[':q_email'] = $term;
+            $params[':q_name'] = $term;
+        }
+
+        $total = (int) $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()} u {$where}",
+            $params
+        )->fetchColumn();
+
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name,
+                       u.is_active, u.created_at,
+                       COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles
+                FROM {$this->getTable()} u
+                LEFT JOIN user_roles ur ON ur.user_id = u.id
+                LEFT JOIN roles r ON r.id = ur.role_id
+                {$where}
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = $offset;
+
+        $rows = $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $totalPages = (int) ceil($total / $perPage);
+
+        return [
+            'data' => $rows,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_records' => $total,
+                'total_pages' => $totalPages,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
+            ],
+        ];
+    }
+
     public function getUserRoles(int $userId): array
     {
         $sql = 'SELECT r.role_slug

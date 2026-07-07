@@ -209,8 +209,9 @@ SHOW_ERRORS={$config['show_errors']}
 # Security & Performance
 FORCE_HTTPS={$config['force_https']}
 FORCE_WWW={$config['force_www']}
-MAINTENANCE={$config['maintenance']}
+# Maintenance is toggled via storage/maintenance.json (admin Settings or deploy scripts)
 MAINTENANCE_ALLOW="{$config['maintenance_allow']}"
+MAINTENANCE_RETRY_AFTER=600
 
 # Mail Configuration
 MAIL_ENABLED=false
@@ -374,7 +375,6 @@ try {
             'db_password' => $appPass,
             'force_https' => $isProduction ? '1' : '0',
             'force_www' => '0',
-            'maintenance' => '0',
             'maintenance_allow' => '127.0.0.1,10.0.0.0/8,192.168.0.0/16',
             'mail_driver' => $mailDriver,
             'mail_host' => $mailHost,

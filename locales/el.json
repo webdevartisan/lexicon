@@ -31,6 +31,8 @@
     "appearanceTheme": "Εμφάνιση / Θέμα",
     "collaborators": "Συνεργάτες",
     "contentSection": "Ενότητα Περιεχομένου",
+    "peopleSection": "Χρήστες & Ρόλοι",
+    "systemSection": "Σύστημα",
     "newPost": "Νέα Ανάρτηση",
     "allPosts": "Όλες οι Αναρτήσεις",
     "categoriesTags": "Κατηγορίες / Ετικέτες",
@@ -44,8 +46,12 @@
     "categories": "Κατηγορίες",
     "tags": "Ετικέτες",
     "roles": "Ρόλοι",
-    "emailTest": "Δοκιμή Email",
-    "settings": "Ρυθμίσεις"
+    "emailTest": "Πρότυπα Email",
+    "settings": "Ρυθμίσεις",
+    "cacheManagement": "Διαχείριση Cache",
+    "auditLog": "Αρχείο Ενεργειών",
+    "moderation": "Εποπτεία Σχολίων",
+    "system": "Σύστημα"
   },
 
   "breadcrumbs": {

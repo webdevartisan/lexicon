@@ -49,7 +49,7 @@ $old = old($elementName);
         id="<?= $elementName ?>" 
         name="<?= $elementName ?>"
         class="<?= $classInput ?> <?= !empty($prefix) ? $classPrefix : '' ?> <?= !empty($errors["$elementName"]) ? $classInvalid : '' ?>" 
-        value="<?= $old ?? $value ?>" 
+        value="<?= e($old ?? $value) ?>"
         <?php if ($type === 'password') {
             echo 'autocomplete="'.str_replace('_', '-', $elementName).'"';
         }  ?>

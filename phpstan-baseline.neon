@@ -37,19 +37,7 @@ parameters:
 			path: src/App/Console/Commands/CacheWarmCommand.php
 
 		-
-			message: '#^Call to an undefined method App\\Models\\BlogModel\:\:findResource\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/App/Controllers/Admin/BlogController.php
-
-		-
 			message: '#^Call to an undefined method App\\Models\\BlogModel\:\:getErrors\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/App/Controllers/Admin/BlogController.php
-
-		-
-			message: '#^Call to an undefined method App\\Models\\BlogModel\:\:logActivity\(\)\.$#'
 			identifier: method.notFound
 			count: 1
 			path: src/App/Controllers/Admin/BlogController.php
@@ -67,20 +55,8 @@ parameters:
 			path: src/App/Controllers/Admin/BlogController.php
 
 		-
-			message: '#^Method App\\Controllers\\Admin\\BlogController\:\:show\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: src/App/Controllers/Admin/BlogController.php
-
-		-
-			message: '#^Method App\\Controllers\\Admin\\BlogController\:\:show\(\) has parameter \$id with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: src/App/Controllers/Admin/BlogController.php
-
-		-
-			message: '#^Variable \$blogs might not be defined\.$#'
-			identifier: variable.undefined
+			message: '#^Method App\\Controllers\\Admin\\BlogController\:\:getBlog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Controllers/Admin/BlogController.php
 
@@ -103,6 +79,24 @@ parameters:
 			path: src/App/Controllers/Admin/CommentController.php
 
 		-
+			message: '#^Method App\\Controllers\\Admin\\ControlPanelController\:\:systemHealth\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Controllers/Admin/ControlPanelController.php
+
+		-
+			message: '#^Property App\\Controllers\\Admin\\ControlPanelController\:\:\$settings is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/App/Controllers/Admin/ControlPanelController.php
+
+		-
+			message: '#^Method App\\Controllers\\Admin\\EmailTestController\:\:getMailConfigSummary\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Controllers/Admin/EmailTestController.php
+
+		-
 			message: '#^Call to an undefined method App\\Models\\PostModel\:\:getErrors\(\)\.$#'
 			identifier: method.notFound
 			count: 2
@@ -121,14 +115,14 @@ parameters:
 			path: src/App/Controllers/Admin/PostController.php
 
 		-
-			message: '#^Method App\\Controllers\\Admin\\RoleController\:\:getRole\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Controllers\\Admin\\PostController\:\:validatePostInput\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/App/Controllers/Admin/RoleController.php
+			path: src/App/Controllers/Admin/PostController.php
 
 		-
-			message: '#^Parameter \#1 \$roleId of method App\\Models\\RoleModel\:\:getRolePermissions\(\) expects int, string given\.$#'
-			identifier: argument.type
+			message: '#^Method App\\Controllers\\Admin\\RoleController\:\:getRole\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Controllers/Admin/RoleController.php
 
@@ -137,6 +131,24 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Controllers/Admin/SettingController.php
+
+		-
+			message: '#^Method App\\Controllers\\Admin\\SystemController\:\:logFiles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Controllers/Admin/SystemController.php
+
+		-
+			message: '#^Method App\\Controllers\\Admin\\SystemController\:\:phpInfo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Controllers/Admin/SystemController.php
+
+		-
+			message: '#^Method App\\Controllers\\Admin\\SystemController\:\:tableStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Controllers/Admin/SystemController.php
 
 		-
 			message: '#^Call to an undefined method App\\Models\\TagModel\:\:getErrors\(\)\.$#'
@@ -149,12 +161,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Controllers/Admin/TagController.php
-
-		-
-			message: '#^Call to an undefined method App\\Models\\UserModel\:\:getErrors\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: src/App/Controllers/Admin/UserController.php
 
 		-
 			message: '#^Method App\\Controllers\\Admin\\UserController\:\:getUser\(\) return type has no value type specified in iterable type array\.$#'
@@ -595,6 +601,18 @@ parameters:
 			path: src/App/Middleware/TranslationGlobalsMiddleware.php
 
 		-
+			message: '#^Method App\\Models\\ActivityLogModel\:\:findWithFilters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/App/Models/ActivityLogModel.php
+
+		-
+			message: '#^Method App\\Models\\ActivityLogModel\:\:latestEntries\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/ActivityLogModel.php
+
+		-
 			message: '#^Method App\\Models\\BlogInvitationModel\:\:getExpiredForBlog\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -610,6 +628,12 @@ parameters:
 			message: '#^Method App\\Models\\BlogModel\:\:createBlog\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
+			path: src/App/Models/BlogModel.php
+
+		-
+			message: '#^Method App\\Models\\BlogModel\:\:findAllForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
 			path: src/App/Models/BlogModel.php
 
 		-
@@ -715,9 +739,21 @@ parameters:
 			path: src/App/Models/BlogSettingsModel.php
 
 		-
+			message: '#^Method App\\Models\\CategoryModel\:\:allWithBlog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/CategoryModel.php
+
+		-
 			message: '#^Method App\\Models\\CategoryModel\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
+			path: src/App/Models/CategoryModel.php
+
+		-
+			message: '#^Method App\\Models\\CategoryModel\:\:findAllForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
 			path: src/App/Models/CategoryModel.php
 
 		-
@@ -802,6 +838,12 @@ parameters:
 			message: '#^Method App\\Models\\CommentModel\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
+			path: src/App/Models/CommentModel.php
+
+		-
+			message: '#^Method App\\Models\\CommentModel\:\:findAllWithFilters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
 			path: src/App/Models/CommentModel.php
 
 		-
@@ -904,6 +946,12 @@ parameters:
 			message: '#^Method App\\Models\\PostModel\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
+			path: src/App/Models/PostModel.php
+
+		-
+			message: '#^Method App\\Models\\PostModel\:\:findAllForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
 			path: src/App/Models/PostModel.php
 
 		-
@@ -1093,10 +1141,34 @@ parameters:
 			path: src/App/Models/ReviewModel.php
 
 		-
+			message: '#^Method App\\Models\\RoleModel\:\:findAllWithUserCounts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/RoleModel.php
+
+		-
 			message: '#^Method App\\Models\\RoleModel\:\:getRolePermissions\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Models/RoleModel.php
+
+		-
+			message: '#^Method App\\Models\\RoleModel\:\:isSystemRole\(\) has parameter \$role with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/RoleModel.php
+
+		-
+			message: '#^Method App\\Models\\TagModel\:\:allWithBlog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/TagModel.php
+
+		-
+			message: '#^Method App\\Models\\TagModel\:\:findAllForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/App/Models/TagModel.php
 
 		-
 			message: '#^Method App\\Models\\TagModel\:\:findBySlug\(\) return type has no value type specified in iterable type array\.$#'
@@ -1129,7 +1201,19 @@ parameters:
 			path: src/App/Models/TagModel.php
 
 		-
+			message: '#^Method App\\Models\\UserModel\:\:findAllForAdmin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/App/Models/UserModel.php
+
+		-
 			message: '#^Method App\\Models\\UserModel\:\:findWithTrashed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Models/UserModel.php
+
+		-
+			message: '#^Method App\\Models\\UserModel\:\:getUserRoles\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Models/UserModel.php
@@ -1315,6 +1399,108 @@ parameters:
 			path: src/App/Policies/PostPolicy.php
 
 		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:accessDashboard\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:allowsArea\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:hasPermission\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:isAdministrator\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageBlogs\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageCache\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:managePosts\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageRoles\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageSettings\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageTaxonomy\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:manageUsers\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:moderateComments\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:update\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:view\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:viewAuditLog\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
+			message: '#^Method App\\Policies\\SystemPolicy\:\:viewSystem\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Policies/SystemPolicy.php
+
+		-
 			message: '#^Method App\\Policies\\UserPolicy\:\:delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1460,6 +1646,12 @@ parameters:
 
 		-
 			message: '#^Method App\\Services\\EmailTemplateRegistry\:\:getAll\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/App/Services/EmailTemplateRegistry.php
+
+		-
+			message: '#^Method App\\Services\\EmailTemplateRegistry\:\:getGrouped\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/App/Services/EmailTemplateRegistry.php

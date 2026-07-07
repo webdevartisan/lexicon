@@ -69,6 +69,18 @@ class CacheService
     }
 
     /**
+     * Whether response caching is currently active.
+     *
+     * The enabled flag only gates serving (get/set/has). Maintenance
+     * operations (clear, prune, delete) always run so leftover files can
+     * be cleaned up even while caching is switched off.
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    /**
      * Get cached content for key or null if expired/missing.
      *
      * check expiration before returning to ensure stale content is never served.
@@ -174,10 +186,6 @@ class CacheService
      */
     public function delete(string $key): bool
     {
-        if (!$this->enabled) {
-            return true;
-        }
-
         $hash = $this->hashKey($key);
 
         return $this->deleteByHash($hash);
@@ -200,10 +208,6 @@ class CacheService
      */
     public function deletePattern(string $pattern): int
     {
-        if (!$this->enabled) {
-            return 0;
-        }
-
         $deleted = 0;
         $index = $this->readIndex();
 
@@ -232,10 +236,6 @@ class CacheService
      */
     public function clear(): array
     {
-        if (!$this->enabled) {
-            return ['deleted' => 0, 'failed' => 0, 'total' => 0];
-        }
-
         $deleted = 0;
         $failed = 0;
 
@@ -302,6 +302,7 @@ class CacheService
      * for monitoring and debugging cache health.
      *
      * @return array{
+     *     enabled: bool,
      *     total_files: int,
      *     live_files: int,
      *     expired_files: int,
@@ -344,6 +345,7 @@ class CacheService
         $index = $this->readIndex();
 
         return [
+            'enabled' => $this->enabled,
             'total_files' => $total,
             'live_files' => $live,
             'expired_files' => $expired,
@@ -370,10 +372,6 @@ class CacheService
      */
     public function pruneExpired(): int
     {
-        if (!$this->enabled) {
-            return 0;
-        }
-
         $deleted = 0;
         $files = glob($this->cachePath.'/*.cache') ?: [];
         $now = time();

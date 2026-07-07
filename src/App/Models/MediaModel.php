@@ -7,7 +7,7 @@ namespace App\Models;
 /**
  * Per-blog index of uploaded images.
  *
- * Files still live under /public/uploads/... — this model just records
+ * Files live under /storage/uploads/... This model just records
  * what's on disk so the library can browse, search and clean them up.
  */
 class MediaModel extends AppModel

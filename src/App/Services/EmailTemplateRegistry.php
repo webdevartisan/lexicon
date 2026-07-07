@@ -12,6 +12,10 @@ use Exception;
  *
  * provide a centralized registry for discovering and instantiating
  * email templates with sample data for testing and preview purposes.
+ *
+ * Every Mailable in src/App/Mail must be registered here so it shows up
+ * on the admin Email Templates page; unregisteredClasses() reports any
+ * that were added to the codebase but never registered.
  */
 class EmailTemplateRegistry
 {
@@ -19,7 +23,8 @@ class EmailTemplateRegistry
      * Get all available email templates with metadata.
      *
      * register each template with sample data needed for instantiation,
-     * making it easy to test templates with realistic content.
+     * making it easy to test templates with realistic content. The group
+     * key drives the section headings on the admin page.
      *
      * @return array<string, array>
      */
@@ -27,9 +32,11 @@ class EmailTemplateRegistry
     {
         // register each template with sample data for testing
         return [
+            // Account lifecycle
             'welcome' => [
                 'name' => 'Welcome Email',
                 'description' => 'Sent to new users after registration',
+                'group' => 'Account',
                 'class' => 'App\\Mail\\WelcomeEmail',
                 'sample_data' => [
                     'user' => [
@@ -42,17 +49,199 @@ class EmailTemplateRegistry
             'password_reset' => [
                 'name' => 'Password Reset',
                 'description' => 'Sent when user requests password reset',
+                'group' => 'Account',
                 'class' => 'App\\Mail\\PasswordResetEmail',
                 'sample_data' => [
                     'user' => [
                         'first_name' => 'Jane',
                         'email' => 'jane@example.com',
                     ],
-                    'reset_url' => 'https://yourdomain.com/password/reset/SAMPLE_TOKEN_HERE',
-                    'expires_in' => 60,
+                    'token' => 'SAMPLE_TOKEN_HERE',
+                    'expiresInMinutes' => 60,
+                ],
+            ],
+
+            // Collaboration and team management
+            'blog_invite' => [
+                'name' => 'Blog Invitation',
+                'description' => 'Invites someone to join a blog with a specific role',
+                'group' => 'Collaboration',
+                'class' => 'App\\Mail\\BlogInviteMail',
+                'sample_data' => [
+                    'toEmail' => 'invitee@example.com',
+                    'rawToken' => 'SAMPLE_INVITE_TOKEN',
+                    'blogName' => 'Travel Stories',
+                    'role' => 'author',
+                ],
+            ],
+            'collaborator_role_changed' => [
+                'name' => 'Collaborator Role Changed',
+                'description' => 'Notifies a collaborator their role on a blog changed',
+                'group' => 'Collaboration',
+                'class' => 'App\\Mail\\CollaboratorRoleChangedMail',
+                'sample_data' => [
+                    'toEmail' => 'collaborator@example.com',
+                    'blogName' => 'Travel Stories',
+                    'newRole' => 'reviewer',
+                    'changedByUsername' => 'blogowner',
+                ],
+            ],
+            'collaborator_removed' => [
+                'name' => 'Collaborator Removed',
+                'description' => 'Notifies a collaborator they were removed from a blog',
+                'group' => 'Collaboration',
+                'class' => 'App\\Mail\\CollaboratorRemovedMail',
+                'sample_data' => [
+                    'toEmail' => 'collaborator@example.com',
+                    'blogName' => 'Travel Stories',
+                    'removedByUsername' => 'blogowner',
+                ],
+            ],
+            'invite_declined' => [
+                'name' => 'Invitation Declined',
+                'description' => 'Tells the blog owner an invitation was declined',
+                'group' => 'Collaboration',
+                'class' => 'App\\Mail\\InviteDeclinedMail',
+                'sample_data' => [
+                    'toEmail' => 'owner@example.com',
+                    'blogName' => 'Travel Stories',
+                    'declinedEmail' => 'invitee@example.com',
+                ],
+            ],
+
+            // Review workflow notifications
+            'post_submitted' => [
+                'name' => 'Post Submitted for Review',
+                'description' => 'Notifies reviewers a draft is waiting for review',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostSubmittedMail',
+                'sample_data' => [
+                    'toEmail' => 'reviewer@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'authorUsername' => 'johndoe',
+                    'unassigned' => false,
+                ],
+            ],
+            'reviewer_assigned' => [
+                'name' => 'Reviewer Assigned',
+                'description' => 'Notifies a reviewer they were assigned to a post',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\ReviewerAssignedMail',
+                'sample_data' => [
+                    'toEmail' => 'reviewer@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'assignedByUsername' => 'blogowner',
+                ],
+            ],
+            'reviewer_stale' => [
+                'name' => 'Reviewer Unassigned (Stale)',
+                'description' => 'Tells a former reviewer the assignment moved on without them',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\ReviewerStaleMail',
+                'sample_data' => [
+                    'toEmail' => 'reviewer@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'formerReviewerUsername' => 'oldreviewer',
+                ],
+            ],
+            'post_approved' => [
+                'name' => 'Post Approved',
+                'description' => 'Tells the author their post passed review',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostApprovedMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'reviewerUsername' => 'janereviewer',
+                ],
+            ],
+            'post_needs_changes' => [
+                'name' => 'Post Needs Changes',
+                'description' => 'Sends the author reviewer feedback asking for changes',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostNeedsChangesMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'reviewerUsername' => 'janereviewer',
+                    'feedback' => 'Great start! Please add photo credits and tighten the intro paragraph.',
+                ],
+            ],
+            'post_published' => [
+                'name' => 'Post Published',
+                'description' => 'Tells the author their post is live with a public link',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostPublishedMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                ],
+            ],
+            'workflow_disabled' => [
+                'name' => 'Review Workflow Disabled',
+                'description' => 'Notifies authors with pending posts that review was switched off',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\WorkflowDisabledMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogName' => 'Travel Stories',
                 ],
             ],
         ];
+    }
+
+    /**
+     * Templates grouped for display, keyed by group label.
+     *
+     * @return array<string, array<string, array>>
+     */
+    public function getGrouped(): array
+    {
+        $grouped = [];
+        foreach ($this->getAll() as $key => $template) {
+            $grouped[$template['group'] ?? 'Other'][$key] = $template;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Mailable classes on disk that are missing from the registry.
+     *
+     * Guards against new notification emails silently not appearing on
+     * the admin Email Templates page.
+     *
+     * @return string[] Fully qualified class names
+     */
+    public function unregisteredClasses(): array
+    {
+        $registered = array_column($this->getAll(), 'class');
+
+        $missing = [];
+        foreach (glob(ROOT_PATH.'/src/App/Mail/*.php') ?: [] as $file) {
+            $class = 'App\\Mail\\'.basename($file, '.php');
+
+            if ($class === Mailable::class || in_array($class, $registered, true)) {
+                continue;
+            }
+
+            // Only concrete Mailable subclasses belong on the page
+            if (class_exists($class) && is_subclass_of($class, Mailable::class)) {
+                $missing[] = $class;
+            }
+        }
+
+        return $missing;
     }
 
     /**

@@ -14,11 +14,14 @@ use Framework\Exceptions\PageNotFoundException;
 /**
  * Admin post management controller.
  *
- * All routes are behind the /admin prefix and administrator role middleware.
- * Authorization is enforced via explicit permission checks (e.g. manage_all_posts).
+ * Authorization is enforced by the /admin route group middleware
+ * (auth + role:administrator) in config/routes.php.
  */
 class PostController extends AppController
 {
+    // Enforced for every action by AppController::beforeAction()
+    protected ?string $areaAbility = 'managePosts';
+
     public function __construct(
         private PostModel $model,
         private BlogModel $blogModel,
@@ -26,17 +29,21 @@ class PostController extends AppController
     ) {}
 
     /**
-     * List posts available to administrators.
+     * List posts across every blog with status filter, search, and paging.
      */
     public function index(): Response
     {
-        $this->requirePermission('manage_all_posts');
+        $status = trim((string) ($this->request->get['status'] ?? ''));
+        $q = trim((string) ($this->request->get['q'] ?? ''));
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        $posts = $this->model->findAll();
+        $result = $this->model->findAllForAdmin($page, 20, $status, $q);
 
         return $this->view([
-            'posts' => $posts,
-            'user' => auth()->user(),
+            'posts' => $result['data'],
+            'pagination' => $result['pagination'],
+            'status' => $status,
+            'q' => $q,
         ]);
     }
 
@@ -45,8 +52,6 @@ class PostController extends AppController
      */
     public function show(string $id): Response
     {
-        $this->requirePermission('manage_all_posts');
-
         $post = $this->getPost($id);
 
         return $this->view([
@@ -59,8 +64,6 @@ class PostController extends AppController
      */
     public function new(): Response
     {
-        $this->requirePermission('create_posts');
-
         $post['status'] = 'draft';
 
         $blogs = $this->getBlogs();
@@ -76,23 +79,24 @@ class PostController extends AppController
      */
     public function create(): Response
     {
-        // $this->requireRole(['author', 'editor', 'administrator']);
-        $this->requirePermission('create_posts');
+        csrf()->assertValid($this->request->postParam('_token'));
 
-        // Get form data (assumes form is submitted as POST)
+        $input = $this->validatePostInput();
+
         $data = [
-            'title' => $this->request->post['title'] ?? '',
-            'slug' => $this->request->post['slug'] ?? '',
-            'content' => $this->request->post['content'] ?? '',
-            'excerpt' => $this->request->post['excerpt'] ?? null,
-            'featured_image' => $this->request->post['featured_image'] ?? null,
-            'status' => $this->request->post['status'] ?? 'draft',
-            'blog_id' => $this->request->post['blog_id'] ?? null,  // important!
-            'author_id' => auth()->user()['id'], // assumes auth()->user() is set in controller constructor
+            'title' => $input['title'],
+            'slug' => $input['slug'] ?? '',
+            'content' => $input['content'],
+            'excerpt' => $input['excerpt'] ?? null,
+            'featured_image' => $input['featured_image'] ?? null,
+            'status' => $input['status'],
+            'blog_id' => (int) $input['blog_id'],
+            'author_id' => auth()->user()['id'],
         ];
 
-        // Call model’s insert; model should validate and handle DB insertion
         if ($this->model->insert($data)) {
+            $this->flash('success', 'Post created.');
+
             return $this->redirect('/admin/posts');
         }
 
@@ -108,12 +112,10 @@ class PostController extends AppController
      */
     public function edit(string $id): Response
     {
-        $this->requirePermission('edit_all_posts');
-
         $post = $this->getPost($id);
         $blogs = $this->getBlogs();
 
-        return $this->view('Admin/Posts/edit.lex.php', [
+        return $this->view('post.edit', [
             'post' => $post,
             'blogs' => $blogs,
         ]);
@@ -124,26 +126,29 @@ class PostController extends AppController
      */
     public function update(string $id): Response
     {
-        $this->requirePermission('edit_all_posts');
+        csrf()->assertValid($this->request->postParam('_token'));
 
         $post = $this->getPost($id);
 
+        $input = $this->validatePostInput();
+
         $data = [
-            'title' => $this->request->post['title'],
-            'slug' => $this->request->post['slug'],
-            'content' => $this->request->post['content'],
-            'excerpt' => $this->request->post['excerpt'] ?? null,
-            'featured_image' => $this->request->post['featured_image'] ?? null,
-            'status' => $this->request->post['status'] ?? 'draft',
-            'blog_id' => $this->request->post['blog_id'],
-            // 'author_id'     => auth()->user()['id'] // assumes auth()->user() is set in controller constructor
+            'title' => $input['title'],
+            'slug' => $input['slug'] ?? $post['slug'],
+            'content' => $input['content'],
+            'excerpt' => $input['excerpt'] ?? null,
+            'featured_image' => $input['featured_image'] ?? null,
+            'status' => $input['status'],
+            'blog_id' => (int) $input['blog_id'],
         ];
 
         if ($this->model->update($id, $data)) {
+            $this->flash('success', 'Post updated.');
+
             return $this->redirect('/admin/posts');
         }
 
-        return $this->view('Admin/Posts/edit.lex.php', [
+        return $this->view('post.edit', [
             'errors' => $this->model->getErrors(),
             'post' => $data,
         ]);
@@ -154,11 +159,9 @@ class PostController extends AppController
      */
     public function delete(string $id): Response
     {
-        $this->requirePermission('delete_all_posts');
-
         $post = $this->getPost($id);
 
-        return $this->view('Admin/Posts/delete.lex.php', [
+        return $this->view('post.delete', [
             'post' => $post,
         ]);
     }
@@ -168,11 +171,40 @@ class PostController extends AppController
      */
     public function destroy(string $id): Response
     {
-        $this->requirePermission('delete_all_posts');
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $post = $this->getPost($id);
 
         $this->model->delete($id);
 
+        audit()->log(
+            (int) auth()->user()['id'],
+            'post.deleted',
+            'post',
+            (int) $id,
+            ['title' => $post['title'] ?? null, 'blog_id' => $post['blog_id'] ?? null],
+            $this->request->ip()
+        );
+
+        $this->flash('success', 'Post deleted.');
+
         return $this->redirect('/admin/posts');
+    }
+
+    /**
+     * Shared validation for create and update submissions.
+     */
+    private function validatePostInput(): array
+    {
+        return $this->validateOrFail([
+            'title' => 'required|min:3|max:200',
+            'slug' => 'max:220',
+            'content' => 'required',
+            'excerpt' => 'max:500',
+            'featured_image' => 'max:255',
+            'status' => 'required|in:draft,published,archived',
+            'blog_id' => 'required|integer|exists:blogs,id',
+        ])->validated();
     }
 
     /**
