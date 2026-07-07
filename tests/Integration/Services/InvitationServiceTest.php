@@ -45,7 +45,8 @@ beforeEach(function () {
         $this->blogModel,
         $this->userModel,
         $notificationService,
-        $this->mailService
+        $this->mailService,
+        new UserPreferencesModel($this->db)
     );
 
     $this->ownerId = UserFactory::new($this->userModel)->create();

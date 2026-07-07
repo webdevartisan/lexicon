@@ -23,6 +23,11 @@ beforeEach(function () {
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
     $this->postModel = new PostModel($this->db);
+
+    // Taxonomy is blog-scoped (blog_id NOT NULL + FK), so every category
+    // needs a real blog to attach to.
+    $this->ownerId = UserFactory::new($this->userModel)->create();
+    $this->blogId = BlogFactory::new($this->blogModel)->published()->create($this->ownerId);
 });
 
 // ============================================================================
@@ -39,6 +44,7 @@ it('creates a category successfully', function () {
     $slug = faker()->slug(2);
 
     $data = [
+        'blog_id' => $this->blogId,
         'name' => $name,
         'slug' => $slug,
     ];
@@ -61,7 +67,7 @@ it('creates a category successfully', function () {
  * Verifies update operation persists changes correctly.
  */
 it('updates a category successfully', function () {
-    $id = CategoryFactory::new($this->categoryModel)
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes([
             'name' => faker()->word(),
             'slug' => faker()->slug(1),
@@ -90,7 +96,7 @@ it('updates a category successfully', function () {
  * Verifies delete operation removes record from database.
  */
 it('deletes a category successfully', function () {
-    $id = CategoryFactory::new($this->categoryModel)->create();
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
 
     $result = $this->categoryModel->delete($id);
 
@@ -124,7 +130,7 @@ it('handles deleting non-existent category gracefully', function () {
 it('finds category by slug when it exists', function () {
     $slug = 'javascript-'.faker()->numberBetween(1000, 9999);
 
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes([
             'name' => 'JavaScript',
             'slug' => $slug,
@@ -155,7 +161,7 @@ it('returns null when slug does not exist', function () {
 it('handles special characters in slug safely', function () {
     $slug = 'c-plus-plus-'.faker()->numberBetween(1000, 9999);
 
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes([
             'name' => 'C++',
             'slug' => $slug,
@@ -174,15 +180,15 @@ it('handles special characters in slug safely', function () {
  * Verifies getCategories returns alphabetically sorted list.
  */
 it('gets all categories ordered by name', function () {
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes(['name' => 'Zebra Topics'])
         ->create();
 
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes(['name' => 'Alpha Topics'])
         ->create();
 
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes(['name' => 'Beta Topics'])
         ->create();
 
@@ -217,7 +223,7 @@ it('returns empty array when no categories exist', function () {
 it('returns published posts in category', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-    $categoryId = CategoryFactory::new($this->categoryModel)->create();
+    $categoryId = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
 
     // create posts with different timestamps
     PostFactory::new($this->postModel)
@@ -254,7 +260,7 @@ it('returns published posts in category', function () {
 it('filters out draft and pending posts', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-    $categoryId = CategoryFactory::new($this->categoryModel)->create();
+    $categoryId = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
 
     // create posts with various statuses
     PostFactory::new($this->postModel)
@@ -285,7 +291,7 @@ it('filters out draft and pending posts', function () {
  * Test that posts returns empty array when category has no posts.
  */
 it('returns empty array when category has no posts', function () {
-    $categoryId = CategoryFactory::new($this->categoryModel)->create();
+    $categoryId = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
 
     $posts = $this->categoryModel->posts($categoryId);
 
@@ -313,7 +319,7 @@ it('returns empty array for non-existent category', function () {
  * Verifies prepared statements protect against SQL injection attacks.
  */
 it('prevents SQL injection in findBySlug', function () {
-    CategoryFactory::new($this->categoryModel)
+    CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes(['slug' => 'legit'])
         ->create();
 
@@ -330,7 +336,7 @@ it('prevents SQL injection in findBySlug', function () {
 it('stores category name with special HTML characters safely', function () {
     $xssName = '<script>alert("XSS")</script>';
 
-    $id = CategoryFactory::new($this->categoryModel)
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)
         ->withAttributes([
             'name' => $xssName,
             'slug' => 'xss-test',
@@ -346,7 +352,7 @@ it('stores category name with special HTML characters safely', function () {
  * Test that update handles empty data gracefully.
  */
 it('handles empty update data', function () {
-    $id = CategoryFactory::new($this->categoryModel)->create();
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
 
     $result = $this->categoryModel->update($id, []);
 

@@ -11,7 +11,7 @@ namespace App\Models;
  * SEO settings, and visual assets. Each blog has one settings record
  * with sensible defaults applied on creation.
  */
-final class BlogSettingsModel extends AppModel
+class BlogSettingsModel extends AppModel
 {
     protected ?string $table = 'blog_settings';
 

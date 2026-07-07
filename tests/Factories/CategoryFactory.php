@@ -48,6 +48,19 @@ class CategoryFactory
     }
 
     /**
+     * Scope the category to a blog (blog_id is NOT NULL since taxonomy
+     * became per-blog).
+     *
+     * @param  int  $blogId  Owning blog
+     */
+    public function forBlog(int $blogId): self
+    {
+        $this->attributes['blog_id'] = $blogId;
+
+        return $this;
+    }
+
+    /**
      * Set number of categories to create.
      *
      * @param  int  $count  Number of categories

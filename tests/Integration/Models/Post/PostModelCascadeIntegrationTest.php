@@ -195,8 +195,8 @@ it('deletes all post-tag relationships for blog', function () {
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
         ->create();
 
-    $tag1Id = TagFactory::new($this->tagModel)->create();
-    $tag2Id = TagFactory::new($this->tagModel)->create();
+    $tag1Id = TagFactory::new($this->tagModel)->forBlog($blogId)->create();
+    $tag2Id = TagFactory::new($this->tagModel)->forBlog($blogId)->create();
 
     $this->tagModel->attachToPost($postId, $tag1Id);
     $this->tagModel->attachToPost($postId, $tag2Id);
@@ -240,7 +240,7 @@ it('only deletes tags from specified blog posts', function () {
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blog2Id])
         ->create();
 
-    $tagId = TagFactory::new($this->tagModel)->create();
+    $tagId = TagFactory::new($this->tagModel)->forBlog($blog1Id)->create();
 
     $this->tagModel->attachToPost($post1Id, $tagId);
     $this->tagModel->attachToPost($post2Id, $tagId);

@@ -10,14 +10,11 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
-use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
 use App\Models\TagModel;
-use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\PostResource;
 use App\Services\MediaService;
-use App\Services\NotificationService;
 use App\Services\PostAutosaveService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
@@ -29,8 +26,8 @@ use Framework\Exceptions\PageNotFoundException;
 /**
  * Dashboard post management controller.
  *
- * Handles CRUD operations, workflow transitions (draft→review→approve→publish),
- * autosave, and file uploads. Authorization via Gate + PostPolicy.
+ * Handles CRUD, the listing surfaces (personal, per-blog, workspace),
+ * status changes, autosave, and featured images.
  */
 final class PostController extends AppController
 {
@@ -43,11 +40,8 @@ final class PostController extends AppController
         private CategoryModel $categoryModel,
         private TagModel $tagModel,
         private WorkflowService $workflowService,
-        private PostReviewerModel $postReviewerModel,
         private ReviewModel $reviewModel,
         private BlogSettingsModel $blogSettingsModel,
-        private NotificationService $notifications,
-        private UserModel $userModel,
         private MediaService $mediaService,
     ) {}
 
@@ -90,9 +84,7 @@ final class PostController extends AppController
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
         $perPage = 12;
 
-        // The "Needs Changes" tab is workflow-state-driven, not status-driven —
-        // those posts have status=draft. Translate the virtual status key to a
-        // real workflow filter so the existing tab plumbing keeps working.
+        // The "Needs Changes" tab is workflow-state-driven.
         $workflowFilter = '';
         if ($status === 'needs_changes') {
             $workflowFilter = 'needs_changes';
@@ -153,26 +145,14 @@ final class PostController extends AppController
 
         // Per-status totals power the filter chip badges (respecting the active
         // category/tag filter so the numbers match what's shown).
-        $counts = [
-            'all' => 0,
-            'published' => 0,
-            'draft' => 0,
-            'pending' => 0,
-            'needs_changes' => 0,
-            'archived' => 0,
-        ];
-        foreach (['published', 'draft', 'pending', 'archived'] as $s) {
-            $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
-                authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: $s, searchQuery: $q,
-                categoryId: $categoryId, tagId: $tagId, blogOwnerId: $ownedScope
-            )['pagination']['total_records'];
-        }
-        // needs_changes is workflow-state, not status — distinct count.
-        $counts['needs_changes'] = (int) $this->model->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 1, blogId: $blogId, status: '', searchQuery: $q,
-            categoryId: $categoryId, tagId: $tagId, workflowState: 'needs_changes', blogOwnerId: $ownedScope
-        )['pagination']['total_records'];
-        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+        $counts = $this->model->countsByStatusForAuthor(
+            authorId: (int) $user['id'],
+            blogId: $blogId,
+            searchQuery: $q,
+            categoryId: $categoryId,
+            tagId: $tagId,
+            blogOwnerId: $ownedScope
+        );
 
         // Preserve the user-facing status key for the view (so 'needs_changes' pill stays active).
         $statusForView = $workflowFilter !== '' ? $workflowFilter : $status;
@@ -248,7 +228,7 @@ final class PostController extends AppController
             : (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
 
         if ($blogId <= 0) {
-            $this->flash('error', 'Pick a blog first — either set a default or write from the Shared page.');
+            $this->flash('error', 'Pick a blog first or write from the Shared page.');
 
             return $this->redirect('/dashboard');
         }
@@ -295,8 +275,7 @@ final class PostController extends AppController
 
         $user = auth()->user();
 
-        // The form posts back blog_id so create() knows which blog the new()
-        // form was scoped to — works the same for default-blog and shared-blog flows.
+        // For default-blog and shared-blog flows.
         $formBlogId = (int) ($this->request->postParam('blog_id') ?? 0);
         $blogId = $formBlogId > 0
             ? $formBlogId
@@ -319,7 +298,7 @@ final class PostController extends AppController
         $data = $validator->validated();
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $data['status'] = $this->constrainStatusForRole(
+        $data['status'] = $this->workflowService->constrainStatusForRole(
             (string) ($data['status'] ?? 'draft'),
             $blogRole,
             (int) $blog->id()
@@ -393,7 +372,7 @@ final class PostController extends AppController
         }
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $workflowState = $post->workflowState() ?? 'draft';
+        $workflowState = $post->workflowState();
         $status = $post->status();
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
@@ -447,152 +426,6 @@ final class PostController extends AppController
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
-        ]);
-    }
-
-    /**
-     * Show post review screen with workflow permissions.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function review(string $id): Response
-    {
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        $blog = $post->blog();
-
-        Gate::authorize('reviewPost', $post, $user);
-
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $workflowState = $post->workflowState() ?? 'draft';
-        $status = $post->status();
-        $currentUserId = (int) $user['id'];
-
-        // Lazy stale-reviewer guard: evaluated on page load, not at role-change time.
-        $this->workflowService->checkStaleReviewer(
-            postId: (int) $id,
-            post: $post,
-            ownerId: (int) $blog->ownerId()
-        );
-
-        $reviewers = $this->postReviewerModel->findByPost((int) $id);
-
-        // Auto-claim / lock: first reviewer to open an unassigned pending post claims it.
-        // Owners/editors don't auto-claim — they can supervise without locking the post.
-        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
-        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
-        $isReviewerRole = $blogRole === 'reviewer';
-        $postNeedsReview = $status === 'pending' || in_array($workflowState, ['in_review', 'needs_changes'], true);
-
-        if ($workflowEnabled
-            && $isReviewerRole
-            && $postNeedsReview
-            && empty($reviewers)
-            && $currentUserId !== (int) $post->authorId()) {
-
-            $this->workflowService->assignReviewer(
-                postId: (int) $id,
-                reviewerId: $currentUserId,
-                assignedBy: $currentUserId,
-                postAuthorId: (int) $post->authorId()
-            );
-
-            if ($workflowState !== 'in_review') {
-                try {
-                    $this->workflowService->submitForReview((int) $id, $currentUserId);
-                    $workflowState = 'in_review';
-                } catch (\RuntimeException $e) {
-                    error_log('Auto submitForReview on claim failed: '.$e->getMessage());
-                }
-            }
-
-            $reviewers = $this->postReviewerModel->findByPost((int) $id);
-            $post = $this->getPost((int) $id); // re-fetch updated state
-        }
-
-        $reviews = $this->reviewModel->findByPost((int) $id);
-
-        // Lock detection: is this post claimed by someone *other* than the current user?
-        $currentReviewerIds = array_map('intval', array_column($reviewers, 'reviewer_id'));
-        $isSelfAssigned = in_array($currentUserId, $currentReviewerIds, true);
-        $lockedByOther = !empty($reviewers) && !$isSelfAssigned;
-        $lockedByReviewer = $lockedByOther ? ($reviewers[0]['reviewer_username'] ?? 'another reviewer') : null;
-        $lockedAt = $lockedByOther ? ($reviewers[0]['assigned_at'] ?? null) : null;
-
-        // Reviewers see a read-only lock screen when someone else has claimed it.
-        // Owners/editors can still take action (supervisory override).
-        $reviewerLocked = $lockedByOther && $isReviewerRole;
-
-        $canRequestReview = false; // Auto-triggered by status=pending now; no manual button.
-
-        $canMarkNeedsChanges = !$reviewerLocked
-            && in_array($blogRole, ['reviewer', 'editor', 'owner'], true)
-            && in_array($workflowState, ['in_review', 'approved'], true);
-
-        $canApprove = !$reviewerLocked
-            && in_array($blogRole, ['reviewer', 'editor', 'owner'], true)
-            && in_array($workflowState, ['in_review', 'needs_changes'], true);
-
-        $canPublish = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && in_array($workflowState, ['approved'], true);
-
-        $canUnpublish = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && $status === 'published';
-
-        $canResetToDraft = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && in_array($workflowState, ['approved'], true);
-
-        // Self-assign button no longer needed: auto-claim handles it on page load.
-        $canSelfAssign = false;
-        $canAssignReviewer = !$reviewerLocked && in_array($blogRole, ['editor', 'owner'], true);
-
-        // Dropdown candidates for editor/owner: reviewer-capable users not yet assigned, not the author
-        $availableReviewers = [];
-        if ($canAssignReviewer) {
-            $blogUsers = $this->blogModel->getBlogUsers((int) $blog->id());
-            foreach ($blogUsers as $blogUser) {
-                if ((int) $blogUser['user_id'] !== $post->authorId()
-                    && in_array($blogUser['role'], ['reviewer', 'editor', 'owner'], true)
-                    && !in_array((int) $blogUser['user_id'], $currentReviewerIds, true)) {
-                    $availableReviewers[] = $blogUser;
-                }
-            }
-        }
-
-        breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            $blogRole === 'owner'
-                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
-                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-            ['label' => 'Review Queue', 'url' => '/dashboard/blog/'.$blog->id().'/review-queue', 'key' => 'breadcrumbs.reviewQueue'],
-            ['label' => 'Review Post', 'url' => null, 'key' => 'breadcrumbs.reviewPost'],
-        ], true);
-
-        return $this->view([
-            'post' => $post->toArray(),
-            'blog' => $blog->toArray(),
-            'workflowState' => $workflowState,
-            'status' => $status,
-            'blogRole' => $blogRole,
-            'isAdmin' => auth()->hasRole('administrator'),
-            'currentUserId' => $currentUserId,
-            'canRequestReview' => $canRequestReview,
-            'canMarkNeedsChanges' => $canMarkNeedsChanges,
-            'canApprove' => $canApprove,
-            'canPublish' => $canPublish,
-            'canUnpublish' => $canUnpublish,
-            'canResetToDraft' => $canResetToDraft,
-            'canAssignReviewer' => $canAssignReviewer,
-            'canSelfAssign' => $canSelfAssign,
-            'reviewerLocked' => $reviewerLocked,
-            'lockedByReviewer' => $lockedByReviewer,
-            'lockedAt' => $lockedAt,
-            'reviewers' => $reviewers,
-            'reviews' => $reviews,
-            'availableReviewers' => $availableReviewers,
         ]);
     }
 
@@ -679,7 +512,7 @@ final class PostController extends AppController
         ];
 
         $blogRole = $post->blog()->effectiveRoleForUser((int) $user['id']);
-        $newData['status'] = $this->constrainStatusForRole(
+        $newData['status'] = $this->workflowService->constrainStatusForRole(
             (string) ($newData['status'] ?? $originalData['status']),
             $blogRole,
             (int) $post->blogId(),
@@ -736,7 +569,7 @@ final class PostController extends AppController
 
         $blogId = (int) $post->blogId();
 
-        // Category — only write it when it actually changed.
+        // Category
         $newCategoryId = $this->resolveCategoryId($blogId);
         $currentCategoryId = isset($post->toArray()['category_id']) ? (int) $post->toArray()['category_id'] : null;
         if ($newCategoryId !== $currentCategoryId) {
@@ -798,12 +631,12 @@ final class PostController extends AppController
      * Resolve the submitted category_id, but only if it belongs to this blog.
      *
      * Returns null for "no category" or anything that isn't a real category of
-     * the blog — so you can't slip in another blog's category id.
+     * the blog.
      */
     private function resolveCategoryId(int $blogId): ?int
     {
         $raw = $this->request->post['category_id'] ?? '';
-        if ($raw === '' || $raw === null) {
+        if ($raw === '') {
             return null;
         }
 
@@ -1139,338 +972,6 @@ final class PostController extends AppController
     }
 
     /**
-     * Request review (author/contributor → reviewer).
-     *
-     * @param  string  $id  Post ID
-     */
-    public function requestReview(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        Gate::authorize('update', $post, $user);
-
-        $this->workflowService->submitForReview((int) $id, $user['id']);
-
-        audit()->log(
-            $user['id'],
-            'post.review_requested',
-            'post',
-            (int) $id,
-            ['workflow_state' => 'in_review'],
-            $this->request->ip()
-        );
-
-        $this->dispatchSubmittedForReview($post, (string) ($user['username'] ?? ''));
-
-        $this->flash('success', 'Post submitted for review.');
-
-        return $this->redirect("/dashboard/posts/{$id}/edit");
-    }
-
-    /**
-     * Review post decision.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function reviewDecision(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $validator = $this->validateOrFail([
-            'decision' => 'in:needs_changes,approved',
-            'feedback' => 'max:300',
-        ]);
-
-        $data = $validator->validated();
-
-        if ($data['decision'] === 'approved') {
-            return $this->approve($id);
-        } elseif ($data['decision'] === 'needs_changes') {
-            return $this->markNeedsChanges($id);
-        } else {
-            $this->flash('error', 'Invalid review decision.');
-
-            return $this->redirectBack();
-        }
-    }
-
-    /**
-     * Approve post (reviewer/editor).
-     *
-     * @param  string  $id  Post ID
-     */
-    public function approve(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        Gate::authorize('approve', $post, $user);
-
-        $feedback = trim((string) ($this->request->postParam('feedback') ?? ''));
-        $this->workflowService->approve((int) $id, $user['id'], $feedback);
-
-        audit()->log(
-            $user['id'],
-            'post.approved',
-            'post',
-            (int) $id,
-            ['workflow_state' => 'approved'],
-            $this->request->ip()
-        );
-
-        $this->dispatchReviewDecision($post, 'post.approved', (string) ($user['username'] ?? ''), $feedback);
-
-        $this->flash('success', 'Post approved.');
-
-        return $this->redirect('/dashboard');
-    }
-
-    /**
-     * Mark post as needing changes.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function markNeedsChanges(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        Gate::authorize('markAsNeedsChanges', $post, $user);
-
-        $feedback = trim((string) ($this->request->postParam('feedback') ?? ''));
-        $this->workflowService->requestChanges((int) $id, $user['id'], $feedback);
-
-        audit()->log(
-            $user['id'],
-            'post.marked_needs_changes',
-            'post',
-            (int) $id,
-            ['workflow_state' => 'needs_changes'],
-            $this->request->ip()
-        );
-
-        $this->dispatchReviewDecision($post, 'post.needs_changes', (string) ($user['username'] ?? ''), $feedback);
-
-        $this->flash('info', 'Post marked as needing changes.');
-
-        return $this->redirect('/dashboard');
-    }
-
-    /**
-     * Notify reviewers when a post enters the review queue.
-     *
-     * Assigned-reviewer path → personal notification to that reviewer.
-     * Unassigned path → broadcast to everyone on the blog who can pick it up
-     * (owner, editor, reviewer). Failures are logged but never bubble — the
-     * workflow transition succeeded, the user shouldn't see a 500.
-     */
-    private function dispatchSubmittedForReview(PostResource $post, string $authorUsername): void
-    {
-        try {
-            $blog = $post->blog();
-            $payload = [
-                'post_id' => $post->id(),
-                'post_title' => $post->title(),
-                'post_slug' => $post->slug(),
-                'blog_id' => $blog->id(),
-                'blog_name' => $blog->name(),
-                'blog_slug' => $blog->slug(),
-                'author_username' => $authorUsername,
-            ];
-
-            $assignments = $this->postReviewerModel->findByPost($post->id());
-            if (!empty($assignments)) {
-                foreach ($assignments as $a) {
-                    $rid = (int) ($a['reviewer_id'] ?? 0);
-                    if ($rid > 0) {
-                        $this->notifications->dispatch($rid, 'post.submitted', $payload);
-                    }
-                }
-
-                return;
-            }
-
-            // No reviewer claimed yet — let everyone who could pick it up know.
-            $recipients = $this->blogModel->getActiveUsersWithRoles(
-                (int) $blog->id(),
-                ['owner', 'editor', 'reviewer']
-            );
-            $authorId = $post->authorId();
-            foreach ($recipients as $r) {
-                $uid = (int) $r['user_id'];
-                if ($uid === $authorId) {
-                    continue; // don't notify the author about their own submission
-                }
-                $this->notifications->dispatch($uid, 'post.submitted_unassigned', $payload);
-            }
-        } catch (\Throwable $e) {
-            error_log('Notify on submit-for-review failed: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Notify the author after a reviewer decision (approve or needs_changes).
-     */
-    private function dispatchReviewDecision(PostResource $post, string $type, string $reviewerUsername, string $feedback): void
-    {
-        try {
-            $authorId = $post->authorId();
-            if ($authorId <= 0) {
-                return;
-            }
-
-            $blog = $post->blog();
-            $payload = [
-                'post_id' => $post->id(),
-                'post_title' => $post->title(),
-                'post_slug' => $post->slug(),
-                'blog_id' => $blog->id(),
-                'blog_name' => $blog->name(),
-                'blog_slug' => $blog->slug(),
-                'reviewer_username' => $reviewerUsername,
-                'feedback' => $feedback,
-            ];
-
-            $this->notifications->dispatch($authorId, $type, $payload);
-        } catch (\Throwable $e) {
-            error_log('Notify on review decision failed: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Reset workflow to draft.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function resetWorkflowToDraft(string $id): Response
-    {
-        csrf()->assertValid($this->request->post['_token'] ?? null);
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        Gate::authorize('update', $post, $user);
-
-        $this->workflowService->resetToDraft((int) $id, $user['id']);
-
-        audit()->log(
-            $user['id'],
-            'post.workflow_reset',
-            'post',
-            (int) $id,
-            ['workflow_state' => 'draft'],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Workflow reset to draft.');
-
-        return $this->redirect("/dashboard/posts/{$id}/edit");
-    }
-
-    /**
-     * Assign a reviewer to a post.
-     *
-     * Owner and editor can assign any reviewer. A reviewer may only self-assign.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function assignReviewer(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        Gate::authorize('assignReviewer', $post, $user);
-
-        $reviewerId = (int) ($this->request->postParam('reviewer_id') ?? 0);
-
-        if ($reviewerId <= 0) {
-            $this->flash('error', 'Please select a reviewer.');
-
-            return $this->redirectBack();
-        }
-
-        $blog = $post->blog();
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-
-        // Reviewers may only self-assign
-        if ($blogRole === 'reviewer' && $reviewerId !== (int) $user['id']) {
-            $this->flash('error', 'Reviewers may only assign themselves.');
-
-            return $this->redirectBack();
-        }
-
-        $this->workflowService->assignReviewer(
-            postId: (int) $id,
-            reviewerId: $reviewerId,
-            assignedBy: (int) $user['id'],
-            postAuthorId: (int) $post->authorId(),
-        );
-
-        audit()->log(
-            $user['id'],
-            'post.reviewer_assigned',
-            'post',
-            (int) $id,
-            ['reviewer_id' => $reviewerId],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Reviewer assigned.');
-
-        return $this->redirectBack();
-    }
-
-    /**
-     * Per-blog review queue.
-     *
-     * Lists every post in workflow_state in_review or needs_changes for one
-     * blog, with assignment info. Anyone with a reviewer-capable role on the
-     * blog (reviewer, editor, owner) or site admin may see this.
-     *
-     * @param  string  $blogId  Target blog
-     */
-    public function reviewQueue(string $blogId): Response
-    {
-        $user = auth()->user();
-        $blog = $this->getBlog((int) $blogId);
-
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $isAdmin = auth()->hasRole('administrator');
-        if (!$isAdmin && !in_array($blogRole, ['reviewer', 'editor', 'owner'], true)) {
-            throw new PageNotFoundException('Review queue not available.');
-        }
-
-        $posts = $this->model->findReviewQueueForBlog((int) $blog->id());
-
-        // Trail roots where the user came from: owners browse their blogs,
-        // collaborators arrive through Shared.
-        breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            $blogRole === 'owner'
-                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
-                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-            ['label' => 'Review Queue', 'url' => null, 'key' => 'breadcrumbs.reviewQueue'],
-        ], true);
-
-        return $this->view('post.reviewQueue', [
-            'blog' => $blog->toArray(),
-            'posts' => $posts,
-            'blogRole' => $blogRole,
-            'isAdmin' => $isAdmin,
-            'currentUserId' => (int) $user['id'],
-        ]);
-    }
-
-    /**
      * Every post in a single blog. Owner + editor only; other roles have
      * role-scoped surfaces (queue for reviewers, write flow for authors).
      *
@@ -1518,23 +1019,7 @@ final class PostController extends AppController
         }
         unset($p);
 
-        $counts = [
-            'all' => 0,
-            'published' => 0,
-            'draft' => 0,
-            'pending' => 0,
-            'needs_changes' => 0,
-            'archived' => 0,
-        ];
-        foreach (['published', 'draft', 'pending', 'archived'] as $s) {
-            $counts[$s] = (int) $this->model->findAllInBlogWithFilters(
-                blogId: (int) $blog->id(), page: 1, perPage: 1, status: $s, searchQuery: $q,
-            )['pagination']['total_records'];
-        }
-        $counts['needs_changes'] = (int) $this->model->findAllInBlogWithFilters(
-            blogId: (int) $blog->id(), page: 1, perPage: 1, searchQuery: $q, workflowState: 'needs_changes',
-        )['pagination']['total_records'];
-        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+        $counts = $this->model->countsByStatusForBlog((int) $blog->id(), $q);
 
         $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($settings['workflow_enabled']);
@@ -1599,15 +1084,8 @@ final class PostController extends AppController
             workflowState: $workflowFilter
         );
 
-        $counts = ['all' => 0, 'draft' => 0, 'pending' => 0, 'needs_changes' => 0, 'published' => 0];
-        foreach (['draft', 'pending', 'published'] as $s) {
-            $counts[$s] = (int) $this->model->findByAuthorWithFiltersPagination(
-                authorId: $userId, page: 1, perPage: 1, blogId: (int) $blog->id(), status: $s
-            )['pagination']['total_records'];
-        }
-        $counts['needs_changes'] = (int) $this->model->findByAuthorWithFiltersPagination(
-            authorId: $userId, page: 1, perPage: 1, blogId: (int) $blog->id(), workflowState: 'needs_changes'
-        )['pagination']['total_records'];
+        $counts = $this->model->countsByStatusForAuthor(authorId: $userId, blogId: (int) $blog->id());
+        // Archived isn't a workspace tab; "all" only spans what the writer can see here.
         $counts['all'] = $counts['draft'] + $counts['pending'] + $counts['published'];
 
         $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
@@ -1628,60 +1106,6 @@ final class PostController extends AppController
             'counts' => $counts,
             'workflowEnabled' => $workflowEnabled,
         ]);
-    }
-
-    /**
-     * Unassign a reviewer from a post.
-     *
-     * Editor/owner may unassign anyone. A reviewer may release themselves
-     * — same authority axis as assignReviewer's self-assign rule, in reverse.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function unassignReviewer(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-
-        $reviewerId = (int) ($this->request->postParam('reviewer_id') ?? 0);
-        if ($reviewerId <= 0) {
-            $this->flash('error', 'Missing reviewer.');
-
-            return $this->redirectBack();
-        }
-
-        $blog = $post->blog();
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $isAdmin = auth()->hasRole('administrator');
-        $isSelfRelease = $reviewerId === (int) $user['id'];
-
-        $canUnassignOthers = $isAdmin || in_array($blogRole, ['owner', 'editor'], true);
-        if (!$canUnassignOthers && !$isSelfRelease) {
-            $this->flash('error', 'Only the assigned reviewer, an editor, or the owner can unassign.');
-
-            return $this->redirectBack();
-        }
-
-        if (!$this->postReviewerModel->unassign((int) $id, $reviewerId)) {
-            $this->flash('info', 'That reviewer was already unassigned.');
-
-            return $this->redirectBack();
-        }
-
-        audit()->log(
-            $user['id'],
-            'post.reviewer_unassigned',
-            'post',
-            (int) $id,
-            ['reviewer_id' => $reviewerId, 'self_release' => $isSelfRelease],
-            $this->request->ip()
-        );
-
-        $this->flash('success', $isSelfRelease ? 'You released this post back to the queue.' : 'Reviewer unassigned.');
-
-        return $this->redirectBack();
     }
 
     /**
@@ -1706,7 +1130,7 @@ final class PostController extends AppController
      * Get post by slug or throw 404.
      *
      * @param  string  $slug  Post slug
-     * @return array Post data
+     * @return array<string, mixed> Post data
      *
      * @throws PageNotFoundException
      */
@@ -1714,7 +1138,7 @@ final class PostController extends AppController
     {
         $post = $this->model->findBySlug($slug);
 
-        if ($post === false) {
+        if ($post === null) {
             throw new PageNotFoundException("Post with slug: '$slug' not found.");
         }
 
@@ -1740,53 +1164,6 @@ final class PostController extends AppController
     }
 
     /**
-     * Clamp a requested post status to what the user's blog role may set.
-     *
-     * Publishing (and archiving, which is the same authority) belongs to
-     * owners and editors. Authors keep it only while the blog runs without
-     * the review pipeline, publish_own is meaningless once every post has
-     * to pass review. Contributors never publish; their ceiling is handing
-     * a draft to the pipeline.
-     *
-     * @param  string  $requested  Status coming from the form
-     * @param  string|null  $role  Effective blog role of the acting user
-     * @param  int  $blogId  Blog the post belongs to
-     * @param  string|null  $current  Current status when updating, null on create
-     * @return string The status the role is actually allowed to persist
-     */
-    private function constrainStatusForRole(string $requested, ?string $role, int $blogId, ?string $current = null): string
-    {
-        if (in_array($role, ['owner', 'editor'], true)) {
-            return $requested;
-        }
-
-        $settings = $this->blogSettingsModel->findByBlogId($blogId);
-        $workflowOn = !empty($settings['workflow_enabled']);
-
-        $canPublish = $role === 'author' && !$workflowOn;
-        if ($canPublish) {
-            return $requested;
-        }
-
-        // No change to a state the post already holds. an editor put it
-        // there, saving content edits shouldn't undo that decision.
-        if ($requested === $current) {
-            return $requested;
-        }
-
-        if (in_array($requested, ['published', 'archived'], true)) {
-            return $workflowOn ? 'pending' : 'draft';
-        }
-
-        // The reverse move is an unpublish; same authority as publishing.
-        if (in_array($current, ['published', 'archived'], true)) {
-            return $current;
-        }
-
-        return $requested;
-    }
-
-    /**
      * Handle featured image upload.
      *
      * @param  int  $userId  User ID (for temp cleanup)
@@ -1795,8 +1172,7 @@ final class PostController extends AppController
      */
     private function handleFeaturedImageUpload(int $userId, \App\Resources\BlogResource $blog): ?string
     {
-        // If the user picked from the media library, prefer that — the file
-        // already lives at a permanent URL and is already indexed.
+        // If the user picked from the media library, prefer that.
         $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
         if ($picked !== '') {
             // Make sure brand-new picks (e.g. someone pasted a URL by hand)
@@ -1815,26 +1191,8 @@ final class PostController extends AppController
             return null;
         }
 
-        [$dir, $baseUrl] = $this->uploader->userBlogPostPath($blog->ownerId(), $blog->id());
-
         try {
-            $path = $this->uploader->moveTempToBranding(
-                $uploadedFiles[0],
-                $blog->ownerId(),
-                $blog->id(),
-                'featured_image',
-                $dir,
-                $baseUrl
-            );
-
-            $this->uploader->cleanupTempFiles($userId);
-
-            if ($path) {
-                $this->mediaService->register((int) $blog->id(), $userId, $path, 'post_image');
-            }
-
-            return $path;
-
+            return $this->mediaService->storeFeaturedImage($uploadedFiles[0], $blog, $userId);
         } catch (\Throwable $e) {
             error_log("Featured image upload failed for blog {$blog->id()}: ".$e->getMessage());
             $this->flash('error', 'Featured image upload failed: '.$e->getMessage());

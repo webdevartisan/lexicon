@@ -130,10 +130,12 @@ it('filters search results by category', function () {
     $blogId = BlogFactory::new($this->blogModel)->create($userId);
 
     $categoryId = CategoryFactory::new($this->categoryModel)
+        ->forBlog($blogId)
         ->withAttributes(['name' => 'Technology'])
         ->create();
 
     $otherCategoryId = CategoryFactory::new($this->categoryModel)
+        ->forBlog($blogId)
         ->withAttributes(['name' => 'Lifestyle'])
         ->create();
 
@@ -159,7 +161,8 @@ it('filters search results by category', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('Post', 1, 8, $categoryId);
+    // Category filter matches by name (topic filter spans all blogs)
+    $result = $this->postModel->searchPublishedPosts('Post', 1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -260,8 +263,12 @@ it('filters recent posts by category', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->create($userId);
 
-    $categoryId = CategoryFactory::new($this->categoryModel)->create();
-    $otherCategoryId = CategoryFactory::new($this->categoryModel)->create();
+    $categoryId = CategoryFactory::new($this->categoryModel)->forBlog($blogId)
+        ->withAttributes(['name' => 'Technology'])
+        ->create();
+    $otherCategoryId = CategoryFactory::new($this->categoryModel)->forBlog($blogId)
+        ->withAttributes(['name' => 'Lifestyle'])
+        ->create();
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -285,7 +292,8 @@ it('filters recent posts by category', function () {
         ])
         ->create();
 
-    $result = $this->postModel->getRecentPublishedWithPagination(1, 8, $categoryId);
+    // Category filter matches by name (topic filter spans all blogs)
+    $result = $this->postModel->getRecentPublishedWithPagination(1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)

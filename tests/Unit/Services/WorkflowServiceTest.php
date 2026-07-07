@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
@@ -28,10 +30,22 @@ function makeWorkflowService(
     ?ReviewModel $review = null,
     ?UserModel $users = null,
     ?NotificationService $notifications = null,
+    ?BlogModel $blogs = null,
+    ?BlogSettingsModel $blogSettings = null,
 ): WorkflowService {
     if ($users === null) {
         $users = Mockery::mock(UserModel::class);
         $users->shouldReceive('findById')->andReturn(['id' => 0, 'username' => 'tester'])->byDefault();
+    }
+
+    if ($blogs === null) {
+        $blogs = Mockery::mock(BlogModel::class);
+        $blogs->shouldReceive('getActiveUsersWithRoles')->andReturn([])->byDefault();
+    }
+
+    if ($blogSettings === null) {
+        $blogSettings = Mockery::mock(BlogSettingsModel::class);
+        $blogSettings->shouldReceive('findByBlogId')->andReturn([])->byDefault();
     }
 
     return new WorkflowService(
@@ -40,6 +54,8 @@ function makeWorkflowService(
         $review ?? Mockery::mock(ReviewModel::class),
         $users,
         $notifications ?? Mockery::mock(NotificationService::class),
+        $blogs,
+        $blogSettings,
     );
 }
 
@@ -47,11 +63,16 @@ function mockPostResource(int $authorId, string $workflowState = 'draft'): PostR
 {
     $blog = Mockery::mock(BlogResource::class);
     $blog->shouldReceive('ownerId')->andReturn(1)->byDefault();
+    $blog->shouldReceive('id')->andReturn(42)->byDefault();
+    $blog->shouldReceive('name')->andReturn('Test Blog')->byDefault();
+    $blog->shouldReceive('slug')->andReturn('test-blog')->byDefault();
 
     $post = Mockery::mock(PostResource::class);
+    $post->shouldReceive('id')->andReturn(10)->byDefault();
     $post->shouldReceive('authorId')->andReturn($authorId)->byDefault();
     $post->shouldReceive('workflowState')->andReturn($workflowState)->byDefault();
     $post->shouldReceive('title')->andReturn('Test Post')->byDefault();
+    $post->shouldReceive('slug')->andReturn('test-post')->byDefault();
     $post->shouldReceive('blog')->andReturn($blog)->byDefault();
 
     return $post;
@@ -63,23 +84,50 @@ function mockPostResource(int $authorId, string $workflowState = 'draft'): PostR
 
 describe('WorkflowService::submitForReview', function () {
 
-    test('transitions draft post to in_review and sends notification', function () {
+    test('unassigned submission notifies reviewer-capable members but never the author', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('transitionWorkflow')
             ->with(10, 'in_review', 5)->once()->andReturn(true);
-        $postModel->shouldReceive('findResource')->with(10)->andReturn(false)->byDefault();
+        $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(5));
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([]);
 
+        // Blog 42 has the owner (1) and the author (5) in reviewer-capable roles
+        $blogs = Mockery::mock(BlogModel::class);
+        $blogs->shouldReceive('getActiveUsersWithRoles')
+            ->with(42, ['owner', 'editor', 'reviewer'])
+            ->andReturn([['user_id' => 1], ['user_id' => 5]]);
+
         $notifications = Mockery::mock(NotificationService::class);
         $notifications->shouldReceive('dispatch')
-            ->with(5, 'post.submitted_unassigned', Mockery::any())->once();
+            ->with(1, 'post.submitted_unassigned', Mockery::any())->once();
+        $notifications->shouldReceive('dispatch')
+            ->with(5, Mockery::any(), Mockery::any())->never();
+
+        $service = makeWorkflowService($postModel, $postReviewer, null, null, $notifications, $blogs);
+        $service->submitForReview(10, 5);
+
+        // Mockery verifies ->once() expectations on afterEach close()
+        expect(true)->toBeTrue();
+    });
+
+    test('assigned submission notifies the assigned reviewer only', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('transitionWorkflow')
+            ->with(10, 'in_review', 5)->once()->andReturn(true);
+        $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(5));
+
+        $postReviewer = Mockery::mock(PostReviewerModel::class);
+        $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([['reviewer_id' => 7]]);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')
+            ->with(7, 'post.submitted', Mockery::any())->once();
 
         $service = makeWorkflowService($postModel, $postReviewer, null, null, $notifications);
         $service->submitForReview(10, 5);
 
-        // Mockery verifies ->once() expectations on afterEach close()
         expect(true)->toBeTrue();
     });
 
@@ -322,5 +370,58 @@ describe('WorkflowService::disableWorkflow', function () {
         $service->disableWorkflow(blogId: 42, actorId: 99);
 
         expect(true)->toBeTrue();
+    });
+});
+
+// ============================================================================
+// constrainStatusForRole
+// ============================================================================
+
+describe('WorkflowService::constrainStatusForRole', function () {
+
+    function makeConstraintService(bool $workflowEnabled): WorkflowService
+    {
+        $blogSettings = Mockery::mock(BlogSettingsModel::class);
+        $blogSettings->shouldReceive('findByBlogId')
+            ->andReturn(['workflow_enabled' => $workflowEnabled ? 1 : 0])->byDefault();
+
+        return makeWorkflowService(null, null, null, null, null, null, $blogSettings);
+    }
+
+    test('owner and editor keep whatever status they requested', function () {
+        $service = makeConstraintService(workflowEnabled: true);
+
+        expect($service->constrainStatusForRole('published', 'owner', 42))->toBe('published');
+        expect($service->constrainStatusForRole('archived', 'editor', 42, 'published'))->toBe('archived');
+    });
+
+    test('author may publish while the blog has no review pipeline', function () {
+        $service = makeConstraintService(workflowEnabled: false);
+
+        expect($service->constrainStatusForRole('published', 'author', 42))->toBe('published');
+    });
+
+    test('author publishing on a workflow blog is clamped to pending', function () {
+        $service = makeConstraintService(workflowEnabled: true);
+
+        expect($service->constrainStatusForRole('published', 'author', 42))->toBe('pending');
+    });
+
+    test('contributor publishing without workflow is clamped to draft', function () {
+        $service = makeConstraintService(workflowEnabled: false);
+
+        expect($service->constrainStatusForRole('published', 'contributor', 42))->toBe('draft');
+    });
+
+    test('resubmitting the current status is always allowed', function () {
+        $service = makeConstraintService(workflowEnabled: true);
+
+        expect($service->constrainStatusForRole('published', 'contributor', 42, 'published'))->toBe('published');
+    });
+
+    test('contributor cannot unpublish a published post', function () {
+        $service = makeConstraintService(workflowEnabled: true);
+
+        expect($service->constrainStatusForRole('draft', 'contributor', 42, 'published'))->toBe('published');
     });
 });

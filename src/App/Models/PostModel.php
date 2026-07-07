@@ -646,8 +646,8 @@ class PostModel extends AppModel
     /**
      * The blog's featured headline: a featured, published post.
      *
-     * Newest wins if more than one is somehow flagged — a safety net on top of
-     * the one-per-blog rule kept by setFeatured().
+     * Newest one takes priority if multiple entries are flagged,
+     * acting as a safety net on top of the one‑per‑blog rule enforced by setFeatured().
      */
     public function findFeaturedByBlogId(int $blogId): ?array
     {
@@ -1198,6 +1198,90 @@ class PostModel extends AppModel
         foreach ($this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $counts[(string) $row['status']] = (int) $row['cnt'];
         }
+
+        return $counts;
+    }
+
+    /**
+     * Per-status totals for an author's posts, for the dashboard filter badges.
+     *
+     * Same filter semantics as findByAuthorWithFiltersPagination, but one
+     * grouped query instead of a count query per status tab.
+     *
+     * @return array<string, int> Keys: all, published, draft, pending, needs_changes, archived
+     */
+    public function countsByStatusForAuthor(
+        int $authorId,
+        ?int $blogId = null,
+        string $searchQuery = '',
+        ?int $categoryId = null,
+        ?int $tagId = null,
+        ?int $blogOwnerId = null
+    ): array {
+        [$whereClause, $params] = $this->buildFilterClauses(
+            $authorId, $blogId, '', $searchQuery, $categoryId, $tagId, '', $blogOwnerId
+        );
+
+        return $this->groupedStatusCounts($whereClause, $params);
+    }
+
+    /**
+     * Per-status totals across every author in one blog, for the per-blog
+     * posts index badges.
+     *
+     * @return array<string, int> Keys: all, published, draft, pending, needs_changes, archived
+     */
+    public function countsByStatusForBlog(int $blogId, string $searchQuery = ''): array
+    {
+        $where = 'WHERE p.blog_id = :blog_id';
+        $params = [':blog_id' => $blogId];
+
+        if ($searchQuery !== '') {
+            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
+            $term = '%'.$searchQuery.'%';
+            $params[':search_title'] = $term;
+            $params[':search_content'] = $term;
+        }
+
+        return $this->groupedStatusCounts($where, $params);
+    }
+
+    /**
+     * Run one GROUP BY status query and shape it into the badge-count array.
+     *
+     * needs_changes is a workflow_state living on posts of any status, so it
+     * is summed across the groups rather than counted as its own status.
+     *
+     * @param  string  $whereClause  Prepared WHERE clause (aliased as p)
+     * @param  array<string, mixed>  $params  Bindings for the WHERE clause
+     * @return array<string, int>
+     */
+    private function groupedStatusCounts(string $whereClause, array $params): array
+    {
+        $counts = [
+            'all' => 0,
+            'published' => 0,
+            'draft' => 0,
+            'pending' => 0,
+            'needs_changes' => 0,
+            'archived' => 0,
+        ];
+
+        $sql = "SELECT p.status, COUNT(*) AS cnt,
+                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
+                FROM {$this->getTable()} p
+                {$whereClause}
+                GROUP BY p.status";
+
+        foreach ($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $status = (string) $row['status'];
+            if (isset($counts[$status])) {
+                $counts[$status] = (int) $row['cnt'];
+            }
+            $counts['needs_changes'] += (int) $row['needs_changes'];
+        }
+
+        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
 
         return $counts;
     }

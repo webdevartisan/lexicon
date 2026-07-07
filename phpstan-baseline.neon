@@ -277,36 +277,6 @@ parameters:
 			path: src/App/Controllers/Dashboard/HomeController.php
 
 		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 2
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Method App\\Controllers\\Dashboard\\PostController\:\:getPostBySlug\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Property App\\Controllers\\Dashboard\\PostController\:\:\$userModel is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between array\|null and false will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between mixed and null will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/App/Controllers/Dashboard/PostController.php
-
-		-
 			message: '#^Property App\\Controllers\\Dashboard\\SharedController\:\:\$postReviewerModel is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1

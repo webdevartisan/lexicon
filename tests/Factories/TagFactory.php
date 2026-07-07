@@ -44,6 +44,19 @@ class TagFactory
     }
 
     /**
+     * Scope the tag to a blog (blog_id is NOT NULL since taxonomy
+     * became per-blog).
+     *
+     * @param  int  $blogId  Owning blog
+     */
+    public function forBlog(int $blogId): self
+    {
+        $this->attributes['blog_id'] = $blogId;
+
+        return $this;
+    }
+
+    /**
      * Create tag in database.
      *
      * @return int Tag ID

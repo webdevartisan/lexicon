@@ -105,12 +105,16 @@ test('cancelPendingForEmail removes pending invite', function () {
     expect($this->model->findValidByToken($hash))->toBeFalse();
 });
 
-test('deleteExpired removes only expired unconsumed invites', function () {
-    $expiredHash = hash('sha256', 'exp');
+test('deleteExpired purges invites past the 30-day grace window only', function () {
+    $stale = hash('sha256', 'stale');
+    $recentlyExpired = hash('sha256', 'exp');
     $validHash = hash('sha256', 'val');
 
+    $this->model->create($this->blogId, 'stale@example.com', 'author',
+        $stale, $this->ownerId, inviteExpiry('-31 days'));
+    // Recently expired stays visible on the team page so the owner can resend.
     $this->model->create($this->blogId, 'exp@example.com', 'author',
-        $expiredHash, $this->ownerId, inviteExpiry('-1 hour'));
+        $recentlyExpired, $this->ownerId, inviteExpiry('-1 hour'));
     $this->model->create($this->blogId, 'val@example.com', 'author',
         $validHash, $this->ownerId, inviteExpiry('+7 days'));
 

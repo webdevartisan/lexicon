@@ -76,7 +76,11 @@ it('returns null for non-existent author', function () {
  * Verifies category() returns category data for valid category ID.
  */
 it('returns category data for valid category ID', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+
     $categoryId = CategoryFactory::new($this->categoryModel)
+        ->forBlog($blogId)
         ->withAttributes([
             'name' => 'Technology',
             'slug' => 'technology-'.faker()->unique()->numberBetween(1000, 9999),
@@ -125,10 +129,12 @@ it('returns all tags for a post', function () {
         ->create();
 
     $tag1Id = TagFactory::new($this->tagModel)
+        ->forBlog($blogId)
         ->withAttributes(['name' => 'PHP'])
         ->create();
 
     $tag2Id = TagFactory::new($this->tagModel)
+        ->forBlog($blogId)
         ->withAttributes(['name' => 'Testing'])
         ->create();
 

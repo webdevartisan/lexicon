@@ -17,7 +17,22 @@ use App\Services\NotificationService;
  * Verifies that dispatch() always writes the in-app row, then conditionally
  * builds and sends a Mailable based on the user's notification preference.
  */
-afterEach(fn () => Mockery::close());
+
+// dispatch() short-circuits when MAIL_ENABLED is off; turn it on so the
+// preference/type gates under test are actually reached.
+beforeEach(function () {
+    $this->previousMailEnabled = $_ENV['MAIL_ENABLED'] ?? null;
+    $_ENV['MAIL_ENABLED'] = 'true';
+});
+
+afterEach(function () {
+    if ($this->previousMailEnabled === null) {
+        unset($_ENV['MAIL_ENABLED']);
+    } else {
+        $_ENV['MAIL_ENABLED'] = $this->previousMailEnabled;
+    }
+    Mockery::close();
+});
 
 function makeNotificationService(
     ?NotificationModel $notif = null,
@@ -79,6 +94,8 @@ describe('NotificationService::dispatch', function () {
         $service->dispatch(7, 'post.approved', [
             'post_id' => 1, 'post_title' => 'My Post', 'reviewer_username' => 'bob',
         ]);
+
+        expect(true)->toBeTrue();
     });
 
     test('post.needs_changes forwards feedback to Mailable', function () {
@@ -103,6 +120,8 @@ describe('NotificationService::dispatch', function () {
             'post_id' => 1, 'post_title' => 'My Post', 'reviewer_username' => 'r',
             'feedback' => 'Please fix the intro',
         ]);
+
+        expect(true)->toBeTrue();
     });
 
     test('collaborator.removed uses notify_role_changes preference', function () {
@@ -123,6 +142,8 @@ describe('NotificationService::dispatch', function () {
         $service->dispatch(7, 'collaborator.removed', [
             'blog_name' => 'My Blog', 'removed_by_username' => 'admin',
         ]);
+
+        expect(true)->toBeTrue();
     });
 
     test('blog.invite writes in-app but skips email (InvitationService sends BlogInviteMail itself)', function () {
@@ -142,6 +163,8 @@ describe('NotificationService::dispatch', function () {
         $service->dispatch(7, 'blog.invite', [
             'blog_id' => 1, 'role' => 'author', 'invited_by' => 2, 'token' => 'abc',
         ]);
+
+        expect(true)->toBeTrue();
     });
 
     test('skips email when recipient user record cannot be loaded', function () {
@@ -161,6 +184,8 @@ describe('NotificationService::dispatch', function () {
         $service->dispatch(7, 'post.approved', [
             'post_id' => 1, 'post_title' => 'T', 'reviewer_username' => 'r',
         ]);
+
+        expect(true)->toBeTrue();
     });
 
     test('unknown type writes in-app row but never emails', function () {
@@ -172,5 +197,7 @@ describe('NotificationService::dispatch', function () {
 
         $service = makeNotificationService($notif, null, null, $mail);
         $service->dispatch(7, 'totally.new.event', ['arbitrary' => 'payload']);
+
+        expect(true)->toBeTrue();
     });
 });
