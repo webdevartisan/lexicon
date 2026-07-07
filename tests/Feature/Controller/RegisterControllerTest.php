@@ -3,10 +3,16 @@
 declare(strict_types=1);
 
 use App\Controllers\Auth\RegisterController;
+use App\Models\BlogInvitationModel;
+use App\Models\BlogModel;
+use App\Models\NotificationModel;
 use App\Models\ReservedSlugModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
+use App\Services\InvitationService;
+use App\Services\MailService;
+use App\Services\NotificationService;
 use App\Services\UsernameValidationService;
 use Framework\Core\Response;
 use Tests\Factories\UserFactory;
@@ -36,12 +42,34 @@ beforeEach(function () {
         new ReservedSlugModel($this->db)
     );
 
+    // Invitation plumbing: real models against the test DB, mocked mailer so
+    // registration (and its pending-invite consumption path) sends nothing.
+    $mailService = Mockery::mock(MailService::class);
+    $mailService->shouldReceive('send')->andReturn(true)->byDefault();
+
+    $invitationModel = new BlogInvitationModel($this->db);
+    $invitationService = new InvitationService(
+        $invitationModel,
+        new BlogModel($this->db),
+        $this->userModel,
+        new NotificationService(
+            new NotificationModel($this->db),
+            $this->userModel,
+            $this->preferencesModel,
+            $mailService,
+        ),
+        $mailService,
+        $this->preferencesModel
+    );
+
     $this->controller = new RegisterController(
         $this->auth,
         $this->userModel,
         $this->profileModel,
         $this->preferencesModel,
-        $this->usernameValidator
+        $this->usernameValidator,
+        $invitationModel,
+        $invitationService
     );
 
     $this->mockViewer = new class() implements \Framework\Interfaces\TemplateViewerInterface
@@ -218,7 +246,9 @@ it('validates email format', function (string $invalidEmail) {
  * Test that email must be unique.
  */
 it('rejects duplicate email', function () {
-    $email = faker()->unique()->safeEmail();
+    // Random local part instead of faker: unique() only dedupes within this
+    // run, and the test DB can hold residue from earlier runs.
+    $email = 'dup-'.bin2hex(random_bytes(6)).'@example.test';
 
     UserFactory::new($this->userModel)
         ->withAttributes(['email' => $email])
@@ -241,7 +271,9 @@ it('rejects duplicate email', function () {
     try {
         $response = callController($this->controller, 'submit', $request);
         $failed = !empty($_SESSION['_errors'] ?? []);
-    } catch (\PDOException $e) {
+    } catch (\PDOException|\RuntimeException $e) {
+        // Framework\Database wraps PDO errors in RuntimeException; either way
+        // the users.email unique index rejected the duplicate.
         $failed = str_contains($e->getMessage(), 'Duplicate entry');
     }
 

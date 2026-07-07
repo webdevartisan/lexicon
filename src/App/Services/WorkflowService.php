@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
@@ -14,8 +16,10 @@ use App\Resources\PostResource;
 /**
  * WorkflowService owns all editorial pipeline state transitions.
  *
- * PostPolicy enforces WHO can act; WorkflowService enforces HOW state moves.
- * PostController calls both — authorize first, then delegate here.
+ * PostPolicy defines WHO is allowed to act, and WorkflowService defines HOW a post moves through its states.
+ * Controllers use both: they authorize first, then hand things off here.
+ * Notifications for state changes are also sent from this layer, so every entry point, including manual actions,
+ * automatic status change submissions, and bulk operations, triggers the same consistent notification flow.
  */
 class WorkflowService
 {
@@ -25,6 +29,8 @@ class WorkflowService
         private ReviewModel $review,
         private UserModel $users,
         private NotificationService $notifications,
+        private BlogModel $blogs,
+        private BlogSettingsModel $blogSettings,
     ) {}
 
     /**
@@ -35,6 +41,24 @@ class WorkflowService
         $row = $this->users->findById($userId);
 
         return (string) ($row['username'] ?? '');
+    }
+
+    /**
+     * Common notification payload: enough post + blog context for the
+     * notification item to render a title and build links.
+     */
+    private function postPayload(PostResource $post): array
+    {
+        $blog = $post->blog();
+
+        return [
+            'post_id' => $post->id(),
+            'post_title' => $post->title(),
+            'post_slug' => $post->slug(),
+            'blog_id' => $blog->id(),
+            'blog_name' => $blog->name(),
+            'blog_slug' => $blog->slug(),
+        ];
     }
 
     /**
@@ -52,27 +76,43 @@ class WorkflowService
             throw new \RuntimeException("Failed to transition post {$postId} to in_review.");
         }
 
-        $assignments = $this->postReviewer->findByPost($postId);
-        $resource = $this->post->findResource($postId);
-        $postTitle = $resource ? $resource->title() : '';
-        $authorName = $this->username($userId);
+        // Notification fan-out must never undo a successful transition.
+        try {
+            $resource = $this->post->findResource($postId);
+            if ($resource === false) {
+                return;
+            }
 
-        if (empty($assignments)) {
-            $this->notifications->dispatch($userId, 'post.submitted_unassigned', [
-                'post_id' => $postId,
-                'post_title' => $postTitle,
-                'author_username' => $authorName,
-            ]);
+            $payload = $this->postPayload($resource);
+            $payload['author_username'] = $this->username($userId);
 
-            return;
-        }
+            $assignments = $this->postReviewer->findByPost($postId);
+            if (!empty($assignments)) {
+                foreach ($assignments as $a) {
+                    $rid = (int) ($a['reviewer_id'] ?? 0);
+                    if ($rid > 0) {
+                        $this->notifications->dispatch($rid, 'post.submitted', $payload);
+                    }
+                }
 
-        foreach ($assignments as $a) {
-            $this->notifications->dispatch((int) $a['reviewer_id'], 'post.submitted', [
-                'post_id' => $postId,
-                'post_title' => $postTitle,
-                'author_username' => $authorName,
-            ]);
+                return;
+            }
+
+            // No reviewer has claimed this yet, so notify everyone who is eligible to pick it up.
+            $recipients = $this->blogs->getActiveUsersWithRoles(
+                (int) $resource->blog()->id(),
+                ['owner', 'editor', 'reviewer']
+            );
+            $authorId = $resource->authorId();
+            foreach ($recipients as $r) {
+                $uid = (int) $r['user_id'];
+                if ($uid === $authorId) {
+                    continue; // don't notify the author about their own submission
+                }
+                $this->notifications->dispatch($uid, 'post.submitted_unassigned', $payload);
+            }
+        } catch (\Throwable $e) {
+            error_log('Notify on submit-for-review failed: '.$e->getMessage());
         }
     }
 
@@ -95,11 +135,7 @@ class WorkflowService
         $this->review->create($postId, $reviewerId, 'approved', $feedback);
 
         if ($post) {
-            $this->notifications->dispatch((int) $post->authorId(), 'post.approved', [
-                'post_id' => $postId,
-                'post_title' => $post->title(),
-                'reviewer_username' => $this->username($reviewerId),
-            ]);
+            $this->notifyReviewDecision($post, 'post.approved', $reviewerId, $feedback);
         }
     }
 
@@ -123,12 +159,30 @@ class WorkflowService
         $this->review->create($postId, $reviewerId, 'needs_revision', $feedback);
 
         if ($post) {
-            $this->notifications->dispatch((int) $post->authorId(), 'post.needs_changes', [
-                'post_id' => $postId,
-                'post_title' => $post->title(),
-                'reviewer_username' => $this->username($reviewerId),
-                'feedback' => $feedback,
-            ]);
+            $this->notifyReviewDecision($post, 'post.needs_changes', $reviewerId, $feedback);
+        }
+    }
+
+    /**
+     * Notify the author after a reviewer makes a decision, whether it is an approval or a
+     * request for changes. Any failures are logged quietly and never interrupt the workflow,
+     * because the state transition has already succeeded.
+     */
+    private function notifyReviewDecision(PostResource $post, string $type, int $reviewerId, string $feedback): void
+    {
+        try {
+            $authorId = (int) $post->authorId();
+            if ($authorId <= 0) {
+                return;
+            }
+
+            $payload = $this->postPayload($post);
+            $payload['reviewer_username'] = $this->username($reviewerId);
+            $payload['feedback'] = $feedback;
+
+            $this->notifications->dispatch($authorId, $type, $payload);
+        } catch (\Throwable $e) {
+            error_log('Notify on review decision failed: '.$e->getMessage());
         }
     }
 
@@ -143,14 +197,13 @@ class WorkflowService
     /**
      * Assign a reviewer to a post.
      *
-     * Clears any existing assignment first (v1: single reviewer per post).
-     * Notifies the assigned reviewer.
+     * Clears any existing assignment first, ensuring only one reviewer is attached.
+     * Sends a notification to the newly assigned reviewer.
      *
-     * @param  int  $postAuthorId  Included in notification payload for context
+     * @param  int  $postAuthorId  Included in the notification payload for context
      */
     public function assignReviewer(int $postId, int $reviewerId, int $assignedBy, int $postAuthorId): void
     {
-        // v1: single-reviewer constraint — clear before re-assigning
         $this->postReviewer->clearByPost($postId);
         $this->postReviewer->assign($postId, $reviewerId, $assignedBy);
 
@@ -192,7 +245,6 @@ class WorkflowService
                     'former_reviewer_username' => (string) ($assignment['reviewer_username'] ?? ''),
                 ]);
 
-                // Only process first assignment (v1: single reviewer)
                 break;
             }
         }
@@ -221,5 +273,52 @@ class WorkflowService
                 'blog_name' => $blog ? $blog->name() : '',
             ]);
         }
+    }
+
+    /**
+     * Clamp a requested post status to what the user's blog role may set.
+     *
+     * Publishing (and archiving, which is the same authority) belongs to
+     * owners and editors. Authors keep it only while the blog runs without
+     * the review pipeline, publish_own is meaningless once every post has
+     * to pass review. Contributors never publish; their ceiling is handing
+     * a draft to the pipeline.
+     *
+     * @param  string  $requested  Status coming from the form
+     * @param  string|null  $role  Effective blog role of the acting user
+     * @param  int  $blogId  Blog the post belongs to
+     * @param  string|null  $current  Current status when updating, null on create
+     * @return string The status the role is actually allowed to persist
+     */
+    public function constrainStatusForRole(string $requested, ?string $role, int $blogId, ?string $current = null): string
+    {
+        if (in_array($role, ['owner', 'editor'], true)) {
+            return $requested;
+        }
+
+        $settings = $this->blogSettings->findByBlogId($blogId);
+        $workflowOn = !empty($settings['workflow_enabled']);
+
+        $canPublish = $role === 'author' && !$workflowOn;
+        if ($canPublish) {
+            return $requested;
+        }
+
+        // No change to a state the post already holds. an editor put it
+        // there, saving content edits shouldn't undo that decision.
+        if ($requested === $current) {
+            return $requested;
+        }
+
+        if (in_array($requested, ['published', 'archived'], true)) {
+            return $workflowOn ? 'pending' : 'draft';
+        }
+
+        // The reverse move is an unpublish; same authority as publishing.
+        if (in_array($current, ['published', 'archived'], true)) {
+            return $current;
+        }
+
+        return $requested;
     }
 }

@@ -109,10 +109,20 @@ $router->group([
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/review', ['controller' => 'PostController', 'action' => 'review', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
     $r->add('/post/new', ['controller' => 'PostController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post/create', ['controller' => 'PostController', 'action' => 'create', 'method' => 'POST']);
+
+    // Review pipeline actions. Explicit routes (same URLs the forms already
+    // post to) so these hit PostReviewController instead of the generic map.
+    $r->add('/posts/{id:\d+}/workflow/review-decision', ['controller' => 'PostReviewController', 'action' => 'reviewDecision', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/request-review', ['controller' => 'PostReviewController', 'action' => 'requestReview', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/needs-changes', ['controller' => 'PostReviewController', 'action' => 'markNeedsChanges', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/approve', ['controller' => 'PostReviewController', 'action' => 'approve', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/reset', ['controller' => 'PostReviewController', 'action' => 'resetWorkflowToDraft', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/assign-reviewer', ['controller' => 'PostReviewController', 'action' => 'assignReviewer', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/unassign-reviewer', ['controller' => 'PostReviewController', 'action' => 'unassignReviewer', 'method' => 'POST']);
     $r->add('/posts/image-upload', ['controller' => 'UploadController', 'action' => 'tinymceImage', 'method' => 'POST']);
 
     // Comment moderation (blog-scoped).
@@ -130,7 +140,7 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 
     // Per-blog review queue (anyone with reviewer-capable role on the blog).
-    $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostController', 'action' => 'reviewQueue', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostReviewController', 'action' => 'reviewQueue', 'method' => 'GET']);
 
     // Per-blog posts index for owners and editors. Kept separate from the
     // personal /dashboard/post surface so the two contexts never mix.
@@ -199,13 +209,6 @@ $router->group([
     $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
     $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/review-decision', ['action' => 'reviewDecision', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/request-review', ['action' => 'requestReview', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/needs-changes', ['action' => 'markNeedsChanges', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/approve', ['action' => 'approve', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/reset', ['action' => 'resetWorkflowToDraft', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/assign-reviewer', ['action' => 'assignReviewer', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/workflow/unassign-reviewer', ['action' => 'unassignReviewer', 'method' => 'POST']);
     // }
 });
 

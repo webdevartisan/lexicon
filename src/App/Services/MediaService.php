@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\MediaModel;
+use App\Resources\BlogResource;
 use InvalidArgumentException;
 
 /**
@@ -56,6 +57,39 @@ final class MediaService
     }
 
     /**
+     * Move a temp-uploaded featured image into the blog's post-image
+     * folder and index it in the library.
+     *
+     * Files land under the blog owner's directory tree no matter which
+     * collaborator uploaded, same as branding and inline post images.
+     *
+     * @param  array  $uploadedFile  Temp file descriptor from UploadService::getUploadedFiles()
+     * @param  int  $uploaderId  Acting user, for temp cleanup and the library row
+     * @return string|null Public URL of the stored image, or null if the move failed
+     */
+    public function storeFeaturedImage(array $uploadedFile, BlogResource $blog, int $uploaderId): ?string
+    {
+        [$dir, $baseUrl] = $this->uploads->userBlogPostPath($blog->ownerId(), $blog->id());
+
+        $path = $this->uploads->moveTempToBranding(
+            $uploadedFile,
+            $blog->ownerId(),
+            $blog->id(),
+            'featured_image',
+            $dir,
+            $baseUrl
+        );
+
+        $this->uploads->cleanupTempFiles($uploaderId);
+
+        if ($path) {
+            $this->register((int) $blog->id(), $uploaderId, $path, 'post_image');
+        }
+
+        return $path;
+    }
+
+    /**
      * Make sure a file that was uploaded through one of the existing
      * flows (post featured image, TinyMCE inline, branding) has a row
      * in the library. Safe to call repeatedly.
@@ -79,9 +113,9 @@ final class MediaService
     }
 
     /**
-     * Delete a media item — both the file on disk and the row.
-     * If the file's already gone we still drop the row so the library
-     * heals itself.
+     * Delete a media item by clearing out both parts of it: the file on disk
+     * and the database row that points to it. And if the file has already vanished,
+     * we still remove the row so the library can tidy itself up and stay consistent.
      */
     public function delete(int $id, int $blogId): bool
     {
