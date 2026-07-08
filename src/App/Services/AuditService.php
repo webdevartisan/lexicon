@@ -26,7 +26,7 @@ class AuditService
      * @param  string  $action  Action performed (e.g., 'user.deleted', 'post.published')
      * @param  string  $resourceType  Resource type (e.g., 'user', 'post', 'comment')
      * @param  int|null  $resourceId  ID of affected resource
-     * @param  array  $details  Additional context (old/new values, metadata)
+     * @param  array<mixed>  $details  Additional context (old/new values, metadata)
      * @param  string|null  $ipAddress  Client IP address for security tracking
      * @return bool True on success, false on failure
      */

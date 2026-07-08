@@ -21,7 +21,7 @@ class UserSocialLinkModel extends AppModel
      * with custom networks sorted alphabetically at the end.
      *
      * @param  int  $userId  User ID
-     * @return array Array of social links
+     * @return array<int, array{network: string, url: string}> Array of social links
      */
     public function listByUser(int $userId): array
     {
@@ -54,7 +54,7 @@ class UserSocialLinkModel extends AppModel
      * Returns network => url mapping for easy template access.
      *
      * @param  int  $userId  User ID
-     * @return array Associative array of network => url
+     * @return array<string, string> Associative array of network => url
      */
     public function getKeyValueArrayLinks(int $userId): array
     {

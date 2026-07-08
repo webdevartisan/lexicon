@@ -51,7 +51,9 @@ class UserResource
 
     public function displayName(): ?string
     {
-        return (string) $this->data['display_name_cached'] ?? null;
+        return isset($this->data['display_name_cached'])
+            ? (string) $this->data['display_name_cached']
+            : null;
     }
 
     public function isActive(): ?bool

@@ -25,7 +25,7 @@ final class ControllerRequestHandler implements RequestHandlerInterface
     /**
      * @param  BaseController  $controller  A concrete controller instance.
      * @param  string  $action  The action method name to call.
-     * @param  array<int,mixed>  $args  Positional arguments for the action (route params, etc.).
+     * @param  array<string,mixed>  $args  Named arguments for the action, keyed by parameter name (route params, etc.).
      */
     public function __construct(
         private BaseController $controller,

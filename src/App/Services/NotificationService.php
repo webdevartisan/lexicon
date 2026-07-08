@@ -59,7 +59,7 @@ class NotificationService
      *
      * @param  int  $userId  Recipient user ID
      * @param  string  $type  One of the documented event types
-     * @param  array  $data  Type-specific payload (see plan for required keys)
+     * @param  array<string, mixed>  $data  Type-specific payload (see plan for required keys)
      */
     public function dispatch(int $userId, string $type, array $data): void
     {
@@ -93,6 +93,8 @@ class NotificationService
      * Build the Mailable for an emailable type.
      *
      * Returns null when the type has no Mailable mapping.
+     *
+     * @param  array<string, mixed>  $data  Type-specific payload
      */
     private function buildMailable(string $type, string $to, array $data): ?Mailable
     {
@@ -126,7 +128,6 @@ class NotificationService
             ),
             'post.published' => new PostPublishedMail(
                 $to,
-                (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
                 (string) ($data['blog_slug'] ?? ''),
                 (string) ($data['post_slug'] ?? '')

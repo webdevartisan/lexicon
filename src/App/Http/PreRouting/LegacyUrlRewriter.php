@@ -39,7 +39,10 @@ final class LegacyUrlRewriter
         $path = parse_url($fullUri, PHP_URL_PATH) ?: '/';
         $query = parse_url($fullUri, PHP_URL_QUERY) ?: null;
 
-        // Example rewrite rules (move to config/legacy_urls.php if preferred)
+        // Example rewrite rules.
+        // Typed as generic config rows so the no-redirect branch stays reachable
+        // when rules omit 'redirect' or set it to false.
+        /** @var array<int, array<string, mixed>> $rules */
         $rules = [
             // Exact path redirect (301)
             ['exact' => '/old-blog', 'target' => '/blog', 'redirect' => true],

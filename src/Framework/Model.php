@@ -90,7 +90,7 @@ abstract class Model
      * Fetch a single row by primary key.
      *
      * @param  string|int  $id  Primary key value
-     * @return array|null Row data or null if not found
+     * @return array<string, mixed>|null Row data or null if not found
      */
     public function find(string|int $id): ?array
     {

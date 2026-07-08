@@ -30,6 +30,9 @@ final class MediaService
      * Files are stored under the blog owner's directory tree (matching the
      * existing branding / post-image conventions) regardless of which
      * collaborator did the upload.
+     *
+     * @param  array<string, mixed>  $file  Uploaded file entry from $_FILES
+     * @return array<string, mixed> Indexed media row data
      */
     public function upload(array $file, int $uploaderId, int $blogId, int $ownerId): array
     {
@@ -37,7 +40,7 @@ final class MediaService
             throw new InvalidArgumentException('No file uploaded.');
         }
 
-        $originalName = (string) ($file['name'] ?? '');
+        $originalName = (string) $file['name'];
 
         [$dir, $baseUrl] = $this->blogMediaPath($ownerId, $blogId);
 
@@ -65,9 +68,9 @@ final class MediaService
      *
      * @param  string  $tempFilename  Temp filename from UploadService::getUploadedFiles()
      * @param  int  $uploaderId  Acting user, for temp cleanup and the library row
-     * @return string|null Public URL of the stored image, or null if the move failed
+     * @return string Public URL of the stored image
      */
-    public function storeFeaturedImage(string $tempFilename, BlogResource $blog, int $uploaderId): ?string
+    public function storeFeaturedImage(string $tempFilename, BlogResource $blog, int $uploaderId): string
     {
         [$dir, $baseUrl] = $this->uploads->userBlogPostPath($blog->ownerId(), $blog->id());
 
@@ -82,9 +85,7 @@ final class MediaService
 
         $this->uploads->cleanupTempFiles($uploaderId);
 
-        if ($path) {
-            $this->register((int) $blog->id(), $uploaderId, $path, 'post_image');
-        }
+        $this->register((int) $blog->id(), $uploaderId, $path, 'post_image');
 
         return $path;
     }
@@ -93,6 +94,8 @@ final class MediaService
      * Make sure a file that was uploaded through one of the existing
      * flows (post featured image, TinyMCE inline, branding) has a row
      * in the library. Safe to call repeatedly.
+     *
+     * @return array<string, mixed>|null Indexed media row data, or null if skipped
      */
     public function register(int $blogId, ?int $userId, string $url, string $source): ?array
     {
@@ -182,6 +185,9 @@ final class MediaService
         return $added;
     }
 
+    /**
+     * @return array{string, string} Absolute directory and public base URL
+     */
     public function blogMediaPath(int $userId, int $blogId): array
     {
         $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/media';
@@ -192,6 +198,8 @@ final class MediaService
 
     /**
      * Read disk metadata for the file behind a URL and write the row.
+     *
+     * @return array<string, mixed> Indexed media row data
      */
     private function indexFile(string $url, int $blogId, ?int $userId, string $source, ?string $originalName): array
     {

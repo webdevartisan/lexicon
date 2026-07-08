@@ -102,7 +102,7 @@ class PostController extends AppController
 
         // On error, return form view again
         return $this->view([
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not create the post. Please try again.'],
             'post' => $data,
         ]);
     }
@@ -149,7 +149,7 @@ class PostController extends AppController
         }
 
         return $this->view('post.edit', [
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not update the post. Please try again.'],
             'post' => $data,
         ]);
     }
@@ -193,6 +193,8 @@ class PostController extends AppController
 
     /**
      * Shared validation for create and update submissions.
+     *
+     * @return array<string, mixed> Validated input fields
      */
     private function validatePostInput(): array
     {
@@ -209,6 +211,8 @@ class PostController extends AppController
 
     /**
      * Utility: fetch post or 404
+     *
+     * @return array<string, mixed> Post record
      */
     private function getPost(string $id): array
     {
@@ -221,6 +225,9 @@ class PostController extends AppController
         return $post;
     }
 
+    /**
+     * @return array<int, array<string, mixed>> Blog rows for the form dropdown
+     */
     private function getBlogs(): array
     {
         return $this->blogModel->getAllBlogsWithOwnerAndCounts();

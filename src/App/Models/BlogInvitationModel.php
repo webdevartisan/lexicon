@@ -124,7 +124,7 @@ class BlogInvitationModel extends AppModel
      * Get all pending invites for a blog (for the team management page).
      *
      * @param  int  $blogId  Target blog
-     * @return array List of pending invitations
+     * @return array<int, array<string, mixed>> List of pending invitations
      */
     public function getPendingForBlog(int $blogId): array
     {
@@ -145,7 +145,7 @@ class BlogInvitationModel extends AppModel
      * left guessing why the row disappeared. Excludes accepted/declined.
      *
      * @param  int  $blogId  Target blog
-     * @return array List of expired invitations within the grace window
+     * @return array<int, array<string, mixed>> List of expired invitations within the grace window
      */
     public function getExpiredForBlog(int $blogId): array
     {

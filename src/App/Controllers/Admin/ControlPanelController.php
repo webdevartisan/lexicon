@@ -9,7 +9,6 @@ use App\Models\ActivityLogModel;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\PostModel;
-use App\Models\SettingModel;
 use App\Models\UserModel;
 use App\Services\CacheManagementService;
 use Framework\Core\Response;
@@ -29,8 +28,7 @@ class ControlPanelController extends AppController
         private UserModel $users,
         private BlogModel $blogs,
         private ActivityLogModel $activityLog,
-        private CacheManagementService $cacheService,
-        private SettingModel $settings
+        private CacheManagementService $cacheService
     ) {}
 
     public function index(): Response
@@ -71,6 +69,8 @@ class ControlPanelController extends AppController
 
     /**
      * Environment facts an admin checks when something feels off.
+     *
+     * @return array<string, mixed> Environment summary values
      */
     private function systemHealth(): array
     {

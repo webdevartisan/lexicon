@@ -34,6 +34,9 @@ class TranslationService
      * translate: resolves a key via two steps—(1) exact match for flat dotted JSON,
      * then (2) nested traversal for structured JSON using the configured separator.
      * Supports {placeholder} interpolation for basic variable substitution.
+     *
+     * @param  string|string[]  $key  Dotted key or pre-split path segments
+     * @param  array<string, mixed>  $params  Placeholder name => value pairs
      */
     public function translate(string|array $key, array $params = []): string
     {
@@ -62,13 +65,17 @@ class TranslationService
     /**
      * getByPath: iteratively traverse an array using segments, e.g., ["sidebar","menu","title"].
      * Returns null if any segment is missing to avoid PHP notices and simplify fallback behavior.
+     *
+     * @param  array<string, mixed>  $array  Translations tree to walk
+     * @param  string[]  $segments  Path segments in traversal order
+     * @return mixed String leaf, nested array on mis-key, or null when not found
      */
-    private function getByPath(array $array, array $segments)
+    private function getByPath(array $array, array $segments): mixed
     {
         $current = $array; // Start at the root of the translations array.
         foreach ($segments as $seg) { // Visit each segment in order to drill into nested keys.
             if (!is_array($current) || !array_key_exists($seg, $current)) {
-                return; // Missing segment stops traversal and signals "not found".
+                return null; // Missing segment stops traversal and signals "not found".
             }
             $current = $current[$seg]; // Descend one level deeper in the structure.
         }
@@ -79,6 +86,8 @@ class TranslationService
     /**
      * interpolate: replace tokens like {name} with corresponding values from $params.
      * This keeps templates clean and localizes message formatting in one place
+     *
+     * @param  array<string, mixed>  $params  Placeholder name => value pairs
      */
     private function interpolate(string $text, array $params): string
     {

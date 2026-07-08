@@ -218,6 +218,9 @@ class UserController extends AppController
         return $this->redirect('/admin/users');
     }
 
+    /**
+     * @return array<string, mixed> User record
+     */
     private function getUser(string $id): array
     {
         $user = $this->model->find($id);

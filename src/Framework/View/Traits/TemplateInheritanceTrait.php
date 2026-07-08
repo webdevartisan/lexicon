@@ -30,6 +30,9 @@ trait TemplateInheritanceTrait
         return $this->replaceYields($base, $blocks);
     }
 
+    /**
+     * @return array<string, string> Block name => block content
+     */
     private function getBlocks(string $code): array
     {
         preg_match_all("#{% block (?<name>\w+) %}(?<content>.*?){% endblock %}#s", $code, $matches, PREG_SET_ORDER);
@@ -37,6 +40,9 @@ trait TemplateInheritanceTrait
         return array_column($matches, 'content', 'name');
     }
 
+    /**
+     * @param  array<string, string>  $blocks  Block name => block content
+     */
     private function replaceYields(string $code, array $blocks): string
     {
         preg_match_all("#{% yield (?<name>\w+) %}#", $code, $matches, PREG_SET_ORDER);

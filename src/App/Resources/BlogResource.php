@@ -12,8 +12,12 @@ use App\Models\BlogModel;
  */
 class BlogResource
 {
+    /** @var array<string, mixed> */
     private array $data;
 
+    /**
+     * @param  array<string, mixed>  $data  Blog row from the database
+     */
     public function __construct(array $data, private BlogModel $model)
     {
         $this->data = $data;
@@ -61,18 +65,29 @@ class BlogResource
     }
 
     // Lazy getters
+
+    /**
+     * @return array<int, array<string, mixed>> Post rows for this blog
+     */
     public function posts(): array
     {
         return $this->model->getBlogPosts($this->id());
     }
 
-    /** We should prefer users() naming for clarity going forward. */
+    /**
+     * We should prefer users() naming for clarity going forward.
+     *
+     * @return array<int, array<string, mixed>> Active blog_users rows with username and email
+     */
     public function users(): array
     {
         // should implement getBlogUsers($blogId) in BlogModel for DRY and performance.
         return $this->model->getBlogUsers($this->id());
     }
 
+    /**
+     * @return array<int, array<string, mixed>> Users not yet assigned to this blog
+     */
     public function availableUsers(): array
     {
         return $this->model->getAvailableUsers($this->id());
@@ -97,6 +112,10 @@ class BlogResource
     }
 
     // Convert back to array for views
+
+    /**
+     * @return array<string, mixed> Blog data plus post_count and user_count
+     */
     public function toArray(): array
     {
         return array_merge($this->data, [

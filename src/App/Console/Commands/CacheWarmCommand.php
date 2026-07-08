@@ -29,6 +29,7 @@ class CacheWarmCommand
 
     private CacheKey $keyGenerator;
 
+    /** @var array<string, mixed> */
     private array $config;
 
     private bool $verbose = false;
@@ -259,7 +260,7 @@ class CacheWarmCommand
         // mock authentication for authenticated routes during warming
         // This allows us to warm dashboard/admin fragments without requiring real login
         $warmAsUserId = $_ENV['CACHE_WARM_AS_USER_ID'] ?? 1;
-        if ($warmAsUserId !== null && $warmAsUserId !== '') {
+        if ($warmAsUserId !== '') {
             $_SESSION['user_id'] = (int) $warmAsUserId;
 
             if ($this->verbose) {

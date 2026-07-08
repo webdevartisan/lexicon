@@ -22,6 +22,9 @@ class MediaModel extends AppModel
      *
      * Pagination uses simple limit/offset — fine for the library where
      * the grid pages 24 at a time.
+     *
+     * @param  array<string, mixed>  $filters  q, source, sort, limit, offset
+     * @return array<int, array<string, mixed>> Media rows for the page
      */
     public function listForBlog(int $blogId, array $filters = []): array
     {
@@ -59,6 +62,9 @@ class MediaModel extends AppModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param  array<string, mixed>  $filters  Same q/source filters as listForBlog()
+     */
     public function countForBlog(int $blogId, array $filters = []): int
     {
         $where = ['blog_id = ?'];
@@ -85,6 +91,8 @@ class MediaModel extends AppModel
     /**
      * Look up a single item but only if it belongs to the given blog,
      * so a caller can't reach into another blog's library by id.
+     *
+     * @return array<string, mixed>|null Media row or null if not found
      */
     public function findForBlog(int $id, int $blogId): ?array
     {
@@ -108,6 +116,9 @@ class MediaModel extends AppModel
         return (bool) $this->database->query($sql, [$blogId, $diskPath])->fetchColumn();
     }
 
+    /**
+     * @param  array<string, mixed>  $data  Media row to insert
+     */
     public function createRecord(array $data): int
     {
         $this->insert($data);

@@ -82,7 +82,11 @@ class UserProfileResource
         return $this->data['display_name_preference'] ?? null;
     }
 
-    /** Convert back to array for views or APIs. */
+    /**
+     * Convert back to array for views or APIs.
+     *
+     * @return array<string, mixed> Raw profile row
+     */
     public function toArray(): array
     {
         return $this->data;

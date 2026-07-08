@@ -19,6 +19,8 @@ class UserPolicy implements PolicyInterface
      * View user profile.
      *
      * allow users to view their own profile and admins to view all profiles.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function view(array $user, object $targetUser): bool
     {
@@ -37,6 +39,8 @@ class UserPolicy implements PolicyInterface
      * Update user profile.
      *
      * allow users to update their own profile and admins to update any profile.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function update(array $user, object $targetUser): bool
     {
@@ -58,6 +62,8 @@ class UserPolicy implements PolicyInterface
      * - Users can delete their own account
      * - Administrators can delete other accounts
      * - Cannot delete the last administrator
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function delete(array $user, object $targetUser): bool
     {
@@ -85,6 +91,8 @@ class UserPolicy implements PolicyInterface
      * Restore a soft-deleted user.
      *
      * only allow administrators to restore deleted accounts.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function restore(array $user, object $targetUser): bool
     {
@@ -98,6 +106,8 @@ class UserPolicy implements PolicyInterface
      * Permanently delete user data (hard delete).
      *
      * restrict this to administrators only for GDPR compliance.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function forceDelete(array $user, object $targetUser): bool
     {
@@ -109,6 +119,8 @@ class UserPolicy implements PolicyInterface
 
     /**
      * Check if user is an administrator.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     private function isAdministrator(array $user): bool
     {

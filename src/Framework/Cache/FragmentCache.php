@@ -75,7 +75,7 @@ class FragmentCache
 
         $locale = $this->getLocale();
 
-        if (preg_match('/:('.preg_quote($locale).')$/', $key)) {
+        if (preg_match('/:('.preg_quote($locale, '/').')$/', $key)) {
             return $key;
         }
 
@@ -229,7 +229,7 @@ class FragmentCache
      *
      * @param  string  $key  Cache key
      * @param  string  $view  View template path
-     * @param  array  $data  Data to pass to view
+     * @param  array<string, mixed>  $data  Data to pass to view
      * @param  int  $ttl  Cache lifetime in seconds
      * @param  bool  $localized  Whether to make cache locale-aware
      * @return string Rendered HTML fragment

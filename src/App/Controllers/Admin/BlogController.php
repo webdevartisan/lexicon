@@ -110,7 +110,7 @@ class BlogController extends AppController
         }
 
         return $this->view('blog.edit', [
-            'errors' => $this->blogModel->getErrors(),
+            'errors' => ['Could not update the blog. Please try again.'],
             'blog' => $data,
         ]);
     }
@@ -172,6 +172,9 @@ class BlogController extends AppController
         return $this->redirect('/admin/blogs');
     }
 
+    /**
+     * @return array<string, mixed> Blog record as array
+     */
     private function getBlog(string $id): array
     {
         $blog = $this->blogModel->getBlog((int) $id);
@@ -183,7 +186,7 @@ class BlogController extends AppController
         return $blog->toArray();
     }
 
-    private function generateSlug($name)
+    private function generateSlug(string $name): string
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
 

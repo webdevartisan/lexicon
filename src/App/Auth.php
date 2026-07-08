@@ -17,12 +17,16 @@ use Framework\Session;
  */
 class Auth implements AuthInterface
 {
+    /** @var array<string, mixed>|null */
     private ?array $cachedUser = null;
 
+    /** @var string[]|null */
     private ?array $cachedRoles = null;
 
+    /** @var string[]|null */
     private ?array $cachedPermissions = null;
 
+    /** @var array<string, mixed>|null */
     private ?array $cachedAvatar = null;
 
     public function __construct(

@@ -239,7 +239,7 @@ class Response
      *
      * automatically encode the data and set appropriate headers.
      *
-     * @param  array  $data  Data to encode as JSON
+     * @param  array<mixed>  $data  Data to encode as JSON
      *
      * @throws \JsonException When encoding fails
      */

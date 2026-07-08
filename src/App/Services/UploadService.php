@@ -23,8 +23,8 @@ final class UploadService implements UploadServiceInterface
      * generates content-based hash for deduplication, and sanitizes filenames.
      * Performs SVG hardening by rejecting files containing script tags.
      *
-     * @param  array  $file  PHP $_FILES array entry
-     * @param  array  $opts  Configuration: dir, base_url, max_bytes, allowed_ext, rename
+     * @param  array<string, mixed>  $file  PHP $_FILES array entry
+     * @param  array<string, mixed>  $opts  Configuration: dir, base_url, max_bytes, allowed_ext, rename
      * @return string|null Public URL of stored file, or null on failure
      *
      * @throws InvalidArgumentException If validation fails
@@ -144,7 +144,7 @@ final class UploadService implements UploadServiceInterface
      * Used for AJAX uploads where final destination depends on form completion.
      * Files remain in temp until moved to permanent location or garbage collected.
      *
-     * @param  array  $file  PHP $_FILES array entry
+     * @param  array<string, mixed>  $file  PHP $_FILES array entry
      * @param  int  $userId  User ID for temp directory isolation
      * @return array{url: string, filename: string, size: int} File metadata for client
      *
@@ -210,12 +210,12 @@ final class UploadService implements UploadServiceInterface
      * Handles both single JSON string and array of JSON strings.
      * Extracts file metadata from encoded format.
      *
-     * @param  string|array  $fieldNames  JSON string or array of JSON strings
-     * @return array Parsed file data
+     * @param  string|string[]  $fieldNames  JSON string or array of JSON strings
+     * @return array<mixed> Parsed file data
      */
     public function getUploadedFiles(string|array $fieldNames): array
     {
-        $json = $fieldNames ?? '[]';
+        $json = $fieldNames;
 
         if (is_array($json)) {
             $fileNames = [];
@@ -252,7 +252,7 @@ final class UploadService implements UploadServiceInterface
      * @param  string  $prefix  Semantic prefix: 'banner', 'logo', or 'favicon'
      * @param  string  $dir  Target directory path
      * @param  string  $baseUrl  Target URL base
-     * @return string|null Public URL of moved file
+     * @return string Public URL of moved file
      *
      * @throws InvalidArgumentException If temp file not found
      * @throws RuntimeException If copy operation fails
@@ -264,7 +264,7 @@ final class UploadService implements UploadServiceInterface
         string $prefix,
         string $dir,
         string $baseUrl
-    ): ?string {
+    ): string {
         $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
 
         if (!file_exists($tempPath)) {

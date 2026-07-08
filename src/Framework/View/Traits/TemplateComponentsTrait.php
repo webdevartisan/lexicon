@@ -36,7 +36,7 @@ trait TemplateComponentsTrait
      * Turn {% cmp="btn" variant="warning" %} into:
      * <?php echo $this->renderComponent('btn', ['variant' => 'warning']); ?>
      *
-     * @param  array  $matches  Regex matches
+     * @param  array<int|string, string>  $matches  Regex matches
      * @return string PHP code
      */
     private function compileComponentToPhp(array $matches): string
@@ -118,7 +118,7 @@ trait TemplateComponentsTrait
             $flagMatches
         );
 
-        foreach (($flagMatches[1] ?? []) as $flag) {
+        foreach ($flagMatches[1] as $flag) {
             $flag = (string) $flag;
             if (!array_key_exists($flag, $attrs)) {
                 $attrs[$flag] = true;

@@ -19,14 +19,16 @@ class Database
 {
     private ?PDO $pdo = null;
 
+    /** @var array<int, array<string, mixed>> */
     private array $queryLog = [];
 
+    /** @var array<string, mixed> */
     private readonly array $config;
 
     /**
      * Create a new Database instance.
      *
-     * @param  array  $config  Database configuration array
+     * @param  array<string, mixed>  $config  Database configuration array
      */
     public function __construct(array $config)
     {
@@ -84,7 +86,7 @@ class Database
      * Execute a SQL query with optional parameters.
      *
      * @param  string  $sql  SQL query string
-     * @param  array  $params  Query parameters for prepared statement
+     * @param  array<int|string, mixed>  $params  Query parameters for prepared statement
      *
      * @throws RuntimeException If query fails
      */
@@ -122,7 +124,7 @@ class Database
      * Execute a non-SELECT query (INSERT, UPDATE, DELETE).
      *
      * @param  string  $sql  SQL query string
-     * @param  array  $params  Query parameters
+     * @param  array<int|string, mixed>  $params  Query parameters
      * @return int Number of affected rows
      */
     public function execute(string $sql, array $params = []): int
@@ -248,7 +250,7 @@ class Database
      * Only logs when DB_LOG_QUERIES=true or query exceeds slow threshold.
      *
      * @param  string  $sql  SQL query
-     * @param  array  $params  Query parameters
+     * @param  array<int|string, mixed>  $params  Query parameters
      * @param  float  $startTime  Query start time (microtime)
      */
     private function logQuery(string $sql, array $params, float $startTime): void
@@ -284,7 +286,7 @@ class Database
      * Write query log entry to file.
      * TODO: Must revisit this to use a proper logging library for better performance and features.
      *
-     * @param  array  $logEntry  Log entry data
+     * @param  array<string, mixed>  $logEntry  Log entry data
      */
     private function writeQueryLog(array $logEntry): void
     {
@@ -311,6 +313,8 @@ class Database
      * Get all logged queries for current request.
      *
      * Useful for debugging and profiling.
+     *
+     * @return array<int, array<string, mixed>> Logged query entries
      */
     public function getQueryLog(): array
     {

@@ -35,6 +35,9 @@ final class Consent
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $payload  Decoded cookie payload
+     */
     public static function fromPayload(array $payload): ?self
     {
         if (!isset($payload['v'], $payload['ts'], $payload['c']) || !is_array($payload['c'])) {

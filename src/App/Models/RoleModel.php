@@ -44,7 +44,7 @@ class RoleModel extends AppModel
     /**
      * All roles with how many users hold each, grouped counts in one query.
      *
-     * @return array Roles ordered by scope then level, each with users_count
+     * @return array<int, array<string, mixed>> Roles ordered by scope then level, each with users_count
      */
     public function findAllWithUserCounts(): array
     {
@@ -71,6 +71,8 @@ class RoleModel extends AppModel
 
     /**
      * Whether a role is one of the shipped roles referenced by code.
+     *
+     * @param  array<string, mixed>  $role  Role row
      */
     public function isSystemRole(array $role): bool
     {
@@ -114,7 +116,7 @@ class RoleModel extends AppModel
      * and permissions tables.
      *
      * @param  int  $roleId  Role identifier
-     * @return array List of permissions assigned to this role
+     * @return array<int, array<string, mixed>> List of permissions assigned to this role
      */
     public function getRolePermissions(int $roleId): array
     {

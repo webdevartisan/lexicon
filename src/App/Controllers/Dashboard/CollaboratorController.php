@@ -86,7 +86,7 @@ final class CollaboratorController extends AppController
         // With the workflow off the reviewer role has nothing to do, so don't offer it on the invite form.
         $availableRoles = $workflowEnabled
             ? BlogModel::ROLES
-            : array_values(array_filter(BlogModel::ROLES, static fn (string $r): bool => $r !== 'reviewer'));
+            : array_values(array_diff(BlogModel::ROLES, ['reviewer']));
 
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
@@ -279,7 +279,7 @@ final class CollaboratorController extends AppController
             return false;
         }
         foreach ($members as $m) {
-            if ((int) ($m['user_id'] ?? 0) === $userIdLosing) {
+            if ($m['user_id'] === $userIdLosing) {
                 return true;
             }
         }

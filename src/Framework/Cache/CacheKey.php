@@ -19,11 +19,12 @@ use Framework\Core\Request;
  */
 class CacheKey
 {
+    /** @var array<string, string[]> */
     private array $queryWhitelist;
 
     /**
-     * @param  array  $queryWhitelist  Map of path => allowed query params
-     *                                 e.g., ['/blogs' => ['page', 'q']]
+     * @param  array<string, string[]>  $queryWhitelist  Map of path => allowed query params
+     *                                                   e.g., ['/blogs' => ['page', 'q']]
      */
     public function __construct(array $queryWhitelist = [])
     {
@@ -54,6 +55,8 @@ class CacheKey
      * Generate cache key for manual operations.
      *
      * Example: cache()->delete(CacheKey::for('/blogs', ['page' => 2]))
+     *
+     * @param  array<string, mixed>  $query  Query parameters to include in the key
      */
     public static function for(string $path, array $query = [], ?string $locale = null): string
     {
@@ -81,6 +84,9 @@ class CacheKey
         return $path === '/' ? '/' : rtrim($path, '/');
     }
 
+    /**
+     * @param  array<string, mixed>  $getParams  Raw GET parameters from the request
+     */
     private function canonicalQuery(string $path, array $getParams): string
     {
         // Get allowed params for this path.

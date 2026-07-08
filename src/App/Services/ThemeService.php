@@ -27,6 +27,9 @@ class ThemeService implements ThemeResolverInterface
         return $this->activeTheme;
     }
 
+    /**
+     * @return string[] View directories in resolution order (theme first, default last)
+     */
     public function viewRoots(): array
     {
         $roots = [];

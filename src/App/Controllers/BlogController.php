@@ -24,7 +24,7 @@ class BlogController extends AppController
         private TagModel $tagModel
     ) {}
 
-    public function index()
+    public function index(): Response
     {
         // 1. Core collections for the sidebar / discovery sections
         $blogs = $this->model->getAllBlogsWithOwnerAndCounts();
@@ -68,17 +68,17 @@ class BlogController extends AppController
 
         // 4. Build a small DTO-like payload for pagination
         $pagination = [
-            'totalPages' => $postsData['totalPages'] ?? 0,
-            'currentPage' => $postsData['currentPage'] ?? $page,
-            'perPage' => $postsData['perPage'] ?? $perPage,
-            'totalPosts' => $postsData['totalPosts'] ?? 0,
+            'totalPages' => $postsData['totalPages'],
+            'currentPage' => $postsData['currentPage'],
+            'perPage' => $postsData['perPage'],
+            'totalPosts' => $postsData['totalPosts'],
         ];
 
         return $this->view([
             'blogs' => $blogs,
             'categories' => $categories,
             'featuredCreators' => $featuredCreators,
-            'posts' => $postsData['data'] ?? [],
+            'posts' => $postsData['data'],
             'pagination' => $pagination,
             'searchQuery' => $searchQuery,
             'activeCategory' => $categoryName,
@@ -127,7 +127,7 @@ class BlogController extends AppController
         return $this->view('Blogs/show.lex.php', $ctx + [
             'posts' => $this->enrichCardPosts($posts),
             'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
-            'totalPosts' => (int) ($landingData['totalPosts'] ?? 0),
+            'totalPosts' => $landingData['totalPosts'],
             'activeCategory' => $activeCategory,
         ]);
     }
@@ -290,7 +290,7 @@ class BlogController extends AppController
         ];
     }
 
-    public function showBlogPost(string $blogSlug, string $postSlug)
+    public function showBlogPost(string $blogSlug, string $postSlug): Response
     {
         $ctx = $this->loadBlogContext($blogSlug);
 
@@ -377,6 +377,9 @@ class BlogController extends AppController
         ]);
     }
 
+    /**
+     * @return array<string, mixed> Blog, owner, settings, and meta context
+     */
     private function loadBlogContext(string $blogSlug): array
     {
         // 1) Blog

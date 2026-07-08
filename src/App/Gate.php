@@ -8,6 +8,9 @@ use App\Policies\PolicyResolver;
 
 class Gate
 {
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public static function allows(string $action, object|string $resource, array $user): bool
     {
         $policy = PolicyResolver::for($resource);
@@ -25,11 +28,17 @@ class Gate
         return $policy->{$action}($user, $resource);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public static function denies(string $action, object|string $resource, array $user): bool
     {
         return !self::allows($action, $resource, $user);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public static function authorize(string $action, object|string $resource, array $user): void
     {
         if (self::allows($action, $resource, $user) === false) {

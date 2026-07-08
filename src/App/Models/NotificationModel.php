@@ -19,7 +19,7 @@ class NotificationModel extends AppModel
      *
      * @param  int  $userId  Recipient
      * @param  string  $type  e.g. 'blog.invite', 'post.approved', 'collaborator.role_changed'
-     * @param  array  $data  JSON-serialisable payload
+     * @param  array<string, mixed>  $data  JSON-serialisable payload
      * @return bool True on success
      */
     public function create(int $userId, string $type, array $data): bool
@@ -35,7 +35,7 @@ class NotificationModel extends AppModel
      * @param  int  $userId  Recipient
      * @param  int  $limit  Max rows
      * @param  bool  $onlyUnread  Limit to rows where read_at is NULL
-     * @return array List of notifications
+     * @return array<int, array<string, mixed>> List of notifications
      */
     public function findForUser(int $userId, int $limit = 20, bool $onlyUnread = false): array
     {
@@ -97,7 +97,7 @@ class NotificationModel extends AppModel
      * @param  int  $userId  Recipient
      * @param  int  $perPage  Page size
      * @param  int  $page  1-based page index
-     * @return array{items: array<int, array>, total: int, page: int, perPage: int}
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
      */
     public function findPageForUser(int $userId, int $perPage = 20, int $page = 1): array
     {

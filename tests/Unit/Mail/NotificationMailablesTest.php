@@ -53,7 +53,7 @@ test('PostNeedsChangesMail includes feedback verbatim (escaped)', function () {
 });
 
 test('PostPublishedMail links to public post URL', function () {
-    $mail = new PostPublishedMail('author@example.test', 42, 'My Post', 'my-blog', 'my-post');
+    $mail = new PostPublishedMail('author@example.test', 'My Post', 'my-blog', 'my-post');
     expect($mail->getBody())->toContain('https://example.test/blog/my-blog/my-post');
 });
 

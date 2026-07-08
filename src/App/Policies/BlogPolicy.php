@@ -14,6 +14,9 @@ use Framework\Interfaces\PolicyInterface;
  */
 class BlogPolicy implements PolicyInterface
 {
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     private function hasRole(array $user, string $role): bool
     {
         return in_array($role, $user['roles'] ?? [], true);
@@ -22,6 +25,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * View a blog in dashboard context.
      * Owner always allowed; per-blog roles editor/author/viewer/contributor/reviewer can view.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function view(array $user, object $blog): bool
     {
@@ -41,6 +46,9 @@ class BlogPolicy implements PolicyInterface
         return in_array($blogRole, $allowedRoles, true);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public function create(array $user): bool
     {
         $allowedRoles = ['administrator', 'editor', 'author', 'content_manager', 'blog_owner'];
@@ -56,6 +64,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * Update blog identity/settings.
      * Owner or editor per-blog.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function update(array $user, object $blog): bool
     {
@@ -78,6 +88,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * Manage users attached to this blog.
      * Owner only — editors no longer manage the collaborator roster.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageUsers(array $user, object $blog): bool
     {
@@ -87,6 +99,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * Invite a new collaborator to this blog.
      * Owner only.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function invite(array $user, object $blog): bool
     {
@@ -96,6 +110,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * Create a post in this blog.
      * Owner, editor, author, contributor can start a post.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function createPost(array $user, object $blog): bool
     {
@@ -111,6 +127,8 @@ class BlogPolicy implements PolicyInterface
     /**
      * Delete blog.
      * Keep strict: owner only.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function delete(array $user, object $blog): bool
     {

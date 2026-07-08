@@ -10,6 +10,9 @@ class CommentModel extends AppModel
 
     private const ALLOWED_STATUSES = ['pending', 'approved', 'spam'];
 
+    /**
+     * @return array<int, array<string, mixed>> Approved comments with user_name, oldest first
+     */
     public function forPost(int $postId): array
     {
         $sql = "SELECT
@@ -41,6 +44,9 @@ class CommentModel extends AppModel
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
+     */
     public function findByBlogIdWithFilters(
         int $blogId,
         string $status = '',
@@ -125,7 +131,7 @@ class CommentModel extends AppModel
      * Mirrors findByBlogIdWithFilters but spans every blog, so administrators
      * can moderate the whole site from one screen.
      *
-     * @return array{data: array, pagination: array}
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findAllWithFilters(
         string $status = '',
@@ -247,6 +253,9 @@ class CommentModel extends AppModel
         return $row ? (int) $row['blog_id'] : null;
     }
 
+    /**
+     * @param  int[]  $ids  Comment IDs to update
+     */
     public function bulkUpdateStatus(array $ids, string $status): int
     {
         if ($ids === []) {
@@ -261,6 +270,9 @@ class CommentModel extends AppModel
         return (int) $this->database->execute($sql, array_merge([$status], $ids));
     }
 
+    /**
+     * @param  int[]  $ids  Comment IDs to delete
+     */
     public function bulkDelete(array $ids): int
     {
         if ($ids === []) {
@@ -281,6 +293,9 @@ class CommentModel extends AppModel
         return $affected > 0;
     }
 
+    /**
+     * @return array<int, array<string, mixed>> User's comments with post_title, newest first
+     */
     public function byUser(int $userId): array
     {
         $sql = "SELECT c.*, p.title AS post_title
@@ -294,6 +309,9 @@ class CommentModel extends AppModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @return array<string, mixed>|null Comment row or null if not found
+     */
     public function findById(int $id): ?array
     {
         $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? LIMIT 1";
@@ -304,6 +322,9 @@ class CommentModel extends AppModel
         return $result ?: null;
     }
 
+    /**
+     * @param  array<string, mixed>  $data  Comment data to insert
+     */
     public function create(array $data): int|false
     {
         return $this->insert($data);
@@ -334,6 +355,9 @@ class CommentModel extends AppModel
         return $this->countByBlogIdAndStatus($blogId, 'approved');
     }
 
+    /**
+     * @return array<int, array<string, mixed>> Pending comments on the author's posts
+     */
     public function recentForAuthor(int $authorId, int $limit = 10): array
     {
         $limit = max(1, min(50, $limit));

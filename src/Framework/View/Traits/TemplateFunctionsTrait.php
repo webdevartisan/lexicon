@@ -32,8 +32,8 @@ trait TemplateFunctionsTrait
             '#{{\s*(?<fn>[a-zA-Z_]\w*)\((?<args>[^}]*)\)\s*(?:\|\s*(?<filter>\w+))?\s*}}#',
             function (array $m): string {
                 return $this->compileFunctionCall(
-                    $m['fn'] ?? '',
-                    $m['args'] ?? '',
+                    $m['fn'],
+                    $m['args'],
                     $m['filter'] ?? null
                 );
             },

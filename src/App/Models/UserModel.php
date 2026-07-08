@@ -156,7 +156,7 @@ class UserModel extends AppModel
      * Errors are logged instead of being sent to the browser.
      *
      * @param  int  $userId  User ID
-     * @param  array  $roles  Array of role IDs to assign
+     * @param  int[]  $roles  Array of role IDs to assign
      * @return bool True on success
      */
     public function insertUserRoles(int $userId, array $roles): bool
@@ -192,7 +192,7 @@ class UserModel extends AppModel
      * Caller is responsible for wrapping in transaction if atomicity is required.
      *
      * @param  int  $userId  User ID
-     * @param  array  $newRoles  Array of new role IDs
+     * @param  int[]  $newRoles  Array of new role IDs
      * @return bool True on success
      */
     public function updateUserRoles(int $userId, array $newRoles): bool
@@ -236,21 +236,13 @@ class UserModel extends AppModel
     }
 
     /**
-     * Get the slugs of roles assigned to a user.
-     *
-     * Example return: ['administrator', 'author'].
-     *
-     * @param  int  $userId  User ID
-     * @return string[] Array of role slugs
-     */
-    /**
      * Paginated user listing for the admin panel, roles aggregated in one
      * query instead of one lookup per row.
      *
      * @param  int  $page  Current page (1-based)
      * @param  int  $perPage  Rows per page (capped at 100)
      * @param  string  $q  Optional username/email/name search term
-     * @return array{data: array, pagination: array}
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
     {
@@ -307,6 +299,14 @@ class UserModel extends AppModel
         ];
     }
 
+    /**
+     * Get the slugs of roles assigned to a user.
+     *
+     * Example return: ['administrator', 'author'].
+     *
+     * @param  int  $userId  User ID
+     * @return string[] Array of role slugs
+     */
     public function getUserRoles(int $userId): array
     {
         $sql = 'SELECT r.role_slug
@@ -364,7 +364,7 @@ class UserModel extends AppModel
      * Column names are validated before being interpolated into SQL.
      *
      * @param  int  $id  User ID
-     * @param  array  $data  Associative array of column => value pairs
+     * @param  array<string, mixed>  $data  Associative array of column => value pairs
      * @return bool True on success
      *
      * @throws Exception If invalid column name provided

@@ -12,6 +12,7 @@ use Framework\Interfaces\PolicyInterface;
 
 class PolicyResolver
 {
+    /** @var array<class-string, class-string<PolicyInterface>> */
     protected static array $map = [
         BlogResource::class => BlogPolicy::class,
         PostResource::class => PostPolicy::class,

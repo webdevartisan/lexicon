@@ -24,6 +24,11 @@ class ValidationException extends Exception
         return $this->validator;
     }
 
+    /**
+     * Get the validation error messages keyed by field name.
+     *
+     * @return array<string, string[]> Field => list of error messages
+     */
     public function errors(): array
     {
         return $this->validator->errors();

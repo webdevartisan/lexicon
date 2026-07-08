@@ -23,6 +23,7 @@ class MailService
 {
     private string $driver;
 
+    /** @var array<string, mixed> */
     private array $config;
 
     /**
@@ -31,7 +32,7 @@ class MailService
      * Configuration is validated at construction time to fail fast if
      * mail settings are misconfigured.
      *
-     * @param  array  $config  Mail configuration array
+     * @param  array<string, mixed>  $config  Mail configuration array
      *
      * @throws Exception If required configuration is missing
      */
@@ -292,7 +293,7 @@ class MailService
      * actually sending emails.
      *
      * @param  Mailable  $mailable  Email template to render
-     * @return array Email details (subject, body, recipients, etc.)
+     * @return array<string, mixed> Email details (subject, body, recipients, etc.)
      *
      * @throws Exception If email building fails
      */

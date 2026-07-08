@@ -66,10 +66,8 @@ final class ThemeResolverMiddleware implements MiddlewareInterface
         // Activates theme; ThemeService falls back to default view roots when null
         $this->themes->activate($theme ?: null);
 
-        // Publish theme and asset() to viewer globals if supported
-        if (method_exists($this->viewer, 'addGlobals')) {
-            $asset = fn (string $p) => $this->themes->assetUrl($p); // /themes/{active}/public/... or /assets/... fallback
-            $this->viewer->addGlobals(['theme' => $theme, 'asset' => $asset]);
-        }
+        // Publish theme and asset() to viewer globals
+        $asset = fn (string $p) => $this->themes->assetUrl($p); // /themes/{active}/public/... or /assets/... fallback
+        $this->viewer->addGlobals(['theme' => $theme, 'asset' => $asset]);
     }
 }

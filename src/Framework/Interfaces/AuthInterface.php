@@ -31,7 +31,7 @@ interface AuthInterface
      * We keep the return type flexible (array|null) to support different
      * user data structures across applications.
      *
-     * @return array|null User data array or null if guest
+     * @return array<string, mixed>|null User data array or null if guest
      */
     public function user(): ?array;
 

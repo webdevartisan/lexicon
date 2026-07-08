@@ -10,6 +10,8 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
+use App\Resources\BlogResource;
+use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
@@ -29,7 +31,7 @@ class HomeController extends AppController
     /**
      * Dashboard overview for the active blog context.
      */
-    public function index()
+    public function index(): Response
     {
         $user = auth()->user();
         $selectedBlogId = $this->preference->getDefaultBlogId($user['id']) ?? 0;
@@ -157,7 +159,7 @@ class HomeController extends AppController
         ]);
     }
 
-    public function setDefaultBlog()
+    public function setDefaultBlog(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
@@ -218,7 +220,7 @@ class HomeController extends AppController
         ];
     }
 
-    private function getBlog(int $id)
+    private function getBlog(int $id): BlogResource
     {
         $blog = $this->blogModel->getBlog((string) $id);
 

@@ -121,6 +121,9 @@ final class RateLimiter
 
     // --- Internal helpers ---
 
+    /**
+     * @return array{score: float, updated: int} Current decay state for the key
+     */
     private function getState(string $key, int $now): array
     {
         $data = $this->cache->get($key);

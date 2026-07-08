@@ -14,8 +14,6 @@ use Framework\Exceptions\PageNotFoundException;
 
 class CommentController extends AppController
 {
-    private const STATUSES = ['pending', 'approved', 'spam'];
-
     public function __construct(
         private CommentModel $model,
         private BlogModel $blogModel
@@ -187,7 +185,7 @@ class CommentController extends AppController
     }
 
     /**
-     * @return array{0: array, 1: BlogResource}
+     * @return array{0: array<string, mixed>, 1: BlogResource}
      *
      * @throws PageNotFoundException
      */

@@ -89,7 +89,7 @@ final class BlogController extends AppController
         });
 
         return $this->view([
-            'blogs' => array_values($blogs),
+            'blogs' => $blogs,
             'q' => $q,
             'status' => $status,
             'sort' => $sort,

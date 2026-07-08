@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Resources;
 
-use App\Models\PostModel;
-
 /**
  * PostResource
  *
@@ -13,9 +11,11 @@ use App\Models\PostModel;
  */
 class PostResource
 {
+    /**
+     * @param  array<string, mixed>  $data  Raw post row from the database
+     */
     public function __construct(
         private array $data,
-        private PostModel $model,
         private BlogResource $blog,
     ) {
         // should keep $data raw but only expose via accessors to centralize logic.
@@ -91,7 +91,11 @@ class PostResource
         return $this->blog;
     }
 
-    /** Convert back to array for views. */
+    /**
+     * Convert back to array for views.
+     *
+     * @return array<string, mixed> Raw post row
+     */
     public function toArray(): array
     {
         return $this->data;

@@ -17,7 +17,7 @@ use App\Resources\BlogResource;
 class NavigationService
 {
     /**
-     * @var array Navigation configuration
+     * @var array<string, mixed> Navigation configuration
      */
     private array $config;
 
@@ -31,7 +31,7 @@ class NavigationService
      *
      * inject dependencies to keep the service testable and flexible.
      *
-     * @param  array  $config  Navigation configuration array
+     * @param  array<string, mixed>  $config  Navigation configuration array
      * @param  Auth  $auth  Authentication service instance
      */
     public function __construct(array $config, Auth $auth)
@@ -51,7 +51,7 @@ class NavigationService
      * @param  string|null  $currentPath  Current request path for active state
      * @param  BlogResource|null  $selectedBlog  Selected blog resource for contextual navigation
      * @param  array<string,bool>  $context  Named boolean flags used by 'show_if' filter
-     * @return array Filtered and processed navigation items with translation keys
+     * @return array<int, array<string, mixed>> Filtered and processed navigation items with translation keys
      */
     public function for(string $area, ?string $currentPath = null, ?BlogResource $selectedBlog = null, array $context = []): array
     {

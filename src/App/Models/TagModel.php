@@ -18,7 +18,7 @@ class TagModel extends AppModel
     /**
      * All tags with their blog name, for the admin listing.
      *
-     * @return array Rows with blog_name joined in
+     * @return array<int, array<string, mixed>> Rows with blog_name joined in
      */
     public function allWithBlog(): array
     {
@@ -33,7 +33,7 @@ class TagModel extends AppModel
     /**
      * Paginated admin listing with optional name/slug/blog search.
      *
-     * @return array{data: array, pagination: array} Same shape as UserModel::findAllForAdmin()
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
     public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
     {
@@ -86,7 +86,7 @@ class TagModel extends AppModel
      * Find a tag by slug.
      *
      * @param  string  $slug  Tag URL slug
-     * @return array|null Tag data or null if not found
+     * @return array<string, mixed>|null Tag data or null if not found
      */
     public function findBySlug(string $slug): ?array
     {
@@ -105,7 +105,7 @@ class TagModel extends AppModel
      * with the specified tag.
      *
      * @param  int  $tagId  Tag identifier
-     * @return array List of published posts, newest first
+     * @return array<int, array<string, mixed>> List of published posts, newest first
      */
     public function posts(int $tagId): array
     {
@@ -164,6 +164,8 @@ class TagModel extends AppModel
 
     /**
      * Tags belonging to a blog, with how many posts use each.
+     *
+     * @return array<int, array<string, mixed>> Tag rows with post_count
      */
     public function getByBlogId(int $blogId): array
     {
@@ -178,6 +180,8 @@ class TagModel extends AppModel
 
     /**
      * Look up a tag by slug within a blog.
+     *
+     * @return array<string, mixed>|null Tag data or null if not found
      */
     public function findBySlugInBlog(int $blogId, string $slug): ?array
     {
@@ -187,6 +191,9 @@ class TagModel extends AppModel
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
+    /**
+     * @return array<string, mixed>|null Tag data or null if not found
+     */
     public function findForBlog(int $id, int $blogId): ?array
     {
         $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? AND blog_id = ? LIMIT 1";

@@ -63,8 +63,9 @@ trait TemplateCacheTrait
             $isStatic = !empty($match['static_key']);
             $rawKey = $isStatic ? $match['static_key'] : $match['dynamic_key'];
 
-            $ttl = $match['ttl'] ?? '3600';
-            $localized = $match['localized'] ?? 'true';
+            // Unmatched optional groups arrive as '' (not missing), so default via ?:
+            $ttl = $match['ttl'] ?: '3600';
+            $localized = $match['localized'] ?: 'true';
             $content = $match['content'];
 
             // CACHE DISABLED: just output the content directly

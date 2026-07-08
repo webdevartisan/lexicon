@@ -10,6 +10,9 @@ interface AuthInterface
 
     public function logout(): void;
 
+    /**
+     * @return array<string, mixed>|null Current user record or null if guest
+     */
     public function user(): ?array;
 
     public function check(): bool;

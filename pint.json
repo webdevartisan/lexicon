@@ -2,7 +2,7 @@
     "$schema": "vendor/laravel/pint/resources/schemas/pint-schema.json",
     "preset": "laravel",
     "rules": {
-        "simplified_null_return": true,
+        "simplified_null_return": false,
         "declare_strict_types": true,
         "new_with_braces": true,
         "ordered_imports": {

@@ -177,7 +177,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
         return $this->redirect($referer);
     }
 
-    protected function backUrlPath()
+    protected function backUrlPath(): string
     {
         $referer = $this->request->header('Referer') ?? '/';
         if ($referer && !str_starts_with($referer, base_url())) {
@@ -211,39 +211,5 @@ abstract class AppController extends BaseController implements SessionAwareInter
         $this->response->setStatusCode(403);
 
         return $this->view('errors/403', ['message' => $message]);
-    }
-
-    // ============== Domain-Specific Helpers ==============
-
-    /**
-     * Transform social links array to flat key-value pairs for form display.
-     *
-     * We keep this in AppController as a shared utility for ProfileController
-     * and AuthorController. Extract to SocialLinkHelper if more controllers need it.
-     *
-     * We convert database format [['network' => 'twitter', 'url' => '...']]
-     * to form input format ['twitter' => '...', 'github' => '...'].
-     *
-     * @param  array<int, array{network: string, url: string}>  $links  Social links from database
-     * @return array<string, string> Flat array keyed by network name
-     */
-    protected function linksToFlatInputs(array $links): array
-    {
-        $out = [
-            'website' => '',
-            'twitter' => '',
-            'instagram' => '',
-            'linkedin' => '',
-            'github' => '',
-        ];
-
-        foreach ($links as $row) {
-            $network = $row['network'] ?? '';
-            if (isset($out[$network])) {
-                $out[$network] = $row['url'] ?? '';
-            }
-        }
-
-        return $out;
     }
 }

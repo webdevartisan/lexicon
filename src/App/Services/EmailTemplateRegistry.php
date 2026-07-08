@@ -26,7 +26,7 @@ class EmailTemplateRegistry
      * making it easy to test templates with realistic content. The group
      * key drives the section headings on the admin page.
      *
-     * @return array<string, array>
+     * @return array<string, array<string, mixed>>
      */
     public function getAll(): array
     {
@@ -203,7 +203,7 @@ class EmailTemplateRegistry
     /**
      * Templates grouped for display, keyed by group label.
      *
-     * @return array<string, array<string, array>>
+     * @return array<string, array<string, array<string, mixed>>>
      */
     public function getGrouped(): array
     {
@@ -248,7 +248,7 @@ class EmailTemplateRegistry
      * Get metadata for a specific template.
      *
      * @param  string  $templateKey  Template identifier
-     * @return array|null Template data or null if not found
+     * @return array<string, mixed>|null Template data or null if not found
      */
     public function get(string $templateKey): ?array
     {

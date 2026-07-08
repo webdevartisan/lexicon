@@ -12,6 +12,7 @@ use Framework\Interfaces\RequestHandlerInterface;
 
 class LocaleMiddleware implements MiddlewareInterface
 {
+    /** @var string[] */
     private array $supported;
 
     private string $default;
@@ -74,9 +75,8 @@ class LocaleMiddleware implements MiddlewareInterface
             unset($_COOKIE['locale']);
         }
 
-        // Optional: set PHP/Intl locale if you localize dates/numbers
-        // setlocale(LC_ALL, $this->toPhpLocale($lang));
-        // \Locale::setDefault($lang);
+        // Optional: set PHP/Intl locale here if we ever localize dates/numbers,
+        // e.g. setlocale(LC_ALL, 'el_GR.UTF-8') and \Locale::setDefault($lang).
 
         return $handler->handle($request);
     }
@@ -92,7 +92,11 @@ class LocaleMiddleware implements MiddlewareInterface
         ]);
     }
 
-    // Very small parser for "en-US,en;q=0.9,fr;q=0.8"
+    /**
+     * Very small parser for "en-US,en;q=0.9,fr;q=0.8".
+     *
+     * @param  string[]  $supported  Supported locale codes
+     */
     private function pickPreferred(string $header, array $supported): ?string
     {
         $langs = array_map('trim', explode(',', $header));
@@ -110,16 +114,5 @@ class LocaleMiddleware implements MiddlewareInterface
         }
 
         return null;
-    }
-
-    private function toPhpLocale(string $lang): string
-    {
-        return match ($lang) {
-            'en' => 'en_US.UTF-8',
-            'fr' => 'fr_FR.UTF-8',
-            'de' => 'de_DE.UTF-8',
-            'gr' => 'el_GR.UTF-8',
-            default => 'en_US.UTF-8',
-        };
     }
 }

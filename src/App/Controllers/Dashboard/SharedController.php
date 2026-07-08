@@ -7,7 +7,6 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
-use App\Models\PostReviewerModel;
 use Framework\Core\Response;
 
 /**
@@ -22,7 +21,6 @@ final class SharedController extends AppController
     public function __construct(
         private BlogModel $blogModel,
         private PostModel $postModel,
-        private PostReviewerModel $postReviewerModel,
     ) {}
 
     /**

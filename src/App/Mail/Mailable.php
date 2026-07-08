@@ -18,12 +18,16 @@ namespace App\Mail;
  */
 abstract class Mailable
 {
+    /** @var array<string, string> Address => name */
     protected array $to = [];
 
+    /** @var array<string, string> Address => name */
     protected array $cc = [];
 
+    /** @var array<string, string> Address => name */
     protected array $bcc = [];
 
+    /** @var array{address: string, name: string}|null */
     protected ?array $replyTo = null;
 
     protected string $subject = '';
@@ -34,8 +38,10 @@ abstract class Mailable
 
     protected bool $isHtml = true;
 
+    /** @var array<int, array{path: string, name: string|null}> */
     protected array $attachments = [];
 
+    /** @var array<string, mixed> Template data */
     protected array $data = [];
 
     /**
@@ -181,21 +187,34 @@ abstract class Mailable
     }
 
     // Getters for MailService to access protected properties
+
+    /**
+     * @return array<string, string> Address => name
+     */
     public function getTo(): array
     {
         return $this->to;
     }
 
+    /**
+     * @return array<string, string> Address => name
+     */
     public function getCc(): array
     {
         return $this->cc;
     }
 
+    /**
+     * @return array<string, string> Address => name
+     */
     public function getBcc(): array
     {
         return $this->bcc;
     }
 
+    /**
+     * @return array{address: string, name: string}|null
+     */
     public function getReplyTo(): ?array
     {
         return $this->replyTo;
@@ -221,6 +240,9 @@ abstract class Mailable
         return $this->isHtml;
     }
 
+    /**
+     * @return array<int, array{path: string, name: string|null}>
+     */
     public function getAttachments(): array
     {
         return $this->attachments;

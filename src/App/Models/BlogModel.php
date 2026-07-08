@@ -35,7 +35,7 @@ class BlogModel extends AppModel
      * If slug changes, invalidates both old and new URLs.
      *
      * @param  int|string  $id  Blog ID
-     * @param  array  $data  Updated blog data
+     * @param  array<string, mixed>  $data  Updated blog data
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -68,7 +68,7 @@ class BlogModel extends AppModel
      * Get all posts belonging to a blog.
      *
      * @param  int  $blogId  Blog ID
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function getBlogPosts(int $blogId): array
     {
@@ -84,7 +84,7 @@ class BlogModel extends AppModel
      *
      * Returns blogs ordered by publish date with post count and active collaborator count.
      *
-     * @return array Array of blog records with owner_name, post_count, author_count
+     * @return array<int, array<string, mixed>> Array of blog records with owner_name, post_count, author_count
      */
     public function getAllBlogsWithOwnerAndCounts(): array
     {
@@ -103,7 +103,7 @@ class BlogModel extends AppModel
     /**
      * Paginated admin listing with optional name/slug/owner search.
      *
-     * @return array{data: array, pagination: array} Same shape as UserModel::findAllForAdmin()
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
     public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
     {
@@ -158,7 +158,7 @@ class BlogModel extends AppModel
      * Get all blogs owned by a user with aggregate counts.
      *
      * @param  int  $ownerId  User ID
-     * @return array Array of blog records with owner_name, post_count, author_count
+     * @return array<int, array<string, mixed>> Array of blog records with owner_name, post_count, author_count
      */
     public function getBlogsByOwnerWithCounts(int $ownerId): array
     {
@@ -178,7 +178,7 @@ class BlogModel extends AppModel
      * Get a single blog by ID with owner info and counts.
      *
      * @param  int  $blogId  Blog ID
-     * @return array|null Blog record with owner_name, post_count, author_count, or null if not found
+     * @return array<string, mixed>|null Blog record with owner_name, post_count, author_count, or null if not found
      */
     public function getBlogByIdWithCounts(int $blogId): ?array
     {
@@ -238,7 +238,7 @@ class BlogModel extends AppModel
     /**
      * Create a new blog.
      *
-     * @param  array  $data  Blog data (blog_name, blog_slug, description, owner_id)
+     * @param  array<string, mixed>  $data  Blog data (blog_name, blog_slug, description, owner_id)
      * @return int Newly created blog ID
      */
     public function createBlog(array $data): int
@@ -258,7 +258,7 @@ class BlogModel extends AppModel
      * Get a blog by ID with owner username.
      *
      * @param  int  $id  Blog ID
-     * @return array|null Blog record with owner_name, or null if not found
+     * @return array<string, mixed>|null Blog record with owner_name, or null if not found
      */
     public function getBlogById(int $id): ?array
     {
@@ -275,7 +275,7 @@ class BlogModel extends AppModel
      * Get all blogs owned by a user.
      *
      * @param  int  $ownerId  User ID
-     * @return array Array of blog records
+     * @return array<int, array<string, mixed>> Array of blog records
      */
     public function getBlogsByOwnerId(int $ownerId): array
     {
@@ -294,7 +294,7 @@ class BlogModel extends AppModel
      * Returns users assigned to the blog with their role and contact info.
      *
      * @param  int  $blogId  Blog ID
-     * @return array Array of blog_users records with username and email
+     * @return array<int, array<string, mixed>> Array of blog_users records with username and email
      */
     public function getBlogUsers(int $blogId): array
     {
@@ -315,7 +315,7 @@ class BlogModel extends AppModel
      * Global user roles do not affect per-blog role eligibility.
      *
      * @param  int  $blogId  Blog ID
-     * @return array Array of user records with id, username, email
+     * @return array<int, array<string, mixed>> Array of user records with id, username, email
      */
     public function getAvailableUsers(int $blogId): array
     {
@@ -444,7 +444,7 @@ class BlogModel extends AppModel
      * Get a blog by its slug.
      *
      * @param  string  $slug  Blog slug
-     * @return array|null Blog record, or null if not found
+     * @return array<string, mixed>|null Blog record, or null if not found
      */
     public function getBlogBySlug(string $slug): ?array
     {
@@ -461,7 +461,7 @@ class BlogModel extends AppModel
      * Used to enrich posts with blog slugs without N+1 queries.
      *
      * @param  array<int>  $ids  Blog IDs to fetch
-     * @return array Array of blog records with id and blog_slug
+     * @return array<int, array<string, mixed>> Array of blog records with id and blog_slug
      */
     public function findByIds(array $ids): array
     {
@@ -483,7 +483,7 @@ class BlogModel extends AppModel
      * Returns blogs with the most published posts for homepage or discovery features.
      *
      * @param  int  $limit  Maximum number of creators to return
-     * @return array Array of blog records with ownername and postcount
+     * @return array<int, array<string, mixed>> Array of blog records with ownername and postcount
      */
     public function getFeaturedCreators(int $limit = 4): array
     {
@@ -519,7 +519,7 @@ class BlogModel extends AppModel
      * Get all blogs for a user as BlogResource array.
      *
      * @param  string|int  $owner_id  User ID
-     * @return array Array of BlogResource instances, or empty array if none found
+     * @return BlogResource[] Array of BlogResource instances, or empty array if none found
      */
     public function resource(string|int $owner_id): array
     {
@@ -540,6 +540,8 @@ class BlogModel extends AppModel
      * Returns the same shape as getBlogsByOwnerWithCounts() plus a `user_role`
      * column: 'owner' for owned blogs, or the collaborative role from blog_users.
      * Used by the dashboard to surface blogs for non-owner collaborators.
+     *
+     * @return array<int, array<string, mixed>> Blog rows with counts and user_role
      */
     public function getAccessibleBlogs(int $userId): array
     {

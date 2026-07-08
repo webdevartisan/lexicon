@@ -179,6 +179,9 @@ class CommentController extends AppController
         return $url;
     }
 
+    /**
+     * @return array<string, mixed> Comment record
+     */
     private function getComment(int $id): array
     {
         $comment = $this->model->findById($id);

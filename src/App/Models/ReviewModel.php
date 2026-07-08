@@ -48,7 +48,7 @@ class ReviewModel extends AppModel
      * Get all review rounds for a post (newest first).
      *
      * @param  int  $postId  Post ID
-     * @return array List of review rows
+     * @return array<int, array<string, mixed>> List of review rows
      */
     public function findByPost(int $postId): array
     {
@@ -69,7 +69,7 @@ class ReviewModel extends AppModel
      * requiring them to navigate to the review screen.
      *
      * @param  int  $postId  Post ID
-     * @return array|null Most recent review row, or null if none exist
+     * @return array<string, mixed>|null Most recent review row, or null if none exist
      */
     public function findLatestByPost(int $postId): ?array
     {

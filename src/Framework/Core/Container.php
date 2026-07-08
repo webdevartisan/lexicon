@@ -63,7 +63,9 @@ final class Container
      */
     private array $singletonCache = [];
 
-    // Debug tracking
+    /**
+     * @var array<int, array<string, mixed>> Debug tracking of resolutions
+     */
     private array $instantiationLog = [];
 
     private bool $debugMode = false;
@@ -293,15 +295,8 @@ final class Container
                 );
             }
 
-            try {
-                $this->reflectionCache[$className] = new ReflectionClass($className);
-            } catch (\ReflectionException $e) {
-                throw new InvalidArgumentException(
-                    "Failed to reflect class '{$className}': {$e->getMessage()}",
-                    0,
-                    $e
-                );
-            }
+            // class_exists() above guarantees reflection cannot throw here
+            $this->reflectionCache[$className] = new ReflectionClass($className);
         }
 
         return $this->reflectionCache[$className];
@@ -446,7 +441,7 @@ final class Container
      *         type: string,
      *         total_duration: float,
      *         total_memory: int,
-     *         instances: array
+     *         instances: array<int, array<string, mixed>>
      *     }>
      * } Debug report with statistics
      */
