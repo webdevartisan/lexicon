@@ -19,7 +19,7 @@ class BlogSettingsModel extends AppModel
      * Find settings for a specific blog.
      *
      * @param  int  $blogId  Blog identifier
-     * @return array|null Blog settings or null if not found
+     * @return array<string, mixed>|null Blog settings or null if not found
      */
     public function findByBlogId(int $blogId): ?array
     {
@@ -42,7 +42,7 @@ class BlogSettingsModel extends AppModel
      * Comments are enabled by default unless explicitly disabled.
      *
      * @param  int  $blogId  Blog identifier
-     * @param  array  $data  Optional overrides for default settings
+     * @param  array<string, mixed>  $data  Optional overrides for default settings
      * @return bool True on success
      */
     public function createDefaultForBlog(int $blogId, array $data): bool
@@ -85,7 +85,7 @@ class BlogSettingsModel extends AppModel
      * Validates and normalizes boolean fields (indexable, comments_enabled).
      *
      * @param  int  $blogId  Blog identifier
-     * @param  array  $data  Settings to update
+     * @param  array<string, mixed>  $data  Settings to update
      * @return bool True on success
      */
     public function updateForBlog(int $blogId, array $data): bool

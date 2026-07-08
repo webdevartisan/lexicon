@@ -56,7 +56,7 @@ class Session
 
         session_set_cookie_params([
             'lifetime' => $params['lifetime'],
-            'path' => $params['path'] ?: '/',
+            'path' => $params['path'],
             'domain' => $params['domain'],
             'secure' => $isHttps,
             'httponly' => true,

@@ -12,6 +12,9 @@ namespace App\Mail;
  */
 class PasswordResetEmail extends Mailable
 {
+    /**
+     * @param  array<string, mixed>  $user  User row (first_name, email)
+     */
     public function __construct(
         private array $user,
         private string $token,

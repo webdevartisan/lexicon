@@ -28,7 +28,7 @@ class CacheManagementService
     /**
      * Get detailed cache statistics covering both cache layers.
      *
-     * @return array Combined stats from CacheService and compiled view cache.
+     * @return array<string, mixed> Combined stats from CacheService and compiled view cache.
      */
     public function getStats(): array
     {
@@ -152,6 +152,8 @@ class CacheManagementService
      *
      * Silently skips if no authenticated user is found, which can happen
      * when operations are triggered from CLI commands.
+     *
+     * @param  array<string, mixed>  $metadata  Operation context for the audit row
      */
     private function audit(string $action, array $metadata, string $userIp): void
     {

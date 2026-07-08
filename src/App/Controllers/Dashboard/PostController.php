@@ -258,7 +258,7 @@ final class PostController extends AppController
         return $this->view([
             'blog' => $blog->toArray(),
             'blogRole' => $blogRole,
-            'backUrl' => $this->backUrlPath() ?? '/dashboard',
+            'backUrl' => $this->backUrlPath(),
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
@@ -416,7 +416,7 @@ final class PostController extends AppController
             'post' => $postArray,
             'blog' => $blog->toArray(),
             'postUrl' => $postUrl,
-            'backUrl' => $this->backUrlPath() ?? '/dashboard',
+            'backUrl' => $this->backUrlPath(),
             'workflowState' => $workflowState,
             'status' => $status,
             'blogRole' => $blogRole,

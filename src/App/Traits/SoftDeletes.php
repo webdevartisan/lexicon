@@ -130,7 +130,7 @@ trait SoftDeletes
      * Useful for checking if a record exists regardless of deletion status.
      *
      * @param  int  $id  Record ID to find
-     * @return array|null Record data or null if not found
+     * @return array<string, mixed>|null Record data or null if not found
      */
     public function findWithTrashed(int $id): ?array
     {

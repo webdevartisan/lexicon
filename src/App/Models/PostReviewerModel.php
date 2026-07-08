@@ -35,7 +35,7 @@ class PostReviewerModel extends AppModel
      * Get all reviewer assignments for a post, with reviewer usernames.
      *
      * @param  int  $postId  Post ID
-     * @return array List of assignment rows
+     * @return array<int, array<string, mixed>> List of assignment rows
      */
     public function findByPost(int $postId): array
     {
@@ -58,7 +58,7 @@ class PostReviewerModel extends AppModel
      * Only includes blogs with workflow enabled.
      *
      * @param  int  $reviewerId  The reviewer's user ID
-     * @return array Posts with title, id, workflow_state, blog name, is_assigned flag
+     * @return array<int, array<string, mixed>> Posts with title, id, workflow_state, blog name, is_assigned flag
      */
     public function findPendingForReviewer(int $reviewerId): array
     {
@@ -101,7 +101,7 @@ class PostReviewerModel extends AppModel
      * @param  bool  $isAdmin  When true, returns posts across all blogs
      * @param  int|null  $blogId  Optional: scope to a single blog
      * @param  int  $limit  Max rows to return
-     * @return array Posts with reviewer info and blog name
+     * @return array<int, array<string, mixed>> Posts with reviewer info and blog name
      */
     public function findInReviewForSupervisor(int $userId, bool $isAdmin = false, ?int $blogId = null, int $limit = 5): array
     {

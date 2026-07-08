@@ -268,15 +268,11 @@ final class Router
             return $mw === '' ? [] : [$mw];
         }
 
-        if (is_array($mw)) {
-            return array_values(
-                array_filter(
-                    array_map('trim', $mw)
-                )
-            );
-        }
-
-        return [];
+        return array_values(
+            array_filter(
+                array_map('trim', $mw)
+            )
+        );
     }
 
     /**

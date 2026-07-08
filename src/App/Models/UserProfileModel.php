@@ -22,7 +22,7 @@ class UserProfileModel extends AppModel
      * Ensures every user has a profile record, creating one if missing.
      *
      * @param  int  $userId  User ID
-     * @return array Profile data
+     * @return array<string, mixed> Profile data
      */
     public function findOrCreate(int $userId): array
     {
@@ -47,7 +47,7 @@ class UserProfileModel extends AppModel
      * Get user's avatar URL.
      *
      * @param  int  $userId  User ID
-     * @return array Avatar data or empty array
+     * @return array<string, mixed> Avatar data or empty array
      */
     public function getProfileAvatar(int $userId): array
     {
@@ -65,7 +65,7 @@ class UserProfileModel extends AppModel
      * Column names are validated to prevent SQL injection.
      *
      * @param  int  $userId  User ID
-     * @param  array  $data  Associative array of column => value pairs
+     * @param  array<string, mixed>  $data  Associative array of column => value pairs
      *
      * @throws Exception If invalid column name provided
      */
@@ -106,7 +106,7 @@ class UserProfileModel extends AppModel
      * to clear PII during pseudonymization.
      *
      * @param  int  $userId  User ID
-     * @param  array  $data  Associative array of column => value pairs
+     * @param  array<string, mixed>  $data  Associative array of column => value pairs
      * @return bool True on success
      *
      * @throws Exception If invalid column name provided
@@ -235,7 +235,7 @@ class UserProfileModel extends AppModel
      * Simple persistence layer for profile updates from account settings.
      *
      * @param  int  $userId  User ID
-     * @param  array  $data  Profile data (slug, bio, avatar_url, is_public)
+     * @param  array<string, mixed>  $data  Profile data (slug, bio, avatar_url, is_public)
      * @return bool True on success
      */
     public function updateProfile(int $userId, array $data): bool

@@ -23,10 +23,14 @@ class CacheMiddleware implements MiddlewareInterface
 
     private AuthInterface $auth;
 
+    /** @var array<string, int> */
     private array $ttlRules;
 
     private bool $debug;
 
+    /**
+     * @param  array<string, int>  $ttlRules  Map of path pattern => TTL in seconds
+     */
     public function __construct(
         CacheService $cache,
         CacheKey $keyGenerator,

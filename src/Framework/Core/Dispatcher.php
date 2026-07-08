@@ -10,6 +10,7 @@ use Framework\Handlers\ControllerRequestHandler;
 use Framework\Handlers\MiddlewareRequestHandler;
 use Framework\Http\Middleware\RequireRoleMiddleware;
 use Framework\Interfaces\AuthInterface;
+use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\View\RouteContext;
@@ -17,12 +18,18 @@ use UnexpectedValueException;
 
 final class Dispatcher implements RequestHandlerInterface
 {
+    /** @var array<string, mixed> */
     private array $middlewareConfig;
 
+    /** @var array<string, class-string<MiddlewareInterface>> */
     private array $middlewareClasses = [];
 
+    /** @var array<int, class-string> */
     private array $globalMiddleware = [];
 
+    /**
+     * @param  array<string, mixed>  $middlewareConfig  Middleware aliases and global stack
+     */
     public function __construct(
         private Router $router,
         private Container $container,
@@ -67,6 +74,9 @@ final class Dispatcher implements RequestHandlerInterface
 
     // --- routing ---
 
+    /**
+     * @return array<string, mixed> Matched route parameters
+     */
     private function matchRoute(string $path, string $method): array
     {
         $params = $this->router->match($path, $method);
@@ -89,6 +99,9 @@ final class Dispatcher implements RequestHandlerInterface
 
     // --- controller resolution ---
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     */
     private function buildController(array $params): BaseController
     {
         $controllerName = $this->getControllerName($params);
@@ -107,6 +120,10 @@ final class Dispatcher implements RequestHandlerInterface
         return $controller;
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     * @param  array<string, mixed>  $args  Resolved action arguments
+     */
     private function buildControllerHandler(BaseController $controller, array $params, array $args): ControllerRequestHandler
     {
         $actionName = $this->getActionName($params);
@@ -114,6 +131,9 @@ final class Dispatcher implements RequestHandlerInterface
         return new ControllerRequestHandler($controller, $actionName, $args);
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     */
     private function getControllerName(array $params): string
     {
         $controller = $params['controller'] ?? '';
@@ -127,6 +147,9 @@ final class Dispatcher implements RequestHandlerInterface
         return $namespace.'\\'.$controller;
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     */
     private function getActionName(array $params): string
     {
         $action = $params['action'] ?? 'index';
@@ -153,6 +176,10 @@ final class Dispatcher implements RequestHandlerInterface
         return lcfirst(str_replace('-', '', ucwords(strtolower($raw), '-')));
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     * @return array<string, mixed> Argument name => resolved value pairs
+     */
     private function getActionArguments(string $controller, string $action, array $params): array
     {
         $method = new \ReflectionMethod($controller, $action);
@@ -165,6 +192,9 @@ final class Dispatcher implements RequestHandlerInterface
         return $args;
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     */
     private function resolveParameterValue(\ReflectionParameter $parameter, array $params): mixed
     {
         $name = $parameter->getName();
@@ -182,6 +212,9 @@ final class Dispatcher implements RequestHandlerInterface
 
     // --- middleware orchestration ---
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     */
     private function buildMiddlewareHandler(array $params, ControllerRequestHandler $controllerHandler): MiddlewareRequestHandler
     {
         $globalInstances = $this->buildGlobalMiddleware();
@@ -192,6 +225,9 @@ final class Dispatcher implements RequestHandlerInterface
         return new MiddlewareRequestHandler($allMiddleware, $controllerHandler);
     }
 
+    /**
+     * @return array<int, MiddlewareInterface> Instantiated global middleware
+     */
     private function buildGlobalMiddleware(): array
     {
         $instances = [];
@@ -202,9 +238,13 @@ final class Dispatcher implements RequestHandlerInterface
         return $instances;
     }
 
+    /**
+     * @param  array<string, mixed>  $params  Matched route parameters
+     * @return array<int, MiddlewareInterface> Instantiated route middleware
+     */
     private function getMiddleware(array $params): array
     {
-        if (!isset($params['middleware']) || $params['middleware'] === null) {
+        if (!isset($params['middleware'])) {
             return [];
         }
 
@@ -225,6 +265,9 @@ final class Dispatcher implements RequestHandlerInterface
         return $instances;
     }
 
+    /**
+     * @return array<int, string> Individual middleware keys
+     */
     private function parseMiddlewareKeys(mixed $raw): array
     {
         if (is_array($raw)) {
@@ -238,11 +281,17 @@ final class Dispatcher implements RequestHandlerInterface
         );
     }
 
+    /**
+     * @return array{string, string|null} Middleware name and optional argument
+     */
     private function splitMiddlewareKey(string $key): array
     {
         return array_pad(explode(':', $key, 2), 2, null);
     }
 
+    /**
+     * @return class-string<MiddlewareInterface> Middleware class for the alias
+     */
     private function resolveMiddlewareClass(string $name): string
     {
         if (!array_key_exists($name, $this->middlewareClasses)) {
@@ -252,6 +301,10 @@ final class Dispatcher implements RequestHandlerInterface
         return $this->middlewareClasses[$name];
     }
 
+    /**
+     * @param  class-string<MiddlewareInterface>  $class  Middleware class to instantiate
+     * @return MiddlewareInterface Ready-to-run middleware instance
+     */
     private function createMiddlewareInstance(string $name, string $class, ?string $arg): object
     {
         // preserve special-case role middleware logic

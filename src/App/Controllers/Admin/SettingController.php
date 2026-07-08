@@ -137,6 +137,8 @@ final class SettingController extends AppController
      * Get mail configuration for read-only display.
      *
      * We never expose SMTP credentials in the UI for security.
+     *
+     * @return array<string, mixed> Sanitized mail settings
      */
     private function getMailConfig(): array
     {

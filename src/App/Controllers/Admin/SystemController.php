@@ -50,6 +50,9 @@ class SystemController extends AppController
         ]);
     }
 
+    /**
+     * @return array<string, mixed> PHP runtime facts
+     */
     private function phpInfo(): array
     {
         return [
@@ -66,6 +69,8 @@ class SystemController extends AppController
 
     /**
      * Row counts and disk size per table for the current schema.
+     *
+     * @return array<int, array<string, mixed>> Table rows with name, rows_estimate, size_bytes
      */
     private function tableStats(): array
     {
@@ -80,6 +85,8 @@ class SystemController extends AppController
 
     /**
      * Log files available in storage/logs, keyed by filename.
+     *
+     * @return array<string, array<string, mixed>> Filename => path, size, modified
      */
     private function logFiles(): array
     {

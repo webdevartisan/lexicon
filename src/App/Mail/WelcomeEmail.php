@@ -12,6 +12,9 @@ namespace App\Mail;
  */
 class WelcomeEmail extends Mailable
 {
+    /**
+     * @param  array<string, mixed>  $user  User row (first_name, username, email)
+     */
     public function __construct(private array $user)
     {
         parent::__construct();

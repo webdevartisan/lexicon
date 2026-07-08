@@ -44,7 +44,7 @@ function getNamespaceFromFile(string $file): ?string
  * Shows caller context (class/method), file location, and line number
  * for easier debugging. Used by dd(), dump(), and d() helpers.
  *
- * @param  array  $vars  Variables to dump
+ * @param  array<mixed>  $vars  Variables to dump
  */
 function dumpVars(array $vars): void
 {
@@ -471,9 +471,9 @@ function base_url(): string
  * Compare arrays and return only fields with different values.
  * Used for efficient database updates (update only changed fields).
  *
- * @param  array  $newData  New data
- * @param  array  $existing  Existing data
- * @return array Changed fields only
+ * @param  array<string, mixed>  $newData  New data
+ * @param  array<string, mixed>  $existing  Existing data
+ * @return array<string, mixed> Changed fields only
  */
 function changedFields(array $newData, array $existing): array
 {

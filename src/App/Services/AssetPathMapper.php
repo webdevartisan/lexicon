@@ -34,7 +34,7 @@ final class AssetPathMapper
         }
 
         $segments = explode('/', $relative);
-        $root = strtolower($segments[0] ?? '');
+        $root = strtolower($segments[0]);
 
         if ($root === 'themes') {
             // /themes/{theme}/public/...

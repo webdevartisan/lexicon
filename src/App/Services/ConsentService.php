@@ -12,6 +12,9 @@ use App\Privacy\ConsentCookieStore;
  */
 final class ConsentService
 {
+    /**
+     * @param  array<string, mixed>  $config  Consent configuration (categories, version)
+     */
     public function __construct(
         private readonly ConsentCookieStore $store,
         private readonly array $config,

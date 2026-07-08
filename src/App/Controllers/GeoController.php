@@ -29,7 +29,7 @@ final class GeoController extends AppController
         $data = $this->geo->getTimezoneData();
 
         // Return 502 for failed lookups, 200 for API responses (even if status=fail)
-        $statusCode = ($data['status'] ?? 'fail') === 'fail' && !isset($data['timezone']) ? 502 : 200;
+        $statusCode = $data['status'] === 'fail' && !isset($data['timezone']) ? 502 : 200;
 
         return $this->json($data, $statusCode);
     }

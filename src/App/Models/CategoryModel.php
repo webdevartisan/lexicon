@@ -18,7 +18,7 @@ class CategoryModel extends AppModel
     /**
      * All categories with their blog name, for the admin listing.
      *
-     * @return array Rows with blog_name joined in
+     * @return array<int, array<string, mixed>> Rows with blog_name joined in
      */
     public function allWithBlog(): array
     {
@@ -33,7 +33,7 @@ class CategoryModel extends AppModel
     /**
      * Paginated admin listing with optional name/slug/blog search.
      *
-     * @return array{data: array, pagination: array} Same shape as UserModel::findAllForAdmin()
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
     public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
     {
@@ -89,7 +89,7 @@ class CategoryModel extends AppModel
      * filters, and navigation menus.
      *
      * @param  int|string  $id  Category identifier
-     * @param  array  $data  Fields to update
+     * @param  array<string, mixed>  $data  Fields to update
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -128,7 +128,7 @@ class CategoryModel extends AppModel
      * Find a category by slug.
      *
      * @param  string  $slug  Category URL slug
-     * @return array|null Category data or null if not found
+     * @return array<string, mixed>|null Category data or null if not found
      */
     public function findBySlug(string $slug): ?array
     {
@@ -140,6 +140,9 @@ class CategoryModel extends AppModel
         return $result ?: null;
     }
 
+    /**
+     * @return array<string, mixed>|null Category data or null if not found
+     */
     public function findById(int $id): ?array
     {
         $sql = "SELECT * FROM {$this->getTable()} WHERE id = ? LIMIT 1";
@@ -157,7 +160,7 @@ class CategoryModel extends AppModel
      * are tightly coupled in the domain model.
      *
      * @param  int  $categoryId  Category identifier
-     * @return array List of published posts, newest first
+     * @return array<int, array<string, mixed>> List of published posts, newest first
      */
     public function posts(int $categoryId): array
     {
@@ -174,7 +177,7 @@ class CategoryModel extends AppModel
     /**
      * Get all categories ordered alphabetically.
      *
-     * @return array List of all categories
+     * @return array<int, array<string, mixed>> List of all categories
      */
     public function getCategories(): array
     {
@@ -190,6 +193,8 @@ class CategoryModel extends AppModel
      * Categories are per-blog, so the same name can exist in several blogs. On
      * the cross-blog discovery page we treat a category as a topic: one entry
      * per name, spanning every blog that uses it.
+     *
+     * @return array<int, array<string, mixed>> Rows with name and post_count
      */
     public function getPublishedTopics(): array
     {
@@ -205,7 +210,7 @@ class CategoryModel extends AppModel
     /**
      * Create a new category.
      *
-     * @param  array  $data  Category data (name, slug, description, etc.)
+     * @param  array<string, mixed>  $data  Category data (name, slug, description, etc.)
      * @return bool|int Inserted category ID on success, false on failure
      */
     public function create(array $data): bool|int
@@ -215,6 +220,8 @@ class CategoryModel extends AppModel
 
     /**
      * Categories belonging to a blog, with how many posts use each.
+     *
+     * @return array<int, array<string, mixed>> Category rows with post_count
      */
     public function getByBlogId(int $blogId): array
     {
@@ -232,6 +239,8 @@ class CategoryModel extends AppModel
      *
      * Used for the public pill filters, where a category with no published posts
      * would just be a dead end.
+     *
+     * @return array<int, array<string, mixed>> Category rows with post_count
      */
     public function getPublishedByBlogId(int $blogId): array
     {
@@ -248,6 +257,8 @@ class CategoryModel extends AppModel
 
     /**
      * Look up a category by slug within a blog.
+     *
+     * @return array<string, mixed>|null Category data or null if not found
      */
     public function findBySlugInBlog(int $blogId, string $slug): ?array
     {
@@ -262,6 +273,8 @@ class CategoryModel extends AppModel
      *
      * Used to authorize edits/assignment so a category from another blog
      * can't be touched.
+     *
+     * @return array<string, mixed>|null Category data or null if not found
      */
     public function findForBlog(int $id, int $blogId): ?array
     {

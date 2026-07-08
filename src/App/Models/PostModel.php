@@ -46,7 +46,7 @@ class PostModel extends AppModel
      *
      * Invalidates blog listings so visitors see the new post immediately.
      *
-     * @param  array  $data  Post data
+     * @param  array<string, mixed>  $data  Post data
      * @return int Newly created post ID
      */
     public function create(array $data): int
@@ -68,7 +68,7 @@ class PostModel extends AppModel
      * Fetches the post before updating to get the current slug in case it changes.
      *
      * @param  int|string  $id  Post ID
-     * @param  array  $data  Updated post data
+     * @param  array<string, mixed>  $data  Updated post data
      * @return bool True on success
      */
     public function update(int|string $id, array $data): bool
@@ -132,7 +132,7 @@ class PostModel extends AppModel
      * Find posts by author ID.
      *
      * @param  int  $authorId  Author user ID
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function findByAuthorId(int $authorId): array
     {
@@ -142,7 +142,7 @@ class PostModel extends AppModel
     /**
      * Get only published posts ordered by publish date.
      *
-     * @return array Array of published post records
+     * @return array<int, array<string, mixed>> Array of published post records
      */
     public function published(): array
     {
@@ -158,7 +158,7 @@ class PostModel extends AppModel
      * Find a post by slug.
      *
      * @param  string  $slug  Post slug
-     * @return array|null Post record, or null if not found
+     * @return array<string, mixed>|null Post record, or null if not found
      */
     public function findBySlug(string $slug): ?array
     {
@@ -172,7 +172,7 @@ class PostModel extends AppModel
      * Get the author (User) of a post.
      *
      * @param  int  $userId  User ID
-     * @return array|null User record, or null if not found
+     * @return array<string, mixed>|null User record, or null if not found
      */
     public function author(int $userId): ?array
     {
@@ -185,7 +185,7 @@ class PostModel extends AppModel
      * Get the category of a post.
      *
      * @param  int|null  $categoryId  Category ID
-     * @return array|null Category record, or null if not found or no category
+     * @return array<string, mixed>|null Category record, or null if not found or no category
      */
     public function category(?int $categoryId): ?array
     {
@@ -201,7 +201,7 @@ class PostModel extends AppModel
      * Get tags for a post.
      *
      * @param  int  $postId  Post ID
-     * @return array Array of tag records
+     * @return array<int, array<string, mixed>> Array of tag records
      */
     public function tags(int $postId): array
     {
@@ -218,7 +218,7 @@ class PostModel extends AppModel
      * Get comments for a post.
      *
      * @param  int  $postId  Post ID
-     * @return array Array of comment records
+     * @return array<int, array<string, mixed>> Array of comment records
      */
     public function comments(int $postId): array
     {
@@ -231,7 +231,7 @@ class PostModel extends AppModel
      * Get random published posts.
      *
      * @param  int  $limit  Maximum number of posts to return
-     * @return array Array of published post records
+     * @return array<int, array<string, mixed>> Array of published post records
      */
     public function findRandomPublicPosts(int $limit = 6): array
     {
@@ -249,9 +249,9 @@ class PostModel extends AppModel
      * List published posts by author filtered by visibility.
      *
      * @param  int  $authorId  Author user ID
-     * @param  array  $visibilities  Array of visibility values to include
+     * @param  string[]  $visibilities  Array of visibility values to include
      * @param  int  $limit  Maximum number of posts
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function listByAuthorVisibility(int $authorId, array $visibilities, int $limit = 10): array
     {
@@ -286,7 +286,7 @@ class PostModel extends AppModel
      *
      * @param  int  $authorId  Author user ID
      * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array|null Post record with id, slug, title, published_at, or null if not found
+     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findPreviousByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
     {
@@ -311,7 +311,7 @@ class PostModel extends AppModel
      *
      * @param  int  $blogId  Blog ID
      * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array|null Post record with id, slug, title, published_at, or null if not found
+     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findPreviousByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
     {
@@ -336,7 +336,7 @@ class PostModel extends AppModel
      *
      * @param  int  $authorId  Author user ID
      * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array|null Post record with id, slug, title, published_at, or null if not found
+     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findNextByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
     {
@@ -361,7 +361,7 @@ class PostModel extends AppModel
      *
      * @param  int  $blogId  Blog ID
      * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array|null Post record with id, slug, title, published_at, or null if not found
+     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
      */
     public function findNextByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
     {
@@ -387,7 +387,7 @@ class PostModel extends AppModel
      * @param  int  $authorId  Author user ID
      * @param  string  $excludeSlug  Slug to exclude from results
      * @param  int  $limit  Maximum number of posts
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function findRecentByAuthorExcludingSlug(int $authorId, string $excludeSlug, int $limit = 4): array
     {
@@ -413,7 +413,7 @@ class PostModel extends AppModel
      * @param  int  $blogId  Blog ID
      * @param  string  $excludeSlug  Slug to exclude from results
      * @param  int  $limit  Maximum number of posts
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function findRecentByBlogIdExcludingSlug(int $blogId, string $excludeSlug, int $limit = 4): array
     {
@@ -439,7 +439,7 @@ class PostModel extends AppModel
      * @param  int  $blogId  Blog ID to filter by
      * @param  int  $page  Page number (starting from 1)
      * @param  int  $perPage  Number of posts per page
-     * @return array Array with 'data' (posts) and pagination metadata
+     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
      */
     public function findPublishedByBlogIdWithPagination(int $blogId, int $page = 1, int $perPage = 5): array
     {
@@ -481,7 +481,7 @@ class PostModel extends AppModel
      * @param  int|null  $blogId  Optional blog ID filter
      * @param  string  $status  Optional status filter
      * @param  string  $searchQuery  Optional search term for title/content
-     * @return array Array of post records with blog_name
+     * @return array<int, array<string, mixed>> Array of post records with blog_name
      */
     public function findByAuthorWithFilters(int $authorId, ?int $blogId = null, string $status = '', string $searchQuery = ''): array
     {
@@ -525,8 +525,8 @@ class PostModel extends AppModel
      * @param  string  $query  Search term
      * @param  int  $page  Page number
      * @param  int  $perPage  Posts per page
-     * @param  int|null  $categoryId  Optional category filter
-     * @return array Array with 'data' (posts) and pagination metadata
+     * @param  string|null  $categoryName  Optional category name filter
+     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
      */
     public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
@@ -594,8 +594,8 @@ class PostModel extends AppModel
      *
      * @param  int  $page  Page number
      * @param  int  $perPage  Posts per page
-     * @param  int|null  $categoryId  Optional category filter
-     * @return array Array with 'data' (posts) and pagination metadata
+     * @param  string|null  $categoryName  Optional category name filter
+     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
      */
     public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
@@ -648,6 +648,8 @@ class PostModel extends AppModel
      *
      * Newest one takes priority if multiple entries are flagged,
      * acting as a safety net on top of the one‑per‑blog rule enforced by setFeatured().
+     *
+     * @return array<string, mixed>|null Featured post record, or null if none
      */
     public function findFeaturedByBlogId(int $blogId): ?array
     {
@@ -731,8 +733,8 @@ class PostModel extends AppModel
      *
      * Delegates to search or recent listing based on query parameter.
      *
-     * @param  array  $options  Options array with page, perPage, categoryId, query keys
-     * @return array Array with 'data' (posts) and pagination metadata
+     * @param  array<string, mixed>  $options  Options array with page, perPage, categoryName, query keys
+     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
      */
     public function getIndexFeed(array $options = []): array
     {
@@ -822,7 +824,7 @@ class PostModel extends AppModel
             return false;
         }
 
-        return new PostResource($found, $this, $blogResource);
+        return new PostResource($found, $blogResource);
     }
 
     /**
@@ -883,7 +885,7 @@ class PostModel extends AppModel
      * @param  int|null  $blogId  Optional blog ID filter
      * @param  string  $status  Optional status filter
      * @param  string  $searchQuery  Optional search term for title/content
-     * @return array Array with 'data' (posts) and 'pagination' metadata
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findByAuthorWithFiltersPagination(
         int $authorId,
@@ -979,7 +981,7 @@ class PostModel extends AppModel
      * Used to find all uploaded files before deletion.
      *
      * @param  int  $blogId  Blog ID
-     * @return array Array of post records
+     * @return array<int, array<string, mixed>> Array of post records
      */
     public function getAllByBlogId(int $blogId): array
     {
@@ -1296,7 +1298,7 @@ class PostModel extends AppModel
      * @param  int  $perPage  Rows per page (capped at 100)
      * @param  string  $status  Optional status filter
      * @param  string  $searchQuery  Optional title/content search term
-     * @return array{data: array, pagination: array}
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findAllForAdmin(
         int $page = 1,
@@ -1361,6 +1363,11 @@ class PostModel extends AppModel
         ];
     }
 
+    /**
+     * Review-pipeline posts for a blog, unassigned submissions first.
+     *
+     * @return array<int, array<string, mixed>> Post rows with author and reviewer info
+     */
     public function findReviewQueueForBlog(int $blogId): array
     {
         $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,
@@ -1439,7 +1446,7 @@ class PostModel extends AppModel
      * @param  int|null  $blogId  Optional blog ID filter
      * @param  string  $status  Optional status filter
      * @param  string  $searchQuery  Optional search term
-     * @return array Tuple of [WHERE clause, parameters]
+     * @return array{string, array<string, mixed>} Tuple of [WHERE clause, parameters]
      */
     private function buildFilterClauses(
         int $authorId,
@@ -1511,7 +1518,7 @@ class PostModel extends AppModel
      * in modern MySQL versions (5.7+) per MySQL documentation.
      *
      * @param  string  $whereClause  WHERE clause built by buildFilterClauses
-     * @param  array  $params  Parameter bindings for the WHERE clause
+     * @param  array<string, mixed>  $params  Parameter bindings for the WHERE clause
      * @return int Total number of matching records
      */
     private function getTotalCount(string $whereClause, array $params): int

@@ -25,12 +25,12 @@ class BreadcrumbMiddleware implements MiddlewareInterface
     private BreadcrumbService $breadcrumbs;
 
     /**
-     * @var array Navigation configuration
+     * @var array<string, mixed> Navigation configuration
      */
     private array $navConfig;
 
     /**
-     * @var array Breadcrumb configuration
+     * @var array<string, mixed> Breadcrumb configuration
      */
     private array $config;
 
@@ -308,8 +308,8 @@ class BreadcrumbMiddleware implements MiddlewareInterface
      * identify all navigation items that are ancestors of the current path.
      *
      * @param  string  $currentPath  Current request path
-     * @param  array  $navItems  Navigation items from config
-     * @return array Matched parent items in hierarchical order
+     * @param  array<int, array<string, mixed>>  $navItems  Navigation items from config
+     * @return array<int, array<string, mixed>> Matched parent items in hierarchical order
      */
     private function findParentNavItems(string $currentPath, array $navItems): array
     {
@@ -352,10 +352,10 @@ class BreadcrumbMiddleware implements MiddlewareInterface
      *
      * process URL segments that don't have navigation items.
      *
-     * @param  array  $trail  Current breadcrumb trail
+     * @param  array<int, array<string, mixed>>  $trail  Current breadcrumb trail
      * @param  string  $currentPath  Full path
-     * @param  array  $matchedItems  Matched navigation items
-     * @return array Updated breadcrumb trail
+     * @param  array<int, array<string, mixed>>  $matchedItems  Matched navigation items
+     * @return array<int, array<string, mixed>> Updated breadcrumb trail
      */
     private function addRemainingSegments(array $trail, string $currentPath, array $matchedItems): array
     {
@@ -408,14 +408,14 @@ class BreadcrumbMiddleware implements MiddlewareInterface
      * transform segments like "email-test" → ["label" => "Email Test", "key" => "t-email-test"].
      *
      * @param  string  $segment  URL segment
-     * @return array|string|null Label data (null = hide from breadcrumbs)
+     * @return array<string, string>|string|null Label data (null = hide from breadcrumbs)
      */
     private function segmentToLabel(string $segment)
     {
         // check if this segment should be hidden
         $hiddenSegments = $this->config['hidden_segments'] ?? [];
         if (in_array($segment, $hiddenSegments, true)) {
-            return;
+            return null;
         }
 
         // check for custom label overrides with translation keys

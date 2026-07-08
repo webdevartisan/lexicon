@@ -87,8 +87,8 @@ final class LocalePrefixIntake
             ]);*/
 
             // Strip only the first segment for routing; keep visible URL unchanged.
-            $stripped = '/'.implode('/', array_slice($segments, 1));
-            $request->uri = $stripped === '/' || $stripped === '' ? '/' : $stripped;
+            // The leading slash guarantees a non-empty path, '/' when nothing remains.
+            $request->uri = '/'.implode('/', array_slice($segments, 1));
             // If we ever want the router to see query too, we could include it here:
             // $request->uri = ($stripped === '' ? '/' : $stripped) . ($query ? ('?' . $query) : '');
 
@@ -140,7 +140,7 @@ final class LocalePrefixIntake
      *   "en-US,en;q=0.9,el;q=0.8" → primary tags "en", "el", etc.
      *
      * @param  string  $header  Raw Accept-Language header.
-     * @param  array  $supported  Supported locale codes (lowercase).
+     * @param  string[]  $supported  Supported locale codes (lowercase).
      * @param  string  $default  Default locale (lowercase).
      * @return string|null Best-matching supported locale or null if none.
      */

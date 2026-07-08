@@ -64,7 +64,7 @@ class CategoryController extends AppController
         }
 
         return $this->view('category.new', [
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not create the category. Please try again.'],
             'category' => $data,
             'blogs' => $this->blogModel->getAllBlogsWithOwnerAndCounts(),
         ]);
@@ -99,7 +99,7 @@ class CategoryController extends AppController
         }
 
         return $this->view('category.edit', [
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not update the category. Please try again.'],
             'category' => $data,
         ]);
     }
@@ -135,6 +135,9 @@ class CategoryController extends AppController
         return $this->redirect('/admin/categories');
     }
 
+    /**
+     * @return array<string, mixed> Category record
+     */
     private function getCategory(string $id): array
     {
         $category = $this->model->find($id);

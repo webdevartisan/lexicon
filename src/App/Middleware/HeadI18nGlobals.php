@@ -70,31 +70,28 @@ final class HeadI18nGlobals implements MiddlewareInterface
             $ogLocaleAlternates[] = $ogMap[$lang] ?? ($lang.'_'.strtoupper($lang));
         }
 
-        // Inject into the template globals
-        if (method_exists($this->viewer, 'addGlobals')) {
-
-            $isRtl = '';
-            if (in_array($current, $rtlLocales, true)) {
-                $isRtl = 'dir="rtl"';
-            }
-
-            $this->viewer->addGlobals([
-                // For the <html> element
-                'supportedLocales' => $supported,
-                'defaultLocale' => $default,
-                'currentLang' => $current,
-                'isRtl' => $isRtl,
-
-                // For <head>
-                'head' => [
-                    'canonicalUrl' => $canonical,
-                    'alternates' => $alternates,
-                    'xDefaultUrl' => $xDefaultUrl,
-                    'ogLocale' => $ogLocale,
-                    'ogLocaleAlternates' => $ogLocaleAlternates,
-                ],
-            ]);
+        $isRtl = '';
+        if (in_array($current, $rtlLocales, true)) {
+            $isRtl = 'dir="rtl"';
         }
+
+        // Inject into the template globals
+        $this->viewer->addGlobals([
+            // For the <html> element
+            'supportedLocales' => $supported,
+            'defaultLocale' => $default,
+            'currentLang' => $current,
+            'isRtl' => $isRtl,
+
+            // For <head>
+            'head' => [
+                'canonicalUrl' => $canonical,
+                'alternates' => $alternates,
+                'xDefaultUrl' => $xDefaultUrl,
+                'ogLocale' => $ogLocale,
+                'ogLocaleAlternates' => $ogLocaleAlternates,
+            ],
+        ]);
 
         return $handler->handle($request);
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
+use App\Helpers\LinksHelper;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
@@ -349,7 +350,7 @@ class ProfileController extends AppController
             $user,
             $profile ?: [],
             $preferences ?: [],
-            $this->linksToFlatInputs($links)
+            LinksHelper::linksToFlatInputs($links)
         );
 
         // add computed/transformed fields

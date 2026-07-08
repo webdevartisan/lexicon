@@ -15,16 +15,25 @@ use Framework\Interfaces\PolicyInterface;
  */
 class SystemPolicy implements PolicyInterface
 {
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public function view(array $user, object $resource): bool
     {
         return $this->isAdministrator($user);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public function update(array $user, object $resource): bool
     {
         return $this->isAdministrator($user);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     public function delete(array $user, object $resource): bool
     {
         return $this->isAdministrator($user);
@@ -52,6 +61,8 @@ class SystemPolicy implements PolicyInterface
      *
      * Anyone holding any control panel permission may land here, so a
      * moderator is not greeted with a 403 before reaching their area.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function accessDashboard(array $user): bool
     {
@@ -70,6 +81,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Manage user accounts in the control panel.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageUsers(array $user): bool
     {
@@ -78,6 +91,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Manage all blogs in the control panel.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageBlogs(array $user): bool
     {
@@ -86,6 +101,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Manage all posts in the control panel.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function managePosts(array $user): bool
     {
@@ -94,6 +111,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Approve, unapprove, mark spam, and delete comments.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function moderateComments(array $user): bool
     {
@@ -102,6 +121,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Manage categories and tags in the control panel.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageTaxonomy(array $user): bool
     {
@@ -110,6 +131,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Create custom roles and edit role permissions.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageRoles(array $user): bool
     {
@@ -118,6 +141,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Read the audit trail.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function viewAuditLog(array $user): bool
     {
@@ -126,6 +151,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * View system diagnostics.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function viewSystem(array $user): bool
     {
@@ -134,6 +161,8 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Manage the response and compiled view caches (view stats, prune, clear).
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageCache(array $user): bool
     {
@@ -142,23 +171,34 @@ class SystemPolicy implements PolicyInterface
 
     /**
      * Edit site-wide settings and test email delivery.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageSettings(array $user): bool
     {
         return $this->allowsArea($user, 'manageSettings');
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     private function allowsArea(array $user, string $ability): bool
     {
         return $this->isAdministrator($user)
             || $this->hasPermission($user, self::AREA_PERMISSIONS[$ability]);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     private function isAdministrator(array $user): bool
     {
         return in_array('administrator', $user['roles'] ?? [], true);
     }
 
+    /**
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
     private function hasPermission(array $user, string $permission): bool
     {
         return in_array($permission, $user['permissions'] ?? [], true);

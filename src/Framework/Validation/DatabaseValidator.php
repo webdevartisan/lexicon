@@ -17,7 +17,7 @@ class DatabaseValidator extends Validator
     /**
      * Create a new database validator instance.
      *
-     * @param  array  $data  The data to validate
+     * @param  array<string, mixed>  $data  The data to validate
      * @param  Database  $database  The database connection for validation queries
      */
     public function __construct(

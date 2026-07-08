@@ -92,6 +92,8 @@ class ContainerDebugMiddleware implements MiddlewareInterface
 
     /**
      * Render the debug toolbar HTML.
+     *
+     * @param  array<string, mixed>  $report  Container debug report from getDebugReport()
      */
     private function renderToolbar(array $report): string
     {

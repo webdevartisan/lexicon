@@ -6,6 +6,7 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Services\UploadService;
+use Framework\Core\Response;
 
 class FileUploadController extends AppController
 {
@@ -16,7 +17,7 @@ class FileUploadController extends AppController
     /**
      * Handle Dropzone AJAX upload
      */
-    public function upload()
+    public function upload(): Response
     {
         // Dropzone sends file with name 'file' by default
         if (!isset($_FILES['file'])) {

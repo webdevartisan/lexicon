@@ -21,7 +21,7 @@ class ActivityLogModel extends AppModel
      * @param  string  $resourceType  Resource type filter (e.g. 'user', 'post')
      * @param  int  $page  Current page (1-based)
      * @param  int  $perPage  Rows per page (capped at 100)
-     * @return array{data: array, pagination: array}
+     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findWithFilters(
         string $action = '',
@@ -101,6 +101,8 @@ class ActivityLogModel extends AppModel
 
     /**
      * Most recent entries for the control panel overview.
+     *
+     * @return array<int, array<string, mixed>> Latest audit rows with username
      */
     public function latestEntries(int $limit = 8): array
     {

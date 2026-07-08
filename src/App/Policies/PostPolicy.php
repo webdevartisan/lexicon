@@ -18,6 +18,8 @@ final class PostPolicy implements PolicyInterface
 {
     /**
      * View a post in dashboard context.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function view(array $user, object $post): bool
     {
@@ -40,6 +42,8 @@ final class PostPolicy implements PolicyInterface
      *
      * Owner and editors can edit any post. Authors/contributors can edit their
      * own posts — unless the post is currently in_review (in-review lock).
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function update(array $user, object $post): bool
     {
@@ -72,6 +76,8 @@ final class PostPolicy implements PolicyInterface
     /**
      * Publish or unpublish a post (change visibility).
      * Only owner or editor can do this.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function publish(array $user, object $post): bool
     {
@@ -91,6 +97,8 @@ final class PostPolicy implements PolicyInterface
     /**
      * Delete a post.
      * Owner or editors always; authors may delete only their own un-published posts.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function delete(array $user, object $post): bool
     {
@@ -118,6 +126,8 @@ final class PostPolicy implements PolicyInterface
     /**
      * Mark a post as needing changes (send back to author for revision).
      * Owner, editor, and reviewer may do this.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function markAsNeedsChanges(array $user, object $post): bool
     {
@@ -137,6 +147,8 @@ final class PostPolicy implements PolicyInterface
     /**
      * Approve a post (advance to approved state).
      * Owner, editor, and reviewer may do this.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function approve(array $user, object $post): bool
     {
@@ -159,6 +171,8 @@ final class PostPolicy implements PolicyInterface
      * Owner and editor may assign any reviewer. Reviewer role may self-assign
      * (the WorkflowService enforces the self-assign constraint — the policy
      * only checks that the acting user has reviewer capability or above).
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function assignReviewer(array $user, object $post): bool
     {
@@ -178,6 +192,8 @@ final class PostPolicy implements PolicyInterface
     /**
      * Perform a review action (approve or request changes) on a post.
      * Owner, editor, and reviewer can take review actions.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function reviewPost(array $user, object $post): bool
     {

@@ -21,6 +21,8 @@ class UsernameValidationService
      * Cached reserved words from database.
      *
      * Loaded once per request to avoid repeated queries during validation.
+     *
+     * @var string[]|null
      */
     private ?array $reservedWordsCache = null;
 

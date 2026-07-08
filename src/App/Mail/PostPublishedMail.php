@@ -8,7 +8,6 @@ class PostPublishedMail extends Mailable
 {
     public function __construct(
         private string $toEmail,
-        private int $postId,
         private string $postTitle,
         private string $blogSlug,
         private string $postSlug

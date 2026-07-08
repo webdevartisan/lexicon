@@ -24,17 +24,15 @@ class TranslationGlobalsMiddleware implements MiddlewareInterface
     public function process(Request $request, RequestHandlerInterface $handler): Response
     {
         // Expose `$t` to all templates before rendering begins.
-        if (method_exists($this->viewer, 'addGlobals')) {
-            $this->viewer->addGlobals([
-                // Accept a string or path array plus optional params for interpolation.
-                't' => function (string|array $key, array $params = []): string {
-                    // Resolve the translator fresh per call, using the current session locale
-                    $translator = new TranslationService($_SESSION['locale'] ?? 'en');
+        $this->viewer->addGlobals([
+            // Accept a string or path array plus optional params for interpolation.
+            't' => function (string|array $key, array $params = []): string {
+                // Resolve the translator fresh per call, using the current session locale
+                $translator = new TranslationService($_SESSION['locale'] ?? 'en');
 
-                    return $translator->translate($key, $params); // Dual resolution inside service.
-                },
-            ]);
-        }
+                return $translator->translate($key, $params); // Dual resolution inside service.
+            },
+        ]);
 
         // Continue the PSR-15 pipeline.
         return $handler->handle($request);

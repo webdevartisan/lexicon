@@ -20,7 +20,7 @@ class UserPreferencesModel extends AppModel
      * Ensures every user has a preferences record, creating one if missing.
      *
      * @param  int  $userId  User ID
-     * @return array Preferences data
+     * @return array<string, mixed> Preferences data
      */
     public function findOrCreate(int $userId): array
     {
@@ -46,7 +46,7 @@ class UserPreferencesModel extends AppModel
      * Insert or update all preference fields with provided values.
      *
      * @param  int  $userId  User ID
-     * @param  array  $data  Preferences data
+     * @param  array<string, mixed>  $data  Preferences data
      */
     public function upsert(int $userId, array $data): void
     {
@@ -85,7 +85,7 @@ class UserPreferencesModel extends AppModel
      * to reset preferences during pseudonymization.
      *
      * @param  int  $userId  User ID
-     * @param  array  $data  Associative array of column => value pairs
+     * @param  array<string, mixed>  $data  Associative array of column => value pairs
      * @return bool True on success
      */
     public function updateByUserId(int $userId, array $data): bool

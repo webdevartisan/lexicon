@@ -68,7 +68,7 @@ class GeoLocationService
     /**
      * Fetch geolocation data from ip-api.com.
      *
-     * @return array API response data or error array
+     * @return array<string, mixed> API response data or error array
      */
     private function fetchFromApi(): array
     {

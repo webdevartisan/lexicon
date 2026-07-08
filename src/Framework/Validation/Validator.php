@@ -22,12 +22,16 @@ namespace Framework\Validation;
  */
 class Validator
 {
+    /** @var array<string, mixed> */
     protected array $data;
 
+    /** @var array<string, array<string>> */
     protected array $rules = [];
 
+    /** @var array<string, array<string>> */
     protected array $errors = [];
 
+    /** @var array<string, string> */
     protected array $messages = [];
 
     /**
@@ -290,6 +294,8 @@ class Validator
 
     /**
      * Join array items with commas and "and" before the last item.
+     *
+     * @param  string[]  $items  Message fragments to join
      */
     protected function joinWithAnd(array $items): string
     {
@@ -325,7 +331,7 @@ class Validator
             return trim($value) !== '';
         }
 
-        return $value !== null && $value !== '';
+        return $value !== null;
     }
 
     protected function validateEmail(mixed $value, ?string $param, string $field): bool

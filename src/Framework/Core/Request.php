@@ -25,7 +25,7 @@ class Request
      * @param  array<string,mixed>  $server  $_SERVER
      * @param  array<string,string>  $headers  Normalized header names (lowercase) → value.
      */
-    public function __construct(
+    final public function __construct(
         public string $uri,
         public string $method,
         public array $get,
@@ -55,11 +55,11 @@ class Request
         return new static(
             $uri,
             $method,
-            $_GET ?? [],
-            $_POST ?? [],
-            $_FILES ?? [],
-            $_COOKIE ?? [],
-            $_SERVER ?? [],
+            $_GET,
+            $_POST,
+            $_FILES,
+            $_COOKIE,
+            $_SERVER,
             $headers
         );
     }
@@ -72,9 +72,7 @@ class Request
     private static function readHeaders(): array
     {
         if (function_exists('getallheaders')) {
-            $headers = getallheaders();
-
-            return is_array($headers) ? $headers : [];
+            return getallheaders();
         }
 
         // Fallback for environments without getallheaders() (e.g. CLI server, some SAPIs).
@@ -219,9 +217,7 @@ class Request
      */
     public function path(): string
     {
-        $path = parse_url($this->uri, PHP_URL_PATH) ?: '/';
-
-        return $path === '' ? '/' : $path;
+        return parse_url($this->uri, PHP_URL_PATH) ?: '/';
     }
 
     /**

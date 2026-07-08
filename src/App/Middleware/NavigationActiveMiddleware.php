@@ -24,8 +24,6 @@ class NavigationActiveMiddleware implements MiddlewareInterface
      *
      * modify the response HTML to add 'active' class to navigation
      * links matching the current page path.
-     *
-     * @param  callable  $next
      */
     public function process(Request $request, RequestHandlerInterface $next): Response
     {
@@ -52,7 +50,7 @@ class NavigationActiveMiddleware implements MiddlewareInterface
         }
 
         // inject active state
-        $currentPath = parse_url('/'.locale().$request->uri ?? '/', PHP_URL_PATH);
+        $currentPath = parse_url('/'.locale().$request->uri, PHP_URL_PATH);
         $modifiedHtml = NavigationActiveInjector::inject($html, $currentPath);
 
         // update the response

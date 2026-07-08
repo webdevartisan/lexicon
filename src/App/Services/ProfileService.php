@@ -34,7 +34,7 @@ class ProfileService
      * for both missing and private profiles to avoid information disclosure.
      *
      * @param  string  $slug  Public profile slug
-     * @return array Profile data with keys: profile, socialLinks, posts
+     * @return array<string, mixed> Profile data with keys: profile, socialLinks, posts
      *
      * @throws NotFoundException If profile not found or not public
      */
@@ -67,8 +67,8 @@ class ProfileService
      * others use standard Font Awesome naming. Falls back to generic icon
      * for unknown networks.
      *
-     * @param  array  $socialLinks  Raw social link data
-     * @return array Social links with icon field added
+     * @param  array<int, array<string, mixed>>  $socialLinks  Raw social link data
+     * @return array<int, array<string, mixed>> Social links with icon field added
      */
     private function enrichSocialLinksWithIcons(array $socialLinks): array
     {
@@ -94,7 +94,7 @@ class ProfileService
      * needed for URL generation. Uses bulk blog lookup to avoid N+1 queries.
      *
      * @param  int  $userId  Author user ID
-     * @return array Posts with blog_slug field
+     * @return array<int, array<string, mixed>> Posts with blog_slug field
      */
     private function getPublicPostsWithBlogSlugs(int $userId): array
     {

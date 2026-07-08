@@ -28,6 +28,7 @@ class TemplateRenderer implements TemplateViewerInterface
     // Properties & Constructor
     // ============================================================
 
+    /** @var array<string, mixed> */
     private array $globals = [];
 
     /**
@@ -48,6 +49,8 @@ class TemplateRenderer implements TemplateViewerInterface
      *
      * Reset after each render() to prevent cross-request contamination
      * (important because TemplateRenderer is registered as a singleton).
+     *
+     * @var string[]
      */
     private array $compilationDependencies = [];
 
@@ -74,6 +77,9 @@ class TemplateRenderer implements TemplateViewerInterface
     // Public API
     // ============================================================
 
+    /**
+     * @param  array<string, mixed>  $vars  Variable name => value pairs shared with all templates
+     */
     public function addGlobals(array $vars): void
     {
         $this->globals = array_replace($this->globals, $vars);
@@ -83,7 +89,7 @@ class TemplateRenderer implements TemplateViewerInterface
      * Render a template file and return the resulting HTML string.
      *
      * @param  string|null  $template  Template identifier (resolved via ViewNameResolver).
-     * @param  array  $data  Variables to expose inside the template.
+     * @param  array<string, mixed>  $data  Variables to expose inside the template.
      * @return string Rendered HTML output.
      *
      * @throws NotFoundException If the template or any include cannot be found.
@@ -282,6 +288,9 @@ class TemplateRenderer implements TemplateViewerInterface
      *
      * Per-render $data takes priority over globals via array_replace
      * so callers can always override a global value when needed.
+     *
+     * @param  array<string, mixed>  $data  Per-render template variables
+     * @return array<string, mixed> Combined globals and per-render data
      */
     private function mergeGlobals(array $data): array
     {
@@ -300,7 +309,7 @@ class TemplateRenderer implements TemplateViewerInterface
      * to the template's variable scope.
      *
      * @param  string  $compiledFile  Absolute path to the compiled PHP file.
-     * @param  array  $data  Variables to expose inside the template.
+     * @param  array<string, mixed>  $data  Variables to expose inside the template.
      * @param  string  $originalFile  Original source template path (for error reporting).
      * @return string Rendered HTML output.
      *

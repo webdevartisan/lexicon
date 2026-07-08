@@ -64,7 +64,7 @@ class TagController extends AppController
         }
 
         return $this->view('tag.new', [
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not create the tag. Please try again.'],
             'tag' => $data,
             'blogs' => $this->blogModel->getAllBlogsWithOwnerAndCounts(),
         ]);
@@ -99,7 +99,7 @@ class TagController extends AppController
         }
 
         return $this->view('tag.edit', [
-            'errors' => $this->model->getErrors(),
+            'errors' => ['Could not update the tag. Please try again.'],
             'tag' => $data,
         ]);
     }
@@ -135,6 +135,9 @@ class TagController extends AppController
         return $this->redirect('/admin/tags');
     }
 
+    /**
+     * @return array<string, mixed> Tag record
+     */
     private function getTag(string $id): array
     {
         $tag = $this->model->find($id);

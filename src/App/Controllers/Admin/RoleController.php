@@ -252,6 +252,8 @@ class RoleController extends AppController
 
     /**
      * Utility: fetch role or 404
+     *
+     * @return array<string, mixed> Role record
      */
     private function getRole(string $id): array
     {

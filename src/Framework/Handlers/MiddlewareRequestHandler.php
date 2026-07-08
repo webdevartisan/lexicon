@@ -22,6 +22,9 @@ final class MiddlewareRequestHandler implements RequestHandlerInterface
      */
     private array $middlewares;
 
+    /**
+     * @param  MiddlewareInterface[]  $middlewares  Middleware stack in execution order
+     */
     public function __construct(
         array $middlewares,
         private ControllerRequestHandler $controllerHandler

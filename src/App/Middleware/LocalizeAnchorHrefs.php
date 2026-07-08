@@ -34,18 +34,16 @@ final class LocalizeAnchorHrefs implements MiddlewareInterface
         $response = $handler->handle($request);
 
         // Get response body as string
-        $html = method_exists($response, 'getBody') ? $response->getBody() : '';
+        $html = $response->getBody();
 
         if ($html === '') {
             return $response;
         }
 
-        // Optional: skip if Content-Type is not HTML
-        if (method_exists($response, 'getHeader')) {
-            $ct = $response->getHeader('Content-Type');
-            if ($ct !== null && stripos($ct, 'text/html') === false) {
-                return $response;
-            }
+        // Skip if Content-Type is not HTML
+        $ct = $response->getHeader('Content-Type');
+        if ($ct !== null && stripos($ct, 'text/html') === false) {
+            return $response;
         }
 
         $locale = $this->currentLocale();

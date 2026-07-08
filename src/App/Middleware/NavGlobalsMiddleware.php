@@ -184,21 +184,19 @@ class NavGlobalsMiddleware
         $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId;
 
         // add navigation globals to all templates
-        if (method_exists($this->viewer, 'addGlobals')) {
-            $this->viewer->addGlobals([
-                'nav_items' => $items,
-                'nav_area' => $area,
-                'current_user' => $user,
-                'selected_blog' => $selectedBlog, // BlogResource or null
-                'has_blog_context' => $selectedBlog !== null, // Convenient boolean flag
-                'area' => $area,
-                'notifications' => $notifications,
-                'user_blogs' => $userBlogs, // id => ['name','status','role'] for topbar switcher
-                'selected_blog_id' => $selectedBlogId,
-                'is_collaborator' => $isCollaborator, // user has any shared blog access
-                'sidebar_cache_key' => $sidebarCacheKey,
-            ]);
-        }
+        $this->viewer->addGlobals([
+            'nav_items' => $items,
+            'nav_area' => $area,
+            'current_user' => $user,
+            'selected_blog' => $selectedBlog, // BlogResource or null
+            'has_blog_context' => $selectedBlog !== null, // Convenient boolean flag
+            'area' => $area,
+            'notifications' => $notifications,
+            'user_blogs' => $userBlogs, // id => ['name','status','role'] for topbar switcher
+            'selected_blog_id' => $selectedBlogId,
+            'is_collaborator' => $isCollaborator, // user has any shared blog access
+            'sidebar_cache_key' => $sidebarCacheKey,
+        ]);
 
         return $handler->handle($request);
     }

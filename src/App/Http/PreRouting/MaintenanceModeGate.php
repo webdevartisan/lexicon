@@ -109,6 +109,9 @@ final class MaintenanceModeGate
         return false;
     }
 
+    /**
+     * @param  array<mixed>  $allowed  Allowlist entries: exact IPs or CIDR ranges
+     */
     private static function isIpAllowed(string $ip, array $allowed): bool
     {
         foreach ($allowed as $entry) {
