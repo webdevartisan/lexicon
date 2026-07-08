@@ -415,7 +415,7 @@ class BreadcrumbMiddleware implements MiddlewareInterface
         // check if this segment should be hidden
         $hiddenSegments = $this->config['hidden_segments'] ?? [];
         if (in_array($segment, $hiddenSegments, true)) {
-            return;
+            return null;
         }
 
         // check for custom label overrides with translation keys
