@@ -69,6 +69,15 @@ $router->add('/comments/create', [
     'method' => 'POST',
 ]);
 
+// Post engagement (auth required; CSRF token in the POST body)
+$router->group([
+    'prefix' => '/posts',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/{id:\d+}/like', ['controller' => 'PostEngagementController', 'action' => 'toggleLike', 'method' => 'POST']);
+    $r->add('/{id:\d+}/bookmark', ['controller' => 'PostEngagementController', 'action' => 'toggleBookmark', 'method' => 'POST']);
+});
+
 // Public blog invitation landing (reached from the email link; no auth required)
 $router->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
 $router->add('/invite/{token:[a-f0-9]+}/accept', ['controller' => 'InviteController', 'action' => 'accept', 'method' => 'POST']);
