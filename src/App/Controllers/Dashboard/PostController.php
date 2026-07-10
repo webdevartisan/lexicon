@@ -170,9 +170,13 @@ final class PostController extends AppController
             $workflowEnabled = !empty($settings['workflow_enabled']);
         }
 
+        $currentListUrl = $this->buildReturnUrl('/dashboard/post');
+        $returnToken = $this->issueReturnToken($currentListUrl, ['/dashboard/post']);
+
         return $this->view([
             'posts' => $result['data'],
             'pagination' => $result['pagination'],
+            'returnToken' => $returnToken,
             'user' => $user,
             'blogs' => $blogs,
             'blog_id' => $blogId,
@@ -426,6 +430,7 @@ final class PostController extends AppController
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
+            'returnToken' => $this->request->getParam('r'),
         ]);
     }
 
@@ -624,7 +629,16 @@ final class PostController extends AppController
             }
         }
 
-        return $this->redirect("/dashboard/post/{$id}/edit");
+        $return = $this->consumeReturnToken(
+            $this->request->postParam('r'),
+            '/dashboard/post',
+            ['/dashboard/post']
+        );
+
+        return $this->redirect($return);
+        // return $this->redirect("/dashboard/post/{$id}/edit");
+        // return $this->redirect("/dashboard/post");
+        // return $this->redirect($return);
     }
 
     /**

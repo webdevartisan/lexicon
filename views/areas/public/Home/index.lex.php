@@ -1,23 +1,35 @@
 {% extends "front.lex.php" %}
 
-{% block title %}{{ t('meta.title') }}{% endblock %}
+{% block title %}<?= e(site_content('meta.title')) ?>{% endblock %}
+
+{% block meta %}
+<meta name="description" content="<?= e(site_content('meta.description')) ?>" />
+<meta property="og:title" content="<?= e(site_content('meta.title')) ?>" />
+<meta property="og:description" content="<?= e(site_content('meta.description')) ?>" />
+<meta property="og:type" content="website" />
+{% endblock %}
 
 {% block body %}
 <!-- Banner -->
 <section id="banner">
     <div class="content">
         <header>
-            <h1>{{ t('banner.title') }}<br /></h1>
-            <p>{{ t('banner.subtitle') }}</p>
+            <h1><?= e(site_content('banner.title')) ?><br /></h1>
+            <p><?= e(site_content('banner.subtitle')) ?></p>
         </header>
-        <p>{{ t('banner.body') }}</p>
+        <p><?= e(site_content('banner.body')) ?></p>
         <ul class="actions">
-            <li><a href="/login" class="button big">{{ t('banner.cta') }}</a></li>
+            {% if (!auth()->check()): %}
+                <li><a href="/register" class="button big primary"><?= e(site_content('banner.cta')) ?></a></li>
+                <li><a href="/blogs" class="button big">{{ t('navigation.exploreBlogs') }}</a></li>
+            {% else %}
+                <li><a href="/dashboard" class="button big primary"><?= e(site_content('banner.ctaDashboard')) ?></a></li>
+            {% endif %}
         </ul>
     </div>
     <span class="image" aria-hidden="true">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" role="img">
-        <title>{{ t('banner.svgTitle') }}</title>
+        <title><?= e(site_content('banner.svgTitle')) ?></title>
         <defs>
         <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stop-color="#F7F7F8"/>
@@ -71,97 +83,165 @@
     </span>
 </section>
 
-<!-- Section -->
+<!-- Stats strip -->
+{% if ((int) ($stats['posts'] ?? 0) > 0): %}
+<section class="stats-strip" aria-label="Platform statistics">
+    <div class="stat">
+        <span class="stat-number"><?= number_format((int) $stats['posts']) ?></span>
+        <span class="stat-label">{{ t('stats.posts') }}</span>
+    </div>
+    <div class="stat">
+        <span class="stat-number"><?= number_format((int) $stats['blogs']) ?></span>
+        <span class="stat-label">{{ t('stats.blogs') }}</span>
+    </div>
+    <div class="stat">
+        <span class="stat-number"><?= number_format((int) $stats['writers']) ?></span>
+        <span class="stat-label">{{ t('stats.writers') }}</span>
+    </div>
+</section>
+{% endif %}
+
+<!-- How it works -->
 <section>
     <header class="major">
-        <h2>Why Start Your Blog Here?</h2>
+        <h2><?= e(site_content('how.title')) ?></h2>
+    </header>
+    <div class="steps">
+        <div class="step">
+            <span class="step-number">1</span>
+            <h3><?= e(site_content('how.step1.title')) ?></h3>
+            <p><?= e(site_content('how.step1.body')) ?></p>
+        </div>
+        <div class="step">
+            <span class="step-number">2</span>
+            <h3><?= e(site_content('how.step2.title')) ?></h3>
+            <p><?= e(site_content('how.step2.body')) ?></p>
+        </div>
+        <div class="step">
+            <span class="step-number">3</span>
+            <h3><?= e(site_content('how.step3.title')) ?></h3>
+            <p><?= e(site_content('how.step3.body')) ?></p>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section>
+    <header class="major">
+        <h2><?= e(site_content('features.title')) ?></h2>
     </header>
     <div class="features">
         <article>
-            <span class="icon fa fa-gem"></span>
+            <span class="icon solid fa fa-feather-alt"></span>
             <div class="content">
-                <h3>Designed for Creators</h3>
-                <p>Lexicon is built from scratch with simplicity and flexibility in mind — no clutter, no distractions, just you and your ideas.</p>
+                <h3><?= e(site_content('features.items.writing.title')) ?></h3>
+                <p><?= e(site_content('features.items.writing.body')) ?></p>
             </div>
         </article>
         <article>
-            <span class="icon solid fa fa-paper-plane"></span>
+            <span class="icon solid fa fa-users"></span>
             <div class="content">
-                <h3>Instant Setup</h3>
-                <p>Create your blog in minutes. No technical skills required. Just pick a theme, start writing, and hit publish.</p>
+                <h3><?= e(site_content('features.items.team.title')) ?></h3>
+                <p><?= e(site_content('features.items.team.body')) ?></p>
             </div>
         </article>
         <article>
-            <span class="icon solid fa fa-rocket"></span>
+            <span class="icon solid fa fa-download"></span>
             <div class="content">
-                <h3>Built to Grow With You</h3>
-                <p>Whether you're writing for fun or building a brand, Lexicon gives you the tools to evolve — from posts to pages to your own domain.</p>
+                <h3><?= e(site_content('features.items.ownership.title')) ?></h3>
+                <p><?= e(site_content('features.items.ownership.body')) ?></p>
             </div>
         </article>
         <article>
-            <span class="icon solid fa fa-signal"></span>
+            <span class="icon solid fa fa-book-reader"></span>
             <div class="content">
-                <h3>Be an Early Voice</h3>
-                <p>You're not joining a crowd — you're helping shape a new platform. Your feedback matters, and your blog will stand out from day one.</p>
+                <h3><?= e(site_content('features.items.readers.title')) ?></h3>
+                <p><?= e(site_content('features.items.readers.body')) ?></p>
             </div>
         </article>
     </div>
 </section>
 
-<!-- Section -->
+<!-- Featured writing: admin picks only. With no picks, the guides keep the
+     section presentable instead of promoting random user content. -->
+{% if (!empty($showcase)): %}
 <section>
     <header class="major">
-        <h2>See What You Can Create</h2>
+        <h2><?= e(site_content('showcase.title')) ?></h2>
+        <p><?= e(site_content('showcase.subtitle')) ?></p>
+    </header>
+    <div class="posts">
+        {% foreach ($showcase as $post): %}
+        <?php
+            $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+$excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
+?>
+        <article>
+            {% if post.featured_image %}
+            <a href="<?= e($postUrl) ?>" class="image">
+                <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy" />
+            </a>
+            {% endif %}
+            <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
+            <p class="meta">
+                {{ post.blog_name }}
+                {% if post.published_at %}
+                &middot;
+                <time datetime="{{ post.published_at }}"><?= e(date('M j, Y', strtotime($post['published_at']))) ?></time>
+                {% endif %}
+            </p>
+            <p>{{ excerpt }}</p>
+            <ul class="actions">
+                <li><a href="<?= e($postUrl) ?>" class="button">{{ t('showcase.readPost') }}</a></li>
+            </ul>
+        </article>
+        {% endforeach; %}
+    </div>
+</section>
+{% else %}
+<section>
+    <header class="major">
+        <h2><?= e(site_content('showcase.emptyTitle')) ?></h2>
     </header>
     <div class="posts">
         <article>
-            <a href="#" class="image"><img src="/images/pic01.jpg" alt="Person typing on a laptop with coffee beside them" /></a>
-            <h3>How I Wrote My First Blog Post</h3>
-            <p>A fictional creator shares their journey from blank page to published post — and how easy it was with Lexicon.</p>
+            <a href="/getting-started/start-your-first-blog" class="image"><img src="/images/pic07.jpg" alt="" loading="lazy" /></a>
+            <h3><a href="/getting-started/start-your-first-blog"><?= e(site_content('sidebar.gettingStarted.items.tip1')) ?></a></h3>
             <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
+                <li><a href="/getting-started/start-your-first-blog" class="button">{{ t('pages.readGuide') }}</a></li>
             </ul>
         </article>
         <article>
-            <a href="#" class="image"><img src="/images/pic02.jpg" alt="Screenshot of a clean blog layout with white space" /></a>
-            <h3>The Power of a Clean Theme</h3>
-            <p>See how a minimalist layout can make your words shine. A sample post using one of Lexicon’s starter themes.</p>
+            <a href="/getting-started/write-posts-people-read" class="image"><img src="/images/pic08.jpg" alt="" loading="lazy" /></a>
+            <h3><a href="/getting-started/write-posts-people-read"><?= e(site_content('sidebar.gettingStarted.items.tip2')) ?></a></h3>
             <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
+                <li><a href="/getting-started/write-posts-people-read" class="button">{{ t('pages.readGuide') }}</a></li>
             </ul>
         </article>
         <article>
-            <a href="#" class="image"><img src="/images/pic03.jpg" alt="Open road with mountains in the background and a journal on a dashboard" /></a>
-            <h3>A Day in the Life of a Travel Blogger</h3>
-            <p>A sample travel blog entry showing how storytelling and visuals come together beautifully on Lexicon.</p>
+            <a href="/getting-started/blog-with-your-team" class="image"><img src="/images/pic09.jpg" alt="" loading="lazy" /></a>
+            <h3><a href="/getting-started/blog-with-your-team"><?= e(site_content('sidebar.gettingStarted.items.tip3')) ?></a></h3>
             <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
+                <li><a href="/getting-started/blog-with-your-team" class="button">{{ t('pages.readGuide') }}</a></li>
             </ul>
         </article>
-        <article>
-            <a href="#" class="image"><img src="/images/pic04.jpg" alt="Illustration of a blog setup wizard on a laptop screen" /></a>
-            <h3>How to Create a Blog on Lexicon</h3>
-            <p>A step-by-step guide to setting up your blog, choosing a theme, and publishing your first post.</p>
-            <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
-            </ul>
-        </article>
-        <article>
-            <a href="#" class="image"><img src="/images/pic05.jpg" alt="Notebook with brainstorming sketches and a pen" /></a>
-            <h3>What Should I Blog About?</h3>
-            <p>Stuck on ideas? Here are 5 blog formats that work for any niche — from personal stories to tutorials.</p>
-            <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
-            </ul>
-        </article>
-        <article>
-            <a href="#" class="image"><img src="/images/pic06.jpg" alt="Whiteboard with sticky notes and feature ideas" /></a>
-            <h3>What’s Coming to Lexicon</h3>
-            <p>A transparent look at our roadmap — and how early users can help shape the future of the platform.</p>
-            <ul class="actions">
-                <li><a href="#" class="button">More</a></li>
-            </ul>
-        </article>
+    </div>
+</section>
+{% endif %}
+
+<!-- FAQ -->
+<section id="faq">
+    <header class="major">
+        <h2><?= e(site_content('faq.title')) ?></h2>
+    </header>
+    <?php $faqKeys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6']; ?>
+    <div class="faq-list">
+        {% foreach ($faqKeys as $fk): %}
+        <details class="faq-item">
+            <summary><?= e(site_content('faq.items.'.$fk.'.q')) ?></summary>
+            <p><?= e(site_content('faq.items.'.$fk.'.a')) ?></p>
+        </details>
+        {% endforeach; %}
     </div>
 </section>
 {% endblock %}

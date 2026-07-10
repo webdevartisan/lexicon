@@ -327,30 +327,51 @@ it('respects limit when finding recent posts by author', function () {
 });
 
 // ============================================================================
-// RANDOM POSTS
+// FRONT PAGE SHOWCASE (admin curation)
 // ============================================================================
 
 /**
- * Test finding random published posts.
- *
- * Verifies findRandomPublicPosts returns only published posts.
+ * The showcase only contains posts an admin flagged, never unflagged ones.
  */
-it('finds random published posts only', function () {
+it('returns only admin picked posts for the home showcase', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->create($userId);
 
-    for ($i = 1; $i <= 10; $i++) {
-        PostFactory::new($this->postModel)
-            ->withAttributes([
-                'author_id' => $userId,
-                'blog_id' => $blogId,
-                'status' => 'published',
-                'published_at' => date('Y-m-d H:i:s'),
-            ])
-            ->create();
-    }
+    $pickedId = PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
 
     PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $this->postModel->setFeaturedOnHome($pickedId, true);
+
+    $showcase = $this->postModel->findHomeShowcase(6);
+
+    expect($showcase)->toHaveCount(1)
+        ->and((int) $showcase[0]['id'])->toBe($pickedId)
+        ->and($showcase[0])->toHaveKey('blog_slug');
+});
+
+/**
+ * A flagged post that is unpublished or non-public never reaches the showcase.
+ */
+it('excludes unpublished and non public posts from the home showcase', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+
+    $draftId = PostFactory::new($this->postModel)
         ->withAttributes([
             'author_id' => $userId,
             'blog_id' => $blogId,
@@ -358,42 +379,41 @@ it('finds random published posts only', function () {
         ])
         ->create();
 
-    $random = $this->postModel->findRandomPublicPosts(6);
+    $privateId = PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'status' => 'published',
+            'visibility' => 'private',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
 
-    expect($random)->toBeArray()
-        ->and($random)->toHaveCount(6)
-        ->and(array_column($random, 'status'))->each->toBe('published');
+    $this->postModel->setFeaturedOnHome($draftId, true);
+    $this->postModel->setFeaturedOnHome($privateId, true);
+
+    expect($this->postModel->findHomeShowcase(6))->toHaveCount(0);
 });
 
 /**
- * Test that random posts respects limit parameter.
+ * The flag toggles off cleanly.
  */
-it('respects limit when finding random posts', function () {
+it('removes a post from the showcase when the flag is turned off', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->create($userId);
 
-    for ($i = 1; $i <= 20; $i++) {
-        PostFactory::new($this->postModel)
-            ->withAttributes([
-                'author_id' => $userId,
-                'blog_id' => $blogId,
-                'status' => 'published',
-                'published_at' => date('Y-m-d H:i:s'),
-            ])
-            ->create();
-    }
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
 
-    $random = $this->postModel->findRandomPublicPosts(3);
+    $this->postModel->setFeaturedOnHome($postId, true);
+    expect($this->postModel->findHomeShowcase(6))->toHaveCount(1);
 
-    expect($random)->toHaveCount(3);
-});
-
-/**
- * Test that random posts returns empty array when none exist.
- */
-it('returns empty array when no published posts exist for random', function () {
-    $random = $this->postModel->findRandomPublicPosts(6);
-
-    expect($random)->toBeArray()
-        ->and($random)->toHaveCount(0);
+    $this->postModel->setFeaturedOnHome($postId, false);
+    expect($this->postModel->findHomeShowcase(6))->toHaveCount(0);
 });

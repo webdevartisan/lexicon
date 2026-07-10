@@ -158,6 +158,144 @@ abstract class AppController extends BaseController implements SessionAwareInter
     }
 
     /**
+     * Build a relative return URL from the current request.
+     *
+     * The resulting URL contains the current path and its query string after
+     * removing transient parameters that should not be propagated between requests.
+     */
+    protected function buildReturnUrl(string $fallback): string
+    {
+        $path = $this->request->path() ?: $fallback;
+        $query = $this->request->queryParams();
+
+        unset(
+            $query['return'],
+            $query['_token'],
+            $query['success'],
+            $query['error']
+        );
+
+        $queryString = http_build_query($query);
+        $url = $path.($queryString !== '' ? '?'.$queryString : '');
+
+        return $this->isSafeReturnUrl($url) ? $url : $fallback;
+    }
+
+    /**
+     * Determine whether a return URL is safe for internal redirects.
+     *
+     * Only relative application URLs are accepted. Protocol-relative URLs and
+     * external destinations are rejected to prevent open redirect vulnerabilities.
+     *
+     * @param  array<int, string>  $allowedPrefixes
+     */
+    protected function isSafeReturnUrl(string $url, array $allowedPrefixes = ['/dashboard']): bool
+    {
+        if ($url === '' || $url[0] !== '/') {
+            return false;
+        }
+
+        if (str_starts_with($url, '//')) {
+            return false;
+        }
+
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($url, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve a return URL from request input.
+     *
+     * Returns the supplied URL when it is safe and allowed; otherwise returns the
+     * provided fallback path.
+     *
+     * @param  array<int, string>  $allowedPrefixes
+     */
+    protected function resolveReturnUrl(?string $return, string $fallback, array $allowedPrefixes = ['/dashboard']): string
+    {
+        if ($return === null || $return === '') {
+            return $fallback;
+        }
+
+        return $this->isSafeReturnUrl($return, $allowedPrefixes)
+            ? $return
+            : $fallback;
+    }
+
+    /**
+     * Create and store a one-time return token for a safe local URL.
+     *
+     * @param  array<int, string>  $allowedPrefixes
+     */
+    protected function issueReturnToken(string $url, array $allowedPrefixes = ['/dashboard']): ?string
+    {
+        if (!$this->isSafeReturnUrl($url, $allowedPrefixes)) {
+            return null;
+        }
+
+        $token = bin2hex(random_bytes(8));
+        $returnUrls = $this->session->get('return_urls', []);
+
+        if (!is_array($returnUrls)) {
+            $returnUrls = [];
+        }
+
+        $returnUrls[$token] = [
+            'url' => $url,
+            'expires_at' => time() + 1800,
+        ];
+
+        $this->session->set('return_urls', $returnUrls);
+
+        return $token;
+    }
+
+    /**
+     * Resolve a one-time return token to a safe local URL.
+     *
+     * @param  array<int, string>  $allowedPrefixes
+     */
+    protected function consumeReturnToken(
+        ?string $token,
+        string $fallback,
+        array $allowedPrefixes = ['/dashboard']
+    ): string {
+        if (!is_string($token) || $token === '') {
+            return $fallback;
+        }
+
+        $returnUrls = $this->session->get('return_urls', []);
+
+        if (!is_array($returnUrls) || !isset($returnUrls[$token])) {
+            return $fallback;
+        }
+
+        $entry = $returnUrls[$token];
+        unset($returnUrls[$token]);
+        $this->session->set('return_urls', $returnUrls);
+
+        if (!is_array($entry)) {
+            return $fallback;
+        }
+
+        $url = $entry['url'] ?? null;
+        $expiresAt = $entry['expires_at'] ?? 0;
+
+        if (!is_string($url) || !is_int($expiresAt) || $expiresAt < time()) {
+            return $fallback;
+        }
+
+        return $this->isSafeReturnUrl($url, $allowedPrefixes)
+            ? $url
+            : $fallback;
+    }
+
+    /**
      * Redirect back to previous page with old input preserved.
      */
     protected function redirectBack(): Response

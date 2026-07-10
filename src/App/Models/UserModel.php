@@ -446,6 +446,23 @@ class UserModel extends AppModel
     }
 
     /**
+     * Count distinct users with at least one published post.
+     *
+     * Powers the front page stats strip, so "writers" means people whose
+     * writing a visitor can actually read, not raw signups.
+     */
+    public function countPublicWriters(): int
+    {
+        $sql = "SELECT COUNT(DISTINCT p.author_id)
+                FROM posts p
+                JOIN users u ON u.id = p.author_id
+                WHERE p.status = 'published'
+                AND u.deleted_at IS NULL";
+
+        return (int) $this->database->query($sql)->fetchColumn();
+    }
+
+    /**
      * Count total active administrator users.
      *
      * Used to prevent deletion of the last admin account.

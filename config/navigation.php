@@ -22,6 +22,9 @@ return [
         ['label' => 'Create a Blog', 'href' => '/login', 'auth' => false, 'key' => 'navigation.createBlog'],
         ['label' => 'Create a Blog', 'href' => '/dashboard', 'auth' => true, 'key' => 'navigation.createBlog'],
         ['label' => 'Explore Blogs', 'href' => '/blogs', 'auth' => null, 'key' => 'navigation.exploreBlogs'],
+        ['label' => 'Getting Started', 'href' => '/getting-started', 'auth' => null, 'key' => 'navigation.gettingStarted'],
+        ['label' => 'About', 'href' => '/about', 'auth' => null, 'key' => 'navigation.about'],
+        ['label' => 'Contact', 'href' => '/contact', 'auth' => null, 'key' => 'navigation.contact'],
         ['label' => 'Admin', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'key' => 'navigation.admin'],
     ],
 
@@ -222,6 +225,8 @@ return [
         ['label' => 'System', 'href' => '/admin/system', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_system_health'], 'key' => 'navigation.system'],
         ['label' => 'Cache Management', 'href' => '/admin/cache', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_cache'], 'key' => 'navigation.cacheManagement'],
         ['label' => 'Email Templates', 'href' => '/admin/email-test', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_site_settings'], 'key' => 'navigation.emailTest'],
+        ['label' => 'Front Page', 'href' => '/admin/front-page', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_site_settings'], 'key' => 'navigation.frontPage'],
+        ['label' => 'Pages', 'href' => '/admin/pages', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_site_settings'], 'key' => 'navigation.pages'],
         ['label' => 'Settings', 'href' => '/admin/settings', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_site_settings'], 'key' => 'navigation.settings'],
     ],
 ];

@@ -49,6 +49,8 @@ $emptyMessage = ($q !== '' || $status !== '') ? 'Try a different search or clear
 $showUrl = '/admin/posts/'.$post['id'].'/show';
 $editUrl = '/admin/posts/'.$post['id'].'/edit';
 $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
+$featuredOnHome = (int) ($post['featured_on_home'] ?? 0) === 1;
+$featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front page';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['id']) ?></td>
@@ -63,6 +65,15 @@ $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $post['updated_at']))) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
+                                <form method="POST" action="/admin/posts/<?= (int) $post['id'] ?>/feature-home">
+                                    {{ csrf_field() }}
+                                    <button type="submit"
+                                            data-tooltip data-tooltip-content="<?= e($featureTip) ?>" data-tooltip-placement="top"
+                                            aria-label="<?= e($featureTip) ?>"
+                                            class="p-2 rounded-md transition-colors <?= $featuredOnHome ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
+                                        <i data-lucide="star" class="size-4 <?= $featuredOnHome ? 'fill-current' : '' ?>"></i>
+                                    </button>
+                                </form>
                                 {% cmp="icon-action" href="{$showUrl}" icon="eye" tip="View" %}
                                 {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit" %}
                                 {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete" danger %}

@@ -28,7 +28,8 @@
       "Framework\\": "src/Framework/"
     },
     "files": [
-      "src/Framework/Core/helpers.php"
+      "src/Framework/Core/helpers.php",
+      "src/App/helpers.php"
     ]
   },
   "autoload-dev": {

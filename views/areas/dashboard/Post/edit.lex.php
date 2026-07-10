@@ -21,6 +21,7 @@
     enctype="multipart/form-data"
     data-dropzone-form
     class="space-y-3" data-autosave-form>
+    <input type="hidden" name="r" value="<?= e(old('r', $returnToken ?? '')) ?>" >
     {% include "partials/dashboard/post/_form.lex.php" %}
   </form>
 </div>

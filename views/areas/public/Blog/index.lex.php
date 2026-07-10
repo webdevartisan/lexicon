@@ -1,6 +1,6 @@
 {% extends "front.lex.php" %}
 
-{% block title %}Lexicon — Discover blogs{% endblock %}
+{% block title %}{{ t('explore.metaTitle') }}{% endblock %}
 
 {% block body %}
 
@@ -8,199 +8,215 @@
     <section id="banner">
         <div class="content">
             <header>
-                <h1>Discover great writing</h1>
-                <p>Browse creators, topics, and the latest posts from across the platform.</p>
+                <h1>{{ t('explore.heroTitle') }}</h1>
+                <p>{{ t('explore.heroSubtitle') }}</p>
             </header>
 
-            <form method="get" action="" class="home-search">
+            <form method="get" action="/blogs" class="home-search">
+                <input type="hidden" name="tab" value="{{ tab }}" />
                 <div class="row gtr-50 gtr-uniform">
-                    <div class="col-8 col-12-small">
+                    <div class="col-9 col-12-small">
                         <input
                             type="text"
                             name="q"
                             id="q"
-                            value="<?= e($searchQuery ?? '') ?>"
-                            placeholder="Search posts or blogs..."
+                            value="{{ searchQuery }}"
+                            placeholder="<?= e($tab === 'posts' ? $t('explore.searchPlaceholderPosts') : $t('explore.searchPlaceholderBlogs')) ?>"
                         />
                     </div>
-                    <div class="col-4 col-6-small">
-                        <select name="category" id="category">
-                            <option value="">All categories</option>
-                            <?php foreach ($categories as $cat) { ?>
-                                <option
-                                    value="<?= e($cat['name']); ?>"
-                                    <?= (($activeCategory ?? '') === $cat['name']) ? 'selected' : ''; ?>
-                                >
-                                    <?= e($cat['name']); ?>
-                                </option>
-                            <?php } ?>
-                        </select>
-                    </div>
-                    <div class="col-2 col-6-small">
+                    <div class="col-3 col-6-small">
                         <ul class="actions">
                             <li>
                                 <button type="submit" class="button primary icon solid fa-search">
-                                    Go
+                                    {{ t('explore.searchButton') }}
                                 </button>
                             </li>
                         </ul>
                     </div>
                 </div>
-                <?php if (($mode ?? '') === 'search') { ?>
+                {% if (!empty($searchQuery)): %}
                     <p class="search-meta">
-                        Showing
-                        <strong><?= (int) ($pagination['totalPosts'] ?? 0); ?></strong>
-                        result(s) for
-                        <strong>"<?= e($searchQuery); ?>"</strong>
+                        <strong><?= (int) ($pagination['total'] ?? 0) ?></strong>
+                        {{ t('explore.resultsFor') }}
+                        <strong>"{{ searchQuery }}"</strong>
                     </p>
-                <?php } ?>
+                {% endif %}
             </form>
         </div>
         <span class="image">
-            <img src="images/DiscoverGreatWritingsIlustration.webp" alt="Lexicon" />
+            <img src="/images/DiscoverGreatWritingsIlustration.webp" alt="" />
         </span>
     </section>
 
-    <!-- Latest / search results -->
-    <section id="home-posts">
+    <?php
+    // Tab links keep the search term; page resets when switching context.
+    $blogsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'blogs', 'q' => $searchQuery]));
+                            $postsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'posts', 'q' => $searchQuery]));
+                            ?>
+
+    <!-- Tabs -->
+    <div class="explore-tabs" role="tablist">
+        <a href="<?= e($blogsTabUrl) ?>" role="tab" class="explore-tab <?= $tab === 'blogs' ? 'active' : '' ?>"
+           aria-selected="<?= $tab === 'blogs' ? 'true' : 'false' ?>">{{ t('explore.tabBlogs') }}</a>
+        <a href="<?= e($postsTabUrl) ?>" role="tab" class="explore-tab <?= $tab === 'posts' ? 'active' : '' ?>"
+           aria-selected="<?= $tab === 'posts' ? 'true' : 'false' ?>">{{ t('explore.tabPosts') }}</a>
+    </div>
+
+    {% if ($tab === 'posts'): %}
+    <!-- Latest posts / search results -->
+    <section id="explore-posts">
         <header class="major">
-            <h2>
-                <?php if (($mode ?? '') === 'search' && $searchQuery !== '') { ?>
-                    Search results
-                <?php } elseif (!empty($activeCategory)) { ?>
-                    Latest in <?= e($activeCategory); ?>
-                <?php } else { ?>
-                    Latest posts
-                <?php } ?>
-            </h2>
+            <h2><?= e($searchQuery !== '' ? $t('explore.searchResults') : $t('explore.tabPosts')) ?></h2>
         </header>
 
-        <?php if (empty($posts)) { ?>
-            <p>No posts found. Try adjusting your search or picking a different category.</p>
-        <?php } else { ?>
+        {% if (empty($items)): %}
+            <p>{{ t('explore.noPosts') }}</p>
+        {% else %}
             <div class="posts">
-                <?php foreach ($posts as $post) { ?>
-                    <article>
-                      <?php $blogSlugs = array_column($blogs, 'blog_slug', 'id'); ?>
-                        <?php if (!empty($post['featured_image'])) { ?>
-                            <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>"
-                               class="image">
-                                <img src="<?= e($post['featured_image']); ?>"
-                                     alt="<?= e($post['title']); ?>" />
-                            </a>
-                        <?php } ?>
+                {% foreach ($items as $post): %}
+                <?php
+                                            $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+                            $excerpt = ($post['excerpt'] ?? '') !== '' && $post['excerpt'] !== null
+                                ? $post['excerpt']
+                                : truncate(strip_tags($post['content'] ?? ''), 160);
+                            ?>
+                <article>
+                    {% if post.featured_image %}
+                    <a href="<?= e($postUrl) ?>" class="image">
+                        <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy" />
+                    </a>
+                    {% endif %}
 
-                        <h3>
-                            <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>">
-                                <?= e($post['title'] ?? 'Untitled'); ?>
-                            </a>
-                        </h3>
+                    <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
 
-                        <p class="meta">
-                            <?= e($post['blog_name'] ?? 'Blog'); ?>
-                            <?php if (!empty($post['category_name'])) { ?>
-                                &middot;
-                                <a href="?category=<?= urlencode($post['category_name']); ?>">
-                                    <?= e($post['category_name']); ?>
-                                </a>
-                            <?php } ?>
-                            <?php if (!empty($post['published_at'])) { ?>
-                                &middot;
-                                <time datetime="<?= e($post['published_at']); ?>">
-                                    <?= e($post['published_at']); ?>
-                                </time>
-                            <?php } ?>
-                        </p>
+                    <p class="meta">
+                        {{ post.blog_name }}
+                        {% if post.published_at %}
+                        &middot;
+                        <time datetime="{{ post.published_at }}"><?= e(date('M j, Y', strtotime($post['published_at']))) ?></time>
+                        {% endif %}
+                    </p>
 
-                        <p>
-                            <?= e($post['excerpt'] ?? mb_substr(strip_tags($post['content'] ?? ''), 0, 180).'…'); ?>
-                        </p>
+                    <p>{{ excerpt }}</p>
 
-                        <ul class="actions">
-                            <li>
-                                <a href="/blog/<?= e($blogSlugs[$post['blog_id']] ?? $post['blog_id']); ?>/<?= e($post['slug']); ?>"
-                                   class="button">
-                                    Read more
-                                </a>
-                            </li>
-                        </ul>
-                    </article>
-                <?php } ?>
+                    <ul class="actions">
+                        <li><a href="<?= e($postUrl) ?>" class="button">{{ t('explore.readMore') }}</a></li>
+                    </ul>
+                </article>
+                {% endforeach; %}
             </div>
-
-            <!-- Pagination -->
-            <?php if (($pagination['totalPages'] ?? 0) > 1) { ?>
-                <ul class="pagination">
-                    <?php for ($p = 1; $p <= (int) $pagination['totalPages']; $p++) { ?>
-                        <?php
-                            $isCurrent = $p === (int) $pagination['currentPage'];
-                        $query = [
-                            'page' => $p,
-                            'q' => $searchQuery ?? null,
-                            'category' => $activeCategory ?? null,
-                        ];
-                        $href = '?'.http_build_query(array_filter($query, fn ($v) => $v !== null && $v !== ''));
-                        ?>
-                        <li>
-                            <a href="<?= $href; ?>"
-                               class="button <?= $isCurrent ? 'primary' : 'small'; ?>">
-                                <?= $p; ?>
-                            </a>
-                        </li>
-                    <?php } ?>
-                </ul>
-            <?php } ?>
-        <?php } ?>
+        {% endif %}
     </section>
+    {% else %}
+    <!-- Blog directory -->
+    <section id="explore-blogs">
+        <header class="major">
+            <h2><?= e($searchQuery !== '' ? $t('explore.searchResults') : $t('explore.tabBlogs')) ?></h2>
+        </header>
 
-    <!-- Featured creators / blogs -->
-    <?php if (!empty($featuredCreators)) { ?>
+        {% if (empty($items)): %}
+            <p>{{ t('explore.noBlogs') }}</p>
+        {% else %}
+            <div class="blog-cards">
+                {% foreach ($items as $blog): %}
+                <?php $blogUrl = '/blog/'.rawurlencode($blog['blog_slug']); ?>
+                <article class="blog-card">
+                    <h3><a href="<?= e($blogUrl) ?>">{{ blog.blog_name }}</a></h3>
+                    <p class="meta">
+                        {{ t('explore.byLabel') }} {{ blog.owner_name }}
+                        &middot; <?= (int) $blog['post_count'] ?> {{ t('explore.postsLabel') }}
+                        {% if ((int) ($blog['author_count'] ?? 0) > 1): %}
+                        &middot; <?= (int) $blog['author_count'] ?> {{ t('explore.writersLabel') }}
+                        {% endif %}
+                    </p>
+                    {% if blog.description %}
+                    <p><?= e(truncate((string) $blog['description'], 180)) ?></p>
+                    {% endif %}
+                    <p class="meta">
+                        {% if blog.last_post_at %}
+                        {{ t('explore.lastPostLabel') }}:
+                        <time datetime="{{ blog.last_post_at }}"><?= e(date('M j, Y', strtotime($blog['last_post_at']))) ?></time>
+                        {% endif %}
+                    </p>
+                    <ul class="actions">
+                        <li><a href="<?= e($blogUrl) ?>" class="button">{{ t('explore.visitBlog') }}</a></li>
+                    </ul>
+                </article>
+                {% endforeach; %}
+            </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Windowed pagination shared by both tabs -->
+    {% if ((int) ($pagination['totalPages'] ?? 0) > 1): %}
+        <?php
+        $totalPages = (int) $pagination['totalPages'];
+                            $currentPage = (int) $pagination['currentPage'];
+
+                            // Window of pages around the current one; edges always visible.
+                            $window = 2;
+                            $pagesToShow = [1, $totalPages];
+                            for ($p = $currentPage - $window; $p <= $currentPage + $window; $p++) {
+                                if ($p >= 1 && $p <= $totalPages) {
+                                    $pagesToShow[] = $p;
+                                }
+                            }
+                            $pagesToShow = array_unique($pagesToShow);
+                            sort($pagesToShow);
+
+                            $pageUrl = function (int $p) use ($tab, $searchQuery): string {
+                                return '/blogs?'.http_build_query(array_filter([
+                                    'tab' => $tab,
+                                    'q' => $searchQuery,
+                                    'page' => $p > 1 ? $p : null,
+                                ]));
+                            };
+                            ?>
+        <ul class="pagination" aria-label="{{ t('explore.paginationAria') }}">
+            <?php $previous = 0; ?>
+            {% foreach ($pagesToShow as $p): %}
+                {% if ($p - $previous > 1): %}
+                    <li><span class="pagination-gap">&hellip;</span></li>
+                {% endif %}
+                <li>
+                    <a href="<?= e($pageUrl($p)) ?>"
+                       class="button small <?= $p === $currentPage ? 'primary' : '' ?>"
+                       <?= $p === $currentPage ? 'aria-current="page"' : '' ?>>
+                        {{ p }}
+                    </a>
+                </li>
+                <?php $previous = $p; ?>
+            {% endforeach; %}
+        </ul>
+    {% endif %}
+
+    <!-- Featured blogs: admin picks only -->
+    {% if (!empty($featuredCreators)): %}
         <section id="featured-creators">
             <header class="major">
-                <h2>Featured creators</h2>
+                <h2>{{ t('explore.featuredTitle') }}</h2>
             </header>
             <div class="features">
-                <?php foreach ($featuredCreators as $creatorBlog) { ?>
+                {% foreach ($featuredCreators as $creatorBlog): %}
+                <?php $creatorUrl = '/blog/'.rawurlencode($creatorBlog['blog_slug']); ?>
                     <article>
                         <span class="icon solid fa-user"></span>
                         <div class="content">
-                            <h3>
-                                <a href="/blog/<?= e($creatorBlog['blog_slug'] ?? $creatorBlog['id']); ?>">
-                                    <?= e($creatorBlog['blog_name'] ?? $creatorBlog['ownername']); ?>
-                                </a>
-                            </h3>
+                            <h3><a href="<?= e($creatorUrl) ?>">{{ creatorBlog.blog_name }}</a></h3>
                             <p>
-                                Posts: <?= (int) ($creatorBlog['postcount'] ?? 0); ?>
+                                {{ t('explore.postsLabel') }}: <?= (int) ($creatorBlog['postcount'] ?? 0) ?>
                                 &middot;
-                                Authors: <?= (int) ($creatorBlog['authorcount'] ?? 1); ?>
+                                {{ t('explore.writersLabel') }}: <?= (int) ($creatorBlog['authorcount'] ?? 1) ?>
                             </p>
-                            <p>
-                                <?= e($creatorBlog['description'] ?? ''); ?>
-                            </p>
+                            {% if creatorBlog.description %}
+                            <p><?= e(truncate((string) $creatorBlog['description'], 160)) ?></p>
+                            {% endif %}
                         </div>
                     </article>
-                <?php } ?>
+                {% endforeach; %}
             </div>
         </section>
-    <?php } ?>
-
-    <!-- Category browse -->
-    <?php if (!empty($categories)) { ?>
-        <section id="category-browse">
-            <header class="major">
-                <h2>Browse by category</h2>
-            </header>
-            <div class="row gtr-50">
-                <?php foreach ($categories as $cat) { ?>
-                    <div class="col-3 col-6-medium col-12-small">
-                        <a href="?category=<?= urlencode($cat['name']); ?>"
-                            class="button fit <?= (($activeCategory ?? '') === $cat['name']) ? 'primary' : 'alt'; ?>">
-                            <?= e($cat['name']); ?>
-                        </a>
-                    </div>
-                <?php } ?>
-            </div>
-        </section>
-    <?php } ?>
+    {% endif %}
 
 {% endblock %}

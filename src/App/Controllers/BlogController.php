@@ -24,65 +24,50 @@ class BlogController extends AppController
         private TagModel $tagModel
     ) {}
 
+    /**
+     * Explore page: a blog directory first, latest posts second.
+     *
+     * Two tabs share one search box. The featured section shows only blogs
+     * an administrator flagged, so nobody can spam their way onto it.
+     */
     public function index(): Response
     {
-        // 1. Core collections for the sidebar / discovery sections
-        $blogs = $this->model->getAllBlogsWithOwnerAndCounts();
-        $categories = $this->categoryModel->getPublishedTopics();
-        $featuredCreators = $this->model->getFeaturedCreators();
+        $tab = $this->request->get['tab'] ?? 'blogs';
+        if (!in_array($tab, ['blogs', 'posts'], true)) {
+            $tab = 'blogs';
+        }
 
-        // 2. Read filters from query string
         $searchQuery = trim($this->request->get['q'] ?? '');
-        $page = (int) ($this->request->get['page'] ?? 1);
-        if ($page < 1) {
-            $page = 1;
-        }
+        $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        // Optional topic filter by category name, e.g. ?category=Guides
-        $categoryName = trim((string) ($this->request->get['category'] ?? ''));
-        if ($categoryName === '') {
-            $categoryName = null;
-        }
+        if ($tab === 'posts') {
+            $postsData = $searchQuery !== ''
+                ? $this->postModel->searchPublishedPosts($searchQuery, $page, 8)
+                : $this->postModel->getRecentPublishedWithPagination($page, 8);
 
-        $perPage = 8;
-
-        // 3. Delegate to Post model for the home feed
-        if ($searchQuery !== '') {
-            // Search within posts and blog names
-            $postsData = $this->postModel->searchPublishedPosts(
-                $searchQuery,
-                $page,
-                $perPage,
-                $categoryName
-            );
-            $mode = 'search';
+            $items = $postsData['data'];
+            $pagination = [
+                'totalPages' => $postsData['totalPages'],
+                'currentPage' => $postsData['currentPage'],
+                'total' => $postsData['totalPosts'],
+            ];
         } else {
-            // Default recent feed, optionally filtered by category
-            $postsData = $this->postModel->getRecentPublishedWithPagination(
-                $page,
-                $perPage,
-                $categoryName
-            );
-            $mode = 'recent';
-        }
+            $blogsData = $this->model->getDirectoryWithPagination($page, 12, $searchQuery);
 
-        // 4. Build a small DTO-like payload for pagination
-        $pagination = [
-            'totalPages' => $postsData['totalPages'],
-            'currentPage' => $postsData['currentPage'],
-            'perPage' => $postsData['perPage'],
-            'totalPosts' => $postsData['totalPosts'],
-        ];
+            $items = $blogsData['data'];
+            $pagination = [
+                'totalPages' => $blogsData['totalPages'],
+                'currentPage' => $blogsData['currentPage'],
+                'total' => $blogsData['totalBlogs'],
+            ];
+        }
 
         return $this->view([
-            'blogs' => $blogs,
-            'categories' => $categories,
-            'featuredCreators' => $featuredCreators,
-            'posts' => $postsData['data'],
+            'tab' => $tab,
+            'items' => $items,
             'pagination' => $pagination,
             'searchQuery' => $searchQuery,
-            'activeCategory' => $categoryName,
-            'mode' => $mode,
+            'featuredCreators' => $this->model->getFeaturedCreators(),
         ]);
     }
 

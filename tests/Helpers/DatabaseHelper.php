@@ -59,6 +59,8 @@ class DatabaseHelper
             // Misc
             'reserved_slugs',
             'settings',
+            'pages',
+            'site_content',
         ];
 
         foreach ($tables as $table) {
