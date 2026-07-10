@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
 use App\Models\PostModel;
 use Framework\Core\Response;
@@ -17,6 +18,7 @@ class CommentController extends AppController
     public function __construct(
         private PostModel $postModel,
         private CommentModel $commentModel,
+        private BlogSettingsModel $blogSettings,
     ) {}
 
     public function create(): Response
@@ -63,11 +65,39 @@ class CommentController extends AppController
             return $this->redirectBack();
         }
 
+        $parentId = (int) ($this->request->post['parent_comment_id'] ?? 0);
+
+        if ($parentId > 0) {
+            // Replies require an account; guests may only post top-level comments
+            if ($userId === null) {
+                $this->flash('error', 'Please log in to reply to comments.');
+
+                return $this->redirectBack();
+            }
+
+            $parent = $this->commentModel->findApprovedParent($parentId, $postId);
+
+            if (!$parent) {
+                $this->flash('error', 'The comment you are replying to is unavailable.');
+
+                return $this->redirectBack();
+            }
+
+            // Keep threads one level deep: replying to a reply attaches to its top-level parent
+            if (!empty($parent['parent_comment_id'])) {
+                $parentId = (int) $parent['parent_comment_id'];
+            }
+        }
+
+        $isReply = $parentId > 0;
+        $autoPublish = $isReply && $this->blogSettings->repliesAutoPublish((int) $post['blog_id']);
+
         $comment = [
             'post_id' => $postId,
             'user_id' => $userId,
+            'parent_comment_id' => $isReply ? $parentId : null,
             'content' => $content,
-            'status' => 'pending',
+            'status' => $autoPublish ? 'approved' : 'pending',
         ];
 
         if (!$this->commentModel->insert($comment)) {
@@ -84,11 +114,14 @@ class CommentController extends AppController
             [
                 'post_id' => $postId,
                 'is_guest' => $userId === null,
+                'parent_comment_id' => $isReply ? $parentId : null,
             ],
             $this->request->ip()
         );
 
-        $this->flash('success', 'Thanks! Your comment was submitted and is awaiting moderation.');
+        $this->flash('success', $autoPublish
+            ? 'Reply posted.'
+            : 'Thanks! Your comment was submitted and is awaiting moderation.');
 
         return $this->redirectBack();
     }

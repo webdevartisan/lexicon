@@ -32,6 +32,54 @@ class CommentModel extends AppModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Approved comments grouped TikTok-style: top-level rows carrying a
+     * 'replies' array, both oldest first.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function forPostThreaded(int $postId): array
+    {
+        $threaded = [];
+        $replies = [];
+
+        foreach ($this->forPost($postId) as $comment) {
+            if (empty($comment['parent_comment_id'])) {
+                $comment['replies'] = [];
+                $threaded[$comment['id']] = $comment;
+            } else {
+                $replies[] = $comment;
+            }
+        }
+
+        foreach ($replies as $reply) {
+            $parentId = (int) $reply['parent_comment_id'];
+
+            // Parent may be unapproved or deleted; orphaned replies stay hidden
+            if (isset($threaded[$parentId])) {
+                $threaded[$parentId]['replies'][] = $reply;
+            }
+        }
+
+        return array_values($threaded);
+    }
+
+    /**
+     * Approved comment usable as a reply target on the given post.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findApprovedParent(int $commentId, int $postId): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()}
+                WHERE id = ? AND post_id = ? AND status = 'approved'
+                LIMIT 1";
+
+        $row = $this->database->query($sql, [$commentId, $postId])->fetch(\PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
     public function countByBlogIdAndStatus(int $blogId, string $status): int
     {
         $sql = "SELECT COUNT(*)

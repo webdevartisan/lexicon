@@ -228,6 +228,19 @@ class PostModel extends AppModel
     }
 
     /**
+     * Get comments for a post grouped into reply threads.
+     *
+     * @param  int  $postId  Post ID
+     * @return array<int, array<string, mixed>> Top-level comments with a 'replies' array each
+     */
+    public function commentsThreaded(int $postId): array
+    {
+        $commentModel = new CommentModel($this->database);
+
+        return $commentModel->forPostThreaded($postId);
+    }
+
+    /**
      * Count published posts by author filtered by visibility.
      *
      * Companion to listByAuthorVisibility() so public pages can show a

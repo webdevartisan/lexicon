@@ -324,7 +324,7 @@ class BlogController extends AppController
         // Load comments only if enabled
         $comments = [];
         if ($commentsEnabled && !empty($post['id'])) {
-            $comments = $this->postModel->comments((int) $post['id']);
+            $comments = $this->postModel->commentsThreaded((int) $post['id']);
         }
 
         // Prev/next/related

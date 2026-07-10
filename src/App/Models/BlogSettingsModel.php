@@ -26,7 +26,7 @@ class BlogSettingsModel extends AppModel
         $sql = 'SELECT blog_id, theme, default_locale, timezone, 
                         meta_title, meta_description, indexable, 
                         banner_path, logo_path, favicon_path,
-                        comments_enabled, workflow_enabled 
+                        comments_enabled, replies_auto_publish, workflow_enabled
                 FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
         $stmt = $this->database->query($sql, [$blogId]);
@@ -50,9 +50,9 @@ class BlogSettingsModel extends AppModel
         $sql = 'INSERT INTO blog_settings
                   (blog_id, theme, default_locale, timezone, meta_title, 
                   meta_description, indexable, banner_path, logo_path, 
-                  favicon_path, comments_enabled)
+                  favicon_path, comments_enabled, replies_auto_publish)
                 VALUES
-                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         // Default: comments enabled unless explicitly disabled
         $commentsEnabled = array_key_exists('comments_enabled', $data)
@@ -71,6 +71,7 @@ class BlogSettingsModel extends AppModel
             $data['logo_path'] ?? null,
             $data['favicon_path'] ?? null,
             $commentsEnabled,
+            array_key_exists('replies_auto_publish', $data) ? (int) (bool) $data['replies_auto_publish'] : 1,
         ];
 
         $rowCount = $this->database->execute($sql, $params);
@@ -102,6 +103,7 @@ class BlogSettingsModel extends AppModel
             'logo_path',
             'favicon_path',
             'comments_enabled',
+            'replies_auto_publish',
             'workflow_enabled',
         ];
 
@@ -112,7 +114,7 @@ class BlogSettingsModel extends AppModel
             if (array_key_exists($col, $data)) {
                 $set[] = "$col = ?";
 
-                if (in_array($col, ['indexable', 'comments_enabled', 'workflow_enabled'], true)) {
+                if (in_array($col, ['indexable', 'comments_enabled', 'replies_auto_publish', 'workflow_enabled'], true)) {
                     $params[] = (int) (bool) $data[$col];
                 } else {
                     $params[] = $data[$col];
@@ -132,6 +134,19 @@ class BlogSettingsModel extends AppModel
         $rowCount = $this->database->execute($sql, $params);
 
         return $rowCount > 0;
+    }
+
+    /**
+     * Whether replies on this blog publish instantly.
+     *
+     * Missing settings rows fall back to instant publishing, matching the
+     * column default.
+     */
+    public function repliesAutoPublish(int $blogId): bool
+    {
+        $settings = $this->findByBlogId($blogId);
+
+        return $settings === null || !empty($settings['replies_auto_publish']);
     }
 
     /**
