@@ -143,7 +143,7 @@ final class PageController extends AppController
         $uploaded = $this->uploader->getUploadedFiles(
             (string) ($this->request->post['uploaded_thumbnail_files'] ?? '')
         );
-        $tempFilename = is_array($uploaded) ? ($uploaded[0] ?? null) : null;
+        $tempFilename = $uploaded[0] ?? null;
 
         if (empty($tempFilename)) {
             return false;
