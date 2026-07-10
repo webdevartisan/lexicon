@@ -7,6 +7,8 @@ namespace App\Controllers;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
+use App\Models\PostBookmarkModel;
+use App\Models\PostLikeModel;
 use App\Models\PostModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
@@ -21,7 +23,9 @@ class BlogController extends AppController
         private PostModel $postModel,
         private CategoryModel $categoryModel,
         private BlogSettingsModel $settings,
-        private TagModel $tagModel
+        private TagModel $tagModel,
+        private PostLikeModel $postLikeModel,
+        private PostBookmarkModel $postBookmarkModel
     ) {}
 
     /**
@@ -350,8 +354,23 @@ class BlogController extends AppController
             'description' => $post['excerpt'] ?? $ctx['meta']['description'] ?? '',
         ];
 
+        $viewerId = auth()->check() ? (int) auth()->user()['id'] : null;
+        $engagementPostId = (int) $post['id'];
+
+        $engagement = [
+            'like_count' => $this->postLikeModel->countByPost($engagementPostId),
+            'bookmark_count' => $this->postBookmarkModel->countByPost($engagementPostId),
+            'liked' => $viewerId !== null && $this->postLikeModel->userLikes($viewerId, $engagementPostId),
+            'bookmarked' => $viewerId !== null && $this->postBookmarkModel->userBookmarks($viewerId, $engagementPostId),
+            'logged_in' => $viewerId !== null,
+        ];
+
+        $shareUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug);
+
         return $this->view('Posts/show.lex.php', $ctx + [
             'flashes' => $this->getFlashMessages(),
+            'engagement' => $engagement,
+            'share_url' => $shareUrl,
             'post' => $post,
             'prev_post' => $prev_post,
             'next_post' => $next_post,

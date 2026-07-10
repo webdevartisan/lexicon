@@ -75,6 +75,8 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
         </p>
       <?php } ?>
 
+      {% include "partials/_engagement.lex.php" %}
+
       <!-- Prev / Next -->
       <nav class="mt-4 d-flex justify-content-between">
         <?php if (!empty($prev_post)) { ?>
@@ -121,10 +123,75 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
                       <?php } ?>
                     </h5>
                     <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
+
+                    <?php if (!empty($comments_enabled)) { ?>
+                      <?php if (auth()->check()) { ?>
+                        <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $comment['id'] ?>">Reply</button>
+
+                        <form class="reply-form" id="reply-form-<?= (int) $comment['id'] ?>" action="/comments/create" method="post" hidden>
+                          <?= csrf_field() ?>
+                          <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
+                          <input type="hidden" name="parent_comment_id" value="<?= (int) $comment['id'] ?>">
+                          <textarea name="content" class="form-control" rows="2" maxlength="2000"
+                            placeholder="Reply to <?= e($comment['user_name'] ?? 'Guest') ?>..." required></textarea>
+                          <button type="submit" class="btn btn-sm btn-primary">Reply</button>
+                          <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $comment['id'] ?>">Cancel</button>
+                        </form>
+                      <?php } else { ?>
+                        <a class="reply-toggle" href="<?= e(lurl('/login')) ?>">Log in to reply</a>
+                      <?php } ?>
+                    <?php } ?>
+
+                    <?php if (!empty($comment['replies'])) { ?>
+                      <ul class="comment-replies">
+                        <?php foreach ($comment['replies'] as $reply) { ?>
+                          <li class="media mb-2 mt-2">
+                            <div class="media-body">
+                              <h6 class="mt-0 mb-1">
+                                <?= e($reply['user_name'] ?? 'Guest') ?>
+                                <?php if (!empty($reply['created_at'])) { ?>
+                                  <small class="text-muted">
+                                    &middot;
+                                    <?= e($reply['created_at']) ?>
+                                  </small>
+                                <?php } ?>
+                              </h6>
+                              <p class="mb-0"><?= nl2br(e($reply['content'] ?? '')) ?></p>
+                            </div>
+                          </li>
+                        <?php } ?>
+                      </ul>
+                    <?php } ?>
                   </div>
                 </li>
               <?php } ?>
             </ul>
+
+            <script>
+            (function () {
+              // One open reply form at a time, TikTok style
+              function closeAll() {
+                document.querySelectorAll('.reply-form').forEach(function (f) { f.setAttribute('hidden', ''); });
+              }
+
+              document.addEventListener('click', function (ev) {
+                var toggle = ev.target.closest('[data-reply-toggle]');
+                if (toggle) {
+                  var form = document.getElementById('reply-form-' + toggle.getAttribute('data-reply-toggle'));
+                  var wasHidden = form.hasAttribute('hidden');
+                  closeAll();
+                  if (wasHidden) {
+                    form.removeAttribute('hidden');
+                    form.querySelector('textarea').focus();
+                  }
+                  return;
+                }
+
+                var cancel = ev.target.closest('[data-reply-cancel]');
+                if (cancel) closeAll();
+              });
+            })();
+            </script>
           <?php } ?>
 
           <hr class="mt-5 mb-4">
