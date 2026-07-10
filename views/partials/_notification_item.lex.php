@@ -54,12 +54,12 @@ $href = match ($type) {
     <input type="hidden" name="target" value="<?= e($href) ?>">
     <button type="submit" class="w-full text-left flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 <?= $isUnread ? 'bg-sky-50/40 dark:bg-sky-900/10' : '' ?>">
         <div class="flex items-center justify-center size-9 rounded-md <?= $color ?> shrink-0">
-            <i data-lucide="<?= e($icon) ?>" class="size-4"></i>
+            {% cache 'lucide:notif-icon:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="size-4"></i>{% endcache %}
         </div>
         <div class="grow min-w-0">
             <p class="text-sm text-slate-900 dark:text-zink-50 truncate"><?= e($label) ?></p>
             <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
-                <i data-lucide="clock" class="inline-block size-3 mr-1"></i>
+                {% cache 'lucide:clock:notif' ttl=3600 %}<i data-lucide="clock" class="inline-block size-3 mr-1"></i>{% endcache %}
                 <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
             </p>
         </div>

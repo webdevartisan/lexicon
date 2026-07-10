@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\PageModel;
 use App\Services\PublicCacheInvalidator;
+use App\Services\UploadService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -25,7 +26,8 @@ final class PageController extends AppController
 
     public function __construct(
         private PageModel $pages,
-        private PublicCacheInvalidator $publicCache
+        private PublicCacheInvalidator $publicCache,
+        private UploadService $uploader
     ) {}
 
     public function index(): Response
@@ -58,6 +60,11 @@ final class PageController extends AppController
         $data = $validator->validated();
         $data['is_published'] = !empty($this->request->postParam('is_published')) ? 1 : 0;
         $data['updated_by'] = (int) auth()->user()['id'];
+
+        $thumbnailChange = $this->handleThumbnailUpload($page);
+        if ($thumbnailChange !== false) {
+            $data['thumbnail_path'] = $thumbnailChange;
+        }
 
         $this->pages->update((int) $page['id'], $data);
 
@@ -115,6 +122,52 @@ final class PageController extends AppController
         $newId = $this->pages->getInsertID();
 
         return $this->redirect('/admin/pages/'.$newId.'/edit');
+    }
+
+    /**
+     * Apply the thumbnail dropzone result: a fresh upload, an explicit
+     * removal, or no change at all.
+     *
+     * @param  array<string, mixed>  $page  The page row being updated
+     * @return string|null|false New public URL, null to clear the column, or
+     *                           false (sentinel) when the column shouldn't be touched
+     */
+    private function handleThumbnailUpload(array $page): string|null|false
+    {
+        if (!empty($this->request->postParam('remove_thumbnail'))) {
+            $this->deleteThumbnailFile($page['thumbnail_path'] ?? null);
+
+            return null;
+        }
+
+        $uploaded = $this->uploader->getUploadedFiles(
+            (string) ($this->request->post['uploaded_thumbnail_files'] ?? '')
+        );
+        $tempFilename = $uploaded[0] ?? null;
+
+        if (empty($tempFilename)) {
+            return false;
+        }
+
+        $userId = (int) auth()->user()['id'];
+        $url = $this->uploader->moveTempToPageThumbnail((string) $tempFilename, $userId);
+
+        $this->deleteThumbnailFile($page['thumbnail_path'] ?? null);
+
+        return $url;
+    }
+
+    private function deleteThumbnailFile(?string $path): void
+    {
+        if (empty($path)) {
+            return;
+        }
+
+        [$dir] = $this->uploader->pageThumbnailPath();
+        $file = $dir.'/'.basename($path);
+        if (file_exists($file)) {
+            @unlink($file);
+        }
     }
 
     /**

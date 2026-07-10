@@ -87,7 +87,7 @@ $maxSizeText = $maxsize >= 1
                     <input name="{{ elementName }}" type="file">
                 </div>
                 <div class="py-8 text-center dz-message needsclick">
-                    <i data-lucide="upload-cloud" class="block mx-auto size-10 text-slate-400 mb-2"></i>
+                    {% cache 'lucide:upload-cloud:dz2' ttl=3600 %}<i data-lucide="upload-cloud" class="block mx-auto size-10 text-slate-400 mb-2"></i>{% endcache %}
                     <p class="text-xs text-slate-500 dark:text-zink-300">
                         {{ t('components.dropzone.messages.drop') }} {{ t('components.dropzone.messages.or') }} <a href="#!" class="text-custom-500">{{ t('components.dropzone.messages.browse') }}</a>
                     </p>
@@ -122,7 +122,7 @@ $maxSizeText = $maxsize >= 1
                     data-media-picker="<?= e((string) $library) ?>"
                     data-media-target="<?= e($elementName) ?>_library_url"
                     data-media-preview="<?= e($elementName) ?>_library_preview">
-                <i data-lucide="image-plus" class="size-3.5"></i>
+                {% cache 'lucide:image-plus' ttl=3600 %}<i data-lucide="image-plus" class="size-3.5"></i>{% endcache %}
                 Pick from Media Library
             </button>
             <?php } ?>

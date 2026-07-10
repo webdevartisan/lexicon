@@ -25,6 +25,6 @@ $submitClass = $danger
 <div class="card-body flex items-center justify-end gap-2 border-t border-slate-100 dark:border-zink-600">
     <a href="<?= e($cancelHref) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors"><?= e($cancelLabel) ?></a>
     <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md transition-colors <?= $submitClass ?>">
-        <i data-lucide="<?= e($submitIcon) ?>" class="size-4"></i> <?= e($submitLabel) ?>
+        {% cache 'lucide:form-footer:' . $submitIcon ttl=3600 %}<i data-lucide="<?= e($submitIcon) ?>" class="size-4"></i>{% endcache %} <?= e($submitLabel) ?>
     </button>
 </div>

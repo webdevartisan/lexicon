@@ -7,8 +7,8 @@
     <div class="flex items-center justify-center min-h-[60vh]">
         <div class="text-center max-w-md px-6">
             <div class="mb-6">
-                <i class="inline-flex items-center justify-center size-16 text-custom-500 bg-custom-100 dark:bg-custom-500/20 rounded-full"
-                    data-lucide="book-open"></i>
+                {% cache 'lucide:book-open' ttl=3600 %}<i class="inline-flex items-center justify-center size-16 text-custom-500 bg-custom-100 dark:bg-custom-500/20 rounded-full"
+                    data-lucide="book-open"></i>{% endcache %}
             </div>
 
             <h2 class="text-2xl font-semibold text-slate-900 dark:text-zink-50 mb-3">
@@ -24,27 +24,27 @@
 
                 <a href="/help/getting-started"
                     class="inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    <i class="size-4 mr-2" data-lucide="help-circle"></i>
+                    {% cache 'lucide:help-circle' ttl=3600 %}<i class="size-4 mr-2" data-lucide="help-circle"></i>{% endcache %}
                     {{ t('dashboard.emptyState.actions.gettingStarted') }}
                 </a>
             </div>
 
             <div class="mt-8 p-4 bg-slate-50 dark:bg-zink-700 rounded-lg text-left">
                 <h3 class="font-semibold text-slate-900 dark:text-zink-50 mb-3 flex items-center gap-2">
-                    <i class="size-4" data-lucide="lightbulb"></i>
+                    {% cache 'lucide:lightbulb' ttl=3600 %}<i class="size-4" data-lucide="lightbulb"></i>{% endcache %}
                     {{ t('dashboard.emptyState.quickTips.title') }}
                 </h3>
                 <ul class="space-y-2 text-sm text-slate-600 dark:text-zink-300">
                     <li class="flex items-start gap-2">
-                        <i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>
+                        {% cache 'lucide:check' ttl=3600 %}<i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>{% endcache %}
                         <span>{{ t('dashboard.emptyState.quickTips.tip1') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>
+                        {% cache 'lucide:check' ttl=3600 %}<i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>{% endcache %}
                         <span>{{ t('dashboard.emptyState.quickTips.tip2') }}</span>
                     </li>
                     <li class="flex items-start gap-2">
-                        <i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>
+                        {% cache 'lucide:check' ttl=3600 %}<i class="size-4 mt-0.5 text-custom-500" data-lucide="check"></i>{% endcache %}
                         <span>{{ t('dashboard.emptyState.quickTips.tip3') }}</span>
                     </li>
                 </ul>
@@ -66,7 +66,7 @@
         <div class="flex items-center gap-2">
             <a href="/blog/{{ blogSlug }}" target="_blank" rel="noopener"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                <i data-lucide="external-link" class="size-4"></i>
+                {% cache 'lucide:external-link' ttl=3600 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                 <span>{{ t('dashboard.actions.viewLive') }}</span>
             </a>
             <?php if (!in_array($blogRole ?? 'none', ['reviewer'], true)) { ?>
@@ -88,7 +88,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.published') }}</span>
                     <span class="inline-flex items-center justify-center size-8 rounded-md bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                        <i data-lucide="check-circle-2" class="size-4"></i>
+                        {% cache 'lucide:check-circle-2' ttl=3600 %}<i data-lucide="check-circle-2" class="size-4"></i>{% endcache %}
                     </span>
                 </div>
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.published }}</div>
@@ -99,7 +99,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.drafts') }}</span>
                     <span class="inline-flex items-center justify-center size-8 rounded-md bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200">
-                        <i data-lucide="file-text" class="size-4"></i>
+                        {% cache 'lucide:file-text' ttl=3600 %}<i data-lucide="file-text" class="size-4"></i>{% endcache %}
                     </span>
                 </div>
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.draft }}</div>
@@ -111,7 +111,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.pending') }}</span>
                     <span class="inline-flex items-center justify-center size-8 rounded-md bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                        <i data-lucide="clock" class="size-4"></i>
+                        {% cache 'lucide:clock' ttl=3600 %}<i data-lucide="clock" class="size-4"></i>{% endcache %}
                     </span>
                 </div>
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.pending }}</div>
@@ -123,7 +123,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.comments') }}</span>
                     <span class="inline-flex items-center justify-center size-8 rounded-md bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
-                        <i data-lucide="message-square" class="size-4"></i>
+                        {% cache 'lucide:message-square' ttl=3600 %}<i data-lucide="message-square" class="size-4"></i>{% endcache %}
                     </span>
                 </div>
                 <div class="flex items-end gap-2">
@@ -144,7 +144,7 @@
             <div class="card-body">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
-                        <i data-lucide="alert-circle" class="size-4 text-amber-500"></i>
+                        {% cache 'lucide:alert-circle' ttl=3600 %}<i data-lucide="alert-circle" class="size-4 text-amber-500"></i>{% endcache %}
                         {{ t('dashboard.sections.needsAttention') }}
                     </h2>
                     {% if needsAttention|notempty %}
@@ -154,7 +154,7 @@
 
                 {% if needsAttention|empty %}
                 <div class="text-center py-8">
-                    <i data-lucide="check-circle" class="size-10 text-green-500 mx-auto mb-2"></i>
+                    {% cache 'lucide:check-circle' ttl=3600 %}<i data-lucide="check-circle" class="size-10 text-green-500 mx-auto mb-2"></i>{% endcache %}
                     <p class="text-sm text-slate-500 dark:text-zink-300">{{ t('dashboard.empty.noDrafts') }}</p>
                 </div>
                 {% else %}
@@ -164,7 +164,11 @@
                         <a href="/dashboard/post/<?= e((string) $post['id']) ?>/edit" 
                             class="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:border-custom-500 hover:bg-slate-50 dark:border-zink-600 dark:hover:bg-zink-600 transition-colors">
                             <span class="inline-flex items-center justify-center size-8 rounded-md bg-slate-100 dark:bg-zink-600 text-slate-500 dark:text-zink-200 shrink-0 mt-0.5">
-                                <i data-lucide="<?= $post['status'] === 'pending' ? 'clock' : 'pencil' ?>" class="size-4"></i>
+                                <?php if ($post['status'] === 'pending') { ?>
+                                    {% cache 'lucide:clock' ttl=3600 %}<i data-lucide="clock" class="size-4"></i>{% endcache %}
+                                <?php } else { ?>
+                                    {% cache 'lucide:pencil' ttl=3600 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
+                                <?php } ?>
                             </span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate transition-colors">
@@ -174,7 +178,7 @@
                                     <?= e(ucfirst((string) $post['status'])) ?> · Updated <?= e(date('M j', strtotime((string) ($post['updated_at'] ?? $post['created_at'] ?? 'now')))) ?>
                                 </p>
                             </div>
-                            <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 mt-3 transition-colors"></i>
+                            {% cache 'lucide:chevron-right' ttl=3600 %}<i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 mt-3 transition-colors"></i>{% endcache %}
                         </a>
                     </li>
                     {% endforeach %}
@@ -188,7 +192,7 @@
             <div class="card-body">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
-                        <i data-lucide="rss" class="size-4 text-green-500"></i>
+                        {% cache 'lucide:rss' ttl=3600 %}<i data-lucide="rss" class="size-4 text-green-500"></i>{% endcache %}
                         {{ t('dashboard.sections.recent') }}
                     </h2>
                     {% if recent|notempty %}
@@ -198,7 +202,7 @@
 
                 {% if recent|empty %}
                 <div class="text-center py-12">
-                    <i data-lucide="feather" class="size-10 text-slate-400 mx-auto mb-2"></i>
+                    {% cache 'lucide:feather' ttl=3600 %}<i data-lucide="feather" class="size-10 text-slate-400 mx-auto mb-2"></i>{% endcache %}
                     <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">{{ t('dashboard.empty.noRecent') }}</p>
                     {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="Write your first post" %}
                 </div>
@@ -229,7 +233,7 @@
         <div class="card-body">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
-                    <i data-lucide="book-open" class="size-4 text-custom-500"></i>
+                    {% cache 'lucide:book-open' ttl=3600 %}<i data-lucide="book-open" class="size-4 text-custom-500"></i>{% endcache %}
                     {{ t('dashboard.sections.yourBlogs') }}
                 </h2>
                 <a href="/dashboard/blog" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all blogs</a>

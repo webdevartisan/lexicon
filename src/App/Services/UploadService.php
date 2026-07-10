@@ -139,6 +139,56 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
+     * Get upload directory and URL for admin-managed static page thumbnails.
+     *
+     * @return array{0: string, 1: string} [directory_path, url_base]
+     */
+    public function pageThumbnailPath(): array
+    {
+        $dir = ROOT_PATH.'/storage/uploads/pages/thumbnails';
+        $url = '/uploads/pages/thumbnails';
+
+        return [$dir, $url];
+    }
+
+    /**
+     * Move a temporary upload to the page thumbnails folder with semantic naming.
+     *
+     * @param  string  $tempFilename  Filename in temp directory
+     * @param  int  $userId  User ID (temp directory isolation only, pages aren't user-owned)
+     * @return string Public URL of moved file
+     *
+     * @throws InvalidArgumentException If temp file not found
+     * @throws RuntimeException If copy operation fails
+     */
+    public function moveTempToPageThumbnail(string $tempFilename, int $userId): string
+    {
+        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
+
+        if (!file_exists($tempPath)) {
+            throw new InvalidArgumentException("Temporary file not found: $tempFilename");
+        }
+
+        $ext = strtolower(pathinfo($tempFilename, PATHINFO_EXTENSION));
+        $hash = substr(sha1_file($tempPath), 0, 12);
+        $newFilename = 'thumbnail-'.$hash.'.'.$ext;
+
+        [$dir, $baseUrl] = $this->pageThumbnailPath();
+
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        $destPath = $dir.'/'.$newFilename;
+
+        if (!copy($tempPath, $destPath)) {
+            throw new RuntimeException('Failed to copy file to folder');
+        }
+
+        return $baseUrl.'/'.$newFilename;
+    }
+
+    /**
      * Store uploaded file in temporary location before form submission.
      *
      * Used for AJAX uploads where final destination depends on form completion.

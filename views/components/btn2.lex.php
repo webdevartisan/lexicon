@@ -54,21 +54,21 @@ $dataAttrsString = implode(' ', $dataAttrs);
     class="<?= e($class) ?> <?= e($addClass ?? '') ?>"
     <?= $dataAttrsString ?>>
     <?php if ($icon) { ?>
-      <i data-lucide="<?= e($icon) ?>"
+      {% cache 'lucide:btn2:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>"
          class="size-4"
-         aria-hidden="true"></i>
+         aria-hidden="true"></i>{% endcache %}
     <?php } ?>
     <span><?= e($label) ?></span>
   </button>
 <?php } else { ?>
-  <a 
-    href="<?= e($href) ?>" 
+  <a
+    href="<?= e($href) ?>"
     class="<?= e($class) ?> <?= e($addClass ?? '') ?>"
     <?= $dataAttrsString ?>>
     <?php if ($icon) { ?>
-      <i data-lucide="<?= e($icon) ?>"
+      {% cache 'lucide:btn2:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>"
          class="size-4"
-         aria-hidden="true"></i>
+         aria-hidden="true"></i>{% endcache %}
     <?php } ?>
     <span><?= e($label) ?></span>
   </a>

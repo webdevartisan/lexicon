@@ -16,10 +16,16 @@
     <?php $guideImages = ['pic07.jpg', 'pic08.jpg', 'pic09.jpg']; ?>
     <div class="posts">
         {% foreach ($guides as $i => $guide): %}
-        <?php $guideUrl = '/getting-started/'.rawurlencode($guide['slug']); ?>
+        <?php
+        $guideUrl = '/getting-started/'.rawurlencode($guide['slug']);
+$guideThumb = $guide['thumbnail_path'] ?? '';
+if ($guideThumb === '' || $guideThumb === null) {
+    $guideThumb = '/images/'.$guideImages[$i % 3];
+}
+?>
         <article>
             <a href="<?= e($guideUrl) ?>" class="image">
-                <img src="/images/<?= e($guideImages[$i % 3]) ?>" alt="" loading="lazy" />
+                <img src="<?= e($guideThumb) ?>" alt="" loading="lazy" />
             </a>
             <h3><a href="<?= e($guideUrl) ?>">{{ guide.title }}</a></h3>
             {% if guide.meta_description %}

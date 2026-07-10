@@ -44,7 +44,7 @@ $actionColor = static function (string $action): string {
                 </select>
                 <?php if ($actionFilter !== '' || $resourceTypeFilter !== '') { ?>
                 <a href="<?= e($basePath) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    <i data-lucide="x" class="size-4"></i> Clear filters
+                    {% cache 'lucide:x' ttl=3600 %}<i data-lucide="x" class="size-4"></i>{% endcache %} Clear filters
                 </a>
                 <?php } ?>
             </div>

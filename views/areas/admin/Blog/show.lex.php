@@ -26,13 +26,13 @@ $statusBadge = [
                 <div class="flex items-center gap-2">
                     <a href="/blog/<?= e((string) ($blog['blog_slug'] ?? '')) ?>" target="_blank" rel="noopener"
                        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                        <i data-lucide="external-link" class="size-3.5"></i> Visit
+                        {% cache 'lucide:external-link' ttl=3600 %}<i data-lucide="external-link" class="size-3.5"></i>{% endcache %} Visit
                     </a>
                     <a href="/admin/blogs/<?= e((string) $blog['id']) ?>/edit" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                        <i data-lucide="pencil" class="size-3.5"></i> Edit
+                        {% cache 'lucide:pencil' ttl=3600 %}<i data-lucide="pencil" class="size-3.5"></i>{% endcache %} Edit
                     </a>
                     <a href="/admin/blogs/<?= e((string) $blog['id']) ?>/delete" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 dark:bg-zink-700 dark:border-red-500/40 dark:hover:bg-red-900/20 transition-colors">
-                        <i data-lucide="trash-2" class="size-3.5"></i> Delete
+                        {% cache 'lucide:trash-2' ttl=3600 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %} Delete
                     </a>
                     <a href="/admin/blogs" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                         Back to list
@@ -51,7 +51,7 @@ $statusBadge = [
     {% if posts|empty %}
     <div class="card">
         <div class="card-body text-center py-10">
-            <i data-lucide="files" class="size-10 text-slate-400 mx-auto mb-2"></i>
+            {% cache 'lucide:files' ttl=3600 %}<i data-lucide="files" class="size-10 text-slate-400 mx-auto mb-2"></i>{% endcache %}
             <p class="text-sm text-slate-500 dark:text-zink-300">No posts in this blog yet.</p>
         </div>
     </div>
@@ -83,11 +83,11 @@ $statusBadge = [
                             <div class="flex items-center justify-end gap-1">
                                 <a href="/admin/posts/<?= e((string) $post['id']) ?>/show" title="View"
                                    class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
-                                    <i data-lucide="eye" class="size-4"></i>
+                                    {% cache 'lucide:eye' ttl=3600 %}<i data-lucide="eye" class="size-4"></i>{% endcache %}
                                 </a>
                                 <a href="/admin/posts/<?= e((string) $post['id']) ?>/edit" title="Edit"
                                    class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
-                                    <i data-lucide="pencil" class="size-4"></i>
+                                    {% cache 'lucide:pencil' ttl=3600 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                                 </a>
                             </div>
                         </td>

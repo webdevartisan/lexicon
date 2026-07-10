@@ -24,5 +24,5 @@ $hover = $danger
    data-tooltip data-tooltip-content="<?= e($tip) ?>" data-tooltip-placement="top"
    aria-label="<?= e($tip) ?>"
    class="p-2 text-slate-500 rounded-md transition-colors <?= $hover ?>">
-    <i data-lucide="<?= e($icon) ?>" class="size-4"></i>
+    {% cache 'lucide:icon-action:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="size-4"></i>{% endcache %}
 </a>

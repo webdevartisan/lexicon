@@ -71,7 +71,11 @@ $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front pag
                                             data-tooltip data-tooltip-content="<?= e($featureTip) ?>" data-tooltip-placement="top"
                                             aria-label="<?= e($featureTip) ?>"
                                             class="p-2 rounded-md transition-colors <?= $featuredOnHome ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
-                                        <i data-lucide="star" class="size-4 <?= $featuredOnHome ? 'fill-current' : '' ?>"></i>
+                                            <?php if ($featuredOnHome) { ?>
+                                            {% cache 'lucide:star-fill' ttl=3600 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
+                                            <?php } else { ?>
+                                            {% cache 'lucide:star' ttl=3600 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
+                                            <?php } ?>
                                     </button>
                                 </form>
                                 {% cmp="icon-action" href="{$showUrl}" icon="eye" tip="View" %}
