@@ -143,7 +143,13 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
                     <?php } ?>
 
                     <?php if (!empty($comment['replies'])) { ?>
-                      <ul class="comment-replies">
+                      <?php $replyTotal = count($comment['replies']); ?>
+                      <p class="mb-0 mt-2">
+                        <button type="button" class="reply-toggle" data-collapse-toggle="<?= (int) $comment['id'] ?>"
+                          data-label-show="View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?>"
+                          data-label-hide="Hide replies">View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?></button>
+                      </p>
+                      <ul class="comment-replies" id="replies-<?= (int) $comment['id'] ?>" hidden>
                         <?php foreach ($comment['replies'] as $reply) { ?>
                           <li class="media mb-2 mt-2">
                             <div class="media-body">
@@ -157,6 +163,20 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
                                 <?php } ?>
                               </h6>
                               <p class="mb-0"><?= nl2br(e($reply['content'] ?? '')) ?></p>
+
+                              <?php if (!empty($comments_enabled) && auth()->check()) { ?>
+                                <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $reply['id'] ?>">Reply</button>
+
+                                <form class="reply-form" id="reply-form-<?= (int) $reply['id'] ?>" action="/comments/create" method="post" hidden>
+                                  <?= csrf_field() ?>
+                                  <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
+                                  <input type="hidden" name="parent_comment_id" value="<?= (int) $reply['id'] ?>">
+                                  <textarea name="content" class="form-control" rows="2" maxlength="2000"
+                                    placeholder="Reply to <?= e($reply['user_name'] ?? 'Guest') ?>..." required></textarea>
+                                  <button type="submit" class="btn btn-sm btn-primary">Reply</button>
+                                  <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $reply['id'] ?>">Cancel</button>
+                                </form>
+                              <?php } ?>
                             </div>
                           </li>
                         <?php } ?>
@@ -188,7 +208,15 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
                 }
 
                 var cancel = ev.target.closest('[data-reply-cancel]');
-                if (cancel) closeAll();
+                if (cancel) { closeAll(); return; }
+
+                var collapse = ev.target.closest('[data-collapse-toggle]');
+                if (collapse) {
+                  var list = document.getElementById('replies-' + collapse.getAttribute('data-collapse-toggle'));
+                  var show = list.hasAttribute('hidden');
+                  list.toggleAttribute('hidden', !show);
+                  collapse.textContent = collapse.getAttribute(show ? 'data-label-hide' : 'data-label-show');
+                }
               });
             })();
             </script>

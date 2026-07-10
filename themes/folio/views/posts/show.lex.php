@@ -122,7 +122,13 @@ $title = e($post['title'] ?? 'Untitled');
             <?php } ?>
 
             <?php if (!empty($comment['replies'])) { ?>
-              <div class="comment-replies">
+              <?php $replyTotal = count($comment['replies']); ?>
+              <p style="margin: .5rem 0 0;">
+                <button type="button" class="reply-toggle" data-collapse-toggle="<?= (int) $comment['id'] ?>"
+                  data-label-show="View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?>"
+                  data-label-hide="Hide replies">View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?></button>
+              </p>
+              <div class="comment-replies" id="replies-<?= (int) $comment['id'] ?>" hidden>
                 <?php foreach ($comment['replies'] as $reply) { ?>
                   <div class="comment-item">
                     <div class="comment-meta">
@@ -132,6 +138,20 @@ $title = e($post['title'] ?? 'Untitled');
                       <?php } ?>
                     </div>
                     <p><?= nl2br(e($reply['content'] ?? '')) ?></p>
+
+                    <?php if (!empty($comments_enabled) && auth()->check()) { ?>
+                      <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $reply['id'] ?>">Reply</button>
+
+                      <form class="reply-form" id="reply-form-<?= (int) $reply['id'] ?>" action="/comments/create" method="post" hidden>
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
+                        <input type="hidden" name="parent_comment_id" value="<?= (int) $reply['id'] ?>">
+                        <textarea name="content" rows="2" maxlength="2000"
+                          placeholder="Reply to <?= e($reply['user_name'] ?? 'Guest') ?>..." required></textarea>
+                        <button type="submit" class="btn-reply">Reply</button>
+                        <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $reply['id'] ?>">Cancel</button>
+                      </form>
+                    <?php } ?>
                   </div>
                 <?php } ?>
               </div>
@@ -160,7 +180,15 @@ $title = e($post['title'] ?? 'Untitled');
             }
 
             var cancel = ev.target.closest('[data-reply-cancel]');
-            if (cancel) closeAll();
+            if (cancel) { closeAll(); return; }
+
+            var collapse = ev.target.closest('[data-collapse-toggle]');
+            if (collapse) {
+              var list = document.getElementById('replies-' + collapse.getAttribute('data-collapse-toggle'));
+              var show = list.hasAttribute('hidden');
+              list.toggleAttribute('hidden', !show);
+              collapse.textContent = collapse.getAttribute(show ? 'data-label-hide' : 'data-label-show');
+            }
           });
         })();
         </script>
