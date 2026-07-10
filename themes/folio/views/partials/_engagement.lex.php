@@ -8,7 +8,9 @@ $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
 <style>
-  .post-engagement { display: flex; align-items: center; gap: .5rem; padding: 1.5rem 0; margin-top: 2rem; border-top: 1px solid var(--rule); position: relative; }
+  /* post-layout is a grid; without an explicit column the bar lands in the
+     tags row and stretches it, squashing the tag pills into ovals */
+  .post-engagement { grid-column: 3 / span 8; display: flex; align-items: center; gap: .5rem; padding: 1.5rem 0; margin-top: 0; border-top: 1px solid var(--rule); position: relative; }
   .post-engagement .engage-btn { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem 1.1rem; border: 1px solid var(--rule); border-radius: 999px; background: transparent; color: var(--muted); font-family: var(--mono); font-size: var(--type-mono); letter-spacing: .1em; text-transform: uppercase; line-height: 1; cursor: pointer; transition: all .18s var(--ease-out); }
   .post-engagement .engage-btn:hover { border-color: var(--rule-strong); color: var(--ink); }
   .post-engagement .engage-btn svg { width: 16px; height: 16px; display: block; }
