@@ -15,6 +15,19 @@ $humanSize = static function (int $bytes): string {
 
     return number_format($bytes / (1024 ** $i), $i === 0 ? 0 : 1).' '.$units[$i];
 };
+
+$mediaSourceOptions = [
+    '' => 'All sources',
+    'upload' => 'Library uploads',
+    'post_image' => 'Post images',
+    'branding' => 'Branding',
+    'backfill' => 'Imported',
+];
+$mediaSortOptions = [
+    'newest' => 'Newest first',
+    'oldest' => 'Oldest first',
+    'largest' => 'Largest first',
+];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto"
      data-media-blog-id="{{ blog.id }}">
@@ -23,7 +36,7 @@ $humanSize = static function (int $bytes): string {
     <div class="flex items-center justify-between gap-3 mb-5">
         <a href="/dashboard/blog/{{ blog.id }}/show"
             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="arrow-left" class="size-4"></i>
+            {% cache 'lucide:arrow-left' ttl=3600 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
             <span>Back to blog</span>
         </a>
         <span class="text-xs text-slate-500 dark:text-zink-300" data-media-total>
@@ -36,7 +49,7 @@ $humanSize = static function (int $bytes): string {
         <div class="card-body">
             <div id="media-uploader"
                  class="border-2 border-dashed border-slate-200 dark:border-zink-500 rounded-lg p-6 text-center cursor-pointer hover:border-custom-400 transition-colors">
-                <i data-lucide="upload-cloud" class="size-8 text-slate-400 dark:text-zink-300 mx-auto mb-2"></i>
+                {% cache 'lucide:upload-cloud:lg' ttl=3600 %}<i data-lucide="upload-cloud" class="size-8 text-slate-400 dark:text-zink-300 mx-auto mb-2"></i>{% endcache %}
                 <p class="text-sm font-medium text-slate-700 dark:text-zink-100">Drop images here or click to upload</p>
                 <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">PNG, JPG, WebP, SVG or GIF · up to 5 MB each</p>
                 <input type="file" id="media-uploader-input" class="hidden" accept="image/*" multiple>
@@ -48,26 +61,12 @@ $humanSize = static function (int $bytes): string {
     <!-- Filters -->
     <section class="card mb-5">
         <div class="card-body">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="relative grow min-w-[200px]">
-                    <i data-lucide="search" class="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                    <input type="search" id="media-q" placeholder="Search filename…"
-                        class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+            <div class="flex flex-wrap items-end gap-3">
+                <div class="grow min-w-[200px]">
+                    {% cmp="input" type="search" name="media-q" placeholder="Search filename…" %}
                 </div>
-                <select id="media-source"
-                    class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <option value="">All sources</option>
-                    <option value="upload">Library uploads</option>
-                    <option value="post_image">Post images</option>
-                    <option value="branding">Branding</option>
-                    <option value="backfill">Imported</option>
-                </select>
-                <select id="media-sort"
-                    class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="largest">Largest first</option>
-                </select>
+                {% cmp="select" name="media-source" options="{$mediaSourceOptions}" selectedKey="" %}
+                {% cmp="select" name="media-sort" options="{$mediaSortOptions}" selectedKey="newest" %}
             </div>
         </div>
     </section>
@@ -93,20 +92,20 @@ $humanSize = static function (int $bytes): string {
                     <button type="button" title="Delete"
                             data-media-delete="<?= (int) $item['id'] ?>"
                             class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                        <i data-lucide="trash-2" class="size-3.5"></i>
+                        {% cache 'lucide:trash-2:sm' ttl=3600 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %}
                     </button>
                 </figure>
                 <?php } ?>
             </div>
 
-            <p id="media-empty" class="text-sm text-slate-500 dark:text-zink-300 py-10 text-center <?= !empty($mediaItems) ? 'hidden' : '' ?>">
-                Nothing here yet. Drop your first image above to start the library.
-            </p>
+            <div id="media-empty" class="<?= !empty($mediaItems) ? 'hidden' : '' ?>">
+                {% cmp="empty-state" icon="image-off" title="Nothing here yet" message="Drop your first image above to start the library." %}
+            </div>
 
             <div class="flex justify-center mt-5 <?= ((int) ($total ?? 0)) <= count($mediaItems ?? []) ? 'hidden' : '' ?>" id="media-load-more-wrap">
                 <button type="button" id="media-load-more"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    <i data-lucide="chevron-down" class="size-4"></i> Load more
+                    {% cache 'lucide:chevron-down' ttl=3600 %}<i data-lucide="chevron-down" class="size-4"></i>{% endcache %} Load more
                 </button>
             </div>
         </div>

@@ -15,7 +15,7 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or blog.' : 'Create one
         <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-xl">
             {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search name, slug, or blog..." %}
             <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                <i data-lucide="search" class="size-4"></i> Search
+                {% cache 'lucide:search' ttl=3600 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
             </button>
         </form>
         <div class="shrink-0">

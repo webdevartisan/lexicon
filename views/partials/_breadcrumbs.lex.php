@@ -46,7 +46,7 @@ if (!empty($items)) { ?>
                 
                 <!-- Separator (not shown on last item) -->
                 <?php if ($index < count($items) - 1) { ?>
-                    <i data-lucide="chevron-right" class="size-4 text-slate-400 dark:text-zink-500"></i>
+                    {% cache 'lucide:chevron-right:breadcrumb' ttl=3600 %}<i data-lucide="chevron-right" class="size-4 text-slate-400 dark:text-zink-500"></i>{% endcache %}
                 <?php } ?>
                 
                 <!-- Structured data position -->

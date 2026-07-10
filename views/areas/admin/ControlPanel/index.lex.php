@@ -22,7 +22,7 @@ $statusBadge = [
                     <p class="text-3xl font-semibold text-slate-900 dark:text-zink-50 mt-2"><?= number_format($stats['posts']) ?></p>
                 </div>
                 <div class="flex items-center justify-center size-12 bg-purple-100 rounded-md dark:bg-purple-500/20">
-                    <i class="text-purple-500 dark:text-purple-200" data-lucide="file-text"></i>
+                    {% cache 'lucide:file-text' ttl=3600 %}<i class="text-purple-500 dark:text-purple-200" data-lucide="file-text"></i>{% endcache %}
                 </div>
             </div>
         </a>
@@ -39,7 +39,7 @@ $statusBadge = [
                     <?php } ?>
                 </div>
                 <div class="flex items-center justify-center size-12 bg-green-100 rounded-md dark:bg-green-500/20">
-                    <i class="text-green-500 dark:text-green-200" data-lucide="message-square"></i>
+                    {% cache 'lucide:message-square' ttl=3600 %}<i class="text-green-500 dark:text-green-200" data-lucide="message-square"></i>{% endcache %}
                 </div>
             </div>
         </a>
@@ -51,7 +51,7 @@ $statusBadge = [
                     <p class="text-3xl font-semibold text-slate-900 dark:text-zink-50 mt-2"><?= number_format($stats['users']) ?></p>
                 </div>
                 <div class="flex items-center justify-center size-12 bg-sky-100 rounded-md dark:bg-sky-500/20">
-                    <i class="text-sky-500 dark:text-sky-200" data-lucide="users"></i>
+                    {% cache 'lucide:users' ttl=3600 %}<i class="text-sky-500 dark:text-sky-200" data-lucide="users"></i>{% endcache %}
                 </div>
             </div>
         </a>
@@ -63,7 +63,7 @@ $statusBadge = [
                     <p class="text-3xl font-semibold text-slate-900 dark:text-zink-50 mt-2"><?= number_format($stats['blogs']) ?></p>
                 </div>
                 <div class="flex items-center justify-center size-12 bg-orange-100 rounded-md dark:bg-orange-500/20">
-                    <i class="text-orange-500 dark:text-orange-200" data-lucide="book-open"></i>
+                    {% cache 'lucide:book-open' ttl=3600 %}<i class="text-orange-500 dark:text-orange-200" data-lucide="book-open"></i>{% endcache %}
                 </div>
             </div>
         </a>
@@ -75,13 +75,13 @@ $statusBadge = [
         {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
         {% cmp="btn" href="/admin/blogs/new" variant="blue" icon="file-plus" label="New Blog" %}
         <a href="/admin/comments?status=pending" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="message-square" class="size-4"></i> Moderate Comments
+            {% cache 'lucide:message-square' ttl=3600 %}<i data-lucide="message-square" class="size-4"></i>{% endcache %} Moderate Comments
         </a>
         <a href="/admin/cache" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="database-zap" class="size-4"></i> Cache Tools
+            {% cache 'lucide:database-zap' ttl=3600 %}<i data-lucide="database-zap" class="size-4"></i>{% endcache %} Cache Tools
         </a>
         <a href="/admin/settings" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="settings" class="size-4"></i> Settings
+            {% cache 'lucide:settings' ttl=3600 %}<i data-lucide="settings" class="size-4"></i>{% endcache %} Settings
         </a>
     </div>
 

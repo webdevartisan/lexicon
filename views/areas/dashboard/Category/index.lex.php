@@ -10,21 +10,21 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
         <div class="card-body">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
-                    <i data-lucide="<?= e($icon) ?>" class="size-4 text-custom-500"></i>
+                    {% cache 'lucide:' . $icon %}<i data-lucide="<?= e($icon) ?>" class="size-4 text-custom-500"></i>{% endcache %}
                     <?= e($title) ?>
                 </h2>
                 <span class="text-xs text-slate-500 dark:text-zink-300"><?= count($items) ?></span>
             </div>
 
-            <form method="POST" action="/dashboard/blog/<?= (int) $blog['id'] ?>/categories" class="flex items-center gap-2 mb-4">
+            <form method="POST" action="/dashboard/blog/<?= (int) $blog['id'] ?>/categories" class="flex items-end gap-2 mb-4">
                 {{ csrf_field() }}
                 <input type="hidden" name="type" value="<?= e($type) ?>">
                 <input type="hidden" name="action" value="add">
-                <input type="text" name="name" required maxlength="100"
-                    placeholder="<?= e($addPlaceholder) ?>"
-                    class="form-input grow border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+                <div class="grow">
+                    {% cmp="input" type="text" name="name" placeholder="{$addPlaceholder}" required %}
+                </div>
                 <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors shrink-0">
-                    <i data-lucide="plus" class="size-4"></i> Add
+                    {% cache 'lucide:plus' ttl=3600 %}<i data-lucide="plus" class="size-4"></i>{% endcache %} Add
                 </button>
             </form>
 
@@ -44,7 +44,7 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
                     <button type="button" title="Rename"
                         data-rename data-type="<?= e($type) ?>" data-id="<?= (int) $item['id'] ?>" data-name="<?= e($item['name']) ?>"
                         class="p-1.5 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
-                        <i data-lucide="pencil" class="size-4"></i>
+                        {% cache 'lucide:pencil' ttl=3600 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                     </button>
                     <form method="POST" action="/dashboard/blog/<?= (int) $blog['id'] ?>/categories" class="m-0 shrink-0"
                         onsubmit="return confirm('Delete <?= e($item['name']) ?>? Posts keep their content, they just lose this <?= e($type) ?>.');">
@@ -54,7 +54,7 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
                         <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                         <button type="submit" title="Delete"
                             class="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                            <i data-lucide="trash-2" class="size-4"></i>
+                            {% cache 'lucide:trash-2' ttl=3600 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                         </button>
                     </form>
                 </li>
@@ -71,7 +71,7 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
     <div class="flex items-center justify-between gap-3 mb-5">
         <a href="/dashboard/blog/{{ blog.id }}/show"
             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="arrow-left" class="size-4"></i>
+            {% cache 'lucide:arrow-left' ttl=3600 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
             <span>Back to blog</span>
         </a>
     </div>

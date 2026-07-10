@@ -47,13 +47,13 @@ $headerTextColor = ($variant === 'default')
         <div class="flex items-center justify-between p-4 border-b <?= $headerClasses ?>">
             <h5 class="text-16 <?= $headerTextColor ?> flex items-center gap-2">
                 <?php if ($icon) { ?>
-                    <i data-lucide="<?= $icon ?>" class="size-5"></i>
+                    {% cache 'lucide:modal-header:' . $icon ttl=3600 %}<i data-lucide="<?= $icon ?>" class="size-5"></i>{% endcache %}
                 <?php } ?>
                 <?= $title ?>
             </h5>
             <button data-modal-close="<?= $id ?>"
                 class="transition-all duration-200 ease-linear <?= ($variant === 'default') ? 'text-slate-500 hover:text-slate-700' : 'text-white hover:text-white/80' ?>">
-                <i data-lucide="x" class="size-5"></i>
+                {% cache 'lucide:x:close5' ttl=3600 %}<i data-lucide="x" class="size-5"></i>{% endcache %}
             </button>
         </div>
 
@@ -72,7 +72,7 @@ $headerTextColor = ($variant === 'default')
                     <?php if ($form) { ?>form="<?= $form ?>"<?php } ?>
                     class="<?= $confirmBtnClasses ?>">
                 <?php if ($confirmIcon) { ?>
-                    <i data-lucide="<?= $confirmIcon ?>" class="inline-block size-4 mr-1"></i>
+                    {% cache 'lucide:modal-confirm:' . $confirmIcon ttl=3600 %}<i data-lucide="<?= $confirmIcon ?>" class="inline-block size-4 mr-1"></i>{% endcache %}
                 <?php } ?>
                 <?= $confirmText ?>
             </button>

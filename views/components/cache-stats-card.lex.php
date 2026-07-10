@@ -13,7 +13,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
         <?php /* Card Header */ ?>
         <div class="flex items-center justify-between mb-4">
             <h6 class="text-15 flex items-center gap-2">
-                <i class="size-5 text-custom-500" data-lucide="database"></i>
+                {% cache 'lucide:database:header5' ttl=3600 %}<i class="size-5 text-custom-500" data-lucide="database"></i>{% endcache %}
                 Cache Statistics
             </h6>
             
@@ -113,7 +113,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
             <?php if ($stats['files_over_limit'] > 0) { ?>
             <div class="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-md mt-3">
                 <span class="text-yellow-700 dark:text-yellow-300 font-medium flex items-center gap-2">
-                    <i class="size-4" data-lucide="alert-triangle"></i>
+                    {% cache 'lucide:alert-triangle:warn' ttl=3600 %}<i class="size-4" data-lucide="alert-triangle"></i>{% endcache %}
                     Files over limit
                 </span>
                 <span class="font-semibold text-yellow-900 dark:text-yellow-200">+<?= number_format($stats['files_over_limit']) ?></span>
@@ -129,7 +129,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
                 <button type="submit" 
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-md hover:bg-orange-100 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-300 dark:hover:bg-orange-500/20 transition-colors"
                         onclick="return confirm('Delete all expired cache files? This is safe and recommended.')">
-                    <i class="size-4" data-lucide="trash-2"></i>
+                    {% cache 'lucide:trash-2:btn' ttl=3600 %}<i class="size-4" data-lucide="trash-2"></i>{% endcache %}
                     Prune Expired
                 </button>
             </form>
@@ -139,7 +139,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
                 <button type="submit" 
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/20 transition-colors"
                         onclick="return confirm('WARNING: This will delete ALL cache files. Are you absolutely sure?')">
-                    <i class="size-4" data-lucide="x-circle"></i>
+                    {% cache 'lucide:x-circle:btn' ttl=3600 %}<i class="size-4" data-lucide="x-circle"></i>{% endcache %}
                     Clear All Cache
                 </button>
             </form>
@@ -147,7 +147,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
             <a href="<?= buildLocalizedUrl('/admin/cache') ?>" 
                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 hover:border-custom-600 dark:bg-custom-500 dark:border-custom-500 dark:hover:bg-custom-600 dark:hover:border-custom-600 transition-colors">
                 View Details
-                <i class="size-4" data-lucide="chevron-right"></i>
+                {% cache 'lucide:chevron-right:btn' ttl=3600 %}<i class="size-4" data-lucide="chevron-right"></i>{% endcache %}
             </a>
         </div>
         <?php } ?>

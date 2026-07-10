@@ -15,7 +15,7 @@ $message = (string) ($message ?? '');
 ?>
 <div class="card">
     <div class="card-body text-center py-12">
-        <i data-lucide="<?= e($icon) ?>" class="size-12 text-slate-400 mx-auto mb-3"></i>
+        {% cache 'lucide:empty-state:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="size-12 text-slate-400 mx-auto mb-3"></i>{% endcache %}
         <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1"><?= e($title) ?></h3>
         <?php if ($message !== '') { ?>
         <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($message) ?></p>

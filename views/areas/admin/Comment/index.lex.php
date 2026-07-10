@@ -40,14 +40,11 @@ $statusBadge = [
         <div class="card-body">
             <input type="hidden" name="status" value="<?= e($status) ?>">
             <div class="flex flex-col md:flex-row gap-3">
-                <div class="relative grow">
-                    <i data-lucide="search" class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
-                    <input id="q" name="q" type="text" value="<?= e($q) ?>"
-                        placeholder="Search comment text or post title..."
-                        class="form-input w-full pl-9 border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+                <div class="grow">
+                    {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search comment text or post title..." %}
                 </div>
-                <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                    <i data-lucide="search" class="size-4"></i> Search
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors self-start">
+                    {% cache 'lucide:search' ttl=3600 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
                 </button>
             </div>
         </div>
@@ -80,7 +77,7 @@ $statusBadge = [
     {% if comments|empty %}
         <div class="card">
             <div class="card-body text-center py-12">
-                <i data-lucide="message-square-dashed" class="size-12 text-slate-400 mx-auto mb-3"></i>
+                {% cache 'lucide:message-square-dashed' ttl=3600 %}<i data-lucide="message-square-dashed" class="size-12 text-slate-400 mx-auto mb-3"></i>{% endcache %}
                 <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">
                     <?php if ($q !== '') { ?>
                         No comments match "<?= e(truncate($q, 40)) ?>"
@@ -152,15 +149,15 @@ $statusBadge = [
 
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-zink-300">
                                     <span class="inline-flex items-center gap-1">
-                                        <i data-lucide="clock" class="size-3"></i>
+                                        {% cache 'lucide:clock:sm' ttl=3600 %}<i data-lucide="clock" class="size-3"></i>{% endcache %}
                                         <?= e(date('M j, Y · g:i a', strtotime((string) $c['created_at']))) ?>
                                     </span>
                                     <a href="/blog/<?= e((string) ($c['blog_slug'] ?? '')) ?>/<?= e((string) ($c['post_slug'] ?? '')) ?>"
                                         target="_blank" rel="noopener"
                                         class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
-                                        <i data-lucide="file-text" class="size-3"></i>
+                                        {% cache 'lucide:file-text:sm' ttl=3600 %}<i data-lucide="file-text" class="size-3"></i>{% endcache %}
                                         <?= e(truncate((string) ($c['post_title'] ?? 'post'), 50)) ?>
-                                        <i data-lucide="external-link" class="size-3"></i>
+                                        {% cache 'lucide:external-link:sm' ttl=3600 %}<i data-lucide="external-link" class="size-3"></i>{% endcache %}
                                     </a>
                                 </div>
                             </div>
@@ -173,7 +170,7 @@ $statusBadge = [
                                         <input type="hidden" name="return_status" value="<?= e($status) ?>">
                                         <button type="submit" title="Approve"
                                             class="p-2 text-slate-500 hover:text-green-600 rounded-md hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500">
-                                            <i data-lucide="check" class="size-4"></i>
+                                            {% cache 'lucide:check' ttl=3600 %}<i data-lucide="check" class="size-4"></i>{% endcache %}
                                         </button>
                                     </form>
                                 <?php } ?>
@@ -184,7 +181,7 @@ $statusBadge = [
                                         <input type="hidden" name="return_status" value="<?= e($status) ?>">
                                         <button type="submit" title="Move to pending"
                                             class="p-2 text-slate-500 hover:text-amber-600 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                                            <i data-lucide="undo-2" class="size-4"></i>
+                                            {% cache 'lucide:undo-2' ttl=3600 %}<i data-lucide="undo-2" class="size-4"></i>{% endcache %}
                                         </button>
                                     </form>
                                 <?php } ?>
@@ -195,7 +192,7 @@ $statusBadge = [
                                         <input type="hidden" name="return_status" value="<?= e($status) ?>">
                                         <button type="submit" title="Mark as spam"
                                             class="p-2 text-slate-500 hover:text-orange-600 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
-                                            <i data-lucide="shield-alert" class="size-4"></i>
+                                            {% cache 'lucide:shield-alert' ttl=3600 %}<i data-lucide="shield-alert" class="size-4"></i>{% endcache %}
                                         </button>
                                     </form>
                                 <?php } ?>
@@ -208,7 +205,7 @@ $statusBadge = [
                                     <input type="hidden" name="return_status" value="<?= e($status) ?>">
                                     <button type="submit" title="Delete"
                                         class="p-2 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                                        <i data-lucide="trash-2" class="size-4"></i>
+                                        {% cache 'lucide:trash-2' ttl=3600 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                                     </button>
                                 </form>
                             </div>
@@ -226,16 +223,16 @@ $statusBadge = [
                 <div class="flex items-center gap-2 px-4 py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-full shadow-lg border border-slate-700">
                     <span id="bulk-count" class="text-sm font-medium pr-2 border-r border-slate-700"></span>
                     <button type="button" data-bulk="approve" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-green-600/30 transition-colors">
-                        <i data-lucide="check" class="size-3.5"></i> Approve
+                        {% cache 'lucide:check:bulk' ttl=3600 %}<i data-lucide="check" class="size-3.5"></i>{% endcache %} Approve
                     </button>
                     <button type="button" data-bulk="unapprove" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-amber-600/30 transition-colors">
-                        <i data-lucide="undo-2" class="size-3.5"></i> Pending
+                        {% cache 'lucide:undo-2:bulk' ttl=3600 %}<i data-lucide="undo-2" class="size-3.5"></i>{% endcache %} Pending
                     </button>
                     <button type="button" data-bulk="spam" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-orange-600/30 transition-colors">
-                        <i data-lucide="shield-alert" class="size-3.5"></i> Spam
+                        {% cache 'lucide:shield-alert:bulk' ttl=3600 %}<i data-lucide="shield-alert" class="size-3.5"></i>{% endcache %} Spam
                     </button>
                     <button type="button" data-bulk="delete" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-red-600/30 transition-colors text-red-300">
-                        <i data-lucide="trash-2" class="size-3.5"></i> Delete
+                        {% cache 'lucide:trash-2:bulk' ttl=3600 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %} Delete
                     </button>
                 </div>
             </div>

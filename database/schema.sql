@@ -642,6 +642,7 @@ CREATE TABLE IF NOT EXISTS pages (
     title VARCHAR(200) NOT NULL,
     content LONGTEXT,
     meta_description VARCHAR(160) DEFAULT NULL,
+    thumbnail_path VARCHAR(255) DEFAULT NULL,
     is_published TINYINT(1) NOT NULL DEFAULT 0,
     updated_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

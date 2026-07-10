@@ -10,12 +10,12 @@ $commentCount = !empty($commentCount) ? $commentCount : 0;
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-red-200 bg-red-500 dark:bg-red-600 dark:border-red-700">
             <h5 class="text-16 text-white flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="size-5"></i>
+                {% cache 'lucide:alert-triangle:header5' ttl=3600 %}<i data-lucide="alert-triangle" class="size-5"></i>{% endcache %}
                 Delete Account Permanently?
             </h5>
             <button data-modal-close="deleteAccountModal"
                 class="transition-all duration-200 ease-linear text-white hover:text-red-100">
-                <i data-lucide="x" class="size-5"></i>
+                {% cache 'lucide:x:close5' ttl=3600 %}<i data-lucide="x" class="size-5"></i>{% endcache %}
             </button>
         </div>
 
@@ -31,19 +31,19 @@ $commentCount = !empty($commentCount) ? $commentCount : 0;
             <h6 class="mb-2 text-15 text-slate-700 dark:text-zink-200">What will be deleted:</h6>
             <ul class="mb-4 space-y-1 text-sm text-slate-500 dark:text-zink-300">
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Your profile information (name, email, bio, location)</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Your avatar and uploaded files</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Your account preferences and settings</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Your social media links</span>
                 </li>
             </ul>
@@ -52,11 +52,11 @@ $commentCount = !empty($commentCount) ? $commentCount : 0;
             <h6 class="mb-2 text-15 text-slate-700 dark:text-zink-200">What will be preserved:</h6>
             <ul class="mb-4 space-y-1 text-sm text-slate-500 dark:text-zink-300">
                 <li class="flex items-start gap-2">
-                    <i data-lucide="check" class="size-4 text-green-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:check:list-green' ttl=3600 %}<i data-lucide="check" class="size-4 text-green-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Your posts (<?= $postCount ?> posts) - attributed to "Deleted User"</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="check" class="size-4 text-green-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:check:list-green' ttl=3600 %}<i data-lucide="check" class="size-4 text-green-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>Comments on your posts (<?= $commentCount ?> comments)</span>
                 </li>
             </ul>
@@ -97,7 +97,7 @@ $commentCount = !empty($commentCount) ? $commentCount : 0;
             </button>
             <button type="submit" form="deleteAccountForm"
                 class="text-white btn bg-red-500 border-red-500 hover:text-white hover:bg-red-600 hover:border-red-600 focus:text-white focus:bg-red-600 focus:border-red-600 focus:ring focus:ring-red-100 active:text-white active:bg-red-600 active:border-red-600 active:ring active:ring-red-100 dark:ring-red-400/20">
-                <i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>
+                {% cache 'lucide:trash-2:btn-inline' ttl=3600 %}<i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>{% endcache %}
                 Yes, Delete My Account
             </button>
         </div>

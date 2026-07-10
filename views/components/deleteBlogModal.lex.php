@@ -16,12 +16,12 @@ $blogSlug = !empty($blog['blog_slug']) ? e($blog['blog_slug']) : '';
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-red-200 bg-red-500 dark:bg-red-600 dark:border-red-700">
             <h5 class="text-16 text-white flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="size-5"></i>
+                {% cache 'lucide:alert-triangle:header5' ttl=3600 %}<i data-lucide="alert-triangle" class="size-5"></i>{% endcache %}
                 {{ t('modals.deleteBlog.title') }}
             </h5>
             <button data-modal-close="deleteBlogModal"
                 class="transition-all duration-200 ease-linear text-white hover:text-red-100">
-                <i data-lucide="x" class="size-5"></i>
+                {% cache 'lucide:x:close5' ttl=3600 %}<i data-lucide="x" class="size-5"></i>{% endcache %}
             </button>
         </div>
 
@@ -41,7 +41,7 @@ $blogSlug = !empty($blog['blog_slug']) ? e($blog['blog_slug']) : '';
                 
                 <!-- Loading State -->
                 <div id="statsLoading" class="text-center py-4">
-                    <i data-lucide="loader-2" class="inline-block size-6 text-orange-500 animate-spin"></i>
+                    {% cache 'lucide:loader-2:spin' ttl=3600 %}<i data-lucide="loader-2" class="inline-block size-6 text-orange-500 animate-spin"></i>{% endcache %}
                     <p class="text-xs text-slate-500 dark:text-zink-300 mt-2">{{ t('modals.deleteBlog.impact.loading') }}</p>
                 </div>
 
@@ -63,7 +63,7 @@ $blogSlug = !empty($blog['blog_slug']) ? e($blog['blog_slug']) : '';
 
                 <!-- Error State -->
                 <div id="statsError" class="text-center py-4 hidden">
-                    <i data-lucide="alert-circle" class="inline-block size-6 text-red-500"></i>
+                    {% cache 'lucide:alert-circle:lg' ttl=3600 %}<i data-lucide="alert-circle" class="inline-block size-6 text-red-500"></i>{% endcache %}
                     <p class="text-xs text-red-600 dark:text-red-400 mt-2">{{ t('modals.deleteBlog.impact.error') }}</p>
                 </div>
             </div>
@@ -72,31 +72,31 @@ $blogSlug = !empty($blog['blog_slug']) ? e($blog['blog_slug']) : '';
             <h6 class="mb-2 text-15 text-slate-700 dark:text-zink-200">{{ t('modals.deleteBlog.deletionList.title') }}</h6>
             <ul class="mb-4 space-y-1 text-sm text-slate-500 dark:text-zink-300">
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span><strong id="postCountText">All posts</strong> and their content</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span><strong id="commentCountText">All comments</strong> from readers</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>{{ t('modals.deleteBlog.deletionList.items.settings') }}</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>{{ t('modals.deleteBlog.deletionList.items.images') }}</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span id="collaboratorCountText">Collaborator access</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>{{ t('modals.deleteBlog.deletionList.items.url') }} (<?= $blogSlug ?>)</span>
                 </li>
                 <li class="flex items-start gap-2">
-                    <i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>
+                    {% cache 'lucide:x:list-red' ttl=3600 %}<i data-lucide="x" class="size-4 text-red-500 mt-0.5 shrink-0"></i>{% endcache %}
                     <span>{{ t('modals.deleteBlog.deletionList.items.seo') }}</span>
                 </li>
             </ul>
@@ -143,7 +143,7 @@ $blogSlug = !empty($blog['blog_slug']) ? e($blog['blog_slug']) : '';
             </button>
             <button type="submit" form="deleteBlogForm"
                 class="text-white btn bg-red-500 border-red-500 hover:text-white hover:bg-red-600 hover:border-red-600 focus:text-white focus:bg-red-600 focus:border-red-600 focus:ring focus:ring-red-100 active:text-white active:bg-red-600 active:border-red-600 active:ring active:ring-red-100 dark:ring-red-400/20">
-                <i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>
+                {% cache 'lucide:trash-2:btn-inline' ttl=3600 %}<i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>{% endcache %}
                 {{ t('modals.deleteBlog.actions.confirmDelete') }} "<?= $blogName ?>"
             </button>
         </div>
