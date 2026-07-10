@@ -143,11 +143,13 @@ class CommentModel extends AppModel
                         u.username,
                         'Anonymous'
                     ) AS user_name,
-                    u.email AS user_email
+                    u.email AS user_email,
+                    parent.content AS parent_content
                 FROM {$this->getTable()} c
                 INNER JOIN posts p ON c.post_id = p.id
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users u ON c.user_id = u.id
+                LEFT JOIN {$this->getTable()} parent ON parent.id = c.parent_comment_id
                 {$whereSql}
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset";
@@ -228,11 +230,13 @@ class CommentModel extends AppModel
                         u.username,
                         'Anonymous'
                     ) AS user_name,
-                    u.email AS user_email
+                    u.email AS user_email,
+                    parent.content AS parent_content
                 FROM {$this->getTable()} c
                 INNER JOIN posts p ON c.post_id = p.id
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users u ON c.user_id = u.id
+                LEFT JOIN {$this->getTable()} parent ON parent.id = c.parent_comment_id
                 {$whereSql}
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset";

@@ -143,6 +143,12 @@ $statusBadge = [
                                     <?php } ?>
                                 </div>
 
+                                <?php if (!empty($c['parent_comment_id'])) { ?>
+                                    <p class="text-[11px] text-slate-400 dark:text-zink-300 mb-1 italic">
+                                        In reply to: "<?= e(truncate((string) ($c['parent_content'] ?? ''), 80)) ?>"
+                                    </p>
+                                <?php } ?>
+
                                 <p class="text-sm text-slate-700 dark:text-zink-100 mb-2 break-words whitespace-pre-line max-h-32 overflow-y-auto">
                                     <?= e((string) $c['content']) ?>
                                 </p>
