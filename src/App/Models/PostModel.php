@@ -228,6 +228,62 @@ class PostModel extends AppModel
     }
 
     /**
+     * Count published posts by author filtered by visibility.
+     *
+     * Companion to listByAuthorVisibility() so public pages can show a
+     * truthful total instead of the denormalized users.posts_count, which
+     * includes drafts and private posts.
+     *
+     * @param  int  $authorId  Author user ID
+     * @param  string[]  $visibilities  Array of visibility values to include
+     * @return int Number of matching posts
+     */
+    public function countByAuthorVisibility(int $authorId, array $visibilities): int
+    {
+        $params = [':author_id' => $authorId];
+        $placeholders = [];
+
+        foreach ($visibilities as $index => $visibility) {
+            $key = ":visibility_{$index}";
+            $placeholders[] = $key;
+            $params[$key] = $visibility;
+        }
+
+        $inClause = implode(',', $placeholders);
+
+        $sql = "SELECT COUNT(*)
+                FROM posts
+                WHERE author_id = :author_id
+                AND status = 'published'
+                AND visibility IN ($inClause)";
+
+        $stmt = $this->database->query($sql, $params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Count approved comments received on an author's public published posts.
+     *
+     * @param  int  $authorId  Author user ID
+     * @return int Number of approved comments on publicly visible posts
+     */
+    public function countPublicCommentsReceived(int $authorId): int
+    {
+        $sql = "SELECT COUNT(c.id)
+                FROM comments c
+                JOIN posts p ON p.id = c.post_id
+                WHERE p.author_id = ?
+                AND p.status = 'published'
+                AND p.visibility = 'public'
+                AND c.status = 'approved'";
+
+        $stmt = $this->database->query($sql, [$authorId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * List published posts by author filtered by visibility.
      *
      * @param  int  $authorId  Author user ID

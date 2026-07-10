@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
+use Framework\Exceptions\HttpException;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Exceptions\TemplateRenderException;
 use Framework\Exceptions\UnauthorizedException;
@@ -110,6 +111,16 @@ final class ErrorRenderer
         // should keep a dedicated template error page if a view explodes, because it’s actionable in dev.
         if ($e instanceof TemplateRenderException) {
             return [500, 'errors/500-template.lex.php'];
+        }
+
+        // any other HttpException (e.g. plain NotFoundException) carries its own status;
+        // trust it instead of collapsing every non-special-cased exception to 500.
+        if ($e instanceof HttpException) {
+            return match ($e->getStatusCode()) {
+                404 => [404, 'errors/404.lex.php'],
+                403 => [403, 'errors/403.lex.php'],
+                default => [500, 'errors/500.lex.php'],
+            };
         }
 
         return [500, 'errors/500.lex.php'];

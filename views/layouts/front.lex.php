@@ -34,6 +34,7 @@ $old = old();
         <meta property="og:locale:alternate" content="{{ ogl }}" />
         {% endforeach; %}
 
+        <link rel="stylesheet" href="/assets/css/fontawesome-all.min.css" />
         <link rel="stylesheet" href="/assets/css/main.css" />
         <link rel="stylesheet" href="/assets/css/front.css" />
 

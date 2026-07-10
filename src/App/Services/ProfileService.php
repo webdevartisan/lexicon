@@ -47,41 +47,63 @@ class ProfileService
             throw new NotFoundException('Profile not found');
         }
 
-        $socialLinks = $this->enrichSocialLinksWithIcons(
-            $this->socialLinks->listByUser($profile->userId())
-        );
+        $allLinks = $this->socialLinks->listByUser($profile->userId());
+
+        // the personal website gets its own call-to-action button, so keep it out of the icon row
+        $websiteUrl = null;
+        $socialLinks = [];
+
+        foreach ($allLinks as $link) {
+            if ($link['network'] === 'website') {
+                $websiteUrl = $link['url'];
+                continue;
+            }
+            $socialLinks[] = $link;
+        }
 
         $posts = $this->getPublicPostsWithBlogSlugs($profile->userId());
 
+        // count from the posts table directly; users.posts_count includes drafts and private posts
+        $stats = [
+            'posts' => $this->posts->countByAuthorVisibility($profile->userId(), ['public']),
+            'comments' => $this->posts->countPublicCommentsReceived($profile->userId()),
+        ];
+
         return [
             'profile' => $profile,
-            'socialLinks' => $socialLinks,
+            'socialLinks' => $this->enrichSocialLinksWithIcons($socialLinks),
+            'websiteUrl' => $websiteUrl,
             'posts' => $posts,
+            'stats' => $stats,
         ];
     }
 
     /**
      * Enrich social links with Font Awesome icon classes.
      *
-     * Maps network names to icon classes. Twitter uses X (Twitter) branding,
-     * others use standard Font Awesome naming. Falls back to generic icon
-     * for unknown networks.
+     * Maps network names to the theme's icon classes. Twitter uses X
+     * branding; unknown networks fall back to a generic link icon.
      *
      * @param  array<int, array<string, mixed>>  $socialLinks  Raw social link data
-     * @return array<int, array<string, mixed>> Social links with icon field added
+     * @return array<int, array<string, mixed>> Social links with icon and iconStyle fields added
      */
     private function enrichSocialLinksWithIcons(array $socialLinks): array
     {
         return array_map(function ($link) {
-            $link['icon'] = match ($link['network']) {
-                'twitter' => 'fa-brands fa-x-twitter',
-                'facebook' => 'fa-brands fa-facebook',
-                'instagram' => 'fa-brands fa-instagram',
-                'linkedin' => 'fa-brands fa-linkedin',
-                'github' => 'fa-brands fa-github',
-                'youtube' => 'fa-brands fa-youtube',
-                default => 'fa fa-'.$link['network']
+            // Font Awesome splits glyphs into brand and solid sets, and the
+            // theme expects that set name as a companion class on the anchor
+            [$style, $icon] = match ($link['network']) {
+                'twitter' => ['brands', 'fa-x-twitter'],
+                'facebook' => ['brands', 'fa-facebook'],
+                'instagram' => ['brands', 'fa-instagram'],
+                'linkedin' => ['brands', 'fa-linkedin'],
+                'github' => ['brands', 'fa-github'],
+                'youtube' => ['brands', 'fa-youtube'],
+                default => ['solid', 'fa-link'],
             };
+
+            $link['icon'] = $icon;
+            $link['iconStyle'] = $style;
 
             return $link;
         }, $socialLinks);
@@ -105,13 +127,15 @@ class ProfileService
             return [];
         }
 
-        // Get blog slugs for all posts in single query
+        // Get blog slugs and names for all posts in a single query
         $blogIds = array_unique(array_column($posts, 'blog_id'));
         $blogs = $this->blogs->findByIds($blogIds);
         $blogSlugs = array_column($blogs, 'blog_slug', 'id');
+        $blogNames = array_column($blogs, 'blog_name', 'id');
 
-        return array_map(function ($post) use ($blogSlugs) {
+        return array_map(function ($post) use ($blogSlugs, $blogNames) {
             $post['blog_slug'] = $blogSlugs[$post['blog_id']] ?? null;
+            $post['blog_name'] = $blogNames[$post['blog_id']] ?? null;
 
             return $post;
         }, $posts);
