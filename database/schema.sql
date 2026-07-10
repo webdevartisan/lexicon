@@ -274,6 +274,7 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     meta_description VARCHAR(160) DEFAULT NULL COMMENT 'SEO meta description',
     indexable BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Allow search engine indexing',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Blog-wide comment setting',
+    replies_auto_publish BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'When on, replies publish instantly; owner moderates retroactively',
     banner_path VARCHAR(255) DEFAULT NULL,
     logo_path VARCHAR(255) DEFAULT NULL,
     favicon_path VARCHAR(255) DEFAULT NULL,
@@ -471,20 +472,61 @@ CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     user_id INT DEFAULT NULL COMMENT 'NULL allows for anonymous comments if enabled',
+    parent_comment_id INT DEFAULT NULL COMMENT 'Threaded replies; NULL = top-level',
     content TEXT NOT NULL,
     status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comment_parent FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_post (post_id),
     INDEX idx_user (user_id),
     INDEX idx_comment_post_created (post_id, created_at),
     INDEX idx_comment_user_created (user_id, created_at),
     INDEX idx_comment_status (status),
-    INDEX idx_comment_post_status (post_id, status)
+    INDEX idx_comment_post_status (post_id, status),
+    INDEX idx_comment_parent (parent_comment_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User comments on published posts';
+
+-- ----------------------------------------------------------------------------
+-- Post Likes Table
+-- ----------------------------------------------------------------------------
+-- We store one row per user per liked post so likes can be toggled and
+-- counted cheaply; the unique key makes concurrent toggles race-safe.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_like_post_user (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_like_post (post_id),
+    INDEX idx_like_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per liked post';
+
+-- ----------------------------------------------------------------------------
+-- Post Bookmarks Table
+-- ----------------------------------------------------------------------------
+-- Same shape as post_likes; kept separate so the two signals stay independent
+-- and each can be indexed and queried on its own.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_bookmarks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_bookmark_post_user (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_bookmark_post (post_id),
+    INDEX idx_bookmark_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per saved post';
 
 -- ----------------------------------------------------------------------------
 -- Submissions Table

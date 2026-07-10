@@ -39,6 +39,8 @@ class DatabaseHelper
             'users',
 
             // Post-related
+            'post_likes',
+            'post_bookmarks',
             'post_reviewers',
             'post_tags',
             'submissions',
