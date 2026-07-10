@@ -107,8 +107,8 @@
         <?php foreach ($posts as $post) { ?>
           <?php
             $postUrl = '/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']);
-        $postTitle = $post['title'] ?? 'Untitled';
-        ?>
+            $postTitle = $post['title'] ?? 'Untitled';
+            ?>
           <article>
             <a href="<?= e($postUrl); ?>" class="image post-thumb">
               <?php if (!empty($post['featured_image'])) { ?>
