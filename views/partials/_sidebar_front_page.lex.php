@@ -48,9 +48,9 @@
             // Only details the admin actually configured are shown; the
             // contact page link is always there as the reliable channel.
             $contactEmail = site_content('contact.email', '');
-            $contactPhone = site_content('contact.phone', '');
-            $contactAddress = site_content('contact.address', '');
-            ?>
+                    $contactPhone = site_content('contact.phone', '');
+                    $contactAddress = site_content('contact.address', '');
+                    ?>
             <ul class="contact">
                 {% if (!empty($contactEmail)): %}
                 <li class="icon solid fa fa-envelope"><a href="mailto:<?= e($contactEmail) ?>">{{ contactEmail }}</a></li>
