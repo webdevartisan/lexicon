@@ -1,6 +1,7 @@
 <?php
 $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
+$returnToken = $returnToken ?: '';
 
 $status = $post['status'] ?? 'draft';
 $statusStyles = [
@@ -64,9 +65,8 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
             <?php } ?>
         </div>
 
-
         <h6 class="mb-2 text-15 line-clamp-2">
-            <a href="/dashboard/post/{{ post.id }}/edit" class="hover:text-custom-500 transition-colors">
+            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="hover:text-custom-500 transition-colors">
                 {{ post.title }}
             </a>
         </h6>
@@ -109,7 +109,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
         </div>
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
-            <form method="GET" action="/dashboard/post/{{ post.id }}/edit" class="m-0">
+            <form method="GET" action="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="m-0">
                 <button type="submit"
                     data-tooltip="default" data-tooltip-content="{{ editTooltip }}" data-tooltip-follow-cursor="true"
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors"

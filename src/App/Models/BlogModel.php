@@ -478,26 +478,107 @@ class BlogModel extends AppModel
     }
 
     /**
-     * Get featured blog creators ordered by post count.
+     * Admin-picked blogs for the explore page's featured section.
      *
-     * Returns blogs with the most published posts for homepage or discovery features.
+     * Curation replaces the old "most posts wins" ordering so nobody can spam
+     * their way onto a platform owned surface. Only published blogs with the
+     * admin flag appear; an empty result simply hides the section.
      *
-     * @param  int  $limit  Maximum number of creators to return
+     * @param  int  $limit  Maximum number of blogs to return
      * @return array<int, array<string, mixed>> Array of blog records with ownername and postcount
      */
     public function getFeaturedCreators(int $limit = 4): array
     {
         $sql = "
             SELECT b.*, u.username AS ownername,
-                (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS postcount
+                (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS postcount,
+                (SELECT COUNT(*) FROM blog_users bu WHERE bu.blog_id = b.id AND bu.is_active = 1) AS authorcount
             FROM blogs b
             INNER JOIN users u ON b.owner_id = u.id
-            ORDER BY postcount DESC, b.published_at DESC
+            WHERE b.is_featured = 1 AND b.status = 'published'
+            ORDER BY b.published_at DESC
             LIMIT ?
         ";
         $stmt = $this->database->query($sql, [$limit]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Platform-wide count of published blogs, for the front page stats strip.
+     */
+    public function countPublished(): int
+    {
+        $sql = "SELECT COUNT(*) FROM blogs WHERE status = 'published'";
+
+        return (int) $this->database->query($sql)->fetchColumn();
+    }
+
+    /**
+     * Toggle the admin-only explore page flag on a blog.
+     */
+    public function setExploreFeatured(int $blogId, bool $on): bool
+    {
+        $rows = $this->database->execute(
+            'UPDATE blogs SET is_featured = ? WHERE id = ?',
+            [$on ? 1 : 0, $blogId]
+        );
+
+        return $rows >= 0;
+    }
+
+    /**
+     * Public blog directory: published blogs that have at least one published post.
+     *
+     * Powers the Blogs tab on the explore page. Empty shells are excluded so
+     * the directory only lists blogs a visitor can actually read.
+     *
+     * @param  int  $page  Page number
+     * @param  int  $perPage  Blogs per page
+     * @param  string  $search  Optional name/description search term
+     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalBlogs: int}
+     */
+    public function getDirectoryWithPagination(int $page = 1, int $perPage = 12, string $search = ''): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $where = "b.status = 'published'
+                  AND EXISTS (SELECT 1 FROM posts p WHERE p.blog_id = b.id AND p.status = 'published')";
+        $params = [];
+
+        if ($search !== '') {
+            $where .= ' AND (b.blog_name LIKE :q_name OR b.description LIKE :q_desc)';
+            $term = '%'.$search.'%';
+            $params[':q_name'] = $term;
+            $params[':q_desc'] = $term;
+        }
+
+        $total = (int) $this->database->query(
+            "SELECT COUNT(*) FROM blogs b WHERE {$where}",
+            $params
+        )->fetchColumn();
+
+        $sql = "SELECT b.*, u.username AS owner_name,
+                    (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS post_count,
+                    (SELECT COUNT(*) FROM blog_users bu WHERE bu.blog_id = b.id AND bu.is_active = 1) AS author_count,
+                    (SELECT MAX(p.published_at) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS last_post_at
+                FROM blogs b
+                INNER JOIN users u ON b.owner_id = u.id
+                WHERE {$where}
+                ORDER BY last_post_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $params[':limit'] = $perPage;
+        $params[':offset'] = $offset;
+
+        return [
+            'data' => $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC),
+            'totalPages' => (int) ceil($total / $perPage),
+            'currentPage' => $page,
+            'perPage' => $perPage,
+            'totalBlogs' => $total,
+        ];
     }
 
     /**

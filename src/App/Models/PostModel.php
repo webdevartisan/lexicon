@@ -228,24 +228,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Get random published posts.
-     *
-     * @param  int  $limit  Maximum number of posts to return
-     * @return array<int, array<string, mixed>> Array of published post records
-     */
-    public function findRandomPublicPosts(int $limit = 6): array
-    {
-        $sql = "SELECT * FROM {$this->getTable()}
-                WHERE status = 'published'
-                ORDER BY RAND()
-                LIMIT :limit";
-
-        $stmt = $this->database->query($sql, [':limit' => $limit]);
-
-        return $stmt->fetchAll();
-    }
-
-    /**
      * List published posts by author filtered by visibility.
      *
      * @param  int  $authorId  Author user ID
@@ -563,11 +545,11 @@ class PostModel extends AppModel
 
         // Data query
         $sql = "
-            SELECT p.*, b.blog_name, c.name as category_name, c.slug as category_slug
+            SELECT p.*, b.blog_name, b.blog_slug, c.name as category_name, c.slug as category_slug
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.status = 'published' 
+            WHERE p.status = 'published'
             AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
             {$categoryClause}
             ORDER BY p.published_at DESC
@@ -618,7 +600,7 @@ class PostModel extends AppModel
 
         // Fetch posts query
         $sql = "
-            SELECT p.*, b.blog_name, c.name AS category_name, c.slug AS category_slug
+            SELECT p.*, b.blog_name, b.blog_slug, c.name AS category_name, c.slug AS category_slug
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id
             LEFT JOIN categories c ON p.category_id = c.id
@@ -697,6 +679,77 @@ class PostModel extends AppModel
 
             return false;
         }
+    }
+
+    /**
+     * Platform-wide count of published posts, for the front page stats strip.
+     */
+    public function countPublished(): int
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE status = 'published'";
+
+        return (int) $this->database->query($sql)->fetchColumn();
+    }
+
+    /**
+     * Public post URLs for the sitemap: published, public, on published blogs.
+     *
+     * @param  int  $limit  Safety cap on sitemap size
+     * @return array<int, array<string, mixed>> Rows with slug, blog_slug, updated_at
+     */
+    public function findPublicForSitemap(int $limit = 1000): array
+    {
+        $sql = "SELECT p.slug, p.updated_at, b.blog_slug
+                FROM posts p
+                JOIN blogs b ON p.blog_id = b.id
+                WHERE p.status = 'published'
+                  AND p.visibility = 'public'
+                  AND b.status = 'published'
+                ORDER BY p.published_at DESC
+                LIMIT :limit";
+
+        return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Admin picks for the site front page showcase, newest first.
+     *
+     * The front page is a platform owned surface, so only posts an
+     * administrator explicitly flagged appear here. Returns an empty array
+     * when nothing is picked; the view falls back to its own static cards.
+     *
+     * @param  int  $limit  Maximum number of showcase posts
+     * @return array<int, array<string, mixed>> Post rows with blog name and slug
+     */
+    public function findHomeShowcase(int $limit = 6): array
+    {
+        $sql = "SELECT p.*, b.blog_name, b.blog_slug
+                FROM posts p
+                JOIN blogs b ON p.blog_id = b.id
+                WHERE p.featured_on_home = 1
+                  AND p.status = 'published'
+                  AND p.visibility = 'public'
+                ORDER BY p.published_at DESC, p.id DESC
+                LIMIT :limit";
+
+        return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Toggle the admin-only front page flag on a post.
+     *
+     * Deliberately separate from the per-blog is_featured flag: blog owners
+     * control their own headline, only administrators control the site front
+     * page.
+     */
+    public function setFeaturedOnHome(int $postId, bool $on): bool
+    {
+        $rows = $this->database->execute(
+            'UPDATE posts SET featured_on_home = ? WHERE id = ?',
+            [$on ? 1 : 0, $postId]
+        );
+
+        return $rows >= 0;
     }
 
     /**
@@ -1333,6 +1386,7 @@ class PostModel extends AppModel
         $offset = ($page - 1) * $perPage;
 
         $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
+                       p.featured_on_home,
                        b.blog_name, b.blog_slug,
                        au.username AS author_username
                 FROM {$this->getTable()} p

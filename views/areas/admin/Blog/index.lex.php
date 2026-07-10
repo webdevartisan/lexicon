@@ -48,6 +48,8 @@ $activeLabel = !empty($blog['is_active']) ? 'Active' : 'Inactive';
 $showUrl = '/admin/blogs/'.$blog['id'].'/show';
 $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
 $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
+$featuredOnExplore = (int) ($blog['is_featured'] ?? 0) === 1;
+$featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on explore page';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $blog['id']) ?></td>
@@ -63,6 +65,15 @@ $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
                         </td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
+                                <form method="POST" action="/admin/blogs/<?= (int) $blog['id'] ?>/feature-explore">
+                                    {{ csrf_field() }}
+                                    <button type="submit"
+                                            data-tooltip data-tooltip-content="<?= e($featureTip) ?>" data-tooltip-placement="top"
+                                            aria-label="<?= e($featureTip) ?>"
+                                            class="p-2 rounded-md transition-colors <?= $featuredOnExplore ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
+                                        <i data-lucide="star" class="size-4 <?= $featuredOnExplore ? 'fill-current' : '' ?>"></i>
+                                    </button>
+                                </form>
                                 {% cmp="icon-action" href="{$showUrl}" icon="eye" tip="View" %}
                                 {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit" %}
                                 {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete" danger %}

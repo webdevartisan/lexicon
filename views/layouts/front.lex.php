@@ -35,6 +35,9 @@ $old = old();
         {% endforeach; %}
 
         <link rel="stylesheet" href="/assets/css/main.css" />
+        <link rel="stylesheet" href="/assets/css/front.css" />
+
+        {% yield meta %}
 
         <script>
             window.AppLocales = {
@@ -88,7 +91,6 @@ $old = old();
 
                     <!-- Footer -->
                     <footer id="footer" role="contentinfo">
-                        <!-- Dev: We use the existing .row /.col-* grid so we don’t invent a parallel grid just for the footer. -->
                         <div class="row gtr-50 items">
                             <!-- Brand & mission -->
                             <section class="col-4 col-12-small footer-section footer-brand">
@@ -97,7 +99,7 @@ $old = old();
                                 </header>
 
                                 <p class="footer-text">
-                                    {{ t('footer.aboutText') }}
+                                    <?= e(site_content('footer.aboutText')) ?>
                                 </p>
                             </section>
 
@@ -108,26 +110,11 @@ $old = old();
                                     <h2 class="footer-heading">{{ t('footer.quickLinksTitle') }}</h2>
                                 </header>
                                 <ul class="footer-list">
-                                    <li>
-                                        <a href="{# url('home') #}">
-                                            {{ t('footer.linkHome') }}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{# url('blog.index') #}">
-                                            {{ t('footer.linkBlog') }}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{# url('about') #}">
-                                            {{ t('footer.linkAbout') }}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{# url('contact') #}">
-                                            {{ t('footer.linkContact') }}
-                                        </a>
-                                    </li>
+                                    <li><a href="/">{{ t('footer.linkHome') }}</a></li>
+                                    <li><a href="/blogs">{{ t('footer.linkExplore') }}</a></li>
+                                    <li><a href="/getting-started">{{ t('footer.linkGettingStarted') }}</a></li>
+                                    <li><a href="/about">{{ t('footer.linkAbout') }}</a></li>
+                                    <li><a href="/contact">{{ t('footer.linkContact') }}</a></li>
                                 </ul>
                             </nav>
 
@@ -138,21 +125,9 @@ $old = old();
                                     <h2 class="footer-heading">{{ t('footer.legalTitle') }}</h2>
                                 </header>
                                 <ul class="footer-list">
-                                    <li>
-                                        <a href="{# url('legal.privacy') #}">
-                                            {{ t('footer.linkPrivacy') }}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{# url('legal.terms') #}">
-                                            {{ t('footer.linkTerms') }}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{# url('legal.cookies') #}">
-                                            {{ t('footer.linkCookies') }}
-                                        </a>
-                                    </li>
+                                    <li><a href="/privacy">{{ t('footer.linkPrivacy') }}</a></li>
+                                    <li><a href="/terms">{{ t('footer.linkTerms') }}</a></li>
+                                    <li><a href="/cookies">{{ t('footer.linkCookies') }}</a></li>
                                 </ul>
                             </nav>
                         </div>
@@ -174,59 +149,45 @@ $old = old();
                             </div>
 
                             <p class="footer-copy copyright">
-                                &copy; <?= date('Y') ?> Lexicon.
-                                {{ t('footer.rightsReserved') }}
+                                &copy; <?= date('Y') ?> <?= e(site_setting('site_name', 'Lexicon')) ?>.
+                                All rights reserved.
                             </p>
 
+                            <?php
+                            // Icons appear only for networks the admin configured,
+                            // so a fresh install never ships dead placeholder links.
+                            $socialNetworks = [
+                                ['key' => 'social.twitter', 'icon' => 'fa-x-twitter', 'label' => 'Twitter', 'ariaKey' => 'footer.socialTwitterAria'],
+                                ['key' => 'social.facebook', 'icon' => 'fa-facebook-f', 'label' => 'Facebook', 'ariaKey' => 'footer.socialFacebookAria'],
+                                ['key' => 'social.instagram', 'icon' => 'fa-instagram', 'label' => 'Instagram', 'ariaKey' => 'footer.socialInstagramAria'],
+                                ['key' => 'social.medium', 'icon' => 'fa-medium-m', 'label' => 'Medium', 'ariaKey' => 'footer.socialMediumAria'],
+                            ];
+$configuredSocials = [];
+foreach ($socialNetworks as $network) {
+    $url = site_content($network['key'], '');
+    if ($url !== '' && preg_match('#^https://#i', $url)) {
+        $network['url'] = $url;
+        $configuredSocials[] = $network;
+    }
+}
+?>
+                            {% if (!empty($configuredSocials)): %}
                             <div class="footer-social" aria-label="{{ t('footer.socialAria') }}">
                                 <ul class="icons">
+                                    {% foreach ($configuredSocials as $social): %}
                                     <li>
-                                        <a href="https://twitter.com/yourprofile"
-                                        class="icon brands fa fa-x-twitter"
+                                        <a href="{{ social.url }}"
+                                        class="icon brands fa <?= e($social['icon']) ?>"
                                         rel="noopener noreferrer"
                                         target="_blank"
-                                        aria-label="{{ t('footer.socialTwitterAria') }}">
-                                            <span class="label">Twitter</span>
+                                        aria-label="<?= e($t($social['ariaKey'])) ?>">
+                                            <span class="label">{{ social.label }}</span>
                                         </a>
                                     </li>
-                                    <li>
-                                        <a href="https://facebook.com/yourpage"
-                                        class="icon brands fa fa-facebook-f"
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                        aria-label="{{ t('footer.socialFacebookAria') }}">
-                                            <span class="label">Facebook</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#"
-                                        class="icon brands fa fa-snapchat-ghost"
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                        aria-label="{{ t('footer.socialSnapchatAria') }}">
-                                            <span class="label">Snapchat</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="https://instagram.com/yourprofile"
-                                        class="icon brands fa fa-instagram"
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                        aria-label="{{ t('footer.socialInstagramAria') }}">
-                                            <span class="label">Instagram</span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#"
-                                        class="icon brands fa fa-medium-m"
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                        aria-label="{{ t('footer.socialMediumAria') }}">
-                                            <span class="label">Medium</span>
-                                        </a>
-                                    </li>
+                                    {% endforeach; %}
                                 </ul>
                             </div>
+                            {% endif %}
                         </div>
 
                     </footer>

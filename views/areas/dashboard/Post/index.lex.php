@@ -253,7 +253,7 @@ if ($q !== '') {
                     aria-label="Select post: <?= e((string) ($post['title'] ?? '')) ?>"
                     class="peer sr-only bulk-checkbox"
                 >
-                {% cmp="post-card" post="{$post}" blogSlug="{$activeBlogSlug}" %}
+                {% cmp="post-card" post="{$post}" blogSlug="{$activeBlogSlug}" returnToken="{$returnToken}" %}
             </label>
             {% endforeach %}
         </div>

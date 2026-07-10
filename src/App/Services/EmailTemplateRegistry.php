@@ -197,6 +197,21 @@ class EmailTemplateRegistry
                     'blogName' => 'Travel Stories',
                 ],
             ],
+
+            // Platform
+            'contact_message' => [
+                'name' => 'Contact Message',
+                'description' => 'A visitor message from the public contact form, delivered to the admin email',
+                'group' => 'Platform',
+                'class' => 'App\\Mail\\ContactMessageMail',
+                'sample_data' => [
+                    'toEmail' => 'admin@example.com',
+                    'senderName' => 'Maria Papadopoulou',
+                    'senderEmail' => 'maria@example.com',
+                    'messageSubject' => 'Question about team roles',
+                    'messageBody' => "Hi,\n\nCan a reviewer also write posts on the same blog?\n\nThanks!",
+                ],
+            ],
         ];
     }
 

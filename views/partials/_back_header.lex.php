@@ -37,9 +37,7 @@
                 </button>
                 {% endcache %}
                 <?php if (!empty($user_blogs)) { ?>
-                <!-- Blog switcher: the topbar control for the active blog context.
-                     Lists every blog the user can act on (owned + shared) so a
-                     reviewer/editor can flip into a colleague's blog from anywhere. -->
+                <!-- Blog switcher: -->
                 <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         {{ csrf_field() }}
@@ -49,7 +47,6 @@
                             <?php foreach ($user_blogs as $bid => $b) {
                                 $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
                                 $bstatus = is_array($b) ? (string) ($b['status'] ?? '') : '';
-                                // Owned-only switcher — surface status when it's not the everyday "published".
                                 $suffixText = ($bstatus !== '' && $bstatus !== 'published')
                                     ? ' — '.ucfirst($bstatus)
                                     : '';

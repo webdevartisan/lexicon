@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
+use App\Services\PublicCacheInvalidator;
 use Framework\Core\Response;
 use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
@@ -25,8 +26,48 @@ class PostController extends AppController
     public function __construct(
         private PostModel $model,
         private BlogModel $blogModel,
-        protected Database $database
+        protected Database $database,
+        private PublicCacheInvalidator $publicCache
     ) {}
+
+    /**
+     * Toggle the front page showcase flag on a post.
+     *
+     * This is the only gate between user content and the site front page,
+     * so the change is audit logged and the cached front page is purged
+     * immediately.
+     */
+    public function featureHome(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $post = $this->getPost($id);
+        $on = !((int) ($post['featured_on_home'] ?? 0) === 1);
+
+        if ($on && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') !== 'public')) {
+            $this->flash('error', 'Only published, public posts can be featured on the front page.');
+
+            return $this->redirect('/admin/posts');
+        }
+
+        $this->model->setFeaturedOnHome((int) $post['id'], $on);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            $on ? 'post.featured_on_home' : 'post.unfeatured_from_home',
+            'post',
+            (int) $post['id'],
+            ['title' => $post['title'] ?? ''],
+            $this->request->ip()
+        );
+
+        $this->publicCache->purgeHome();
+        $this->flash('success', $on
+            ? 'Post is now featured on the front page.'
+            : 'Post removed from the front page.');
+
+        return $this->redirect('/admin/posts');
+    }
 
     /**
      * List posts across every blog with status filter, search, and paging.

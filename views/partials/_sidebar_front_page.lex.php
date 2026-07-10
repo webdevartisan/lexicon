@@ -1,56 +1,68 @@
 <div id="sidebar">
     <div class="inner">
         <!-- Menu -->
-            <nav id="menu">
-                <header class="major">
-                    <h2>{{ t('sidebar.menu.title') }}</h2>
-                </header>
-                <ul>
-        {% foreach ($nav_items as $it): %}
-        <li>
-            <a href="<?= lurl($it['href']) ?>" {{ it['current_attr'] }}>{{ it['label'] }}</a>
-        </li>
-        {% endforeach; %}
-                </ul>
-            </nav>
+        <nav id="menu">
+            <header class="major">
+                <h2>{{ t('sidebar.menu.title') }}</h2>
+            </header>
+            <ul>
+                {% foreach ($nav_items as $it): %}
+                <li>
+                    <a href="<?= lurl($it['href']) ?>" {{ it['current_attr'] }}>{{ it['label'] }}</a>
+                </li>
+                {% endforeach; %}
+            </ul>
+        </nav>
 
-        <!-- Section -->
-            <section>
-                <header class="major">
-                    <h2>Getting Started</h2>
-                </header>
-                <div class="mini-posts">
-                    <article>
-                        <a href="#" class="image"><img src="/images/pic07.jpg" alt="" /></a>
-                        <p>New to blogging? Here's how to launch your first post in under 10 minutes.</p>
-                    </article>
-                    <article>
-                        <a href="#" class="image"><img src="/images/pic08.jpg" alt="" /></a>
-                        <p>Why Lexicon was built: a note from the creator on simplicity and creative freedom.</p>
-                    </article>
-                    <article>
-                        <a href="#" class="image"><img src="/images/pic09.jpg" alt="" /></a>
-                        <p>Coming soon: custom domains, monetization tools, and more — help shape what’s next.</p>
-                    </article>
-                </div>
-                <ul class="actions">
-                    <li><a href="#" class="button">More</a></li>
-                </ul>
-            </section>
+        <!-- Getting started -->
+        <section>
+            <header class="major">
+                <h2><?= e(site_content('sidebar.gettingStarted.title')) ?></h2>
+            </header>
+            <div class="mini-posts">
+                <article>
+                    <a href="/getting-started/start-your-first-blog" class="image"><img src="/images/pic07.jpg" alt="" loading="lazy" /></a>
+                    <p><?= e(site_content('sidebar.gettingStarted.items.tip1')) ?></p>
+                </article>
+                <article>
+                    <a href="/getting-started/write-posts-people-read" class="image"><img src="/images/pic08.jpg" alt="" loading="lazy" /></a>
+                    <p><?= e(site_content('sidebar.gettingStarted.items.tip2')) ?></p>
+                </article>
+                <article>
+                    <a href="/getting-started/blog-with-your-team" class="image"><img src="/images/pic09.jpg" alt="" loading="lazy" /></a>
+                    <p><?= e(site_content('sidebar.gettingStarted.items.tip3')) ?></p>
+                </article>
+            </div>
+            <ul class="actions">
+                <li><a href="/getting-started" class="button"><?= e(site_content('sidebar.gettingStarted.actionMore')) ?></a></li>
+            </ul>
+        </section>
 
-        <!-- Section -->
-            <section>
-                <header class="major">
-                    <h2>Get in touch</h2>
-                </header>
-                <p>Have questions, ideas, or feedback? We'd love to hear from you.</p>
-                <ul class="contact">
-                    <li class="icon solid fa fa-envelope"><a href="#">hello@lexicon.dev</a></li>
-                    <li class="icon solid fa fa-phone">(000) 000-0000</li>
-                    <li class="icon solid fa fa-home">1234 Somewhere Road #8254<br />
-                    Nashville, TN 00000-0000</li>
-                </ul>
-            </section>
-
+        <!-- Get in touch -->
+        <section>
+            <header class="major">
+                <h2><?= e(site_content('contact.title')) ?></h2>
+            </header>
+            <p><?= e(site_content('contact.body')) ?></p>
+            <?php
+            // Only details the admin actually configured are shown; the
+            // contact page link is always there as the reliable channel.
+            $contactEmail = site_content('contact.email', '');
+            $contactPhone = site_content('contact.phone', '');
+            $contactAddress = site_content('contact.address', '');
+            ?>
+            <ul class="contact">
+                {% if (!empty($contactEmail)): %}
+                <li class="icon solid fa fa-envelope"><a href="mailto:<?= e($contactEmail) ?>">{{ contactEmail }}</a></li>
+                {% endif %}
+                {% if (!empty($contactPhone)): %}
+                <li class="icon solid fa fa-phone">{{ contactPhone }}</li>
+                {% endif %}
+                {% if (!empty($contactAddress)): %}
+                <li class="icon solid fa fa-home">{{ contactAddress }}</li>
+                {% endif %}
+                <li class="icon solid fa fa-comment"><a href="/contact">{{ t('contact.link') }}</a></li>
+            </ul>
+        </section>
     </div>
 </div>

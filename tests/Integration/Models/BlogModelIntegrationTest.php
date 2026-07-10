@@ -396,7 +396,8 @@ it('returns empty array when getting resources for owner with no blogs', functio
 /**
  * Test retrieving featured creators with limit.
  *
- * Verifies getFeaturedCreators returns top blogs by post count.
+ * Featured creators are admin picks now, so the test flags blogs explicitly
+ * and verifies the limit still applies.
  */
 it('gets featured creators with custom limit', function (int $limit) {
     $owner1 = UserFactory::new($this->userModel)->create();
@@ -405,16 +406,8 @@ it('gets featured creators with custom limit', function (int $limit) {
     $blog1 = BlogFactory::new($this->blogModel)->published()->create($owner1);
     $blog2 = BlogFactory::new($this->blogModel)->published()->create($owner2);
 
-    // FIXED: Set author_id and blog_id via withAttributes
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $owner1, 'blog_id' => $blog1])
-        ->published()
-        ->count(5);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $owner2, 'blog_id' => $blog2])
-        ->published()
-        ->count(2);
+    $this->blogModel->setExploreFeatured($blog1, true);
+    $this->blogModel->setExploreFeatured($blog2, true);
 
     $featured = $this->blogModel->getFeaturedCreators($limit);
 
@@ -626,4 +619,127 @@ it('deletes all collaborators when deleting blog', function () {
 
     $remainingUsers = $this->blogModel->getBlogUsers($blogId);
     expect($remainingUsers)->toBeEmpty();
+});
+
+// ============================================================================
+// EXPLORE PAGE CURATION AND DIRECTORY
+// ============================================================================
+
+/**
+ * Featured creators only lists blogs an admin flagged; post volume no longer
+ * buys a spot on the explore page.
+ */
+it('returns only admin featured published blogs as featured creators', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+
+    $featuredId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    $busyId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    $draftFeaturedId = BlogFactory::new($this->blogModel)->draft()->create($ownerId);
+
+    // The unflagged blog has more posts, which must not matter
+    for ($i = 0; $i < 3; $i++) {
+        PostFactory::new($this->postModel)
+            ->withAttributes([
+                'author_id' => $ownerId,
+                'blog_id' => $busyId,
+                'status' => 'published',
+                'published_at' => date('Y-m-d H:i:s'),
+            ])
+            ->create();
+    }
+
+    $this->blogModel->setExploreFeatured($featuredId, true);
+    $this->blogModel->setExploreFeatured($draftFeaturedId, true);
+
+    // Large limit so leftovers from other tests cannot push our blog out
+    $ids = array_map('intval', array_column($this->blogModel->getFeaturedCreators(100), 'id'));
+
+    expect($ids)->toContain($featuredId)
+        ->not->toContain($busyId)
+        ->not->toContain($draftFeaturedId);
+});
+
+/**
+ * The directory lists published blogs with published posts and excludes
+ * drafts and empty shells.
+ */
+it('lists only published blogs with published posts in the directory', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+
+    $liveId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    $emptyId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    $draftId = BlogFactory::new($this->blogModel)->draft()->create($ownerId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $ownerId,
+            'blog_id' => $liveId,
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    // Draft blog has a published post but still stays hidden
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $ownerId,
+            'blog_id' => $draftId,
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    // Large page size so blogs left behind by other tests cannot hide ours
+    $result = $this->blogModel->getDirectoryWithPagination(1, 100);
+    $ids = array_map('intval', array_column($result['data'], 'id'));
+
+    expect($ids)->toContain($liveId)
+        ->not->toContain($emptyId)
+        ->not->toContain($draftId);
+});
+
+/**
+ * Directory search matches blog names and descriptions.
+ */
+it('searches the directory by name and description', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+
+    // Unique term so reruns and other tests can never collide with it
+    $needle = 'Needle'.bin2hex(random_bytes(4));
+
+    $matchId = BlogFactory::new($this->blogModel)
+        ->published()
+        ->withAttributes(['blog_name' => $needle.' Kitchen Stories'])
+        ->create($ownerId);
+    $otherId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+
+    foreach ([$matchId, $otherId] as $blogId) {
+        PostFactory::new($this->postModel)
+            ->withAttributes([
+                'author_id' => $ownerId,
+                'blog_id' => $blogId,
+                'status' => 'published',
+                'published_at' => date('Y-m-d H:i:s'),
+            ])
+            ->create();
+    }
+
+    $result = $this->blogModel->getDirectoryWithPagination(1, 12, $needle);
+
+    expect($result['totalBlogs'])->toBe(1)
+        ->and((int) $result['data'][0]['id'])->toBe($matchId);
+});
+
+/**
+ * countPublished counts published blogs only.
+ */
+it('counts only published blogs', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+
+    $before = $this->blogModel->countPublished();
+
+    BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    BlogFactory::new($this->blogModel)->draft()->create($ownerId);
+
+    expect($this->blogModel->countPublished())->toBe($before + 1);
 });

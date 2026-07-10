@@ -990,6 +990,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .mb-6 {
   margin-bottom: 1.5rem;
 }
+.mb-8 {
+  margin-bottom: 2rem;
+}
 .me-0 {
   margin-inline-end: 0px;
 }
@@ -2011,6 +2014,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .fill-amber-400 {
   fill: #fbbf24;
 }
+.fill-current {
+  fill: currentColor;
+}
 .fill-slate-100 {
   fill: #f1f5f9;
 }
@@ -2596,6 +2602,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .text-yellow-900 {
   --tw-text-opacity: 1;
   color: rgb(113 63 18 / var(--tw-text-opacity, 1));
+}
+.text-zink-300 {
+  --tw-text-opacity: 1;
+  color: rgb(var(--sc-zink-300) / var(--tw-text-opacity, 1));
 }
 .underline {
   text-decoration-line: underline;

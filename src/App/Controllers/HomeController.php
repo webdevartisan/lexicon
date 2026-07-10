@@ -4,36 +4,58 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
-use App\Services\NavigationService;
 use Framework\Core\Response;
 
+/**
+ * Public front page: hero, stats, admin-curated showcase and FAQ.
+ */
 class HomeController extends AppController
 {
     public function __construct(
         private PostModel $postModel,
-        private UserModel $userModel,
-        private NavigationService $nav
+        private BlogModel $blogModel,
+        private UserModel $userModel
     ) {}
 
     public function index(): Response
     {
-        // Fetch random public posts (limit to 6 for homepage)
-        $posts = $this->postModel->findRandomPublicPosts(6);
+        return $this->view([
+            'showcase' => $this->postModel->findHomeShowcase(6),
+            'stats' => $this->publicStats(),
+        ]);
+    }
 
-        // Attach author info to each post
-        foreach ($posts as &$post) {
-            $author = $this->userModel->findById($post['author_id']);
-            $post['author_username'] = $author['username'] ?? 'unknown';
+    /**
+     * Platform-wide counts for the stats strip.
+     *
+     * Cached for an hour because three COUNT queries on every front page hit
+     * would defeat the point of a landing page, and the numbers only need to
+     * be roughly current.
+     *
+     * @return array{posts: int, blogs: int, writers: int}
+     */
+    private function publicStats(): array
+    {
+        $cached = cache()->get('front:stats');
+        if ($cached !== null) {
+            $stats = json_decode($cached, true);
+            if (is_array($stats)) {
+                return $stats;
+            }
         }
 
-        $items = $this->nav->for('front', $this->request->uri);
+        $stats = [
+            'posts' => $this->postModel->countPublished(),
+            'blogs' => $this->blogModel->countPublished(),
+            'writers' => $this->userModel->countPublicWriters(),
+        ];
 
-        return $this->view([
-            'posts' => $posts,
-            'nav_items' => $items,
-        ]);
+        cache()->set('front:stats', (string) json_encode($stats), 3600);
+
+        return $stats;
     }
 
     public function debugCache(): Response

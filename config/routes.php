@@ -35,6 +35,18 @@ $router->add('/', ['controller' => 'HomeController',    'action' => 'index', 'me
 $router->add('/home', ['controller' => 'HomeController',    'action' => 'index', 'method' => 'GET']);
 
 $router->add('/blogs', ['controller' => 'BlogController',   'action' => 'index', 'method' => 'GET']);
+
+// Static pages: explicit slugs only, so the pages table can never expose
+// anything that was not deliberately routed.
+$router->add('/about', ['controller' => 'PageController', 'action' => 'show', 'slug' => 'about', 'method' => 'GET']);
+$router->add('/privacy', ['controller' => 'PageController', 'action' => 'show', 'slug' => 'privacy', 'method' => 'GET']);
+$router->add('/terms', ['controller' => 'PageController', 'action' => 'show', 'slug' => 'terms', 'method' => 'GET']);
+$router->add('/cookies', ['controller' => 'PageController', 'action' => 'show', 'slug' => 'cookies', 'method' => 'GET']);
+$router->add('/contact', ['controller' => 'PageController', 'action' => 'contact', 'method' => 'GET']);
+$router->add('/contact', ['controller' => 'PageController', 'action' => 'sendContact', 'method' => 'POST']);
+$router->add('/getting-started', ['controller' => 'PageController', 'action' => 'gettingStarted', 'method' => 'GET']);
+$router->add('/getting-started/{slug:[a-z0-9-]+}', ['controller' => 'PageController', 'action' => 'guide', 'method' => 'GET']);
+$router->add('/sitemap.xml', ['controller' => 'SitemapController', 'action' => 'index', 'method' => 'GET']);
 $router->add('/products', ['controller' => 'Products', 'action' => 'index', 'method' => 'GET']);
 
 // Route with slug parameter, only allowing word characters and hyphen
@@ -302,6 +314,20 @@ $router->group([
     // Site settings
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'update', 'method' => 'POST']);
+
+    // Front page content (per-locale overrides of the public site text)
+    $r->add('/front-page', ['controller' => 'FrontPageController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/front-page', ['controller' => 'FrontPageController', 'action' => 'update', 'method' => 'POST']);
+
+    // Static pages (about, contact, legal, guides)
+    $r->add('/pages', ['controller' => 'PageController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/pages/{id:\d+}/edit', ['controller' => 'PageController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/pages/{id:\d+}/update', ['controller' => 'PageController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/pages/{id:\d+}/translate', ['controller' => 'PageController', 'action' => 'translate', 'method' => 'POST']);
+
+    // Platform surface curation: front page showcase and explore featured
+    $r->add('/posts/{id:\d+}/feature-home', ['controller' => 'PostController', 'action' => 'featureHome', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/feature-explore', ['controller' => 'BlogController', 'action' => 'featureExplore', 'method' => 'POST']);
 
     // Audit trail
     $r->add('/audit-log', ['controller' => 'AuditLogController', 'action' => 'index', 'method' => 'GET']);

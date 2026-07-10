@@ -110,6 +110,26 @@ class Request
     }
 
     /**
+     * Get all query (GET) parameters.
+     *
+     * @return array<string,mixed>
+     */
+    public function queryParams(): array
+    {
+        return $this->get;
+    }
+
+    /**
+     * Get all POST/body parameters.
+     *
+     * @return array<string,mixed>
+     */
+    public function postParams(): array
+    {
+        return $this->post;
+    }
+
+    /**
      * Get a query (GET) parameter.
      *
      * @param  mixed  $default  Value to return if key is not present.

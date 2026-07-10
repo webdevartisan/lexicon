@@ -245,6 +245,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     description TEXT DEFAULT NULL,
     owner_id INT NOT NULL,
     status ENUM('draft','published','archived') NOT NULL DEFAULT 'draft',
+    is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick for the explore page featured blogs',
     published_at TIMESTAMP NULL COMMENT 'When blog was first published',
     archived_at TIMESTAMP NULL COMMENT 'When blog was archived',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -253,7 +254,8 @@ CREATE TABLE IF NOT EXISTS blogs (
     INDEX idx_owner (owner_id),
     INDEX idx_slug (blog_slug),
     INDEX idx_status (status),
-    INDEX idx_status_published (status, published_at)
+    INDEX idx_status_published (status, published_at),
+    INDEX idx_featured (is_featured, published_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog instances with ownership and lifecycle tracking';
 
@@ -377,6 +379,7 @@ CREATE TABLE IF NOT EXISTS posts (
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
     is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Headlines the blog landing; one per blog',
+    featured_on_home TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick shown on the site front page',
     published_at TIMESTAMP NULL,
     timezone VARCHAR(50) DEFAULT 'UTC' COMMENT 'Timezone for scheduled publishing',
     last_workflow_by INT DEFAULT NULL COMMENT 'Last user to change workflow state',
@@ -398,7 +401,8 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_status_published (status, published_at),
     INDEX idx_author_created (author_id, created_at),
     INDEX idx_blog_published (blog_id, published_at),
-    INDEX idx_blog_featured (blog_id, is_featured)
+    INDEX idx_blog_featured (blog_id, is_featured),
+    INDEX idx_featured_home (featured_on_home, published_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog posts with workflow state and visibility controls';
 
@@ -623,6 +627,49 @@ CREATE TABLE IF NOT EXISTS password_resets (
     INDEX idx_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Time-limited password reset tokens';
+
+-- ----------------------------------------------------------------------------
+-- Pages Table
+-- ----------------------------------------------------------------------------
+-- Admin managed static pages (about, contact, legal texts, guides). Pages
+-- exist per locale; English acts as the fallback for missing translations.
+-- Slugs are only reachable through explicit routes.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(100) NOT NULL,
+    locale VARCHAR(5) NOT NULL DEFAULT 'en',
+    title VARCHAR(200) NOT NULL,
+    content LONGTEXT,
+    meta_description VARCHAR(160) DEFAULT NULL,
+    is_published TINYINT(1) NOT NULL DEFAULT 0,
+    updated_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_slug_locale (slug, locale),
+    INDEX idx_slug (slug),
+    INDEX idx_published (is_published)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Admin managed static pages (about, contact, legal, guides)';
+
+-- ----------------------------------------------------------------------------
+-- Site Content Table
+-- ----------------------------------------------------------------------------
+-- Per-locale overrides for the editable public site text (front page, footer,
+-- sidebar). Locale files remain the defaults; an empty locale string marks a
+-- value shared by every locale (contact details, social URLs).
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS site_content (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    locale VARCHAR(5) NOT NULL DEFAULT '' COMMENT 'Empty string means the value applies to every locale',
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_name_locale (name, locale),
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Editable site text; overrides the locale file defaults';
 
 -- ============================================================================
 -- ADD FOREIGN KEY FOR USER PREFERENCES (After blogs table exists)

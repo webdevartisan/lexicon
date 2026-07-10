@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Interfaces\UploadServiceInterface;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
-use App\Services\UploadService;
 use App\Services\UserDeletionService;
 use Framework\Database;
+use Mockery as m;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\UserRelationsHelper;
 
@@ -25,7 +26,13 @@ describe('UserDeletionService Integration', function () {
         $this->profileModel = new UserProfileModel($this->db);
         $this->socialLinksModel = new UserSocialLinkModel($this->db);
         $this->preferencesModel = new UserPreferencesModel($this->db);
-        $this->uploadService = new UploadService();
+
+        // Mock the upload service so tests never touch the real storage/uploads
+        // directory. The test DB is separate but the uploads directory is shared
+        // with production; without this mock, deleteUser() calls would wipe
+        // storage/uploads/users/{id}/ for whatever id the factory happens to
+        // produce (usually 1 after TRUNCATE resets auto_increment).
+        $this->uploadService = m::mock(UploadServiceInterface::class)->shouldIgnoreMissing();
 
         $this->service = new UserDeletionService(
             $this->userModel,

@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\BlogModel;
+use App\Services\PublicCacheInvalidator;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -14,7 +15,52 @@ class BlogController extends AppController
     // Enforced for every action by AppController::beforeAction()
     protected ?string $areaAbility = 'manageBlogs';
 
-    public function __construct(private BlogModel $blogModel) {}
+    public function __construct(
+        private BlogModel $blogModel,
+        private PublicCacheInvalidator $publicCache
+    ) {}
+
+    /**
+     * Toggle the explore page featured flag on a blog.
+     *
+     * Curation gate for a platform owned surface, so it is audit logged and
+     * the cached explore page is purged right away.
+     */
+    public function featureExplore(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->blogModel->find($id);
+        if (!$blog) {
+            throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        $on = !((int) ($blog['is_featured'] ?? 0) === 1);
+
+        if ($on && ($blog['status'] ?? '') !== 'published') {
+            $this->flash('error', 'Only published blogs can be featured on the explore page.');
+
+            return $this->redirect('/admin/blogs');
+        }
+
+        $this->blogModel->setExploreFeatured((int) $blog['id'], $on);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            $on ? 'blog.featured_on_explore' : 'blog.unfeatured_from_explore',
+            'blog',
+            (int) $blog['id'],
+            ['blog_name' => $blog['blog_name'] ?? ''],
+            $this->request->ip()
+        );
+
+        $this->publicCache->purgeExplore();
+        $this->flash('success', $on
+            ? 'Blog is now featured on the explore page.'
+            : 'Blog removed from the explore page featured section.');
+
+        return $this->redirect('/admin/blogs');
+    }
 
     public function index(): Response
     {
