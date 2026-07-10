@@ -121,6 +121,8 @@ $router->group([
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
     $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/likes', ['controller' => 'EngagementController', 'action' => 'likes', 'method' => 'GET']);
+    $r->add('/bookmarks', ['controller' => 'EngagementController', 'action' => 'bookmarks', 'method' => 'GET']);
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);

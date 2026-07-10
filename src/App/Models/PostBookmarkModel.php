@@ -69,10 +69,11 @@ class PostBookmarkModel extends AppModel
      */
     public function bookmarkedPosts(int $userId): array
     {
-        $sql = "SELECT p.id, p.title, p.slug, p.blog_id, b.created_at AS bookmarked_at
+        $sql = "SELECT p.id, p.title, p.slug, p.excerpt, bl.blog_slug, bl.blog_name, b.created_at AS bookmarked_at
                 FROM {$this->getTable()} b
                 INNER JOIN posts p ON p.id = b.post_id
-                WHERE b.user_id = ?
+                INNER JOIN blogs bl ON bl.id = p.blog_id
+                WHERE b.user_id = ? AND p.status = 'published' AND p.visibility = 'public'
                 ORDER BY b.created_at DESC";
 
         return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);

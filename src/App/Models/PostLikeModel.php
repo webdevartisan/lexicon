@@ -53,6 +53,23 @@ class PostLikeModel extends AppModel
     }
 
     /**
+     * Published public posts the user has liked, newest like first.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function likedPosts(int $userId): array
+    {
+        $sql = "SELECT p.id, p.title, p.slug, p.excerpt, b.blog_slug, b.blog_name, l.created_at AS liked_at
+                FROM {$this->getTable()} l
+                INNER JOIN posts p ON p.id = l.post_id
+                INNER JOIN blogs b ON b.id = p.blog_id
+                WHERE l.user_id = ? AND p.status = 'published' AND p.visibility = 'public'
+                ORDER BY l.created_at DESC";
+
+        return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Total likes on a post.
      */
     public function countByPost(int $postId): int
