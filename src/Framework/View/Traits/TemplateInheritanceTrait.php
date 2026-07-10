@@ -24,6 +24,9 @@ trait TemplateInheritanceTrait
             throw new NotFoundException("Base layout '{$matches['template']}' not found.");
         }
 
+        // Register the layout as a dependency so editing it invalidates every compiled child view
+        $this->compilationDependencies[] = $basePath;
+
         $base = file_get_contents($basePath);
         $blocks = $this->getBlocks($code);
 

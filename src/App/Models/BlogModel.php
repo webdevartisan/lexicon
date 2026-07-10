@@ -457,11 +457,11 @@ class BlogModel extends AppModel
     /**
      * Find multiple blogs by their IDs.
      *
-     * Returns minimal blog data (id, blog_slug) for efficient slug lookups.
-     * Used to enrich posts with blog slugs without N+1 queries.
+     * Returns minimal blog data (id, blog_slug, blog_name) for efficient
+     * lookups. Used to enrich posts with blog links without N+1 queries.
      *
      * @param  array<int>  $ids  Blog IDs to fetch
-     * @return array<int, array<string, mixed>> Array of blog records with id and blog_slug
+     * @return array<int, array<string, mixed>> Array of blog records with id, blog_slug, and blog_name
      */
     public function findByIds(array $ids): array
     {
@@ -471,7 +471,7 @@ class BlogModel extends AppModel
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
-        $sql = "SELECT id, blog_slug FROM blogs WHERE id IN ($placeholders)";
+        $sql = "SELECT id, blog_slug, blog_name FROM blogs WHERE id IN ($placeholders)";
         $stmt = $this->database->query($sql, $ids);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);

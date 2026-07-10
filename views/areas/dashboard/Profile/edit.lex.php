@@ -67,13 +67,25 @@
               {% cmp="input" type="textarea" label="Bio" value="{$bio}" %}
             </div>
 
-            {# Profile #}
+            {# Public profile #}
             <div class="mt-6 space-y-3">
               <h3 class="text-xs font-semibold tracking-wide uppercase text-slate-500 dark:text-zink-300">
-                Profile
+                Public Profile
               </h3>
               <?php $slug = $user['slug']; ?>
-              {% cmp="input" type="text" label="Public profile URL" value="{$slug}" prefix="https://lexicon.com/en/profile/" placeholder="your-slug" underlabel="This will be your public profile link." %}
+              {% cmp="input" type="text" name="public profile url" label="Public profile URL" value="{$slug}" prefix="{$profileUrlPrefix}" placeholder="your-name" underlabel="Lowercase letters, numbers, and hyphens. Leave empty to disable your public page." %}
+
+              <label class="flex items-start gap-2 text-xs text-slate-700 dark:text-zink-100">
+                <input type="checkbox" name="is_public" value="1"
+                  class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600" {{
+                  user.is_public ? 'checked' : '' }}>
+                <span>
+                  <span class="font-medium">Make my profile public</span><br>
+                  <span class="text-[11px] text-slate-500 dark:text-zink-300">
+                    When off, your profile page returns a 404 for visitors.
+                  </span>
+                </span>
+              </label>
             </div>
 
             {# Social Links #}
@@ -87,7 +99,7 @@
                 {% cmp="input" type="url" label="Website" value="{$website}" %}
 
                 <?php $twitter = $user['twitter']; ?>
-                {% cmp="input" type="url" label="Twitter (X)" value="{$twitter}" %}
+                {% cmp="input" type="url" name="twitter" label="Twitter (X)" value="{$twitter}" %}
 
                 <?php $instagram = $user['instagram']; ?>
                 {% cmp="input" type="url" label="Instagram" value="{$instagram}" %}
@@ -112,16 +124,16 @@
                 <?php $selectedKey = $user['display_name']; ?>
                 {% cmp="select" options="{$options}" selectedKey="{$selectedKey}" label="Display Name" %}
 
-                <?php $options = ['public' => 'Public', 'private' => 'Private']; ?>
+                <?php $options = ['public' => 'Public', 'unlisted' => 'Unlisted', 'private' => 'Private']; ?>
                 <?php $selectedKey = $user['default_visibility']; ?>
-                {% cmp="select" options="{$options}" selectedKey="{$selectedKey}" label="Default Visibility" %}
+                {% cmp="select" options="{$options}" selectedKey="{$selectedKey}" name="default visibility" label="Default Visibility" %}
 
               </div>
 
               <div class="grid gap-4 mt-2 md:grid-cols-2">
 
                 <?php $selectedKey = $user['timezone']; ?>
-                {% cmp="select" groups="{$timezones}" selectedKey="{$selectedKey}" label="timezone" %}
+                {% cmp="select" groups="{$timezones}" selectedKey="{$selectedKey}" name="timezone" label="Timezone" %}
 
               </div>
             </div>
@@ -306,10 +318,14 @@
           <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Activity Summary</h3>
         </div>
         <div class="p-4 space-y-2 text-xs text-slate-600 dark:text-zink-200">
-          <p>Total Posts <span class="font-semibold text-slate-900 dark:text-zink-100">{{ user.post_count }}</span></p>
-          <p>Comments Received <span class="font-semibold text-slate-900 dark:text-zink-100">{{ user.comment_count
-              }}</span></p>
-          <p>Last Login <span class="font-semibold text-slate-900 dark:text-zink-100">{{ user.last_login }}</span></p>
+          <p class="flex items-center justify-between">Total Posts
+            <span class="font-semibold text-slate-900 dark:text-zink-100">{{ user.post_count }}</span></p>
+          <p class="flex items-center justify-between">Comments Received
+            <span class="font-semibold text-slate-900 dark:text-zink-100">{{ user.comment_count }}</span></p>
+          <p class="flex items-center justify-between">Last Login
+            <span class="font-semibold text-slate-900 dark:text-zink-100">
+              {% if user.last_login|notempty %}{{ user.last_login }}{% else %}Never{% endif %}
+            </span></p>
         </div>
       </section>
 
@@ -319,7 +335,7 @@
           <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Notifications</h2>
         </div>
         <div class="p-4 md:p-5">
-          <form method="post" action="/dashboard/account/notifications">
+          <form method="post" action="/dashboard/profile/notifications">
             {{ csrf_field() }}
             <div class="space-y-3 text-xs text-slate-700 dark:text-zink-100">
               <label class="flex items-start gap-2">
@@ -388,17 +404,16 @@
         <div class="p-4 space-y-5 text-xs text-slate-600 dark:text-zink-200">
           <?php $slug = $user['slug']; ?>
           <div class="flex justify-center gap-2">
+            {% if user.slug|notempty %}
             {% cmp="btn" href="/profile/{$slug}" variant="slate" icon="external-link" label="Profile Preview" %}
+            {% endif %}
             {% cmp="btn" href="/dashboard/export" variant="slate" icon="download" label="Export my data" %}
           </div>
-          <form method="post" action="/dashboard/delete-account"
-            onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
-            <input type="hidden" name="_method" value="DELETE">
-            {{ csrf_field() }}
-            <div class="flex justify-center mt-4">
-              {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Delete my account" %}
-            </div>
-          </form>
+          {% if user.slug|empty %}
+          <p class="text-center text-[11px] text-slate-500 dark:text-zink-300">
+            Set a public profile URL to enable your public page.
+          </p>
+          {% endif %}
         </div>
 
       </section>
@@ -406,8 +421,10 @@
   </div>
 </div>
 
-<!-- Delete Account Modal (Using Your Template's Structure) -->
- {% cmp="deleteAccountModal" postCount="{$userPostCount}" commentCount="{$userCommentCount}" %}
+<!-- Delete Account Modal -->
+<?php $userPostCount = $user['post_count']; ?>
+<?php $userCommentCount = $user['comment_count']; ?>
+{% cmp="deleteAccountModal" postCount="{$userPostCount}" commentCount="{$userCommentCount}" %}
 
 {% endblock %}
 {% block scripts %}
@@ -461,11 +478,6 @@
 
       }
     });
-
-    // Public profile URL Prefix
-    const base = window.location.origin;
-    const prefix = document.getElementById('public_profile_url');
-    prefix.innerHTML = base + '/en/profile/';
   });
 </script>
 

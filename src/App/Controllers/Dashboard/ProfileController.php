@@ -45,6 +45,7 @@ class ProfileController extends AppController
         return $this->view([
             'user' => $profileData,
             'timezones' => $timezones,
+            'profileUrlPrefix' => rtrim(base_url(), '/').lurl('/profile').'/',
             'noBreadcrumb' => false,
         ]);
     }
@@ -55,35 +56,52 @@ class ProfileController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
+        $slugInput = strtolower(trim((string) $this->request->postParam('public_profile_url')));
 
-        // validate all form input using the validation framework
-        $validator = $this->validateOrFail([
+        $rules = [
             'first_name' => 'required|alpha|min:2|max:50',
             'last_name' => 'required|alpha|min:2|max:50',
             'email' => 'required|email|unique:users,email,'.$userId,
-            'bio' => 'max:500',
-            'public_profile_url' => 'alpha|min:2|max:50',
+            'bio' => 'max:1000',
             'occupation' => 'max:100',
             'location' => 'max:100',
             'website' => 'url',
-            'twitter_(x)' => 'url',
+            'twitter' => 'url',
             'instagram' => 'url',
             'linkedin' => 'url',
             'github' => 'url',
             'display_name' => 'in:name,username',
             'default_visibility' => 'in:public,private,unlisted',
-            'timezone' => 'in:'.implode(',', DateTimeZone::listIdentifiers()),
-            'notify_comments' => 'boolean',
-            'notify_likes' => 'boolean',
-            'notify_post_status' => 'boolean',
-            'notify_role_changes' => 'boolean',
-            'notify_invites' => 'boolean',
-        ], [
+            'timezone' => 'timezone',
+        ];
+
+        // the slug rule rejects empty values, so only apply it when a slug was submitted
+        if ($slugInput !== '') {
+            $rules['public_profile_url'] = 'slug|min:2|max:50';
+        }
+
+        $validator = $this->validateOrFail($rules, [
             'email.unique' => 'This email address is already in use.',
-            'timezone.in' => 'Please select a valid timezone.',
+            'public_profile_url.slug' => 'Profile URL may only contain lowercase letters, numbers, and single hyphens.',
+            'timezone.timezone' => 'Please select a valid timezone.',
         ]);
 
         $validated = $validator->validated();
+
+        $profile = $this->profiles->findOrCreate($userId);
+        $currentSlug = $profile['slug'] ?? null;
+
+        // reserved and taken slugs would hit the unique index at write time; reject them with a
+        // friendly error. Unchanged slugs are skipped so a grandfathered reserved slug stays usable.
+        if ($slugInput !== '' && $slugInput !== $currentSlug && !$this->profiles->isSlugAvailable($slugInput, $userId)) {
+            $this->session->set('_errors', [
+                'public_profile_url' => ['This profile URL is already taken.'],
+            ]);
+            $this->session->set('_old_input', $this->request->all());
+            $this->flash('error', 'That profile URL is already taken. Please choose another.');
+
+            return $this->redirect('/dashboard/profile');
+        }
 
         // prepare user table updates only if fields changed
         $user = auth()->user();
@@ -97,29 +115,25 @@ class ProfileController extends AppController
             $this->users->updateById($userId, $userUpdate);
         }
 
-        // handle profile fields (bio, occupation, location)
-        $profile = $this->profiles->findOrCreate($userId);
+        // handle profile fields (bio, occupation, location, visibility)
         $profileData = changedFields([
             'bio' => $validated['bio'] ?? '',
-            'slug' => $validated['public_profile_url'] ?? '',
+            // empty slug must be NULL: the unique index tolerates many NULLs but only one ''
+            'slug' => $slugInput !== '' ? $slugInput : null,
             'occupation' => $validated['occupation'] ?? '',
             'location' => $validated['location'] ?? '',
+            'is_public' => $this->request->postParam('is_public') ? '1' : '0',
         ], $profile);
 
         if (!empty($profileData)) {
             $this->profiles->upsert($userId, $profileData);
         }
 
-        // handle preferences
+        // handle preferences; notification toggles live in their own form (see updateNotifications)
         $prefData = [
             'display_name_preference' => $validated['display_name'] ?? 'username',
             'default_post_visibility' => $validated['default_visibility'] ?? 'public',
             'timezone' => $validated['timezone'] ?? null,
-            'notify_comments' => isset($validated['notify_comments']) ? 1 : 0,
-            'notify_likes' => isset($validated['notify_likes']) ? 1 : 0,
-            'notify_post_status' => (int) (bool) ($this->request->postParam('notify_post_status') ?? 0),
-            'notify_role_changes' => (int) (bool) ($this->request->postParam('notify_role_changes') ?? 0),
-            'notify_invites' => (int) (bool) ($this->request->postParam('notify_invites') ?? 0),
         ];
         $this->prefs->upsert($userId, $prefData);
 
@@ -127,7 +141,7 @@ class ProfileController extends AppController
         $socialLinks = $this->socials->getKeyValueArrayLinks($userId);
         $socialData = changedFields([
             'website' => $validated['website'] ?? '',
-            'twitter' => $validated['twitter_(x)'] ?? '',
+            'twitter' => $validated['twitter'] ?? '',
             'instagram' => $validated['instagram'] ?? '',
             'linkedin' => $validated['linkedin'] ?? '',
             'github' => $validated['github'] ?? '',
@@ -151,6 +165,33 @@ class ProfileController extends AppController
         $this->users->updateById($userId, ['display_name_cached' => $display]);
 
         $this->flash('success', 'Profile updated successfully.');
+
+        return $this->redirect('/dashboard/profile');
+    }
+
+    /**
+     * Save email notification preferences.
+     *
+     * separate from update() so saving the main profile form never
+     * touches notification toggles, and vice versa.
+     */
+    public function updateNotifications(): Response
+    {
+        // enforce CSRF protection
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $userId = (int) auth()->user()['id'];
+
+        // unchecked boxes are absent from the request, so absence means off
+        $this->prefs->upsert($userId, [
+            'notify_comments' => $this->request->postParam('notify_comments') ? 1 : 0,
+            'notify_likes' => $this->request->postParam('notify_likes') ? 1 : 0,
+            'notify_post_status' => $this->request->postParam('notify_post_status') ? 1 : 0,
+            'notify_role_changes' => $this->request->postParam('notify_role_changes') ? 1 : 0,
+            'notify_invites' => $this->request->postParam('notify_invites') ? 1 : 0,
+        ]);
+
+        $this->flash('success', 'Notification settings saved.');
 
         return $this->redirect('/dashboard/profile');
     }
@@ -276,7 +317,7 @@ class ProfileController extends AppController
         }
 
         // regenerate session ID after credential change to prevent session fixation
-        session_regenerate_id(true);
+        $this->session->regenerate();
 
         $this->flash('success', 'Password updated successfully.');
 
@@ -310,6 +351,20 @@ class ProfileController extends AppController
             // log but don't fail - database update is more important
             error_log("Failed to delete avatar file for user {$userId}: ".$e->getMessage());
         }
+    }
+
+    /**
+     * Build the avatar placeholder initials from name, falling back to username.
+     */
+    private function computeInitials(string $first, string $last, string $username): string
+    {
+        $initials = mb_strtoupper(mb_substr(trim($first), 0, 1).mb_substr(trim($last), 0, 1));
+
+        if ($initials === '') {
+            $initials = mb_strtoupper(mb_substr(trim($username), 0, 1));
+        }
+
+        return $initials !== '' ? $initials : '?';
     }
 
     private function computeDisplay(string $pref, string $first, string $last, string $username): string
@@ -373,6 +428,11 @@ class ProfileController extends AppController
         $enriched['display_name'] = $data['display_name_preference'] ?? 'username';
         $enriched['default_visibility'] = $data['default_post_visibility'] ?? 'public';
         $enriched['timezone'] = $data['timezone'] ?? 'UTC';
+        $enriched['initials'] = $this->computeInitials(
+            $data['first_name'] ?? '',
+            $data['last_name'] ?? '',
+            $data['username'] ?? ''
+        );
 
         // default notification preferences to enabled
         $enriched['notify_comments'] = isset($data['notify_comments']) ? (int) $data['notify_comments'] : 1;
@@ -381,11 +441,13 @@ class ProfileController extends AppController
         $enriched['notify_role_changes'] = isset($data['notify_role_changes']) ? (int) $data['notify_role_changes'] : 1;
         $enriched['notify_invites'] = isset($data['notify_invites']) ? (int) $data['notify_invites'] : 1;
 
-        // use denormalized counts if available, otherwise compute them
-        $enriched['post_count'] = $data['posts_count']
-            ?? $this->users->countPosts($userId);
-        $enriched['comment_count'] = $data['comments_received_count']
-            ?? $this->users->countCommentsReceived($userId);
+        // denormalized counters are unreliable (often stale at 0), so recount when empty
+        $enriched['post_count'] = !empty($data['posts_count'])
+            ? (int) $data['posts_count']
+            : $this->users->countPosts($userId);
+        $enriched['comment_count'] = !empty($data['comments_received_count'])
+            ? (int) $data['comments_received_count']
+            : $this->users->countCommentsReceived($userId);
 
         // format last login time in user's timezone
         $enriched['last_login'] = $this->formatLastLogin(
@@ -422,7 +484,7 @@ class ProfileController extends AppController
                 error_log("Invalid timezone '{$timezone}' for user, using UTC");
             }
 
-            return $date->format('Y-m-d H:i:s');
+            return $date->format('M j, Y H:i');
         } catch (Exception $e) {
             // log datetime parsing errors but don't crash the page
             error_log("Failed to parse last_login '{$lastLogin}': ".$e->getMessage());

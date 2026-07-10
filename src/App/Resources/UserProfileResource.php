@@ -55,7 +55,25 @@ class UserProfileResource
 
     public function location(): ?string
     {
-        return $this->data['location_text'] ?? null;
+        return $this->data['location'] ?? null;
+    }
+
+    /** Occupation or job title shown under the display name. */
+    public function occupation(): ?string
+    {
+        return $this->data['occupation'] ?? null;
+    }
+
+    /** Account username, used as a display-name fallback. */
+    public function username(): ?string
+    {
+        return $this->data['username'] ?? null;
+    }
+
+    /** When the user joined (users.created_at), or null if not loaded. */
+    public function memberSince(): ?string
+    {
+        return $this->data['user_created_at'] ?? null;
     }
 
     /** Cached display name for listing (from users.display_name_cached). */

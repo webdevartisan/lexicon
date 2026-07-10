@@ -158,6 +158,7 @@ class UserProfileModel extends AppModel
                 u.display_name_cached,
                 u.posts_count,
                 u.comments_received_count,
+                u.created_at            AS user_created_at,
                 up.slug,
                 up.bio,
                 up.avatar_url,

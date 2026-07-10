@@ -115,6 +115,7 @@ $router->group([
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);
+    $r->add('/profile/notifications', ['controller' => 'ProfileController', 'action' => 'updateNotifications', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'ProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
     $r->add('/profile/avatar/remove', ['controller' => 'ProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
