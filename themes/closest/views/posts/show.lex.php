@@ -229,6 +229,7 @@ $heroImg = $cover ? e($cover) : $asset('images/work-2.jpg');
 
             <form action="/comments/create" method="post">
 
+              <?= csrf_field() ?>
               <input type="hidden" name="post_id" value="<?= ($post['id'] ?? 0) ?>">
 
               <div class="form-group">

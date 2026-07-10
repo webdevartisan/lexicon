@@ -90,7 +90,9 @@ class CommentController extends AppController
         }
 
         $isReply = $parentId > 0;
-        $autoPublish = $isReply && $this->blogSettings->repliesAutoPublish((int) $post['blog_id']);
+        $autoPublish = $isReply
+            ? $this->blogSettings->repliesAutoPublish((int) $post['blog_id'])
+            : $this->blogSettings->commentsAutoPublish((int) $post['blog_id']);
 
         $comment = [
             'post_id' => $postId,
@@ -119,9 +121,11 @@ class CommentController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', $autoPublish
-            ? 'Reply posted.'
-            : 'Thanks! Your comment was submitted and is awaiting moderation.');
+        if ($autoPublish) {
+            $this->flash('success', $isReply ? 'Reply posted.' : 'Comment posted.');
+        } else {
+            $this->flash('success', 'Thanks! Your comment was submitted and is awaiting moderation.');
+        }
 
         return $this->redirectBack();
     }
