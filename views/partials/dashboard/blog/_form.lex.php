@@ -220,6 +220,26 @@ $isArchived = $blogStatus === 'archived';
           <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
             <div class="flex items-start gap-2">
               <input
+                id="replies_auto_publish"
+                name="replies_auto_publish"
+                type="checkbox"
+                value="1"
+                class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
+                {% if settings.replies_auto_publish|notempty %}checked{% endif %}>
+              <div>
+                <label for="replies_auto_publish" class="text-xs font-medium text-slate-800 dark:text-zink-100">
+                  {{ t('blog.form.fields.allowReplies.label') }}
+                </label>
+                <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
+                  {{ t('blog.form.fields.allowReplies.help') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
+            <div class="flex items-start gap-2">
+              <input
                 id="workflow_enabled"
                 name="workflow_enabled"
                 type="checkbox"

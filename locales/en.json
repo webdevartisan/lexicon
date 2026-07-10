@@ -394,6 +394,10 @@
                     "label": "Allow comments on posts",
                     "help": "Can be disabled per post."
                 },
+                "allowReplies": {
+                    "label": "Publish replies instantly",
+                    "help": "Replies to comments appear immediately. Turn off to hold them for moderation like new comments."
+                },
                 "banner": {
                     "label": "Banner"
                 },

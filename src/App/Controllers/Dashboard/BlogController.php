@@ -226,6 +226,7 @@ final class BlogController extends AppController
             'indexable' => 1,
             'timezone' => 'UTC',
             'comments_enabled' => 1,
+            'replies_auto_publish' => 1,
             'workflow_enabled' => 0,
         ];
 
@@ -267,6 +268,7 @@ final class BlogController extends AppController
             'meta_description' => 'max:500',
             'allow_indexing' => 'boolean',
             'allow_comments' => 'boolean',
+            'replies_auto_publish' => 'boolean',
             'remove_banner' => 'boolean',
             'remove_logo' => 'boolean',
             'remove_favicon' => 'boolean',
@@ -324,6 +326,7 @@ final class BlogController extends AppController
             'meta_description' => $validated['meta_description'] ?? '',
             'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
             'comments_enabled' => isset($validated['allow_comments']) ? 1 : 0,
+            'replies_auto_publish' => isset($validated['replies_auto_publish']) ? 1 : 0,
             'workflow_enabled' => isset($validated['workflow_enabled']) ? 1 : 0,
         ];
 
