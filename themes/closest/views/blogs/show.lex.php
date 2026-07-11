@@ -117,4 +117,26 @@ $blogTitle = e($blog['blog_name'] ?? ($username."'s Blog"));
       </div>
     </div>
   </section>
+
+  <!-- Subscribe -->
+  <section id="subscribe">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 text-center animate-box">
+          <h2>Never miss a post</h2>
+          <p class="text-muted">Get an email when <?= e($blog['blog_name'] ?? 'this blog') ?> publishes something new. Unsubscribe any time.</p>
+          <form action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post"
+            style="display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; margin-top:1rem;">
+            <?= csrf_field() ?>
+            <label for="subscribe-email" class="sr-only">Email address</label>
+            <input id="subscribe-email" name="email" type="email" class="form-control"
+              style="max-width:280px;" placeholder="you@example.com"
+              value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
+              autocomplete="email" maxlength="255" required>
+            <button type="submit" class="btn btn-primary">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 {% endblock %}

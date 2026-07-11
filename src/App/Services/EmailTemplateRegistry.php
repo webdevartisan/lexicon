@@ -185,6 +185,20 @@ class EmailTemplateRegistry
                     'postSlug' => 'ten-hidden-beaches-in-crete',
                 ],
             ],
+            'new_post' => [
+                'name' => 'New Post for Subscribers',
+                'description' => 'Tells blog subscribers a new post is live, with an unsubscribe link',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\NewPostMail',
+                'sample_data' => [
+                    'toEmail' => 'reader@example.com',
+                    'blogName' => 'Travel Stories',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'unsubscribeToken' => str_repeat('ab', 32),
+                ],
+            ],
             'workflow_disabled' => [
                 'name' => 'Review Workflow Disabled',
                 'description' => 'Notifies authors with pending posts that review was switched off',

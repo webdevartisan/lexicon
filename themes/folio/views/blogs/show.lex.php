@@ -210,16 +210,19 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
         <p class="reveal">No tracking, no algorithms, easy unsubscribe.</p>
       </div>
 
-      <form class="news-form reveal" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Thank you'; this.querySelector('input').value='';">
+      <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
+        <?= csrf_field() ?>
         <label for="email-sub">Your address</label>
         <div class="news-input">
-          <input id="email-sub" type="email" placeholder="reader@quiet-room.co" autocomplete="email" required />
+          <input id="email-sub" name="email" type="email" placeholder="reader@quiet-room.co"
+            value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
+            autocomplete="email" maxlength="255" required />
           <button type="submit">
             Subscribe
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="news-fine">Free &mdash; by request</span>
+        <span class="news-fine">Free &mdash; unsubscribe any time</span>
       </form>
     </div>
   </div>

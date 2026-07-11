@@ -69,6 +69,18 @@ $router->add('/comments/create', [
     'method' => 'POST',
 ]);
 
+// Blog subscriptions (guests allowed; unsubscribe is a signed token link from email)
+$router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/subscribe', [
+    'controller' => 'SubscriptionController',
+    'action' => 'subscribe',
+    'method' => 'POST',
+]);
+$router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
+    'controller' => 'SubscriptionController',
+    'action' => 'unsubscribe',
+    'method' => 'GET',
+]);
+
 // Post engagement (auth required; CSRF token in the POST body)
 $router->group([
     'prefix' => '/posts',

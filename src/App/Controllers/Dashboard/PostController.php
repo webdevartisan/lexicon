@@ -16,6 +16,7 @@ use App\Models\UserPreferencesModel;
 use App\Resources\PostResource;
 use App\Services\MediaService;
 use App\Services\PostAutosaveService;
+use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
 use DateTime;
@@ -43,6 +44,7 @@ final class PostController extends AppController
         private ReviewModel $reviewModel,
         private BlogSettingsModel $blogSettingsModel,
         private MediaService $mediaService,
+        private SubscriberNotificationService $subscriberNotifier,
     ) {}
 
     /**
@@ -335,6 +337,9 @@ final class PostController extends AppController
             $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
             $this->model->setFeatured($postId, (int) $blog->id(), !empty($this->request->post['is_featured']));
 
+            // No-op unless the post was created straight into published
+            $this->subscriberNotifier->notifyPostPublished($postId);
+
             audit()->log(
                 $user['id'],
                 'post.created',
@@ -590,6 +595,9 @@ final class PostController extends AppController
         if (!empty($data)) {
             $this->model->update((int) $id, $data);
 
+            // No-op unless the post just became published and was never announced
+            $this->subscriberNotifier->notifyPostPublished((int) $id);
+
             audit()->log(
                 $user['id'],
                 'post.updated',
@@ -826,6 +834,10 @@ final class PostController extends AppController
                 'delete' => $this->model->delete($id),
             };
 
+            if ($action === 'publish') {
+                $this->subscriberNotifier->notifyPostPublished((int) $id);
+            }
+
             $blogSettings = $this->blogSettingsModel->findByBlogId($post->blogId());
             if (!empty($blogSettings['workflow_enabled'])) {
                 try {
@@ -882,6 +894,7 @@ final class PostController extends AppController
         }
 
         $this->model->updateStatus((int) $id, 'published');
+        $this->subscriberNotifier->notifyPostPublished((int) $id);
 
         audit()->log(
             $user['id'],

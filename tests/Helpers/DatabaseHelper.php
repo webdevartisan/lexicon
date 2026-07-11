@@ -49,6 +49,7 @@ class DatabaseHelper
             'comments',
 
             // Blog-related
+            'blog_subscribers',
             'blog_invitations',
             'blog_settings',
             'blog_users',
