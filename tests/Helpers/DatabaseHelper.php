@@ -39,14 +39,18 @@ class DatabaseHelper
             'users',
 
             // Post-related
+            'post_likes',
+            'post_bookmarks',
             'post_reviewers',
             'post_tags',
+            'post_translations',
             'submissions',
             'reviews',
             'posts',
             'comments',
 
             // Blog-related
+            'blog_subscribers',
             'blog_invitations',
             'blog_settings',
             'blog_users',

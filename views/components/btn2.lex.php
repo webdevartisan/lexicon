@@ -54,7 +54,7 @@ $dataAttrsString = implode(' ', $dataAttrs);
     class="<?= e($class) ?> <?= e($addClass ?? '') ?>"
     <?= $dataAttrsString ?>>
     <?php if ($icon) { ?>
-      {% cache 'lucide:btn2:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>"
+      {% cache 'lucide:btn2:' . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>"
          class="size-4"
          aria-hidden="true"></i>{% endcache %}
     <?php } ?>
@@ -66,7 +66,7 @@ $dataAttrsString = implode(' ', $dataAttrs);
     class="<?= e($class) ?> <?= e($addClass ?? '') ?>"
     <?= $dataAttrsString ?>>
     <?php if ($icon) { ?>
-      {% cache 'lucide:btn2:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>"
+      {% cache 'lucide:btn2:' . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>"
          class="size-4"
          aria-hidden="true"></i>{% endcache %}
     <?php } ?>

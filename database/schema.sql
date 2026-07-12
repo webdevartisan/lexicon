@@ -272,13 +272,22 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone for scheduling posts',
     meta_title VARCHAR(70) DEFAULT NULL COMMENT 'SEO meta title override',
     meta_description VARCHAR(160) DEFAULT NULL COMMENT 'SEO meta description',
+    tagline VARCHAR(160) DEFAULT NULL COMMENT 'Short hero tagline shown in the theme header area',
+    subtitle VARCHAR(255) DEFAULT NULL COMMENT 'Introduction line shown under the blog name',
+    about_text VARCHAR(500) DEFAULT NULL COMMENT 'About-this-blog statement (folio colophon section)',
+    founded_year VARCHAR(4) DEFAULT NULL COMMENT 'Year shown beside the about section; empty = current year',
+    newsletter_heading VARCHAR(255) DEFAULT NULL COMMENT 'Subscribe section heading; empty = theme default',
+    newsletter_text VARCHAR(255) DEFAULT NULL COMMENT 'Subscribe section supporting line; empty = theme default',
     indexable BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Allow search engine indexing',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Blog-wide comment setting',
+    comments_auto_publish BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When on, new comments publish instantly; owner moderates retroactively',
+    replies_auto_publish BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'When on, replies publish instantly; owner moderates retroactively',
     banner_path VARCHAR(255) DEFAULT NULL,
     logo_path VARCHAR(255) DEFAULT NULL,
     favicon_path VARCHAR(255) DEFAULT NULL,
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
     workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
+    translations_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, post edit pages offer per-locale translation tabs',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
@@ -378,6 +387,7 @@ CREATE TABLE IF NOT EXISTS posts (
     workflow_state ENUM('draft','in_review','needs_changes','approved') NOT NULL DEFAULT 'draft',
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
+    subscribers_notified_at TIMESTAMP NULL DEFAULT NULL COMMENT 'When subscriber emails went out; prevents re-sends on republish',
     is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Headlines the blog landing; one per blog',
     featured_on_home TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick shown on the site front page',
     published_at TIMESTAMP NULL,
@@ -471,20 +481,104 @@ CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     user_id INT DEFAULT NULL COMMENT 'NULL allows for anonymous comments if enabled',
+    parent_comment_id INT DEFAULT NULL COMMENT 'Threaded replies; NULL = top-level',
     content TEXT NOT NULL,
     status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_comment_parent FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_post (post_id),
     INDEX idx_user (user_id),
     INDEX idx_comment_post_created (post_id, created_at),
     INDEX idx_comment_user_created (user_id, created_at),
     INDEX idx_comment_status (status),
-    INDEX idx_comment_post_status (post_id, status)
+    INDEX idx_comment_post_status (post_id, status),
+    INDEX idx_comment_parent (parent_comment_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User comments on published posts';
+
+-- ----------------------------------------------------------------------------
+-- Blog Subscribers Table
+-- ----------------------------------------------------------------------------
+-- Readers leave an email per blog and get notified when a new post is
+-- published. Token drives one-click unsubscribe links.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS blog_subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
+    user_id INT DEFAULT NULL COMMENT 'Set when a logged-in user subscribes',
+    email VARCHAR(255) NOT NULL,
+    token CHAR(64) NOT NULL COMMENT 'Unsubscribe token',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_subscriber_blog_email (blog_id, email),
+    UNIQUE KEY uq_subscriber_token (token),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_subscriber_blog (blog_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-blog email subscribers for new post notifications';
+
+-- ----------------------------------------------------------------------------
+-- Post Translations Table
+-- ----------------------------------------------------------------------------
+-- Per-locale overlays of post content for blogs that opted into localized
+-- posts. The base posts row is the default language; missing locales fall
+-- back to it. Slugs are shared across locales, so routing is untouched.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_translations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    locale VARCHAR(5) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content LONGTEXT DEFAULT NULL,
+    excerpt TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_post_locale (post_id, locale),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    INDEX idx_translation_locale (locale)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-locale overlays of post content; base posts row is the default language';
+
+-- ----------------------------------------------------------------------------
+-- Post Likes Table
+-- ----------------------------------------------------------------------------
+-- We store one row per user per liked post so likes can be toggled and
+-- counted cheaply; the unique key makes concurrent toggles race-safe.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_like_post_user (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_like_post (post_id),
+    INDEX idx_like_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per liked post';
+
+-- ----------------------------------------------------------------------------
+-- Post Bookmarks Table
+-- ----------------------------------------------------------------------------
+-- Same shape as post_likes; kept separate so the two signals stay independent
+-- and each can be indexed and queried on its own.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_bookmarks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_bookmark_post_user (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_bookmark_post (post_id),
+    INDEX idx_bookmark_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per saved post';
 
 -- ----------------------------------------------------------------------------
 -- Submissions Table

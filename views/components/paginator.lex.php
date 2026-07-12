@@ -83,14 +83,14 @@ $itemPlural = $itemPlural ?? null;
                     <a href="<?= e($buildPaginationUrl($pagination['current_page'] - 1)) ?>"
                        class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($previousPageLabel) ?>">
-                        {% cache 'lucide:chevron-left' ttl=3600 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
+                        {% cache 'lucide:chevron-left' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
                     </a>
                 <?php } else { ?>
                     <!-- disable the previous button on first page -->
                     <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
                           aria-disabled="true"
                           aria-label="<?= e($previousUnavailableLabel) ?>">
-                        {% cache 'lucide:chevron-left' ttl=3600 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
+                        {% cache 'lucide:chevron-left' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
                     </span>
                 <?php } ?>
             </li>
@@ -121,14 +121,14 @@ $itemPlural = $itemPlural ?? null;
                     <a href="<?= e($buildPaginationUrl($pagination['current_page'] + 1)) ?>"
                        class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($nextPageLabel) ?>">
-                        {% cache 'lucide:chevron-right' ttl=3600 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
+                        {% cache 'lucide:chevron-right' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
                     </a>
                 <?php } else { ?>
                     <!-- disable the next button on last page -->
                     <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
                           aria-disabled="true"
                           aria-label="<?= e($nextUnavailableLabel) ?>">
-                        {% cache 'lucide:chevron-right' ttl=3600 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
+                        {% cache 'lucide:chevron-right' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
                     </span>
                 <?php } ?>
             </li>

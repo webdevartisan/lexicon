@@ -1,4 +1,4 @@
-{% cache $sidebar_cache_key ttl=3600 %}
+{% cache $sidebar_cache_key ttl=31536000 %}
 <?php
 /**
  * Dashboard Sidebar Navigation

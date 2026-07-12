@@ -226,6 +226,8 @@ final class BlogController extends AppController
             'indexable' => 1,
             'timezone' => 'UTC',
             'comments_enabled' => 1,
+            'comments_auto_publish' => 0,
+            'replies_auto_publish' => 1,
             'workflow_enabled' => 0,
         ];
 
@@ -265,12 +267,21 @@ final class BlogController extends AppController
             'timezone' => 'max:100',
             'meta_title' => 'max:200',
             'meta_description' => 'max:500',
+            'tagline' => 'max:160',
+            'subtitle' => 'max:255',
+            'about_text' => 'max:500',
+            'founded_year' => 'max:4',
+            'newsletter_heading' => 'max:255',
+            'newsletter_text' => 'max:255',
             'allow_indexing' => 'boolean',
             'allow_comments' => 'boolean',
+            'comments_auto_publish' => 'boolean',
+            'replies_auto_publish' => 'boolean',
             'remove_banner' => 'boolean',
             'remove_logo' => 'boolean',
             'remove_favicon' => 'boolean',
             'workflow_enabled' => 'boolean',
+            'translations_enabled' => 'boolean',
         ], [
             'name.required' => 'Blog name is required.',
             'name.title' => 'Blog name contains invalid characters.',
@@ -322,9 +333,18 @@ final class BlogController extends AppController
             'theme' => $validated['theme'] ?? 'default',
             'meta_title' => $validated['meta_title'] ?? '',
             'meta_description' => $validated['meta_description'] ?? '',
+            'tagline' => trim((string) ($validated['tagline'] ?? '')),
+            'subtitle' => trim((string) ($validated['subtitle'] ?? '')),
+            'about_text' => trim((string) ($validated['about_text'] ?? '')),
+            'founded_year' => trim((string) ($validated['founded_year'] ?? '')),
+            'newsletter_heading' => trim((string) ($validated['newsletter_heading'] ?? '')),
+            'newsletter_text' => trim((string) ($validated['newsletter_text'] ?? '')),
             'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
             'comments_enabled' => isset($validated['allow_comments']) ? 1 : 0,
+            'comments_auto_publish' => isset($validated['comments_auto_publish']) ? 1 : 0,
+            'replies_auto_publish' => isset($validated['replies_auto_publish']) ? 1 : 0,
             'workflow_enabled' => isset($validated['workflow_enabled']) ? 1 : 0,
+            'translations_enabled' => isset($validated['translations_enabled']) ? 1 : 0,
         ];
 
         // Handle branding uploads
@@ -358,6 +378,10 @@ final class BlogController extends AppController
             } else {
                 $this->settings->createDefaultForBlog($blogId, $settingsData);
             }
+
+            // Settings feed the public theme (texts, branding), so purge the
+            // blog's cached pages including the landing page itself.
+            cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
         }
 
         // When the owner disables the workflow mid-flight, reset any in-review/needs_changes posts to draft.

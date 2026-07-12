@@ -8,7 +8,7 @@
     <form method="post" action="/admin/categories/<?= e((string) $category['id']) ?>/destroy" class="card">
         {{ csrf_field() }}
         <div class="card-body text-center py-10">
-            {% cache 'lucide:alert-triangle' ttl=3600 %}<i data-lucide="alert-triangle" class="size-12 text-red-500 mx-auto mb-3"></i>{% endcache %}
+            {% cache 'lucide:alert-triangle' ttl=31536000 %}<i data-lucide="alert-triangle" class="size-12 text-red-500 mx-auto mb-3"></i>{% endcache %}
             <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">
                 Delete "<?= e($category['name']) ?>"?
             </h3>

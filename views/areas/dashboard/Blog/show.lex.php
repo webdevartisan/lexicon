@@ -180,6 +180,10 @@
                         <i data-lucide="users" class="size-4 text-slate-400"></i>
                         <span>Collaborators</span>
                     </a>
+                    <a href="/dashboard/blog/{{ blog.id }}/subscribers" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
+                        <i data-lucide="mail" class="size-4 text-slate-400"></i>
+                        <span>Subscribers</span>
+                    </a>
                     <?php } ?>
                     <a href="/dashboard/blog/{{ blog.id }}/posts" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
                         <i data-lucide="files" class="size-4 text-slate-400"></i>

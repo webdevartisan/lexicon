@@ -15,7 +15,7 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or owner.' : 'Create th
         <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-xl">
             {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search name, slug, or owner..." %}
             <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                {% cache 'lucide:search' ttl=3600 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
+                {% cache 'lucide:search' ttl=31536000 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
             </button>
         </form>
         <div class="shrink-0">
@@ -73,9 +73,9 @@ $featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on 
                                             class="p-2 rounded-md transition-colors <?= $featuredOnExplore ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
                                         
                                             <?php if ($featuredOnExplore) { ?>
-                                            {% cache 'lucide:star-fill' ttl=3600 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
+                                            {% cache 'lucide:star-fill' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
                                             <?php } else { ?>
-                                            {% cache 'lucide:star' ttl=3600 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
+                                            {% cache 'lucide:star' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
                                             <?php } ?>
                                     </button>
                                 </form>

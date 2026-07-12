@@ -30,6 +30,7 @@
         "collaborators": "Collaborators",
         "team": "Team",
         "shared": "Shared",
+        "likedSaved": "Liked & Saved",
         "contentSection": "Content",
         "peopleSection": "People",
         "systemSection": "System",
@@ -338,6 +339,18 @@
                 "seo": {
                     "title": "SEO",
                     "description": "Configure meta information and search engine visibility."
+                },
+                "frontPage": {
+                    "title": "Front Page Text",
+                    "description": "Wording your theme shows on the blog's public pages. Empty fields fall back to the theme's defaults."
+                },
+                "discussion": {
+                    "title": "Discussion",
+                    "description": "How comments and replies behave across this blog."
+                },
+                "workflow": {
+                    "title": "Editorial Workflow",
+                    "description": "Review and approval before publishing."
                 }
             },
             "fields": {
@@ -394,6 +407,14 @@
                     "label": "Allow comments on posts",
                     "help": "Can be disabled per post."
                 },
+                "instantComments": {
+                    "label": "Publish comments instantly",
+                    "help": "New comments appear immediately. Turn off to hold them for moderation first."
+                },
+                "allowReplies": {
+                    "label": "Publish replies instantly",
+                    "help": "Replies to comments appear immediately. Turn off to hold them for moderation like new comments."
+                },
                 "banner": {
                     "label": "Banner"
                 },
@@ -402,6 +423,44 @@
                 },
                 "favicon": {
                     "label": "Favicon"
+                },
+                "tagline": {
+                    "label": "Tagline",
+                    "placeholder": "A Journal of Slow Reading",
+                    "underlabel": "Short phrase shown at the very top of your front page."
+                },
+                "subtitle": {
+                    "label": "Introduction",
+                    "placeholder": "A collection of essays, ideas, and slow reading.",
+                    "underlabel": "One sentence shown under the blog name."
+                },
+                "aboutText": {
+                    "label": "About This Blog",
+                    "placeholder": "What this blog is about and who writes it.",
+                    "underlabel": "Shown in the about section near the end of the front page."
+                },
+                "foundedYear": {
+                    "label": "Founded Year",
+                    "placeholder": "2026",
+                    "underlabel": "Shown next to the about section. Leave empty for the current year."
+                },
+                "newsletterHeading": {
+                    "label": "Subscribe Heading",
+                    "placeholder": "Get every new post in your inbox.",
+                    "underlabel": "Heading of the subscribe section."
+                },
+                "newsletterText": {
+                    "label": "Subscribe Text",
+                    "placeholder": "No tracking, no algorithms, easy unsubscribe.",
+                    "underlabel": "Supporting line under the subscribe heading."
+                },
+                "workflowEnabled": {
+                    "label": "Editorial workflow",
+                    "help": "When enabled, posts require review and approval before they can be published. Disabling resets any in-progress reviews to draft."
+                },
+                "translationsEnabled": {
+                    "label": "Localized posts",
+                    "help": "Adds language tabs to each post's edit page so posts can be translated. Readers see the version matching the site language, falling back to the original."
                 }
             },
             "actions": {
@@ -561,6 +620,22 @@
             "subject": "Subject",
             "message": "Message",
             "send": "Send message"
+        }
+    },
+    "post": {
+        "translations": {
+            "original": "Original",
+            "tabsHint": "Translations show to readers browsing in that language; missing ones fall back to the original.",
+            "pageTitle": "Translate Post",
+            "editIn": "Editing the {locale} version",
+            "titleLabel": "Title",
+            "contentLabel": "Body",
+            "excerptLabel": "Excerpt",
+            "save": "Save Translation",
+            "delete": "Delete Translation",
+            "backToPost": "Back to post",
+            "notTranslated": "Not translated yet",
+            "deleteConfirm": "Delete this translation? Readers of this language will see the original post instead."
         }
     }
 }

@@ -15,6 +15,8 @@
 
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
+  <?php $activeLocale = $defaultLocale ?? 'en'; ?>
+  {% include "partials/dashboard/post/_locale_tabs.lex.php" %}
   <form
     method="post"
     action="/dashboard/post/{{ post.id }}/update"

@@ -128,7 +128,8 @@ class BlogResource
     {
         foreach ($this->users() as $u) {
             if ((int) $u['user_id'] === $userId && (int) $u['is_active'] === 1) {
-                return $u['role'] ?? 'author'; // safe default
+                // Custom admin-created roles resolve to the shipped role they act as.
+                return $this->model->baseRoleFor($u['role'] ?? 'author');
             }
         }
 

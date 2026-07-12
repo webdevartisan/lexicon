@@ -23,6 +23,13 @@ if (empty($workflowEnabled)) {
     unset($roleDocs['reviewer']);
 }
 
+// Custom control-panel roles have no shipped doc; explain where they come from.
+foreach (($roles ?? []) as $r) {
+    if (!isset($roleDocs[$r])) {
+        $roleDocs[$r] = 'Custom role defined by the site administrator. Its abilities follow the permissions assigned to it in the control panel.';
+    }
+}
+
 $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 dark:text-zink-200 dark:border-zink-500';
 $initials = static function (string $name): string {
     $parts = preg_split('/[\s_.-]+/', trim($name)) ?: [];

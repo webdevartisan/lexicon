@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * Cache configuration.
  *
- * Defines file‑based caching behavior, including TTL rules, garbage
- * collection settings, and file‑limit enforcement to prevent disk growth.
+ * Defines file-based response caching behavior, including TTL rules,
+ * query-key normalization, garbage collection, and cache limits.
  *
  * TTL values are expressed in seconds:
  * - 60 = 1 minute
@@ -15,6 +15,12 @@ declare(strict_types=1);
  * - 1800 = 30 minutes
  * - 3600 = 1 hour
  * - 86400 = 24 hours
+ *
+ * Route rules use fnmatch() wildcards:
+ * - *  matches zero or more characters
+ * - ?  matches a single character
+ *
+ * Keep more specific rules before broader ones.
  */
 return [
 
@@ -31,7 +37,7 @@ return [
     'path' => ROOT_PATH.'/storage/cache',
 
     /**
-     * Debug mode adds X‑Cache‑* headers to responses.
+     * Debug mode adds X-Cache-* headers to responses.
      *
      * Useful during development to inspect hit/miss behavior.
      * Should remain disabled in production to avoid exposing cache keys.
@@ -47,55 +53,105 @@ return [
      * Format: 'route_pattern' => ttl_in_seconds
      */
     'ttl_rules' => [
-        // Authenticated areas (no caching)
+        /*
+         |--------------------------------------------------------------------------
+         | Never cache: authenticated, private, tokenized, state-changing, utility
+         |--------------------------------------------------------------------------
+         */
         '/dashboard*' => 0,
         '/admin*' => 0,
         '/account*' => 0,
+
         '/login' => 0,
+        '/login/submit' => 0,
+        '/logout' => 0,
         '/register' => 0,
+        '/register/submit' => 0,
+
+        '/password/forgot' => 0,
+        '/password/reset*' => 0,
+
+        '/csrf-token' => 0,
         '/geo' => 0,
+        '/consent' => 0,
+        '/consent/withdraw' => 0,
 
-        // Blog content
-        '/blog/*/post/*' => 1800,   // Individual posts: 30 minutes
-        '/blog/*' => 3600,          // Blog home: 1 hour
-        '/blogs' => 3600,           // Blogs list: 1 hour
+        '/comments/create' => 0,
 
-        // User profiles
-        '/profile/*' => 300,        // 5 minutes
+        '/blog/*/subscribe' => 0,
+        '/subscriptions/unsubscribe/*' => 0,
 
-        // Public product pages
-        '/products' => 600,         // 10 minutes
-        '/product/*' => 1800,       // 30 minutes
+        '/posts/*/like' => 0,
+        '/posts/*/bookmark' => 0,
 
-        // Homepage
-        '/' => 300,                 // 5 minutes
-        '/home' => 300,             // 5 minutes
+        '/invite/*' => 0,
+        '/invite/*/accept' => 0,
+        '/invite/*/decline' => 0,
 
-        // Static/SEO pages
+        '/sitemap.xml' => 0,
+
+        /*
+         |--------------------------------------------------------------------------
+         | Public pages
+         |--------------------------------------------------------------------------
+         */
+        '/' => 300,
+        '/home' => 300,
+
+        '/blogs' => 1800,
+
         '/about' => 3600,
-        '/contact' => 3600,
+        '/contact' => 0,          // GET page may contain CSRF form; safest uncached
         '/privacy' => 86400,
         '/terms' => 86400,
+        '/cookies' => 86400,
+
+        '/getting-started' => 3600,
+        '/getting-started/*' => 3600,
+
+        '/profile/*' => 300,
+
+        /*
+         |--------------------------------------------------------------------------
+         | Public blog surfaces
+         |--------------------------------------------------------------------------
+         */
+        '/blog/*/archive' => 1800,
+        '/blog/*/category/*' => 1800,
+        '/blog/*/tag/*' => 1800,
+        '/blog/*/index-feed' => 900,
+        '/blog/*' => 1800,
+
     ],
 
     /**
      * Query parameter whitelist per route.
      *
      * Only whitelisted parameters are included in cache keys to prevent
-     * fragmentation caused by tracking parameters (e.g., utm_*).
+     * fragmentation caused by tracking parameters (e.g. utm_*).
      *
      * Format: 'route' => ['param1', 'param2']
      */
     'query_whitelist' => [
-        '/blogs' => ['page', 'q', 'category'],
-        '/products' => ['page', 'sort', 'filter'],
-        '/search' => ['q', 'lang', 'page'],
+        '/blogs' => ['page', 'q'],
+        '/profile/*' => [],
+
+        '/getting-started/*' => [],
+
+        '/blog/*' => ['page'],
+        '/blog/*/archive' => ['page'],
+        '/blog/*/category/*' => ['page'],
+        '/blog/*/tag/*' => ['page'],
+        '/blog/*/index-feed' => ['page'],
     ],
 
     /**
      * Default TTL for routes not matching any pattern (seconds).
+     *
+     * Safer default for an app with mixed public/private surfaces:
+     * unmatched routes are not cached unless explicitly allowed above.
      */
-    'default_ttl' => 600, // 10 minutes
+    'default_ttl' => 0,
 
     // ==================== MAINTENANCE & CLEANUP ====================
 
@@ -104,35 +160,28 @@ return [
      *
      * Cleanup is triggered probabilistically based on:
      * probability = gc_probability / gc_divisor
-     *
-     * Example:
-     * - 1 / 100 → 1% chance per request (recommended)
-     * - 2 / 100 → 2% chance (more aggressive)
-     * - 0 → disabled (cleanup handled externally)
      */
     'gc_probability' => (int) ($_ENV['CACHE_GC_PROBABILITY'] ?? 1),
 
     /**
      * Garbage collection divisor.
-     *
-     * Used together with gc_probability to determine cleanup frequency.
      */
     'gc_divisor' => (int) ($_ENV['CACHE_GC_DIVISOR'] ?? 100),
 
     /**
      * Maximum number of cache files before LRU eviction.
      *
-     * Enforces a hard limit to prevent unbounded disk usage. When the
-     * limit is exceeded, the oldest 10% of files (by access time) are removed.
-     *
      * Set to 0 for unlimited storage (not recommended).
      */
     'max_files' => (int) ($_ENV['CACHE_MAX_FILES'] ?? 5000),
 
-    // Path for compiled template PHP files (separate from response cache)
+    /**
+     * Path for compiled template PHP files (separate from response cache).
+     */
     'compiled_views_path' => ROOT_PATH.'/storage/cache/views',
 
-    // Maximum age (seconds) before compiled view files are pruned
+    /**
+     * Maximum age (seconds) before compiled view files are pruned.
+     */
     'compiled_views_max_age' => (int) ($_ENV['COMPILED_VIEWS_MAX_AGE'] ?? 604800), // 7 days
-
 ];

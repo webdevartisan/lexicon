@@ -44,7 +44,7 @@ $class = $variants[$variant] ?? $variants['slate'];
           <?php } ?>
           >
     <?php if ($icon) { ?>
-      {% cache "lucide:btn:" . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}
+      {% cache "lucide:btn:" . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}
     <?php } ?>
     <span><?= e($label) ?></span>
   </button>
@@ -55,7 +55,7 @@ $class = $variants[$variant] ?? $variants['slate'];
     href="<?= e($href) ?>"
     class="<?= e($class) ?>">
       <?php if ($icon) { ?>
-        {% cache "lucide:btn:" . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}
+        {% cache "lucide:btn:" . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}
       <?php } ?>
     <?= e($label) ?>
   </a>

@@ -17,6 +17,8 @@ $label = match ($type) {
     'post.workflow_disabled' => 'A post of yours was reset to draft',
     'collaborator.role_changed' => 'Your role on '.($payload['blog_name'] ?? '').' changed',
     'collaborator.removed' => 'You were removed from '.($payload['blog_name'] ?? ''),
+    'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
+        .(!empty($payload['awaiting_moderation']) ? ' (awaiting moderation)' : ''),
     default => $type,
 };
 
@@ -29,6 +31,7 @@ $icon = match ($type) {
     'post.reviewer_assigned' => 'user-check',
     'post.reviewer_stale', 'post.workflow_disabled' => 'rotate-ccw',
     'collaborator.role_changed', 'collaborator.removed' => 'users',
+    'comment.created' => 'message-circle',
     default => 'bell',
 };
 
@@ -46,6 +49,9 @@ $href = match ($type) {
     'post.workflow_disabled' => '/dashboard/post/'.(int) ($payload['post_id'] ?? 0).'/edit',
     'post.published' => '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? '')),
     'blog.invite' => '/invite/'.rawurlencode((string) ($payload['token'] ?? '')),
+    'comment.created' => !empty($payload['awaiting_moderation'])
+        ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
+        : '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? '')),
     default => '/dashboard/notifications',
 };
 ?>
@@ -54,12 +60,12 @@ $href = match ($type) {
     <input type="hidden" name="target" value="<?= e($href) ?>">
     <button type="submit" class="w-full text-left flex gap-3 p-3 hover:bg-slate-50 dark:hover:bg-zink-500 <?= $isUnread ? 'bg-sky-50/40 dark:bg-sky-900/10' : '' ?>">
         <div class="flex items-center justify-center size-9 rounded-md <?= $color ?> shrink-0">
-            {% cache 'lucide:notif-icon:' . $icon ttl=3600 %}<i data-lucide="<?= e($icon) ?>" class="size-4"></i>{% endcache %}
+            {% cache 'lucide:notif-icon:' . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="size-4"></i>{% endcache %}
         </div>
         <div class="grow min-w-0">
             <p class="text-sm text-slate-900 dark:text-zink-50 truncate"><?= e($label) ?></p>
             <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
-                {% cache 'lucide:clock:notif' ttl=3600 %}<i data-lucide="clock" class="inline-block size-3 mr-1"></i>{% endcache %}
+                {% cache 'lucide:clock:notif' ttl=31536000 %}<i data-lucide="clock" class="inline-block size-3 mr-1"></i>{% endcache %}
                 <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
             </p>
         </div>

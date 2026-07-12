@@ -54,6 +54,13 @@ return [
             'scope' => 'global',
             'show_if' => 'isCollaborator',
             'key' => 'navigation.shared',
+        ],
+        [
+            'label' => 'Liked & Saved',
+            'href' => '/dashboard/likes',
+            'auth' => true,
+            'scope' => 'global',
+            'key' => 'navigation.likedSaved',
         ], /*
         [
             'label' => 'Create New Blog',

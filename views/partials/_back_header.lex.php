@@ -30,7 +30,7 @@
 
                 </div>
 
-                {% cache 'topbar:chevron-icon' ttl=3600 %}
+                {% cache 'topbar:chevron-icon' ttl=31536000 %}
                 <button type="button" class="inline-flex relative justify-center items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-75 ease-linear bg-topbar rounded-md btn hover:bg-slate-100 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:border-topbar-brand group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:dark:border-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=dark]:dark:hover:text-zink-50   hamburger-icon" id="topnav-hamburger-icon">
                     <i data-lucide="chevrons-left" class="w-5 h-5 group-data-[sidebar-size=sm]:hidden"></i>
                     <i data-lucide="chevrons-right" class="hidden w-5 h-5 group-data-[sidebar-size=sm]:block"></i>
@@ -41,7 +41,7 @@
                 <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         {{ csrf_field() }}
-                        {% cache 'lucide:book-open:blogswitch' ttl=3600 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
+                        {% cache 'lucide:book-open:blogswitch' ttl=31536000 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                         <select name="blog" onchange="this.form.submit()" aria-label="Switch active blog"
                             class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
                             <?php foreach ($user_blogs as $bid => $b) {
@@ -56,7 +56,7 @@
                             </option>
                             <?php } ?>
                         </select>
-                        {% cache 'lucide:chevrons-up-down' ttl=3600 %}<i data-lucide="chevrons-up-down" class="inline-block size-4 absolute ltr:right-2.5 rtl:left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
+                        {% cache 'lucide:chevrons-up-down' ttl=31536000 %}<i data-lucide="chevrons-up-down" class="inline-block size-4 absolute ltr:right-2.5 rtl:left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                     </form>
                 </div>
                 <?php } ?>
@@ -149,7 +149,7 @@
                         </div>
                     </div>
 
-                    {% cache 'topbar:sunbutton-icon' ttl=3600 %}
+                    {% cache 'topbar:sunbutton-icon' ttl=31536000 %}
                     <div class="relative flex items-center h-header">
                         <button type="button" aria-label="Toggle light or dark mode" class="inline-flex relative justify-center items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="light-dark-mode">
                             <i data-lucide="sun" class="inline-block w-5 h-5 stroke-1 fill-slate-100 group-data-[topbar=dark]:fill-topbar-item-dark group-data-[topbar=brand]:fill-topbar-item-bg-hover-brand"></i>
@@ -160,7 +160,7 @@
                     {% if (!empty($notifications['enabled'])): %}
                     <div class="relative flex items-center dropdown h-header">
                         <button type="button" class="inline-flex justify-center relative items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md dropdown-toggle btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="notificationDropdown" data-bs-toggle="dropdown" aria-label="Notifications">
-                            {% cache 'lucide:bell-ring' ttl=3600 %}<i data-lucide="bell-ring" class="inline-block w-5 h-5 stroke-1 fill-slate-100 group-data-[topbar=dark]:fill-topbar-item-bg-hover-dark group-data-[topbar=brand]:fill-topbar-item-bg-hover-brand"></i>{% endcache %}
+                            {% cache 'lucide:bell-ring' ttl=31536000 %}<i data-lucide="bell-ring" class="inline-block w-5 h-5 stroke-1 fill-slate-100 group-data-[topbar=dark]:fill-topbar-item-bg-hover-dark group-data-[topbar=brand]:fill-topbar-item-bg-hover-brand"></i>{% endcache %}
                             <?php if (!empty($notifications['count'])) { ?>
                             <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] font-semibold text-white bg-red-500 rounded-full">
                                 <?= (int) $notifications['count'] > 9 ? '9+' : (int) $notifications['count'] ?>
@@ -180,7 +180,7 @@
                             <div data-simplebar="" class="max-h-[350px] border-t border-slate-100 dark:border-zink-500">
                                 <?php if (empty($notifications['items'])) { ?>
                                 <div class="text-center py-8 px-4">
-                                    {% cache 'lucide:bell-off' ttl=3600 %}<i data-lucide="bell-off" class="size-8 text-slate-400 mx-auto mb-2"></i>{% endcache %}
+                                    {% cache 'lucide:bell-off' ttl=31536000 %}<i data-lucide="bell-off" class="size-8 text-slate-400 mx-auto mb-2"></i>{% endcache %}
                                     <p class="text-sm text-slate-500 dark:text-zink-300">You're all caught up. No recent activity.</p>
                                 </div>
                                 <?php } else { ?>
@@ -209,7 +209,7 @@
                         <button type="button" class="inline-block p-0 transition-all duration-200 ease-linear bg-topbar rounded-full text-topbar-item dropdown-toggle btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200" id="dropdownMenuButton" data-bs-toggle="dropdown">
                             <div class="bg-pink-100 rounded-full">
                                 {% if current_user.avatar_url|notempty %}
-                                    {% cache 'lucide:user-avatar' ttl=3600 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-full ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
+                                    {% cache 'lucide:user-avatar' ttl=31536000 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-full ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
                                 {% else %}
                                     <div class="flex items-center justify-center rounded-full size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                         <?php
@@ -233,7 +233,7 @@
                                 <div class="relative inline-block shrink-0">
                                     <div class="rounded bg-slate-100 dark:bg-zink-500">
                                         {% if current_user.avatar_url|notempty %}
-                                            {% cache 'lucide:user-avatar' ttl=3600 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-md ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
+                                            {% cache 'lucide:user-avatar' ttl=31536000 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-md ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
                                         {% else %}
                                             <div class="flex items-center justify-center rounded-md size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                                 <?php
@@ -266,12 +266,12 @@
                                 <li>
                                     <?php if (str_ends_with($path, 'admin')) { ?>
                                         <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard">
-                                            {% cache 'lucide:layout-dashboard' ttl=3600 %}<i data-lucide="layout-dashboard" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                            {% cache 'lucide:layout-dashboard' ttl=31536000 %}<i data-lucide="layout-dashboard" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                             <span>{{ dashboardLabel }}</span>
                                         </a>
                                     <?php } else { ?> 
                                         <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/admin">
-                                            {% cache 'lucide:sliders-horizontal' ttl=3600 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                            {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                             <span>{{ controlPanelLabel }}</span>
                                         </a>
                                     <?php } ?>    
@@ -279,13 +279,13 @@
                                 <?php } ?>
                                 <li>
                                     <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard/profile">
-                                        {% cache 'lucide:user-2' ttl=3600 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        {% cache 'lucide:user-2' ttl=31536000 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ editProfileLabel }}</span>
                                     </a>
                                 </li>
                                 <li class="pt-2 mt-2 border-t border-slate-200 dark:border-zink-500">
                                     <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/logout">
-                                        {% cache 'lucide:log-out' ttl=3600 %}<i data-lucide="log-out" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        {% cache 'lucide:log-out' ttl=31536000 %}<i data-lucide="log-out" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ signOutLabel }}</span>
                                     </a>
                                 </li>

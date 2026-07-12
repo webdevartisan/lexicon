@@ -36,7 +36,7 @@ $mediaSortOptions = [
     <div class="flex items-center justify-between gap-3 mb-5">
         <a href="/dashboard/blog/{{ blog.id }}/show"
             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            {% cache 'lucide:arrow-left' ttl=3600 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
+            {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
             <span>Back to blog</span>
         </a>
         <span class="text-xs text-slate-500 dark:text-zink-300" data-media-total>
@@ -49,7 +49,7 @@ $mediaSortOptions = [
         <div class="card-body">
             <div id="media-uploader"
                  class="border-2 border-dashed border-slate-200 dark:border-zink-500 rounded-lg p-6 text-center cursor-pointer hover:border-custom-400 transition-colors">
-                {% cache 'lucide:upload-cloud:lg' ttl=3600 %}<i data-lucide="upload-cloud" class="size-8 text-slate-400 dark:text-zink-300 mx-auto mb-2"></i>{% endcache %}
+                {% cache 'lucide:upload-cloud:lg' ttl=31536000 %}<i data-lucide="upload-cloud" class="size-8 text-slate-400 dark:text-zink-300 mx-auto mb-2"></i>{% endcache %}
                 <p class="text-sm font-medium text-slate-700 dark:text-zink-100">Drop images here or click to upload</p>
                 <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">PNG, JPG, WebP, SVG or GIF · up to 5 MB each</p>
                 <input type="file" id="media-uploader-input" class="hidden" accept="image/*" multiple>
@@ -92,7 +92,7 @@ $mediaSortOptions = [
                     <button type="button" title="Delete"
                             data-media-delete="<?= (int) $item['id'] ?>"
                             class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                        {% cache 'lucide:trash-2:sm' ttl=3600 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %}
+                        {% cache 'lucide:trash-2:sm' ttl=31536000 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %}
                     </button>
                 </figure>
                 <?php } ?>
@@ -105,7 +105,7 @@ $mediaSortOptions = [
             <div class="flex justify-center mt-5 <?= ((int) ($total ?? 0)) <= count($mediaItems ?? []) ? 'hidden' : '' ?>" id="media-load-more-wrap">
                 <button type="button" id="media-load-more"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    {% cache 'lucide:chevron-down' ttl=3600 %}<i data-lucide="chevron-down" class="size-4"></i>{% endcache %} Load more
+                    {% cache 'lucide:chevron-down' ttl=31536000 %}<i data-lucide="chevron-down" class="size-4"></i>{% endcache %} Load more
                 </button>
             </div>
         </div>
