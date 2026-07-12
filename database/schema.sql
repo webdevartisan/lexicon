@@ -272,6 +272,12 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone for scheduling posts',
     meta_title VARCHAR(70) DEFAULT NULL COMMENT 'SEO meta title override',
     meta_description VARCHAR(160) DEFAULT NULL COMMENT 'SEO meta description',
+    tagline VARCHAR(160) DEFAULT NULL COMMENT 'Short hero tagline shown in the theme header area',
+    subtitle VARCHAR(255) DEFAULT NULL COMMENT 'Introduction line shown under the blog name',
+    about_text VARCHAR(500) DEFAULT NULL COMMENT 'About-this-blog statement (folio colophon section)',
+    founded_year VARCHAR(4) DEFAULT NULL COMMENT 'Year shown beside the about section; empty = current year',
+    newsletter_heading VARCHAR(255) DEFAULT NULL COMMENT 'Subscribe section heading; empty = theme default',
+    newsletter_text VARCHAR(255) DEFAULT NULL COMMENT 'Subscribe section supporting line; empty = theme default',
     indexable BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Allow search engine indexing',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Blog-wide comment setting',
     comments_auto_publish BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When on, new comments publish instantly; owner moderates retroactively',
@@ -281,6 +287,7 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     favicon_path VARCHAR(255) DEFAULT NULL,
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
     workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
+    translations_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, post edit pages offer per-locale translation tabs',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
@@ -512,6 +519,28 @@ CREATE TABLE IF NOT EXISTS blog_subscribers (
     INDEX idx_subscriber_blog (blog_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Per-blog email subscribers for new post notifications';
+
+-- ----------------------------------------------------------------------------
+-- Post Translations Table
+-- ----------------------------------------------------------------------------
+-- Per-locale overlays of post content for blogs that opted into localized
+-- posts. The base posts row is the default language; missing locales fall
+-- back to it. Slugs are shared across locales, so routing is untouched.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_translations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    locale VARCHAR(5) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content LONGTEXT DEFAULT NULL,
+    excerpt TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_post_locale (post_id, locale),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    INDEX idx_translation_locale (locale)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-locale overlays of post content; base posts row is the default language';
 
 -- ----------------------------------------------------------------------------
 -- Post Likes Table

@@ -12,7 +12,7 @@ $elementName = str_replace(' ', '_', strtolower($label));
             </div>
             <div class="w-full py-5 text-lg text-center dz-message needsclick">
                 <div class="mb-3">
-                    {% cache 'lucide:upload-cloud:dz1' ttl=3600 %}<i data-lucide="upload-cloud" class="block mx-auto size-12 text-slate-500 fill-slate-200 dark:text-zink-200 dark:fill-zink-500"></i>{% endcache %}
+                    {% cache 'lucide:upload-cloud:dz1' ttl=31536000 %}<i data-lucide="upload-cloud" class="block mx-auto size-12 text-slate-500 fill-slate-200 dark:text-zink-200 dark:fill-zink-500"></i>{% endcache %}
                 </div>
 
                 <h5 class="mb-0 font-normal text-slate-500 text-15">Drag and drop your files or <a href="#!">browse</a> your files</h5>

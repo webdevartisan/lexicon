@@ -14,12 +14,18 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   $gridPosts = !empty($posts) ? array_slice($posts, 1, 6) : []; // landing shows 6; rest lives on /archive
   $hasMore = $postCount > 1 + count($gridPosts);
 
+  // The Long Read spotlights the longest piece on the landing page.
   $totalMinutes = 0;
+  $longReadPost = null;
+  $longReadMinutes = 0;
   foreach (($posts ?? []) as $p) {
-      $totalMinutes += reading_time($p['content'] ?? '');
+      $minutes = reading_time($p['content'] ?? '');
+      $totalMinutes += $minutes;
+      if ($longReadPost === null || $minutes > $longReadMinutes) {
+          $longReadPost = $p;
+          $longReadMinutes = $minutes;
+      }
   }
-
-  $longReadPost = $gridPosts[0] ?? $featuredPost;
 
   // stored featured_image is sometimes a category label rather than a real path
   $validImg = '#^(https?://|/|data:)#i';
@@ -29,7 +35,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   <div class="container">
     <div class="hero-meta-top">
       <span><?= $blogTitle ?> &mdash; <?= date('Y') ?></span>
-      <span><?= !empty($blog['subtitle']) ? e($blog['subtitle']) : 'A Journal of Slow Reading' ?></span>
+      <span><?= !empty($settings['tagline']) ? e($settings['tagline']) : 'A Journal of Slow Reading' ?></span>
       <span><?= $postCount ?> Post<?= $postCount === 1 ? '' : 's' ?> / <?= $totalMinutes ?> Min Read</span>
     </div>
 
@@ -37,7 +43,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
     <div class="hero-bottom">
       <p class="hero-dek reveal">
-        <?= !empty($blog['subtitle']) ? e($blog['subtitle']) : 'A collection of essays, ideas, and slow reading.' ?>
+        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'A collection of essays, ideas, and slow reading.' ?>
       </p>
       <?php if ($featuredPost) { ?>
       <div class="hero-pointer reveal">
@@ -59,7 +65,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     $fExc = e($featuredPost['excerpt'] ?? '');
     $fAuthor = e($featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''));
     $fDate = e($featuredPost['published_at'] ?? '');
-    $fCat = e($featuredPost['category'] ?? 'Essay');
+    $fCat = e($featuredPost['category'] ?? 'Article');
     ?>
 <section class="lead" id="lead">
   <div class="container">
@@ -178,7 +184,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       </div>
 
       <div class="longread-body reveal">
-        <p><em><?= $lrTitle ?></em> &mdash; continue reading the full essay in its slow, deliberate form.</p>
+        <p><em><?= $lrTitle ?></em> &mdash; continue reading the full article in its slow, deliberate form.</p>
         <a href="<?= $lrUrl ?>">Read the full post &rarr;</a>
       </div>
     </div>
@@ -189,11 +195,17 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <section class="colophon" id="colophon">
   <div class="container">
     <div class="grid-12">
-      <p class="colophon-number reveal"><?= date('Y') ?>.</p>
+      <p class="colophon-number reveal"><?= !empty($settings['founded_year']) ? e($settings['founded_year']) : date('Y') ?>.</p>
       <div class="colophon-body">
         <span class="colophon-eyebrow reveal">About this blog</span>
         <p class="colophon-statement reveal">
-          <?= !empty($blog['subtitle']) ? e($blog['subtitle']) : e($user['blog_name'] ?? 'FOLIO').' — a place for slow reading.' ?>
+          <?php if (!empty($settings['about_text'])) { ?>
+            <?= e($settings['about_text']) ?>
+          <?php } elseif (!empty($settings['subtitle'])) { ?>
+            <?= e($settings['subtitle']) ?>
+          <?php } else { ?>
+            <?= e($blog['blog_name'] ?? 'FOLIO') ?> — a place for slow reading.
+          <?php } ?>
         </p>
         <span class="colophon-sign reveal">&mdash; <?= e($user['display_name_cached'] ?? $user['username'] ?? 'The Author') ?></span>
       </div>
@@ -206,8 +218,8 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     <div class="grid-12">
       <div class="news-copy">
         <span class="eyebrow reveal">Stay in touch</span>
-        <h2 class="reveal">Read <?= $blogTitle ?> from your own quiet rooms.</h2>
-        <p class="reveal">No tracking, no algorithms, easy unsubscribe.</p>
+        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'Read '.$blogTitle.' from your own quiet rooms.' ?></h2>
+        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'No tracking, no algorithms, easy unsubscribe.' ?></p>
       </div>
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">

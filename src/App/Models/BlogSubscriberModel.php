@@ -73,4 +73,53 @@ class BlogSubscriberModel extends AppModel
 
         return (int) $this->database->query($sql, [$blogId])->fetchColumn();
     }
+
+    /**
+     * Paginated subscriber list for the dashboard management page.
+     *
+     * @param  string  $q  Optional email search
+     * @return array{data: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
+     */
+    public function pageForBlog(int $blogId, int $page = 1, int $perPage = 25, string $q = ''): array
+    {
+        $where = 's.blog_id = ?';
+        $params = [$blogId];
+
+        if ($q !== '') {
+            $where .= ' AND s.email LIKE ?';
+            $params[] = '%'.$q.'%';
+        }
+
+        $total = (int) $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()} s WHERE {$where}",
+            $params
+        )->fetchColumn();
+
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $rows = $this->database->query(
+            "SELECT s.id, s.email, s.user_id, s.created_at, u.username
+             FROM {$this->getTable()} s
+             LEFT JOIN users u ON u.id = s.user_id
+             WHERE {$where}
+             ORDER BY s.created_at DESC, s.id DESC
+             LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return ['data' => $rows, 'total' => $total, 'page' => $page, 'perPage' => $perPage];
+    }
+
+    /**
+     * Remove a subscriber by row id, scoped to the blog so an owner can only
+     * delete their own blog's subscribers.
+     */
+    public function deleteByIdForBlog(int $id, int $blogId): bool
+    {
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE id = ? AND blog_id = ? LIMIT 1",
+            [$id, $blogId]
+        ) > 0;
+    }
 }

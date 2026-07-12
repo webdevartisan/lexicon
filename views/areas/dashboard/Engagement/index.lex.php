@@ -25,14 +25,14 @@ $dateKey = $isLikes ? 'liked_at' : 'bookmarked_at';
            class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors <?= $isLikes
                ? 'border-custom-500 text-custom-600 dark:text-custom-400'
                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zink-300 dark:hover:text-zink-100' ?>">
-            {% cache 'lucide:heart:sm' ttl=3600 %}<i data-lucide="heart" class="inline-block size-4 align-text-bottom"></i>{% endcache %}
+            {% cache 'lucide:heart:sm' ttl=31536000 %}<i data-lucide="heart" class="inline-block size-4 align-text-bottom"></i>{% endcache %}
             Liked
         </a>
         <a href="<?= e(lurl('/dashboard/bookmarks')) ?>"
            class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors <?= !$isLikes
                ? 'border-custom-500 text-custom-600 dark:text-custom-400'
                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-zink-300 dark:hover:text-zink-100' ?>">
-            {% cache 'lucide:bookmark:sm' ttl=3600 %}<i data-lucide="bookmark" class="inline-block size-4 align-text-bottom"></i>{% endcache %}
+            {% cache 'lucide:bookmark:sm' ttl=31536000 %}<i data-lucide="bookmark" class="inline-block size-4 align-text-bottom"></i>{% endcache %}
             Saved
         </a>
     </div>

@@ -14,7 +14,7 @@ $isArchived = $postStatus === 'archived';
         {% cmp="urlWithOpenButton" previewUrl="{$postUrl}" %} 
       </div>
     {% endif; %}
-    <div class="grid gap-6 lg:grid-cols-[1fr_auto]">
+    <div class="grid gap-6 lg:grid-cols-[1fr_auto] max-lg:pb-20">
       <main>
         <!-- Content -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
@@ -57,7 +57,7 @@ $isArchived = $postStatus === 'archived';
 
         </section>
       </main>
-      <aside class="sticky top-4 space-y-4 shrink-0 w-full sm:w-64">
+      <aside class="lg:sticky lg:top-4 space-y-4 shrink-0 w-full lg:w-64">
 
         <!-- Reviewer feedback — shown to the author when a reviewer has requested changes -->
         <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
@@ -82,7 +82,7 @@ $isArchived = $postStatus === 'archived';
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
           <div class="p-4 space-y-4">
             <!-- Primary Action Buttons -->
-            <div class="flex w-full gap-2">
+            <div class="flex w-full gap-2 max-lg:fixed max-lg:bottom-0 max-lg:inset-x-0 max-lg:z-40 max-lg:p-3 max-lg:bg-white max-lg:dark:bg-zink-700 max-lg:border-t max-lg:border-slate-200 max-lg:dark:border-zink-600 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
               <?php $label = $isPublished ? 'Update' : 'Save' ?>
               {% cmp="btn" type="submit" variant="blue" icon="save" label="{$label}" addClass="flex-1 " %}
               {% cmp="btn" href="{$backUrl}" variant="slate" icon="step-back" label="Back" %}

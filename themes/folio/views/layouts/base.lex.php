@@ -90,21 +90,17 @@
       <div class="foot-grid">
         <div class="foot-mark">
           <a href="<?= lurl('/blog/'.urlencode($blog['blog_slug'] ?? '')) ?>" class="wordmark"><?= e($user['blog_name'] ?? 'FOLIO') ?></a>
-          <?php if (!empty($blog['subtitle'])) { ?>
-            <p><?= e($blog['subtitle']) ?></p>
+          <?php if (!empty($settings['subtitle'])) { ?>
+            <p><?= e($settings['subtitle']) ?></p>
           <?php } ?>
         </div>
 
-        <div class="foot-col">
-          <h4>Blog</h4>
+        <nav class="foot-nav" aria-label="Footer">
           <a href="<?= lurl('/blog/'.urlencode($blog['blog_slug'] ?? '')) ?>">Home</a>
+          <a href="<?= lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive') ?>">Archive</a>
           <a href="#newsletter">Subscribe</a>
-        </div>
-
-        <div class="foot-col">
-          <h4>Platform</h4>
-          <a href="/"><?= e($_ENV['APP_NAME'] ?? 'Home') ?></a>
-        </div>
+          <a href="<?= lurl('/') ?>"><?= e(env('APP_NAME', 'Home')) ?></a>
+        </nav>
       </div>
 
       <div class="foot-display-wrap" aria-hidden="true">

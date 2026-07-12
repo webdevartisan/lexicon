@@ -40,7 +40,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <div class="mb-2">
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
                           title="Currently under review">
-                        {% cache 'lucide:lock:sm' ttl=3600 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
+                        {% cache 'lucide:lock:sm' ttl=31536000 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
                         Reviewed by <?= e($post['reviewer_username']) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
                     </span>
                 </div>
@@ -50,7 +50,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <div class="mb-2">
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30"
                           title="No reviewer has claimed this post yet">
-                        {% cache 'lucide:user-plus:sm' ttl=3600 %}<i data-lucide="user-plus" class="size-3"></i>{% endcache %}
+                        {% cache 'lucide:user-plus:sm' ttl=31536000 %}<i data-lucide="user-plus" class="size-3"></i>{% endcache %}
                         Awaiting reviewer
                     </span>
                 </div>
@@ -81,19 +81,19 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
         <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-[11px] text-slate-500 dark:text-zink-300">
             <?php if (!empty($post['category_name'])) { ?>
             <span class="inline-flex items-center gap-1">
-                {% cache 'lucide:folder:sm' ttl=3600 %}<i data-lucide="folder" class="size-3"></i>{% endcache %}
+                {% cache 'lucide:folder:sm' ttl=31536000 %}<i data-lucide="folder" class="size-3"></i>{% endcache %}
                 <?= e((string) $post['category_name']) ?>
             </span>
             <?php } ?>
             <?php if (isset($post['comment_count'])) { ?>
             <span class="inline-flex items-center gap-1" title="<?= (int) $post['comment_count'] ?> comments">
-                {% cache 'lucide:message-square:sm' ttl=3600 %}<i data-lucide="message-square" class="size-3"></i>{% endcache %}
+                {% cache 'lucide:message-square:sm' ttl=31536000 %}<i data-lucide="message-square" class="size-3"></i>{% endcache %}
                 <?= (int) $post['comment_count'] ?>
             </span>
             <?php } ?>
             <?php if (!empty($post['blog_name'])) { ?>
             <span class="inline-flex items-center gap-1">
-                {% cache 'lucide:book-open:sm' ttl=3600 %}<i data-lucide="book-open" class="size-3"></i>{% endcache %}
+                {% cache 'lucide:book-open:sm' ttl=31536000 %}<i data-lucide="book-open" class="size-3"></i>{% endcache %}
                 <?= e((string) $post['blog_name']) ?>
             </span>
             <?php } ?>
@@ -101,7 +101,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                 <?php foreach (array_slice($post['tags'], 0, 3) as $tg) { ?>
                 <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>&blog_id=<?= (int) ($post['blog_id'] ?? 0) ?>"
                    class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
-                    {% cache 'lucide:tag:sm' ttl=3600 %}<i data-lucide="tag" class="size-3"></i>{% endcache %}
+                    {% cache 'lucide:tag:sm' ttl=31536000 %}<i data-lucide="tag" class="size-3"></i>{% endcache %}
                     <?= e((string) $tg['name']) ?>
                 </a>
                 <?php } ?>
@@ -114,7 +114,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     data-tooltip="default" data-tooltip-content="{{ editTooltip }}" data-tooltip-follow-cursor="true"
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors"
                     title="{{ editTooltip }}">
-                    {% cache 'lucide:pencil' ttl=3600 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
+                    {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                     <span>{{ editTooltip }}</span>
                 </button>
             </form>
@@ -125,7 +125,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     data-tooltip="default" data-tooltip-content="{{ previewText }}" data-tooltip-follow-cursor="true"
                     class="p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500"
                     title="{{ previewText }}">
-                    {% cache 'lucide:external-link' ttl=3600 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
+                    {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                 </a>
                 {% endif %}
 
@@ -135,7 +135,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     <button data-tooltip="default" data-tooltip-content="{{ publishTooltip }}" data-tooltip-follow-cursor="true" type="submit"
                         class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                         title="{{ publishTooltip }}">
-                        {% cache 'lucide:send' ttl=3600 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
+                        {% cache 'lucide:send' ttl=31536000 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
                     </button>
                 </form>
                 {% endif %}
@@ -146,7 +146,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     <button data-tooltip="default" data-tooltip-content="{{ draftTooltip }}" data-tooltip-follow-cursor="true" type="submit"
                         class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                         title="{{ draftTooltip }}">
-                        {% cache 'lucide:pencil-ruler' ttl=3600 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
+                        {% cache 'lucide:pencil-ruler' ttl=31536000 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
                     </button>
                 </form>
                 {% endif %}
@@ -157,7 +157,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     <button data-tooltip="default" data-tooltip-content="{{ archiveTooltip }}" data-tooltip-follow-cursor="true" type="submit"
                         class="p-2 text-slate-500 hover:text-orange-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                         title="{{ archiveTooltip }}">
-                        {% cache 'lucide:archive' ttl=3600 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
+                        {% cache 'lucide:archive' ttl=31536000 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
                     </button>
                 </form>
                 {% endif %}
@@ -169,7 +169,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                         class="p-2 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 <?= !empty($post['is_featured']) ? 'text-amber-500' : 'text-slate-500 hover:text-amber-500' ?>"
                         title="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>">
                         <?php $starKey = !empty($post['is_featured']) ? 'lucide:star:filled' : 'lucide:star:outline'; ?>
-                        {% cache $starKey ttl=3600 %}<i data-lucide="star" class="size-4 <?= !empty($post['is_featured']) ? 'fill-amber-400' : '' ?>"></i>{% endcache %}
+                        {% cache $starKey ttl=31536000 %}<i data-lucide="star" class="size-4 <?= !empty($post['is_featured']) ? 'fill-amber-400' : '' ?>"></i>{% endcache %}
                     </button>
                 </form>
 
@@ -181,7 +181,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     <button data-tooltip="default" data-tooltip-content="{{ deleteTooltip }}" data-tooltip-follow-cursor="true" type="submit"
                         class="p-2 text-slate-500 hover:text-red-600 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                         title="{{ deleteTooltip }}">
-                        {% cache 'lucide:trash-2' ttl=3600 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
+                        {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                     </button>
                 </form>
             </div>

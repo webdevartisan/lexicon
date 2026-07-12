@@ -433,6 +433,17 @@ class Validator
         return preg_match('/^[\p{L}\p{N}\p{P}\p{S} ]+$/u', $value) === 1;
     }
 
+    protected function validateName(mixed $value, ?string $param, string $field): bool
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return false; // Required, cannot be empty
+        }
+
+        // one or more words, each containing letters from any language, optional apostrophes,
+        // optional hyphens, and optional spaces between name parts
+        return preg_match('/^\p{L}+(?:[\'\-]\p{L}+)*(?:\s+\p{L}+(?:[\'\-]\p{L}+)*)*$/u', $value) === 1;
+    }
+
     /**
      * Validate datetime string against a specific format.
      *

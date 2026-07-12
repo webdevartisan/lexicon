@@ -10,6 +10,7 @@ use App\Models\CategoryModel;
 use App\Models\PostBookmarkModel;
 use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\PostTranslationModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
 use Framework\Core\Response;
@@ -25,8 +26,32 @@ class BlogController extends AppController
         private BlogSettingsModel $settings,
         private TagModel $tagModel,
         private PostLikeModel $postLikeModel,
-        private PostBookmarkModel $postBookmarkModel
+        private PostBookmarkModel $postBookmarkModel,
+        private PostTranslationModel $translations
     ) {}
+
+    /**
+     * Swap in translated title/content/excerpt for the viewer's locale on
+     * blogs with localized posts enabled. Posts without a translation (and
+     * the blog's default locale) pass through unchanged.
+     *
+     * @param  array<int, array<string, mixed>>  $posts
+     * @param  array<string, mixed>  $settings  Blog settings row
+     * @return array<int, array<string, mixed>>
+     */
+    private function localizePosts(array $posts, array $settings): array
+    {
+        if (empty($settings['translations_enabled']) || $posts === []) {
+            return $posts;
+        }
+
+        $viewerLocale = locale();
+        if ($viewerLocale === (string) ($settings['default_locale'] ?? 'en')) {
+            return $posts;
+        }
+
+        return $this->translations->overlay($posts, $viewerLocale);
+    }
 
     /**
      * Explore page: a blog directory first, latest posts second.
@@ -114,7 +139,7 @@ class BlogController extends AppController
         }
 
         return $this->view('Blogs/show.lex.php', $ctx + [
-            'posts' => $this->enrichCardPosts($posts),
+            'posts' => $this->localizePosts($this->enrichCardPosts($posts), $ctx['settings']),
             'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
             'totalPosts' => $landingData['totalPosts'],
             'activeCategory' => $activeCategory,
@@ -158,7 +183,7 @@ class BlogController extends AppController
         $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
 
         return $this->view('Blogs/_index_cards.lex.php', [
-            'cards' => $this->enrichCardPosts($cards),
+            'cards' => $this->localizePosts($this->enrichCardPosts($cards), $ctx['settings']),
             'blog' => $ctx['blog'],
             'user' => $ctx['user'],
         ]);
@@ -204,7 +229,7 @@ class BlogController extends AppController
         $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $postsData['data'],
+            'posts' => $this->localizePosts($postsData['data'], $ctx['settings']),
             'pagination' => [
                 'totalPages' => $postsData['totalPages'],
                 'currentPage' => $postsData['currentPage'],
@@ -231,7 +256,7 @@ class BlogController extends AppController
         $name = e($category['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $posts,
+            'posts' => $this->localizePosts($posts, $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Category &mdash; '.$name,
             'archiveTitle' => $name,
@@ -256,7 +281,7 @@ class BlogController extends AppController
         $name = e($tag['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $posts,
+            'posts' => $this->localizePosts($posts, $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Tagged &mdash; '.$name,
             'archiveTitle' => '#'.$name,
@@ -301,6 +326,9 @@ class BlogController extends AppController
             throw new PageNotFoundException('Post not be found.', 404);
         }
 
+        // Swap in the viewer-locale translation before any derived fields (meta, excerpt) are built.
+        $post = $this->localizePosts([$post], $ctx['settings'])[0];
+
         // Normalize timestamps
         $rawTs = $post['published_at'] ?? $post['created_at'] ?? gmdate('Y-m-d H:i:s');
         $post['published_at_raw'] = $rawTs;
@@ -334,7 +362,17 @@ class BlogController extends AppController
         // Prev/next/related
         $prev_post = $this->postModel->findPreviousByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $next_post = $this->postModel->findNextByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
-        $related = $this->postModel->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4);
+        $related = $this->localizePosts(
+            $this->postModel->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4),
+            $ctx['settings']
+        );
+
+        if ($prev_post !== null) {
+            $prev_post = $this->localizePosts([$prev_post], $ctx['settings'])[0];
+        }
+        if ($next_post !== null) {
+            $next_post = $this->localizePosts([$next_post], $ctx['settings'])[0];
+        }
 
         // Taxonomy for display: category name + slug, and tags as name/slug pairs.
         $category = !empty($post['category_id'])

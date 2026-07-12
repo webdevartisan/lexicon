@@ -16,7 +16,7 @@ $type = ucwords($type);
 ?>
 
 <div class="mb-4 mt-4 {{ classContainer }}" data-closable>
-    <button class="{{ classBtn }}" data-close>{% cache 'lucide:x:msg-close' ttl=3600 %}<i data-lucide="x" class="h-5"></i>{% endcache %}</button>
+    <button class="{{ classBtn }}" data-close>{% cache 'lucide:x:msg-close' ttl=31536000 %}<i data-lucide="x" class="h-5"></i>{% endcache %}</button>
     <span class="font-bold"><b>{{ type }}:</b></span> {{ msg }}
 </div>
 

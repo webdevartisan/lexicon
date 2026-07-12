@@ -42,7 +42,7 @@ $autoClose = $autoClose ?? 10000;
     
     <!-- Icon -->
     <div class="flex-shrink-0 mt-0.5">
-        {% cache 'lucide:msg2-icon:' . $icon ttl=3600 %}<i data-lucide="{{ icon }}" class="h-5 w-5"></i>{% endcache %}
+        {% cache 'lucide:msg2-icon:' . $icon ttl=31536000 %}<i data-lucide="{{ icon }}" class="h-5 w-5"></i>{% endcache %}
     </div>
     
     <!-- Content -->
@@ -53,7 +53,7 @@ $autoClose = $autoClose ?? 10000;
     
     <!-- Close Button -->
     <button class="{{ classBtn }}" data-close aria-label="Close">
-        {% cache 'lucide:x:msg2-close' ttl=3600 %}<i data-lucide="x" class="h-4 w-4"></i>{% endcache %}
+        {% cache 'lucide:x:msg2-close' ttl=31536000 %}<i data-lucide="x" class="h-4 w-4"></i>{% endcache %}
     </button>
     
     <!-- Progress Bar -->

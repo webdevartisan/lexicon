@@ -10,6 +10,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
 use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
@@ -45,6 +46,7 @@ final class PostController extends AppController
         private BlogSettingsModel $blogSettingsModel,
         private MediaService $mediaService,
         private SubscriberNotificationService $subscriberNotifier,
+        private PostTranslationModel $translationModel,
     ) {}
 
     /**
@@ -421,9 +423,16 @@ final class PostController extends AppController
         // Surface the most recent review feedback so the author sees it without visiting the review page
         $latestReview = $workflowEnabled ? $this->reviewModel->findLatestByPost((int) $post->id()) : null;
 
+        // Localized posts: the edit page grows language tabs when the blog opted in.
+        $translationsEnabled = !empty($blogSettings['translations_enabled']);
+
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
+            'translationsEnabled' => $translationsEnabled,
+            'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
+            'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
+            'availableLocales' => PostTranslationModel::SUPPORTED_LOCALES,
             'postUrl' => $postUrl,
             'backUrl' => $this->backUrlPath(),
             'workflowState' => $workflowState,

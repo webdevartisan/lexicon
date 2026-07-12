@@ -24,6 +24,23 @@ $isArchived = $blogStatus === 'archived';
 {% set bannerLabel = t('blog.form.fields.banner.label') %}
 {% set logoLabel = t('blog.form.fields.logo.label') %}
 {% set faviconLabel = t('blog.form.fields.favicon.label') %}
+{% set taglineLabel = t('blog.form.fields.tagline.label') %}
+{% set taglinePlaceholder = t('blog.form.fields.tagline.placeholder') %}
+{% set taglineUnderlabel = t('blog.form.fields.tagline.underlabel') %}
+{% set subtitleLabel = t('blog.form.fields.subtitle.label') %}
+{% set subtitlePlaceholder = t('blog.form.fields.subtitle.placeholder') %}
+{% set subtitleUnderlabel = t('blog.form.fields.subtitle.underlabel') %}
+{% set aboutTextLabel = t('blog.form.fields.aboutText.label') %}
+{% set aboutTextPlaceholder = t('blog.form.fields.aboutText.placeholder') %}
+{% set foundedYearLabel = t('blog.form.fields.foundedYear.label') %}
+{% set foundedYearPlaceholder = t('blog.form.fields.foundedYear.placeholder') %}
+{% set foundedYearUnderlabel = t('blog.form.fields.foundedYear.underlabel') %}
+{% set newsHeadingLabel = t('blog.form.fields.newsletterHeading.label') %}
+{% set newsHeadingPlaceholder = t('blog.form.fields.newsletterHeading.placeholder') %}
+{% set newsHeadingUnderlabel = t('blog.form.fields.newsletterHeading.underlabel') %}
+{% set newsTextLabel = t('blog.form.fields.newsletterText.label') %}
+{% set newsTextPlaceholder = t('blog.form.fields.newsletterText.placeholder') %}
+{% set newsTextUnderlabel = t('blog.form.fields.newsletterText.underlabel') %}
 
 <!-- Errors -->
 {% if errors|notempty %}
@@ -50,7 +67,7 @@ $isArchived = $blogStatus === 'archived';
 {{ csrf_field() }}
 
 <!-- Form card -->
-<div class="grid gap-6 lg:grid-cols-[1fr_auto]">
+<div class="grid gap-6 lg:grid-cols-[1fr_auto] max-lg:pb-20">
   <main>
       <!-- Identity -->
       <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
@@ -146,6 +163,41 @@ $isArchived = $blogStatus === 'archived';
         </div>
       </section>
 
+      <!-- Front page text -->
+      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
+        <div class="p-4 border-b border-slate-200 dark:border-zink-600">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.frontPage.title') }}</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">
+            {{ t('blog.form.sections.frontPage.description') }}
+          </p>
+        </div>
+        <div class="p-4 space-y-4 md:p-5">
+          <?php $value = $settings['tagline'] ?? ''; ?>
+          {% cmp="input" type="text" name="tagline" label="{$taglineLabel}" value="{$value}" placeholder="{$taglinePlaceholder}" underlabel="{$taglineUnderlabel}" %}
+
+          <?php $value = $settings['subtitle'] ?? ''; ?>
+          {% cmp="input" type="text" name="subtitle" label="{$subtitleLabel}" value="{$value}" placeholder="{$subtitlePlaceholder}" underlabel="{$subtitleUnderlabel}" %}
+
+          <?php $value = $settings['about_text'] ?? ''; ?>
+          {% cmp="input" type="textarea" name="about_text" label="{$aboutTextLabel}" value="{$value}" rows="3" placeholder="{$aboutTextPlaceholder}" %}
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <?php $value = $settings['founded_year'] ?? ''; ?>
+              {% cmp="input" type="text" name="founded_year" label="{$foundedYearLabel}" value="{$value}" placeholder="{$foundedYearPlaceholder}" underlabel="{$foundedYearUnderlabel}" %}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600 space-y-4">
+            <?php $value = $settings['newsletter_heading'] ?? ''; ?>
+            {% cmp="input" type="text" name="newsletter_heading" label="{$newsHeadingLabel}" value="{$value}" placeholder="{$newsHeadingPlaceholder}" underlabel="{$newsHeadingUnderlabel}" %}
+
+            <?php $value = $settings['newsletter_text'] ?? ''; ?>
+            {% cmp="input" type="text" name="newsletter_text" label="{$newsTextLabel}" value="{$value}" placeholder="{$newsTextPlaceholder}" underlabel="{$newsTextUnderlabel}" %}
+          </div>
+        </div>
+      </section>
+
       <!-- Localization -->
       <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
         <div class="p-4 border-b border-slate-200 dark:border-zink-600">
@@ -154,7 +206,7 @@ $isArchived = $blogStatus === 'archived';
             {{ t('blog.form.sections.localization.description') }}
           </p>
         </div>
-        <div class="p-4 md:p-5">
+        <div class="p-4 space-y-4 md:p-5">
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <?php $value = $current_locale ?? ''; ?>
@@ -164,6 +216,26 @@ $isArchived = $blogStatus === 'archived';
             <div>
               <?php $value = $settings['timezone'] ?? ''; ?>
               {% cmp="select" name="timezone" groups="{$timezones}" label="{$timezoneLabel}" selectedKey="{$value}" %}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
+            <div class="flex items-start gap-2">
+              <input
+                id="translations_enabled"
+                name="translations_enabled"
+                type="checkbox"
+                value="1"
+                class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
+                {% if settings.translations_enabled|notempty %}checked{% endif %}>
+              <div>
+                <label for="translations_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
+                  {{ t('blog.form.fields.translationsEnabled.label') }}
+                </label>
+                <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
+                  {{ t('blog.form.fields.translationsEnabled.help') }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -179,10 +251,12 @@ $isArchived = $blogStatus === 'archived';
         </div>
         <div class="p-4 space-y-4 md:p-5">
           <!-- Meta title -->
-          {% cmp="input" type="text" name="meta_title" label="{$metaTitleLabel}" placeholder="{$metaTitlePlaceholder}" %}
+          <?php $value = $settings['meta_title'] ?? ''; ?>
+          {% cmp="input" type="text" name="meta_title" label="{$metaTitleLabel}" value="{$value}" placeholder="{$metaTitlePlaceholder}" %}
 
           <!-- Meta description -->
-          {% cmp="input" type="textarea" name="meta_description" label="{$metaDescLabel}" rows="3" placeholder="{$metaDescPlaceholder}" %}
+          <?php $value = $settings['meta_description'] ?? ''; ?>
+          {% cmp="input" type="textarea" name="meta_description" label="{$metaDescLabel}" value="{$value}" rows="3" placeholder="{$metaDescPlaceholder}" %}
 
           <div class="flex items-center gap-2">
             <input
@@ -196,8 +270,19 @@ $isArchived = $blogStatus === 'archived';
               {{ t('blog.form.fields.allowIndexing.label') }}
             </label>
           </div>
+        </div>
+      </section>
 
-          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
+      <!-- Discussion -->
+      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
+        <div class="p-4 border-b border-slate-200 dark:border-zink-600">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.discussion.title') }}</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">
+            {{ t('blog.form.sections.discussion.description') }}
+          </p>
+        </div>
+        <div class="p-4 space-y-4 md:p-5">
+          <div>
             <div class="flex items-start gap-2">
               <input
                 id="allow_comments"
@@ -257,32 +342,42 @@ $isArchived = $blogStatus === 'archived';
             </div>
           </div>
 
-          <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
-            <div class="flex items-start gap-2">
-              <input
-                id="workflow_enabled"
-                name="workflow_enabled"
-                type="checkbox"
-                value="1"
-                class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                {% if settings.workflow_enabled|notempty %}checked{% endif %}>
-              <div>
-                <label for="workflow_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                  Editorial workflow
-                </label>
-                <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                  When enabled, posts require review and approval before they can be published. Disabling resets any in-progress reviews to draft.
-                </p>
-              </div>
+        </div>
+      </section>
+
+      <!-- Editorial workflow -->
+      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
+        <div class="p-4 border-b border-slate-200 dark:border-zink-600">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.workflow.title') }}</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">
+            {{ t('blog.form.sections.workflow.description') }}
+          </p>
+        </div>
+        <div class="p-4 md:p-5">
+          <div class="flex items-start gap-2">
+            <input
+              id="workflow_enabled"
+              name="workflow_enabled"
+              type="checkbox"
+              value="1"
+              class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
+              {% if settings.workflow_enabled|notempty %}checked{% endif %}>
+            <div>
+              <label for="workflow_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
+                {{ t('blog.form.fields.workflowEnabled.label') }}
+              </label>
+              <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
+                {{ t('blog.form.fields.workflowEnabled.help') }}
+              </p>
             </div>
           </div>
         </div>
       </section>
   </main>
   
-  <aside class="sticky top-4 space-y-4 shrink-0 w-full sm:w-64">
-      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
-          <div class="p-4 space-y-4">
+  <aside class="lg:sticky lg:top-4 space-y-4 shrink-0 w-full lg:w-64">
+      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 max-lg:fixed max-lg:bottom-0 max-lg:inset-x-0 max-lg:z-40 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+          <div class="p-4 space-y-4 max-lg:p-3">
               <!-- Primary Action Buttons -->
               <div class="flex w-full gap-2">
               <?php $label = $isPublished ? $updateBtnLabel : $saveDraftBtnLabel ?>

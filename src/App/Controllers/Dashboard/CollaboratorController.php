@@ -84,9 +84,8 @@ final class CollaboratorController extends AppController
         }
 
         // With the workflow off the reviewer role has nothing to do, so don't offer it on the invite form.
-        $availableRoles = $workflowEnabled
-            ? BlogModel::ROLES
-            : array_values(array_diff(BlogModel::ROLES, ['reviewer']));
+        // Custom blog-scope roles created in the control panel are offered too.
+        $availableRoles = $this->blogModel->availableCollaboratorRoles($workflowEnabled);
 
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
@@ -113,7 +112,7 @@ final class CollaboratorController extends AppController
 
         $validator = $this->validateOrFail([
             'email' => 'required|email',
-            'role' => 'required|in:'.implode(',', BlogModel::ROLES),
+            'role' => 'required|in:'.implode(',', $this->blogModel->availableCollaboratorRoles()),
         ]);
         $data = $validator->validated();
 
@@ -164,7 +163,7 @@ final class CollaboratorController extends AppController
         Gate::authorize('manageUsers', $blog, auth()->user());
 
         $validator = $this->validateOrFail([
-            'role' => 'required|in:'.implode(',', BlogModel::ROLES),
+            'role' => 'required|in:'.implode(',', $this->blogModel->availableCollaboratorRoles()),
         ]);
         $role = $validator->validated()['role'];
 

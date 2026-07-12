@@ -72,9 +72,9 @@ $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front pag
                                             aria-label="<?= e($featureTip) ?>"
                                             class="p-2 rounded-md transition-colors <?= $featuredOnHome ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
                                             <?php if ($featuredOnHome) { ?>
-                                            {% cache 'lucide:star-fill' ttl=3600 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
+                                            {% cache 'lucide:star-fill' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
                                             <?php } else { ?>
-                                            {% cache 'lucide:star' ttl=3600 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
+                                            {% cache 'lucide:star' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
                                             <?php } ?>
                                     </button>
                                 </form>

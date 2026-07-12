@@ -43,6 +43,7 @@ class DatabaseHelper
             'post_bookmarks',
             'post_reviewers',
             'post_tags',
+            'post_translations',
             'submissions',
             'reviews',
             'posts',

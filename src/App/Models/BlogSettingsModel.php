@@ -23,10 +23,13 @@ class BlogSettingsModel extends AppModel
      */
     public function findByBlogId(int $blogId): ?array
     {
-        $sql = 'SELECT blog_id, theme, default_locale, timezone, 
-                        meta_title, meta_description, indexable, 
+        $sql = 'SELECT blog_id, theme, default_locale, timezone,
+                        meta_title, meta_description, indexable,
+                        tagline, subtitle, about_text, founded_year,
+                        newsletter_heading, newsletter_text,
                         banner_path, logo_path, favicon_path,
-                        comments_enabled, comments_auto_publish, replies_auto_publish, workflow_enabled
+                        comments_enabled, comments_auto_publish, replies_auto_publish,
+                        workflow_enabled, translations_enabled
                 FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
         $stmt = $this->database->query($sql, [$blogId]);
@@ -99,6 +102,12 @@ class BlogSettingsModel extends AppModel
             'timezone',
             'meta_title',
             'meta_description',
+            'tagline',
+            'subtitle',
+            'about_text',
+            'founded_year',
+            'newsletter_heading',
+            'newsletter_text',
             'indexable',
             'banner_path',
             'logo_path',
@@ -107,6 +116,7 @@ class BlogSettingsModel extends AppModel
             'comments_auto_publish',
             'replies_auto_publish',
             'workflow_enabled',
+            'translations_enabled',
         ];
 
         $set = [];
@@ -116,7 +126,7 @@ class BlogSettingsModel extends AppModel
             if (array_key_exists($col, $data)) {
                 $set[] = "$col = ?";
 
-                if (in_array($col, ['indexable', 'comments_enabled', 'comments_auto_publish', 'replies_auto_publish', 'workflow_enabled'], true)) {
+                if (in_array($col, ['indexable', 'comments_enabled', 'comments_auto_publish', 'replies_auto_publish', 'workflow_enabled', 'translations_enabled'], true)) {
                     $params[] = (int) (bool) $data[$col];
                 } else {
                     $params[] = $data[$col];

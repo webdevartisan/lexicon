@@ -8,6 +8,7 @@ use App\Mail\CollaboratorRemovedMail;
 use App\Mail\CollaboratorRoleChangedMail;
 use App\Mail\InviteDeclinedMail;
 use App\Mail\Mailable;
+use App\Mail\NewCommentMail;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
@@ -45,6 +46,7 @@ class NotificationService
         'post.workflow_disabled' => 'notify_post_status',
         'collaborator.role_changed' => 'notify_role_changes',
         'collaborator.removed' => 'notify_role_changes',
+        'comment.created' => 'notify_comments',
     ];
 
     public function __construct(
@@ -160,6 +162,15 @@ class NotificationService
                 $to,
                 (string) ($data['blog_name'] ?? ''),
                 (string) ($data['removed_by_username'] ?? '')
+            ),
+            'comment.created' => new NewCommentMail(
+                $to,
+                (string) ($data['post_title'] ?? ''),
+                (string) ($data['blog_slug'] ?? ''),
+                (string) ($data['post_slug'] ?? ''),
+                (string) ($data['commenter_name'] ?? 'A reader'),
+                (string) ($data['comment_excerpt'] ?? ''),
+                (bool) ($data['awaiting_moderation'] ?? false)
             ),
             'blog.invite_declined' => new InviteDeclinedMail(
                 $to,

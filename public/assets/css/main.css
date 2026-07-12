@@ -1806,10 +1806,14 @@ button,
       margin-bottom: 0; }
     .posts article .image {
       display: block;
-      margin: 0 0 2em 0; }
+      margin: 0 0 2em 0;
+      aspect-ratio: 16 / 10;
+      overflow: hidden; }
       .posts article .image img {
         display: block;
-        width: 100%; }
+        width: 100%;
+        height: 100%;
+        object-fit: cover; }
   @media screen and (min-width: 1681px) {
     .posts article:nth-child(3n + 1):before {
       display: none; }

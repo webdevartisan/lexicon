@@ -51,10 +51,10 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
 
                 <div class="card-body flex items-center justify-between border-t border-slate-100 dark:border-zink-600">
                     <a href="/admin/pages" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-zink-200 border border-slate-200 dark:border-zink-500 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors">
-                        {% cache 'lucide:arrow-left' ttl=3600 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %} Back to pages
+                        {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %} Back to pages
                     </a>
                     <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                        {% cache 'lucide:save' ttl=3600 %}<i data-lucide="save" class="size-4"></i>{% endcache %} Save Page
+                        {% cache 'lucide:save' ttl=31536000 %}<i data-lucide="save" class="size-4"></i>{% endcache %} Save Page
                     </button>
                 </div>
             </div>

@@ -59,8 +59,8 @@ class ProfileController extends AppController
         $slugInput = strtolower(trim((string) $this->request->postParam('public_profile_url')));
 
         $rules = [
-            'first_name' => 'required|alpha|min:2|max:50',
-            'last_name' => 'required|alpha|min:2|max:50',
+            'first_name' => 'required|name|min:2|max:50',
+            'last_name' => 'required|name|min:2|max:50',
             'email' => 'required|email|unique:users,email,'.$userId,
             'bio' => 'max:1000',
             'occupation' => 'max:100',

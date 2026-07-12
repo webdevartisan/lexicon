@@ -14,7 +14,7 @@ $rows = $rows ?? '8';
 $classLabel = 'inline-block mb-2 text-base font-medium';
 $classInput = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 disabled:bg-slate-100 dark:disabled:bg-zink-600 disabled:border-slate-300 dark:disabled:border-zink-500 dark:disabled:text-zink-200 disabled:text-slate-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
 $classInvalid = 'valid:border-green-500 invalid:border-red-500 dark:valid:border-green-800 dark:invalid:border-red-800';
-$classPrefix = 'ltr:rounded-l-none rtl:rounded-r-none';
+$classPrefix = 'ltr:rounded-l-none rtl:rounded-r-none flex-1 min-w-0';
 
 if (!empty($name)) {
     $elementName = str_replace(' ', '_', strtolower($name));
@@ -38,10 +38,10 @@ $old = old($elementName);
     <?php } ?>
 
 <?php if (!empty($prefix)) { ?>
-<div class="flex items-center">
+<div class="flex items-center min-w-0">
     <span id="<?= $elementName ?>_prefix"
-        class="inline-block px-3 py-2 border ltr:border-r-0 rtl:border-l-0 border-slate-200 bg-slate-100 dark:border-zink-500 dark:bg-zink-600 ltr:rounded-l-md rtl:rounded-r-md whitespace-nowrap flex-shrink-0">
-        <?= $prefix ?>
+        class="inline-block px-3 py-2 border ltr:border-r-0 rtl:border-l-0 border-slate-200 bg-slate-100 dark:border-zink-500 dark:bg-zink-600 ltr:rounded-l-md rtl:rounded-r-md whitespace-nowrap shrink min-w-0 max-w-[55%] overflow-hidden text-ellipsis [direction:rtl]">
+        <span dir="ltr"><?= $prefix ?></span>
     </span>
 <?php } ?>
     <input 

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
 use App\Models\PostModel;
+use App\Services\NotificationService;
 use Framework\Core\Response;
 
 class CommentController extends AppController
@@ -19,6 +21,8 @@ class CommentController extends AppController
         private PostModel $postModel,
         private CommentModel $commentModel,
         private BlogSettingsModel $blogSettings,
+        private BlogModel $blogModel,
+        private NotificationService $notifications,
     ) {}
 
     public function create(): Response
@@ -121,6 +125,8 @@ class CommentController extends AppController
             $this->request->ip()
         );
 
+        $this->notifyBlogTeam($post, $content, $user, !$autoPublish);
+
         if ($autoPublish) {
             $this->flash('success', $isReply ? 'Reply posted.' : 'Comment posted.');
         } else {
@@ -128,5 +134,51 @@ class CommentController extends AppController
         }
 
         return $this->redirectBack();
+    }
+
+    /**
+     * Notify the blog owner, active editors, and the post author about a new
+     * comment. The commenter is skipped so people don't get notified about
+     * their own comments; recipients can opt out via notify_comments.
+     *
+     * @param  array<string, mixed>  $post  The commented post row
+     * @param  string  $content  Raw comment text
+     * @param  array<string, mixed>|null  $commenter  Authenticated commenter, null for guests
+     * @param  bool  $awaitingModeration  Whether the comment is held for approval
+     */
+    private function notifyBlogTeam(array $post, string $content, ?array $commenter, bool $awaitingModeration): void
+    {
+        $blog = $this->blogModel->getBlog((int) $post['blog_id']);
+        if (!$blog) {
+            return;
+        }
+
+        $recipients = [$blog->ownerId(), (int) ($post['author_id'] ?? 0)];
+        foreach ($blog->users() as $member) {
+            if ((int) ($member['is_active'] ?? 0) === 1
+                && $this->blogModel->baseRoleFor((string) ($member['role'] ?? '')) === 'editor') {
+                $recipients[] = (int) $member['user_id'];
+            }
+        }
+
+        $commenterId = $commenter ? (int) $commenter['id'] : null;
+        $recipients = array_unique(array_filter($recipients, static fn (int $id): bool => $id > 0 && $id !== $commenterId));
+
+        $payload = [
+            'post_id' => (int) $post['id'],
+            'post_title' => (string) ($post['title'] ?? ''),
+            'post_slug' => (string) ($post['slug'] ?? ''),
+            'blog_id' => (int) $post['blog_id'],
+            'blog_slug' => $blog->slug(),
+            'commenter_name' => $commenter
+                ? (string) ($commenter['display_name'] ?? $commenter['username'] ?? 'A reader')
+                : 'A guest',
+            'comment_excerpt' => truncate($content, 140),
+            'awaiting_moderation' => $awaitingModeration,
+        ];
+
+        foreach ($recipients as $userId) {
+            $this->notifications->dispatch($userId, 'comment.created', $payload);
+        }
     }
 }

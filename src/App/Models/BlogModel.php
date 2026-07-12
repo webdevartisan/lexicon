@@ -29,6 +29,70 @@ class BlogModel extends AppModel
     public const ROLES = ['editor', 'author', 'contributor', 'reviewer'];
 
     /**
+     * Collaborator roles offered on the team page: the shipped list plus any
+     * admin-created custom roles with blog scope.
+     *
+     * @param  bool  $workflowEnabled  When false the reviewer role is dropped (nothing for it to do)
+     * @return string[] Role slugs
+     */
+    public function availableCollaboratorRoles(bool $workflowEnabled = true): array
+    {
+        $roles = $workflowEnabled ? self::ROLES : array_values(array_diff(self::ROLES, ['reviewer']));
+
+        $custom = $this->database->query(
+            "SELECT role_slug FROM roles WHERE scope = 'blog' AND is_system = 0 ORDER BY level DESC"
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($custom as $slug) {
+            if (!in_array($slug, $roles, true)) {
+                $roles[] = (string) $slug;
+            }
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Behavior level for a stored collaborator role.
+     *
+     * Custom admin-created roles keep their own slug in blog_users, but act as
+     * one of the shipped roles, derived from the permissions granted to them.
+     * Resolving here keeps every policy and view check working against the
+     * known role names.
+     */
+    public function baseRoleFor(string $role): string
+    {
+        if ($role === '' || $role === 'owner' || in_array($role, self::ROLES, true)) {
+            return $role;
+        }
+
+        static $resolved = [];
+        if (isset($resolved[$role])) {
+            return $resolved[$role];
+        }
+
+        $slugs = $this->database->query(
+            'SELECT p.permission_slug
+             FROM roles r
+             JOIN role_permissions rp ON rp.role_id = r.id
+             JOIN permissions p ON p.id = rp.permission_id
+             WHERE r.role_slug = ?',
+            [$role]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        $base = 'contributor';
+        if (array_intersect($slugs, ['edit_blog_posts', 'publish_blog_posts', 'delete_blog_posts'])) {
+            $base = 'editor';
+        } elseif (in_array('create_posts', $slugs, true)) {
+            $base = 'author';
+        } elseif (array_intersect($slugs, ['review_posts', 'approve_posts', 'reject_posts'])) {
+            $base = 'reviewer';
+        }
+
+        return $resolved[$role] = $base;
+    }
+
+    /**
      * Update a blog and invalidate related caches.
      *
      * Invalidates all cached blog URLs and post listings when blog data changes.

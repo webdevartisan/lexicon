@@ -47,13 +47,6 @@ $router->add('/contact', ['controller' => 'PageController', 'action' => 'sendCon
 $router->add('/getting-started', ['controller' => 'PageController', 'action' => 'gettingStarted', 'method' => 'GET']);
 $router->add('/getting-started/{slug:[a-z0-9-]+}', ['controller' => 'PageController', 'action' => 'guide', 'method' => 'GET']);
 $router->add('/sitemap.xml', ['controller' => 'SitemapController', 'action' => 'index', 'method' => 'GET']);
-$router->add('/products', ['controller' => 'Products', 'action' => 'index', 'method' => 'GET']);
-
-// Route with slug parameter, only allowing word characters and hyphen
-$router->add('/product/{slug:[\w-]+}', ['controller' => 'Products', 'action' => 'show',  'method' => 'GET']);
-
-// More specific product page route with parameters to avoid conflicts
-$router->add('/{title}/{id:\d+}/{page:\d+}', ['controller' => 'Products', 'action' => 'showPage', 'method' => 'GET']);
 
 // Profile route.
 $router->add('/profile/{slug:[A-Za-z0-9_\-]+}', [
@@ -147,6 +140,11 @@ $router->group([
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
+
+    // Post translations (per-locale overlays; offered when the blog enables localized posts).
+    $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}', ['controller' => 'PostTranslationController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}', ['controller' => 'PostTranslationController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}/delete', ['controller' => 'PostTranslationController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/post/new', ['controller' => 'PostController', 'action' => 'new', 'method' => 'GET']);
     $r->add('/post/create', ['controller' => 'PostController', 'action' => 'create', 'method' => 'POST']);
 
@@ -192,6 +190,10 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/team/leave', ['controller' => 'CollaboratorController', 'action' => 'leave', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/role', ['controller' => 'CollaboratorController', 'action' => 'changeRole', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/revoke', ['controller' => 'CollaboratorController', 'action' => 'revoke', 'method' => 'POST']);
+
+    // Subscribers (owner-only): audience list with search and removal.
+    $r->add('/blog/{blogId:\d+}/subscribers', ['controller' => 'SubscriberController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/subscribers/{id:\d+}/delete', ['controller' => 'SubscriberController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
