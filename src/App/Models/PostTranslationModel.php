@@ -74,7 +74,7 @@ class PostTranslationModel extends AppModel
         $this->database->execute($sql, [
             $postId,
             $locale,
-            (string) ($data['title'] ?? ''),
+            (string) $data['title'],
             $data['content'] ?? null,
             $data['excerpt'] ?? null,
         ]);
