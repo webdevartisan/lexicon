@@ -1,0 +1,110 @@
+/* Nocturne archive: the Ledger. */
+
+.ledger-hero {
+  padding: clamp(8rem, 18vh, 12rem) 0 var(--step-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ledger-rail {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+  margin-bottom: var(--step-3);
+}
+
+.ledger-title {
+  margin: 0 0 var(--step-2);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 7.5vw, 6.5rem);
+  line-height: 1;
+}
+
+.ledger-dek {
+  margin: 0 0 var(--step-3);
+  max-width: 48ch;
+  font-size: var(--type-lede);
+  color: var(--paper-2);
+  line-height: 1.5;
+}
+
+.ledger-dek em {
+  color: var(--brass);
+}
+
+.ledger {
+  padding: var(--step-4) 0;
+}
+
+.ledger .idx-list {
+  border-top: 0;
+}
+
+.ledger-empty {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ledger-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding-top: var(--step-3);
+}
+
+.ledger-pagination-info {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ledger-pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ledger-pagination-nav a,
+.ledger-pagination-nav span {
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  color: var(--paper-2);
+}
+
+.ledger-pagination-nav a {
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.ledger-pagination-nav a:hover {
+  color: var(--brass-bright);
+  background: var(--night-3);
+}
+
+.ledger-pagination-nav .is-current {
+  color: var(--night);
+  background: var(--brass);
+}
+
+.ledger-pagination-nav .is-disabled {
+  color: var(--muted);
+  opacity: 0.45;
+}
