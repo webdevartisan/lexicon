@@ -18,10 +18,45 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     }
 
+    var userMenu = document.querySelector(".nav-user");
+    if (userMenu) {
+    var userBtn = userMenu.querySelector(".nav-user-btn");
+    userBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = userMenu.classList.toggle("is-open");
+        userBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    document.addEventListener("click", function (e) {
+        if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove("is-open");
+        userBtn.setAttribute("aria-expanded", "false");
+        }
+    });
+    }
+
     var masthead = document.querySelector(".masthead");
     var onScroll = function () { if (masthead) masthead.classList.toggle("is-scrolled", window.scrollY > 8); };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Cross-page anchors (e.g. Subscribe from the archive) can miss the native
+    // jump while deferred scripts and reveal styles settle; scroll explicitly,
+    // and retry after full load in case the browser resets to the top.
+    if (location.hash) {
+    var anchorTarget = document.getElementById(location.hash.slice(1));
+    if (anchorTarget) {
+        var jumpToAnchor = function () {
+        // Plain scrollIntoView: the smooth variant gets cancelled while the page settles
+        if (window.scrollY < 10) anchorTarget.scrollIntoView();
+        };
+        setTimeout(jumpToAnchor, 120);
+        if (document.readyState === "complete") {
+        setTimeout(jumpToAnchor, 600);
+        } else {
+        window.addEventListener("load", function () { setTimeout(jumpToAnchor, 150); }, { once: true });
+        }
+    }
+    }
 
     var revealEls = document.querySelectorAll(".reveal, .img-mask");
     var showAll = function () { revealEls.forEach(function (el) { el.classList.add("is-in"); }); };

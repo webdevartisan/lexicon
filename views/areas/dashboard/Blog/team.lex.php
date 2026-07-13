@@ -54,7 +54,7 @@ $initials = static function (string $name): string {
         <i data-lucide="info" class="size-4 shrink-0 mt-0.5 text-slate-400"></i>
         <span>
             Editorial workflow is off for this blog, so reviewer-related controls (review queue, reviewer role, workflow health) are hidden.
-            Turn it on in <a href="/dashboard/blog/{{ blog.id }}/edit" class="font-medium text-custom-500 hover:text-custom-600 underline">Blog Settings</a> if you want submissions to go through a review pipeline before publishing.
+            Turn it on in <a href="/dashboard/blog/{{ blog.id }}/settings#discussion" class="font-medium text-custom-500 hover:text-custom-600 underline">Blog Settings</a> if you want submissions to go through a review pipeline before publishing.
         </span>
     </div>
     <?php } ?>

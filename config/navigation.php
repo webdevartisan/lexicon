@@ -154,7 +154,7 @@ return [
         ],
         [
             'label' => 'Blog Settings',
-            'href' => '/dashboard/blog/{blogId}/edit',
+            'href' => '/dashboard/blog/{blogId}/settings',
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,

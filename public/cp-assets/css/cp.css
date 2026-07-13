@@ -1862,6 +1862,10 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(236 253 245 / var(--tw-bg-opacity, 1));
 }
+.bg-emerald-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
+}
 .bg-gray-200 {
   --tw-bg-opacity: 1;
   background-color: rgb(229 231 235 / var(--tw-bg-opacity, 1));
@@ -2008,10 +2012,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .bg-yellow-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(234 179 8 / var(--tw-bg-opacity, 1));
-}
-.bg-emerald-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
 }
 .bg-gradient-to-t {
   background-image: linear-gradient(to top, var(--tw-gradient-stops));
@@ -4147,6 +4147,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .dark\:border-custom-500\/30:where([data-mode="dark"], [data-mode="dark"] *) {
   border-color: rgb(var(--sc-custom-500) / 0.3);
 }
+.dark\:border-custom-600:where([data-mode="dark"], [data-mode="dark"] *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--sc-custom-600) / var(--tw-border-opacity, 1));
+}
 .dark\:border-emerald-800:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
   border-color: rgb(6 95 70 / var(--tw-border-opacity, 1));
@@ -4228,10 +4232,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .dark\:border-zink-600:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
   border-color: rgb(var(--sc-zink-600) / var(--tw-border-opacity, 1));
-}
-.dark\:border-custom-600:where([data-mode="dark"], [data-mode="dark"] *) {
-  --tw-border-opacity: 1;
-  border-color: rgb(var(--sc-custom-600) / var(--tw-border-opacity, 1));
 }
 .dark\:bg-amber-500\/10:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(245 158 11 / 0.1);
@@ -4662,6 +4662,10 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-border-opacity: 1;
   border-color: rgb(153 27 27 / var(--tw-border-opacity, 1));
 }
+.dark\:hover\:border-custom-500:hover:where([data-mode="dark"], [data-mode="dark"] *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--sc-custom-500) / var(--tw-border-opacity, 1));
+}
 .dark\:hover\:border-custom-600:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
   border-color: rgb(var(--sc-custom-600) / var(--tw-border-opacity, 1));
@@ -4673,10 +4677,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .dark\:hover\:border-zink-500:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
   border-color: rgb(var(--sc-zink-500) / var(--tw-border-opacity, 1));
-}
-.dark\:hover\:border-custom-500:hover:where([data-mode="dark"], [data-mode="dark"] *) {
-  --tw-border-opacity: 1;
-  border-color: rgb(var(--sc-custom-500) / var(--tw-border-opacity, 1));
 }
 .dark\:hover\:bg-amber-900\/30:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(120 53 15 / 0.3);

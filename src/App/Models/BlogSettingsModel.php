@@ -16,6 +16,45 @@ class BlogSettingsModel extends AppModel
     protected ?string $table = 'blog_settings';
 
     /**
+     * Social platforms a blog can link to, in display order.
+     * Shared by the settings form and the themes that render the icons.
+     *
+     * @var string[]
+     */
+    public const SOCIAL_PLATFORMS = ['x', 'facebook', 'instagram', 'linkedin', 'youtube', 'github'];
+
+    /**
+     * Decode the social_links JSON column into a platform => URL map.
+     *
+     * Unknown platforms and non-string values are dropped so themes can
+     * iterate the result without further checks.
+     *
+     * @param  mixed  $raw  Raw column value (JSON string or null)
+     * @return array<string, string>
+     */
+    public static function decodeSocialLinks(mixed $raw): array
+    {
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $links = [];
+        foreach (self::SOCIAL_PLATFORMS as $platform) {
+            $url = $decoded[$platform] ?? '';
+            if (is_string($url) && trim($url) !== '') {
+                $links[$platform] = trim($url);
+            }
+        }
+
+        return $links;
+    }
+
+    /**
      * Find settings for a specific blog.
      *
      * @param  int  $blogId  Blog identifier
@@ -26,7 +65,7 @@ class BlogSettingsModel extends AppModel
         $sql = 'SELECT blog_id, theme, default_locale, timezone,
                         meta_title, meta_description, indexable,
                         tagline, subtitle, about_text, founded_year,
-                        newsletter_heading, newsletter_text,
+                        newsletter_heading, newsletter_text, social_links,
                         banner_path, logo_path, favicon_path,
                         comments_enabled, comments_auto_publish, replies_auto_publish,
                         workflow_enabled, translations_enabled
@@ -108,6 +147,7 @@ class BlogSettingsModel extends AppModel
             'founded_year',
             'newsletter_heading',
             'newsletter_text',
+            'social_links',
             'indexable',
             'banner_path',
             'logo_path',

@@ -120,7 +120,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <a href="/dashboard/blog/{{ blog.id }}/edit" 
+                    <a href="/dashboard/blog/{{ blog.id }}/settings"
                         class="text-slate-500 btn bg-slate-200 border-slate-200 hover:text-slate-600 hover:bg-slate-300">
                         <i data-lucide="arrow-left" class="inline-block size-4 mr-1"></i>
                         Cancel
