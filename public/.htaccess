@@ -53,6 +53,15 @@
 
 
 # ========================================
+# MIME TYPES FOR MANIFEST FILES
+# ========================================
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json webmanifest
+</IfModule>
+
+
+# ========================================
 # REWRITE RULES (FRONT CONTROLLER)
 # ========================================
 

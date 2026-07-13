@@ -34,7 +34,9 @@ class CacheKey
     /**
      * Generate cache key for a request.
      *
-     * Format: "{locale}:{method}:{path}?{canonical_query}"
+     * Format: "{locale}:{method}:{path}?{canonical_query}#{consent_state}"
+     *
+     * Varies cache based on consent cookie to ensure homepage shows correct banner state.
      */
     public function forRequest(Request $request): string
     {
@@ -47,6 +49,10 @@ class CacheKey
         if ($query !== '') {
             $key .= "?{$query}";
         }
+
+        // Include consent cookie state in cache key to vary by consent status
+        $hasConsent = isset($_COOKIE['app_consent']) ? '1' : '0';
+        $key .= "#{$hasConsent}";
 
         return $key;
     }

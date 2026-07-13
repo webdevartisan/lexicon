@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Privacy;
 
+use Framework\HttpUtils;
+
 /**
  * Signed, HttpOnly consent cookie store.
  *
@@ -70,11 +72,12 @@ final class ConsentCookieStore
     public function write(Consent $consent): void
     {
         $value = $this->encodeCookieValue($consent);
-        $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $isHttps = HttpUtils::isHttps();
 
         setcookie($this->cookieName, $value, [
             'expires' => time() + ($this->ttlDays * 86400),
             'path' => '/',
+            'domain' => '',
             'secure' => $isHttps,
             'httponly' => true,
             'samesite' => 'Lax',
@@ -83,11 +86,12 @@ final class ConsentCookieStore
 
     public function clear(): void
     {
-        $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $isHttps = HttpUtils::isHttps();
 
         setcookie($this->cookieName, '', [
             'expires' => time() - 3600,
             'path' => '/',
+            'domain' => '',
             'secure' => $isHttps,
             'httponly' => true,
             'samesite' => 'Lax',
