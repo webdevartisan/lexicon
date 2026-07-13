@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\PreRouting;
 
 use Framework\Core\Request;
+use Framework\HttpUtils;
 
 /**
  * Class SubdomainNormalizer
@@ -122,7 +123,7 @@ final class SubdomainNormalizer
         // - In production, always prefer https:// to align with HttpsRedirector and SEO.
         // - In non-production, mirror the current scheme to avoid surprises in local testing.
         $scheme = 'http://';
-        if ($isProd || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')) {
+        if ($isProd || HttpUtils::isHttps()) {
             $scheme = 'https://';
         }
 

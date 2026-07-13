@@ -51,13 +51,13 @@ class Session
      */
     protected function configure(): void
     {
-        $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $isHttps = HttpUtils::isHttps();
         $params = session_get_cookie_params();
 
         session_set_cookie_params([
             'lifetime' => $params['lifetime'],
             'path' => $params['path'],
-            'domain' => $params['domain'],
+            'domain' => '',
             'secure' => $isHttps,
             'httponly' => true,
             'samesite' => 'Lax',
