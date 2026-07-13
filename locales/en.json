@@ -70,6 +70,7 @@
         "reviewQueue": "Review Queue",
         "blogPosts": "Posts",
         "editBlog": "Edit Blog",
+        "blogSettings": "Blog Settings",
         "editPost": "Edit Post",
         "blogOverview": "Blog Overview",
         "reviewPost": "Review Post",
@@ -313,11 +314,26 @@
     "blog": {
         "create": {
             "pageTitle": "Create New Blog",
-            "pageSubtitle": "Fill in details to set up your new blog."
+            "pageSubtitle": "Just the essentials. Everything else can be configured after creation.",
+            "essentials": {
+                "title": "The essentials",
+                "description": "Name your blog and pick its address. That is all you need to get started."
+            },
+            "afterCreateHint": "Theme, branding, SEO and discussion settings come next, on the settings page."
         },
         "update": {
             "pageTitle": "Edit Blog Settings",
             "pageSubtitle": "Update details, localization, theme, SEO, and comments settings."
+        },
+        "settings": {
+            "pageTitle": "Blog Settings",
+            "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic.",
+            "tabs": {
+                "general": "General",
+                "appearance": "Appearance",
+                "seo": "SEO",
+                "discussion": "Discussion & Workflow"
+            }
         },
         "form": {
             "errors": {
@@ -351,6 +367,14 @@
                 "workflow": {
                     "title": "Editorial Workflow",
                     "description": "Review and approval before publishing."
+                },
+                "branding": {
+                    "title": "Branding",
+                    "description": "Banner, logo, and favicon shown by your theme."
+                },
+                "social": {
+                    "title": "Social Profiles",
+                    "description": "Links to your profiles elsewhere. Themes show them as icons, for example in the folio footer. Empty fields are hidden."
                 }
             },
             "fields": {
@@ -440,9 +464,17 @@
                     "underlabel": "Shown in the about section near the end of the front page."
                 },
                 "foundedYear": {
-                    "label": "Founded Year",
-                    "placeholder": "2026",
-                    "underlabel": "Shown next to the about section. Leave empty for the current year."
+                    "label": "About Label",
+                    "placeholder": "2026, Est. MMXXVI, Ongoing...",
+                    "underlabel": "A year or a short word shown beside the about section. Leave empty for the current year."
+                },
+                "social": {
+                    "x": "X (Twitter)",
+                    "facebook": "Facebook",
+                    "instagram": "Instagram",
+                    "linkedin": "LinkedIn",
+                    "youtube": "YouTube",
+                    "github": "GitHub"
                 },
                 "newsletterHeading": {
                     "label": "Subscribe Heading",
@@ -466,7 +498,8 @@
             "actions": {
                 "update": "Update",
                 "saveDraft": "Save Draft",
-                "back": "Back"
+                "back": "Back",
+                "create": "Create Blog"
             },
             "sidebar": {
                 "tips": {

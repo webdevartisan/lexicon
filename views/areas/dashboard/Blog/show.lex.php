@@ -46,7 +46,7 @@
                 <span>View live</span>
             </a>
             <?php if (in_array($blogRole ?? 'none', ['owner', 'editor'], true)) { ?>
-            <a href="/dashboard/blog/{{ blog.id }}/edit"
+            <a href="/dashboard/blog/{{ blog.id }}/settings"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                 <i data-lucide="settings" class="size-4"></i>
                 <span>Settings</span>
@@ -167,7 +167,7 @@
                 <?php $isOwner = ($blogRole ?? '') === 'owner'; ?>
                 <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-3">Manage this blog</h2>
                 <div class="flex flex-col gap-2">
-                    <a href="/dashboard/blog/{{ blog.id }}/edit" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
+                    <a href="/dashboard/blog/{{ blog.id }}/settings" class="flex items-center gap-3 p-2.5 rounded-md hover:bg-slate-50 dark:hover:bg-zink-600 transition-colors text-sm text-slate-700 dark:text-zink-100">
                         <i data-lucide="sliders" class="size-4 text-slate-400"></i>
                         <span>Blog settings</span>
                     </a>

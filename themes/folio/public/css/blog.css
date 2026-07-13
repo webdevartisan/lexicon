@@ -105,13 +105,15 @@
   .article-arrow { position: absolute; right: 1rem; bottom: 1rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--bone); color: var(--ink); display: grid; place-items: center; opacity: 0; transform: translateY(8px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); }
   .article:hover .article-image img { transform: scale(1.04); }
   .article:hover .article-arrow { opacity: 1; transform: translateY(0); }
-  .article-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h3); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 22ch; }
+  /* flex-grow keeps tags and bylines bottom-aligned across cards whose titles wrap differently */
+  .article-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h3); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 22ch; flex-grow: 1; }
   .article-byline { display: flex; justify-content: space-between; font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); padding-top: var(--step-2); border-top: 1px solid var(--rule); }
   .articles-footer { display: flex; justify-content: space-between; align-items: center; margin-top: var(--step-5); padding-top: var(--step-3); border-top: 1px solid var(--rule); flex-wrap: wrap; gap: var(--step-2); }
 
   .colophon { padding: var(--step-7) 0; border-top: 1px solid var(--ink); background: var(--ink); color: var(--bone); }
   .colophon .grid-12 { row-gap: var(--step-5); }
   .colophon-number { grid-column: 1 / span 5; font-family: var(--serif); font-style: italic; font-weight: 300; font-size: clamp(8rem, 22vw, 22rem); line-height: 0.85; letter-spacing: -0.04em; margin: 0; font-variation-settings: "opsz" 144, "SOFT" 60; }
+  .colophon-number--word { font-size: clamp(2.75rem, 7vw, 7rem); line-height: 1; overflow-wrap: anywhere; }
   .colophon-body { grid-column: 7 / span 5; display: flex; flex-direction: column; gap: var(--step-3); }
   .colophon-eyebrow { font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--bone-deep); opacity: 0.6; }
   .colophon-statement { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h2); line-height: 1.25; letter-spacing: -0.01em; margin: 0; max-width: 28ch; }

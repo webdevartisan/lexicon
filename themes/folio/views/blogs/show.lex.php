@@ -195,7 +195,13 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <section class="colophon" id="colophon">
   <div class="container">
     <div class="grid-12">
-      <p class="colophon-number reveal"><?= !empty($settings['founded_year']) ? e($settings['founded_year']) : date('Y') ?>.</p>
+      <?php
+        // The label can be a year or a short word; words render smaller so
+        // the display size doesn't overflow the column.
+        $aboutLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
+  $aboutLabelClass = mb_strlen($aboutLabel) > 6 ? ' colophon-number--word' : '';
+  ?>
+      <p class="colophon-number<?= $aboutLabelClass ?> reveal"><?= e($aboutLabel) ?>.</p>
       <div class="colophon-body">
         <span class="colophon-eyebrow reveal">About this blog</span>
         <p class="colophon-statement reveal">

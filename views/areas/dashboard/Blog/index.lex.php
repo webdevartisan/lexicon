@@ -151,7 +151,7 @@ $blogCardHref = "/dashboard/blog/$bid/show";
                         </form>
                         <?php } ?>
                         <?php if ($isOwner) { ?>
-                        <a href="/dashboard/blog/<?= $bid ?>/edit" title="Blog settings"
+                        <a href="/dashboard/blog/<?= $bid ?>/settings" title="Blog settings"
                             class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors">
                             <i data-lucide="sliders" class="size-4"></i>
                         </a>

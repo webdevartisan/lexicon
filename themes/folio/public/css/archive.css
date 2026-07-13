@@ -58,7 +58,8 @@
   .article-arrow { position: absolute; right: 1rem; bottom: 1rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--bone); color: var(--ink); display: grid; place-items: center; opacity: 0; transform: translateY(8px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); }
   .article:hover .article-image img { transform: scale(1.04); }
   .article:hover .article-arrow { opacity: 1; transform: translateY(0); }
-  .article-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h3); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 22ch; }
+  /* flex-grow keeps bylines bottom-aligned across cards whose titles wrap differently */
+  .article-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: var(--type-h3); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 22ch; flex-grow: 1; }
   .article-byline { display: flex; justify-content: space-between; font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); padding-top: var(--step-2); border-top: 1px solid var(--rule); }
 
   .archive-pagination {

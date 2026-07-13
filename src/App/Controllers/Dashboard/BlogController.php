@@ -99,21 +99,23 @@ final class BlogController extends AppController
 
     /**
      * Show blog creation form.
+     *
+     * Only collects the essentials (name, slug, description); everything
+     * optional lives on the settings page shown right after creation.
      */
     public function new(): Response
     {
         $user = auth()->user();
         Gate::authorize('create', BlogResource::class, $user);
 
-        return $this->view([
-            'themes' => self::getAvailableThemes(),
-            'locales' => ['en', 'fr', 'de', 'el', 'ar'],
-            'timezones' => TimezoneHelper::getGroupedTimezones(),
-        ]);
+        return $this->view();
     }
 
     /**
-     * Create new blog.
+     * Create new blog from the essentials, then hand off to settings.
+     *
+     * New blogs always start as drafts with default settings; the settings
+     * page is where visibility, theme, and the rest get configured.
      */
     public function create(): Response
     {
@@ -127,50 +129,27 @@ final class BlogController extends AppController
         $validator = $this->validateOrFail([
             'name' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:blogs,blog_slug',
-            'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
-            'locale' => 'max:200',
-            'timezone' => 'max:200',
-            'theme' => 'max:50',
-            'meta_title' => 'max:200',
-            'meta_description' => 'max:500',
-            'allow_indexing' => 'boolean',
         ]);
 
         $validated = $validator->validated();
 
-        // Prepare blog identity
         $identity = [
             'blog_name' => $validated['name'],
             'blog_slug' => $validated['slug'],
             'description' => $validated['description'] ?? '',
             'owner_id' => $userId,
-            'status' => $validated['status'],
-            'published_at' => $validated['status'] === 'published' ? date('Y-m-d H:i:s') : null,
-            'archived_at' => $validated['status'] === 'archived' ? date('Y-m-d H:i:s') : null,
-        ];
-
-        // Prepare settings
-        $settings = [
-            'default_locale' => $validated['locale'] ?? 'en',
-            'timezone' => $validated['timezone'] ?? 'UTC',
-            'theme' => $validated['theme'] ?? 'default',
-            'meta_title' => $validated['meta_title'] ?? '',
-            'meta_description' => $validated['meta_description'] ?? '',
-            'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
+            'status' => 'draft',
+            'published_at' => null,
+            'archived_at' => null,
         ];
 
         try {
-            // Insert blog
             $this->blogModel->insert($identity);
             $blogId = $this->blogModel->getInsertID();
 
-            // Handle branding uploads
-            $brandingPaths = $this->handleBrandingUploads($userId, $blogId);
-            $settings = array_merge($settings, $brandingPaths);
-
-            // Create settings
-            $this->settings->createDefaultForBlog($blogId, $settings);
+            // Default settings; the settings page takes over from here
+            $this->settings->createDefaultForBlog($blogId, []);
 
             // Set as default blog
             $this->preference->setDefaultBlogId($userId, $blogId);
@@ -184,9 +163,9 @@ final class BlogController extends AppController
                 $this->request->ip()
             );
 
-            $this->flash('success', 'Blog created successfully.');
+            $this->flash('success', 'Blog created. Configure it below whenever you are ready.');
 
-            return $this->redirect('/dashboard');
+            return $this->redirect('/dashboard/blog/'.$blogId.'/settings');
 
         } catch (\PDOException $e) {
             return $this->view('blog.new', [
@@ -197,11 +176,24 @@ final class BlogController extends AppController
     }
 
     /**
-     * Show blog edit form.
+     * Legacy edit URL, configuration moved to the sectioned settings page.
      *
      * @param  string  $id  Blog ID
      */
     public function edit(string $id): Response
+    {
+        return $this->redirect('/dashboard/blog/'.$id.'/settings');
+    }
+
+    /**
+     * Show blog settings grouped into sections.
+     *
+     * Sections: General, Appearance, SEO, Discussion & Workflow. All sections
+     * post to the same update action, so saving from any tab is safe.
+     *
+     * @param  string  $id  Blog ID
+     */
+    public function settings(string $id): Response
     {
         $user = auth()->user();
         $blog = $this->getBlog($id);
@@ -212,7 +204,7 @@ final class BlogController extends AppController
                 ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
                 ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
                 ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
-                ['label' => 'Edit Blog', 'url' => null, 'key' => 'breadcrumbs.editBlog'],
+                ['label' => 'Blog Settings', 'url' => null, 'key' => 'breadcrumbs.blogSettings'],
             ], true);
         }
 
@@ -234,6 +226,8 @@ final class BlogController extends AppController
         return $this->view([
             'blog' => $blog->toArray(),
             'settings' => $settings,
+            'socialLinks' => BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null),
+            'socialPlatforms' => BlogSettingsModel::SOCIAL_PLATFORMS,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
             'themes' => self::getAvailableThemes(),
@@ -258,7 +252,7 @@ final class BlogController extends AppController
         $ownerId = $blog->ownerId();
         $blogId = (int) $id;
 
-        $validator = $this->validateOrFail([
+        $rules = [
             'name' => 'required|title|min:2|max:50',
             'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
@@ -270,7 +264,7 @@ final class BlogController extends AppController
             'tagline' => 'max:160',
             'subtitle' => 'max:255',
             'about_text' => 'max:500',
-            'founded_year' => 'max:4',
+            'founded_year' => 'max:20',
             'newsletter_heading' => 'max:255',
             'newsletter_text' => 'max:255',
             'allow_indexing' => 'boolean',
@@ -282,7 +276,13 @@ final class BlogController extends AppController
             'remove_favicon' => 'boolean',
             'workflow_enabled' => 'boolean',
             'translations_enabled' => 'boolean',
-        ], [
+        ];
+
+        foreach (BlogSettingsModel::SOCIAL_PLATFORMS as $platform) {
+            $rules['social_'.$platform] = 'url|max:255';
+        }
+
+        $validator = $this->validateOrFail($rules, [
             'name.required' => 'Blog name is required.',
             'name.title' => 'Blog name contains invalid characters.',
             'status.in' => 'Invalid status value.',
@@ -327,6 +327,15 @@ final class BlogController extends AppController
         // Update settings (blog_settings table)
         $currentSettings = $this->settings->findByBlogId($blogId) ?? [];
 
+        // Collapse the per-platform inputs into one JSON column; empty map clears it
+        $socialLinks = [];
+        foreach (BlogSettingsModel::SOCIAL_PLATFORMS as $platform) {
+            $url = trim((string) ($validated['social_'.$platform] ?? ''));
+            if ($url !== '') {
+                $socialLinks[$platform] = $url;
+            }
+        }
+
         $settingsData = [
             'default_locale' => $validated['locale'] ?? 'en',
             'timezone' => $validated['timezone'] ?? 'UTC',
@@ -339,6 +348,7 @@ final class BlogController extends AppController
             'founded_year' => trim((string) ($validated['founded_year'] ?? '')),
             'newsletter_heading' => trim((string) ($validated['newsletter_heading'] ?? '')),
             'newsletter_text' => trim((string) ($validated['newsletter_text'] ?? '')),
+            'social_links' => $socialLinks === [] ? null : json_encode($socialLinks, JSON_UNESCAPED_SLASHES),
             'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
             'comments_enabled' => isset($validated['allow_comments']) ? 1 : 0,
             'comments_auto_publish' => isset($validated['comments_auto_publish']) ? 1 : 0,
@@ -402,7 +412,11 @@ final class BlogController extends AppController
 
         $this->flash('success', 'Blog updated successfully.');
 
-        return $this->redirect('/dashboard/blog/'.$blogId.'/edit');
+        // Land back on the tab the user saved from
+        $section = (string) $this->request->postParam('active_section');
+        $anchor = in_array($section, ['general', 'appearance', 'seo', 'discussion'], true) ? '#'.$section : '';
+
+        return $this->redirect('/dashboard/blog/'.$blogId.'/settings'.$anchor);
     }
 
     /**
@@ -516,7 +530,7 @@ final class BlogController extends AppController
         if (!$this->user->verifyPassword($userId, $password)) {
             $this->flash('error', 'Incorrect password. Blog deletion cancelled.');
 
-            return $this->redirect("/dashboard/blog/{$blogId}/edit");
+            return $this->redirect("/dashboard/blog/{$blogId}/settings");
         }
 
         try {
@@ -545,7 +559,7 @@ final class BlogController extends AppController
             error_log("Blog deletion failed for blog {$blogId}: ".$e->getMessage());
             $this->flash('error', 'Failed to delete blog. Please try again or contact support.');
 
-            return $this->redirect("/dashboard/blog/{$blogId}/edit");
+            return $this->redirect("/dashboard/blog/{$blogId}/settings");
         }
     }
 

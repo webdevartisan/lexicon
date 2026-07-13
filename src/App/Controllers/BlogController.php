@@ -13,6 +13,7 @@ use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
+use App\Models\UserProfileModel;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -27,7 +28,8 @@ class BlogController extends AppController
         private TagModel $tagModel,
         private PostLikeModel $postLikeModel,
         private PostBookmarkModel $postBookmarkModel,
-        private PostTranslationModel $translations
+        private PostTranslationModel $translations,
+        private UserProfileModel $profiles
     ) {}
 
     /**
@@ -444,6 +446,9 @@ class BlogController extends AppController
         // 3) Settings + meta defaults
         $settings = $this->settings->findByBlogId((int) $blog['id']) ?? [];
 
+        // Themes iterate this as platform => URL, so hand them the decoded map
+        $settings['social_links'] = BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null);
+
         $meta = [
             'title' => $settings['meta_title'] ?? ($blog['blog_name'] ?? ($user['display_name_cached']."'s Blog")),
             'description' => $settings['meta_description'] ?? ($blog['description'] ?? ''),
@@ -452,7 +457,18 @@ class BlogController extends AppController
         // 4) Back-compat field some templates expect
         $user['blog_name'] = $blog['blog_name'] ?? ($user['username']."'s Blog");
 
-        return compact('user', 'blog', 'settings', 'meta');
+        // 5) Logged-in reader shown in the theme masthead. Full-page cache only
+        // serves guests, so viewer-specific markup never leaks between users.
+        $viewer = null;
+        if (auth()->check()) {
+            $authUser = auth()->user();
+            $viewer = [
+                'name' => $authUser['display_name_cached'] ?? ($authUser['username'] ?? ''),
+                'avatar_url' => $this->profiles->getProfileAvatar((int) $authUser['id'])['avatar_url'] ?? null,
+            ];
+        }
+
+        return compact('user', 'blog', 'settings', 'meta', 'viewer');
     }
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string

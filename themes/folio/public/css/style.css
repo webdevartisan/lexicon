@@ -132,7 +132,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .nav { display: flex; gap: var(--step-4); align-items: center; }
-.nav a { font-size: var(--type-small); font-weight: 500; letter-spacing: 0.02em; position: relative; padding: 0.4em 0; }
+.nav a { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; position: relative; padding: 0.4em 0; }
 .nav a::after {
     content: "";
     position: absolute;
@@ -147,7 +147,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .masthead-actions { display: flex; align-items: center; gap: var(--step-2); }
 
-.nav-subscribe {
+.nav-pill {
     padding: 0.6em 1.1em;
     border: 1px solid var(--ink);
     border-radius: 999px;
@@ -157,7 +157,49 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     white-space: nowrap;
     transition: background 0.3s, color 0.3s;
 }
-.nav-subscribe:hover { background: var(--ink); color: var(--bone); }
+.nav-pill:hover { background: var(--ink); color: var(--bone); }
+
+.nav-user { position: relative; }
+.nav-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    padding: 0.25em 0.3em;
+    font-size: var(--type-small);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+.nav-user-name { max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-avatar {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid var(--ink);
+    background: var(--bone-deep);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; filter: none; }
+.nav-user-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    min-width: 10rem;
+    background: var(--bone);
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    padding: 0.35rem;
+    display: none;
+    z-index: 80;
+    box-shadow: 0 10px 30px rgba(10, 10, 10, 0.12);
+}
+.nav-user.is-open .nav-user-menu { display: block; }
+.nav-user-menu a { display: block; padding: 0.5em 0.75em; font-size: var(--type-small); border-radius: 3px; }
+.nav-user-menu a:hover { background: var(--bone-deep); }
 
 .nav-toggle {
     display: none;
@@ -193,24 +235,23 @@ footer.site {
     padding: var(--step-6) 0 var(--step-4);
     background: var(--bone);
 }
-.foot-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--step-4) var(--gutter); }
-.foot-mark { grid-column: 1 / span 4; }
-.foot-mark .wordmark { font-size: 2.5rem; display: block; }
-.foot-mark p { font-family: var(--serif); font-style: italic; color: var(--ink-soft); max-width: 28ch; margin: var(--step-2) 0 0; }
-.foot-nav {
-    grid-column: 6 / -1;
-    align-self: center;
+.foot-social {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--step-2) var(--step-4);
-    font-family: var(--mono);
-    font-size: var(--type-mono);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    align-items: center;
+    gap: var(--step-2);
 }
-.foot-nav a { color: var(--ink); transition: color 0.3s; }
-.foot-nav a:hover { color: var(--muted); }
+.foot-social a {
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    transition: background 0.3s, color 0.3s;
+}
+.foot-social a:hover { background: var(--ink); color: var(--bone); }
+.foot-social svg { width: 1.05rem; height: 1.05rem; }
 .foot-bottom {
     margin-top: var(--step-6);
     padding-top: var(--step-3);
@@ -273,17 +314,13 @@ footer.site {
     .nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 }
 
-@media (max-width: 900px) {
-    .foot-mark { grid-column: 1 / -1; }
-    .foot-nav { grid-column: 1 / -1; justify-content: flex-start; }
-}
-
 @media (max-width: 500px) {
     :root { --gutter: 1.1rem; }
     .masthead .inner { padding: 0.9rem var(--gutter); gap: 0.6rem; }
     .wordmark { font-size: 1.2rem; }
     .wordmark sup { display: none; }
-    .nav-subscribe { padding: 0.5em 0.85em; font-size: 0.72rem; letter-spacing: 0.03em; }
+    .nav-pill { padding: 0.5em 0.85em; font-size: 0.72rem; letter-spacing: 0.03em; }
+    .nav-user-name { display: none; }
     .nav-toggle { width: 2.3rem; height: 2.3rem; padding: 0.45rem 0.4rem; }
     .nav-toggle span { width: 16px; }
     .masthead-actions { gap: 0.55rem; }
