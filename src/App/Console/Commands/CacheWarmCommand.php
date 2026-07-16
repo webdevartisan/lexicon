@@ -647,7 +647,7 @@ class CacheWarmCommand
      * mock data to create concrete routes for warming.
      *
      * @param  string|null  $routesOption  Command-line routes option
-     * @return array<string, int> Map of route => TTL
+     * @return array<string, array{ttl: int, exempt: bool}> Map of route => TTL and rate-exempt flag
      */
     private function getRoutesToWarm(?string $routesOption): array
     {
@@ -664,9 +664,11 @@ class CacheWarmCommand
         }
 
         // use all routes from cache config
+        /** @var array<string, int> $configRoutes */
         $configRoutes = $this->config['ttl_rules'] ?? [];
 
         // load mock data for wildcard expansion
+        /** @var array<string, list<string>> $mocks */
         $mocks = $this->config['warmup_mocks'] ?? [
             'blog_slugs' => ['blog-1'],
             'categories' => ['general'],
@@ -721,6 +723,16 @@ class CacheWarmCommand
         return $routesToWarm;
     }
 
+    /**
+     * Expand a wildcard route pattern into concrete routes using mock data.
+     *
+     * supports single-wildcard patterns (blog, category, tag routes) and
+     * nested two-wildcard patterns, filling slots from the warmup mocks.
+     *
+     * @param  string  $pattern  Route pattern containing wildcards
+     * @param  array<string, list<string>>  $mocks  Mock values keyed by type (blog_slugs, categories, tags)
+     * @return list<string> Concrete routes ready for warming
+     */
     private function expandWildcardPattern(string $pattern, array $mocks): array
     {
         $routes = [];
