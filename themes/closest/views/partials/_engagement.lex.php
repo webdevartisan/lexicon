@@ -8,27 +8,28 @@ $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
 <style>
-  .post-engagement { display: flex; align-items: center; gap: .5rem; padding: 1.25rem 0; margin-top: 1.5rem; border-top: 1px solid #e8e8e8; position: relative; }
-  .post-engagement .engage-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem 1rem; border: 1px solid #d9d9d9; border-radius: 999px; background: transparent; color: #555; font-size: 14px; line-height: 1; cursor: pointer; transition: all .15s ease; }
-  .post-engagement .engage-btn:hover { background: rgba(0,0,0,.05); }
-  .post-engagement .engage-btn svg { width: 18px; height: 18px; display: block; }
-  .post-engagement .engage-btn.is-active { border-color: currentColor; }
-  .post-engagement .engage-btn[data-engage="like"].is-active { color: #e0245e; }
-  .post-engagement .engage-btn[data-engage="like"].is-active svg { fill: #e0245e; }
-  .post-engagement .engage-btn[data-engage="bookmark"].is-active { color: #2271b1; }
-  .post-engagement .engage-btn[data-engage="bookmark"].is-active svg { fill: #2271b1; }
-  .share-popover { position: absolute; bottom: calc(100% + 8px); right: 0; min-width: 200px; background: #fff; border: 1px solid #eee; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: .4rem; z-index: 50; }
-  .share-popover a, .share-popover button { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .5rem .65rem; border: 0; background: none; border-radius: 6px; color: #444; font-size: 13px; text-decoration: none; cursor: pointer; text-align: left; transition: background .12s ease; }
-  .share-popover a:hover, .share-popover button:hover { background: rgba(0,0,0,.06); text-decoration: none; }
-  .share-popover svg { width: 16px; height: 16px; flex: none; }
-  .comment-replies { list-style: none; margin: .75rem 0 0; padding: 0 0 0 2.5rem; border-left: 2px solid #f0f0f0; }
-  .comment-replies .media-body { font-size: 95%; }
-  .reply-toggle { font-size: 12px; color: #888; background: none; border: 0; padding: 0; cursor: pointer; }
-  .reply-toggle:hover { color: #333; text-decoration: underline; }
-  .reply-form { margin-top: .6rem; }
-  .reply-form textarea { width: 100%; }
-  .reply-form .btn { margin-top: .4rem; }
-  .reply-form .reply-cancel { font-size: 12px; color: #888; margin-left: .75rem; }
+  .post-engagement { display: flex; align-items: center; gap: .5rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); position: relative; }
+  .post-engagement .engage-btn { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem 1.05rem; border: 1px solid var(--rule-strong); border-radius: 3px; background: var(--chart); color: var(--moss); font-family: var(--sign); font-size: var(--type-sign); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; line-height: 1; cursor: pointer; transition: border-color .18s var(--ease-out), color .18s var(--ease-out), background .18s var(--ease-out); }
+  .post-engagement .engage-btn:hover { border-color: var(--spruce); color: var(--spruce); }
+  .post-engagement .engage-btn svg { width: 15px; height: 15px; display: block; }
+  .post-engagement .engage-btn.is-active { border-color: var(--blaze); color: var(--blaze); background: var(--panel); }
+  .post-engagement .engage-btn[data-engage="like"].is-active svg { fill: var(--blaze); }
+  .post-engagement .engage-btn[data-engage="bookmark"].is-active svg { fill: var(--blaze); }
+  .post-engagement .engage-btn [data-count] { font-family: var(--mono); font-size: var(--type-mono); }
+  .share-popover { position: absolute; bottom: calc(100% + 8px); left: 0; min-width: 215px; background: var(--chart); border: 1px solid var(--rule-strong); border-radius: 3px; box-shadow: 0 10px 24px rgba(21, 32, 25, .14); padding: .4rem; z-index: 50; }
+  .share-popover a, .share-popover button { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .55rem .65rem; border: 0; background: none; color: var(--spruce-soft); font-family: var(--sign); font-size: var(--type-small); text-decoration: none; cursor: pointer; text-align: left; border-radius: 2px; transition: background .12s ease; }
+  .share-popover a:hover, .share-popover button:hover { background: var(--panel); }
+  .share-popover svg { width: 15px; height: 15px; flex: none; }
+  .comment-replies { margin: 1rem 0 0; padding: 0 0 0 2.25rem; border-left: 2px solid var(--rule); }
+  .comment-replies .comment-item { font-size: 95%; margin-bottom: .75rem; }
+  .reply-toggle { font-family: var(--sign); font-size: var(--type-sign); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--moss); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; }
+  .reply-toggle:hover { color: var(--blaze); text-decoration: underline; }
+  .reply-form { margin-top: .75rem; }
+  .reply-form textarea { width: 100%; padding: .6rem; border: 1px solid var(--rule-strong); border-radius: 3px; background: transparent; font-family: var(--serif); font-size: var(--type-small); }
+  .reply-form textarea:focus { outline: 2px solid var(--blaze); outline-offset: 1px; }
+  .reply-form .btn-reply { margin-top: .5rem; padding: .5rem 1.05rem; border: 1px solid var(--blaze); border-radius: 3px; background: var(--blaze); color: #fff; font-family: var(--sign); font-size: var(--type-sign); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+  .reply-form .btn-reply:hover { background: var(--blaze-deep); border-color: var(--blaze-deep); }
+  .reply-form .reply-cancel { margin-left: .85rem; }
 </style>
 
 <div class="post-engagement" data-auth="<?= $engagement['logged_in'] ? '1' : '0' ?>" data-login="<?= $loginUrl ?>">

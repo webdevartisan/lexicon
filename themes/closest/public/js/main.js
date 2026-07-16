@@ -1,207 +1,101 @@
-;(function () {
-	
-	'use strict';
+document.addEventListener("DOMContentLoaded", function () {
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  var toggle = document.querySelector(".nav-toggle");
+  var nav = document.getElementById("primaryNav");
+  if (toggle && nav) {
+    toggle.addEventListener("click", function () {
+      var open = nav.classList.toggle("is-open");
+      toggle.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    nav.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        nav.classList.remove("is-open");
+        toggle.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
 
+  var userMenu = document.querySelector(".nav-user");
+  if (userMenu) {
+    var userBtn = userMenu.querySelector(".nav-user-btn");
+    userBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = userMenu.classList.toggle("is-open");
+      userBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    document.addEventListener("click", function (e) {
+      if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove("is-open");
+        userBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
 
-	// iPad and iPod detection	
-	var isiPad = function(){
-		return (navigator.platform.indexOf("iPad") != -1);
-	};
+  var masthead = document.querySelector(".masthead");
+  var onScroll = function () { if (masthead) masthead.classList.toggle("is-scrolled", window.scrollY > 8); };
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
 
-	var isiPhone = function(){
-	    return (
-			(navigator.platform.indexOf("iPhone") != -1) || 
-			(navigator.platform.indexOf("iPod") != -1)
-	    );
-	};
+  // Cross-page anchors (e.g. Dispatches from the archive) can miss the native
+  // jump while deferred scripts and reveal styles settle; scroll explicitly,
+  // and retry after full load in case the browser resets to the top.
+  if (location.hash) {
+    var anchorTarget = document.getElementById(location.hash.slice(1));
+    if (anchorTarget) {
+      var jumpToAnchor = function () {
+        // Plain scrollIntoView: the smooth variant gets cancelled while the page settles
+        if (window.scrollY < 10) anchorTarget.scrollIntoView();
+      };
+      setTimeout(jumpToAnchor, 120);
+      if (document.readyState === "complete") {
+        setTimeout(jumpToAnchor, 600);
+      } else {
+        window.addEventListener("load", function () { setTimeout(jumpToAnchor, 150); }, { once: true });
+      }
+    }
+  }
 
-	// Parallax
-	var parallax = function() {
-		$(window).stellar();
-	};
+  var revealEls = document.querySelectorAll(".reveal");
+  var showAll = function () { revealEls.forEach(function (el) { el.classList.add("is-in"); }); };
 
+  if (window.ScrollTrigger) {
+    revealEls.forEach(function (el) {
+      window.ScrollTrigger.create({ trigger: el, start: "top 90%", once: true, onEnter: function () { el.classList.add("is-in"); } });
+    });
+  } else {
+    // ScrollTrigger may still be loading; fall back to showing everything once load fires
+    window.addEventListener("load", showAll, { once: true });
+    setTimeout(showAll, 800);
+  }
 
+  // No hover on touch: survey each inset once it's properly in view so the
+  // contour overlay still clears and readers get the full cover.
+  if (window.matchMedia("(hover: none)").matches && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-surveyed");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.55 });
+    document.querySelectorAll(".inset").forEach(function (p) { io.observe(p); });
+  }
 
-	// Burger Menu
-	var burgerMenu = function() {
+  if (window.gsap && !reduce) {
+    gsap.registerPlugin(window.ScrollTrigger);
 
-		$('body').on('click', '.js-fh5co-nav-toggle', function(event){
-
-			event.preventDefault();
-
-			if ( $('#navbar').is(':visible') ) {
-				$(this).removeClass('active');
-			} else {
-				$(this).addClass('active');	
-			}
-
-			
-			
-		});
-
-	};
-
-
-	var goToTop = function() {
-
-		$('.js-gotop').on('click', function(event){
-			
-			event.preventDefault();
-
-			$('html, body').animate({
-				scrollTop: $('html').offset().top
-			}, 500);
-			
-			return false;
-		});
-	
-	};
-
-
-	// Page Nav
-	var clickMenu = function() {
-
-		$('#navbar a:not([class="external"])').click(function(event){
-			var section = $(this).data('nav-section'),
-				navbar = $('#navbar');
-
-				if ( $('[data-section="' + section + '"]').length ) {
-			    	$('html, body').animate({
-			        	scrollTop: $('[data-section="' + section + '"]').offset().top
-			    	}, 500);
-			   }
-
-		    if ( navbar.is(':visible')) {
-		    	navbar.removeClass('in');
-		    	navbar.attr('aria-expanded', 'false');
-		    	$('.js-fh5co-nav-toggle').removeClass('active');
-		    }
-
-		    event.preventDefault();
-		    return false;
-		});
-
-
-	};
-
-	// Reflect scrolling in navigation
-	var navActive = function(section) {
-
-		var $el = $('#navbar > ul');
-		$el.find('li').removeClass('active');
-		$el.each(function(){
-			$(this).find('a[data-nav-section="'+section+'"]').closest('li').addClass('active');
-		});
-
-	};
-
-	var navigationSection = function() {
-
-		var $section = $('section[data-section]');
-		
-		$section.waypoint(function(direction) {
-		  	
-		  	if (direction === 'down') {
-		    	navActive($(this.element).data('section'));
-		  	}
-		}, {
-	  		offset: '150px'
-		});
-
-		$section.waypoint(function(direction) {
-		  	if (direction === 'up') {
-		    	navActive($(this.element).data('section'));
-		  	}
-		}, {
-		  	offset: function() { return -$(this.element).height() + 155; }
-		});
-
-	};
-
-
-	
-
-
-	// Window Scroll
-	var windowScroll = function() {
-		var lastScrollTop = 0;
-
-		$(window).scroll(function(event){
-
-		   	var header = $('#fh5co-header'),
-				scrlTop = $(this).scrollTop();
-
-			if ( scrlTop > 500 && scrlTop <= 2000 ) {
-				header.addClass('navbar-fixed-top fh5co-animated slideInDown');
-			} else if ( scrlTop <= 500) {
-				if ( header.hasClass('navbar-fixed-top') ) {
-					header.addClass('navbar-fixed-top fh5co-animated slideOutUp');
-					setTimeout(function(){
-						header.removeClass('navbar-fixed-top fh5co-animated slideInDown slideOutUp');
-					}, 100 );
-				}
-			} 
-			
-		});
-	};
-
-
-
-	// Animations
-
-	var contentWayPoint = function() {
-		var i = 0;
-		$('.animate-box').waypoint( function( direction ) {
-
-			if( direction === 'down' && !$(this.element).hasClass('animated') ) {
-				
-				i++;
-
-				$(this.element).addClass('item-animate');
-				setTimeout(function(){
-
-					$('body .animate-box.item-animate').each(function(k){
-						var el = $(this);
-						setTimeout( function () {
-							el.addClass('fadeInUp animated');
-							el.removeClass('item-animate');
-						},  k * 200, 'easeInOutExpo' );
-					});
-					
-				}, 100);
-				
-			}
-
-		} , { offset: '85%' } );
-	};
-	
-
-
-	
-	
-
-	// Document on load.
-	$(function(){
-
-		// parallax();
-
-		// burgerMenu();
-
-		// clickMenu();
-
-		// windowScroll();
-
-		// navigationSection();
-
-		// goToTop();
-
-
-		// Animations
-		contentWayPoint();
-		
-
-	});
-
-
-}());
+    // The sheet title drifts a little as the footer scrolls past, like a
+    // map sliding on the plotting table.
+    var footSheet = document.querySelector(".foot-sheet");
+    var footWrap = document.querySelector(".foot-sheet-wrap");
+    if (footSheet && footWrap) {
+      var headroom = footWrap.clientWidth - footSheet.scrollWidth;
+      var drift = Math.max(Math.min(headroom, 0), -80);
+      gsap.fromTo(footSheet, { x: 0 }, { x: drift, ease: "none", scrollTrigger: { trigger: footWrap, start: "top bottom", end: "bottom bottom", scrub: 0.8 } });
+    }
+  }
+});
