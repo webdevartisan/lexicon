@@ -1,0 +1,146 @@
+/* Offset — archive: the catalogue. Row styles come from style.css; this
+   file adds the hero, year headings, and pagination. */
+
+.archive-hero {
+  padding-block: var(--step-4) var(--step-3);
+}
+
+.archive-meta-top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--step-2);
+  padding-bottom: var(--step-2);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.archive-title {
+  margin: var(--step-3) 0 var(--step-1);
+  font-family: var(--disp);
+  font-stretch: 125%;
+  font-weight: 850;
+  font-size: clamp(2.6rem, 7.5vw, 6.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.archive-dek {
+  margin: 0 0 var(--step-2);
+  max-width: 52ch;
+  font-size: var(--type-lede);
+  color: var(--carbon-soft);
+}
+
+.archive-dek em {
+  font-style: normal;
+  color: var(--cobalt);
+}
+
+.archive-back {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--slate);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 0.35rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.archive-back:hover {
+  color: var(--cobalt);
+  border-color: var(--cobalt);
+}
+
+/* ---------- catalogue ---------- */
+
+.catalogue {
+  padding-block: var(--step-2) var(--step-4);
+}
+
+.catalogue-year {
+  margin: var(--step-4) 0 var(--step-1);
+  font-family: var(--disp);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--cobalt);
+}
+
+.catalogue-rows > .catalogue-year:first-child {
+  margin-top: 0;
+}
+
+.catalogue-empty {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+/* ---------- pagination ---------- */
+
+.archive-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--step-2);
+  flex-wrap: wrap;
+  margin-top: var(--step-4);
+  padding-top: var(--step-2);
+  border-top: 1px solid var(--rule);
+}
+
+.archive-pagination-info {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--slate);
+}
+
+.archive-pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.archive-pagination-nav a,
+.archive-pagination-nav span {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid transparent;
+  color: var(--carbon-soft);
+}
+
+.archive-pagination-nav a {
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.archive-pagination-nav a:hover {
+  border-color: var(--cobalt);
+  color: var(--cobalt);
+  background: var(--tint);
+}
+
+.archive-pagination-nav .is-current {
+  border-color: var(--cobalt);
+  background: var(--cobalt);
+  color: #fff;
+}
+
+.archive-pagination-nav .is-disabled {
+  color: var(--rule-strong);
+}
