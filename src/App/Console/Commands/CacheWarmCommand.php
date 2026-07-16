@@ -9,7 +9,6 @@ use Framework\Cache\CacheService;
 use Framework\Cache\FragmentCache;
 use Framework\Core\Dispatcher;
 use Framework\Core\Request;
-use Framework\Core\Response;
 
 /**
  * Cache warming command.
@@ -766,6 +765,7 @@ class CacheWarmCommand
                 }
             }
         }
+
         return $routes;
     }
 
