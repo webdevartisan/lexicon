@@ -1,0 +1,159 @@
+/* CLOSEST — the route log: full survey, season headings, legs. */
+
+.log-hero {
+  padding: clamp(2.5rem, 6vw, 4.5rem) 0 clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.log-meta-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--spruce);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.log-title {
+  margin: clamp(1.25rem, 3vw, 2.25rem) 0 1rem;
+  font-family: var(--serif);
+  font-weight: 850;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.log-dek {
+  margin: 0 0 1.5rem;
+  max-width: 52ch;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--spruce-soft);
+}
+
+.log-dek em {
+  font-style: normal;
+}
+
+.log-back {
+  font-family: var(--sign);
+  font-size: var(--type-sign);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--moss);
+  transition: color 0.18s var(--ease-soft);
+}
+
+.log-back:hover {
+  color: var(--blaze);
+}
+
+.log {
+  padding-top: 1rem;
+}
+
+.log-year {
+  margin: 2.5rem 0 0.5rem;
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.02em;
+}
+
+.log-year span {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--moss);
+  vertical-align: 0.45em;
+  margin-right: 0.4rem;
+}
+
+.log-rows .log-year:first-child {
+  margin-top: 0;
+}
+
+.log-empty {
+  padding: 3rem 0;
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--moss);
+}
+
+.log-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.log-pagination-info {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.log-pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.log-pagination-nav a,
+.log-pagination-nav span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-family: var(--sign);
+  font-size: var(--type-sign);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--spruce-soft);
+}
+
+.log-pagination-nav a {
+  border-color: var(--rule-strong);
+  transition: border-color 0.18s var(--ease-soft), color 0.18s var(--ease-soft);
+}
+
+.log-pagination-nav a:hover {
+  border-color: var(--blaze);
+  color: var(--blaze);
+}
+
+.log-pagination-nav .is-current {
+  background: var(--spruce);
+  border-color: var(--spruce);
+  color: var(--chart);
+}
+
+.log-pagination-nav .is-disabled {
+  color: var(--rule-strong);
+}
+
+@media (max-width: 800px) {
+  .log-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
