@@ -6,9 +6,9 @@ namespace App\Console\Commands;
 
 use Framework\Cache\CacheKey;
 use Framework\Cache\CacheService;
+use Framework\Cache\FragmentCache;
 use Framework\Core\Dispatcher;
 use Framework\Core\Request;
-use Framework\Core\Response;
 
 /**
  * Cache warming command.
@@ -29,15 +29,18 @@ class CacheWarmCommand
 
     private CacheKey $keyGenerator;
 
+    private FragmentCache $fragmentCache;
+
     /** @var array<string, mixed> */
     private array $config;
 
     private bool $verbose = false;
 
-    public function __construct(CacheService $cache, CacheKey $keyGenerator)
+    public function __construct(CacheService $cache, CacheKey $keyGenerator, FragmentCache $fragmentCache)
     {
         $this->cache = $cache;
         $this->keyGenerator = $keyGenerator;
+        $this->fragmentCache = $fragmentCache;
 
         // load cache configuration to know which routes to warm
         $this->config = require ROOT_PATH.'/config/cache.php';
@@ -77,12 +80,18 @@ class CacheWarmCommand
             echo 'Locales: '.implode(', ', $locales)."\n";
             echo "\n";
 
+            $iconStats = $this->warmIconFragments($locales);
+            echo "Icons:        {$iconStats['warmed']} warmed, {$iconStats['already_cached']} already cached, {$iconStats['failed']} failed\n";
+            echo "\n";
+
             $stats = [
                 'total' => 0,
                 'success' => 0,
                 'cached' => 0,
                 'failed' => 0,
                 'skipped' => 0,
+                'exempt_total' => 0,
+                'exempt_success' => 0,
             ];
 
             // warm cache for each locale + route combination
@@ -90,28 +99,38 @@ class CacheWarmCommand
                 echo "Warming locale: {$locale}\n";
                 echo str_repeat('─', 60)."\n";
 
-                foreach ($routes as $route => $ttl) {
-                    $stats['total']++;
+                foreach ($routes as $route => $routeInfo) {
+                    $ttl = $routeInfo['ttl'];
+                    $exempt = $routeInfo['exempt'];
+
+                    if ($exempt) {
+                        $stats['exempt_total']++;
+                    } else {
+                        $stats['total']++;
+                    }
 
                     // still visit routes with TTL=0 to warm their fragments
                     // (even though full-page caching is disabled for them)
                     $result = $this->warmRoute($route, $locale, $ttl);
+                    $tag = $exempt ? ' [exempt]' : '';
 
                     if ($result['success']) {
-                        $stats['success']++;
+                        $exempt ? $stats['exempt_success']++ : $stats['success']++;
 
                         if ($ttl === 0) {
                             // Route has no full-page cache, but fragments may have been warmed
-                            echo "  ○ {$route} (no page cache, {$result['time']}ms)\n";
+                            echo "  ○ {$route}{$tag} (no page cache, {$result['time']}ms)\n";
                         } elseif ($result['cached']) {
                             $stats['cached']++;
-                            echo "  ✓ {$route} ({$result['size']} bytes, {$result['time']}ms)\n";
+                            echo "  ✓ {$route}{$tag} ({$result['size']} bytes, {$result['time']}ms)\n";
                         } else {
-                            echo "  ○ {$route} (not cacheable, {$result['time']}ms)\n";
+                            echo "  ○ {$route}{$tag} (not cacheable, {$result['time']}ms)\n";
                         }
                     } else {
-                        $stats['failed']++;
-                        echo "  ✗ {$route} (Error: {$result['error']})\n";
+                        if (!$exempt) {
+                            $stats['failed']++;
+                        }
+                        echo "  ✗ {$route}{$tag} (Error: {$result['error']})\n";
                     }
                 }
 
@@ -128,6 +147,7 @@ class CacheWarmCommand
             echo "\n";
             echo "Duration:     {$duration}ms\n";
             echo "Routes:       {$stats['success']}/{$stats['total']} warmed successfully\n";
+            echo "Exempt:       {$stats['exempt_success']}/{$stats['exempt_total']} attempted (excluded from rate; POST-only or need a real id/slug)\n";
             echo "Cached:       {$stats['cached']} entries created\n";
             echo "Failed:       {$stats['failed']} errors\n";
             echo "Skipped:      {$stats['skipped']} (TTL=0)\n";
@@ -138,7 +158,7 @@ class CacheWarmCommand
             echo "  Live files:  {$cacheStats['live_files']}\n";
             echo "\n";
 
-            // return success if at least 80% of routes were warmed
+            // return success if at least 80% of rate-eligible routes were warmed
             $successRate = $stats['total'] > 0 ? ($stats['success'] / $stats['total']) : 1;
             if ($successRate < 0.8) {
                 echo '⚠ WARNING: Only '.round($successRate * 100)."% success rate\n";
@@ -183,20 +203,16 @@ class CacheWarmCommand
             $request = $this->createInternalRequest($route, $locale);
 
             // skip cache checking for TTL=0 routes (they won't be full-page cached)
-            if ($ttl > 0) {
-                // check if already cached (avoid unnecessary regeneration)
-                $cacheKey = $this->keyGenerator->forRequest($request);
-                if ($this->cache->has($cacheKey)) {
-                    if ($this->verbose) {
-                        return [
-                            'success' => true,
-                            'cached' => false,
-                            'size' => 0,
-                            'time' => round((microtime(true) - $startTime) * 1000, 2),
-                            'error' => 'Already cached',
-                        ];
-                    }
-                }
+            $cacheKey = $ttl > 0 ? $this->keyGenerator->forRequest($request) : null;
+
+            if ($cacheKey !== null && $this->cache->has($cacheKey)) {
+                return [
+                    'success' => true,
+                    'cached' => false,
+                    'size' => 0,
+                    'time' => round((microtime(true) - $startTime) * 1000, 2),
+                    'error' => 'Already cached',
+                ];
             }
 
             // load the full application stack
@@ -215,10 +231,9 @@ class CacheWarmCommand
             $size = strlen($response->getBody());
             $time = round((microtime(true) - $startTime) * 1000, 2);
 
-            // check if the response was cached (only relevant for TTL > 0)
-            $wasCached = $ttl > 0
-                && $response->hasHeader('X-Cache-Status')
-                && $response->getHeader('X-Cache-Status') === 'STORED';
+            // Check the cache store directly rather than the X-Cache-Status header,
+            // since that header is only added when config('cache.debug') is on.
+            $wasCached = $cacheKey !== null && $this->cache->has($cacheKey);
 
             return [
                 'success' => true,
@@ -236,6 +251,315 @@ class CacheWarmCommand
                 'time' => round((microtime(true) - $startTime) * 1000, 2),
                 'error' => $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Pre-warm icon fragments so real page loads never pay the Node.js
+     * subprocess cost of rendering an uncached data-lucide icon.
+     *
+     * Fragment cache TTLs for icons are long-lived (typically 1 year) but are
+     * scoped to whichever page first renders them. Route warming only visits
+     * a handful of pages, so icons unique to unwarmed pages (e.g. deep
+     * dashboard forms) stay cold until a real user hits them. This scans every
+     * template for {% cache 'key' %}<i data-lucide="...">{% endcache %} blocks
+     * and forces them all through the cache up front, regardless of which
+     * route uses them.
+     *
+     * @param  array<string>  $locales
+     * @return array{warmed: int, already_cached: int, failed: int}
+     */
+    private function warmIconFragments(array $locales): array
+    {
+        $fragments = $this->discoverIconFragments();
+
+        $stats = ['warmed' => 0, 'already_cached' => 0, 'failed' => 0];
+
+        foreach ($locales as $locale) {
+            $this->fragmentCache->setLocale($locale);
+
+            foreach ($fragments as $key => $fragment) {
+                if ($this->fragmentCache->has($key)) {
+                    $stats['already_cached']++;
+
+                    continue;
+                }
+
+                try {
+                    $this->fragmentCache->remember($key, fn () => $fragment['markup'], $fragment['ttl']);
+                    $stats['warmed']++;
+                } catch (\Throwable $e) {
+                    $stats['failed']++;
+                    if ($this->verbose) {
+                        echo "  ✗ icon fragment '{$key}' (Error: {$e->getMessage()})\n";
+                    }
+                }
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Discover icon fragments to pre-warm across every view template.
+     *
+     * Combines two sources:
+     * 1. Static {% cache 'literal-key' %} blocks holding a data-lucide icon.
+     * 2. Icon components, whose cache key is built per call site from an $icon
+     *    parameter ("lucide:btn:" . $icon) and so has no literal to match. These
+     *    are found by convention, not configuration - see discoverIconComponents().
+     *
+     * @return array<string, array{markup: string, ttl: int}>
+     */
+    private function discoverIconFragments(): array
+    {
+        $componentBlocks = $this->discoverIconComponents();
+        $componentNames = array_keys($componentBlocks);
+
+        // Single pass over all templates: collect literal-key icon fragments and
+        // the icon values each icon component is called with.
+        $fragments = [];
+        $componentIcons = array_fill_keys($componentNames, []);
+        $cmpPattern = $this->buildComponentIconPattern($componentNames);
+
+        foreach ($this->templateFiles() as $contents) {
+            foreach ($this->matchLiteralIconBlocks($contents) as $key => $fragment) {
+                $fragments[$key] = $fragment;
+            }
+
+            if ($cmpPattern !== null && preg_match_all($cmpPattern, $contents, $cmpMatches, PREG_SET_ORDER)) {
+                foreach ($cmpMatches as $cmpMatch) {
+                    $componentIcons[$cmpMatch[1]][$cmpMatch[2]] = true;
+                }
+            }
+        }
+
+        // Render each icon component's own cache block for every icon value used
+        // at its call sites, deriving both key and markup from the component
+        // source so warmed HTML always matches the template.
+        foreach ($componentBlocks as $name => $block) {
+            foreach (array_keys($componentIcons[$name]) as $icon) {
+                $key = $this->evalCacheKeyExpression($block['keyExpr'], ['icon' => $icon]);
+                $markup = $this->renderTemplateSnippet($block['markup'], ['icon' => $icon]);
+
+                if ($key !== null && $markup !== null) {
+                    $fragments[$key] = ['markup' => $markup, 'ttl' => $block['ttl']];
+                }
+            }
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * Find components that render an icon under an $icon-parameterised cache key.
+     *
+     * Discovered by convention rather than declared: the framework resolves
+     * {% cmp="x" %} to views/components/x.lex.php (TemplateComponentsTrait::
+     * renderComponent), so any component there whose icon cache block keys off
+     * $icon is warmable, and its name is simply its filename. A new icon
+     * component is picked up with no config change.
+     *
+     * @return array<string, array{keyExpr: string, markup: string, ttl: int}>
+     */
+    private function discoverIconComponents(): array
+    {
+        $components = [];
+
+        foreach (glob(ROOT_PATH.'/views/components/*.lex.php') ?: [] as $path) {
+            $contents = file_get_contents($path);
+            if ($contents === false || !str_contains($contents, 'data-lucide')) {
+                continue;
+            }
+
+            $block = $this->extractIconCacheBlock($contents, '$icon');
+            if ($block !== null) {
+                $components[basename($path, '.lex.php')] = $block;
+            }
+        }
+
+        return $components;
+    }
+
+    /**
+     * Yield the contents of every .lex.php template, app views first then themes.
+     *
+     * @return \Generator<string>
+     */
+    private function templateFiles(): \Generator
+    {
+        $viewDirs = [ROOT_PATH.'/views'];
+        foreach (glob(ROOT_PATH.'/themes/*/views', GLOB_ONLYDIR) ?: [] as $themeViewDir) {
+            $viewDirs[] = $themeViewDir;
+        }
+
+        foreach ($viewDirs as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($files as $file) {
+                if (!str_ends_with($file->getFilename(), '.lex.php')) {
+                    continue;
+                }
+
+                $contents = file_get_contents($file->getPathname());
+                if ($contents !== false) {
+                    yield $contents;
+                }
+            }
+        }
+    }
+
+    /**
+     * Extract literal-key icon cache blocks that are safe to render statelessly.
+     *
+     * Only blocks with a single-quoted literal key, a data-lucide icon, and no
+     * PHP/template interpolation qualify - anything request-dependent is skipped.
+     *
+     * @return array<string, array{markup: string, ttl: int}>
+     */
+    private function matchLiteralIconBlocks(string $contents): array
+    {
+        if (!str_contains($contents, 'data-lucide')) {
+            return [];
+        }
+
+        $pattern = '#\{%\s*cache\s+\'([a-zA-Z0-9_:\-]+)\'(?:\s+ttl=(\d+))?\s*%\}(.*?)\{%\s*endcache\s*%\}#s';
+        if (!preg_match_all($pattern, $contents, $matches, PREG_SET_ORDER)) {
+            return [];
+        }
+
+        $blocks = [];
+        foreach ($matches as $match) {
+            $markup = $match[3];
+
+            if (!str_contains($markup, 'data-lucide')
+                || str_contains($markup, '<?')
+                || str_contains($markup, '{{')
+                || str_contains($markup, '{%')
+            ) {
+                continue;
+            }
+
+            $blocks[$match[1]] = ['markup' => $markup, 'ttl' => $match[2] !== '' ? (int) $match[2] : 3600];
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Build a regex matching call sites of the given icon components, capturing
+     * the component name and the icon= value (e.g. {% cmp="btn" ... icon="x" %}).
+     *
+     * @param  array<string>  $componentNames
+     */
+    private function buildComponentIconPattern(array $componentNames): ?string
+    {
+        if ($componentNames === []) {
+            return null;
+        }
+
+        $alternation = implode('|', array_map(
+            static fn (string $name): string => preg_quote($name, '#'),
+            $componentNames
+        ));
+
+        return '#\{%\s*cmp="('.$alternation.')"(?:(?!%\}).)*?\bicon="([a-zA-Z0-9_-]+)"#s';
+    }
+
+    /**
+     * Read the first icon {% cache %} block whose key expression matches.
+     *
+     * Returns the block's key expression, markup, and TTL taken straight from the
+     * template source. keyExprContains selects the intended block when a file
+     * holds several icon blocks (e.g. '$icon' for a component's parameterised key).
+     *
+     * @param  string  $contents  Raw template source.
+     * @return array{keyExpr: string, markup: string, ttl: int}|null
+     */
+    private function extractIconCacheBlock(string $contents, string $keyExprContains): ?array
+    {
+        if (!preg_match_all('#\{%\s*cache\s+(.*?)\s*%\}(.*?)\{%\s*endcache\s*%\}#s', $contents, $matches, PREG_SET_ORDER)) {
+            return null;
+        }
+
+        foreach ($matches as $match) {
+            $markup = $match[2];
+            if (!str_contains($markup, 'data-lucide')) {
+                continue;
+            }
+
+            // Strip cache options (ttl=, localized=) to isolate the key expression.
+            $keyExpr = trim((string) preg_replace('/\s*\b(?:ttl=\d+|localized=(?:true|false))\b/', '', $match[1]));
+            if ($keyExprContains !== '' && !str_contains($keyExpr, $keyExprContains)) {
+                continue;
+            }
+
+            $ttl = preg_match('/\bttl=(\d+)\b/', $match[1], $ttlMatch) ? (int) $ttlMatch[1] : 3600;
+
+            return ['keyExpr' => $keyExpr, 'markup' => $markup, 'ttl' => $ttl];
+        }
+
+        return null;
+    }
+
+    /**
+     * Evaluate a cache-key expression captured from a template with vars bound.
+     *
+     * Same trust model as renderTemplateSnippet(): the expression is a substring
+     * extracted from our own template source, run in a CLI-only command with no
+     * untrusted input. Returns null on error so the caller can skip the fragment.
+     *
+     * @param  array<string, mixed>  $vars
+     */
+    private function evalCacheKeyExpression(string $keyExpr, array $vars): ?string
+    {
+        try {
+            extract($vars, EXTR_SKIP);
+            $result = eval('return '.$keyExpr.';');
+
+            return is_string($result) ? $result : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Render a raw template snippet (HTML mixed with short PHP echo tags) captured
+     * from a source .lex.php file, with the given variables bound.
+     *
+     * Used only for the handful of icon fragments whose cache key depends on a
+     * call-site value we can't match as a static literal - this executes the
+     * actual captured markup instead of us maintaining a hand-written copy of it.
+     * Returns null on any error so the caller can skip that fragment rather than
+     * risk caching something wrong.
+     *
+     * @param  array<string, mixed>  $vars
+     */
+    private function renderTemplateSnippet(string $snippet, array $vars): ?string
+    {
+        try {
+            extract($vars, EXTR_SKIP);
+            ob_start();
+            // $snippet is never external/user input - it's a substring this same
+            // command just extracted, via regex, from our own .lex.php files on
+            // disk (discoverIconFragments()). This command is CLI-only (never
+            // reachable from an HTTP request) and only warms the deploy's own
+            // cache, so there is no untrusted-data path into this eval().
+            eval('?>'.$snippet);
+
+            return ob_get_clean();
+        } catch (\Throwable $e) {
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            return null;
         }
     }
 
@@ -319,11 +643,11 @@ class CacheWarmCommand
      * Get routes to warm from config or command-line options.
      *
      * use the TTL rules from cache.php as the source of truth for
-     * which routes should be warmed. For wildcard patterns (e.g., /dashboard*),
-     * extract the base route (e.g., /dashboard) to warm.
+     * which routes should be warmed. Expands wildcard patterns using
+     * mock data to create concrete routes for warming.
      *
      * @param  string|null  $routesOption  Command-line routes option
-     * @return array<string, int> Map of route => TTL
+     * @return array<string, array{ttl: int, exempt: bool}> Map of route => TTL and rate-exempt flag
      */
     private function getRoutesToWarm(?string $routesOption): array
     {
@@ -333,14 +657,25 @@ class CacheWarmCommand
             foreach (explode(',', $routesOption) as $route) {
                 $route = trim($route);
                 // look up TTL from config or use default
-                $routes[$route] = $this->resolveTtl($route);
+                $routes[$route] = ['ttl' => $this->resolveTtl($route), 'exempt' => false];
             }
 
             return $routes;
         }
 
         // use all routes from cache config
+        /** @var array<string, int> $configRoutes */
         $configRoutes = $this->config['ttl_rules'] ?? [];
+
+        // load mock data for wildcard expansion
+        /** @var array<string, list<string>> $mocks */
+        $mocks = $this->config['warmup_mocks'] ?? [
+            'blog_slugs' => ['blog-1'],
+            'categories' => ['general'],
+            'tags' => ['featured'],
+        ];
+
+        $rateExemptPatterns = $this->config['warmup_rate_exempt_patterns'] ?? [];
 
         $routesToWarm = [];
 
@@ -348,26 +683,102 @@ class CacheWarmCommand
         foreach ($configRoutes as $pattern => $ttl) {
             // If it's an exact route (no wildcards), keep it as-is
             if (!str_contains($pattern, '*') && !str_contains($pattern, '?')) {
-                $routesToWarm[$pattern] = $ttl;
-            }
-            // If it's a wildcard pattern, extract the base route
-            elseif (str_ends_with($pattern, '*')) {
-                // convert /dashboard* to /dashboard
-                $baseRoute = rtrim($pattern, '*');
+                $routesToWarm[$pattern] = ['ttl' => $ttl, 'exempt' => in_array($pattern, $rateExemptPatterns, true)];
 
-                // skip if base route is empty or already exists
-                if ($baseRoute === '' || isset($routesToWarm[$baseRoute])) {
-                    continue;
+                continue;
+            }
+
+            if (!str_contains($pattern, '*')) {
+                continue;
+            }
+
+            // Expand patterns with wildcards (including nested like /blog/*/archive)
+            $expanded = $this->expandWildcardPattern($pattern, $mocks);
+            if ($expanded !== []) {
+                $exempt = in_array($pattern, $rateExemptPatterns, true);
+                foreach ($expanded as $route) {
+                    if (!isset($routesToWarm[$route])) {
+                        $routesToWarm[$route] = ['ttl' => $ttl, 'exempt' => $exempt];
+                    }
                 }
 
-                // add the base route with the same TTL as the pattern
-                $routesToWarm[$baseRoute] = $ttl;
+                continue;
             }
-            // For other patterns (? wildcards, etc.), skip them
-            // as they're too ambiguous to expand automatically
+
+            if (!str_ends_with($pattern, '*')) {
+                continue;
+            }
+
+            $baseRoute = rtrim($pattern, '*');
+            if ($baseRoute === '' || isset($routesToWarm[$baseRoute])) {
+                continue;
+            }
+
+            $routesToWarm[$baseRoute] = [
+                'ttl' => $ttl,
+                'exempt' => in_array($pattern, $rateExemptPatterns, true),
+            ];
         }
 
         return $routesToWarm;
+    }
+
+    /**
+     * Expand a wildcard route pattern into concrete routes using mock data.
+     *
+     * supports single-wildcard patterns (blog, category, tag routes) and
+     * nested two-wildcard patterns, filling slots from the warmup mocks.
+     *
+     * @param  string  $pattern  Route pattern containing wildcards
+     * @param  array<string, list<string>>  $mocks  Mock values keyed by type (blog_slugs, categories, tags)
+     * @return list<string> Concrete routes ready for warming
+     */
+    private function expandWildcardPattern(string $pattern, array $mocks): array
+    {
+        $routes = [];
+        $wildcardCount = substr_count($pattern, '*');
+
+        if ($wildcardCount === 1) {
+            $values = [];
+            // Matches both '/blog/*' and '/blog/*/archive' etc.
+            if (str_starts_with($pattern, '/blog/*')) {
+                $values = $mocks['blog_slugs'] ?? [];
+            } elseif (str_contains($pattern, '/category/')) {
+                $values = $mocks['categories'] ?? [];
+            } elseif (str_contains($pattern, '/tag/')) {
+                $values = $mocks['tags'] ?? [];
+            }
+            foreach ($values as $value) {
+                $routes[] = str_replace('*', $value, $pattern);
+            }
+        } elseif ($wildcardCount === 2) {
+            $primaryBlog = $mocks['blog_slugs'][0] ?? null;
+            if ($primaryBlog === null) {
+                return $routes;
+            }
+
+            if (str_contains($pattern, 'category')) {
+                $categoryValues = $mocks['categories'] ?? [];
+                foreach ($categoryValues as $category) {
+                    $pos = strpos($pattern, '*');
+                    $route = substr_replace($pattern, $primaryBlog, $pos, 1);
+                    $pos2 = strpos($route, '*');
+                    $route = substr_replace($route, $category, $pos2, 1);
+                    $routes[] = $route;
+                }
+            } elseif (str_contains($pattern, 'tag')) {
+                $tagValues = $mocks['tags'] ?? [];
+                foreach ($tagValues as $tag) {
+                    $pos = strpos($pattern, '*');
+                    $route = substr_replace($pattern, $primaryBlog, $pos, 1);
+                    $pos2 = strpos($route, '*');
+                    $route = substr_replace($route, $tag, $pos2, 1);
+                    $routes[] = $route;
+                }
+            }
+        }
+
+        return $routes;
     }
 
     /**
