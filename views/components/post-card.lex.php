@@ -168,8 +168,11 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                         data-tooltip="default" data-tooltip-content="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>" data-tooltip-follow-cursor="true"
                         class="p-2 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 <?= !empty($post['is_featured']) ? 'text-amber-500' : 'text-slate-500 hover:text-amber-500' ?>"
                         title="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>">
-                        <?php $starKey = !empty($post['is_featured']) ? 'lucide:star:filled' : 'lucide:star:outline'; ?>
-                        {% cache $starKey ttl=31536000 %}<i data-lucide="star" class="size-4 <?= !empty($post['is_featured']) ? 'fill-amber-400' : '' ?>"></i>{% endcache %}
+                        <?php if (!empty($post['is_featured'])) { ?>
+                            {% cache 'lucide:star:filled' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-amber-400"></i>{% endcache %}
+                        <?php } else { ?>
+                            {% cache 'lucide:star:outline' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
+                        <?php } ?>
                     </button>
                 </form>
 
