@@ -65,9 +65,10 @@
   }
   
   function closeAlert(box) {
+    const offscreen = document.documentElement.dir === 'rtl' ? '-110%' : '110%';
     box.style.opacity = '0';
-    box.style.transform = 'translateX(100%)';
-    
+    box.style.transform = 'translateX(' + offscreen + ')';
+
     setTimeout(() => {
       box.remove();
       alerts.delete(box);
@@ -99,7 +100,6 @@
       mutation.addedNodes.forEach((node) => {
         
         if (node.nodeType === 1 && node.hasAttribute('data-closable')) {
-            console.log('tset');
           initializeAlert(node);
         }
       });

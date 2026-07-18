@@ -93,15 +93,6 @@ $old = old();
                 </div>
                 {% endif %}
                 
-                <!-- Flash messages -->
-                {% if flash|notempty %}
-                    {% foreach ($flash as $type => $messages): %}
-                        {% foreach ($messages as $msg): %}
-                            {% cmp="msg2" type="{$type}" msg="{$msg}" %}
-                        {% endforeach %}
-                    {% endforeach %}
-                {% endif %}
-                
                 <!-- Content here -->
                  {% yield body %}
 
@@ -128,6 +119,17 @@ $old = old();
     
 </div>
 <!-- end main content -->
+
+<!-- Flash toasts, fixed overlay so they never move the page -->
+{% if flash|notempty %}
+<div id="toast-stack" class="fixed top-[calc(theme('spacing.header')_+_1rem)] ltr:right-4 rtl:left-4 z-[1050] flex flex-col gap-3 w-80 max-w-[calc(100vw_-_2rem)] pointer-events-none print:hidden">
+    {% foreach ($flash as $type => $messages): %}
+        {% foreach ($messages as $msg): %}
+            {% cmp="msg2" type="{$type}" msg="{$msg}" %}
+        {% endforeach %}
+    {% endforeach %}
+</div>
+{% endif %}
 
 <script src="/cp-assets/libs/%40popperjs/core/umd/popper.min.js"></script>
 <script src="/cp-assets/libs/tippy.js/tippy-bundle.umd.min.js"></script>
