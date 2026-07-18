@@ -335,7 +335,7 @@ final class BlogController extends AppController
 
         // When the owner disables the workflow mid-flight, reset any in-review/needs_changes posts to draft.
         $workflowWasEnabled = (bool) ($currentSettings['workflow_enabled'] ?? false);
-        $workflowNowEnabled = (bool) ($settingsData['workflow_enabled'] ?? false);
+        $workflowNowEnabled = (bool) $settingsData['workflow_enabled'];
         if ($workflowWasEnabled && !$workflowNowEnabled) {
             $this->workflowService->disableWorkflow($blogId, $userId);
         }
