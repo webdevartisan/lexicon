@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Nocturne theme preview">
+  <defs>
+    <radialGradient id="noct-glow" cx="78%" cy="12%" r="70%">
+      <stop offset="0%" stop-color="#c9a25d" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#c9a25d" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#c9a25d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="noct-cover" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#242019"/>
+      <stop offset="60%" stop-color="#3a2c1c"/>
+      <stop offset="100%" stop-color="#c25742"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="#131110"/>
+  <rect width="1200" height="900" fill="url(#noct-glow)"/>
+
+  <!-- masthead -->
+  <text x="80" y="82" font-family="Consolas, 'Courier New', monospace" font-size="17" letter-spacing="5" fill="#c9a25d">NOCTURNE · OPEN AFTER DARK</text>
+  <text x="1120" y="82" text-anchor="end" font-family="Consolas, 'Courier New', monospace" font-size="17" letter-spacing="5" fill="#8d8577">23:47</text>
+  <line x1="80" y1="108" x2="1120" y2="108" stroke="#ebe4d8" stroke-opacity="0.12" stroke-width="2"/>
+
+  <!-- oversized reading index -->
+  <g font-family="Georgia, 'Times New Roman', serif">
+    <text x="80" y="248" font-size="108" fill="#ebe4d8" fill-opacity="0.35">Field Notes</text>
+    <text x="80" y="398" font-size="118" fill="#e0bd7d">Night Reading</text>
+    <text x="80" y="540" font-size="108" fill="#ebe4d8" fill-opacity="0.35">The Long Shelf</text>
+    <text x="80" y="682" font-size="108" fill="#ebe4d8" fill-opacity="0.22">Last Orders</text>
+  </g>
+
+  <!-- index numbers -->
+  <g font-family="Consolas, 'Courier New', monospace" font-size="17" letter-spacing="3" fill="#8d8577">
+    <text x="84" y="160">NO. 01</text>
+    <text x="84" y="300">NO. 02</text>
+    <text x="84" y="452">NO. 03</text>
+    <text x="84" y="594">NO. 04</text>
+  </g>
+
+  <!-- floating cover preview beside the lit entry -->
+  <g transform="rotate(-4 985 372)">
+    <rect x="880" y="252" width="210" height="272" fill="url(#noct-cover)" stroke="#c9a25d" stroke-opacity="0.5" stroke-width="2"/>
+    <rect x="902" y="286" width="120" height="13" rx="6" fill="#ebe4d8" fill-opacity="0.8"/>
+    <rect x="902" y="312" width="88" height="13" rx="6" fill="#ebe4d8" fill-opacity="0.45"/>
+    <text x="902" y="492" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3" fill="#e0bd7d">NO. 02</text>
+  </g>
+
+  <!-- footer -->
+  <line x1="80" y1="782" x2="1120" y2="782" stroke="#ebe4d8" stroke-opacity="0.12" stroke-width="2"/>
+  <text x="80" y="826" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="4" fill="#8d8577">A READING ROOM LIT BY BRASS · LAST LAMP OUT AT DAWN</text>
+  <circle cx="1104" cy="820" r="7" fill="#c9a25d"/>
+</svg>

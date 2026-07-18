@@ -26,7 +26,7 @@
         "blogSection": "Ενότητα Blog",
         "blogOverview": "Σύνοψη Ιστολογίου",
         "editBlogSettings": "Ρυθμίσεις Ιστολογίου",
-        "appearanceTheme": "Εμφάνιση / Θέμα",
+        "appearanceTheme": "Εμφάνιση",
         "collaborators": "Συνεργάτες",
         "contentSection": "Ενότητα Περιεχομένου",
         "peopleSection": "Χρήστες & Ρόλοι",
@@ -311,6 +311,20 @@
                 "seo": "SEO",
                 "discussion": "Συζήτηση & Ροή Έγκρισης"
             }
+        },
+        "themes": {
+            "pageTitle": "Θέματα",
+            "pageSubtitle": "Επιλέξτε την εμφάνιση του ιστολογίου σας για τους αναγνώστες.",
+            "currentTheme": "Τρέχον θέμα",
+            "allThemes": "Όλα τα θέματα",
+            "previewHint": "Η ζωντανή προεπισκόπηση ανοίγει το δημόσιο ιστολόγιό σας σε νέα καρτέλα με το επιλεγμένο θέμα. Μόνο εσείς τη βλέπετε μέχρι την ενεργοποίηση.",
+            "activate": "Ενεργοποίηση",
+            "activeBadge": "Ενεργό",
+            "preview": "Ζωντανή προεπισκόπηση",
+            "viewBlog": "Προβολή ιστολογίου",
+            "customize": "Επωνυμία & κείμενα",
+            "versionPrefix": "Έκδοση",
+            "byAuthor": "Από"
         },
         "update": {
             "pageTitle": "Ρυθμίσεις Ιστολογίου",

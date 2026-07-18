@@ -1,0 +1,86 @@
+document.addEventListener("DOMContentLoaded", function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var toggle = document.querySelector(".nav-toggle");
+    var nav = document.getElementById("primaryNav");
+    if (toggle && nav) {
+    toggle.addEventListener("click", function () {
+        var open = nav.classList.toggle("is-open");
+        toggle.classList.toggle("is-open", open);
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    nav.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", function () {
+        nav.classList.remove("is-open");
+        toggle.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+        });
+    });
+    }
+
+    var userMenu = document.querySelector(".nav-user");
+    if (userMenu) {
+    var userBtn = userMenu.querySelector(".nav-user-btn");
+    userBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = userMenu.classList.toggle("is-open");
+        userBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    document.addEventListener("click", function (e) {
+        if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove("is-open");
+        userBtn.setAttribute("aria-expanded", "false");
+        }
+    });
+    }
+
+    var masthead = document.querySelector(".masthead");
+    var onScroll = function () { if (masthead) masthead.classList.toggle("is-scrolled", window.scrollY > 8); };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Cross-page anchors (e.g. Private View from the catalogue) can miss the
+    // native jump while deferred scripts and reveal styles settle; scroll
+    // explicitly, and retry after full load in case the browser resets to the top.
+    if (location.hash) {
+    var anchorTarget = document.getElementById(location.hash.slice(1));
+    if (anchorTarget) {
+        var jumpToAnchor = function () {
+        // Plain scrollIntoView: the smooth variant gets cancelled while the page settles
+        if (window.scrollY < 10) anchorTarget.scrollIntoView();
+        };
+        setTimeout(jumpToAnchor, 120);
+        if (document.readyState === "complete") {
+        setTimeout(jumpToAnchor, 600);
+        } else {
+        window.addEventListener("load", function () { setTimeout(jumpToAnchor, 150); }, { once: true });
+        }
+    }
+    }
+
+    var revealEls = document.querySelectorAll(".reveal");
+    var showAll = function () { revealEls.forEach(function (el) { el.classList.add("is-in"); }); };
+
+    if (window.ScrollTrigger) {
+    revealEls.forEach(function (el) {
+        window.ScrollTrigger.create({ trigger: el, start: "top 90%", once: true, onEnter: function () { el.classList.add("is-in"); } });
+    });
+    } else {
+    // ScrollTrigger may still be loading; fall back to showing everything once load fires
+    window.addEventListener("load", showAll, { once: true });
+    setTimeout(showAll, 800);
+    }
+
+    if (window.gsap && !reduce) {
+    gsap.registerPlugin(window.ScrollTrigger);
+
+    // The carved name rises out of the viridian wall as the visitor reaches the exit.
+    var footDisplay = document.querySelector(".foot-display");
+    var footWrap = document.querySelector(".foot-display-wrap");
+    if (footDisplay && footWrap) {
+        gsap.fromTo(footDisplay,
+        { yPercent: 55, opacity: 0.25 },
+        { yPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: footWrap, start: "top bottom", end: "bottom 92%", scrub: 0.8 } });
+    }
+    }
+});

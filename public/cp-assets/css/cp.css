@@ -58,6 +58,38 @@
   --sc-vertical-menu-item-active: 255 255 255;
   --sc-vertical-menu-item-bg-active: 28 46 69;
 }
+/* Flash toast entrance. Kept outside the layers so purging never drops it. */
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(calc(100% + 1.5rem));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+@keyframes toast-slide-in-rtl {
+    from {
+        transform: translateX(calc(-100% - 1.5rem));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.toast-enter {
+    animation: toast-slide-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+[dir=rtl] .toast-enter {
+    animation-name: toast-slide-in-rtl;
+}
+@media (prefers-reduced-motion: reduce) {
+    .toast-enter {
+        animation: none;
+    }
+}
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -808,6 +840,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .pointer-events-none {
   pointer-events: none;
 }
+.pointer-events-auto {
+  pointer-events: auto;
+}
 .visible {
   visibility: visible;
 }
@@ -907,6 +942,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .top-3 {
   top: 0.75rem;
 }
+.top-\[calc\(theme\(\'spacing\.header\'\)_\+_1rem\)\] {
+  top: calc(70px + 1rem);
+}
 .z-50 {
   z-index: 50;
 }
@@ -921,6 +959,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .z-\[1049\] {
   z-index: 1049;
+}
+.z-\[1050\] {
+  z-index: 1050;
 }
 .z-\[1100\] {
   z-index: 1100;
@@ -1282,6 +1323,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .w-6 {
   width: 1.5rem;
 }
+.w-80 {
+  width: 20rem;
+}
 .w-\[37\.5px\] {
   width: 37.5px;
 }
@@ -1338,6 +1382,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .max-w-\[55\%\] {
   max-width: 55%;
+}
+.max-w-\[calc\(100vw_-_2rem\)\] {
+  max-width: calc(100vw - 2rem);
 }
 .max-w-md {
   max-width: 28rem;
@@ -2082,6 +2129,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .p-4 {
   padding: 1rem;
+}
+.p-5 {
+  padding: 1.25rem;
 }
 .p-6 {
   padding: 1.5rem;
@@ -3888,8 +3938,17 @@ input[type=range]:focus::-webkit-slider-thumb {
   .md\:rounded-xl {
     border-radius: 0.75rem;
   }
+  .md\:border-b-0 {
+    border-bottom-width: 0px;
+  }
+  .md\:border-r {
+    border-right-width: 1px;
+  }
   .md\:p-5 {
     padding: 1.25rem;
+  }
+  .md\:p-6 {
+    padding: 1.5rem;
   }
   .md\:shadow-2xl {
     --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
@@ -3984,6 +4043,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .ltr\:right-2\.5:where([dir="ltr"], [dir="ltr"] *) {
   right: 0.625rem;
 }
+.ltr\:right-4:where([dir="ltr"], [dir="ltr"] *) {
+  right: 1rem;
+}
 .ltr\:ml-3:where([dir="ltr"], [dir="ltr"] *) {
   margin-left: 0.75rem;
 }
@@ -4047,6 +4109,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .rtl\:left-2\.5:where([dir="rtl"], [dir="rtl"] *) {
   left: 0.625rem;
+}
+.rtl\:left-4:where([dir="rtl"], [dir="rtl"] *) {
+  left: 1rem;
 }
 .rtl\:ml-2:where([dir="rtl"], [dir="rtl"] *) {
   margin-left: 0.5rem;
@@ -4261,9 +4326,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .dark\:bg-blue-900\/10:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(30 58 138 / 0.1);
 }
-.dark\:bg-custom-200\/20:where([data-mode="dark"], [data-mode="dark"] *) {
-  background-color: rgb(var(--sc-custom-200) / 0.2);
-}
 .dark\:bg-custom-500:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--sc-custom-500) / var(--tw-bg-opacity, 1));
@@ -4315,9 +4377,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .dark\:bg-orange-500\/20:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(249 115 22 / 0.2);
-}
-.dark\:bg-orange-900\/20:where([data-mode="dark"], [data-mode="dark"] *) {
-  background-color: rgb(124 45 18 / 0.2);
 }
 .dark\:bg-purple-500\/20:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(168 85 247 / 0.2);

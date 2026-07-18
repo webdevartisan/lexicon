@@ -1,0 +1,8 @@
+{
+  "name": "Vernissage",
+  "key": "vernissage",
+  "version": "1.0.0",
+  "author": "Me",
+  "description": "A private gallery opening: plaster walls, one wall of viridian, works hung in frames that draw the room's light on hover.",
+  "compat": ">=1.0"
+}

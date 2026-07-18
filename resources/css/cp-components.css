@@ -176,3 +176,40 @@
         }
     }
 }
+
+/* Flash toast entrance. Kept outside the layers so purging never drops it. */
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(calc(100% + 1.5rem));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-slide-in-rtl {
+    from {
+        transform: translateX(calc(-100% - 1.5rem));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast-enter {
+    animation: toast-slide-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+
+[dir=rtl] .toast-enter {
+    animation-name: toast-slide-in-rtl;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast-enter {
+        animation: none;
+    }
+}

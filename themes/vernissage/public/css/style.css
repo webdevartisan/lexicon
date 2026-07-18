@@ -1,0 +1,783 @@
+/* Vernissage: a private gallery opening. Plaster walls, charcoal ink,
+   one wall of viridian. Shared base for every page of the theme. */
+
+:root {
+  --plaster: #f4f1e9;
+  --plaster-2: #eae5d9;
+  --mat: #faf8f2;
+  --ink: #1a1914;
+  --ink-soft: #35332a;
+  --stone: #7a7565;
+  --viridian: #1d4f3a;
+  --viridian-deep: #123527;
+  --viridian-ink: #0c271c;
+  --sage: #d9e2d3;
+  --rule: rgba(26, 25, 20, 0.15);
+  --rule-strong: rgba(26, 25, 20, 0.45);
+
+  --disp: "Bodoni Moda", "Didot", "Bodoni MT", serif;
+  --sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --text: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "Fragment Mono", "SFMono-Regular", Consolas, monospace;
+
+  --type-mono: 0.71rem;
+  --type-small: 0.95rem;
+  --type-body: 1.12rem;
+  --type-lede: clamp(1.2rem, 1.8vw, 1.5rem);
+  --type-h3: clamp(1.5rem, 2.8vw, 2.2rem);
+  --type-h2: clamp(2.2rem, 4.6vw, 4rem);
+  --type-display: clamp(3.2rem, 10.5vw, 9.75rem);
+
+  --step-1: 0.75rem;
+  --step-2: 1.5rem;
+  --step-3: 2.5rem;
+  --step-4: 4rem;
+  --step-5: 6.5rem;
+  --step-6: 9rem;
+
+  --pad-x: clamp(1.25rem, 4.5vw, 3.5rem);
+  --max-w: 1320px;
+
+  /* The mat: every cover hangs inside a bright board and a hairline frame. */
+  --mat-pad: clamp(10px, 1.6vw, 20px);
+  --frame-shadow: 0 24px 44px -24px rgba(26, 25, 20, 0.38);
+  --frame-shadow-lift: 0 34px 58px -26px rgba(26, 25, 20, 0.48);
+
+  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--plaster);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--type-body);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--viridian);
+  color: var(--plaster);
+}
+
+:focus-visible {
+  outline: 2px solid var(--viridian);
+  outline-offset: 3px;
+}
+
+.container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding-inline: var(--pad-x);
+}
+
+/* ---------- shared type utilities ---------- */
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 0.35rem;
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
+}
+
+.link-arrow svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.25s var(--ease-out);
+}
+
+.link-arrow:hover {
+  color: var(--viridian);
+  border-color: var(--viridian);
+}
+
+.link-arrow:hover svg {
+  transform: translateX(4px);
+}
+
+/* the engraved divider: rule, lozenge, rule */
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--viridian);
+}
+
+.ornament::before,
+.ornament::after {
+  content: "";
+  height: 1px;
+  width: clamp(2.5rem, 8vw, 6.5rem);
+  background: var(--rule-strong);
+}
+
+.ornament svg {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+
+/* ---------- the frame: covers hang in a mat behind glass ---------- */
+
+.frame {
+  position: relative;
+  display: block;
+  padding: var(--mat-pad);
+  background: var(--mat);
+  border: 1px solid var(--ink);
+  box-shadow: var(--frame-shadow);
+  transition: box-shadow 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+}
+
+.frame-img {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--plaster-2);
+}
+
+.frame-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.9s var(--ease-out);
+}
+
+/* glazing: a faint sheet of light across the glass */
+.frame-img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.16), transparent 42%);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease-soft);
+}
+
+.frame:hover {
+  box-shadow: var(--frame-shadow-lift);
+  transform: translateY(-4px);
+}
+
+.frame:hover .frame-img img {
+  transform: scale(1.045);
+}
+
+.frame:hover .frame-img::after {
+  opacity: 0.35;
+}
+
+/* ---------- wall plaques ---------- */
+
+.plaque {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.plaque-no {
+  color: var(--viridian);
+}
+
+/* ---------- reveal-on-scroll ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s var(--ease-soft), transform 0.7s var(--ease-out);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .frame,
+  .frame-img img,
+  .frame-img::after,
+  .link-arrow svg {
+    transition: none;
+  }
+}
+
+/* ---------- catalogue rows (archive listing) ---------- */
+
+.work-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4rem 1fr auto 2.2rem;
+  align-items: center;
+  gap: var(--step-2);
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 0.25s var(--ease-soft);
+}
+
+.work-row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.work-row:hover {
+  background: linear-gradient(90deg, var(--sage), transparent 72%);
+}
+
+.row-no {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.1em;
+  color: var(--stone);
+  transition: color 0.2s var(--ease-soft);
+}
+
+.work-row:hover .row-no {
+  color: var(--viridian);
+}
+
+.row-thumb {
+  display: none;
+}
+
+.row-main {
+  min-width: 0;
+}
+
+/* the micro-signature: titles lean into the italic when the light finds them */
+.row-title {
+  margin: 0;
+  font-family: var(--disp);
+  font-weight: 560;
+  font-size: clamp(1.3rem, 2.3vw, 2rem);
+  line-height: 1.12;
+  letter-spacing: 0.005em;
+}
+
+.row-title a {
+  transition: color 0.2s var(--ease-soft);
+}
+
+.work-row:hover .row-title {
+  font-style: italic;
+}
+
+.work-row:hover .row-title a {
+  color: var(--viridian);
+}
+
+.row-author {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: var(--type-small);
+  color: var(--stone);
+}
+
+.row-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stone);
+  white-space: nowrap;
+}
+
+.row-cat {
+  color: var(--ink-soft);
+}
+
+.row-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--viridian);
+  opacity: 0;
+  transform: translate(-6px, 6px);
+  transition: opacity 0.25s var(--ease-soft), transform 0.3s var(--ease-out);
+}
+
+.work-row:hover .row-arrow {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 1023px) {
+  .work-row {
+    grid-template-columns: 2.6rem 88px 1fr;
+    gap: 1rem;
+  }
+
+  .row-thumb {
+    display: block;
+    width: 88px;
+    padding: 5px;
+  }
+
+  .row-thumb .frame-img {
+    aspect-ratio: 4 / 3;
+  }
+
+  .row-meta {
+    grid-column: 3;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.1rem;
+  }
+
+  .row-date {
+    display: none;
+  }
+
+  .row-arrow {
+    display: none;
+  }
+}
+
+/* ---------- flash messages ---------- */
+
+.flash-wrap {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(92vw, 480px);
+}
+
+.alert {
+  padding: 0.85rem 1.1rem;
+  background: var(--mat);
+  border: 1px solid var(--rule-strong);
+  border-left: 4px solid var(--stone);
+  box-shadow: var(--frame-shadow);
+  font-size: var(--type-small);
+}
+
+.alert-success { border-left-color: var(--viridian); }
+.alert-danger { border-left-color: #a32c22; }
+.alert-warning { border-left-color: #b98a1c; }
+.alert-info { border-left-color: var(--ink-soft); }
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(244, 241, 233, 0.9);
+  background: color-mix(in srgb, var(--plaster) 90%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s var(--ease-soft);
+}
+
+.masthead.is-scrolled {
+  border-bottom-color: var(--rule);
+}
+
+.masthead .inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 1rem var(--pad-x);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--step-2);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  font-family: var(--disp);
+  font-weight: 620;
+  font-size: 1.22rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.wordmark span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wordmark-mark {
+  width: 15px;
+  height: 15px;
+  color: var(--viridian);
+  flex: none;
+  transition: transform 0.6s var(--ease-out);
+}
+
+.wordmark:hover .wordmark-mark {
+  transform: rotate(180deg);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+}
+
+.nav a {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+  padding: 0.25rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
+}
+
+.nav a:hover {
+  color: var(--viridian);
+  border-bottom-color: var(--viridian);
+}
+
+.masthead-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.nav-pill {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  transition: background 0.2s var(--ease-soft), color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
+}
+
+.nav-pill:hover {
+  background: var(--viridian);
+  border-color: var(--viridian);
+  color: var(--plaster);
+}
+
+/* logged-in user chip + menu */
+.nav-user {
+  position: relative;
+}
+
+.nav-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.6rem;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--type-small);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease-soft);
+}
+
+.nav-user-btn:hover,
+.nav-user.is-open .nav-user-btn {
+  border-color: var(--rule-strong);
+}
+
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--sage);
+  color: var(--viridian);
+  font-family: var(--disp);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.nav-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nav-user-name {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-user-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  min-width: 170px;
+  background: var(--mat);
+  border: 1px solid var(--rule-strong);
+  box-shadow: var(--frame-shadow);
+  padding: 0.35rem;
+  display: none;
+  z-index: 120;
+}
+
+.nav-user.is-open .nav-user-menu {
+  display: block;
+}
+
+.nav-user-menu a {
+  display: block;
+  padding: 0.55rem 0.7rem;
+  font-size: var(--type-small);
+  color: var(--ink-soft);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nav-user-menu a:hover {
+  background: var(--plaster-2);
+  color: var(--ink);
+}
+
+/* hamburger, mobile only */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  cursor: pointer;
+}
+
+.nav-toggle span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--ink);
+  transition: transform 0.3s var(--ease-out), opacity 0.2s ease;
+}
+
+.nav-toggle.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (max-width: 800px) {
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    background: var(--plaster);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.5rem var(--pad-x) 1rem;
+    display: none;
+  }
+
+  .nav.is-open {
+    display: flex;
+  }
+
+  .nav a {
+    padding: 0.7rem 0;
+    width: 100%;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .nav-user-name {
+    display: none;
+  }
+}
+
+/* ---------- footer: the viridian wall ---------- */
+
+footer.site {
+  margin-top: var(--step-6);
+  background: var(--viridian-deep);
+  color: var(--plaster);
+}
+
+.foot-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding-top: var(--step-4);
+  color: var(--sage);
+}
+
+.foot-rule {
+  height: 1px;
+  flex: 1;
+  max-width: 220px;
+  background: rgba(244, 241, 233, 0.25);
+}
+
+.foot-social {
+  display: flex;
+  justify-content: center;
+  gap: 0.9rem;
+  padding-top: var(--step-3);
+}
+
+.foot-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(244, 241, 233, 0.3);
+  border-radius: 50%;
+  color: var(--sage);
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft), background 0.2s var(--ease-soft);
+}
+
+.foot-social a:hover {
+  color: var(--viridian-deep);
+  border-color: var(--plaster);
+  background: var(--plaster);
+}
+
+.foot-social svg {
+  width: 16px;
+  height: 16px;
+}
+
+.foot-display-wrap {
+  overflow: hidden;
+  padding-block: var(--step-3) 0.5rem;
+  text-align: center;
+}
+
+/* the gallery's name, carved wall-size over the exit */
+.foot-display {
+  font-family: var(--disp);
+  font-weight: 500;
+  font-size: clamp(3rem, 11.5vw, 10.5rem);
+  line-height: 1.05;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+  color: var(--plaster);
+  transition: color 0.5s var(--ease-soft), font-style 0.3s ease;
+}
+
+.foot-display:hover {
+  font-style: italic;
+  color: var(--sage);
+}
+
+.foot-hours {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 233, 0.55);
+}
+
+.foot-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: var(--step-3);
+  padding-block: var(--step-2) var(--step-3);
+  border-top: 1px solid rgba(244, 241, 233, 0.18);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 233, 0.55);
+}
+
+.foot-bottom a {
+  color: var(--plaster);
+  border-bottom: 1px solid rgba(244, 241, 233, 0.4);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.foot-bottom a:hover {
+  color: var(--sage);
+  border-color: var(--sage);
+}

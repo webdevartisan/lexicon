@@ -26,7 +26,7 @@
         "blogSection": "Manage Blog",
         "blogOverview": "Blog Overview",
         "editBlogSettings": "Blog Settings",
-        "appearanceTheme": "Appearance / Theme",
+        "appearanceTheme": "Appearance",
         "collaborators": "Collaborators",
         "team": "Team",
         "shared": "Shared",
@@ -334,6 +334,20 @@
                 "seo": "SEO",
                 "discussion": "Discussion & Workflow"
             }
+        },
+        "themes": {
+            "pageTitle": "Themes",
+            "pageSubtitle": "Choose how your blog looks to readers.",
+            "currentTheme": "Current theme",
+            "allThemes": "All themes",
+            "previewHint": "Live preview opens your public blog in a new tab with the selected theme applied. Only you see it until you activate.",
+            "activate": "Activate",
+            "activeBadge": "Active",
+            "preview": "Live preview",
+            "viewBlog": "View blog",
+            "customize": "Branding & texts",
+            "versionPrefix": "Version",
+            "byAuthor": "By"
         },
         "form": {
             "errors": {
