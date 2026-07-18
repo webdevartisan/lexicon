@@ -1,0 +1,512 @@
+/* Vernissage single work: wall label, the framed piece, the essay,
+   and the visitors' book. */
+
+/* ---------- tour progress: a hairline of viridian along the wall ---------- */
+
+.tour-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  z-index: 150;
+  background: transparent;
+}
+
+#tour-progress-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--viridian);
+  transform: scaleY(var(--tour-progress, 0));
+  transform-origin: top center;
+}
+
+@media (max-width: 800px) {
+  .tour-progress {
+    right: 0;
+    bottom: auto;
+    width: auto;
+    height: 3px;
+  }
+
+  #tour-progress-fill {
+    transform: scaleX(var(--tour-progress, 0));
+    transform-origin: left center;
+  }
+}
+
+/* ---------- wall label (hero) ---------- */
+
+.work-hero {
+  padding-block: var(--step-4) var(--step-3);
+  text-align: center;
+}
+
+.work-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.75rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.work-hero-meta a {
+  color: var(--viridian);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s var(--ease-soft);
+}
+
+.work-hero-meta a:hover {
+  border-bottom-color: var(--viridian);
+}
+
+.work-hero-title {
+  margin: var(--step-2) auto 0;
+  max-width: 20ch;
+  font-family: var(--disp);
+  font-weight: 540;
+  font-size: clamp(2.4rem, 6vw, 5.25rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.work-standfirst {
+  margin: var(--step-2) auto 0;
+  max-width: 52ch;
+  font-family: var(--text);
+  font-style: italic;
+  font-size: var(--type-lede);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.work-hero-byline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--step-1);
+  margin-top: var(--step-2);
+}
+
+.work-artist {
+  font-family: var(--text);
+  font-style: italic;
+  font-size: var(--type-small);
+  color: var(--stone);
+}
+
+/* ---------- the piece itself ---------- */
+
+.work-figure {
+  margin: var(--step-2) auto 0;
+  max-width: 940px;
+}
+
+.work-cover {
+  cursor: default;
+}
+
+.work-cover .frame-img {
+  aspect-ratio: 16 / 10;
+}
+
+.work-figcap {
+  margin-top: 0.9rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* ---------- the essay ---------- */
+
+.work-layout {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: var(--step-3);
+}
+
+.work-essay {
+  font-family: var(--text);
+  font-size: var(--type-body);
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+/* the opening letter, set large in the display didone; post.js picks the
+   first real paragraph since editors nest content arbitrarily deep */
+.work-essay .has-dropcap::first-letter {
+  float: left;
+  padding-right: 0.14em;
+  font-family: var(--disp);
+  font-weight: 540;
+  font-size: 4.1em;
+  line-height: 0.82;
+  color: var(--viridian);
+}
+
+.work-essay p {
+  margin: 0 0 1.35em;
+}
+
+.work-essay h2,
+.work-essay h3,
+.work-essay h4 {
+  margin: 1.8em 0 0.6em;
+  font-family: var(--disp);
+  font-weight: 560;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.work-essay h2 { font-size: var(--type-h3); }
+.work-essay h3 { font-size: calc(var(--type-h3) * 0.82); }
+.work-essay h4 { font-size: var(--type-lede); }
+
+.work-essay a {
+  color: var(--viridian);
+  border-bottom: 1px solid var(--sage);
+  transition: border-color 0.2s ease;
+}
+
+.work-essay a:hover {
+  border-bottom-color: var(--viridian);
+}
+
+.work-essay blockquote {
+  margin: 2em 0;
+  padding: 0.35em 0 0.35em 1.6em;
+  border-left: 2px solid var(--viridian);
+  font-family: var(--disp);
+  font-style: italic;
+  font-weight: 460;
+  font-size: var(--type-lede);
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.work-essay blockquote p {
+  margin: 0;
+}
+
+.work-essay img {
+  margin: 2em auto;
+  padding: clamp(8px, 1.2vw, 14px);
+  background: var(--mat);
+  border: 1px solid var(--ink);
+  box-shadow: var(--frame-shadow);
+}
+
+.work-essay ul,
+.work-essay ol {
+  margin: 0 0 1.35em;
+  padding-left: 1.4em;
+}
+
+.work-essay li {
+  margin-bottom: 0.45em;
+}
+
+.work-essay li::marker {
+  color: var(--viridian);
+}
+
+.work-essay hr {
+  margin: 2.5em auto;
+  width: 120px;
+  border: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.work-essay pre,
+.work-essay .code-block {
+  margin: 2em 0;
+  padding: 1.2rem 1.4rem;
+  background: var(--viridian-ink);
+  color: var(--sage);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  line-height: 1.65;
+  overflow-x: auto;
+}
+
+.work-essay .code-block p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.work-essay code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+
+.work-essay p code,
+.work-essay li code {
+  padding: 0.1em 0.4em;
+  background: var(--plaster-2);
+  color: var(--viridian-deep);
+}
+
+/* ---------- tags ---------- */
+
+.work-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: var(--step-3);
+}
+
+.work-tag-chip {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft), background 0.2s var(--ease-soft);
+}
+
+.work-tag-chip:hover {
+  color: var(--plaster);
+  border-color: var(--viridian);
+  background: var(--viridian);
+}
+
+/* ---------- previous / next work ---------- */
+
+.work-nav {
+  margin-top: var(--step-4);
+  border-top: 1px solid var(--rule);
+}
+
+.work-nav .inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--step-2);
+  padding-block: var(--step-3);
+}
+
+.work-nav-item.next {
+  text-align: end;
+}
+
+.work-nav-label {
+  display: block;
+  margin-bottom: 0.55rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.work-nav-title {
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-h3);
+  line-height: 1.12;
+  transition: color 0.2s var(--ease-soft);
+}
+
+.work-nav-title:hover {
+  font-style: italic;
+  color: var(--viridian);
+}
+
+@media (max-width: 640px) {
+  .work-nav .inner {
+    grid-template-columns: 1fr;
+  }
+
+  .work-nav-item.next {
+    text-align: start;
+  }
+}
+
+/* ---------- the visitors' book ---------- */
+
+.work-comments .inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: var(--step-3);
+}
+
+.comments-title {
+  margin: 0 0 var(--step-2);
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-h3);
+  line-height: 1.1;
+}
+
+.comment-item {
+  padding-block: var(--step-2);
+  border-top: 1px solid var(--rule);
+}
+
+.comment-meta {
+  margin-bottom: 0.5rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.comment-meta strong {
+  color: var(--viridian);
+  font-weight: 400;
+}
+
+.comment-item > p {
+  margin: 0;
+  font-family: var(--text);
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.comment-form {
+  margin-top: var(--step-3);
+  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  background: var(--mat);
+  border: 1px solid var(--ink);
+  box-shadow: var(--frame-shadow);
+}
+
+.comment-form h4 {
+  margin: 0 0 var(--step-2);
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-lede);
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.form-field textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--plaster);
+  font-family: var(--text);
+  font-size: var(--type-small);
+  line-height: 1.6;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.form-field textarea:focus {
+  outline: 2px solid var(--viridian);
+  outline-offset: -1px;
+}
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--step-1);
+  padding: 0.8rem 1.5rem;
+  border: 0;
+  background: var(--viridian);
+  color: var(--plaster);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s var(--ease-soft);
+}
+
+.btn-submit:hover {
+  background: var(--viridian-deep);
+}
+
+.comments-closed {
+  padding: var(--step-2) 0;
+  border-top: 1px solid var(--rule);
+  font-family: var(--text);
+  font-style: italic;
+  color: var(--stone);
+}
+
+/* ---------- also on view ---------- */
+
+.work-related {
+  margin-top: var(--step-4);
+  padding-top: var(--step-4);
+  border-top: 1px solid var(--rule);
+}
+
+.work-related h2 {
+  margin: 0 0 var(--step-3);
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-h2);
+  line-height: 1;
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--step-3);
+}
+
+.related-frame .frame-img {
+  aspect-ratio: 5 / 4;
+}
+
+.related-title {
+  margin: var(--step-2) 0 0;
+  font-family: var(--disp);
+  font-weight: 560;
+  font-size: var(--type-lede);
+  line-height: 1.15;
+}
+
+.related-title a {
+  transition: color 0.2s var(--ease-soft);
+}
+
+.related-title a:hover {
+  font-style: italic;
+  color: var(--viridian);
+}
+
+.related-exc {
+  margin: 0.6rem 0 0.9rem;
+  font-family: var(--text);
+  font-size: var(--type-small);
+  line-height: 1.6;
+  color: var(--stone);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .related-grid {
+    grid-template-columns: 1fr;
+    gap: var(--step-3);
+  }
+
+  .related-frame .frame-img {
+    aspect-ratio: 16 / 9;
+  }
+}

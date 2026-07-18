@@ -1,0 +1,151 @@
+/* Vernissage catalogue raisonné: the complete works, plated and dated. */
+
+.archive-hero {
+  padding-block: var(--step-4) var(--step-3);
+  text-align: center;
+}
+
+.archive-meta-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: var(--step-2);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+  text-align: start;
+}
+
+.archive-title {
+  margin: var(--step-4) 0 0;
+  font-family: var(--disp);
+  font-weight: 540;
+  font-size: clamp(2.6rem, 7.5vw, 6.5rem);
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+}
+
+.archive-dek {
+  margin: var(--step-2) auto 0;
+  max-width: 52ch;
+  font-family: var(--text);
+  font-size: var(--type-lede);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.archive-dek em {
+  font-family: var(--disp);
+  font-style: italic;
+  color: var(--viridian);
+}
+
+.archive-back {
+  display: inline-block;
+  margin-top: var(--step-2);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+  transition: color 0.2s var(--ease-soft);
+}
+
+.archive-back:hover {
+  color: var(--viridian);
+}
+
+.catalogue {
+  padding-block: var(--step-3) var(--step-2);
+}
+
+.catalogue-year {
+  margin: var(--step-4) 0 var(--step-1);
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  font-family: var(--disp);
+  font-weight: 500;
+  font-size: var(--type-h3);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.catalogue-year:first-child {
+  margin-top: 0;
+}
+
+.catalogue-year-roman {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.22em;
+  color: var(--viridian);
+}
+
+.catalogue-empty {
+  padding-block: var(--step-4);
+  text-align: center;
+  font-family: var(--disp);
+  font-style: italic;
+  font-size: var(--type-h3);
+  color: var(--stone);
+}
+
+.archive-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: var(--step-4);
+  padding-top: var(--step-2);
+  border-top: 1px solid var(--rule);
+}
+
+.archive-pagination-info {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.archive-pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.archive-pagination-nav a,
+.archive-pagination-nav span {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid transparent;
+  color: var(--stone);
+}
+
+.archive-pagination-nav a {
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
+}
+
+.archive-pagination-nav a:hover {
+  color: var(--viridian);
+  border-color: var(--viridian);
+}
+
+.archive-pagination-nav .is-current {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--mat);
+}
+
+.archive-pagination-nav .is-disabled {
+  opacity: 0.4;
+}

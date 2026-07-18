@@ -1,0 +1,586 @@
+/* Vernissage landing: the entrance hall, the centrepiece, the salon wall,
+   the curator's note, and the private-view invitation. */
+
+/* ---------- entrance hall ---------- */
+
+.gallery-hero {
+  padding-block: var(--step-4) var(--step-5);
+}
+
+.hero-meta-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: var(--step-2);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.hero-stage {
+  padding-block: var(--step-4) var(--step-3);
+  text-align: center;
+}
+
+.hero-kicker {
+  display: inline-block;
+  margin-bottom: var(--step-2);
+  font-family: var(--disp);
+  font-style: italic;
+  font-weight: 460;
+  font-size: var(--type-lede);
+  color: var(--viridian);
+}
+
+.hero-headline {
+  margin: 0;
+  font-family: var(--disp);
+  font-weight: 540;
+  font-size: var(--type-display);
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  overflow-wrap: anywhere;
+}
+
+/* split chars rise from behind the baseline; hidden until the intro is set
+   so nothing flashes while GSAP takes over */
+.hero-headline .word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.hero-headline .char {
+  display: inline-block;
+  will-change: transform;
+}
+
+.hero-ornament {
+  margin-top: var(--step-3);
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-soft);
+}
+
+.hero-ornament.is-set {
+  opacity: 1;
+}
+
+.hero-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--step-2);
+  text-align: center;
+}
+
+.hero-dek {
+  margin: 0;
+  max-width: 42ch;
+  font-family: var(--text);
+  font-size: var(--type-lede);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ornament {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+/* ---------- the centrepiece ---------- */
+
+.centrepiece {
+  padding-block: var(--step-3) var(--step-5);
+}
+
+.centre-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--step-4);
+  align-items: center;
+}
+
+.centre-frame .frame-img {
+  aspect-ratio: 4 / 3;
+}
+
+.centre-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--step-2);
+}
+
+.centre-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+}
+
+.centre-title {
+  margin: 0;
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-h2);
+  line-height: 1.08;
+}
+
+.centre-title a {
+  transition: color 0.25s var(--ease-soft);
+}
+
+.centre-title a:hover {
+  font-style: italic;
+  color: var(--viridian);
+}
+
+.centre-dek {
+  margin: 0;
+  font-family: var(--text);
+  font-size: var(--type-lede);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.centre-byline {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+@media (max-width: 900px) {
+  .centre-grid {
+    grid-template-columns: 1fr;
+    gap: var(--step-3);
+  }
+}
+
+/* ---------- the collection: room filter + salon wall ---------- */
+
+.collection {
+  padding-block: var(--step-4);
+}
+
+.collection-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: var(--step-2);
+}
+
+.collection-title {
+  margin: 0;
+  font-family: var(--disp);
+  font-weight: 550;
+  font-size: var(--type-h2);
+  line-height: 1;
+}
+
+.collection-count {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+  white-space: nowrap;
+}
+
+.filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 var(--step-3);
+  padding: var(--step-2) 0 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+
+.filter-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1.05rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+  cursor: pointer;
+  transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft), background 0.2s var(--ease-soft);
+}
+
+.room-no {
+  font-style: italic;
+  color: var(--viridian);
+  transition: color 0.2s var(--ease-soft);
+}
+
+.filter-list a:hover {
+  color: var(--ink);
+  border-color: var(--rule-strong);
+}
+
+.filter-list li.is-active a {
+  background: var(--viridian);
+  border-color: var(--viridian);
+  color: var(--plaster);
+}
+
+.filter-list li.is-active .room-no {
+  color: var(--sage);
+}
+
+/* the salon wall: two columns hung at alternating heights; hovering one work
+   pulls the room's light onto it and lets the others fall into shadow */
+.salon-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--step-4) var(--step-4);
+  transition: opacity 0.2s ease;
+}
+
+.work {
+  cursor: pointer;
+  transition: opacity 0.45s var(--ease-soft), filter 0.45s var(--ease-soft);
+}
+
+.work:nth-child(even) {
+  transform: translateY(var(--step-3));
+}
+
+/* keep the reveal transform from fighting the stagger offset */
+.work.reveal {
+  transform: translateY(18px);
+}
+
+.work.reveal.is-in {
+  transform: none;
+}
+
+.work.reveal:nth-child(even) {
+  transform: translateY(calc(var(--step-3) + 18px));
+}
+
+.work.reveal.is-in:nth-child(even) {
+  transform: translateY(var(--step-3));
+}
+
+@media (hover: hover) {
+  .salon-grid:hover .work:not(:hover) {
+    opacity: 0.3;
+    filter: saturate(0.55);
+  }
+}
+
+.work-frame .frame-img {
+  aspect-ratio: 5 / 4;
+}
+
+.work:nth-child(4n + 1) .frame-img {
+  aspect-ratio: 4 / 5;
+}
+
+.work-plaque {
+  padding: var(--step-2) 0.25rem 0;
+}
+
+.work-title {
+  margin: 0.55rem 0 0;
+  font-family: var(--disp);
+  font-weight: 560;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+  line-height: 1.12;
+}
+
+.work-title a {
+  transition: color 0.2s var(--ease-soft);
+}
+
+.work:hover .work-title {
+  font-style: italic;
+}
+
+.work:hover .work-title a {
+  color: var(--viridian);
+}
+
+.work-attrib {
+  margin: 0.4rem 0 0;
+  font-family: var(--text);
+  font-style: italic;
+  font-size: var(--type-small);
+  color: var(--stone);
+}
+
+.work-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.1rem;
+  margin-top: 0.7rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.work-tag {
+  color: var(--viridian);
+  transition: color 0.15s ease;
+}
+
+.work-tag:hover {
+  text-decoration: underline;
+}
+
+.collection-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: calc(var(--step-4) + var(--step-3));
+  padding-top: var(--step-2);
+  border-top: 1px solid var(--rule);
+}
+
+@media (max-width: 800px) {
+  .salon-grid {
+    grid-template-columns: 1fr;
+    gap: var(--step-3);
+  }
+
+  /* single column: no stagger, every mat landscape */
+  .work:nth-child(even),
+  .work.reveal:nth-child(even),
+  .work.reveal.is-in:nth-child(even) {
+    transform: none;
+  }
+
+  .work.reveal:nth-child(even) {
+    transform: translateY(18px);
+  }
+
+  .work:nth-child(4n + 1) .frame-img {
+    aspect-ratio: 5 / 4;
+  }
+
+  .collection-footer {
+    margin-top: var(--step-3);
+  }
+}
+
+/* ---------- curator's note: the viridian wall ---------- */
+
+.curator {
+  margin-top: var(--step-5);
+  background: var(--viridian);
+  color: var(--plaster);
+}
+
+.curator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: var(--step-4);
+  padding-block: var(--step-5);
+}
+
+.curator-est {
+  margin: 0;
+  font-family: var(--disp);
+  font-weight: 480;
+  font-size: clamp(3.5rem, 8.5vw, 8rem);
+  line-height: 0.95;
+  color: var(--sage);
+}
+
+.curator-est--word {
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1.1;
+}
+
+.curator-body .eyebrow {
+  color: var(--sage);
+}
+
+.curator-statement {
+  margin: var(--step-2) 0 0;
+  font-family: var(--disp);
+  font-style: italic;
+  font-weight: 460;
+  font-size: clamp(1.5rem, 3vw, 2.6rem);
+  line-height: 1.3;
+}
+
+.curator-sign {
+  display: block;
+  margin-top: var(--step-2);
+  font-family: var(--text);
+  font-style: italic;
+  font-size: var(--type-lede);
+  color: var(--sage);
+}
+
+.curator-fine {
+  margin: var(--step-3) 0 0;
+  max-width: 52ch;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.08em;
+  line-height: 1.9;
+  text-transform: uppercase;
+  color: rgba(244, 241, 233, 0.6);
+}
+
+@media (max-width: 800px) {
+  .curator-grid {
+    grid-template-columns: 1fr;
+    gap: var(--step-3);
+    padding-block: var(--step-4);
+  }
+}
+
+/* ---------- the private view: an invitation card ---------- */
+
+.private-view {
+  padding-block: var(--step-5) var(--step-2);
+}
+
+.invite-card {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px;
+  background: var(--mat);
+  border: 1px solid var(--ink);
+  box-shadow: var(--frame-shadow);
+}
+
+/* the classic double-rule of an engraved invitation */
+.invite-inner {
+  padding: clamp(2rem, 5vw, 3.5rem);
+  border: 1px solid var(--rule-strong);
+  text-align: center;
+}
+
+.invite-inner h2 {
+  margin: var(--step-1) 0 0;
+  font-family: var(--disp);
+  font-weight: 540;
+  font-size: var(--type-h3);
+  line-height: 1.15;
+}
+
+.invite-inner > p {
+  margin: var(--step-1) auto 0;
+  max-width: 44ch;
+  font-family: var(--text);
+  font-size: var(--type-small);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.invite-form {
+  margin-top: var(--step-2);
+}
+
+.invite-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+.invite-input {
+  display: flex;
+  max-width: 460px;
+  margin: 0 auto;
+  border: 1px solid var(--ink);
+  background: var(--plaster);
+}
+
+.invite-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: var(--type-small);
+  color: var(--ink);
+}
+
+.invite-input input::placeholder {
+  color: var(--stone);
+}
+
+.invite-input input:focus {
+  outline: 2px solid var(--viridian);
+  outline-offset: -2px;
+}
+
+.invite-input button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.4rem;
+  border: 0;
+  background: var(--viridian);
+  color: var(--plaster);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s var(--ease-soft);
+}
+
+.invite-input button:hover {
+  background: var(--viridian-deep);
+}
+
+.invite-fine {
+  display: block;
+  margin-top: 0.85rem;
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+@media (max-width: 520px) {
+  .invite-input {
+    flex-direction: column;
+    border: 0;
+    background: none;
+    gap: 0.6rem;
+  }
+
+  .invite-input input {
+    border: 1px solid var(--ink);
+    background: var(--plaster);
+  }
+
+  .invite-input button {
+    justify-content: center;
+  }
+}
