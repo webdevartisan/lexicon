@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Closest theme preview">
+  <rect width="1200" height="900" fill="#f3f5ee"/>
+
+  <!-- contour lines -->
+  <g fill="none" stroke="#152019" stroke-opacity="0.12" stroke-width="1.5">
+    <circle cx="340" cy="330" r="70"/><circle cx="340" cy="330" r="120"/><circle cx="340" cy="330" r="175"/><circle cx="340" cy="330" r="235"/>
+    <circle cx="960" cy="700" r="60"/><circle cx="960" cy="700" r="110"/><circle cx="960" cy="700" r="165"/>
+  </g>
+
+  <!-- sheet header -->
+  <text x="80" y="72" font-family="Consolas, 'Courier New', monospace" font-size="16" letter-spacing="4" fill="#35423a">45.442°N · 6.980°E · SHEET 07</text>
+  <text x="1120" y="72" text-anchor="end" font-family="'Arial Narrow', Arial, sans-serif" font-size="19" letter-spacing="5" fill="#1c2620">CLOSEST — A FIELD ATLAS</text>
+  <line x1="80" y1="96" x2="1120" y2="96" stroke="#aab49b" stroke-width="2"/>
+
+  <!-- display title -->
+  <text x="76" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="124" letter-spacing="-3" fill="#1c2620">Waypoints</text>
+  <text x="80" y="282" font-family="Georgia, serif" font-size="25" font-style="italic" fill="#35423a">Posts charted as places; the newest is the closest.</text>
+
+  <!-- trail -->
+  <polyline points="170,700 380,560 640,624 900,430 1054,470" fill="none" stroke="#d4550a" stroke-width="4" stroke-dasharray="2 14" stroke-linecap="round"/>
+
+  <!-- waypoints -->
+  <g>
+    <circle cx="170" cy="700" r="14" fill="#f3f5ee" stroke="#35423a" stroke-width="3"/>
+    <circle cx="380" cy="560" r="14" fill="#f3f5ee" stroke="#35423a" stroke-width="3"/>
+    <circle cx="640" cy="624" r="14" fill="#f3f5ee" stroke="#35423a" stroke-width="3"/>
+    <circle cx="900" cy="430" r="17" fill="#d4550a" stroke="#a83f04" stroke-width="3"/>
+    <circle cx="900" cy="430" r="30" fill="none" stroke="#d4550a" stroke-opacity="0.4" stroke-width="2"/>
+  </g>
+
+  <!-- waypoint labels -->
+  <g font-family="'Arial Narrow', Arial, sans-serif" font-size="21" letter-spacing="2" fill="#1c2620">
+    <text x="196" y="694">RIDGE DIARY</text>
+    <text x="406" y="554">SPRUCE LINE</text>
+    <text x="666" y="618">COLD CAMP</text>
+    <text x="930" y="416">TRAILHEAD, AGAIN</text>
+  </g>
+  <g font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="2" fill="#6a7565">
+    <text x="196" y="720">12.1 KM · APR</text>
+    <text x="406" y="580">8.6 KM · MAY</text>
+    <text x="666" y="644">4.2 KM · JUN</text>
+    <text x="930" y="444" fill="#a83f04">0.3 KM · TODAY</text>
+  </g>
+
+  <!-- legend panel -->
+  <rect x="80" y="790" width="1040" height="66" fill="#e9edde" stroke="#d9dfcc" stroke-width="2"/>
+  <circle cx="122" cy="823" r="9" fill="#d4550a"/>
+  <text x="148" y="830" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3" fill="#35423a">THE NEWEST POST IS THE CLOSEST WAYPOINT</text>
+  <text x="1090" y="830" text-anchor="end" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3" fill="#6a7565">SCALE 1:25 000</text>
+</svg>

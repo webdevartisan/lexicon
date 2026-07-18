@@ -14,8 +14,6 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
-use App\Services\MediaService;
-use App\Services\UploadService;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -33,11 +31,9 @@ final class BlogController extends AppController
         private PostModel $post,
         private UserModel $user,
         private BlogSettingsModel $settings,
-        private UploadService $uploader,
         private UserPreferencesModel $preference,
         private BlogDeletionService $blogDeletion,
         private WorkflowService $workflowService,
-        private MediaService $mediaService,
     ) {}
 
     /**
@@ -226,11 +222,8 @@ final class BlogController extends AppController
         return $this->view([
             'blog' => $blog->toArray(),
             'settings' => $settings,
-            'socialLinks' => BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null),
-            'socialPlatforms' => BlogSettingsModel::SOCIAL_PLATFORMS,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
-            'themes' => self::getAvailableThemes(),
             'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
     }
@@ -249,38 +242,23 @@ final class BlogController extends AppController
         Gate::authorize('update', $blog, $user);
 
         $userId = $user['id'];
-        $ownerId = $blog->ownerId();
         $blogId = (int) $id;
 
         $rules = [
             'name' => 'required|title|min:2|max:50',
             'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
-            'theme' => 'max:50',
             'locale' => 'max:10',
             'timezone' => 'max:100',
             'meta_title' => 'max:200',
             'meta_description' => 'max:500',
-            'tagline' => 'max:160',
-            'subtitle' => 'max:255',
-            'about_text' => 'max:500',
-            'founded_year' => 'max:20',
-            'newsletter_heading' => 'max:255',
-            'newsletter_text' => 'max:255',
             'allow_indexing' => 'boolean',
             'allow_comments' => 'boolean',
             'comments_auto_publish' => 'boolean',
             'replies_auto_publish' => 'boolean',
-            'remove_banner' => 'boolean',
-            'remove_logo' => 'boolean',
-            'remove_favicon' => 'boolean',
             'workflow_enabled' => 'boolean',
             'translations_enabled' => 'boolean',
         ];
-
-        foreach (BlogSettingsModel::SOCIAL_PLATFORMS as $platform) {
-            $rules['social_'.$platform] = 'url|max:255';
-        }
 
         $validator = $this->validateOrFail($rules, [
             'name.required' => 'Blog name is required.',
@@ -324,31 +302,14 @@ final class BlogController extends AppController
             $this->blogModel->update($blogId, $identityChanges);
         }
 
-        // Update settings (blog_settings table)
         $currentSettings = $this->settings->findByBlogId($blogId) ?? [];
-
-        // Collapse the per-platform inputs into one JSON column; empty map clears it
-        $socialLinks = [];
-        foreach (BlogSettingsModel::SOCIAL_PLATFORMS as $platform) {
-            $url = trim((string) ($validated['social_'.$platform] ?? ''));
-            if ($url !== '') {
-                $socialLinks[$platform] = $url;
-            }
-        }
 
         $settingsData = [
             'default_locale' => $validated['locale'] ?? 'en',
             'timezone' => $validated['timezone'] ?? 'UTC',
-            'theme' => $validated['theme'] ?? 'default',
+            'theme' => $currentSettings['theme'] ?? 'folio',
             'meta_title' => $validated['meta_title'] ?? '',
             'meta_description' => $validated['meta_description'] ?? '',
-            'tagline' => trim((string) ($validated['tagline'] ?? '')),
-            'subtitle' => trim((string) ($validated['subtitle'] ?? '')),
-            'about_text' => trim((string) ($validated['about_text'] ?? '')),
-            'founded_year' => trim((string) ($validated['founded_year'] ?? '')),
-            'newsletter_heading' => trim((string) ($validated['newsletter_heading'] ?? '')),
-            'newsletter_text' => trim((string) ($validated['newsletter_text'] ?? '')),
-            'social_links' => $socialLinks === [] ? null : json_encode($socialLinks, JSON_UNESCAPED_SLASHES),
             'indexable' => isset($validated['allow_indexing']) ? 1 : 0,
             'comments_enabled' => isset($validated['allow_comments']) ? 1 : 0,
             'comments_auto_publish' => isset($validated['comments_auto_publish']) ? 1 : 0,
@@ -356,28 +317,6 @@ final class BlogController extends AppController
             'workflow_enabled' => isset($validated['workflow_enabled']) ? 1 : 0,
             'translations_enabled' => isset($validated['translations_enabled']) ? 1 : 0,
         ];
-
-        // Handle branding uploads
-        $brandingPaths = $this->handleBrandingUploads($userId, $blogId, $ownerId);
-        $settingsData = array_merge($settingsData, $brandingPaths);
-
-        // Handle removal checkboxes
-        foreach (['remove_banner', 'remove_logo', 'remove_favicon'] as $removeKey) {
-            if (!empty($validated[$removeKey])) {
-                $type = explode('_', $removeKey)[1]; // banner, logo, favicon
-                $filePathKey = $type.'_path';
-
-                // Delete physical file
-                if (!empty($currentSettings[$filePathKey])) {
-                    $oldFile = ROOT_PATH.'/public'.$currentSettings[$filePathKey];
-                    if (file_exists($oldFile)) {
-                        @unlink($oldFile);
-                    }
-                }
-
-                $settingsData[$filePathKey] = null;
-            }
-        }
 
         // Update only changed settings
         $settingsChanges = changedFields($settingsData, $currentSettings);
@@ -414,7 +353,7 @@ final class BlogController extends AppController
 
         // Land back on the tab the user saved from
         $section = (string) $this->request->postParam('active_section');
-        $anchor = in_array($section, ['general', 'appearance', 'seo', 'discussion'], true) ? '#'.$section : '';
+        $anchor = in_array($section, ['general', 'seo', 'discussion'], true) ? '#'.$section : '';
 
         return $this->redirect('/dashboard/blog/'.$blogId.'/settings'.$anchor);
     }
@@ -634,16 +573,6 @@ final class BlogController extends AppController
     }
 
     /**
-     * Legacy team-update endpoint — superseded by CollaboratorController.
-     *
-     * @param  string  $id  Blog ID
-     */
-    public function updateUsers(string $id): Response
-    {
-        return $this->redirect(lurl("/dashboard/blog/{$id}/team"));
-    }
-
-    /**
      * Get blog resource or throw 404.
      *
      * @param  string|int  $id  Blog ID
@@ -659,101 +588,5 @@ final class BlogController extends AppController
         }
 
         return $blog;
-    }
-
-    /**
-     * Handle branding file uploads (banner, logo, favicon).
-     *
-     * Extracts uploaded files from POST, moves from temp to branding directory,
-     * and returns path array for settings merge.
-     *
-     * @param  int  $userId  User ID (for temp cleanup)
-     * @param  int  $blogId  Blog ID
-     * @param  int|null  $ownerId  Owner ID (defaults to userId)
-     * @return array<string, string> Paths keyed by 'banner_path', 'logo_path', 'favicon_path'
-     */
-    private function handleBrandingUploads(int $userId, int $blogId, ?int $ownerId = null): array
-    {
-        $ownerId ??= $userId;
-
-        $paths = [];
-
-        // Library picks beat freshly-uploaded files — if the user selected an
-        // existing image, drop it straight into the corresponding _path slot.
-        foreach (['banner', 'logo', 'favicon'] as $type) {
-            $picked = trim((string) ($this->request->post[$type.'_library_url'] ?? ''));
-            if ($picked !== '') {
-                $paths[$type.'_path'] = $picked;
-                $this->mediaService->register($blogId, $userId, $picked, 'branding');
-            }
-        }
-
-        $uploadedFiles = [
-            'uploaded_banner_files' => $this->request->post['uploaded_banner_files'] ?? '',
-            'uploaded_logo_files' => $this->request->post['uploaded_logo_files'] ?? '',
-            'uploaded_favicon_files' => $this->request->post['uploaded_favicon_files'] ?? '',
-        ];
-
-        $uploadedFileNames = $this->uploader->getUploadedFiles($uploadedFiles);
-
-        [$dir, $baseUrl] = $this->uploader->blogBrandingPath($ownerId, $blogId);
-
-        foreach ($uploadedFileNames as $fieldName => $fileName) {
-            if (empty($fileName)) {
-                continue;
-            }
-
-            // Extract type: uploaded_banner_files to banner
-            $parts = explode('_', $fieldName);
-            $type = $parts[1];
-
-            // Library pick already filled this slot — don't clobber it.
-            if (isset($paths[$type.'_path'])) {
-                continue;
-            }
-
-            try {
-                $path = $this->uploader->moveTempToBranding(
-                    $fileName,
-                    $ownerId,
-                    $blogId,
-                    $type,
-                    $dir,
-                    $baseUrl
-                );
-                $paths[$type.'_path'] = $path;
-
-                if ($path) {
-                    $this->mediaService->register($blogId, $userId, $path, 'branding');
-                }
-            } catch (\Throwable $e) {
-                error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());
-                $this->flash('error', ucfirst($type).' upload failed: '.$e->getMessage());
-            }
-        }
-
-        // Cleanup temp files
-        $this->uploader->cleanupTempFiles($userId);
-
-        return $paths;
-    }
-
-    /** @return array<string, string> */
-    private static function getAvailableThemes(): array
-    {
-        $themesPath = ROOT_PATH.'/themes';
-        $themes = [];
-
-        foreach (glob($themesPath.'/*/theme.json') as $file) {
-            $meta = json_decode(file_get_contents($file), true);
-
-            if (!empty($meta['key'])) {
-                $themes[$meta['key']] = $meta['name'];
-            }
-        }
-
-        asort($themes, SORT_STRING);
-
-        return $themes;
     }
 }

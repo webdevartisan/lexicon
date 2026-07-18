@@ -202,6 +202,20 @@
         }
     },
     "blog": {
+        "themes": {
+            "pageTitle": "القوالب",
+            "pageSubtitle": "اختر مظهر مدونتك كما يراه القراء.",
+            "currentTheme": "القالب الحالي",
+            "allThemes": "جميع القوالب",
+            "previewHint": "تفتح المعاينة المباشرة مدونتك العامة في تبويب جديد بالقالب المحدد. أنت وحدك من يراها حتى التفعيل.",
+            "activate": "تفعيل",
+            "activeBadge": "مفعّل",
+            "preview": "معاينة مباشرة",
+            "viewBlog": "عرض المدونة",
+            "customize": "الهوية والنصوص",
+            "versionPrefix": "الإصدار",
+            "byAuthor": "بواسطة"
+        },
         "form": {
             "sections": {
                 "frontPage": {

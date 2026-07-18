@@ -171,15 +171,13 @@ return [
             'key' => 'navigation.team',
         ],
         [
-            'label' => 'Appearance / Theme',
-            'href' => '/dashboard/blog/{blogId}/theme',
+            'label' => 'Appearance',
+            'href' => '/dashboard/blog/{blogId}/appearance',
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'update',
             'key' => 'navigation.appearanceTheme',
-            'disabled' => true,
-            'badge' => 'Soon',
         ],
         [
             'label' => 'Insights',

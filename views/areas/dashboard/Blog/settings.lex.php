@@ -5,7 +5,6 @@
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
-<link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
 {% endblock %}
 
@@ -27,32 +26,11 @@ $isArchived = $blogStatus === 'archived';
 {% set metaTitlePlaceholder = t('blog.form.fields.metaTitle.placeholder') %}
 {% set metaDescLabel = t('blog.form.fields.metaDescription.label') %}
 {% set metaDescPlaceholder = t('blog.form.fields.metaDescription.placeholder') %}
-{% set themeLabel = t('blog.form.fields.theme.label') %}
 {% set localeLabel = t('blog.form.fields.locale.label') %}
 {% set timezoneLabel = t('blog.form.fields.timezone.label') %}
 {% set updateBtnLabel = t('blog.form.actions.update') %}
 {% set saveDraftBtnLabel = t('blog.form.actions.saveDraft') %}
 {% set backBtnLabel = t('blog.form.actions.back') %}
-{% set bannerLabel = t('blog.form.fields.banner.label') %}
-{% set logoLabel = t('blog.form.fields.logo.label') %}
-{% set faviconLabel = t('blog.form.fields.favicon.label') %}
-{% set taglineLabel = t('blog.form.fields.tagline.label') %}
-{% set taglinePlaceholder = t('blog.form.fields.tagline.placeholder') %}
-{% set taglineUnderlabel = t('blog.form.fields.tagline.underlabel') %}
-{% set subtitleLabel = t('blog.form.fields.subtitle.label') %}
-{% set subtitlePlaceholder = t('blog.form.fields.subtitle.placeholder') %}
-{% set subtitleUnderlabel = t('blog.form.fields.subtitle.underlabel') %}
-{% set aboutTextLabel = t('blog.form.fields.aboutText.label') %}
-{% set aboutTextPlaceholder = t('blog.form.fields.aboutText.placeholder') %}
-{% set foundedYearLabel = t('blog.form.fields.foundedYear.label') %}
-{% set foundedYearPlaceholder = t('blog.form.fields.foundedYear.placeholder') %}
-{% set foundedYearUnderlabel = t('blog.form.fields.foundedYear.underlabel') %}
-{% set newsHeadingLabel = t('blog.form.fields.newsletterHeading.label') %}
-{% set newsHeadingPlaceholder = t('blog.form.fields.newsletterHeading.placeholder') %}
-{% set newsHeadingUnderlabel = t('blog.form.fields.newsletterHeading.underlabel') %}
-{% set newsTextLabel = t('blog.form.fields.newsletterText.label') %}
-{% set newsTextPlaceholder = t('blog.form.fields.newsletterText.placeholder') %}
-{% set newsTextUnderlabel = t('blog.form.fields.newsletterText.underlabel') %}
 
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
 
@@ -79,9 +57,6 @@ $isArchived = $blogStatus === 'archived';
     <button type="button" data-settings-tab="general" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
       {{ t('blog.settings.tabs.general') }}
     </button>
-    <button type="button" data-settings-tab="appearance" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-      {{ t('blog.settings.tabs.appearance') }}
-    </button>
     <button type="button" data-settings-tab="seo" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
       {{ t('blog.settings.tabs.seo') }}
     </button>
@@ -93,9 +68,7 @@ $isArchived = $blogStatus === 'archived';
   <form
     id="blog-settings-form"
     method="post"
-    action="/dashboard/blogs/{{ blog.id }}/update"
-    enctype="multipart/form-data"
-    data-dropzone-form>
+    action="/dashboard/blogs/{{ blog.id }}/update">
     <input type="hidden" name="_method" value="PUT">
     <input type="hidden" name="active_section" id="active_section" value="general">
     {{ csrf_field() }}
@@ -212,86 +185,6 @@ $isArchived = $blogStatus === 'archived';
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- ============ Appearance ============ -->
-        <div data-settings-panel="appearance" class="hidden">
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.theme.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.theme.description') }}</p>
-            </div>
-            <div class="p-4 md:p-5">
-              <?php $value = $settings['theme'] ?? ''; ?>
-              {% cmp="select" name="theme" options="{$themes}" label="{$themeLabel}" selectedKey="{$value}" %}
-            </div>
-          </section>
-
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.branding.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.branding.description') }}</p>
-            </div>
-            <div class="p-4 md:p-5">
-              <div class="grid gap-4 md:grid-cols-3">
-                <?php $blogIdForLibrary = (string) ($blog['id'] ?? ''); ?>
-                {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" library="{$blogIdForLibrary}" %}
-                {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" library="{$blogIdForLibrary}" %}
-                {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" library="{$blogIdForLibrary}" %}
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.frontPage.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.frontPage.description') }}</p>
-            </div>
-            <div class="p-4 space-y-4 md:p-5">
-              <?php $value = $settings['tagline'] ?? ''; ?>
-              {% cmp="input" type="text" name="tagline" label="{$taglineLabel}" value="{$value}" placeholder="{$taglinePlaceholder}" underlabel="{$taglineUnderlabel}" %}
-
-              <?php $value = $settings['subtitle'] ?? ''; ?>
-              {% cmp="input" type="text" name="subtitle" label="{$subtitleLabel}" value="{$value}" placeholder="{$subtitlePlaceholder}" underlabel="{$subtitleUnderlabel}" %}
-
-              <?php $value = $settings['about_text'] ?? ''; ?>
-              {% cmp="input" type="textarea" name="about_text" label="{$aboutTextLabel}" value="{$value}" rows="3" placeholder="{$aboutTextPlaceholder}" %}
-
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <?php $value = $settings['founded_year'] ?? ''; ?>
-                  {% cmp="input" type="text" name="founded_year" label="{$foundedYearLabel}" value="{$value}" placeholder="{$foundedYearPlaceholder}" underlabel="{$foundedYearUnderlabel}" %}
-                </div>
-              </div>
-
-              <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600 space-y-4">
-                <?php $value = $settings['newsletter_heading'] ?? ''; ?>
-                {% cmp="input" type="text" name="newsletter_heading" label="{$newsHeadingLabel}" value="{$value}" placeholder="{$newsHeadingPlaceholder}" underlabel="{$newsHeadingUnderlabel}" %}
-
-                <?php $value = $settings['newsletter_text'] ?? ''; ?>
-                {% cmp="input" type="text" name="newsletter_text" label="{$newsTextLabel}" value="{$value}" placeholder="{$newsTextPlaceholder}" underlabel="{$newsTextUnderlabel}" %}
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.social.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.social.description') }}</p>
-            </div>
-            <div class="p-4 md:p-5">
-              <div class="grid gap-4 md:grid-cols-2">
-                {% foreach ($socialPlatforms as $platform): %}
-                  <?php
-                    $socialName = 'social_'.$platform;
-$socialValue = $socialLinks[$platform] ?? '';
-$socialLabel = $t('blog.form.fields.social.'.$platform);
-?>
-                  {% cmp="input" type="url" name="{$socialName}" label="{$socialLabel}" value="{$socialValue}" placeholder="https://" %}
-                {% endforeach %}
-              </div>
-            </div>
-          </section>
         </div>
 
         <!-- ============ SEO ============ -->
@@ -429,16 +322,13 @@ $socialLabel = $t('blog.form.fields.social.'.$platform);
 
 {% block scripts %}
 <script src='/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js'></script>
-<script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="/cp-assets/js/timezone.init.js"></script>
-<script src="/cp-assets/js/dropzone.init.js"></script>
 <script src="/cp-assets/js/choices.init.js"></script>
-<script src="/cp-assets/js/media-picker.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
 <script src="/cp-assets/js/delete-blog-modal.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    var sections = ['general', 'appearance', 'seo', 'discussion'];
+    var sections = ['general', 'seo', 'discussion'];
     var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-settings-tab]'));
     var panels = Array.prototype.slice.call(document.querySelectorAll('[data-settings-panel]'));
     var activeInput = document.getElementById('active_section');

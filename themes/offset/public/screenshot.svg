@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Offset theme preview">
+  <defs>
+    <linearGradient id="off-plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2036e6"/>
+      <stop offset="100%" stop-color="#14229f"/>
+    </linearGradient>
+    <linearGradient id="off-plate-dev" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d6dcf8"/>
+      <stop offset="100%" stop-color="#2036e6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="#eef0f1"/>
+
+  <!-- registration marks -->
+  <g stroke="#17191c" stroke-width="2" fill="none" opacity="0.7">
+    <circle cx="60" cy="60" r="12"/><line x1="40" y1="60" x2="80" y2="60"/><line x1="60" y1="40" x2="60" y2="80"/>
+    <circle cx="1140" cy="60" r="12"/><line x1="1120" y1="60" x2="1160" y2="60"/><line x1="1140" y1="40" x2="1140" y2="80"/>
+    <circle cx="60" cy="760" r="12"/><line x1="40" y1="760" x2="80" y2="760"/><line x1="60" y1="740" x2="60" y2="780"/>
+    <circle cx="1140" cy="760" r="12"/><line x1="1120" y1="760" x2="1160" y2="760"/><line x1="1140" y1="740" x2="1140" y2="780"/>
+  </g>
+
+  <!-- job ticket -->
+  <text x="110" y="68" font-family="Consolas, 'Courier New', monospace" font-size="16" letter-spacing="4" fill="#676d74">PROOF NO. 018 — APPROVED FOR PRESS</text>
+  <text x="1090" y="68" text-anchor="end" font-family="Consolas, 'Courier New', monospace" font-size="16" letter-spacing="4" fill="#2036e6">PLATE: COBALT</text>
+
+  <!-- display headline -->
+  <g font-family="'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-weight="bold" letter-spacing="-2">
+    <text x="76" y="248" font-size="164" fill="#17191c">THE PROOF</text>
+    <text x="76" y="392" font-size="164" fill="#2036e6">ROOM</text>
+  </g>
+  <line x1="80" y1="430" x2="1120" y2="430" stroke="#17191c" stroke-opacity="0.4" stroke-width="3"/>
+  <text x="80" y="470" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="24" fill="#34383d">Every post is pulled as a plate: cobalt first, full colour on approval.</text>
+
+  <!-- three plates -->
+  <g>
+    <rect x="80" y="512" width="320" height="200" fill="url(#off-plate)"/>
+    <rect x="440" y="512" width="320" height="200" fill="url(#off-plate-dev)"/>
+    <rect x="800" y="512" width="320" height="200" fill="#17191c"/>
+    <g font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3">
+      <text x="80" y="746" fill="#676d74">SHEET 01 / DUOTONE</text>
+      <text x="440" y="746" fill="#676d74">SHEET 02 / DEVELOPING</text>
+      <text x="800" y="746" fill="#676d74">SHEET 03 / CARBON</text>
+    </g>
+    <g fill="#eef0f1" opacity="0.9">
+      <rect x="104" y="662" width="150" height="12" rx="6"/>
+      <rect x="464" y="662" width="128" height="12" rx="6"/>
+      <rect x="824" y="662" width="164" height="12" rx="6"/>
+    </g>
+  </g>
+
+  <!-- colour control strip -->
+  <g>
+    <rect x="80" y="806" width="52" height="34" fill="#2036e6"/>
+    <rect x="132" y="806" width="52" height="34" fill="#14229f"/>
+    <rect x="184" y="806" width="52" height="34" fill="#17191c"/>
+    <rect x="236" y="806" width="52" height="34" fill="#34383d"/>
+    <rect x="288" y="806" width="52" height="34" fill="#676d74"/>
+    <rect x="340" y="806" width="52" height="34" fill="#d6dcf8"/>
+    <rect x="392" y="806" width="52" height="34" fill="#e3e6e8"/>
+    <rect x="444" y="806" width="52" height="34" fill="#eef0f1" stroke="#17191c" stroke-opacity="0.16"/>
+  </g>
+  <text x="1120" y="830" text-anchor="end" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="4" fill="#676d74">OFFSET · A PRINT STUDIO FOR THE WEB</text>
+</svg>

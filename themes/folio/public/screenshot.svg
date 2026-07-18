@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Folio theme preview">
+  <rect width="1200" height="900" fill="#f7f5f0"/>
+
+  <!-- masthead -->
+  <text x="80" y="76" font-family="Consolas, 'Courier New', monospace" font-size="17" letter-spacing="4" fill="#6b6a64">FOLIO — A JOURNAL OF LONG READING</text>
+  <text x="1120" y="76" text-anchor="end" font-family="Consolas, 'Courier New', monospace" font-size="17" letter-spacing="4" fill="#6b6a64">ISSUE 12</text>
+  <line x1="80" y1="100" x2="1120" y2="100" stroke="#0a0a0a" stroke-opacity="0.14" stroke-width="2"/>
+
+  <!-- display headline -->
+  <text x="76" y="290" font-family="Georgia, 'Times New Roman', serif" font-size="150" letter-spacing="-4" fill="#0a0a0a">The Quiet</text>
+  <text x="76" y="432" font-family="Georgia, 'Times New Roman', serif" font-size="150" font-style="italic" letter-spacing="-4" fill="#0a0a0a">Hours</text>
+
+  <!-- lede -->
+  <text x="80" y="500" font-family="Georgia, serif" font-size="27" fill="#1d1d1b">Essays and letters written slowly, for reading slowly.</text>
+
+  <!-- hairline + column heads -->
+  <line x1="80" y1="556" x2="1120" y2="556" stroke="#0a0a0a" stroke-opacity="0.85" stroke-width="3"/>
+
+  <!-- three column index -->
+  <g font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3" fill="#6b6a64">
+    <text x="80" y="600">NO. 01</text>
+    <text x="440" y="600">NO. 02</text>
+    <text x="800" y="600">NO. 03</text>
+  </g>
+  <g font-family="Georgia, 'Times New Roman', serif" font-size="33" fill="#0a0a0a">
+    <text x="80" y="648">On Margins</text>
+    <text x="440" y="648">A Winter Desk</text>
+    <text x="800" y="648">Letters, Kept</text>
+  </g>
+  <g fill="#6b6a64" opacity="0.55">
+    <rect x="80" y="676" width="280" height="11" rx="5"/>
+    <rect x="80" y="700" width="252" height="11" rx="5"/>
+    <rect x="80" y="724" width="266" height="11" rx="5"/>
+    <rect x="440" y="676" width="280" height="11" rx="5"/>
+    <rect x="440" y="700" width="238" height="11" rx="5"/>
+    <rect x="440" y="724" width="270" height="11" rx="5"/>
+    <rect x="800" y="676" width="280" height="11" rx="5"/>
+    <rect x="800" y="700" width="258" height="11" rx="5"/>
+    <rect x="800" y="724" width="242" height="11" rx="5"/>
+  </g>
+  <line x1="420" y1="580" x2="420" y2="740" stroke="#0a0a0a" stroke-opacity="0.14" stroke-width="2"/>
+  <line x1="780" y1="580" x2="780" y2="740" stroke="#0a0a0a" stroke-opacity="0.14" stroke-width="2"/>
+
+  <!-- footer -->
+  <line x1="80" y1="806" x2="1120" y2="806" stroke="#0a0a0a" stroke-opacity="0.14" stroke-width="2"/>
+  <text x="80" y="846" font-family="Consolas, 'Courier New', monospace" font-size="15" letter-spacing="3" fill="#6b6a64">PUBLISHED QUARTERLY · SET IN FRAUNCES</text>
+</svg>

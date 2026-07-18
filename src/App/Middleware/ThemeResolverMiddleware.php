@@ -55,6 +55,16 @@ final class ThemeResolverMiddleware implements MiddlewareInterface
             }
         }
 
+        // Live preview: signed-in users can render the blog with any installed
+        // theme via ?_theme= (used by the dashboard theme browser). Guests never
+        // get the override, and authenticated responses bypass the page cache,
+        // so previews can't leak into cached pages.
+        $previewTheme = $request->get['_theme'] ?? null;
+        if (is_string($previewTheme) && $previewTheme !== ''
+            && auth()->check() && $this->themes->isValidKey($previewTheme)) {
+            $theme = $previewTheme;
+        }
+
         // Activate theme and publish globals (defaults when null)
         $this->activateAndPublish($theme);
 

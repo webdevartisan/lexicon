@@ -87,7 +87,7 @@ return [
             ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
             ['label' => 'Collaborators', 'url' => null, 'key' => 'breadcrumbs.collaborators'],
         ],
-        '/dashboard/blog/{id}/theme' => [
+        '/dashboard/blog/{id}/appearance' => [
             ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
             ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
             ['label' => 'Appearance', 'url' => null, 'key' => 'breadcrumbs.appearance'],
