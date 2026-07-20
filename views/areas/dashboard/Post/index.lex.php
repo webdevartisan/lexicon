@@ -226,11 +226,15 @@ if ($q !== '') {
         </div>
     </div>
     {% else %}
+    <!-- The bulk form holds only its own fields. Cards must stay outside it:
+         each card carries its own action forms, and nesting forms makes the
+         browser drop the inner ones. Checkboxes attach via form="bulk-form". -->
     <form id="bulk-form" method="POST" action="/dashboard/post/bulk">
         {{ csrf_field() }}
         <input type="hidden" name="bulk_action" id="bulk-action" value="">
+    </form>
 
-        <div class="flex items-center justify-between mb-3 text-xs">
+    <div class="flex items-center justify-between mb-3 text-xs">
             <label class="inline-flex items-center gap-2 text-slate-600 dark:text-zink-200 cursor-pointer">
                 <input
                     type="checkbox"
@@ -262,8 +266,8 @@ if ($q !== '') {
             {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="/dashboard/post" %}
         </div>
 
-        <div id="bulk-bar" class="hidden" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); top: auto; z-index: 9999;">
-            <div class="flex items-center gap-2 px-4 py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-full shadow-lg border border-slate-700">
+        <div id="bulk-bar" class="hidden fixed bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[9999]">
+            <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-2xl sm:rounded-full shadow-lg border border-slate-700">
                 <span id="bulk-count" class="text-sm font-medium pr-2 border-r border-slate-700"></span>
 
                 <button type="button" data-bulk="publish" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-green-600/30 transition-colors">
@@ -289,7 +293,6 @@ if ($q !== '') {
                 </button>
             </div>
         </div>
-    </form>
     {% endif %}
 
 </div>
@@ -302,7 +305,9 @@ if ($q !== '') {
     const form = document.getElementById('bulk-form');
     if (!form) return;
 
-    const checkboxes = form.querySelectorAll('.bulk-checkbox');
+    // The checkboxes live outside the form element and attach via form="bulk-form",
+    // so query the document rather than the form subtree.
+    const checkboxes = document.querySelectorAll('.bulk-checkbox');
     const selectAll = document.getElementById('select-all');
     const bulkBar = document.getElementById('bulk-bar');
     const bulkCount = document.getElementById('bulk-count');

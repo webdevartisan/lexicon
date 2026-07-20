@@ -81,7 +81,7 @@
          reviewer-context branch here — that case is impossible by construction
          since the default blog must be one the user owns.
          The Pending tile only renders when this blog uses the editorial pipeline. -->
-    <?php $kpiCols = !empty($workflowEnabled) ? 'lg:grid-cols-4' : 'lg:grid-cols-3'; ?>
+    <?php $kpiCols = !empty($workflowEnabled) ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-5'; ?>
     <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
         <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
@@ -118,6 +118,17 @@
             </div>
         </a>
         <?php } ?>
+        <a href="/dashboard/post?status=archived" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+            <div class="card-body">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.archived') }}</span>
+                    <span class="inline-flex items-center justify-center size-8 rounded-md bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-200">
+                        {% cache 'lucide:archive' ttl=31536000 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
+                    </span>
+                </div>
+                <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.archived }}</div>
+            </div>
+        </a>
         <a href="/dashboard/blog/{{ selectedBlogId }}/comments?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
@@ -134,6 +145,17 @@
                     </span>
                     <?php } ?>
                 </div>
+            </div>
+        </a>
+        <a href="/dashboard/blog/{{ selectedBlogId }}/subscribers" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+            <div class="card-body">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.subscribers') }}</span>
+                    <span class="inline-flex items-center justify-center size-8 rounded-md bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                        {% cache 'lucide:mail' ttl=31536000 %}<i data-lucide="mail" class="size-4"></i>{% endcache %}
+                    </span>
+                </div>
+                <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.subscribers }}</div>
             </div>
         </a>
     </div>

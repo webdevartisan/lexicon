@@ -15,9 +15,18 @@
         </svg>
       </div>
 
+      <?php
+      // Keep the reading context alive across the login hop
+      $returnTo = !empty($return_to) ? $return_to : '';
+      $registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+      ?>
       <header class="auth__header">
         <h2 class="auth__title">Sign in</h2>
-        <p class="auth__subtitle">Welcome back. Sign in to continue.</p>
+        <?php if ($returnTo !== '') { ?>
+          <p class="auth__subtitle">Log in to continue where you left off.</p>
+        <?php } else { ?>
+          <p class="auth__subtitle">Welcome back. Sign in to continue.</p>
+        <?php } ?>
       </header>
       <?php $flash = flash(); ?>
       {% if flash|notempty %}
@@ -37,6 +46,9 @@
 
       <form class="auth__form" action="/login/submit" method="post">
         <?= csrf_field(); ?>
+        <?php if ($returnTo !== '') { ?>
+          <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
+        <?php } ?>
 
         <label class="auth__label" for="email">Email</label>
         <?php $email = old('email') ?? ''; ?>
@@ -53,24 +65,50 @@
         >
 
         <label class="auth__label" for="password">Password</label>
-        <input
-          class="auth__input"
-          type="password"
-          name="password"
-          id="password"
-          autocomplete="current-password"
-          required
-          <?= $email ? 'autofocus' : ''?>
-        >
+        <div class="auth__inputRow" style="position: relative;">
+          <input
+            class="auth__input"
+            type="password"
+            name="password"
+            id="password"
+            autocomplete="current-password"
+            required
+            style="padding-right: 3.5rem;"
+            <?= $email ? 'autofocus' : ''?>
+          >
+          <button type="button"
+                  id="password_toggle"
+                  aria-label="Show password"
+                  aria-pressed="false"
+                  style="position: absolute; top: 50%; right: .75rem; transform: translateY(-50%); background: none; border: 0; cursor: pointer; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; opacity: .7;">Show</button>
+        </div>
 
         <button class="button primary fit" type="submit">Login</button>
 
         <div class="auth__links">
-          <a href="/register">Register</a>
+          <a href="<?= e($registerHref) ?>">Register</a>
           <a href="/password/forgot">Forgot password?</a>
         </div>
       </form>
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var toggle = document.getElementById('password_toggle');
+  var field = document.getElementById('password');
+  if (!toggle || !field) return;
+
+  toggle.addEventListener('click', function () {
+    var show = field.type === 'password';
+    field.type = show ? 'text' : 'password';
+    toggle.textContent = show ? 'Hide' : 'Show';
+    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+  });
+})();
+</script>
 {% endblock %}
