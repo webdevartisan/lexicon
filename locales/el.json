@@ -28,6 +28,11 @@
         "editBlogSettings": "Ρυθμίσεις Ιστολογίου",
         "appearanceTheme": "Εμφάνιση",
         "collaborators": "Συνεργάτες",
+        "subscribers": "Συνδρομητές",
+        "saved": "Αποθηκευμένα",
+        "subscriptions": "Συνδρομές",
+        "activity": "Δραστηριότητα",
+        "profile": "Προφίλ",
         "contentSection": "Ενότητα Περιεχομένου",
         "peopleSection": "Χρήστες & Ρόλοι",
         "systemSection": "Σύστημα",
@@ -54,7 +59,9 @@
         "about": "Σχετικά",
         "contact": "Επικοινωνία",
         "frontPage": "Αρχική Σελίδα",
-        "pages": "Σελίδες"
+        "pages": "Σελίδες",
+        "library": "Βιβλιοθήκη",
+        "liked": "Αγαπημένα"
     },
     "breadcrumbs": {
         "home": "Αρχική",
@@ -87,7 +94,12 @@
         "myProfile": "Το Προφίλ μου",
         "users": "Χρήστες",
         "blogs": "Blogs",
-        "posts": "Αναρτήσεις"
+        "posts": "Αναρτήσεις",
+        "library": "Βιβλιοθήκη",
+        "liked": "Αγαπημένα",
+        "saved": "Αποθηκευμένα",
+        "subscriptions": "Συνδρομές",
+        "activity": "Δραστηριότητα"
     },
     "dashboard": {
         "pageTitle": "Πίνακας Ελέγχου",
@@ -178,6 +190,8 @@
         "openShared": "Άνοιγμα Κοινόχρηστων",
         "createFirstBlogHint": "Ξεκινήστε δημιουργώντας το πρώτο σας ιστολόγιο.",
         "createFirstBlog": "Δημιουργία ιστολογίου",
+        "startWritingHint": "Έχετε όρεξη για γράψιμο;",
+        "startWriting": "Ξεκινήστε ένα ιστολόγιο",
         "welcome": "Καλώς ήρθατε",
         "signOut": "Αποσύνδεση",
         "signedInAs": "Συνδεδεμένος ως",
