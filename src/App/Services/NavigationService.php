@@ -175,6 +175,19 @@ class NavigationService
                 ($href !== '' && $href !== '#' && str_ends_with($path, $href.'/'))
             );
 
+            // Collapsible sub-items. Open state is resolved in the browser
+            // because the sidebar is cached without the current path in its key.
+            $children = [];
+            foreach ($it['children'] ?? [] as $child) {
+                $childLabel = $child['label'];
+                $children[] = [
+                    'label' => $childLabel,
+                    'href' => rtrim($child['href'], '/'),
+                    'key' => $child['key'] ?? null,
+                    'tag' => str_replace(' ', '-', strtolower($childLabel)),
+                ];
+            }
+
             $items[] = [
                 'label' => $label,
                 'href' => $href,
@@ -187,6 +200,7 @@ class NavigationService
                 'tag' => $tag,
                 'disabled' => !empty($it['disabled']),
                 'badge' => $it['badge'] ?? null,
+                'children' => $children,
             ];
         }
 

@@ -39,6 +39,25 @@ class PublicCacheInvalidator
     }
 
     /**
+     * Blog surfaces that render author names, plus one public profile page.
+     *
+     * Author links are baked into cached blog pages, so flipping a profile to
+     * private has to clear them. Which blogs an author has posted to isn't
+     * tracked, so this purges all blog surfaces — acceptable because profile
+     * visibility changes are rare.
+     *
+     * @param  string|null  $slug  Profile slug to purge, when the user has one
+     */
+    public function purgeAuthorSurfaces(?string $slug = null): void
+    {
+        cache()->deletePattern('*:GET:/blog/*');
+
+        if ($slug !== null && $slug !== '') {
+            cache()->deletePattern("*:GET:/profile/{$slug}*");
+        }
+    }
+
+    /**
      * Everything public at once, for site content edits that render on every
      * page (footer, sidebar, contact details).
      */
