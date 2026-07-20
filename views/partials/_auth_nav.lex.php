@@ -28,8 +28,8 @@ if ($navVariant === 'platform') { ?>
         <li><a href="/dashboard" class="button"><?= e($tr('header.dashboard')) ?></a></li>
         <li><a href="/logout" class="button"><?= e($tr('header.signOut')) ?></a></li>
     <?php }
-} else {
-    if (!empty($navViewer)) { ?>
+    } else {
+        if (!empty($navViewer)) { ?>
         <div class="nav-user">
           <button class="nav-user-btn" type="button" aria-haspopup="true" aria-expanded="false">
             <span class="nav-avatar">
@@ -54,7 +54,7 @@ if ($navVariant === 'platform') { ?>
     <?php } else { ?>
         <a href="<?= e($loginUrl) ?>" class="nav-pill">Log in</a>
     <?php }
-}
+    }
 // Must close the tag. Includes are spliced into the layout as raw text, so
 // leaving PHP mode open here would swallow the markup that follows.
 ?>

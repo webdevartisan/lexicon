@@ -202,6 +202,7 @@
                     {% set signedInAsLabel = t('layout.profileDropdown.signedInAs') %}
                     {% set controlPanelLabel = t('layout.profileDropdown.links.controlPanel') %}
                     {% set editProfileLabel = t('layout.profileDropdown.links.editProfile') %}
+                    {% set accountSettingsLabel = t('layout.profileDropdown.links.accountSettings') %}
                     {% set signOutLabel = t('layout.profileDropdown.links.signOut') %}
 
                     <div class="relative flex items-center dropdown h-header">
@@ -228,7 +229,7 @@
                         </button>
                         <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="dropdownMenuButton">
                             <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ signedInAsLabel }}</h6>
-                            <a href="#!" class="flex gap-3 mb-3">
+                            <a href="/dashboard/profile" class="flex gap-3 mb-3">
                                 <div class="relative inline-block shrink-0">
                                     <div class="rounded bg-slate-100 dark:bg-zink-500">
                                         {% if current_user.avatar_url|notempty %}
@@ -270,6 +271,12 @@
                                     <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard/profile">
                                         {% cache 'lucide:user-2' ttl=31536000 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ editProfileLabel }}</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard/account">
+                                        {% cache 'lucide:settings' ttl=31536000 %}<i data-lucide="settings" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        <span>{{ accountSettingsLabel }}</span>
                                     </a>
                                 </li>
                                 <li class="pt-2 mt-2 border-t border-slate-200 dark:border-zink-500">

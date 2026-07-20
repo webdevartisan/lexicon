@@ -24,6 +24,7 @@ $icons = [
     'subscriptions' => 'mail',
     'activity' => 'message-circle',
     'profile' => 'user',
+    'account' => 'settings',
     'create-new-blog' => 'file-plus',
     'new-blog' => 'file-plus',
     'all-blogs' => 'book-open',
