@@ -20,6 +20,9 @@ use Framework\Core\Response;
  */
 final class PasswordController extends AppController
 {
+    // One neutral message for every forgot-flow outcome prevents enumeration
+    private const RESET_SENT_MESSAGE = 'If that email exists in our system, a reset link has been sent.';
+
     /**
      * Inject dependencies for user lookup, tokens, and rate limiting.
      */
@@ -53,24 +56,21 @@ final class PasswordController extends AppController
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
-        $email = trim($this->request->post['email'] ?? '');
-        $ip = $this->request->ip();
+        $validator = $this->validate(['email' => 'required|email']);
 
-        // Validate email format
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->flash('error', 'Please enter a valid email address.');
-
-            return $this->redirect('/password/forgot');
+        if ($validator->fails()) {
+            return $this->forgotResponse(false, 'Please enter a valid email address.', 422);
         }
+
+        $email = trim((string) $validator->validated()['email']);
+        $ip = $this->request->ip();
 
         // Check rate limit BEFORE any processing
         if ($this->limiter->tooManyAttempts($ip, $email)) {
             $wait = $this->limiter->availableIn($ip, $email);
             $waitFormatted = $this->formatWaitTime($wait);
 
-            $this->flash('error', "Too many password reset attempts. Try again in {$waitFormatted}.");
-
-            return $this->redirect('/password/forgot');
+            return $this->forgotResponse(false, "Too many password reset attempts. Try again in {$waitFormatted}.", 429);
         }
 
         // Look up user
@@ -91,9 +91,7 @@ final class PasswordController extends AppController
             );
 
             // Same success message as if email existed
-            $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
-
-            return $this->redirect('/password/forgot');
+            return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
         }
 
         // Generate secure token
@@ -106,9 +104,7 @@ final class PasswordController extends AppController
             error_log("Failed to store password reset token for {$email}");
 
             // Still show success to prevent enumeration
-            $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
-
-            return $this->redirect('/password/forgot');
+            return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
         }
 
         // Send email
@@ -117,9 +113,7 @@ final class PasswordController extends AppController
                 error_log("MAIL_ENABLED is false. Skipping password reset email to {$email}");
 
                 // Show success anyway to prevent enumeration
-                $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
-
-                return $this->redirect('/password/forgot');
+                return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
             }
 
             mailer()->send(new PasswordResetEmail($user, $token, 60));
@@ -137,13 +131,25 @@ final class PasswordController extends AppController
             error_log('Failed to send password reset email: '.$e->getMessage());
 
             // Still show success to prevent enumeration
-            $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
-
-            return $this->redirect('/password/forgot');
+            return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
         }
 
-        // Generic success message
-        $this->flash('success', 'If that email exists in our system, a reset link has been sent.');
+        return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
+    }
+
+    /**
+     * Shared ending for the forgot flow: JSON for the blog-front modal,
+     * flash + redirect for the standalone page.
+     */
+    private function forgotResponse(bool $ok, string $message, int $errorStatus = 422): Response
+    {
+        if ($this->request->isAjax()) {
+            return $ok
+                ? $this->jsonSuccess(['message' => $message])
+                : $this->jsonError($message, $errorStatus);
+        }
+
+        $this->flash($ok ? 'success' : 'error', $message);
 
         return $this->redirect('/password/forgot');
     }
