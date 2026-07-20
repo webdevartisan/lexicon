@@ -41,41 +41,67 @@ class UserPreferencesModel extends AppModel
     }
 
     /**
+     * Preference columns upsert() is allowed to write.
+     *
+     * Keys outside this list are ignored, so caller-supplied array keys can
+     * never reach the SQL string.
+     */
+    private const UPSERT_COLUMNS = [
+        'display_name_preference',
+        'default_post_visibility',
+        'timezone',
+        'notify_comments',
+        'notify_likes',
+        'notify_post_status',
+        'notify_role_changes',
+        'notify_invites',
+    ];
+
+    /**
      * Upsert user preferences.
      *
-     * Insert or update all preference fields with provided values.
+     * Only the keys present in $data are written. Columns left out keep whatever
+     * they already hold, so the notifications form cannot reset the profile form's
+     * fields (and vice versa). A row that does not exist yet is created with the
+     * schema defaults filling in everything $data does not mention.
      *
      * @param  int  $userId  User ID
      * @param  array<string, mixed>  $data  Preferences data
      */
     public function upsert(int $userId, array $data): void
     {
-        $sql = 'INSERT INTO user_preferences
-                (user_id, display_name_preference, default_post_visibility, timezone,
-                 notify_comments, notify_likes,
-                 notify_post_status, notify_role_changes, notify_invites)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                  display_name_preference = VALUES(display_name_preference),
-                  default_post_visibility = VALUES(default_post_visibility),
-                  timezone                = VALUES(timezone),
-                  notify_comments         = VALUES(notify_comments),
-                  notify_likes            = VALUES(notify_likes),
-                  notify_post_status      = VALUES(notify_post_status),
-                  notify_role_changes     = VALUES(notify_role_changes),
-                  notify_invites          = VALUES(notify_invites)';
+        $columns = [];
+        $values = [];
 
-        $this->database->execute($sql, [
-            $userId,
-            $data['display_name_preference'] ?? 'username',
-            $data['default_post_visibility'] ?? 'public',
-            $data['timezone'] ?? null,
-            (int) ($data['notify_comments'] ?? 1),
-            (int) ($data['notify_likes'] ?? 1),
-            (int) ($data['notify_post_status'] ?? 1),
-            (int) ($data['notify_role_changes'] ?? 1),
-            (int) ($data['notify_invites'] ?? 1),
-        ]);
+        foreach (self::UPSERT_COLUMNS as $column) {
+            if (!array_key_exists($column, $data)) {
+                continue;
+            }
+
+            $columns[] = $column;
+            $values[] = str_starts_with($column, 'notify_')
+                ? (int) $data[$column]
+                : $data[$column];
+        }
+
+        // nothing recognised to write, but the caller still expects a row to exist
+        if (!$columns) {
+            $this->database->execute('INSERT IGNORE INTO user_preferences (user_id) VALUES (?)', [$userId]);
+
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+        $assignments = implode(', ', array_map(
+            fn (string $column): string => "{$column} = VALUES({$column})",
+            $columns
+        ));
+
+        $sql = 'INSERT INTO user_preferences (user_id, '.implode(', ', $columns).')
+                VALUES (?, '.$placeholders.')
+                ON DUPLICATE KEY UPDATE '.$assignments;
+
+        $this->database->execute($sql, array_merge([$userId], $values));
     }
 
     /**
