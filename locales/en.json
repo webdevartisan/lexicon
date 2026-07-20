@@ -10,7 +10,8 @@
                 "dashboard": "Dashboard",
                 "controlPanel": "Control Panel",
                 "editProfile": "Edit Profile",
-                "signOut": "Sign Out"
+                "signOut": "Sign Out",
+                "accountSettings": "Account Settings"
             }
         }
     },
@@ -64,7 +65,8 @@
         "frontPage": "Front Page",
         "pages": "Pages",
         "library": "Library",
-        "liked": "Liked"
+        "liked": "Liked",
+        "account": "Account"
     },
     "breadcrumbs": {
         "home": "Home",
@@ -101,7 +103,10 @@
         "liked": "Liked",
         "saved": "Saved",
         "subscriptions": "Subscriptions",
-        "activity": "Activity"
+        "activity": "Activity",
+        "account": "Account",
+        "security": "Security",
+        "emailNotifications": "Email Notifications"
     },
     "dashboard": {
         "pageTitle": "Dashboard",

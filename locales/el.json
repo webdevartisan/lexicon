@@ -10,7 +10,8 @@
                 "dashboard": "Πίνακας Ελέγχου",
                 "controlPanel": "Πίνακας Διαχείρισης",
                 "editProfile": "Επεξεργασία Προφίλ",
-                "signOut": "Αποσύνδεση"
+                "signOut": "Αποσύνδεση",
+                "accountSettings": "Ρυθμίσεις λογαριασμού"
             }
         }
     },
@@ -61,7 +62,8 @@
         "frontPage": "Αρχική Σελίδα",
         "pages": "Σελίδες",
         "library": "Βιβλιοθήκη",
-        "liked": "Αγαπημένα"
+        "liked": "Αγαπημένα",
+        "account": "Λογαριασμός"
     },
     "breadcrumbs": {
         "home": "Αρχική",
@@ -99,7 +101,10 @@
         "liked": "Αγαπημένα",
         "saved": "Αποθηκευμένα",
         "subscriptions": "Συνδρομές",
-        "activity": "Δραστηριότητα"
+        "activity": "Δραστηριότητα",
+        "account": "Λογαριασμός",
+        "security": "Ασφάλεια",
+        "emailNotifications": "Ειδοποιήσεις email"
     },
     "dashboard": {
         "pageTitle": "Πίνακας Ελέγχου",
