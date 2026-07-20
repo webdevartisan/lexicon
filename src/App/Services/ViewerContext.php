@@ -24,7 +24,7 @@ final class ViewerContext
      * Summary of the current user for masthead rendering.
      *
      * @return array{name: string, avatar_url: string|null, is_reader: bool}|null
-     *         Null when nobody is logged in.
+     *                                                                            Null when nobody is logged in.
      */
     public function current(): ?array
     {
