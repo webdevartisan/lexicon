@@ -4,7 +4,8 @@
 // from W-02 because W-01 is the nearest post pinned above the route, and the
 // gap labels state the real publication gap between neighbouring waypoints.
 $blogSlug = urlencode($blog['blog_slug'] ?? '');
-$ownerName = e($user['display_name_cached'] ?? $user['username'] ?? 'The Surveyor');
+$ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Surveyor';
+$ownerName = e($ownerNameRaw);
 $validImg = '#^(https?://|/|data:)#i';
 
 $prevStamp = null;
@@ -16,7 +17,7 @@ foreach (($cards ?? []) as $i => $post) {
     $title = e($post['title'] ?? 'Untitled');
     $cat = trim((string) ($post['category'] ?? 'Field note'));
     $catSlug = (string) ($post['category_slug'] ?? '');
-    $author = e($post['author_name'] ?? $ownerName);
+    $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
 

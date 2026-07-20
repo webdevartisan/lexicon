@@ -8,7 +8,8 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerName = e($user['display_name_cached'] ?? $user['username'] ?? 'The Author');
+  $ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Author';
+  $ownerName = e($ownerNameRaw);
   $postCount = (int) ($totalPosts ?? count($posts ?? []));
   $featuredPost = !empty($posts) ? $posts[0] : null;
   $gridPosts = !empty($posts) ? array_slice($posts, 1, 6) : []; // landing shows 6; rest lives on /archive
@@ -63,7 +64,10 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = e($featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''));
+    $fAuthor = profile_link(
+      $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
+      $user['public_profile_slug'] ?? null
+    );
     $fDate = e($featuredPost['published_at'] ?? '');
     $fCat = e($featuredPost['category'] ?? 'Article');
     ?>
@@ -147,7 +151,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     $lrTitle = e($longReadPost['title'] ?? 'Untitled');
     $lrUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($longReadPost['slug'] ?? ''));
     $lrMinutes = reading_time($longReadPost['content'] ?? '');
-    $lrAuthor = e($longReadPost['author_name'] ?? $ownerName);
+    $lrAuthor = profile_link($longReadPost['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
 
     $excerpt = trim((string) ($longReadPost['excerpt'] ?? ''));
     $quote = trim(preg_replace('/\s+/', ' ', $excerpt !== ''

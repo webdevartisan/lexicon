@@ -64,7 +64,29 @@ $loginUrl = e(lurl('/login'));
     var btn = ev.target.closest('[data-engage]');
     if (!btn) return;
 
-    if (!loggedIn) { window.location = loginUrl; return; }
+    if (!loggedIn) {
+      if (window.LexiconAuth) {
+        // Finish the tap after auth: refresh the CSRF token, flip the bar
+        // to logged-in, and re-fire the same button
+        window.LexiconAuth.open({
+          reason: btn.getAttribute('data-engage'),
+          onSuccess: function () {
+            fetch('/csrf-token', { credentials: 'same-origin' })
+              .then(function (r) { return r.json(); })
+              .then(function (json) {
+                if (tokenInput && json.token) tokenInput.value = json.token;
+                loggedIn = true;
+                bar.setAttribute('data-auth', '1');
+                btn.click();
+              })
+              .catch(function () { window.location.reload(); });
+          }
+        });
+      } else {
+        window.location = loginUrl + '?return_to=' + encodeURIComponent(location.pathname + location.search);
+      }
+      return;
+    }
     if (btn.dataset.busy === '1') return;
     btn.dataset.busy = '1';
 

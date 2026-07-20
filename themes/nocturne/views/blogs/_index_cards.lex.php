@@ -2,7 +2,8 @@
 // Index rows shared by the landing and the AJAX category swap
 // (rendered standalone by BlogController::indexFeed).
 $blogSlug = urlencode($blog['blog_slug'] ?? '');
-$ownerName = e($user['display_name_cached'] ?? $user['username'] ?? 'The Author');
+$ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Author';
+$ownerName = e($ownerNameRaw);
 $validImg = '#^(https?://|/|data:)#i';
 
 foreach (($cards ?? []) as $i => $post) {
@@ -13,7 +14,7 @@ foreach (($cards ?? []) as $i => $post) {
     $cat = trim((string) ($post['category'] ?? 'Post'));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e($post['published_at'] ?? '');
-    $author = e($post['author_name'] ?? $ownerName);
+    $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>

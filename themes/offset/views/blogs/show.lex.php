@@ -60,7 +60,10 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = e($featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''));
+    $fAuthor = profile_link(
+      $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
+      $user['public_profile_slug'] ?? null
+    );
     $fDate = e($featuredPost['published_at'] ?? '');
     $fCat = e($featuredPost['category'] ?? 'Article');
     $fMinutes = reading_time($featuredPost['content'] ?? '');
