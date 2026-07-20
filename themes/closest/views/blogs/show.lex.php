@@ -72,8 +72,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
     $fAuthor = profile_link(
-      $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
-      $user['public_profile_slug'] ?? null
+        $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
+        $user['public_profile_slug'] ?? null
     );
     $fDate = e($fmtDate($featuredPost['published_at'] ?? ''));
     $fCat = e($featuredPost['category'] ?? 'Field note');
