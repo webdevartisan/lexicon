@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ currentLang }}" {{ isRtl|raw }}>
 <head>
   <meta charset="UTF-8" />
@@ -10,10 +10,10 @@
     // SEO/social meta arrives pre-assembled from BlogController: blog defaults
     // on listing pages, post-level overrides on post pages.
     $desc = e($meta['description'] ?? ($user['blog_name'] ?? 'Blog'));
-    $ogTitle = e($meta['og_title'] ?? ($meta['title'] ?? ($user['blog_name'] ?? 'Blog')));
-    $ogDesc = e($meta['og_description'] ?? ($meta['description'] ?? ''));
-    $ogImage = e($meta['og_image'] ?? '');
-    $ogUrl = e($meta['url'] ?? '');
+  $ogTitle = e($meta['og_title'] ?? ($meta['title'] ?? ($user['blog_name'] ?? 'Blog')));
+  $ogDesc = e($meta['og_description'] ?? ($meta['description'] ?? ''));
+  $ogImage = e($meta['og_image'] ?? '');
+  $ogUrl = e($meta['url'] ?? '');
   ?>
   <meta name="description" content="<?= $desc ?>" />
   <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>" />
