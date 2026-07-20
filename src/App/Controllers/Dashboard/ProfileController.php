@@ -10,6 +10,7 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
+use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
 use DateTime;
 use DateTimeZone;
@@ -23,7 +24,8 @@ class ProfileController extends AppController
         private UserProfileModel $profiles,
         private UserPreferencesModel $prefs,
         private UserSocialLinkModel $socials,
-        private UploadService $uploader
+        private UploadService $uploader,
+        private PublicCacheInvalidator $cacheInvalidator
     ) {}
 
     /**
@@ -127,6 +129,15 @@ class ProfileController extends AppController
 
         if (!empty($profileData)) {
             $this->profiles->upsert($userId, $profileData);
+
+            // Author links are baked into cached blog pages, so a visibility or
+            // slug change has to clear them or the stale links outlive the TTL.
+            // The old slug is purged, since that's the URL already cached.
+            if (array_key_exists('is_public', $profileData) || array_key_exists('slug', $profileData)) {
+                $this->cacheInvalidator->purgeAuthorSurfaces(
+                    is_string($currentSlug) && $currentSlug !== '' ? $currentSlug : null
+                );
+            }
         }
 
         // handle preferences; notification toggles live in their own form (see updateNotifications)

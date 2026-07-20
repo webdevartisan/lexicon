@@ -8,6 +8,9 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
+use App\Models\BlogSubscriberModel;
+use App\Models\CommentModel;
+use App\Models\PostBookmarkModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
@@ -26,6 +29,9 @@ class HomeController extends AppController
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
         private BlogSettingsModel $blogSettings,
+        private BlogSubscriberModel $subscribers,
+        private PostBookmarkModel $bookmarks,
+        private CommentModel $comments,
     ) {}
 
     /**
@@ -40,27 +46,13 @@ class HomeController extends AppController
         $isAdmin = auth()->hasRole('administrator');
 
         if (empty($accessibleBlogs)) {
-            // First-time user with neither owned nor shared blogs — show onboarding.
-            return $this->view([
-                'blogIds' => [],
-                'blogSlug' => '',
-                'selectedBlogId' => 0,
-                'hasNoBlogs' => true,
-                'stats' => $this->emptyStats(),
-                'recent' => [],
-                'needsAttention' => [],
-                'blogsSummary' => [],
-                'isAdmin' => $isAdmin,
-                'blogRole' => 'none',
-                'noBreadcrumb' => true,
-                'hideTitle' => true,
-            ]);
+            // No owned or shared blogs, so there is no dashboard to show.
+            // The library is this account's home. Keeping the redirect here
+            // means login and signup can keep sending everyone to /dashboard.
+            return $this->redirect('/library');
         }
 
-        // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is
-        // the natural landing — sending them through the owner-style dashboard
-        // is confusing. Single-blog pure collaborators just get pushed into the
-        // blog they were invited to instead of a "pick" screen.
+        // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is the natural landing.
         $ownsAny = false;
         foreach ($accessibleBlogs as $b) {
             if (($b['user_role'] ?? '') === 'owner') {
@@ -128,6 +120,7 @@ class HomeController extends AppController
             'archived' => (int) $archivedResult['pagination']['total_records'],
             'comments' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'approved'),
             'comments_pending' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'pending'),
+            'subscribers' => $this->subscribers->countForBlog($selectedBlogId),
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
@@ -159,16 +152,53 @@ class HomeController extends AppController
         ]);
     }
 
+    /**
+     * GET /library
+     *
+     * Open to creators as well as readers. Publishing a blog does not stop
+     * you reading other people's, so the library is not gated on role.
+     */
+    public function library(): Response
+    {
+        return $this->readerHome(auth()->user());
+    }
+
+    /**
+     * The reading hub: feed from subscribed blogs, recent saves, recent
+     * conversations, and a soft path into writing.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    private function readerHome(array $user): Response
+    {
+        $userId = (int) $user['id'];
+        $email = (string) ($user['email'] ?? '');
+
+        breadcrumbs()->clear();
+
+        return $this->view('home.reader', [
+            'feed' => $this->subscribers->feedForUser($userId, $email, 12),
+            'savedPosts' => array_slice($this->bookmarks->bookmarkedPosts($userId), 0, 4),
+            'subscriptions' => $this->subscribers->forUser($userId, $email),
+            'replies' => $this->comments->repliesToUser($userId, 3),
+            'myComments' => $this->comments->byUserWithContext($userId, 3),
+            'noBreadcrumb' => true,
+            'hideTitle' => true,
+        ]);
+    }
+
     public function setDefaultBlog(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
         $user = auth()->user();
-        $selectedBlogId = (int) $this->request()->all()['blog'];
 
-        // Default-blog is the OWNER workspace context. Shared blogs are accessed
-        // via /dashboard/shared and dedicated per-action URLs — not by switching
-        // the global context, which would re-mix the surfaces we just split.
+        // Missing field used to fatal on an undefined index. The owner check
+        // below already covers authorization, this just stops a malformed
+        // post returning a 500.
+        $selectedBlogId = (int) ($this->request->post['blog'] ?? 0);
+
+        // Default-blog is the OWNER workspace context.
         $blog = $this->blogModel->getBlog($selectedBlogId);
         if (!$blog) {
             $this->flash('error', 'That blog no longer exists.');
@@ -194,7 +224,6 @@ class HomeController extends AppController
      */
     private function buildBlogsSummary(int $userId): array
     {
-        // "Your blogs" means blogs you OWN — shared blogs live on /dashboard/shared.
         $rows = $this->blogModel->getBlogsByOwnerWithCounts($userId);
 
         return array_map(static fn (array $row): array => [
@@ -216,6 +245,7 @@ class HomeController extends AppController
             'archived' => 0,
             'comments' => 0,
             'comments_pending' => 0,
+            'subscribers' => 0,
             'total' => 0,
         ];
     }

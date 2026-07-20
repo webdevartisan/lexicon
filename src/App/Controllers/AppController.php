@@ -158,6 +158,24 @@ abstract class AppController extends BaseController implements SessionAwareInter
     }
 
     /**
+     * Flatten validator errors into a single sentence for JSON responses
+     * and inline form errors, where the per-field structure has no home.
+     *
+     * @param  array<string, array<string>>  $errors  Validator::errors() output
+     */
+    protected function validationErrorLine(array $errors): string
+    {
+        $flat = [];
+        foreach ($errors as $fieldErrors) {
+            foreach ($fieldErrors as $message) {
+                $flat[] = $message;
+            }
+        }
+
+        return implode(' ', $flat);
+    }
+
+    /**
      * Build a relative return URL from the current request.
      *
      * The resulting URL contains the current path and its query string after
