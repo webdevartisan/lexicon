@@ -97,6 +97,32 @@ function truncate(string $string, int $limit = 50): string
 }
 
 /**
+ * Render an author name, linked to their public profile when they have one.
+ *
+ * Returns the escaped name alone when no slug is given, so private profiles
+ * and guest commenters degrade to plain text instead of a dead link. The
+ * return value is already escaped — echo it raw, never through e().
+ *
+ * @param  string|null  $name  Display name to render
+ * @param  string|null  $slug  Public profile slug, or null when unavailable
+ * @param  string  $class  Optional CSS class for the anchor
+ * @return string Escaped HTML: an anchor, or the bare name
+ */
+function profile_link(?string $name, ?string $slug, string $class = ''): string
+{
+    $label = e((string) $name);
+
+    if ($label === '' || $slug === null || $slug === '') {
+        return $label;
+    }
+
+    $href = e(lurl('/profile/'.rawurlencode($slug)));
+    $attr = $class !== '' ? ' class="'.e($class).'"' : '';
+
+    return '<a href="'.$href.'"'.$attr.' rel="author">'.$label.'</a>';
+}
+
+/**
  * Turn a label into a URL-friendly slug.
  *
  * Lowercases, strips accents where possible, and collapses anything that
@@ -313,6 +339,40 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
 
     // Avoid double slashes when target is '/'
     return '/'.$locale.($target === '/' ? '' : $target);
+}
+
+/**
+ * Validate a user-supplied return path for post-auth redirects.
+ *
+ * Accepts only site-local paths so login/register return_to values can never
+ * turn into open redirects: single leading slash, no scheme, no host.
+ *
+ * @param  string|null  $url  Raw return_to value from query string or form
+ * @return string|null The path when safe to redirect to, null otherwise
+ */
+function safe_return_to(?string $url): ?string
+{
+    if ($url === null) {
+        return null;
+    }
+
+    $url = trim($url);
+
+    if ($url === '' || strlen($url) > 2048 || $url[0] !== '/') {
+        return null;
+    }
+
+    // '//host' and '/\host' are protocol-relative redirects in browsers
+    if (isset($url[1]) && ($url[1] === '/' || $url[1] === '\\')) {
+        return null;
+    }
+
+    // No control characters, no embedded scheme anywhere in the value
+    if (preg_match('#[\x00-\x1f]#', $url) || stripos($url, '://') !== false) {
+        return null;
+    }
+
+    return $url;
 }
 
 /**

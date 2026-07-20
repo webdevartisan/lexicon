@@ -93,9 +93,10 @@ class NavGlobalsMiddleware
     {
         $path = $request->uri ?? '/';
 
-        // determine which navigation area to use based on the URL path
+        // determine which navigation area to use based on the URL path.
+        // The library shares the control panel shell, so it counts as 'back'.
         $area = str_starts_with($path, '/admin') ? 'admin'
-            : (str_starts_with($path, '/dashboard') ? 'back' : 'front');
+            : ((str_starts_with($path, '/dashboard') || str_starts_with($path, '/library')) ? 'back' : 'front');
 
         $selectedBlog = null;
         $userBlogs = []; // id => ['name','status'] for the topbar blog switcher (owned only)
@@ -157,9 +158,15 @@ class NavGlobalsMiddleware
             }
         }
 
+        // Reader mode = no owned blogs and no shared ones. Both lists are
+        // already computed above, so this costs nothing extra.
+        $isReader = $area === 'back' && $this->auth->check() && $userBlogs === [] && !$isCollaborator;
+
         // generate navigation items with blog context and per-user predicates
         $items = $this->nav->for($area, $path, $selectedBlog, [
             'isCollaborator' => $isCollaborator,
+            'isReader' => $isReader,
+            'isCreator' => !$isReader,
         ]);
         $user = $this->auth->user();
 
@@ -180,8 +187,9 @@ class NavGlobalsMiddleware
         }
 
         // Per-user sidebar cache key — keeps the Shared item visibility correct
-        // when a user gains/loses collaborator access mid-cache-window.
-        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId;
+        // when a user gains/loses collaborator access mid-cache-window. The
+        // mode suffix swaps the cached sidebar the moment a reader turns creator.
+        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c');
 
         // add navigation globals to all templates
         $this->viewer->addGlobals([
@@ -195,6 +203,7 @@ class NavGlobalsMiddleware
             'user_blogs' => $userBlogs, // id => ['name','status','role'] for topbar switcher
             'selected_blog_id' => $selectedBlogId,
             'is_collaborator' => $isCollaborator, // user has any shared blog access
+            'is_reader' => $isReader, // no owned or shared blogs: reading-hub mode
             'sidebar_cache_key' => $sidebarCacheKey,
         ]);
 

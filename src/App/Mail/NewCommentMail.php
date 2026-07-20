@@ -13,7 +13,8 @@ class NewCommentMail extends Mailable
         private string $postSlug,
         private string $commenterName,
         private string $commentExcerpt,
-        private bool $awaitingModeration
+        private bool $awaitingModeration,
+        private int $commentId = 0
     ) {
         parent::__construct();
     }
@@ -26,11 +27,22 @@ class NewCommentMail extends Mailable
             ->textAlternative($this->buildTextBody());
     }
 
+    /**
+     * Public post URL, anchored at the new comment when it is publicly visible.
+     *
+     * A comment held for moderation isn't rendered on the post page, so an
+     * anchor would resolve to nothing — those mails link to the post instead.
+     */
     private function postUrl(): string
     {
         $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        $url = $appUrl.'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
 
-        return $appUrl.'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
+        if ($this->commentId > 0 && !$this->awaitingModeration) {
+            $url .= '#comment-'.$this->commentId;
+        }
+
+        return $url;
     }
 
     private function buildHtmlBody(): string

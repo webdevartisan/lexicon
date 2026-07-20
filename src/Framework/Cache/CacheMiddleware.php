@@ -82,7 +82,12 @@ class CacheMiddleware implements MiddlewareInterface
         $response = $next->handle($request);
 
         // 3) STORE if cacheable (server-side cache)
-        if ($this->isCacheable($response) && $ttl > 0) {
+        //
+        // The same skip test as the read path above. Without it a logged-in
+        // visitor's render gets stored under a key that carries no auth
+        // discriminator, and the next guest is served their navigation and
+        // any other viewer-specific markup on the page.
+        if ($this->shouldSkipCache($request) === false && $this->isCacheable($response) && $ttl > 0) {
             $this->cache->set($cacheKey, $response->getBody(), $ttl);
 
             if ($this->debug) {
@@ -149,6 +154,7 @@ class CacheMiddleware implements MiddlewareInterface
 
         if (stripos($request->uri, '/login') !== false ||
             stripos($request->uri, '/dashboard') !== false ||
+            stripos($request->uri, '/library') !== false ||
             stripos($request->uri, '/admin') !== false) {
             return true;
         }
