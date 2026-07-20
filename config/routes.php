@@ -109,15 +109,6 @@ $router->group([
 
 });
 
-$router->group([
-    'prefix' => '/account',
-    'namespace' => 'Account',
-    'middleware' => ['auth'],
-], function (Router $r) {
-    $r->add('/settings', ['controller' => 'AccountSettingsController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/settings', ['controller' => 'AccountSettingsController', 'action' => 'update', 'method' => 'POST']);
-});
-
 // The reading hub. Top-level because reading is not a sub-feature of the
 // creator dashboard: every account reads, only some write. Creators keep a
 // library too, which is why none of this is gated on being reader-only.
@@ -144,12 +135,21 @@ $router->group([
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
     $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
+    // Settings are split across four pages: public identity (profile), private
+    // preferences (account), credentials (security) and email toggles. Each has
+    // its own POST target so a save returns to the page it was made on.
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);
-    $r->add('/profile/notifications', ['controller' => 'ProfileController', 'action' => 'updateNotifications', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'ProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
     $r->add('/profile/avatar/remove', ['controller' => 'ProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
+
+    $r->add('/account', ['controller' => 'AccountController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/account/update', ['controller' => 'AccountController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/account/notifications', ['controller' => 'AccountController', 'action' => 'notifications', 'method' => 'GET']);
+    $r->add('/account/notifications/update', ['controller' => 'AccountController', 'action' => 'updateNotifications', 'method' => 'POST']);
+
+    $r->add('/account/security', ['controller' => 'SecurityController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/account/security/password', ['controller' => 'SecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.

@@ -78,6 +78,16 @@ return [
             'show_if' => 'isReader',
             'key' => 'navigation.profile',
         ],
+        [
+            // Same reasoning as Profile: readers have no topbar user menu entry
+            // for the private settings, so they get a sidebar slot instead.
+            'label' => 'Account',
+            'href' => '/dashboard/account',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isReader',
+            'key' => 'navigation.account',
+        ],
 
         // === GLOBAL ITEMS ===
         [
@@ -111,13 +121,6 @@ return [
             'auth' => true,
             'scope' => 'global',
             'key' => 'navigation.createNewBlog',
-        ],
-        [
-            'label' => 'Account Settings',
-            'href' => '/account/settings',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.accountSettings',
         ],*/
 
         // === CONTEXTUAL ITEMS ===
