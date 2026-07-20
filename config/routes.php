@@ -94,6 +94,8 @@ $router->group([
 ], function (Router $r) {
     $r->add('/login', ['controller' => 'AuthController',   'action' => 'index', 'method' => 'GET']);
     $r->add('/login/submit', ['controller' => 'AuthController',   'action' => 'submit', 'method' => 'POST']);
+    $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
+    $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
     $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'GET']);
 
     $r->add('/register', ['controller' => 'RegisterController', 'action' => 'show', 'method' => 'GET']);
@@ -116,6 +118,22 @@ $router->group([
     $r->add('/settings', ['controller' => 'AccountSettingsController', 'action' => 'update', 'method' => 'POST']);
 });
 
+// The reading hub. Top-level because reading is not a sub-feature of the
+// creator dashboard: every account reads, only some write. Creators keep a
+// library too, which is why none of this is gated on being reader-only.
+$router->group([
+    'prefix' => '/library',
+    'namespace' => 'Dashboard',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'HomeController', 'action' => 'library', 'method' => 'GET']);
+    $r->add('/saved', ['controller' => 'EngagementController', 'action' => 'bookmarks', 'method' => 'GET']);
+    $r->add('/likes', ['controller' => 'EngagementController', 'action' => 'likes', 'method' => 'GET']);
+    $r->add('/subscriptions', ['controller' => 'SubscriptionController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/subscriptions/{id:\d+}/unsubscribe', ['controller' => 'SubscriptionController', 'action' => 'unsubscribe', 'method' => 'POST']);
+    $r->add('/activity', ['controller' => 'ActivityController', 'action' => 'index', 'method' => 'GET']);
+});
+
 // Grouped routes for user dashboard - all require authentication middleware
 $router->group([
     'prefix' => '/dashboard',
@@ -126,8 +144,6 @@ $router->group([
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
     $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/likes', ['controller' => 'EngagementController', 'action' => 'likes', 'method' => 'GET']);
-    $r->add('/bookmarks', ['controller' => 'EngagementController', 'action' => 'bookmarks', 'method' => 'GET']);
     $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/update/password', ['controller' => 'ProfileController', 'action' => 'updatePassword', 'method' => 'POST']);

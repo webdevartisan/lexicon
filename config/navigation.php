@@ -32,12 +32,60 @@ return [
      * Dashboard navigation (authenticated users)
      */
     'back' => [
+        // === READER ITEMS ===
+        // Every account reads, only some write, so these stay visible after a
+        // reader starts a blog. Gating them on isReader used to orphan a
+        // creator's saves and subscriptions: the pages kept working but
+        // nothing linked to them any more.
+        [
+            'label' => 'Library',
+            'href' => '/library',
+            'auth' => true,
+            'scope' => 'global',
+            'key' => 'navigation.library',
+            // Collapsible group. The parent is a real link to the hub, and the
+            // sidebar auto-expands it whenever the current path sits under it.
+            'children' => [
+                [
+                    'label' => 'Liked',
+                    'href' => '/library/likes',
+                    'key' => 'navigation.liked',
+                ],
+                [
+                    'label' => 'Saved',
+                    'href' => '/library/saved',
+                    'key' => 'navigation.saved',
+                ],
+                [
+                    'label' => 'Subscriptions',
+                    'href' => '/library/subscriptions',
+                    'key' => 'navigation.subscriptions',
+                ],
+                [
+                    'label' => 'Activity',
+                    'href' => '/library/activity',
+                    'key' => 'navigation.activity',
+                ],
+            ],
+        ],
+        [
+            // Creators already reach this from the topbar user menu, so it
+            // only needs a sidebar slot for reader-only accounts.
+            'label' => 'Profile',
+            'href' => '/dashboard/profile',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isReader',
+            'key' => 'navigation.profile',
+        ],
+
         // === GLOBAL ITEMS ===
         [
             'label' => 'Dashboard',
             'href' => '/dashboard',
             'auth' => true,
             'scope' => 'global',
+            'show_if' => 'isCreator',
             'key' => 'navigation.dashboard',
         ],
         [
@@ -45,6 +93,7 @@ return [
             'href' => '/dashboard/blog',
             'auth' => true,
             'scope' => 'global',
+            'show_if' => 'isCreator',
             'key' => 'navigation.allBlogs',
         ],
         [
@@ -55,13 +104,7 @@ return [
             'show_if' => 'isCollaborator',
             'key' => 'navigation.shared',
         ],
-        [
-            'label' => 'Liked & Saved',
-            'href' => '/dashboard/likes',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.likedSaved',
-        ], /*
+        /*
         [
             'label' => 'Create New Blog',
             'href' => '/dashboard/blog/new',
@@ -169,6 +212,15 @@ return [
             'replace_blog_id' => true,
             'policy' => 'manageUsers',
             'key' => 'navigation.team',
+        ],
+        [
+            'label' => 'Subscribers',
+            'href' => '/dashboard/blog/{blogId}/subscribers',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'manageUsers',
+            'key' => 'navigation.subscribers',
         ],
         [
             'label' => 'Appearance',
