@@ -165,8 +165,8 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found.', 404);
         }
 
-    // The headline uses the featured post when available, otherwise it uses the 
-    // newest post, matching showBlog so the “All” category behaves consistently.
+        // The headline uses the featured post when available, otherwise it uses the
+        // newest post, matching showBlog so the “All” category behaves consistently.
         $featured = $this->postModel->findFeaturedByBlogId($blogId);
         if ($featured !== null) {
             $headlineId = (int) $featured['id'];
