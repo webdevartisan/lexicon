@@ -73,19 +73,9 @@ $old = old();
                             {{ t('header.logoTagline') }}
                         </a>
 
-                        <ul class="icons">
-                            <!-- <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-                            <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-                            <li><a href="#" class="icon brands fa-snapchat-ghost"><span class="label">Snapchat</span></a></li>
-                            <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-                            <li><a href="#" class="icon brands fa-medium-m"><span class="label">Medium</span></a></li> -->
-
-                            {% if (!auth()->check()): %}
-                                <li><a href="/login" class="button">{{ t('header.signIn') }}</a></li>
-                            {% else %}
-                                <li><a href="/dashboard" class="button">{{ t('header.dashboard') }}</a></li>
-                                <li><a href="/logout" class="button">{{ t('header.signOut') }}</a></li>
-                            {% endif %}
+                        <ul class="icons" data-auth-nav="platform">
+                            <?php $authNavVariant = 'platform'; ?>
+                            {% include "partials/_auth_nav.lex.php" %}
                         </ul>
                     </header>
                     {% yield body %}
@@ -211,6 +201,7 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/main.js"></script>
 		<script src="/assets/js/locale.js"></script>
 		<script src="/assets/js/scrolltop.js"></script>
+		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}
 	</body>
 </html>

@@ -49,9 +49,11 @@ $href = match ($type) {
     'post.workflow_disabled' => '/dashboard/post/'.(int) ($payload['post_id'] ?? 0).'/edit',
     'post.published' => '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? '')),
     'blog.invite' => '/invite/'.rawurlencode((string) ($payload['token'] ?? '')),
+    // Older rows predate comment_id and simply keep the top-of-post behaviour
     'comment.created' => !empty($payload['awaiting_moderation'])
         ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
-        : '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? '')),
+        : '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? ''))
+            .(!empty($payload['comment_id']) ? '#comment-'.(int) $payload['comment_id'] : ''),
     default => '/dashboard/notifications',
 };
 ?>

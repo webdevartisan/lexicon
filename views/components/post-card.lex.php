@@ -109,84 +109,87 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
         </div>
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
-            <form method="GET" action="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="m-0">
-                <button type="submit"
-                    data-tooltip="default" data-tooltip-content="{{ editTooltip }}" data-tooltip-follow-cursor="true"
-                    class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors"
-                    title="{{ editTooltip }}">
-                    {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
-                    <span>{{ editTooltip }}</span>
+            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
+                {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
+                <span>{{ editTooltip }}</span>
+            </a>
+
+            <!-- Secondary actions live in one menu so cards stay readable on small screens. -->
+            <div class="relative dropdown">
+                <button type="button" aria-haspopup="menu" aria-label="Post actions"
+                    class="dropdown-toggle p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+                    {% cache 'lucide:more-vertical' ttl=31536000 %}<i data-lucide="more-vertical" class="size-4"></i>{% endcache %}
                 </button>
-            </form>
 
-            <div class="flex items-center gap-0.5">
-                {% if ($post['status'] === 'published'): %}
-                <a href="/blog/{{ blogSlug }}/{{ post.slug }}" target="_blank" rel="noopener"
-                    data-tooltip="default" data-tooltip-content="{{ previewText }}" data-tooltip-follow-cursor="true"
-                    class="p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500"
-                    title="{{ previewText }}">
-                    {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
-                </a>
-                {% endif %}
+                <div class="absolute z-50 hidden py-1.5 ltr:text-left rtl:text-right bg-white rounded-md shadow-md dropdown-menu min-w-[11rem] dark:bg-zink-600">
+                    {% if ($post['status'] === 'published'): %}
+                    <a href="/blog/{{ blogSlug }}/{{ post.slug }}" target="_blank" rel="noopener"
+                        class="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                        {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
+                        <span>{{ previewText }}</span>
+                    </a>
+                    {% endif %}
 
-                {% if (($post['status'] === 'draft') || ($post['status'] === 'archived')): %}
-                <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
-                    {{ csrf_field() }}
-                    <button data-tooltip="default" data-tooltip-content="{{ publishTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
-                        title="{{ publishTooltip }}">
-                        {% cache 'lucide:send' ttl=31536000 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
-                    </button>
-                </form>
-                {% endif %}
+                    {% if (($post['status'] === 'draft') || ($post['status'] === 'archived')): %}
+                    <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
+                        {{ csrf_field() }}
+                        <button type="submit"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            {% cache 'lucide:send' ttl=31536000 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
+                            <span>{{ publishTooltip }}</span>
+                        </button>
+                    </form>
+                    {% endif %}
 
-                {% if (($post['status'] === 'archived') || ($post['status'] === 'published')): %}
-                <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
-                    {{ csrf_field() }}
-                    <button data-tooltip="default" data-tooltip-content="{{ draftTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-purple-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
-                        title="{{ draftTooltip }}">
-                        {% cache 'lucide:pencil-ruler' ttl=31536000 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
-                    </button>
-                </form>
-                {% endif %}
+                    {% if (($post['status'] === 'archived') || ($post['status'] === 'published')): %}
+                    <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
+                        {{ csrf_field() }}
+                        <button type="submit"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            {% cache 'lucide:pencil-ruler' ttl=31536000 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
+                            <span>{{ draftTooltip }}</span>
+                        </button>
+                    </form>
+                    {% endif %}
 
-                {% if ($post['status'] !== 'archived'): %}
-                <form method="POST" action="/dashboard/post/{{ post.id }}/archive" class="m-0">
-                    {{ csrf_field() }}
-                    <button data-tooltip="default" data-tooltip-content="{{ archiveTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-orange-600 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-                        title="{{ archiveTooltip }}">
-                        {% cache 'lucide:archive' ttl=31536000 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
-                    </button>
-                </form>
-                {% endif %}
+                    {% if ($post['status'] !== 'archived'): %}
+                    <form method="POST" action="/dashboard/post/{{ post.id }}/archive" class="m-0">
+                        {{ csrf_field() }}
+                        <button type="submit"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            {% cache 'lucide:archive' ttl=31536000 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
+                            <span>{{ archiveTooltip }}</span>
+                        </button>
+                    </form>
+                    {% endif %}
 
-                <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">
-                    {{ csrf_field() }}
-                    <button type="submit"
-                        data-tooltip="default" data-tooltip-content="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>" data-tooltip-follow-cursor="true"
-                        class="p-2 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 <?= !empty($post['is_featured']) ? 'text-amber-500' : 'text-slate-500 hover:text-amber-500' ?>"
-                        title="<?= !empty($post['is_featured']) ? 'Unfeature' : 'Feature on homepage' ?>">
-                        <?php if (!empty($post['is_featured'])) { ?>
-                            {% cache 'lucide:star:filled' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-amber-400"></i>{% endcache %}
-                        <?php } else { ?>
-                            {% cache 'lucide:star:outline' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
-                        <?php } ?>
-                    </button>
-                </form>
+                    <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">
+                        {{ csrf_field() }}
+                        <button type="submit"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-amber-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            <?php if (!empty($post['is_featured'])) { ?>
+                                {% cache 'lucide:star:filled' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-amber-400 text-amber-500"></i>{% endcache %}
+                                <span>Unfeature</span>
+                            <?php } else { ?>
+                                {% cache 'lucide:star:outline' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
+                                <span>Feature on homepage</span>
+                            <?php } ?>
+                        </button>
+                    </form>
 
-                <span class="mx-1 h-4 w-px bg-slate-200 dark:bg-zink-500" aria-hidden="true"></span>
+                    <div class="my-1.5 border-t border-slate-100 dark:border-zink-500" aria-hidden="true"></div>
 
-                <form method="POST" action="/dashboard/post/{{ post.id }}/delete" class="m-0"
-                    onsubmit="return confirm('Permanently delete this post? This cannot be undone.');">
-                    {{ csrf_field() }}
-                    <button data-tooltip="default" data-tooltip-content="{{ deleteTooltip }}" data-tooltip-follow-cursor="true" type="submit"
-                        class="p-2 text-slate-500 hover:text-red-600 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        title="{{ deleteTooltip }}">
-                        {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
-                    </button>
-                </form>
+                    <!-- No JS confirm here: the delete action renders its own confirmation page. -->
+                    <form method="POST" action="/dashboard/post/{{ post.id }}/delete" class="m-0">
+                        {{ csrf_field() }}
+                        <button type="submit"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors">
+                            {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
+                            <span>{{ deleteTooltip }}</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
