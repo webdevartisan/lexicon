@@ -149,11 +149,13 @@ class BlogController extends AppController
     }
 
     /**
-     * AJAX: the landing's card grid for a category (or recent for "All").
+     * AJAX endpoint that returns the landing page card grid for a category
+     * or the most recent posts when the category is “All”.
      *
-     * Returns just the cards as an HTML fragment, rendered through the active
-     * theme so each theme keeps its own card markup. The headline post is
-     * excluded — same rule as showBlog — so it never doubles in the grid.
+     * Produces only the card HTML fragment, rendered through the active theme
+     * so each theme preserves its own card markup. The headline post is always
+     * excluded, following the same rule as showBlog, ensuring it never appears
+     * twice in the grid.
      */
     public function indexFeed(string $blogSlug): Response
     {
@@ -163,7 +165,8 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found.', 404);
         }
 
-        // Headline = featured post, else newest — mirror showBlog so "All" matches.
+    // The headline uses the featured post when available, otherwise it uses the 
+    // newest post, matching showBlog so the “All” category behaves consistently.
         $featured = $this->postModel->findFeaturedByBlogId($blogId);
         if ($featured !== null) {
             $headlineId = (int) $featured['id'];
@@ -388,11 +391,38 @@ class BlogController extends AppController
             $this->postModel->tags((int) $post['id'])
         );
 
-        // Merge meta: post > blog > settings defaults
-        $meta = [
-            'title' => ($post['title'] ?? 'Post').' — '.($ctx['blog']['blog_name'] ?? $ctx['user']['username']."'s Blog"),
-            'description' => $post['excerpt'] ?? $ctx['meta']['description'] ?? '',
-        ];
+        $shareUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug);
+
+        // Merge meta: post-level SEO overrides > post content > blog defaults.
+        $robots = [];
+        if (!empty($post['meta_noindex']) || $ctx['meta']['robots'] !== null) {
+            $robots[] = 'noindex';
+        }
+        if (!empty($post['meta_nofollow']) || $ctx['meta']['robots'] !== null) {
+            $robots[] = 'nofollow';
+        }
+
+        $serpTitle = !empty($post['meta_title'])
+            ? $post['meta_title']
+            : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['username']."'s Blog");
+        $serpDescription = !empty($post['meta_description'])
+            ? $post['meta_description']
+            : ($post['excerpt'] ?? $ctx['meta']['description'] ?? '');
+
+        $meta = array_merge($ctx['meta'], [
+            'title' => $serpTitle,
+            'description' => $serpDescription,
+            'url' => $shareUrl,
+            'og_type' => 'article',
+            'og_title' => !empty($post['og_title']) ? $post['og_title'] : ($post['title'] ?? $serpTitle),
+            'og_description' => !empty($post['og_description']) ? $post['og_description'] : $serpDescription,
+            'og_image' => $this->absoluteAssetUrl(
+                !empty($post['og_image']) ? $post['og_image'] : ($post['featured_image'] ?? null)
+            ) ?? $ctx['meta']['og_image'],
+            'twitter_card' => !empty($post['twitter_card_type']) ? $post['twitter_card_type'] : 'summary_large_image',
+            'canonical' => !empty($post['canonical_url']) ? $post['canonical_url'] : $shareUrl,
+            'robots' => $robots !== [] ? implode(', ', $robots) : null,
+        ]);
 
         $viewerId = auth()->check() ? (int) auth()->user()['id'] : null;
         $engagementPostId = (int) $post['id'];
@@ -405,10 +435,9 @@ class BlogController extends AppController
             'logged_in' => $viewerId !== null,
         ];
 
-        $shareUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug);
-
-        return $this->view('Posts/show.lex.php', $ctx + [
-            'flashes' => $this->getFlashMessages(),
+        // array_merge, not +: the post-level meta must override the blog-level
+        // meta already present in $ctx (the + operator kept the left side).
+        return $this->view('Posts/show.lex.php', array_merge($ctx, [
             'engagement' => $engagement,
             'share_url' => $shareUrl,
             'post' => $post,
@@ -418,7 +447,27 @@ class BlogController extends AppController
             'meta' => $meta,
             'comments' => $comments,
             'comments_enabled' => $commentsEnabled,
-        ]);
+        ]));
+    }
+
+    /**
+     * Turn a stored asset path into an absolute URL for og:image and friends.
+     *
+     * Social crawlers ignore relative URLs, so local paths are prefixed with
+     * the site base URL while full http(s) URLs pass through untouched.
+     */
+    private function absoluteAssetUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $url)) {
+            return $url;
+        }
+
+        return rtrim(base_url(), '/').'/'.ltrim($url, '/');
     }
 
     /**
@@ -449,26 +498,41 @@ class BlogController extends AppController
         // Themes iterate this as platform => URL, so hand them the decoded map
         $settings['social_links'] = BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null);
 
+        $blogUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode((string) ($blog['blog_slug'] ?? ''));
+
         $meta = [
             'title' => $settings['meta_title'] ?? ($blog['blog_name'] ?? ($user['display_name_cached']."'s Blog")),
             'description' => $settings['meta_description'] ?? ($blog['description'] ?? ''),
+            'url' => $blogUrl,
+            'site_name' => (string) ($blog['blog_name'] ?? ''),
+            'og_type' => 'website',
+            'og_title' => null, // themes fall back to title
+            'og_description' => null, // themes fall back to description
+            'og_image' => $this->absoluteAssetUrl($settings['banner_path'] ?? null),
+            'twitter_card' => 'summary_large_image',
+            'canonical' => null,
+            // Only an explicit indexable=false opts the blog out; a missing settings row must not.
+            'robots' => (array_key_exists('indexable', $settings) && !$settings['indexable']) ? 'noindex, nofollow' : null,
         ];
 
         // 4) Back-compat field some templates expect
         $user['blog_name'] = $blog['blog_name'] ?? ($user['username']."'s Blog");
 
+        // Every themed surface renders the owner as the author (the post guard
+        // enforces it), so one lookup covers bylines, cards, and archives
+        $user['public_profile_slug'] = $this->profiles->publicSlugFor((int) $user['id']);
+
         // 5) Logged-in reader shown in the theme masthead. Full-page cache only
         // serves guests, so viewer-specific markup never leaks between users.
-        $viewer = null;
-        if (auth()->check()) {
-            $authUser = auth()->user();
-            $viewer = [
-                'name' => $authUser['display_name_cached'] ?? ($authUser['username'] ?? ''),
-                'avatar_url' => $this->profiles->getProfileAvatar((int) $authUser['id'])['avatar_url'] ?? null,
-            ];
-        }
+        // Shared with the /auth/nav endpoint, which re-renders the same masthead
+        // after a modal login.
+        $viewer = app(\App\Services\ViewerContext::class)->current();
 
-        return compact('user', 'blog', 'settings', 'meta', 'viewer');
+        // Every themed page renders these, so the subscribe confirmation (and any
+        // other flash) shows up no matter which blog page the visitor lands back on.
+        $flashes = $this->getFlashMessages();
+
+        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes');
     }
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
