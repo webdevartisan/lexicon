@@ -122,4 +122,64 @@ class BlogSubscriberModel extends AppModel
             [$id, $blogId]
         ) > 0;
     }
+
+    /**
+     * Blogs the user subscribes to, for the reader dashboard.
+     *
+     * Matches by user_id OR email so subscriptions made while logged out
+     * (same address) still show up after the reader creates an account.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function forUser(int $userId, string $email): array
+    {
+        $sql = "SELECT s.id, s.blog_id, s.email, s.created_at,
+                       b.blog_name, b.blog_slug, b.description, b.status AS blog_status,
+                       (SELECT MAX(p.published_at) FROM posts p
+                        WHERE p.blog_id = s.blog_id AND p.status = 'published' AND p.visibility = 'public') AS latest_post_at,
+                       (SELECT COUNT(*) FROM posts p
+                        WHERE p.blog_id = s.blog_id AND p.status = 'published' AND p.visibility = 'public') AS post_count
+                FROM {$this->getTable()} s
+                INNER JOIN blogs b ON b.id = s.blog_id
+                WHERE s.user_id = ? OR s.email = ?
+                ORDER BY s.created_at DESC";
+
+        return $this->database->query($sql, [$userId, $email])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Latest public posts across the user's subscribed blogs — the reading feed.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function feedForUser(int $userId, string $email, int $limit = 12): array
+    {
+        $limit = max(1, min(50, $limit));
+
+        // DISTINCT guards against the same blog matching via both user_id and
+        // a second subscription row under a different email
+        $sql = "SELECT DISTINCT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at,
+                       b.blog_name, b.blog_slug
+                FROM {$this->getTable()} s
+                INNER JOIN blogs b ON b.id = s.blog_id AND b.status = 'published'
+                INNER JOIN posts p ON p.blog_id = s.blog_id
+                WHERE (s.user_id = ? OR s.email = ?)
+                  AND p.status = 'published' AND p.visibility = 'public'
+                ORDER BY p.published_at DESC
+                LIMIT {$limit}";
+
+        return $this->database->query($sql, [$userId, $email])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Remove a subscription by row id, scoped to the reader who owns it
+     * (their account or their email address).
+     */
+    public function deleteByIdForUser(int $id, int $userId, string $email): bool
+    {
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE id = ? AND (user_id = ? OR email = ?) LIMIT 1",
+            [$id, $userId, $email]
+        ) > 0;
+    }
 }

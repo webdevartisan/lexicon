@@ -191,6 +191,25 @@ class UserProfileModel extends AppModel
     }
 
     /**
+     * Public profile slug for a user, or null when they have none.
+     *
+     * Returns null for private profiles and for users who never set a slug, so
+     * callers can treat null as "render plain text, not a link" without
+     * disclosing whether a private profile exists.
+     *
+     * @param  int  $userId  User ID to look up
+     * @return string|null Slug when publicly reachable, null otherwise
+     */
+    public function publicSlugFor(int $userId): ?string
+    {
+        $sql = 'SELECT slug FROM user_profiles WHERE user_id = ? AND is_public = 1 LIMIT 1';
+
+        $slug = $this->database->query($sql, [$userId])->fetchColumn();
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
+    /**
      * Check whether a slug is available for assignment.
      *
      * Validates against reserved slugs table and existing user profiles.

@@ -829,6 +829,20 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Whether the user is in reader mode: owns no blog and collaborates on none.
+     *
+     * This single definition drives the reader/creator dashboard split, the
+     * reader navigation, and the blog-front header label.
+     */
+    public function userIsReaderOnly(int $userId): bool
+    {
+        $sql = 'SELECT NOT EXISTS(SELECT 1 FROM blogs WHERE owner_id = ?)
+                   AND NOT EXISTS(SELECT 1 FROM blog_users WHERE user_id = ? AND is_active = 1)';
+
+        return (bool) $this->database->query($sql, [$userId, $userId])->fetchColumn();
+    }
+
+    /**
      * Get blogs shared with a user (excludes blogs they own).
      *
      * Returns the per-blog role the user holds via blog_users plus a few
