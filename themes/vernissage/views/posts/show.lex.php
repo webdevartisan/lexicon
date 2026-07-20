@@ -10,8 +10,8 @@
 $title = e($post['title'] ?? 'Untitled');
   $date = e($post['published_at'] ?? '');
   $author = profile_link(
-    $post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
-    $user['public_profile_slug'] ?? null
+      $post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
+      $user['public_profile_slug'] ?? null
   );
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;
