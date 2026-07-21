@@ -10,15 +10,18 @@ use Framework\Core\Response;
 /**
  * Handle login and logout.
  *
- * GET  /login        → index()
- * POST /login        → submit()
- * GET  /login/show   → show()   (if you need a separate view)
- * POST /logout       → logout()
+ * GET  /login          → index()
+ * POST /login/submit   → submit()   (HTML form or AJAX from the blog-front modal)
+ * POST /login/identify → identify() (modal step 1: does this email have an account?)
+ * GET  /logout         → logout()
  */
 final class AuthController extends AppController
 {
     /**
      * Show the main login form.
+     *
+     * Blog-front links pass ?return_to= so readers land back on the page
+     * they were reading instead of the dashboard.
      */
     public function index(): Response
     {
@@ -26,7 +29,9 @@ final class AuthController extends AppController
             return $this->redirect('/');
         }
 
-        return $this->view('auth.login.index');
+        return $this->view('auth.login.index', [
+            'return_to' => safe_return_to((string) ($this->request->get['return_to'] ?? '')),
+        ]);
     }
 
     /**
@@ -38,39 +43,110 @@ final class AuthController extends AppController
     }
 
     /**
+     * Modal step 1: report whether an account exists for the email.
+     *
+     * This intentionally reveals account existence. The email-first modal
+     * needs it to branch into login or inline registration. So it is
+     * throttled by IP to keep enumeration expensive. Registration and
+     * password reset already disclose the same fact.
+     */
+    public function identify(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $validator = $this->validate(['email' => 'required|email']);
+
+        if ($validator->fails()) {
+            return $this->jsonError('Please enter a valid email address.', 422);
+        }
+
+        $email = strtolower(trim((string) $validator->validated()['email']));
+
+        $limiter = app(\App\Services\IdentifyRateLimiter::class);
+        $ip = $this->request->ip() ?? 'unknown';
+
+        // Record first, then check. Recording blocked attempts is what stops
+        // the decayed score sliding back under the limit and leaking roughly
+        // one lookup a minute to a client that just keeps retrying.
+        $limiter->hit($ip);
+
+        if ($limiter->tooManyAttempts($ip)) {
+            $this->response->addHeader('Retry-After', (string) $limiter->availableIn($ip));
+
+            return $this->jsonError('Too many attempts. Please try again later.', 429);
+        }
+
+        $exists = (bool) app(\App\Models\UserModel::class)->findByEmail($email);
+
+        return $this->jsonSuccess(['exists' => $exists]);
+    }
+
+    /**
+     * Render the masthead auth controls for the current session.
+     *
+     * The modal logs a reader in without navigating, which leaves the
+     * server-rendered "Log in" pill on screen. This hands back the same
+     * partial the layouts use so the header can be swapped in place.
+     */
+    public function nav(): Response
+    {
+        $variant = ($this->request->get['variant'] ?? '') === 'platform' ? 'platform' : 'theme';
+        $returnTo = safe_return_to((string) ($this->request->get['return_to'] ?? '')) ?? '/';
+
+        $html = $this->viewer()->render('partials/_auth_nav.lex.php', [
+            'authNavVariant' => $variant,
+            'authNavReturnTo' => $returnTo,
+            'viewer' => app(\App\Services\ViewerContext::class)->current(),
+        ]);
+
+        // Never cache: the markup is specific to one logged-in reader.
+        $this->response->addHeader('Cache-Control', 'no-store, must-revalidate');
+
+        return $this->jsonSuccess(['html' => $html]);
+    }
+
+    /**
      * Handle login form submission.
      *
-     * Validates basic input, delegates authentication to the Auth service,
-     * and returns the appropriate response.
+     * Serves both the full login page (redirects + flashes) and the
+     * blog-front modal (JSON), so the two entry points share one set of
+     * rate limits and redirect rules.
      */
     public function submit(): Response
     {
         // Enforce CSRF token for login POST
         csrf()->assertValid($this->request->postParam('_token'));
 
+        $isAjax = $this->request->isAjax();
+
         // Safely read and normalize input
         $email = trim((string) ($this->request->post['email'] ?? ''));
         $password = (string) ($this->request->post['password'] ?? '');
+        $returnTo = safe_return_to((string) ($this->request->post['return_to'] ?? ''));
         $ip = $this->request->ip();
 
         // Basic validation before attempting login
-        $errors = [];
+        $validator = $this->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ], [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'password.required' => 'Password is required.',
+        ]);
 
-        if ($email === '') {
-            $errors[] = 'Email is required.';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Please enter a valid email address.';
-        }
+        if ($validator->fails()) {
+            $error = $this->validationErrorLine($validator->errors());
 
-        if ($password === '') {
-            $errors[] = 'Password is required.';
-        }
+            if ($isAjax) {
+                return $this->jsonError($error, 422);
+            }
 
-        if ($errors !== []) {
             // Re-render the form with validation errors and keep the email field filled
             return $this->view('auth.login.index', [
-                'error' => implode(' ', $errors),
+                'error' => $error,
                 'email' => $email,
+                'return_to' => $returnTo,
             ]);
         }
 
@@ -90,9 +166,13 @@ final class AuthController extends AppController
                 $wait = $wait.' seconds';
             }
 
+            if ($isAjax) {
+                return $this->jsonError("Too many login attempts. Try again in {$wait}.", 429);
+            }
+
             $this->flash('error', "Too many login attempts. Try again in {$wait}.");
 
-            return $this->redirect('/login');
+            return $this->redirect('/login'.($returnTo !== null ? '?return_to='.urlencode($returnTo) : ''));
         }
 
         // ---------------------------------------------------------
@@ -102,13 +182,34 @@ final class AuthController extends AppController
 
             $limiter->clear($ip, $email);
 
-            // Retrieve intended URL with fallback to dashboard
-            $intendedUrl = $this->session->get('intended_url', '/dashboard');
+            // A reply captured before login gets posted now and wins the
+            // redirect: the reader lands back on the comment they answered.
+            $resume = app(\App\Services\CommentService::class)->resumePending(auth()->user(), $ip);
+            if ($resume !== null) {
+                if ($isAjax) {
+                    return $this->jsonSuccess(['redirect' => $resume['path']]);
+                }
 
-            // Clear the stored URL
+                $this->flash($resume['ok'] ? 'success' : 'error', $resume['message']);
+
+                return $this->redirect($resume['path']);
+            }
+
+            // Redirect priority: blog-front return_to beats the stored
+            // intended URL, and only when neither exists do we fall back to
+            // the dashboard (readers land on their reading hub there).
+            $intendedUrl = $this->session->get('intended_url');
             $this->session->remove('intended_url');
 
-            return $this->redirect($intendedUrl);
+            $target = $returnTo ?? ($intendedUrl ?: '/dashboard');
+
+            if ($isAjax) {
+                // No flash here: the modal shows its own success state and
+                // usually finishes the action in place instead of navigating
+                return $this->jsonSuccess(['redirect' => $target]);
+            }
+
+            return $this->redirect($target);
         }
 
         // ---------------------------------------------------------
@@ -116,6 +217,12 @@ final class AuthController extends AppController
         // ---------------------------------------------------------
         $limiter->hit($ip, $email);
         // ---------------------------------------------------------
+
+        if ($isAjax) {
+            // The modal's email step already confirmed the account exists,
+            // so a specific message doesn't disclose anything new
+            return $this->jsonError('Incorrect password. Try again or reset it.', 401);
+        }
 
         // Authentication failed - flash error and redirect back
         $this->flash('error', 'Invalid credentials');
@@ -125,15 +232,15 @@ final class AuthController extends AppController
     }
 
     /**
-     * Log the user out and redirect to the homepage.
+     * Log the user out.
+     *
+     * Blog-front logout links pass ?return_to= so readers stay on the
+     * public blog page they were reading; everything else goes home.
      */
     public function logout(): Response
     {
         auth()->logout();
 
-        // Optional: flash a message for the next request.
-        // $this->flash('success', 'You have been logged out.');
-
-        return $this->redirect('/');
+        return $this->redirect(safe_return_to((string) ($this->request->get['return_to'] ?? '')) ?? '/');
     }
 }

@@ -212,11 +212,11 @@ $lastIdx = count($allowed) - 1;
             <!-- Comments & Other Options -->
             <div class="space-y-2.5">
               <label class="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  name="comments_enabled" 
+                <input
+                  type="checkbox"
+                  name="comments_enabled"
                   value="1"
-                  <?= !empty($post['comments_enabled']) ? 'checked' : '' ?>
+                  <?= (!isset($post['comments_enabled']) || !empty($post['comments_enabled'])) ? 'checked' : '' ?>
                   class="text-custom-500 border-slate-300 rounded focus:ring-custom-500 dark:border-zink-600">
                 <span class="text-xs text-slate-700 dark:text-zink-200  ">
                   Allow comments
@@ -306,16 +306,16 @@ $lastIdx = count($allowed) - 1;
             <div>
               <label for="tagInput" class="block mb-1.5 text-xs font-medium text-slate-500 dark:text-zink-300">Tags</label>
               <div id="tagChips" class="flex flex-wrap gap-1.5 mb-1.5"></div>
-              <input id="tagInput" type="text" list="tagSuggestions" autocomplete="off"
-                placeholder="Type a tag, press Enter"
-                class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 dark:placeholder:text-zink-400">
-              <datalist id="tagSuggestions">
-                <?php foreach (($allTags ?? []) as $t) { ?>
-                <option value="<?= e($t['name']) ?>"></option>
-                <?php } ?>
-              </datalist>
+              <div class="relative">
+                <input id="tagInput" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="tagSuggestions"
+                  placeholder="Type a tag, press Enter"
+                  class="block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 dark:placeholder:text-zink-400"
+                  data-tags='<?= e(json_encode(array_values(array_map(static fn ($t) => (string) $t['name'], $allTags ?? [])))) ?>'>
+                <div id="tagSuggestions" role="listbox"
+                  class="hidden absolute z-40 inset-x-0 top-full mt-1 py-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-md dark:bg-zink-600 dark:border-zink-500"></div>
+              </div>
               <input type="hidden" name="tags" id="tagsField" value="<?= e(implode(',', $postTags ?? [])) ?>">
-              <p class="mt-1 text-[11px] text-slate-400 dark:text-zink-400">Optional. New tags are created as you type.</p>
+              <p class="mt-1 text-[11px] text-slate-400 dark:text-zink-400">Optional. Suggestions come from this blog's existing tags; new ones are created as you type.</p>
             </div>
           </div>
         </section>
@@ -639,9 +639,16 @@ $lastIdx = count($allowed) - 1;
     var field = document.getElementById('tagsField');
     var chips = document.getElementById('tagChips');
     var input = document.getElementById('tagInput');
-    if (!field || !chips || !input) return;
+    var panel = document.getElementById('tagSuggestions');
+    if (!field || !chips || !input || !panel) return;
 
     var tags = field.value ? field.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+
+    var known = [];
+    try { known = JSON.parse(input.dataset.tags || '[]'); } catch (e) { known = []; }
+
+    var activeIndex = -1;
+    var visible = [];
 
     function sync() {
         field.value = tags.join(',');
@@ -664,19 +671,78 @@ $lastIdx = count($allowed) - 1;
         value = value.trim().replace(/,+$/, '').trim();
         if (value && tags.indexOf(value) === -1) tags.push(value);
         input.value = '';
+        closePanel();
         sync();
     }
 
+    function closePanel() {
+        panel.classList.add('hidden');
+        input.setAttribute('aria-expanded', 'false');
+        activeIndex = -1;
+        visible = [];
+    }
+
+    function paintPanel() {
+        panel.innerHTML = '';
+        visible.forEach(function (name, i) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.setAttribute('role', 'option');
+            item.className = 'flex w-full px-3 py-1.5 text-sm text-left transition-colors '
+                + (i === activeIndex
+                    ? 'bg-custom-50 text-custom-700 dark:bg-custom-500/20 dark:text-custom-300'
+                    : 'text-slate-600 hover:bg-slate-50 dark:text-zink-200 dark:hover:bg-zink-500');
+            item.textContent = name;
+            // mousedown fires before the input's blur, so the click always lands
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                add(name);
+            });
+            panel.appendChild(item);
+        });
+        panel.classList.toggle('hidden', visible.length === 0);
+        input.setAttribute('aria-expanded', visible.length ? 'true' : 'false');
+    }
+
+    function suggest() {
+        var q = input.value.trim().toLowerCase();
+        if (q === '') { closePanel(); paintPanel(); return; }
+        visible = known.filter(function (name) {
+            return tags.indexOf(name) === -1 && name.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 8);
+        activeIndex = -1;
+        paintPanel();
+    }
+
+    input.addEventListener('input', suggest);
+    input.addEventListener('focus', suggest);
+
     input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ',') {
+        if (e.key === 'ArrowDown' && visible.length) {
             e.preventDefault();
-            add(input.value);
+            activeIndex = (activeIndex + 1) % visible.length;
+            paintPanel();
+        } else if (e.key === 'ArrowUp' && visible.length) {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + visible.length) % visible.length;
+            paintPanel();
+        } else if (e.key === 'Escape') {
+            closePanel();
+            paintPanel();
+        } else if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            add(activeIndex >= 0 && visible[activeIndex] ? visible[activeIndex] : input.value);
         } else if (e.key === 'Backspace' && input.value === '' && tags.length) {
             tags.pop();
             sync();
         }
     });
-    input.addEventListener('blur', function () { if (input.value.trim()) add(input.value); });
+
+    input.addEventListener('blur', function () {
+        closePanel();
+        paintPanel();
+        if (input.value.trim()) add(input.value);
+    });
 
     sync();
 })();

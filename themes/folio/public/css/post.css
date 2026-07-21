@@ -274,3 +274,27 @@
   .related-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease-out); }
   .related-item:hover .related-image img { transform: scale(1.04); }
   .related-title { font-family: var(--serif); font-style: italic; font-size: var(--type-h3); line-height: 1.2; margin: 0; }
+/* ---------- deep-linked comment ---------- */
+
+.comment-item.comment-target {
+  animation: comment-target-flash 3s ease-out forwards;
+}
+
+@keyframes comment-target-flash {
+  0%, 55% {
+    background: rgba(10, 10, 10, 0.06);
+    box-shadow: inset 3px 0 0 var(--rule-strong);
+  }
+  100% {
+    background: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment-item.comment-target {
+    animation: none;
+    background: rgba(10, 10, 10, 0.06);
+    box-shadow: inset 3px 0 0 var(--rule-strong);
+  }
+}

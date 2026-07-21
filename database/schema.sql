@@ -393,6 +393,16 @@ CREATE TABLE IF NOT EXISTS posts (
     featured_on_home TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick shown on the site front page',
     published_at TIMESTAMP NULL,
     timezone VARCHAR(50) DEFAULT 'UTC' COMMENT 'Timezone for scheduled publishing',
+    focus_keyword VARCHAR(100) DEFAULT NULL COMMENT 'Primary keyword the author targets; editor guidance only',
+    meta_title VARCHAR(70) DEFAULT NULL COMMENT 'SERP title override; falls back to post title',
+    meta_description VARCHAR(200) DEFAULT NULL COMMENT 'SERP description override; falls back to excerpt',
+    canonical_url VARCHAR(255) DEFAULT NULL COMMENT 'Canonical URL when the post is republished elsewhere',
+    meta_noindex TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Ask search engines not to index this post',
+    meta_nofollow TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Ask search engines not to follow links on this post',
+    og_title VARCHAR(70) DEFAULT NULL COMMENT 'Social share title; falls back to meta/post title',
+    og_description VARCHAR(100) DEFAULT NULL COMMENT 'Social share description; falls back to meta description',
+    og_image VARCHAR(255) DEFAULT NULL COMMENT 'Social share image URL; falls back to featured image',
+    twitter_card_type VARCHAR(30) NOT NULL DEFAULT 'summary_large_image' COMMENT 'summary or summary_large_image',
     last_workflow_by INT DEFAULT NULL COMMENT 'Last user to change workflow state',
     last_workflow_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -785,7 +795,7 @@ ALTER TABLE user_preferences
 -- Seed Roles
 -- ----------------------------------------------------------------------------
 -- We define a hierarchical role structure from Administrator (level 100) down
--- to Contributor (level 20) to enable role-based access control.
+-- to Reader (level 10) to enable role-based access control.
 -- ----------------------------------------------------------------------------
 INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) VALUES
 ('Administrator', 'administrator', 'Full site-wide access including user management and site settings', 'system', 1, 100),
@@ -793,7 +803,8 @@ INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) V
 ('Blog Owner', 'blog_owner', 'Owns and manages a specific blog, can assign Authors', 'blog', 1, 60),
 ('Author', 'author', 'Can create and edit posts within assigned blog(s)', 'blog', 1, 40),
 ('Reviewer', 'reviewer', 'Can review drafts and provide feedback, cannot edit or publish', 'blog', 1, 30),
-('Contributor', 'contributor', 'Can submit drafts or ideas for review', 'blog', 1, 20);
+('Contributor', 'contributor', 'Can submit drafts or ideas for review', 'blog', 1, 20),
+('Reader', 'reader', 'Default account role: can subscribe, save posts, and join discussions', 'system', 1, 10);
 
 -- ----------------------------------------------------------------------------
 -- Seed Permissions

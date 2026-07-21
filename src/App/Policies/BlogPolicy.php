@@ -51,7 +51,9 @@ class BlogPolicy implements PolicyInterface
      */
     public function create(array $user): bool
     {
-        $allowedRoles = ['administrator', 'editor', 'author', 'content_manager', 'blog_owner'];
+        // 'reader' is here on purpose: any registered account may start a blog.
+        // The creator upgrade (author role) happens on first successful creation.
+        $allowedRoles = ['administrator', 'editor', 'author', 'content_manager', 'blog_owner', 'reader'];
         foreach ($allowedRoles as $role) {
             if ($this->hasRole($user, $role)) {
                 return true;

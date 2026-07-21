@@ -119,6 +119,30 @@ final class CacheControlHint
             return;
         }
 
+        // ========== Uploaded media ==========
+        // Avatars, post images, blog banners and the media library. UploadService
+        // names every file with a sha1 hash of its contents, so a given URL always
+        // maps to the same bytes and a replaced image arrives under a new name.
+        // That makes these immutable in the same sense as a versioned asset.
+        //
+        // Matches an optional "{locale}/" prefix the same way LocaleAwareStaticBypass
+        // does, since that runs straight after this and locale is not stripped yet.
+        $uploadSegments = array_values(array_filter(explode('/', $path), fn ($segment) => $segment !== ''));
+        if (!empty($uploadSegments)) {
+            $localeCfg = require ROOT_PATH.'/config/localization.php';
+            $supportedLocales = array_map('strtolower', $localeCfg['supported'] ?? ['en']);
+            $rootIndex = in_array(strtolower($uploadSegments[0]), $supportedLocales, true) ? 1 : 0;
+
+            if (($uploadSegments[$rootIndex] ?? '') === 'uploads') {
+                // Session handlers often emit these; drop them so the policy below wins.
+                header_remove('Pragma');
+                header_remove('Expires');
+                header('Cache-Control: public, max-age=31536000, immutable'); // 1 year
+
+                return;
+            }
+        }
+
         // Static assets under /assets.
         if (str_starts_with($path, '/assets/') || str_starts_with($path, '/themes/')) {
             $fileName = basename($path);

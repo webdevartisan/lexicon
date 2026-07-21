@@ -1,5 +1,5 @@
 {% extends "base.lex.php" %}
-{% block title %}{{ post.title }} &mdash; {{ blog.blog_name }}{% endblock %}
+{% block title %}{{ meta.title }}{% endblock %}
 
 {% block styles %}
   <link rel="stylesheet" href="<?= $asset('css/post.css') ?>">
@@ -9,7 +9,10 @@
 <?php
 $title = e($post['title'] ?? 'Untitled');
   $date = e($post['published_at'] ?? '');
-  $author = e($post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''));
+  $author = profile_link(
+      $post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
+      $user['public_profile_slug'] ?? null
+  );
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;
   $cover = $post['featured_image'] ?? ($post['cover_url'] ?? null);
@@ -98,9 +101,9 @@ $title = e($post['title'] ?? 'Untitled');
       <?php if (!empty($comments)) { ?>
         <h2 class="comments-title"><?= count($comments) ?> Comment<?= count($comments) === 1 ? '' : 's' ?></h2>
         <?php foreach ($comments as $comment) { ?>
-          <div class="comment-item reveal">
+          <div class="comment-item reveal" id="comment-<?= (int) $comment['id'] ?>">
             <div class="comment-meta">
-              <strong><?= e($comment['user_name'] ?? 'Guest') ?></strong>
+              <strong><?= profile_link($comment['user_name'] ?? 'Guest', $comment['author_profile_slug'] ?? null) ?></strong>
               <?php if (!empty($comment['created_at'])) { ?>
                 &mdash; <?= e($comment['created_at']) ?>
               <?php } ?>
@@ -108,21 +111,20 @@ $title = e($post['title'] ?? 'Untitled');
             <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
 
             <?php if (!empty($comments_enabled)) { ?>
-              <?php if (auth()->check()) { ?>
-                <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $comment['id'] ?>">Reply</button>
+              <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $comment['id'] ?>">Reply</button>
 
-                <form class="reply-form" id="reply-form-<?= (int) $comment['id'] ?>" action="/comments/create" method="post" hidden>
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
-                  <input type="hidden" name="parent_comment_id" value="<?= (int) $comment['id'] ?>">
-                  <textarea name="content" rows="2" maxlength="2000"
-                    placeholder="Reply to <?= e($comment['user_name'] ?? 'Guest') ?>..." required></textarea>
-                  <button type="submit" class="btn-reply">Reply</button>
-                  <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $comment['id'] ?>">Cancel</button>
-                </form>
-              <?php } else { ?>
-                <a class="reply-toggle" href="<?= e(lurl('/login')) ?>">Log in to reply</a>
-              <?php } ?>
+              <form class="reply-form" id="reply-form-<?= (int) $comment['id'] ?>" action="/comments/create" method="post" hidden>
+                <?= csrf_field() ?>
+                <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
+                <input type="hidden" name="parent_comment_id" value="<?= (int) $comment['id'] ?>">
+                <textarea name="content" rows="2" maxlength="2000"
+                  placeholder="Reply to <?= e($comment['user_name'] ?? 'Guest') ?>..." required></textarea>
+                <?php if (!auth()->check()) { ?>
+                  <p style="margin: .35rem 0 0; font-size: .8em; opacity: .7;">You'll be asked to log in &mdash; your reply is kept.</p>
+                <?php } ?>
+                <button type="submit" class="btn-reply">Reply</button>
+                <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $comment['id'] ?>">Cancel</button>
+              </form>
             <?php } ?>
 
             <?php if (!empty($comment['replies'])) { ?>
@@ -134,16 +136,16 @@ $title = e($post['title'] ?? 'Untitled');
               </p>
               <div class="comment-replies" id="replies-<?= (int) $comment['id'] ?>" hidden>
                 <?php foreach ($comment['replies'] as $reply) { ?>
-                  <div class="comment-item">
+                  <div class="comment-item" id="comment-<?= (int) $reply['id'] ?>">
                     <div class="comment-meta">
-                      <strong><?= e($reply['user_name'] ?? 'Guest') ?></strong>
+                      <strong><?= profile_link($reply['user_name'] ?? 'Guest', $reply['author_profile_slug'] ?? null) ?></strong>
                       <?php if (!empty($reply['created_at'])) { ?>
                         &mdash; <?= e($reply['created_at']) ?>
                       <?php } ?>
                     </div>
                     <p><?= nl2br(e($reply['content'] ?? '')) ?></p>
 
-                    <?php if (!empty($comments_enabled) && auth()->check()) { ?>
+                    <?php if (!empty($comments_enabled)) { ?>
                       <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $reply['id'] ?>">Reply</button>
 
                       <form class="reply-form" id="reply-form-<?= (int) $reply['id'] ?>" action="/comments/create" method="post" hidden>
@@ -152,6 +154,9 @@ $title = e($post['title'] ?? 'Untitled');
                         <input type="hidden" name="parent_comment_id" value="<?= (int) $reply['id'] ?>">
                         <textarea name="content" rows="2" maxlength="2000"
                           placeholder="Reply to <?= e($reply['user_name'] ?? 'Guest') ?>..." required></textarea>
+                        <?php if (!auth()->check()) { ?>
+                          <p style="margin: .35rem 0 0; font-size: .8em; opacity: .7;">You'll be asked to log in &mdash; your reply is kept.</p>
+                        <?php } ?>
                         <button type="submit" class="btn-reply">Reply</button>
                         <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $reply['id'] ?>">Cancel</button>
                       </form>
@@ -224,4 +229,5 @@ $title = e($post['title'] ?? 'Untitled');
 
 {% block scripts %}
   <script defer src="<?= $asset('js/post.js') ?>"></script>
+  <script defer src="/assets/js/comment-anchor.js"></script>
 {% endblock %}

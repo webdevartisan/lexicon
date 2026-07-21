@@ -170,7 +170,8 @@ class NotificationService
                 (string) ($data['post_slug'] ?? ''),
                 (string) ($data['commenter_name'] ?? 'A reader'),
                 (string) ($data['comment_excerpt'] ?? ''),
-                (bool) ($data['awaiting_moderation'] ?? false)
+                (bool) ($data['awaiting_moderation'] ?? false),
+                (int) ($data['comment_id'] ?? 0)
             ),
             'blog.invite_declined' => new InviteDeclinedMail(
                 $to,

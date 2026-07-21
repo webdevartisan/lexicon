@@ -11,19 +11,28 @@ class CommentModel extends AppModel
     private const ALLOWED_STATUSES = ['pending', 'approved', 'spam'];
 
     /**
+     * Approved comments for a post, oldest first.
+     *
+     * `author_profile_slug` is null for guest commenters and for registered
+     * commenters whose profile is private or has no slug.
+     *
      * @return array<int, array<string, mixed>> Approved comments with user_name, oldest first
      */
     public function forPost(int $postId): array
     {
+        // is_public belongs in the ON clause: in WHERE it would turn the LEFT
+        // JOIN into an inner join and drop guest comments entirely
         $sql = "SELECT
                     c.*,
                     COALESCE(
                         u.display_name_cached,
                         NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
                         u.username
-                    ) AS user_name
+                    ) AS user_name,
+                    NULLIF(up.slug, '') AS author_profile_slug
                 FROM {$this->getTable()} c
                 LEFT JOIN users u ON c.user_id = u.id
+                LEFT JOIN user_profiles up ON up.user_id = c.user_id AND up.is_public = 1
                 WHERE c.post_id = ? AND c.status = 'approved'
                 ORDER BY c.created_at ASC";
 
@@ -359,6 +368,60 @@ class CommentModel extends AppModel
         $stmt = $this->database->query($sql, [$userId]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * The user's comments with enough post/blog context to link back to them.
+     *
+     * @return array<int, array<string, mixed>> Newest first
+     */
+    public function byUserWithContext(int $userId, int $limit = 20): array
+    {
+        $limit = max(1, min(50, $limit));
+
+        $sql = "SELECT c.id, c.content, c.status, c.created_at, c.parent_comment_id,
+                       p.title AS post_title, p.slug AS post_slug,
+                       b.blog_slug, b.blog_name
+                FROM {$this->getTable()} c
+                INNER JOIN posts p ON c.post_id = p.id
+                LEFT JOIN blogs b ON p.blog_id = b.id
+                WHERE c.user_id = ?
+                ORDER BY c.created_at DESC
+                LIMIT {$limit}";
+
+        return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Approved replies other people left on the user's comments.
+     *
+     * @return array<int, array<string, mixed>> Newest first
+     */
+    public function repliesToUser(int $userId, int $limit = 20): array
+    {
+        $limit = max(1, min(50, $limit));
+
+        $sql = "SELECT r.id, r.content, r.created_at, r.parent_comment_id,
+                       p.title AS post_title, p.slug AS post_slug,
+                       b.blog_slug, b.blog_name,
+                       COALESCE(
+                           u.display_name_cached,
+                           NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
+                           u.username,
+                           'A guest'
+                       ) AS author_name
+                FROM {$this->getTable()} r
+                INNER JOIN {$this->getTable()} parent ON r.parent_comment_id = parent.id
+                INNER JOIN posts p ON r.post_id = p.id
+                LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN users u ON r.user_id = u.id
+                WHERE parent.user_id = ?
+                  AND (r.user_id IS NULL OR r.user_id != ?)
+                  AND r.status = 'approved'
+                ORDER BY r.created_at DESC
+                LIMIT {$limit}";
+
+        return $this->database->query($sql, [$userId, $userId])->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**

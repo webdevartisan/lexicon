@@ -7,21 +7,29 @@
   <title>{% yield title %}</title>
 
   <?php
+    // SEO/social meta arrives pre-assembled from BlogController: blog defaults
+    // on listing pages, post-level overrides on post pages.
     $desc = e($meta['description'] ?? ($user['blog_name'] ?? 'Blog'));
+  $ogTitle = e($meta['og_title'] ?? ($meta['title'] ?? ($user['blog_name'] ?? 'Blog')));
+  $ogDesc = e($meta['og_description'] ?? ($meta['description'] ?? ''));
+  $ogImage = e($meta['og_image'] ?? '');
+  $ogUrl = e($meta['url'] ?? '');
   ?>
   <meta name="description" content="<?= $desc ?>" />
-  <meta name="keywords" content="blog, posts" />
   <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>" />
+  <?php if (!empty($meta['robots'])) { ?><meta name="robots" content="<?= e($meta['robots']) ?>" /><?php } ?>
+  <?php if (!empty($meta['canonical'])) { ?><link rel="canonical" href="<?= e($meta['canonical']) ?>" /><?php } ?>
 
-  <meta property="og:title" content="" />
-  <meta property="og:image" content="" />
-  <meta property="og:url" content="" />
-  <meta property="og:site_name" content="" />
-  <meta property="og:description" content="" />
-  <meta name="twitter:title" content="" />
-  <meta name="twitter:image" content="" />
-  <meta name="twitter:url" content="" />
-  <meta name="twitter:card" content="" />
+  <meta property="og:type" content="<?= e($meta['og_type'] ?? 'website') ?>" />
+  <meta property="og:title" content="<?= $ogTitle ?>" />
+  <meta property="og:description" content="<?= $ogDesc ?>" />
+  <meta property="og:url" content="<?= $ogUrl ?>" />
+  <meta property="og:site_name" content="<?= e($meta['site_name'] ?? ($user['blog_name'] ?? '')) ?>" />
+  <?php if ($ogImage !== '') { ?><meta property="og:image" content="<?= $ogImage ?>" /><?php } ?>
+  <meta name="twitter:card" content="<?= e($meta['twitter_card'] ?? 'summary_large_image') ?>" />
+  <meta name="twitter:title" content="<?= $ogTitle ?>" />
+  <meta name="twitter:description" content="<?= $ogDesc ?>" />
+  <?php if ($ogImage !== '') { ?><meta name="twitter:image" content="<?= $ogImage ?>" /><?php } ?>
 
   <?php
     $logo = $settings['logo_path'] ?? null;
@@ -82,27 +90,9 @@
       </nav>
 
       <div class="masthead-actions">
-        <?php if (!empty($viewer)) { ?>
-          <div class="nav-user">
-            <button class="nav-user-btn" type="button" aria-haspopup="true" aria-expanded="false">
-              <span class="nav-avatar">
-                <?php if (!empty($viewer['avatar_url'])) { ?>
-                  <img src="<?= e($viewer['avatar_url']) ?>" alt="" />
-                <?php } else { ?>
-                  <?= e(mb_substr((string) ($viewer['name'] ?? '?'), 0, 1)) ?>
-                <?php } ?>
-              </span>
-              <span class="nav-user-name"><?= e($viewer['name'] ?? '') ?></span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <div class="nav-user-menu" role="menu">
-              <a href="<?= lurl('/dashboard') ?>" role="menuitem">Dashboard</a>
-              <a href="<?= lurl('/logout') ?>" role="menuitem">Log out</a>
-            </div>
-          </div>
-        <?php } else { ?>
-          <a href="<?= lurl('/login') ?>" class="nav-pill">Log in</a>
-        <?php } ?>
+        <span data-auth-nav="theme" style="display:contents">
+          {% include "partials/_auth_nav.lex.php" %}
+        </span>
         <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
           <span></span><span></span><span></span>
         </button>
@@ -182,6 +172,7 @@
           crossorigin="anonymous" defer></script>
 
 	<script defer src="<?= $asset('js/main.js') ?>"></script>
+  {% include "partials/_auth_modal.lex.php" %}
   {% yield scripts %}
 
 </body>

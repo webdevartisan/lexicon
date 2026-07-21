@@ -71,6 +71,40 @@ return [
      * ]
      */
     'patterns' => [
+        // Library (reading hub) patterns. The hub itself needs no trail, it is
+        // the root of this area, so only the sub-pages are listed.
+        '/library/likes' => [
+            ['label' => 'Library', 'url' => '/library', 'key' => 'breadcrumbs.library'],
+            ['label' => 'Liked', 'url' => null, 'key' => 'breadcrumbs.liked'],
+        ],
+        '/library/saved' => [
+            ['label' => 'Library', 'url' => '/library', 'key' => 'breadcrumbs.library'],
+            ['label' => 'Saved', 'url' => null, 'key' => 'breadcrumbs.saved'],
+        ],
+        '/library/subscriptions' => [
+            ['label' => 'Library', 'url' => '/library', 'key' => 'breadcrumbs.library'],
+            ['label' => 'Subscriptions', 'url' => null, 'key' => 'breadcrumbs.subscriptions'],
+        ],
+        '/library/activity' => [
+            ['label' => 'Library', 'url' => '/library', 'key' => 'breadcrumbs.library'],
+            ['label' => 'Activity', 'url' => null, 'key' => 'breadcrumbs.activity'],
+        ],
+
+        // Settings patterns. Listed explicitly rather than via segment_labels so
+        // "notifications" here reads as the email preferences without renaming
+        // the notification feed at /dashboard/notifications.
+        '/dashboard/account' => [
+            ['label' => 'Account', 'url' => null, 'key' => 'breadcrumbs.account'],
+        ],
+        '/dashboard/account/security' => [
+            ['label' => 'Account', 'url' => '/dashboard/account', 'key' => 'breadcrumbs.account'],
+            ['label' => 'Security', 'url' => null, 'key' => 'breadcrumbs.security'],
+        ],
+        '/dashboard/account/notifications' => [
+            ['label' => 'Account', 'url' => '/dashboard/account', 'key' => 'breadcrumbs.account'],
+            ['label' => 'Email Notifications', 'url' => null, 'key' => 'breadcrumbs.emailNotifications'],
+        ],
+
         // Blog management patterns
         '/dashboard/blog/{id}/edit' => [
             ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],

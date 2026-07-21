@@ -200,16 +200,16 @@
 
                     <!-- Profile -->
                     {% set signedInAsLabel = t('layout.profileDropdown.signedInAs') %}
-                    {% set dashboardLabel = t('layout.profileDropdown.links.dashboard') %}
                     {% set controlPanelLabel = t('layout.profileDropdown.links.controlPanel') %}
                     {% set editProfileLabel = t('layout.profileDropdown.links.editProfile') %}
+                    {% set accountSettingsLabel = t('layout.profileDropdown.links.accountSettings') %}
                     {% set signOutLabel = t('layout.profileDropdown.links.signOut') %}
 
                     <div class="relative flex items-center dropdown h-header">
                         <button type="button" class="inline-block p-0 transition-all duration-200 ease-linear bg-topbar rounded-full text-topbar-item dropdown-toggle btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200" id="dropdownMenuButton" data-bs-toggle="dropdown">
                             <div class="bg-pink-100 rounded-full">
                                 {% if current_user.avatar_url|notempty %}
-                                    {% cache 'lucide:user-avatar' ttl=31536000 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-full ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
+                                    <img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-full ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">
                                 {% else %}
                                     <div class="flex items-center justify-center rounded-full size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                         <?php
@@ -229,11 +229,11 @@
                         </button>
                         <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="dropdownMenuButton">
                             <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ signedInAsLabel }}</h6>
-                            <a href="#!" class="flex gap-3 mb-3">
+                            <a href="/dashboard/profile" class="flex gap-3 mb-3">
                                 <div class="relative inline-block shrink-0">
                                     <div class="rounded bg-slate-100 dark:bg-zink-500">
                                         {% if current_user.avatar_url|notempty %}
-                                            {% cache 'lucide:user-avatar' ttl=31536000 %}<img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-md ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">{% endcache %}
+                                            <img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-md ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">
                                         {% else %}
                                             <div class="flex items-center justify-center rounded-md size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
                                                 <?php
@@ -259,28 +259,24 @@
                             </a>
                             <ul>
                                 <?php if (auth()->hasRole('administrator')) { ?>
-                                    <?php
-                $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-                                    $path = rtrim($path, '/');
-                                    ?>
+                                <!-- Stable entry: always Control Panel. The logo already leads back to the dashboard. -->
                                 <li>
-                                    <?php if (str_ends_with($path, 'admin')) { ?>
-                                        <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard">
-                                            {% cache 'lucide:layout-dashboard' ttl=31536000 %}<i data-lucide="layout-dashboard" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
-                                            <span>{{ dashboardLabel }}</span>
-                                        </a>
-                                    <?php } else { ?> 
-                                        <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/admin">
-                                            {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
-                                            <span>{{ controlPanelLabel }}</span>
-                                        </a>
-                                    <?php } ?>    
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/admin">
+                                        {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        <span>{{ controlPanelLabel }}</span>
+                                    </a>
                                 </li>
                                 <?php } ?>
                                 <li>
                                     <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard/profile">
                                         {% cache 'lucide:user-2' ttl=31536000 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ editProfileLabel }}</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/dashboard/account">
+                                        {% cache 'lucide:settings' ttl=31536000 %}<i data-lucide="settings" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        <span>{{ accountSettingsLabel }}</span>
                                     </a>
                                 </li>
                                 <li class="pt-2 mt-2 border-t border-slate-200 dark:border-zink-500">

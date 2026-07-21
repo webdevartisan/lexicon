@@ -33,6 +33,23 @@ use Framework\Exceptions\PageNotFoundException;
  */
 final class PostController extends AppController
 {
+    /**
+     * Validation rules for the optional SEO / social sharing fields.
+     * Shared by create() and update() so the two paths can't drift.
+     */
+    private const SEO_RULES = [
+        'focus_keyword' => 'max:100',
+        'meta_title' => 'max:70',
+        'meta_description' => 'max:200',
+        'canonical_url' => 'url|max:255',
+        'meta_noindex' => 'boolean',
+        'meta_nofollow' => 'boolean',
+        'og_title' => 'max:70',
+        'og_description' => 'max:100',
+        'og_image' => 'url|max:255',
+        'twitter_card_type' => 'in:summary,summary_large_image',
+    ];
+
     public function __construct(
         private PostModel $model,
         private BlogModel $blogModel,
@@ -301,9 +318,12 @@ final class PostController extends AppController
             'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
-        ]);
+            'comments_enabled' => 'boolean',
+        ] + self::SEO_RULES);
 
         $data = $validator->validated();
+        $data['comments_enabled'] = !empty($data['comments_enabled']) ? 1 : 0;
+        $data = $this->normalizeSeoFields($data);
 
         $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
         $data['status'] = $this->workflowService->constrainStatusForRole(
@@ -502,10 +522,11 @@ final class PostController extends AppController
             'published_at' => 'datetime:d.m.y H:i',
             'remove_featured_image' => 'boolean',
             'comments_enabled' => 'boolean',
-        ]);
+        ] + self::SEO_RULES);
 
         $newData = $validator->validated();
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
+        $newData = $this->normalizeSeoFields($newData);
 
         $timezone = $newData['timezone'] ?? 'UTC';
 
@@ -529,6 +550,12 @@ final class PostController extends AppController
             'comments_enabled' => $post->comments_enabled(),
             'blog_id' => $post->blogId(),
         ];
+
+        // SEO/social fields join the same change-detection diff.
+        $postSnapshot = $post->toArray();
+        foreach (array_keys(self::SEO_RULES) as $seoField) {
+            $originalData[$seoField] = $postSnapshot[$seoField] ?? null;
+        }
 
         $blogRole = $post->blog()->effectiveRoleForUser((int) $user['id']);
         $newData['status'] = $this->workflowService->constrainStatusForRole(
@@ -1235,6 +1262,34 @@ final class PostController extends AppController
 
             return null;
         }
+    }
+
+    /**
+     * Normalize the SEO / social fields for storage.
+     *
+     * Checkboxes arrive only when ticked, so the two robots flags are forced
+     * to 0/1. Cleared text inputs arrive as empty strings and are stored as
+     * NULL so the theme fallback chain (post > excerpt/title > blog) works.
+     *
+     * @param  array<string, mixed>  $data  Validated form data
+     * @return array<string, mixed> Data with SEO fields normalized
+     */
+    private function normalizeSeoFields(array $data): array
+    {
+        $data['meta_noindex'] = !empty($data['meta_noindex']) ? 1 : 0;
+        $data['meta_nofollow'] = !empty($data['meta_nofollow']) ? 1 : 0;
+
+        foreach (['focus_keyword', 'meta_title', 'meta_description', 'canonical_url', 'og_title', 'og_description', 'og_image'] as $seoField) {
+            if (isset($data[$seoField]) && trim((string) $data[$seoField]) === '') {
+                $data[$seoField] = null;
+            }
+        }
+
+        if (empty($data['twitter_card_type'])) {
+            $data['twitter_card_type'] = 'summary_large_image';
+        }
+
+        return $data;
     }
 
     /**

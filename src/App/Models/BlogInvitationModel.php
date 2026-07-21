@@ -82,20 +82,21 @@ class BlogInvitationModel extends AppModel
     }
 
     /**
-     * Cancel all pending invites for a given blog+email.
+     * Cancel all unconsumed invites (pending or expired) for a given blog+email.
      *
      * Used before issuing a new invite and when the owner explicitly cancels.
+     * Expired rows are included on purpose: the team page offers "Drop" on
+     * them, and a resend should not leave a stale expired row behind either.
      *
      * @param  int  $blogId  Target blog
      * @param  string  $email  Invitee email
-     * @return bool True if at least one pending invite was removed
+     * @return bool True if at least one invite was removed
      */
     public function cancelPendingForEmail(int $blogId, string $email): bool
     {
         $sql = 'DELETE FROM blog_invitations
                 WHERE blog_id = ? AND email = ?
-                  AND accepted_at IS NULL AND declined_at IS NULL
-                  AND expires_at > UTC_TIMESTAMP()';
+                  AND accepted_at IS NULL AND declined_at IS NULL';
 
         return $this->database->execute($sql, [$blogId, $email]) > 0;
     }

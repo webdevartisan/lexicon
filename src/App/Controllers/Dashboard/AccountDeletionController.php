@@ -99,7 +99,7 @@ class AccountDeletionController extends AppController
         if (!$this->users->verifyPassword($userId, $password)) {
             $this->flash('error', 'Incorrect password. Account deletion cancelled.');
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect('/dashboard/account');
         }
 
         // Check business rules
@@ -108,7 +108,7 @@ class AccountDeletionController extends AppController
         if (!$deletionCheck['canDelete']) {
             $this->flash('error', $deletionCheck['reason']);
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect('/dashboard/account');
         }
 
         try {
@@ -136,7 +136,7 @@ class AccountDeletionController extends AppController
             error_log("Account deletion failed for user {$userId}: ".$e->getMessage());
             $this->flash('error', 'Failed to delete account. Please contact support.');
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect('/dashboard/account');
         }
     }
 }

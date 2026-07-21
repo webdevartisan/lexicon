@@ -51,7 +51,7 @@ class WelcomeEmail extends Mailable
     {
         $appName = htmlspecialchars($_ENV['APP_NAME'] ?? 'Blog Platform');
         $appUrl = htmlspecialchars($_ENV['APP_URL'] ?? 'http://localhost');
-        $dashboardUrl = $appUrl.'/dashboard';
+        $dashboardUrl = $appUrl.'/library';
 
         return <<<HTML
         <!DOCTYPE html>
@@ -76,8 +76,8 @@ class WelcomeEmail extends Mailable
                     <h2>Hello {$firstName},</h2>
                     <p>Thank you for joining our community! Your account has been successfully created.</p>
                     <p><strong>Username:</strong> @{$username}</p>
-                    <p>You can now start writing and sharing your stories with our community.</p>
-                    <a href="{$dashboardUrl}" class="button">Go to Dashboard</a>
+                    <p>Save posts for later, follow the blogs you love, and join the discussions. When you feel like writing, you can start a blog of your own any time.</p>
+                    <a href="{$dashboardUrl}" class="button">Open your reading hub</a>
                     <p>If you have any questions, feel free to reach out to our support team.</p>
                 </div>
                 <div class="footer">
@@ -104,7 +104,7 @@ class WelcomeEmail extends Mailable
     private function buildTextBody(string $firstName, string $username): string
     {
         $appName = $_ENV['APP_NAME'] ?? 'Blog Platform';
-        $dashboardUrl = ($_ENV['APP_URL'] ?? 'http://localhost').'/dashboard';
+        $dashboardUrl = ($_ENV['APP_URL'] ?? 'http://localhost').'/library';
 
         return <<<TEXT
         Welcome to {$appName}!
@@ -114,10 +114,11 @@ class WelcomeEmail extends Mailable
         Thank you for joining our community! Your account has been successfully created.
         
         Username: @{$username}
-        
-        You can now start writing and sharing your stories with our community.
-        
-        Visit your dashboard: {$dashboardUrl}
+
+        Save posts for later, follow the blogs you love, and join the discussions.
+        When you feel like writing, you can start a blog of your own any time.
+
+        Open your reading hub: {$dashboardUrl}
         
         If you have any questions, feel free to reach out to our support team.
         

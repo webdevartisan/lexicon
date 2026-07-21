@@ -18,6 +18,13 @@ $icons = [
     // Global Navigation Icons
     'home' => 'home',
     'dashboard' => 'layout-dashboard',
+    'library' => 'library',
+    'liked' => 'heart',
+    'saved' => 'bookmark',
+    'subscriptions' => 'mail',
+    'activity' => 'message-circle',
+    'profile' => 'user',
+    'account' => 'settings',
     'create-new-blog' => 'file-plus',
     'new-blog' => 'file-plus',
     'all-blogs' => 'book-open',
@@ -31,6 +38,7 @@ $icons = [
     'appearance-/-theme' => 'palette',
     'collaborators' => 'users',
     'team' => 'users',
+    'subscribers' => 'mail',
 
     // Content Management Icons
     'new-post' => 'pen',
@@ -78,6 +86,44 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
             <span>
                 <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
             </span>
+        </li>
+        <?php continue;
+        } ?>
+        <?php if (!empty($it['children'])) { ?>
+        <li class="relative group/sm" data-nav-group data-nav-group-path="<?= e(lurl($it['href'])) ?>">
+            <div class="flex items-center">
+                <a class="sidebar-menu-item group/menu-link grow"
+                   href="<?= e($it['href']) ?>"
+                   data-nav-path="<?= e(lurl($it['href'])) ?>">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>" class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
+                    </span>
+                    <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
+                        <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
+                    </span>
+                </a>
+                <button type="button" data-nav-toggle
+                        class="shrink-0 p-2 ltr:mr-2 rtl:ml-2 text-vertical-menu-item group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden"
+                        aria-expanded="false" aria-label="Toggle section">
+                    <i data-lucide="chevron-down" class="size-4 transition-transform" data-nav-chevron></i>
+                </button>
+            </div>
+            <ul class="hidden ltr:pl-6 rtl:pr-6 group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden" data-nav-submenu>
+                <?php foreach ($it['children'] as $child) { ?>
+                <li>
+                    <a class="sidebar-menu-item group/menu-link text-[13px]"
+                       href="<?= e($child['href']) ?>"
+                       data-nav-path="<?= e(lurl($child['href'])) ?>">
+                        <span class="min-w-[1.5rem] inline-block text-start text-[14px]">
+                            <i data-lucide="<?= $icons[$child['tag']] ?? 'circle' ?>" class="h-3.5"></i>
+                        </span>
+                        <span class="align-middle">
+                            <?php echo !empty($child['key']) ? $t($child['key']) : e($child['label']); ?>
+                        </span>
+                    </a>
+                </li>
+                <?php } ?>
+            </ul>
         </li>
         <?php continue;
         } ?>
@@ -170,12 +216,12 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
             </a>
         </li>
     <?php } elseif (empty($user_blogs)) { ?>
-        <!-- Brand new account: nothing owned, nothing shared -->
+        <!-- Reader account: a soft path into writing, not an onboarding push -->
         <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
-            <span class="block opacity-50 italic mb-2"><?= $t('common.createFirstBlogHint') ?></span>
+            <span class="block opacity-50 italic mb-2"><?= $t('common.startWritingHint') ?></span>
             <a href="/dashboard/blog/new" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
                 <i data-lucide="file-plus" class="size-3.5"></i>
-                <?= $t('common.createFirstBlog') ?>
+                <?= $t('common.startWriting') ?>
             </a>
         </li>
     <?php } else { ?>
@@ -185,4 +231,42 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <?php } ?>
 <?php } ?>
 
+
+<script>
+(function () {
+  // Open state lives here rather than in PHP because the sidebar is cached
+  // without the request path in its key, so a server-rendered "expanded"
+  // flag would be wrong on every page that reused the cached copy.
+  var here = window.location.pathname.replace(/\/+$/, '');
+
+  document.querySelectorAll('[data-nav-group]').forEach(function (group) {
+    var submenu = group.querySelector('[data-nav-submenu]');
+    var toggle = group.querySelector('[data-nav-toggle]');
+    var chevron = group.querySelector('[data-nav-chevron]');
+    if (!submenu || !toggle) return;
+
+    function setOpen(open) {
+      submenu.classList.toggle('hidden', !open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+    }
+
+    var base = (group.getAttribute('data-nav-group-path') || '').replace(/\/+$/, '');
+    var inside = base !== '' && (here === base || here.indexOf(base + '/') === 0);
+
+    setOpen(inside);
+    toggle.addEventListener('click', function () {
+      setOpen(submenu.classList.contains('hidden'));
+    });
+  });
+
+  // Nothing else marks the active row, so do it here for parents and children
+  document.querySelectorAll('.sidebar-menu-item[data-nav-path]').forEach(function (link) {
+    if (link.getAttribute('data-nav-path').replace(/\/+$/, '') === here) {
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
+    }
+  });
+})();
+</script>
 {% endcache %}

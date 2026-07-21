@@ -10,7 +10,8 @@
                 "dashboard": "Dashboard",
                 "controlPanel": "Control Panel",
                 "editProfile": "Edit Profile",
-                "signOut": "Sign Out"
+                "signOut": "Sign Out",
+                "accountSettings": "Account Settings"
             }
         }
     },
@@ -29,8 +30,13 @@
         "appearanceTheme": "Appearance",
         "collaborators": "Collaborators",
         "team": "Team",
+        "subscribers": "Subscribers",
         "shared": "Shared",
         "likedSaved": "Liked & Saved",
+        "saved": "Saved",
+        "subscriptions": "Subscriptions",
+        "activity": "Activity",
+        "profile": "Profile",
         "contentSection": "Content",
         "peopleSection": "People",
         "systemSection": "System",
@@ -57,7 +63,10 @@
         "about": "About",
         "contact": "Contact",
         "frontPage": "Front Page",
-        "pages": "Pages"
+        "pages": "Pages",
+        "library": "Library",
+        "liked": "Liked",
+        "account": "Account"
     },
     "breadcrumbs": {
         "home": "Home",
@@ -89,7 +98,15 @@
         "myProfile": "My Profile",
         "users": "Users",
         "blogs": "Blogs",
-        "posts": "Posts"
+        "posts": "Posts",
+        "library": "Library",
+        "liked": "Liked",
+        "saved": "Saved",
+        "subscriptions": "Subscriptions",
+        "activity": "Activity",
+        "account": "Account",
+        "security": "Security",
+        "emailNotifications": "Email Notifications"
     },
     "dashboard": {
         "pageTitle": "Dashboard",
@@ -133,7 +150,9 @@
             "published": "Published",
             "drafts": "Drafts",
             "pending": "In Review",
-            "comments": "Comments"
+            "comments": "Comments",
+            "archived": "Archived",
+            "subscribers": "Subscribers"
         },
         "empty": {
             "noDrafts": "Nothing waiting. You're all caught up.",
@@ -197,6 +216,8 @@
         "openShared": "Open Shared",
         "createFirstBlogHint": "Start by creating your first blog.",
         "createFirstBlog": "Create a blog",
+        "startWritingHint": "Feel like writing?",
+        "startWriting": "Start a blog",
         "welcome": "Welcome",
         "signOut": "Sign Out",
         "signedInAs": "Signed in as",
