@@ -115,10 +115,12 @@ class BlogModel extends AppModel
         if ($result) {
             // Invalidate old blog URL and all its posts
             cache()->deletePattern("*:GET:/blog/{$blog->slug()}/*");
+            fragment()->forget('blog-by-slug:'.$blog->slug(), false);
 
             // If slug changed, invalidate new URL too
             if (isset($data['slug']) && $data['slug'] !== $blog->slug()) {
                 cache()->deletePattern("*:GET:/blog/{$data['slug']}/*");
+                fragment()->forget('blog-by-slug:'.$data['slug'], false);
             }
 
             // Invalidate blog listings
@@ -314,6 +316,9 @@ class BlogModel extends AppModel
             $data['description'],
             $data['owner_id'],
         ]);
+
+        // Clear any cached 404 for this slug from before the blog existed.
+        fragment()->forget('blog-by-slug:'.$data['blog_slug'], false);
 
         return (int) $this->database->lastInsertId();
     }
@@ -512,10 +517,17 @@ class BlogModel extends AppModel
      */
     public function getBlogBySlug(string $slug): ?array
     {
-        $sql = 'SELECT * FROM blogs WHERE blog_slug = ?';
-        $stmt = $this->database->query($sql, [$slug]);
+        $cacheKey = 'blog-by-slug:'.$slug;
 
-        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+        $loadBlog = function () use ($slug): ?array {
+            $sql = 'SELECT * FROM blogs WHERE blog_slug = ?';
+
+            return $this->database->query($sql, [$slug])->fetch(\PDO::FETCH_ASSOC) ?: null;
+        };
+
+        // Hit on every blog page; busted from createBlog/update/delete. Creation
+        // also clears the key so a pre-creation 404 lookup can't linger.
+        return fragment()->rememberData($cacheKey, $loadBlog, 3600, false);
     }
 
     /**
@@ -734,6 +746,7 @@ class BlogModel extends AppModel
         if ($result && $blog) {
             // Invalidate all posts in this blog
             cache()->deletePattern("*:GET:/blog/{$blog->slug()}/*");
+            fragment()->forget('blog-by-slug:'.$blog->slug(), false);
 
             // Invalidate blog listings
             cache()->deletePattern('*:GET:/blogs*');

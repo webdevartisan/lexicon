@@ -62,19 +62,24 @@ class BlogSettingsModel extends AppModel
      */
     public function findByBlogId(int $blogId): ?array
     {
-        $sql = 'SELECT blog_id, theme, default_locale, timezone,
-                        meta_title, meta_description, indexable,
-                        tagline, subtitle, about_text, founded_year,
-                        newsletter_heading, newsletter_text, social_links,
-                        banner_path, logo_path, favicon_path,
-                        comments_enabled, comments_auto_publish, replies_auto_publish,
-                        workflow_enabled, translations_enabled
-                FROM blog_settings WHERE blog_id = ? LIMIT 1';
+        $cacheKey = 'blog-settings:'.$blogId;
 
-        $stmt = $this->database->query($sql, [$blogId]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $loadSettings = function () use ($blogId): ?array {
+            $sql = 'SELECT blog_id, theme, default_locale, timezone,
+                            meta_title, meta_description, indexable,
+                            tagline, subtitle, about_text, founded_year,
+                            newsletter_heading, newsletter_text, social_links,
+                            banner_path, logo_path, favicon_path,
+                            comments_enabled, comments_auto_publish, replies_auto_publish,
+                            workflow_enabled, translations_enabled
+                    FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
-        return $row ?: null;
+            return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+        };
+
+        // Read on every blog page; only whitelisted (non-sensitive) columns are
+        // selected. Busted from updateForBlog when settings change.
+        return fragment()->rememberData($cacheKey, $loadSettings, 3600, false);
     }
 
     /**
@@ -184,6 +189,10 @@ class BlogSettingsModel extends AppModel
         $sql = 'UPDATE blog_settings SET '.implode(', ', $set).' WHERE blog_id = ?';
 
         $rowCount = $this->database->execute($sql, $params);
+
+        if ($rowCount > 0) {
+            fragment()->forget('blog-settings:'.$blogId, false);
+        }
 
         return $rowCount > 0;
     }

@@ -49,6 +49,26 @@ class CommentModel extends AppModel
      */
     public function forPostThreaded(int $postId): array
     {
+        $cacheKey = 'post-comments:'.$postId;
+
+        // localized=false: a comment thread reads the same in every locale.
+        // Busted from create/updateStatus/delete when this post's comments change.
+        return fragment()->rememberData(
+            $cacheKey,
+            fn (): array => $this->buildThread($postId),
+            3600,
+            false
+        );
+    }
+
+    /**
+     * Assemble a post's approved comments into top-level entries with replies.
+     *
+     * @param  int  $postId  Post id
+     * @return array<int, array<string, mixed>> Top-level comments, each with a 'replies' array
+     */
+    private function buildThread(int $postId): array
+    {
         $threaded = [];
         $replies = [];
 
@@ -297,6 +317,14 @@ class CommentModel extends AppModel
         $sql = "UPDATE {$this->getTable()} SET status = ? WHERE id = ?";
         $affected = $this->database->execute($sql, [$status, $id]);
 
+        if ($affected > 0) {
+            // A moderated comment appears/disappears in the public thread.
+            $postId = $this->postIdForComment($id);
+            if ($postId !== null) {
+                $this->forgetThreadCache($postId);
+            }
+        }
+
         return $affected > 0;
     }
 
@@ -315,6 +343,54 @@ class CommentModel extends AppModel
     }
 
     /**
+     * Resolve which post a comment belongs to.
+     *
+     * Moderation methods only receive a comment id, so they use this to find
+     * the post whose cached thread needs dropping.
+     *
+     * @param  int  $commentId  Comment id
+     * @return int|null Owning post id, or null if the comment is gone
+     */
+    private function postIdForComment(int $commentId): ?int
+    {
+        $sql = "SELECT post_id FROM {$this->getTable()} WHERE id = ? LIMIT 1";
+        $row = $this->database->query($sql, [$commentId])->fetch(\PDO::FETCH_ASSOC);
+
+        return $row ? (int) $row['post_id'] : null;
+    }
+
+    /**
+     * Distinct owning post ids for a set of comments, for bulk moderation.
+     *
+     * @param  int[]  $commentIds  Comment ids
+     * @return int[] Unique post ids touched by those comments
+     */
+    private function postIdsForComments(array $commentIds): array
+    {
+        if ($commentIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($commentIds), '?'));
+        $sql = "SELECT DISTINCT post_id FROM {$this->getTable()} WHERE id IN ({$placeholders})";
+        $rows = $this->database->query($sql, $commentIds)->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $r): int => (int) $r['post_id'], $rows);
+    }
+
+    /**
+     * Drop a post's cached comment thread after it changes.
+     *
+     * Clears the key written by forPostThreaded() (localized=false).
+     *
+     * @param  int  $postId  Post whose thread cache to clear
+     */
+    private function forgetThreadCache(int $postId): void
+    {
+        fragment()->forget('post-comments:'.$postId, false);
+    }
+
+    /**
      * @param  int[]  $ids  Comment IDs to update
      */
     public function bulkUpdateStatus(array $ids, string $status): int
@@ -327,8 +403,15 @@ class CommentModel extends AppModel
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $sql = "UPDATE {$this->getTable()} SET status = ? WHERE id IN ({$placeholders})";
+        $affected = (int) $this->database->execute($sql, array_merge([$status], $ids));
 
-        return (int) $this->database->execute($sql, array_merge([$status], $ids));
+        if ($affected > 0) {
+            foreach ($this->postIdsForComments($ids) as $postId) {
+                $this->forgetThreadCache($postId);
+            }
+        }
+
+        return $affected;
     }
 
     /**
@@ -340,16 +423,33 @@ class CommentModel extends AppModel
             return 0;
         }
 
+        // Resolve owning posts before the rows are gone.
+        $postIds = $this->postIdsForComments($ids);
+
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $sql = "DELETE FROM {$this->getTable()} WHERE id IN ({$placeholders})";
+        $affected = (int) $this->database->execute($sql, $ids);
 
-        return (int) $this->database->execute($sql, $ids);
+        if ($affected > 0) {
+            foreach ($postIds as $postId) {
+                $this->forgetThreadCache($postId);
+            }
+        }
+
+        return $affected;
     }
 
     public function deleteById(int $id): bool
     {
+        // Resolve the owning post before the row is gone.
+        $postId = $this->postIdForComment($id);
+
         $sql = "DELETE FROM {$this->getTable()} WHERE id = ?";
         $affected = $this->database->execute($sql, [$id]);
+
+        if ($affected > 0 && $postId !== null) {
+            $this->forgetThreadCache($postId);
+        }
 
         return $affected > 0;
     }
@@ -442,7 +542,13 @@ class CommentModel extends AppModel
      */
     public function create(array $data): int|false
     {
-        return $this->insert($data);
+        $id = $this->insert($data);
+
+        if ($id !== false && !empty($data['post_id'])) {
+            $this->forgetThreadCache((int) $data['post_id']);
+        }
+
+        return $id;
     }
 
     public function countForPost(int $postId): int
@@ -510,6 +616,10 @@ class CommentModel extends AppModel
     {
         $sql = "DELETE FROM {$this->getTable()} WHERE post_id = ?";
         $affected = $this->database->execute($sql, [$postId]);
+
+        if ($affected > 0) {
+            $this->forgetThreadCache($postId);
+        }
 
         return $affected > 0;
     }

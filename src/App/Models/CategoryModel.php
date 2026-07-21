@@ -94,11 +94,18 @@ class CategoryModel extends AppModel
      */
     public function update(int|string $id, array $data): bool
     {
+        // Categories never move blogs, so the stored row gives us the blog id.
+        $existing = $this->find($id);
         $result = parent::update($id, $data);
 
         if ($result) {
             // Invalidate all blog listings (categories shown in sidebars, filters, etc.)
             cache()->deletePattern('*:GET:/blogs*');
+
+            $blogId = (int) ($existing['blog_id'] ?? $data['blog_id'] ?? 0);
+            if ($blogId > 0) {
+                fragment()->forget('blog-pubcats:'.$blogId, false);
+            }
         }
 
         return $result;
@@ -114,11 +121,18 @@ class CategoryModel extends AppModel
      */
     public function delete(int|string $id): bool
     {
+        // Resolve the owning blog before the row is gone.
+        $existing = $this->find($id);
         $result = parent::delete($id);
 
         if ($result) {
             // Invalidate all blog cache (posts in this category need to update)
             cache()->deletePattern('*:GET:/blog*');
+
+            $blogId = (int) ($existing['blog_id'] ?? 0);
+            if ($blogId > 0) {
+                fragment()->forget('blog-pubcats:'.$blogId, false);
+            }
         }
 
         return $result;
@@ -244,15 +258,22 @@ class CategoryModel extends AppModel
      */
     public function getPublishedByBlogId(int $blogId): array
     {
-        $sql = "SELECT c.*, COUNT(p.id) AS post_count
-                FROM categories c
-                JOIN posts p ON p.category_id = c.id AND p.status = 'published'
-                WHERE c.blog_id = ?
-                GROUP BY c.id
-                ORDER BY c.name ASC";
-        $stmt = $this->database->query($sql, [$blogId]);
+        $cacheKey = 'blog-pubcats:'.$blogId;
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $loadCategories = function () use ($blogId): array {
+            $sql = "SELECT c.*, COUNT(p.id) AS post_count
+                    FROM categories c
+                    JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                    WHERE c.blog_id = ?
+                    GROUP BY c.id
+                    ORDER BY c.name ASC";
+
+            return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
+        };
+
+        // post_count depends on published posts, so this is busted by post writes
+        // (PostModel) as well as category writes in this model.
+        return fragment()->rememberData($cacheKey, $loadCategories, 3600, false);
     }
 
     /**

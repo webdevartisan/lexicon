@@ -56,6 +56,11 @@ class PostModel extends AppModel
         if ($id) {
             // Clear all blog listing cache (homepage, category pages, etc.)
             cache()->deletePattern('*:GET:/blogs*');
+
+            // A new post shifts every neighbour/related list in its blog.
+            if (!empty($data['blog_id'])) {
+                $this->forgetBlogPostFragments((int) $data['blog_id']);
+            }
         }
 
         return $id;
@@ -95,6 +100,9 @@ class PostModel extends AppModel
 
             // Invalidate all blog listings (post might appear in multiple lists)
             cache()->deletePattern('*:GET:/blogs*');
+
+            // Drop this post's own data fragments plus the blog-wide neighbour lists.
+            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
         }
 
         return $result;
@@ -123,9 +131,41 @@ class PostModel extends AppModel
 
             // Invalidate all blog listings (post removed from lists)
             cache()->deletePattern('*:GET:/blogs*');
+
+            // Drop this post's own data fragments plus the blog-wide neighbour lists.
+            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
         }
 
         return $result;
+    }
+
+    /**
+     * Drop cached data fragments tied to a blog's posts.
+     *
+     * Neighbour and related lists are blog-scoped, so any post write in the
+     * blog invalidates all of them. When a specific post id is given, its own
+     * tag and comment fragments are dropped too.
+     *
+     * @param  int  $blogId  Blog whose neighbour/related fragments to clear
+     * @param  int|null  $postId  Specific post whose tag/comment fragments to clear
+     */
+    private function forgetBlogPostFragments(int $blogId, ?int $postId = null): void
+    {
+        // Post-page neighbour and related lists.
+        fragment()->forgetPattern('post-nav:'.$blogId.':*');
+        fragment()->forgetPattern('post-related:'.$blogId.':*');
+
+        // Landing/listing data: featured pick, paginated lists, category grids,
+        // and the category chips (their post_count tracks published posts).
+        fragment()->forget('blog-featured:'.$blogId, false);
+        fragment()->forgetPattern('blog-posts:'.$blogId.':*');
+        fragment()->forgetPattern('blog-catposts:'.$blogId.':*');
+        fragment()->forget('blog-pubcats:'.$blogId, false);
+
+        if ($postId !== null) {
+            fragment()->forget('post-tags:'.$postId, false);
+            fragment()->forget('post-comments:'.$postId, false);
+        }
     }
 
     /**
@@ -205,13 +245,20 @@ class PostModel extends AppModel
      */
     public function tags(int $postId): array
     {
-        $sql = 'SELECT t.* 
-                FROM tags t
-                INNER JOIN post_tags pt ON t.id = pt.tag_id
-                WHERE pt.post_id = :post_id';
-        $stmt = $this->database->query($sql, [':post_id' => $postId]);
+        $cacheKey = 'post-tags:'.$postId;
 
-        return $stmt->fetchAll();
+        $loadTags = function () use ($postId): array {
+            $sql = 'SELECT t.*
+                    FROM tags t
+                    INNER JOIN post_tags pt ON t.id = pt.tag_id
+                    WHERE pt.post_id = :post_id';
+
+            return $this->database->query($sql, [':post_id' => $postId])->fetchAll();
+        };
+
+        // localized=false: tag rows read the same in every locale.
+        // Busted from create/update/delete when a post's tags may change.
+        return fragment()->rememberData($cacheKey, $loadTags, 3600, false);
     }
 
     /**
@@ -235,6 +282,8 @@ class PostModel extends AppModel
      */
     public function commentsThreaded(int $postId): array
     {
+        // Caching lives in CommentModel::forPostThreaded, next to the comment
+        // write paths that invalidate it.
         $commentModel = new CommentModel($this->database);
 
         return $commentModel->forPostThreaded($postId);
@@ -366,20 +415,25 @@ class PostModel extends AppModel
      */
     public function findPreviousByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
     {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE blog_id = :blog_id
-                AND status = 'published'
-                AND published_at < :ts
-                ORDER BY published_at DESC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':blog_id' => $blogId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
+        $cacheKey = 'post-nav:'.$blogId.':prev:'.$publishedAtUtc;
 
-        return $row ?: null;
+        $loadPrevious = function () use ($blogId, $publishedAtUtc): ?array {
+            $sql = "SELECT id, slug, title, published_at
+                    FROM {$this->getTable()}
+                    WHERE blog_id = :blog_id
+                    AND status = 'published'
+                    AND published_at < :ts
+                    ORDER BY published_at DESC
+                    LIMIT 1";
+
+            return $this->database->query($sql, [
+                ':blog_id' => $blogId,
+                ':ts' => $publishedAtUtc,
+            ])->fetch() ?: null;
+        };
+
+        // Blog-scoped neighbour lookup, busted for the whole blog on any post write.
+        return fragment()->rememberData($cacheKey, $loadPrevious, 3600, false);
     }
 
     /**
@@ -416,20 +470,25 @@ class PostModel extends AppModel
      */
     public function findNextByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
     {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE blog_id = :blog_id
-                AND status = 'published'
-                AND published_at > :ts
-                ORDER BY published_at ASC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':blog_id' => $blogId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
+        $cacheKey = 'post-nav:'.$blogId.':next:'.$publishedAtUtc;
 
-        return $row ?: null;
+        $loadNext = function () use ($blogId, $publishedAtUtc): ?array {
+            $sql = "SELECT id, slug, title, published_at
+                    FROM {$this->getTable()}
+                    WHERE blog_id = :blog_id
+                    AND status = 'published'
+                    AND published_at > :ts
+                    ORDER BY published_at ASC
+                    LIMIT 1";
+
+            return $this->database->query($sql, [
+                ':blog_id' => $blogId,
+                ':ts' => $publishedAtUtc,
+            ])->fetch() ?: null;
+        };
+
+        // Blog-scoped neighbour lookup, busted for the whole blog on any post write.
+        return fragment()->rememberData($cacheKey, $loadNext, 3600, false);
     }
 
     /**
@@ -468,20 +527,26 @@ class PostModel extends AppModel
      */
     public function findRecentByBlogIdExcludingSlug(int $blogId, string $excludeSlug, int $limit = 4): array
     {
-        $sql = "SELECT id, slug, title, excerpt, featured_image AS cover_url, published_at
-                FROM {$this->getTable()}
-                WHERE blog_id = :blog_id
-                AND status = 'published'
-                AND slug <> :slug
-                ORDER BY published_at DESC
-                LIMIT :limit";
-        $stmt = $this->database->query($sql, [
-            ':blog_id' => $blogId,
-            ':slug' => $excludeSlug,
-            ':limit' => $limit,
-        ]);
+        $cacheKey = 'post-related:'.$blogId.':'.$excludeSlug.':'.$limit;
 
-        return $stmt->fetchAll() ?: [];
+        $loadRelated = function () use ($blogId, $excludeSlug, $limit): array {
+            $sql = "SELECT id, slug, title, excerpt, featured_image AS cover_url, published_at
+                    FROM {$this->getTable()}
+                    WHERE blog_id = :blog_id
+                    AND status = 'published'
+                    AND slug <> :slug
+                    ORDER BY published_at DESC
+                    LIMIT :limit";
+
+            return $this->database->query($sql, [
+                ':blog_id' => $blogId,
+                ':slug' => $excludeSlug,
+                ':limit' => $limit,
+            ])->fetchAll() ?: [];
+        };
+
+        // "Related" list for the post page, busted for the whole blog on any post write.
+        return fragment()->rememberData($cacheKey, $loadRelated, 3600, false);
     }
 
     /**
@@ -494,35 +559,40 @@ class PostModel extends AppModel
      */
     public function findPublishedByBlogIdWithPagination(int $blogId, int $page = 1, int $perPage = 5): array
     {
-        $offset = ($page - 1) * $perPage;
+        $cacheKey = 'blog-posts:'.$blogId.':'.$page.':'.$perPage;
 
-        // Get total count of published posts for this blog
-        $countSql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = 'published'";
-        $countStmt = $this->database->query($countSql, [':blog_id' => $blogId]);
-        $totalPosts = (int) $countStmt->fetchColumn();
+        $loadPage = function () use ($blogId, $page, $perPage): array {
+            $offset = ($page - 1) * $perPage;
 
-        $totalPages = (int) ceil($totalPosts / $perPage);
+            // Get total count of published posts for this blog
+            $countSql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = 'published'";
+            $totalPosts = (int) $this->database->query($countSql, [':blog_id' => $blogId])->fetchColumn();
 
-        // Get paginated results
-        $sql = "SELECT * FROM {$this->getTable()}
-                WHERE blog_id = :blog_id AND status = 'published'
-                ORDER BY published_at DESC
-                LIMIT :limit OFFSET :offset";
+            $totalPages = (int) ceil($totalPosts / $perPage);
 
-        $stmt = $this->database->query($sql, [
-            ':blog_id' => $blogId,
-            ':limit' => $perPage,
-            ':offset' => $offset,
-        ]);
-        $posts = $stmt->fetchAll();
+            // Get paginated results
+            $sql = "SELECT * FROM {$this->getTable()}
+                    WHERE blog_id = :blog_id AND status = 'published'
+                    ORDER BY published_at DESC
+                    LIMIT :limit OFFSET :offset";
 
-        return [
-            'data' => $posts,
-            'totalPages' => $totalPages,
-            'currentPage' => $page,
-            'perPage' => $perPage,
-            'totalPosts' => $totalPosts,
-        ];
+            $posts = $this->database->query($sql, [
+                ':blog_id' => $blogId,
+                ':limit' => $perPage,
+                ':offset' => $offset,
+            ])->fetchAll();
+
+            return [
+                'data' => $posts,
+                'totalPages' => $totalPages,
+                'currentPage' => $page,
+                'perPage' => $perPage,
+                'totalPosts' => $totalPosts,
+            ];
+        };
+
+        // Blog-scoped published listing; busted on any post write for the blog.
+        return fragment()->rememberData($cacheKey, $loadPage, 3600, false);
     }
 
     /**
@@ -704,12 +774,19 @@ class PostModel extends AppModel
      */
     public function findFeaturedByBlogId(int $blogId): ?array
     {
-        $sql = "SELECT * FROM posts
-                WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
-                ORDER BY published_at DESC, id DESC
-                LIMIT 1";
+        $cacheKey = 'blog-featured:'.$blogId;
 
-        return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+        $loadFeatured = function () use ($blogId): ?array {
+            $sql = "SELECT * FROM posts
+                    WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
+                    ORDER BY published_at DESC, id DESC
+                    LIMIT 1";
+
+            return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+        };
+
+        // Blog-scoped landing data; busted on any post write or a featured toggle.
+        return fragment()->rememberData($cacheKey, $loadFeatured, 3600, false);
     }
 
     /**
@@ -725,6 +802,7 @@ class PostModel extends AppModel
                 'UPDATE posts SET is_featured = 0 WHERE id = ? AND blog_id = ?',
                 [$postId, $blogId]
             );
+            $this->forgetBlogPostFragments($blogId);
 
             return true;
         }
@@ -740,6 +818,7 @@ class PostModel extends AppModel
                 [$postId, $blogId]
             );
             $this->database->commit();
+            $this->forgetBlogPostFragments($blogId);
 
             return true;
         } catch (\Throwable $e) {
@@ -831,23 +910,31 @@ class PostModel extends AppModel
      */
     public function findPublishedByBlogAndCategory(int $blogId, ?int $categoryId, int $limit = 6, ?int $excludeId = null): array
     {
-        $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
-        $params = [':blog_id' => $blogId];
+        // null id/exclude become 'all'/'none' so the key stays readable and distinct.
+        $cacheKey = 'blog-catposts:'.$blogId.':'.($categoryId ?? 'all').':'.$limit.':'.($excludeId ?? 'none');
 
-        if ($categoryId !== null) {
-            $sql .= ' AND category_id = :category_id';
-            $params[':category_id'] = $categoryId;
-        }
+        $loadCategoryPosts = function () use ($blogId, $categoryId, $limit, $excludeId): array {
+            $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
+            $params = [':blog_id' => $blogId];
 
-        if ($excludeId !== null) {
-            $sql .= ' AND id <> :exclude_id';
-            $params[':exclude_id'] = $excludeId;
-        }
+            if ($categoryId !== null) {
+                $sql .= ' AND category_id = :category_id';
+                $params[':category_id'] = $categoryId;
+            }
 
-        $sql .= ' ORDER BY published_at DESC, id DESC LIMIT :limit';
-        $params[':limit'] = $limit;
+            if ($excludeId !== null) {
+                $sql .= ' AND id <> :exclude_id';
+                $params[':exclude_id'] = $excludeId;
+            }
 
-        return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
+            $sql .= ' ORDER BY published_at DESC, id DESC LIMIT :limit';
+            $params[':limit'] = $limit;
+
+            return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
+        };
+
+        // Blog-scoped category grid; busted on any post write for the blog.
+        return fragment()->rememberData($cacheKey, $loadCategoryPosts, 3600, false);
     }
 
     /**
@@ -909,11 +996,26 @@ class PostModel extends AppModel
      */
     public function updateStatus(int $id, string $status): bool
     {
+        // Fetch before the change so we know which blog/URL to invalidate.
+        $post = $this->findResource($id);
+
         $sql = 'UPDATE posts SET status = :status WHERE id = :id';
         $affected = $this->database->execute($sql, [
             ':status' => $status,
             ':id' => $id,
         ]);
+
+        if ($affected > 0 && $post) {
+            $blog = $post->blog();
+
+            // Publishing/archiving changes what listings and the post page show.
+            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
+            cache()->deletePattern('*:GET:/blogs*');
+
+            // Neighbour/related lists filter on status='published', so a status
+            // flip shifts them for the whole blog.
+            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+        }
 
         return $affected > 0;
     }

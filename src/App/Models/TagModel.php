@@ -138,6 +138,11 @@ class TagModel extends AppModel
             ':tag_id' => $tagId,
         ]);
 
+        if ($affected > 0) {
+            // The post's cached tag list (PostModel::tags) is now stale.
+            fragment()->forget('post-tags:'.$postId, false);
+        }
+
         // 0 = already exists, 1 = newly inserted, both are success
         return $affected >= 0;
     }
@@ -158,6 +163,11 @@ class TagModel extends AppModel
             ':post_id' => $postId,
             ':tag_id' => $tagId,
         ]);
+
+        if ($affected > 0) {
+            // The post's cached tag list (PostModel::tags) is now stale.
+            fragment()->forget('post-tags:'.$postId, false);
+        }
 
         return $affected > 0; // Only true if actually removed
     }
