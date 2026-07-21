@@ -125,12 +125,9 @@ final class CacheControlHint
         // maps to the same bytes and a replaced image arrives under a new name.
         // That makes these immutable in the same sense as a versioned asset.
         //
-        // Without this the browser gets no validator at all and re-downloads on
-        // every navigation, which is what made the topbar avatar flicker.
-        //
         // Matches an optional "{locale}/" prefix the same way LocaleAwareStaticBypass
         // does, since that runs straight after this and locale is not stripped yet.
-        $uploadSegments = array_values(array_filter(explode('/', $path), 'strlen'));
+        $uploadSegments = array_values(array_filter(explode('/', $path), fn ($segment) => $segment !== ''));
         if (!empty($uploadSegments)) {
             $localeCfg = require ROOT_PATH.'/config/localization.php';
             $supportedLocales = array_map('strtolower', $localeCfg['supported'] ?? ['en']);
