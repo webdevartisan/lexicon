@@ -39,6 +39,19 @@ class PublicCacheInvalidator
     }
 
     /**
+     * Every cached blog page, all locales.
+     *
+     * Listings bake in the set of visible posts, so a post appearing or
+     * disappearing has to clear them or it stays invisible until the TTL runs
+     * out. Which blog a change belongs to isn't part of the cache key, so this
+     * is necessarily broad.
+     */
+    public function purgeBlogSurfaces(): void
+    {
+        cache()->deletePattern('*:GET:/blog/*');
+    }
+
+    /**
      * Blog surfaces that render author names, plus one public profile page.
      *
      * Author links are baked into cached blog pages, so flipping a profile to
@@ -50,7 +63,7 @@ class PublicCacheInvalidator
      */
     public function purgeAuthorSurfaces(?string $slug = null): void
     {
-        cache()->deletePattern('*:GET:/blog/*');
+        $this->purgeBlogSurfaces();
 
         if ($slug !== null && $slug !== '') {
             cache()->deletePattern("*:GET:/profile/{$slug}*");
