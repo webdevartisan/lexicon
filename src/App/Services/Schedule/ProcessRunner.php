@@ -20,9 +20,10 @@ use App\Interfaces\TaskRunnerInterface;
  * the real work and exits, which lets us close our end immediately instead of
  * waiting on a task that might run for minutes.
  *
- * The only values interpolated into that shell command are the two row ids,
+ * What goes into that shell command is fixed console command names, row ids
  * cast to int here, and paths passed through escapeshellarg. Nothing an
- * operator can type reaches this class.
+ * operator can type reaches this class, and nothing should ever be added that
+ * does.
  */
 class ProcessRunner implements TaskRunnerInterface
 {
@@ -36,6 +37,24 @@ class ProcessRunner implements TaskRunnerInterface
      */
     public function dispatch(int $taskId, int $runId): bool
     {
+        return $this->spawn('schedule:run-task '.(int) $taskId.' '.(int) $runId);
+    }
+
+    /**
+     * Start a whole tick in the background.
+     */
+    public function dispatchTick(): bool
+    {
+        return $this->spawn('schedule:run');
+    }
+
+    /**
+     * Start a console command in the background and let go of it.
+     *
+     * @param  string  $consoleArguments  Command name and arguments, built from trusted values only
+     */
+    private function spawn(string $consoleArguments): bool
+    {
         $binary = $this->resolveBinary();
 
         // Refuse rather than hand Windows a path that is not there. Starting a
@@ -46,7 +65,7 @@ class ProcessRunner implements TaskRunnerInterface
             return false;
         }
 
-        $command = $this->buildCommand($binary, (int) $taskId, (int) $runId);
+        $command = $this->buildCommand($binary, $consoleArguments);
 
         $descriptors = [
             ['file', $this->nullDevice(), 'r'],
@@ -129,11 +148,10 @@ class ProcessRunner implements TaskRunnerInterface
     /**
      * Build the platform specific background command.
      */
-    private function buildCommand(string $binary, int $taskId, int $runId): string
+    private function buildCommand(string $binary, string $task): string
     {
         $php = escapeshellarg($binary);
         $cli = escapeshellarg($this->rootPath.DIRECTORY_SEPARATOR.'cli');
-        $task = "schedule:run-task {$taskId} {$runId}";
 
         if ($this->isWindows()) {
             // The empty quotes are the window title start expects. Without

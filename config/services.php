@@ -348,6 +348,22 @@ $container->setShared(App\Services\ScheduleService::class, function ($c) {
 });
 
 /**
+ * Page visit fallback for installs with no crontab.
+ *
+ * Off unless SCHEDULE_PSEUDO_CRON is set, and it stands down on hosts that
+ * cannot start processes, since running a tick inside a request would hold
+ * that worker for as long as the due tasks take.
+ */
+$container->setShared(App\Services\PseudoCron::class, function ($c) {
+    return new App\Services\PseudoCron(
+        $c->get(App\Services\ScheduleService::class),
+        $c->get(App\Interfaces\TaskRunnerInterface::class),
+        $c->get(App\Models\SettingModel::class),
+        require ROOT_PATH.'/config/schedule.php'
+    );
+});
+
+/**
  * Email template registry discovers and caches available email templates.
  *
  * We register as singleton to avoid repeated filesystem scans when

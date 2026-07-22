@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\ScheduledTaskModel;
 use App\Models\ScheduledTaskRunModel;
 use App\Models\UserPreferencesModel;
+use App\Services\PseudoCron;
 use App\Services\ScheduleCalculator;
 use App\Services\ScheduleRegistry;
 use App\Services\ScheduleService;
@@ -44,6 +45,7 @@ class ScheduledTaskController extends AppController
         private ScheduleRegistry $registry,
         private ScheduleCalculator $calculator,
         private UserPreferencesModel $preferences,
+        private PseudoCron $pseudoCron,
     ) {}
 
     /**
@@ -59,6 +61,8 @@ class ScheduledTaskController extends AppController
             'viewerTimezone' => $this->viewerTimezone(),
             'cronLine' => $this->cronLine(),
             'labels' => $this->registry->options(),
+            'pseudoCronEnabled' => $this->pseudoCron->isEnabled(),
+            'pseudoCronOperational' => $this->pseudoCron->isOperational(),
         ]);
     }
 

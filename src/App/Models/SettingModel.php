@@ -109,6 +109,43 @@ class SettingModel extends AppModel
     }
 
     /**
+     * Take a timestamp setting, but only if it is older than the given age.
+     *
+     * A conditional update used as a lock. Whoever wins gets a row count of
+     * one and everybody arriving at the same moment gets nothing, which is how
+     * a busy site avoids every visitor at once kicking off the same background
+     * work. The comparison is done as a string because the column is TEXT and
+     * ISO timestamps sort correctly that way, with no reliance on MySQL
+     * quietly casting it to a date.
+     *
+     * @param  string  $name  Setting holding a 'Y-m-d H:i:s' UTC timestamp
+     * @param  int  $olderThanSeconds  How stale it has to be to claim
+     * @return bool Whether this caller won the claim
+     */
+    public function claimStale(string $name, int $olderThanSeconds): bool
+    {
+        // Seeds the row on first use, dated far enough back to be claimable.
+        $this->database->execute(
+            "INSERT IGNORE INTO {$this->getTable()} (name, value) VALUES (?, '1970-01-01 00:00:00')",
+            [$name]
+        );
+
+        $won = $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET value = DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%d %H:%i:%s')
+             WHERE name = ?
+               AND value < DATE_FORMAT(DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? SECOND), '%Y-%m-%d %H:%i:%s')",
+            [$name, $olderThanSeconds]
+        ) > 0;
+
+        if ($won) {
+            $this->cache = null;
+        }
+
+        return $won;
+    }
+
+    /**
      * Set multiple settings in a single transaction.
      *
      * We batch updates for better performance when saving the settings form.

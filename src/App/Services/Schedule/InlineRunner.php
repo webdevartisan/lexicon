@@ -41,6 +41,19 @@ class InlineRunner implements TaskRunnerInterface
     }
 
     /**
+     * Always declines.
+     *
+     * The page visit fallback exists to start a whole tick, and running one
+     * here would mean a visitor's request sat there for as long as every due
+     * task took. A slow page is a worse problem than a late task, so this says
+     * no and the panel explains why.
+     */
+    public function dispatchTick(): bool
+    {
+        return false;
+    }
+
+    /**
      * Always fails. The work is happening in this process, so there is nothing
      * separate left to signal.
      */

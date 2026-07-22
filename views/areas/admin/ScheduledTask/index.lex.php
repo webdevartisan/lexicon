@@ -108,6 +108,34 @@ $heartbeatText = $heartbeatAge === null ? '' : $relative(gmdate('Y-m-d H:i:s', t
     </div>
     <?php } ?>
 
+    <?php if ($pseudoCronEnabled) { ?>
+        <?php if ($pseudoCronOperational) { ?>
+        <div class="flex items-start gap-3 p-4 mb-4 text-sm border-l-4 rounded-md bg-custom-50 border-custom-500 text-custom-800 dark:bg-zink-700 dark:text-custom-400">
+            {% cache 'lucide:sched:mouse-pointer-click' ttl=31536000 %}<i data-lucide="mouse-pointer-click" class="size-5 shrink-0 mt-0.5"></i>{% endcache %}
+            <div>
+                <p class="font-medium">Page visits are keeping the scheduler ticking</p>
+                <p class="mt-0.5">
+                    A visitor arriving more than a minute after the last tick starts one in the background.
+                    Worth knowing that cached pages never reach PHP, so a quiet site may tick rarely or not at
+                    all overnight. Real cron is still the dependable option.
+                </p>
+            </div>
+        </div>
+        <?php } else { ?>
+        <div class="flex items-start gap-3 p-4 mb-4 text-sm border-l-4 rounded-md bg-orange-50 border-orange-500 text-orange-800 dark:bg-zink-700 dark:text-orange-200">
+            {% cache 'lucide:sched:alert-triangle-pseudo' ttl=31536000 %}<i data-lucide="alert-triangle" class="size-5 shrink-0 mt-0.5"></i>{% endcache %}
+            <div>
+                <p class="font-medium">The page visit fallback is switched on but cannot run</p>
+                <p class="mt-0.5">
+                    It needs to start a background process, and this host does not allow that. Running a whole
+                    tick inside a page load would leave visitors waiting for however long the tasks take, so it
+                    stands down instead. Use a real crontab entry here.
+                </p>
+            </div>
+        </div>
+        <?php } ?>
+    <?php } ?>
+
     <?php if (empty($tasks)) { ?>
         {% cmp="empty-state" icon="clock" title="No tasks yet" message="Add a task to have the scheduler run it on a timetable." %}
         <div class="mt-4 text-center">

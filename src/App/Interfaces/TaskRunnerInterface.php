@@ -31,6 +31,17 @@ interface TaskRunnerInterface
     public function dispatch(int $taskId, int $runId): bool;
 
     /**
+     * Start a whole scheduler tick out of band.
+     *
+     * Used by the page visit fallback on installs with no crontab. Only the
+     * detached runner can honour it, since running a full tick inside a
+     * request would hold that worker for as long as the tasks take.
+     *
+     * @return bool Whether a tick was started
+     */
+    public function dispatchTick(): bool;
+
+    /**
      * Whether work leaves this process and can therefore be killed later.
      */
     public function isDetached(): bool;
