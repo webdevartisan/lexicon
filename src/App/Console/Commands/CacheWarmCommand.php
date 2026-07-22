@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Interfaces\SchedulableCommandInterface;
 use Framework\Cache\CacheKey;
 use Framework\Cache\CacheService;
 use Framework\Cache\FragmentCache;
@@ -23,7 +24,7 @@ use Framework\Core\Request;
  *   php cli cache:warm --locale=el        - Warm specific locale only
  *   php cli cache:warm --verbose          - Show detailed progress
  */
-class CacheWarmCommand
+class CacheWarmCommand implements SchedulableCommandInterface
 {
     private CacheService $cache;
 
@@ -46,6 +47,19 @@ class CacheWarmCommand
         $this->config = require ROOT_PATH.'/config/cache.php';
     }
 
+    public static function scheduleLabel(): string
+    {
+        return 'Warm the cache';
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function argumentSchema(): array
+    {
+        return [];
+    }
+
     /**
      * Execute the cache warming operation.
      *
@@ -55,7 +69,7 @@ class CacheWarmCommand
      *
      * @return int Exit code (0 = success, 1 = failure)
      */
-    public function handle(): int
+    public function handle(array $arguments = []): int
     {
         try {
             $startTime = microtime(true);

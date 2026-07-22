@@ -57,6 +57,19 @@ class Kernel
     }
 
     /**
+     * Registered commands, keyed by console name.
+     *
+     * The task scheduler reads this so its allowlist is the registration
+     * itself rather than a second list that could drift out of step.
+     *
+     * @return array<string, class-string>
+     */
+    public function commandMap(): array
+    {
+        return $this->commands;
+    }
+
+    /**
      * Handle an incoming console command.
      *
      * We parse the command-line arguments, validate the command exists,
@@ -99,7 +112,11 @@ class Kernel
             }
 
             // execute the command and return its exit code
-            return $command->handle();
+            // commands that accept arguments get everything after the name,
+            // the rest keep being called with nothing as they always were
+            return $this->acceptsArguments($command)
+                ? $command->handle($this->parseArguments(array_slice($argv, 2)))
+                : $command->handle();
 
         } catch (\Throwable $e) {
             echo "Error: {$e->getMessage()}\n";
@@ -107,6 +124,52 @@ class Kernel
 
             return 1;
         }
+    }
+
+    /**
+     * Whether a command wants the command line arguments.
+     *
+     * We check the signature rather than an interface so commands written
+     * before arguments existed keep working untouched.
+     *
+     * @param  object  $command  Resolved command handler
+     */
+    protected function acceptsArguments(object $command): bool
+    {
+        try {
+            return (new \ReflectionMethod($command, 'handle'))->getNumberOfParameters() > 0;
+        } catch (\ReflectionException) {
+            return false;
+        }
+    }
+
+    /**
+     * Turn raw arguments into something a command can read.
+     *
+     * Named options come back under their own key and anything else keeps its
+     * position, so both `--tier=bulk` and a plain `12` are available without
+     * every command having to pick argv apart itself.
+     *
+     * @param  array<int, string>  $arguments  Everything after the command name
+     * @return array<int|string, string>
+     */
+    protected function parseArguments(array $arguments): array
+    {
+        $parsed = [];
+        $position = 0;
+
+        foreach ($arguments as $argument) {
+            if (str_starts_with($argument, '--')) {
+                $pair = explode('=', substr($argument, 2), 2);
+                $parsed[$pair[0]] = $pair[1] ?? '1';
+
+                continue;
+            }
+
+            $parsed[$position++] = $argument;
+        }
+
+        return $parsed;
     }
 
     /**

@@ -1673,6 +1673,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .break-words {
   overflow-wrap: break-word;
 }
+.break-all {
+  word-break: break-all;
+}
 .rounded {
   border-radius: 0.25rem;
 }
@@ -2293,6 +2296,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .pb-2\.5 {
   padding-bottom: 0.625rem;
+}
+.pb-3 {
+  padding-bottom: 0.75rem;
 }
 .pb-\[calc\(theme\(\'spacing\.header\'\)_\*_0\.8\)\] {
   padding-bottom: calc(70px * 0.8);
@@ -3517,6 +3523,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .disabled\:text-slate-500:disabled {
   --tw-text-opacity: 1;
   color: rgb(100 116 139 / var(--tw-text-opacity, 1));
+}
+.disabled\:opacity-40:disabled {
+  opacity: 0.4;
 }
 .group[open] .group-open\:rotate-180 {
   --tw-rotate: 180deg;

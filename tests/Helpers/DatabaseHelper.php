@@ -66,6 +66,8 @@ class DatabaseHelper
             'pages',
             'site_content',
             'mail_queue',
+            'scheduled_task_runs',
+            'scheduled_tasks',
         ];
 
         foreach ($tables as $table) {

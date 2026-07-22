@@ -53,7 +53,7 @@ class NotificationService
         private NotificationModel $notifications,
         private UserModel $users,
         private UserPreferencesModel $preferences,
-        private MailService $mail,
+        private MailQueueService $mailQueue,
     ) {}
 
     /**
@@ -81,13 +81,12 @@ class NotificationService
             return;
         }
 
-        if (env('MAIL_ENABLED', false) === false) {
-            return;
-        }
-
+        // No MAIL_ENABLED check here any more. The queue worker leaves
+        // everything alone while mail is switched off, so notifications wait
+        // and go out when it is switched back on instead of being dropped.
         $mailable = $this->buildMailable($type, (string) $user['email'], $data);
         if ($mailable !== null) {
-            $this->mail->send($mailable);
+            $this->mailQueue->enqueue($mailable, 'notification', $userId);
         }
     }
 

@@ -25,7 +25,7 @@ class InvitationService
         private readonly BlogModel $blogModel,
         private readonly UserModel $userModel,
         private readonly NotificationService $notifications,
-        private readonly MailService $mailService,
+        private readonly MailQueueService $mailQueue,
         private readonly UserPreferencesModel $preferences,
     ) {}
 
@@ -71,11 +71,12 @@ class InvitationService
             ]);
         }
 
-        // Email always sent (raw token in link, never stored).
+        // Email always queued (raw token in link, never stored). Queueing means
+        // an invite survives the transport being down instead of vanishing.
         $blog = $this->blogModel->getBlog($blogId);
         $blogName = $blog ? $blog->name() : 'a blog';
 
-        return $this->mailService->send(new BlogInviteMail($email, $rawToken, $blogName, $role));
+        return $this->mailQueue->enqueue(new BlogInviteMail($email, $rawToken, $blogName, $role), 'blog', $blogId) > 0;
     }
 
     /**

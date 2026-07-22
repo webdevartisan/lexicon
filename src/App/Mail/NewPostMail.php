@@ -9,6 +9,9 @@ namespace App\Mail;
  */
 class NewPostMail extends Mailable
 {
+    /** Goes to every subscriber at once, so throughput matters far more than latency. */
+    protected string $tier = self::TIER_BULK;
+
     public function __construct(
         private string $toEmail,
         private string $blogName,

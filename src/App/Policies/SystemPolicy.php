@@ -54,6 +54,7 @@ class SystemPolicy implements PolicyInterface
         'viewSystem' => 'view_system_health',
         'manageCache' => 'manage_cache',
         'manageMailQueue' => 'manage_mail_queue',
+        'manageScheduledTasks' => 'manage_scheduled_tasks',
         'manageSettings' => 'manage_site_settings',
     ];
 
@@ -178,6 +179,19 @@ class SystemPolicy implements PolicyInterface
     public function manageMailQueue(array $user): bool
     {
         return $this->allowsArea($user, 'manageMailQueue');
+    }
+
+    /**
+     * Configure recurring tasks and start them by hand.
+     *
+     * Separate from site settings because this one starts processes, so it is
+     * worth being able to grant the rest of the control panel without it.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageScheduledTasks(array $user): bool
+    {
+        return $this->allowsArea($user, 'manageScheduledTasks');
     }
 
     /**

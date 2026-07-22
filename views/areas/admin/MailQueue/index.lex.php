@@ -15,13 +15,15 @@ $tiles = [
     ['status' => 'failed', 'label' => 'Failed', 'icon' => 'alert-circle'],
 ];
 
-// Relative wording reads better than a timestamp for something due imminently
-$dueIn = static function (?string $when): string {
-    if (empty($when)) {
-        return '—';
+// Relative wording reads better than a timestamp for something due imminently.
+// The seconds come from MySQL rather than being worked out here, because the
+// database and PHP do not agree on what time it is.
+$dueIn = static function ($seconds): string {
+    if ($seconds === null) {
+        return 'not scheduled';
     }
 
-    $seconds = strtotime($when) - time();
+    $seconds = (int) $seconds;
 
     if ($seconds <= 0) {
         return 'due now';
@@ -35,8 +37,28 @@ $dueIn = static function (?string $when): string {
 
     return 'in '.(int) round($seconds / 3600).'h';
 };
+// Tiers borrow existing badge colours rather than introducing their own
+$tierBadges = [
+    'critical' => ['pending', 'Critical'],
+    'standard' => ['draft', 'Standard'],
+    'bulk' => ['sending', 'Bulk'],
+];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
+
+    <?php if (!empty($undrainedTiers)) { ?>
+    <div class="flex items-start gap-3 p-4 mb-4 text-sm border-l-4 rounded-md bg-orange-50 border-orange-500 text-orange-800 dark:bg-zink-700 dark:text-orange-200">
+        {% cache 'lucide:mq:alert-triangle-tier' ttl=31536000 %}<i data-lucide="alert-triangle" class="size-5 shrink-0 mt-0.5"></i>{% endcache %}
+        <div>
+            <p class="font-medium">Mail is waiting with nothing scheduled to send it</p>
+            <p class="mt-0.5">
+                The <strong><?= e(implode(', ', $undrainedTiers)) ?></strong> tier has mail queued, but no active
+                scheduled task drains it. It will sit here until one exists.
+            </p>
+            <a href="<?= e(lurl('/admin/scheduled-tasks')) ?>" class="inline-block mt-2 underline">Open scheduled tasks</a>
+        </div>
+    </div>
+    <?php } ?>
 
     <?php if (!$mailEnabled) { ?>
     <div class="flex items-start gap-3 p-4 mb-4 rounded-md bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30">
@@ -90,8 +112,15 @@ foreach ($statusOptions as $opt) {
                     <div class="grow sm:max-w-xs">
                         {% cmp="input" type="search" name="q" value="{$searchFilter}" placeholder="Search recipient…" %}
                     </div>
+                    <?php
+    $tierChoices = ['' => 'All tiers'];
+foreach ($tierOptions as $tierOpt) {
+    $tierChoices[$tierOpt] = ucfirst($tierOpt);
+}
+?>
+                    {% cmp="select" name="tier" options="{$tierChoices}" selectedKey="{$tierFilter}" onchange="this.form.submit()" %}
                     {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
-                    <?php if ($statusFilter !== '' || $searchFilter !== '') { ?>
+                    <?php if ($statusFilter !== '' || $searchFilter !== '' || $tierFilter !== '') { ?>
                     {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
                     <?php } ?>
                 </form>
@@ -118,7 +147,7 @@ foreach ($statusOptions as $opt) {
     </div>
 
     {% if entries|empty %}
-        {% cmp="empty-state" icon="mail-check" title="Nothing in the queue" message="Subscriber announcements appear here when a post is published, and clear as the delivery worker sends them." %}
+        {% cmp="empty-state" icon="mail-check" title="Nothing in the queue" message="Everything the platform sends passes through here and clears as the tier workers deliver it." %}
     {% else %}
     <div class="card">
         <div class="card-body p-0 overflow-x-auto">
@@ -129,6 +158,7 @@ foreach ($statusOptions as $opt) {
                         <th class="px-3.5 py-2.5 font-semibold">Recipient</th>
                         <th class="px-3.5 py-2.5 font-semibold">Subject</th>
                         <th class="px-3.5 py-2.5 font-semibold">Status</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Tier</th>
                         <th class="px-3.5 py-2.5 font-semibold">Attempts</th>
                         <th class="px-3.5 py-2.5 font-semibold">Queued</th>
                         <th class="px-3.5 py-2.5 font-semibold">Next / Sent</th>
@@ -143,6 +173,8 @@ $attempts = (int) $entry['attempts'];
 $maxAttempts = (int) $entry['max_attempts'];
 $isFailed = $entryStatus === 'failed';
 $error = (string) ($entry['last_error'] ?? '');
+$entryTier = (string) ($entry['tier'] ?? 'standard');
+[$entryTierBadge, $entryTierLabel] = $tierBadges[$entryTier] ?? ['draft', ucfirst($entryTier)];
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors align-top">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) $entry['id'] ?></td>
@@ -160,6 +192,9 @@ $error = (string) ($entry['last_error'] ?? '');
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$entryStatus}" %}
                         </td>
+                        <td class="px-3.5 py-2.5">
+                            {% cmp="status-badge" status="{$entryTierBadge}" label="{$entryTierLabel}" %}
+                        </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
                             <span class="<?= $isFailed ? 'text-red-600 dark:text-red-400 font-medium' : '' ?>">
                                 <?= $attempts ?> / <?= $maxAttempts ?>
@@ -172,7 +207,7 @@ $error = (string) ($entry['last_error'] ?? '');
                             <?php if ($entryStatus === 'sent') { ?>
                                 <?= e(date('M j, g:i a', strtotime((string) $entry['sent_at']))) ?>
                             <?php } elseif ($entryStatus === 'pending') { ?>
-                                <?= e($dueIn((string) $entry['next_attempt_at'])) ?>
+                                <?= e($dueIn($entry['due_in_seconds'] ?? null)) ?>
                             <?php } else { ?>
                                 —
                             <?php } ?>

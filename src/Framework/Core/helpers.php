@@ -505,6 +505,21 @@ function mailer(): \App\Services\MailService
 }
 
 /**
+ * Get the shared MailQueueService instance.
+ *
+ * Prefer this over mailer() for anything the application sends. Queued mail
+ * gets retries and shows up in the control panel, where a send straight down
+ * mailer() is gone for good the moment the transport refuses it.
+ */
+function mail_queue(): \App\Services\MailQueueService
+{
+    /** @var \App\Services\MailQueueService $queue */
+    $queue = \Framework\Core\App::container()->get(\App\Services\MailQueueService::class);
+
+    return $queue;
+}
+
+/**
  * Get the shared BreadcrumbService instance.
  */
 function breadcrumbs(): \App\Services\BreadcrumbService

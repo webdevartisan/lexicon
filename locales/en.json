@@ -55,6 +55,7 @@
         "roles": "Roles",
         "emailTest": "Email Templates",
         "mailQueue": "Mail Queue",
+        "scheduledTasks": "Scheduled Tasks",
         "settings": "Settings",
         "cacheManagement": "Cache Management",
         "auditLog": "Audit Log",

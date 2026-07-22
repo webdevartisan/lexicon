@@ -552,6 +552,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     body_html LONGTEXT NOT NULL,
     body_text LONGTEXT DEFAULT NULL,
     status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+    tier ENUM('critical','standard','bulk') NOT NULL DEFAULT 'standard' COMMENT 'Set by the Mailable class, decides which worker drains the row',
     attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',
     max_attempts INT NOT NULL DEFAULT 3 COMMENT 'Give up and mark failed past this',
     last_error TEXT DEFAULT NULL COMMENT 'Transport complaint from the most recent failure',
@@ -562,12 +563,89 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     sent_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_mail_queue_claim (status, next_attempt_at),
+    INDEX idx_mail_queue_claim (tier, status, next_attempt_at),
     INDEX idx_mail_queue_token (claim_token),
     INDEX idx_mail_queue_related (related_type, related_id),
     INDEX idx_mail_queue_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Outbound email queue drained by the mail:queue-work cron worker';
+
+-- ----------------------------------------------------------------------------
+-- Scheduled Tasks Table
+-- ----------------------------------------------------------------------------
+-- Cron gets one entry, `php cli schedule:run`, and everything else is set up in
+-- the control panel. Before this, every recurring job needed its own crontab
+-- line and there was no way to tell whether it had run.
+--
+-- Timezone note: the scheduling columns here hold UTC in plain DATETIME and the
+-- code compares against UTC_TIMESTAMP(), never NOW(). The connection does not
+-- pin a session time_zone, so NOW() follows the MySQL host while PHP runs in
+-- UTC, and TIMESTAMP columns would shift under the session zone on read and
+-- write. created_at and updated_at stay TIMESTAMP to match the other tables
+-- since nothing compares them against PHP time.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS scheduled_tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    label VARCHAR(100) NOT NULL COMMENT 'Operator facing name, e.g. Subscriber mail',
+    command VARCHAR(100) NOT NULL COMMENT 'Console command name, checked against the kernel allowlist',
+    arguments JSON DEFAULT NULL COMMENT 'Validated against the command declared schema',
+    schedule_type ENUM('every_minute','every_n_minutes','hourly','daily') NOT NULL DEFAULT 'every_minute',
+    interval_minutes SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Used by every_n_minutes',
+    minute_of_hour TINYINT UNSIGNED DEFAULT NULL COMMENT 'Used by hourly',
+    run_at TIME DEFAULT NULL COMMENT 'Used by daily, local wall clock in schedule_timezone',
+    schedule_timezone VARCHAR(64) NOT NULL DEFAULT 'UTC' COMMENT 'IANA zone the rule is written in, so daily times survive DST',
+    timeout_seconds SMALLINT UNSIGNED NOT NULL DEFAULT 300 COMMENT 'Runaway bound, the reaper kills the process past this',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    next_run_at DATETIME DEFAULT NULL COMMENT 'UTC, computed from the rule after every run',
+    claim_token CHAR(32) DEFAULT NULL COMMENT 'Held while a run is in flight, doubles as the overlap lock',
+    claimed_at DATETIME DEFAULT NULL COMMENT 'UTC, how the reaper spots an abandoned claim',
+    current_run_id INT DEFAULT NULL COMMENT 'Open run row, drives the running indicator in the list',
+    last_run_at DATETIME DEFAULT NULL COMMENT 'UTC',
+    last_status VARCHAR(20) DEFAULT NULL,
+    last_duration_ms INT UNSIGNED DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_scheduled_tasks_due (is_active, next_run_at, claim_token),
+    INDEX idx_scheduled_tasks_claim (claim_token),
+    INDEX idx_scheduled_tasks_command (command)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Recurring console tasks dispatched by the schedule:run cron entry';
+
+-- ----------------------------------------------------------------------------
+-- Scheduled Task Runs Table
+-- ----------------------------------------------------------------------------
+-- One row per execution, kept separate from the task so history survives a
+-- schedule change and the list view never has to load captured output.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS scheduled_task_runs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id INT NOT NULL,
+    trigger_source ENUM('cron','manual','pseudo') NOT NULL DEFAULT 'cron' COMMENT 'Answers whether cron really fired or someone pressed the button',
+    status ENUM('running','success','failed','timed_out','skipped_locked') NOT NULL DEFAULT 'running',
+    pid INT UNSIGNED DEFAULT NULL COMMENT 'Child process, so a later tick can kill a hung detached run',
+    exit_code SMALLINT DEFAULT NULL,
+    started_at DATETIME(3) NOT NULL COMMENT 'UTC, millisecond precision so short runs do not all report as one second',
+    finished_at DATETIME(3) DEFAULT NULL COMMENT 'UTC',
+    duration_ms INT UNSIGNED DEFAULT NULL,
+    output MEDIUMTEXT DEFAULT NULL COMMENT 'Captured stdout and stderr, truncated on write',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_task_runs_task FOREIGN KEY (task_id) REFERENCES scheduled_tasks(id) ON DELETE CASCADE,
+    INDEX idx_task_runs_history (task_id, id),
+    INDEX idx_task_runs_status (status),
+    INDEX idx_task_runs_started (started_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Execution history for scheduled_tasks, pruned by schedule:prune-runs';
+
+-- Ships with the jobs the platform actually needs, so a fresh install works
+-- after the single crontab line with nothing to configure by hand.
+INSERT INTO scheduled_tasks (label, command, arguments, schedule_type, interval_minutes, run_at, schedule_timezone, timeout_seconds, is_active, next_run_at) VALUES
+('Publish scheduled posts', 'posts:publish-due', NULL, 'every_minute', NULL, NULL, 'UTC', 120, 1, UTC_TIMESTAMP()),
+('Mail, critical', 'mail:queue-work', '{"tier":"critical"}', 'every_minute', NULL, NULL, 'UTC', 120, 1, UTC_TIMESTAMP()),
+('Mail, standard', 'mail:queue-work', '{"tier":"standard"}', 'every_n_minutes', 5, NULL, 'UTC', 300, 1, UTC_TIMESTAMP()),
+('Mail, bulk', 'mail:queue-work', '{"tier":"bulk"}', 'every_n_minutes', 10, NULL, 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune expired cache', 'cache:prune', NULL, 'daily', NULL, '03:20:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune old notifications', 'notifications:prune', NULL, 'daily', NULL, '03:40:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP());
 
 -- ----------------------------------------------------------------------------
 -- Post Translations Table
@@ -906,7 +984,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('View Audit Log', 'view_audit_log', 'audit', 'read', 'Read the audit trail'),
 ('View System Health', 'view_system_health', 'system', 'read', 'View system diagnostics'),
 ('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
-('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends');
+('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
+('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

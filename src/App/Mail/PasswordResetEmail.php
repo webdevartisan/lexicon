@@ -12,6 +12,9 @@ namespace App\Mail;
  */
 class PasswordResetEmail extends Mailable
 {
+    /** Someone is locked out and holding a token that expires, so this cannot wait behind a fan-out. */
+    protected string $tier = self::TIER_CRITICAL;
+
     /**
      * @param  array<string, mixed>  $user  User row (first_name, email)
      */

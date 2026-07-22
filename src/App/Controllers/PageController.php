@@ -116,16 +116,18 @@ class PageController extends AppController
 
         $adminEmail = $this->settings->get('admin_email', (string) env('MAIL_FROM_ADDRESS', ''));
 
-        $sent = $adminEmail !== '' && mailer()->send(new ContactMessageMail(
+        // Queued, so a provider refusing right now no longer loses the message.
+        // enqueue() returns how many rows it wrote, one per recipient.
+        $sent = $adminEmail !== '' && mail_queue()->enqueue(new ContactMessageMail(
             $adminEmail,
             $data['name'],
             $data['email'],
             $data['subject'],
             $data['message']
-        ));
+        )) > 0;
 
         if (!$sent) {
-            error_log('Contact form delivery failed (admin email: '.($adminEmail ?: 'unset').')');
+            error_log('Contact form could not be queued (admin email: '.($adminEmail ?: 'unset').')');
             $this->flash('error', 'Sorry, your message could not be sent right now. Please try again later.');
 
             return $this->redirect('/contact');

@@ -18,21 +18,22 @@ class MailQueueModel extends AppModel
     /**
      * Add a rendered email to the queue.
      *
-     * @param  array{to_email: string, to_name?: string|null, subject: string, body_html: string, body_text?: string|null, related_type?: string|null, related_id?: int|null, max_attempts?: int}  $mail
+     * @param  array{to_email: string, to_name?: string|null, subject: string, body_html: string, body_text?: string|null, tier?: string, related_type?: string|null, related_id?: int|null, max_attempts?: int}  $mail
      * @return int The new queue row ID
      */
     public function enqueue(array $mail): int
     {
         $this->database->query(
             "INSERT INTO {$this->getTable()}
-                (to_email, to_name, subject, body_html, body_text, related_type, related_id, max_attempts)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $mail['to_email'],
                 $mail['to_name'] ?? null,
                 $mail['subject'],
                 $mail['body_html'],
                 $mail['body_text'] ?? null,
+                $mail['tier'] ?? 'standard',
                 $mail['related_type'] ?? null,
                 $mail['related_id'] ?? null,
                 $mail['max_attempts'] ?? 3,
@@ -51,13 +52,19 @@ class MailQueueModel extends AppModel
      * row visible to the next cron tick and send it twice.
      *
      * @param  int  $limit  Maximum rows to claim
+     * @param  string  $tier  Restrict to one tier, '' for any
      * @return array<int, array<string, mixed>> Claimed rows, oldest first
      */
-    public function claimBatch(int $limit): array
+    public function claimBatch(int $limit, string $tier = ''): array
     {
         if ($limit < 1) {
             return [];
         }
+
+        // Scoped so a large bulk send can never be picked up by the worker
+        // that exists to get password resets out in seconds.
+        $tierFilter = $tier !== '' ? 'AND tier = ?' : '';
+        $tierParams = $tier !== '' ? [$tier] : [];
 
         $claimToken = bin2hex(random_bytes(16));
 
@@ -67,10 +74,10 @@ class MailQueueModel extends AppModel
         $claimed = $this->database->execute(
             "UPDATE {$this->getTable()}
              SET status = 'sending', claim_token = ?
-             WHERE status = 'pending' AND next_attempt_at <= NOW()
+             WHERE status = 'pending' AND next_attempt_at <= NOW() {$tierFilter}
              ORDER BY next_attempt_at, id
              LIMIT {$limit}",
-            [$claimToken]
+            array_merge([$claimToken], $tierParams)
         );
 
         if ($claimed === 0) {
@@ -153,6 +160,33 @@ class MailQueueModel extends AppModel
     }
 
     /**
+     * Pending rows per tier.
+     *
+     * Lets the panel spot mail piling up in a tier that has no worker
+     * scheduled to drain it, which otherwise looks exactly like email being
+     * broken and gives nobody anywhere to start looking.
+     *
+     * @return array<string, int> Tier name to pending count
+     */
+    public function pendingByTier(): array
+    {
+        $rows = $this->database->query(
+            "SELECT tier, COUNT(*) AS total
+             FROM {$this->getTable()}
+             WHERE status IN ('pending', 'sending')
+             GROUP BY tier"
+        )->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $counts = ['critical' => 0, 'standard' => 0, 'bulk' => 0];
+
+        foreach ($rows as $row) {
+            $counts[$row['tier']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
+
+    /**
      * Count rows per status, for the dashboard and the worker summary.
      *
      * @return array{pending: int, sending: int, sent: int, failed: int}
@@ -177,13 +211,15 @@ class MailQueueModel extends AppModel
      *
      * @param  string  $status  Restrict to one status, '' for all
      * @param  string  $search  Partial recipient address match
+     * @param  string  $tier  Restrict to one tier, '' for all
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, mixed>}
      */
     public function findWithFilters(
         string $status = '',
         string $search = '',
         int $page = 1,
-        int $perPage = 25
+        int $perPage = 25,
+        string $tier = ''
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
@@ -201,6 +237,11 @@ class MailQueueModel extends AppModel
             $params[':search'] = '%'.$search.'%';
         }
 
+        if ($tier !== '') {
+            $where[] = 'tier = :tier';
+            $params[':tier'] = $tier;
+        }
+
         $whereSql = $where ? 'WHERE '.implode(' AND ', $where) : '';
 
         $total = (int) $this->database->query(
@@ -210,7 +251,14 @@ class MailQueueModel extends AppModel
 
         // The body columns are LONGTEXT and never rendered in the listing, so
         // they are left out rather than hauling every email body into memory.
-        $sql = "SELECT id, to_email, to_name, subject, status, attempts, max_attempts,
+        // due_in_seconds is worked out by MySQL against its own clock. Handing
+        // the raw timestamp to PHP and subtracting there was reading hours out,
+        // because the connection pins no session zone so NOW() follows the
+        // database host while PHP runs in UTC. Mail that was due right now
+        // showed as due in three hours, which is exactly the sort of thing that
+        // makes an operator think the queue has stopped.
+        $sql = "SELECT id, to_email, to_name, subject, status, tier, attempts, max_attempts,
+                       TIMESTAMPDIFF(SECOND, NOW(), next_attempt_at) AS due_in_seconds,
                        last_error, related_type, related_id, next_attempt_at, sent_at, created_at
                 FROM {$this->getTable()}
                 {$whereSql}

@@ -125,15 +125,16 @@ final class RegisterController extends AppController
 
         $this->user_preferences->findOrCreate($userId);
 
-        // send welcome email asynchronously (non-blocking)
+        // queued, so a transport problem does not cost the welcome email
         try {
-            mailer()->send(new WelcomeEmail([
+            mail_queue()->enqueue(new WelcomeEmail([
                 'email' => $validated['email'],
                 'username' => $username,
-            ]));
+            ]), 'user', $userId);
         } catch (Exception $e) {
-            // log email failures but don't block registration
-            error_log('Failed to send welcome email: '.$e->getMessage());
+            // queueing is a single insert, so this only fires if the database
+            // is in trouble. Registration itself already succeeded either way.
+            error_log('Failed to queue welcome email: '.$e->getMessage());
         }
 
         // log the user in automatically after successful registration
