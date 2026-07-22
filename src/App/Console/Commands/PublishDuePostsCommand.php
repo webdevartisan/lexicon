@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Interfaces\SchedulableCommandInterface;
 use App\Models\PostModel;
 use App\Services\PublicCacheInvalidator;
 use App\Services\SubscriberNotificationService;
@@ -22,7 +23,7 @@ use Throwable;
  * Usage: php cli posts:publish-due
  * Cron:  * * * * * cd /var/www/html && php cli posts:publish-due >> /var/log/publish-due.log 2>&1
  */
-class PublishDuePostsCommand
+class PublishDuePostsCommand implements SchedulableCommandInterface
 {
     public function __construct(
         private PostModel $posts,
@@ -30,12 +31,25 @@ class PublishDuePostsCommand
         private PublicCacheInvalidator $publicCache,
     ) {}
 
+    public static function scheduleLabel(): string
+    {
+        return 'Publish scheduled posts';
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function argumentSchema(): array
+    {
+        return [];
+    }
+
     /**
      * Publish everything that is due.
      *
      * @return int Exit code (0 = success, 1 = failure)
      */
-    public function handle(): int
+    public function handle(array $arguments = []): int
     {
         try {
             $start = microtime(true);

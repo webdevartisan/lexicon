@@ -271,6 +271,83 @@ $container->setShared(App\Services\MailQueueService::class, function ($c) {
 });
 
 /**
+ * Task scheduler.
+ *
+ * The console kernel is registered here so ScheduleRegistry can read the
+ * command map off it. That map is the scheduler allowlist, so keeping it as
+ * the single source avoids a second list quietly drifting out of step.
+ */
+$container->setShared(App\Console\Kernel::class, function ($c) {
+    return new App\Console\Kernel($c);
+});
+
+$container->set(App\Models\ScheduledTaskModel::class, function ($c) {
+    return new App\Models\ScheduledTaskModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
+$container->set(App\Models\ScheduledTaskRunModel::class, function ($c) {
+    return new App\Models\ScheduledTaskRunModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
+$container->setShared(App\Services\ScheduleCalculator::class, function ($c) {
+    return new App\Services\ScheduleCalculator();
+});
+
+$container->setShared(App\Services\ScheduleRegistry::class, function ($c) {
+    return new App\Services\ScheduleRegistry(
+        $c->get(App\Console\Kernel::class)
+    );
+});
+
+$container->setShared(App\Services\TaskExecutor::class, function ($c) {
+    return new App\Services\TaskExecutor(
+        $c,
+        $c->get(App\Models\ScheduledTaskModel::class),
+        $c->get(App\Models\ScheduledTaskRunModel::class),
+        $c->get(App\Services\ScheduleRegistry::class),
+        $c->get(App\Services\ScheduleCalculator::class)
+    );
+});
+
+/**
+ * Picks how scheduled tasks get started.
+ *
+ * Separate processes everywhere they are allowed, since a task then outlives
+ * the tick or request that began it and can still be stopped if it hangs.
+ * Hosts that block process control fall back to running the work inline, which
+ * the panel reports so nobody is surprised by the weaker guarantees.
+ */
+$container->setShared(App\Interfaces\TaskRunnerInterface::class, function ($c) {
+    $config = require ROOT_PATH.'/config/schedule.php';
+
+    if (!App\Services\Schedule\ProcessRunner::isAvailable()) {
+        return new App\Services\Schedule\InlineRunner(
+            $c->get(App\Services\TaskExecutor::class)
+        );
+    }
+
+    return new App\Services\Schedule\ProcessRunner(
+        ROOT_PATH,
+        (string) ($config['php_binary'] ?? '')
+    );
+});
+
+$container->setShared(App\Services\ScheduleService::class, function ($c) {
+    return new App\Services\ScheduleService(
+        $c->get(App\Models\ScheduledTaskModel::class),
+        $c->get(App\Models\ScheduledTaskRunModel::class),
+        $c->get(App\Services\ScheduleCalculator::class),
+        $c->get(App\Interfaces\TaskRunnerInterface::class),
+        $c->get(App\Models\SettingModel::class),
+        require ROOT_PATH.'/config/schedule.php'
+    );
+});
+
+/**
  * Email template registry discovers and caches available email templates.
  *
  * We register as singleton to avoid repeated filesystem scans when

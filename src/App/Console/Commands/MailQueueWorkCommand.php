@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Interfaces\SchedulableCommandInterface;
+use App\Interfaces\ScheduleHintInterface;
 use App\Services\MailQueueService;
 use Throwable;
 
@@ -18,18 +20,60 @@ use Throwable;
  * Usage: php cli mail:queue-work
  * Cron:  * * * * * cd /var/www/html && php cli mail:queue-work >> /var/log/mail-queue.log 2>&1
  */
-class MailQueueWorkCommand
+class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintInterface
 {
     public function __construct(
         private MailQueueService $mailQueue,
     ) {}
 
+    public static function scheduleLabel(): string
+    {
+        return 'Outbound mail';
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function argumentSchema(): array
+    {
+        return [];
+    }
+
+    /**
+     * Spell out what a given schedule works out to in practice.
+     *
+     * Interval and batch size multiply, and the answer surprises people.
+     * Ten at a time every ten minutes reads as often but comes to sixty an
+     * hour, which is days of waiting for a decent sized subscriber list.
+     *
+     * @param  array<string, mixed>  $arguments
+     */
+    public static function scheduleHint(array $arguments, int $runsPerHour): ?string
+    {
+        if ($runsPerHour < 1) {
+            return null;
+        }
+
+        $config = require ROOT_PATH.'/config/mail.php';
+        $batchSize = (int) ($config['queue']['batch_size'] ?? 10);
+        $perHour = $batchSize * $runsPerHour;
+
+        if ($perHour < 1) {
+            return null;
+        }
+
+        $hoursForList = (int) ceil(5000 / $perHour);
+
+        return "About {$perHour} emails an hour. A 5,000 recipient send would take roughly {$hoursForList} hours to go out.";
+    }
+
     /**
      * Drain one batch.
      *
+     * @param  array<string, mixed>  $arguments  Unused for now, the queue takes its pacing from config
      * @return int Exit code (0 = success, 1 = failure)
      */
-    public function handle(): int
+    public function handle(array $arguments = []): int
     {
         try {
             $start = microtime(true);

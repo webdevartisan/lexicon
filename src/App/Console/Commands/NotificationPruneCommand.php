@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Interfaces\SchedulableCommandInterface;
 use App\Models\NotificationModel;
 
 /**
@@ -16,18 +17,31 @@ use App\Models\NotificationModel;
  * Usage: php cli notifications:prune
  * Cron:  0 3 * * * cd /var/www/html && php cli notifications:prune >> /var/log/notifications-prune.log 2>&1
  */
-class NotificationPruneCommand
+class NotificationPruneCommand implements SchedulableCommandInterface
 {
     public function __construct(
         private NotificationModel $notifications,
     ) {}
+
+    public static function scheduleLabel(): string
+    {
+        return 'Prune old notifications';
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function argumentSchema(): array
+    {
+        return [];
+    }
 
     /**
      * Execute the prune.
      *
      * @return int Exit code (0 = success, 1 = failure)
      */
-    public function handle(): int
+    public function handle(array $arguments = []): int
     {
         try {
             $start = microtime(true);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Interfaces\SchedulableCommandInterface;
 use Framework\Cache\CacheService;
 use Framework\Interfaces\TemplateViewerInterface;
 
@@ -17,7 +18,7 @@ use Framework\Interfaces\TemplateViewerInterface;
  * Usage: php cli cache:prune
  * Cron:  0 3 * * * cd /var/www/html && php cli cache:prune >> /var/log/cache-prune.log 2>&1
  */
-class CachePruneCommand
+class CachePruneCommand implements SchedulableCommandInterface
 {
     /**
      * @param  CacheService  $cache  HTTP response / fragment cache service.
@@ -28,6 +29,19 @@ class CachePruneCommand
         private TemplateViewerInterface $renderer,
     ) {}
 
+    public static function scheduleLabel(): string
+    {
+        return 'Prune expired cache';
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function argumentSchema(): array
+    {
+        return [];
+    }
+
     /**
      * Execute the cache pruning operation.
      *
@@ -37,7 +51,7 @@ class CachePruneCommand
      *
      * @return int Exit code (0 = success, 1 = failure).
      */
-    public function handle(): int
+    public function handle(array $arguments = []): int
     {
         try {
             $startTime = microtime(true);

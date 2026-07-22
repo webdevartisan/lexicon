@@ -11,6 +11,9 @@ use App\Console\Commands\KeyGenerateCommand;
 use App\Console\Commands\MailQueueWorkCommand;
 use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PublishDuePostsCommand;
+use App\Console\Commands\SchedulePruneRunsCommand;
+use App\Console\Commands\ScheduleRunCommand;
+use App\Console\Commands\ScheduleRunTaskCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -47,8 +50,18 @@ class Kernel extends ConsoleKernel
             // Promotes scheduled posts once published_at arrives; run every minute
             'posts:publish-due' => PublishDuePostsCommand::class,
 
-            // Delivers queued email at a paced rate; run every minute
+            // Delivers queued email at a paced rate, scheduled from the panel
             'mail:queue-work' => MailQueueWorkCommand::class,
+
+            // The only entry cron needs. Everything else is configured under
+            // System, Scheduled Tasks.
+            // * * * * * cd /var/www/html && php cli schedule:run >> /dev/null 2>&1
+            'schedule:run' => ScheduleRunCommand::class,
+
+            // Started by schedule:run for one task, not meant to be run by hand
+            'schedule:run-task' => ScheduleRunTaskCommand::class,
+
+            'schedule:prune-runs' => SchedulePruneRunsCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'db:seed'       => SeedCommand::class,
