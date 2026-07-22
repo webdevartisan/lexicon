@@ -9,6 +9,7 @@ use App\Console\Commands\CachePruneCommand;
 use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
 use App\Console\Commands\NotificationPruneCommand;
+use App\Console\Commands\PublishDuePostsCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -41,6 +42,9 @@ class Kernel extends ConsoleKernel
 
             // Notification management
             'notifications:prune' => NotificationPruneCommand::class,
+
+            // Promotes scheduled posts once published_at arrives; run every minute
+            'posts:publish-due' => PublishDuePostsCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'db:seed'       => SeedCommand::class,
