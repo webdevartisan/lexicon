@@ -11,6 +11,12 @@ $required = $required ?? false;
 $prefix = $prefix ?? '';
 $rows = $rows ?? '8';
 
+// Bounds for number and time inputs. Only written out when given, so nothing
+// that already uses this component picks up attributes it never asked for.
+$min = $min ?? null;
+$max = $max ?? null;
+$step = $step ?? null;
+
 $classLabel = 'inline-block mb-2 text-base font-medium';
 $classInput = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 disabled:bg-slate-100 dark:disabled:bg-zink-600 disabled:border-slate-300 dark:disabled:border-zink-500 dark:disabled:text-zink-200 disabled:text-slate-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
 $classInvalid = 'valid:border-green-500 invalid:border-red-500 dark:valid:border-green-800 dark:invalid:border-red-800';
@@ -59,6 +65,15 @@ $old = old($elementName);
         <?php if ($required == true) {
             echo 'required';
         }  ?>
+        <?php if ($min !== null) {
+            echo ' min="'.e((string) $min).'"';
+        } ?>
+        <?php if ($max !== null) {
+            echo ' max="'.e((string) $max).'"';
+        } ?>
+        <?php if ($step !== null) {
+            echo ' step="'.e((string) $step).'"';
+        } ?>
         <?php if ($disabled == true) {
             echo 'disabled=""';
         }  ?>

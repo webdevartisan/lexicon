@@ -6,131 +6,98 @@
 {% block body %}
 <?php
 $basePath = '/admin/scheduled-tasks';
-$action = $task === null ? $basePath.'/store' : $basePath.'/'.(int) $task['id'].'/update';
+$formAction = lurl($task === null ? $basePath.'/store' : $basePath.'/'.(int) $task['id'].'/update');
+$cancelUrl = lurl($basePath);
 
 $value = static function (string $key, $fallback = '') use ($task) {
     return $task === null ? $fallback : ($task[$key] ?? $fallback);
 };
 
-$scheduleType = (string) $value('schedule_type', 'every_minute');
+$labelValue = (string) $value('label');
 $selectedCommand = (string) $value('command', '');
+$scheduleType = (string) $value('schedule_type', 'every_minute');
 $selectedZone = (string) $value('schedule_timezone', $viewerTimezone);
+$intervalValue = (string) $value('interval_minutes', '10');
+$minuteValue = (string) $value('minute_of_hour', '0');
+$runAtValue = substr((string) $value('run_at', '03:00:00'), 0, 5);
+$timeoutValue = (string) $value('timeout_seconds', '300');
+$isActive = $task === null || !empty($task['is_active']);
+$submitLabel = $task === null ? 'Create task' : 'Save task';
 
-$typeLabels = [
+// The dropdown shows both the friendly name and the console name, since an
+// operator reading a crontab or a log needs to recognise the same thing twice.
+$commandChoices = ['' => 'Choose a command'];
+foreach ($commandOptions as $commandName => $commandLabel) {
+    $commandChoices[$commandName] = $commandLabel.' ('.$commandName.')';
+}
+
+$typeChoices = [
     'every_minute' => 'Every minute',
     'every_n_minutes' => 'Every N minutes',
     'hourly' => 'Hourly, at a set minute',
     'daily' => 'Daily, at a set time',
 ];
+
+$zoneChoices = [];
+foreach ($timezones as $zone) {
+    $zoneChoices[$zone] = $zone;
+}
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <form method="POST" action="<?= e(lurl($action)) ?>">
+    <form method="POST" action="<?= e($formAction) ?>">
         {{ csrf_field() }}
 
         <div class="card">
             <div class="card-body space-y-5">
 
-                <div>
-                    <label for="label" class="inline-block mb-2 text-base font-medium">Name</label>
-                    <input type="text" id="label" name="label" required maxlength="100"
-                           value="<?= e((string) $value('label')) ?>"
-                           placeholder="Subscriber mail"
-                           class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">What this task is called in the list.</p>
-                </div>
+                {% cmp="input" type="text" label="Name" name="label" value="{$labelValue}" placeholder="Subscriber mail" required="1" underlabel="What this task is called in the list." %}
 
                 <div>
-                    <label for="command" class="inline-block mb-2 text-base font-medium">Command</label>
-                    <select id="command" name="command" required
-                            class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                        <option value="">Choose a command</option>
-                        <?php foreach ($commandOptions as $name => $label) { ?>
-                        <option value="<?= e($name) ?>" <?= $selectedCommand === $name ? 'selected' : '' ?>>
-                            <?= e($label) ?> (<?= e($name) ?>)
-                        </option>
-                        <?php } ?>
-                    </select>
-                    <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">
+                    {% cmp="select" label="Command" name="command" options="{$commandChoices}" selectedKey="{$selectedCommand}" %}
+                    <div class="mt-1 text-xs text-slate-500 dark:text-zink-200">
                         Only commands built to be scheduled appear here.
-                    </p>
+                    </div>
                 </div>
 
                 <!-- Filled in from the chosen command declared arguments -->
                 <div id="argument-fields" class="space-y-4"></div>
 
-                <div>
-                    <label for="schedule_type" class="inline-block mb-2 text-base font-medium">How often</label>
-                    <select id="schedule_type" name="schedule_type" required
-                            class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                        <?php foreach ($scheduleTypes as $type) { ?>
-                        <option value="<?= e($type) ?>" <?= $scheduleType === $type ? 'selected' : '' ?>>
-                            <?= e($typeLabels[$type] ?? $type) ?>
-                        </option>
-                        <?php } ?>
-                    </select>
-                </div>
+                {% cmp="select" label="How often" name="schedule_type" options="{$typeChoices}" selectedKey="{$scheduleType}" %}
 
                 <div data-schedule-part="every_n_minutes" class="hidden">
-                    <label for="interval_minutes" class="inline-block mb-2 text-base font-medium">Interval, in minutes</label>
-                    <input type="number" id="interval_minutes" name="interval_minutes" min="1" max="1440"
-                           value="<?= e((string) $value('interval_minutes', '10')) ?>"
-                           class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+                    {% cmp="input" type="number" label="Interval, in minutes" name="interval_minutes" value="{$intervalValue}" min="1" max="1440" %}
                 </div>
 
                 <div data-schedule-part="hourly" class="hidden">
-                    <label for="minute_of_hour" class="inline-block mb-2 text-base font-medium">Minute of the hour</label>
-                    <input type="number" id="minute_of_hour" name="minute_of_hour" min="0" max="59"
-                           value="<?= e((string) $value('minute_of_hour', '0')) ?>"
-                           class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+                    {% cmp="input" type="number" label="Minute of the hour" name="minute_of_hour" value="{$minuteValue}" min="0" max="59" %}
                 </div>
 
                 <div data-schedule-part="daily" class="hidden">
-                    <label for="run_at" class="inline-block mb-2 text-base font-medium">Time of day</label>
-                    <input type="time" id="run_at" name="run_at"
-                           value="<?= e(substr((string) $value('run_at', '03:00:00'), 0, 5)) ?>"
-                           class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
+                    {% cmp="input" type="time" label="Time of day" name="run_at" value="{$runAtValue}" %}
                 </div>
 
                 <div data-schedule-part="daily hourly" class="hidden">
-                    <label for="schedule_timezone" class="inline-block mb-2 text-base font-medium">Timezone</label>
-                    <select id="schedule_timezone" name="schedule_timezone"
-                            class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                        <?php foreach ($timezones as $zone) { ?>
-                        <option value="<?= e($zone) ?>" <?= $selectedZone === $zone ? 'selected' : '' ?>><?= e($zone) ?></option>
-                        <?php } ?>
-                    </select>
-                    <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">
+                    {% cmp="select" label="Timezone" name="schedule_timezone" options="{$zoneChoices}" selectedKey="{$selectedZone}" %}
+                    <div class="mt-1 text-xs text-slate-500 dark:text-zink-200">
                         The time above is read in this zone, so it stays put when the clocks change.
-                    </p>
+                    </div>
                 </div>
 
                 <!-- What the chosen pace actually adds up to -->
-                <div id="rate-hint" class="hidden p-3 rounded-md bg-sky-50 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 text-sm text-sky-800 dark:text-sky-200"></div>
+                <div id="rate-hint" class="hidden p-3 rounded-md border bg-custom-50 border-custom-500 text-custom-800 dark:bg-zink-700 dark:text-custom-400 text-sm"></div>
 
-                <div>
-                    <label for="timeout_seconds" class="inline-block mb-2 text-base font-medium">Timeout, in seconds</label>
-                    <input type="number" id="timeout_seconds" name="timeout_seconds" min="10" max="86400" required
-                           value="<?= e((string) $value('timeout_seconds', '300')) ?>"
-                           class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">
-                        A task still going past this is stopped and recorded as timed out. Give long jobs more room.
-                    </p>
-                </div>
+                {% cmp="input" type="number" label="Timeout, in seconds" name="timeout_seconds" value="{$timeoutValue}" min="10" max="86400" required="1" underlabel="A task still going past this is stopped and recorded as timed out. Give long jobs more room." %}
 
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="is_active" name="is_active" value="1"
-                           <?= $task === null || !empty($task['is_active']) ? 'checked' : '' ?>
+                           <?= $isActive ? 'checked' : '' ?>
                            class="size-4 rounded border-slate-200 dark:border-zink-500">
-                    <label for="is_active" class="text-base font-medium">Switched on</label>
+                    <label for="is_active" class="inline-block text-base font-medium">Switched on</label>
                 </div>
 
                 <div class="flex items-center gap-2 pt-2">
-                    <button type="submit" class="btn bg-custom-500 border-custom-500 text-white hover:bg-custom-600">
-                        <?= $task === null ? 'Create task' : 'Save task' ?>
-                    </button>
-                    <a href="<?= e(lurl($basePath)) ?>" class="btn bg-slate-200 border-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-zink-600 dark:border-zink-600 dark:text-zink-100">
-                        Cancel
-                    </a>
+                    {% cmp="btn" type="submit" variant="blue" label="{$submitLabel}" icon="save" %}
+                    {% cmp="btn" variant="slate" label="Cancel" href="{$cancelUrl}" %}
                 </div>
             </div>
         </div>
@@ -149,6 +116,11 @@ $typeLabels = [
     var argumentBox = document.getElementById('argument-fields');
     var hintBox = document.getElementById('rate-hint');
     var hintTimer = null;
+
+    // Classes copied from the input component so generated fields match the
+    // ones rendered server side.
+    var fieldClass = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800';
+    var labelClass = 'inline-block mb-2 text-base font-medium';
 
     function escapeHtml(text) {
         var div = document.createElement('div');
@@ -169,10 +141,10 @@ $typeLabels = [
             var id = 'argument-' + name;
 
             html += '<div>';
-            html += '<label for="' + escapeHtml(id) + '" class="inline-block mb-2 text-base font-medium">' + escapeHtml(rule.label || name) + '</label>';
+            html += '<label for="' + escapeHtml(id) + '" class="' + labelClass + '">' + escapeHtml(rule.label || name) + '</label>';
 
             if (rule.type === 'enum') {
-                html += '<select id="' + escapeHtml(id) + '" name="arguments[' + escapeHtml(name) + ']" class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">';
+                html += '<select id="' + escapeHtml(id) + '" name="arguments[' + escapeHtml(name) + ']" class="' + fieldClass + '">';
                 (rule.values || []).forEach(function (option) {
                     var chosen = String(current) === String(option) ? ' selected' : '';
                     html += '<option value="' + escapeHtml(String(option)) + '"' + chosen + '>' + escapeHtml(String(option)) + '</option>';
@@ -182,7 +154,7 @@ $typeLabels = [
                 html += '<input type="number" id="' + escapeHtml(id) + '" name="arguments[' + escapeHtml(name) + ']"';
                 if (rule.min !== undefined) { html += ' min="' + Number(rule.min) + '"'; }
                 if (rule.max !== undefined) { html += ' max="' + Number(rule.max) + '"'; }
-                html += ' value="' + escapeHtml(String(current === undefined ? '' : current)) + '" class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">';
+                html += ' value="' + escapeHtml(String(current === undefined ? '' : current)) + '" class="' + fieldClass + '">';
             } else if (rule.type === 'bool') {
                 html += '<input type="checkbox" id="' + escapeHtml(id) + '" name="arguments[' + escapeHtml(name) + ']" value="1"' + (current ? ' checked' : '') + ' class="size-4 rounded border-slate-200 dark:border-zink-500">';
             }
