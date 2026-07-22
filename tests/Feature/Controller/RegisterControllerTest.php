@@ -12,7 +12,7 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\InvitationService;
-use App\Services\MailService;
+use App\Services\MailQueueService;
 use App\Services\NotificationService;
 use App\Services\UsernameValidationService;
 use Framework\Core\Response;
@@ -45,10 +45,10 @@ beforeEach(function () {
         new ReservedSlugModel($this->db)
     );
 
-    // Invitation plumbing: real models against the test DB, mocked mailer so
-    // registration (and its pending-invite consumption path) sends nothing.
-    $mailService = Mockery::mock(MailService::class);
-    $mailService->shouldReceive('send')->andReturn(true)->byDefault();
+    // Invitation plumbing: real models against the test DB, mocked mail queue so
+    // registration (and its pending-invite consumption path) enqueues nothing.
+    $mailQueue = Mockery::mock(MailQueueService::class);
+    $mailQueue->shouldReceive('enqueue')->andReturn(1)->byDefault();
 
     $invitationModel = new BlogInvitationModel($this->db);
     $invitationService = new InvitationService(
@@ -59,9 +59,9 @@ beforeEach(function () {
             new NotificationModel($this->db),
             $this->userModel,
             $this->preferencesModel,
-            $mailService,
+            $mailQueue,
         ),
-        $mailService,
+        $mailQueue,
         $this->preferencesModel
     );
 

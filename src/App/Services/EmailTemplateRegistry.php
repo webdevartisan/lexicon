@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Mail\Mailable;
+use App\Mail\QueuedMail;
 use Exception;
 
 /**
@@ -328,11 +329,16 @@ class EmailTemplateRegistry
     {
         $registered = array_column($this->getAll(), 'class');
 
+        // Infrastructure Mailables that are not user-facing templates and so
+        // never belong on the preview page. QueuedMail only re-wraps an
+        // already-rendered queue row; it has no sample data to preview.
+        $infrastructure = [Mailable::class, QueuedMail::class];
+
         $missing = [];
         foreach (glob(ROOT_PATH.'/src/App/Mail/*.php') ?: [] as $file) {
             $class = 'App\\Mail\\'.basename($file, '.php');
 
-            if ($class === Mailable::class || in_array($class, $registered, true)) {
+            if (in_array($class, $infrastructure, true) || in_array($class, $registered, true)) {
                 continue;
             }
 
