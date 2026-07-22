@@ -8,7 +8,7 @@ use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\InvitationService;
-use App\Services\MailService;
+use App\Services\MailQueueService;
 use App\Services\NotificationService;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
@@ -17,7 +17,7 @@ use Tests\Factories\UserFactory;
  * Integration tests for InvitationService.
  *
  * Exercises the invite lifecycle against a real database with a mocked
- * MailService (no real email is sent).
+ * mail queue (nothing is actually enqueued for delivery).
  */
 beforeEach(function () {
     $this->blogModel = new BlogModel($this->db);
@@ -27,25 +27,25 @@ beforeEach(function () {
 
     // NotificationService wraps NotificationModel — wire with real DB models so
     // dispatch() writes rows that notifModel->findForUser() can read back.
-    $notifMailService = Mockery::mock(MailService::class);
-    $notifMailService->shouldReceive('send')->andReturn(true)->byDefault();
+    $notifMailQueue = Mockery::mock(MailQueueService::class);
+    $notifMailQueue->shouldReceive('enqueue')->andReturn(1)->byDefault();
 
     $notificationService = new NotificationService(
         $this->notifModel,
         $this->userModel,
         new UserPreferencesModel($this->db),
-        $notifMailService,
+        $notifMailQueue,
     );
 
-    $this->mailService = Mockery::mock(MailService::class);
-    $this->mailService->shouldReceive('send')->andReturn(true)->byDefault();
+    $this->mailQueue = Mockery::mock(MailQueueService::class);
+    $this->mailQueue->shouldReceive('enqueue')->andReturn(1)->byDefault();
 
     $this->service = new InvitationService(
         $this->inviteModel,
         $this->blogModel,
         $this->userModel,
         $notificationService,
-        $this->mailService,
+        $this->mailQueue,
         new UserPreferencesModel($this->db)
     );
 

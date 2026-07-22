@@ -75,11 +75,12 @@ class UserDeletionService
             $this->socialLinks->deleteByUserId($userId);
 
             // Step 4: Reset preferences to defaults
-            $this->preferences->updateByUserId($userId, [
-                'timezone' => 'UTC',
-                'notify_comments' => 0,
-                'notify_likes' => 0,
-            ]);
+            // Every notify column goes off, not just a couple of them: a pseudonymized
+            // account must stop receiving mail entirely, not just comment mail.
+            $this->preferences->updateByUserId($userId, array_merge(
+                ['timezone' => 'UTC'],
+                array_fill_keys(UserPreferencesModel::NOTIFY_KEYS, 0)
+            ));
 
             // Step 5: Delete uploaded files
             $this->uploader->deleteUserUploads($userId);
@@ -191,11 +192,10 @@ class UserDeletionService
         $this->socialLinks->deleteByUserId($userId);
 
         // Reset preferences
-        $this->preferences->updateByUserId($userId, [
-            'timezone' => 'UTC',
-            'notify_comments' => 0,
-            'notify_likes' => 0,
-        ]);
+        $this->preferences->updateByUserId($userId, array_merge(
+            ['timezone' => 'UTC'],
+            array_fill_keys(UserPreferencesModel::NOTIFY_KEYS, 0)
+        ));
 
         // Delete uploaded files
         $this->uploader->deleteUserUploads($userId);

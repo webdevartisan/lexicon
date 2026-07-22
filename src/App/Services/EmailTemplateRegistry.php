@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Mail\Mailable;
+use App\Mail\QueuedMail;
 use Exception;
 
 /**
@@ -199,9 +200,45 @@ class EmailTemplateRegistry
                     'unsubscribeToken' => str_repeat('ab', 32),
                 ],
             ],
-            'new_comment' => [
-                'name' => 'New Comment',
-                'description' => 'Tells the blog owner, editors, and post author that a reader commented',
+            'new_comment_reply' => [
+                'name' => 'New Comment — Reply',
+                'description' => 'Tells you someone replied to a comment you wrote',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\NewCommentMail',
+                'sample_data' => [
+                    'toEmail' => 'reader@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Same! Balos is unreal at sunrise, get there early.',
+                    'awaitingModeration' => false,
+                    'commentId' => 128,
+                    'reason' => 'reply',
+                    'blogId' => 7,
+                ],
+            ],
+            'new_comment_authored' => [
+                'name' => 'New Comment — On Your Post',
+                'description' => 'Tells a post author a reader commented on their post',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\NewCommentMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Loved the section on Balos — going there next month!',
+                    'awaitingModeration' => false,
+                    'commentId' => 128,
+                    'reason' => 'authored',
+                    'blogId' => 7,
+                ],
+            ],
+            'new_comment_moderation' => [
+                'name' => 'New Comment — Awaiting Moderation',
+                'description' => 'Tells a blog owner or editor a comment is held for approval',
                 'group' => 'Comments',
                 'class' => 'App\\Mail\\NewCommentMail',
                 'sample_data' => [
@@ -212,6 +249,27 @@ class EmailTemplateRegistry
                     'commenterName' => 'quietreader',
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => true,
+                    'commentId' => 128,
+                    'reason' => 'moderation',
+                    'blogId' => 7,
+                ],
+            ],
+            'new_comment_blog' => [
+                'name' => 'New Comment — On Your Blog',
+                'description' => 'Tells a blog owner a reader commented anywhere on their blog',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\NewCommentMail',
+                'sample_data' => [
+                    'toEmail' => 'owner@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Loved the section on Balos — going there next month!',
+                    'awaitingModeration' => false,
+                    'commentId' => 128,
+                    'reason' => 'blog',
+                    'blogId' => 7,
                 ],
             ],
             'workflow_disabled' => [
@@ -271,11 +329,16 @@ class EmailTemplateRegistry
     {
         $registered = array_column($this->getAll(), 'class');
 
+        // Infrastructure Mailables that are not user-facing templates and so
+        // never belong on the preview page. QueuedMail only re-wraps an
+        // already-rendered queue row; it has no sample data to preview.
+        $infrastructure = [Mailable::class, QueuedMail::class];
+
         $missing = [];
         foreach (glob(ROOT_PATH.'/src/App/Mail/*.php') ?: [] as $file) {
             $class = 'App\\Mail\\'.basename($file, '.php');
 
-            if ($class === Mailable::class || in_array($class, $registered, true)) {
+            if (in_array($class, $infrastructure, true) || in_array($class, $registered, true)) {
                 continue;
             }
 

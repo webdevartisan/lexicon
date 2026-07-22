@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Models\PostModel;
 
 test('STATUSES contains the public lifecycle values', function () {
-    expect(PostModel::STATUSES)->toBe(['draft', 'pending', 'published', 'archived']);
+    expect(PostModel::STATUSES)->toBe(['draft', 'pending', 'scheduled', 'published', 'archived']);
 });
 
 test('STATUSES does not contain legacy values', function () {

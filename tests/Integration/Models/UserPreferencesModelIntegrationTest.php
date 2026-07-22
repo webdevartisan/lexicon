@@ -55,8 +55,7 @@ test('upsert leaves columns it was not given untouched', function () {
 
     // now save only the notification toggles, as the notifications form does
     $this->prefs->upsert($this->userId, [
-        'notify_comments' => 0,
-        'notify_likes' => 0,
+        'notify_comments_blog' => 0,
         'notify_post_status' => 0,
         'notify_role_changes' => 0,
         'notify_invites' => 0,
@@ -65,7 +64,7 @@ test('upsert leaves columns it was not given untouched', function () {
     $row = $this->prefs->findOrCreate($this->userId);
 
     // the toggles were saved
-    expect((int) $row['notify_comments'])->toBe(0)
+    expect((int) $row['notify_comments_blog'])->toBe(0)
         ->and((int) $row['notify_invites'])->toBe(0);
 
     // and the untouched columns kept their values instead of reverting to defaults
@@ -85,7 +84,7 @@ test('upsert applies schema defaults when inserting a brand new row', function (
     expect($row['timezone'])->toBe('Europe/Athens')
         ->and($row['display_name_preference'])->toBe('username')
         ->and($row['default_post_visibility'])->toBe('public')
-        ->and((int) $row['notify_comments'])->toBe(1);
+        ->and((int) $row['notify_comments_blog'])->toBe(1);
 });
 
 test('notificationPreference returns boolean for the requested key', function () {

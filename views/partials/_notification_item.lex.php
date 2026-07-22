@@ -17,7 +17,11 @@ $label = match ($type) {
     'post.workflow_disabled' => 'A post of yours was reset to draft',
     'collaborator.role_changed' => 'Your role on '.($payload['blog_name'] ?? '').' changed',
     'collaborator.removed' => 'You were removed from '.($payload['blog_name'] ?? ''),
-    'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
+    'comment.reply' => ($payload['commenter_name'] ?? 'Someone').' replied to your comment on '.($payload['post_title'] ?? 'a post'),
+    'comment.on_your_post' => ($payload['commenter_name'] ?? 'A reader').' commented on your post '.($payload['post_title'] ?? ''),
+    'comment.awaiting_moderation' => 'A comment needs approval on '.($payload['post_title'] ?? 'a post'),
+    // comment.created rows predate the split into four types
+    'comment.on_blog', 'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
         .(!empty($payload['awaiting_moderation']) ? ' (awaiting moderation)' : ''),
     default => $type,
 };
@@ -31,13 +35,15 @@ $icon = match ($type) {
     'post.reviewer_assigned' => 'user-check',
     'post.reviewer_stale', 'post.workflow_disabled' => 'rotate-ccw',
     'collaborator.role_changed', 'collaborator.removed' => 'users',
-    'comment.created' => 'message-circle',
+    'comment.reply' => 'reply',
+    'comment.awaiting_moderation' => 'shield-alert',
+    'comment.on_your_post', 'comment.on_blog', 'comment.created' => 'message-circle',
     default => 'bell',
 };
 
 $color = match (true) {
     in_array($type, ['post.approved', 'post.published'], true) => 'bg-emerald-50 text-emerald-500',
-    in_array($type, ['post.needs_changes', 'post.workflow_disabled'], true) => 'bg-amber-50 text-amber-600',
+    in_array($type, ['post.needs_changes', 'post.workflow_disabled', 'comment.awaiting_moderation'], true) => 'bg-amber-50 text-amber-600',
     in_array($type, ['collaborator.removed'], true) => 'bg-red-50 text-red-500',
     default => 'bg-sky-50 text-sky-500',
 };
@@ -49,8 +55,10 @@ $href = match ($type) {
     'post.workflow_disabled' => '/dashboard/post/'.(int) ($payload['post_id'] ?? 0).'/edit',
     'post.published' => '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? '')),
     'blog.invite' => '/invite/'.rawurlencode((string) ($payload['token'] ?? '')),
-    // Older rows predate comment_id and simply keep the top-of-post behaviour
-    'comment.created' => !empty($payload['awaiting_moderation'])
+    // Moderation alerts land on the queue; the comment isn't public yet
+    'comment.awaiting_moderation' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments',
+    // Older comment.created rows predate the split and may still be pending
+    'comment.reply', 'comment.on_your_post', 'comment.on_blog', 'comment.created' => !empty($payload['awaiting_moderation'])
         ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
         : '/blog/'.rawurlencode((string) ($payload['blog_slug'] ?? '')).'/'.rawurlencode((string) ($payload['post_slug'] ?? ''))
             .(!empty($payload['comment_id']) ? '#comment-'.(int) $payload['comment_id'] : ''),

@@ -106,14 +106,15 @@ class AccountController extends AppController
 
         $userId = (int) auth()->user()['id'];
 
-        // unchecked boxes are absent from the request, so absence means off
-        $this->prefs->upsert($userId, [
-            'notify_comments' => $this->request->postParam('notify_comments') ? 1 : 0,
-            'notify_likes' => $this->request->postParam('notify_likes') ? 1 : 0,
-            'notify_post_status' => $this->request->postParam('notify_post_status') ? 1 : 0,
-            'notify_role_changes' => $this->request->postParam('notify_role_changes') ? 1 : 0,
-            'notify_invites' => $this->request->postParam('notify_invites') ? 1 : 0,
-        ]);
+        // unchecked boxes are absent from the request, so absence means off.
+        // Driving this off NOTIFY_KEYS means adding a toggle is a one-line
+        // change to the model, not another entry to remember here.
+        $data = [];
+        foreach (UserPreferencesModel::NOTIFY_KEYS as $key) {
+            $data[$key] = $this->request->postParam($key) ? 1 : 0;
+        }
+
+        $this->prefs->upsert($userId, $data);
 
         $this->flash('success', 'Notification settings saved.');
 
@@ -162,7 +163,7 @@ class AccountController extends AppController
         $preferences = $this->prefs->findOrCreate($userId) ?: [];
 
         $toggles = [];
-        foreach (['notify_comments', 'notify_likes', 'notify_post_status', 'notify_role_changes', 'notify_invites'] as $key) {
+        foreach (UserPreferencesModel::NOTIFY_KEYS as $key) {
             $toggles[$key] = isset($preferences[$key]) ? (int) $preferences[$key] : 1;
         }
 

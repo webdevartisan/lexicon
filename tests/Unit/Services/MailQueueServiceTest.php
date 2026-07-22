@@ -120,7 +120,7 @@ describe('MailQueueService::processBatch', function () {
         $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'];
 
         $queue = Mockery::mock(MailQueueModel::class);
-        $queue->shouldReceive('claimBatch')->once()->with(10)->andReturn([$row]);
+        $queue->shouldReceive('claimBatch')->once()->with(10, '')->andReturn([$row]);
         $queue->shouldReceive('markSent')->once()->with(7)->andReturn(true);
 
         $mailer = Mockery::mock(MailService::class);
@@ -212,7 +212,7 @@ describe('MailQueueService::processBatch', function () {
 
     test('honours a configured batch size', function () {
         $queue = Mockery::mock(MailQueueModel::class);
-        $queue->shouldReceive('claimBatch')->once()->with(3)->andReturn([]);
+        $queue->shouldReceive('claimBatch')->once()->with(3, '')->andReturn([]);
 
         makeMailQueueService($queue, null, ['batch_size' => 3])->processBatch();
 
