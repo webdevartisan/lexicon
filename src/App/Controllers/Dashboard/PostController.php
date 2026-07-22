@@ -14,6 +14,7 @@ use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
 use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
+use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
 use App\Services\MediaService;
 use App\Services\PostAutosaveService;
@@ -47,7 +48,11 @@ final class PostController extends AppController
         'og_title' => 'max:70',
         'og_description' => 'max:100',
         'og_image' => 'url|max:255',
+        'og_image_alt' => 'max:255',
         'twitter_card_type' => 'in:summary,summary_large_image',
+        'twitter_title' => 'max:70',
+        'twitter_description' => 'max:200',
+        'twitter_image' => 'url|max:255',
     ];
 
     public function __construct(
@@ -288,6 +293,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
+            'actions' => PostActionPresenter::for('draft', $blogRole, $workflowEnabled),
         ]);
     }
 
@@ -313,7 +319,6 @@ final class PostController extends AppController
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
             'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
-            'status' => 'in:'.implode(',', PostModel::STATUSES),
             'content' => 'required|max:60000',
             'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
@@ -325,14 +330,8 @@ final class PostController extends AppController
         $data['comments_enabled'] = !empty($data['comments_enabled']) ? 1 : 0;
         $data = $this->normalizeSeoFields($data);
 
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $data['status'] = $this->workflowService->constrainStatusForRole(
-            (string) ($data['status'] ?? 'draft'),
-            $blogRole,
-            (int) $blog->id()
-        );
-
-        // Convert published_at to UTC
+        // Convert published_at to UTC before resolving the intent, because
+        // whether the date is in the future decides publish versus schedule.
         if (!empty($data['timezone']) && !empty($data['published_at'])) {
             $data['published_at'] = $this->normalizePublishedAt(
                 $data['published_at'],
@@ -341,6 +340,13 @@ final class PostController extends AppController
         } else {
             unset($data['published_at']);
         }
+
+        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
+        $data['status'] = $this->workflowService->constrainStatusForRole(
+            $this->requestedStatus('draft', $data['published_at'] ?? null),
+            $blogRole,
+            (int) $blog->id()
+        );
 
         $data['blog_id'] = $blog->id();
         $data['author_id'] = $user['id'];
@@ -465,6 +471,13 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            'actions' => PostActionPresenter::for(
+                $status,
+                $blogRole,
+                $workflowEnabled,
+                $post->publishedAt() !== null && strtotime($post->publishedAt().' UTC') > time(),
+                $workflowState
+            ),
         ]);
     }
 
@@ -515,7 +528,6 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
-            'status' => 'in:'.implode(',', PostModel::STATUSES),
             'content' => 'required|max:60000',
             'excerpt' => 'required|max:300',
             'timezone' => 'timezone',
@@ -559,7 +571,10 @@ final class PostController extends AppController
 
         $blogRole = $post->blog()->effectiveRoleForUser((int) $user['id']);
         $newData['status'] = $this->workflowService->constrainStatusForRole(
-            (string) ($newData['status'] ?? $originalData['status']),
+            $this->requestedStatus(
+                (string) $originalData['status'],
+                $newData['published_at'] ?? $originalData['published_at'] ?? null
+            ),
             $blogRole,
             (int) $post->blogId(),
             $originalData['status']
@@ -747,7 +762,8 @@ final class PostController extends AppController
                 'id' => 'integer',
                 'title' => 'required|title|min:2|max:100',
                 'slug' => $slugRule,
-                'status' => 'in:'.implode(',', PostModel::STATUSES),
+                // No status rule: autosave never sends one, and the "in" rule
+                // rejects an absent value rather than skipping it.
                 'content' => 'required|max:60000',
                 'excerpt' => 'required|max:300',
                 'timezone' => 'timezone',
@@ -1153,7 +1169,7 @@ final class PostController extends AppController
 
         $counts = $this->model->countsByStatusForAuthor(authorId: $userId, blogId: (int) $blog->id());
         // Archived isn't a workspace tab; "all" only spans what the writer can see here.
-        $counts['all'] = $counts['draft'] + $counts['pending'] + $counts['published'];
+        $counts['all'] = $counts['draft'] + $counts['pending'] + $counts['published'] + $counts['scheduled'];
 
         $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($settings['workflow_enabled']);
@@ -1283,7 +1299,13 @@ final class PostController extends AppController
         $data['meta_noindex'] = !empty($data['meta_noindex']) ? 1 : 0;
         $data['meta_nofollow'] = !empty($data['meta_nofollow']) ? 1 : 0;
 
-        foreach (['focus_keyword', 'meta_title', 'meta_description', 'canonical_url', 'og_title', 'og_description', 'og_image'] as $seoField) {
+        $nullable = [
+            'focus_keyword', 'meta_title', 'meta_description', 'canonical_url',
+            'og_title', 'og_description', 'og_image', 'og_image_alt',
+            'twitter_title', 'twitter_description', 'twitter_image',
+        ];
+
+        foreach ($nullable as $seoField) {
             if (isset($data[$seoField]) && trim((string) $data[$seoField]) === '') {
                 $data[$seoField] = null;
             }
@@ -1294,6 +1316,38 @@ final class PostController extends AppController
         }
 
         return $data;
+    }
+
+    /**
+     * Resolve the status the editor is asking for from the clicked button.
+     *
+     * The form submits an intent ("publish", "save_draft", ...) rather than a
+     * status, so the buttons can stay readable while the mapping lives in one
+     * place. Whatever comes back is still passed through
+     * WorkflowService::constrainStatusForRole(), which is what actually
+     * enforces who may publish.
+     *
+     * The whitelist lives here rather than in the validation rules because a
+     * form can be submitted with no submitter at all — pressing Enter in a
+     * text field does it — and that should quietly mean "just save", not
+     * reject the whole post.
+     *
+     * @param  string  $currentStatus  Status the post holds today
+     * @param  string|null  $publishedAtUtc  Normalized publish date, when set
+     * @return string The requested status
+     */
+    private function requestedStatus(string $currentStatus, ?string $publishedAtUtc): string
+    {
+        $intent = (string) ($this->request->postParam('intent') ?? '');
+
+        if (!in_array($intent, PostActionPresenter::INTENTS, true)) {
+            $intent = PostActionPresenter::INTENT_UPDATE;
+        }
+
+        $hasFutureDate = $publishedAtUtc !== null
+            && strtotime($publishedAtUtc.' UTC') > time();
+
+        return PostActionPresenter::statusForIntent($intent, $currentStatus, $hasFutureDate);
     }
 
     /**
