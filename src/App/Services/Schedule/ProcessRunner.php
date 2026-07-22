@@ -160,7 +160,7 @@ class ProcessRunner implements TaskRunnerInterface
             return "cmd /c start /B \"\" {$php} {$cli} {$task} > NUL 2>&1";
         }
 
-        return "/bin/sh -c ".escapeshellarg("nohup {$php} {$cli} {$task} > /dev/null 2>&1 &");
+        return '/bin/sh -c '.escapeshellarg("nohup {$php} {$cli} {$task} > /dev/null 2>&1 &");
     }
 
     /**
