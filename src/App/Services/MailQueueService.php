@@ -16,9 +16,11 @@ use Throwable;
  * result, so the worker never reconstructs a Mailable and a later change to a
  * template's constructor cannot break mail that is already waiting.
  *
- * Sending inline is still correct for anything a user is waiting on, like a
- * password reset. Queue the fan-outs, where nobody is watching the clock and a
- * per-second provider limit is the real constraint.
+ * Everything goes through here, including the mail somebody is waiting on.
+ * Inline sending was the only mode with no retry, so a provider hiccup on a
+ * password reset lost it outright. A reset queued at the critical tier and
+ * drained by a worker running every minute still lands in seconds, and it
+ * survives the transport being briefly unavailable.
  */
 class MailQueueService
 {
@@ -64,6 +66,7 @@ class MailQueueService
                 'subject' => $mailable->getSubject(),
                 'body_html' => $html,
                 'body_text' => $text,
+                'tier' => $mailable->getTier(),
                 'related_type' => $relatedType,
                 'related_id' => $relatedId,
                 'max_attempts' => (int) ($this->config['max_attempts'] ?? 3),
@@ -82,9 +85,10 @@ class MailQueueService
      * by the configured delay and capped per run. Each row is isolated, so one
      * refusal never costs the rest of the batch.
      *
+     * @param  string  $tier  Restrict to one tier, '' for any
      * @return array{claimed: int, sent: int, retrying: int, failed: int, skipped: bool}
      */
-    public function processBatch(): array
+    public function processBatch(string $tier = ''): array
     {
         $result = ['claimed' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'skipped' => false];
 
@@ -102,7 +106,7 @@ class MailQueueService
         $delayMs = (int) ($this->config['delay_ms'] ?? 500);
         $backoff = (int) ($this->config['backoff_seconds'] ?? 60);
 
-        $rows = $this->queue->claimBatch($batchSize);
+        $rows = $this->queue->claimBatch($batchSize, $tier);
         $result['claimed'] = count($rows);
 
         foreach ($rows as $index => $row) {
@@ -135,6 +139,16 @@ class MailQueueService
     public function releaseStuck(): int
     {
         return $this->queue->releaseStuck((int) ($this->config['stuck_after_minutes'] ?? 15));
+    }
+
+    /**
+     * Pending mail per tier, for the panel undrained tier warning.
+     *
+     * @return array<string, int>
+     */
+    public function pendingByTier(): array
+    {
+        return $this->queue->pendingByTier();
     }
 
     /**

@@ -36,7 +36,15 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
      */
     public static function argumentSchema(): array
     {
-        return [];
+        return [
+            'tier' => [
+                'type' => 'enum',
+                'label' => 'Tier',
+                'values' => ['critical', 'standard', 'bulk'],
+                'default' => 'standard',
+                'required' => true,
+            ],
+        ];
     }
 
     /**
@@ -62,19 +70,32 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
             return null;
         }
 
-        $hoursForList = (int) ceil(5000 / $perHour);
+        $tier = (string) ($arguments['tier'] ?? 'standard');
 
-        return "About {$perHour} emails an hour. A 5,000 recipient send would take roughly {$hoursForList} hours to go out.";
+        // Only the bulk tier ever sees a list big enough for the projection to
+        // mean anything. On the others it would just be noise, and the number
+        // that actually matters there is how long someone waits.
+        if ($tier === 'bulk') {
+            $hoursForList = (int) ceil(5000 / $perHour);
+
+            return "About {$perHour} emails an hour. A 5,000 recipient send would take roughly {$hoursForList} hours to go out.";
+        }
+
+        $waitMinutes = (int) ceil(60 / $runsPerHour);
+
+        return "About {$perHour} emails an hour, and a message waits up to {$waitMinutes} minute(s) before a worker picks it up.";
     }
 
     /**
      * Drain one batch.
      *
-     * @param  array<string, mixed>  $arguments  Unused for now, the queue takes its pacing from config
+     * @param  array<string, mixed>  $arguments  Accepts 'tier' to drain one tier only
      * @return int Exit code (0 = success, 1 = failure)
      */
     public function handle(array $arguments = []): int
     {
+        $tier = (string) ($arguments['tier'] ?? '');
+
         try {
             $start = microtime(true);
 
@@ -86,7 +107,7 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
                 echo "Reclaimed {$released} row(s) from an interrupted run.\n";
             }
 
-            $result = $this->mailQueue->processBatch();
+            $result = $this->mailQueue->processBatch($tier);
 
             if ($result['skipped']) {
                 echo "Mail is disabled (MAIL_ENABLED=false); queue left untouched.\n";
@@ -95,7 +116,7 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
             }
 
             if ($result['claimed'] === 0) {
-                echo "No mail due for delivery.\n";
+                echo 'No mail due for delivery'.($tier !== '' ? " in the {$tier} tier" : '').".\n";
 
                 return 0;
             }

@@ -552,6 +552,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     body_html LONGTEXT NOT NULL,
     body_text LONGTEXT DEFAULT NULL,
     status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+    tier ENUM('critical','standard','bulk') NOT NULL DEFAULT 'standard' COMMENT 'Set by the Mailable class, decides which worker drains the row',
     attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',
     max_attempts INT NOT NULL DEFAULT 3 COMMENT 'Give up and mark failed past this',
     last_error TEXT DEFAULT NULL COMMENT 'Transport complaint from the most recent failure',
@@ -562,7 +563,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     sent_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_mail_queue_claim (status, next_attempt_at),
+    INDEX idx_mail_queue_claim (tier, status, next_attempt_at),
     INDEX idx_mail_queue_token (claim_token),
     INDEX idx_mail_queue_related (related_type, related_id),
     INDEX idx_mail_queue_created (created_at)
@@ -637,12 +638,14 @@ COMMENT='Execution history for scheduled_tasks, pruned by schedule:prune-runs';
 
 -- Ships with the jobs the platform actually needs, so a fresh install works
 -- after the single crontab line with nothing to configure by hand.
-INSERT INTO scheduled_tasks (label, command, schedule_type, interval_minutes, run_at, schedule_timezone, timeout_seconds, is_active, next_run_at) VALUES
-('Publish scheduled posts', 'posts:publish-due', 'every_minute', NULL, NULL, 'UTC', 120, 1, UTC_TIMESTAMP()),
-('Outbound mail', 'mail:queue-work', 'every_minute', NULL, NULL, 'UTC', 300, 1, UTC_TIMESTAMP()),
-('Prune expired cache', 'cache:prune', 'daily', NULL, '03:20:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
-('Prune old notifications', 'notifications:prune', 'daily', NULL, '03:40:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
-('Prune task history', 'schedule:prune-runs', 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP());
+INSERT INTO scheduled_tasks (label, command, arguments, schedule_type, interval_minutes, run_at, schedule_timezone, timeout_seconds, is_active, next_run_at) VALUES
+('Publish scheduled posts', 'posts:publish-due', NULL, 'every_minute', NULL, NULL, 'UTC', 120, 1, UTC_TIMESTAMP()),
+('Mail, critical', 'mail:queue-work', '{"tier":"critical"}', 'every_minute', NULL, NULL, 'UTC', 120, 1, UTC_TIMESTAMP()),
+('Mail, standard', 'mail:queue-work', '{"tier":"standard"}', 'every_n_minutes', 5, NULL, 'UTC', 300, 1, UTC_TIMESTAMP()),
+('Mail, bulk', 'mail:queue-work', '{"tier":"bulk"}', 'every_n_minutes', 10, NULL, 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune expired cache', 'cache:prune', NULL, 'daily', NULL, '03:20:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune old notifications', 'notifications:prune', NULL, 'daily', NULL, '03:40:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP());
 
 -- ----------------------------------------------------------------------------
 -- Post Translations Table

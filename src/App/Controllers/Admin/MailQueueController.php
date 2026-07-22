@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\MailQueueModel;
+use App\Models\ScheduledTaskModel;
 use App\Services\MailQueueService;
 use Framework\Core\Response;
 
@@ -25,10 +26,14 @@ class MailQueueController extends AppController
     /** Statuses a row may be filtered by, used to reject anything else. */
     private const STATUSES = ['pending', 'sending', 'sent', 'failed'];
 
+    /** Tiers a row may be filtered by, in the order they drain. */
+    private const TIERS = ['critical', 'standard', 'bulk'];
+
     public function __construct(
         protected Response $response,
         private MailQueueModel $model,
         private MailQueueService $mailQueue,
+        private ScheduledTaskModel $tasks,
     ) {}
 
     /**
@@ -45,7 +50,13 @@ class MailQueueController extends AppController
             $status = '';
         }
 
-        $result = $this->model->findWithFilters($status, $search, $page, 25);
+        $tier = trim((string) ($this->request->get['tier'] ?? ''));
+
+        if (!in_array($tier, self::TIERS, true)) {
+            $tier = '';
+        }
+
+        $result = $this->model->findWithFilters($status, $search, $page, 25, $tier);
 
         return $this->view('areas/admin/MailQueue/index.lex.php', [
             'entries' => $result['data'],
@@ -54,8 +65,36 @@ class MailQueueController extends AppController
             'statusFilter' => $status,
             'searchFilter' => $search,
             'statusOptions' => self::STATUSES,
+            'tierFilter' => $tier,
+            'tierOptions' => self::TIERS,
+            'undrainedTiers' => $this->undrainedTiers(),
             'mailEnabled' => mailer()->enabled(),
         ]);
+    }
+
+    /**
+     * Tiers holding mail that no active scheduled worker will ever pick up.
+     *
+     * Mail sitting in a tier with nothing draining it looks exactly like mail
+     * being broken, and without this the only clue is a number that quietly
+     * stops going down.
+     *
+     * @return array<int, string> Tier names, empty when everything is covered
+     */
+    private function undrainedTiers(): array
+    {
+        $pending = $this->mailQueue->pendingByTier();
+        $covered = $this->tasks->activeArgumentValues('mail:queue-work', 'tier');
+
+        $undrained = [];
+
+        foreach (self::TIERS as $tier) {
+            if (($pending[$tier] ?? 0) > 0 && !in_array($tier, $covered, true)) {
+                $undrained[] = $tier;
+            }
+        }
+
+        return $undrained;
     }
 
     /**

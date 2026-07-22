@@ -18,6 +18,27 @@ namespace App\Mail;
  */
 abstract class Mailable
 {
+    /** Somebody is blocked waiting on it, so it goes out on its own fast worker. */
+    public const TIER_CRITICAL = 'critical';
+
+    /** Prompted by something a person did, but nobody is watching the clock. */
+    public const TIER_STANDARD = 'standard';
+
+    /** Fan-out to a list, where throughput matters and a delay costs nothing. */
+    public const TIER_BULK = 'bulk';
+
+    /**
+     * How urgently this email needs to leave.
+     *
+     * Deliberately a property of the class rather than something an operator
+     * sets. Urgency follows from what the email is: a password reset is
+     * time critical because of what it does, not because of a preference, and
+     * a setting for it would mostly be a way to break the one email nobody can
+     * afford to lose. Operators control pace instead, by scheduling each tier
+     * worker at whatever rate their provider tolerates.
+     */
+    protected string $tier = self::TIER_STANDARD;
+
     /** @var array<string, string> Address => name */
     protected array $to = [];
 
@@ -187,6 +208,14 @@ abstract class Mailable
     }
 
     // Getters for MailService to access protected properties
+
+    /**
+     * Delivery tier, used to pick which queue worker handles it.
+     */
+    public function getTier(): string
+    {
+        return $this->tier;
+    }
 
     /**
      * @return array<string, string> Address => name

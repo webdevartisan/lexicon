@@ -199,6 +199,38 @@ class ScheduledTaskModel extends AppModel
     }
 
     /**
+     * Distinct values of one argument across active tasks for a command.
+     *
+     * Lets a feature ask what the scheduler is actually covering on its
+     * behalf, for instance which mail tiers have a worker keeping them moving.
+     * Work piling up with nothing scheduled to clear it looks identical to the
+     * feature being broken, and this is what makes the difference visible.
+     *
+     * @param  string  $command  Console command name
+     * @param  string  $key  Argument to read
+     * @return array<int, string> Values in use, deduplicated
+     */
+    public function activeArgumentValues(string $command, string $key): array
+    {
+        $rows = $this->database->query(
+            "SELECT arguments FROM {$this->getTable()} WHERE command = ? AND is_active = 1",
+            [$command]
+        )->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+
+        $values = [];
+
+        foreach ($rows as $raw) {
+            $decoded = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;
+
+            if (is_array($decoded) && isset($decoded[$key]) && is_scalar($decoded[$key])) {
+                $values[] = (string) $decoded[$key];
+            }
+        }
+
+        return array_values(array_unique($values));
+    }
+
+    /**
      * Save a new task.
      *
      * @param  array<string, mixed>  $data  Already validated by the controller

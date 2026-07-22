@@ -113,7 +113,10 @@ class ScheduledTaskController extends AppController
         $runsPerHour = $this->calculator->runsPerHour($draft);
 
         try {
-            $hint = $this->registry->hintFor($command, [], $runsPerHour);
+            // Half-finished argument values are normal while someone is still
+            // choosing, so a rejection here just means no hint yet.
+            $arguments = $this->registry->validate($command, (array) ($this->request->get['arguments'] ?? []));
+            $hint = $this->registry->hintFor($command, $arguments, $runsPerHour);
         } catch (InvalidArgumentException) {
             $hint = null;
         }

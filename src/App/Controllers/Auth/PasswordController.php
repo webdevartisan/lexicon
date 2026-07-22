@@ -116,7 +116,10 @@ final class PasswordController extends AppController
                 return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
             }
 
-            mailer()->send(new PasswordResetEmail($user, $token, 60));
+            // Queued rather than sent inline. Inline was the one mode with no
+            // retry, so a transport blip lost the reset outright. The critical
+            // tier worker runs every minute, so this still lands in seconds.
+            mail_queue()->enqueue(new PasswordResetEmail($user, $token, 60), 'user', (int) $user['id']);
 
             // Audit successful email send
             audit()->log(

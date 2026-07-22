@@ -187,6 +187,16 @@ foreach ($timezones as $zone) {
             interval_minutes: intervalField ? intervalField.value : '5'
         });
 
+        // The arguments shape the answer too. Draining the bulk tier ten at a
+        // time reads very differently from draining the critical one.
+        argumentBox.querySelectorAll('[name^="arguments["]').forEach(function (field) {
+            if (field.type === 'checkbox' && !field.checked) {
+                return;
+            }
+
+            params.append(field.getAttribute('name'), field.value);
+        });
+
         fetch(hintEndpoint + '?' + params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (response) { return response.ok ? response.json() : null; })
             .then(function (payload) {
