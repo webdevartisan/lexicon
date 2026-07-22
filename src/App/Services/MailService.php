@@ -61,6 +61,13 @@ class MailService
      * configuration choice, not a delivery failure, and treating it as one
      * would make every dev environment report errors to the user.
      *
+     * Reach for mail_queue()->enqueue() instead when adding a new email.
+     * Nothing in the application calls this directly any more, because a send
+     * from here that the transport refuses is gone for good. Queued mail is
+     * retried, shows up in the control panel, and picks its pace from the tier
+     * its Mailable declares. This stays for the delivery path underneath the
+     * queue and for admin test sends.
+     *
      * @param  Mailable  $mailable  Email to send
      * @return bool True on success or when mail is disabled, false on failure
      */
