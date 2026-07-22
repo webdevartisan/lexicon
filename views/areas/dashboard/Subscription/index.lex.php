@@ -45,10 +45,10 @@
                             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 dark:text-zink-300 mt-1">
                                 <span><?= (int) ($s['post_count'] ?? 0) ?> post<?= (int) ($s['post_count'] ?? 0) === 1 ? '' : 's' ?></span>
                                 <?php if (!empty($s['latest_post_at'])) { ?>
-                                    <span>Latest: <?= e(date('M j, Y', strtotime((string) $s['latest_post_at']))) ?></span>
+                                    <span>Latest: <?= e(local_datetime($s['latest_post_at'] ?? null, 'M j, Y')) ?></span>
                                 <?php } ?>
                                 <?php if (!empty($s['created_at'])) { ?>
-                                    <span>Subscribed <?= e(date('M j, Y', strtotime((string) $s['created_at']))) ?></span>
+                                    <span>Subscribed <?= e(local_datetime($s['created_at'] ?? null, 'M j, Y')) ?></span>
                                 <?php } ?>
                                 <?php if (!$isLive) { ?>
                                     <span class="text-amber-500">Not published right now</span>

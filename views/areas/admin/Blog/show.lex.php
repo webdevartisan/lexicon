@@ -78,7 +78,7 @@ $statusBadge = [
                                 <?= e(ucfirst((string) $post['status'])) ?>
                             </span>
                         </td>
-                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $post['updated_at']))) ?></td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
                                 <a href="/admin/posts/<?= e((string) $post['id']) ?>/show" title="View"

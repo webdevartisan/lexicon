@@ -10,21 +10,7 @@ $basePath = '/admin/scheduled-tasks';
 $historyPath = $basePath.'/'.$taskId.'/history';
 $backUrl = lurl($basePath);
 
-try {
-    $viewerZone = new DateTimeZone($viewerTimezone);
-} catch (Exception $e) {
-    $viewerZone = new DateTimeZone('UTC');
-}
-
-$local = static function (?string $utc) use ($viewerZone): string {
-    if (empty($utc)) {
-        return '';
-    }
-
-    return (new DateTimeImmutable($utc, new DateTimeZone('UTC')))
-        ->setTimezone($viewerZone)
-        ->format('d M Y, H:i:s');
-};
+$local = static fn (?string $utc): string => local_datetime($utc, 'd M Y, H:i:s', $viewerTimezone);
 
 // Run outcomes borrow the badge palette already in the compiled stylesheet
 // rather than introducing colours of their own.

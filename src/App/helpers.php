@@ -9,8 +9,11 @@ declare(strict_types=1);
  * helpers here depend on application services and models.
  */
 
+use App\Helpers\TimezoneHelper;
+use App\Models\BlogSettingsModel;
 use App\Models\SettingModel;
 use App\Models\SiteContentModel;
+use App\Models\UserPreferencesModel;
 use App\Services\AssetPathMapper;
 use App\Services\TranslationService;
 
@@ -61,6 +64,187 @@ function site_setting(string $name, ?string $default = null): ?string
     $model ??= app(SettingModel::class);
 
     return $model->get($name, $default);
+}
+
+/**
+ * Timezone configured for the site as a whole.
+ *
+ * Last resort for both of the resolvers below, so it never returns something
+ * DateTimeZone will reject.
+ *
+ * @return string A valid timezone identifier
+ */
+function site_timezone(): string
+{
+    static $zone = null;
+
+    if ($zone === null) {
+        $configured = site_setting('timezone', 'UTC');
+        $zone = TimezoneHelper::isValid($configured) ? $configured : 'UTC';
+    }
+
+    return $zone;
+}
+
+/**
+ * Timezone the signed in viewer reads dates in.
+ *
+ * Falls back to the site timezone rather than UTC, since most accounts never
+ * open the preferences page and UTC would be wrong for all of them.
+ *
+ * @return string A valid timezone identifier
+ */
+function viewer_timezone(): string
+{
+    static $zone = null;
+
+    if ($zone !== null) {
+        return $zone;
+    }
+
+    $user = auth()->user();
+
+    if ($user) {
+        $preference = app(UserPreferencesModel::class)->getTimezone((int) $user['id']);
+
+        if (TimezoneHelper::isValid($preference)) {
+            return $zone = $preference;
+        }
+    }
+
+    return $zone = site_timezone();
+}
+
+/**
+ * Timezone a blog publishes in.
+ *
+ * Public pages are full page cached, so they render on the blog's clock
+ * instead of the reader's. Rendering per reader would store one visitor's
+ * timezone in the cache and serve it to the next.
+ *
+ * @param  int|null  $blogId  Blog identifier, null falls back to the site zone
+ * @return string A valid timezone identifier
+ */
+function blog_timezone(?int $blogId): string
+{
+    if ($blogId === null) {
+        return site_timezone();
+    }
+
+    static $zones = [];
+
+    if (!array_key_exists($blogId, $zones)) {
+        // findByBlogId is fragment cached, so this costs nothing on a page that
+        // already loaded the blog's settings.
+        $settings = app(BlogSettingsModel::class)->findByBlogId($blogId);
+        $candidate = $settings['timezone'] ?? null;
+
+        $zones[$blogId] = TimezoneHelper::isValid($candidate) ? $candidate : site_timezone();
+    }
+
+    return $zones[$blogId];
+}
+
+/**
+ * Format a stored UTC timestamp for display.
+ *
+ * Every timestamp in the database is UTC. Calling date() on a raw column
+ * formats it in PHP's own zone, which is how dashboard times ended up hours
+ * off, so views should come through here instead.
+ *
+ * @param  string|null  $utc  Datetime as stored, 'Y-m-d H:i:s'
+ * @param  string  $format  Any date() format string
+ * @param  string|null  $timezone  Target zone, defaults to the viewer's
+ * @return string Formatted datetime, or '' when there is nothing to show
+ */
+function local_datetime(?string $utc, string $format = 'M j, Y', ?string $timezone = null): string
+{
+    if ($utc === null || trim($utc) === '') {
+        return '';
+    }
+
+    $timezone ??= viewer_timezone();
+
+    if (!TimezoneHelper::isValid($timezone)) {
+        $timezone = site_timezone();
+    }
+
+    try {
+        $when = new DateTimeImmutable($utc, new DateTimeZone('UTC'));
+    } catch (Exception $e) {
+        error_log("local_datetime could not parse '{$utc}': ".$e->getMessage());
+
+        return '';
+    }
+
+    return $when->setTimezone(new DateTimeZone($timezone))->format($format);
+}
+
+/**
+ * Machine readable timestamp for a <time datetime="..."> attribute.
+ *
+ * Always UTC with an offset, which is what a browser needs if anything ever
+ * localises these client side.
+ *
+ * @param  string|null  $utc  Datetime as stored, 'Y-m-d H:i:s'
+ * @return string ISO 8601 timestamp, or '' when there is nothing to show
+ */
+function iso_datetime(?string $utc): string
+{
+    return local_datetime($utc, 'c', 'UTC');
+}
+
+/**
+ * How long ago something happened, or how long until it does.
+ *
+ * Timezone independent by construction, so it stays correct on a cached page
+ * no matter who reads it.
+ *
+ * @param  string|null  $utc  Datetime as stored, 'Y-m-d H:i:s'
+ * @param  bool  $short  Terse units for dense tables, '3h ago' over '3 hours ago'
+ * @return string Human phrasing, or '' when there is nothing to show
+ */
+function relative_time(?string $utc, bool $short = false): string
+{
+    if ($utc === null || trim($utc) === '') {
+        return '';
+    }
+
+    $seconds = strtotime($utc.' UTC');
+
+    if ($seconds === false) {
+        return '';
+    }
+
+    $seconds -= time();
+    $ahead = $seconds > 0;
+    $seconds = abs($seconds);
+
+    if ($seconds < 60) {
+        $text = $short ? $seconds.'s' : plural_unit($seconds, 'second');
+    } elseif ($seconds < 3600) {
+        $count = (int) round($seconds / 60);
+        $text = $short ? $count.'m' : plural_unit($count, 'minute');
+    } elseif ($seconds < 86400) {
+        $count = (int) round($seconds / 3600);
+        $text = $short ? $count.'h' : plural_unit($count, 'hour');
+    } else {
+        $count = (int) round($seconds / 86400);
+        $text = $short ? $count.'d' : plural_unit($count, 'day');
+    }
+
+    return $ahead ? 'in '.$text : $text.' ago';
+}
+
+/**
+ * Pluralise a counted unit, '1 hour' against '2 hours'.
+ *
+ * @param  int  $count  How many
+ * @param  string  $unit  Singular noun
+ */
+function plural_unit(int $count, string $unit): string
+{
+    return $count.' '.$unit.($count === 1 ? '' : 's');
 }
 
 /**

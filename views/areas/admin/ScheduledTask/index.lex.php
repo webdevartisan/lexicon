@@ -8,44 +8,8 @@
 $basePath = '/admin/scheduled-tasks';
 $newTaskUrl = lurl($basePath.'/create');
 
-try {
-    $viewerZone = new DateTimeZone($viewerTimezone);
-} catch (Exception $e) {
-    $viewerZone = new DateTimeZone('UTC');
-}
-
 // Stored times are UTC. Everything an operator reads is their own clock.
-$local = static function (?string $utc) use ($viewerZone): string {
-    if (empty($utc)) {
-        return '';
-    }
-
-    $when = new DateTimeImmutable($utc, new DateTimeZone('UTC'));
-
-    return $when->setTimezone($viewerZone)->format('d M, H:i');
-};
-
-$relative = static function (?string $utc): string {
-    if (empty($utc)) {
-        return '';
-    }
-
-    $seconds = strtotime($utc.' UTC') - time();
-    $ahead = $seconds > 0;
-    $seconds = abs($seconds);
-
-    if ($seconds < 60) {
-        $text = $seconds.'s';
-    } elseif ($seconds < 3600) {
-        $text = (int) round($seconds / 60).'m';
-    } elseif ($seconds < 86400) {
-        $text = (int) round($seconds / 3600).'h';
-    } else {
-        $text = (int) round($seconds / 86400).'d';
-    }
-
-    return $ahead ? 'in '.$text : $text.' ago';
-};
+$local = static fn (?string $utc): string => local_datetime($utc, 'd M, H:i', $viewerTimezone);
 
 // Reads back the picker in the words it was set with
 $describe = static function (array $task): string {
@@ -71,7 +35,7 @@ $statusStyles = [
     'skipped_locked' => ['skip-forward', 'text-slate-400', 'Skipped'],
 ];
 
-$heartbeatText = $heartbeatAge === null ? '' : $relative(gmdate('Y-m-d H:i:s', time() - $heartbeatAge));
+$heartbeatText = $heartbeatAge === null ? '' : relative_time(gmdate('Y-m-d H:i:s', time() - $heartbeatAge), true);
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
@@ -200,14 +164,14 @@ $heartbeatText = $heartbeatAge === null ? '' : $relative(gmdate('Y-m-d H:i:s', t
                                     <span class="text-slate-400">Switched off</span>
                                 <?php } else { ?>
                                     <?= e($local($task['next_run_at'])) ?>
-                                    <span class="block text-xs text-slate-400"><?= e($relative($task['next_run_at'])) ?></span>
+                                    <span class="block text-xs text-slate-400"><?= e(relative_time($task['next_run_at'] ?? null, true)) ?></span>
                                 <?php } ?>
                             </td>
                             <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
                                 <?php if (empty($task['last_run_at'])) { ?>
                                     <span class="text-slate-400">Never</span>
                                 <?php } else { ?>
-                                    <?= e($relative($task['last_run_at'])) ?>
+                                    <?= e(relative_time($task['last_run_at'] ?? null, true)) ?>
                                     <span class="block text-xs text-slate-400">
                                         <?= $task['last_duration_ms'] === null ? '' : e(number_format((int) $task['last_duration_ms']).' ms') ?>
                                     </span>

@@ -11,9 +11,9 @@ namespace App\Models;
  * show something turning before the child process has even booted, and closes
  * when the child reports back or the reaper gives up on it.
  *
- * Every timestamp here is UTC written with UTC_TIMESTAMP(). The connection
- * does not pin a session zone, so NOW() would follow the MySQL host while PHP
- * runs in UTC.
+ * Every timestamp here is UTC written with UTC_TIMESTAMP(). The session is
+ * pinned to UTC now so NOW() would do the same job, but these columns are
+ * DATETIME and carry no zone of their own, so it stays spelled out.
  */
 class ScheduledTaskRunModel extends AppModel
 {

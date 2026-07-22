@@ -41,7 +41,7 @@
               <?php if (!empty($profile->memberSince())) { ?>
                 <li>
                   <span class="icon solid fa fa-calendar" aria-hidden="true"></span>
-                  Member since <?= e(date('F Y', strtotime($profile->memberSince()))); ?>
+                  Member since <?= e(local_datetime($profile->memberSince(), 'F Y', site_timezone())); ?>
                 </li>
               <?php } ?>
             </ul>
@@ -129,7 +129,7 @@
             <p class="meta">
               <?= e($post['blog_name'] ?? 'Blog'); ?>
               <?php if (!empty($post['published_at'])) { ?>
-                &middot; <time datetime="<?= e($post['published_at']); ?>"><?= e(date('M j, Y', strtotime($post['published_at']))); ?></time>
+                &middot; <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)); ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())); ?></time>
               <?php } ?>
             </p>
 

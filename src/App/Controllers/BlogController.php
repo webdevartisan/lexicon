@@ -338,9 +338,11 @@ class BlogController extends AppController
         $rawTs = $post['published_at'] ?? $post['created_at'] ?? gmdate('Y-m-d H:i:s');
         $post['published_at_raw'] = $rawTs;
 
-        // Pretty date with ordinal suffix like "5th Nov 2025"
+        // Pretty date with ordinal suffix like "5th Nov 2025", read on the
+        // blog's clock. These pages are full page cached, so the date cannot
+        // follow whoever happens to be reading.
         $dt = new \DateTime($post['published_at_raw'], new \DateTimeZone('UTC'));
-        $post['published_at'] = $this->formatDateWithOrdinal($dt); // see helper below
+        $post['published_at'] = $this->formatDateWithOrdinal($dt, blog_timezone((int) ($ctx['blog']['id'] ?? 0)));
 
         // Enrich display fields
         $displayName = empty($ctx['user']['display_name_cached']) ? $ctx['user']['username'] : $ctx['user']['display_name_cached'];

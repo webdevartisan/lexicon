@@ -79,7 +79,7 @@ $hasActivity = !empty($replies) || !empty($myComments);
                             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 dark:text-zink-300">
                                 <span class="font-medium text-custom-500"><?= e((string) ($p['blog_name'] ?? '')) ?></span>
                                 <?php if (!empty($p['published_at'])) { ?>
-                                    <span><?= e(date('M j, Y', strtotime((string) $p['published_at']))) ?></span>
+                                    <span><?= e(local_datetime($p['published_at'] ?? null, 'M j, Y')) ?></span>
                                 <?php } ?>
                             </div>
                             <a href="<?= e($url) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-600 dark:hover:text-custom-400 transition-colors">
@@ -134,7 +134,7 @@ $hasActivity = !empty($replies) || !empty($myComments);
                                         <?= e((string) $s['blog_name']) ?>
                                     </a>
                                     <?php if (!empty($s['latest_post_at'])) { ?>
-                                        <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(date('M j', strtotime((string) $s['latest_post_at']))) ?></span>
+                                        <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(local_datetime($s['latest_post_at'] ?? null, 'M j')) ?></span>
                                     <?php } ?>
                                 </div>
                             <?php } ?>

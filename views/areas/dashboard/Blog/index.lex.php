@@ -127,7 +127,7 @@ $blogCardHref = "/dashboard/blog/$bid/show";
                     <span class="inline-flex items-center gap-1"><i data-lucide="files" class="size-3"></i> <?= (int) ($blog['post_count'] ?? 0) ?> posts</span>
                     <span class="inline-flex items-center gap-1"><i data-lucide="users" class="size-3"></i> <?= (int) ($blog['author_count'] ?? 0) ?> collaborators</span>
                     <?php if (!empty($blog['updated_at'])) { ?>
-                    <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="size-3"></i> <?= e(date('M j, Y', strtotime((string) $blog['updated_at']))) ?></span>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="size-3"></i> <?= e(local_datetime($blog['updated_at'] ?? null, 'M j, Y')) ?></span>
                     <?php } ?>
                 </div>
 

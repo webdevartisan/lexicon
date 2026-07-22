@@ -251,12 +251,10 @@ class MailQueueModel extends AppModel
 
         // The body columns are LONGTEXT and never rendered in the listing, so
         // they are left out rather than hauling every email body into memory.
-        // due_in_seconds is worked out by MySQL against its own clock. Handing
-        // the raw timestamp to PHP and subtracting there was reading hours out,
-        // because the connection pins no session zone so NOW() follows the
-        // database host while PHP runs in UTC. Mail that was due right now
-        // showed as due in three hours, which is exactly the sort of thing that
-        // makes an operator think the queue has stopped.
+        // due_in_seconds is subtracted by MySQL so the countdown an operator
+        // reads comes from the same clock that decides what claimBatch() picks
+        // up. This used to be hours out when PHP did the subtraction on a
+        // connection that followed the database host zone.
         $sql = "SELECT id, to_email, to_name, subject, status, tier, attempts, max_attempts,
                        TIMESTAMPDIFF(SECOND, NOW(), next_attempt_at) AS due_in_seconds,
                        last_error, related_type, related_id, next_attempt_at, sent_at, created_at

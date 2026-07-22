@@ -41,7 +41,7 @@ $title = e($post['title'] ?? 'Untitled');
     <?php } ?>
 
     <div class="work-hero-byline">
-      <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(date('Y', strtotime((string) ($post['published_at'] ?? 'now')))) : '' ?></span><?php } ?>
+      <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)))) : '' ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
         Back to <?= e($blog['blog_name'] ?? 'the exhibition') ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -113,7 +113,7 @@ $title = e($post['title'] ?? 'Untitled');
             <div class="comment-meta">
               <strong><?= profile_link($comment['user_name'] ?? 'Guest', $comment['author_profile_slug'] ?? null) ?></strong>
               <?php if (!empty($comment['created_at'])) { ?>
-                &mdash; <?= e($comment['created_at']) ?>
+                &mdash; <?= e(relative_time($comment['created_at'] ?? null)) ?>
               <?php } ?>
             </div>
             <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
@@ -148,7 +148,7 @@ $title = e($post['title'] ?? 'Untitled');
                     <div class="comment-meta">
                       <strong><?= profile_link($reply['user_name'] ?? 'Guest', $reply['author_profile_slug'] ?? null) ?></strong>
                       <?php if (!empty($reply['created_at'])) { ?>
-                        &mdash; <?= e($reply['created_at']) ?>
+                        &mdash; <?= e(relative_time($reply['created_at'] ?? null)) ?>
                       <?php } ?>
                     </div>
                     <p><?= nl2br(e($reply['content'] ?? '')) ?></p>

@@ -183,7 +183,7 @@ final class SharedController extends AppController
                 'primary' => [
                     'label' => 'Open my work',
                     'href' => "/dashboard/blog/{$blogId}/workspace",
-                    'icon' => 'notebook-pen',
+                    'icon' => 'pen-square',
                     'variant' => 'blue',
                 ],
                 'secondary' => [
@@ -196,7 +196,7 @@ final class SharedController extends AppController
                 'primary' => [
                     'label' => 'Open my work',
                     'href' => "/dashboard/blog/{$blogId}/workspace",
-                    'icon' => 'notebook-pen',
+                    'icon' => 'pen-square',
                     'variant' => 'blue',
                 ],
                 'secondary' => [

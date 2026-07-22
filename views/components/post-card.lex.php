@@ -14,7 +14,7 @@ $statusStyles = [
 [$badgeClass, $badgeLabel] = $statusStyles[$status] ?? $statusStyles['draft'];
 
 $dateRaw = $post['published_at'] ?? $post['updated_at'] ?? $post['created_at'] ?? '';
-$dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
+$dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 ?>
 {% set previewText = t('components.postCard.actions.preview') %}
 {% set editTooltip = t('components.postCard.tooltips.edit') %}
@@ -35,7 +35,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
         if ($status === 'pending') {
             if (!empty($post['reviewer_username'])) {
                 $claimedAgo = !empty($post['reviewer_assigned_at'])
-                    ? date('M j', strtotime((string) $post['reviewer_assigned_at']))
+                    ? local_datetime($post['reviewer_assigned_at'] ?? null, 'M j')
                     : '';
                 ?>
                 <div class="mb-2">

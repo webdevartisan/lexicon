@@ -197,7 +197,7 @@
                                     <?= e($post['title']) ?>
                                 </p>
                                 <p class="text-xs text-slate-500 dark:text-zink-300 mt-0.5">
-                                    <?= e(ucfirst((string) $post['status'])) ?> · Updated <?= e(date('M j', strtotime((string) ($post['updated_at'] ?? $post['created_at'] ?? 'now')))) ?>
+                                    <?= e(ucfirst((string) $post['status'])) ?> · Updated <?= e(local_datetime($post['updated_at'] ?? $post['created_at'] ?? null, 'M j')) ?>
                                 </p>
                             </div>
                             {% cache 'lucide:chevron-right' ttl=31536000 %}<i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 mt-3 transition-colors"></i>{% endcache %}
@@ -239,7 +239,7 @@
                             </p>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-zink-300">
-                            <?= e(date('M j, Y', strtotime((string) ($post['published_at'] ?? $post['created_at'] ?? 'now')))) ?>
+                            <?= e(local_datetime($post['published_at'] ?? $post['created_at'] ?? null, 'M j, Y')) ?>
                         </p>
                     </a>
                     {% endforeach %}

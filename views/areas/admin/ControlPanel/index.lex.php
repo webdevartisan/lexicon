@@ -207,7 +207,7 @@ $rows = [
                                 <?= e(truncate((string) $p['title'], 60)) ?>
                             </a>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300">
-                                <?= e((string) ($p['blog_name'] ?? '')) ?> · <?= e((string) ($p['author_username'] ?? '')) ?> · <?= e(date('M j', strtotime((string) $p['updated_at']))) ?>
+                                <?= e((string) ($p['blog_name'] ?? '')) ?> · <?= e((string) ($p['author_username'] ?? '')) ?> · <?= e(local_datetime($p['updated_at'] ?? null, 'M j')) ?>
                             </span>
                         </div>
                         <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $statusBadge[$p['status']] ?? $statusBadge['draft'] ?>">
@@ -240,7 +240,7 @@ $rows = [
                             <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e((string) $u['email']) ?></span>
                         </div>
                         <span class="shrink-0 text-[11px] text-slate-400 dark:text-zink-300">
-                            <?= e(date('M j, Y', strtotime((string) $u['created_at']))) ?>
+                            <?= e(local_datetime($u['created_at'] ?? null, 'M j, Y')) ?>
                         </span>
                     </div>
                     <?php } ?>
@@ -267,7 +267,7 @@ $rows = [
                             <span class="text-slate-500 dark:text-zink-300"><?= e((string) $a['action']) ?></span>
                             <span class="text-slate-400 dark:text-zink-300 text-xs"><?= e((string) $a['resource_type']) ?><?= $a['resource_id'] !== null ? ' #'.e((string) $a['resource_id']) : '' ?></span>
                         </div>
-                        <span class="shrink-0 text-[11px] text-slate-400 dark:text-zink-300"><?= e(date('M j · g:i a', strtotime((string) $a['created_at']))) ?></span>
+                        <span class="shrink-0 text-[11px] text-slate-400 dark:text-zink-300"><?= e(local_datetime($a['created_at'] ?? null, 'M j · g:i a')) ?></span>
                     </div>
                     <?php } ?>
                 </div>

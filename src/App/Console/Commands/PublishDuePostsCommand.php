@@ -98,6 +98,12 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
                 $this->publicCache->purgeBlogSurfaces();
                 $this->publicCache->purgeHome();
                 $this->publicCache->purgeExplore();
+
+                // Also clear fragment caches for affected blogs so paginated lists
+                // and category grids reflect the newly published post immediately.
+                foreach ($due as $post) {
+                    $this->posts->forgetBlogPostFragments((int) $post['blog_id']);
+                }
             }
 
             $duration = round((microtime(true) - $start) * 1000, 2);

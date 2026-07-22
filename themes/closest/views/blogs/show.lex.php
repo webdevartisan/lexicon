@@ -25,11 +25,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   // stored featured_image is sometimes a category label rather than a real path
   $validImg = '#^(https?://|/|data:)#i';
 
-  $fmtDate = static function ($raw) {
-      $ts = strtotime((string) $raw);
-
-      return $ts ? date('j M Y', $ts) : '';
-  };
+  $blogTz = blog_timezone((int) ($blog['id'] ?? 0));
+  $fmtDate = static fn ($raw): string => local_datetime($raw, 'j M Y', $blogTz);
   ?>
 
 <section class="trailhead" id="top">

@@ -93,7 +93,7 @@
                         {{ post.blog_name }}
                         {% if post.published_at %}
                         &middot;
-                        <time datetime="{{ post.published_at }}"><?= e(date('M j, Y', strtotime($post['published_at']))) ?></time>
+                        <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
                         {% endif %}
                     </p>
 
@@ -135,7 +135,7 @@
                     <p class="meta">
                         {% if blog.last_post_at %}
                         {{ t('explore.lastPostLabel') }}:
-                        <time datetime="{{ blog.last_post_at }}"><?= e(date('M j, Y', strtotime($blog['last_post_at']))) ?></time>
+                        <time datetime="<?= e(iso_datetime($blog['last_post_at'] ?? null)) ?>"><?= e(local_datetime($blog['last_post_at'] ?? null, 'M j, Y', blog_timezone((int) ($blog['id'] ?? 0)))) ?></time>
                         {% endif %}
                     </p>
                     <ul class="actions">
