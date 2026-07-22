@@ -39,10 +39,13 @@ class InvitationService
      * @param  string  $role  Must be in BlogModel::ROLES
      * @param  int  $invitedBy  Owner issuing the invite
      * @param  string  $ip  Client IP for audit
+     * @return bool Whether the invitation email was delivered. The invite row
+     *              exists either way, but the accept link only travels by
+     *              email, so a false here means the invitee cannot act on it.
      *
      * @throws \InvalidArgumentException If role is not in BlogModel::ROLES
      */
-    public function invite(int $blogId, string $email, string $role, int $invitedBy, string $ip): void
+    public function invite(int $blogId, string $email, string $role, int $invitedBy, string $ip): bool
     {
         if (!in_array($role, BlogModel::ROLES, true)) {
             throw new \InvalidArgumentException("Invalid role: {$role}");
@@ -71,7 +74,8 @@ class InvitationService
         // Email always sent (raw token in link, never stored).
         $blog = $this->blogModel->getBlog($blogId);
         $blogName = $blog ? $blog->name() : 'a blog';
-        $this->mailService->send(new BlogInviteMail($email, $rawToken, $blogName, $role));
+
+        return $this->mailService->send(new BlogInviteMail($email, $rawToken, $blogName, $role));
     }
 
     /**

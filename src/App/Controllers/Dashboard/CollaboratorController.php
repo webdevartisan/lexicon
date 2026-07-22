@@ -116,7 +116,7 @@ final class CollaboratorController extends AppController
         ]);
         $data = $validator->validated();
 
-        $this->invitationService->invite(
+        $emailed = $this->invitationService->invite(
             $blog->id(),
             $data['email'],
             $data['role'],
@@ -124,7 +124,17 @@ final class CollaboratorController extends AppController
             (string) ($this->request->ip() ?? '')
         );
 
-        $this->flash('success', 'Invitation sent to '.$data['email'].'.');
+        if ($emailed) {
+            $this->flash('success', 'Invitation sent to '.$data['email'].'.');
+        } else {
+            // The invite exists but its accept link only travels by email, so
+            // saying "sent" here would strand the invitee.
+            $this->flash(
+                'error',
+                'Invitation created, but the email to '.$data['email'].' could not be delivered. '
+                .'Cancel it and try again once mail is working.'
+            );
+        }
 
         return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
     }

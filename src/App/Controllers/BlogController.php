@@ -419,7 +419,18 @@ class BlogController extends AppController
             'og_image' => $this->absoluteAssetUrl(
                 !empty($post['og_image']) ? $post['og_image'] : ($post['featured_image'] ?? null)
             ) ?? $ctx['meta']['og_image'],
+            'og_image_alt' => $post['og_image_alt'] ?? null,
             'twitter_card' => !empty($post['twitter_card_type']) ? $post['twitter_card_type'] : 'summary_large_image',
+            // X is the only platform that reads its own tags, so it is the
+            // only one an author can address separately. Empty means inherit.
+            'twitter_title' => $post['twitter_title'] ?? null,
+            'twitter_description' => $post['twitter_description'] ?? null,
+            'twitter_image' => $this->absoluteAssetUrl($post['twitter_image'] ?? null),
+            'article_published_time' => gmdate('c', strtotime((string) $post['published_at_raw'])),
+            'article_modified_time' => !empty($post['updated_at'])
+                ? gmdate('c', strtotime((string) $post['updated_at']))
+                : null,
+            'article_author' => $post['author_name'] ?? null,
             'canonical' => !empty($post['canonical_url']) ? $post['canonical_url'] : $shareUrl,
             'robots' => $robots !== [] ? implode(', ', $robots) : null,
         ]);
