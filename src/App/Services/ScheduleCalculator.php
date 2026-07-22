@@ -149,7 +149,7 @@ class ScheduleCalculator
         $parts = explode(':', $runAt);
 
         return [
-            max(0, min(23, (int) ($parts[0] ?? 0))),
+            max(0, min(23, (int) $parts[0])),
             max(0, min(59, (int) ($parts[1] ?? 0))),
         ];
     }

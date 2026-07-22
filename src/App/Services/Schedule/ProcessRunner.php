@@ -182,7 +182,7 @@ class ProcessRunner implements TaskRunnerInterface
             return $this->phpBinary;
         }
 
-        if (in_array(PHP_SAPI, ['cli', 'cli-server', 'phpdbg'], true) && PHP_BINARY !== '') {
+        if (in_array(PHP_SAPI, ['cli', 'cli-server', 'phpdbg'], true)) {
             return PHP_BINARY;
         }
 
