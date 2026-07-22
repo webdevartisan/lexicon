@@ -31,6 +31,7 @@ class CommentService
         private BlogSettingsModel $blogSettings,
         private BlogModel $blogModel,
         private NotificationService $notifications,
+        private CommentAudienceResolver $audience,
         private Session $session,
     ) {}
 
@@ -68,6 +69,7 @@ class CommentService
         }
 
         $parentId = (int) $parentId;
+        $repliedToUserId = null;
 
         if ($parentId > 0) {
             // Replies require an account; guests are captured upstream and
@@ -81,6 +83,11 @@ class CommentService
             if (!$parent) {
                 return ['ok' => false, 'message' => 'The comment you are replying to is unavailable.'];
             }
+
+            // Notify the person actually replied to, captured before the
+            // reparenting below moves $parentId up the thread. Null when they
+            // commented as a guest and so have no account to notify.
+            $repliedToUserId = !empty($parent['user_id']) ? (int) $parent['user_id'] : null;
 
             // Keep threads one level deep: replying to a reply attaches to its top-level parent
             if (!empty($parent['parent_comment_id'])) {
@@ -120,7 +127,7 @@ class CommentService
             $ip
         );
 
-        $this->notifyBlogTeam($post, $content, $user, !$autoPublish, $commentId);
+        $this->notifyComment($post, $content, $user, !$autoPublish, $commentId, $repliedToUserId);
 
         if ($autoPublish) {
             return ['ok' => true, 'message' => $isReply ? 'Reply posted.' : 'Comment posted.'];
@@ -204,38 +211,39 @@ class CommentService
     }
 
     /**
-     * Notify the blog owner, active editors, and the post author about a new
-     * comment. The commenter is skipped so people don't get notified about
-     * their own comments; recipients can opt out via notify_comments.
+     * Notify everyone with a stake in a new comment.
+     *
+     * Who hears about it, and under which of the four comment types, is the
+     * resolver's job. This method only assembles the payload and dispatches,
+     * so the audience rules stay testable without touching mail or the queue.
      *
      * @param  array<string, mixed>  $post  The commented post row
      * @param  string  $content  Raw comment text
      * @param  array<string, mixed>|null  $commenter  Authenticated commenter, null for guests
      * @param  bool  $awaitingModeration  Whether the comment is held for approval
      * @param  int  $commentId  ID of the new comment, used to build a deep link
+     * @param  int|null  $repliedToUserId  Author of the comment being replied to, if any
      */
-    private function notifyBlogTeam(
+    private function notifyComment(
         array $post,
         string $content,
         ?array $commenter,
         bool $awaitingModeration,
-        int $commentId
+        int $commentId,
+        ?int $repliedToUserId
     ): void {
         $blog = $this->blogModel->getBlog((int) $post['blog_id']);
         if (!$blog) {
             return;
         }
 
-        $recipients = [$blog->ownerId(), (int) ($post['author_id'] ?? 0)];
-        foreach ($blog->users() as $member) {
-            if ((int) ($member['is_active'] ?? 0) === 1
-                && $this->blogModel->baseRoleFor((string) ($member['role'] ?? '')) === 'editor') {
-                $recipients[] = (int) $member['user_id'];
-            }
-        }
-
-        $commenterId = $commenter ? (int) $commenter['id'] : null;
-        $recipients = array_unique(array_filter($recipients, static fn (int $id): bool => $id > 0 && $id !== $commenterId));
+        $audience = $this->audience->resolve(
+            $blog,
+            (int) ($post['author_id'] ?? 0),
+            $repliedToUserId,
+            $commenter ? (int) $commenter['id'] : null,
+            $awaitingModeration
+        );
 
         $payload = [
             'post_id' => (int) $post['id'],
@@ -251,8 +259,8 @@ class CommentService
             'awaiting_moderation' => $awaitingModeration,
         ];
 
-        foreach ($recipients as $userId) {
-            $this->notifications->dispatch($userId, 'comment.created', $payload);
+        foreach ($audience as $userId => $types) {
+            $this->notifications->dispatchFirstEnabled($userId, $types, $payload);
         }
     }
 }

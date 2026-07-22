@@ -74,8 +74,7 @@ describe('UserDeletionService Integration', function () {
                 ],
                 [
                     'timezone' => 'Europe/Nicosia',
-                    'notify_comments' => 1,
-                    'notify_likes' => 1,
+                    'notify_comments_blog' => 1,
                 ]
             );
 
@@ -130,22 +129,21 @@ describe('UserDeletionService Integration', function () {
 
             UserRelationsHelper::createUserPreferences($this->db, $userId, [
                 'timezone' => 'America/New_York',
-                'notify_comments' => 1,
-                'notify_likes' => 1,
+                'notify_comments_blog' => 1,
             ]);
 
             $this->service->pseudonymizeUser($userId);
 
             // Check preferences reset
             $stmt = $this->db->query(
-                'SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?',
+                'SELECT timezone, notify_comments_blog, notify_post_status FROM user_preferences WHERE user_id = ?',
                 [$userId]
             );
             $prefs = $stmt->fetch();
 
             expect($prefs['timezone'])->toBe('UTC');
-            expect($prefs['notify_comments'])->toBe(0);
-            expect($prefs['notify_likes'])->toBe(0);
+            expect($prefs['notify_comments_blog'])->toBe(0);
+            expect($prefs['notify_post_status'])->toBe(0);
         });
 
         it('commits transaction when all operations succeed', function () {

@@ -86,8 +86,14 @@ describe('UserDeletionService', function () {
                 ->once()
                 ->with($userId, [
                     'timezone' => 'UTC',
-                    'notify_comments' => 0,
-                    'notify_likes' => 0,
+                    'notify_comment_replies' => 0,
+                    'notify_comments_authored' => 0,
+                    'notify_comments_moderation' => 0,
+                    'notify_comments_blog' => 0,
+                    'notify_post_status' => 0,
+                    'notify_review_requests' => 0,
+                    'notify_role_changes' => 0,
+                    'notify_invites' => 0,
                 ])
                 ->andReturn(true);
 

@@ -95,34 +95,27 @@ class UserRelationsHelper
      */
     public static function createUserPreferences(Database $db, int $userId, array $preferences = []): int
     {
-        $defaults = [
+        $columns = [
             'timezone' => $preferences['timezone'] ?? 'Europe/Nicosia',
-            'notify_comments' => $preferences['notify_comments'] ?? 1,
-            'notify_likes' => $preferences['notify_likes'] ?? 1,
             'display_name_preference' => $preferences['display_name_preference'] ?? 'username',
             'default_post_visibility' => $preferences['default_post_visibility'] ?? 'public',
         ];
 
-        $prefData = array_merge($defaults, $preferences);
+        // Let a test seed any notification toggle it cares about; unspecified
+        // ones fall back to the schema default (TRUE) instead of being listed here.
+        foreach ($preferences as $key => $value) {
+            if (str_starts_with($key, 'notify_')) {
+                $columns[$key] = (int) $value;
+            }
+        }
 
-        $db->query('
-            INSERT INTO user_preferences (
-                user_id, 
-                timezone, 
-                notify_comments, 
-                notify_likes,
-                display_name_preference,
-                default_post_visibility
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-        ', [
-            $userId,
-            $prefData['timezone'],
-            $prefData['notify_comments'],
-            $prefData['notify_likes'],
-            $prefData['display_name_preference'],
-            $prefData['default_post_visibility'],
-        ]);
+        $names = array_keys($columns);
+        $placeholders = implode(', ', array_fill(0, count($names) + 1, '?'));
+
+        $db->query(
+            'INSERT INTO user_preferences (user_id, '.implode(', ', $names).') VALUES ('.$placeholders.')',
+            array_merge([$userId], array_values($columns))
+        );
 
         return $userId;
     }
@@ -191,12 +184,18 @@ class UserRelationsHelper
         expect($count)->toBe(0);
 
         // Check preferences reset to defaults
-        $stmt = $db->query('SELECT timezone, notify_comments, notify_likes FROM user_preferences WHERE user_id = ?', [$userId]);
+        $stmt = $db->query(
+            'SELECT timezone, notify_comments_blog, notify_post_status, notify_role_changes, notify_invites
+             FROM user_preferences WHERE user_id = ?',
+            [$userId]
+        );
         $prefs = $stmt->fetch();
 
         expect($prefs['timezone'])->toBe('UTC');
-        expect($prefs['notify_comments'])->toBe(0);
-        expect($prefs['notify_likes'])->toBe(0);
+        expect($prefs['notify_comments_blog'])->toBe(0);
+        expect($prefs['notify_post_status'])->toBe(0);
+        expect($prefs['notify_role_changes'])->toBe(0);
+        expect($prefs['notify_invites'])->toBe(0);
     }
 
     /**

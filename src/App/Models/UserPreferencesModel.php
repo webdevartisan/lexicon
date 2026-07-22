@@ -50,11 +50,7 @@ class UserPreferencesModel extends AppModel
         'display_name_preference',
         'default_post_visibility',
         'timezone',
-        'notify_comments',
-        'notify_likes',
-        'notify_post_status',
-        'notify_role_changes',
-        'notify_invites',
+        ...self::NOTIFY_KEYS,
     ];
 
     /**
@@ -252,9 +248,12 @@ class UserPreferencesModel extends AppModel
      * Kept as an allowlist so unknown column names cannot be queried.
      */
     public const NOTIFY_KEYS = [
-        'notify_comments',
-        'notify_likes',
+        'notify_comment_replies',
+        'notify_comments_authored',
+        'notify_comments_moderation',
+        'notify_comments_blog',
         'notify_post_status',
+        'notify_review_requests',
         'notify_role_changes',
         'notify_invites',
     ];
