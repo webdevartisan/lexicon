@@ -53,6 +53,7 @@ class SystemPolicy implements PolicyInterface
         'viewAuditLog' => 'view_audit_log',
         'viewSystem' => 'view_system_health',
         'manageCache' => 'manage_cache',
+        'manageMailQueue' => 'manage_mail_queue',
         'manageSettings' => 'manage_site_settings',
     ];
 
@@ -167,6 +168,16 @@ class SystemPolicy implements PolicyInterface
     public function manageCache(array $user): bool
     {
         return $this->allowsArea($user, 'manageCache');
+    }
+
+    /**
+     * Inspect the outbound mail queue and retry failed sends.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageMailQueue(array $user): bool
+    {
+        return $this->allowsArea($user, 'manageMailQueue');
     }
 
     /**

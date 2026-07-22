@@ -65,6 +65,7 @@ class DatabaseHelper
             'settings',
             'pages',
             'site_content',
+            'mail_queue',
         ];
 
         foreach ($tables as $table) {

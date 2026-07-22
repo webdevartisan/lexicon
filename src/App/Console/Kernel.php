@@ -8,6 +8,7 @@ use App\Console\Commands\CacheClearCommand;
 use App\Console\Commands\CachePruneCommand;
 use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
+use App\Console\Commands\MailQueueWorkCommand;
 use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PublishDuePostsCommand;
 use Framework\Console\Kernel as ConsoleKernel;
@@ -45,6 +46,9 @@ class Kernel extends ConsoleKernel
 
             // Promotes scheduled posts once published_at arrives; run every minute
             'posts:publish-due' => PublishDuePostsCommand::class,
+
+            // Delivers queued email at a paced rate; run every minute
+            'mail:queue-work' => MailQueueWorkCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'db:seed'       => SeedCommand::class,

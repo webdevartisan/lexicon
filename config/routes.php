@@ -413,6 +413,12 @@ $router->group([
     // System diagnostics
     $r->add('/system', ['controller' => 'SystemController', 'action' => 'index', 'method' => 'GET']);
 
+    // Outbound mail queue: inspect and recover failed sends
+    $r->add('/mail-queue', ['controller' => 'MailQueueController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/mail-queue/{id:\d+}/retry', ['controller' => 'MailQueueController', 'action' => 'retry', 'method' => 'POST']);
+    $r->add('/mail-queue/retry-all', ['controller' => 'MailQueueController', 'action' => 'retryAll', 'method' => 'POST']);
+    $r->add('/mail-queue/prune', ['controller' => 'MailQueueController', 'action' => 'prune', 'method' => 'POST']);
+
     // Generic admin routes are powerful and should not be exposed in production.
     if (env('APP_DEBUG', false)) {
         $r->add('/{controller}/{action}');
