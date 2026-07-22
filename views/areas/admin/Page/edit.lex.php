@@ -60,7 +60,7 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
             </div>
 
             <aside class="space-y-4">
-                {% cmp="dropzone2" label="Thumbnail" name="thumbnail" resource="{$page}" imageClass="object-cover w-full rounded-md h-32" %}
+                {% cmp="dropzone" label="Thumbnail" name="thumbnail" resource="{$page}" imageClass="object-cover w-full rounded-md h-32" %}
             </aside>
         </div>
     </form>

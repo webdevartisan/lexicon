@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Framework\Security;
 
+use Framework\Exceptions\CsrfTokenException;
 use Framework\Session;
-use RuntimeException;
 
 /**
  * CSRF protection service.
@@ -76,14 +76,12 @@ final class Csrf
      * Controllers can call this at the very start of an action before
      * reading or mutating any user-specific state.
      *
-     * @throws RuntimeException When the token is invalid or missing.
+     * @throws CsrfTokenException When the token is invalid or missing.
      */
     public function assertValid(?string $token): void
     {
         if (!$this->isTokenValid($token)) {
-            // This can later become a framework-specific HTTP exception
-            // with a 419/403 status code and a dedicated error page.
-            throw new RuntimeException('Invalid CSRF token.');
+            throw new CsrfTokenException();
         }
     }
 }

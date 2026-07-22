@@ -78,6 +78,8 @@ class WorkflowService
             throw new \RuntimeException("Failed to transition post {$postId} to in_review.");
         }
 
+        $this->auditTransition($postId, 'in_review', $userId);
+
         // Notification fan-out must never undo a successful transition.
         try {
             $resource = $this->post->findResource($postId);
@@ -133,6 +135,8 @@ class WorkflowService
             throw new \RuntimeException("Failed to transition post {$postId} to approved.");
         }
 
+        $this->auditTransition($postId, 'approved', $reviewerId);
+
         $post = $this->post->findResource($postId);
         $this->review->create($postId, $reviewerId, 'approved', $feedback);
 
@@ -155,6 +159,8 @@ class WorkflowService
         if (!$ok) {
             throw new \RuntimeException("Failed to transition post {$postId} to needs_changes.");
         }
+
+        $this->auditTransition($postId, 'needs_changes', $reviewerId);
 
         $post = $this->post->findResource($postId);
         // ReviewModel ENUM uses 'needs_revision'; workflow_state uses 'needs_changes'
@@ -193,7 +199,27 @@ class WorkflowService
      */
     public function resetToDraft(int $postId, int $actorId): void
     {
-        $this->post->transitionWorkflow($postId, 'draft', $actorId);
+        if ($this->post->transitionWorkflow($postId, 'draft', $actorId)) {
+            $this->auditTransition($postId, 'draft', $actorId);
+        }
+    }
+
+    /**
+     * Record a workflow transition in the audit log.
+     *
+     * Lives here rather than in PostModel: the model is also driven from CLI
+     * and tests, where an audit row carrying HTTP context is misleading.
+     */
+    private function auditTransition(int $postId, string $newState, int $actorId): void
+    {
+        audit()->log(
+            $actorId,
+            'transition_workflow',
+            'post',
+            $postId,
+            ["Changed workflow_state to {$newState}"],
+            $_SERVER['REMOTE_ADDR'] ?? null
+        );
     }
 
     /**
@@ -264,7 +290,9 @@ class WorkflowService
         $inFlight = $this->post->findInFlightByBlogId($blogId);
 
         foreach ($inFlight as $row) {
-            $this->post->transitionWorkflow((int) $row['id'], 'draft', $actorId);
+            if ($this->post->transitionWorkflow((int) $row['id'], 'draft', $actorId)) {
+                $this->auditTransition((int) $row['id'], 'draft', $actorId);
+            }
 
             $postRes = $this->post->findResource((int) $row['id']);
             $blog = $postRes ? $postRes->blog() : null;

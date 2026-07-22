@@ -125,7 +125,14 @@
 
     function autosavePost(form) {
         const formData = new FormData();
-        
+
+        // Autosave builds its payload from a field whitelist, so the token has
+        // to be added explicitly or the request arrives with no CSRF proof.
+        const tokenField = form.querySelector('[name="_token"]');
+        if (tokenField) {
+            formData.append('_token', tokenField.value);
+        }
+
         const actionUrl = form.action;
         const urlMatch = actionUrl.match(/\/post\/(\d+)\//);
         const postId = urlMatch ? urlMatch[1] : null;

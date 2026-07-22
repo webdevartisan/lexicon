@@ -435,18 +435,6 @@ class BlogModel extends AppModel
 
         $rowCount = $this->database->execute($sql, [$blogId, $userId, $role, $assignedBy]);
 
-        // Log assignment for audit trail
-        if ($rowCount > 0) {
-            audit()->log(
-                $assignedBy,
-                'assign_blog_user',
-                'blog_user',
-                $blogId,
-                ["Assigned user {$userId} as {$role} to blog {$blogId}"],
-                $_SERVER['REMOTE_ADDR'] ?? null
-            );
-        }
-
         return $rowCount > 0;
     }
 
@@ -467,18 +455,6 @@ class BlogModel extends AppModel
                 WHERE blog_id = ? AND user_id = ? AND is_active = 1';
 
         $rowCount = $this->database->execute($sql, [$blogId, $userId]);
-
-        // Log revocation for compliance and debugging
-        if ($rowCount > 0) {
-            audit()->log(
-                auth()->user()['id'] ?? 0,
-                'revoke_blog_user',
-                'blog_user',
-                $blogId,
-                ["Revoked user {$userId} from blog {$blogId}"],
-                $_SERVER['REMOTE_ADDR'] ?? null
-            );
-        }
 
         return $rowCount > 0;
     }

@@ -44,8 +44,8 @@ class PasswordResetEmail extends Mailable
      */
     private function buildHtmlBody(string $firstName): string
     {
-        $appName = htmlspecialchars($_ENV['APP_NAME'] ?? 'Blog Platform');
-        $appUrl = htmlspecialchars($_ENV['APP_URL'] ?? 'http://localhost');
+        $appName = htmlspecialchars(env('APP_NAME', 'Blog Platform'));
+        $appUrl = htmlspecialchars(env('APP_URL', 'http://localhost'));
         $resetUrl = $appUrl.'/password/reset/'.urlencode($this->token);
 
         return <<<HTML
@@ -95,8 +95,8 @@ class PasswordResetEmail extends Mailable
      */
     private function buildTextBody(string $firstName): string
     {
-        $appName = $_ENV['APP_NAME'] ?? 'Blog Platform';
-        $appUrl = $_ENV['APP_URL'] ?? 'http://localhost';
+        $appName = env('APP_NAME', 'Blog Platform');
+        $appUrl = env('APP_URL', 'http://localhost');
         $resetUrl = $appUrl.'/password/reset/'.$this->token;
 
         return <<<TEXT

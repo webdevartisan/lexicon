@@ -278,7 +278,7 @@ $lastIdx = count($allowed) - 1;
 
             <!-- Delete Action -->
             {% if post|notempty %}
-            {% cmp="btn2" type="button" variant="red" icon="trash-2" label="Delete" size="xs" dataModalTarget="confirmModal" %}
+            {% cmp="btn" type="button" variant="red" icon="trash-2" label="Delete" size="xs" dataModalTarget="confirmModal" %}
             {% endif %}
           </div>
         </section>
@@ -322,7 +322,7 @@ $lastIdx = count($allowed) - 1;
 
         <!-- Featured Image -->
         <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
-        {% cmp="dropzone2" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" %}
+        {% cmp="dropzone" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" %}
 
         <!-- SEO Settings Card -->
         <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">

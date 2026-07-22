@@ -1081,20 +1081,7 @@ class PostModel extends AppModel
             ':id' => $postId,
         ]);
 
-        $ok = $affected > 0;
-
-        if ($ok) {
-            audit()->log(
-                $byUserId,
-                'transition_workflow',
-                'post',
-                $postId,
-                ["Changed workflow_state to {$newState}"],
-                $_SERVER['REMOTE_ADDR'] ?? null
-            );
-        }
-
-        return $ok;
+        return $affected > 0;
     }
 
     /**

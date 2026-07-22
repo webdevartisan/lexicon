@@ -67,7 +67,7 @@ final class TrailingSlashNormalizer
         // If normalization changed the path, redirect to the canonical form.
         if ($normalized !== $path) {
             $target = $normalized.($query ? ('?'.$query) : '');
-            $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+            $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
 
             header('Location: '.$target, true, $isProd ? 301 : 302);
             exit;

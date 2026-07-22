@@ -25,7 +25,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
 
     public function __construct()
     {
-        $this->isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
+        $this->isProduction = (env('APP_ENV', 'development')) === 'production';
     }
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -84,12 +84,51 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
             }
         }
 
-        // Optional: Content Security Policy (customize for your needs)
-        // Uncomment and configure when ready:
-        // if (!$response->hasHeader('Content-Security-Policy')) {
-        //     $csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
-        //     $response->addHeader('Content-Security-Policy', $csp);
-        // }
+        $this->applyContentSecurityPolicy($response);
+    }
+
+    /**
+     * Attach a Content-Security-Policy, report-only until it is proven clean.
+     *
+     * Ships in report-only mode so a missed inline script shows up in the
+     * console instead of breaking the page. Flip CSP_ENFORCE=true once the
+     * report-only run is quiet.
+     *
+     * Note the policy deliberately omits 'unsafe-inline' for script-src: with
+     * it, the policy would still allow exactly the injected-script attack it
+     * exists to stop, which is why the previous commented-out block was
+     * decorative rather than protective.
+     *
+     * Known remaining inline scripts to clear before enforcing: window.AppLocales
+     * in front.lex.php, and the per-page TinyMCE/Dropzone init blocks.
+     */
+    private function applyContentSecurityPolicy(Response $response): void
+    {
+        if ($response->hasHeader('Content-Security-Policy')
+            || $response->hasHeader('Content-Security-Policy-Report-Only')) {
+            return;
+        }
+
+        // Everything this app loads is first-party (/assets, /cp-assets,
+        // /themes, /uploads); data: covers inlined icons and editor previews.
+        $csp = implode('; ', [
+            "default-src 'self'",
+            "script-src 'self'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data:",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "frame-ancestors 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "object-src 'none'",
+        ]);
+
+        $header = filter_var(env('CSP_ENFORCE', false), FILTER_VALIDATE_BOOLEAN)
+            ? 'Content-Security-Policy'
+            : 'Content-Security-Policy-Report-Only';
+
+        $response->addHeader($header, $csp);
     }
 
     /**

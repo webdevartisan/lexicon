@@ -44,7 +44,9 @@ final class HttpsRedirector
     public static function handle(Request $request): void
     {
         // Skip in CLI or if env explicitly disables HTTPS enforcement.
-        if (PHP_SAPI === 'cli' || ($_ENV['FORCE_HTTPS'] ?? '1') === '0') {
+        // Boolean check rather than === '0': env() returns FORCE_HTTPS=0 as int,
+        // which would not match the string and would force HTTPS on in dev.
+        if (PHP_SAPI === 'cli' || !filter_var(env('FORCE_HTTPS', true), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 
@@ -92,7 +94,7 @@ final class HttpsRedirector
         //     * non-prod : 302 (temporary) to avoid caches sticking to HTTPS while developing.
         // - For non-idempotent methods (POST/PUT/PATCH/DELETE), 302 is also acceptable in practice,
         //   but if strict method preservation is ever required, this can be tightened to 307/308.
-        $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+        $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
         $status = 302;

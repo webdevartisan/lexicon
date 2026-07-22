@@ -271,7 +271,7 @@ class MailService
                 public function build(): void
                 {
                     $this->to($this->recipient)
-                        ->subject('Test Email from '.($_ENV['APP_NAME'] ?? 'Blog Platform'))
+                        ->subject('Test Email from '.(env('APP_NAME', 'Blog Platform')))
                         ->html('<p>This is a test email. If you received this, your mail configuration is working correctly.</p>');
                 }
             };

@@ -48,17 +48,25 @@ final class LocalizeAnchorHrefs implements MiddlewareInterface
 
         $locale = $this->currentLocale();
 
-        // Match <a ... href="/..."> only
-        $pattern = '#<a\b[^>]*\bhref=(["\'])/(?![a-z]{2}(?:/|\1)|/|/|/)([^"\']*)\1#i';
-        $replace = '<a $0'; // placeholder to keep structure? No, better use a callback to avoid duplicating <a
+        if ($this->locales === []) {
+            return $response;
+        }
 
+        // Build the "already localized" guard from the configured locales rather
+        // than a generic [a-z]{2}. The old pattern treated any two-letter first
+        // segment as a locale, so a future /go/... or /my/... route would have
+        // silently stopped being localized.
+        $localeAlt = implode('|', array_map('preg_quote', $this->locales));
+
+        // Matches <a ... href="/..."> and skips hrefs that already start with a
+        // known locale, plus protocol-relative "//host" targets.
         $final = preg_replace_callback(
-            '#(<a\b[^>]*\bhref=(["\']))/(?![a-z]{2}(?:/|\2)|/|/|/)([^"\']*)(\2)#i',
-            function ($m) use ($locale) {
-                // $m[1] is '<a ... href="'
-                // $m[2] is the quote
-                // $m[3] is the URL without the leading slash
-                // $m[4] is the closing quote
+            '#(<a\b[^>]*\bhref=(["\']))/(?!(?:'.$localeAlt.')(?:/|\2)|/)([^"\']*)(\2)#i',
+            function (array $m) use ($locale): string {
+                // $m[1] '<a ... href="',
+                // $m[2] quote,
+                // $m[3] path without the leading slash,
+                // $m[4] closing quote.
                 return $m[1].'/'.$locale.'/'.$m[3].$m[4];
             },
             $html

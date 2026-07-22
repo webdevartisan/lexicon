@@ -56,12 +56,20 @@ test('toggle treats a duplicate-key insert as already liked', function () {
         ->andReturn($this->stmtMock);
     $this->stmtMock->shouldReceive('fetchColumn')->once()->andReturn(false);
 
-    $duplicate = new PDOException('Duplicate entry');
-    $duplicate->errorInfo = ['23000', 1062, 'Duplicate entry'];
-    // PDOException::getCode() reflects SQLSTATE via constructor trickery; set it directly
-    (function () {
-        $this->code = '23000';
-    })->call($duplicate);
+    // PDO reports the SQLSTATE as the exception code, but that property cannot
+    // be set from outside: PHP refuses to bind a closure to the scope of an
+    // internal class, so the old ->call($duplicate) trick silently left the
+    // code at 0 and this test could never pass. A subclass can assign the
+    // inherited protected property directly.
+    $duplicate = new class('Duplicate entry') extends PDOException
+    {
+        public function __construct(string $message)
+        {
+            parent::__construct($message);
+            $this->code = '23000';
+            $this->errorInfo = ['23000', 1062, 'Duplicate entry'];
+        }
+    };
 
     $this->dbMock->shouldReceive('query')
         ->once()

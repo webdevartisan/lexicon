@@ -1,47 +1,172 @@
 <?php
-$label = $label ?? 'Dropzone';
-$elementName = str_replace(' ', '_', strtolower($label));
+$label = $label ?? 'Image';
+$name = $name ?? '';
+$settings = $settings ?? [];
+$resource = $resource ?? [];
+$accepts = $accepts ?? 'image/jpeg,image/png,image/webp';
+$maxsize = $maxsize ?? '2'; // MB
+$imageClass = $imageClass ?? '';
+$type = $type ?? str_replace(' ', '_', strtolower($label));
+// `library` is the blog id; when set, a "Pick from Library" button appears
+// next to the dropzone and the picked URL flows in via {name}_library_url.
+$library = $library ?? '';
 
+if (empty($imageClass)) {
+    $imageClass = match ($type) {
+        'banner' => 'object-cover w-full rounded-md h-24',
+        'logo' => 'object-contain w-16 h-16 rounded-md',
+        'favicon' => 'w-6 h-6 rounded',
+        'profile_photo' => 'w-32 h-32 rounded-full object-cover',
+        default => 'object-cover w-full rounded-md h-24'
+    };
+}
+
+if (!empty($name)) {
+    $elementName = str_replace(' ', '_', strtolower($name));
+} else {
+    $elementName = str_replace(' ', '_', strtolower($label));
+}
+
+$elementPathName = $elementName.'_path';
+$path = $resource[$elementPathName] ?? '';
+if (empty($path)) {
+    $path = $resource[$elementName] ?? '';
+}
+
+$acceptedTypesText = formatAcceptedTypes($accepts);
+$maxSizeText = $maxsize >= 1
+    ? number_format($maxsize, 0).'MB'
+    : number_format($maxsize * 1024, 0).'KB';
 ?>
-<div class="card">
-    <div class="card-body">
-        <h6 class="mb-4 text-15">{{ label }}</h6>
-        <div class="flex items-center justify-center border rounded-md cursor-pointer bg-slate-100 dropzone-{{ elementName }} border-slate-200 dark:bg-zink-600 dark:border-zink-500">
-            <div class="fallback">
-                <input name="{{ elementName }}" type="file" multiple="multiple">
-            </div>
-            <div class="w-full py-5 text-lg text-center dz-message needsclick">
-                <div class="mb-3">
-                    {% cache 'lucide:upload-cloud:dz1' ttl=31536000 %}<i data-lucide="upload-cloud" class="block mx-auto size-12 text-slate-500 fill-slate-200 dark:text-zink-200 dark:fill-zink-500"></i>{% endcache %}
-                </div>
 
-                <h5 class="mb-0 font-normal text-slate-500 text-15">Drag and drop your files or <a href="#!">browse</a> your files</h5>
+{% set changeBtnLabel = t('components.dropzone.actions.change') %}
+{% set removeBtnLabel = t('components.dropzone.actions.remove') %}
+{% set cancelBtnLabel = t('components.dropzone.actions.cancel') %}
+
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600" 
+     data-dropzone-card="{{ elementName }}">
+    <div class="p-3 border-b border-slate-200 dark:border-zink-600">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ label }}</h3>
+    </div>
+
+    <div class="p-3">
+        <!-- Current Image Section -->
+        <div class="current-image-section" 
+             id="current-{{ elementName }}" 
+             style="display: {% if path|notempty %}block{% else %}none{% endif %}">
+            {% if path|notempty %}
+            <div class="mb-3">
+                <img src="{{ path }}" 
+                     alt="{{ t('components.dropzone.altText.current') }} {{ elementName }}" 
+                     class="{{ imageClass }}">
+            </div>
+            {% endif %}
+            
+            <div class="flex gap-2">
+                <?php $dataAction = 'change-image'; ?>
+                {% cmp="btn" type="button" variant="slate" icon="refresh-cw" label="{$changeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
+                
+                <?php $dataAction = 'remove-image'; ?>
+                {% cmp="btn" type="button" variant="slate" icon="trash-2" label="{$removeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
             </div>
         </div>
 
-        <ul class="mb-0" id="dropzone-{{ elementName }}-preview">
-            <li class="mt-2" id="dropzone-{{ elementName }}-preview-list">
-                <!-- This is used as the file preview template -->
-                <div class="border rounded border-slate-200 dark:border-zink-500">
-                    <div class="flex p-2">
-                        <div class="shrink-0 me-3">
-                            <div class="p-2 rounded-md size-14 bg-slate-100 dark:bg-zink-600">
-                                <img data-dz-thumbnail="" class="block w-full h-full rounded-md" src="data:image/png;base64,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" alt="Dropzone-Image">
-                            </div>
-                        </div>
-                        <div class="grow">
-                            <div class="pt-1">
-                                <h5 class="mb-1 text-15" data-dz-name="">&nbsp;</h5>
-                                <p class="mb-0 text-slate-500 dark:text-zink-200" data-dz-size=""></p>
-                                <strong class="error text-danger" data-dz-errormessage=""></strong>
-                            </div>
-                        </div>
-                        <div class="shrink-0 ms-3">
-                            <button data-dz-remove="" class="px-2 py-1.5 text-xs text-white bg-red-500 border-red-500 btn hover:text-white hover:bg-red-600 hover:border-red-600 focus:text-white focus:bg-red-600 focus:border-red-600 focus:ring focus:ring-red-100 active:text-white active:bg-red-600 active:border-red-600 active:ring active:ring-red-100 dark:ring-custom-400/20">Delete</button>
-                        </div>
-                    </div>
+        <!-- Dropzone Section -->
+        <div class="dropzone-section" 
+             id="dropzone-section-{{ elementName }}"
+             style="display: {% if path|notempty %}none{% else %}block{% endif %}">
+            
+            <div class="dropzone-{{ elementName }} cursor-pointer border-2 border-dashed rounded-md border-slate-200 dark:border-zink-500 hover:border-custom-400 transition-colors"
+                 data-dropzone="uploaded_{{ elementName }}_files"
+                 data-preview="dropzone-{{ elementName }}-preview"
+                 data-max-files="1"
+                 data-accept="{{ accepts }}"
+                 data-max-size="{{ maxsize }}">
+                
+                <div class="fallback">
+                    <input name="{{ elementName }}" type="file">
                 </div>
-            </li>
-        </ul>
+                <div class="py-8 text-center dz-message needsclick">
+                    {% cache 'lucide:upload-cloud:dz2' ttl=31536000 %}<i data-lucide="upload-cloud" class="block mx-auto size-10 text-slate-400 mb-2"></i>{% endcache %}
+                    <p class="text-xs text-slate-500 dark:text-zink-300">
+                        {{ t('components.dropzone.messages.drop') }} {{ t('components.dropzone.messages.or') }} <a href="#!" class="text-custom-500">{{ t('components.dropzone.messages.browse') }}</a>
+                    </p>
+                    <p class="text-[10px] text-slate-400 mt-1">
+                        {{ acceptedTypesText }}, {{ t('components.dropzone.messages.upTo') }} {{ maxSizeText }}
+                    </p>
+                </div>
+            </div>
+            
+            <ul class="mt-2" id="dropzone-{{ elementName }}-preview">
+                <li id="dropzone-{{ elementName }}-preview-list">
+                    <div class="flex gap-2 p-2 text-xs border rounded border-slate-200 dark:border-zink-500">
+                        <img data-dz-thumbnail="" class="object-cover w-10 h-10 rounded" alt="{{ t('components.dropzone.altText.preview') }}">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium truncate text-slate-700 dark:text-zink-100" data-dz-name=""></p>
+                            <p class="text-[10px] text-slate-500" data-dz-size=""></p>
+                            <strong class="text-red-500 text-[10px]" data-dz-errormessage=""></strong>
+                        </div>
+                        <button data-dz-remove="" class="px-2 py-1 text-[10px] text-red-600 hover:text-red-700">×</button>
+                    </div>
+                </li>
+            </ul>
+
+            {% if path|notempty %}
+                <?php $dataAction = 'cancel-change'; ?>
+                {% cmp="btn" type="button" variant="slate" icon="x" label="{$cancelBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
+            {% endif %}
+
+            <?php if (!empty($library)) { ?>
+            <button type="button"
+                    class="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors"
+                    data-media-picker="<?= e((string) $library) ?>"
+                    data-media-target="<?= e($elementName) ?>_library_url"
+                    data-media-preview="<?= e($elementName) ?>_library_preview">
+                {% cache 'lucide:image-plus' ttl=31536000 %}<i data-lucide="image-plus" class="size-3.5"></i>{% endcache %}
+                Pick from Media Library
+            </button>
+            <?php } ?>
+        </div>
+
+        <!-- Hidden input to mark for removal -->
+        <input type="hidden"
+               id="remove_{{ elementName }}"
+               name="remove_{{ elementName }}"
+               value="">
+
+        <?php if (!empty($library)) { ?>
+        <!-- Filled in by media-picker.js when the user picks from the library -->
+        <input type="hidden"
+               id="<?= e($elementName) ?>_library_url"
+               name="<?= e($elementName) ?>_library_url"
+               value="">
+        <script>
+        (function () {
+            var input = document.getElementById('<?= e($elementName) ?>_library_url');
+            if (!input) return;
+            input.addEventListener('change', function () {
+                if (!input.value) return;
+                var current = document.getElementById('current-<?= e($elementName) ?>');
+                var dropzoneSection = document.getElementById('dropzone-section-<?= e($elementName) ?>');
+                var removeInput = document.getElementById('remove_<?= e($elementName) ?>');
+                if (current) {
+                    var img = current.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.className = '<?= e($imageClass) ?>';
+                        var wrap = document.createElement('div');
+                        wrap.className = 'mb-3';
+                        wrap.appendChild(img);
+                        current.insertBefore(wrap, current.firstChild);
+                    }
+                    img.src = input.value;
+                    current.style.display = 'block';
+                }
+                if (dropzoneSection) dropzoneSection.style.display = 'none';
+                if (removeInput) removeInput.value = '0';
+            });
+        })();
+        </script>
+        <?php } ?>
     </div>
-</div><!--end card-->
+</div>

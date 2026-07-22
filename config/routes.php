@@ -96,7 +96,7 @@ $router->group([
     $r->add('/login/submit', ['controller' => 'AuthController',   'action' => 'submit', 'method' => 'POST']);
     $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
     $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
-    $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'GET']);
+    $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'POST']);
 
     $r->add('/register', ['controller' => 'RegisterController', 'action' => 'show', 'method' => 'GET']);
     $r->add('/register/submit', ['controller' => 'RegisterController', 'action' => 'submit', 'method' => 'POST']);
@@ -257,20 +257,49 @@ $router->group([
         'method' => 'POST',
     ]);
 
-    // Generic CRUD routes for dashboard.
-    // if (env('APP_DEBUG', false)) {
-    $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
-    $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-    $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-    $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
-    $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
-    // }
+    // Explicit routes for everything that used to be served only by the generic
+    // wildcards below. Written out so the dashboard route table is enumerable
+    // and the wildcards can go back behind APP_DEBUG without 404ing production.
+    //
+    // The plural spellings are deliberate: several views post to /blogs/... and
+    // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
+    // appending "Controller", so both spellings reach the same class.
+    $r->add('/account/{id:\d+}/update', ['controller' => 'AccountController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/profile/{id:\d+}/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
+
+    $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/blog/{id:\d+}/show', ['controller' => 'BlogController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'POST']);
+
+    $r->add('/post/{id:\d+}/edit', ['controller' => 'PostController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/draft', ['controller' => 'PostController', 'action' => 'draft', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/archive', ['controller' => 'PostController', 'action' => 'archive', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+
+    $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+
+    // Generic CRUD routes for dashboard. Debug-only: with the explicit routes
+    // above, nothing in the app depends on these to resolve.
+    if (env('APP_DEBUG', false)) {
+        $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
+        $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
+        $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    }
 });
 
 // Admin route group. Authentication is middleware; authorization is enforced

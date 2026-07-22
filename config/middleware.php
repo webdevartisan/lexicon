@@ -6,8 +6,6 @@ return [
     'aliases' => [
         'auth' => App\Middleware\AuthMiddleware::class,
         'role' => Framework\Http\Middleware\RequireRoleMiddleware::class,
-        'message' => App\Middleware\ChangeResponseExample::class,
-        'trim' => App\Middleware\ChangeRequestExample::class,
         'theme' => \App\Middleware\ThemeResolverMiddleware::class,
     ],
     'global' => [
@@ -21,6 +19,7 @@ return [
         Framework\Cache\CacheMiddleware::class,
         Framework\Http\Middleware\ContainerDebugMiddleware::class,
         App\Middleware\NavigationActiveMiddleware::class,
+        Framework\Security\CsrfMiddleware::class,
         App\Middleware\HandleValidationExceptionMiddleware::class,
     ],
 ];

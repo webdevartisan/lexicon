@@ -462,16 +462,24 @@ a {
   display: block;
 }
 
-.nav-user-menu a {
+.nav-user-menu a,
+.nav-user-menu button {
   display: block;
+  width: 100%;
   padding: 0.55rem 0.7rem;
+  border: 0;
   border-radius: 2px;
+  background: none;
   font-family: var(--sign);
   font-size: var(--type-small);
+  line-height: inherit;
+  text-align: inherit;
   color: var(--spruce-soft);
+  cursor: pointer;
 }
 
-.nav-user-menu a:hover {
+.nav-user-menu a:hover,
+.nav-user-menu button:hover {
   background: var(--panel);
   color: var(--spruce);
 }

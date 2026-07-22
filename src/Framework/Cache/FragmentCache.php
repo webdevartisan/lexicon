@@ -54,7 +54,7 @@ class FragmentCache
     {
         return $this->currentLocale
             ?? $_SESSION['locale']
-            ?? $_ENV['APP_LOCALE']
+            ?? env('APP_LOCALE')
             ?? 'en';
     }
 

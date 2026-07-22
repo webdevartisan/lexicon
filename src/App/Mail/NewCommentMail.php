@@ -35,7 +35,7 @@ class NewCommentMail extends Mailable
      */
     private function postUrl(): string
     {
-        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
         $url = $appUrl.'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
 
         if ($this->commentId > 0 && !$this->awaitingModeration) {

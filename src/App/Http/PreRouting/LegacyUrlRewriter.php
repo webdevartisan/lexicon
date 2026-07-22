@@ -79,7 +79,7 @@ final class LegacyUrlRewriter
             $target = $newPath.($query ? ('?'.$query) : '');
 
             if ($redirect) {
-                $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+                $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
                 header('Location: '.$target, true, $isProd ? 301 : 302);
                 exit;
             } else {

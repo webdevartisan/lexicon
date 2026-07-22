@@ -100,6 +100,15 @@ class InvitationService
             (int) $invite['invited_by']
         );
 
+        audit()->log(
+            $acceptingUserId,
+            'blog.invite_accepted',
+            'blog_user',
+            (int) $invite['blog_id'],
+            ["Accepted invitation as {$invite['role']}"],
+            $_SERVER['REMOTE_ADDR'] ?? null
+        );
+
         // First-blog convenience: if the new collaborator has no default blog
         // set, land them inside this one on their next dashboard visit. They
         // can still switch via the topbar. Owners keep their own default.

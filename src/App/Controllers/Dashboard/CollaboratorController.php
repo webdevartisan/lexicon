@@ -178,6 +178,15 @@ final class CollaboratorController extends AppController
         // addUserToBlog handles role change via ON DUPLICATE KEY UPDATE.
         $this->blogModel->addUserToBlog($blog->id(), (int) $userId, $role, (int) auth()->user()['id']);
 
+        audit()->log(
+            (int) auth()->user()['id'],
+            'blog.role_changed',
+            'blog_user',
+            (int) $blog->id(),
+            ["Set user {$userId} to {$role} on blog {$blogId}"],
+            $this->request->ip()
+        );
+
         $target = $this->userModel->findById((int) $userId);
         $actor = auth()->user();
         if ($target && !empty($target['email'])) {
@@ -214,6 +223,15 @@ final class CollaboratorController extends AppController
         }
 
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $userId);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            'blog.user_revoked',
+            'blog_user',
+            (int) $blog->id(),
+            ["Revoked user {$userId} from blog {$blogId}"],
+            $this->request->ip()
+        );
 
         $target = $this->userModel->findById((int) $userId);
         $actor = auth()->user();

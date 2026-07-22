@@ -559,15 +559,24 @@ a {
   display: block;
 }
 
-.nav-user-menu a {
+.nav-user-menu a,
+.nav-user-menu button {
   display: block;
+  width: 100%;
   padding: 0.55rem 0.7rem;
+  border: 0;
+  background: none;
+  font-family: inherit;
   font-size: var(--type-small);
+  line-height: inherit;
+  text-align: inherit;
   color: var(--carbon-soft);
+  cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
 }
 
-.nav-user-menu a:hover {
+.nav-user-menu a:hover,
+.nav-user-menu button:hover {
   background: var(--porcelain-2);
   color: var(--carbon);
 }
