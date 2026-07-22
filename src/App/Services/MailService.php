@@ -51,12 +51,86 @@ class MailService
      * accept Mailable objects that encapsulate email content and
      * configuration, promoting reusable and testable email templates.
      *
-     * @param  Mailable  $mailable  Email to send
-     * @return bool True on success, false on failure
+     * Never throws. Mail is a side effect of whatever the user was actually
+     * doing — publishing a post, accepting an invite, registering — and an
+     * unreachable SMTP server must not take that action down with it. Callers
+     * check the return value and decide how much they care. Use sendOrFail()
+     * when the reason for a failure matters.
      *
-     * @throws Exception If mail sending fails
+     * Returns true when mail is disabled: suppression is a deliberate
+     * configuration choice, not a delivery failure, and treating it as one
+     * would make every dev environment report errors to the user.
+     *
+     * @param  Mailable  $mailable  Email to send
+     * @return bool True on success or when mail is disabled, false on failure
      */
     public function send(Mailable $mailable): bool
+    {
+        if (!$this->enabled()) {
+            error_log('Mail suppressed (MAIL_ENABLED=false): '.$mailable->getSubject());
+
+            return true;
+        }
+
+        try {
+            $this->deliver($mailable);
+
+            return true;
+        } catch (Exception $e) {
+            error_log('Mail sending failed: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Send an email, throwing when it cannot be delivered.
+     *
+     * For the admin mail diagnostics, where "it failed" is useless without the
+     * transport's own message.
+     *
+     * Unlike send(), this treats a disabled mailer as an error: an admin
+     * testing delivery needs to be told the master switch is off, not handed a
+     * success for an email that never left.
+     *
+     * @param  Mailable  $mailable  Email to send
+     * @return bool Always true; failure arrives as an exception
+     *
+     * @throws Exception If mail is disabled, or sending fails
+     */
+    public function sendOrFail(Mailable $mailable): bool
+    {
+        if (!$this->enabled()) {
+            throw new Exception('Mail is disabled. Set MAIL_ENABLED=true in .env to send.');
+        }
+
+        $this->deliver($mailable);
+
+        return true;
+    }
+
+    /**
+     * Whether outgoing mail is switched on.
+     *
+     * Defaults to false so a missing key can never start mailing real people
+     * from an environment that never meant to.
+     */
+    public function enabled(): bool
+    {
+        return (bool) ($this->config['enabled'] ?? false);
+    }
+
+    /**
+     * Build and hand one Mailable to PHPMailer.
+     *
+     * The single delivery path behind both send() and sendOrFail(), so the two
+     * can never drift apart in how they construct or transmit a message.
+     *
+     * @param  Mailable  $mailable  Email to send
+     *
+     * @throws Exception If PHPMailer rejects or cannot transmit the message
+     */
+    private function deliver(Mailable $mailable): void
     {
         try {
             $mail = $this->createMailer();
@@ -64,20 +138,11 @@ class MailService
             // build the email from the Mailable configuration
             $this->buildEmail($mail, $mailable);
 
-            // attempt to send the email
-            $sent = $mail->send();
-
-            if (!$sent) {
-                error_log('Mail sending failed: '.$mail->ErrorInfo);
-
-                return false;
+            if (!$mail->send()) {
+                // A refusal with no exception; ErrorInfo holds the reason.
+                throw new Exception('Failed to send email: '.$mail->ErrorInfo);
             }
-
-            return true;
-
         } catch (PHPMailerException $e) {
-            // log PHPMailer errors but don't expose them to users
-            error_log('PHPMailer Exception: '.$e->getMessage());
             throw new Exception('Failed to send email: '.$e->getMessage());
         }
     }
@@ -228,6 +293,13 @@ class MailService
      */
     private function validateConfig(): void
     {
+        // Nothing will be transmitted, so incomplete credentials are not a
+        // problem worth refusing to boot over. Lets an environment run with
+        // MAIL_ENABLED=false and no SMTP secrets at all.
+        if (!$this->enabled()) {
+            return;
+        }
+
         // require 'from' configuration for all emails
         if (empty($this->config['from']['address'])) {
             throw new Exception("Mail configuration missing 'from.address'");
@@ -252,6 +324,8 @@ class MailService
      *
      * @param  string  $recipient  Test recipient email address
      * @return bool True if test email sent successfully
+     *
+     * @throws Exception If sending fails, so the admin sees the real reason
      */
     public function test(string $recipient): bool
     {
@@ -276,7 +350,9 @@ class MailService
                 }
             };
 
-            return $this->send($testMail);
+            // sendOrFail, not send: an admin testing mail configuration needs
+            // the transport's actual complaint, not a bare false.
+            return $this->sendOrFail($testMail);
 
         } catch (Exception $e) {
             error_log('Mail test failed: '.$e->getMessage());
@@ -387,7 +463,9 @@ class MailService
                 }
             };
 
-            return $this->send($testMail);
+            // sendOrFail, not send: an admin testing mail configuration needs
+            // the transport's actual complaint, not a bare false.
+            return $this->sendOrFail($testMail);
 
         } catch (Exception $e) {
             error_log('Test email failed: '.$e->getMessage());
