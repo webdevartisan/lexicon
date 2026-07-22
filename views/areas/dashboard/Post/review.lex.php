@@ -85,7 +85,7 @@
                         </p>
                         <?php } ?>
                         <p class="text-[10px] text-slate-400 dark:text-zink-400 mt-1">
-                            <?= e(date('M j, Y g:ia', strtotime((string) ($rev['reviewed_at'] ?? 'now')))) ?>
+                            <?= e(local_datetime($rev['reviewed_at'] ?? null, 'M j, Y g:ia')) ?>
                         </p>
                     </div>
                     <?php } ?>
@@ -153,7 +153,7 @@
                         <p class="text-xs text-amber-700 dark:text-amber-300">
                             Only one reviewer works on a post at a time.
                             <?php if (!empty($lockedAt)) { ?>
-                                Claimed <?= e(date('M j, g:ia', strtotime((string) $lockedAt))) ?>.
+                                Claimed <?= e(local_datetime($lockedAt ?? null, 'M j, g:ia')) ?>.
                             <?php } ?>
                         </p>
                         <p class="text-[11px] text-amber-600 dark:text-amber-400 italic">

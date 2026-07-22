@@ -34,7 +34,7 @@
                             </div>
                             <p class="text-xs text-slate-600 dark:text-zink-200"><?= e(truncate((string) $r['content'], 180)) ?></p>
                             <?php if (!empty($r['created_at'])) { ?>
-                                <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $r['created_at']))) ?></span>
+                                <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(local_datetime($r['created_at'] ?? null, 'M j, Y')) ?></span>
                             <?php } ?>
                         </div>
                     </div>
@@ -75,7 +75,7 @@
                             </div>
                             <p class="text-xs text-slate-600 dark:text-zink-200"><?= e(truncate((string) $c['content'], 180)) ?></p>
                             <?php if (!empty($c['created_at'])) { ?>
-                                <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $c['created_at']))) ?></span>
+                                <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e(local_datetime($c['created_at'] ?? null, 'M j, Y')) ?></span>
                             <?php } ?>
                         </div>
                     </div>

@@ -201,11 +201,11 @@ $entryTier = (string) ($entry['tier'] ?? 'standard');
                             </span>
                         </td>
                         <td class="px-3.5 py-2.5 text-xs text-slate-500 dark:text-zink-300">
-                            <?= e(date('M j, g:i a', strtotime((string) $entry['created_at']))) ?>
+                            <?= e(local_datetime($entry['created_at'] ?? null, 'M j, g:i a')) ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-xs text-slate-500 dark:text-zink-300">
                             <?php if ($entryStatus === 'sent') { ?>
-                                <?= e(date('M j, g:i a', strtotime((string) $entry['sent_at']))) ?>
+                                <?= e(local_datetime($entry['sent_at'] ?? null, 'M j, g:i a')) ?>
                             <?php } elseif ($entryStatus === 'pending') { ?>
                                 <?= e($dueIn($entry['due_in_seconds'] ?? null)) ?>
                             <?php } else { ?>

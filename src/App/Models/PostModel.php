@@ -153,7 +153,7 @@ class PostModel extends AppModel
      * @param  int  $blogId  Blog whose neighbour/related fragments to clear
      * @param  int|null  $postId  Specific post whose tag/comment fragments to clear
      */
-    private function forgetBlogPostFragments(int $blogId, ?int $postId = null): void
+    public function forgetBlogPostFragments(int $blogId, ?int $postId = null): void
     {
         // Post-page neighbour and related lists.
         fragment()->forgetPattern('post-nav:'.$blogId.':*');

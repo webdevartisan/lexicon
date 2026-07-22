@@ -66,7 +66,7 @@ $primaryClass = $primary['variant'] === 'green'
         class="flex cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 px-2.5 py-2 text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
         aria-haspopup="menu"
         title="More actions">
-        <i data-lucide="ellipsis" class="size-4" aria-hidden="true"></i>
+        <i data-lucide="more-horizontal" class="size-4" aria-hidden="true"></i>
         <span class="sr-only">More actions</span>
       </summary>
       <div

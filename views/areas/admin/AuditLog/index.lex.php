@@ -71,7 +71,7 @@ $actionColor = static function (string $action): string {
                     {% foreach ($entries as $entry): %}
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors align-top">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
-                            <?= e(date('M j, Y · g:i a', strtotime((string) $entry['created_at']))) ?>
+                            <?= e(local_datetime($entry['created_at'] ?? null, 'M j, Y · g:i a')) ?>
                         </td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
                             <?= e((string) ($entry['username'] ?? 'system')) ?>

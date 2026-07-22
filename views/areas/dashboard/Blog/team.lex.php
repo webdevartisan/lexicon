@@ -205,7 +205,7 @@ $initials = static function (string $name): string {
                     <li class="flex items-center justify-between gap-2 py-2">
                         <div class="min-w-0">
                             <p class="text-sm text-slate-800 dark:text-zink-100 truncate"><?= e($inv['email'] ?? '') ?></p>
-                            <p class="text-[11px] text-slate-500 dark:text-zink-300 capitalize"><?= e($inv['role'] ?? '') ?> · expires <?= e($inv['expires_at'] ?? '') ?></p>
+                            <p class="text-[11px] text-slate-500 dark:text-zink-300 capitalize"><?= e($inv['role'] ?? '') ?> · expires <?= e(relative_time($inv['expires_at'] ?? null)) ?></p>
                         </div>
                         <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/cancel-invite" class="m-0 shrink-0">
                             {{ csrf_field() }}
@@ -227,7 +227,7 @@ $initials = static function (string $name): string {
                     <li class="flex items-center justify-between gap-2 py-2">
                         <div class="min-w-0">
                             <p class="text-sm text-slate-800 dark:text-zink-100 truncate"><?= e($inv['email'] ?? '') ?></p>
-                            <p class="text-[11px] text-slate-500 dark:text-zink-300 capitalize"><?= e($inv['role'] ?? '') ?> · expired <?= e($inv['expires_at'] ?? '') ?></p>
+                            <p class="text-[11px] text-slate-500 dark:text-zink-300 capitalize"><?= e($inv['role'] ?? '') ?> · expired <?= e(local_datetime($inv['expires_at'] ?? null, 'M j, Y')) ?></p>
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
                             <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/invite" class="m-0">

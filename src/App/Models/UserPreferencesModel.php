@@ -179,6 +179,27 @@ class UserPreferencesModel extends AppModel
      * @param  int  $userId  User ID
      * @return int|null Blog ID or null if not set
      */
+    /**
+     * Read just the timezone for a user.
+     *
+     * findOrCreate() writes a row when none exists, which is the wrong thing to
+     * do from a display helper that runs on every page.
+     *
+     * @param  int  $userId  User identifier
+     * @return string|null Stored identifier, or null when unset
+     */
+    public function getTimezone(int $userId): ?string
+    {
+        $sql = 'SELECT timezone FROM user_preferences WHERE user_id = ? LIMIT 1';
+        $result = $this->database->query($sql, [$userId])->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result || empty($result['timezone'])) {
+            return null;
+        }
+
+        return (string) $result['timezone'];
+    }
+
     public function getDefaultBlogId(int $userId): ?int
     {
         $sql = 'SELECT default_blog_id FROM user_preferences WHERE user_id = ? LIMIT 1';

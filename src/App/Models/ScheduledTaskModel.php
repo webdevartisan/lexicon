@@ -14,7 +14,8 @@ namespace App\Models;
  * the next tick arrives is simply skipped rather than started twice.
  *
  * All scheduling columns are UTC and every comparison uses UTC_TIMESTAMP().
- * NOW() would follow the MySQL host zone while PHP runs in UTC.
+ * The session is pinned to UTC now so NOW() would match, but these columns are
+ * DATETIME and carry no zone of their own, so it stays spelled out.
  */
 class ScheduledTaskModel extends AppModel
 {

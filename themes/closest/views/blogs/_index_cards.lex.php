@@ -22,7 +22,7 @@ foreach (($cards ?? []) as $i => $post) {
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
 
     $stamp = strtotime((string) ($post['published_at'] ?? ''));
-    $date = $stamp ? e(date('j M Y', $stamp)) : '';
+    $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
 
     // Rows run newest to oldest, so the gap is measured back down the trail.
     $gapLabel = '';

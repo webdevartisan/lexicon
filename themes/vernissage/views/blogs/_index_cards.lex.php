@@ -14,13 +14,12 @@ foreach (($cards ?? []) as $i => $post) {
     $title = e($post['title'] ?? 'Untitled');
     $cat = trim((string) ($post['category'] ?? 'Work'));
     $catSlug = (string) ($post['category_slug'] ?? '');
-    $date = e($post['published_at'] ?? '');
+    $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
 
-    $stamp = strtotime((string) ($post['published_at'] ?? ''));
-    $year = $stamp ? date('Y', $stamp) : date('Y');
+    $year = local_datetime($post['published_at'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0))) ?: date('Y');
     ?>
   <article class="work reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" onclick="location.href='<?= $url ?>'">
     <a href="<?= $url ?>" class="frame work-frame" aria-hidden="true" tabindex="-1">

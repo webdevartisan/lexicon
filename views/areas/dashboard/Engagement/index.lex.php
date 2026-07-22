@@ -64,7 +64,7 @@ $dateKey = $isLikes ? 'liked_at' : 'bookmarked_at';
                         <?php } ?>
                         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 dark:text-zink-300 mt-1">
                             <span><?= e((string) ($p['blog_name'] ?? '')) ?></span>
-                            <span><?= e(date('M j, Y', strtotime((string) $p[$dateKey]))) ?></span>
+                            <span><?= e(local_datetime($p[$dateKey] ?? null, 'M j, Y')) ?></span>
                         </div>
                     </div>
                 </div>

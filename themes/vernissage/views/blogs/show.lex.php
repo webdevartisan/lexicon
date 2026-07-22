@@ -81,7 +81,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
         $user['public_profile_slug'] ?? null
     );
-    $fDate = e($featuredPost['published_at'] ?? '');
+    $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $fCat = e($featuredPost['category'] ?? 'Work');
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>

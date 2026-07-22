@@ -38,7 +38,9 @@ return [
         \PDO::ATTR_TIMEOUT => 5,
 
         // Character encoding - prevent encoding-based injection
-        \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
+        // Session pinned to UTC so TIMESTAMP columns stop shifting on read/write.
+        // PHP already runs in UTC, this makes NOW() and UTC_TIMESTAMP() agree.
+        \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, time_zone = '+00:00'",
     ],
 
     /**

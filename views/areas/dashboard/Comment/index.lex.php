@@ -168,7 +168,7 @@ $statusBadge = [
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-zink-300">
                                     <span class="inline-flex items-center gap-1">
                                         {% cache 'lucide:clock:sm' ttl=31536000 %}<i data-lucide="clock" class="size-3"></i>{% endcache %}
-                                        <?= e(date('M j, Y · g:i a', strtotime((string) $c['created_at']))) ?>
+                                        <?= e(local_datetime($c['created_at'] ?? null, 'M j, Y · g:i a')) ?>
                                     </span>
                                     <a href="/blog/<?= e((string) ($c['blog_slug'] ?? '')) ?>/<?= e((string) ($c['post_slug'] ?? '')) ?>"
                                         target="_blank" rel="noopener"

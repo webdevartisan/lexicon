@@ -63,13 +63,12 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
           $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
           $title = e($post['title'] ?? 'Untitled');
           $cat = trim((string) ($post['category'] ?? 'Post'));
-          $date = e($post['published_at'] ?? '');
+          $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
           $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
 
-          $stamp = strtotime((string) ($post['published_at'] ?? ''));
-          $year = $stamp ? date('Y', $stamp) : '';
+          $year = local_datetime($post['published_at'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)));
           ?>
         <?php if ($year !== '' && $year !== $lastYear) {
             $lastYear = $year;

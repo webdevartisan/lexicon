@@ -66,7 +66,7 @@ $activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$activeStatus}" label="{$activeLabel}" %}
                         </td>
-                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(date('M j, Y', strtotime((string) $user['created_at']))) ?></td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($user['created_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
                                 {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit user" %}

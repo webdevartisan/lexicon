@@ -7,7 +7,6 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\ScheduledTaskModel;
 use App\Models\ScheduledTaskRunModel;
-use App\Models\UserPreferencesModel;
 use App\Services\PseudoCron;
 use App\Services\ScheduleCalculator;
 use App\Services\ScheduleRegistry;
@@ -44,7 +43,6 @@ class ScheduledTaskController extends AppController
         private ScheduleService $schedule,
         private ScheduleRegistry $registry,
         private ScheduleCalculator $calculator,
-        private UserPreferencesModel $preferences,
         private PseudoCron $pseudoCron,
     ) {}
 
@@ -58,7 +56,7 @@ class ScheduledTaskController extends AppController
             'heartbeatAge' => $this->schedule->heartbeatAge(),
             'heartbeatStale' => $this->schedule->heartbeatIsStale(),
             'runsDetached' => $this->schedule->runsDetached(),
-            'viewerTimezone' => $this->viewerTimezone(),
+            'viewerTimezone' => viewer_timezone(),
             'cronLine' => $this->cronLine(),
             'labels' => $this->registry->options(),
             'pseudoCronEnabled' => $this->pseudoCron->isEnabled(),
@@ -298,7 +296,7 @@ class ScheduledTaskController extends AppController
             'task' => $task,
             'runs' => $result['data'],
             'pagination' => $result['pagination'],
-            'viewerTimezone' => $this->viewerTimezone(),
+            'viewerTimezone' => viewer_timezone(),
         ]);
     }
 
@@ -323,7 +321,7 @@ class ScheduledTaskController extends AppController
             'commandOptions' => $this->registry->options(),
             'schemas' => $this->registry->allSchemas(),
             'timezones' => DateTimeZone::listIdentifiers(),
-            'viewerTimezone' => $this->viewerTimezone(),
+            'viewerTimezone' => viewer_timezone(),
             'scheduleTypes' => self::SCHEDULE_TYPES,
         ];
     }
@@ -442,22 +440,6 @@ class ScheduledTaskController extends AppController
         }
 
         return [];
-    }
-
-    /**
-     * Timezone to show timestamps in, from the signed in user preferences.
-     */
-    private function viewerTimezone(): string
-    {
-        $userId = (int) (auth()->user()['id'] ?? 0);
-
-        if ($userId < 1) {
-            return 'UTC';
-        }
-
-        $timezone = (string) ($this->preferences->findOrCreate($userId)['timezone'] ?? '');
-
-        return $timezone !== '' ? $timezone : 'UTC';
     }
 
     /**

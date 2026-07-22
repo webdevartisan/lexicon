@@ -57,7 +57,7 @@ $workflowLabel = [
             <header class="flex items-end justify-between gap-3 mb-4">
                 <div>
                     <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
-                        <i data-lucide="notebook-pen" class="size-4 text-custom-500"></i>
+                        <i data-lucide="pen-square" class="size-4 text-custom-500"></i>
                         My work on <?= e($blog['blog_name']) ?>
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">

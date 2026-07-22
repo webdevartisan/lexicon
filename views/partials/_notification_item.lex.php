@@ -68,7 +68,7 @@ $href = match ($type) {
             <p class="text-sm text-slate-900 dark:text-zink-50 truncate"><?= e($label) ?></p>
             <p class="text-[11px] text-slate-400 dark:text-zink-300 mt-1">
                 {% cache 'lucide:clock:notif' ttl=31536000 %}<i data-lucide="clock" class="inline-block size-3 mr-1"></i>{% endcache %}
-                <?= e(date('M j, Y · g:i a', strtotime((string) ($n['created_at'] ?? 'now')))) ?>
+                <?= e(local_datetime($n['created_at'] ?? null, 'M j, Y · g:i a')) ?>
             </p>
         </div>
         <?php if ($isUnread) { ?>

@@ -41,11 +41,11 @@ $statusBadge = [
                 </div>
                 <div>
                     <dt class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300 mb-1">Created</dt>
-                    <dd class="text-slate-900 dark:text-zink-50"><?= e(date('M j, Y · g:i a', strtotime((string) $post['created_at']))) ?></dd>
+                    <dd class="text-slate-900 dark:text-zink-50"><?= e(local_datetime($post['created_at'] ?? null, 'M j, Y · g:i a')) ?></dd>
                 </div>
                 <div>
                     <dt class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300 mb-1">Updated</dt>
-                    <dd class="text-slate-900 dark:text-zink-50"><?= e(date('M j, Y · g:i a', strtotime((string) $post['updated_at']))) ?></dd>
+                    <dd class="text-slate-900 dark:text-zink-50"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y · g:i a')) ?></dd>
                 </div>
             </dl>
 

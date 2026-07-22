@@ -22,7 +22,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     <?php if (!empty($errors)) { ?>
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10" role="alert">
       <div class="flex items-center gap-2">
-        <i data-lucide="circle-alert" class="size-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true"></i>
+        <i data-lucide="alert-circle" class="size-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true"></i>
         <h3 class="text-sm font-semibold text-red-800 dark:text-red-300">This post wasn't saved</h3>
       </div>
       <ul class="mt-2 space-y-1 ltr:pl-6 rtl:pr-6">
@@ -94,7 +94,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
         <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
         <section class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
             <div class="flex items-center gap-2 border-b border-amber-200 p-4 dark:border-amber-500/30">
-                <i data-lucide="message-square-warning" class="size-4 shrink-0 text-amber-600 dark:text-amber-400"></i>
+                <i data-lucide="message-square" class="size-4 shrink-0 text-amber-600 dark:text-amber-400"></i>
                 <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Reviewer feedback</h3>
             </div>
             <div class="space-y-2 p-4">
@@ -103,7 +103,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                 </p>
                 <p class="text-[11px] text-amber-600 dark:text-amber-400">
                     — <?= e($latestReview['reviewer_username'] ?? 'Reviewer') ?>,
-                    <?= e(date('M j, Y', strtotime((string) ($latestReview['reviewed_at'] ?? 'now')))) ?>
+                    <?= e(local_datetime($latestReview['reviewed_at'] ?? null, 'M j, Y')) ?>
                 </p>
             </div>
         </section>

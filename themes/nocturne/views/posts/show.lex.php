@@ -105,7 +105,7 @@ $title = e($post['title'] ?? 'Untitled');
             <div class="comment-meta">
               <strong><?= profile_link($comment['user_name'] ?? 'Guest', $comment['author_profile_slug'] ?? null) ?></strong>
               <?php if (!empty($comment['created_at'])) { ?>
-                &mdash; <?= e($comment['created_at']) ?>
+                &mdash; <?= e(relative_time($comment['created_at'] ?? null)) ?>
               <?php } ?>
             </div>
             <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
@@ -140,7 +140,7 @@ $title = e($post['title'] ?? 'Untitled');
                     <div class="comment-meta">
                       <strong><?= profile_link($reply['user_name'] ?? 'Guest', $reply['author_profile_slug'] ?? null) ?></strong>
                       <?php if (!empty($reply['created_at'])) { ?>
-                        &mdash; <?= e($reply['created_at']) ?>
+                        &mdash; <?= e(relative_time($reply['created_at'] ?? null)) ?>
                       <?php } ?>
                     </div>
                     <p><?= nl2br(e($reply['content'] ?? '')) ?></p>

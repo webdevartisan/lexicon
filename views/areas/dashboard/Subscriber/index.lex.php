@@ -59,7 +59,7 @@
                   <?php } ?>
                 </td>
                 <td class="px-3 py-2.5 text-sm text-slate-500 dark:text-zink-300">
-                  <?= e(date('M j, Y', strtotime((string) ($sub['created_at'] ?? 'now')))) ?>
+                  <?= e(local_datetime($sub['created_at'] ?? null, 'M j, Y')) ?>
                 </td>
                 <td class="px-3 py-2.5 ltr:text-right rtl:text-left">
                   <form method="post" action="/dashboard/blog/{{ blog.id }}/subscribers/<?= (int) $sub['id'] ?>/delete" class="inline"

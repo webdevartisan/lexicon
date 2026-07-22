@@ -63,4 +63,21 @@ class TimezoneHelper
     {
         return DateTimeZone::listIdentifiers(DateTimeZone::ALL);
     }
+
+    /**
+     * Check a stored timezone string before handing it to DateTimeZone.
+     *
+     * Preferences and blog settings hold whatever was in the database, which
+     * might be null, empty or a zone that PHP dropped in a later tzdata.
+     *
+     * @param  string|null  $timezone  Candidate identifier, e.g. 'Europe/Athens'
+     */
+    public static function isValid(?string $timezone): bool
+    {
+        if ($timezone === null || $timezone === '') {
+            return false;
+        }
+
+        return in_array($timezone, DateTimeZone::listIdentifiers(DateTimeZone::ALL), true);
+    }
 }

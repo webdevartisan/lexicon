@@ -187,7 +187,7 @@ $excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160)
                 {{ post.blog_name }}
                 {% if post.published_at %}
                 &middot;
-                <time datetime="{{ post.published_at }}"><?= e(date('M j, Y', strtotime($post['published_at']))) ?></time>
+                <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
                 {% endif %}
             </p>
             <p>{{ excerpt }}</p>
