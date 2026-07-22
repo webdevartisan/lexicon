@@ -68,7 +68,17 @@ class SubscriberNotificationService
 
             if ($ok) {
                 $sent++;
+
+                continue;
             }
+
+            // Naming the address makes a partial fan-out diagnosable; the
+            // transport's own reason is already in the log from MailService.
+            error_log(sprintf(
+                'Subscriber notification failed for post %d, subscriber %s',
+                $postId,
+                $subscriber['email']
+            ));
         }
 
         return $sent;

@@ -12,6 +12,11 @@ $tabs = [
     ['key' => 'draft', 'label' => 'Drafts', 'count' => $counts['draft']],
 ];
 
+// Only worth a tab once something is actually waiting to go out.
+if (!empty($counts['scheduled'])) {
+    $tabs[] = ['key' => 'scheduled', 'label' => 'Scheduled', 'count' => $counts['scheduled']];
+}
+
 if ($showReviewPills) {
     $tabs[] = ['key' => 'pending', 'label' => 'In Review', 'count' => $counts['pending']];
     $tabs[] = ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0];
@@ -173,6 +178,12 @@ $selectedSortKey = (string) ($sort ?? '');
             'icon' => 'rss',
             'title' => 'No published posts yet',
             'text' => 'Publish a draft when you are ready to make it live.',
+            'cta' => 'New post',
+        ],
+        'scheduled' => [
+            'icon' => 'calendar-clock',
+            'title' => 'Nothing scheduled',
+            'text' => 'Give a draft a future publish date and it will queue up here.',
             'cta' => 'New post',
         ],
         'archived' => [

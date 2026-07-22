@@ -10,26 +10,14 @@
     // SEO/social meta arrives pre-assembled from BlogController: blog defaults
     // on listing pages, post-level overrides on post pages.
     $desc = e($meta['description'] ?? ($user['blog_name'] ?? 'Blog'));
-  $ogTitle = e($meta['og_title'] ?? ($meta['title'] ?? ($user['blog_name'] ?? 'Blog')));
-  $ogDesc = e($meta['og_description'] ?? ($meta['description'] ?? ''));
-  $ogImage = e($meta['og_image'] ?? '');
-  $ogUrl = e($meta['url'] ?? '');
   ?>
   <meta name="description" content="<?= $desc ?>" />
   <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>" />
   <?php if (!empty($meta['robots'])) { ?><meta name="robots" content="<?= e($meta['robots']) ?>" /><?php } ?>
   <?php if (!empty($meta['canonical'])) { ?><link rel="canonical" href="<?= e($meta['canonical']) ?>" /><?php } ?>
 
-  <meta property="og:type" content="<?= e($meta['og_type'] ?? 'website') ?>" />
-  <meta property="og:title" content="<?= $ogTitle ?>" />
-  <meta property="og:description" content="<?= $ogDesc ?>" />
-  <meta property="og:url" content="<?= $ogUrl ?>" />
-  <meta property="og:site_name" content="<?= e($meta['site_name'] ?? ($user['blog_name'] ?? '')) ?>" />
-  <?php if ($ogImage !== '') { ?><meta property="og:image" content="<?= $ogImage ?>" /><?php } ?>
-  <meta name="twitter:card" content="<?= e($meta['twitter_card'] ?? 'summary_large_image') ?>" />
-  <meta name="twitter:title" content="<?= $ogTitle ?>" />
-  <meta name="twitter:description" content="<?= $ogDesc ?>" />
-  <?php if ($ogImage !== '') { ?><meta name="twitter:image" content="<?= $ogImage ?>" /><?php } ?>
+  <?php /* Shared across every theme so a new tag lands everywhere at once. */ ?>
+  <?= social_meta_tags($meta ?? []) ?>
 
   <?php
     $logo = $settings['logo_path'] ?? null;

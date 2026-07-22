@@ -314,6 +314,9 @@ class WorkflowService
      * to pass review. Contributors never publish; their ceiling is handing
      * a draft to the pipeline.
      *
+     * Scheduling counts as publishing: it is publishing with a delay, so it
+     * needs identical authority or it becomes a way to sidestep review.
+     *
      * @param  string  $requested  Status coming from the form
      * @param  string|null  $role  Effective blog role of the acting user
      * @param  int  $blogId  Blog the post belongs to
@@ -340,12 +343,12 @@ class WorkflowService
             return $requested;
         }
 
-        if (in_array($requested, ['published', 'archived'], true)) {
+        if (in_array($requested, ['published', 'scheduled', 'archived'], true)) {
             return $workflowOn ? 'pending' : 'draft';
         }
 
         // The reverse move is an unpublish; same authority as publishing.
-        if (in_array($current, ['published', 'archived'], true)) {
+        if (in_array($current, ['published', 'scheduled', 'archived'], true)) {
             return $current;
         }
 

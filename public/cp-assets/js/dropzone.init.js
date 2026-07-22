@@ -175,9 +175,18 @@
             return dropzone;
         }
 
+        // form.submit() drops the clicked button's name/value, so anything the
+        // server reads from the submitter has to be carried over by hand.
+        var pendingSubmitter = null;
+
         form.addEventListener("submit", function(e) {
             e.preventDefault();
-            
+
+            var submitter = e.submitter || document.activeElement;
+            if (submitter && submitter.name && form.contains(submitter)) {
+                pendingSubmitter = { name: submitter.name, value: submitter.value };
+            }
+
             if (formSubmitted) return false;
 
             var dropzonesToProcess = dropzones.filter(function(dz) {
@@ -214,7 +223,16 @@
                 input.value = JSON.stringify(dz.uploadedFiles);
                 form.appendChild(input);
             });
-            
+
+            if (pendingSubmitter) {
+                var submitterInput = document.createElement('input');
+                submitterInput.type = 'hidden';
+                submitterInput.name = pendingSubmitter.name;
+                submitterInput.value = pendingSubmitter.value;
+                form.appendChild(submitterInput);
+                log("📎 Carrying submitter:", pendingSubmitter.name, "=", pendingSubmitter.value);
+            }
+
             log("📤 Submitting form");
             originalSubmit.call(form);
         }

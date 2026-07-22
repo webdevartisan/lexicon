@@ -16,6 +16,19 @@ declare(strict_types=1);
 return [
     /*
     |--------------------------------------------------------------------------
+    | Mail enabled
+    |--------------------------------------------------------------------------
+    |
+    | Master switch for outgoing mail. When false, MailService suppresses every
+    | send instead of opening an SMTP connection. This lives here, and is
+    | enforced inside MailService, because individual call sites used to check
+    | MAIL_ENABLED themselves and most of them forgot to.
+    |
+    */
+    'enabled' => filter_var($_ENV['MAIL_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mail driver
     |--------------------------------------------------------------------------
     |

@@ -8,6 +8,7 @@ $statusStyles = [
     'published' => ['bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800', 'Published'],
     'draft' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'Draft'],
     'pending' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', 'Pending'],
+    'scheduled' => ['bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-800', 'Scheduled'],
     'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', 'Archived'],
 ];
 [$badgeClass, $badgeLabel] = $statusStyles[$status] ?? $statusStyles['draft'];
@@ -131,7 +132,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     </a>
                     {% endif %}
 
-                    {% if (($post['status'] === 'draft') || ($post['status'] === 'archived')): %}
+                    {% if (($post['status'] === 'draft') || ($post['status'] === 'archived') || ($post['status'] === 'scheduled')): %}
                     <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"
@@ -142,7 +143,7 @@ $dateDisplay = $dateRaw ? date('M j, Y', strtotime((string) $dateRaw)) : '';
                     </form>
                     {% endif %}
 
-                    {% if (($post['status'] === 'archived') || ($post['status'] === 'published')): %}
+                    {% if (($post['status'] === 'archived') || ($post['status'] === 'published') || ($post['status'] === 'scheduled')): %}
                     <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"

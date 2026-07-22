@@ -20,8 +20,11 @@ class PostModel extends AppModel
      * Valid post status values.
      *
      * 'pending' = awaiting reviewer action (the canonical "needs review" signal).
+     * 'scheduled' = approved to go live, waiting on published_at. Deliberately
+     * distinct from 'published' so the public queries, which all filter on
+     * status = 'published', exclude it without needing a date check.
      */
-    public const STATUSES = ['draft', 'pending', 'published', 'archived'];
+    public const STATUSES = ['draft', 'pending', 'scheduled', 'published', 'archived'];
 
     /**
      * Valid workflow state values for the editorial pipeline.
@@ -35,10 +38,11 @@ class PostModel extends AppModel
      * 'needs_changes' feedback drops the post back from pending→draft.
      */
     public const STATUS_TRANSITIONS = [
-        'draft' => ['pending', 'published'],
-        'pending' => ['draft', 'published', 'archived'],
-        'published' => ['archived', 'draft'],
-        'archived' => ['published', 'draft'],
+        'draft' => ['pending', 'scheduled', 'published'],
+        'pending' => ['draft', 'scheduled', 'published', 'archived'],
+        'scheduled' => ['draft', 'pending', 'published', 'archived'],
+        'published' => ['archived', 'scheduled', 'draft'],
+        'archived' => ['published', 'scheduled', 'draft'],
     ];
 
     /**
@@ -192,6 +196,48 @@ class PostModel extends AppModel
         $stmt = $this->database->query($sql);
 
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Scheduled posts whose publish time has arrived.
+     *
+     * Compared against UTC because published_at is normalised to UTC on save;
+     * the author's timezone only ever affects how the date is displayed.
+     *
+     * @param  int  $limit  Maximum rows to return in one sweep
+     * @return array<int, array<string, mixed>> Due post records
+     */
+    public function dueForPublishing(int $limit = 100): array
+    {
+        $sql = "SELECT id, blog_id, title, slug, published_at
+                FROM {$this->getTable()}
+                WHERE status = 'scheduled'
+                AND published_at IS NOT NULL
+                AND published_at <= UTC_TIMESTAMP()
+                ORDER BY published_at ASC
+                LIMIT :limit";
+        $stmt = $this->database->query($sql, [':limit' => $limit]);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Flip one scheduled post to published.
+     *
+     * The status guard makes this safe to run concurrently: a second sweep
+     * touching the same row changes nothing and reports zero.
+     *
+     * @param  int  $postId  Post ID
+     * @return bool True when this call was the one that published it
+     */
+    public function markScheduledAsPublished(int $postId): bool
+    {
+        $rows = $this->database->execute(
+            "UPDATE {$this->getTable()} SET status = 'published' WHERE id = ? AND status = 'scheduled'",
+            [$postId]
+        );
+
+        return $rows > 0;
     }
 
     /**
@@ -1474,6 +1520,7 @@ class PostModel extends AppModel
         $counts = [
             'all' => 0,
             'published' => 0,
+            'scheduled' => 0,
             'draft' => 0,
             'pending' => 0,
             'needs_changes' => 0,
@@ -1494,7 +1541,8 @@ class PostModel extends AppModel
             $counts['needs_changes'] += (int) $row['needs_changes'];
         }
 
-        $counts['all'] = $counts['published'] + $counts['draft'] + $counts['pending'] + $counts['archived'];
+        $counts['all'] = $counts['published'] + $counts['scheduled'] + $counts['draft']
+            + $counts['pending'] + $counts['archived'];
 
         return $counts;
     }

@@ -12,6 +12,11 @@ $tabs = [
     ['key' => 'draft',     'label' => 'Drafts',     'count' => $counts['draft']],
 ];
 
+// Only worth a tab once something is actually waiting to go out.
+if (!empty($counts['scheduled'])) {
+    $tabs[] = ['key' => 'scheduled', 'label' => 'Scheduled', 'count' => $counts['scheduled']];
+}
+
 if ($showReviewPills) {
     $tabs[] = ['key' => 'pending',       'label' => 'In Review',     'count' => $counts['pending']];
     $tabs[] = ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0];
@@ -52,6 +57,7 @@ $statusBadge = [
     'published' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
     'draft' => 'bg-slate-100 text-slate-700 dark:bg-zink-600 dark:text-zink-200',
     'pending' => 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+    'scheduled' => 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
     'archived' => 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-300',
 ];
 ?>
