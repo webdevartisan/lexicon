@@ -17,6 +17,8 @@ use Throwable;
  * this command. Each post is flipped with a status guard, which makes a second
  * concurrent run a no-op rather than a double announcement.
  *
+ * Subscriber mail is only queued here; mail:queue-work delivers it.
+ *
  * Usage: php cli posts:publish-due
  * Cron:  * * * * * cd /var/www/html && php cli posts:publish-due >> /var/log/publish-due.log 2>&1
  */
@@ -48,7 +50,7 @@ class PublishDuePostsCommand
             echo 'Found '.count($due)." post(s) due for publishing...\n";
 
             $published = 0;
-            $notified = 0;
+            $queued = 0;
             $failed = 0;
 
             foreach ($due as $post) {
@@ -62,16 +64,17 @@ class PublishDuePostsCommand
                 $published++;
                 echo "  ✓ #{$postId} {$post['title']}\n";
 
-                // Announcements are best-effort. A dead mail server must not
-                // stop the rest of the batch from going live, and the post is
-                // already published by this point either way.
+                // Announcements are best-effort. A queue write that fails must
+                // not stop the rest of the batch from going live, and the post
+                // is already published by this point either way.
                 try {
                     // Runs after the flip because the notifier ignores
-                    // anything that isn't already 'published'.
-                    $notified += $this->subscriberNotifier->notifyPostPublished($postId);
+                    // anything that isn't already 'published'. Delivery itself
+                    // is mail:queue-work's job; this only enqueues.
+                    $queued += $this->subscriberNotifier->notifyPostPublished($postId);
                 } catch (Throwable $e) {
                     $failed++;
-                    echo "    ! subscriber email failed: {$e->getMessage()}\n";
+                    echo "    ! queueing subscriber email failed: {$e->getMessage()}\n";
                 }
             }
 
@@ -85,10 +88,10 @@ class PublishDuePostsCommand
 
             $duration = round((microtime(true) - $start) * 1000, 2);
 
-            echo "Published {$published} post(s), {$notified} subscriber email(s) sent in {$duration}ms\n";
+            echo "Published {$published} post(s), queued {$queued} subscriber email(s) in {$duration}ms\n";
 
             if ($failed > 0) {
-                echo "{$failed} post(s) published but could not notify subscribers.\n";
+                echo "{$failed} post(s) published but could not queue subscriber mail.\n";
             }
 
             return 0;

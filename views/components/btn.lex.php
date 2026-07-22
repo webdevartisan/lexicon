@@ -14,7 +14,7 @@ $dataTarget = $dataTarget ?? '';
 $dataModalTarget = $dataModalTarget ?? '';
 
 $variants = [
-    'blue' => 'bg-white text-custom-500 btn border-custom-500 hover:text-white hover:bg-custom-600 hover:border-custom-600 focus:text-white focus:bg-custom-600 focus:border-custom-600 focus:ring focus:ring-custom-100 active:text-white active:bg-custom-600 active:border-custom-600 active:ring active:ring-custom-100 dark:bg-zink-700 dark:hover:bg-custom-500 dark:ring-custom-400/20 dark:focus:bg-custom-500',
+    'blue' => 'inline-flex items-center justify-center gap-2 rounded-md font-medium bg-white text-custom-500 btn border-custom-500 hover:text-white hover:bg-custom-600 hover:border-custom-600 focus:text-white focus:bg-custom-600 focus:border-custom-600 focus:ring focus:ring-custom-100 active:text-white active:bg-custom-600 active:border-custom-600 active:ring active:ring-custom-100 dark:bg-zink-700 dark:hover:bg-custom-500 dark:ring-custom-400/20 dark:focus:bg-custom-500',
     'green' => 'inline-flex items-center justify-center gap-2 rounded-md font-medium focus:ring text-green-500 bg-white border-green-500 btn hover:text-white hover:bg-green-600 hover:border-green-600 dark:bg-zink-700 dark:hover:bg-green-500',
     'red' => 'inline-flex items-center justify-center gap-2 rounded-md font-medium focus:ring text-red-500 bg-white border-red-500 btn hover:text-white hover:bg-red-600 hover:border-red-600 dark:bg-zink-700 dark:hover:bg-red-500',
     'yellow' => 'inline-flex items-center justify-center gap-2 rounded-md font-medium focus:ring text-yellow-500 bg-white border-yellow-500 btn hover:text-white hover:bg-yellow-600 hover:border-yellow-600 dark:bg-zink-700 dark:hover:bg-yellow-500',

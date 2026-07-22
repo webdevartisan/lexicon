@@ -120,7 +120,7 @@ class UserController extends AppController
         $validator = $this->validateOrFail([
             'username' => 'required|min:3|max:50|unique:users,username,'.(int) $id,
             'email' => 'required|email|unique:users,email,'.(int) $id,
-            'password' => 'min:8',
+            'password' => 'min:4',
             'first_name' => 'max:50',
             'last_name' => 'max:50',
         ]);

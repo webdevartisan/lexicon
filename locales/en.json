@@ -54,6 +54,7 @@
         "tags": "Tags",
         "roles": "Roles",
         "emailTest": "Email Templates",
+        "mailQueue": "Mail Queue",
         "settings": "Settings",
         "cacheManagement": "Cache Management",
         "auditLog": "Audit Log",

@@ -255,6 +255,22 @@ $container->setShared(App\Services\MailService::class, function ($c) {
 });
 
 /**
+ * Mail queue service stores outgoing email and drains it on a paced schedule.
+ *
+ * We register explicitly rather than autowire because it needs the queue
+ * section of the mail config, which the container cannot infer.
+ */
+$container->setShared(App\Services\MailQueueService::class, function ($c) {
+    $config = require ROOT_PATH.'/config/mail.php';
+
+    return new App\Services\MailQueueService(
+        $c->get(App\Models\MailQueueModel::class),
+        $c->get(App\Services\MailService::class),
+        $config['queue'] ?? []
+    );
+});
+
+/**
  * Email template registry discovers and caches available email templates.
  *
  * We register as singleton to avoid repeated filesystem scans when

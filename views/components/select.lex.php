@@ -58,7 +58,7 @@ if (!is_assoc($options)) {
         <?php } ?>
     </select>
     
-    <span class="pointer-events-none absolute right-3 top-1/2 text-slate-500 dark:text-zink-300"> ▼ </span>
+    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zink-300"> ▼ </span>
 </div>
 
 <?php } else { ?>

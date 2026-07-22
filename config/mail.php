@@ -72,6 +72,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Queue
+    |--------------------------------------------------------------------------
+    |
+    | Pacing for the mail:queue-work cron worker. Providers reject bursts, so
+    | the worker sends a capped batch per run and waits between messages. The
+    | defaults suit a rate-limited sandbox; raise them once a real sending
+    | domain is in place.
+    |
+    | batch_size          how many emails one worker run may send
+    | delay_ms            pause between individual sends within a run
+    | max_attempts        deliveries tried before a row is marked failed
+    | backoff_seconds     base retry delay, multiplied by the attempt count
+    | stuck_after_minutes how long a claim may sit before it is reclaimed
+    |
+    */
+    'queue' => [
+        'batch_size' => (int) ($_ENV['MAIL_QUEUE_BATCH_SIZE'] ?? 10),
+        'delay_ms' => (int) ($_ENV['MAIL_QUEUE_DELAY_MS'] ?? 500),
+        'max_attempts' => (int) ($_ENV['MAIL_QUEUE_MAX_ATTEMPTS'] ?? 3),
+        'backoff_seconds' => (int) ($_ENV['MAIL_QUEUE_BACKOFF_SECONDS'] ?? 60),
+        'stuck_after_minutes' => (int) ($_ENV['MAIL_QUEUE_STUCK_AFTER_MINUTES'] ?? 15),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Debug mode
     |--------------------------------------------------------------------------
     |

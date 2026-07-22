@@ -536,6 +536,40 @@ CREATE TABLE IF NOT EXISTS blog_subscribers (
 COMMENT='Per-blog email subscribers for new post notifications';
 
 -- ----------------------------------------------------------------------------
+-- Mail Queue Table
+-- ----------------------------------------------------------------------------
+-- Outbound email waiting to be delivered by the mail:queue-work cron worker.
+-- Rows hold already-rendered content, so the worker never has to reconstruct a
+-- Mailable and old rows survive changes to a template's constructor.
+-- `related_type`/`related_id` group a fan-out (all subscriber mail for one
+-- post) so the admin panel can report on it.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS mail_queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    to_email VARCHAR(255) NOT NULL,
+    to_name VARCHAR(255) DEFAULT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body_html LONGTEXT NOT NULL,
+    body_text LONGTEXT DEFAULT NULL,
+    status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+    attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',
+    max_attempts INT NOT NULL DEFAULT 3 COMMENT 'Give up and mark failed past this',
+    last_error TEXT DEFAULT NULL COMMENT 'Transport complaint from the most recent failure',
+    claim_token CHAR(32) DEFAULT NULL COMMENT 'Identifies which worker run owns a sending row',
+    related_type VARCHAR(50) DEFAULT NULL COMMENT 'What triggered this mail, e.g. post',
+    related_id INT DEFAULT NULL,
+    next_attempt_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Backoff gate; worker ignores rows dated ahead',
+    sent_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_mail_queue_claim (status, next_attempt_at),
+    INDEX idx_mail_queue_token (claim_token),
+    INDEX idx_mail_queue_related (related_type, related_id),
+    INDEX idx_mail_queue_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Outbound email queue drained by the mail:queue-work cron worker';
+
+-- ----------------------------------------------------------------------------
 -- Post Translations Table
 -- ----------------------------------------------------------------------------
 -- Per-locale overlays of post content for blogs that opted into localized
@@ -871,7 +905,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Roles', 'manage_roles', 'roles', 'manage', 'Create custom roles and edit role permissions'),
 ('View Audit Log', 'view_audit_log', 'audit', 'read', 'Read the audit trail'),
 ('View System Health', 'view_system_health', 'system', 'read', 'View system diagnostics'),
-('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches');
+('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
+('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role
