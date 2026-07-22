@@ -52,6 +52,7 @@
         "roles": "Ρόλοι",
         "emailTest": "Πρότυπα Email",
         "mailQueue": "Ουρά Email",
+        "scheduledTasks": "Προγραμματισμένες Εργασίες",
         "settings": "Ρυθμίσεις",
         "cacheManagement": "Διαχείριση Cache",
         "auditLog": "Αρχείο Ενεργειών",

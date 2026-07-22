@@ -36,7 +36,17 @@ class ProcessRunner implements TaskRunnerInterface
      */
     public function dispatch(int $taskId, int $runId): bool
     {
-        $command = $this->buildCommand((int) $taskId, (int) $runId);
+        $binary = $this->resolveBinary();
+
+        // Refuse rather than hand Windows a path that is not there. Starting a
+        // missing executable puts an error dialog on the server desktop and
+        // leaves the task sitting at running until the reaper notices, which
+        // tells whoever pressed the button nothing at all.
+        if ($this->looksLikePath($binary) && !is_file($binary)) {
+            return false;
+        }
+
+        $command = $this->buildCommand($binary, (int) $taskId, (int) $runId);
 
         $descriptors = [
             ['file', $this->nullDevice(), 'r'],
@@ -119,9 +129,9 @@ class ProcessRunner implements TaskRunnerInterface
     /**
      * Build the platform specific background command.
      */
-    private function buildCommand(int $taskId, int $runId): string
+    private function buildCommand(string $binary, int $taskId, int $runId): string
     {
-        $php = escapeshellarg($this->resolveBinary());
+        $php = escapeshellarg($binary);
         $cli = escapeshellarg($this->rootPath.DIRECTORY_SEPARATOR.'cli');
         $task = "schedule:run-task {$taskId} {$runId}";
 
@@ -138,9 +148,15 @@ class ProcessRunner implements TaskRunnerInterface
     /**
      * Work out which PHP to start.
      *
-     * PHP_BINARY is only trustworthy on the command line. Under a web server
-     * it names the server itself, so the fallback goes looking for the command
-     * line build beside it instead.
+     * PHP_BINARY names the running program, which is what we want on the
+     * command line and under the built in server, and completely wrong under
+     * Apache or php-fpm where it names the web server.
+     *
+     * PHP_BINDIR looks like the obvious fallback and is not. On Windows it
+     * holds the path the build was compiled with, commonly C:\php, which
+     * usually does not exist on the machine. Handing that to the shell puts an
+     * error dialog on the server desktop, so it is only used when it turns out
+     * to be real and we drop to the PATH otherwise.
      */
     private function resolveBinary(): string
     {
@@ -148,11 +164,28 @@ class ProcessRunner implements TaskRunnerInterface
             return $this->phpBinary;
         }
 
-        if (PHP_SAPI === 'cli' && PHP_BINARY !== '') {
+        if (in_array(PHP_SAPI, ['cli', 'cli-server', 'phpdbg'], true) && PHP_BINARY !== '') {
             return PHP_BINARY;
         }
 
-        return PHP_BINDIR.DIRECTORY_SEPARATOR.($this->isWindows() ? 'php.exe' : 'php');
+        $name = $this->isWindows() ? 'php.exe' : 'php';
+        $guess = PHP_BINDIR.DIRECTORY_SEPARATOR.$name;
+
+        if (is_file($guess)) {
+            return $guess;
+        }
+
+        // Nothing dependable left to go on, so let the shell search PATH. On a
+        // host where that fails too, set SCHEDULE_PHP_BINARY.
+        return 'php';
+    }
+
+    /**
+     * Whether a binary setting names a location rather than something on PATH.
+     */
+    private function looksLikePath(string $binary): bool
+    {
+        return str_contains($binary, '/') || str_contains($binary, '\\');
     }
 
     private function nullDevice(): string

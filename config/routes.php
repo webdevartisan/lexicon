@@ -419,6 +419,20 @@ $router->group([
     $r->add('/mail-queue/retry-all', ['controller' => 'MailQueueController', 'action' => 'retryAll', 'method' => 'POST']);
     $r->add('/mail-queue/prune', ['controller' => 'MailQueueController', 'action' => 'prune', 'method' => 'POST']);
 
+    // Recurring tasks. Listed before the id routes so the fixed segments are
+    // not swallowed by them.
+    $r->add('/scheduled-tasks', ['controller' => 'ScheduledTaskController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/statuses', ['controller' => 'ScheduledTaskController', 'action' => 'statuses', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/hint', ['controller' => 'ScheduledTaskController', 'action' => 'hint', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/create', ['controller' => 'ScheduledTaskController', 'action' => 'create', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/store', ['controller' => 'ScheduledTaskController', 'action' => 'store', 'method' => 'POST']);
+    $r->add('/scheduled-tasks/{id:\d+}/edit', ['controller' => 'ScheduledTaskController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/{id:\d+}/history', ['controller' => 'ScheduledTaskController', 'action' => 'history', 'method' => 'GET']);
+    $r->add('/scheduled-tasks/{id:\d+}/update', ['controller' => 'ScheduledTaskController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/scheduled-tasks/{id:\d+}/run', ['controller' => 'ScheduledTaskController', 'action' => 'run', 'method' => 'POST']);
+    $r->add('/scheduled-tasks/{id:\d+}/toggle', ['controller' => 'ScheduledTaskController', 'action' => 'toggle', 'method' => 'POST']);
+    $r->add('/scheduled-tasks/{id:\d+}/delete', ['controller' => 'ScheduledTaskController', 'action' => 'destroy', 'method' => 'POST']);
+
     // Generic admin routes are powerful and should not be exposed in production.
     if (env('APP_DEBUG', false)) {
         $r->add('/{controller}/{action}');
