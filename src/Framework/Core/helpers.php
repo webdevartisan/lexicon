@@ -522,7 +522,7 @@ function breadcrumbs(): \App\Services\BreadcrumbService
  */
 function base_url(): string
 {
-    return $_ENV['APP_URL'];
+    return (string) env('APP_URL', 'http://localhost');
 }
 
 /**

@@ -230,9 +230,9 @@ $previewUrl = $previewBase.'?_theme='.rawurlencode($themeKey);
         <div class="p-4 md:p-5">
           <div class="grid gap-4 md:grid-cols-3">
             <?php $blogIdForLibrary = (string) ($blog['id'] ?? ''); ?>
-            {% cmp="dropzone2" label="{$bannerLabel}" name="banner" resource="{$settings}" library="{$blogIdForLibrary}" %}
-            {% cmp="dropzone2" label="{$logoLabel}" name="logo" resource="{$settings}" library="{$blogIdForLibrary}" %}
-            {% cmp="dropzone2" label="{$faviconLabel}" name="favicon" resource="{$settings}" library="{$blogIdForLibrary}" %}
+            {% cmp="dropzone" label="{$bannerLabel}" name="banner" resource="{$settings}" library="{$blogIdForLibrary}" %}
+            {% cmp="dropzone" label="{$logoLabel}" name="logo" resource="{$settings}" library="{$blogIdForLibrary}" %}
+            {% cmp="dropzone" label="{$faviconLabel}" name="favicon" resource="{$settings}" library="{$blogIdForLibrary}" %}
           </div>
         </div>
       </section>

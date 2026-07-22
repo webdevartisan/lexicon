@@ -68,7 +68,7 @@ final class LocalePrefixIntake
             }
 
             // Use 308 in production (permanent, method-preserving), 307 elsewhere.
-            $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+            $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
             header('Location: '.$target, true, $isProd ? 308 : 307);
             exit;
         }
@@ -128,7 +128,7 @@ final class LocalePrefixIntake
 
         // Redirect once to the canonical locale-prefixed URL.
         // 308 in production (permanent, method-preserving), 307 elsewhere.
-        $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+        $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
         header('Location: '.$target, true, $isProd ? 308 : 307);
         exit;
     }

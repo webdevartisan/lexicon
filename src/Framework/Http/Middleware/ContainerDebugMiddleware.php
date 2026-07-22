@@ -28,7 +28,7 @@ class ContainerDebugMiddleware implements MiddlewareInterface
      */
     public function process(Request $request, RequestHandlerInterface $next): Response
     {
-        if ($_ENV['APP_DEBUG'] == 'false') {
+        if (!env('APP_DEBUG', false)) {
             // If not in debug mode, just pass through
             return $next->handle($request);
         }
@@ -52,8 +52,10 @@ class ContainerDebugMiddleware implements MiddlewareInterface
      */
     private function shouldInjectToolbar(Response $response): bool
     {
-        // Only in debug mode
-        if (!($_ENV['APP_DEBUG'] ?? false)) {
+        // Only in debug mode. Read through env() so the raw string "false" is
+        // coerced to a boolean; reading $_ENV directly made this check truthy
+        // whenever APP_DEBUG was set to false.
+        if (!env('APP_DEBUG', false)) {
             return false;
         }
 

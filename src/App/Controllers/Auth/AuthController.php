@@ -234,13 +234,18 @@ final class AuthController extends AppController
     /**
      * Log the user out.
      *
-     * Blog-front logout links pass ?return_to= so readers stay on the
-     * public blog page they were reading; everything else goes home.
+     * POST-only with a CSRF check: a GET logout lets any third-party page end a
+     * visitor's session with nothing more than <img src="/logout">.
+     *
+     * Blog-front logout forms post return_to so readers stay on the public blog
+     * page they were reading; everything else goes home.
      */
     public function logout(): Response
     {
+        csrf()->assertValid($this->request->postParam('_token'));
+
         auth()->logout();
 
-        return $this->redirect(safe_return_to((string) ($this->request->get['return_to'] ?? '')) ?? '/');
+        return $this->redirect(safe_return_to((string) ($this->request->post['return_to'] ?? '')) ?? '/');
     }
 }

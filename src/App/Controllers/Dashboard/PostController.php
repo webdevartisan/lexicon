@@ -726,6 +726,10 @@ final class PostController extends AppController
      */
     public function autosave(): Response
     {
+        if (!csrf()->isTokenValid($this->request->postParam('_token'))) {
+            return $this->json(['success' => false, 'error' => 'Invalid CSRF token.'], 419);
+        }
+
         $user = auth()->user();
 
         if (!$user) {

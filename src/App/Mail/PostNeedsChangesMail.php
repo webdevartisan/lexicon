@@ -26,7 +26,7 @@ class PostNeedsChangesMail extends Mailable
 
     private function editUrl(): string
     {
-        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
 
         return $appUrl.'/dashboard/posts/'.$this->postId.'/edit';
     }

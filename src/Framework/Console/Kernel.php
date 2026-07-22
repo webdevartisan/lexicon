@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Framework\Console;
 
-use Exception;
 use Framework\Core\Container;
 
 /**
@@ -102,8 +101,7 @@ class Kernel
             // execute the command and return its exit code
             return $command->handle();
 
-        } catch (Exception $e) {
-            // catch any unhandled exceptions and display them
+        } catch (\Throwable $e) {
             echo "Error: {$e->getMessage()}\n";
             echo "Stack trace:\n{$e->getTraceAsString()}\n";
 

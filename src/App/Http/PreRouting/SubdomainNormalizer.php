@@ -56,15 +56,17 @@ final class SubdomainNormalizer
 
         // Feature flags / environment configuration.
         // FORCE_WWW: "1" → canonical host is www.<domain>, "0" → canonical is apex <domain>.
-        $forceWww = ($_ENV['FORCE_WWW'] ?? '0') === '1';
+        // Boolean check, not === '1': env() types the value, so FORCE_WWW=1
+        // arrives as int and would never match the string.
+        $forceWww = filter_var(env('FORCE_WWW', false), FILTER_VALIDATE_BOOLEAN);
 
         // APP_ENV: production → 301 (permanent), anything else → 302 (temporary).
-        $appEnv = $_ENV['APP_ENV'] ?? ($_SERVER['APP_ENV'] ?? 'production');
+        $appEnv = env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production');
         $isProd = $appEnv === 'production';
 
         // Optionally restrict normalization to a single primary domain, e.g. "example.com".
         // This prevents rewriting completely different domains, like "static.other.com".
-        $primary = $_ENV['PRIMARY_DOMAIN'] ?? null;
+        $primary = env('PRIMARY_DOMAIN');
         if ($primary !== null && $primary !== '') {
             $primary = strtolower($primary);
             $hostLower = strtolower($hostName);

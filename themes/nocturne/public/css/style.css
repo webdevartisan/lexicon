@@ -341,19 +341,27 @@ a {
   transform: translateY(0);
 }
 
-.nav-user-menu a {
+.nav-user-menu a,
+.nav-user-menu button {
   display: block;
+  width: 100%;
   padding: 0.6rem 0.8rem;
+  border: 0;
   border-radius: 6px;
+  background: none;
   font-family: var(--mono);
   font-size: var(--type-mono);
+  line-height: inherit;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  text-align: inherit;
   color: var(--paper-2);
+  cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.nav-user-menu a:hover {
+.nav-user-menu a:hover,
+.nav-user-menu button:hover {
   background: var(--night-3);
   color: var(--paper);
 }

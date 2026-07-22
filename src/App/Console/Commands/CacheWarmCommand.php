@@ -583,7 +583,7 @@ class CacheWarmCommand
 
         // mock authentication for authenticated routes during warming
         // This allows us to warm dashboard/admin fragments without requiring real login
-        $warmAsUserId = $_ENV['CACHE_WARM_AS_USER_ID'] ?? 1;
+        $warmAsUserId = env('CACHE_WARM_AS_USER_ID', 1);
         if ($warmAsUserId !== '') {
             $_SESSION['user_id'] = (int) $warmAsUserId;
 
@@ -619,11 +619,11 @@ class CacheWarmCommand
         $_SERVER = [
             'REQUEST_METHOD' => 'GET',
             'REQUEST_URI' => $route,
-            'HTTP_HOST' => parse_url($_ENV['APP_URL'] ?? 'http://localhost', PHP_URL_HOST) ?? 'localhost',
+            'HTTP_HOST' => parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?? 'localhost',
             'HTTP_USER_AGENT' => 'Cache-Warmer/1.0 (CLI)',
             'REMOTE_ADDR' => '127.0.0.1',
             'SERVER_PROTOCOL' => 'HTTP/1.1',
-            'SERVER_NAME' => parse_url($_ENV['APP_URL'] ?? 'http://localhost', PHP_URL_HOST) ?? 'localhost',
+            'SERVER_NAME' => parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?? 'localhost',
             'SERVER_PORT' => '80',
             'SCRIPT_NAME' => '/index.php',
             'PHP_SELF' => '/index.php',

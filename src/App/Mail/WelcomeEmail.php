@@ -32,7 +32,7 @@ class WelcomeEmail extends Mailable
         $username = $this->user['username'] ?? '';
 
         $this->to($this->user['email'], $firstName)
-            ->subject('Welcome to '.($_ENV['APP_NAME'] ?? 'Our Blog Platform'))
+            ->subject('Welcome to '.(env('APP_NAME', 'Our Blog Platform')))
             ->html($this->buildHtmlBody($firstName, $username))
             ->textAlternative($this->buildTextBody($firstName, $username));
     }
@@ -49,8 +49,8 @@ class WelcomeEmail extends Mailable
      */
     private function buildHtmlBody(string $firstName, string $username): string
     {
-        $appName = htmlspecialchars($_ENV['APP_NAME'] ?? 'Blog Platform');
-        $appUrl = htmlspecialchars($_ENV['APP_URL'] ?? 'http://localhost');
+        $appName = htmlspecialchars(env('APP_NAME', 'Blog Platform'));
+        $appUrl = htmlspecialchars(env('APP_URL', 'http://localhost'));
         $dashboardUrl = $appUrl.'/library';
 
         return <<<HTML
@@ -103,8 +103,8 @@ class WelcomeEmail extends Mailable
      */
     private function buildTextBody(string $firstName, string $username): string
     {
-        $appName = $_ENV['APP_NAME'] ?? 'Blog Platform';
-        $dashboardUrl = ($_ENV['APP_URL'] ?? 'http://localhost').'/library';
+        $appName = env('APP_NAME', 'Blog Platform');
+        $dashboardUrl = (env('APP_URL', 'http://localhost')).'/library';
 
         return <<<TEXT
         Welcome to {$appName}!

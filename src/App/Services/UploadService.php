@@ -21,7 +21,6 @@ final class UploadService implements UploadServiceInterface
      *
      * Validates file type via extension and MIME sniffing, enforces size limits,
      * generates content-based hash for deduplication, and sanitizes filenames.
-     * Performs SVG hardening by rejecting files containing script tags.
      *
      * @param  array<string, mixed>  $file  PHP $_FILES array entry
      * @param  array<string, mixed>  $opts  Configuration: dir, base_url, max_bytes, allowed_ext, rename
@@ -43,7 +42,7 @@ final class UploadService implements UploadServiceInterface
         }
 
         // Validate extension
-        $allowedExt = $opts['allowed_ext'] ?? ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+        $allowedExt = $opts['allowed_ext'] ?? ['jpg', 'jpeg', 'png', 'webp'];
         $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
         if (!in_array($ext, $allowedExt, true)) {
             throw new InvalidArgumentException('File extension not allowed.');
@@ -55,18 +54,10 @@ final class UploadService implements UploadServiceInterface
         finfo_close($finfo);
 
         $allowedMime = [
-            'image/jpeg', 'image/png', 'image/webp', 'image/svg+xml',
+            'image/jpeg', 'image/png', 'image/webp',
         ];
         if (!in_array($mime, $allowedMime, true)) {
             throw new InvalidArgumentException('File type not allowed.');
-        }
-
-        // SVG hardening: reject files containing script tags to prevent XSS
-        if ($mime === 'image/svg+xml') {
-            $svg = file_get_contents($file['tmp_name']);
-            if (preg_match('#<script#i', $svg)) {
-                return null;
-            }
         }
 
         // Ensure target directory exists
@@ -209,7 +200,7 @@ final class UploadService implements UploadServiceInterface
             'dir' => $tempDir,
             'base_url' => $tempUrl,
             'max_bytes' => 5 * 1024 * 1024, // 5MB
-            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp', 'svg'],
+            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
         ]);
 
         if (!$url) {

@@ -67,6 +67,7 @@
       "@php cli cache:warm"
     ],
     "test": [
+        "Composer\\Config::disableProcessTimeout",
         "@php tests/setup-test-db.php",
         "vendor/bin/pest"
     ],

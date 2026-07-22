@@ -30,7 +30,7 @@ class NewPostMail extends Mailable
 
     private function appUrl(): string
     {
-        return rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        return rtrim((string) (env('APP_URL', 'http://localhost')), '/');
     }
 
     private function postUrl(): string

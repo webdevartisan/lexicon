@@ -47,7 +47,7 @@ final class MediaService
         $url = $this->uploads->storeImage($file, [
             'dir' => $dir,
             'base_url' => $baseUrl,
-            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'],
+            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
             'max_bytes' => 5 * 1024 * 1024,
             'rename' => pathinfo($originalName, PATHINFO_FILENAME) ?: 'image',
         ]);
@@ -171,7 +171,7 @@ final class MediaService
                     continue;
                 }
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'], true)) {
+                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
                     continue;
                 }
 

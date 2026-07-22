@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
+use Framework\Exceptions\CsrfTokenException;
 use Framework\Exceptions\HttpException;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Exceptions\TemplateRenderException;
@@ -108,6 +109,12 @@ final class ErrorRenderer
             return [403, 'errors/403.lex.php'];
         }
 
+        // A stale token is a benign, common case (form left open overnight).
+        // It must not look like a server crash to the user or to the error log.
+        if ($e instanceof CsrfTokenException) {
+            return [419, 'errors/419.lex.php'];
+        }
+
         // should keep a dedicated template error page if a view explodes, because it’s actionable in dev.
         if ($e instanceof TemplateRenderException) {
             return [500, 'errors/500-template.lex.php'];
@@ -131,6 +138,7 @@ final class ErrorRenderer
         return match ($status) {
             404 => 'Page not found',
             403 => 'Access denied',
+            419 => 'Your session expired',
             default => 'Server error',
         };
     }

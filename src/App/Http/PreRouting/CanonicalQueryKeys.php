@@ -80,7 +80,7 @@ final class CanonicalQueryKeys
         }
 
         // Use 301 in production (SEO-friendly), 302 in other environments.
-        $isProd = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production') === 'production';
+        $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
         header('Location: '.$canonical, true, $isProd ? 301 : 302);
         exit;
     }

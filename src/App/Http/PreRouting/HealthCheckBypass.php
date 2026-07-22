@@ -56,7 +56,7 @@ final class HealthCheckBypass
 
             // Including a version string helps distinguish deployments.
             // could later make this more opaque (e.g., a build hash) if version exposure is a concern.
-            $version = $_ENV['APP_VERSION'] ?? 'v0';
+            $version = env('APP_VERSION', 'v0');
 
             // HEAD responses should not include a body.
             if ($method === 'HEAD') {

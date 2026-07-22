@@ -105,7 +105,7 @@ $old = old();
             <div class="  w-full">
                 <div class="grid items-center grid-cols-1 text-center lg:grid-cols-2 text-slate-400 dark:text-zink-200 ltr:lg:text-left rtl:lg:text-right">
                     <div>
-                        &copy; <?= $_ENV['APP_NAME'] ?> <?= date('Y') ?>
+                        &copy; <?= e(env('APP_NAME', 'Lexicon')) ?> <?= date('Y') ?>
                     </div>
                     <div class="hidden lg:block">
                         <div class="ltr:text-right rtl:text-left">
@@ -125,7 +125,7 @@ $old = old();
 <div id="toast-stack" class="fixed top-[calc(theme('spacing.header')_+_1rem)] ltr:right-4 rtl:left-4 z-[1050] flex flex-col gap-3 w-80 max-w-[calc(100vw_-_2rem)] pointer-events-none print:hidden">
     {% foreach ($flash as $type => $messages): %}
         {% foreach ($messages as $msg): %}
-            {% cmp="msg2" type="{$type}" msg="{$msg}" %}
+            {% cmp="msg" type="{$type}" msg="{$msg}" %}
         {% endforeach %}
     {% endforeach %}
 </div>

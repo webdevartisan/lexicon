@@ -25,7 +25,7 @@ class PostPublishedMail extends Mailable
 
     private function publicUrl(): string
     {
-        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
 
         return $appUrl.'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
     }

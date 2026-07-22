@@ -232,7 +232,7 @@ it('clears session on logout', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $_SESSION['user_id'] = $userId;
 
-    $request = makeRequest('/logout', 'POST');
+    $request = makeRequest('/logout', 'POST', ['_token' => csrf()->getToken()]);
     $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
@@ -247,7 +247,7 @@ it('clears session on logout', function () {
  * Verifies logout() returns redirect response.
  */
 it('redirects to homepage after logout', function () {
-    $request = makeRequest('/logout', 'POST');
+    $request = makeRequest('/logout', 'POST', ['_token' => csrf()->getToken()]);
     $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
@@ -262,9 +262,90 @@ it('redirects to homepage after logout', function () {
  * Verifies logout() handles missing session gracefully.
  */
 it('handles logout when not authenticated', function () {
-    $request = makeRequest('/logout', 'POST');
+    $request = makeRequest('/logout', 'POST', ['_token' => csrf()->getToken()]);
     $controller = new AuthController();
     setupController($controller, $request, $this->mockViewer);
 
     expect(fn () => $controller->logout())->not->toThrow(Exception::class);
+});
+
+/**
+ * Test that logout requires a CSRF token.
+ *
+ * Without this, <img src="/logout"> on any third-party page ends the session.
+ */
+it('rejects logout with no CSRF token', function () {
+    $request = makeRequest('/logout', 'POST');
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    expect(fn () => $controller->logout())
+        ->toThrow(RuntimeException::class, 'Invalid CSRF token.');
+});
+
+/**
+ * Test that logout rejects a forged CSRF token.
+ */
+it('rejects logout with an invalid CSRF token', function () {
+    $request = makeRequest('/logout', 'POST', ['_token' => 'not-a-real-token']);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    expect(fn () => $controller->logout())
+        ->toThrow(RuntimeException::class, 'Invalid CSRF token.');
+});
+
+/**
+ * Test that a valid token actually ends the session.
+ */
+it('logs the user out when the CSRF token is valid', function () {
+    // Session is primed directly rather than via auth()->login(): this test is
+    // about the logout path, and a real login would drag credential handling
+    // into a CSRF assertion for no added coverage.
+    $_SESSION['user_id'] = UserFactory::new($this->userModel)->create();
+
+    $request = makeRequest('/logout', 'POST', ['_token' => csrf()->getToken()]);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    $controller->logout();
+
+    // check() goes through Auth rather than reading $_SESSION directly, so this
+    // also catches a cachedUser surviving logout.
+    expect(auth()->check())->toBeFalse()
+        ->and($_SESSION)->not->toHaveKey('user_id');
+});
+
+/**
+ * Test that return_to is read from POST now that logout is a form submission.
+ */
+it('honours a posted return_to after logout', function () {
+    $request = makeRequest('/logout', 'POST', [
+        '_token' => csrf()->getToken(),
+        'return_to' => '/blog/hello-world',
+    ]);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    $response = $controller->logout();
+
+    expect($response->getHeader('Location'))->toContain('/blog/hello-world');
+});
+
+/**
+ * Test that an off-site return_to is not honoured.
+ *
+ * safe_return_to() is what stops logout from doubling as an open redirect.
+ */
+it('ignores an off-site return_to after logout', function () {
+    $request = makeRequest('/logout', 'POST', [
+        '_token' => csrf()->getToken(),
+        'return_to' => 'https://evil.example.com/phish',
+    ]);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    $response = $controller->logout();
+
+    expect($response->getHeader('Location'))->not->toContain('evil.example.com');
 });

@@ -46,8 +46,8 @@ final class UserAgentBlocklist
         }
 
         // Parse comma-separated lists from environment and strip quotes/whitespace.
-        $denySubs = self::parseList($_ENV['USER_AGENT_BLOCKLIST'] ?? '');
-        $denyExact = self::parseList($_ENV['USER_AGENT_BLOCK_EXACT'] ?? '');
+        $denySubs = self::parseList(env('USER_AGENT_BLOCKLIST', ''));
+        $denyExact = self::parseList(env('USER_AGENT_BLOCK_EXACT', ''));
 
         // Exact matches (case-sensitive to avoid accidental over-matches).
         // Useful for known, stable bad actors where strict equality is safe.

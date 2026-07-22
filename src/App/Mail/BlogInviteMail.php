@@ -38,14 +38,14 @@ class BlogInviteMail extends Mailable
      */
     private function inviteUrl(): string
     {
-        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? 'http://localhost'), '/');
+        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
 
         return $appUrl.'/invite/'.urlencode($this->rawToken);
     }
 
     private function buildHtmlBody(): string
     {
-        $appName = htmlspecialchars((string) ($_ENV['APP_NAME'] ?? 'Blog Platform'));
+        $appName = htmlspecialchars((string) (env('APP_NAME', 'Blog Platform')));
         $blogName = htmlspecialchars($this->blogName);
         $role = htmlspecialchars($this->role);
         $url = htmlspecialchars($this->inviteUrl());

@@ -41,8 +41,10 @@ final class RateLimitPrecheck
      */
     public static function handle(Request $request): void
     {
-        // Optional global enable/disable switch.
-        if (($_ENV['RATE_LIMIT_ENABLED'] ?? '1') !== '1') {
+        // Optional global enable/disable switch. Compared as a boolean, not
+        // against the string '1': env() coerces "1" to int and "false" to bool,
+        // so a string comparison here would silently disable rate limiting.
+        if (!filter_var(env('RATE_LIMIT_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 
@@ -58,7 +60,7 @@ final class RateLimitPrecheck
         }
 
         // IP whitelist: any address in RATE_LIMIT_WHITELIST bypasses rate limits.
-        $whitelistRaw = $_ENV['RATE_LIMIT_WHITELIST'] ?? '';
+        $whitelistRaw = env('RATE_LIMIT_WHITELIST', '');
         $whitelist = array_filter(
             array_map(
                 static fn (string $entry): string => trim($entry, " \t\n\r\0\x0B\"'"),
@@ -71,9 +73,9 @@ final class RateLimitPrecheck
         }
 
         // Read rate limit parameters from environment or use sane defaults.
-        $window = max(1, (int) ($_ENV['RATE_LIMIT_WINDOW'] ?? 60));  // seconds
-        $max = max(1, (int) ($_ENV['RATE_LIMIT_MAX'] ?? 120)); // allowed in window
-        $burst = max(0, (int) ($_ENV['RATE_LIMIT_BURST'] ?? 60));  // extra tolerance
+        $window = max(1, (int) (env('RATE_LIMIT_WINDOW', 60)));  // seconds
+        $max = max(1, (int) (env('RATE_LIMIT_MAX', 120))); // allowed in window
+        $burst = max(0, (int) (env('RATE_LIMIT_BURST', 60)));  // extra tolerance
 
         $limit = $max + $burst;
 

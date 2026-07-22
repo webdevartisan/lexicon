@@ -23,7 +23,7 @@ class Session
     public function __construct()
     {
         $isCli = PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg';
-        $isCacheWarming = isset($_ENV['CACHE_WARMING']) && $_ENV['CACHE_WARMING'] === 'true';
+        $isCacheWarming = filter_var(env('CACHE_WARMING', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($isCli || $isCacheWarming) {
             $this->enabled = false;

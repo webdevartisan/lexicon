@@ -41,7 +41,7 @@ class UploadController extends AppController
             $url = $this->uploader->storeImage($file, [
                 'dir' => $dir,
                 'base_url' => $baseUrl,
-                'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp', 'svg'],
+                'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
                 'max_bytes' => 2 * 1024 * 1024,
                 'rename' => 'post-image', // base part; UploadService will add hash
             ]);

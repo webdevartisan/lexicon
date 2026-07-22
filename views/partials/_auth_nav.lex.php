@@ -10,7 +10,7 @@ $navReturn = $authNavReturnTo ?? (string) ($_SERVER['REQUEST_URI'] ?? '/');
 $navViewer = $viewer ?? null;
 
 $loginUrl = lurl('/login').'?return_to='.urlencode($navReturn);
-$logoutUrl = lurl('/logout').'?return_to='.urlencode($navReturn);
+$logoutUrl = lurl('/logout');
 
 // $t is injected as a shared view var. Fall back to the raw key so a standalone
 // render never fatals if the helper is missing.
@@ -26,7 +26,13 @@ if ($navVariant === 'platform') { ?>
         <li><a href="<?= e($loginUrl) ?>" class="button" data-auth-login><?= e($tr('header.signIn')) ?></a></li>
     <?php } else { ?>
         <li><a href="/dashboard" class="button"><?= e($tr('header.dashboard')) ?></a></li>
-        <li><a href="/logout" class="button"><?= e($tr('header.signOut')) ?></a></li>
+        <li>
+            <form method="post" action="<?= e($logoutUrl) ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="return_to" value="<?= e($navReturn) ?>">
+                <button type="submit" class="button"><?= e($tr('header.signOut')) ?></button>
+            </form>
+        </li>
     <?php }
     } else {
         if (!empty($navViewer)) { ?>
@@ -48,7 +54,11 @@ if ($navVariant === 'platform') { ?>
             <?php } else { ?>
               <a href="<?= e(lurl('/dashboard')) ?>" role="menuitem">Dashboard</a>
             <?php } ?>
-            <a href="<?= e($logoutUrl) ?>" role="menuitem">Log out</a>
+            <form method="post" action="<?= e($logoutUrl) ?>" class="nav-user-logout">
+              <?= csrf_field() ?>
+              <input type="hidden" name="return_to" value="<?= e($navReturn) ?>">
+              <button type="submit" role="menuitem">Log out</button>
+            </form>
           </div>
         </div>
     <?php } else { ?>
