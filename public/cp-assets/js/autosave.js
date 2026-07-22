@@ -62,23 +62,6 @@
             });
         });
         
-        // Setup status radio buttons
-        const statusRadios = form.querySelectorAll('[name="status"]');
-        statusRadios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                log('Status changed to:', radio.value);
-                clearTimeout(autosaveTimer);
-                autosaveTimer = setTimeout(() => {
-                    if (!isSaving) {
-                        isSaving = true;
-                        autosavePost(form).finally(() => {
-                            isSaving = false;
-                        });
-                    }
-                }, AUTOSAVE_DELAY);
-            });
-        });
-        
         setupTinyMCEAutosave(form, () => {
             if (!isSaving) {
                 isSaving = true;
@@ -156,12 +139,8 @@
             }
         });
 
-        // Handle status radio buttons
-        const statusRadio = form.querySelector('[name="status"]:checked');
-        if (statusRadio) {
-            formData.append('status', statusRadio.value);
-            log('Sending status:', statusRadio.value);
-        }
+        // Status deliberately isn't autosaved: it changes only when someone
+        // clicks a button in the action bar, and the endpoint ignores it.
 
         if (!formData.get('title') && !formData.get('content')) {
             log('Skipping autosave - no title or content');
