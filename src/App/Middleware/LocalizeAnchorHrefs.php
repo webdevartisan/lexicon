@@ -63,9 +63,9 @@ final class LocalizeAnchorHrefs implements MiddlewareInterface
         $final = preg_replace_callback(
             '#(<a\b[^>]*\bhref=(["\']))/(?!(?:'.$localeAlt.')(?:/|\2)|/)([^"\']*)(\2)#i',
             function (array $m) use ($locale): string {
-                // $m[1] '<a ... href="', 
-                // $m[2] quote, 
-                // $m[3] path without the leading slash, 
+                // $m[1] '<a ... href="',
+                // $m[2] quote,
+                // $m[3] path without the leading slash,
                 // $m[4] closing quote.
                 return $m[1].'/'.$locale.'/'.$m[3].$m[4];
             },

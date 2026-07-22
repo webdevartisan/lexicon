@@ -13,7 +13,6 @@ use Framework\Session;
 
 /**
  * Verify a CSRF token on every state-changing request.
- *
  */
 final class CsrfMiddleware implements MiddlewareInterface
 {
