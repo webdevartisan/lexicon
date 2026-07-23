@@ -14,6 +14,8 @@ use App\Models\PostTranslationModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\ContentLocaleResolver;
+use App\Services\LocaleState;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -29,7 +31,8 @@ class BlogController extends AppController
         private PostLikeModel $postLikeModel,
         private PostBookmarkModel $postBookmarkModel,
         private PostTranslationModel $translations,
-        private UserProfileModel $profiles
+        private UserProfileModel $profiles,
+        private ContentLocaleResolver $localeResolver
     ) {}
 
     /**
@@ -108,6 +111,10 @@ class BlogController extends AppController
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
         if ($blogId === 0) {
             throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        if ($redirect = $this->blogLocaleRedirect($ctx)) {
+            return $redirect;
         }
 
         $featured = $this->postModel->findFeaturedByBlogId($blogId);
@@ -230,6 +237,10 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found.', 404);
         }
 
+        if ($redirect = $this->blogLocaleRedirect($ctx)) {
+            return $redirect;
+        }
+
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
         $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
 
@@ -251,6 +262,10 @@ class BlogController extends AppController
     {
         $ctx = $this->loadBlogContext($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        if ($redirect = $this->blogLocaleRedirect($ctx)) {
+            return $redirect;
+        }
 
         $category = $this->categoryModel->findBySlugInBlog($blogId, $categorySlug);
         if (!$category) {
@@ -276,6 +291,10 @@ class BlogController extends AppController
     {
         $ctx = $this->loadBlogContext($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        if ($redirect = $this->blogLocaleRedirect($ctx)) {
+            return $redirect;
+        }
 
         $tag = $this->tagModel->findBySlugInBlog($blogId, $tagSlug);
         if (!$tag) {
@@ -325,6 +344,20 @@ class BlogController extends AppController
 
         if (!$canPreview && $post['status'] !== 'published') {
             throw new PageNotFoundException('Post not be found', 404);
+        }
+
+        // A post's locale set is narrower than its blog's: the blog may carry
+        // Greek posts while this particular one has never been translated.
+        $postDefault = (string) ($ctx['settings']['default_locale'] ?? 'en');
+        $postLocales = empty($ctx['settings']['translations_enabled'])
+            ? []
+            : $this->translations->localesForPost((int) $post['id']);
+
+        $postLocaleSet = array_values(array_unique(array_merge([$postDefault], $postLocales)));
+        LocaleState::setLocaleSet($postLocaleSet);
+
+        if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault)) {
+            return $redirect;
         }
 
         // Swap in the viewer-locale translation before any derived fields (meta, excerpt) are built.
@@ -546,7 +579,76 @@ class BlogController extends AppController
         // other flash) shows up no matter which blog page the visitor lands back on.
         $flashes = $this->getFlashMessages();
 
-        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes');
+        // Which languages this blog's own pages exist in. Recorded on LocaleState
+        // so the head globals stop advertising translations that do not exist.
+        $localeSet = $this->blogLocaleSet((int) $blog['id'], $settings);
+        LocaleState::setLocaleSet($localeSet);
+
+        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet');
+    }
+
+    /**
+     * Locales a blog's own pages exist in: its base language, plus any locale a
+     * post has been translated into once the blog opts into translations.
+     *
+     * @param  array<string, mixed>  $settings  Blog settings row
+     * @return string[]
+     */
+    private function blogLocaleSet(int $blogId, array $settings): array
+    {
+        $default = (string) ($settings['default_locale'] ?? 'en');
+
+        if (empty($settings['translations_enabled'])) {
+            return [$default];
+        }
+
+        return array_values(array_unique(
+            array_merge([$default], $this->translations->localesForBlog($blogId))
+        ));
+    }
+
+    /**
+     * Blog-level redirect guard, for pages whose languages are the blog's.
+     *
+     * @param  array<string, mixed>  $ctx  Result of loadBlogContext()
+     */
+    private function blogLocaleRedirect(array $ctx): ?Response
+    {
+        return $this->localeRedirect(
+            $ctx['localeSet'],
+            (string) ($ctx['settings']['default_locale'] ?? 'en')
+        );
+    }
+
+    /**
+     * A redirect when the requested locale is not one this page exists in.
+     *
+     * 302 rather than 301: a locale set changes the moment an author adds a
+     * translation, and a permanent redirect would outlive that change in browser
+     * caches with no way to recall it.
+     *
+     * @param  string[]  $localeSet  Locales this page exists in
+     * @param  string  $default  The page's own default locale
+     */
+    private function localeRedirect(array $localeSet, string $default): ?Response
+    {
+        $target = $this->localeResolver->redirectTarget($localeSet, locale(), $default);
+
+        if ($target === null) {
+            return null;
+        }
+
+        // LocalePrefixIntake already stripped the prefix, so the request URI is
+        // the bare path and prefixing it rebuilds the whole URL. It strips the
+        // query string too, so that has to come from the parsed parameters or a
+        // reader on page 4 of an archive gets sent back to page 1.
+        $path = parse_url($this->request->uri ?? '/', PHP_URL_PATH) ?: '/';
+        $query = $this->request->get !== [] ? '?'.http_build_query($this->request->get) : '';
+
+        return $this->response->redirect(
+            '/'.$target.($path === '/' ? '' : $path).$query,
+            302
+        );
     }
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
