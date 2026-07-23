@@ -41,9 +41,13 @@ final class HeadI18nGlobals implements MiddlewareInterface
         // Path arrives without the locale prefix thanks to pre-routing.
         $full = $request->uri ?? '/';
 
+        // The query has to come from $request->get, not from the URI: pre-routing
+        // rewrites uri to the path alone when it strips the locale prefix, so
+        // parsing a query back out of it always yielded null and every alternate
+        // silently dropped ?page=2 and friends.
         $this->viewer->addGlobals($this->builder->build(
             parse_url($full, PHP_URL_PATH) ?: '/',
-            parse_url($full, PHP_URL_QUERY) ?: null
+            $request->get !== [] ? http_build_query($request->get) : null
         ));
 
         return $handler->handle($request);

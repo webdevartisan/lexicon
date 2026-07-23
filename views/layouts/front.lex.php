@@ -48,13 +48,6 @@ $old = old();
 
         {% yield meta %}
 
-        <script>
-            window.AppLocales = {
-                supported: <?= json_encode($supportedLocales) ?>,
-                default: <?= json_encode($defaultLocale, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
-            };
-        </script>
-
 	</head>
 
 	<body class="is-preload">
@@ -134,18 +127,7 @@ $old = old();
                         <!-- Social & bottom line -->
                         <div class="footer-bottom">
 
-                            <div class="lang-switcher"> <!-- Language Switcher -->
-                                <button class="button small alt" id="langToggle" aria-haspopup="listbox" aria-expanded="false">
-                                    <span class="icon solid fa fa-globe" aria-hidden="true"></span>
-                                    <span id="currentLang">EN</span>
-                                    <span class="caret" aria-hidden="true">▾</span>
-                                </button>
-                                <ul class="lang-menu" id="langMenu" role="listbox" aria-label="Select language">
-                                    <li role="option" data-lang="en" aria-selected="false">English</li>
-                                    <li role="option" data-lang="el" aria-selected="false">Ελληνικά</li>
-                                    <li role="option" data-lang="ar" aria-selected="false">Arabic</li>
-                                </ul>
-                            </div>
+                            {% include "partials/_language_switcher.lex.php" %}
 
                             <p class="footer-copy copyright">
                                 &copy; <?= date('Y') ?> <?= e(site_setting('site_name', 'Lexicon')) ?>.
@@ -207,7 +189,7 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/breakpoints.min.js"></script>
 		<script src="/assets/js/util.js"></script>
 		<script src="/assets/js/main.js"></script>
-		<script src="/assets/js/locale.js"></script>
+		<script src="/assets/js/lang-switcher.js" defer></script>
 		<script src="/assets/js/scrolltop.js"></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}

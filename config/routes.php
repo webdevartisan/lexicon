@@ -24,6 +24,14 @@ $router->add('/consent', [
     'method' => 'POST',
 ]);
 
+// Only signed-in readers post here: their interface follows a stored preference,
+// so switching language has to write it. Guests switch with a plain link.
+$router->add('/language', [
+    'controller' => 'LanguageController',
+    'action' => 'switch',
+    'method' => 'POST',
+]);
+
 $router->add('/consent/withdraw', [
     'controller' => 'ConsentController',
     'action' => 'withdraw',

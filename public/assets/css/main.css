@@ -2335,16 +2335,24 @@ button,
   line-height: 0;          /* prevent baseline from affecting anchor box */
 }
 
-.lang-switcher .button.small.alt {
+.lang-switcher__toggle {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   line-height: 1;
   padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: solid 1px rgba(210, 215, 217, 0.75);
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  color: inherit;
 }
 
 /* Dropdown panel (CSS fallback top; JS will override with measured height) */
-.lang-switcher .lang-menu {
+.lang-switcher__menu {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);   /* fallback; JS sets precise px top */
@@ -2363,26 +2371,46 @@ button,
 }
 
 /* Show state */
-.lang-switcher .lang-menu.show { display: block; }
+.lang-switcher__menu.show { display: block; }
 
-/* Options */
-.lang-switcher .lang-menu li {
-  /* padding: 0.6rem 0.9rem; */
+/* An entry is an <li><a> for guests and a <form><button> for signed-in readers,
+   because their click also saves the preference. Both are styled here so the two
+   shapes are visually identical. */
+.lang-switcher__item {
   margin: 4px;
+  display: block;
+}
+
+.lang-switcher__item a,
+.lang-switcher__item button {
+  display: block;
+  width: 100%;
   padding: 15px 20px;
   cursor: pointer;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 0.25rem;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 0;
 }
-.lang-switcher .lang-menu li[aria-selected="true"] {
+
+.lang-switcher__item a[aria-current="true"],
+.lang-switcher__item button[aria-current="true"] {
   background: #f5f6f8;
   font-weight: 600;
 }
-.lang-switcher .lang-menu li:hover {
+
+.lang-switcher__item a:hover,
+.lang-switcher__item button:hover {
   background: #f0f2f5;
 }
 
 /* Narrow screens: comfortable width; JS still controls vertical offset */
 @media (max-width: 736px) {
-  .lang-switcher .lang-menu {
+  .lang-switcher__menu {
     right: auto;
     left: 50%;
     transform: translateX(-50%);
