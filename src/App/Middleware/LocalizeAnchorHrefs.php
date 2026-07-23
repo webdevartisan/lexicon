@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
@@ -14,11 +15,9 @@ final class LocalizeAnchorHrefs implements MiddlewareInterface
     /** @var string[] */
     private array $locales;
 
-    public function __construct()
+    public function __construct(LocaleRegistry $registry)
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $supported = $cfg['supported'] ?? ['en'];
-        $this->locales = array_map('strtolower', $supported);
+        $this->locales = $registry->supported();
     }
 
     private function currentLocale(): string

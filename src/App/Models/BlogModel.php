@@ -486,6 +486,35 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Published blogs with the locale data the sitemap needs.
+     *
+     * Separate from getDirectoryWithPagination because that one feeds the explore
+     * listing and carries presentation fields this does not want, and because a
+     * sitemap wants every blog rather than a page of them.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findPublicForSitemap(int $limit = 1000): array
+    {
+        $sql = "SELECT b.blog_slug,
+                       COALESCE(s.default_locale, 'en') AS default_locale,
+                       COALESCE(s.translations_enabled, 0) AS translations_enabled,
+                       GROUP_CONCAT(DISTINCT t.locale) AS translated_locales,
+                       MAX(p.published_at) AS last_post_at
+                FROM blogs b
+                LEFT JOIN blog_settings s ON s.blog_id = b.id
+                LEFT JOIN posts p ON p.blog_id = b.id
+                     AND p.status = 'published' AND p.visibility = 'public'
+                LEFT JOIN post_translations t ON t.post_id = p.id
+                WHERE b.status = 'published'
+                GROUP BY b.id, b.blog_slug, s.default_locale, s.translations_enabled
+                ORDER BY b.id
+                LIMIT :limit";
+
+        return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get a blog by its slug.
      *
      * @param  string  $slug  Blog slug

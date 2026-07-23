@@ -17,6 +17,21 @@ use Framework\Interfaces\RequestHandlerInterface;
  */
 class CacheMiddleware implements MiddlewareInterface
 {
+    /**
+     * Headers restored onto a cache hit.
+     *
+     * Deliberately a short allowlist rather than everything the response carried.
+     * Replaying Set-Cookie, Location or any auth-varying header would hand one
+     * visitor's state to the next.
+     */
+    private const REPLAYABLE_HEADERS = ['Content-Type', 'Content-Language'];
+
+    /**
+     * Companion cache key holding those headers, so the body entry stays a plain
+     * string and nothing else that reads the cache has to change.
+     */
+    private const HEADER_KEY_SUFFIX = '#headers';
+
     private CacheService $cache;
 
     private CacheKey $keyGenerator;
@@ -66,6 +81,13 @@ class CacheMiddleware implements MiddlewareInterface
             $response = new Response();
             $response->setBody($cached);
 
+            // Without this the rebuilt response carries no content type and PHP's
+            // default text/html wins, so a cached sitemap or robots.txt served
+            // itself correctly once and then lied on every later request.
+            foreach ($this->readStoredHeaders($cacheKey) as $name => $value) {
+                $response->addHeader($name, $value);
+            }
+
             if ($this->debug) {
                 $response->addHeader('X-Cache-Status', 'HIT');
                 $response->addHeader('X-Cache-Key', substr($cacheKey, 0, 16).'...');
@@ -89,6 +111,7 @@ class CacheMiddleware implements MiddlewareInterface
         // any other viewer-specific markup on the page.
         if ($this->shouldSkipCache($request) === false && $this->isCacheable($response) && $ttl > 0) {
             $this->cache->set($cacheKey, $response->getBody(), $ttl);
+            $this->storeHeaders($cacheKey, $response, $ttl);
 
             if ($this->debug) {
                 $response->addHeader('X-Cache-Status', 'STORED');
@@ -160,6 +183,62 @@ class CacheMiddleware implements MiddlewareInterface
         }
 
         return false;
+    }
+
+    /**
+     * Headers stored alongside a cached body, filtered to the allowlist again on
+     * the way out so an entry written by older code can never widen it.
+     *
+     * @return array<string, string>
+     */
+    private function readStoredHeaders(string $cacheKey): array
+    {
+        $raw = $this->cache->get($cacheKey.self::HEADER_KEY_SUFFIX);
+
+        if (!is_string($raw) || $raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $headers = [];
+        foreach (self::REPLAYABLE_HEADERS as $name) {
+            if (isset($decoded[$name]) && is_string($decoded[$name])) {
+                $headers[$name] = $decoded[$name];
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Persist the headers a cached response cannot be rebuilt without.
+     *
+     * Stored beside the body rather than with it, so the entry format the rest
+     * of the cache uses stays a plain string and an entry written before this
+     * existed simply restores no headers.
+     */
+    private function storeHeaders(string $cacheKey, Response $response, int $ttl): void
+    {
+        $headers = [];
+
+        foreach (self::REPLAYABLE_HEADERS as $name) {
+            $value = $response->getHeader($name);
+
+            if ($value !== null && $value !== '') {
+                $headers[$name] = $value;
+            }
+        }
+
+        if ($headers !== []) {
+            // JSON rather than the array itself, because CacheService::set takes
+            // a string and widening that contract would reach every other caller.
+            $this->cache->set($cacheKey.self::HEADER_KEY_SUFFIX, (string) json_encode($headers), $ttl);
+        }
     }
 
     private function isCacheable(Response $response): bool

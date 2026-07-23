@@ -209,15 +209,40 @@ $container->setShared(App\Services\NavigationService::class, function ($c) {
  * Translation service provides i18n support with locale detection.
  *
  * We register as factory (NOT shared) because each request may have a different
- * locale from session. This ensures proper locale isolation between requests
- * in long-running processes.
+ * locale. This ensures proper locale isolation between requests in long-running
+ * processes.
+ *
+ * Interface strings follow the chrome locale, which is the content locale for
+ * guests and the reader's own preference once they are signed in.
  */
 $container->set(App\Services\TranslationService::class, function ($c) {
-    /** @var Framework\Session $session */
-    $session = $c->get(Framework\Session::class);
-    $locale = $session->get('locale') ?? 'en';
+    return new App\Services\TranslationService(
+        App\Services\LocaleState::get()->chromeLocale
+    );
+});
 
-    return new App\Services\TranslationService($locale);
+/**
+ * Locale registry is the single source of truth for supported locales.
+ * Shared because it caches the parsed config for the request.
+ */
+$container->setShared(App\Services\LocaleRegistry::class, function ($c) {
+    return App\Services\LocaleRegistry::instance();
+});
+
+/**
+ * Decides whether a requested locale is one the current page actually has.
+ * Stateless, so a single shared instance is enough.
+ */
+$container->setShared(App\Services\ContentLocaleResolver::class, function ($c) {
+    return new App\Services\ContentLocaleResolver($c->get(App\Services\LocaleRegistry::class));
+});
+
+/**
+ * Builds the language head globals from the page's content locale and locale set.
+ * Shared because it holds no per-request state of its own.
+ */
+$container->setShared(App\Services\HeadI18nBuilder::class, function ($c) {
+    return new App\Services\HeadI18nBuilder($c->get(App\Services\LocaleRegistry::class));
 });
 
 /**

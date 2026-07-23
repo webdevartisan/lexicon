@@ -294,9 +294,10 @@ function lurl(string $path, ?string $locale = null): string
 {
     $path = '/'.ltrim($path, '/');
 
-    // Resolve locale from session/cookie if not provided
-    $current = $locale
-        ?? strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    // URLs point at content, so they follow the content locale rather than the
+    // viewer's interface preference. The explicit argument stays for callers
+    // like the sitemap, which emits one URL per locale a page exists in.
+    $current = $locale ?? App\Services\LocaleState::get()->contentLocale;
 
     return '/'.$current.$path;
 }
@@ -330,12 +331,19 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
         }
     }
 
-    // Already locale-prefixed
-    if (preg_match('#^/([a-z]{2})(/|$)#i', $target)) {
+    // Already carries a supported locale. Checking against the real list rather
+    // than a generic two-letter pattern keeps future routes such as /go/ or /my/
+    // from silently losing localization.
+    $registry = App\Services\LocaleRegistry::instance();
+    // explode always yields at least one element, so index 0 is always present.
+    $firstSegment = strtolower(explode('/', ltrim($target, '/'))[0]);
+
+    if ($registry->isSupported($firstSegment)) {
         return $target;
     }
 
-    $locale = strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    $locale = $registry->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null)
+        ?? $registry->default();
 
     // Avoid double slashes when target is '/'
     return '/'.$locale.($target === '/' ? '' : $target);
@@ -382,7 +390,7 @@ function safe_return_to(?string $url): ?string
  */
 function locale(): string
 {
-    return strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    return App\Services\LocaleState::get()->contentLocale;
 }
 
 /**

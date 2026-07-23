@@ -20,6 +20,26 @@ class PageModel extends AppModel
     public const FALLBACK_LOCALE = 'en';
 
     /**
+     * Locales this page has a published row for.
+     *
+     * A page translated into two languages is a genuine pair of alternates. One
+     * that exists only in English is not, and must not advertise otherwise.
+     *
+     * @return string[]
+     */
+    public function localesForSlug(string $slug): array
+    {
+        $rows = $this->database->query(
+            "SELECT DISTINCT locale FROM {$this->getTable()}
+             WHERE slug = ? AND is_published = 1
+             ORDER BY locale",
+            [$slug]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $row): string => (string) $row['locale'], $rows);
+    }
+
+    /**
      * A published page for the visitor, falling back to English.
      *
      * @param  string  $slug  Page slug, e.g. 'about'

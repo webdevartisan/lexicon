@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\PreRouting;
 
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 
 /**
@@ -129,8 +130,7 @@ final class CacheControlHint
         // does, since that runs straight after this and locale is not stripped yet.
         $uploadSegments = array_values(array_filter(explode('/', $path), fn ($segment) => $segment !== ''));
         if (!empty($uploadSegments)) {
-            $localeCfg = require ROOT_PATH.'/config/localization.php';
-            $supportedLocales = array_map('strtolower', $localeCfg['supported'] ?? ['en']);
+            $supportedLocales = LocaleRegistry::instance()->supported();
             $rootIndex = in_array(strtolower($uploadSegments[0]), $supportedLocales, true) ? 1 : 0;
 
             if (($uploadSegments[$rootIndex] ?? '') === 'uploads') {

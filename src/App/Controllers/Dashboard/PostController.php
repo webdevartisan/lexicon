@@ -16,6 +16,7 @@ use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
+use App\Services\LocaleRegistry;
 use App\Services\MediaService;
 use App\Services\PostAutosaveService;
 use App\Services\SubscriberNotificationService;
@@ -69,6 +70,7 @@ final class PostController extends AppController
         private MediaService $mediaService,
         private SubscriberNotificationService $subscriberNotifier,
         private PostTranslationModel $translationModel,
+        private LocaleRegistry $localeRegistry,
     ) {}
 
     /**
@@ -458,7 +460,7 @@ final class PostController extends AppController
             'translationsEnabled' => $translationsEnabled,
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
-            'availableLocales' => PostTranslationModel::SUPPORTED_LOCALES,
+            'availableLocales' => $this->localeRegistry->supported(),
             'postUrl' => $postUrl,
             'backUrl' => $this->backUrlPath(),
             'workflowState' => $workflowState,

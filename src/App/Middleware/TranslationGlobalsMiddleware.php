@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Services\LocaleState;
 use App\Services\TranslationService;
 use Framework\Core\Request;
 use Framework\Core\Response;
@@ -23,14 +24,23 @@ class TranslationGlobalsMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandlerInterface $handler): Response
     {
+        // Built on first use and reused for the rest of the request. This used to
+        // construct a fresh service on every single $t() call, so a page with
+        // fifty translated strings re-read and re-parsed the locale JSON fifty
+        // times. Keyed by locale so the memo can never serve the wrong language.
+        $translators = [];
+
         // Expose `$t` to all templates before rendering begins.
         $this->viewer->addGlobals([
             // Accept a string or path array plus optional params for interpolation.
-            't' => function (string|array $key, array $params = []): string {
-                // Resolve the translator fresh per call, using the current session locale
-                $translator = new TranslationService($_SESSION['locale'] ?? 'en');
+            't' => function (string|array $key, array $params = []) use (&$translators): string {
+                // Interface strings follow the chrome locale: the content locale
+                // for guests, the reader's own preference once they are signed in.
+                $locale = LocaleState::get()->chromeLocale;
 
-                return $translator->translate($key, $params); // Dual resolution inside service.
+                $translators[$locale] ??= new TranslationService($locale);
+
+                return $translators[$locale]->translate($key, $params); // Dual resolution inside service.
             },
         ]);
 

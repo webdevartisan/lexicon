@@ -37,6 +37,12 @@ class CacheKey
      * Format: "{locale}:{method}:{path}?{canonical_query}#{consent_state}"
      *
      * Varies cache based on consent cookie to ensure homepage shows correct banner state.
+     *
+     * The locale segment looks redundant now that every URL carries a locale
+     * prefix, but it is not: LocalePrefixIntake strips that prefix from
+     * Request::$uri before routing, so the path reaching this method carries no
+     * language at all. Removing the segment collapses every locale onto one
+     * entry and serves Greek readers English. Pinned by CacheKeyLocaleTest.
      */
     public function forRequest(Request $request): string
     {

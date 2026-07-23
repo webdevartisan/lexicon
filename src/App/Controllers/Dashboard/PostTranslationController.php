@@ -10,6 +10,7 @@ use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Resources\PostResource;
+use App\Services\LocaleRegistry;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -26,6 +27,7 @@ final class PostTranslationController extends AppController
         private PostModel $postModel,
         private PostTranslationModel $translations,
         private BlogSettingsModel $blogSettings,
+        private LocaleRegistry $localeRegistry,
     ) {}
 
     /**
@@ -55,7 +57,7 @@ final class PostTranslationController extends AppController
             'translation' => $translation,
             'translations' => $this->translations->findForPost((int) $post->id()),
             'defaultLocale' => (string) ($settings['default_locale'] ?? 'en'),
-            'availableLocales' => PostTranslationModel::SUPPORTED_LOCALES,
+            'availableLocales' => $this->localeRegistry->supported(),
         ]);
     }
 
@@ -152,7 +154,7 @@ final class PostTranslationController extends AppController
         $defaultLocale = (string) ($settings['default_locale'] ?? 'en');
 
         if (empty($settings['translations_enabled'])
-            || !in_array($locale, PostTranslationModel::SUPPORTED_LOCALES, true)
+            || !$this->localeRegistry->isSupported($locale)
             || $locale === $defaultLocale) {
             throw new PageNotFoundException("No translation surface for locale '{$locale}'.");
         }

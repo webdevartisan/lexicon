@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\PreRouting;
 
 use App\Services\AssetPathMapper;
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 
 /**
@@ -49,8 +50,7 @@ final class LocaleAwareStaticBypass
         }
 
         // Read supported locales to detect optional "{locale}/" prefixes.
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $supported = array_map('strtolower', $cfg['supported'] ?? ['en']);
+        $supported = LocaleRegistry::instance()->supported();
 
         $uri = $request->uri ?? '/';
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';

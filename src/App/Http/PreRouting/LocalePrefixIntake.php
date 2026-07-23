@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\PreRouting;
 
+use App\Services\LocaleRegistry;
+use App\Services\LocaleState;
+use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
 
 /**
@@ -35,13 +38,20 @@ final class LocalePrefixIntake
      */
     public static function handle(Request $request): void
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $supported = array_map('strtolower', $cfg['supported'] ?? ['en']);
-        $default = strtolower($cfg['default'] ?? 'en');
+        $registry = LocaleRegistry::instance();
+        $supported = $registry->supported();
+        $default = $registry->default();
 
         $fullUri = $request->uri ?? '/';
         $path = parse_url($fullUri, PHP_URL_PATH) ?: '/';
         $query = parse_url($fullUri, PHP_URL_QUERY) ?: null;
+
+        // Crawlers fetch these at the origin root by specification, so they never
+        // take a locale prefix. /sitemap.xml is the one that matters: it is a
+        // route rather than a file, so Apache cannot serve it before we get here.
+        if (WellKnownPathBypass::isWellKnown($path)) {
+            return;
+        }
 
         $segments = array_values(array_filter(explode('/', $path)));
         $first = isset($segments[0]) ? strtolower($segments[0]) : null;
@@ -89,8 +99,25 @@ final class LocalePrefixIntake
             // Strip only the first segment for routing; keep visible URL unchanged.
             // The leading slash guarantees a non-empty path, '/' when nothing remains.
             $request->uri = '/'.implode('/', array_slice($segments, 1));
+
+            // A prefixed protocol endpoint such as /en/robots.txt would otherwise
+            // serve the same body as the canonical /robots.txt. Send it to the one
+            // real URL. Permanent, because these never belong under a locale.
+            if (WellKnownPathBypass::isWellKnown($request->uri)) {
+                if ($isUnsafe) {
+                    return;
+                }
+
+                header('Location: '.$request->uri, true, 301);
+                exit;
+            }
             // If we ever want the router to see query too, we could include it here:
             // $request->uri = ($stripped === '' ? '/' : $stripped) . ($query ? ('?' . $query) : '');
+
+            // The prefix is the content locale, always. Chrome follows it for
+            // guests; the signed-in account preference overrides only the chrome
+            // half, and that arrives in a later change.
+            LocaleState::set(LocaleContext::forGuest($first));
 
             return;
         }
@@ -120,6 +147,10 @@ final class LocalePrefixIntake
             'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
             'samesite' => 'Lax',
         ]);*/
+
+        // An unsafe method is served here rather than redirected, so it still
+        // needs a context for anything downstream that reads the locale.
+        LocaleState::set(LocaleContext::forGuest($resolved));
 
         // For unsafe methods, avoid redirecting to protect non-idempotent requests.
         if ($isUnsafe) {
