@@ -7,8 +7,6 @@
  */
 var navbarMenuHTML = document.querySelector(".app-menu")?.innerHTML || '';
 let scrollbarElement = null;
-var default_lang = "en";
-var language = getLocaleFromUrl() || default_lang;
 
 /**
  * Scrollbar Logic State Tracker
@@ -17,184 +15,6 @@ var language = getLocaleFromUrl() || default_lang;
  * by tracking pending timeouts. This eliminates duplicate icon destruction.
  */
 let scrollbarResetTimeout = null;
-
-/**
- * Extract locale code from URL path
- * 
- * Examples:
- * /en/dashboard → "en"
- * /el/dashboard/blog/1 → "el"
- * /dashboard → "en" (fallback)
- * 
- * @returns {string|null} Locale code or null
- */
-function getLocaleFromUrl() {
-    const pathParts = window.location.pathname.split('/').filter(Boolean);
-    const firstSegment = pathParts[0];
-    
-    // We check if first segment is a valid locale code
-    const validLocales = ['en', 'el', 'sp', 'de', 'fr', 'jp', 'ch', 'it', 'ru', 'ar'];
-    return validLocales.includes(firstSegment) ? firstSegment : null;
-}
-
-/**
- * Map short locale codes to HTML lang codes
- * 
- * We use this for the lang attribute (accessibility).
- * 
- * @param {string} code - Short locale code
- * @returns {string} HTML lang attribute value
- */
-function getHtmlLangFromCode(code) {
-    const map = {
-        en: "en",
-        el: "el", // Greek
-        sp: "es", // Spanish
-        de: "de", // German
-        fr: "fr", // French
-        jp: "ja", // Japanese
-        ch: "zh", // Chinese
-        it: "it", // Italian
-        ru: "ru", // Russian
-        ar: "ar", // Arabic
-    };
-    return map[code] || "en";
-}
-
-/**
- * Build language configuration from DOM
- * 
- * We scan the language dropdown links to build a config object
- * with flag images and text direction (RTL for Arabic).
- * 
- * @returns {Object} Language configuration object
- */
-function buildLanguageConfigFromDom() {
-    const config = {};
-    const languageLinks = document.getElementsByClassName("language");
-    
-    Array.from(languageLinks || []).forEach((el) => {
-        const code = el.getAttribute("data-lang");
-        const img = el.querySelector("img");
-        
-        if (!code || !img?.getAttribute("src")) return;
-        
-        config[code] = {
-            flagSrc: img.getAttribute("src"),
-            dir: code === "ar" ? "rtl" : "ltr",
-            htmlLang: getHtmlLangFromCode(code),
-        };
-    });
-    
-    return config;
-}
-
-/**
- * Initialize language switcher
- * 
- * We set up click handlers that navigate to localized URLs.
- * Server handles all translation rendering.
- */
-function initLanguage() {
-    const languages = document.getElementsByClassName("language");
-    const config = buildLanguageConfigFromDom();
-    
-    // We ensure a stored value can't point to a missing JSON/flag
-    if (!config[language]) language = default_lang;
-    
-    // We set the correct flag on page load
-    updateLanguageUI(language, config);
-    
-    // We attach click handlers for language switching
-    Array.from(languages || []).forEach(function (dropdown) {
-        dropdown.addEventListener("click", function (e) {
-            e.preventDefault();
-            const targetLang = dropdown.getAttribute("data-lang");
-            switchLanguage(targetLang);
-        });
-    });
-}
-
-/**
- * Update language UI (flag icon, direction, html lang)
- * 
- * We update visual elements without changing content
- * (content is already translated by server).
- * 
- * @param {string} lang - Language code
- * @param {Object} config - Language configuration object
- */
-function updateLanguageUI(lang, config) {
-    if (!config || !config[lang]) lang = default_lang;
-    const cfg = config[lang];
-    
-    // We update the header flag icon
-    const headerImg = document.getElementById("header-lang-img");
-    if (headerImg) headerImg.src = cfg.flagSrc;
-    
-    // We persist dir so layout restores it after refresh
-    setAttrItemAndTag("dir", cfg.dir);
-    
-    // We keep html lang correct for accessibility
-    document.documentElement.setAttribute("lang", cfg.htmlLang);
-    
-    // We store user's language preference
-    localStorage.setItem("language", lang);
-    language = lang;
-}
-
-/**
- * Switch language by navigating to localized URL
- * 
- * Examples:
- * Currently on: /en/dashboard/blog/1
- * User selects: Greek (el)
- * Navigate to: /el/dashboard/blog/1
- * 
- * Server will render the same page in Greek.
- * 
- * @param {string} newLang - Target language code
- */
-function switchLanguage(newLang) {
-    const currentPath = window.location.pathname;
-    const currentLocale = getLocaleFromUrl();
-    let newPath;
-    
-    if (currentLocale) {
-        // We replace existing locale in path
-        // /en/dashboard → /el/dashboard
-        newPath = currentPath.replace(`/${currentLocale}`, `/${newLang}`);
-    } else {
-        // We add locale prefix to path without one
-        // /dashboard → /el/dashboard
-        newPath = `/${newLang}${currentPath}`;
-    }
-    
-    // We navigate to the new localized URL
-    window.location.href = newPath;
-}
-
-/**
- * Legacy function - now disabled
- * 
- * We no longer fetch translations client-side.
- * Server renders all translations before page loads.
- */
-function getLanguage() {
-    // DISABLED: Server-side translations only
-    console.info('Translations handled server-side');
-}
-
-/**
- * Legacy function - now disabled
- * 
- * We no longer apply translations to data-key elements.
- * Server renders translated text directly into HTML.
- */
-function applyTranslations(data) {
-    // DISABLED: Server-side translations only
-    console.info('Translations handled server-side');
-}
 
 /**
  * Remove active state from dropdown menus
@@ -651,9 +471,6 @@ function init() {
     
     // We initialize theme switcher
     lightDarkMode();
-    
-    // We initialize language switcher
-    initLanguage();
     
     // We initialize menu item scrolling
     initMenuItemScroll();

@@ -18,7 +18,6 @@
     // We only allow these values (security best practice)
     const ALLOWED_VALUES = {
         mode: new Set(['light', 'dark']),
-        dir: new Set(['ltr', 'rtl']),
         sidebarSize: new Set(['lg', 'sm']),
         layout: new Set(['vertical'])
     };
@@ -89,10 +88,6 @@
         document.documentElement.setAttribute('data-sidebar', mode);
         document.documentElement.setAttribute('data-topbar', mode);
     }
-
-    // Load and apply text direction (for RTL languages like Arabic)
-    const dir = readStorage('dir');
-    setValidatedAttribute('dir', dir, ALLOWED_VALUES.dir);
 
     // ==========================================
     // SIDEBAR SIZE - THE IMPORTANT PART
