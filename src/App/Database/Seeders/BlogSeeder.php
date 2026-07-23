@@ -33,7 +33,9 @@ final class BlogSeeder extends Seeder
                 ? null
                 : $faker->dateTimeBetween('-18 months', '-1 day')->format('Y-m-d H:i:s');
 
-            $name = rtrim($faker->catchPhrase(), '.');
+            // Built from words rather than catchPhrase(), which only exists on the
+            // en_US provider and would break under any other Faker locale.
+            $name = ucwords($faker->words(random_int(2, 3), true));
             $blogId = $this->insertOne('blogs', [
                 'blog_name' => $name,
                 'blog_slug' => $faker->slug(2).'-'.$faker->unique()->numberBetween(1000, 999999),
@@ -51,7 +53,7 @@ final class BlogSeeder extends Seeder
                 'blog_id' => $blogId,
                 'theme' => $faker->randomElement($themes),
                 'default_locale' => 'en',
-                'tagline' => $faker->catchPhrase(),
+                'tagline' => rtrim($faker->sentence(5), '.'),
                 'subtitle' => $faker->sentence(8),
                 'about_text' => $faker->paragraph(),
                 'comments_enabled' => 1,
