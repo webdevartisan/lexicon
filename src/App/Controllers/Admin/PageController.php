@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\PageModel;
+use App\Services\LocaleRegistry;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
 use Framework\Core\Response;
@@ -27,7 +28,8 @@ final class PageController extends AppController
     public function __construct(
         private PageModel $pages,
         private PublicCacheInvalidator $publicCache,
-        private UploadService $uploader
+        private UploadService $uploader,
+        private LocaleRegistry $localeRegistry
     ) {}
 
     public function index(): Response
@@ -189,8 +191,6 @@ final class PageController extends AppController
      */
     private function supportedLocales(): array
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-
-        return array_map('strtolower', $cfg['supported'] ?? ['en']);
+        return $this->localeRegistry->supported();
     }
 }

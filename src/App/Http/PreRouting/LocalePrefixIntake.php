@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\PreRouting;
 
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 
 /**
@@ -35,9 +36,9 @@ final class LocalePrefixIntake
      */
     public static function handle(Request $request): void
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $supported = array_map('strtolower', $cfg['supported'] ?? ['en']);
-        $default = strtolower($cfg['default'] ?? 'en');
+        $registry = LocaleRegistry::instance();
+        $supported = $registry->supported();
+        $default = $registry->default();
 
         $fullUri = $request->uri ?? '/';
         $path = parse_url($fullUri, PHP_URL_PATH) ?: '/';

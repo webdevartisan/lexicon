@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Middleware\LocalizeAnchorHrefs;
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\RequestHandlerInterface;
@@ -17,7 +18,7 @@ use Framework\Interfaces\RequestHandlerInterface;
 beforeEach(function () {
     $_SESSION['locale'] = 'en';
 
-    $this->middleware = new LocalizeAnchorHrefs();
+    $this->middleware = new LocalizeAnchorHrefs(new LocaleRegistry(ROOT_PATH));
 
     $this->run = function (string $html): string {
         $response = new Response();

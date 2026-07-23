@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
@@ -23,14 +24,12 @@ use Framework\Interfaces\TemplateViewerInterface;
  */
 final class HeadI18nGlobals implements MiddlewareInterface
 {
-    public function __construct(private TemplateViewerInterface $viewer) {}
+    public function __construct(private TemplateViewerInterface $viewer, private LocaleRegistry $registry) {}
 
     public function process(Request $request, RequestHandlerInterface $handler): Response
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $supported = array_map('strtolower', $cfg['supported'] ?? ['en']);
-        $default = strtolower($cfg['default'] ?? 'en');
-        $rtlLocales = array_map('strtolower', $cfg['rtl'] ?? ['ar', 'he', 'fa', 'ur']);
+        $supported = $this->registry->supported();
+        $default = $this->registry->default();
 
         // Resolve current locale (session/cookie) and validate
         $current = strtolower($_SESSION['locale'] ?? ($_COOKIE['locale'] ?? $default));
@@ -71,7 +70,7 @@ final class HeadI18nGlobals implements MiddlewareInterface
         }
 
         $isRtl = '';
-        if (in_array($current, $rtlLocales, true)) {
+        if ($this->registry->isRtl($current)) {
             $isRtl = 'dir="rtl"';
         }
 

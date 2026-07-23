@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\SiteContentModel;
+use App\Services\LocaleRegistry;
 use App\Services\PublicCacheInvalidator;
 use App\Services\TranslationService;
 use Framework\Core\Response;
@@ -152,7 +153,8 @@ final class FrontPageController extends AppController
 
     public function __construct(
         private SiteContentModel $content,
-        private PublicCacheInvalidator $publicCache
+        private PublicCacheInvalidator $publicCache,
+        private LocaleRegistry $localeRegistry
     ) {}
 
     public function index(): Response
@@ -323,8 +325,6 @@ final class FrontPageController extends AppController
      */
     private function supportedLocales(): array
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-
-        return array_map('strtolower', $cfg['supported'] ?? ['en']);
+        return $this->localeRegistry->supported();
     }
 }

@@ -330,12 +330,18 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
         }
     }
 
-    // Already locale-prefixed
-    if (preg_match('#^/([a-z]{2})(/|$)#i', $target)) {
+    // Already carries a supported locale. Checking against the real list rather
+    // than a generic two-letter pattern keeps future routes such as /go/ or /my/
+    // from silently losing localization.
+    $registry = App\Services\LocaleRegistry::instance();
+    $firstSegment = strtolower(explode('/', ltrim($target, '/'))[0] ?? '');
+
+    if ($registry->isSupported($firstSegment)) {
         return $target;
     }
 
-    $locale = strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    $locale = $registry->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null)
+        ?? $registry->default();
 
     // Avoid double slashes when target is '/'
     return '/'.$locale.($target === '/' ? '' : $target);

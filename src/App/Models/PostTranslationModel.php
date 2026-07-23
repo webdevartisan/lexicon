@@ -16,12 +16,6 @@ class PostTranslationModel extends AppModel
     protected ?string $table = 'post_translations';
 
     /**
-     * Locales offered on the translation tabs. Mirrors the platform locale
-     * list used on the blog settings form.
-     */
-    public const SUPPORTED_LOCALES = ['en', 'fr', 'de', 'el', 'ar'];
-
-    /**
      * All translations of a post, keyed by locale.
      *
      * @return array<string, array<string, mixed>>

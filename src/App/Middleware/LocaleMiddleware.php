@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Services\ConsentService;
+use App\Services\LocaleRegistry;
 use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
@@ -19,11 +20,10 @@ class LocaleMiddleware implements MiddlewareInterface
 
     private ConsentService $consent;
 
-    public function __construct(ConsentService $consent)
+    public function __construct(ConsentService $consent, LocaleRegistry $registry)
     {
-        $cfg = require ROOT_PATH.'/config/localization.php';
-        $this->supported = $cfg['supported'];
-        $this->default = $cfg['default'];
+        $this->supported = $registry->supported();
+        $this->default = $registry->default();
         $this->consent = $consent;
     }
 
