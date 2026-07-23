@@ -64,6 +64,10 @@
                 <?php $selectedKey = $user['timezone']; ?>
                 {% cmp="select" groups="{$timezones}" selectedKey="{$selectedKey}" name="timezone" label="Timezone" %}
 
+                <?php $options = $locales; ?>
+                <?php $selectedKey = $user['locale']; ?>
+                {% cmp="select" options="{$options}" selectedKey="{$selectedKey}" name="locale" label="Interface Language" %}
+
               </div>
             </div>
 

@@ -220,6 +220,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     display_name_preference ENUM('name','username') NOT NULL DEFAULT 'username',
     default_post_visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone identifier (e.g., Europe/Athens)',
+    locale VARCHAR(5) DEFAULT NULL COMMENT 'Preferred interface language (ISO 639-1); NULL follows page content',
     notify_post_status BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me about my own posts: approved, changes requested, published, reset to draft',
     notify_review_requests BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when a post is handed to me to review, or my review assignment changes',
     notify_role_changes BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when my collaborator role changes or I am removed',

@@ -8,12 +8,14 @@ use App\Controllers\AppController;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\DisplayNameService;
+use App\Services\LocaleRegistry;
 use DateTimeZone;
 use Exception;
 use Framework\Core\Response;
 
 /**
- * Private account settings: email, posting defaults, timezone, email notifications.
+ * Private account settings: email, posting defaults, timezone, interface
+ * language, email notifications.
  *
  * Public identity lives in ProfileController and credentials in SecurityController.
  */
@@ -22,7 +24,8 @@ class AccountController extends AppController
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
-        private DisplayNameService $displayNames
+        private DisplayNameService $displayNames,
+        private LocaleRegistry $locales
     ) {}
 
     /**
@@ -35,6 +38,7 @@ class AccountController extends AppController
         return $this->view([
             'user' => $this->loadAccount($userId),
             'timezones' => $this->getGroupedTimezones(),
+            'locales' => $this->localeOptions(),
             'noBreadcrumb' => false,
         ]);
     }
@@ -54,9 +58,12 @@ class AccountController extends AppController
             'display_name' => 'in:name,username',
             'default_visibility' => 'in:public,private,unlisted',
             'timezone' => 'timezone',
+            // Built from the registry so adding a locale never means editing this file.
+            'locale' => 'in:auto,'.implode(',', $this->locales->supported()),
         ], [
             'email.unique' => 'This email address is already in use.',
             'timezone.timezone' => 'Please select a valid timezone.',
+            'locale.in' => 'Please choose a language from the list.',
         ]);
 
         $validated = $validator->validated();
@@ -73,6 +80,9 @@ class AccountController extends AppController
             'display_name_preference' => $validated['display_name'] ?? 'username',
             'default_post_visibility' => $validated['default_visibility'] ?? 'public',
             'timezone' => $validated['timezone'] ?? null,
+            // "auto" is the absence of a preference, stored as NULL so the chrome
+            // locale keeps following whatever language the page itself is in.
+            'locale' => ($validated['locale'] ?? 'auto') === 'auto' ? null : $validated['locale'],
         ]);
 
         // the display preference decides whether the cached name is the real name or the handle
@@ -140,6 +150,7 @@ class AccountController extends AppController
         $merged['display_name'] = $preferences['display_name_preference'] ?? 'username';
         $merged['default_visibility'] = $preferences['default_post_visibility'] ?? 'public';
         $merged['timezone'] = $preferences['timezone'] ?? 'UTC';
+        $merged['locale'] = $preferences['locale'] ?? 'auto';
 
         // the delete-account modal spells out what deletion will affect
         // denormalized counters are unreliable (often stale at 0), so recount when empty
@@ -198,5 +209,21 @@ class AccountController extends AppController
         }
 
         return $grouped;
+    }
+
+    /**
+     * Language options for the account form, each named in its own language.
+     *
+     * @return array<string, string> Locale code => label, led by the "auto" entry
+     */
+    private function localeOptions(): array
+    {
+        $options = ['auto' => 'Automatic (follow page language)'];
+
+        foreach ($this->locales->supported() as $code) {
+            $options[$code] = $this->locales->nativeName($code);
+        }
+
+        return $options;
     }
 }

@@ -50,6 +50,7 @@ class UserPreferencesModel extends AppModel
         'display_name_preference',
         'default_post_visibility',
         'timezone',
+        'locale',
         ...self::NOTIFY_KEYS,
     ];
 
@@ -168,14 +169,6 @@ class UserPreferencesModel extends AppModel
     }
 
     /**
-     * Get user's default blog ID.
-     *
-     * Retrieve the user's preferred default blog for dashboard navigation.
-     *
-     * @param  int  $userId  User ID
-     * @return int|null Blog ID or null if not set
-     */
-    /**
      * Read just the timezone for a user.
      *
      * findOrCreate() writes a row when none exists, which is the wrong thing to
@@ -196,6 +189,36 @@ class UserPreferencesModel extends AppModel
         return (string) $result['timezone'];
     }
 
+    /**
+     * Read just the interface language for a user.
+     *
+     * Same reasoning as getTimezone(): findOrCreate() writes a row when none
+     * exists, which is the wrong thing to do from a read that runs on every
+     * request.
+     *
+     * @param  int  $userId  User identifier
+     * @return string|null Stored locale code, or null when the user has no preference
+     */
+    public function getLocale(int $userId): ?string
+    {
+        $sql = 'SELECT locale FROM user_preferences WHERE user_id = ? LIMIT 1';
+        $result = $this->database->query($sql, [$userId])->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result || empty($result['locale'])) {
+            return null;
+        }
+
+        return (string) $result['locale'];
+    }
+
+    /**
+     * Get user's default blog ID.
+     *
+     * Retrieve the user's preferred default blog for dashboard navigation.
+     *
+     * @param  int  $userId  User ID
+     * @return int|null Blog ID or null if not set
+     */
     public function getDefaultBlogId(int $userId): ?int
     {
         $sql = 'SELECT default_blog_id FROM user_preferences WHERE user_id = ? LIMIT 1';
