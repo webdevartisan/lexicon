@@ -8,7 +8,7 @@
                     <a href="/dashboard">
 
                         <span class="hidden">
-                            <img src="/cp-assets/images/logo.png" alt="" class="h-6 mx-auto">
+                            <img src="/cp-assets/images/logo/L-light.png" alt="" class="h-6 mx-auto">
                         </span>
 
                         <span class="group-data-[topbar=dark]:hidden group-data-[topbar=brand]:hidden">
@@ -19,7 +19,7 @@
                     <a href="/dashboard" class="hidden group-data-[topbar=dark]:block group-data-[topbar=brand]:block">
                         
                         <span class="group-data-[topbar=dark]:hidden group-data-[topbar=brand]:hidden">
-                            <img src="/cp-assets/images/logo.png" alt="" class="h-6 mx-auto">
+                            <img src="/cp-assets/images/logo/L-dark.png" alt="" class="h-6 mx-auto">
                         </span>
 
                         <span class="group-data-[topbar=dark]:block group-data-[topbar=brand]:block">
@@ -42,7 +42,7 @@
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         {{ csrf_field() }}
                         {% cache 'lucide:book-open:blogswitch' ttl=31536000 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
-                        <select name="blog" onchange="this.form.submit()" aria-label="Switch active blog"
+                        <select name="blog" data-auto-submit aria-label="Switch active blog"
                             class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
                             <?php foreach ($user_blogs as $bid => $b) {
                                 $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
