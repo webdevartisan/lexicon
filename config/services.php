@@ -221,6 +221,14 @@ $container->set(App\Services\TranslationService::class, function ($c) {
 });
 
 /**
+ * Locale registry is the single source of truth for supported locales.
+ * Shared because it caches the parsed config for the request.
+ */
+$container->setShared(App\Services\LocaleRegistry::class, function ($c) {
+    return App\Services\LocaleRegistry::instance();
+});
+
+/**
  * Consent service manages GDPR/privacy consent preferences.
  *
  * We use APP_KEY for signing consent cookies to prevent tampering.

@@ -59,16 +59,17 @@ test('an href that already carries a locale is left alone', function () {
 test('every configured locale is recognised as already-localized', function (string $locale) {
     expect(($this->run)('<a href="/'.$locale.'/posts">Go</a>'))
         ->not->toContain('/en/'.$locale.'/');
-})->with(['en', 'fr', 'de', 'el', 'ar']);
+})->with(['en', 'el', 'ar']);
 
 /**
  * The bug this middleware shipped with: the guard was a generic [a-z]{2}, so
- * ANY two-letter first segment looked like a locale and was skipped.
+ * ANY two-letter first segment looked like a locale and was skipped. The fr and
+ * de entries also pin that dropping an unbacked locale really removes it.
  */
 test('a two-letter path segment that is not a locale still gets localized', function (string $path) {
     expect(($this->run)('<a href="/'.$path.'/thing">Go</a>'))
         ->toContain('href="/en/'.$path.'/thing"');
-})->with(['go', 'my', 'ui', 'qa']);
+})->with(['go', 'my', 'ui', 'qa', 'fr', 'de']);
 
 test('protocol-relative hrefs are never rewritten', function () {
     $html = ($this->run)('<a href="//evil.example.com/x">Go</a>');
