@@ -15,6 +15,7 @@ use App\Models\SettingModel;
 use App\Models\SiteContentModel;
 use App\Models\UserPreferencesModel;
 use App\Services\AssetPathMapper;
+use App\Services\LocaleRegistry;
 use App\Services\TranslationService;
 
 /**
@@ -245,6 +246,20 @@ function relative_time(?string $utc, bool $short = false): string
 function plural_unit(int $count, string $unit): string
 {
     return $count.' '.$unit.($count === 1 ? '' : 's');
+}
+
+/**
+ * A language's own name for itself, for language pickers.
+ *
+ * Not translated on purpose: a picker exists for someone who cannot read the
+ * language currently on screen.
+ *
+ * @param  string  $code  Locale code
+ * @return string Native name, or the uppercased code when unknown
+ */
+function locale_native_name(string $code): string
+{
+    return app(LocaleRegistry::class)->nativeName($code);
 }
 
 /**

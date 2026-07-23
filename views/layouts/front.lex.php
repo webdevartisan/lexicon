@@ -4,7 +4,15 @@ $errors = errors();
 $old = old();
 ?>
 <!DOCTYPE HTML>
-<html lang="{{ currentLang }}" {{ isRtl|raw }}>
+<?php
+// Declared from the chrome locale, not the content locale: every visible string
+// in this layout comes from $t(), which follows the reader's own preference. A
+// guest has them equal, so this only differs for someone signed in who chose a
+// language, and it is what stops Arabic text rendering inside lang="en" ltr.
+// The canonical and hreflang below stay content-based, because those describe
+// the URL rather than the text.
+?>
+<html lang="{{ chromeLang }}" dir="{{ chromeDir }}">
 
 	<head>
 		<title>{% yield title %}</title>
@@ -25,7 +33,9 @@ $old = old();
         <link rel="alternate" href="{{ alt.href }}" hreflang="{{ alt.hreflang }}" />
         {% endforeach; %}
 
+        {% if (!empty($head['alternates'])): %}
         <link rel="alternate" href="{{ head.xDefaultUrl }}" hreflang="x-default" />
+        {% endif; %}
 
         <!-- Open Graph locale -->
         <meta property="og:locale" content="{{ head.ogLocale }}" />
@@ -39,13 +49,6 @@ $old = old();
         <link rel="stylesheet" href="/assets/css/front.css" />
 
         {% yield meta %}
-
-        <script>
-            window.AppLocales = {
-                supported: <?= json_encode($supportedLocales) ?>,
-                default: <?= json_encode($defaultLocale, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
-            };
-        </script>
 
 	</head>
 
@@ -126,18 +129,7 @@ $old = old();
                         <!-- Social & bottom line -->
                         <div class="footer-bottom">
 
-                            <div class="lang-switcher"> <!-- Language Switcher -->
-                                <button class="button small alt" id="langToggle" aria-haspopup="listbox" aria-expanded="false">
-                                    <span class="icon solid fa fa-globe" aria-hidden="true"></span>
-                                    <span id="currentLang">EN</span>
-                                    <span class="caret" aria-hidden="true">▾</span>
-                                </button>
-                                <ul class="lang-menu" id="langMenu" role="listbox" aria-label="Select language">
-                                    <li role="option" data-lang="en" aria-selected="false">English</li>
-                                    <li role="option" data-lang="el" aria-selected="false">Ελληνικά</li>
-                                    <li role="option" data-lang="ar" aria-selected="false">Arabic</li>
-                                </ul>
-                            </div>
+                            {% include "partials/_language_switcher.lex.php" %}
 
                             <p class="footer-copy copyright">
                                 &copy; <?= date('Y') ?> <?= e(site_setting('site_name', 'Lexicon')) ?>.
@@ -199,7 +191,7 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/breakpoints.min.js"></script>
 		<script src="/assets/js/util.js"></script>
 		<script src="/assets/js/main.js"></script>
-		<script src="/assets/js/locale.js"></script>
+		<script src="/assets/js/lang-switcher.js" defer></script>
 		<script src="/assets/js/scrolltop.js"></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}

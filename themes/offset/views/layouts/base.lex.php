@@ -15,6 +15,13 @@
   <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>" />
   <?php if (!empty($meta['robots'])) { ?><meta name="robots" content="<?= e($meta['robots']) ?>" /><?php } ?>
   <?php if (!empty($meta['canonical'])) { ?><link rel="canonical" href="<?= e($meta['canonical']) ?>" /><?php } ?>
+  <?php // One alternate per language this page genuinely exists in; a monolingual blog emits none.?>
+  <?php foreach (($head['alternates'] ?? []) as $alt) { ?>
+  <link rel="alternate" href="<?= e($alt['href']) ?>" hreflang="<?= e($alt['hreflang']) ?>" />
+  <?php } ?>
+  <?php if (!empty($head['alternates'])) { ?>
+  <link rel="alternate" href="<?= e($head['xDefaultUrl']) ?>" hreflang="x-default" />
+  <?php } ?>
 
   <?php /* Shared across every theme so a new tag lands everywhere at once. */ ?>
   <?= social_meta_tags($meta ?? []) ?>
@@ -150,6 +157,7 @@
       <div class="foot-bottom">
         <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Offset') ?>.</span>
         <span>Published &amp; hosted by <a href="/"><?= e($_ENV['APP_NAME'] ?? '') ?></a></span>
+        {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>
   </footer>
@@ -165,5 +173,6 @@
   {% include "partials/_auth_modal.lex.php" %}
   {% yield scripts %}
 
+<script src="/assets/js/lang-switcher.js" defer></script>
 </body>
 </html>

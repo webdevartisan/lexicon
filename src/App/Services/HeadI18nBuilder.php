@@ -39,6 +39,7 @@ final class HeadI18nBuilder
     public function build(string $path, ?string $query = null): array
     {
         $current = LocaleState::get()->contentLocale;
+        $chrome = LocaleState::get()->chromeLocale;
         $suffix = ($path === '/' ? '' : $path).($query !== null && $query !== '' ? '?'.$query : '');
         $origin = $this->origin();
 
@@ -59,6 +60,13 @@ final class HeadI18nBuilder
             'defaultLocale' => $this->registry->default(),
             'currentLang' => $current,
             'isRtl' => $this->registry->isRtl($current) ? 'dir="rtl"' : '',
+
+            // The interface half, kept separate from currentLang because the
+            // dashboard renders in the reader's own language whatever locale
+            // prefix the URL carries. A bare value rather than a whole
+            // attribute, since the layout must always carry a dir.
+            'chromeLang' => $chrome,
+            'chromeDir' => $this->registry->isRtl($chrome) ? 'rtl' : 'ltr',
 
             'head' => [
                 'canonicalUrl' => $origin.'/'.$current.$suffix,
@@ -111,8 +119,25 @@ final class HeadI18nBuilder
         return $out;
     }
 
+    /**
+     * The site's own origin, taken from configuration.
+     *
+     * Deliberately not the Host header. These URLs go into canonical, hreflang
+     * and the language switcher's links, and the full-page cache key carries no
+     * host, so a request sent with "Host: evil.com" would poison the cached page
+     * for every later visitor. It also keeps alternates on the same origin as
+     * the canonical, which BlogController already builds from APP_URL.
+     */
     private function origin(): string
     {
+        $configured = rtrim((string) env('APP_URL', ''), '/');
+
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        // Only reached when APP_URL is unset, which is a misconfiguration; a
+        // relative-looking origin is still better than trusting the header.
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['SERVER_PORT'] ?? null) === '443');
 

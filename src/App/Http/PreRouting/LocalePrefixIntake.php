@@ -6,6 +6,7 @@ namespace App\Http\PreRouting;
 
 use App\Services\LocaleRegistry;
 use App\Services\LocaleState;
+use App\Services\UserLocalePreference;
 use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
 
@@ -17,8 +18,9 @@ use Framework\Core\Request;
  *   the Request path so routing stays language-agnostic ("/path").
  *
  * Behavior:
- * - If the first segment is a supported locale (case-insensitive), set session/cookie,
+ * - If the first segment is a supported locale (case-insensitive), set the session,
  *   strip the prefix for internal routing, and keep the visible URL unchanged.
+ *   The locale cookie is written by LocaleMiddleware, never here.
  * - If no prefix, redirect once to "/{resolved-locale}{path}" (preserving query).
  * - If the first segment looks like a 2-letter code but is unsupported, redirect to the
  *   default-locale version to avoid junk prefixes being indexed.
@@ -86,15 +88,8 @@ final class LocalePrefixIntake
         // 1) Prefixed with supported locale → set and internally rewrite path.
         //    Visible URL keeps the locale prefix; router sees a clean, unprefixed path.
         if ($first && in_array($first, $supported, true)) {
-            // Persist locale choice in session (if active) and cookie.
+            // Persist locale choice in session (if active).
             $_SESSION['locale'] = $first;
-            /*setcookie('locale', $first, [
-                'expires'  => time() + 31536000,
-                'path'     => '/',
-                'httponly' => false,
-                'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-                'samesite' => 'Lax',
-            ]);*/
 
             // Strip only the first segment for routing; keep visible URL unchanged.
             // The leading slash guarantees a non-empty path, '/' when nothing remains.
@@ -111,19 +106,24 @@ final class LocalePrefixIntake
                 header('Location: '.$request->uri, true, 301);
                 exit;
             }
-            // If we ever want the router to see query too, we could include it here:
-            // $request->uri = ($stripped === '' ? '/' : $stripped) . ($query ? ('?' . $query) : '');
-
             // The prefix is the content locale, always. Chrome follows it for
-            // guests; the signed-in account preference overrides only the chrome
-            // half, and that arrives in a later change.
-            LocaleState::set(LocaleContext::forGuest($first));
+            // guests; a signed-in reader's stored preference overrides only the
+            // chrome half, so /el/ still serves Greek content to someone whose
+            // interface is English.
+            $preference = self::storedPreference();
+            LocaleState::set(new LocaleContext($first, $preference ?? $first));
 
             return;
         }
 
-        // 2) No prefix → resolve target locale (session > cookie > Accept-Language > default).
+        // 2) No prefix → resolve target locale
+        //    (session > account preference > cookie > Accept-Language > default).
+        //    Read once and reused for the chrome half below, so a request costs
+        //    at most one preference lookup.
+        $preference = self::storedPreference();
+
         $resolved = $_SESSION['locale']
+            ?? $preference
             ?? $_COOKIE['locale']
             ?? self::pickFromAcceptLanguage($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '', $supported, $default)
             ?? $default;
@@ -139,18 +139,9 @@ final class LocalePrefixIntake
             $target .= '?'.$query;
         }
 
-        // Refresh locale cookie to align with the resolved locale.
-        /*setcookie('locale', $resolved, [
-            'expires'  => time() + 31536000,
-            'path'     => '/',
-            'httponly' => false,
-            'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'samesite' => 'Lax',
-        ]);*/
-
         // An unsafe method is served here rather than redirected, so it still
         // needs a context for anything downstream that reads the locale.
-        LocaleState::set(LocaleContext::forGuest($resolved));
+        LocaleState::set(new LocaleContext($resolved, $preference ?? $resolved));
 
         // For unsafe methods, avoid redirecting to protect non-idempotent requests.
         if ($isUnsafe) {
@@ -192,5 +183,23 @@ final class LocalePrefixIntake
         }
 
         return null;
+    }
+
+    /**
+     * The signed-in reader's stored interface language, or null.
+     *
+     * Reachable from pre-routing because index.php builds the container and
+     * touches Auth before it runs the pre-routing pipeline. A guest costs one
+     * session array read and no query.
+     *
+     * @return string|null Supported locale code, or null for a guest or no preference
+     */
+    private static function storedPreference(): ?string
+    {
+        $userId = auth()->user()['id'] ?? null;
+
+        return app(UserLocalePreference::class)->resolve(
+            $userId === null ? null : (int) $userId
+        );
     }
 }

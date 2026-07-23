@@ -28,3 +28,11 @@ it('retrieves validation errors from session', function () {
 
     expect($allErrors)->toHaveKey('email', 'Invalid email');
 });
+
+test('locale_native_name gives the language its own name', function () {
+    expect(locale_native_name('el'))->toBe('Ελληνικά');
+});
+
+test('locale_native_name falls back to the code for anything unknown', function () {
+    expect(locale_native_name('zz'))->toBe('ZZ');
+});

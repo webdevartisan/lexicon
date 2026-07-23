@@ -99,8 +99,9 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * exists to stop, which is why the previous commented-out block was
      * decorative rather than protective.
      *
-     * Known remaining inline scripts to clear before enforcing: window.AppLocales
-     * in front.lex.php, and the per-page TinyMCE/Dropzone init blocks.
+     * Known remaining inline scripts to clear before enforcing: the per-page
+     * TinyMCE/Dropzone init blocks. The window.AppLocales block is gone, dropped
+     * with the client-side locale rewriting it existed to feed.
      */
     private function applyContentSecurityPolicy(Response $response): void
     {

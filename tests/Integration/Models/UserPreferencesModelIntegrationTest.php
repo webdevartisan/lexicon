@@ -7,10 +7,12 @@ use App\Models\UserPreferencesModel;
 use Tests\Factories\UserFactory;
 
 /**
- * Integration tests for UserPreferencesModel notification preference columns.
+ * Integration tests for UserPreferencesModel.
  *
- * Covers the three new columns added in the 2026-06-24 migration:
- * notify_post_status, notify_role_changes, notify_invites.
+ * Covers the three notification columns added in the 2026-06-24 migration
+ * (notify_post_status, notify_role_changes, notify_invites) and the locale
+ * column added on 2026-07-23, including the rule that binds them all: upsert()
+ * writes only the keys it is given, so one form cannot blank another's fields.
  */
 beforeEach(function () {
     $this->userModel = new UserModel($this->db);
@@ -107,4 +109,28 @@ test('notificationPreference defaults true when no row exists', function () {
 test('notificationPreference rejects unknown keys', function () {
     expect(fn () => $this->prefs->notificationPreference($this->userId, 'notify_bogus'))
         ->toThrow(\InvalidArgumentException::class);
+});
+
+test('a stored interface language round-trips', function () {
+    $this->prefs->upsert($this->userId, ['locale' => 'el']);
+
+    expect($this->prefs->getLocale($this->userId))->toBe('el');
+});
+
+test('no stored preference reads as null rather than an empty string', function () {
+    $this->prefs->upsert($this->userId, ['timezone' => 'Europe/Athens']);
+
+    expect($this->prefs->getLocale($this->userId))->toBeNull();
+});
+
+/**
+ * The notifications form and the profile form post disjoint field sets, so
+ * saving one must not blank the other's columns.
+ */
+test('saving notifications leaves the interface language alone', function () {
+    $this->prefs->upsert($this->userId, ['locale' => 'ar']);
+
+    $this->prefs->upsert($this->userId, ['notify_invites' => 0]);
+
+    expect($this->prefs->getLocale($this->userId))->toBe('ar');
 });

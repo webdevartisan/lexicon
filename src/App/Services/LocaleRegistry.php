@@ -21,6 +21,19 @@ final class LocaleRegistry
      */
     public const RTL = ['ar', 'he', 'fa', 'ur'];
 
+    /**
+     * Each language's name in itself, for language pickers.
+     *
+     * Deliberately not translated. A picker exists for someone who cannot read
+     * the language currently on screen, so labelling Greek as "Greek" is useless
+     * to the one person who needs that entry.
+     */
+    public const NATIVE_NAMES = [
+        'en' => 'English',
+        'el' => 'Ελληνικά',
+        'ar' => 'العربية',
+    ];
+
     private static ?self $instance = null;
 
     /** @var array{supported: string[], default: string}|null */
@@ -113,6 +126,19 @@ final class LocaleRegistry
     public function isRtl(string $code): bool
     {
         return in_array(strtolower(trim($code)), self::RTL, true);
+    }
+
+    /**
+     * The language's own name for itself, for use in a language picker.
+     *
+     * @param  string  $code  Locale code, any case
+     * @return string Native name, or the uppercased code when unknown
+     */
+    public function nativeName(string $code): string
+    {
+        $code = strtolower(trim($code));
+
+        return self::NATIVE_NAMES[$code] ?? strtoupper($code);
     }
 
     /**

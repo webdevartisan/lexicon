@@ -141,3 +141,29 @@ test('locale codes that are not plain language tags are rejected', function (str
 
     expect((new LocaleRegistry($root))->hasTranslationFile($code))->toBeFalse();
 })->with(['../../etc/passwd', 'en/../../secret', 'e', 'toolongcode', '..']);
+
+/**
+ * A language picker names each language in that language, never in the viewer's.
+ * Translating these would show "Greek" to the one person who cannot read English,
+ * which is exactly who the entry is for.
+ */
+test('native names are given in the language itself', function () {
+    $root = ($this->makeRoot)(['supported' => ['en'], 'default' => 'en'], ['en']);
+    $registry = new LocaleRegistry($root);
+
+    expect($registry->nativeName('en'))->toBe('English')
+        ->and($registry->nativeName('el'))->toBe('Ελληνικά')
+        ->and($registry->nativeName('ar'))->toBe('العربية');
+});
+
+test('an unknown code falls back to its own uppercased form', function () {
+    $root = ($this->makeRoot)(['supported' => ['en'], 'default' => 'en'], ['en']);
+
+    expect((new LocaleRegistry($root))->nativeName('zz'))->toBe('ZZ');
+});
+
+test('native name lookup is case insensitive', function () {
+    $root = ($this->makeRoot)(['supported' => ['en'], 'default' => 'en'], ['en']);
+
+    expect((new LocaleRegistry($root))->nativeName('EL'))->toBe('Ελληνικά');
+});

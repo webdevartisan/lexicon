@@ -746,3 +746,86 @@ footer.site {
   color: var(--cobalt);
   border-color: var(--cobalt);
 }
+
+
+/* ---------- language switcher ---------- */
+/* Shared markup from views/partials/_language_switcher.lex.php. An entry is a
+   link for guests and a form button for signed-in readers, so both are styled. */
+
+.lang-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-switcher__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  color: var(--slate);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.lang-switcher__toggle:hover {
+  color: var(--cobalt);
+  border-color: var(--cobalt);
+}
+
+/* Sits in the footer, so it opens upward by default; the script re-measures. */
+.lang-switcher__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 40;
+  display: none;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--porcelain-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  box-shadow: 0 12px 28px rgba(23, 25, 28, 0.16);
+}
+
+.lang-switcher__menu.show { display: block; }
+
+.lang-switcher__item {
+  display: block;
+  margin: 0;
+}
+
+.lang-switcher__item a,
+.lang-switcher__item button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  color: var(--carbon);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lang-switcher__item a:hover,
+.lang-switcher__item button:hover {
+  background: var(--tint);
+  color: var(--carbon);
+}
+
+.lang-switcher__item a[aria-current="true"],
+.lang-switcher__item button[aria-current="true"] {
+  color: var(--cobalt);
+}
