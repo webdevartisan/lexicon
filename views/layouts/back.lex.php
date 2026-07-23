@@ -136,6 +136,7 @@ $old = old();
 <script src="/cp-assets/libs/simplebar/simplebar.min.js"></script>
 <!-- <script src="/cp-assets/libs/prismjs/prism.js"></script> -->
 <script src="/cp-assets/js/dropdown.js"></script>
+<script src="/cp-assets/js/blog-switcher.js"></script>
 
 {% yield scripts %}
 
