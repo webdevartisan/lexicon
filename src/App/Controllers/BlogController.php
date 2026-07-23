@@ -15,6 +15,7 @@ use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\ContentLocaleResolver;
+use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -32,7 +33,8 @@ class BlogController extends AppController
         private PostBookmarkModel $postBookmarkModel,
         private PostTranslationModel $translations,
         private UserProfileModel $profiles,
-        private ContentLocaleResolver $localeResolver
+        private ContentLocaleResolver $localeResolver,
+        private HeadI18nBuilder $headI18n
     ) {}
 
     /**
@@ -355,6 +357,7 @@ class BlogController extends AppController
 
         $postLocaleSet = array_values(array_unique(array_merge([$postDefault], $postLocales)));
         LocaleState::setLocaleSet($postLocaleSet);
+        $this->refreshHeadI18n();
 
         if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault)) {
             return $redirect;
@@ -427,7 +430,10 @@ class BlogController extends AppController
             $this->postModel->tags((int) $post['id'])
         );
 
-        $shareUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug);
+        // Locale-prefixed, because this feeds og:url, the canonical link and the
+        // share buttons. An unprefixed URL redirects to whatever locale the
+        // reader's browser negotiates, which is not a stable canonical target.
+        $shareUrl = rtrim(base_url(), '/').lurl('/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug));
 
         // Merge meta: post-level SEO overrides > post content > blog defaults.
         $robots = [];
@@ -545,7 +551,7 @@ class BlogController extends AppController
         // Themes iterate this as platform => URL, so hand them the decoded map
         $settings['social_links'] = BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null);
 
-        $blogUrl = rtrim(base_url(), '/').'/blog/'.rawurlencode((string) ($blog['blog_slug'] ?? ''));
+        $blogUrl = rtrim(base_url(), '/').lurl('/blog/'.rawurlencode((string) ($blog['blog_slug'] ?? '')));
 
         $meta = [
             'title' => $settings['meta_title'] ?? ($blog['blog_name'] ?? ($user['display_name_cached']."'s Blog")),
@@ -557,7 +563,9 @@ class BlogController extends AppController
             'og_description' => null, // themes fall back to description
             'og_image' => $this->absoluteAssetUrl($settings['banner_path'] ?? null),
             'twitter_card' => 'summary_large_image',
-            'canonical' => null,
+            // The blog home is reachable under any locale prefix that survives the
+            // redirect guard, so name the content-locale URL as the one to index.
+            'canonical' => $blogUrl,
             // Only an explicit indexable=false opts the blog out; a missing settings row must not.
             'robots' => (array_key_exists('indexable', $settings) && !$settings['indexable']) ? 'noindex, nofollow' : null,
         ];
@@ -583,6 +591,7 @@ class BlogController extends AppController
         // so the head globals stop advertising translations that do not exist.
         $localeSet = $this->blogLocaleSet((int) $blog['id'], $settings);
         LocaleState::setLocaleSet($localeSet);
+        $this->refreshHeadI18n();
 
         return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet');
     }
@@ -604,6 +613,23 @@ class BlogController extends AppController
 
         return array_values(array_unique(
             array_merge([$default], $this->translations->localesForBlog($blogId))
+        ));
+    }
+
+    /**
+     * Rebuild the language head globals now that this page's locale set is known.
+     *
+     * HeadI18nGlobals runs before the controller, so it could only assume every
+     * supported locale. Template globals are merged at render time, so this later
+     * call is what the page actually renders with.
+     */
+    private function refreshHeadI18n(): void
+    {
+        $full = $this->request->uri ?? '/';
+
+        $this->viewer->addGlobals($this->headI18n->build(
+            parse_url($full, PHP_URL_PATH) ?: '/',
+            $this->request->get !== [] ? http_build_query($this->request->get) : null
         ));
     }
 

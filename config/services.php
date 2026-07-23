@@ -238,6 +238,14 @@ $container->setShared(App\Services\ContentLocaleResolver::class, function ($c) {
 });
 
 /**
+ * Builds the language head globals from the page's content locale and locale set.
+ * Shared because it holds no per-request state of its own.
+ */
+$container->setShared(App\Services\HeadI18nBuilder::class, function ($c) {
+    return new App\Services\HeadI18nBuilder($c->get(App\Services\LocaleRegistry::class));
+});
+
+/**
  * Consent service manages GDPR/privacy consent preferences.
  *
  * We use APP_KEY for signing consent cookies to prevent tampering.

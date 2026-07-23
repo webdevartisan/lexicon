@@ -104,7 +104,8 @@ beforeEach(function () {
         new \App\Models\PostBookmarkModel($this->db),
         new \App\Models\PostTranslationModel($this->db),
         new \App\Models\UserProfileModel($this->db),
-        new \App\Services\ContentLocaleResolver(new \App\Services\LocaleRegistry(ROOT_PATH))
+        new \App\Services\ContentLocaleResolver(new \App\Services\LocaleRegistry(ROOT_PATH)),
+        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH))
     );
 
     // Pre-routing has already stripped the prefix by the time a controller runs,

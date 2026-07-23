@@ -912,12 +912,22 @@ class PostModel extends AppModel
      */
     public function findPublicForSitemap(int $limit = 1000): array
     {
-        $sql = "SELECT p.slug, p.updated_at, b.blog_slug
+        // The locale columns come along so the sitemap can list each post at the
+        // URLs it actually resolves at, rather than assuming English. Translated
+        // locales arrive concatenated to keep this a single query.
+        $sql = "SELECT p.slug, p.updated_at, b.blog_slug,
+                       COALESCE(s.default_locale, 'en') AS default_locale,
+                       COALESCE(s.translations_enabled, 0) AS translations_enabled,
+                       GROUP_CONCAT(DISTINCT t.locale) AS translated_locales
                 FROM posts p
                 JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN blog_settings s ON s.blog_id = b.id
+                LEFT JOIN post_translations t ON t.post_id = p.id
                 WHERE p.status = 'published'
                   AND p.visibility = 'public'
                   AND b.status = 'published'
+                GROUP BY p.id, p.slug, p.updated_at, p.published_at, b.blog_slug,
+                         s.default_locale, s.translations_enabled
                 ORDER BY p.published_at DESC
                 LIMIT :limit";
 

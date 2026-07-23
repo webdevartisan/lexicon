@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Models\BlogModel;
 use App\Models\PageModel;
 use App\Models\PostModel;
+use App\Services\LocaleRegistry;
 use Framework\Core\Response;
 
 /**
@@ -26,7 +27,8 @@ class SitemapController extends AppController
     public function __construct(
         private PostModel $postModel,
         private BlogModel $blogModel,
-        private PageModel $pageModel
+        private PageModel $pageModel,
+        private LocaleRegistry $registry
     ) {}
 
     public function index(): Response
@@ -73,39 +75,98 @@ class SitemapController extends AppController
         return $this->response;
     }
 
+    /**
+     * One entry per locale a page is genuinely reachable at.
+     *
+     * The sitemap used to list only /en/ URLs while the pages themselves
+     * advertised alternates for every configured locale. The two disagreed, and
+     * the sitemap was the one telling the truth.
+     *
+     * @param  string[]  $localeSet
+     * @return array<int, array{loc: string, lastmod: string|null}>
+     */
+    private function entriesFor(string $base, string $path, array $localeSet, ?string $lastmod): array
+    {
+        $entries = [];
+
+        foreach ($localeSet as $locale) {
+            if (!$this->registry->isSupported($locale)) {
+                continue;
+            }
+
+            $entries[] = ['loc' => $base.lurl($path, $locale), 'lastmod' => $lastmod];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Locale set for a blog or post row from the sitemap queries.
+     *
+     * Mirrors the rule the redirect guard enforces: the base language always,
+     * plus translated locales once the blog opted into translations.
+     *
+     * @param  array<string, mixed>  $row
+     * @return string[]
+     */
+    private function localeSetFor(array $row): array
+    {
+        $default = (string) ($row['default_locale'] ?? 'en');
+
+        if (empty($row['translations_enabled']) || empty($row['translated_locales'])) {
+            return [$default];
+        }
+
+        return array_values(array_unique(array_merge(
+            [$default],
+            explode(',', (string) $row['translated_locales'])
+        )));
+    }
+
     private function build(): string
     {
         $base = rtrim(base_url(), '/');
         $urls = [];
 
+        // Platform pages carry only chrome, so they exist in every locale that
+        // has a strings file behind it.
+        $platformLocales = $this->registry->supported();
+
         foreach (self::STATIC_PATHS as $path) {
-            $urls[] = ['loc' => $base.lurl($path, 'en'), 'lastmod' => null];
+            $urls = array_merge($urls, $this->entriesFor($base, $path, $platformLocales, null));
         }
 
         // Guides are pages, so their edit date is a meaningful lastmod
         foreach (['start-your-first-blog', 'write-posts-people-read', 'blog-with-your-team'] as $guideSlug) {
-            $guide = $this->pageModel->findPublished($guideSlug, 'en');
-            if ($guide !== null) {
-                $urls[] = [
-                    'loc' => $base.lurl('/getting-started/'.$guideSlug, 'en'),
-                    'lastmod' => $guide['updated_at'] ?? null,
-                ];
+            $guide = $this->pageModel->findPublished($guideSlug, $this->registry->default());
+            if ($guide === null) {
+                continue;
             }
+
+            $urls = array_merge($urls, $this->entriesFor(
+                $base,
+                '/getting-started/'.$guideSlug,
+                $this->pageModel->localesForSlug($guideSlug),
+                $guide['updated_at'] ?? null
+            ));
         }
 
-        $blogs = $this->blogModel->getDirectoryWithPagination(1, 500);
-        foreach ($blogs['data'] as $blog) {
-            $urls[] = [
-                'loc' => $base.lurl('/blog/'.rawurlencode($blog['blog_slug']), 'en'),
-                'lastmod' => $blog['last_post_at'] ?? null,
-            ];
+        foreach ($this->blogModel->findPublicForSitemap() as $blog) {
+            $urls = array_merge($urls, $this->entriesFor(
+                $base,
+                '/blog/'.rawurlencode($blog['blog_slug']),
+                $this->localeSetFor($blog),
+                $blog['last_post_at'] ?? null
+            ));
         }
 
         foreach ($this->postModel->findPublicForSitemap() as $post) {
-            $urls[] = [
-                'loc' => $base.lurl('/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']), 'en'),
-                'lastmod' => $post['updated_at'] ?? null,
-            ];
+            $urls = array_merge($urls, $this->entriesFor(
+                $base,
+                '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']),
+                $this->localeSetFor($post),
+                $post['updated_at'] ?? null
+            ));
         }
 
         $lines = ['<?xml version="1.0" encoding="UTF-8"?>'];
