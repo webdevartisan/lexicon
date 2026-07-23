@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->postModel = new PostModel($this->db);
     $this->settingsModel = new BlogSettingsModel($this->db);
 
-    $this->viewer = new class implements Framework\Interfaces\TemplateViewerInterface
+    $this->viewer = new class() implements Framework\Interfaces\TemplateViewerInterface
     {
         public function render(string $template, array $data = []): string
         {

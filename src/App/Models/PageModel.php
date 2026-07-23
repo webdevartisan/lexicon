@@ -20,13 +20,6 @@ class PageModel extends AppModel
     public const FALLBACK_LOCALE = 'en';
 
     /**
-     * A published page for the visitor, falling back to English.
-     *
-     * @param  string  $slug  Page slug, e.g. 'about'
-     * @param  string  $locale  Visitor locale
-     * @return array<string, mixed>|null Page row, or null when unpublished/missing
-     */
-    /**
      * Locales this page has a published row for.
      *
      * A page translated into two languages is a genuine pair of alternates. One
@@ -46,6 +39,13 @@ class PageModel extends AppModel
         return array_map(static fn (array $row): string => (string) $row['locale'], $rows);
     }
 
+    /**
+     * A published page for the visitor, falling back to English.
+     *
+     * @param  string  $slug  Page slug, e.g. 'about'
+     * @param  string  $locale  Visitor locale
+     * @return array<string, mixed>|null Page row, or null when unpublished/missing
+     */
     public function findPublished(string $slug, string $locale): ?array
     {
         $sql = "SELECT * FROM {$this->getTable()}

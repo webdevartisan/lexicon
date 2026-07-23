@@ -486,12 +486,6 @@ class BlogModel extends AppModel
     }
 
     /**
-     * Get a blog by its slug.
-     *
-     * @param  string  $slug  Blog slug
-     * @return array<string, mixed>|null Blog record, or null if not found
-     */
-    /**
      * Published blogs with the locale data the sitemap needs.
      *
      * Separate from getDirectoryWithPagination because that one feeds the explore
@@ -520,6 +514,12 @@ class BlogModel extends AppModel
         return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Get a blog by its slug.
+     *
+     * @param  string  $slug  Blog slug
+     * @return array<string, mixed>|null Blog record, or null if not found
+     */
     public function getBlogBySlug(string $slug): ?array
     {
         $cacheKey = 'blog-by-slug:'.$slug;

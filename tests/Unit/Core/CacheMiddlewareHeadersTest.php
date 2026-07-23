@@ -23,7 +23,7 @@ beforeEach(function () {
 
     $this->cache = new CacheService($this->cacheDir, true);
 
-    $this->auth = new class implements AuthInterface
+    $this->auth = new class() implements AuthInterface
     {
         public function check(): bool
         {
@@ -113,7 +113,7 @@ test('the cached body itself still comes back intact', function () {
 test('a set-cookie header is never replayed from cache', function () {
     $request = new Request('/page', 'GET', [], [], [], [], [], []);
 
-    $handler = new class implements RequestHandlerInterface
+    $handler = new class() implements RequestHandlerInterface
     {
         public function handle(Request $request): Response
         {

@@ -335,7 +335,8 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
     // than a generic two-letter pattern keeps future routes such as /go/ or /my/
     // from silently losing localization.
     $registry = App\Services\LocaleRegistry::instance();
-    $firstSegment = strtolower(explode('/', ltrim($target, '/'))[0] ?? '');
+    // explode always yields at least one element, so index 0 is always present.
+    $firstSegment = strtolower(explode('/', ltrim($target, '/'))[0]);
 
     if ($registry->isSupported($firstSegment)) {
         return $target;
