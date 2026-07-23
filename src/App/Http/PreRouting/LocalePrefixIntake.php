@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\PreRouting;
 
 use App\Services\LocaleRegistry;
+use App\Services\LocaleState;
+use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
 
 /**
@@ -112,6 +114,11 @@ final class LocalePrefixIntake
             // If we ever want the router to see query too, we could include it here:
             // $request->uri = ($stripped === '' ? '/' : $stripped) . ($query ? ('?' . $query) : '');
 
+            // The prefix is the content locale, always. Chrome follows it for
+            // guests; the signed-in account preference overrides only the chrome
+            // half, and that arrives in a later change.
+            LocaleState::set(LocaleContext::forGuest($first));
+
             return;
         }
 
@@ -140,6 +147,10 @@ final class LocalePrefixIntake
             'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
             'samesite' => 'Lax',
         ]);*/
+
+        // An unsafe method is served here rather than redirected, so it still
+        // needs a context for anything downstream that reads the locale.
+        LocaleState::set(LocaleContext::forGuest($resolved));
 
         // For unsafe methods, avoid redirecting to protect non-idempotent requests.
         if ($isUnsafe) {

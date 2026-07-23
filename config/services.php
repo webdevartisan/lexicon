@@ -209,15 +209,16 @@ $container->setShared(App\Services\NavigationService::class, function ($c) {
  * Translation service provides i18n support with locale detection.
  *
  * We register as factory (NOT shared) because each request may have a different
- * locale from session. This ensures proper locale isolation between requests
- * in long-running processes.
+ * locale. This ensures proper locale isolation between requests in long-running
+ * processes.
+ *
+ * Interface strings follow the chrome locale, which is the content locale for
+ * guests and the reader's own preference once they are signed in.
  */
 $container->set(App\Services\TranslationService::class, function ($c) {
-    /** @var Framework\Session $session */
-    $session = $c->get(Framework\Session::class);
-    $locale = $session->get('locale') ?? 'en';
-
-    return new App\Services\TranslationService($locale);
+    return new App\Services\TranslationService(
+        App\Services\LocaleState::get()->chromeLocale
+    );
 });
 
 /**

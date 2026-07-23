@@ -294,9 +294,10 @@ function lurl(string $path, ?string $locale = null): string
 {
     $path = '/'.ltrim($path, '/');
 
-    // Resolve locale from session/cookie if not provided
-    $current = $locale
-        ?? strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    // URLs point at content, so they follow the content locale rather than the
+    // viewer's interface preference. The explicit argument stays for callers
+    // like the sitemap, which emits one URL per locale a page exists in.
+    $current = $locale ?? App\Services\LocaleState::get()->contentLocale;
 
     return '/'.$current.$path;
 }
@@ -388,7 +389,7 @@ function safe_return_to(?string $url): ?string
  */
 function locale(): string
 {
-    return strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+    return App\Services\LocaleState::get()->contentLocale;
 }
 
 /**
