@@ -167,8 +167,10 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     // Fade the last word or two into muted weight so the quote ends on a quieter beat.
     $words = preg_split('/\s+/', $quote);
     $tailLen = count($words) >= 4 ? 2 : 1;
-    $head = e(implode(' ', array_slice($words, 0, -$tailLen)));
-    $tail = e(implode(' ', array_slice($words, -$tailLen)));
+    // Not $head: template globals share this scope, and `head` is the i18n one
+    // the layout reads for canonical, hreflang and the language switcher.
+    $quoteHead = e(implode(' ', array_slice($words, 0, -$tailLen)));
+    $quoteTail = e(implode(' ', array_slice($words, -$tailLen)));
     ?>
 <section class="longread">
   <div class="container">
@@ -179,7 +181,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       </div>
 
       <blockquote class="longread-quote reveal">
-        &ldquo;<?= $head ?> <span class="accent"><?= $tail ?></span>&rdquo;
+        &ldquo;<?= $quoteHead ?> <span class="accent"><?= $quoteTail ?></span>&rdquo;
       </blockquote>
 
       <div class="longread-author reveal">

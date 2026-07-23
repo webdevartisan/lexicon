@@ -46,13 +46,25 @@ final class LocaleState
      * knowledge, which downstream reads as every supported locale, and that is
      * the right answer for chrome-only pages such as the home page.
      *
+     * Codes the platform no longer serves are dropped here rather than at each
+     * reader. The sets are built from stored translation rows, which outlive the
+     * registry: a dropped locale leaves its rows behind, and unfiltered those
+     * produced an hreflang and a switcher entry pointing at a URL that redirects
+     * straight back. Filtering at the one place every set enters means no
+     * consumer can be handed a locale that has no strings file.
+     *
      * @param  string[]  $set
      */
     public static function setLocaleSet(array $set): void
     {
-        self::$localeSet = array_values(array_unique(array_map(
-            static fn ($code): string => strtolower(trim((string) $code)),
-            $set
+        $registry = LocaleRegistry::instance();
+
+        self::$localeSet = array_values(array_unique(array_filter(
+            array_map(
+                static fn ($code): string => strtolower(trim((string) $code)),
+                $set
+            ),
+            static fn (string $code): bool => $registry->isSupported($code)
         )));
     }
 

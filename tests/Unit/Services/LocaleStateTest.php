@@ -60,3 +60,29 @@ test('reset clears the locale set too', function () {
 
     expect(LocaleState::localeSet())->toBe([]);
 });
+
+/**
+ * The dev database still holds post_translations rows for fr, a locale that was
+ * dropped from the registry. Left unfiltered those reached the head builder,
+ * which advertised hreflang="fr" and offered a French entry in the switcher,
+ * both pointing at a URL that redirects away. ContentLocaleResolver filtered its
+ * own working copy, so nothing caught it until the themes started rendering the
+ * set.
+ */
+test('a locale set drops codes the platform does not serve', function () {
+    LocaleState::setLocaleSet(['en', 'fr', 'el']);
+
+    expect(LocaleState::localeSet())->toBe(['en', 'el']);
+});
+
+test('a locale set of only unsupported codes comes back empty', function () {
+    LocaleState::setLocaleSet(['fr', 'de']);
+
+    expect(LocaleState::localeSet())->toBe([]);
+});
+
+test('filtering still normalises case and whitespace', function () {
+    LocaleState::setLocaleSet([' EN ', 'El', 'en']);
+
+    expect(LocaleState::localeSet())->toBe(['en', 'el']);
+});

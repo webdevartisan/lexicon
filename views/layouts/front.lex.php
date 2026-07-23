@@ -33,7 +33,9 @@ $old = old();
         <link rel="alternate" href="{{ alt.href }}" hreflang="{{ alt.hreflang }}" />
         {% endforeach; %}
 
+        {% if (!empty($head['alternates'])): %}
         <link rel="alternate" href="{{ head.xDefaultUrl }}" hreflang="x-default" />
+        {% endif; %}
 
         <!-- Open Graph locale -->
         <meta property="og:locale" content="{{ head.ogLocale }}" />

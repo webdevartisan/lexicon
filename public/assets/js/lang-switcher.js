@@ -45,11 +45,13 @@
     var spaceBelow = viewportH - rect.bottom;
     var spaceAbove = rect.top;
 
+    // Vertical placement only. Width belongs to the stylesheet, which each theme
+    // sets for itself; an inline min-width here silently overrode it and squeezed
+    // the menu down to the width of the little "EN" button.
     p.menu.style.top = '';
     p.menu.style.bottom = '';
     p.menu.style.maxHeight = '';
     p.menu.style.overflowY = '';
-    p.menu.style.minWidth = Math.ceil(rect.width) + 'px';
 
     // Flip above the button when there is not enough room below it.
     if (spaceBelow < menuHeight + GAP && spaceAbove > spaceBelow) {

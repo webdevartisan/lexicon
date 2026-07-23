@@ -119,8 +119,25 @@ final class HeadI18nBuilder
         return $out;
     }
 
+    /**
+     * The site's own origin, taken from configuration.
+     *
+     * Deliberately not the Host header. These URLs go into canonical, hreflang
+     * and the language switcher's links, and the full-page cache key carries no
+     * host, so a request sent with "Host: evil.com" would poison the cached page
+     * for every later visitor. It also keeps alternates on the same origin as
+     * the canonical, which BlogController already builds from APP_URL.
+     */
     private function origin(): string
     {
+        $configured = rtrim((string) env('APP_URL', ''), '/');
+
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        // Only reached when APP_URL is unset, which is a misconfiguration; a
+        // relative-looking origin is still better than trusting the header.
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['SERVER_PORT'] ?? null) === '443');
 

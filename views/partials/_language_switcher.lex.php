@@ -2,6 +2,12 @@
 // Driven entirely by the alternates the head builder already computed for this
 // page, so the switcher can never offer a language the page does not exist in,
 // and the query string survives a switch because it is baked into every target.
+//
+// NOTE: $head is a template global, and views share one scope with the layout
+// that includes them. A view that assigns its own $head clobbers this and the
+// switcher silently disappears from the footer while the canonical and hreflang
+// in the head, rendered earlier, still look right. Folio's pull quote did
+// exactly that. Do not reuse the name in a view.
 $alternates = $head['alternates'] ?? [];
 $currentCode = $currentLang ?? '';
 

@@ -13,7 +13,11 @@ use App\ValueObjects\LocaleContext;
  * and advertised five translations of a post that had one.
  */
 beforeEach(function () {
+    // Set deliberately, and deliberately never expected in a URL: the builder
+    // takes its origin from APP_URL so the Host header cannot reach the output.
     $_SERVER['HTTP_HOST'] = 'lexicon.test';
+
+    $this->origin = rtrim((string) env('APP_URL'), '/');
     $this->builder = new HeadI18nBuilder(new LocaleRegistry(ROOT_PATH));
 });
 
@@ -89,7 +93,7 @@ test('canonical points at the current content locale and keeps the query', funct
     LocaleState::setLocaleSet(['en', 'el']);
 
     expect($this->builder->build('/blog/x/archive', 'page=3')['head']['canonicalUrl'])
-        ->toBe('http://lexicon.test/el/blog/x/archive?page=3');
+        ->toBe($this->origin.'/el/blog/x/archive?page=3');
 });
 
 /**
@@ -101,7 +105,7 @@ test('x-default uses the page default when the platform default is absent', func
     LocaleState::setLocaleSet(['el']);
 
     expect($this->builder->build('/blog/greek-blog')['head']['xDefaultUrl'])
-        ->toBe('http://lexicon.test/el/blog/greek-blog');
+        ->toBe($this->origin.'/el/blog/greek-blog');
 });
 
 test('the og locale is region qualified and excludes the current one', function () {
@@ -145,4 +149,32 @@ test('chrome direction is always explicit', function () {
     LocaleState::set(LocaleContext::forGuest('en'));
 
     expect($this->builder->build('/')['chromeDir'])->toBe('ltr');
+});
+
+/**
+ * Canonical and hreflang describe the site's own URLs, so the origin has to come
+ * from configuration rather than the request. Deriving it from the Host header
+ * let an attacker send "Host: evil.com", have the response cached under a key
+ * that carries no host, and serve every later visitor a page whose alternates
+ * and switcher links pointed at their domain.
+ */
+test('the origin comes from configuration, not the request host', function () {
+    $_SERVER['HTTP_HOST'] = 'evil.example.com';
+
+    LocaleState::set(LocaleContext::forGuest('en'));
+    $globals = $this->builder->build('/blogs');
+
+    expect($globals['head']['canonicalUrl'])->toStartWith(rtrim((string) env('APP_URL'), '/'))
+        ->and($globals['head']['canonicalUrl'])->not->toContain('evil.example.com');
+});
+
+test('alternates are built on the same configured origin', function () {
+    $_SERVER['HTTP_HOST'] = 'evil.example.com';
+
+    LocaleState::set(LocaleContext::forGuest('en'));
+    LocaleState::setLocaleSet(['en', 'el']);
+
+    foreach ($this->builder->build('/blogs')['head']['alternates'] as $alternate) {
+        expect($alternate['href'])->not->toContain('evil.example.com');
+    }
 });

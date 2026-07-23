@@ -327,3 +327,85 @@ footer.site {
     .nav-toggle span { width: 16px; }
     .masthead-actions { gap: 0.55rem; }
 }
+
+/* ---------- language switcher ---------- */
+/* Shared markup from views/partials/_language_switcher.lex.php. An entry is a
+   link for guests and a form button for signed-in readers, so both are styled. */
+
+.lang-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-switcher__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.lang-switcher__toggle:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* Sits in the footer, so it opens upward by default; the script re-measures. */
+.lang-switcher__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 40;
+  display: none;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--bone-deep);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: 0 12px 28px rgba(10, 10, 10, 0.12);
+}
+
+.lang-switcher__menu.show { display: block; }
+
+.lang-switcher__item {
+  display: block;
+  margin: 0;
+}
+
+.lang-switcher__item a,
+.lang-switcher__item button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  color: var(--ink-soft);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lang-switcher__item a:hover,
+.lang-switcher__item button:hover {
+  background: rgba(10, 10, 10, 0.06);
+  color: var(--ink-soft);
+}
+
+.lang-switcher__item a[aria-current="true"],
+.lang-switcher__item button[aria-current="true"] {
+  color: var(--ink);
+}
