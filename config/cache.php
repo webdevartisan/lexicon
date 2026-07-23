@@ -71,6 +71,13 @@ return [
         '/password/forgot' => 0,
         '/password/reset*' => 0,
 
+        // The full-page cache stores only the body, so a hit rebuilds the
+        // response with PHP's default text/html. Combined with nosniff that
+        // makes crawlers refuse to parse these. Both are cheap to regenerate,
+        // and the sitemap already caches its own XML internally.
+        '/robots.txt' => 0,
+        '/sitemap.xml' => 0,
+
         '/csrf-token' => 0,
         '/geo' => 0,
         '/consent' => 0,

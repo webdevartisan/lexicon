@@ -10,7 +10,11 @@ use App\Models\PostModel;
 use Framework\Core\Response;
 
 /**
- * XML sitemap for search engines: static pages, blog homes and public posts.
+ * Crawler endpoints: the XML sitemap of static pages, blog homes and public
+ * posts, plus robots.txt.
+ *
+ * Both live outside the locale-prefixed URL space, which WellKnownPathBypass
+ * enforces on the way in.
  */
 class SitemapController extends AppController
 {
@@ -37,6 +41,34 @@ class SitemapController extends AppController
 
         $this->response->addHeader('Content-Type', 'application/xml; charset=utf-8');
         $this->response->setBody($xml);
+
+        return $this->response;
+    }
+
+    /**
+     * robots.txt, served by the app rather than as a static file under public/.
+     *
+     * The Sitemap directive is only valid as an absolute URL, and the host
+     * differs between development, staging and production, so it has to be
+     * built from APP_URL at request time.
+     */
+    public function robots(): Response
+    {
+        $lines = [
+            'User-agent: *',
+            'Allow: /',
+            '',
+            'Disallow: /dashboard/',
+            'Disallow: /admin/',
+            'Disallow: /login',
+            'Disallow: /register',
+            '',
+            'Sitemap: '.rtrim(base_url(), '/').'/sitemap.xml',
+            '',
+        ];
+
+        $this->response->addHeader('Content-Type', 'text/plain; charset=utf-8');
+        $this->response->setBody(implode("\n", $lines));
 
         return $this->response;
     }

@@ -47,6 +47,7 @@ $router->add('/contact', ['controller' => 'PageController', 'action' => 'sendCon
 $router->add('/getting-started', ['controller' => 'PageController', 'action' => 'gettingStarted', 'method' => 'GET']);
 $router->add('/getting-started/{slug:[a-z0-9-]+}', ['controller' => 'PageController', 'action' => 'guide', 'method' => 'GET']);
 $router->add('/sitemap.xml', ['controller' => 'SitemapController', 'action' => 'index', 'method' => 'GET']);
+$router->add('/robots.txt', ['controller' => 'SitemapController', 'action' => 'robots', 'method' => 'GET']);
 
 // Profile route.
 $router->add('/profile/{slug:[A-Za-z0-9_\-]+}', [
