@@ -313,8 +313,9 @@ class BlogController extends AppController
     {
         $ctx = $this->loadBlogContext($blogSlug);
 
-        // Post
-        $post = $this->postModel->findBySlug($postSlug);
+        // Post. Scoped to the blog because slugs are only unique per blog, and
+        // because a blog serves every member's posts, not just the owner's.
+        $post = $this->postModel->findBySlugAndBlogId($postSlug, (int) $ctx['blog']['id']);
         if (!$post) {
             throw new PageNotFoundException('Post not be found', 404);
         }
@@ -324,11 +325,6 @@ class BlogController extends AppController
 
         if (!$canPreview && $post['status'] !== 'published') {
             throw new PageNotFoundException('Post not be found', 404);
-        }
-
-        // Guard: post must belong to the resolved author
-        if (!empty($post['author_id']) && (int) $post['author_id'] !== (int) $ctx['user']['id']) {
-            throw new PageNotFoundException('Post not be found.', 404);
         }
 
         // Swap in the viewer-locale translation before any derived fields (meta, excerpt) are built.
@@ -344,9 +340,14 @@ class BlogController extends AppController
         $dt = new \DateTime($post['published_at_raw'], new \DateTimeZone('UTC'));
         $post['published_at'] = $this->formatDateWithOrdinal($dt, blog_timezone((int) ($ctx['blog']['id'] ?? 0)));
 
-        // Enrich display fields
-        $displayName = empty($ctx['user']['display_name_cached']) ? $ctx['user']['username'] : $ctx['user']['display_name_cached'];
-        $post['author_name'] = $displayName;
+        // Enrich display fields. The byline follows the post's own author since a
+        // blog serves every member's posts; the owner is only the fallback.
+        $author = $ctx['user'];
+        if (!empty($post['author_id']) && (int) $post['author_id'] !== (int) $ctx['user']['id']) {
+            $author = $this->userModel->findById((int) $post['author_id']) ?: $ctx['user'];
+        }
+
+        $post['author_name'] = empty($author['display_name_cached']) ? $author['username'] : $author['display_name_cached'];
         $post['cover_url'] = $post['cover_url'] ?? null; // TODO update the key
 
         // --- comments enabled logic ---

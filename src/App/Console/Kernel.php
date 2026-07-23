@@ -14,6 +14,7 @@ use App\Console\Commands\PublishDuePostsCommand;
 use App\Console\Commands\SchedulePruneRunsCommand;
 use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
+use App\Console\Commands\SeedCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -63,8 +64,10 @@ class Kernel extends ConsoleKernel
 
             'schedule:prune-runs' => SchedulePruneRunsCommand::class,
 
+            // Populates the database with realistic fake content for local dev
+            'db:seed' => SeedCommand::class,
+
             // 'db:migrate'    => MigrateCommand::class,
-            // 'db:seed'       => SeedCommand::class,
             // 'make:controller' => MakeControllerCommand::class,
         ];
     }

@@ -255,6 +255,25 @@ class PostModel extends AppModel
     }
 
     /**
+     * Find a post by slug within a specific blog.
+     *
+     * Slugs are only unique per blog (unique_blog_slug), so public blog routes
+     * must scope the lookup; an unscoped search can return another blog's post
+     * that happens to share the slug.
+     *
+     * @param  string  $slug  Post slug
+     * @param  int  $blogId  Blog the post must belong to
+     * @return array<string, mixed>|null Post record, or null if not found
+     */
+    public function findBySlugAndBlogId(string $slug, int $blogId): ?array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE slug = :slug AND blog_id = :blog_id LIMIT 1";
+        $stmt = $this->database->query($sql, [':slug' => $slug, ':blog_id' => $blogId]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
      * Get the author (User) of a post.
      *
      * @param  int  $userId  User ID
