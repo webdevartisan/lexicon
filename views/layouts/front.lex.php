@@ -4,7 +4,15 @@ $errors = errors();
 $old = old();
 ?>
 <!DOCTYPE HTML>
-<html lang="{{ currentLang }}" {{ isRtl|raw }}>
+<?php
+// Declared from the chrome locale, not the content locale: every visible string
+// in this layout comes from $t(), which follows the reader's own preference. A
+// guest has them equal, so this only differs for someone signed in who chose a
+// language, and it is what stops Arabic text rendering inside lang="en" ltr.
+// The canonical and hreflang below stay content-based, because those describe
+// the URL rather than the text.
+?>
+<html lang="{{ chromeLang }}" dir="{{ chromeDir }}">
 
 	<head>
 		<title>{% yield title %}</title>

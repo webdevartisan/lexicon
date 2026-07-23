@@ -4,7 +4,7 @@ $errors = errors();
 $old = old();
 ?>
 <!DOCTYPE html>
-<html lang="en" class="dark scrollbar-gutter-stable scroll-smooth group" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-mode="dark" data-topbar="dark" dir="ltr">
+<html lang="{{ chromeLang }}" class="dark scrollbar-gutter-stable scroll-smooth group" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-mode="dark" data-topbar="dark" dir="{{ chromeDir }}">
 
 <head>
 

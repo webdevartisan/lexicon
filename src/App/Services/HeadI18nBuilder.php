@@ -39,6 +39,7 @@ final class HeadI18nBuilder
     public function build(string $path, ?string $query = null): array
     {
         $current = LocaleState::get()->contentLocale;
+        $chrome = LocaleState::get()->chromeLocale;
         $suffix = ($path === '/' ? '' : $path).($query !== null && $query !== '' ? '?'.$query : '');
         $origin = $this->origin();
 
@@ -59,6 +60,13 @@ final class HeadI18nBuilder
             'defaultLocale' => $this->registry->default(),
             'currentLang' => $current,
             'isRtl' => $this->registry->isRtl($current) ? 'dir="rtl"' : '',
+
+            // The interface half, kept separate from currentLang because the
+            // dashboard renders in the reader's own language whatever locale
+            // prefix the URL carries. A bare value rather than a whole
+            // attribute, since the layout must always carry a dir.
+            'chromeLang' => $chrome,
+            'chromeDir' => $this->registry->isRtl($chrome) ? 'rtl' : 'ltr',
 
             'head' => [
                 'canonicalUrl' => $origin.'/'.$current.$suffix,

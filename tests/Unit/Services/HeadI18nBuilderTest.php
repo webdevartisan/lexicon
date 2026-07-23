@@ -113,3 +113,36 @@ test('the og locale is region qualified and excludes the current one', function 
     expect($head['ogLocale'])->toBe('en_US')
         ->and($head['ogLocaleAlternates'])->toBe(['el_GR']);
 });
+
+/**
+ * The dashboard renders in the reader's own language whatever locale prefix the
+ * URL carries, so its lang and dir cannot come from currentLang.
+ */
+test('the chrome globals follow the chrome locale, not the content', function () {
+    LocaleState::set(new LocaleContext('el', 'en'));
+
+    $globals = $this->builder->build('/dashboard/account');
+
+    expect($globals['chromeLang'])->toBe('en')
+        ->and($globals['chromeDir'])->toBe('ltr');
+});
+
+test('an rtl chrome locale flips the direction independently of the content', function () {
+    LocaleState::set(new LocaleContext('en', 'ar'));
+
+    $globals = $this->builder->build('/dashboard/account');
+
+    expect($globals['chromeLang'])->toBe('ar')
+        ->and($globals['chromeDir'])->toBe('rtl')
+        ->and($globals['isRtl'])->toBe('');
+});
+
+/**
+ * Emitted as a bare value rather than a whole attribute, because the layout it
+ * feeds must always carry a dir and never an empty one.
+ */
+test('chrome direction is always explicit', function () {
+    LocaleState::set(LocaleContext::forGuest('en'));
+
+    expect($this->builder->build('/')['chromeDir'])->toBe('ltr');
+});

@@ -9,6 +9,7 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\UserPreferencesModel;
+use App\Services\LocaleState;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
 
@@ -189,7 +190,11 @@ class NavGlobalsMiddleware
         // Per-user sidebar cache key — keeps the Shared item visibility correct
         // when a user gains/loses collaborator access mid-cache-window. The
         // mode suffix swaps the cached sidebar the moment a reader turns creator.
-        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c');
+        // The locale suffix matters because the sidebar labels are translated and
+        // the entry lives for a year: without it, changing the interface language
+        // would leave the navigation in the old one until the cache expired.
+        $chromeLocale = LocaleState::get()->chromeLocale;
+        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale;
 
         // add navigation globals to all templates
         $this->viewer->addGlobals([
