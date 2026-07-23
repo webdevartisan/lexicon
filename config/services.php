@@ -230,6 +230,14 @@ $container->setShared(App\Services\LocaleRegistry::class, function ($c) {
 });
 
 /**
+ * Decides whether a requested locale is one the current page actually has.
+ * Stateless, so a single shared instance is enough.
+ */
+$container->setShared(App\Services\ContentLocaleResolver::class, function ($c) {
+    return new App\Services\ContentLocaleResolver($c->get(App\Services\LocaleRegistry::class));
+});
+
+/**
  * Consent service manages GDPR/privacy consent preferences.
  *
  * We use APP_KEY for signing consent cookies to prevent tampering.

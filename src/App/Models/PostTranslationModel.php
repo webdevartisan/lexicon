@@ -136,4 +136,41 @@ class PostTranslationModel extends AppModel
 
         return $posts;
     }
+
+    /**
+     * Locales a single post has been translated into, excluding its base language.
+     *
+     * @return string[]
+     */
+    public function localesForPost(int $postId): array
+    {
+        $rows = $this->database->query(
+            "SELECT DISTINCT locale FROM {$this->getTable()} WHERE post_id = ? ORDER BY locale",
+            [$postId]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $row): string => (string) $row['locale'], $rows);
+    }
+
+    /**
+     * Locales any post in a blog has been translated into.
+     *
+     * Builds the locale set for blog-level pages, so it runs once per blog page
+     * and belongs behind the same cache as the blog's settings.
+     *
+     * @return string[]
+     */
+    public function localesForBlog(int $blogId): array
+    {
+        $rows = $this->database->query(
+            "SELECT DISTINCT t.locale
+             FROM {$this->getTable()} t
+             INNER JOIN posts p ON p.id = t.post_id
+             WHERE p.blog_id = ?
+             ORDER BY t.locale",
+            [$blogId]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $row): string => (string) $row['locale'], $rows);
+    }
 }
