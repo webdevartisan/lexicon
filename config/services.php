@@ -660,6 +660,18 @@ $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
     );
 });
 
+/**
+ * CSP report rate limiter prevents flooding the unauthenticated /csp-report route.
+ *
+ * We register as factory, matching the other rate limiters above.
+ */
+$container->set(App\Services\CspReportRateLimiter::class, function ($c) {
+    return new App\Services\CspReportRateLimiter(
+        $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\CacheService::class)
+    );
+});
+
 // ============================================================================
 // RESOURCES & DTOs
 // ============================================================================

@@ -22,6 +22,13 @@ final class CsrfMiddleware implements MiddlewareInterface
      */
     private const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
+    /**
+     * Paths the browser itself POSTs to without a page, a session, or any
+     * chance to carry a token - e.g. CSP violation reports fired by the
+     * report-uri directive. Exact path match, not a prefix.
+     */
+    private const EXEMPT_PATHS = ['/csp-report'];
+
     public function __construct(
         private Csrf $csrf,
         private Session $session
@@ -30,6 +37,10 @@ final class CsrfMiddleware implements MiddlewareInterface
     public function process(Request $request, RequestHandlerInterface $next): Response
     {
         if (in_array(strtoupper($request->method), self::SAFE_METHODS, true)) {
+            return $next->handle($request);
+        }
+
+        if (in_array($request->path(), self::EXEMPT_PATHS, true)) {
             return $next->handle($request);
         }
 
