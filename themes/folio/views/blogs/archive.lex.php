@@ -63,7 +63,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
           ?>
-      <article class="article reveal" onclick="location.href='<?= $url ?>'">
+      <article class="article reveal" data-card-link="<?= e($url) ?>">
         <div class="article-meta">
           <span class="cat"><?= sprintf('%02d', $n) ?> &mdash; <?= e($cat) ?></span>
           <?php if ($date) { ?><span><?= $date ?></span><?php } ?>

@@ -18,7 +18,7 @@ foreach (($cards ?? []) as $i => $post) {
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>
-  <article class="idx-row reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-cover="<?= $img ?>" onclick="location.href='<?= $url ?>'">
+  <article class="idx-row reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-cover="<?= $img ?>" data-card-link="<?= e($url) ?>">
     <span class="idx-num"><?= sprintf('%02d', $i + 1) ?></span>
     <h3 class="idx-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
     <div class="idx-thumb" aria-hidden="true">
@@ -34,7 +34,7 @@ foreach (($cards ?? []) as $i => $post) {
       <?php foreach (array_slice($tags, 0, 2) as $t) {
           $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
           ?>
-      <a class="idx-tag" href="<?= $tUrl ?>" onclick="event.stopPropagation();">#<?= e((string) ($t['name'] ?? '')) ?></a>
+      <a class="idx-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
       <?php } ?>
     </div>
     <?php } ?>

@@ -20,7 +20,7 @@ foreach (($cards ?? []) as $i => $post) {
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>
   <article class="index-row reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>"
-           data-cover="<?= e($img) ?>" data-cap="<?= $title ?>" onclick="location.href='<?= $url ?>'">
+           data-cover="<?= e($img) ?>" data-cap="<?= $title ?>" data-card-link="<?= e($url) ?>">
     <span class="row-no"><?= sprintf('%02d', $i + 1) ?></span>
 
     <span class="plate row-thumb" aria-hidden="true">
@@ -34,7 +34,7 @@ foreach (($cards ?? []) as $i => $post) {
         <?php foreach (array_slice($tags, 0, 2) as $t) {
             $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
             ?>
-        <a class="row-tag" href="<?= $tUrl ?>" onclick="event.stopPropagation();">#<?= e((string) ($t['name'] ?? '')) ?></a>
+        <a class="row-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
         <?php } ?>
       </div>
       <?php } ?>

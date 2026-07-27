@@ -78,7 +78,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
           <h2 class="log-year reveal"><span>Season</span> <?= e($year) ?></h2>
           <?php } ?>
 
-          <article class="waypoint reveal" onclick="location.href='<?= $url ?>'">
+          <article class="waypoint reveal" data-card-link="<?= e($url) ?>">
             <span class="wp-node" aria-hidden="true"></span>
             <span class="wp-no">W-<?= sprintf('%02d', $n) ?></span>
 

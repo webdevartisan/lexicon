@@ -90,7 +90,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <h2 class="catalogue-year reveal"><?= e($year) ?> <span class="catalogue-year-roman"><?= $roman((int) $year) ?></span></h2>
         <?php } ?>
 
-        <article class="work-row reveal" onclick="location.href='<?= $url ?>'">
+        <article class="work-row reveal" data-card-link="<?= e($url) ?>">
           <span class="row-no">Cat. <?= sprintf('%02d', $n) ?></span>
 
           <span class="frame row-thumb" aria-hidden="true">

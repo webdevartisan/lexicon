@@ -61,7 +61,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
           ?>
-      <article class="idx-row reveal" data-cover="<?= $img ?>" onclick="location.href='<?= $url ?>'">
+      <article class="idx-row reveal" data-cover="<?= $img ?>" data-card-link="<?= e($url) ?>">
         <span class="idx-num"><?= sprintf('%02d', $n) ?></span>
         <h3 class="idx-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
         <div class="idx-thumb" aria-hidden="true">

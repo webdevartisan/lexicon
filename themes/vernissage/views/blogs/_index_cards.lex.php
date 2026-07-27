@@ -21,7 +21,7 @@ foreach (($cards ?? []) as $i => $post) {
 
     $year = local_datetime($post['published_at'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0))) ?: date('Y');
     ?>
-  <article class="work reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" onclick="location.href='<?= $url ?>'">
+  <article class="work reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-card-link="<?= e($url) ?>">
     <a href="<?= $url ?>" class="frame work-frame" aria-hidden="true" tabindex="-1">
       <span class="frame-img"><img src="<?= e($img) ?>" alt="" loading="lazy" /></span>
     </a>
@@ -38,7 +38,7 @@ foreach (($cards ?? []) as $i => $post) {
           <?php foreach (array_slice($tags, 0, 2) as $t) {
               $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
               ?>
-          <a class="work-tag" href="<?= $tUrl ?>" onclick="event.stopPropagation();">#<?= e((string) ($t['name'] ?? '')) ?></a>
+          <a class="work-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
           <?php } ?>
         <?php } ?>
       </div>

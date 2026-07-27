@@ -83,4 +83,16 @@ document.addEventListener("DOMContentLoaded", function () {
         { yPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: footWrap, start: "top bottom", end: "bottom 92%", scrub: 0.8 } });
     }
     }
+
+    // Whole-card click-through: nested links (title, tags) still handle their
+    // own navigation since clicks on an <a> are excluded here.
+    document.addEventListener("click", function (e) {
+        if (e.target.closest("a")) {
+            return;
+        }
+        var card = e.target.closest("[data-card-link]");
+        if (card) {
+            window.location.href = card.getAttribute("data-card-link");
+        }
+    });
 });
