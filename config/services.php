@@ -131,6 +131,16 @@ $container->setShared(Framework\Security\Csrf::class, function ($c) {
     );
 });
 
+/**
+ * CSP nonce service issues one random nonce per request for inline scripts.
+ *
+ * We register as singleton so the nonce embedded in the response header
+ * matches the nonce attribute rendered on inline <script> tags.
+ */
+$container->setShared(Framework\Security\Csp::class, function ($c) {
+    return new Framework\Security\Csp();
+});
+
 // ============================================================================
 // VIEW & TEMPLATE SERVICES (Shared Singletons)
 // ============================================================================

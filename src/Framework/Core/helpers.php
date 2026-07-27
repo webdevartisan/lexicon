@@ -247,6 +247,20 @@ function csrf_field(): string
 }
 
 /**
+ * Get the current request's CSP nonce for inline <script> tags.
+ *
+ * @return string Base64 nonce, matching the value sent in the
+ *                Content-Security-Policy header for this request.
+ */
+function csp_nonce(): string
+{
+    /** @var \Framework\Security\Csp $csp */
+    $csp = \Framework\Core\App::container()->get(\Framework\Security\Csp::class);
+
+    return $csp->getNonce();
+}
+
+/**
  * Format DateTime with English ordinal suffix.
  *
  * Examples: "January 3rd, 2025", "December 21st, 2025"
