@@ -500,3 +500,18 @@ function windowScroll() {
         }
     }
 }
+
+/**
+ * Confirm-before-submit for destructive buttons
+ *
+ * Reads the message off data-confirm instead of an inline onclick, so
+ * buttons stay CSP-safe under script-src (no inline attribute handlers).
+ */
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-confirm]');
+    if (!btn) return;
+
+    if (!window.confirm(btn.getAttribute('data-confirm'))) {
+        e.preventDefault();
+    }
+});

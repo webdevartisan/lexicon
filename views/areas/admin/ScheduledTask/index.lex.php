@@ -202,10 +202,10 @@ $heartbeatText = $heartbeatAge === null ? '' : relative_time(gmdate('Y-m-d H:i:s
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="<?= e(lurl($basePath.'/'.$taskId.'/delete')) ?>" class="m-0"
-                                          onsubmit="return confirm('Delete this task and its history?');">
+                                    <form method="POST" action="<?= e(lurl($basePath.'/'.$taskId.'/delete')) ?>" class="m-0">
                                         {{ csrf_field() }}
                                         <button type="submit"
+                                                data-confirm="Delete this task and its history?"
                                                 data-tooltip data-tooltip-content="Delete task" data-tooltip-placement="top"
                                                 aria-label="Delete task"
                                                 class="p-2 rounded-md text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
@@ -224,7 +224,7 @@ $heartbeatText = $heartbeatAge === null ? '' : relative_time(gmdate('Y-m-d H:i:s
     <?php } ?>
 </div>
 
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
     var endpoint = <?= json_encode(lurl($basePath.'/statuses')) ?>;
 

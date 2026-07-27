@@ -44,7 +44,7 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
         </div>
         <input id="meta_title" name="meta_title" type="text" maxlength="70"
           value="<?= e($post['meta_title'] ?? '') ?>"
-          oninput="updateCharCount('meta_title', 60)"
+          data-char-limit="60"
           class="<?= $inputClass ?>"
           placeholder="Defaults to post title">
         <p class="<?= $hintClass ?>">50-60 characters displays without truncation.</p>
@@ -56,7 +56,7 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
           <span id="meta_description_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/160</span>
         </div>
         <textarea id="meta_description" name="meta_description" rows="3" maxlength="200"
-          oninput="updateCharCount('meta_description', 160)"
+          data-char-limit="160"
           class="<?= $inputClass ?>"
           placeholder="Compelling summary for search results"><?= e($post['meta_description'] ?? '') ?></textarea>
         <p class="<?= $hintClass ?>">150-160 characters. Falls back to the excerpt when empty.</p>

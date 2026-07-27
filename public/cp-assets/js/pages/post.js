@@ -26,6 +26,14 @@ function updateCharCount(fieldId, limit) {
 }
 window.updateCharCount = updateCharCount;
 
+// Reads the limit off data-char-limit instead of an inline oninput, so the
+// SEO/social fields stay CSP-safe under script-src (no inline attributes).
+document.addEventListener('input', function (e) {
+  if (e.target.matches('[data-char-limit]')) {
+    updateCharCount(e.target.id, parseInt(e.target.getAttribute('data-char-limit'), 10));
+  }
+});
+
 function fieldValue(id) {
   const el = document.getElementById(id);
   return el ? el.value.trim() : '';

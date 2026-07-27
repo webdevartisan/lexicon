@@ -238,7 +238,7 @@
                             </div>
                             <?php if ($canUnassignThis) { ?>
                             <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/unassign-reviewer" class="m-0 shrink-0"
-                                  onsubmit="return confirm('<?= e($isSelf ? 'Release this post back to the review queue?' : 'Unassign this reviewer?') ?>');">
+                                  data-confirm="<?= e($isSelf ? 'Release this post back to the review queue?' : 'Unassign this reviewer?') ?>">
                                 {{ csrf_field() }}
                                 <input type="hidden" name="reviewer_id" value="<?= $rid ?>">
                                 <button type="submit" class="text-[11px] font-medium text-slate-500 hover:text-red-500 inline-flex items-center gap-1">

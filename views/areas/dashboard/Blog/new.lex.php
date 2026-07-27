@@ -79,7 +79,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     const NameInput = document.getElementById('name');
     const SlugInput = document.getElementById('slug');

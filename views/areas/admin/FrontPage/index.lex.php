@@ -146,7 +146,7 @@ if (!isset($tabs[$activeTab]) && $activeTab !== 'global') {
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
     // Tab switch without page reload; keep language switcher visible only on
     // the locale-aware tabs (the "Global" tab shares one row per key).
     document.addEventListener('DOMContentLoaded', () => {

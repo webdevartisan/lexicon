@@ -96,7 +96,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
   var toggle = document.getElementById('password_toggle');
   var field = document.getElementById('password');

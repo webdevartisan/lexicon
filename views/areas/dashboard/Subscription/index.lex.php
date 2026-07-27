@@ -56,7 +56,7 @@
                             </div>
                         </div>
                         <form action="/library/subscriptions/<?= (int) $s['id'] ?>/unsubscribe" method="post"
-                              onsubmit="return confirm('Unsubscribe from <?= e(addslashes((string) $s['blog_name'])) ?>?');">
+                              data-confirm="Unsubscribe from <?= e((string) $s['blog_name']) ?>?">
                             <?= csrf_field() ?>
                             <button type="submit"
                                     class="btn bg-white text-slate-500 border-slate-200 hover:text-red-500 hover:border-red-200 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-200 dark:hover:text-red-400 text-xs">

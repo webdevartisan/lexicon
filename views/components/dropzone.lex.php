@@ -140,7 +140,7 @@ $maxSizeText = $maxsize >= 1
                id="<?= e($elementName) ?>_library_url"
                name="<?= e($elementName) ?>_library_url"
                value="">
-        <script>
+        <script nonce="<?= csp_nonce() ?>">
         (function () {
             var input = document.getElementById('<?= e($elementName) ?>_library_url');
             if (!input) return;

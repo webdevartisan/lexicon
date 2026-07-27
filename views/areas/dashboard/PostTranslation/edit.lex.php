@@ -5,7 +5,7 @@
 
 {% block head %}
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
-<script>window.editorBlogId = <?= (int) ($post['blog_id'] ?? 0) ?>;</script>
+<script nonce="<?= csp_nonce() ?>">window.editorBlogId = <?= (int) ($post['blog_id'] ?? 0) ?>;</script>
 <script src="/assets/js/initeditor.js" referrerpolicy="origin"></script>
 {% endblock %}
 
@@ -114,7 +114,7 @@ $formErrors = errors();
           <div class="p-4">
             <button type="submit"
               form="deleteTranslation"
-              onclick="return confirm(<?= e(json_encode($t('post.translations.deleteConfirm'))) ?>);"
+              data-confirm="<?= e($t('post.translations.deleteConfirm')) ?>"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20">
               <i data-lucide="trash-2" class="size-3.5"></i>
               {{ t('post.translations.delete') }}

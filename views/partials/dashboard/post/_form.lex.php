@@ -231,7 +231,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
       </aside>
     </div>
 
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
     var field = document.getElementById('tagsField');
     var chips = document.getElementById('tagChips');

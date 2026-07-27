@@ -85,14 +85,14 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                         </form>
                         <?php } elseif ($assignedToMe) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/unassign-reviewer" class="m-0"
-                              onsubmit="return confirm('Release this post back to the queue?');">
+                              data-confirm="Release this post back to the queue?">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($currentUserId ?? 0) ?>">
                             {% cmp="btn" type="submit" variant="slate" icon="log-out" label="Release" %}
                         </form>
                         <?php } elseif (!$unassigned && (in_array($blogRole, ['editor', 'owner'], true) || !empty($isAdmin))) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/unassign-reviewer" class="m-0"
-                              onsubmit="return confirm('Unassign <?= e(addslashes($p['reviewer_username'] ?? 'this reviewer')) ?>?');">
+                              data-confirm="Unassign <?= e($p['reviewer_username'] ?? 'this reviewer') ?>?">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($p['reviewer_id'] ?? 0) ?>">
                             {% cmp="btn" type="submit" variant="slate" icon="user-minus" label="Unassign" %}

@@ -301,7 +301,7 @@ $socialLabel = $t('blog.form.fields.social.'.$platform);
 <script src="/cp-assets/js/dropzone.init.js"></script>
 <script src="/cp-assets/js/media-picker.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['theme', 'branding'];
     var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-appearance-tab]'));

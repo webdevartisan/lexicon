@@ -37,7 +37,7 @@ $hasActivity = !empty($replies) || !empty($myComments);
             </button>
         </div>
     </div>
-    <script>
+    <script nonce="<?= csp_nonce() ?>">
     (function () {
         var key = 'lexicon_reader_intro_dismissed';
         var card = document.getElementById('reader-intro');

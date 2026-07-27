@@ -195,7 +195,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
 // add JavaScript confirmation for extra safety
 document.getElementById('deleteForm')?.addEventListener('submit', function(e) {
     const checkbox = document.getElementById('confirmCheck');

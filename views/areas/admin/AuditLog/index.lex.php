@@ -28,14 +28,14 @@ $actionColor = static function (string $action): string {
     <form method="GET" action="<?= e($basePath) ?>" class="card mb-4">
         <div class="card-body">
             <div class="flex flex-col md:flex-row gap-3">
-                <select name="action" onchange="this.form.submit()"
+                <select name="action" data-auto-submit
                         class="form-select border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
                     <option value="">All actions</option>
                     <?php foreach ($actionOptions as $opt) { ?>
                     <option value="<?= e($opt) ?>" <?= $actionFilter === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
                     <?php } ?>
                 </select>
-                <select name="resource_type" onchange="this.form.submit()"
+                <select name="resource_type" data-auto-submit
                         class="form-select border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
                     <option value="">All resource types</option>
                     <?php foreach ($resourceTypeOptions as $opt) { ?>

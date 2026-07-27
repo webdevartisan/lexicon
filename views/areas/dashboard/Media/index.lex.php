@@ -114,7 +114,7 @@ $mediaSortOptions = [
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
     var root = document.querySelector('[data-media-blog-id]');
     if (!root) return;

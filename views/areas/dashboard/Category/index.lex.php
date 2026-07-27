@@ -46,13 +46,13 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
                         class="p-1.5 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
                         {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                     </button>
-                    <form method="POST" action="/dashboard/blog/<?= (int) $blog['id'] ?>/categories" class="m-0 shrink-0"
-                        onsubmit="return confirm('Delete <?= e($item['name']) ?>? Posts keep their content, they just lose this <?= e($type) ?>.');">
+                    <form method="POST" action="/dashboard/blog/<?= (int) $blog['id'] ?>/categories" class="m-0 shrink-0">
                         {{ csrf_field() }}
                         <input type="hidden" name="type" value="<?= e($type) ?>">
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                         <button type="submit" title="Delete"
+                            data-confirm="Delete <?= e($item['name']) ?>? Posts keep their content, they just lose this <?= e($type) ?>."
                             class="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                             {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                         </button>
@@ -95,7 +95,7 @@ $panel('tag', 'Tags', 'tags', $tags, 'New tag name…', 'No tags yet. You can al
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
 document.querySelectorAll('[data-rename]').forEach(function (btn) {
     btn.addEventListener('click', function () {
         var current = btn.dataset.name;

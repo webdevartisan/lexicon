@@ -104,7 +104,7 @@ foreach ($timezones as $zone) {
     </form>
 </div>
 
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
     var schemas = <?= json_encode($schemas) ?>;
     var saved = <?= json_encode((object) $arguments) ?>;

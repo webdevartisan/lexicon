@@ -326,7 +326,7 @@ $isArchived = $blogStatus === 'archived';
 <script src="/cp-assets/js/choices.init.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
 <script src="/cp-assets/js/delete-blog-modal.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['general', 'seo', 'discussion'];
     var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-settings-tab]'));
