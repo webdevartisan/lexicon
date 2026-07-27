@@ -128,7 +128,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
                 <?= csrf_field() ?>
                 <button type="submit" 
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-md hover:bg-orange-100 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-300 dark:hover:bg-orange-500/20 transition-colors"
-                        onclick="return confirm('Delete all expired cache files? This is safe and recommended.')">
+                        data-confirm="Delete all expired cache files? This is safe and recommended.">
                     {% cache 'lucide:trash-2:btn' ttl=31536000 %}<i class="size-4" data-lucide="trash-2"></i>{% endcache %}
                     Prune Expired
                 </button>
@@ -138,7 +138,7 @@ $compiledBytes = (int) ($stats['compiled_views_size_bytes'] ?? 0);
                 <?= csrf_field() ?>
                 <button type="submit" 
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/20 transition-colors"
-                        onclick="return confirm('WARNING: This will delete ALL cache files. Are you absolutely sure?')">
+                        data-confirm="WARNING: This will delete ALL cache files. Are you absolutely sure?">
                     {% cache 'lucide:x-circle:btn' ttl=31536000 %}<i class="size-4" data-lucide="x-circle"></i>{% endcache %}
                     Clear All Cache
                 </button>

@@ -76,7 +76,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <h2 class="catalogue-year reveal"><?= e($year) ?></h2>
         <?php } ?>
 
-        <article class="index-row reveal" onclick="location.href='<?= $url ?>'">
+        <article class="index-row reveal" data-card-link="<?= e($url) ?>">
           <span class="row-no"><?= sprintf('%02d', $n) ?></span>
 
           <span class="plate row-thumb" aria-hidden="true">

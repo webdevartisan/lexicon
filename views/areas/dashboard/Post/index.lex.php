@@ -311,7 +311,7 @@ if ($q !== '') {
 
 {% block scripts %}
 <script src="/cp-assets/js/tooltip.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
     const form = document.getElementById('bulk-form');
     if (!form) return;

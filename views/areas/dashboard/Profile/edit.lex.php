@@ -253,7 +253,7 @@
 {% block scripts %}
 {% include "partials/dashboard/_form_error_validity.lex.php" %}
 
-<script>
+<script nonce="<?= csp_nonce() ?>">
   // handle avatar upload preview and validation
   (function () {
     const avatarInput = document.getElementById('avatar-input');

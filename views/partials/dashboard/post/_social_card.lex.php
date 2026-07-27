@@ -54,7 +54,7 @@ $platforms = [
         </div>
         <input id="og_title" name="og_title" type="text" maxlength="70"
           value="<?= e($post['og_title'] ?? '') ?>"
-          oninput="updateCharCount('og_title', 60)"
+          data-char-limit="60"
           class="<?= $inputClass ?>"
           placeholder="Defaults to post title">
         <p class="<?= $hintClass ?>">55-60 characters survives on every platform.</p>
@@ -66,7 +66,7 @@ $platforms = [
           <span id="og_description_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/65</span>
         </div>
         <textarea id="og_description" name="og_description" rows="2" maxlength="100"
-          oninput="updateCharCount('og_description', 65)"
+          data-char-limit="65"
           class="<?= $inputClass ?>"
           placeholder="Engaging description for social shares"><?= e($post['og_description'] ?? '') ?></textarea>
         <p class="<?= $hintClass ?>">60-65 characters. LinkedIn drops this entirely, so don't rely on it there.</p>

@@ -72,6 +72,7 @@ return [
         '/password/reset*' => 0,
 
         '/csrf-token' => 0,
+        '/csp-report' => 0,
         '/geo' => 0,
         '/consent' => 0,
         '/consent/withdraw' => 0,
@@ -184,6 +185,7 @@ return [
         '/register/submit',
         '/consent',
         '/consent/withdraw',
+        '/csp-report',
         '/comments/create',
         '/account*',
         '/password/reset*',

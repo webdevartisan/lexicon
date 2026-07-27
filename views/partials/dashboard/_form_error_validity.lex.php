@@ -1,4 +1,4 @@
-<script>
+<script nonce="<?= csp_nonce() ?>">
   // mirror server-side errors into the browser's constraint validation so the
   // :invalid styling matches what the server rejected
   document.addEventListener('DOMContentLoaded', function () {

@@ -131,6 +131,16 @@ $container->setShared(Framework\Security\Csrf::class, function ($c) {
     );
 });
 
+/**
+ * CSP nonce service issues one random nonce per request for inline scripts.
+ *
+ * We register as singleton so the nonce embedded in the response header
+ * matches the nonce attribute rendered on inline <script> tags.
+ */
+$container->setShared(Framework\Security\Csp::class, function ($c) {
+    return new Framework\Security\Csp();
+});
+
 // ============================================================================
 // VIEW & TEMPLATE SERVICES (Shared Singletons)
 // ============================================================================
@@ -645,6 +655,18 @@ $container->set(App\Services\LoginRateLimiter::class, function ($c) {
  */
 $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
     return new App\Services\PasswordResetRateLimiter(
+        $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\CacheService::class)
+    );
+});
+
+/**
+ * CSP report rate limiter prevents flooding the unauthenticated /csp-report route.
+ *
+ * We register as factory, matching the other rate limiters above.
+ */
+$container->set(App\Services\CspReportRateLimiter::class, function ($c) {
+    return new App\Services\CspReportRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
         $c->get(Framework\Cache\CacheService::class)
     );

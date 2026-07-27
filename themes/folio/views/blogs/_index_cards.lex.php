@@ -18,7 +18,7 @@ foreach (($cards ?? []) as $i => $post) {
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>
-  <article class="article reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" onclick="location.href='<?= $url ?>'">
+  <article class="article reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-card-link="<?= e($url) ?>">
     <div class="article-meta">
       <span class="cat"><?= sprintf('%02d', $i + 1) ?> &mdash; <?= e($cat) ?></span>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
@@ -35,7 +35,7 @@ foreach (($cards ?? []) as $i => $post) {
       <?php foreach (array_slice($tags, 0, 2) as $t) {
           $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
           ?>
-      <a class="article-tag" href="<?= $tUrl ?>" onclick="event.stopPropagation();">#<?= e((string) ($t['name'] ?? '')) ?></a>
+      <a class="article-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
       <?php } ?>
     </div>
     <?php } ?>

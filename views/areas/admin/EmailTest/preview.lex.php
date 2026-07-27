@@ -157,7 +157,7 @@
 </div>
 
 <!-- JavaScript for iframe height adjustment -->
-<script>
+<script nonce="<?= csp_nonce() ?>">
 document.addEventListener('DOMContentLoaded', function() {
     const iframe = document.getElementById('email-preview-iframe');
     const increaseBtn = document.getElementById('increase-height');

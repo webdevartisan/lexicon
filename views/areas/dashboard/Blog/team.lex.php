@@ -151,7 +151,7 @@ $initials = static function (string $name): string {
                         <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/<?= (int) ($m['user_id'] ?? 0) ?>/role" class="m-0 shrink-0 w-40">
                             {{ csrf_field() }}
                             <label for="role-<?= (int) ($m['user_id'] ?? 0) ?>" class="sr-only">Role</label>
-                            <select id="role-<?= (int) ($m['user_id'] ?? 0) ?>" name="role" onchange="this.form.submit()"
+                            <select id="role-<?= (int) ($m['user_id'] ?? 0) ?>" name="role" data-auto-submit
                                 class="form-select appearance-none border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 text-sm py-1 pr-7">
                                 <?php foreach ($roles as $role) { ?>
                                     <option value="<?= e($role) ?>" <?= $role === $currentRole ? 'selected' : '' ?>><?= ucfirst(e($role)) ?></option>
@@ -159,10 +159,13 @@ $initials = static function (string $name): string {
                             </select>
                         </form>
 
-                        <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/<?= (int) ($m['user_id'] ?? 0) ?>/revoke" class="m-0 shrink-0"
-                            onsubmit="return confirm('Remove <?= e(addslashes($m['username'] ?? 'this collaborator')) ?> from this blog?\n\nThey will need a new invitation to rejoin.');">
+                        <?php
+                        $revokeConfirmMsg = 'Remove '.($m['username'] ?? 'this collaborator').' from this blog? They will need a new invitation to rejoin.';
+$revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
+?>
+                        <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/<?= (int) ($m['user_id'] ?? 0) ?>/revoke" class="m-0 shrink-0">
                             {{ csrf_field() }}
-                            {% cmp="btn" type="submit" variant="red" icon="user-minus" label="Remove" %}
+                            {% cmp="btn" type="submit" variant="red" icon="user-minus" label="Remove" dataBtn="{$revokeConfirmAttr}" %}
                         </form>
                     </li>
                     {% endforeach %}
@@ -276,7 +279,7 @@ $initials = static function (string $name): string {
 {% endblock %}
 {% block scripts %}
 <script src='/cp-assets/js/tooltip.js'></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
 // Live-update the small role explainer under the role select on the invite form.
 (function () {
     var sel = document.getElementById('invite-role');

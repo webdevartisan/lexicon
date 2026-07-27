@@ -128,7 +128,7 @@ foreach ($tierOptions as $tierOpt) {
                 <div class="flex flex-wrap gap-2 lg:justify-end shrink-0">
                     <?php if ((int) ($counts['failed'] ?? 0) > 0) { ?>
                     <form method="POST" action="<?= buildLocalizedUrl($basePath.'/retry-all') ?>"
-                          onsubmit="return confirm('Requeue every failed email? They will go out on the next worker run.')">
+                          data-confirm="Requeue every failed email? They will go out on the next worker run.">
                         {{ csrf_field() }}
                         {% cmp="btn" type="submit" variant="yellow" icon="refresh-cw" label="Retry all failed" %}
                     </form>
@@ -136,7 +136,7 @@ foreach ($tierOptions as $tierOpt) {
 
                     <?php if ((int) ($counts['sent'] ?? 0) > 0) { ?>
                     <form method="POST" action="<?= buildLocalizedUrl($basePath.'/prune') ?>"
-                          onsubmit="return confirm('Delete delivered emails older than 30 days? Pending and failed mail is untouched.')">
+                          data-confirm="Delete delivered emails older than 30 days? Pending and failed mail is untouched.">
                         {{ csrf_field() }}
                         {% cmp="btn" type="submit" variant="slate" icon="trash-2" label="Prune delivered" %}
                     </form>

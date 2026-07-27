@@ -59,7 +59,7 @@
     });
   });
 
-  // Option A (recommended for simple hints): close tooltips on scroll/resize so they never “stick”.
+  // Close tooltips on scroll/resize so they never “stick”.
   window.addEventListener('scroll', () => {
     if (activeBtn) closeTip(activeBtn);
   }, { passive: true });
@@ -67,13 +67,4 @@
   window.addEventListener('resize', () => {
     if (activeBtn) closeTip(activeBtn);
   });
-
-  // Option B (alternative): comment out Option A and use this instead to only reposition if open.
-  // window.addEventListener('scroll', () => {
-  //   if (activeBtn && activeTip && !activeTip.hidden) positionTooltip(activeBtn, activeTip);
-  // }, { passive: true });
-  //
-  // window.addEventListener('resize', () => {
-  //   if (activeBtn && activeTip && !activeTip.hidden) positionTooltip(activeBtn, activeTip);
-  // });
 })();

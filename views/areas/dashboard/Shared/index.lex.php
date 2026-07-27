@@ -127,7 +127,7 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
                         <?php } ?>
                     </div>
                     <form method="POST" action="/dashboard/blog/<?= (int) $b['id'] ?>/team/leave" class="m-0"
-                          onsubmit="return confirm('Leave “<?= e(addslashes($b['name'])) ?>”? You will need a new invitation to rejoin.');">
+                          data-confirm="Leave “<?= e($b['name']) ?>”? You will need a new invitation to rejoin.">
                         {{ csrf_field() }}
                         <button type="submit" class="text-xs font-medium text-slate-400 hover:text-red-500 dark:text-zink-500" title="Leave this blog">
                             Leave

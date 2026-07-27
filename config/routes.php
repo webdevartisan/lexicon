@@ -24,6 +24,13 @@ $router->add('/consent', [
     'method' => 'POST',
 ]);
 
+// Sent by the browser itself via the CSP report-uri directive; no token, no session.
+$router->add('/csp-report', [
+    'controller' => 'CspReportController',
+    'action' => 'store',
+    'method' => 'POST',
+]);
+
 // Only signed-in readers post here: their interface follows a stored preference,
 // so switching language has to write it. Guests switch with a plain link.
 $router->add('/language', [

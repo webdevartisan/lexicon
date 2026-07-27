@@ -205,11 +205,11 @@ $statusBadge = [
 
                                 <span class="mx-0.5 mt-1 h-5 w-px bg-slate-200 dark:bg-zink-500" aria-hidden="true"></span>
 
-                                <form method="POST" action="/admin/comments/<?= e((string) $c['id']) ?>/destroy" class="m-0"
-                                    onsubmit="return confirm('Permanently delete this comment? This cannot be undone.');">
+                                <form method="POST" action="/admin/comments/<?= e((string) $c['id']) ?>/destroy" class="m-0">
                                     {{ csrf_field() }}
                                     <input type="hidden" name="return_status" value="<?= e($status) ?>">
                                     <button type="submit" title="Delete"
+                                        data-confirm="Permanently delete this comment? This cannot be undone."
                                         class="p-2 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                                         {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                                     </button>
@@ -248,7 +248,7 @@ $statusBadge = [
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="<?= csp_nonce() ?>">
 // Bulk comment selection + floating action bar
 (function () {
     const form = document.getElementById('bulk-form');

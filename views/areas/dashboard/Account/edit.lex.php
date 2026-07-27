@@ -128,7 +128,7 @@
 {% block scripts %}
 <script src='/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js'></script>
 <script src="/cp-assets/js/modal.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
   document.addEventListener('DOMContentLoaded', () => {
     const selectEl = document.querySelector('select[name="timezone"]');
     if (!selectEl) {
@@ -147,7 +147,7 @@
 
 {% include "partials/dashboard/_form_error_validity.lex.php" %}
 
-<script>
+<script nonce="<?= csp_nonce() ?>">
   // extra confirmation beyond the modal, since deletion is unrecoverable
   document.getElementById('deleteAccountForm')?.addEventListener('submit', function (e) {
     const checkbox = document.getElementById('confirmDeleteCheck');

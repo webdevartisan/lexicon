@@ -8,6 +8,7 @@ use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Security\Csp;
 
 /**
  * Security Headers Middleware
@@ -23,8 +24,9 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
 {
     private bool $isProduction;
 
-    public function __construct()
-    {
+    public function __construct(
+        private Csp $csp = new Csp()
+    ) {
         $this->isProduction = (env('APP_ENV', 'development')) === 'production';
     }
 
@@ -94,10 +96,12 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * console instead of breaking the page. Flip CSP_ENFORCE=true once the
      * report-only run is quiet.
      *
-     * Note the policy deliberately omits 'unsafe-inline' for script-src: with
-     * it, the policy would still allow exactly the injected-script attack it
-     * exists to stop, which is why the previous commented-out block was
-     * decorative rather than protective.
+     * script-src uses a per-request nonce (see Csp::getNonce()) instead of
+     * 'unsafe-inline': inline scripts that carry the matching nonce attribute
+     * still run, but injected/extension/attacker scripts don't have it and
+     * get blocked. csp_nonce() (in helpers.php) exposes the same value to
+     * templates so <script nonce="<?= csp_nonce() ?>"> tags line up with the
+     * header.
      *
      * Known remaining inline scripts to clear before enforcing: the per-page
      * TinyMCE/Dropzone init blocks. The window.AppLocales block is gone, dropped
@@ -115,11 +119,22 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
             return;
         }
 
+        $enforced = filter_var(env('CSP_ENFORCE', false), FILTER_VALIDATE_BOOLEAN);
+        $nonce = $this->csp->getNonce();
+
+        // Extension-injected scripts (chrome-extension:/moz-extension:/etc.)
+        // never carry our nonce and would otherwise spam the report endpoint
+        // with noise we can't fix from app code. Only allow them through in
+        // report-only mode, never once enforcement is on.
+        $scriptSrc = $enforced
+            ? "script-src 'self' 'nonce-{$nonce}'"
+            : "script-src 'self' 'nonce-{$nonce}' chrome-extension: moz-extension: safari-extension:";
+
         // Everything this app loads is first-party (/assets, /cp-assets,
         // /themes, /uploads); data: covers inlined icons and editor previews.
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self'",
+            $scriptSrc,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data:",
             "font-src 'self' data: https://fonts.gstatic.com",
@@ -128,11 +143,10 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
             "base-uri 'self'",
             "form-action 'self'",
             "object-src 'none'",
+            'report-uri /csp-report',
         ]);
 
-        $header = filter_var(env('CSP_ENFORCE', false), FILTER_VALIDATE_BOOLEAN)
-            ? 'Content-Security-Policy'
-            : 'Content-Security-Policy-Report-Only';
+        $header = $enforced ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only';
 
         $response->addHeader($header, $csp);
     }

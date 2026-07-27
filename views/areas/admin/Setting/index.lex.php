@@ -246,7 +246,7 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
 {% block scripts %}
 <script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
 <script src="/cp-assets/js/searchable-select.init.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
     // switch settings sections without a page reload
     document.addEventListener('DOMContentLoaded', () => {
         const tabs = document.querySelectorAll('.tab-button');

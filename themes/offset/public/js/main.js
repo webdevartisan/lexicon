@@ -96,4 +96,16 @@ document.addEventListener("DOMContentLoaded", function () {
         gsap.fromTo(footDisplay, { x: 0 }, { x: drift, ease: "none", scrollTrigger: { trigger: footWrap, start: "top bottom", end: "bottom bottom", scrub: 0.8 } });
     }
     }
+
+    // Whole-card click-through: nested links (title, tags) still handle their
+    // own navigation since clicks on an <a> are excluded here.
+    document.addEventListener("click", function (e) {
+        if (e.target.closest("a")) {
+            return;
+        }
+        var card = e.target.closest("[data-card-link]");
+        if (card) {
+            window.location.href = card.getAttribute("data-card-link");
+        }
+    });
 });

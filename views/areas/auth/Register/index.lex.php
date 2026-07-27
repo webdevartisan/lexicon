@@ -117,7 +117,7 @@ $loginHref = '/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '
 
 {% block scripts %}
 <script src="/assets/js/tooltip.js"></script>
-<script>
+<script nonce="<?= csp_nonce() ?>">
 (function () {
   var toggle = document.getElementById('password_toggle');
   var field = document.getElementById('password');

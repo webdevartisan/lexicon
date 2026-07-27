@@ -44,7 +44,7 @@ foreach (($cards ?? []) as $i => $post) {
   <div class="wp-gap" aria-hidden="true"><span><?= e($gapLabel) ?></span></div>
   <?php } ?>
 
-  <article class="waypoint reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" onclick="location.href='<?= $url ?>'">
+  <article class="waypoint reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-card-link="<?= e($url) ?>">
     <span class="wp-node" aria-hidden="true"></span>
     <span class="wp-no">W-<?= sprintf('%02d', $i + 2) ?></span>
 
@@ -60,7 +60,7 @@ foreach (($cards ?? []) as $i => $post) {
         <?php foreach (array_slice($tags, 0, 2) as $t) {
             $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
             ?>
-        <a class="wp-tag" href="<?= $tUrl ?>" onclick="event.stopPropagation();">#<?= e((string) ($t['name'] ?? '')) ?></a>
+        <a class="wp-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
         <?php } ?>
       </div>
       <?php } ?>

@@ -77,7 +77,7 @@
 
                     <button type="submit" 
                             class="w-full text-white btn bg-orange-500 border-orange-500 hover:text-white hover:bg-orange-600 hover:border-orange-600 focus:text-white focus:bg-orange-600 focus:border-orange-600 focus:ring focus:ring-orange-100 active:text-white active:bg-orange-600 active:border-orange-600 active:ring active:ring-orange-100 dark:ring-orange-400/20"
-                            onclick="return confirm('Are you sure you want to delete cache files matching this pattern?')">
+                            data-confirm="Are you sure you want to delete cache files matching this pattern?">
                         <i class="size-4 mr-2" data-lucide="trash-2"></i>
                         Delete Matching Files
                     </button>

@@ -46,7 +46,7 @@ if (!is_assoc($options)) {
         id="<?= $elementName ?>" 
         name="<?= $elementName ?>"
         <?php if (!empty($onchange)) { ?>
-            onchange="<?= $onchange ?>"
+            data-auto-submit
         <?php } ?>
         >
         <?php if (!empty($emptyDefault)) { ?>
