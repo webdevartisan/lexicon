@@ -161,8 +161,8 @@ $initials = static function (string $name): string {
 
                         <?php
                         $revokeConfirmMsg = 'Remove '.($m['username'] ?? 'this collaborator').' from this blog? They will need a new invitation to rejoin.';
-                        $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
-                        ?>
+$revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
+?>
                         <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/<?= (int) ($m['user_id'] ?? 0) ?>/revoke" class="m-0 shrink-0">
                             {{ csrf_field() }}
                             {% cmp="btn" type="submit" variant="red" icon="user-minus" label="Remove" dataBtn="{$revokeConfirmAttr}" %}
