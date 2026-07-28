@@ -1,114 +1,88 @@
-{% extends "front.lex.php" %}
+{% extends "auth.lex.php" %}
 
-{% block title %}Sign In{% endblock %}
+{% block title %}<?= e($t('auth.loginTitle')) ?>{% endblock %}
 
-{% block body %}
-<section class="auth">
-  <div class="auth__wrap">
-    <div class="auth__card">
-      <!-- We keep the SVG inline to avoid third‑party asset requests and extra CSP allowances. -->
-      <div class="auth__hero" aria-hidden="true">
-        <svg class="auth__heroIcon" viewBox="0 0 64 64" role="img" focusable="false">
-          <path d="M32 34c8.3 0 15-6.7 15-15S40.3 4 32 4 17 10.7 17 19s6.7 15 15 15Z" fill="currentColor" opacity=".15"/>
-          <path d="M12 58c2.8-10.9 10.7-18 20-18s17.2 7.1 20 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <path d="M43 30l3 3 7-7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+{% block heading %}<?= e($t('auth.loginTitle')) ?>{% endblock %}
 
-      <?php
-      // Keep the reading context alive across the login hop
-      $returnTo = !empty($return_to) ? $return_to : '';
-      $registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
-      ?>
-      <header class="auth__header">
-        <h2 class="auth__title">Sign in</h2>
-        <?php if ($returnTo !== '') { ?>
-          <p class="auth__subtitle">Log in to continue where you left off.</p>
-        <?php } else { ?>
-          <p class="auth__subtitle">Welcome back. Sign in to continue.</p>
-        <?php } ?>
-      </header>
-      <?php $flash = flash(); ?>
-      {% if flash|notempty %}
-          {% foreach ($flash as $type => $msgs): %}
-            {% foreach ($msgs as $msg): %}
-              <div class="auth__alert" role="alert">
-                {{ msg }}
-              </div>
-            {% endforeach %}
-          {% endforeach %}
-      {% endif %}
-      {% if (isset($error) && $error) : %}
-        <div class="auth__alert" role="alert">
-          {{ error }}
-        </div>
-      {% endif; %}
-
-      <form class="auth__form" action="/login/submit" method="post">
-        <?= csrf_field(); ?>
-        <?php if ($returnTo !== '') { ?>
-          <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
-        <?php } ?>
-
-        <label class="auth__label" for="email">Email</label>
-        <?php $email = old('email') ?? ''; ?>
-        <input
-          class="auth__input"
-          type="email"
-          name="email"
-          id="email"
-          value="{{ email }}"
-          autocomplete="email"
-          inputmode="email"
-          required
-          <?= empty($email) ? 'autofocus' : ''?>
-        >
-
-        <label class="auth__label" for="password">Password</label>
-        <div class="auth__inputRow" style="position: relative;">
-          <input
-            class="auth__input"
-            type="password"
-            name="password"
-            id="password"
-            autocomplete="current-password"
-            required
-            style="padding-right: 3.5rem;"
-            <?= $email ? 'autofocus' : ''?>
-          >
-          <button type="button"
-                  id="password_toggle"
-                  aria-label="Show password"
-                  aria-pressed="false"
-                  style="position: absolute; top: 50%; right: .75rem; transform: translateY(-50%); background: none; border: 0; cursor: pointer; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; opacity: .7;">Show</button>
-        </div>
-
-        <button class="button primary fit" type="submit">Login</button>
-
-        <div class="auth__links">
-          <a href="<?= e($registerHref) ?>">Register</a>
-          <a href="/password/forgot">Forgot password?</a>
-        </div>
-      </form>
-    </div>
-  </div>
-</section>
+{% block sub %}
+<?php
+// Keep the reading context alive across the login hop.
+$returnTo = !empty($return_to) ? $return_to : '';
+echo e($returnTo !== '' ? $t('auth.loginSubtitleReturn') : $t('auth.loginSubtitle'));
+?>
 {% endblock %}
 
-{% block scripts %}
-<script nonce="<?= csp_nonce() ?>">
-(function () {
-  var toggle = document.getElementById('password_toggle');
-  var field = document.getElementById('password');
-  if (!toggle || !field) return;
+{% block altAction %}
+<?php
+$returnTo = !empty($return_to) ? $return_to : '';
+$registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+?>
+<a href="<?= e($registerHref) ?>"><?= e($t('auth.createAccount')) ?></a>
+{% endblock %}
 
-  toggle.addEventListener('click', function () {
-    var show = field.type === 'password';
-    field.type = show ? 'text' : 'password';
-    toggle.textContent = show ? 'Hide' : 'Show';
-    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-    toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
-  });
-})();
-</script>
+{% block body %}
+<?php
+$returnTo = !empty($return_to) ? $return_to : '';
+$email = old('email') ?? '';
+?>
+<form action="/login/submit" method="post">
+    <?= csrf_field() ?>
+    <?php if ($returnTo !== '') { ?>
+        <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
+    <?php } ?>
+
+    <div class="lx-field">
+        <label class="lx-field__label" for="email"><?= e($t('auth.emailLabel')) ?></label>
+        <input class="lx-field__input"
+               type="email"
+               name="email"
+               id="email"
+               value="<?= e($email) ?>"
+               placeholder="name@example.com"
+               autocomplete="email"
+               inputmode="email"
+               required
+               <?= $email === '' ? 'autofocus' : '' ?>>
+    </div>
+
+    <div class="lx-field">
+        <label class="lx-field__label" for="password"><?= e($t('auth.passwordLabel')) ?></label>
+        <div class="lx-field__control">
+            <input class="lx-field__input"
+                   type="password"
+                   name="password"
+                   id="password"
+                   autocomplete="current-password"
+                   required
+                   <?= $email !== '' ? 'autofocus' : '' ?>>
+            <button type="button"
+                    class="lx-field__toggle"
+                    data-password-toggle="password"
+                    data-label-show="<?= e($t('auth.show')) ?>"
+                    data-label-hide="<?= e($t('auth.hide')) ?>"
+                    data-aria-show="<?= e($t('auth.showPassword')) ?>"
+                    data-aria-hide="<?= e($t('auth.hidePassword')) ?>"
+                    aria-label="<?= e($t('auth.showPassword')) ?>"
+                    aria-pressed="false"><?= e($t('auth.show')) ?></button>
+        </div>
+    </div>
+
+    <button class="lx-btn lx-authsubmit" type="submit"><?= e($t('auth.loginSubmit')) ?></button>
+</form>
+{% endblock %}
+
+{% block help %}
+<a href="/password/forgot"><?= e($t('auth.cantLogIn')) ?></a>
+{% endblock %}
+
+{% block legal %}
+<?php
+// The sentence shape differs per language, so the locale file owns the whole
+// line and the two links go in as placeholders. Both the text and the anchors
+// are ours, never user input, which is what makes the raw echo safe here.
+echo $t('auth.legal', [
+    'terms' => '<a href="/terms">'.e($t('footer.linkTerms')).'</a>',
+    'privacy' => '<a href="/privacy">'.e($t('footer.linkPrivacy')).'</a>',
+]);
+?>
 {% endblock %}
