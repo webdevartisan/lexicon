@@ -43,11 +43,20 @@ final class FrontPageController extends AppController
             'label' => 'Hero',
             'groups' => [
                 'Headline & call to action' => [
-                    'banner.title' => ['Title', 'text'],
+                    'banner.eyebrow' => ['Eyebrow line', 'text'],
                     'banner.cta' => ['Button (guests)', 'text'],
-                    'banner.subtitle' => ['Subtitle', 'textarea'],
+                    'banner.title' => ['Sense 1 (the headline)', 'textarea'],
                     'banner.ctaDashboard' => ['Button (signed in)', 'text'],
-                    'banner.body' => ['Body paragraph', 'textarea'],
+                    'banner.subtitle' => ['Sense 2', 'textarea'],
+                    'banner.body' => ['Usage note', 'textarea'],
+                ],
+                // The hero is typeset as a dictionary entry. Separate the parts
+                // with an interpunct (·) to mark syllable breaks.
+                'Entry heading' => [
+                    'banner.headword' => ['Headword, e.g. lex·i·con', 'text'],
+                    'banner.pronunciation' => ['Pronunciation', 'text'],
+                    'banner.pos' => ['Part of speech, e.g. n.', 'text'],
+                    'banner.noteLabel' => ['Usage note label', 'text'],
                 ],
             ],
         ],
@@ -57,6 +66,8 @@ final class FrontPageController extends AppController
             'groups' => [
                 'How it works' => [
                     'how.title' => ['Section title', 'text'],
+                    'how.entryWord' => ['Headword, e.g. pub·lish', 'text'],
+                    'how.entryPos' => ['Part of speech, e.g. v.', 'text'],
                     'how.step1.title' => ['Step 1 title', 'text'],
                     'how.step1.body' => ['Step 1 text', 'textarea'],
                     'how.step2.title' => ['Step 2 title', 'text'],
@@ -64,21 +75,35 @@ final class FrontPageController extends AppController
                     'how.step3.title' => ['Step 3 title', 'text'],
                     'how.step3.body' => ['Step 3 text', 'textarea'],
                 ],
-                'Feature cards' => [
+                // Each feature is rendered as a dictionary entry: a headword and
+                // a part of speech on the left, the definition on the right.
+                'Related entries' => [
                     'features.title' => ['Section title', 'text'],
-                    'features.items.writing.title' => ['Card 1 title', 'text'],
-                    'features.items.writing.body' => ['Card 1 text', 'textarea'],
-                    'features.items.team.title' => ['Card 2 title', 'text'],
-                    'features.items.team.body' => ['Card 2 text', 'textarea'],
-                    'features.items.ownership.title' => ['Card 3 title', 'text'],
-                    'features.items.ownership.body' => ['Card 3 text', 'textarea'],
-                    'features.items.readers.title' => ['Card 4 title', 'text'],
-                    'features.items.readers.body' => ['Card 4 text', 'textarea'],
+                    'features.items.writing.word' => ['Entry 1 headword', 'text'],
+                    'features.items.writing.pos' => ['Entry 1 part of speech', 'text'],
+                    'features.items.writing.title' => ['Entry 1 definition', 'text'],
+                    'features.items.writing.body' => ['Entry 1 text', 'textarea'],
+                    'features.items.team.word' => ['Entry 2 headword', 'text'],
+                    'features.items.team.pos' => ['Entry 2 part of speech', 'text'],
+                    'features.items.team.title' => ['Entry 2 definition', 'text'],
+                    'features.items.team.body' => ['Entry 2 text', 'textarea'],
+                    'features.items.ownership.word' => ['Entry 3 headword', 'text'],
+                    'features.items.ownership.pos' => ['Entry 3 part of speech', 'text'],
+                    'features.items.ownership.title' => ['Entry 3 definition', 'text'],
+                    'features.items.ownership.body' => ['Entry 3 text', 'textarea'],
+                    'features.items.readers.word' => ['Entry 4 headword', 'text'],
+                    'features.items.readers.pos' => ['Entry 4 part of speech', 'text'],
+                    'features.items.readers.title' => ['Entry 4 definition', 'text'],
+                    'features.items.readers.body' => ['Entry 4 text', 'textarea'],
                 ],
                 'Featured writing' => [
                     'showcase.title' => ['Section title', 'text'],
                     'showcase.subtitle' => ['Section subtitle', 'text'],
                     'showcase.emptyTitle' => ['Fallback title (no picks)', 'text'],
+                ],
+                'Closing call to action' => [
+                    'cta.title' => ['Title', 'text'],
+                    'cta.body' => ['Text', 'textarea'],
                 ],
             ],
         ],
@@ -105,16 +130,18 @@ final class FrontPageController extends AppController
         ],
         'sidebar' => [
             'icon' => 'panel-right',
-            'label' => 'Sidebar & Footer',
+            'label' => 'Guides & Footer',
             'groups' => [
-                'Sidebar: getting started' => [
+                // Since the front sidebar was removed these feed the footer's
+                // guides column and the front page's fallback cards.
+                'Guides' => [
                     'sidebar.gettingStarted.title' => ['Section title', 'text'],
                     'sidebar.gettingStarted.actionMore' => ['Button label', 'text'],
                     'sidebar.gettingStarted.items.tip1' => ['Card 1 text', 'textarea'],
                     'sidebar.gettingStarted.items.tip2' => ['Card 2 text', 'textarea'],
                     'sidebar.gettingStarted.items.tip3' => ['Card 3 text', 'textarea'],
                 ],
-                'Sidebar: get in touch' => [
+                'Get in touch' => [
                     'contact.title' => ['Section title', 'text'],
                     'contact.body' => ['Section text', 'textarea'],
                 ],
