@@ -64,12 +64,12 @@ if (!auth()->check()) {
   .lex-auth-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(15, 18, 20, .6); backdrop-filter: blur(2px); }
   .lex-auth-overlay[hidden] { display: none; }
   .lex-auth-card { position: relative; width: 100%; max-width: 380px; background: #fff; color: #16181d; border-radius: 10px; padding: 1.75rem 1.5rem 1.25rem; box-shadow: 0 24px 64px rgba(0, 0, 0, .35); font-family: inherit; }
-  /* The platform layout loads main.css, whose bare `button` and
-     `input[type="..."]` selectors outrank plain classes and were repainting
-     this modal (uppercase Roboto Slab buttons, forced input metrics, and a
-     `color: ... !important` on every button). Everything below is scoped to
+  /* This modal is dropped into whatever stylesheet the host page already has,
+     and several blog themes style bare `button` and `input[type="..."]`
+     selectors that outrank plain classes: uppercase display buttons, forced
+     input metrics, `color: ... !important`. Everything below is scoped to
      .lex-auth-card so it wins on specificity, and the two reset blocks strip
-     what main.css injects. The colour resets need !important to match it. */
+     what a host theme injects. The colour resets need !important to match. */
   .lex-auth-card button {
     appearance: none; -webkit-appearance: none; background: none; border: 0;
     box-shadow: none; font: inherit; letter-spacing: normal;
