@@ -1,0 +1,2880 @@
+/*
+ * Lexicon front-end design system.
+ *
+ * Replaces the Editorial template stylesheet for the public layout. The page
+ * is built as a bound reference volume: a dark cover, then paper, with every
+ * section using the apparatus of a dictionary entry (headword, pronunciation,
+ * senses, citations, usage notes).
+ *
+ * Sections: fonts, tokens, base, primitives, nav, cover, band, senses,
+ * entries, citations, notes, closing panel, footer, buttons, legacy component
+ * shims (Editorial classes still used by the other public views), auth,
+ * profile, utilities, motion.
+ */
+
+/* ==========================================================================
+   1. Fonts
+   Self-hosted so the front page makes no third-party request; the cookie
+   banner would otherwise have to account for Google Fonts.
+   ========================================================================== */
+
+@font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/assets/fonts/newsreader-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/assets/fonts/newsreader-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    font-style: italic;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/assets/fonts/newsreader-italic-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Newsreader';
+    font-style: italic;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('/assets/fonts/newsreader-italic-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url('/assets/fonts/instrumentsans-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Instrument Sans';
+    font-style: normal;
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url('/assets/fonts/instrumentsans-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ==========================================================================
+   2. Tokens
+   ========================================================================== */
+
+:root {
+    /* Paper: a cool book stock, deliberately not cream. */
+    --lx-paper: #f0f1ec;
+    --lx-paper-raised: #fbfbf8;
+    --lx-paper-sunk: #e7e9e1;
+
+    /* Binding: the cloth cover of a reference volume. */
+    --lx-bind: #16233f;
+    --lx-bind-deep: #0d1526;
+    --lx-bind-soft: #24355a;
+
+    /* Foil. Two values: the bright one only ever sits on the binding, the
+       deep one only on paper. Bright gold on paper is 2.5:1, and even a
+       mid ochre lands at 4.3, so the paper value is pushed to 5.2:1. */
+    --lx-gilt: #c9a227;
+    --lx-gilt-deep: #7a5d0e;
+
+    --lx-ink: #171a1c;
+    --lx-ink-2: #5c6470;
+    /* Tertiary grey. Kept at AA on paper rather than the lighter tone the
+       hierarchy wanted, because it carries real text: dates, bylines,
+       placeholders. Separation from --lx-ink-2 comes from size and case. */
+    --lx-ink-3: #646b76;
+    --lx-rule: #d3d7cd;
+    --lx-rule-strong: #b9bfb2;
+    --lx-spot: #1b3a6b;
+
+    --lx-on-bind: #f0f1ec;
+    --lx-on-bind-2: #a8b2c6;
+    /* The quiet tone for the binding. --lx-ink-3 is tuned for paper and drops
+       to 3.4:1 down here, so dark panels get their own tertiary. */
+    --lx-on-bind-3: #7e8798;
+    --lx-rule-bind: rgba(240, 241, 236, 0.16);
+
+    --lx-danger: #a3261c;
+    --lx-danger-bg: #fbeceb;
+    --lx-ok: #1b6b45;
+    --lx-ok-bg: #e8f2ec;
+
+    --lx-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+    --lx-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+    /* One measure for the whole site so sections never drift out of alignment. */
+    --lx-measure: 76rem;
+    --lx-gutter: clamp(1.25rem, 5vw, 4rem);
+    --lx-section-y: clamp(4.5rem, 10vw, 8.5rem);
+
+    /* The cover slides under the masthead by exactly this much, so the bar can
+       carry no border: a 1px border would leave a sliver of paper above the
+       dark hero. The stuck rule is drawn with an inset shadow instead. */
+    --lx-nav-h: 4.5rem;
+
+    --lx-radius: 4px;
+    --lx-radius-lg: 10px;
+
+    --lx-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* Consumed by partials written against the old theme. consent.css builds
+       the cookie FAB with `rgb(var(--primary-color-token) / 0.5)`, so the token
+       has to be bare channels and it has to exist: undefined, the whole
+       declaration is invalid and the FAB paints a white icon on nothing. */
+    --primary-color: #1b3a6b;
+    --primary-color-token: 27 58 107;
+}
+
+/* ==========================================================================
+   3. Base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--lx-paper);
+    color: var(--lx-ink);
+    font-family: var(--lx-serif);
+    font-optical-sizing: auto;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: var(--lx-spot);
+    text-decoration: none;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: from-font;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+p {
+    margin: 0 0 1.1em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--lx-serif);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0 0 0.5em;
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+h2 {
+    font-size: clamp(1.75rem, 3.6vw, 2.6rem);
+}
+
+h3 {
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+}
+
+h4 {
+    font-size: 1.05rem;
+}
+
+strong,
+b {
+    font-weight: 650;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--lx-rule);
+    margin: 2.5rem 0;
+}
+
+::selection {
+    background: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+:focus-visible {
+    outline: 2px solid var(--lx-spot);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.lx-cover :focus-visible,
+.lx-close :focus-visible,
+.lx-foot :focus-visible,
+.lx-drawer :focus-visible,
+.lx-nav.is-over :focus-visible {
+    outline-color: var(--lx-gilt);
+}
+
+/* Screen-reader-only text. */
+.lx-sr,
+.label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.lx-skip {
+    position: absolute;
+    inset-inline-start: 1rem;
+    top: -4rem;
+    z-index: 200;
+    padding: 0.75rem 1.25rem;
+    background: var(--lx-bind);
+    color: var(--lx-on-bind);
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    border-radius: var(--lx-radius);
+    transition: top 0.2s var(--lx-ease);
+}
+
+.lx-skip:focus {
+    top: 1rem;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   4. Typographic primitives
+   ========================================================================== */
+
+.lx-wrap {
+    width: 100%;
+    max-width: var(--lx-measure);
+    margin-inline: auto;
+    padding-inline: var(--lx-gutter);
+}
+
+.lx-section {
+    padding-block: var(--lx-section-y);
+}
+
+/* Small-caps utility voice: eyebrows, labels, data captions. */
+.lx-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 0 1.75rem;
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.lx-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--lx-rule);
+}
+
+.lx-eyebrow--bind {
+    color: var(--lx-gilt);
+}
+
+.lx-eyebrow--bind::after {
+    background: var(--lx-rule-bind);
+}
+
+/* Grammar label: "n.", "v.", "adj." — always italic, always the serif. */
+.lx-pos {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lx-ink-2);
+}
+
+.lx-pron {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    letter-spacing: 0.01em;
+}
+
+/* Syllable divider inside a headword. */
+.lx-dot {
+    color: var(--lx-gilt-deep);
+    font-style: normal;
+    padding-inline: 0.06em;
+}
+
+.lx-lede {
+    font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+    line-height: 1.55;
+    color: var(--lx-ink-2);
+    max-width: 46ch;
+}
+
+/* ==========================================================================
+   5. Navigation
+   ========================================================================== */
+
+/* Everything in the bar inherits `color`, so the paper/cover flip is two
+   declarations rather than a per-element override for each state. */
+.lx-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    color: var(--lx-ink);
+    background: var(--lx-paper);
+    transition: background 0.3s var(--lx-ease), box-shadow 0.3s var(--lx-ease),
+        color 0.3s var(--lx-ease), backdrop-filter 0.3s var(--lx-ease);
+}
+
+.lx-nav__inner {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    min-height: var(--lx-nav-h);
+}
+
+.lx-nav.is-stuck {
+    background: rgba(240, 241, 236, 0.88);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    box-shadow: inset 0 -1px 0 var(--lx-rule);
+}
+
+/* On the home page the bar starts transparent over the cover. */
+.lx-nav.is-over {
+    background: transparent;
+    color: var(--lx-on-bind);
+}
+
+.lx-nav.is-over.is-stuck {
+    background: rgba(13, 21, 38, 0.9);
+    box-shadow: inset 0 -1px 0 var(--lx-rule-bind);
+}
+
+.lx-logo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: var(--lx-sans);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.lx-logo:hover {
+    text-decoration: none;
+}
+
+.lx-logo__mark {
+    width: 0.4rem;
+    height: 0.4rem;
+    background: var(--lx-gilt);
+    border-radius: 50%;
+    flex: none;
+    transform: translateY(-0.15em);
+}
+
+.lx-nav__links {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 1.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    margin-inline-end: auto;
+}
+
+.lx-nav__link {
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: inherit;
+    opacity: 0.72;
+    padding-block: 0.35rem;
+    position: relative;
+    transition: opacity 0.2s var(--lx-ease);
+}
+
+.lx-nav__link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.15rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: inline-start;
+    transition: transform 0.25s var(--lx-ease);
+}
+
+.lx-nav__link:hover,
+.lx-nav__link[aria-current] {
+    opacity: 1;
+    text-decoration: none;
+}
+
+.lx-nav__link:hover::after,
+.lx-nav__link[aria-current]::after {
+    transform: scaleX(1);
+}
+
+.lx-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-nav__actions form {
+    margin: 0;
+}
+
+.lx-nav__toggle {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-color: var(--lx-rule-strong);
+}
+
+.lx-nav.is-over .lx-nav__toggle {
+    border-color: var(--lx-rule-bind);
+}
+
+.lx-nav__toggle span,
+.lx-nav__toggle span::before,
+.lx-nav__toggle span::after {
+    display: block;
+    width: 1.1rem;
+    height: 1px;
+    background: currentColor;
+    transition: transform 0.25s var(--lx-ease), opacity 0.2s var(--lx-ease);
+}
+
+.lx-nav__toggle span::before,
+.lx-nav__toggle span::after {
+    content: '';
+    position: absolute;
+}
+
+.lx-nav__toggle span::before {
+    transform: translateY(-0.32rem);
+}
+
+.lx-nav__toggle span::after {
+    transform: translateY(0.32rem);
+}
+
+/* Mobile drawer */
+
+.lx-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: var(--lx-bind-deep);
+    color: var(--lx-on-bind);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem var(--lx-gutter) 2.5rem;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-1rem);
+    /* Hiding is the `hidden` attribute's job, not visibility's: a transitioning
+       `visibility` leaves the close button unfocusable at the moment the menu
+       opens, so focus never moves into the drawer. */
+    pointer-events: none;
+    transition: opacity 0.3s var(--lx-ease), transform 0.3s var(--lx-ease);
+}
+
+.lx-drawer[hidden] {
+    display: none;
+}
+
+.lx-drawer.is-open {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.lx-drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3rem;
+    margin-bottom: 2.5rem;
+}
+
+.lx-drawer__close {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lx-drawer__links {
+    list-style: none;
+    margin: 0 0 2.5rem;
+    padding: 0;
+}
+
+.lx-drawer__links li + li {
+    border-top: 1px solid var(--lx-rule-bind);
+}
+
+.lx-drawer__links a {
+    display: block;
+    padding: 0.9rem 0;
+    font-family: var(--lx-serif);
+    font-size: 1.6rem;
+    color: var(--lx-on-bind);
+}
+
+.lx-drawer__links a:hover {
+    color: var(--lx-gilt);
+    text-decoration: none;
+}
+
+.lx-drawer__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+}
+
+.lx-drawer__actions form {
+    margin: 0;
+}
+
+body.lx-drawer-open {
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .lx-nav__links {
+        display: none;
+    }
+
+    .lx-nav__actions {
+        margin-inline-start: auto;
+    }
+
+    .lx-nav__actions .lx-btn {
+        display: none;
+    }
+
+    .lx-nav__actions .lx-btn--primary {
+        display: inline-flex;
+    }
+
+    .lx-nav__toggle {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 480px) {
+    .lx-nav__actions .lx-btn--primary {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   6. Cover — the bound hero
+   ========================================================================== */
+
+.lx-cover {
+    position: relative;
+    background: var(--lx-bind);
+    color: var(--lx-on-bind);
+    margin-top: calc(-1 * var(--lx-nav-h));
+    padding-top: var(--lx-nav-h);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Cloth grain: two very low-opacity gradients, no image request. */
+.lx-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(120% 90% at 78% 8%, rgba(201, 162, 39, 0.14), transparent 58%),
+        radial-gradient(90% 80% at 4% 96%, rgba(36, 53, 90, 0.9), transparent 60%),
+        linear-gradient(178deg, var(--lx-bind) 0%, var(--lx-bind-deep) 100%);
+}
+
+/* The foil rule that runs down the spine edge. */
+.lx-cover::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, transparent, var(--lx-gilt) 18%, var(--lx-gilt) 82%, transparent);
+    opacity: 0.55;
+}
+
+.lx-cover__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-block: clamp(3.5rem, 9vw, 7rem) clamp(3.5rem, 8vw, 6rem);
+    min-height: min(88vh, 52rem);
+    align-content: center;
+}
+
+.lx-cover__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem 1.5rem;
+    margin: 0 0 clamp(1.5rem, 4vw, 2.75rem);
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lx-gilt);
+}
+
+.lx-cover__meta span:not(:first-child) {
+    color: var(--lx-on-bind-2);
+}
+
+/* The headword: the single loudest element on the site. */
+.lx-headword {
+    margin: 0;
+    font-family: var(--lx-serif);
+    font-weight: 500;
+    font-size: clamp(4.5rem, 15.5vw, 13rem);
+    line-height: 0.86;
+    letter-spacing: -0.035em;
+    color: var(--lx-on-bind);
+}
+
+.lx-headword .lx-dot {
+    color: var(--lx-gilt);
+    font-size: 0.55em;
+    vertical-align: 0.22em;
+    padding-inline: 0.03em;
+}
+
+.lx-cover__pron {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.9rem;
+    margin: clamp(1rem, 2.5vw, 1.75rem) 0 0;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    color: var(--lx-on-bind-2);
+}
+
+.lx-cover__pron .lx-pos {
+    color: var(--lx-gilt);
+}
+
+.lx-cover__pron .lx-cover__rule {
+    flex: 1;
+    min-width: 2rem;
+    height: 1px;
+    background: var(--lx-rule-bind);
+    transform: translateY(-0.3em);
+}
+
+/* Senses: the actual product promise, typeset as numbered definitions. */
+.lx-senses {
+    list-style: none;
+    counter-reset: sense;
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+    padding: 0;
+    max-width: 42ch;
+}
+
+.lx-senses li {
+    counter-increment: sense;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.25rem;
+    padding-block: 0.6rem;
+}
+
+.lx-senses li::before {
+    content: counter(sense);
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--lx-gilt);
+    line-height: 1.9;
+}
+
+.lx-senses li:first-child p {
+    font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+    line-height: 1.3;
+    color: var(--lx-on-bind);
+    letter-spacing: -0.012em;
+}
+
+.lx-senses p {
+    margin: 0;
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    line-height: 1.55;
+    color: var(--lx-on-bind-2);
+}
+
+/* Usage note: the long-form paragraph, set as marginal apparatus. */
+.lx-cover__note {
+    margin: clamp(2rem, 4vw, 2.75rem) 0 0;
+    padding-inline-start: 1.25rem;
+    border-inline-start: 1px solid var(--lx-rule-bind);
+    max-width: 54ch;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--lx-on-bind-2);
+}
+
+.lx-cover__note .lx-label {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    color: var(--lx-gilt);
+    margin-inline-end: 0.4rem;
+}
+
+.lx-cover__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: clamp(2.25rem, 5vw, 3rem);
+}
+
+/* Wide but short, i.e. most laptops. The entry is sized off viewport width,
+   which on a 768px-tall screen pushes the call to action past the fold, so the
+   whole stack tightens against height instead. */
+@media (min-width: 1000px) and (max-height: 900px) {
+    .lx-cover__inner {
+        padding-block: clamp(2.5rem, 7vh, 4.5rem);
+        min-height: 0;
+    }
+
+    .lx-headword {
+        font-size: min(15.5vw, 21vh);
+    }
+
+    .lx-cover__meta {
+        margin-bottom: 1.5rem;
+    }
+
+    .lx-senses {
+        margin-top: 1.75rem;
+    }
+
+    .lx-cover__actions {
+        margin-top: 2rem;
+    }
+
+    .lx-cover__note {
+        margin-top: 2rem;
+    }
+}
+
+/* ==========================================================================
+   7. Data band — the seam between cover and paper
+   ========================================================================== */
+
+.lx-band {
+    background: var(--lx-paper-sunk);
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-band__inner {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-block: clamp(2rem, 4vw, 3rem);
+}
+
+.lx-band__item {
+    padding-inline: clamp(0.5rem, 3vw, 2rem);
+    text-align: center;
+}
+
+.lx-band__item + .lx-band__item {
+    border-inline-start: 1px solid var(--lx-rule);
+}
+
+.lx-band__n {
+    display: block;
+    font-family: var(--lx-serif);
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--lx-ink);
+}
+
+.lx-band__label {
+    display: block;
+    margin-top: 0.5rem;
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+@media (max-width: 560px) {
+    .lx-band__inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .lx-band__item {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        text-align: start;
+        padding-block: 0.85rem;
+    }
+
+    .lx-band__item + .lx-band__item {
+        border-inline-start: 0;
+        border-top: 1px solid var(--lx-rule);
+    }
+
+    .lx-band__label {
+        margin-top: 0;
+    }
+}
+
+/* ==========================================================================
+   8. Senses block — how it works
+   ========================================================================== */
+
+.lx-entryhead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 0 0 clamp(2rem, 4vw, 3rem);
+}
+
+.lx-entryhead h2 {
+    margin: 0;
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.lx-entryhead .lx-pos {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+.lx-entryhead__rule {
+    flex: 1;
+    min-width: 2rem;
+    height: 1px;
+    background: var(--lx-rule);
+    transform: translateY(-0.35em);
+}
+
+.lx-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+}
+
+.lx-step {
+    counter-increment: step;
+    padding: 1.75rem clamp(1rem, 2.5vw, 2rem) 0.5rem;
+    border-top: 2px solid var(--lx-ink);
+    position: relative;
+}
+
+.lx-step:first-child {
+    padding-inline-start: 0;
+}
+
+.lx-step + .lx-step {
+    border-inline-start: 1px solid var(--lx-rule);
+}
+
+.lx-step::before {
+    content: counter(step);
+    display: block;
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--lx-gilt-deep);
+    margin-bottom: 1rem;
+}
+
+.lx-step h3 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    font-weight: 550;
+}
+
+.lx-step p {
+    margin: 0;
+    color: var(--lx-ink-2);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    .lx-step {
+        padding-inline: 0;
+        padding-block: 1.5rem 0.5rem;
+    }
+
+    .lx-step + .lx-step {
+        border-inline-start: 0;
+        border-top: 1px solid var(--lx-rule);
+    }
+
+    .lx-step:first-child {
+        border-top-width: 2px;
+    }
+}
+
+/* ==========================================================================
+   9. Related entries — the features, set as a definition column
+   ========================================================================== */
+
+.lx-entries {
+    margin: 0;
+    border-top: 2px solid var(--lx-ink);
+}
+
+.lx-entry {
+    display: grid;
+    grid-template-columns: minmax(11rem, 22%) minmax(0, 1fr);
+    gap: clamp(1rem, 4vw, 3rem);
+    padding-block: clamp(1.75rem, 3.5vw, 2.75rem);
+    border-bottom: 1px solid var(--lx-rule);
+    transition: background 0.3s var(--lx-ease);
+}
+
+.lx-entry:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.lx-entry__word {
+    font-family: var(--lx-serif);
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.lx-entry__pos {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.lx-entry__def {
+    margin: 0;
+}
+
+.lx-entry__def h3 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.15rem, 1.9vw, 1.4rem);
+    font-weight: 550;
+}
+
+.lx-entry__def p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--lx-ink-2);
+    line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+    .lx-entry {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    .lx-entry__pos {
+        display: inline;
+        margin-inline-start: 0.5rem;
+    }
+}
+
+/* ==========================================================================
+   10. Citations — featured writing
+   ========================================================================== */
+
+.lx-cites {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+    gap: clamp(1.75rem, 3.5vw, 2.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-cite {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.lx-cite__media {
+    display: block;
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--lx-paper-sunk);
+    border-radius: var(--lx-radius);
+    margin-bottom: 1.15rem;
+}
+
+.lx-cite__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--lx-ease), filter 0.5s var(--lx-ease);
+}
+
+.lx-cite:hover .lx-cite__media img {
+    transform: scale(1.04);
+}
+
+/* No featured image: set the post's initial as a plate. */
+.lx-cite__plate {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--lx-bind);
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.lx-cite__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+    font-weight: 550;
+    line-height: 1.3;
+}
+
+.lx-cite__title a {
+    color: var(--lx-ink);
+    background-image: linear-gradient(var(--lx-gilt-deep), var(--lx-gilt-deep));
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    transition: background-size 0.35s var(--lx-ease);
+}
+
+.lx-cite:hover .lx-cite__title a {
+    background-size: 100% 1px;
+    text-decoration: none;
+}
+
+/* The attribution line, the part that makes it read as a citation. */
+.lx-cite__attr {
+    margin: 0 0 0.75rem;
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-cite__attr::before {
+    content: '—';
+    margin-inline-end: 0.4rem;
+    color: var(--lx-gilt-deep);
+}
+
+.lx-cite__excerpt {
+    margin: 0 0 1rem;
+    color: var(--lx-ink-2);
+    font-size: 0.9875rem;
+    line-height: 1.65;
+}
+
+.lx-cite__more {
+    margin-top: auto;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--lx-spot);
+}
+
+.lx-cite__more span {
+    display: inline-block;
+    transition: transform 0.25s var(--lx-ease);
+}
+
+.lx-cite:hover .lx-cite__more span {
+    transform: translateX(0.25rem);
+}
+
+[dir='rtl'] .lx-cite:hover .lx-cite__more span {
+    transform: translateX(-0.25rem);
+}
+
+/* ==========================================================================
+   11. Usage notes — FAQ
+   ========================================================================== */
+
+.lx-notes {
+    border-top: 2px solid var(--lx-ink);
+    max-width: 60rem;
+}
+
+.lx-note {
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-note > summary {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr) 2rem;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-block: 1.35rem;
+    cursor: pointer;
+    list-style: none;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    font-weight: 500;
+    line-height: 1.4;
+    transition: color 0.2s var(--lx-ease);
+}
+
+.lx-note > summary::-webkit-details-marker {
+    display: none;
+}
+
+.lx-note > summary:hover {
+    color: var(--lx-spot);
+}
+
+.lx-note__n {
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--lx-gilt-deep);
+}
+
+.lx-note__sign {
+    justify-self: end;
+    position: relative;
+    width: 0.85rem;
+    height: 0.85rem;
+    align-self: center;
+}
+
+.lx-note__sign::before,
+.lx-note__sign::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--lx-ink-2);
+    transition: transform 0.3s var(--lx-ease);
+}
+
+.lx-note__sign::after {
+    transform: rotate(90deg);
+}
+
+.lx-note[open] .lx-note__sign::after {
+    transform: rotate(0deg);
+}
+
+.lx-note__body {
+    padding-block: 0 1.6rem;
+    padding-inline: 2.75rem 2rem;
+    margin: 0;
+    max-width: 68ch;
+    color: var(--lx-ink-2);
+    line-height: 1.7;
+}
+
+@media (max-width: 560px) {
+    .lx-note > summary {
+        grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
+    }
+
+    .lx-note__body {
+        padding-inline: 1.75rem 0;
+    }
+}
+
+/* ==========================================================================
+   12. Closing panel — the back cover
+   ========================================================================== */
+
+.lx-close {
+    position: relative;
+    background: var(--lx-bind);
+    color: var(--lx-on-bind);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.lx-close::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(100% 120% at 90% 100%, rgba(201, 162, 39, 0.16), transparent 60%),
+        linear-gradient(2deg, var(--lx-bind) 0%, var(--lx-bind-deep) 100%);
+}
+
+.lx-close__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+
+.lx-close h2 {
+    margin: 0;
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    max-width: 18ch;
+}
+
+.lx-close p {
+    margin: 1rem 0 0;
+    max-width: 44ch;
+    color: var(--lx-on-bind-2);
+}
+
+.lx-close__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+@media (max-width: 800px) {
+    .lx-close__inner {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+}
+
+/* ==========================================================================
+   13. Footer — the colophon
+   ========================================================================== */
+
+.lx-foot {
+    background: var(--lx-bind-deep);
+    color: var(--lx-on-bind-2);
+    font-size: 0.9375rem;
+}
+
+.lx-foot__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+    padding-block: clamp(3rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+}
+
+.lx-foot__brand .lx-logo {
+    color: var(--lx-on-bind);
+    margin-bottom: 1rem;
+}
+
+.lx-foot__tagline {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    color: var(--lx-gilt);
+    margin: 0 0 1rem;
+}
+
+.lx-foot__about {
+    margin: 0 0 1.5rem;
+    max-width: 42ch;
+    line-height: 1.7;
+}
+
+.lx-foot h2 {
+    margin: 0 0 1.1rem;
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-on-bind);
+}
+
+.lx-foot ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot li + li {
+    margin-top: 0.6rem;
+}
+
+.lx-foot a {
+    color: var(--lx-on-bind-2);
+}
+
+.lx-foot a:hover {
+    color: var(--lx-gilt);
+    text-decoration: none;
+}
+
+.lx-foot__contact li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+}
+
+.lx-foot__contact svg {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    opacity: 0.6;
+    transform: translateY(0.1em);
+}
+
+.lx-foot__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    padding-block: 1.5rem 2rem;
+    border-top: 1px solid var(--lx-rule-bind);
+    font-size: 0.8125rem;
+}
+
+.lx-foot__copy {
+    margin: 0;
+    margin-inline-end: auto;
+    color: var(--lx-on-bind-3);
+}
+
+.lx-foot__social {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot__social a {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: 50%;
+    color: var(--lx-on-bind-2);
+    transition: border-color 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-foot__social a:hover {
+    border-color: var(--lx-gilt);
+    color: var(--lx-gilt);
+}
+
+.lx-foot__social svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+@media (max-width: 900px) {
+    .lx-foot__inner {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lx-foot__brand {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 520px) {
+    .lx-foot__inner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ==========================================================================
+   14. Buttons
+   ========================================================================== */
+
+.lx-btn,
+.button,
+button.button,
+input[type='submit'],
+input[type='button'] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.875rem;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid var(--lx-ink);
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s var(--lx-ease), color 0.2s var(--lx-ease),
+        border-color 0.2s var(--lx-ease), transform 0.15s var(--lx-ease);
+}
+
+.lx-btn:hover,
+.button:hover,
+button.button:hover,
+input[type='submit']:hover,
+input[type='button']:hover {
+    background: var(--lx-ink);
+    color: var(--lx-paper);
+    text-decoration: none;
+}
+
+.lx-btn:active,
+.button:active {
+    transform: translateY(1px);
+}
+
+.lx-btn--primary,
+.button.primary {
+    background: var(--lx-ink);
+    border-color: var(--lx-ink);
+    color: var(--lx-paper);
+}
+
+.lx-btn--primary:hover,
+.button.primary:hover {
+    background: var(--lx-spot);
+    border-color: var(--lx-spot);
+    color: #fff;
+}
+
+/* Buttons that sit on the binding. */
+.lx-btn--gilt {
+    background: var(--lx-gilt);
+    border-color: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+.lx-btn--gilt:hover {
+    background: #ddb943;
+    border-color: #ddb943;
+    color: var(--lx-bind-deep);
+}
+
+.lx-btn--ghost {
+    border-color: var(--lx-rule-bind);
+    color: var(--lx-on-bind);
+}
+
+.lx-btn--ghost:hover {
+    background: rgba(240, 241, 236, 0.1);
+    border-color: var(--lx-on-bind-2);
+    color: var(--lx-on-bind);
+}
+
+.lx-btn--quiet {
+    border-color: transparent;
+    padding-inline: 0.75rem;
+}
+
+.lx-btn--quiet:hover {
+    background: transparent;
+    color: var(--lx-spot);
+    border-color: transparent;
+    text-decoration: underline;
+}
+
+.lx-nav.is-over .lx-btn--quiet {
+    color: var(--lx-on-bind);
+}
+
+.lx-nav.is-over .lx-btn--quiet:hover {
+    color: var(--lx-gilt);
+}
+
+.lx-nav.is-over .lx-btn--primary {
+    background: var(--lx-gilt);
+    border-color: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+.lx-nav.is-over .lx-btn--primary:hover {
+    background: #ddb943;
+    border-color: #ddb943;
+}
+
+.button.big,
+.lx-btn--big {
+    min-height: 3.25rem;
+    padding-inline: 1.9rem;
+    font-size: 0.95rem;
+}
+
+.button.small,
+.lx-btn--small {
+    min-height: 2.25rem;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+}
+
+.button.fit,
+.lx-btn--fit {
+    width: 100%;
+}
+
+.button.disabled,
+.lx-btn[disabled],
+.button[disabled] {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   15. Legacy component shims
+   Editorial class names still used by the explore, page, profile, auth and
+   invite views. Restyled to the new system rather than reproduced.
+   ========================================================================== */
+
+/* Views written against the old theme drop bare sections into the body block,
+   so the main element supplies the measure. Anything that must reach the
+   viewport edge opts out with .lx-bleed and carries its own .lx-wrap. */
+/* :not(.lx-bleed) is carrying specificity as well as intent here. Legacy
+   components set their own shorthand margins (.explore-tabs, ul.pagination),
+   and a plain `.lx-main > *` ties or loses against them, which knocks those
+   blocks out of the column. */
+.lx-main > *:not(.lx-bleed) {
+    width: 100%;
+    max-width: var(--lx-measure);
+    margin-inline: auto;
+    padding-inline: var(--lx-gutter);
+}
+
+/* Scoped with :not() so a bleed section keeps whatever padding its own
+   component rule sets; without it the descendant selector here would outrank
+   .lx-section and flatten the home page rhythm. */
+.lx-main > section:not(.lx-bleed),
+.lx-main > article:not(.lx-bleed) {
+    padding-block: clamp(2.25rem, 4.5vw, 3.5rem);
+}
+
+.lx-main > section:not(.lx-bleed) + section:not(.lx-bleed) {
+    border-top: 1px solid var(--lx-rule);
+}
+
+header.major {
+    margin-bottom: 1.75rem;
+}
+
+header.major h2 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: 500;
+}
+
+header.major h2 + p,
+header.major > p {
+    margin: 0;
+    color: var(--lx-ink-2);
+    max-width: 56ch;
+}
+
+/* Section hero used by the explore page. */
+#banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    gap: clamp(1.5rem, 5vw, 4rem);
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+#banner h1 {
+    margin: 0 0 0.6rem;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+}
+
+#banner header > p {
+    margin: 0 0 1.5rem;
+    font-size: clamp(1.05rem, 1.7vw, 1.2rem);
+    color: var(--lx-ink-2);
+    max-width: 48ch;
+}
+
+#banner .image img {
+    width: 100%;
+    border-radius: var(--lx-radius-lg);
+}
+
+@media (max-width: 800px) {
+    #banner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #banner .image {
+        display: none;
+    }
+}
+
+/* Actions list */
+ul.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+}
+
+ul.actions:last-child {
+    margin-bottom: 0;
+}
+
+ul.actions.stacked {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* Grid */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline-start: -1.5rem;
+}
+
+.row > * {
+    padding-inline-start: 1.5rem;
+    width: 100%;
+}
+
+.row.gtr-50 {
+    margin-inline-start: -0.75rem;
+}
+
+.row.gtr-50 > * {
+    padding-inline-start: 0.75rem;
+}
+
+.row.aln-middle {
+    align-items: center;
+}
+
+.col-1 { width: 8.3333%; }
+.col-2 { width: 16.6666%; }
+.col-3 { width: 25%; }
+.col-4 { width: 33.3333%; }
+.col-5 { width: 41.6666%; }
+.col-6 { width: 50%; }
+.col-7 { width: 58.3333%; }
+.col-8 { width: 66.6666%; }
+.col-9 { width: 75%; }
+.col-10 { width: 83.3333%; }
+.col-11 { width: 91.6666%; }
+.col-12 { width: 100%; }
+
+@media (max-width: 980px) {
+    .col-6-medium { width: 50%; }
+    .col-12-medium { width: 100%; }
+}
+
+@media (max-width: 736px) {
+    .col-6-small { width: 50%; }
+    .col-12-small { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    .col-12-xsmall { width: 100%; }
+}
+
+/* Post/article grids */
+.posts,
+.features,
+.guide-cards,
+.blog-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.posts > article,
+.features > article {
+    display: flex;
+    flex-direction: column;
+}
+
+.posts > article > .image,
+.posts > article > .image.post-thumb {
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-sunk);
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.posts > article > .image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--lx-ease);
+}
+
+.posts > article:hover > .image img {
+    transform: scale(1.04);
+}
+
+.post-thumb-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--lx-bind);
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.posts > article h3,
+.features > article h3,
+.blog-card h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.25rem;
+    font-weight: 550;
+    line-height: 1.3;
+}
+
+.posts > article h3 a,
+.blog-card h3 a {
+    color: var(--lx-ink);
+}
+
+.posts > article p,
+.features > article p {
+    color: var(--lx-ink-2);
+    font-size: 0.9875rem;
+    line-height: 1.65;
+}
+
+.posts > article .actions,
+.blog-card .actions {
+    margin-top: auto;
+    margin-bottom: 0;
+    padding-top: 0.75rem;
+}
+
+p.meta,
+.meta {
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.features > article {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--lx-rule);
+}
+
+.features > article > .icon {
+    color: var(--lx-gilt-deep);
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+}
+
+.mini-posts article {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.mini-posts article .image {
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--lx-radius);
+}
+
+.mini-posts article .image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mini-posts article p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.image.fit img,
+.image.fit {
+    width: 100%;
+}
+
+.box {
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+}
+
+.box > :last-child {
+    margin-bottom: 0;
+}
+
+.card {
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+/* Icon lists */
+ul.icons {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+ul.contact {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+}
+
+ul.contact li {
+    padding-block: 0.4rem;
+    position: relative;
+    padding-inline-start: 1.75rem;
+}
+
+ul.contact li::before {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.55rem;
+    color: var(--lx-gilt-deep);
+}
+
+/* Pagination */
+ul.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+}
+
+.pagination-gap {
+    display: inline-block;
+    padding-inline: 0.35rem;
+    color: var(--lx-ink-3);
+}
+
+/* Forms */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+input[type='url'],
+input[type='tel'],
+input[type='number'],
+select,
+textarea {
+    width: 100%;
+    min-height: 2.875rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: 1rem;
+    line-height: 1.4;
+    transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
+}
+
+textarea {
+    min-height: 9rem;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--lx-spot);
+    box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.14);
+}
+
+/* The soft ring above is a pointer affordance and is far too faint to be a
+   keyboard indicator. Suppressing the outline only for :not(:focus-visible)
+   keeps the real ring for keyboard users without depending on source order. */
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--lx-ink-3);
+}
+
+label {
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Explore page tabs */
+.explore-tabs {
+    display: flex;
+    gap: 1.75rem;
+    margin: 0 0 2rem;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.explore-tab {
+    position: relative;
+    padding-block: 0.9rem;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.explore-tab::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--lx-gilt-deep);
+    transform: scaleX(0);
+    transition: transform 0.25s var(--lx-ease);
+}
+
+.explore-tab:hover {
+    color: var(--lx-ink);
+    text-decoration: none;
+}
+
+.explore-tab.active {
+    color: var(--lx-ink);
+}
+
+.explore-tab.active::after {
+    transform: scaleX(1);
+}
+
+.blog-card {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    transition: border-color 0.25s var(--lx-ease), transform 0.25s var(--lx-ease);
+}
+
+.blog-card:hover {
+    border-color: var(--lx-rule-strong);
+    transform: translateY(-2px);
+}
+
+.blog-card .meta {
+    margin-bottom: 0.75rem;
+}
+
+.search-meta {
+    margin-top: 1rem;
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    color: var(--lx-ink-2);
+}
+
+.home-search {
+    margin: 0;
+}
+
+/* Static content pages */
+.page-content {
+    max-width: 42rem;
+}
+
+.page-content h2 {
+    margin-top: 2.5rem;
+    font-size: clamp(1.4rem, 2.4vw, 1.85rem);
+}
+
+.page-content ul,
+.page-content ol {
+    margin: 0 0 1.5rem;
+    padding-inline-start: 1.25rem;
+}
+
+.page-content li + li {
+    margin-top: 0.4rem;
+}
+
+.page-content blockquote {
+    margin: 2rem 0;
+    padding-inline-start: 1.25rem;
+    border-inline-start: 2px solid var(--lx-gilt-deep);
+    font-style: italic;
+    color: var(--lx-ink-2);
+}
+
+/* ==========================================================================
+   16. Auth pages
+   Sign in, sign up, password reset and the invite outcomes. These run on
+   layouts/auth.lex.php, which drops the masthead and the footer site map:
+   the page has one job and everything else is a distraction from it.
+   ========================================================================== */
+
+.lx-authpage {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--lx-paper);
+}
+
+/* Slim bar: an escape hatch on one side, the opposite journey on the other. */
+.lx-authbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2.75rem);
+}
+
+.lx-authbar__back,
+.lx-authbar__alt a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--lx-ink);
+}
+
+.lx-authbar__back:hover,
+.lx-authbar__alt a:hover {
+    color: var(--lx-spot);
+    text-decoration: none;
+}
+
+.lx-authbar__back svg {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+
+[dir='rtl'] .lx-authbar__back svg {
+    transform: scaleX(-1);
+}
+
+.lx-authmain {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: clamp(0.5rem, 4vh, 2.5rem) clamp(1.25rem, 4vw, 2.75rem) clamp(2rem, 5vh, 3.5rem);
+}
+
+/* One narrow column. No card, no border, no shadow: on a page this empty a
+   panel only draws a box around nothing. */
+.lx-authcol {
+    width: 100%;
+    max-width: 25rem;
+}
+
+.lx-authmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-bottom: clamp(1.5rem, 5vh, 2.5rem);
+}
+
+.lx-authmark:hover {
+    text-decoration: none;
+}
+
+.lx-authmark__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--lx-gilt-deep);
+    flex: none;
+}
+
+.lx-authmark__word {
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-ink);
+}
+
+.lx-authtitle {
+    margin: 0 0 0.5rem;
+    text-align: center;
+    font-size: clamp(1.7rem, 5vw, 2.35rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+.lx-authsub {
+    margin: 0 0 clamp(1.75rem, 5vh, 2.5rem);
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--lx-ink-2);
+}
+
+/* The layout always emits the element; an empty one must not leave a gap. */
+.lx-authsub:empty {
+    display: none;
+}
+
+.lx-authalert {
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 0.9rem;
+    border-inline-start: 2px solid var(--lx-danger);
+    background: var(--lx-danger-bg);
+    color: var(--lx-danger);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.lx-authalert.is-ok {
+    border-inline-start-color: var(--lx-ok);
+    background: var(--lx-ok-bg);
+    color: var(--lx-ok);
+}
+
+/* --- Fields ---------------------------------------------------------- */
+
+.lx-field {
+    margin-bottom: 1.6rem;
+}
+
+/* Wraps the input and its show/hide button. The toggle used to be positioned
+   against .lx-field, which is fine on the login form where the input is the
+   last thing in it, but on registration the hint and the strength meter sit
+   below the input, so the button landed at the bottom of all of that. */
+.lx-field__control {
+    position: relative;
+}
+
+.lx-field__label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-family: var(--lx-sans);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+/* Two classes deep on purpose: the generic `input[type="email"]` rule in the
+   component shims is (0,1,1) and would otherwise repaint these as boxes. */
+.lx-field .lx-field__input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.45rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--lx-rule-strong);
+    border-radius: 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: var(--lx-ink);
+    transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
+}
+
+.lx-field .lx-field__input::placeholder {
+    color: var(--lx-ink-3);
+    font-family: var(--lx-serif);
+}
+
+/* Only inputs that carry a toggle get a wrapper, so this can be unconditional
+   and a long password never runs underneath the button. */
+.lx-field__control .lx-field__input {
+    padding-inline-end: 3.75rem;
+}
+
+/* The rule itself is the focus indicator here, so the outline is suppressed
+   for both modalities rather than just for pointer focus. Browsers match
+   :focus-visible on any text-input focus, so :not(:focus-visible) would not
+   have removed it on click anyway.
+
+   That makes the underline load-bearing for keyboard users, so it is not
+   subtle: 1px of --lx-rule-strong becomes 2px of --lx-ink at 15.6:1 against
+   paper, drawn as a shadow so nothing shifts by a pixel. */
+.lx-field .lx-field__input:focus,
+.lx-field .lx-field__input:focus-visible {
+    outline: none;
+    border-bottom-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+}
+
+.lx-field--invalid .lx-field__input {
+    border-bottom-color: var(--lx-danger);
+}
+
+.lx-field__labelrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* Show/hide sits inside the field, on the input's own baseline. */
+.lx-field__toggle {
+    position: absolute;
+    inset-inline-end: 0;
+    bottom: 0.55rem;
+    min-height: 0;
+    padding: 0.25rem 0.15rem;
+    background: none;
+    border: 0;
+    border-radius: 2px;
+    font-family: var(--lx-sans);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+    cursor: pointer;
+}
+
+.lx-field__toggle:hover {
+    background: none;
+    color: var(--lx-ink);
+}
+
+.lx-field__error {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-danger);
+}
+
+.lx-field__hint {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-ink-2);
+}
+
+/* --- Password strength -------------------------------------------------
+   Advisory only. The server enforces `password:basic`, which is a six
+   character minimum and nothing else, so the meter must never look like a
+   gate: the requirement is stated in words above it, and the bar only rates
+   what the reader typed. */
+
+.lx-meter {
+    margin-top: 0.75rem;
+}
+
+.lx-meter[hidden] {
+    display: none;
+}
+
+.lx-meter__track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    height: 3px;
+}
+
+.lx-meter__seg {
+    background: var(--lx-rule);
+    border-radius: 2px;
+    transition: background 0.25s var(--lx-ease);
+}
+
+.lx-meter[data-level='1'] .lx-meter__seg:nth-child(-n + 1),
+.lx-meter[data-level='2'] .lx-meter__seg:nth-child(-n + 2),
+.lx-meter[data-level='3'] .lx-meter__seg:nth-child(-n + 3),
+.lx-meter[data-level='4'] .lx-meter__seg {
+    background: var(--lx-meter-fill, var(--lx-ink-2));
+}
+
+.lx-meter[data-level='0'],
+.lx-meter[data-level='1'] {
+    --lx-meter-fill: var(--lx-danger);
+}
+
+.lx-meter[data-level='2'] {
+    --lx-meter-fill: var(--lx-gilt-deep);
+}
+
+.lx-meter[data-level='3'],
+.lx-meter[data-level='4'] {
+    --lx-meter-fill: var(--lx-ok);
+}
+
+.lx-meter__label {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-ink-2);
+}
+
+.lx-meter__level {
+    font-weight: 600;
+    color: var(--lx-meter-fill, var(--lx-ink-2));
+}
+
+/* --- Submit and the tail of the page --------------------------------- */
+
+.lx-authsubmit {
+    width: 100%;
+    min-height: 3.25rem;
+    margin-top: 2rem;
+    background: var(--lx-ink);
+    border-color: var(--lx-ink);
+    color: var(--lx-paper);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.lx-authsubmit:hover {
+    background: var(--lx-spot);
+    border-color: var(--lx-spot);
+    color: #fff;
+}
+
+.lx-authhelp {
+    margin-top: 2.25rem;
+    text-align: center;
+}
+
+.lx-authhelp:empty {
+    display: none;
+}
+
+.lx-authhelp a {
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--lx-ink);
+}
+
+.lx-authhelp a:hover {
+    color: var(--lx-spot);
+}
+
+.lx-authnote {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--lx-ink-2);
+}
+
+.lx-authlegal {
+    padding: 0 clamp(1.25rem, 4vw, 2.75rem) clamp(1.5rem, 4vh, 2.5rem);
+    text-align: center;
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    color: var(--lx-ink-3);
+}
+
+.lx-authlegal p {
+    margin: 0;
+}
+
+.lx-authlegal a {
+    color: var(--lx-ink-3);
+    text-decoration: underline;
+}
+
+.lx-authlegal a:hover {
+    color: var(--lx-ink);
+}
+
+@media (max-width: 420px) {
+    .lx-authbar {
+        padding-inline: 1.25rem;
+    }
+}
+
+/* ==========================================================================
+   17. Profile page
+   ========================================================================== */
+
+.profile-card {
+    background: var(--lx-paper-raised);
+}
+
+.profile-image img,
+.profile-image .profile-initials {
+    width: 100%;
+    max-width: 11rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-image .profile-initials {
+    display: grid;
+    place-items: center;
+    background: var(--lx-bind);
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: 3.5rem;
+}
+
+.profile-right h1 {
+    margin: 0 0 0.25rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+.profile-meta {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    color: var(--lx-ink-2);
+}
+
+.profile-meta li .icon {
+    color: var(--lx-gilt-deep);
+    margin-inline-end: 0.35rem;
+}
+
+.profile-stats {
+    margin-top: 1.5rem;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.profile-stats strong {
+    display: inline-block;
+    font-family: var(--lx-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--lx-ink);
+}
+
+.profile-social {
+    margin-top: 1.25rem;
+}
+
+/* ==========================================================================
+   18. Language switcher, back-to-top, misc
+   ========================================================================== */
+
+.lang-switcher {
+    position: relative;
+}
+
+.lang-switcher__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: var(--lx-radius);
+    color: var(--lx-on-bind-2);
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.lang-switcher__toggle:hover {
+    color: var(--lx-gilt);
+    border-color: var(--lx-gilt);
+    background: transparent;
+}
+
+.lang-switcher__menu {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    inset-inline-start: 0;
+    z-index: 20;
+    min-width: 10rem;
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    background: var(--lx-bind);
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: var(--lx-radius);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.lang-switcher__menu.show {
+    display: block;
+}
+
+/* Two shapes on purpose: the switcher renders POST buttons for a signed-in
+   reader and plain links for a guest (see _language_switcher). Both need the
+   same box, so both selectors carry it. */
+.lang-switcher__item button,
+.lang-switcher__item a {
+    display: block;
+    width: 100%;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.7rem;
+    background: transparent;
+    border: 0;
+    border-radius: var(--lx-radius);
+    color: var(--lx-on-bind-2);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: start;
+    text-decoration: none;
+    letter-spacing: normal;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.lang-switcher__item button:hover,
+.lang-switcher__item a:hover {
+    background: rgba(240, 241, 236, 0.08);
+    color: var(--lx-on-bind);
+    text-decoration: none;
+}
+
+.lang-switcher__item button[aria-current='true'],
+.lang-switcher__item a[aria-current='true'] {
+    color: var(--lx-gilt);
+}
+
+.fab.scroll-top-btn {
+    position: fixed;
+    inset-inline-end: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 50%;
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    box-shadow: 0 10px 30px rgba(22, 35, 63, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(0.5rem);
+    transition: opacity 0.25s var(--lx-ease), transform 0.25s var(--lx-ease), visibility 0.25s;
+}
+
+.fab.scroll-top-btn::before {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    border-top: 1.5px solid currentColor;
+    border-inline-start: 1.5px solid currentColor;
+    transform: rotate(45deg) translate(1px, 1px);
+}
+
+.fab.scroll-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+}
+
+.fab.scroll-top-btn:hover {
+    background: var(--lx-ink);
+    border-color: var(--lx-ink);
+    color: var(--lx-paper);
+}
+
+/* Cookie banner buttons. consent.css lays the banner out but defines no button
+   rules at all: it leaned on the old theme's. Its panel is near-black, so the
+   default .button here would put ink on ink. */
+.consent-banner__inner .button {
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+    background: transparent;
+}
+
+.consent-banner__inner .button:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: #fff;
+    color: #fff;
+}
+
+.consent-banner__inner .button.primary {
+    background: #fff;
+    border-color: #fff;
+    color: #111827;
+}
+
+.consent-banner__inner .button.primary:hover {
+    background: var(--lx-gilt);
+    border-color: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+.consent-banner__inner .button.alt {
+    border-color: transparent;
+    text-decoration: underline;
+}
+
+.consent-banner__inner .button.alt:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-red {
+    color: var(--lx-danger);
+}
+
+.stack-trace {
+    overflow: auto;
+    padding: 1rem;
+    background: var(--lx-paper-sunk);
+    border-radius: var(--lx-radius);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   19. Motion
+   ========================================================================== */
+
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.7s var(--lx-ease), transform 0.7s var(--lx-ease);
+}
+
+[data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+}
+
+/* Cover load sequence: one orchestrated moment, nothing else on the page
+   animates on load. */
+.lx-cover__meta,
+.lx-headword,
+.lx-cover__pron,
+.lx-senses li,
+.lx-cover__note,
+.lx-cover__actions {
+    animation: lx-rise 0.9s var(--lx-ease) both;
+}
+
+.lx-cover__meta { animation-delay: 0.05s; }
+.lx-headword { animation-delay: 0.12s; animation-name: lx-unveil; }
+.lx-cover__pron { animation-delay: 0.4s; }
+.lx-senses li:nth-child(1) { animation-delay: 0.5s; }
+.lx-senses li:nth-child(2) { animation-delay: 0.58s; }
+.lx-senses li:nth-child(3) { animation-delay: 0.66s; }
+.lx-cover__note { animation-delay: 0.74s; }
+.lx-cover__actions { animation-delay: 0.8s; }
+
+@keyframes lx-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* The headword is unveiled rather than faded: it reads as a cover being set. */
+@keyframes lx-unveil {
+    from {
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+        transform: translateY(0.12em);
+    }
+    to {
+        opacity: 1;
+        clip-path: inset(0 0 -20% 0);
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    [data-reveal] {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   20. Print
+   ========================================================================== */
+
+@media print {
+    .lx-nav,
+    .lx-drawer,
+    .fab,
+    .lx-close,
+    .lx-foot__social {
+        display: none !important;
+    }
+
+    .lx-cover,
+    .lx-close {
+        background: none;
+        color: #000;
+    }
+
+    body {
+        background: #fff;
+    }
+}

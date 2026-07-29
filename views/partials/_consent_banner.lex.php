@@ -108,9 +108,21 @@
   </div>
 </div>
 
-<button 
-    type="button" 
-    class="consent-fab" 
-    data-consent-open 
+<?php
+// Inline mark rather than a Font Awesome glyph: this button is on every public
+// page, and the auth layout deliberately does not load the icon font, which
+// left the button rendering as a bare circle there.
+?>
+<button
+    type="button"
+    class="consent-fab"
+    data-consent-open
     aria-label="Cookie settings">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    <path d="M12 3a9 9 0 1 0 9 9 3.4 3.4 0 0 1-4.4-4.4A3.4 3.4 0 0 1 12 3Z"/>
+    <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="13.5" cy="14.5" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="8.5" cy="15" r="1" fill="currentColor" stroke="none"/>
+  </svg>
 </button>

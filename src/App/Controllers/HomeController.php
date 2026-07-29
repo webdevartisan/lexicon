@@ -25,6 +25,9 @@ class HomeController extends AppController
         return $this->view([
             'showcase' => $this->postModel->findHomeShowcase(6),
             'stats' => $this->publicStats(),
+            // Only this page opens on the dark cover, so only this page gets
+            // the transparent masthead.
+            'navMode' => 'over',
         ]);
     }
 

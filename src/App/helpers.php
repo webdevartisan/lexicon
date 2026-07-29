@@ -53,6 +53,40 @@ function site_content(string $name, ?string $default = null): string
 }
 
 /**
+ * Label for a navigation item, translated when a translation exists.
+ *
+ * NavigationService emits both an English `label` and a `key`. Rendering the
+ * key blindly is what left the public menu in English, but rendering the
+ * translation blindly is worse: TranslationService returns the key itself on a
+ * miss, so a half-translated locale shows "navigation.home" to the reader.
+ * ar.json is missing roughly half its keys today, which is exactly that case.
+ *
+ * @param  array<string, mixed>  $item  Navigation item with `label` and optional `key`
+ * @return string Translated label, or the English label when no translation exists
+ */
+function nav_label(array $item): string
+{
+    $label = (string) ($item['label'] ?? '');
+    $key = (string) ($item['key'] ?? '');
+
+    if ($key === '') {
+        return $label;
+    }
+
+    // Navigation is interface text, so it follows the chrome locale, and the
+    // service is memoized per locale the same way the $t global does it —
+    // it cannot be autowired because its constructor takes a locale string.
+    static $translators = [];
+    $locale = App\Services\LocaleState::get()->chromeLocale;
+    $translators[$locale] ??= new TranslationService($locale);
+
+    $translated = $translators[$locale]->translate($key);
+
+    // The service echoes the key back when the lookup misses.
+    return $translated === $key ? $label : $translated;
+}
+
+/**
  * Read a site setting from the settings table.
  *
  * @param  string  $name  Setting name, e.g. 'site_name'

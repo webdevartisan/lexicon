@@ -10,238 +10,243 @@
 {% endblock %}
 
 {% block body %}
-<!-- Banner -->
-<section id="banner">
-    <div class="content">
-        <header>
-            <h1><?= e(site_content('banner.title')) ?><br /></h1>
-            <p><?= e(site_content('banner.subtitle')) ?></p>
-        </header>
-        <p><?= e(site_content('banner.body')) ?></p>
-        <ul class="actions">
-            {% if (!auth()->check()): %}
-                <li><a href="/register" class="button big primary"><?= e(site_content('banner.cta')) ?></a></li>
-                <li><a href="/blogs" class="button big">{{ t('navigation.exploreBlogs') }}</a></li>
-            {% else %}
-                <li><a href="/dashboard" class="button big primary"><?= e(site_content('banner.ctaDashboard')) ?></a></li>
-            {% endif %}
-        </ul>
-    </div>
-    <span class="image" aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" role="img">
-        <title><?= e(site_content('banner.svgTitle')) ?></title>
-        <defs>
-        <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="#F7F7F8"/>
-            <stop offset="100%" stop-color="#EFEFF2"/>
-        </linearGradient>
-        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#151515" flood-opacity="0.08"/>
-        </filter>
-        </defs>
+<?php
+/**
+ * Render a headword with its syllable breaks marked up.
+ *
+ * Admins type the interpunct directly ("lex·i·con"); the dots become spans so
+ * they can take the foil colour, and the aria-label restores the plain word so
+ * a screen reader says "lexicon" rather than spelling out the parts.
+ *
+ * @param  string  $word  Headword, optionally containing U+00B7 separators
+ * @return string Escaped HTML for the headword
+ */
+$headwordHtml = static function (string $word): string {
+    $parts = array_map('e', preg_split('/\x{00B7}/u', $word) ?: [$word]);
+    $dot = '<span class="lx-dot" aria-hidden="true">&middot;</span>';
 
-        <rect width="720" height="540" rx="24" fill="url(#bg)"/>
-        <!-- Editor window -->
-        <g filter="url(#softShadow)" transform="translate(48,48)">
-        <rect width="624" height="444" rx="16" fill="#FFFFFF"/>
-        <!-- Title bar -->
-        <rect x="0" y="0" width="624" height="48" rx="16" fill="#FBFBFC"/>
-        <circle cx="24" cy="24" r="6" fill="#FF6B6B"/>
-        <circle cx="44" cy="24" r="6" fill="#F5C451"/>
-        <circle cx="64" cy="24" r="6" fill="#53D86A"/>
-        <!-- Title -->
-        <rect x="96" y="16" width="180" height="16" rx="8" fill="#E7E8EC"/>
-        <!-- Toolbar -->
-        <rect x="24" y="72" width="80" height="12" rx="6" fill="#EDEEF1"/>
-        <rect x="112" y="72" width="56" height="12" rx="6" fill="#EDEEF1"/>
-        <rect x="176" y="72" width="56" height="12" rx="6" fill="#EDEEF1"/>
-        <!-- Body lines -->
-        <rect x="24" y="108" width="456" height="12" rx="6" fill="#F0F1F4"/>
-        <rect x="24" y="132" width="504" height="12" rx="6" fill="#F0F1F4"/>
-        <rect x="24" y="156" width="384" height="12" rx="6" fill="#F0F1F4"/>
-        <rect x="24" y="192" width="520" height="12" rx="6" fill="#F0F1F4"/>
-        <rect x="24" y="216" width="428" height="12" rx="6" fill="#F0F1F4"/>
-        <rect x="24" y="240" width="494" height="12" rx="6" fill="#F0F1F4"/>
-        <!-- CTA pill inside the editor as a motif -->
-        <rect x="24" y="288" width="148" height="36" rx="18" fill="#f56a6a"/>
-        <rect x="40" y="300" width="88" height="12" rx="6" fill="#FFFFFF" opacity="0.95"/>
-        </g>
+    return '<span aria-label="'.e(str_replace("\u{00B7}", '', $word)).'">'
+        .implode($dot, $parts)
+        .'</span>';
+};
 
-        <!-- Publish sparkle motif -->
-        <g transform="translate(540,120)">
-        <circle cx="0" cy="0" r="26" fill="#f56a6a" opacity="0.12"/>
-        <path d="M0 -18 L4 -6 L18 -6 L7 2 L11 16 L0 8 L-11 16 L-7 2 L-18 -6 L-4 -6 Z"
-                fill="#f56a6a"/>
-        </g>
-
-        <!-- Cursor accent -->
-        <g transform="translate(580,220)">
-        <path d="M0 0 L36 20 L20 24 L28 44 L18 48 L10 28 L0 36 Z" fill="#151515"/>
-        <circle cx="28" cy="12" r="6" fill="#f56a6a"/>
-        </g>
-    </svg>
-    </span>
-</section>
-
-<!-- Stats strip -->
-{% if ((int) ($stats['posts'] ?? 0) > 0): %}
-<section class="stats-strip" aria-label="Platform statistics">
-    <div class="stat">
-        <span class="stat-number"><?= number_format((int) $stats['posts']) ?></span>
-        <span class="stat-label">{{ t('stats.posts') }}</span>
-    </div>
-    <div class="stat">
-        <span class="stat-number"><?= number_format((int) $stats['blogs']) ?></span>
-        <span class="stat-label">{{ t('stats.blogs') }}</span>
-    </div>
-    <div class="stat">
-        <span class="stat-number"><?= number_format((int) $stats['writers']) ?></span>
-        <span class="stat-label">{{ t('stats.writers') }}</span>
-    </div>
-</section>
-{% endif %}
-
-<!-- How it works -->
-<section>
-    <header class="major">
-        <h2><?= e(site_content('how.title')) ?></h2>
-    </header>
-    <div class="steps">
-        <div class="step">
-            <span class="step-number">1</span>
-            <h3><?= e(site_content('how.step1.title')) ?></h3>
-            <p><?= e(site_content('how.step1.body')) ?></p>
-        </div>
-        <div class="step">
-            <span class="step-number">2</span>
-            <h3><?= e(site_content('how.step2.title')) ?></h3>
-            <p><?= e(site_content('how.step2.body')) ?></p>
-        </div>
-        <div class="step">
-            <span class="step-number">3</span>
-            <h3><?= e(site_content('how.step3.title')) ?></h3>
-            <p><?= e(site_content('how.step3.body')) ?></p>
-        </div>
-    </div>
-</section>
-
-<!-- Features -->
-<section>
-    <header class="major">
-        <h2><?= e(site_content('features.title')) ?></h2>
-    </header>
-    <div class="features">
-        <article>
-            <span class="icon solid fa fa-feather-alt"></span>
-            <div class="content">
-                <h3><?= e(site_content('features.items.writing.title')) ?></h3>
-                <p><?= e(site_content('features.items.writing.body')) ?></p>
-            </div>
-        </article>
-        <article>
-            <span class="icon solid fa fa-users"></span>
-            <div class="content">
-                <h3><?= e(site_content('features.items.team.title')) ?></h3>
-                <p><?= e(site_content('features.items.team.body')) ?></p>
-            </div>
-        </article>
-        <article>
-            <span class="icon solid fa fa-download"></span>
-            <div class="content">
-                <h3><?= e(site_content('features.items.ownership.title')) ?></h3>
-                <p><?= e(site_content('features.items.ownership.body')) ?></p>
-            </div>
-        </article>
-        <article>
-            <span class="icon solid fa fa-book-reader"></span>
-            <div class="content">
-                <h3><?= e(site_content('features.items.readers.title')) ?></h3>
-                <p><?= e(site_content('features.items.readers.body')) ?></p>
-            </div>
-        </article>
-    </div>
-</section>
-
-<!-- Featured writing: admin picks only. With no picks, the guides keep the
-     section presentable instead of promoting random user content. -->
-{% if (!empty($showcase)): %}
-<section>
-    <header class="major">
-        <h2><?= e(site_content('showcase.title')) ?></h2>
-        <p><?= e(site_content('showcase.subtitle')) ?></p>
-    </header>
-    <div class="posts">
-        {% foreach ($showcase as $post): %}
-        <?php
-            $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
-$excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
+$coverHeadword = site_content('banner.headword');
+$statsPosts = (int) ($stats['posts'] ?? 0);
 ?>
-        <article>
-            {% if post.featured_image %}
-            <a href="<?= e($postUrl) ?>" class="image">
-                <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy" />
-            </a>
+
+<!-- Cover: the bound front matter of the volume. Everything here is the
+     banner content the admin already edits, re-set as a dictionary entry. -->
+<section class="lx-cover lx-bleed">
+    <div class="lx-wrap lx-cover__inner">
+        <p class="lx-cover__meta"><?= e(site_content('banner.eyebrow')) ?></p>
+
+        <h1 class="lx-headword"><?= $headwordHtml($coverHeadword) ?></h1>
+
+        <p class="lx-cover__pron">
+            <span class="lx-pron"><?= e(site_content('banner.pronunciation')) ?></span>
+            <em class="lx-pos"><?= e(site_content('banner.pos')) ?></em>
+            <span class="lx-cover__rule" aria-hidden="true"></span>
+        </p>
+
+        <ol class="lx-senses">
+            <li><p><?= e(site_content('banner.title')) ?></p></li>
+            <li><p><?= e(site_content('banner.subtitle')) ?></p></li>
+        </ol>
+
+        <?php
+        // Actions before the usage note: it keeps the call to action above the
+        // fold on short laptops, and a dictionary puts the usage paragraph at
+        // the end of an entry anyway.
+?>
+        <div class="lx-cover__actions">
+            {% if (!auth()->check()): %}
+                <a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.cta')) ?></a>
+                <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
+            {% else %}
+                <a href="<?= e(lurl('/dashboard')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.ctaDashboard')) ?></a>
+                <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
             {% endif %}
-            <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
-            <p class="meta">
-                {{ post.blog_name }}
-                {% if post.published_at %}
-                &middot;
-                <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
-                {% endif %}
-            </p>
-            <p>{{ excerpt }}</p>
-            <ul class="actions">
-                <li><a href="<?= e($postUrl) ?>" class="button">{{ t('showcase.readPost') }}</a></li>
-            </ul>
-        </article>
-        {% endforeach; %}
+        </div>
+
+        <p class="lx-cover__note">
+            <span class="lx-label"><?= e(site_content('banner.noteLabel')) ?></span> <?= e(site_content('banner.body')) ?>
+        </p>
     </div>
 </section>
-{% else %}
-<section>
-    <header class="major">
-        <h2><?= e(site_content('showcase.emptyTitle')) ?></h2>
-    </header>
-    <div class="posts">
-        <article>
-            <a href="/getting-started/start-your-first-blog" class="image"><img src="/images/pic07.jpg" alt="" loading="lazy" /></a>
-            <h3><a href="/getting-started/start-your-first-blog"><?= e(site_content('sidebar.gettingStarted.items.tip1')) ?></a></h3>
-            <ul class="actions">
-                <li><a href="/getting-started/start-your-first-blog" class="button">{{ t('pages.readGuide') }}</a></li>
-            </ul>
-        </article>
-        <article>
-            <a href="/getting-started/write-posts-people-read" class="image"><img src="/images/pic08.jpg" alt="" loading="lazy" /></a>
-            <h3><a href="/getting-started/write-posts-people-read"><?= e(site_content('sidebar.gettingStarted.items.tip2')) ?></a></h3>
-            <ul class="actions">
-                <li><a href="/getting-started/write-posts-people-read" class="button">{{ t('pages.readGuide') }}</a></li>
-            </ul>
-        </article>
-        <article>
-            <a href="/getting-started/blog-with-your-team" class="image"><img src="/images/pic09.jpg" alt="" loading="lazy" /></a>
-            <h3><a href="/getting-started/blog-with-your-team"><?= e(site_content('sidebar.gettingStarted.items.tip3')) ?></a></h3>
-            <ul class="actions">
-                <li><a href="/getting-started/blog-with-your-team" class="button">{{ t('pages.readGuide') }}</a></li>
-            </ul>
-        </article>
+
+<!-- The turn from cover to paper, carrying the only numbers on the page. -->
+{% if ($statsPosts > 0): %}
+<section class="lx-band lx-bleed" aria-label="{{ t('stats.posts') }}">
+    <div class="lx-wrap lx-band__inner">
+        <div class="lx-band__item">
+            <span class="lx-band__n"><?= number_format($statsPosts) ?></span>
+            <span class="lx-band__label">{{ t('stats.posts') }}</span>
+        </div>
+        <div class="lx-band__item">
+            <span class="lx-band__n"><?= number_format((int) ($stats['blogs'] ?? 0)) ?></span>
+            <span class="lx-band__label">{{ t('stats.blogs') }}</span>
+        </div>
+        <div class="lx-band__item">
+            <span class="lx-band__n"><?= number_format((int) ($stats['writers'] ?? 0)) ?></span>
+            <span class="lx-band__label">{{ t('stats.writers') }}</span>
+        </div>
     </div>
 </section>
 {% endif %}
 
-<!-- FAQ -->
-<section id="faq">
-    <header class="major">
-        <h2><?= e(site_content('faq.title')) ?></h2>
-    </header>
-    <?php $faqKeys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6']; ?>
-    <div class="faq-list">
-        {% foreach ($faqKeys as $fk): %}
-        <details class="faq-item">
-            <summary><?= e(site_content('faq.items.'.$fk.'.q')) ?></summary>
-            <p><?= e(site_content('faq.items.'.$fk.'.a')) ?></p>
-        </details>
-        {% endforeach; %}
+<!-- How it works. The three steps are a real sequence, so they are numbered;
+     the headword above them names the verb they add up to. -->
+<section class="lx-section lx-bleed" id="how">
+    <div class="lx-wrap">
+        <p class="lx-eyebrow"><?= e(site_content('how.title')) ?></p>
+
+        <div class="lx-entryhead" data-reveal="0">
+            <h2><?= $headwordHtml(site_content('how.entryWord')) ?></h2>
+            <em class="lx-pos"><?= e(site_content('how.entryPos')) ?></em>
+            <span class="lx-entryhead__rule" aria-hidden="true"></span>
+        </div>
+
+        <ol class="lx-steps">
+            <?php foreach (['step1', 'step2', 'step3'] as $stepIndex => $stepKey) { ?>
+            <li class="lx-step" data-reveal="<?= $stepIndex ?>">
+                <h3><?= e(site_content('how.'.$stepKey.'.title')) ?></h3>
+                <p><?= e(site_content('how.'.$stepKey.'.body')) ?></p>
+            </li>
+            <?php } ?>
+        </ol>
+    </div>
+</section>
+
+<!-- Features as a run of related entries: a headword, a grammar label and a
+     definition, which is what each of these actually is. -->
+<section class="lx-section lx-bleed" id="entries">
+    <div class="lx-wrap">
+        <p class="lx-eyebrow"><?= e(site_content('features.title')) ?></p>
+
+        <div class="lx-entries">
+            <?php foreach (['writing', 'team', 'ownership', 'readers'] as $entryIndex => $entryKey) { ?>
+            <article class="lx-entry" data-reveal="<?= $entryIndex ?>">
+                <div>
+                    <h3 class="lx-entry__word"><?= $headwordHtml(site_content('features.items.'.$entryKey.'.word')) ?></h3>
+                    <em class="lx-pos lx-entry__pos"><?= e(site_content('features.items.'.$entryKey.'.pos')) ?></em>
+                </div>
+                <div class="lx-entry__def">
+                    <h3><?= e(site_content('features.items.'.$entryKey.'.title')) ?></h3>
+                    <p><?= e(site_content('features.items.'.$entryKey.'.body')) ?></p>
+                </div>
+            </article>
+            <?php } ?>
+        </div>
+    </div>
+</section>
+
+<!-- Citations: a dictionary shows a word in real use, attributed. That is
+     exactly what the editors' picks are. With no picks, the guides keep the
+     section presentable instead of promoting random user content. -->
+<section class="lx-section lx-bleed" id="citations">
+    <div class="lx-wrap">
+        {% if (!empty($showcase)): %}
+        <p class="lx-eyebrow"><?= e(site_content('showcase.title')) ?></p>
+        <p class="lx-lede"><?= e(site_content('showcase.subtitle')) ?></p>
+
+        <ul class="lx-cites">
+            {% foreach ($showcase as $citeIndex => $post): %}
+            <?php
+        $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+$excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
+$postTitle = (string) ($post['title'] ?? '');
+?>
+            <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">
+                <a href="<?= e($postUrl) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
+                    <?php if (!empty($post['featured_image'])) { ?>
+                        <img src="<?= e($post['featured_image']) ?>" alt="" loading="lazy" />
+                    <?php } else { ?>
+                        <span class="lx-cite__plate"><?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))) ?></span>
+                    <?php } ?>
+                </a>
+
+                <h3 class="lx-cite__title"><a href="<?= e($postUrl) ?>"><?= e($postTitle) ?></a></h3>
+
+                <p class="lx-cite__attr">
+                    <?= e($post['blog_name'] ?? '') ?>
+                    <?php if (!empty($post['published_at'])) { ?>
+                        <span aria-hidden="true">&middot;</span>
+                        <time datetime="<?= e(iso_datetime($post['published_at'])) ?>"><?= e(local_datetime($post['published_at'], 'M j, Y', site_timezone())) ?></time>
+                    <?php } ?>
+                </p>
+
+                <p class="lx-cite__excerpt"><?= e($excerpt) ?></p>
+
+                <p class="lx-cite__more">
+                    <a href="<?= e($postUrl) ?>">{{ t('showcase.readPost') }} <span aria-hidden="true">&rarr;</span></a>
+                </p>
+            </li>
+            {% endforeach; %}
+        </ul>
+        {% else %}
+        <p class="lx-eyebrow"><?= e(site_content('showcase.emptyTitle')) ?></p>
+
+        <ul class="lx-cites">
+            <?php
+            $guides = [
+['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
+['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
+['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
+            ];
+foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
+    $guideBlurb = trim(site_content($guideKey));
+    $guideTitle = trim((string) strtok($guideBlurb, '.'));
+    ?>
+            <li class="lx-cite" data-reveal="<?= $guideIndex ?>">
+                <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
+                    <img src="<?= e($guideImage) ?>" alt="" loading="lazy" />
+                </a>
+                <h3 class="lx-cite__title"><a href="<?= e(lurl($guideHref)) ?>"><?= e($guideTitle !== '' ? $guideTitle : $guideBlurb) ?></a></h3>
+                <p class="lx-cite__excerpt"><?= e($guideBlurb) ?></p>
+                <p class="lx-cite__more">
+                    <a href="<?= e(lurl($guideHref)) ?>">{{ t('pages.readGuide') }} <span aria-hidden="true">&rarr;</span></a>
+                </p>
+            </li>
+            <?php } ?>
+        </ul>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Usage notes. -->
+<section class="lx-section lx-bleed" id="faq">
+    <div class="lx-wrap">
+        <p class="lx-eyebrow"><?= e(site_content('faq.title')) ?></p>
+
+        <div class="lx-notes">
+            <?php foreach (['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as $noteIndex => $noteKey) { ?>
+            <details class="lx-note">
+                <summary>
+                    <span class="lx-note__n"><?= str_pad((string) ($noteIndex + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                    <span><?= e(site_content('faq.items.'.$noteKey.'.q')) ?></span>
+                    <span class="lx-note__sign" aria-hidden="true"></span>
+                </summary>
+                <p class="lx-note__body"><?= e(site_content('faq.items.'.$noteKey.'.a')) ?></p>
+            </details>
+            <?php } ?>
+        </div>
+    </div>
+</section>
+
+<!-- Back cover. -->
+<section class="lx-close lx-bleed">
+    <div class="lx-wrap lx-close__inner">
+        <div>
+            <h2><?= e(site_content('cta.title')) ?></h2>
+            <p><?= e(site_content('cta.body')) ?></p>
+        </div>
+        <div class="lx-close__actions">
+            {% if (!auth()->check()): %}
+                <a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.cta')) ?></a>
+            {% else %}
+                <a href="<?= e(lurl('/dashboard')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.ctaDashboard')) ?></a>
+            {% endif %}
+        </div>
     </div>
 </section>
 {% endblock %}

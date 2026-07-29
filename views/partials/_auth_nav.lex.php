@@ -16,21 +16,21 @@ $logoutUrl = lurl('/logout');
 // render never fatals if the helper is missing.
 $tr = isset($t) && is_callable($t) ? $t : static fn (string $key): string => $key;
 
-if ($navVariant === 'platform') { ?>
-    <!-- <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-    <li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-    <li><a href="#" class="icon brands fa-snapchat-ghost"><span class="label">Snapchat</span></a></li>
-    <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-    <li><a href="#" class="icon brands fa-medium-m"><span class="label">Medium</span></a></li> -->
-    <?php if (!auth()->check()) { ?>
-        <li><a href="<?= e($loginUrl) ?>" class="button" data-auth-login><?= e($tr('header.signIn')) ?></a></li>
+if ($navVariant === 'platform') {
+    // No data-auth-login here on purpose. On the platform pages "Sign in" sits
+    // next to "Create a Blog", and one opening a modal while the other
+    // navigates is the inconsistency. The modal stays bound to the blog themes'
+    // .nav-pill trigger, where interrupting the reader is the whole point.
+    if (!auth()->check()) { ?>
+        <li><a href="<?= e($loginUrl) ?>" class="lx-btn lx-btn--quiet"><?= e($tr('header.signIn')) ?></a></li>
+        <li><a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--primary"><?= e($tr('navigation.createBlog')) ?></a></li>
     <?php } else { ?>
-        <li><a href="/dashboard" class="button"><?= e($tr('header.dashboard')) ?></a></li>
+        <li><a href="<?= e(lurl('/dashboard')) ?>" class="lx-btn lx-btn--primary"><?= e($tr('header.dashboard')) ?></a></li>
         <li>
             <form method="post" action="<?= e($logoutUrl) ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" name="return_to" value="<?= e($navReturn) ?>">
-                <button type="submit" class="button"><?= e($tr('header.signOut')) ?></button>
+                <button type="submit" class="lx-btn lx-btn--quiet"><?= e($tr('header.signOut')) ?></button>
             </form>
         </li>
     <?php }

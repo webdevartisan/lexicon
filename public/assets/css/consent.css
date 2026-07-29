@@ -201,7 +201,8 @@
   align-items: center;
   justify-content: center;
 
-  background: rgb(var(--primary-color-token) / 0.5);
+  /* was 0.5, which put the white icon at 3:1 against the page behind it */
+  background: rgb(var(--primary-color-token) / 0.85);
   color: #ffffff !important;
 
   border: 0;
@@ -210,13 +211,11 @@
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
 }
 
-/* render the Font Awesome cookie icon in the center. */
-.consent-fab::before {
-  font-family: "Font Awesome 5 Free";
-  font-weight: 900;
-  content: "\f564"; /* use "cookie-bite" from Font Awesome 5 Free solid. */
-  font-size: 18px;
-  line-height: 1;
+/* the mark is an inline SVG in the markup now: the Font Awesome glyph that
+   used to live here needed the icon font, which not every layout loads. */
+.consent-fab svg {
+  width: 22px;
+  height: 22px;
 }
 
 /* provide a visible keyboard focus state. */

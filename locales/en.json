@@ -255,26 +255,39 @@
         "body": "Lexicon is a calm, fast place to write. There are no plugins to install, no themes to fight with and no ads between you and your readers. Create your blog, open the editor and publish your first post today.",
         "cta": "Create your blog",
         "svgTitle": "Clean blog editor window with publish highlight",
-        "ctaDashboard": "Go to your dashboard"
+        "ctaDashboard": "Go to your dashboard",
+        "eyebrow": "A writing and publishing platform, free to start",
+        "headword": "lex·i·con",
+        "pronunciation": "/ˈlek.sɪ.kən/",
+        "pos": "n.",
+        "noteLabel": "Usage."
     },
     "features": {
         "title": "Why writers pick Lexicon",
         "items": {
             "writing": {
                 "title": "A calm writing space",
-                "body": "A clean editor with drafts, autosave and featured images. Everything you need to write, nothing that gets in your way."
+                "body": "A clean editor with drafts, autosave and featured images. Everything you need to write, nothing that gets in your way.",
+                "word": "calm",
+                "pos": "adj."
             },
             "team": {
                 "title": "Built for writing together",
-                "body": "Invite authors, editors and reviewers to your blog. A built in review step keeps quality high without endless message threads."
+                "body": "Invite authors, editors and reviewers to your blog. A built in review step keeps quality high without endless message threads.",
+                "word": "to·geth·er",
+                "pos": "adv."
             },
             "ownership": {
                 "title": "Your words stay yours",
-                "body": "Export everything you have written whenever you want. If you ever leave, your content leaves with you."
+                "body": "Export everything you have written whenever you want. If you ever leave, your content leaves with you.",
+                "word": "yours",
+                "pos": "pron."
             },
             "readers": {
                 "title": "Kind to your readers",
-                "body": "Fast pages, clean typography and no advertising. You moderate the comments, so the conversation stays worth reading."
+                "body": "Fast pages, clean typography and no advertising. You moderate the comments, so the conversation stays worth reading.",
+                "word": "read·ers",
+                "pos": "n. pl."
             }
         }
     },
@@ -620,7 +633,9 @@
         "step3": {
             "title": "Grow at your own pace",
             "body": "Invite people to write with you, organize posts with categories and tags, and let readers join in through comments."
-        }
+        },
+        "entryWord": "pub·lish",
+        "entryPos": "v."
     },
     "showcase": {
         "title": "Featured writing",
@@ -707,5 +722,57 @@
             "notTranslated": "Not translated yet",
             "deleteConfirm": "Delete this translation? Readers of this language will see the original post instead."
         }
+    },
+    "a11y": {
+        "skipToContent": "Skip to content",
+        "openMenu": "Open menu",
+        "closeMenu": "Close menu",
+        "backToTop": "Back to top"
+    },
+    "cta": {
+        "title": "Begin your entry.",
+        "body": "Name your blog, open the editor and publish. It takes about ten minutes and costs nothing."
+    },
+    "auth": {
+        "back": "Back",
+        "createAccount": "Create account",
+        "signIn": "Sign in",
+        "emailLabel": "Email address",
+        "passwordLabel": "Password",
+        "newPasswordLabel": "New password",
+        "confirmPasswordLabel": "Confirm new password",
+        "show": "Show",
+        "hide": "Hide",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "cantLogIn": "Can't log in?",
+        "loginTitle": "Log in",
+        "loginSubtitle": "Welcome back.",
+        "loginSubtitleReturn": "Log in to pick up where you left off.",
+        "loginSubmit": "Log in",
+        "registerTitle": "Create account",
+        "registerSubtitle": "Save posts, follow blogs, join the conversation.",
+        "registerSubmit": "Create account",
+        "registerUsernameNote": "We pick a username from your email. You can change it any time in your profile.",
+        "haveAccount": "Already have an account?",
+        "forgotTitle": "Reset your password",
+        "forgotSubtitle": "Enter your email address and we will send you a link.",
+        "forgotSubmit": "Send reset link",
+        "backToLogin": "Back to log in",
+        "resetTitle": "Choose a new password",
+        "resetSubtitle": "Pick something you have not used anywhere else.",
+        "resetSubmit": "Save new password",
+        "legal": "By continuing you agree to our {terms} and {privacy}.",
+        "inviteDeclinedTitle": "Invitation declined",
+        "inviteDeclinedBody": "You have declined the invitation. The blog owner has been notified.",
+        "inviteExpiredTitle": "Invitation expired",
+        "inviteExpiredBody": "This invitation link is no longer valid. Ask the blog owner to send a new one.",
+        "returnHome": "Return home",
+        "passwordMin": "At least 6 characters. Longer is stronger, and a passphrase beats a short complicated one.",
+        "strengthTooShort": "Too short",
+        "strengthWeak": "Weak",
+        "strengthFair": "Fair",
+        "strengthGood": "Good",
+        "strengthStrong": "Strong"
     }
 }
