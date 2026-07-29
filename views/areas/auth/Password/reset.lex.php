@@ -46,7 +46,7 @@
             $t('auth.strengthGood'),
             $t('auth.strengthStrong'),
         ]);
-        ?>
+?>
         <div class="lx-meter"
              data-password-meter="password"
              data-levels="<?= e($meterLevels) ?>"
@@ -62,7 +62,7 @@
     </div>
 
     <div class="lx-field">
-        <?php // The `required` here was misspelled `requiredd`, so the confirm field was optional. ?>
+        <?php // The `required` here was misspelled `requiredd`, so the confirm field was optional.?>
         <label class="lx-field__label" for="password_confirm"><?= e($t('auth.confirmPasswordLabel')) ?></label>
         <input class="lx-field__input"
                type="password"

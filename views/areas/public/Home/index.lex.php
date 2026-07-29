@@ -57,7 +57,7 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // Actions before the usage note: it keeps the call to action above the
         // fold on short laptops, and a dictionary puts the usage paragraph at
         // the end of an entry anyway.
-        ?>
+?>
         <div class="lx-cover__actions">
             {% if (!auth()->check()): %}
                 <a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.cta')) ?></a>
@@ -152,10 +152,10 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         <ul class="lx-cites">
             {% foreach ($showcase as $citeIndex => $post): %}
             <?php
-                $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
-                $excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
-                $postTitle = (string) ($post['title'] ?? '');
-                ?>
+        $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+$excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
+$postTitle = (string) ($post['title'] ?? '');
+?>
             <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">
                 <a href="<?= e($postUrl) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
                     <?php if (!empty($post['featured_image'])) { ?>
@@ -189,14 +189,14 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         <ul class="lx-cites">
             <?php
             $guides = [
-                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
-                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
-                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
+['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
+['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
+['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
             ];
-            foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
-                $guideBlurb = trim(site_content($guideKey));
-                $guideTitle = trim((string) strtok($guideBlurb, '.'));
-                ?>
+foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
+    $guideBlurb = trim(site_content($guideKey));
+    $guideTitle = trim((string) strtok($guideBlurb, '.'));
+    ?>
             <li class="lx-cite" data-reveal="<?= $guideIndex ?>">
                 <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
                     <img src="<?= e($guideImage) ?>" alt="" loading="lazy" />

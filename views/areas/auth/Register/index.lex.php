@@ -74,19 +74,19 @@ $fieldErrors = errors();
         // The requirement is stated plainly and always; the meter below only
         // rates what has been typed. Keeping them separate stops the meter
         // from reading like a rule the server does not actually enforce.
-        ?>
+?>
         <p class="lx-field__hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
 
         <?php
-        // Rating labels ride along as data so the script stays free of copy.
-        $meterLevels = implode('|', [
-            $t('auth.strengthTooShort'),
-            $t('auth.strengthWeak'),
-            $t('auth.strengthFair'),
-            $t('auth.strengthGood'),
-            $t('auth.strengthStrong'),
-        ]);
-        ?>
+// Rating labels ride along as data so the script stays free of copy.
+$meterLevels = implode('|', [
+    $t('auth.strengthTooShort'),
+    $t('auth.strengthWeak'),
+    $t('auth.strengthFair'),
+    $t('auth.strengthGood'),
+    $t('auth.strengthStrong'),
+]);
+?>
         <div class="lx-meter"
              data-password-meter="password"
              data-hint-from="email"

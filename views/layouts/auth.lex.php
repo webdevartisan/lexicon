@@ -23,7 +23,7 @@ $siteName = site_setting('site_name', 'Lexicon');
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#f0f1ec" />
-        <?php // Credential screens have no business in an index. ?>
+        <?php // Credential screens have no business in an index.?>
         <meta name="robots" content="noindex, nofollow" />
 
         <link rel="icon" type="image/png" href="/assets/icon/favicon-32x32.png" sizes="32x32" />
@@ -70,9 +70,9 @@ $siteName = site_setting('site_name', 'Lexicon');
                     foreach ($messages as $message) { ?>
                         <p class="lx-authalert<?= $type === 'success' ? ' is-ok' : '' ?>" role="alert"><?= e($message) ?></p>
                     <?php }
-                }
+                    }
 
-                if (!empty($authError)) { ?>
+if (!empty($authError)) { ?>
                     <p class="lx-authalert" role="alert"><?= e($authError) ?></p>
                 <?php } ?>
 
@@ -91,7 +91,7 @@ $siteName = site_setting('site_name', 'Lexicon');
         // here first, and dropping the banner from a whole set of pages would
         // be a compliance change, not a design one. It stays hidden once a
         // choice is stored, so on most visits it costs nothing visually.
-        ?>
+?>
         {% include "partials/_consent_bootstrap.lex.php" %}
         {% include "partials/_consent_banner.lex.php" %}
 

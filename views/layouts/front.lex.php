@@ -62,7 +62,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <?php
         // The two display faces block first paint, so they are fetched in
         // parallel with the stylesheet rather than discovered inside it.
-        ?>
+?>
         <link rel="preload" href="/assets/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
@@ -86,10 +86,10 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
                 <ul class="lx-nav__links">
                     <?php
-                    // NavigationService hands over a translation key alongside the
-                    // English label; rendering the label alone is what left the
-                    // menu in English on /el and /ar.
-                    foreach ($barNav as $it) { ?>
+            // NavigationService hands over a translation key alongside the
+            // English label; rendering the label alone is what left the
+            // menu in English on /el and /ar.
+            foreach ($barNav as $it) { ?>
                     <li>
                         <a class="lx-nav__link" href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a>
                     </li>
@@ -144,45 +144,45 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         </main>
 
         <?php
-        // Footer as colophon. It carries the full site map that used to live in
-        // the right sidebar, so removing the sidebar loses no navigation.
-        $footerEmail = site_content('contact.email', '');
-        $footerPhone = site_content('contact.phone', '');
-        $footerAddress = site_content('contact.address', '');
+// Footer as colophon. It carries the full site map that used to live in
+// the right sidebar, so removing the sidebar loses no navigation.
+$footerEmail = site_content('contact.email', '');
+$footerPhone = site_content('contact.phone', '');
+$footerAddress = site_content('contact.address', '');
 
-        // The guide blurbs are full sentences in the content store. The first
-        // sentence of each makes a usable link label without a second key.
-        $guideLinks = [];
-        foreach ([
-            ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1'],
-            ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2'],
-            ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3'],
-        ] as [$href, $key]) {
-            $blurb = trim(site_content($key));
-            if ($blurb === '') {
-                continue;
-            }
-            $label = trim((string) strtok($blurb, '.'));
-            $guideLinks[] = ['href' => $href, 'label' => $label !== '' ? $label : $blurb];
-        }
+// The guide blurbs are full sentences in the content store. The first
+// sentence of each makes a usable link label without a second key.
+$guideLinks = [];
+foreach ([
+    ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1'],
+    ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2'],
+    ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3'],
+] as [$href, $key]) {
+    $blurb = trim(site_content($key));
+    if ($blurb === '') {
+        continue;
+    }
+    $label = trim((string) strtok($blurb, '.'));
+    $guideLinks[] = ['href' => $href, 'label' => $label !== '' ? $label : $blurb];
+}
 
-        // Icons appear only for networks the admin configured, so a fresh
-        // install never ships dead placeholder links.
-        $socialNetworks = [
-            ['key' => 'social.twitter', 'mark' => 'x', 'label' => 'Twitter', 'ariaKey' => 'footer.socialTwitterAria'],
-            ['key' => 'social.facebook', 'mark' => 'facebook', 'label' => 'Facebook', 'ariaKey' => 'footer.socialFacebookAria'],
-            ['key' => 'social.instagram', 'mark' => 'instagram', 'label' => 'Instagram', 'ariaKey' => 'footer.socialInstagramAria'],
-            ['key' => 'social.medium', 'mark' => 'medium', 'label' => 'Medium', 'ariaKey' => 'footer.socialMediumAria'],
-        ];
-        $configuredSocials = [];
-        foreach ($socialNetworks as $network) {
-            $url = site_content($network['key'], '');
-            if ($url !== '' && preg_match('#^https://#i', $url)) {
-                $network['url'] = $url;
-                $configuredSocials[] = $network;
-            }
-        }
-        ?>
+// Icons appear only for networks the admin configured, so a fresh
+// install never ships dead placeholder links.
+$socialNetworks = [
+    ['key' => 'social.twitter', 'mark' => 'x', 'label' => 'Twitter', 'ariaKey' => 'footer.socialTwitterAria'],
+    ['key' => 'social.facebook', 'mark' => 'facebook', 'label' => 'Facebook', 'ariaKey' => 'footer.socialFacebookAria'],
+    ['key' => 'social.instagram', 'mark' => 'instagram', 'label' => 'Instagram', 'ariaKey' => 'footer.socialInstagramAria'],
+    ['key' => 'social.medium', 'mark' => 'medium', 'label' => 'Medium', 'ariaKey' => 'footer.socialMediumAria'],
+];
+$configuredSocials = [];
+foreach ($socialNetworks as $network) {
+    $url = site_content($network['key'], '');
+    if ($url !== '' && preg_match('#^https://#i', $url)) {
+        $network['url'] = $url;
+        $configuredSocials[] = $network;
+    }
+}
+?>
         <footer class="lx-foot" role="contentinfo">
             <div class="lx-wrap lx-foot__inner">
                 <div class="lx-foot__brand">
