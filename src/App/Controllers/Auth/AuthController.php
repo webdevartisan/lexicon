@@ -182,6 +182,12 @@ final class AuthController extends AppController
 
             $limiter->clear($ip, $email);
 
+            // The session still holds the locale this visitor was browsing as a
+            // guest, and every redirect below is built from it. Adopt the
+            // account's language now that there is an account to read it from.
+            $preferredLocale = app(\App\Services\SessionLocaleSync::class)
+                ->apply((int) auth()->user()['id']);
+
             // A reply captured before login gets posted now and wins the
             // redirect: the reader lands back on the comment they answered.
             $resume = app(\App\Services\CommentService::class)->resumePending(auth()->user(), $ip);
@@ -202,6 +208,12 @@ final class AuthController extends AppController
             $this->session->remove('intended_url');
 
             $target = $returnTo ?? ($intendedUrl ?: '/dashboard');
+
+            // A prefix on one of the platform's own pages only records what the
+            // last visitor was reading, which on a shared browser is somebody
+            // else. A prefix on a post is part of the link and stays put.
+            $target = app(\App\Services\ReaderLocaleTarget::class)
+                ->resolve($target, $preferredLocale);
 
             if ($isAjax) {
                 // No flash here: the modal shows its own success state and
@@ -245,6 +257,10 @@ final class AuthController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         auth()->logout();
+
+        // Otherwise the next person at this browser starts out in the language
+        // of the account that just left.
+        app(\App\Services\SessionLocaleSync::class)->forget();
 
         return $this->redirect(safe_return_to((string) ($this->request->post['return_to'] ?? '')) ?? '/');
     }

@@ -26,6 +26,13 @@ use App\Services\TranslationService;
  * Site content keys deliberately mirror translation keys so the locale files
  * act as the defaults and the database only stores what admins changed.
  *
+ * Follows the chrome locale, the same as $t(): this is the platform's own
+ * marketing and interface copy, not authored content a URL points at, so it
+ * has to move with the reader's interface language rather than the URL. Using
+ * locale() here used to split the homepage between the nav (chrome locale)
+ * and the hero/FAQ copy (URL locale) for any signed-in reader whose account
+ * language differed from the locale they landed on.
+ *
  * @param  string  $name  Content key, e.g. 'front.hero.title'
  * @param  string|null  $default  Returned instead of the translation when no override exists
  * @return string The effective text for the current locale
@@ -36,7 +43,9 @@ function site_content(string $name, ?string $default = null): string
     static $model = null;
     $model ??= app(SiteContentModel::class);
 
-    $value = $model->get($name, locale());
+    $chromeLocale = App\Services\LocaleState::get()->chromeLocale;
+
+    $value = $model->get($name, $chromeLocale);
 
     if ($value !== null && $value !== '') {
         return $value;
@@ -46,10 +55,12 @@ function site_content(string $name, ?string $default = null): string
         return $default;
     }
 
-    static $translator = null;
-    $translator ??= new TranslationService(locale());
+    // Keyed by locale, same as $t()'s memo: a bare static here served the
+    // first locale it ever built to every locale after it.
+    static $translators = [];
+    $translators[$chromeLocale] ??= new TranslationService($chromeLocale);
 
-    return $translator->translate($name);
+    return $translators[$chromeLocale]->translate($name);
 }
 
 /**

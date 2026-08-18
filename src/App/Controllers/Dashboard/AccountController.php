@@ -9,6 +9,7 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\DisplayNameService;
 use App\Services\LocaleRegistry;
+use App\Services\SessionLocaleSync;
 use DateTimeZone;
 use Exception;
 use Framework\Core\Response;
@@ -25,7 +26,8 @@ class AccountController extends AppController
         private UserModel $users,
         private UserPreferencesModel $prefs,
         private DisplayNameService $displayNames,
-        private LocaleRegistry $locales
+        private LocaleRegistry $locales,
+        private SessionLocaleSync $localeSync
     ) {}
 
     /**
@@ -87,6 +89,11 @@ class AccountController extends AppController
 
         // the display preference decides whether the cached name is the real name or the handle
         $this->displayNames->refreshCached($userId);
+
+        // Picking a language here has to move the URL too, or the redirect below
+        // lands back on the locale the visitor was already on and the choice
+        // looks like it did nothing.
+        $this->localeSync->apply($userId);
 
         $this->flash('success', 'Account settings saved.');
 
