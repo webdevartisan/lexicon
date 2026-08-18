@@ -189,9 +189,9 @@ $postTitle = (string) ($post['title'] ?? '');
         <ul class="lx-cites">
             <?php
             $guides = [
-['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
-['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
-['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
+                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
+                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
+                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
             ];
 foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
     $guideBlurb = trim(site_content($guideKey));
