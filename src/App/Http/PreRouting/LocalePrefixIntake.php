@@ -6,6 +6,7 @@ namespace App\Http\PreRouting;
 
 use App\Services\LocaleRegistry;
 use App\Services\LocaleState;
+use App\Services\ReaderLocaleTarget;
 use App\Services\UserLocalePreference;
 use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
@@ -111,6 +112,23 @@ final class LocalePrefixIntake
             // chrome half, so /el/ still serves Greek content to someone whose
             // interface is English.
             $preference = self::storedPreference();
+
+            // A page with no language of its own follows the reader, however
+            // they arrived: links are built with lurl(), which carries the
+            // locale of the page they were built on, so a menu link from an
+            // English post lands on an English dashboard for a reader whose
+            // interface is Greek. Bookmarks and pasted URLs do the same. 302,
+            // never 308, because a preference can change at any time.
+            if (!$isUnsafe && $preference !== null && $preference !== $first) {
+                $current = $path.($query !== null ? '?'.$query : '');
+                $preferred = app(ReaderLocaleTarget::class)->resolve($current, $preference);
+
+                if ($preferred !== $current) {
+                    header('Location: '.$preferred, true, 302);
+                    exit;
+                }
+            }
+
             LocaleState::set(new LocaleContext($first, $preference ?? $first));
 
             return;
