@@ -41,12 +41,14 @@
   --sc-vertical-menu-bg-brand: 59 130 246;
   --sc-vertical-menu-border-brand: 37 99 235;
 
-  --sc-vertical-menu-item: 15 23 42;
-  --sc-vertical-menu-item-hover: 59 130 246;
+  --sc-vertical-menu-item: 51 65 85;
+  --sc-vertical-menu-item-hover: 37 99 235;
 
   --sc-vertical-menu-item-bg-hover: 241 245 249;
 
-  --sc-vertical-menu-item-active: 59 130 246;
+  /* custom-600 rather than custom-500: the lighter blue only reaches 3:1 on the
+     custom-100 fill, which is under the AA floor for label text. */
+  --sc-vertical-menu-item-active: 37 99 235;
   --sc-vertical-menu-item-bg-active: 219 234 254;
 }
 
@@ -54,8 +56,10 @@
   --sc-vertical-menu-item: 146 175 211;
   --sc-vertical-menu-item-hover: 226 232 240;
 
-  --sc-vertical-menu-item-bg-hover: 28 46 69;
+  /* The dark sidebar sits on zink-700, so the old zink-600 fills landed within
+     a hair of the surface and neither hover nor the current page showed up. */
+  --sc-vertical-menu-item-bg-hover: 35 58 87;
 
   --sc-vertical-menu-item-active: 255 255 255;
-  --sc-vertical-menu-item-bg-active: 28 46 69;
+  --sc-vertical-menu-item-bg-active: 29 56 96;
 }

@@ -3,31 +3,10 @@
     scrollbar-gutter: stable;
   }
 
-  /* font size utility */
-  .text-vertical-menu-item-font-size {
-    font-size: 0.8125rem; /* or whatever your theme uses */
-  }
-
-  /* light mode hover utilities */
-  .text-vertical-menu-item-hover {
-    color: var(--sc-vertical-menu-item-hover);
-  }
-  .bg-vertical-menu-item-bg-hover {
-    background-color: var(--sc-vertical-menu-item-bg-hover);
-  }
-
-  /* dark mode utilities */
-  .text-vertical-menu-item-dark {
-    color: var(--sc-vertical-menu-item);
-  }
-  .text-vertical-menu-item-hover-dark {
-    color: var(--sc-vertical-menu-item-hover);
-  }
-  .bg-vertical-menu-item-bg-hover-dark {
-    background-color: var(--sc-vertical-menu-item-bg-hover);
-  }
-  .vertical-menu-item.active {
-      color: rgb(var(--sc-custom-500)) !important;
-      background-color: var(--sc-vertical-menu-item-bg-hover) !important;
-  }
+  /* NOTE: the sidebar row colours live in cp-components.css. There used to be
+     hand-written .text-vertical-menu-item-* / .bg-vertical-menu-item-* rules
+     here that shadowed the generated Tailwind utilities of the same name and
+     passed the bare RGB triplet straight to color/background-color, so every
+     one of them computed to transparent and killed the rule it was meant to
+     support. */
 }
