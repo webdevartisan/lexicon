@@ -12,7 +12,6 @@
             <div class="card">
                 <div class="card-body !p-0">
                     <div class="px-4 py-3 border-b border-slate-200 dark:border-zink-600">
-                        test
                         <div class="flex items-center justify-between">
                             <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Email Preview</h2>
                             <div class="flex items-center gap-2">
