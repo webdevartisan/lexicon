@@ -32,6 +32,43 @@ return [
      * Dashboard navigation (authenticated users)
      */
     'back' => [
+        // === GLOBAL ITEMS ===
+        // Ordered by how central each surface is to a creator's day. The
+        // writing workspace comes first; reading surfaces follow below. A
+        // reader-only account never sees these, so Library still lands first.
+        [
+            'label' => 'Dashboard',
+            'href' => '/dashboard',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isCreator',
+            'key' => 'navigation.dashboard',
+        ],
+        [
+            'label' => 'All Blogs',
+            'href' => '/dashboard/blog',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isCreator',
+            'key' => 'navigation.allBlogs',
+        ],
+        [
+            'label' => 'Shared',
+            'href' => '/dashboard/shared',
+            'auth' => true,
+            'scope' => 'global',
+            'show_if' => 'isCollaborator',
+            'key' => 'navigation.shared',
+        ],
+        /*
+        [
+            'label' => 'Create New Blog',
+            'href' => '/dashboard/blog/new',
+            'auth' => true,
+            'scope' => 'global',
+            'key' => 'navigation.createNewBlog',
+        ],*/
+
         // === READER ITEMS ===
         // Every account reads, only some write, so these stay visible after a
         // reader starts a blog. Gating them on isReader used to orphan a
@@ -88,40 +125,6 @@ return [
             'show_if' => 'isReader',
             'key' => 'navigation.account',
         ],
-
-        // === GLOBAL ITEMS ===
-        [
-            'label' => 'Dashboard',
-            'href' => '/dashboard',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isCreator',
-            'key' => 'navigation.dashboard',
-        ],
-        [
-            'label' => 'All Blogs',
-            'href' => '/dashboard/blog',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isCreator',
-            'key' => 'navigation.allBlogs',
-        ],
-        [
-            'label' => 'Shared',
-            'href' => '/dashboard/shared',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isCollaborator',
-            'key' => 'navigation.shared',
-        ],
-        /*
-        [
-            'label' => 'Create New Blog',
-            'href' => '/dashboard/blog/new',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.createNewBlog',
-        ],*/
 
         // === CONTEXTUAL ITEMS ===
 
