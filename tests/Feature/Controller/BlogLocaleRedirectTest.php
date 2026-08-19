@@ -100,7 +100,7 @@ beforeEach(function () {
         new \App\Models\CategoryModel($this->db),
         $this->settingsModel,
         new \App\Models\TagModel($this->db),
-        new \App\Models\PostLikeModel($this->db),
+        new \App\Models\PostVoteModel($this->db),
         new \App\Models\PostBookmarkModel($this->db),
         new \App\Models\PostTranslationModel($this->db),
         new \App\Models\UserProfileModel($this->db),

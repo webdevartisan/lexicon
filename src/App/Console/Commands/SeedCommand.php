@@ -83,7 +83,7 @@ final class SeedCommand
     {
         $tables = [
             'users', 'blogs', 'categories', 'tags', 'posts',
-            'comments', 'post_likes', 'blog_subscribers', 'reviews', 'notifications',
+            'comments', 'post_votes', 'blog_subscribers', 'reviews', 'notifications',
         ];
 
         echo "\nRow counts:\n";

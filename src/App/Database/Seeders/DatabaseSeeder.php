@@ -29,7 +29,7 @@ final class DatabaseSeeder
         'reviews',
         'post_reviewers',
         'submissions',
-        'post_likes',
+        'post_votes',
         'post_bookmarks',
         'post_tags',
         'comments',

@@ -82,7 +82,7 @@ final class PostSeeder extends Seeder
         }
 
         $this->insertMany('post_tags', $postTags);
-        $this->insertMany('post_likes', $postLikes);
+        $this->insertMany('post_votes', $postLikes);
         $this->insertMany('post_bookmarks', $postBookmarks);
     }
 
