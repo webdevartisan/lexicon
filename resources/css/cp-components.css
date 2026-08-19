@@ -171,6 +171,21 @@
             margin-left: 16.25rem
         }
 
+        /* RTL and md-sidebar counterparts. The page content and the footer both
+           ask for these; without them an Arabic control panel had no sidebar
+           offset at all and the sidebar sat on top of the content. */
+        .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:rtl\:md\:mr-vertical-menu:where([dir=rtl], [dir=rtl] *) {
+            margin-right: 16.25rem
+        }
+
+        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:ltr\:ml-vertical-menu-md:where([dir=ltr], [dir=ltr] *) {
+            margin-left: 10.3125rem
+        }
+
+        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:rtl\:mr-vertical-menu-md:where([dir=rtl], [dir=rtl] *) {
+            margin-right: 10.3125rem
+        }
+
         .group[data-layout=horizontal] .group-data-\[layout\=horizontal\]\:ltr\:md\:pl-0:where([dir=ltr], [dir=ltr] *) {
             padding-left: 0
         }

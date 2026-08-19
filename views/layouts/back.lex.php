@@ -101,16 +101,20 @@ $old = old();
         </div>
         <!-- End Page-content -->
 
-        <footer class="ltr:md:left-vertical-menu rtl:md:right-vertical-menu group-data-[sidebar-size=md]:ltr:md:left-vertical-menu-md group-data-[sidebar-size=md]:rtl:md:right-vertical-menu-md group-data-[sidebar-size=sm]:ltr:md:left-vertical-menu-sm group-data-[sidebar-size=sm]:rtl:md:right-vertical-menu-sm right-0 bottom-0 px-4 h-14    left-0 border-t py-3 flex items-center dark:border-zink-600">
-            <div class="  w-full">
-                <div class="grid items-center grid-cols-1 text-center lg:grid-cols-2 text-slate-400 dark:text-zink-200 ltr:lg:text-left rtl:lg:text-right">
+        <?php /* The footer is static, so the sidebar offset has to be a margin.
+                 It used to carry `left-vertical-menu`, which does nothing without
+                 positioning and left the copyright sitting under the fixed sidebar. */ ?>
+        <footer class="group-data-[sidebar-size=lg]:ltr:md:ml-vertical-menu group-data-[sidebar-size=lg]:rtl:md:mr-vertical-menu group-data-[sidebar-size=md]:ltr:ml-vertical-menu-md group-data-[sidebar-size=md]:rtl:mr-vertical-menu-md group-data-[sidebar-size=sm]:ltr:ml-vertical-menu-sm group-data-[sidebar-size=sm]:rtl:mr-vertical-menu-sm px-4 h-14 border-t py-3 flex items-center dark:border-zink-600 print:hidden">
+            <div class="w-full">
+                <div class="grid items-center grid-cols-1 gap-1 text-center lg:grid-cols-2 text-slate-400 dark:text-zink-200 ltr:lg:text-left rtl:lg:text-right">
                     <div>
                         &copy; <?= e(env('APP_NAME', 'Lexicon')) ?> <?= date('Y') ?>
                     </div>
-                    <div class="hidden lg:block">
-                        <div class="ltr:text-right rtl:text-left">
-                            Terms of use | Support
-                        </div>
+                    <?php /* Both targets are rows in the `pages` table, edited at /admin/pages. */ ?>
+                    <div class="ltr:lg:text-right rtl:lg:text-left">
+                        <a href="<?= e(lurl('/terms')) ?>" class="hover:text-custom-500 transition-colors">{{ t('footer.linkTerms') }}</a>
+                        <span class="px-1.5" aria-hidden="true">|</span>
+                        <a href="<?= e(lurl('/contact')) ?>" class="hover:text-custom-500 transition-colors">{{ t('footer.linkContact') }}</a>
                     </div>
                 </div>
             </div>
