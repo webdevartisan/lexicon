@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
@@ -25,14 +26,30 @@ class UserController extends AppController
     public function index(): Response
     {
         $q = trim((string) ($this->request->get['q'] ?? ''));
+        $active = trim((string) ($this->request->get['active'] ?? ''));
+        $role = trim((string) ($this->request->get['role'] ?? ''));
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        $result = $this->model->findAllForAdmin($page, 20, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'u.id',
+            'username' => 'u.username',
+            'email' => 'u.email',
+            'posts' => 'u.posts_count',
+            'active' => 'u.is_active',
+            'last_login' => 'u.last_login',
+            'created' => 'u.created_at',
+        ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'u.id DESC');
+
+        $result = $this->model->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy());
 
         return $this->view('user.index', [
             'users' => $result['data'],
             'pagination' => $result['pagination'],
             'q' => $q,
+            'active' => $active,
+            'role' => $role,
+            'roleOptions' => $this->roleModel->findAll(),
+            'sort' => $sort,
         ]);
     }
 

@@ -167,38 +167,79 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Every blog as `id => name`, for filter dropdowns.
+     *
+     * Deliberately two columns and no counts: the admin filters only need a label,
+     * and getAllBlogsWithOwnerAndCounts() runs two correlated subqueries per row.
+     *
+     * @return array<int, string>
+     */
+    public function getAllForSelect(): array
+    {
+        $rows = $this->database
+            ->query('SELECT id, blog_name FROM blogs ORDER BY blog_name ASC')
+            ->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $options = [];
+        foreach ($rows as $row) {
+            $options[(int) $row['id']] = (string) $row['blog_name'];
+        }
+
+        return $options;
+    }
+
+    /**
      * Paginated admin listing with optional name/slug/owner search.
      *
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
-    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
-    {
+    public function findAllForAdmin(
+        int $page = 1,
+        int $perPage = 20,
+        string $q = '',
+        string $status = '',
+        string $featured = '',
+        string $orderBy = 'b.published_at DESC'
+    ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
-        $where = '';
+        $conditions = [];
         $params = [];
 
         if ($q !== '') {
-            $where = 'WHERE (b.blog_name LIKE :q_name OR b.blog_slug LIKE :q_slug OR u.username LIKE :q_owner)';
+            $conditions[] = '(b.blog_name LIKE :q_name OR b.blog_slug LIKE :q_slug OR u.username LIKE :q_owner)';
             $term = '%'.$q.'%';
             $params[':q_name'] = $term;
             $params[':q_slug'] = $term;
             $params[':q_owner'] = $term;
         }
 
+        if (in_array($status, self::STATUSES, true)) {
+            $conditions[] = 'b.status = :status';
+            $params[':status'] = $status;
+        }
+
+        if ($featured === 'yes' || $featured === 'no') {
+            $conditions[] = 'b.is_featured = :featured';
+            $params[':featured'] = $featured === 'yes' ? 1 : 0;
+        }
+
+        $where = $conditions === [] ? '' : 'WHERE '.implode(' AND ', $conditions);
+
         $total = (int) $this->database->query(
             "SELECT COUNT(*) FROM blogs b INNER JOIN users u ON b.owner_id = u.id {$where}",
             $params
         )->fetchColumn();
 
+        // $orderBy comes from a TableSort whitelist, never from raw input.
         $sql = "SELECT b.*, u.username as owner_name,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
                 INNER JOIN users u ON b.owner_id = u.id
                 {$where}
-                ORDER BY b.published_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;

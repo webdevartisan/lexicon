@@ -5,26 +5,56 @@
 
 {% block body %}
 <?php
-$statusOptions = ['' => 'All statuses', 'published' => 'Published', 'draft' => 'Draft', 'archived' => 'Archived'];
 $basePath = '/admin/posts';
-$emptyTitle = ($q !== '' || $status !== '') ? 'No posts match your filters' : 'No posts yet';
-$emptyMessage = ($q !== '' || $status !== '') ? 'Try a different search or clear the status filter.' : 'Posts from every blog will appear here.';
+$hasFilters = $q !== '' || $status !== '' || $featured !== '' || $visibility !== '' || $blogId > 0;
+$emptyTitle = $hasFilters ? 'No posts match your filters' : 'No posts yet';
+$emptyMessage = $hasFilters ? 'Try a different search, or clear the filters.' : 'Posts from every blog will appear here.';
+
+// Built from PostModel::STATUSES so a new status can never go missing here.
+$statusChoices = ['' => 'All statuses'];
+foreach ($statusOptions as $opt) {
+    $statusChoices[$opt] = ucfirst($opt);
+}
+
+$visibilityChoices = ['' => 'Any visibility'];
+foreach ($visibilityOptions as $opt) {
+    $visibilityChoices[$opt] = ucfirst($opt);
+}
+
+$featuredChoices = [
+    '' => 'Featured: any',
+    'home' => 'On the front page',
+    'blog' => 'Featured in its blog',
+    'none' => 'Not featured anywhere',
+];
+
+$blogChoices = ['' => 'All blogs'] + $blogOptions;
+$selectedBlogKey = $blogId > 0 ? (string) $blogId : '';
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
-        <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-2xl">
-            {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search title or content..." %}
-            {% cmp="select" name="status" options="{$statusOptions}" selectedKey="{$status}" onchange="this.form.submit()" %}
-            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                <i data-lucide="search" class="size-4"></i> Search
-            </button>
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between mb-4">
+        <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-wrap items-center gap-3 grow">
+            {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search title or content..." %}
+            {% cmp="select" name="status" options="{$statusChoices}" selectedKey="{$status}" onchange="this.form.submit()" %}
+            {% cmp="select" name="blog_id" options="{$blogChoices}" selectedKey="{$selectedBlogKey}" onchange="this.form.submit()" %}
+            {% cmp="select" name="featured" options="{$featuredChoices}" selectedKey="{$featured}" onchange="this.form.submit()" %}
+            {% cmp="select" name="visibility" options="{$visibilityChoices}" selectedKey="{$visibility}" onchange="this.form.submit()" %}
+            {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
+            <?php /* Marked for table-sort.js: the region swap does not reach
+                     into the filter form, so this is refreshed separately. */ ?>
+            <span data-table-sync="filter-clear" class="contents">
+            <?php if ($hasFilters) { ?>
+            {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
+            <?php } ?>
+            </span>
         </form>
         <div class="shrink-0">
             {% cmp="btn" href="/admin/posts/new" variant="blue" icon="plus" label="New Post" %}
         </div>
     </div>
 
+    <div data-table-region>
     {% if posts|empty %}
         {% cmp="empty-state" icon="files" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}
@@ -33,12 +63,12 @@ $emptyMessage = ($q !== '' || $status !== '') ? 'Try a different search or clear
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
-                        <th class="px-3.5 py-2.5 font-semibold">ID</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Title</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Blog</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Author</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Status</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Updated</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="title" label="Title" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="blog" label="Blog" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="author" label="Author" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="updated" label="Updated" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -94,6 +124,7 @@ $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front pag
         {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" itemSingular="post" itemPlural="posts" %}
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
 

@@ -32,6 +32,11 @@ class PostModel extends AppModel
     public const WORKFLOW_STATES = ['draft', 'in_review', 'needs_changes', 'approved'];
 
     /**
+     * Valid visibility values, mirroring the `posts.visibility` enum.
+     */
+    public const VISIBILITIES = ['public', 'private', 'unlisted'];
+
+    /**
      * Allowed public-lifecycle status transitions.
      *
      * Authors push draft→pending; reviewers/editors push pending→published.
@@ -1586,13 +1591,21 @@ class PostModel extends AppModel
      * @param  int  $perPage  Rows per page (capped at 100)
      * @param  string  $status  Optional status filter
      * @param  string  $searchQuery  Optional title/content search term
+     * @param  int|null  $blogId  Optional single-blog constraint
+     * @param  string  $featured  '' | 'home' (featured on the front page) | 'blog' (featured in its blog)
+     * @param  string  $visibility  Optional visibility filter
+     * @param  string  $orderBy  Whitelisted ORDER BY body from TableSort
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findAllForAdmin(
         int $page = 1,
         int $perPage = 20,
         string $status = '',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        ?int $blogId = null,
+        string $featured = '',
+        string $visibility = '',
+        string $orderBy = 'p.updated_at DESC'
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
@@ -1612,6 +1625,26 @@ class PostModel extends AppModel
             $params[':search_content'] = $term;
         }
 
+        if ($blogId !== null) {
+            $where .= ' AND p.blog_id = :blog_id';
+            $params[':blog_id'] = $blogId;
+        }
+
+        // Posts carry two independent featured flags: featured_on_home drives the
+        // site front page, is_featured drives the blog's own landing page.
+        if ($featured === 'home') {
+            $where .= ' AND p.featured_on_home = 1';
+        } elseif ($featured === 'blog') {
+            $where .= ' AND p.is_featured = 1';
+        } elseif ($featured === 'none') {
+            $where .= ' AND p.featured_on_home = 0 AND p.is_featured = 0';
+        }
+
+        if ($visibility !== '' && in_array($visibility, self::VISIBILITIES, true)) {
+            $where .= ' AND p.visibility = :visibility';
+            $params[':visibility'] = $visibility;
+        }
+
         $countStmt = $this->database->query(
             "SELECT COUNT(*) FROM {$this->getTable()} p {$where}",
             $params
@@ -1620,15 +1653,16 @@ class PostModel extends AppModel
 
         $offset = ($page - 1) * $perPage;
 
+        // $orderBy comes from a TableSort whitelist, never from raw input.
         $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
-                       p.featured_on_home,
+                       p.featured_on_home, p.is_featured, p.visibility, p.published_at,
                        b.blog_name, b.blog_slug,
                        au.username AS author_username
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users au ON au.id = p.author_id
                 {$where}
-                ORDER BY p.updated_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;

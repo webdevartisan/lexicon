@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Services\PublicCacheInvalidator;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -65,14 +66,30 @@ class BlogController extends AppController
     public function index(): Response
     {
         $q = trim((string) $this->request->getParam('q', ''));
+        $status = trim((string) $this->request->getParam('status', ''));
+        $featured = trim((string) $this->request->getParam('featured', ''));
         $page = max(1, (int) $this->request->getParam('page', 1));
 
-        $result = $this->blogModel->findAllForAdmin($page, 20, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'b.id',
+            'name' => 'b.blog_name',
+            'owner' => 'u.username',
+            'posts' => 'post_count',
+            'team' => 'author_count',
+            'status' => 'b.status',
+            'created' => 'b.created_at',
+        ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC');
+
+        $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy());
 
         return $this->view('blog.index', [
             'blogs' => $result['data'],
             'pagination' => $result['pagination'],
             'q' => $q,
+            'status' => $status,
+            'featured' => $featured,
+            'statusOptions' => BlogModel::STATUSES,
+            'sort' => $sort,
         ]);
     }
 

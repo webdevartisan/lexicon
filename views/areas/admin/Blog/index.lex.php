@@ -6,23 +6,39 @@
 {% block body %}
 <?php
 $basePath = '/admin/blogs';
-$emptyTitle = $q !== '' ? 'No blogs match your search' : 'No blogs yet';
-$emptyMessage = $q !== '' ? 'Try a different name, slug, or owner.' : 'Create the first blog to get the site going.';
+$hasFilters = $q !== '' || $status !== '' || $featured !== '';
+$emptyTitle = $hasFilters ? 'No blogs match these filters' : 'No blogs yet';
+$emptyMessage = $hasFilters ? 'Try a different name, owner, status, or featured state.' : 'Create the first blog to get the site going.';
+
+$statusChoices = ['' => 'All statuses'];
+foreach ($statusOptions as $opt) {
+    $statusChoices[$opt] = ucfirst($opt);
+}
+
+$featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'Not featured'];
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
-        <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-xl">
-            {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search name, slug, or owner..." %}
-            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                {% cache 'lucide:search' ttl=31536000 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
-            </button>
+        <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
+            {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search name, slug, or owner..." %}
+            {% cmp="select" name="status" options="{$statusChoices}" selectedKey="{$status}" onchange="this.form.submit()" %}
+            {% cmp="select" name="featured" options="{$featuredChoices}" selectedKey="{$featured}" onchange="this.form.submit()" %}
+            {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
+            <?php /* Marked for table-sort.js: the region swap does not reach
+                     into the filter form, so this is refreshed separately. */ ?>
+            <span data-table-sync="filter-clear" class="contents">
+            <?php if ($hasFilters) { ?>
+            {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
+            <?php } ?>
+            </span>
         </form>
         <div class="shrink-0">
             {% cmp="btn" href="/admin/blogs/new" variant="blue" icon="plus" label="New Blog" %}
         </div>
     </div>
 
+    <div data-table-region>
     {% if blogs|empty %}
         {% cmp="empty-state" icon="book-open" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}
@@ -31,20 +47,22 @@ $emptyMessage = $q !== '' ? 'Try a different name, slug, or owner.' : 'Create th
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
-                        <th class="px-3.5 py-2.5 font-semibold">ID</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Name</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Owner</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Posts</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Team</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Active</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="name" label="Name" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="owner" label="Owner" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="posts" label="Posts" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="team" label="Team" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
                     {% foreach ($blogs as $blog): %}
                     <?php
-                        $activeStatus = !empty($blog['is_active']) ? 'active' : 'inactive';
-$activeLabel = !empty($blog['is_active']) ? 'Active' : 'Inactive';
+                        // The blogs table has a `status` enum and no `is_active` column;
+// reading the missing key made every row render as "Inactive".
+$blogStatus = (string) ($blog['status'] ?? 'draft');
+$statusLabel = ucfirst($blogStatus);
 $showUrl = '/admin/blogs/'.$blog['id'].'/show';
 $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
 $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
@@ -61,7 +79,7 @@ $featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on 
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['post_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['author_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5">
-                            {% cmp="status-badge" status="{$activeStatus}" label="{$activeLabel}" %}
+                            {% cmp="status-badge" status="{$blogStatus}" label="{$statusLabel}" %}
                         </td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
@@ -95,6 +113,7 @@ $featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on 
         {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" itemSingular="blog" itemPlural="blogs" %}
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
 

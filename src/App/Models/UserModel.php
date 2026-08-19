@@ -244,8 +244,14 @@ class UserModel extends AppModel
      * @param  string  $q  Optional username/email/name search term
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
-    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
-    {
+    public function findAllForAdmin(
+        int $page = 1,
+        int $perPage = 20,
+        string $q = '',
+        string $active = '',
+        string $role = '',
+        string $orderBy = 'u.created_at DESC'
+    ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
@@ -261,6 +267,20 @@ class UserModel extends AppModel
             $params[':q_name'] = $term;
         }
 
+        if ($active === 'yes' || $active === 'no') {
+            $where .= ' AND u.is_active = :is_active';
+            $params[':is_active'] = $active === 'yes' ? 1 : 0;
+        }
+
+        // Role lives on a join table, so filtering needs EXISTS rather than a
+        // WHERE on the GROUP_CONCAT (which is only computed after grouping).
+        if ($role !== '') {
+            $where .= ' AND EXISTS (SELECT 1 FROM user_roles ur2
+                                    INNER JOIN roles r2 ON r2.id = ur2.role_id
+                                    WHERE ur2.user_id = u.id AND r2.role_slug = :role_slug)';
+            $params[':role_slug'] = $role;
+        }
+
         $total = (int) $this->database->query(
             "SELECT COUNT(*) FROM {$this->getTable()} u {$where}",
             $params
@@ -268,15 +288,16 @@ class UserModel extends AppModel
 
         $offset = ($page - 1) * $perPage;
 
+        // $orderBy comes from a TableSort whitelist, never from raw input.
         $sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name,
-                       u.is_active, u.created_at,
+                       u.is_active, u.created_at, u.last_login, u.posts_count,
                        COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles
                 FROM {$this->getTable()} u
                 LEFT JOIN user_roles ur ON ur.user_id = u.id
                 LEFT JOIN roles r ON r.id = ur.role_id
                 {$where}
                 GROUP BY u.id
-                ORDER BY u.created_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;

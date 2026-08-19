@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Services\PublicCacheInvalidator;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
@@ -76,15 +77,39 @@ class PostController extends AppController
     {
         $status = trim((string) ($this->request->get['status'] ?? ''));
         $q = trim((string) ($this->request->get['q'] ?? ''));
+        $featured = trim((string) ($this->request->get['featured'] ?? ''));
+        $visibility = trim((string) ($this->request->get['visibility'] ?? ''));
+        $blogId = (int) ($this->request->get['blog_id'] ?? 0);
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        $result = $this->model->findAllForAdmin($page, 20, $status, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'p.id',
+            'title' => 'p.title',
+            'blog' => 'b.blog_name',
+            'author' => 'au.username',
+            'status' => 'p.status',
+            'published' => 'p.published_at',
+            'updated' => 'p.updated_at',
+        ], defaultKey: 'updated', defaultDirection: 'desc', tiebreaker: 'p.id DESC');
+
+        $result = $this->model->findAllForAdmin(
+            $page, 20, $status, $q,
+            $blogId > 0 ? $blogId : null,
+            $featured, $visibility, $sort->orderBy()
+        );
 
         return $this->view([
             'posts' => $result['data'],
             'pagination' => $result['pagination'],
             'status' => $status,
             'q' => $q,
+            'featured' => $featured,
+            'visibility' => $visibility,
+            'blogId' => $blogId,
+            'statusOptions' => PostModel::STATUSES,
+            'visibilityOptions' => PostModel::VISIBILITIES,
+            'blogOptions' => $this->blogModel->getAllForSelect(),
+            'sort' => $sort,
         ]);
     }
 

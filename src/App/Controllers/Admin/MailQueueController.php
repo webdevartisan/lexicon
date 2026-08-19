@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\MailQueueModel;
 use App\Models\ScheduledTaskModel;
 use App\Services\MailQueueService;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 
 /**
@@ -56,11 +57,22 @@ class MailQueueController extends AppController
             $tier = '';
         }
 
-        $result = $this->model->findWithFilters($status, $search, $page, 25, $tier);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'id',
+            'recipient' => 'to_email',
+            'subject' => 'subject',
+            'status' => 'status',
+            'tier' => 'tier',
+            'attempts' => 'attempts',
+            'created' => 'created_at',
+        ], defaultKey: 'id', defaultDirection: 'desc', tiebreaker: 'id DESC');
+
+        $result = $this->model->findWithFilters($status, $search, $page, 25, $tier, $sort->orderBy());
 
         return $this->view('areas/admin/MailQueue/index.lex.php', [
             'entries' => $result['data'],
             'pagination' => $result['pagination'],
+            'sort' => $sort,
             'counts' => $this->mailQueue->statusCounts(),
             'statusFilter' => $status,
             'searchFilter' => $search,

@@ -219,7 +219,8 @@ class MailQueueModel extends AppModel
         string $search = '',
         int $page = 1,
         int $perPage = 25,
-        string $tier = ''
+        string $tier = '',
+        string $orderBy = 'id DESC'
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
@@ -260,7 +261,7 @@ class MailQueueModel extends AppModel
                        last_error, related_type, related_id, next_attempt_at, sent_at, created_at
                 FROM {$this->getTable()}
                 {$whereSql}
-                ORDER BY id DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;
