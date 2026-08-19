@@ -1,16 +1,10 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Activity{% endblock %}
+{% block subtitle %}Your comments and the replies people left you, across every blog.{% endblock %}
 
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <div class="flex flex-col gap-2 mb-6">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50">Activity</h1>
-        <p class="text-sm text-slate-500 dark:text-zink-300">
-            Your comments and the replies people left you, across every blog.
-        </p>
-    </div>
-
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
         <div class="flex flex-col gap-3">
             <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-zink-300">Replies to you</h2>

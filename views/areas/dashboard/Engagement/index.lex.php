@@ -1,6 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{% if tab == 'likes' %}Liked posts{% else %}Saved posts{% endif %}{% endblock %}
+{% block subtitle %}{% if tab == 'likes' %}Every post you have liked across all blogs, newest first.{% else %}Posts you bookmarked to come back to later.{% endif %}{% endblock %}
 
 {% block body %}
 <?php
@@ -9,17 +10,6 @@ $dateKey = $isLikes ? 'liked_at' : 'bookmarked_at';
 ?>
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <div class="flex flex-col gap-2 mb-6">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50">
-            <?= $isLikes ? 'Liked posts' : 'Saved posts' ?>
-        </h1>
-        <p class="text-sm text-slate-500 dark:text-zink-300">
-            <?= $isLikes
-                ? 'Every post you have liked across all blogs, newest first.'
-                : 'Posts you bookmarked to come back to later.' ?>
-        </p>
-    </div>
-
     <div class="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-zink-600">
         <a href="<?= e(lurl('/library/likes')) ?>"
            class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors <?= $isLikes

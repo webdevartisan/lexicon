@@ -1,6 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ blog.blog_name }} · Comments{% endblock %}
+{% block subtitle %}Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.{% endblock %}
 
 {% block body %}
 <?php
@@ -34,14 +35,6 @@ $statusBadge = [
 ?>
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <div class="flex flex-col gap-2 mb-6">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50">Comments</h1>
-        <p class="text-sm text-slate-500 dark:text-zink-300">
-            Moderate comments on <span class="font-medium text-slate-700 dark:text-zink-100"><?= e($blog['blog_name']) ?></span>.
-            New ones show up as <span class="font-medium">pending</span> until you approve them.
-        </p>
-    </div>
-
     <!-- Search form -->
     <form method="GET" action="<?= e($basePath) ?>" class="card mb-4">
         <div class="card-body">
