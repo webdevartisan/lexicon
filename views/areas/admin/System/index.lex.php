@@ -60,11 +60,11 @@ foreach ($phpLabels as $key => $label) { ?>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-zink-600">
-                            <?php foreach ($tables as $t) { ?>
+                            <?php foreach ($tables as $table) { ?>
                             <tr>
-                                <td class="px-4 py-1.5 font-medium text-slate-900 dark:text-zink-50"><?= e($t['name']) ?></td>
-                                <td class="px-4 py-1.5 text-right text-slate-500 dark:text-zink-300"><?= number_format((int) $t['rows_estimate']) ?></td>
-                                <td class="px-4 py-1.5 text-right text-slate-500 dark:text-zink-300"><?= $fmtBytes($t['size_bytes']) ?></td>
+                                <td class="px-4 py-1.5 font-medium text-slate-900 dark:text-zink-50"><?= e($table['name']) ?></td>
+                                <td class="px-4 py-1.5 text-right text-slate-500 dark:text-zink-300"><?= number_format((int) $table['rows_estimate']) ?></td>
+                                <td class="px-4 py-1.5 text-right text-slate-500 dark:text-zink-300"><?= $fmtBytes($table['size_bytes']) ?></td>
                             </tr>
                             <?php } ?>
                         </tbody>

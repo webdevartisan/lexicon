@@ -6,23 +6,39 @@
 {% block body %}
 <?php
 $basePath = '/admin/users';
-$emptyTitle = $q !== '' ? 'No users match your search' : 'No users yet';
-$emptyMessage = $q !== '' ? 'Try a different name, username, or email.' : 'Create the first account to get started.';
+$hasFilters = $q !== '' || $active !== '' || $role !== '';
+$emptyTitle = $hasFilters ? 'No users match these filters' : 'No users yet';
+$emptyMessage = $hasFilters ? 'Try a different name, role, or status.' : 'Create the first account to get started.';
+
+$activeChoices = ['' => 'Any status', 'yes' => 'Active only', 'no' => 'Deactivated only'];
+
+$roleChoices = ['' => 'All roles'];
+foreach ($roleOptions as $r) {
+    $roleChoices[(string) $r['role_slug']] = (string) ($r['role_name'] ?? $r['role_slug']);
+}
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
-        <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row gap-3 grow max-w-xl">
-            {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search username, email, or name..." %}
-            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
-                <i data-lucide="search" class="size-4"></i> Search
-            </button>
+        <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
+            {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search username, email, or name..." %}
+            {% cmp="select" name="role" options="{$roleChoices}" selectedKey="{$role}" onchange="this.form.submit()" %}
+            {% cmp="select" name="active" options="{$activeChoices}" selectedKey="{$active}" onchange="this.form.submit()" %}
+            {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
+            <?php /* Marked for table-sort.js: the region swap does not reach
+                     into the filter form, so this is refreshed separately. */ ?>
+            <span data-table-sync="filter-clear" class="contents">
+            <?php if ($hasFilters) { ?>
+            {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
+            <?php } ?>
+            </span>
         </form>
         <div class="shrink-0">
             {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
         </div>
     </div>
 
+    <div data-table-region>
     {% if users|empty %}
         {% cmp="empty-state" icon="users" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}
@@ -31,13 +47,13 @@ $emptyMessage = $q !== '' ? 'Try a different name, username, or email.' : 'Creat
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
-                        <th class="px-3.5 py-2.5 font-semibold">ID</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Username</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="username" label="Username" %}
                         <th class="px-3.5 py-2.5 font-semibold">Name</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Email</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="email" label="Email" %}
                         <th class="px-3.5 py-2.5 font-semibold">Roles</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Status</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Joined</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="active" label="Status" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="created" label="Joined" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -84,6 +100,7 @@ $activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
         {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" itemSingular="user" itemPlural="users" %}
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
 

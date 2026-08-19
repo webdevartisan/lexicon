@@ -92,6 +92,31 @@ class NotificationModel extends AppModel
     }
 
     /**
+     * Delete one notification belonging to a user.
+     *
+     * @param  int  $id  Notification ID
+     * @param  int  $userId  Owner — prevents deleting another user's notification
+     * @return bool True if a row was removed
+     */
+    public function deleteForUser(int $id, int $userId): bool
+    {
+        $sql = 'DELETE FROM notifications WHERE id = ? AND user_id = ?';
+
+        return $this->database->execute($sql, [$id, $userId]) > 0;
+    }
+
+    /**
+     * Delete every notification belonging to a user.
+     *
+     * @param  int  $userId  Recipient
+     * @return int Rows deleted
+     */
+    public function deleteAllForUser(int $userId): int
+    {
+        return $this->database->execute('DELETE FROM notifications WHERE user_id = ?', [$userId]);
+    }
+
+    /**
      * Return paginated notifications for a user with total count.
      *
      * @param  int  $userId  Recipient

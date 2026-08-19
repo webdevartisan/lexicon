@@ -3,9 +3,10 @@
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
-    <!-- Blog header: identity + status + primary actions -->
+    <!-- Blog header: identity + status + primary actions. The blog name is not
+         repeated here; the layout page title already carries it. -->
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <div class="flex items-start gap-3 min-w-0">
+        <div class="flex items-center gap-3 min-w-0">
             {% if blog.logo_path|notempty %}
             <div class="flex items-center justify-center w-12 h-12 rounded-md bg-slate-100 dark:bg-zink-700 shrink-0 overflow-hidden">
                 <img src="{{ blog.logo_path }}" alt="{{ blog.blog_name }} logo" class="object-contain w-10 h-10">
@@ -17,10 +18,7 @@
             {% endif %}
 
             <div class="min-w-0">
-                <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50 truncate">
-                    {{ blog.blog_name }}
-                </h1>
-                <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                <div class="flex flex-wrap items-center gap-2">
                     <?php
                     $blogStatus = $blog['status'] ?? 'draft';
                     $blogBadge = [

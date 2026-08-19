@@ -35,32 +35,54 @@ class CategoryModel extends AppModel
      *
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
-    public function findAllForAdmin(int $page = 1, int $perPage = 20, string $q = ''): array
-    {
+    public function findAllForAdmin(
+        int $page = 1,
+        int $perPage = 20,
+        string $q = '',
+        ?int $blogId = null,
+        string $used = '',
+        string $orderBy = 'b.blog_name ASC, c.name ASC'
+    ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
-        $where = '';
+        $conditions = [];
         $params = [];
 
         if ($q !== '') {
-            $where = 'WHERE (c.name LIKE :q_name OR c.slug LIKE :q_slug OR b.blog_name LIKE :q_blog)';
+            $conditions[] = '(c.name LIKE :q_name OR c.slug LIKE :q_slug OR b.blog_name LIKE :q_blog)';
             $term = '%'.$q.'%';
             $params[':q_name'] = $term;
             $params[':q_slug'] = $term;
             $params[':q_blog'] = $term;
         }
 
+        if ($blogId !== null) {
+            $conditions[] = 'c.blog_id = :blog_id';
+            $params[':blog_id'] = $blogId;
+        }
+
+        // "Unused" is the one worth having: it is how you find taxonomy to prune.
+        if ($used === 'yes') {
+            $conditions[] = 'EXISTS (SELECT 1 FROM posts p WHERE p.category_id = c.id)';
+        } elseif ($used === 'no') {
+            $conditions[] = 'NOT EXISTS (SELECT 1 FROM posts p WHERE p.category_id = c.id)';
+        }
+
+        $where = $conditions === [] ? '' : 'WHERE '.implode(' AND ', $conditions);
+
         $total = (int) $this->database->query(
             "SELECT COUNT(*) FROM {$this->getTable()} c LEFT JOIN blogs b ON b.id = c.blog_id {$where}",
             $params
         )->fetchColumn();
 
-        $sql = "SELECT c.*, b.blog_name
+        // $orderBy comes from a TableSort whitelist, never from raw input.
+        $sql = "SELECT c.*, b.blog_name,
+                       (SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id) AS post_count
                 FROM {$this->getTable()} c
                 LEFT JOIN blogs b ON b.id = c.blog_id
                 {$where}
-                ORDER BY b.blog_name, c.name
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;

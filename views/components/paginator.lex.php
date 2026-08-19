@@ -80,7 +80,7 @@ $itemPlural = $itemPlural ?? null;
             <!-- Previous Button -->
             <li>
                 <?php if ($pagination['has_previous']) { ?>
-                    <a href="<?= e($buildPaginationUrl($pagination['current_page'] - 1)) ?>"
+                    <a href="<?= e($buildPaginationUrl($pagination['current_page'] - 1)) ?>" data-page-link
                        class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($previousPageLabel) ?>">
                         {% cache 'lucide:chevron-left' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
@@ -106,7 +106,7 @@ $itemPlural = $itemPlural ?? null;
                             <?= $i ?>
                         </span>
                     <?php } else { ?>
-                        <a href="<?= e($buildPaginationUrl($i)) ?>"
+                        <a href="<?= e($buildPaginationUrl($i)) ?>" data-page-link
                            class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500 [&.active]:text-custom-50 dark:[&.active]:text-custom-50 [&.active]:bg-custom-500 dark:[&.active]:bg-custom-500 [&.active]:border-custom-500 dark:[&.active]:border-custom-500"
                            aria-label="<?= e($goToPageLabel) ?> <?= $i ?>">
                             <?= $i ?>
@@ -118,7 +118,7 @@ $itemPlural = $itemPlural ?? null;
             <!-- Next Button -->
             <li>
                 <?php if ($pagination['has_next']) { ?>
-                    <a href="<?= e($buildPaginationUrl($pagination['current_page'] + 1)) ?>"
+                    <a href="<?= e($buildPaginationUrl($pagination['current_page'] + 1)) ?>" data-page-link
                        class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($nextPageLabel) ?>">
                         {% cache 'lucide:chevron-right' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}

@@ -14,12 +14,21 @@
                         <?= (int) $total ?> total · <?= (int) $unreadCount ?> unread
                     </p>
                 </div>
-                <?php if ($unreadCount > 0) { ?>
-                <form method="post" action="/dashboard/notifications/read-all">
-                    {{ csrf_field() }}
-                    {% cmp="btn" type="submit" variant="slate" icon="check-check" label="Mark all read" %}
-                </form>
-                <?php } ?>
+                <div class="flex flex-wrap items-center gap-2">
+                    <?php if ($unreadCount > 0) { ?>
+                    <form method="post" action="/dashboard/notifications/read-all">
+                        {{ csrf_field() }}
+                        {% cmp="btn" type="submit" variant="slate" icon="check-check" label="Mark all read" %}
+                    </form>
+                    <?php } ?>
+                    <?php if ($total > 0) { ?>
+                    <form method="post" action="/dashboard/notifications/clear-all"
+                        onsubmit="return confirm('Clear all notifications? This cannot be undone.');">
+                        {{ csrf_field() }}
+                        {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Clear all" %}
+                    </form>
+                    <?php } ?>
+                </div>
             </div>
 
             <?php if (empty($notificationRows)) { ?>

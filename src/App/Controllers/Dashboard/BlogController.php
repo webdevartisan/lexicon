@@ -426,10 +426,10 @@ final class BlogController extends AppController
         ];
         $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
 
-        // Recent published posts blog-wide (all authors).
-        $recent = $this->post->findByAuthorWithFiltersPagination(
-            authorId: (int) $user['id'], page: 1, perPage: 6,
-            blogId: (int) $id, status: 'published'
+        // Recent published posts blog-wide (all authors). Only owners and
+        // editors reach this action, so dropping the author scope is safe.
+        $recent = $this->post->findAllInBlogWithFilters(
+            blogId: (int) $id, page: 1, perPage: 6, status: 'published'
         )['data'];
 
         return $this->view([

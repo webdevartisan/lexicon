@@ -1,16 +1,10 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Subscriptions{% endblock %}
+{% block subtitle %}Every blog you follow. New posts show up in your feed and land in your inbox.{% endblock %}
 
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <div class="flex flex-col gap-2 mb-6">
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50">Subscriptions</h1>
-        <p class="text-sm text-slate-500 dark:text-zink-300">
-            Every blog you follow. New posts show up in your feed and land in your inbox.
-        </p>
-    </div>
-
     <?php if (empty($subscriptions)) { ?>
         <div class="card">
             <div class="card-body py-12 text-center">

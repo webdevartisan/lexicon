@@ -1,11 +1,10 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Delete Post{% endblock %}
+{% block subtitle %}This cannot be undone.{% endblock %}
 
 {% block body %}
 <section class="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-    <h1 class="text-2xl font-semibold text-red-600 mb-4">Delete Post</h1>
-
     <p class="text-gray-700 mb-6">
         Are you sure you want to delete the post 
         <strong class="text-gray-900">"{{ post.title }}"</strong>?

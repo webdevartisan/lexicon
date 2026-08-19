@@ -25,32 +25,38 @@ $actionColor = static function (string $action): string {
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <!-- Filters -->
-    <form method="GET" action="<?= e($basePath) ?>" class="card mb-4">
+    <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="card mb-4">
         <div class="card-body">
-            <div class="flex flex-col md:flex-row gap-3">
-                <select name="action" data-auto-submit
-                        class="form-select border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <option value="">All actions</option>
-                    <?php foreach ($actionOptions as $opt) { ?>
-                    <option value="<?= e($opt) ?>" <?= $actionFilter === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
-                    <?php } ?>
-                </select>
-                <select name="resource_type" data-auto-submit
-                        class="form-select border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">
-                    <option value="">All resource types</option>
-                    <?php foreach ($resourceTypeOptions as $opt) { ?>
-                    <option value="<?= e($opt) ?>" <?= $resourceTypeFilter === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
-                    <?php } ?>
-                </select>
+            <div class="flex flex-col md:flex-row md:items-center gap-3">
+                <?php
+                // The select component maps a flat list to value => label; prepend the
+                // "all" sentinel so it reads as a real filter option. Action and resource
+                // slugs are already lowercase keys, so they are shown verbatim.
+                $actionChoices = ['' => 'All actions'];
+foreach ($actionOptions as $opt) {
+    $actionChoices[$opt] = $opt;
+}
+
+$resourceChoices = ['' => 'All resource types'];
+foreach ($resourceTypeOptions as $opt) {
+    $resourceChoices[$opt] = $opt;
+}
+?>
+                {% cmp="select" name="action" options="{$actionChoices}" selectedKey="{$actionFilter}" onchange="this.form.submit()" %}
+                {% cmp="select" name="resource_type" options="{$resourceChoices}" selectedKey="{$resourceTypeFilter}" onchange="this.form.submit()" %}
+                {% cmp="btn" type="submit" variant="blue" icon="filter" label="Apply" %}
+                <?php /* Marked for table-sort.js: the region swap does not reach
+                         into the filter form, so this is refreshed separately. */ ?>
+                <span data-table-sync="filter-clear" class="contents">
                 <?php if ($actionFilter !== '' || $resourceTypeFilter !== '') { ?>
-                <a href="<?= e($basePath) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    {% cache 'lucide:x' ttl=31536000 %}<i data-lucide="x" class="size-4"></i>{% endcache %} Clear filters
-                </a>
+                {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
                 <?php } ?>
+                </span>
             </div>
         </div>
     </form>
 
+    <div data-table-region>
     {% if entries|empty %}
         {% cmp="empty-state" icon="history" title="No audit entries" message="Actions like deletions, approvals, and role changes will be recorded here." %}
     {% else %}
@@ -59,12 +65,12 @@ $actionColor = static function (string $action): string {
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
-                        <th class="px-3.5 py-2.5 font-semibold">When</th>
-                        <th class="px-3.5 py-2.5 font-semibold">User</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Action</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Resource</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="when" label="When" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="user" label="User" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="action" label="Action" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="resource" label="Resource" %}
                         <th class="px-3.5 py-2.5 font-semibold">Details</th>
-                        <th class="px-3.5 py-2.5 font-semibold">IP</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="ip" label="IP" %}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
@@ -108,5 +114,6 @@ if (is_array($details)) {
         {% cmp="paginator" pagination="{$pagination}" pageParam="page" basePath="{$basePath}" itemSingular="entry" itemPlural="entries" %}
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}

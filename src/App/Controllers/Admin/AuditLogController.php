@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\ActivityLogModel;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 
 /**
@@ -32,7 +33,15 @@ class AuditLogController extends AppController
         $resourceType = trim((string) ($this->request->get['resource_type'] ?? ''));
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        $result = $this->model->findWithFilters($action, $resourceType, $page, 25);
+        $sort = TableSort::fromRequest($this->request, [
+            'when' => 'a.created_at',
+            'user' => 'u.username',
+            'action' => 'a.action',
+            'resource' => 'a.resource_type',
+            'ip' => 'a.ip_address',
+        ], defaultKey: 'when', defaultDirection: 'desc', tiebreaker: 'a.id DESC');
+
+        $result = $this->model->findWithFilters($action, $resourceType, $page, 25, $sort->orderBy());
         $options = $this->model->filterOptions();
 
         return $this->view([
@@ -42,6 +51,7 @@ class AuditLogController extends AppController
             'resourceTypeFilter' => $resourceType,
             'actionOptions' => $options['actions'],
             'resourceTypeOptions' => $options['resource_types'],
+            'sort' => $sort,
         ]);
     }
 }

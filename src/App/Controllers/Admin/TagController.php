@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\TagModel;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -23,14 +24,33 @@ class TagController extends AppController
     public function index(): Response
     {
         $q = trim((string) $this->request->getParam('q', ''));
+        $used = trim((string) $this->request->getParam('used', ''));
+        $blogId = (int) $this->request->getParam('blog_id', 0);
         $page = max(1, (int) $this->request->getParam('page', 1));
 
-        $result = $this->model->findAllForAdmin($page, 20, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 't.id',
+            'name' => 't.name',
+            'slug' => 't.slug',
+            'blog' => 'b.blog_name',
+            'posts' => 'post_count',
+            'created' => 't.created_at',
+        ], defaultKey: 'name', defaultDirection: 'asc', tiebreaker: 't.id DESC');
+
+        $result = $this->model->findAllForAdmin(
+            $page, 20, $q,
+            $blogId > 0 ? $blogId : null,
+            $used, $sort->orderBy()
+        );
 
         return $this->view('tag.index', [
             'tags' => $result['data'],
             'pagination' => $result['pagination'],
             'q' => $q,
+            'used' => $used,
+            'blogId' => $blogId,
+            'blogOptions' => $this->blogModel->getAllForSelect(),
+            'sort' => $sort,
         ]);
     }
 

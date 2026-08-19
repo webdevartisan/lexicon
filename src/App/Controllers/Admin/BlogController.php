@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Services\PublicCacheInvalidator;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -40,7 +41,7 @@ class BlogController extends AppController
         if ($on && ($blog['status'] ?? '') !== 'published') {
             $this->flash('error', 'Only published blogs can be featured on the explore page.');
 
-            return $this->redirect('/admin/blogs');
+            return $this->redirectToList('/admin/blogs');
         }
 
         $this->blogModel->setExploreFeatured((int) $blog['id'], $on);
@@ -59,20 +60,36 @@ class BlogController extends AppController
             ? 'Blog is now featured on the explore page.'
             : 'Blog removed from the explore page featured section.');
 
-        return $this->redirect('/admin/blogs');
+        return $this->redirectToList('/admin/blogs');
     }
 
     public function index(): Response
     {
         $q = trim((string) $this->request->getParam('q', ''));
+        $status = trim((string) $this->request->getParam('status', ''));
+        $featured = trim((string) $this->request->getParam('featured', ''));
         $page = max(1, (int) $this->request->getParam('page', 1));
 
-        $result = $this->blogModel->findAllForAdmin($page, 20, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'b.id',
+            'name' => 'b.blog_name',
+            'owner' => 'u.username',
+            'posts' => 'post_count',
+            'team' => 'author_count',
+            'status' => 'b.status',
+            'created' => 'b.created_at',
+        ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC');
+
+        $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy());
 
         return $this->view('blog.index', [
             'blogs' => $result['data'],
             'pagination' => $result['pagination'],
             'q' => $q,
+            'status' => $status,
+            'featured' => $featured,
+            'statusOptions' => BlogModel::STATUSES,
+            'sort' => $sort,
         ]);
     }
 
@@ -152,7 +169,7 @@ class BlogController extends AppController
         if ($this->blogModel->update($id, $data)) {
             $this->flash('success', 'Blog updated.');
 
-            return $this->redirect('/admin/blogs');
+            return $this->redirectToList('/admin/blogs');
         }
 
         return $this->view('blog.edit', [
@@ -215,7 +232,7 @@ class BlogController extends AppController
 
         $this->flash('success', 'Blog deleted.');
 
-        return $this->redirect('/admin/blogs');
+        return $this->redirectToList('/admin/blogs');
     }
 
     /**

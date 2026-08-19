@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Services\PublicCacheInvalidator;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
@@ -47,7 +48,7 @@ class PostController extends AppController
         if ($on && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') !== 'public')) {
             $this->flash('error', 'Only published, public posts can be featured on the front page.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         $this->model->setFeaturedOnHome((int) $post['id'], $on);
@@ -66,7 +67,7 @@ class PostController extends AppController
             ? 'Post is now featured on the front page.'
             : 'Post removed from the front page.');
 
-        return $this->redirect('/admin/posts');
+        return $this->redirectToList('/admin/posts');
     }
 
     /**
@@ -76,15 +77,39 @@ class PostController extends AppController
     {
         $status = trim((string) ($this->request->get['status'] ?? ''));
         $q = trim((string) ($this->request->get['q'] ?? ''));
+        $featured = trim((string) ($this->request->get['featured'] ?? ''));
+        $visibility = trim((string) ($this->request->get['visibility'] ?? ''));
+        $blogId = (int) ($this->request->get['blog_id'] ?? 0);
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
-        $result = $this->model->findAllForAdmin($page, 20, $status, $q);
+        $sort = TableSort::fromRequest($this->request, [
+            'id' => 'p.id',
+            'title' => 'p.title',
+            'blog' => 'b.blog_name',
+            'author' => 'au.username',
+            'status' => 'p.status',
+            'published' => 'p.published_at',
+            'updated' => 'p.updated_at',
+        ], defaultKey: 'updated', defaultDirection: 'desc', tiebreaker: 'p.id DESC');
+
+        $result = $this->model->findAllForAdmin(
+            $page, 20, $status, $q,
+            $blogId > 0 ? $blogId : null,
+            $featured, $visibility, $sort->orderBy()
+        );
 
         return $this->view([
             'posts' => $result['data'],
             'pagination' => $result['pagination'],
             'status' => $status,
             'q' => $q,
+            'featured' => $featured,
+            'visibility' => $visibility,
+            'blogId' => $blogId,
+            'statusOptions' => PostModel::STATUSES,
+            'visibilityOptions' => PostModel::VISIBILITIES,
+            'blogOptions' => $this->blogModel->getAllForSelect(),
+            'sort' => $sort,
         ]);
     }
 
@@ -138,7 +163,7 @@ class PostController extends AppController
         if ($this->model->insert($data)) {
             $this->flash('success', 'Post created.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         // On error, return form view again
@@ -186,7 +211,7 @@ class PostController extends AppController
         if ($this->model->update($id, $data)) {
             $this->flash('success', 'Post updated.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         return $this->view('post.edit', [
@@ -229,7 +254,7 @@ class PostController extends AppController
 
         $this->flash('success', 'Post deleted.');
 
-        return $this->redirect('/admin/posts');
+        return $this->redirectToList('/admin/posts');
     }
 
     /**

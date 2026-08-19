@@ -27,7 +27,8 @@ class ActivityLogModel extends AppModel
         string $action = '',
         string $resourceType = '',
         int $page = 1,
-        int $perPage = 25
+        int $perPage = 25,
+        string $orderBy = 'a.created_at DESC, a.id DESC'
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
@@ -54,11 +55,12 @@ class ActivityLogModel extends AppModel
 
         $offset = ($page - 1) * $perPage;
 
+        // $orderBy comes from a TableSort whitelist, never from raw input.
         $sql = "SELECT a.*, u.username
                 FROM {$this->getTable()} a
                 LEFT JOIN users u ON u.id = a.user_id
                 {$whereSql}
-                ORDER BY a.created_at DESC, a.id DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $params[':limit'] = $perPage;

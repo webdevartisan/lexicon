@@ -107,7 +107,7 @@ foreach ($statusOptions as $opt) {
     $statusChoices[$opt] = ucfirst($opt);
 }
 ?>
-                <form method="GET" action="<?= e($basePath) ?>" class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
+                <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
                     {% cmp="select" name="status" options="{$statusChoices}" selectedKey="{$statusFilter}" onchange="this.form.submit()" %}
                     <div class="grow sm:max-w-xs">
                         {% cmp="input" type="search" name="q" value="{$searchFilter}" placeholder="Search recipient…" %}
@@ -120,9 +120,13 @@ foreach ($tierOptions as $tierOpt) {
 ?>
                     {% cmp="select" name="tier" options="{$tierChoices}" selectedKey="{$tierFilter}" onchange="this.form.submit()" %}
                     {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
+                    <?php /* Marked for table-sort.js: the region swap does not reach
+                             into the filter form, so this is refreshed separately. */ ?>
+                    <span data-table-sync="filter-clear" class="contents">
                     <?php if ($statusFilter !== '' || $searchFilter !== '' || $tierFilter !== '') { ?>
                     {% cmp="btn" href="{$basePath}" variant="slate" icon="x" label="Clear" %}
                     <?php } ?>
+                    </span>
                 </form>
 
                 <div class="flex flex-wrap gap-2 lg:justify-end shrink-0">
@@ -146,6 +150,7 @@ foreach ($tierOptions as $tierOpt) {
         </div>
     </div>
 
+    <div data-table-region>
     {% if entries|empty %}
         {% cmp="empty-state" icon="mail-check" title="Nothing in the queue" message="Everything the platform sends passes through here and clears as the tier workers deliver it." %}
     {% else %}
@@ -154,13 +159,13 @@ foreach ($tierOptions as $tierOpt) {
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
-                        <th class="px-3.5 py-2.5 font-semibold">ID</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Recipient</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Subject</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Status</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Tier</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Attempts</th>
-                        <th class="px-3.5 py-2.5 font-semibold">Queued</th>
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="recipient" label="Recipient" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="subject" label="Subject" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="tier" label="Tier" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="attempts" label="Attempts" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="created" label="Queued" %}
                         <th class="px-3.5 py-2.5 font-semibold">Next / Sent</th>
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
@@ -250,6 +255,7 @@ $entryTier = (string) ($entry['tier'] ?? 'standard');
         {% cmp="paginator" pagination="{$pagination}" pageParam="page" basePath="{$basePath}" itemSingular="email" itemPlural="emails" %}
     </div>
     {% endif %}
+    </div>
 </div>
 {% endblock %}
 

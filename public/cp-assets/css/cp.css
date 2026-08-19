@@ -41,22 +41,26 @@
   --sc-vertical-menu-bg-brand: 59 130 246;
   --sc-vertical-menu-border-brand: 37 99 235;
 
-  --sc-vertical-menu-item: 15 23 42;
-  --sc-vertical-menu-item-hover: 59 130 246;
+  --sc-vertical-menu-item: 51 65 85;
+  --sc-vertical-menu-item-hover: 37 99 235;
 
   --sc-vertical-menu-item-bg-hover: 241 245 249;
 
-  --sc-vertical-menu-item-active: 59 130 246;
+  /* custom-600 rather than custom-500: the lighter blue only reaches 3:1 on the
+     custom-100 fill, which is under the AA floor for label text. */
+  --sc-vertical-menu-item-active: 37 99 235;
   --sc-vertical-menu-item-bg-active: 219 234 254;
 }
 [data-mode="dark"] {
   --sc-vertical-menu-item: 146 175 211;
   --sc-vertical-menu-item-hover: 226 232 240;
 
-  --sc-vertical-menu-item-bg-hover: 28 46 69;
+  /* The dark sidebar sits on zink-700, so the old zink-600 fills landed within
+     a hair of the surface and neither hover nor the current page showed up. */
+  --sc-vertical-menu-item-bg-hover: 35 58 87;
 
   --sc-vertical-menu-item-active: 255 255 255;
-  --sc-vertical-menu-item-bg-active: 28 46 69;
+  --sc-vertical-menu-item-bg-active: 29 56 96;
 }
 /* Flash toast entrance. Kept outside the layers so purging never drops it. */
 @keyframes toast-slide-in {
@@ -577,86 +581,108 @@ input[type=range]:focus::-webkit-slider-thumb {
     max-width: 1536px;
   }
 }
+/*
+     * Sidebar navigation rows.
+     *
+     * Colours come from the --sc-vertical-menu-item-* tokens, which cp-vars.css
+     * redefines per theme, so one set of rules covers light and dark. The tokens
+     * hold bare RGB triplets, hence the rgb() wrappers: dropping them yields an
+     * invalid colour and the browser silently falls back to transparent, which
+     * is exactly how the hover fill went missing in light mode before.
+     */
 .sidebar-menu-item {
-  position: relative;
-  margin-left: 0.75rem;
-  margin-right: 0.75rem;
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-  display: flex;
-  align-items: center;
-  border-radius: 0.375rem;
-  padding-top: 0.625rem;
-  padding-bottom: 0.625rem;
-  font-weight: 400;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 75ms;
-  transition-timing-function: linear;
-    font-size: 0.8125rem; /* or whatever your theme uses */
-}
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-inline: 0.75rem;
+        margin-block: 0.25rem;
+        padding-block: 0.625rem;
+        padding-inline: 0.75rem 1.25rem;
+        border-radius: 0.375rem;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        color: rgb(var(--sc-vertical-menu-item));
+        transition: color 0.15s linear, background-color 0.15s linear, width 0.15s linear;
+    }
 .sidebar-menu-item:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-vertical-menu-item-bg-hover) / var(--tw-bg-opacity, 1));
-  --tw-text-opacity: 1;
-  color: rgb(var(--sc-vertical-menu-item-hover) / var(--tw-text-opacity, 1));
-    color: var(--sc-vertical-menu-item-hover);
-    background-color: var(--sc-vertical-menu-item-bg-hover);
-}
-.group[data-sidebar-size="sm"] .sidebar-menu-item {
-  margin-top: 0px;
-  margin-bottom: 0px;
-}
-.group[data-sidebar-size="md"] .sidebar-menu-item {
-  display: block;
-}
-.group[data-sidebar-size="sm"] .sidebar-menu-item {
-  border-bottom-right-radius: 0px;
-  border-bottom-left-radius: 0px;
-}
-.group[data-sidebar-size="md"] .sidebar-menu-item {
-  text-align: center;
-}
-.group[data-sidebar="dark"] .sidebar-menu-item {
-    color: var(--sc-vertical-menu-item);
-  }
-.group[data-sidebar="dark"] .sidebar-menu-item:hover {
-    color: var(--sc-vertical-menu-item-hover);
-    background-color: var(--sc-vertical-menu-item-bg-hover);
-  }
-.group[data-sidebar-size="sm"] .group\/sm:hover .sidebar-menu-item {
-  width: calc(4.375rem * 3.63);
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-vertical-menu-bg) / var(--tw-bg-opacity, 1));
-}
-.group[data-sidebar-size="sm"][data-sidebar="dark"] .group\/sm:hover .sidebar-menu-item {
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-vertical-menu-bg-dark) / var(--tw-bg-opacity, 1));
-}
-.sidebar-menu-item:where([dir="ltr"], [dir="ltr"] *) {
-  padding-left: 0.75rem;
-  padding-right: 1.25rem;
-}
-.sidebar-menu-item:where([dir="rtl"], [dir="rtl"] *) {
-  padding-right: 0.75rem;
-  padding-left: 1.25rem;
-}
-.group[data-sidebar="dark"] .sidebar-menu-item:hover:where([data-mode="dark"], [data-mode="dark"] *) {
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-zink-600) / var(--tw-bg-opacity, 1));
-  --tw-text-opacity: 1;
-  color: rgb(var(--sc-custom-500) / var(--tw-text-opacity, 1));
-}
+        color: rgb(var(--sc-vertical-menu-item-hover));
+        background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
+    }
 .sidebar-menu-item.active {
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-vertical-menu-item-bg-hover) / var(--tw-bg-opacity, 1));
-  --tw-text-opacity: 1;
-  color: rgb(var(--sc-custom-500) / var(--tw-text-opacity, 1));
-    background-color: var(--sc-vertical-menu-item-bg-hover);
-}
-.group[data-sidebar="dark"] .sidebar-menu-item.active, .sidebar-menu-item.active { 
-        background-color: rgb(var(--sc-zink-600) / var(--tw-bg-opacity, 1));
-        color: rgb(var(--sc-custom-500)); 
+        color: rgb(var(--sc-vertical-menu-item-active));
+        background-color: rgb(var(--sc-vertical-menu-item-bg-active));
+        font-weight: 500;
+    }
+/* An accent rail carries the current page on the dark sidebar, where any
+       fill light enough to read on its own would be louder than the page needs. */
+.sidebar-menu-item.active::before {
+        content: "";
+        position: absolute;
+        inset-block: 0.375rem;
+        inset-inline-start: 0;
+        width: 3px;
+        border-radius: 3px;
+        background-color: rgb(var(--sc-custom-500));
+    }
+/* Parent of the open section. Tinting the label is enough while the children
+       are visible; collapsed rails hide them, so there the parent takes the fill. */
+.sidebar-menu-item.active-within {
+        color: rgb(var(--sc-vertical-menu-item-active));
+        font-weight: 500;
+    }
+/* Collapsible group rows: the toggle floats inside the pill instead of
+       sitting beside it, so hover and active fills cover the whole row. */
+.sidebar-menu-row {
+        position: relative;
+    }
+.sidebar-menu-item--group {
+        padding-inline-end: 2.75rem;
+    }
+.sidebar-menu-toggle {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 1.25rem;
+        display: flex;
+        padding: 0.25rem;
+        color: inherit;
+        opacity: 0.6;
+        transform: translateY(-50%);
+        transition: opacity 0.15s linear;
+    }
+.sidebar-menu-toggle:hover {
+        opacity: 1;
+    }
+.sidebar-menu-toggle svg {
+        transition: transform 0.15s linear;
+    }
+.sidebar-menu-toggle.is-open svg {
+        transform: rotate(180deg);
+    }
+.group[data-sidebar-size="md"] .sidebar-menu-item {
+        display: block;
+        text-align: center;
+    }
+.group[data-sidebar-size="sm"] .sidebar-menu-item {
+        margin-block: 0;
+    }
+/* Both collapsed rails hide the toggle, so the row goes back to the plain
+       padding and lines up with its siblings again. */
+.group[data-sidebar-size="sm"] .sidebar-menu-item--group,
+    .group[data-sidebar-size="md"] .sidebar-menu-item--group {
+        padding-inline-end: 1.25rem;
+    }
+.group[data-sidebar-size="sm"] .sidebar-menu-item.active-within {
+        background-color: rgb(var(--sc-vertical-menu-item-bg-active));
+    }
+/* On the icon-only rail the hovered row grows out over the page to show its
+       label, so it needs a surface and a shadow of its own to read as a flyout. */
+.group[data-sidebar-size="sm"] .group\/sm:hover > .sidebar-menu-item,
+    .group[data-sidebar-size="sm"] .group\/sm:hover > .sidebar-menu-row > .sidebar-menu-item {
+        z-index: 10;
+        width: calc(4.375rem * 3.63);
+        color: rgb(var(--sc-vertical-menu-item-hover));
+        background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
+        box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
     }
 .\!btn {
         display: inline-block !important;
@@ -820,6 +846,21 @@ input[type=range]:focus::-webkit-slider-thumb {
 
         .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:ltr\:md\:ml-vertical-menu:where([dir=ltr], [dir=ltr] *) {
             margin-left: 16.25rem
+        }
+
+        /* RTL and md-sidebar counterparts. The page content and the footer both
+           ask for these; without them an Arabic control panel had no sidebar
+           offset at all and the sidebar sat on top of the content. */
+        .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:rtl\:md\:mr-vertical-menu:where([dir=rtl], [dir=rtl] *) {
+            margin-right: 16.25rem
+        }
+
+        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:ltr\:ml-vertical-menu-md:where([dir=ltr], [dir=ltr] *) {
+            margin-left: 10.3125rem
+        }
+
+        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:rtl\:mr-vertical-menu-md:where([dir=rtl], [dir=rtl] *) {
+            margin-right: 10.3125rem
         }
 
         .group[data-layout=horizontal] .group-data-\[layout\=horizontal\]\:ltr\:md\:pl-0:where([dir=ltr], [dir=ltr] *) {
@@ -1143,6 +1184,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .grid {
   display: grid;
+}
+.contents {
+  display: contents;
 }
 .hidden {
   display: none;
@@ -1515,6 +1559,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .items-center {
   align-items: center;
+}
+.items-stretch {
+  align-items: stretch;
 }
 .justify-end {
   justify-content: flex-end;
@@ -2900,13 +2947,12 @@ input[type=range]:focus::-webkit-slider-thumb {
 .scrollbar-gutter-stable {
     scrollbar-gutter: stable;
   }
-/* font size utility */
-/* light mode hover utilities */
-/* dark mode utilities */
-.vertical-menu-item.active {
-      color: rgb(var(--sc-custom-500)) !important;
-      background-color: var(--sc-vertical-menu-item-bg-hover) !important;
-  }
+/* NOTE: the sidebar row colours live in cp-components.css. There used to be
+     hand-written .text-vertical-menu-item-* / .bg-vertical-menu-item-* rules
+     here that shadowed the generated Tailwind utilities of the same name and
+     passed the bare RGB triplet straight to color/background-color, so every
+     one of them computed to transparent and killed the rule it was meant to
+     support. */
 .\[direction\:rtl\] {
   direction: rtl;
 }
@@ -3210,9 +3256,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .hover\:text-white\/80:hover {
   color: rgb(255 255 255 / 0.8);
-}
-.hover\:underline:hover {
-  text-decoration-line: underline;
 }
 .hover\:no-underline:hover {
   text-decoration-line: none;
@@ -3529,9 +3572,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.group\/menu-link:hover .group-hover\/menu-link\:fill-blue-200 {
-  fill: #bfdbfe;
 }
 .group:hover .group-hover\:text-custom-500 {
   --tw-text-opacity: 1;
@@ -4099,6 +4139,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .lg\:flex-row {
     flex-direction: row;
   }
+  .lg\:items-start {
+    align-items: flex-start;
+  }
   .lg\:items-end {
     align-items: flex-end;
   }
@@ -4190,6 +4233,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .ltr\:pl-9:where([dir="ltr"], [dir="ltr"] *) {
   padding-left: 2.25rem;
 }
+.ltr\:pr-2:where([dir="ltr"], [dir="ltr"] *) {
+  padding-right: 0.5rem;
+}
 .ltr\:pr-3:where([dir="ltr"], [dir="ltr"] *) {
   padding-right: 0.75rem;
 }
@@ -4223,6 +4269,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 @media (min-width: 1024px) {
   .ltr\:lg\:text-left:where([dir="ltr"], [dir="ltr"] *) {
     text-align: left;
+  }
+  .ltr\:lg\:text-right:where([dir="ltr"], [dir="ltr"] *) {
+    text-align: right;
   }
 }
 .rtl\:-left-1:where([dir="rtl"], [dir="rtl"] *) {
@@ -4264,6 +4313,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .rtl\:border-r-4:where([dir="rtl"], [dir="rtl"] *) {
   border-right-width: 4px;
 }
+.rtl\:pl-2:where([dir="rtl"], [dir="rtl"] *) {
+  padding-left: 0.5rem;
+}
 .rtl\:pl-3:where([dir="rtl"], [dir="rtl"] *) {
   padding-left: 0.75rem;
 }
@@ -4304,6 +4356,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
 }
 @media (min-width: 1024px) {
+  .rtl\:lg\:text-left:where([dir="rtl"], [dir="rtl"] *) {
+    text-align: left;
+  }
   .rtl\:lg\:text-right:where([dir="rtl"], [dir="rtl"] *) {
     text-align: right;
   }
@@ -5057,9 +5112,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--sc-zink-700) / var(--tw-bg-opacity, 1));
 }
-.group[data-sidebar="dark"] .group-data-\[sidebar\=dark\]\:dark\:fill-zink-600:where([data-mode="dark"], [data-mode="dark"] *) {
-  fill: rgb(var(--sc-zink-600) / 1);
-}
 .group[data-topbar="dark"] .group-data-\[topbar\=dark\]\:dark\:text-zink-100:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-text-opacity: 1;
   color: rgb(var(--sc-zink-100) / var(--tw-text-opacity, 1));
@@ -5075,9 +5127,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .group[data-topbar="dark"] .group-data-\[topbar\=dark\]\:dark\:hover\:text-zink-50:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-text-opacity: 1;
   color: rgb(var(--sc-zink-50) / var(--tw-text-opacity, 1));
-}
-.group[data-sidebar="dark"] .group\/menu-link:hover .group-data-\[sidebar\=dark\]\:group-hover\/menu-link\:dark\:fill-custom-500\/20:where([data-mode="dark"], [data-mode="dark"] *) {
-  fill: rgb(var(--sc-custom-500) / 0.2);
 }
 .group[data-topbar="dark"] .group\/topbar.is-sticky .group-data-\[topbar\=dark\]\:group-\[\.is-sticky\]\/topbar\:dark\:shadow-md:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);

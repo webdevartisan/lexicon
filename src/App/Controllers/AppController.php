@@ -321,26 +321,89 @@ abstract class AppController extends BaseController implements SessionAwareInter
         // Preserve old input for form repopulation
         $this->session->set('_old_input', $this->request->all());
 
-        // Redirect back to previous page
-        $referer = $this->request->header('Referer') ?? '/';
-
-        // Validate referer is from our domain
-        if ($referer && !str_starts_with($referer, base_url())) {
-            $referer = '/';
-        }
-
-        // Return Response instead of sending and exiting
-        return $this->redirect($referer);
+        return $this->redirect($this->backUrlPath());
     }
 
-    protected function backUrlPath(): string
+    /**
+     * Send the operator back to a list page they were just acting from, keeping
+     * the filters, sort and page number they had.
+     *
+     * Row actions (feature toggles, retries) post from a list that is usually
+     * filtered, sorted and paginated. Redirecting to the bare path throws all of
+     * that away and drops them back on page one of an unfiltered table. The
+     * Referer carries the state, but it is client-supplied, so it is only
+     * honoured when it points at the very list we were going to send them to
+     * anyway -- which makes it useless as a redirect gadget.
+     *
+     * @param  string  $listPath  Unlocalised list path, e.g. `/admin/blogs`
+     */
+    protected function redirectToList(string $listPath): Response
     {
-        $referer = $this->request->header('Referer') ?? '/';
-        if ($referer && !str_starts_with($referer, base_url())) {
-            $referer = '/';
+        $referer = (string) ($this->request->header('Referer') ?? '');
+
+        if ($referer !== '' && str_starts_with($referer, base_url())) {
+            $path = (string) (parse_url($referer, PHP_URL_PATH) ?? '');
+            $quoted = preg_quote($listPath, '#');
+
+            // Same path, with or without a /{locale} prefix in front of it.
+            if (preg_match('#^(/[a-z]{2,5})?'.$quoted.'/?$#', $path) === 1) {
+                $query = (string) (parse_url($referer, PHP_URL_QUERY) ?? '');
+
+                return $this->redirect($path.($query !== '' ? '?'.$query : ''));
+            }
         }
 
-        return $referer;
+        return $this->redirect($listPath);
+    }
+
+    /**
+     * The local path (plus query) the request came from, or `/` when there is
+     * no usable Referer.
+     *
+     * Two deliberate properties, because the Referer is attacker-controlled and
+     * this feeds a redirect:
+     *
+     * 1. The origin is compared by scheme+host+port, not with a prefix match.
+     *    `str_starts_with($referer, base_url())` accepted
+     *    `http://lexicon.test.evil.com/...` for a base URL of `http://lexicon.test`,
+     *    which was an open redirect on every caller.
+     * 2. Only the path and query are returned, never the full URL, so even a
+     *    mistake in the origin check cannot send anyone off-site.
+     */
+    protected function backUrlPath(): string
+    {
+        $referer = (string) ($this->request->header('Referer') ?? '');
+
+        if ($referer === '') {
+            return '/';
+        }
+
+        $refererParts = parse_url($referer);
+        $baseParts = parse_url(base_url());
+
+        if ($refererParts === false || $baseParts === false) {
+            return '/';
+        }
+
+        $origin = static fn (array $p): string => strtolower((string) ($p['scheme'] ?? ''))
+            .'://'.strtolower((string) ($p['host'] ?? ''))
+            .':'.(string) ($p['port'] ?? '');
+
+        if ($origin($refererParts) !== $origin($baseParts)) {
+            return '/';
+        }
+
+        $path = (string) ($refererParts['path'] ?? '/');
+
+        // A protocol-relative or scheme-bearing path would escape the origin the
+        // check above just pinned down.
+        if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
+            return '/';
+        }
+
+        $query = (string) ($refererParts['query'] ?? '');
+
+        return $path.($query !== '' ? '?'.$query : '');
     }
 
     // ============== Error Response Helpers ==============

@@ -22,6 +22,9 @@ use Framework\Interfaces\TemplateViewerInterface;
  */
 class NavGlobalsMiddleware
 {
+    /** Cache-busting stamp for the rendered sidebar markup. */
+    private const SIDEBAR_MARKUP_VERSION = 2;
+
     /**
      * @var NavigationService Navigation service instance
      */
@@ -193,8 +196,11 @@ class NavGlobalsMiddleware
         // The locale suffix matters because the sidebar labels are translated and
         // the entry lives for a year: without it, changing the interface language
         // would leave the navigation in the old one until the cache expired.
+        // Bump SIDEBAR_MARKUP_VERSION whenever the partial's markup changes:
+        // entries live for a year, so without it everyone already holding one
+        // keeps the old sidebar until it expires.
         $chromeLocale = LocaleState::get()->chromeLocale;
-        $sidebarCacheKey = $area.':sidebar:nav-structure:u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale;
+        $sidebarCacheKey = $area.':sidebar:nav-structure:v'.self::SIDEBAR_MARKUP_VERSION.':u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale;
 
         // add navigation globals to all templates
         $this->viewer->addGlobals([

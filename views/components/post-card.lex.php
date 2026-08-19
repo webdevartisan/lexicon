@@ -1,7 +1,7 @@
 <?php
 $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
-$returnToken = $returnToken ?: '';
+$returnToken = $returnToken ?? '';
 
 $status = $post['status'] ?? 'draft';
 $statusStyles = [
