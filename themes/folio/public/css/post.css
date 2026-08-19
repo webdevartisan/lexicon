@@ -227,7 +227,6 @@
     font-size: var(--type-h2);
     margin: 0 0 var(--step-4);
   }
-  .comment-item { padding: var(--step-3) 0; border-bottom: 1px solid var(--rule); }
   .comment-meta { font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--step-2); }
   .comment-meta strong { font-family: var(--sans); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ink); font-size: var(--type-small); }
 
@@ -274,6 +273,20 @@
   .related-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease-out); }
   .related-item:hover .related-image img { transform: scale(1.04); }
   .related-title { font-family: var(--serif); font-style: italic; font-size: var(--type-h3); line-height: 1.2; margin: 0; }
+.comments-closed {
+  font-family: var(--mono);
+  font-size: var(--type-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: var(--step-4);
+}
+
+/* Accent the shared comment thread borrows for votes and @mentions. */
+.comment-thread-root {
+  --comment-accent: var(--ink);
+}
+
 /* ---------- deep-linked comment ---------- */
 
 .comment-item.comment-target {

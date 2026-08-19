@@ -368,10 +368,7 @@
   text-transform: uppercase;
 }
 
-.comment-item {
-  padding: var(--step-2) 0;
-  border-top: 1px solid var(--rule);
-}
+
 
 .comment-meta {
   font-family: var(--mono);
@@ -529,6 +526,11 @@
   .related-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Accent the shared comment thread borrows for votes and @mentions. */
+.comment-thread-root {
+  --comment-accent: var(--cobalt);
 }
 
 /* ---------- deep-linked comment ---------- */

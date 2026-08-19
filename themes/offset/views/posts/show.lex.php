@@ -105,100 +105,12 @@ $title = e($post['title'] ?? 'Untitled');
 <section class="post-comments">
   <div class="container">
     <div class="inner">
-      <?php if (!empty($comments)) { ?>
-        <h2 class="comments-title">Letters &mdash; <?= count($comments) ?> Comment<?= count($comments) === 1 ? '' : 's' ?></h2>
-        <?php foreach ($comments as $comment) { ?>
-          <div class="comment-item reveal" id="comment-<?= (int) $comment['id'] ?>">
-            <div class="comment-meta">
-              <strong><?= profile_link($comment['user_name'] ?? 'Guest', $comment['author_profile_slug'] ?? null) ?></strong>
-              <?php if (!empty($comment['created_at'])) { ?>
-                &mdash; <?= e(relative_time($comment['created_at'] ?? null)) ?>
-              <?php } ?>
-            </div>
-            <p><?= nl2br(e($comment['content'] ?? '')) ?></p>
-
-            <?php if (!empty($comments_enabled)) { ?>
-              <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $comment['id'] ?>">Reply</button>
-
-              <form class="reply-form" id="reply-form-<?= (int) $comment['id'] ?>" action="/comments/create" method="post" hidden>
-                <?= csrf_field() ?>
-                <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
-                <input type="hidden" name="parent_comment_id" value="<?= (int) $comment['id'] ?>">
-                <textarea name="content" rows="2" maxlength="2000"
-                  placeholder="Reply to <?= e($comment['user_name'] ?? 'Guest') ?>..." required></textarea>
-                <?php if (!auth()->check()) { ?>
-                  <p style="margin: .35rem 0 0; font-size: .8em; opacity: .7;">You'll be asked to log in &mdash; your reply is kept.</p>
-                <?php } ?>
-                <button type="submit" class="btn-reply">Reply</button>
-                <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $comment['id'] ?>">Cancel</button>
-              </form>
-            <?php } ?>
-
-            <?php if (!empty($comment['replies'])) { ?>
-              <?php $replyTotal = count($comment['replies']); ?>
-              <p style="margin: .5rem 0 0;">
-                <button type="button" class="reply-toggle" data-collapse-toggle="<?= (int) $comment['id'] ?>"
-                  data-label-show="View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?>"
-                  data-label-hide="Hide replies">View <?= $replyTotal ?> <?= $replyTotal === 1 ? 'reply' : 'replies' ?></button>
-              </p>
-              <div class="comment-replies" id="replies-<?= (int) $comment['id'] ?>" hidden>
-                <?php foreach ($comment['replies'] as $reply) { ?>
-                  <div class="comment-item" id="comment-<?= (int) $reply['id'] ?>">
-                    <div class="comment-meta">
-                      <strong><?= profile_link($reply['user_name'] ?? 'Guest', $reply['author_profile_slug'] ?? null) ?></strong>
-                      <?php if (!empty($reply['created_at'])) { ?>
-                        &mdash; <?= e(relative_time($reply['created_at'] ?? null)) ?>
-                      <?php } ?>
-                    </div>
-                    <p><?= nl2br(e($reply['content'] ?? '')) ?></p>
-
-                    <?php if (!empty($comments_enabled)) { ?>
-                      <button type="button" class="reply-toggle" data-reply-toggle="<?= (int) $reply['id'] ?>">Reply</button>
-
-                      <form class="reply-form" id="reply-form-<?= (int) $reply['id'] ?>" action="/comments/create" method="post" hidden>
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="post_id" value="<?= (int) ($post['id'] ?? 0) ?>">
-                        <input type="hidden" name="parent_comment_id" value="<?= (int) $reply['id'] ?>">
-                        <textarea name="content" rows="2" maxlength="2000"
-                          placeholder="Reply to <?= e($reply['user_name'] ?? 'Guest') ?>..." required></textarea>
-                        <?php if (!auth()->check()) { ?>
-                          <p style="margin: .35rem 0 0; font-size: .8em; opacity: .7;">You'll be asked to log in &mdash; your reply is kept.</p>
-                        <?php } ?>
-                        <button type="submit" class="btn-reply">Reply</button>
-                        <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= (int) $reply['id'] ?>">Cancel</button>
-                      </form>
-                    <?php } ?>
-                  </div>
-                <?php } ?>
-              </div>
-            <?php } ?>
-          </div>
-        <?php } ?>
-
-        <script defer src="/assets/js/comment-replies.js"></script>
-      <?php } ?>
-
-      <?php if (!empty($comments_enabled)) { ?>
-      <div class="comment-form">
-        <h4>Send a letter</h4>
-        <form action="/comments/create" method="post">
-          <input type="hidden" name="post_id" value="<?= ($post['id'] ?? 0) ?>">
-          <?= csrf_field() ?>
-          <div class="form-field">
-            <label for="comment_content">Your comment</label>
-            <textarea id="comment_content" name="content" rows="5" maxlength="2000" placeholder="Write something worth printing…" required></textarea>
-          </div>
-          <button type="submit" class="btn-submit">
-            Post comment
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </button>
-        </form>
-      </div>
-      <?php } else { ?>
-        <p class="comments-closed">
-          Comments are closed for this post.
-        </p>
-      <?php } ?>
+      <?php $comment_labels = [
+        'title_prefix' => 'Letters &mdash; ',
+        'form_label' => 'Write something worth printing&hellip;',
+        'form_button' => 'Send',
+      ]; ?>
+      {% include "partials/public/_comments.lex.php" %}
     </div>
   </div>
 </section>
@@ -238,5 +150,4 @@ $title = e($post['title'] ?? 'Untitled');
 
 {% block scripts %}
 	<script defer src="<?= $asset('js/post.js') ?>"></script>
-	<script defer src="/assets/js/comment-anchor.js"></script>
 {% endblock %}

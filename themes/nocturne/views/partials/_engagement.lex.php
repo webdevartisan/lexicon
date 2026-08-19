@@ -1,6 +1,7 @@
 <?php
 // Engagement bar: like, bookmark, share. Expects $post, $engagement, $share_url.
-$engagement = $engagement ?? ['like_count' => 0, 'bookmark_count' => 0, 'liked' => false, 'bookmarked' => false, 'logged_in' => false];
+$engagement = $engagement ?? ['like_count' => 0, 'bookmark_count' => 0, 'my_vote' => 0, 'bookmarked' => false, 'logged_in' => false];
+$myVote = (int) ($engagement['my_vote'] ?? 0);
 $shareUrl = $share_url ?? '';
 $shareTitle = $post['title'] ?? '';
 $encodedUrl = rawurlencode($shareUrl);
@@ -8,11 +9,19 @@ $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
 <div class="post-engagement" data-auth="<?= $engagement['logged_in'] ? '1' : '0' ?>" data-login="<?= $loginUrl ?>">
-  <button type="button" class="engage-btn<?= $engagement['liked'] ? ' is-active' : '' ?>"
-          data-engage="like" data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/like"
-          aria-pressed="<?= $engagement['liked'] ? 'true' : 'false' ?>" aria-label="Like this post">
-    <svg viewBox="0 0 24 24" fill="<?= $engagement['liked'] ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+  <button type="button" class="engage-btn<?= $myVote === 1 ? ' is-active' : '' ?>"
+          data-engage="up" data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/vote"
+          aria-pressed="<?= $myVote === 1 ? 'true' : 'false' ?>" aria-label="Agree with this post">
+    <svg viewBox="0 0 24 24" fill="<?= $myVote === 1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 22V10l5-8a2.5 2.5 0 0 1 2.4 3.2L13.5 9H19a2.5 2.5 0 0 1 2.4 3.2l-2 7A2.5 2.5 0 0 1 17 22z"/><path d="M7 10H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
     <span data-count><?= (int) $engagement['like_count'] ?></span>
+  </button>
+
+  <?php // No count on the down vote: it registers the signal without handing
+        // readers a pile-on to watch. Same call as the comment thread. ?>
+  <button type="button" class="engage-btn<?= $myVote === -1 ? ' is-active' : '' ?>"
+          data-engage="down" data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/vote"
+          aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>" aria-label="Disagree with this post">
+    <svg viewBox="0 0 24 24" fill="<?= $myVote === -1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2v12l-5 8a2.5 2.5 0 0 1-2.4-3.2l.9-3.8H5a2.5 2.5 0 0 1-2.4-3.2l2-7A2.5 2.5 0 0 1 7 2z"/><path d="M17 14h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-3"/></svg>
   </button>
 
   <button type="button" class="engage-btn<?= $engagement['bookmarked'] ? ' is-active' : '' ?>"
@@ -44,6 +53,16 @@ $loginUrl = e(lurl('/login'));
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
       <span>Share on LinkedIn</span>
     </a>
+  </div>
+
+  <div class="engage-menu" data-engage-menu>
+    <button type="button" class="engage-btn" data-engage-menu-toggle
+            aria-haspopup="true" aria-expanded="false" aria-label="More actions on this post">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    </button>
+    <div class="engage-menu-list" data-engage-menu-list hidden>
+      <button type="button" data-report-post data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/report">Report</button>
+    </div>
   </div>
 
   <form id="engage-token" hidden aria-hidden="true"><?= csrf_field() ?></form>

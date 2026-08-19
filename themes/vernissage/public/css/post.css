@@ -348,10 +348,7 @@
   line-height: 1.1;
 }
 
-.comment-item {
-  padding-block: var(--step-2);
-  border-top: 1px solid var(--rule);
-}
+
 
 .comment-meta {
   margin-bottom: 0.5rem;
@@ -509,6 +506,11 @@
   .related-frame .frame-img {
     aspect-ratio: 16 / 9;
   }
+}
+
+/* Accent the shared comment thread borrows for votes and @mentions. */
+.comment-thread-root {
+  --comment-accent: var(--viridian);
 }
 
 /* ---------- deep-linked comment ---------- */
