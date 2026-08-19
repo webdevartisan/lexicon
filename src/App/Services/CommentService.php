@@ -43,7 +43,7 @@ class CommentService
      * @param  string  $content  Raw comment text
      * @param  array<string, mixed>|null  $user  Authenticated user row, null for guests
      * @param  string|null  $ip  Request IP for the audit trail
-     * @return array{ok: bool, message: string}
+     * @return array{ok: bool, message: string, id: int|null} Id is null when nothing was stored
      */
     public function create(int $postId, ?int $parentId, string $content, ?array $user, ?string $ip = null): array
     {
@@ -51,47 +51,51 @@ class CommentService
         $userId = $user ? (int) $user['id'] : null;
 
         if ($postId <= 0 || $content === '') {
-            return ['ok' => false, 'message' => 'Comment content is required.'];
+            return $this->failure('Comment content is required.');
         }
 
         if ($error = $this->contentLengthError($content)) {
-            return ['ok' => false, 'message' => $error];
+            return $this->failure($error);
         }
 
         $post = $this->postModel->find((string) $postId);
 
         if (!$post) {
-            return ['ok' => false, 'message' => 'Post not found.'];
+            return $this->failure('Post not found.');
         }
 
         if ($post['status'] !== 'published' || $post['visibility'] !== 'public') {
-            return ['ok' => false, 'message' => 'Comments are not available for this post.'];
+            return $this->failure('Comments are not available for this post.');
         }
 
         $parentId = (int) $parentId;
         $repliedToUserId = null;
+        $replyToId = null;
 
         if ($parentId > 0) {
             // Replies require an account; guests are captured upstream and
             // resumed here after login, so this only rejects direct misuse
             if ($userId === null) {
-                return ['ok' => false, 'message' => 'Please log in to reply to comments.'];
+                return $this->failure('Please log in to reply to comments.');
             }
 
             $parent = $this->commentModel->findApprovedParent($parentId, $postId);
 
             if (!$parent) {
-                return ['ok' => false, 'message' => 'The comment you are replying to is unavailable.'];
+                return $this->failure('The comment you are replying to is unavailable.');
             }
 
-            // Notify the person actually replied to, captured before the
-            // reparenting below moves $parentId up the thread. Null when they
-            // commented as a guest and so have no account to notify.
+            // Null when they commented as a guest and so have no account to notify.
             $repliedToUserId = !empty($parent['user_id']) ? (int) $parent['user_id'] : null;
 
-            // Keep threads one level deep: replying to a reply attaches to its top-level parent
-            if (!empty($parent['parent_comment_id'])) {
-                $parentId = (int) $parent['parent_comment_id'];
+            // Nesting stops at the cap: past it the reply becomes a sibling of
+            // what it answered instead of indenting further. The target is kept
+            // whole in reply_to_comment_id so the @mention can still name it.
+            $answeredId = $parentId;
+            $parentId = $this->commentModel->parentForReply($parentId);
+
+            if ($parentId !== $answeredId) {
+                $replyToId = $answeredId;
             }
         }
 
@@ -104,15 +108,21 @@ class CommentService
             'post_id' => $postId,
             'user_id' => $userId,
             'parent_comment_id' => $isReply ? $parentId : null,
+            'reply_to_comment_id' => $replyToId,
             'content' => $content,
             'status' => $autoPublish ? 'approved' : 'pending',
         ];
 
-        if (!$this->commentModel->insert($comment)) {
-            return ['ok' => false, 'message' => 'Failed to create comment. Please try again.'];
+        // create(), not insert(): it is the call that drops this post's cached
+        // thread. Inserting straight past it leaves the new comment invisible
+        // until the fragment expires an hour later.
+        $commentId = $this->commentModel->create($comment);
+
+        if ($commentId === false) {
+            return $this->failure('Failed to create comment. Please try again.');
         }
 
-        $commentId = (int) $this->commentModel->getInsertID();
+        $commentId = (int) $commentId;
 
         audit()->log(
             $userId ?? 0,
@@ -123,6 +133,7 @@ class CommentService
                 'post_id' => $postId,
                 'is_guest' => $userId === null,
                 'parent_comment_id' => $isReply ? $parentId : null,
+                'reply_to_comment_id' => $replyToId,
             ],
             $ip
         );
@@ -130,10 +141,28 @@ class CommentService
         $this->notifyComment($post, $content, $user, !$autoPublish, $commentId, $repliedToUserId);
 
         if ($autoPublish) {
-            return ['ok' => true, 'message' => $isReply ? 'Reply posted.' : 'Comment posted.'];
+            return [
+                'ok' => true,
+                'message' => $isReply ? 'Reply posted.' : 'Comment posted.',
+                'id' => $commentId,
+            ];
         }
 
-        return ['ok' => true, 'message' => 'Thanks! Your comment was submitted and is awaiting moderation.'];
+        // No id on the way back: the comment is not in the thread yet, so
+        // anchoring to it would drop the reader on a fragment that renders nothing.
+        return [
+            'ok' => true,
+            'message' => 'Thanks! Your comment was submitted and is awaiting moderation.',
+            'id' => null,
+        ];
+    }
+
+    /**
+     * @return array{ok: bool, message: string, id: null}
+     */
+    private function failure(string $message): array
+    {
+        return ['ok' => false, 'message' => $message, 'id' => null];
     }
 
     /**
@@ -203,8 +232,10 @@ class CommentService
         );
 
         $path = safe_return_to((string) ($pending['return'] ?? '')) ?? '/';
-        if ($result['ok'] && $parentId > 0) {
-            $path .= '#comment-'.$parentId;
+
+        // Land on the reply that was just posted, not on the one it answered.
+        if ($result['ok'] && $result['id'] !== null) {
+            $path .= '#comment-'.$result['id'];
         }
 
         return ['ok' => $result['ok'], 'message' => $result['message'], 'path' => $path];

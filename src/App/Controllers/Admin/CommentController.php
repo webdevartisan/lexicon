@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\CommentModel;
+use App\Services\CommentRemovalService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -21,10 +22,11 @@ class CommentController extends AppController
     // Enforced for every action by AppController::beforeAction()
     protected ?string $areaAbility = 'moderateComments';
 
-    private const STATUSES = ['all', 'pending', 'approved', 'spam'];
+    private const STATUSES = ['all', 'pending', 'approved', 'spam', 'reported'];
 
     public function __construct(
-        private CommentModel $model
+        private CommentModel $model,
+        private CommentRemovalService $removal
     ) {}
 
     /**
@@ -76,7 +78,9 @@ class CommentController extends AppController
 
         $comment = $this->getComment((int) $id);
 
-        $this->model->deleteById((int) $id);
+        // Shared removal path: a comment holding replies becomes a tombstone
+        // rather than cascading those replies out of the thread.
+        $this->removal->remove((int) $id, CommentRemovalService::BY_MODERATOR);
 
         audit()->log(
             (int) auth()->user()['id'],
@@ -118,7 +122,7 @@ class CommentController extends AppController
         }
 
         $affected = $action === 'delete'
-            ? $this->model->bulkDelete($ids)
+            ? $this->removeMany($ids)
             : $this->model->bulkUpdateStatus($ids, $statusMap[$action]);
 
         audit()->log(
@@ -133,6 +137,24 @@ class CommentController extends AppController
         $this->flash('success', "{$affected} comment(s) updated.");
 
         return $this->redirect($this->commentsUrl());
+    }
+
+    /**
+     * Remove a selection one at a time so each keeps its replies.
+     *
+     * A single bulk DELETE would cascade through parent_comment_id and take
+     * replies nobody selected with it.
+     *
+     * @param  int[]  $ids  Comment ids to remove
+     * @return int How many were removed
+     */
+    private function removeMany(array $ids): int
+    {
+        foreach ($ids as $id) {
+            $this->removal->remove($id, CommentRemovalService::BY_MODERATOR);
+        }
+
+        return count($ids);
     }
 
     /**

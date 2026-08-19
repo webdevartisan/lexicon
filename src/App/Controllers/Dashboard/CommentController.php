@@ -8,7 +8,9 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
+use App\Models\CommentReportModel;
 use App\Resources\BlogResource;
+use App\Services\CommentRemovalService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -16,7 +18,9 @@ class CommentController extends AppController
 {
     public function __construct(
         private CommentModel $model,
-        private BlogModel $blogModel
+        private BlogModel $blogModel,
+        private CommentRemovalService $removal,
+        private CommentReportModel $reports
     ) {}
 
     public function index(string $blogId): Response
@@ -26,7 +30,7 @@ class CommentController extends AppController
         Gate::authorize('update', $blog, $user);
 
         $status = trim((string) ($this->request->get['status'] ?? 'pending'));
-        if (!in_array($status, ['all', 'pending', 'approved', 'spam'], true)) {
+        if (!in_array($status, ['all', 'pending', 'approved', 'spam', 'reported'], true)) {
             $status = 'pending';
         }
 
@@ -34,6 +38,7 @@ class CommentController extends AppController
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
 
         $filterStatus = $status === 'all' ? '' : $status;
+
         $result = $this->model->findByBlogIdWithFilters((int) $blogId, $filterStatus, $q, $page, 20);
 
         $counts = [
@@ -42,6 +47,7 @@ class CommentController extends AppController
             'spam' => $this->model->countByBlogIdAndStatus((int) $blogId, 'spam'),
         ];
         $counts['all'] = $counts['pending'] + $counts['approved'] + $counts['spam'];
+        $counts['reported'] = $this->model->countReportedByBlogId((int) $blogId);
 
         return $this->view([
             'blog' => $blog->toArray(),
@@ -76,18 +82,20 @@ class CommentController extends AppController
         [$comment, $blog] = $this->resolveCommentBlog((int) $id);
         Gate::authorize('update', $blog, $user);
 
-        $this->model->deleteById((int) $id);
+        // Same removal path the post page uses: a comment with replies under it
+        // becomes a tombstone instead of taking those replies down with it.
+        $purged = $this->removal->remove((int) $id, CommentRemovalService::BY_MODERATOR);
 
         audit()->log(
             (int) $user['id'],
             'comment.deleted',
             'comment',
             (int) $id,
-            ['post_id' => $comment['post_id'] ?? null],
+            ['post_id' => $comment['post_id'] ?? null, 'purged' => $purged],
             $this->request->ip()
         );
 
-        $this->flash('success', 'Comment deleted.');
+        $this->flash('success', $purged ? 'Comment deleted.' : 'Comment removed; its replies were kept.');
 
         return $this->redirect($this->commentsUrl($blog->id()));
     }
@@ -130,7 +138,7 @@ class CommentController extends AppController
         ];
 
         $affected = $action === 'delete'
-            ? $this->model->bulkDelete($ids)
+            ? $this->removeMany($ids)
             : $this->model->bulkUpdateStatus($ids, $statusMap[$action]);
 
         audit()->log(
@@ -147,6 +155,24 @@ class CommentController extends AppController
         return $this->redirect($this->commentsUrl($blogId));
     }
 
+    /**
+     * Remove a selection one at a time so each keeps its replies.
+     *
+     * A single bulk DELETE would cascade through parent_comment_id and take
+     * replies nobody selected with it.
+     *
+     * @param  int[]  $ids  Comment ids to remove
+     * @return int How many were removed
+     */
+    private function removeMany(array $ids): int
+    {
+        foreach ($ids as $id) {
+            $this->removal->remove($id, CommentRemovalService::BY_MODERATOR);
+        }
+
+        return count($ids);
+    }
+
     private function transition(int $id, string $status, string $auditAction, string $message): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
@@ -156,6 +182,12 @@ class CommentController extends AppController
         Gate::authorize('update', $blog, $user);
 
         $this->model->updateStatus($id, $status);
+
+        // Ruling a comment fine settles the reports against it. Leaving them
+        // would keep the queue arguing with a decision it already made.
+        if ($status === 'approved') {
+            $this->reports->clearFor($id);
+        }
 
         audit()->log(
             (int) $user['id'],
@@ -177,7 +209,7 @@ class CommentController extends AppController
         $status = (string) ($this->request->post['return_status'] ?? '');
         $url = "/dashboard/blog/{$blogId}/comments";
 
-        if (in_array($status, ['all', 'pending', 'approved', 'spam'], true)) {
+        if (in_array($status, ['all', 'pending', 'approved', 'spam', 'reported'], true)) {
             $url .= '?status='.$status;
         }
 

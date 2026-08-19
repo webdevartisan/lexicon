@@ -11,6 +11,7 @@ $statusFilters = [
     ['key' => 'pending',  'label' => 'Pending',  'count' => $counts['pending']],
     ['key' => 'approved', 'label' => 'Approved', 'count' => $counts['approved']],
     ['key' => 'spam',     'label' => 'Spam',     'count' => $counts['spam']],
+    ['key' => 'reported', 'label' => 'Reported', 'count' => $counts['reported'] ?? 0],
 ];
 
 // Build query string with overrides so tabs, search, and paging combine cleanly
@@ -149,9 +150,23 @@ $statusBadge = [
                                     </p>
                                 <?php } ?>
 
-                                <p class="text-sm text-slate-700 dark:text-zink-100 mb-2 break-words whitespace-pre-line max-h-32 overflow-y-auto">
-                                    <?= e((string) $c['content']) ?>
-                                </p>
+                                <?php if ((int) ($c['reports_count'] ?? 0) > 0) { ?>
+                                    <p class="text-[11px] text-rose-600 dark:text-rose-400 mb-1 font-medium">
+                                        Reported by <?= (int) $c['reports_count'] ?> reader<?= (int) $c['reports_count'] === 1 ? '' : 's' ?>
+                                    </p>
+                                <?php } ?>
+
+                                <?php if (!empty($c['deleted_at'])) { ?>
+                                    <p class="text-sm italic text-slate-400 dark:text-zink-300 mb-2">
+                                        <?= ($c['deleted_by'] ?? 'author') === 'moderator'
+                                            ? 'Removed by a moderator. The text is gone; the row is kept so its replies still read in order.'
+                                            : 'Deleted by its author. The text is gone; the row is kept so its replies still read in order.' ?>
+                                    </p>
+                                <?php } else { ?>
+                                    <p class="text-sm text-slate-700 dark:text-zink-100 mb-2 break-words whitespace-pre-line max-h-32 overflow-y-auto">
+                                        <?= e((string) $c['content']) ?>
+                                    </p>
+                                <?php } ?>
 
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-zink-300">
                                     <span class="inline-flex items-center gap-1">

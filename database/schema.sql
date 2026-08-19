@@ -423,6 +423,7 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_status (status),
     INDEX idx_workflow_state (workflow_state),
     INDEX idx_visibility (visibility),
+    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from post_reports',
     INDEX idx_blog (blog_id),
     INDEX idx_author (author_id),
     INDEX idx_category (category_id),
@@ -500,9 +501,17 @@ CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     user_id INT DEFAULT NULL COMMENT 'NULL allows for anonymous comments if enabled',
-    parent_comment_id INT DEFAULT NULL COMMENT 'Threaded replies; NULL = top-level',
+    parent_comment_id INT DEFAULT NULL COMMENT 'True parent; NULL = top-level. Nesting stops at CommentModel::MAX_DEPTH',
+    reply_to_comment_id INT DEFAULT NULL COMMENT 'Answer target when the depth cap made it differ from the parent',
     content TEXT NOT NULL,
+    upvotes INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_votes',
+    downvotes INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_votes',
+    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_reports',
     status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
+    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Tombstone marker; row survives so its replies keep their thread',
+    deleted_by ENUM('author','moderator') DEFAULT NULL COMMENT 'Who removed it; drives the tombstone wording',
+    pinned_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set by the blog team; one pinned comment per post, sorts first',
+    pinned_by INT DEFAULT NULL COMMENT 'Who pinned it; drives the "Pinned by" byline',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -514,9 +523,55 @@ CREATE TABLE IF NOT EXISTS comments (
     INDEX idx_comment_user_created (user_id, created_at),
     INDEX idx_comment_status (status),
     INDEX idx_comment_post_status (post_id, status),
-    INDEX idx_comment_parent (parent_comment_id)
+    INDEX idx_comment_parent (parent_comment_id),
+    CONSTRAINT fk_comment_pinned_by FOREIGN KEY (pinned_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_comment_deleted (deleted_at),
+    INDEX idx_comment_pinned (post_id, pinned_at),
+    INDEX idx_comment_reply_to (reply_to_comment_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='User comments on published posts';
+
+-- ----------------------------------------------------------------------------
+-- Comment Votes Table
+-- ----------------------------------------------------------------------------
+-- One row per user per voted comment. Flipping direction updates the row
+-- rather than adding a second one, and the running totals are denormalised
+-- onto comments.upvotes/downvotes so a thread renders without an aggregate.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS comment_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    value TINYINT NOT NULL COMMENT '1 = up, -1 = down',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_comment_vote (comment_id, user_id),
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_comment_vote_comment (comment_id),
+    INDEX idx_comment_vote_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per voted comment';
+
+-- ----------------------------------------------------------------------------
+-- Comment Reports Table
+-- ----------------------------------------------------------------------------
+-- Readers flag a comment for the blog team. One row per reporter keeps the
+-- count honest, and the running total is denormalised onto comments so the
+-- moderation queue can sort by it without an aggregate.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS comment_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_comment_report (comment_id, user_id),
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_comment_report_comment (comment_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per reported comment; reporting twice is a no-op';
 
 -- ----------------------------------------------------------------------------
 -- Blog Subscribers Table
@@ -679,10 +734,11 @@ COMMENT='Per-locale overlays of post content; base posts row is the default lang
 -- We store one row per user per liked post so likes can be toggled and
 -- counted cheaply; the unique key makes concurrent toggles race-safe.
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS post_likes (
+CREATE TABLE IF NOT EXISTS post_votes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     user_id INT NOT NULL,
+    value TINYINT NOT NULL DEFAULT 1 COMMENT '1 = up, -1 = down',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_like_post_user (post_id, user_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
@@ -690,7 +746,27 @@ CREATE TABLE IF NOT EXISTS post_likes (
     INDEX idx_like_post (post_id),
     INDEX idx_like_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='One row per user per liked post';
+COMMENT='One row per user per voted post; only the up count is published';
+
+-- ----------------------------------------------------------------------------
+-- Post Reports Table
+-- ----------------------------------------------------------------------------
+-- Mirrors comment_reports. Separate tables rather than one polymorphic table,
+-- because a real foreign key is what guarantees reports disappear with the
+-- thing they were about.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS post_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_post_report (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_post_report_post (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per user per reported post; reporting twice is a no-op';
 
 -- ----------------------------------------------------------------------------
 -- Post Bookmarks Table

@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
+use App\Models\CommentModel;
+use App\Models\CommentVoteModel;
 use App\Models\PostBookmarkModel;
-use App\Models\PostLikeModel;
+use App\Models\PostVoteModel;
 use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
 use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
@@ -29,10 +33,13 @@ class BlogController extends AppController
         private CategoryModel $categoryModel,
         private BlogSettingsModel $settings,
         private TagModel $tagModel,
-        private PostLikeModel $postLikeModel,
+        private PostVoteModel $postVoteModel,
         private PostBookmarkModel $postBookmarkModel,
         private PostTranslationModel $translations,
         private UserProfileModel $profiles,
+        private CommentModel $commentModel,
+        private CommentVoteModel $commentVotes,
+        private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
         private HeadI18nBuilder $headI18n
     ) {}
@@ -397,10 +404,25 @@ class BlogController extends AppController
 
         $commentsEnabled = $blogCommentsEnabled && $postCommentsEnabled;
 
+        // Reader-chosen ordering, whitelisted by the model. It becomes part of
+        // the thread cache key, so both orders can be warm at once.
+        $commentSort = (string) ($this->request->get['comments'] ?? CommentModel::SORT_TOP);
+        if (!in_array($commentSort, CommentModel::ALLOWED_SORTS, true)) {
+            $commentSort = CommentModel::SORT_TOP;
+        }
+
+        // Built here rather than in the view: the query string reaches a
+        // template only through the superglobals the framework keeps out of them.
+        $commentSortUrls = [];
+        foreach (CommentModel::ALLOWED_SORTS as $option) {
+            $query = array_merge($this->request->get, ['comments' => $option]);
+            $commentSortUrls[$option] = '?'.http_build_query($query).'#comments';
+        }
+
         // Load comments only if enabled
         $comments = [];
         if ($commentsEnabled && !empty($post['id'])) {
-            $comments = $this->postModel->commentsThreaded((int) $post['id']);
+            $comments = $this->commentModel->forPostThreaded((int) $post['id'], $commentSort);
         }
 
         // Prev/next/related
@@ -480,10 +502,36 @@ class BlogController extends AppController
         $viewerId = auth()->check() ? (int) auth()->user()['id'] : null;
         $engagementPostId = (int) $post['id'];
 
+        // Comment votes and removal rights are the two things the thread cannot
+        // read from its own cached rows, because both depend on who is looking.
+        // The cached thread stays viewer-agnostic and these ride alongside it.
+        $viewer = auth()->user();
+        $blogResource = $viewerId !== null ? $this->model->getBlog((int) $ctx['blog']['id']) : null;
+        $moderatesComments = $blogResource !== null && Gate::allows('update', $blogResource, $viewer);
+
+        $commentVotes = $viewerId !== null && $commentsEnabled
+            ? $this->commentVotes->votesForPost($viewerId, $engagementPostId)
+            : [];
+
+        // Handed to the view as a callable so the "author or moderator" rule
+        // lives in the removal service, next to the removal itself.
+        $canRemoveComment = fn (array $comment): bool => $this->commentRemoval->canRemove(
+            $comment,
+            $viewerId,
+            $moderatesComments
+        );
+
+        // The composer shows who you are about to comment as.
+        $viewerAvatar = $viewerId !== null
+            ? ($this->profiles->getProfileAvatar($viewerId)['avatar_url'] ?? null)
+            : null;
+
+        // Only the up count is published, matching the comment thread: the
+        // down vote registers without handing readers a pile-on to watch.
         $engagement = [
-            'like_count' => $this->postLikeModel->countByPost($engagementPostId),
+            'like_count' => $this->postVoteModel->countByPost($engagementPostId),
             'bookmark_count' => $this->postBookmarkModel->countByPost($engagementPostId),
-            'liked' => $viewerId !== null && $this->postLikeModel->userLikes($viewerId, $engagementPostId),
+            'my_vote' => $viewerId !== null ? $this->postVoteModel->userVote($viewerId, $engagementPostId) : 0,
             'bookmarked' => $viewerId !== null && $this->postBookmarkModel->userBookmarks($viewerId, $engagementPostId),
             'logged_in' => $viewerId !== null,
         ];
@@ -500,6 +548,13 @@ class BlogController extends AppController
             'meta' => $meta,
             'comments' => $comments,
             'comments_enabled' => $commentsEnabled,
+            'comment_votes' => $commentVotes,
+            'can_remove_comment' => $canRemoveComment,
+            'can_moderate_comments' => $moderatesComments,
+            'comment_sort' => $commentSort,
+            'comment_sort_urls' => $commentSortUrls,
+            'viewer_name' => $viewer['display_name_cached'] ?? ($viewer['username'] ?? null),
+            'viewer_avatar' => $viewerAvatar,
         ]));
     }
 
