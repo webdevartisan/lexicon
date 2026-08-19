@@ -82,6 +82,42 @@ class NotificationController extends AppController
     }
 
     /**
+     * Delete a single notification, then return to the list.
+     *
+     * The model scopes the delete to the caller, so a forged id belonging to
+     * someone else simply removes nothing.
+     *
+     * POST /dashboard/notifications/{id}/delete
+     */
+    public function destroy(string $id): Response
+    {
+        $user = auth()->user();
+
+        if ($this->notifications->deleteForUser((int) $id, (int) $user['id'])) {
+            $this->flash('success', 'Notification removed.');
+        }
+
+        return $this->redirect(lurl('/dashboard/notifications'));
+    }
+
+    /**
+     * Delete every notification for the authenticated user.
+     *
+     * POST /dashboard/notifications/clear-all
+     */
+    public function clearAll(): Response
+    {
+        $user = auth()->user();
+        $deleted = $this->notifications->deleteAllForUser((int) $user['id']);
+
+        $this->flash('success', $deleted === 1
+            ? 'Notification cleared.'
+            : $deleted.' notifications cleared.');
+
+        return $this->redirect(lurl('/dashboard/notifications'));
+    }
+
+    /**
      * Return the unread notification count as JSON for the bell badge.
      *
      * GET /dashboard/notifications/unread-count

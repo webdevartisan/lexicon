@@ -261,6 +261,8 @@ $router->group([
     $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
     $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
     $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
+    $r->add('/notifications/clear-all', ['controller' => 'NotificationController', 'action' => 'clearAll',    'method' => 'POST']);
+    $r->add('/notifications/{id:\d+}/delete', ['controller' => 'NotificationController', 'action' => 'destroy',     'method' => 'POST']);
     // API Routes - Blog deletion stats for confirmation modal
     $r->add('/api/blog/{id:\d+}/deletion-stats', [
         'controller' => 'Api\BlogApiController',
