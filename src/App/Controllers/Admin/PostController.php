@@ -48,7 +48,7 @@ class PostController extends AppController
         if ($on && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') !== 'public')) {
             $this->flash('error', 'Only published, public posts can be featured on the front page.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         $this->model->setFeaturedOnHome((int) $post['id'], $on);
@@ -67,7 +67,7 @@ class PostController extends AppController
             ? 'Post is now featured on the front page.'
             : 'Post removed from the front page.');
 
-        return $this->redirect('/admin/posts');
+        return $this->redirectToList('/admin/posts');
     }
 
     /**
@@ -163,7 +163,7 @@ class PostController extends AppController
         if ($this->model->insert($data)) {
             $this->flash('success', 'Post created.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         // On error, return form view again
@@ -211,7 +211,7 @@ class PostController extends AppController
         if ($this->model->update($id, $data)) {
             $this->flash('success', 'Post updated.');
 
-            return $this->redirect('/admin/posts');
+            return $this->redirectToList('/admin/posts');
         }
 
         return $this->view('post.edit', [
@@ -254,7 +254,7 @@ class PostController extends AppController
 
         $this->flash('success', 'Post deleted.');
 
-        return $this->redirect('/admin/posts');
+        return $this->redirectToList('/admin/posts');
     }
 
     /**

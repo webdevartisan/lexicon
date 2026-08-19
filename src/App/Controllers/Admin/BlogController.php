@@ -41,7 +41,7 @@ class BlogController extends AppController
         if ($on && ($blog['status'] ?? '') !== 'published') {
             $this->flash('error', 'Only published blogs can be featured on the explore page.');
 
-            return $this->redirect('/admin/blogs');
+            return $this->redirectToList('/admin/blogs');
         }
 
         $this->blogModel->setExploreFeatured((int) $blog['id'], $on);
@@ -60,7 +60,7 @@ class BlogController extends AppController
             ? 'Blog is now featured on the explore page.'
             : 'Blog removed from the explore page featured section.');
 
-        return $this->redirect('/admin/blogs');
+        return $this->redirectToList('/admin/blogs');
     }
 
     public function index(): Response
@@ -169,7 +169,7 @@ class BlogController extends AppController
         if ($this->blogModel->update($id, $data)) {
             $this->flash('success', 'Blog updated.');
 
-            return $this->redirect('/admin/blogs');
+            return $this->redirectToList('/admin/blogs');
         }
 
         return $this->view('blog.edit', [
@@ -232,7 +232,7 @@ class BlogController extends AppController
 
         $this->flash('success', 'Blog deleted.');
 
-        return $this->redirect('/admin/blogs');
+        return $this->redirectToList('/admin/blogs');
     }
 
     /**
