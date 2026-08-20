@@ -15,9 +15,11 @@ use App\Models\CommentModel;
  *
  * - a comment nothing replies to is deleted outright, because "delete" should
  *   mean gone when nothing depends on it;
- * - a comment with replies becomes a tombstone, because deleting it for real
- *   cascades down parent_comment_id and takes conversations other people wrote
- *   with it;
+ * - a comment with replies becomes a tombstone, for two reasons: deleting it
+ *   for real cascades down parent_comment_id and takes conversations other
+ *   people wrote with it, and a reply held at the depth cap is a sibling
+ *   rather than a child, so it survives that cascade still naming the deleted
+ *   row in reply_to_comment_id and reads as an answer to nobody;
  * - a tombstone whose last reply later goes away is collected, so threads do
  *   not accumulate "[removed]" markers with nothing under them.
  */
@@ -64,7 +66,11 @@ class CommentRemovalService
      */
     public function remove(int $commentId, string $by): bool
     {
-        $parentId = $this->comments->parentIdOf($commentId);
+        $comment = $this->comments->findById($commentId);
+
+        if ($comment === null) {
+            return false;
+        }
 
         if ($this->comments->hasReplies($commentId)) {
             $this->comments->softDelete($commentId, $by);
@@ -73,13 +79,31 @@ class CommentRemovalService
         }
 
         $this->comments->deleteById($commentId);
-
-        // The parent may have been kept alive only to hold this reply.
-        if ($parentId !== null) {
-            $this->collectEmptyTombstone($parentId);
-        }
+        $this->collectAbove($comment);
 
         return true;
+    }
+
+    /**
+     * Collect any tombstone the comment just removed was holding up.
+     *
+     * Two comments can be waiting on one reply: the parent it hung under, and
+     * the one it actually answered where the depth cap made those differ. Both
+     * are checked, and the walk continues upward, so a chain of tombstones
+     * kept alive for a single thread goes when that thread does.
+     *
+     * @param  array<string, mixed>  $comment  The row as it was before deletion
+     */
+    private function collectAbove(array $comment): void
+    {
+        $above = array_unique(array_filter([
+            (int) ($comment['parent_comment_id'] ?? 0),
+            (int) ($comment['reply_to_comment_id'] ?? 0),
+        ]));
+
+        foreach ($above as $id) {
+            $this->collectEmptyTombstone($id);
+        }
     }
 
     /**
@@ -98,5 +122,6 @@ class CommentRemovalService
         }
 
         $this->comments->deleteById($commentId);
+        $this->collectAbove($parent);
     }
 }

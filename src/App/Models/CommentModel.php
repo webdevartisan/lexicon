@@ -64,6 +64,7 @@ class CommentModel extends AppModel
                         pu.username
                     ) AS parent_name,
                     COALESCE(c.reply_to_comment_id, c.parent_comment_id) AS answered_id,
+                    parent.deleted_at AS answered_deleted_at,
                     COALESCE(
                         piu.display_name_cached,
                         NULLIF(CONCAT_WS(' ', piu.first_name, piu.last_name), ' '),
@@ -74,8 +75,10 @@ class CommentModel extends AppModel
                 LEFT JOIN user_profiles up ON up.user_id = c.user_id AND up.is_public = 1
                 LEFT JOIN {$this->getTable()} parent
                     ON parent.id = COALESCE(c.reply_to_comment_id, c.parent_comment_id)
-                    AND parent.deleted_at IS NULL
-                LEFT JOIN users pu ON pu.id = parent.user_id
+                -- The deleted check sits on the user join, not the comment one:
+                -- a removed parent must not hand its author's name to the
+                -- mention, but the reply still needs to know it is there.
+                LEFT JOIN users pu ON pu.id = parent.user_id AND parent.deleted_at IS NULL
                 LEFT JOIN users piu ON piu.id = c.pinned_by
                 WHERE c.post_id = ? AND c.status = 'approved'
                 ORDER BY c.created_at ASC";
@@ -285,18 +288,25 @@ class CommentModel extends AppModel
     }
 
     /**
-     * Whether anything replies to this comment.
+     * Whether anything answers this comment.
      *
-     * Counts replies in every moderation state on purpose: a hard delete
-     * cascades down parent_comment_id, so a pending reply would disappear with
-     * its parent just as surely as an approved one. Removal falls back to a
-     * tombstone whenever this is true.
+     * Both columns count. parent_comment_id is the structural one, but a reply
+     * held at the depth cap is a sibling of what it answered and names its
+     * target in reply_to_comment_id alone; removing that target outright would
+     * leave the reply pointing at nothing, which is exactly the orphan the
+     * tombstone exists to prevent.
+     *
+     * Replies in every moderation state count too: a hard delete cascades down
+     * parent_comment_id, so a pending reply would go with its parent just as
+     * surely as an approved one.
      */
     public function hasReplies(int $id): bool
     {
-        $sql = "SELECT 1 FROM {$this->getTable()} WHERE parent_comment_id = ? LIMIT 1";
+        $sql = "SELECT 1 FROM {$this->getTable()}
+                WHERE parent_comment_id = ? OR reply_to_comment_id = ?
+                LIMIT 1";
 
-        return (bool) $this->database->query($sql, [$id])->fetchColumn();
+        return (bool) $this->database->query($sql, [$id, $id])->fetchColumn();
     }
 
     /**

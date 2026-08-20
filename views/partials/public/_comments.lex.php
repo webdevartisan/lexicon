@@ -106,7 +106,15 @@ $renderComment = static function (array $comment, int $depth) use (
     // comment sits directly under what it answered, so naming it is noise.
     // Past the indent cap it is the only thing left pointing at the parent.
     $answeredId = (int) ($comment['answered_id'] ?? 0);
-    $showMention = $depth >= 2 && $answeredId > 0 && !empty($comment['parent_name']);
+    $answeredGone = !empty($comment['answered_deleted_at']);
+    $showMention = $depth >= 2 && $answeredId > 0 && (!empty($comment['parent_name']) || $answeredGone);
+
+    // A removed target keeps the pointer and loses the name. Dropping the whole
+    // mention would leave the reply reading as an opening remark, which is the
+    // one thing it is not.
+    $mentionLabel = $answeredGone
+        ? 'in reply to [removed]'
+        : '@'.(string) ($comment['parent_name'] ?? '');
 
     // A removed comment keeps its slot and its timestamp so the replies under
     // it still read in order, but it stops being a person saying something:
@@ -127,67 +135,73 @@ $renderComment = static function (array $comment, int $depth) use (
         <?= $removed ? '<span class="comment-avatar is-ghost"></span>' : $avatar($authorName, $comment['author_avatar'] ?? null) ?>
 
         <div class="comment-main">
-          <p class="comment-meta">
-            <?php if ($removed) { ?>
-              <strong class="comment-ghost">[removed]</strong>
-            <?php } else { ?>
-              <strong><?= profile_link($authorName, $comment['author_profile_slug'] ?? null) ?></strong>
-            <?php } ?>
-            <?php if (!empty($comment['created_at'])) { ?>
-              <time><?= e(relative_time($comment['created_at'])) ?></time>
-            <?php } ?>
-          </p>
-
-          <?php if ($removed) { ?>
-            <p class="comment-body comment-removed"><?= e($removedText) ?></p>
-          <?php } else { ?>
-            <p class="comment-body">
-              <?php if ($showMention) { ?><a class="comment-mention" href="#comment-<?= $answeredId ?>">@<?= e($comment['parent_name']) ?></a> <?php } ?>
-              <?= nl2br(e($comment['content'] ?? '')) ?>
+          <?php
+            // What this person said, kept in one box so the deep-link flash can
+            // land on it without washing over the replies hanging underneath.
+          ?>
+          <div class="comment-block">
+            <p class="comment-meta">
+              <?php if ($removed) { ?>
+                <strong class="comment-ghost">[removed]</strong>
+              <?php } else { ?>
+                <strong><?= profile_link($authorName, $comment['author_profile_slug'] ?? null) ?></strong>
+              <?php } ?>
+              <?php if (!empty($comment['created_at'])) { ?>
+                <time><?= e(relative_time($comment['created_at'])) ?></time>
+              <?php } ?>
             </p>
 
-            <div class="comment-actions">
-              <div class="comment-votes" data-comment-id="<?= $id ?>">
-                <button type="button" class="comment-vote<?= $myVote === 1 ? ' is-active' : '' ?>"
-                        data-vote="up" aria-pressed="<?= $myVote === 1 ? 'true' : 'false' ?>"
-                        aria-label="Agree with this comment">
-                  <svg viewBox="0 0 24 24" fill="<?= $myVote === 1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 22V10l5-8a2.5 2.5 0 0 1 2.4 3.2L13.5 9H19a2.5 2.5 0 0 1 2.4 3.2l-2 7A2.5 2.5 0 0 1 17 22z"/><path d="M7 10H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
-                  <span data-vote-count="up"><?= $up > 0 ? number_format($up) : '' ?></span>
-                </button>
-                <?php
-                  // No count on the down vote, the way YouTube settled it in
-                  // 2021: a public dislike tally invited pile-ons and told
-                  // readers nothing.
-              ?>
-                <button type="button" class="comment-vote<?= $myVote === -1 ? ' is-active' : '' ?>"
-                        data-vote="down" aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>"
-                        aria-label="Disagree with this comment">
-                  <svg viewBox="0 0 24 24" fill="<?= $myVote === -1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2v12l-5 8a2.5 2.5 0 0 1-2.4-3.2l.9-3.8H5a2.5 2.5 0 0 1-2.4-3.2l2-7A2.5 2.5 0 0 1 7 2z"/><path d="M17 14h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-3"/></svg>
-                </button>
+            <?php if ($removed) { ?>
+              <p class="comment-body comment-removed"><?= e($removedText) ?></p>
+            <?php } else { ?>
+              <p class="comment-body">
+                <?php if ($showMention) { ?><a class="comment-mention<?= $answeredGone ? ' is-gone' : '' ?>" href="#comment-<?= $answeredId ?>"><?= e($mentionLabel) ?></a> <?php } ?>
+                <?= nl2br(e($comment['content'] ?? '')) ?>
+              </p>
+
+              <div class="comment-actions">
+                <div class="comment-votes" data-comment-id="<?= $id ?>">
+                  <button type="button" class="comment-vote<?= $myVote === 1 ? ' is-active' : '' ?>"
+                          data-vote="up" aria-pressed="<?= $myVote === 1 ? 'true' : 'false' ?>"
+                          aria-label="Agree with this comment">
+                    <svg viewBox="0 0 24 24" fill="<?= $myVote === 1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 22V10l5-8a2.5 2.5 0 0 1 2.4 3.2L13.5 9H19a2.5 2.5 0 0 1 2.4 3.2l-2 7A2.5 2.5 0 0 1 17 22z"/><path d="M7 10H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
+                    <span data-vote-count="up"><?= $up > 0 ? number_format($up) : '' ?></span>
+                  </button>
+                  <?php
+                    // No count on the down vote, the way YouTube settled it in
+                    // 2021: a public dislike tally invited pile-ons and told
+                    // readers nothing.
+                ?>
+                  <button type="button" class="comment-vote<?= $myVote === -1 ? ' is-active' : '' ?>"
+                          data-vote="down" aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>"
+                          aria-label="Disagree with this comment">
+                    <svg viewBox="0 0 24 24" fill="<?= $myVote === -1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2v12l-5 8a2.5 2.5 0 0 1-2.4-3.2l.9-3.8H5a2.5 2.5 0 0 1-2.4-3.2l2-7A2.5 2.5 0 0 1 7 2z"/><path d="M17 14h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-3"/></svg>
+                  </button>
+                </div>
+
+                <?php if ($commentsOpen) { ?>
+                  <button type="button" class="reply-toggle" data-reply-toggle="<?= $id ?>">Reply</button>
+                <?php } ?>
               </div>
 
               <?php if ($commentsOpen) { ?>
-                <button type="button" class="reply-toggle" data-reply-toggle="<?= $id ?>">Reply</button>
+                <form class="reply-form" id="reply-form-<?= $id ?>" action="/comments/create" method="post" hidden>
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="post_id" value="<?= $postId ?>">
+                  <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
+                  <textarea name="content" rows="1" maxlength="2000"
+                            placeholder="Reply to <?= e($authorName) ?>…" required></textarea>
+                  <?php if ($viewerIsGuest) { ?>
+                    <p class="comment-form-note">You'll be asked to log in — your reply is kept.</p>
+                  <?php } ?>
+                  <div class="comment-form-actions">
+                    <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>">Cancel</button>
+                    <button type="submit" class="btn-reply">Reply</button>
+                  </div>
+                </form>
               <?php } ?>
-            </div>
-
-            <?php if ($commentsOpen) { ?>
-              <form class="reply-form" id="reply-form-<?= $id ?>" action="/comments/create" method="post" hidden>
-                <?= csrf_field() ?>
-                <input type="hidden" name="post_id" value="<?= $postId ?>">
-                <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
-                <textarea name="content" rows="1" maxlength="2000"
-                          placeholder="Reply to <?= e($authorName) ?>…" required></textarea>
-                <?php if ($viewerIsGuest) { ?>
-                  <p class="comment-form-note">You'll be asked to log in — your reply is kept.</p>
-                <?php } ?>
-                <div class="comment-form-actions">
-                  <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>">Cancel</button>
-                  <button type="submit" class="btn-reply">Reply</button>
-                </div>
-              </form>
             <?php } ?>
-          <?php } ?>
+          </div>
 
           <?php if ($replies !== []) { ?>
             <?php
@@ -313,6 +327,26 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-removed { font-style: italic; opacity: .6; }
   .comment-ghost { opacity: .6; }
   .comment-item.is-removed .comment-meta { opacity: .6; }
+  .comment-mention.is-gone { font-weight: 400; font-style: italic; opacity: .55; }
+
+  /* ---- deep-linked comment ---------------------------------------------
+     The flash lands on the comment's own block, not on its <li>: a top-level
+     comment carries its entire reply tree inside that element, and washing a
+     screenful of other people's answers in colour to point at one of them
+     helps nobody. What looks like padding is a spread shadow, so nothing in
+     the thread moves when the flash fires or clears. */
+  .comment-block { border-radius: 10px; }
+
+  .comment-target > .comment-row > .comment-main > .comment-block {
+    --flash: var(--comment-highlight, color-mix(in srgb, var(--comment-accent, currentColor) 14%, transparent));
+    animation: comment-target-flash 3s ease-out forwards;
+  }
+
+  @keyframes comment-target-flash {
+    from { background: transparent; box-shadow: 0 0 0 .6rem transparent; }
+    12%, 62% { background: var(--flash); box-shadow: 0 0 0 .6rem var(--flash); }
+    to { background: transparent; box-shadow: 0 0 0 .6rem transparent; }
+  }
 
   .comment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .9rem; margin-top: .3rem; }
   .comment-votes { display: inline-flex; align-items: center; gap: .25rem; margin-left: -.4rem; }
@@ -447,6 +481,14 @@ $renderComment = static function (array $comment, int $depth) use (
 
   @media (prefers-reduced-motion: reduce) {
     .comment-vote, .replies-toggle svg, .comment-menu-button { transition: none; }
+
+    /* No fade, but the reader still has to be shown which comment they came
+       for, so the tint is simply left on. */
+    .comment-target > .comment-row > .comment-main > .comment-block {
+      animation: none;
+      background: var(--flash);
+      box-shadow: 0 0 0 .6rem var(--flash);
+    }
   }
 </style>
 

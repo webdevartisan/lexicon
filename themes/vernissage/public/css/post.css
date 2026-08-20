@@ -348,8 +348,6 @@
   line-height: 1.1;
 }
 
-
-
 .comment-meta {
   margin-bottom: 0.5rem;
   font-family: var(--mono);
@@ -511,29 +509,4 @@
 /* Accent the shared comment thread borrows for votes and @mentions. */
 .comment-thread-root {
   --comment-accent: var(--viridian);
-}
-
-/* ---------- deep-linked comment ---------- */
-
-.comment-item.comment-target {
-  animation: comment-target-flash 3s ease-out forwards;
-}
-
-@keyframes comment-target-flash {
-  0%, 55% {
-    background: var(--sage);
-    box-shadow: inset 3px 0 0 var(--viridian);
-  }
-  100% {
-    background: transparent;
-    box-shadow: inset 3px 0 0 transparent;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comment-item.comment-target {
-    animation: none;
-    background: var(--sage);
-    box-shadow: inset 3px 0 0 var(--viridian);
-  }
 }

@@ -1,7 +1,7 @@
 /**
  * Comment thread behaviour: reply boxes, collapsible replies, batched reply
- * reveal, voting, the per-comment overflow menu, reporting, and landing on a
- * deep-linked comment at any depth.
+ * reveal, voting, the per-comment overflow menu, the sort menu, reporting, and
+ * landing on a deep-linked comment at any depth.
  *
  * Mostly progressive. Reply, remove and pin are real form posts that work with
  * scripting off; voting and reporting need fetch, and degrade to doing nothing
@@ -145,8 +145,24 @@
 
     var open = list.hasAttribute('hidden');
     closeMenus(list);
+    closeSort();
     list.toggleAttribute('hidden', !open);
     button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  // The sort control is a <details>, so it opens and closes itself but has no
+  // idea a click landed somewhere else on the page. Left alone it sits there
+  // until something inside it is chosen, which reads as being trapped.
+  var sortMenu = root.querySelector('.comment-sort');
+
+  function closeSort() {
+    if (sortMenu) sortMenu.removeAttribute('open');
+  }
+
+  if (sortMenu) {
+    sortMenu.addEventListener('toggle', function () {
+      if (sortMenu.hasAttribute('open')) closeMenus(null);
+    });
   }
 
   function copyCommentLink(button) {
@@ -311,10 +327,20 @@
 
   document.addEventListener('click', function (ev) {
     if (!ev.target.closest('[data-comment-menu]')) closeMenus(null);
+    if (!ev.target.closest('.comment-sort')) closeSort();
   });
 
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape') closeMenus(null);
+    if (ev.key !== 'Escape') return;
+
+    closeMenus(null);
+
+    // Escape hands focus back to what opened the list rather than leaving it
+    // on a link that just disappeared.
+    if (sortMenu && sortMenu.hasAttribute('open')) {
+      closeSort();
+      sortMenu.querySelector('summary').focus();
+    }
   });
 
   root.addEventListener('submit', function (ev) {
