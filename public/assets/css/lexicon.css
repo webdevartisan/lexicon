@@ -3319,3 +3319,5 @@ label {
     background: #fdf3f2;
 }
 .lx-danger-zone h2 { color: #b3261e; font-size: 0.95rem; margin: 0 0 0.35rem; }
+.lx-always { margin-block: 0.75rem; }
+.lx-always .lx-check-title { margin: 0; }
