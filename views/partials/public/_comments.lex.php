@@ -337,6 +337,15 @@ $renderComment = static function (array $comment, int $depth) use (
      the thread moves when the flash fires or clears. */
   .comment-block { border-radius: 10px; }
 
+  /* Where the browser puts a comment when it jumps to #comment-N by itself, on
+     load or on any later fragment navigation. Without it the comment lands
+     flush against the top of the viewport, behind whatever masthead the theme
+     is wearing. 45vh is roughly where the script centres a comment of ordinary
+     height, so the two agree and the correction is imperceptible; nothing here
+     depends on the script running, or on which events the browser decides to
+     fire for a given navigation. */
+  .comment-item { scroll-margin-top: 45vh; }
+
   .comment-target > .comment-row > .comment-main > .comment-block {
     --flash: var(--comment-highlight, color-mix(in srgb, var(--comment-accent, currentColor) 14%, transparent));
     animation: comment-target-flash 3s ease-out forwards;
