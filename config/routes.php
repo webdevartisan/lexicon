@@ -173,6 +173,36 @@ $router->group([
     $r->add('/{blogId:\d+}/resubscribe', ['controller' => 'ReaderController', 'action' => 'resubscribe', 'method' => 'POST']);
 });
 
+// Personal account settings, on the front for every account whatever its role.
+// Cut on ownership: anything belonging to the person lives here; anything
+// belonging to a blog stays in the dashboard. No namespace key, so these
+// controllers sit at App\Controllers and resolve by auto-discovery like
+// ReaderController. Deletion keeps its own confirm/destroy pair, reached from
+// the foot of Preferences rather than from the rail.
+$router->group([
+    'prefix' => '/account',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
+
+    $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
+    $r->add('/profile/avatar/remove', ['controller' => 'AccountProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
+
+    $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/preferences/update', ['controller' => 'AccountPreferencesController', 'action' => 'update', 'method' => 'POST']);
+
+    $r->add('/notifications', ['controller' => 'AccountNotificationsController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);
+
+    $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
+
+    $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'confirm', 'method' => 'GET']);
+    $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'destroy', 'method' => 'POST']);
+});
+
 // Grouped routes for user dashboard - all require authentication middleware
 $router->group([
     'prefix' => '/dashboard',
