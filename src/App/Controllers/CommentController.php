@@ -9,6 +9,7 @@ use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\CommentReportModel;
 use App\Models\CommentVoteModel;
+use App\Services\CommentRateLimiter;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
 use Framework\Core\Response;
@@ -30,11 +31,20 @@ class CommentController extends AppController
         private CommentReportModel $reports,
         private CommentRemovalService $removal,
         private BlogModel $blogModel,
+        private CommentRateLimiter $throttle,
     ) {}
 
     public function create(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
+
+        // Posting is open to guests, and every accepted comment queues mail to
+        // the blog team, so an unthrottled POST amplifies into outbound email.
+        if ($this->throttle->hitSubmission($this->clientIp())) {
+            $this->flash('error', $this->waitMessage($this->throttle->submissionAvailableIn($this->clientIp())));
+
+            return $this->redirectBack();
+        }
 
         $postId = (int) ($this->request->post['post_id'] ?? 0);
         $parentId = (int) ($this->request->post['parent_comment_id'] ?? 0);
@@ -135,6 +145,10 @@ class CommentController extends AppController
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
+        if ($blocked = $this->interactionThrottleResponse()) {
+            return $blocked;
+        }
+
         $commentId = (int) $id;
         $direction = (string) ($this->request->post['direction'] ?? '');
 
@@ -169,6 +183,10 @@ class CommentController extends AppController
     public function report(string $id): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
+
+        if ($blocked = $this->interactionThrottleResponse()) {
+            return $blocked;
+        }
 
         $commentId = (int) $id;
         $reason = (string) ($this->request->post['reason'] ?? 'other');
@@ -233,6 +251,46 @@ class CommentController extends AppController
         $this->flash('success', $pinning ? 'Comment pinned to the top.' : 'Comment unpinned.');
 
         return $this->redirect($this->backUrlPath().'#comment-'.$commentId);
+    }
+
+    /**
+     * Record a vote/report attempt and build the 429 when the caller is over.
+     *
+     * @return Response|null The refusal to return, or null to carry on
+     */
+    private function interactionThrottleResponse(): ?Response
+    {
+        $ip = $this->clientIp();
+
+        if (!$this->throttle->hitInteraction($ip)) {
+            return null;
+        }
+
+        $wait = $this->throttle->interactionAvailableIn($ip);
+        $this->response->addHeader('Retry-After', (string) $wait);
+
+        return $this->jsonError($this->waitMessage($wait), 429);
+    }
+
+    private function clientIp(): string
+    {
+        return $this->request->ip() ?? 'unknown';
+    }
+
+    /**
+     * Phrase the refusal in minutes so it reads like a pause, not a failure.
+     *
+     * @param  int  $seconds  Seconds left on the throttle
+     */
+    private function waitMessage(int $seconds): string
+    {
+        if ($seconds < 60) {
+            return 'You are going a little fast. Try again in a few seconds.';
+        }
+
+        $minutes = (int) ceil($seconds / 60);
+
+        return "You are going a little fast. Try again in {$minutes} minute".($minutes === 1 ? '' : 's').'.';
     }
 
     /**

@@ -337,6 +337,15 @@ $renderComment = static function (array $comment, int $depth) use (
      the thread moves when the flash fires or clears. */
   .comment-block { border-radius: 10px; }
 
+  /* Where the browser puts a comment when it jumps to #comment-N by itself, on
+     load or on any later fragment navigation. Without it the comment lands
+     flush against the top of the viewport, behind whatever masthead the theme
+     is wearing. 45vh is roughly where the script centres a comment of ordinary
+     height, so the two agree and the correction is imperceptible; nothing here
+     depends on the script running, or on which events the browser decides to
+     fire for a given navigation. */
+  .comment-item { scroll-margin-top: 45vh; }
+
   .comment-target > .comment-row > .comment-main > .comment-block {
     --flash: var(--comment-highlight, color-mix(in srgb, var(--comment-accent, currentColor) 14%, transparent));
     animation: comment-target-flash 3s ease-out forwards;
@@ -357,6 +366,14 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-vote span { min-width: .5em; font-variant-numeric: tabular-nums; }
   .comment-vote[data-vote="down"] svg { transform: translateY(1px); }
   .comment-item .reply-toggle { font-size: .78em; }
+
+  /* A request is out and the reader has to wait on the answer, so the control
+     dims and stops taking clicks rather than sitting there looking idle, which
+     is what invites the second click the guard then throws away.
+
+     Votes belong to the other kind: they paint on the press, so dimming one
+     would make a finished action look pending. */
+  .comment-menu-list button.is-busy { opacity: .45; pointer-events: none; }
 
   /* ---- the connector tree ----------------------------------------------
      Drawn per reply rather than as one rule down the whole list: the rail is

@@ -4,8 +4,9 @@
  * landing on a deep-linked comment at any depth.
  *
  * Mostly progressive. Reply, remove and pin are real form posts that work with
- * scripting off; voting and reporting need fetch, and degrade to doing nothing
- * rather than to a broken control.
+ * scripting off; voting and reporting need fetch, and degrade to leaving the
+ * page as it stands rather than to a broken control. A session that has since
+ * expired reopens the sign-in flow instead of failing.
  */
 (function () {
   'use strict';
@@ -23,6 +24,23 @@
     return tokenInput ? tokenInput.value : '';
   }
 
+  /** An outcome a caller can branch on, rather than a bare parse error. */
+  function failure(kind, message) {
+    var error = new Error(message || kind);
+    error.kind = kind;
+
+    return error;
+  }
+
+  /**
+   * POST to a comment endpoint, resolving with the payload the server sent.
+   *
+   * Rejects with kind 'auth' when the session is no longer good, and kind
+   * 'failed' for anything else, carrying a message worth showing. The split is
+   * what lets a caller tell apart the two things that arrive as HTML rather
+   * than JSON: a login page, which the reader can do something about, and an
+   * error page, which they cannot.
+   */
   function post(url, fields) {
     var body = new FormData();
     body.append('_token', token());
@@ -38,7 +56,36 @@
       body: body,
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
-    }).then(function (r) { return r.json(); });
+    }).then(function (response) {
+      // 419 is a stale token, and a redirect means fetch followed its way to
+      // the login page. Signing in again fixes both, so neither is worth an
+      // error message.
+      if (response.status === 401 || response.status === 403 || response.status === 419 || response.redirected) {
+        throw failure('auth');
+      }
+
+      return response.text().then(function (raw) {
+        var json = null;
+
+        try {
+          json = JSON.parse(raw);
+        } catch (e) {
+          json = null;
+        }
+
+        // An error page carries nothing a reader can act on, so it becomes one
+        // plain sentence rather than a parse exception nobody sees.
+        if (json === null) {
+          throw failure('failed', 'Something went wrong. Please try again.');
+        }
+
+        if (!response.ok || json.success === false) {
+          throw failure('failed', json.error || 'That did not work. Please try again.');
+        }
+
+        return json.data;
+      });
+    });
   }
 
   // -------------------------------------------------------------- composer
@@ -188,6 +235,8 @@
   }
 
   function reportComment(button) {
+    if (button.classList.contains('is-busy')) return;
+
     var reason = window.prompt(
       'Why are you reporting this comment?\n' + REPORT_REASONS.join(', '),
       'spam'
@@ -201,14 +250,22 @@
       : reason.trim().toLowerCase();
 
     closeMenus(null);
+    button.classList.add('is-busy');
 
     post('/comments/' + button.getAttribute('data-comment-id') + '/report', { reason: reason })
-      .then(function (json) {
-        window.alert(json.error || (json.data && json.data.message) || 'Thanks for the report.');
+      .then(function (data) {
+        window.alert((data && data.message) || 'Thanks for the report.');
       })
-      .catch(function () {
-        window.alert('That report could not be sent. Please try again.');
-      });
+      .catch(function (error) {
+        if (error.kind === 'auth') {
+          authenticateThen(button, 'report');
+
+          return;
+        }
+
+        window.alert(error.message);
+      })
+      .finally(function () { button.classList.remove('is-busy'); });
   }
 
   // ------------------------------------------------------------------ votes
@@ -237,7 +294,45 @@
     });
   }
 
+  /**
+   * The group's current tally, read from the DOM the first time and carried on
+   * the element after that. Reading it back off the rendered text every time
+   * would mean parsing a number we already know, through whatever separators
+   * toLocaleString chose for the reader's locale.
+   */
+  function voteState(group) {
+    if (group.dataset.up === undefined) {
+      var active = group.querySelector('.comment-vote.is-active');
+      var count = group.querySelector('[data-vote-count]');
+      var text = (count && count.textContent) || '';
+
+      group.dataset.up = String(parseInt(text.replace(/\D/g, ''), 10) || 0);
+      group.dataset.mine = active ? (active.getAttribute('data-vote') === 'up' ? '1' : '-1') : '0';
+    }
+
+    return { up: Number(group.dataset.up), mine: Number(group.dataset.mine) };
+  }
+
+  /**
+   * What the server will say, worked out locally so the button can move now.
+   * Mirrors CommentVoteModel::apply: pressing your own vote clears it, the
+   * opposite one flips it, and only up votes carry a tally.
+   */
+  function predictVote(state, direction) {
+    var wanted = direction === 'up' ? 1 : -1;
+    var mine = state.mine === wanted ? 0 : wanted;
+    var up = state.up;
+
+    if (state.mine === 1 && mine !== 1) up -= 1;
+    if (state.mine !== 1 && mine === 1) up += 1;
+
+    return { up: Math.max(0, up), mine: mine };
+  }
+
   function paintVote(group, data) {
+    group.dataset.up = String(data.up);
+    group.dataset.mine = String(data.mine);
+
     group.querySelectorAll('.comment-vote').forEach(function (button) {
       var direction = button.getAttribute('data-vote');
       var active = (direction === 'up' && data.mine === 1) || (direction === 'down' && data.mine === -1);
@@ -255,16 +350,72 @@
 
   function castVote(button) {
     var group = button.closest('.comment-votes');
+    var direction = button.getAttribute('data-vote');
+    var confirmed = voteState(group);
 
-    if (group.dataset.busy === '1') return;
-    group.dataset.busy = '1';
+    // Move now, ask after. The outcome of pressing your own thumb is known
+    // here, so the round trip has nothing to add but delay.
+    paintVote(group, predictVote(confirmed, direction));
 
-    post('/comments/' + group.getAttribute('data-comment-id') + '/vote', {
-      direction: button.getAttribute('data-vote')
-    })
-      .then(function (json) { paintVote(group, json.data || json); })
-      .catch(function () { /* leave the counts as rendered; the next click retries */ })
-      .finally(function () { group.dataset.busy = '0'; });
+    // One request at a time, but a press that lands mid-flight is remembered
+    // rather than dropped: the screen has already moved, so ignoring it would
+    // leave a vote showing that the reader has since changed. Latest wins.
+    if (group.classList.contains('is-busy')) {
+      group.dataset.pending = direction;
+
+      return;
+    }
+
+    sendVote(group, button, direction, confirmed);
+  }
+
+  /**
+   * Send a vote the group is already painted for.
+   *
+   * A press queued mid-flight enters here rather than through castVote, since
+   * queueing it painted the group and a second paint would double the change.
+   *
+   * @param {Element} group     The .comment-votes wrapper
+   * @param {Element} button    The pressed control, for the auth re-fire
+   * @param {string}  direction "up" or "down"
+   * @param {Object}  confirmed The tally the server held before this request
+   */
+  function sendVote(group, button, direction, confirmed) {
+    // Ownership of the in-flight guard passes to a queued request, so this
+    // one's cleanup leaves the guard alone once it has handed off.
+    var chained = false;
+
+    group.classList.add('is-busy');
+
+    post('/comments/' + group.getAttribute('data-comment-id') + '/vote', { direction: direction })
+      .then(function (data) {
+        var pending = group.dataset.pending;
+
+        // A press arrived while this was out, so the reader has already moved
+        // past this answer. Painting it would flick the button back to a state
+        // they abandoned, so the newer press goes out against it instead.
+        if (pending) {
+          delete group.dataset.pending;
+          chained = true;
+          sendVote(group, button, pending, data);
+
+          return;
+        }
+
+        paintVote(group, data);
+      })
+      .catch(function (error) {
+        // Put back what the server still holds. A rejection carries no counts,
+        // and leaving the optimistic paint up would show a vote that was never
+        // recorded.
+        delete group.dataset.pending;
+        paintVote(group, confirmed);
+
+        if (error.kind === 'auth') authenticateThen(button, 'vote');
+      })
+      .finally(function () {
+        if (!chained) group.classList.remove('is-busy');
+      });
   }
 
   // --------------------------------------------------------------- listeners

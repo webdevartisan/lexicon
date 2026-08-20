@@ -672,6 +672,18 @@ $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
     );
 });
 
+/**
+ * Comment rate limiter throttles reader comment submission, votes and reports.
+ *
+ * We register as factory, matching the other rate limiters above.
+ */
+$container->set(App\Services\CommentRateLimiter::class, function ($c) {
+    return new App\Services\CommentRateLimiter(
+        $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\CacheService::class)
+    );
+});
+
 // ============================================================================
 // RESOURCES & DTOs
 // ============================================================================
