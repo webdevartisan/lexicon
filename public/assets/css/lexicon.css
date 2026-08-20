@@ -3247,9 +3247,16 @@ label {
     padding-block: 0.5rem;
     padding-inline: 0.75rem;
     border-radius: 6px;
+    border-inline-start: 3px solid transparent;
+    color: var(--lx-ink-2);
     text-decoration: none;
 }
-.lx-account-nav a[aria-current="page"] { font-weight: 600; background: #eef1f6; }
+.lx-account-nav a[aria-current="page"] {
+    font-weight: 600;
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    border-inline-start-color: var(--lx-gilt);
+}
 @media (min-width: 720px) {
     .lx-account { grid-template-columns: 12rem 1fr; align-items: start; }
 }
@@ -3260,6 +3267,15 @@ label {
 .lx-account-head { margin-block-end: 1.5rem; }
 .lx-account-head h1 { margin: 0 0 0.25rem; }
 .lx-account-body { display: grid; gap: 2rem; }
+/* The head and the danger zone are full-width strips; only the form and the
+   sidebar (aside, when a page has one) share the two-column row below the
+   head. Without this, grid auto-placement drops the head into column 1 and
+   the form into column 2 of the SAME row, leaving the row under the head
+   empty until whatever's left wraps down. */
+.lx-account-body > .lx-account-head,
+.lx-account-body > .lx-danger-zone {
+    grid-column: 1 / -1;
+}
 @media (min-width: 900px) {
     .lx-account-body { grid-template-columns: 1fr 18rem; align-items: start; }
 }
