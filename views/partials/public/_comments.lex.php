@@ -13,7 +13,6 @@
  * A theme sets $comment_labels before including this to keep its own voice;
  * every key falls back to neutral wording. See the defaults below.
  */
-
 $commentList = $comments ?? [];
 $commentsOpen = !empty($comments_enabled);
 $postId = (int) ($post['id'] ?? 0);
@@ -159,7 +158,7 @@ $renderComment = static function (array $comment, int $depth) use (
                   // No count on the down vote, the way YouTube settled it in
                   // 2021: a public dislike tally invited pile-ons and told
                   // readers nothing.
-                  ?>
+              ?>
                 <button type="button" class="comment-vote<?= $myVote === -1 ? ' is-active' : '' ?>"
                         data-vote="down" aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>"
                         aria-label="Disagree with this comment">
@@ -193,10 +192,10 @@ $renderComment = static function (array $comment, int $depth) use (
           <?php if ($replies !== []) { ?>
             <?php
             $replyTotal = count($replies);
-            $replyWord = $replyTotal === 1 ? 'reply' : 'replies';
-            $childDepth = $depth + 1;
-            $hidden = max(0, $replyTotal - $replyBatch);
-            ?>
+              $replyWord = $replyTotal === 1 ? 'reply' : 'replies';
+              $childDepth = $depth + 1;
+              $hidden = max(0, $replyTotal - $replyBatch);
+              ?>
             <button type="button" class="reply-toggle replies-toggle" aria-expanded="false"
                     aria-controls="replies-<?= $id ?>"
                     data-collapse-toggle="<?= $id ?>"
@@ -209,18 +208,18 @@ $renderComment = static function (array $comment, int $depth) use (
             <ol class="comment-replies<?= $childDepth > $indentCap ? ' is-flush' : '' ?>" id="replies-<?= $id ?>" hidden>
               <?php foreach ($replies as $index => $reply) { ?>
                 <?php
-                // Replies past the first batch are rendered but held back, so
-                // "Show more" costs nothing at click time and still works for a
-                // reader who arrived on a deep link into one of them.
-                $batched = $index >= $replyBatch;
-                ob_start();
-                $renderComment($reply, $childDepth);
-                $markup = (string) ob_get_clean();
+                  // Replies past the first batch are rendered but held back, so
+                  // "Show more" costs nothing at click time and still works for a
+                  // reader who arrived on a deep link into one of them.
+                  $batched = $index >= $replyBatch;
+                  ob_start();
+                  $renderComment($reply, $childDepth);
+                  $markup = (string) ob_get_clean();
 
-                echo $batched
-                    ? preg_replace('/^(\s*)<li /', '$1<li hidden data-batched="'.$id.'" ', $markup, 1)
-                    : $markup;
-                ?>
+                  echo $batched
+                      ? preg_replace('/^(\s*)<li /', '$1<li hidden data-batched="'.$id.'" ', $markup, 1)
+                      : $markup;
+                  ?>
               <?php } ?>
 
               <?php if ($hidden > 0) { ?>

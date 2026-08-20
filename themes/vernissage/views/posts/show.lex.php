@@ -107,12 +107,12 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-        'title_prefix' => 'The Visitors&rsquo; Book &mdash; ',
-        'noun' => 'Entry',
-        'noun_plural' => 'Entries',
-        'form_label' => 'Leave a note for the gallery&hellip;',
-        'form_button' => 'Sign the book',
-        'closed' => 'The visitors&rsquo; book is closed for this work.',
+          'title_prefix' => 'The Visitors&rsquo; Book &mdash; ',
+          'noun' => 'Entry',
+          'noun_plural' => 'Entries',
+          'form_label' => 'Leave a note for the gallery&hellip;',
+          'form_button' => 'Sign the book',
+          'closed' => 'The visitors&rsquo; book is closed for this work.',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>

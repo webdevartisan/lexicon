@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\PostBookmarkModel;
-use App\Models\PostVoteModel;
 use App\Models\PostModel;
+use App\Models\PostVoteModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;

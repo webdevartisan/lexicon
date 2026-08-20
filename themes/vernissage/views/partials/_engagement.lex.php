@@ -44,7 +44,7 @@ $loginUrl = e(lurl('/login'));
   </button>
 
   <?php // No count on the down vote: it registers the signal without handing
-        // readers a pile-on to watch. Same call as the comment thread. ?>
+        // readers a pile-on to watch. Same call as the comment thread.?>
   <button type="button" class="engage-btn<?= $myVote === -1 ? ' is-active' : '' ?>"
           data-engage="down" data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/vote"
           aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>" aria-label="Disagree with this post">
