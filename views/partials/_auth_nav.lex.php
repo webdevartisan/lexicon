@@ -93,7 +93,7 @@ $renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnrea
                 <?php if (!$navIsReader) { ?>
                 <li><a href="<?= e(lurl('/dashboard')) ?>"><?= e($tr('header.dashboard')) ?></a></li>
                 <?php } ?>
-                <li><a href="<?= e(lurl('/dashboard/profile')) ?>"><?= e($tr('navigation.settings')) ?></a></li>
+                <li><a href="<?= e(lurl('/account/profile')) ?>"><?= e($tr('navigation.account')) ?></a></li>
             </ul>
 
             <form method="post" action="<?= e($logoutUrl) ?>">
