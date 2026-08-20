@@ -287,6 +287,28 @@ foreach ($socialNetworks as $network) {
             </div>
         </footer>
 
+        <?php
+        // front.lex.php reads flash() into $flash at the top of the file but
+        // never rendered it, so every front POST since the reader surfaces was
+        // silent. Fixed overlay toasts, top inline-end, so a save confirmation
+        // never shoves the page down. Matches the dashboard's placement; the
+        // dashboard's toast is Tailwind/cp.css, which the front does not load,
+        // so the look is rebuilt here in lexicon.css. aria-live because the
+        // message appears after an action rather than on load.
+        if (!empty($flash)) { ?>
+        <div class="lx-toasts" role="status" aria-live="polite">
+            <?php foreach ($flash as $type => $messages) {
+                foreach ($messages as $message) { ?>
+            <div class="lx-toast is-<?= e($type) ?>" data-lx-toast data-auto-close="6000">
+                <span class="lx-toast-msg"><?= e($message) ?></span>
+                <button type="button" class="lx-toast-close" data-lx-toast-close
+                        aria-label="<?= e($t('a11y.dismiss')) ?>">&times;</button>
+            </div>
+            <?php }
+            } ?>
+        </div>
+        <?php } ?>
+
         {% include "partials/_consent_bootstrap.lex.php" %}
         {% include "partials/_consent_banner.lex.php" %}
 
@@ -294,6 +316,7 @@ foreach ($socialNetworks as $network) {
 
 		<!-- Scripts -->
 		<script src="/assets/js/platform-menu.js" defer></script>
+		<script src="/assets/js/flash-toast.js" defer></script>
 		<script src="/assets/js/front.js" defer></script>
 		<script src="/assets/js/lang-switcher.js" defer></script>
 		<script src="/assets/js/scrolltop.js" defer></script>
