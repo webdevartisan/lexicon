@@ -29,7 +29,12 @@ final class ReaderLocaleTarget
      * The empty string is the site root. Deliberately excluded: '/blog' and the
      * static page slugs, whose controllers resolve real per-locale content.
      */
-    private const LOCALE_AGNOSTIC = ['', 'home', 'blogs', 'profile', 'dashboard', 'library', 'admin'];
+    private const LOCALE_AGNOSTIC = [
+        '', 'home', 'blogs', 'profile', 'dashboard', 'admin',
+        // The reader surfaces: personal lists of other people's writing, and
+        // the page chrome is the only text on them that has a language.
+        'saved', 'replies', 'subscriptions',
+    ];
 
     public function __construct(private LocaleRegistry $registry) {}
 

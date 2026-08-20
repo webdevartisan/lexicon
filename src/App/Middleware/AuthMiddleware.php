@@ -40,9 +40,17 @@ final class AuthMiddleware implements MiddlewareInterface
             // Store intended URL for post-login redirect
             app()->get(\Framework\Session::class)->set('intended_url', $request->fullUrl());
 
+            // And put it on the login URL as well. The session copy is the one
+            // that survives a modal login, but a query parameter survives a
+            // session the visitor loses on the way -- a browser that drops the
+            // cookie, or a login opened in a second tab -- and it is what the
+            // login form itself reads to carry the destination through a POST.
+            $returnTo = safe_return_to($request->uri);
+            $login = '/login'.($returnTo !== null ? '?return_to='.urlencode($returnTo) : '');
+
             // Default for browser/HTML: redirect to login
             $response = new Response();
-            $response->redirect('/login');
+            $response->redirect($login);
 
             return $response;
         }

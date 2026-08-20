@@ -175,11 +175,13 @@ class CacheMiddleware implements MiddlewareInterface
             return true;
         }
 
-        if (stripos($request->uri, '/login') !== false ||
-            stripos($request->uri, '/dashboard') !== false ||
-            stripos($request->uri, '/library') !== false ||
-            stripos($request->uri, '/admin') !== false) {
-            return true;
+        // Defence in depth. The auth check above already excludes every one of
+        // these, since they all require a session; the list stands so that
+        // loosening that check can never silently start caching private pages.
+        foreach (['/login', '/dashboard', '/admin', '/saved', '/replies', '/subscriptions'] as $private) {
+            if (stripos($request->uri, $private) !== false) {
+                return true;
+            }
         }
 
         return false;

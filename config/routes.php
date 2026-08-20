@@ -139,20 +139,38 @@ $router->group([
 
 });
 
-// The reading hub. Top-level because reading is not a sub-feature of the
-// creator dashboard: every account reads, only some write. Creators keep a
-// library too, which is why none of this is gated on being reader-only.
+// The reader's own things. Top level and on the front, because reading is not
+// a sub-feature of the creator dashboard: every account reads, only some write.
+// A creator reaches the same pages from the same menu a reader does.
 $router->group([
-    'prefix' => '/library',
-    'namespace' => 'Dashboard',
+    'prefix' => '/saved',
     'middleware' => ['auth'],
 ], function (Router $r) {
-    $r->add('/', ['controller' => 'HomeController', 'action' => 'library', 'method' => 'GET']);
-    $r->add('/saved', ['controller' => 'EngagementController', 'action' => 'bookmarks', 'method' => 'GET']);
-    $r->add('/likes', ['controller' => 'EngagementController', 'action' => 'likes', 'method' => 'GET']);
-    $r->add('/subscriptions', ['controller' => 'SubscriptionController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/subscriptions/{id:\d+}/unsubscribe', ['controller' => 'SubscriptionController', 'action' => 'unsubscribe', 'method' => 'POST']);
-    $r->add('/activity', ['controller' => 'ActivityController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/', ['controller' => 'ReaderController', 'action' => 'saved', 'method' => 'GET']);
+    $r->add('/liked', ['controller' => 'ReaderController', 'action' => 'liked', 'method' => 'GET']);
+    // Straight deletes, not the post page's toggles: asked twice, a toggle puts
+    // back what the reader just removed.
+    $r->add('/{postId:\d+}/remove', ['controller' => 'ReaderController', 'action' => 'removeBookmark', 'method' => 'POST']);
+    $r->add('/liked/{postId:\d+}/remove', ['controller' => 'ReaderController', 'action' => 'removeVote', 'method' => 'POST']);
+});
+
+$router->group([
+    'prefix' => '/replies',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'ReaderController', 'action' => 'replies', 'method' => 'GET']);
+    $r->add('/mine', ['controller' => 'ReaderController', 'action' => 'myComments', 'method' => 'GET']);
+    // The only writer of read_at on this surface, and never a GET.
+    $r->add('/mark-read', ['controller' => 'ReaderController', 'action' => 'markRepliesRead', 'method' => 'POST']);
+});
+
+$router->group([
+    'prefix' => '/subscriptions',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'ReaderController', 'action' => 'subscriptions', 'method' => 'GET']);
+    $r->add('/{blogId:\d+}/unsubscribe', ['controller' => 'ReaderController', 'action' => 'unsubscribe', 'method' => 'POST']);
+    $r->add('/{blogId:\d+}/resubscribe', ['controller' => 'ReaderController', 'action' => 'resubscribe', 'method' => 'POST']);
 });
 
 // Grouped routes for user dashboard - all require authentication middleware

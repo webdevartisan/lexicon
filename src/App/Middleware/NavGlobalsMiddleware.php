@@ -23,7 +23,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 2;
+    private const SIDEBAR_MARKUP_VERSION = 3;
 
     /**
      * @var NavigationService Navigation service instance
@@ -73,7 +73,8 @@ class NavGlobalsMiddleware
         TemplateViewerInterface $viewer,
         UserPreferencesModel $preferencesModel,
         BlogModel $blogModel,
-        NotificationModel $notificationModel
+        NotificationModel $notificationModel,
+        private \App\Services\ViewerContext $viewerContext
     ) {
         $this->nav = $nav;
         $this->auth = $auth;
@@ -98,9 +99,8 @@ class NavGlobalsMiddleware
         $path = $request->uri ?? '/';
 
         // determine which navigation area to use based on the URL path.
-        // The library shares the control panel shell, so it counts as 'back'.
         $area = str_starts_with($path, '/admin') ? 'admin'
-            : ((str_starts_with($path, '/dashboard') || str_starts_with($path, '/library')) ? 'back' : 'front');
+            : (str_starts_with($path, '/dashboard') ? 'back' : 'front');
 
         $selectedBlog = null;
         $userBlogs = []; // id => ['name','status'] for the topbar blog switcher (owned only)
@@ -216,6 +216,11 @@ class NavGlobalsMiddleware
             'is_collaborator' => $isCollaborator, // user has any shared blog access
             'is_reader' => $isReader, // no owned or shared blogs: reading-hub mode
             'sidebar_cache_key' => $sidebarCacheKey,
+            // The masthead menu is the same on the Lexicon front and inside
+            // every blog theme, so its viewer summary is a global rather than
+            // something each controller remembers to pass. Memoised in the
+            // service, so the blog controller asking for it again is free.
+            'viewer' => $this->viewerContext->current(),
         ]);
 
         return $handler->handle($request);
