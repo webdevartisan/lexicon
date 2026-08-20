@@ -51,7 +51,9 @@ class WelcomeEmail extends Mailable
     {
         $appName = htmlspecialchars(env('APP_NAME', 'Blog Platform'));
         $appUrl = htmlspecialchars(env('APP_URL', 'http://localhost'));
-        $dashboardUrl = $appUrl.'/library';
+        // Explore, not a personal page: a brand new account has nothing on
+        // its own lists yet, so the useful first destination is the catalog.
+        $exploreUrl = $appUrl.'/blogs';
 
         return <<<HTML
         <!DOCTYPE html>
@@ -77,7 +79,7 @@ class WelcomeEmail extends Mailable
                     <p>Thank you for joining our community! Your account has been successfully created.</p>
                     <p><strong>Username:</strong> @{$username}</p>
                     <p>Save posts for later, follow the blogs you love, and join the discussions. When you feel like writing, you can start a blog of your own any time.</p>
-                    <a href="{$dashboardUrl}" class="button">Open your reading hub</a>
+                    <a href="{$exploreUrl}" class="button">Find something to read</a>
                     <p>If you have any questions, feel free to reach out to our support team.</p>
                 </div>
                 <div class="footer">
@@ -104,7 +106,7 @@ class WelcomeEmail extends Mailable
     private function buildTextBody(string $firstName, string $username): string
     {
         $appName = env('APP_NAME', 'Blog Platform');
-        $dashboardUrl = (env('APP_URL', 'http://localhost')).'/library';
+        $exploreUrl = (env('APP_URL', 'http://localhost')).'/blogs';
 
         return <<<TEXT
         Welcome to {$appName}!
@@ -118,7 +120,7 @@ class WelcomeEmail extends Mailable
         Save posts for later, follow the blogs you love, and join the discussions.
         When you feel like writing, you can start a blog of your own any time.
 
-        Open your reading hub: {$dashboardUrl}
+        Find something to read: {$exploreUrl}
         
         If you have any questions, feel free to reach out to our support team.
         
