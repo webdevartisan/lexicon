@@ -248,13 +248,13 @@ $renderComment = static function (array $comment, int $depth) use (
         </div>
 
         <?php if (!$removed) { ?>
-          <div class="comment-menu" data-comment-menu>
+          <div class="comment-menu platform-menu" data-comment-menu>
             <button type="button" class="comment-menu-button" data-menu-toggle
                     aria-haspopup="true" aria-expanded="false" aria-label="More actions on this comment">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
             </button>
 
-            <div class="comment-menu-list" data-menu-list hidden>
+            <div class="platform-menu-list comment-menu-list" data-menu-list hidden>
               <button type="button" data-copy-comment data-anchor="#comment-<?= $id ?>">Copy link</button>
 
               <?php if (!$viewerIsGuest) { ?>
@@ -439,8 +439,8 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-sort > summary::-webkit-details-marker { display: none; }
   .comment-sort > summary:hover { opacity: 1; }
   .comment-sort > summary svg { width: 16px; height: 16px; }
-  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; padding: .35rem; border-radius: 8px; background: var(--comment-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
-  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: 5px; color: var(--comment-menu-fg, #f2f2f2); text-decoration: none; }
+  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; padding: .35rem; border-radius: 8px; background: var(--platform-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
+  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: 5px; color: var(--platform-menu-fg, #f2f2f2); text-decoration: none; }
   .comment-sort-list a:hover, .comment-sort-list a.is-current { background: rgba(128, 128, 128, .22); }
   .comment-sort-list strong { display: block; font-weight: 600; }
   .comment-sort-list span { display: block; margin-top: .1rem; font-size: .88em; opacity: .6; }
@@ -475,17 +475,13 @@ $renderComment = static function (array $comment, int $depth) use (
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
   /* ---- overflow menu --------------------------------------------------- */
-  .comment-menu { flex: none; position: relative; margin-left: auto; }
+  .comment-menu { flex: none; margin-left: auto; }
   .comment-menu-button { display: block; padding: .25rem; border: 0; border-radius: 999px; background: none; color: inherit; opacity: 0; cursor: pointer; transition: opacity .15s ease; }
   .comment-menu-button svg { width: 16px; height: 16px; display: block; }
   .comment-item:hover > .comment-row > .comment-menu .comment-menu-button,
   .comment-menu-button:focus-visible,
   .comment-menu-button[aria-expanded="true"] { opacity: .7; }
   .comment-menu-button:hover { opacity: 1; }
-  .comment-menu-list { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; min-width: 170px; padding: .3rem; border-radius: 6px; background: var(--comment-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
-  .comment-menu-list form { margin: 0; }
-  .comment-menu-list button { display: block; width: 100%; padding: .5rem .6rem; border: 0; border-radius: 4px; background: none; color: var(--comment-menu-fg, #f2f2f2); font: inherit; font-size: .85em; text-align: left; cursor: pointer; }
-  .comment-menu-list button:hover { background: rgba(128, 128, 128, .22); }
   .comment-menu-list button.is-destructive { color: #ff6b6b; }
 
   @media (max-width: 640px) {

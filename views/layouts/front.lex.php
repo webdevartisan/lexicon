@@ -66,6 +66,8 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <link rel="preload" href="/assets/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
+        <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
+        <link rel="stylesheet" href="/assets/css/platform-chrome.css" />
         <link rel="stylesheet" href="/assets/css/lexicon.css" />
         <link rel="stylesheet" href="/assets/css/fontawesome-all.min.css" />
 
@@ -130,7 +132,13 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl('/register')) ?>">{{ t('navigation.createBlog') }}</a>
                     <a class="lx-btn lx-btn--ghost lx-btn--fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
                 {% else %}
-                    <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl('/dashboard')) ?>">{{ t('header.dashboard') }}</a>
+                    <?php
+                    // Same rule as the bar: a reader has no dashboard, so the
+                    // drawer offers them the blog form instead of a redirect
+                    // back to where they already are.
+                    $drawerIsReader = !empty($viewer['is_reader']);
+                    ?>
+                    <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>
                         <button type="submit" class="lx-btn lx-btn--ghost lx-btn--fit">{{ t('header.signOut') }}</button>
@@ -285,6 +293,7 @@ foreach ($socialNetworks as $network) {
         <button type="button" class="fab scroll-top-btn" title="<?= e($t('a11y.backToTop')) ?>" aria-label="<?= e($t('a11y.backToTop')) ?>"></button>
 
 		<!-- Scripts -->
+		<script src="/assets/js/platform-menu.js" defer></script>
 		<script src="/assets/js/front.js" defer></script>
 		<script src="/assets/js/lang-switcher.js" defer></script>
 		<script src="/assets/js/scrolltop.js" defer></script>
