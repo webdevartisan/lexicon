@@ -135,12 +135,16 @@ final class AccountPreferencesController extends AppController
 
         // Picking a language here has to move the URL too, or the redirect below
         // lands on the locale the visitor was already on and the choice looks
-        // like it did nothing.
-        $this->localeSync->apply($userId);
+        // like it did nothing. apply() writes the session locale, but lurl() in
+        // this same request still resolves the locale captured at bootstrap, so
+        // the redirect has to use the language apply() reports rather than the
+        // stale one. A null answer means "auto", where the current URL's locale
+        // is exactly what should carry over.
+        $adopted = $this->localeSync->apply($userId);
 
         $this->flash('success', chrome_translate('account.flash.preferencesSaved'));
 
-        return $this->redirect(lurl('/account/preferences'));
+        return $this->redirect(lurl('/account/preferences', $adopted));
     }
 
     /**

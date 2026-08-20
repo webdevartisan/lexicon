@@ -189,6 +189,27 @@ test('once throttled, even the correct password cannot change the email', functi
     expect($this->users->findById($this->userId)['email'])->toBe($this->email);
 });
 
+test('changing the interface language moves the redirect to that locale', function () {
+    $mail = Mockery::mock(MailQueueService::class);
+    $controller = ($this->makeController)($mail);
+
+    $request = makeRequest('/account/preferences/update', 'POST', [
+        '_token' => csrf()->getToken(),
+        'email' => $this->email, // unchanged, so no password gate
+        'display_name' => 'username',
+        'default_visibility' => 'public',
+        'timezone' => 'UTC',
+        'locale' => 'el',
+    ]);
+    setupController($controller, $request, $this->viewer);
+
+    $response = callController($controller, 'update', $request);
+
+    // The choice has to move the URL, or the redirect lands on the old locale
+    // and the language switch looks like it did nothing.
+    expect($response->getHeader('Location'))->toContain('/el/account/preferences');
+});
+
 test('saving preferences does not disturb notification toggles', function () {
     // Turn a notification off first.
     $this->prefs->upsert($this->userId, ['notify_comments_blog' => 0]);
