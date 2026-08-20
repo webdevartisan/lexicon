@@ -274,7 +274,7 @@ class CommentController extends AppController
 
         $blog = $this->blogModel->getBlog($blogId);
 
-        return $blog !== null && Gate::allows('update', $blog, $user);
+        return $blog !== false && Gate::allows('update', $blog, $user);
     }
 
     /**
