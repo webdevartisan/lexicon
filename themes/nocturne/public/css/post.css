@@ -575,40 +575,6 @@
   }
 }
 
-.engage-menu {
-  position: relative;
-}
-
-.engage-menu-list {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 50;
-  min-width: 150px;
-  padding: 0.3rem;
-  border-radius: 6px;
-  background: var(--comment-menu-bg, #1c1c1c);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
-}
-
-.engage-menu-list button {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0.6rem;
-  border: 0;
-  border-radius: 4px;
-  background: none;
-  color: var(--comment-menu-fg, #f2f2f2);
-  font: inherit;
-  font-size: 0.85em;
-  text-align: left;
-  cursor: pointer;
-}
-
-.engage-menu-list button:hover {
-  background: rgba(128, 128, 128, 0.22);
-}
-
 /* Accent the shared comment thread borrows for votes and @mentions. */
 .comment-thread-root {
   --comment-accent: var(--brass-bright);

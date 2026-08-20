@@ -403,87 +403,6 @@ a {
   position: relative;
 }
 
-.nav-user-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.6rem;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  color: var(--spruce);
-  font-family: var(--sign);
-  font-size: var(--type-small);
-  cursor: pointer;
-  transition: border-color 0.18s var(--ease-soft);
-}
-
-.nav-user-btn:hover {
-  border-color: var(--rule-strong);
-}
-
-.nav-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel);
-  border: 1px solid var(--rule-strong);
-  font-family: var(--sign);
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-}
-
-.nav-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.nav-user-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  min-width: 170px;
-  background: var(--chart);
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
-  box-shadow: 0 10px 24px rgba(21, 32, 25, 0.14);
-  padding: 0.35rem;
-  display: none;
-  z-index: 120;
-}
-
-.nav-user.is-open .nav-user-menu {
-  display: block;
-}
-
-.nav-user-menu a,
-.nav-user-menu button {
-  display: block;
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 0;
-  border-radius: 2px;
-  background: none;
-  font-family: var(--sign);
-  font-size: var(--type-small);
-  line-height: inherit;
-  text-align: inherit;
-  color: var(--spruce-soft);
-  cursor: pointer;
-}
-
-.nav-user-menu a:hover,
-.nav-user-menu button:hover {
-  background: var(--panel);
-  color: var(--spruce);
-}
-
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -861,10 +780,6 @@ a {
     display: flex;
   }
 
-  .nav-user-name {
-    display: none;
-  }
-
   .waypoint {
     grid-template-columns: 92px minmax(0, 1fr) 2rem;
     grid-template-areas:
@@ -932,7 +847,6 @@ a {
     left: 1.25rem;
   }
 }
-
 
 /* ---------- language switcher ---------- */
 /* Shared markup from views/partials/_language_switcher.lex.php. An entry is a

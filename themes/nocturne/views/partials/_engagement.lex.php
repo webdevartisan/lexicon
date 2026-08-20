@@ -55,12 +55,12 @@ $loginUrl = e(lurl('/login'));
     </a>
   </div>
 
-  <div class="engage-menu" data-engage-menu>
+  <div class="platform-menu" data-engage-menu>
     <button type="button" class="engage-btn" data-engage-menu-toggle
             aria-haspopup="true" aria-expanded="false" aria-label="More actions on this post">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
-    <div class="engage-menu-list" data-engage-menu-list hidden>
+    <div class="platform-menu-list engage-menu-list" data-engage-menu-list hidden>
       <button type="button" data-report-post data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/report">Report</button>
     </div>
   </div>

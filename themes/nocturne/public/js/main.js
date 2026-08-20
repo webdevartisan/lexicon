@@ -18,21 +18,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  var userMenu = document.querySelector(".nav-user");
-  if (userMenu) {
-    var userBtn = userMenu.querySelector(".nav-user-btn");
-    userBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      var open = userMenu.classList.toggle("is-open");
-      userBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-    document.addEventListener("click", function (e) {
-      if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove("is-open");
-        userBtn.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
 
   var masthead = document.querySelector(".masthead");
   var onScroll = function () { if (masthead) masthead.classList.toggle("is-scrolled", window.scrollY > 8); };
