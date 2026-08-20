@@ -367,6 +367,14 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-vote[data-vote="down"] svg { transform: translateY(1px); }
   .comment-item .reply-toggle { font-size: .78em; }
 
+  /* A request is out and the reader has to wait on the answer, so the control
+     dims and stops taking clicks rather than sitting there looking idle, which
+     is what invites the second click the guard then throws away.
+
+     Votes belong to the other kind: they paint on the press, so dimming one
+     would make a finished action look pending. */
+  .comment-menu-list button.is-busy { opacity: .45; pointer-events: none; }
+
   /* ---- the connector tree ----------------------------------------------
      Drawn per reply rather than as one rule down the whole list: the rail is
      the left edge of each reply's elbow, and only replies that have a sibling
