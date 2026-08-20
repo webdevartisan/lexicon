@@ -9,8 +9,6 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\BlogSubscriberModel;
-use App\Models\CommentModel;
-use App\Models\PostBookmarkModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
@@ -30,8 +28,6 @@ class HomeController extends AppController
         private UserPreferencesModel $preference,
         private BlogSettingsModel $blogSettings,
         private BlogSubscriberModel $subscribers,
-        private PostBookmarkModel $bookmarks,
-        private CommentModel $comments,
     ) {}
 
     /**
@@ -46,10 +42,12 @@ class HomeController extends AppController
         $isAdmin = auth()->hasRole('administrator');
 
         if (empty($accessibleBlogs)) {
-            // No owned or shared blogs, so there is no dashboard to show.
-            // The library is this account's home. Keeping the redirect here
-            // means login and signup can keep sending everyone to /dashboard.
-            return $this->redirect('/library');
+            // No owned or shared blogs, so there is no dashboard to show. The
+            // landing page is this account's home: their own things live on the
+            // front now, one click away in the account menu. Keeping the
+            // redirect here means login and signup can go on sending everyone
+            // to /dashboard.
+            return $this->redirect('/');
         }
 
         // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is the natural landing.
@@ -148,41 +146,6 @@ class HomeController extends AppController
             'isAdmin' => $isAdmin,
             'blogRole' => $blogRole,
             'workflowEnabled' => $workflowEnabled,
-            'hideTitle' => true,
-        ]);
-    }
-
-    /**
-     * GET /library
-     *
-     * Open to creators as well as readers. Publishing a blog does not stop
-     * you reading other people's, so the library is not gated on role.
-     */
-    public function library(): Response
-    {
-        return $this->readerHome(auth()->user());
-    }
-
-    /**
-     * The reading hub: feed from subscribed blogs, recent saves, recent
-     * conversations, and a soft path into writing.
-     *
-     * @param  array<string, mixed>  $user  Authenticated user record
-     */
-    private function readerHome(array $user): Response
-    {
-        $userId = (int) $user['id'];
-        $email = (string) ($user['email'] ?? '');
-
-        breadcrumbs()->clear();
-
-        return $this->view('home.reader', [
-            'feed' => $this->subscribers->feedForUser($userId, $email, 12),
-            'savedPosts' => array_slice($this->bookmarks->bookmarkedPosts($userId), 0, 4),
-            'subscriptions' => $this->subscribers->forUser($userId, $email),
-            'replies' => $this->comments->repliesToUser($userId, 3),
-            'myComments' => $this->comments->byUserWithContext($userId, 3),
-            'noBreadcrumb' => true,
             'hideTitle' => true,
         ]);
     }

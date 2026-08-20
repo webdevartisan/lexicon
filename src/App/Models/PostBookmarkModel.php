@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\ListsEngagedPosts;
+
 /**
  * One bookmark per user per post, toggled on and off.
  */
 class PostBookmarkModel extends AppModel
 {
+    use ListsEngagedPosts;
+
     protected ?string $table = 'post_bookmarks';
 
     /**
@@ -29,25 +33,19 @@ class PostBookmarkModel extends AppModel
     public function toggle(int $userId, int $postId): bool
     {
         if ($this->userBookmarks($userId, $postId)) {
-            $this->database->query(
-                "DELETE FROM {$this->getTable()} WHERE post_id = ? AND user_id = ?",
-                [$postId, $userId]
-            );
+            $this->remove($userId, $postId);
 
             return false;
         }
 
-        try {
-            $this->database->query(
-                "INSERT INTO {$this->getTable()} (post_id, user_id) VALUES (?, ?)",
-                [$postId, $userId]
-            );
-        } catch (\PDOException $e) {
-            // Unique key means a parallel request already saved it; treat as saved
-            if ((string) $e->getCode() !== '23000') {
-                throw $e;
-            }
-        }
+        // A parallel request may have saved it between the check above and
+        // here. IGNORE settles that in the statement: catching the violation
+        // does not work, because Database::query() rewraps PDOException as a
+        // RuntimeException and a catch for the former never fires.
+        $this->database->execute(
+            "INSERT IGNORE INTO {$this->getTable()} (post_id, user_id) VALUES (?, ?)",
+            [$postId, $userId]
+        );
 
         return true;
     }
@@ -63,19 +61,35 @@ class PostBookmarkModel extends AppModel
     }
 
     /**
-     * Posts the user has saved, newest first.
+     * Delete the user's bookmark on a post.
      *
-     * @return array<int, array<string, mixed>>
+     * Unconditional, unlike toggle(): the reader's Saved page means "remove
+     * this", and a toggle would re-save a row another tab already removed.
+     *
+     * @return bool True when a row was actually deleted
      */
-    public function bookmarkedPosts(int $userId): array
+    public function remove(int $userId, int $postId): bool
     {
-        $sql = "SELECT p.id, p.title, p.slug, p.excerpt, bl.blog_slug, bl.blog_name, b.created_at AS bookmarked_at
-                FROM {$this->getTable()} b
-                INNER JOIN posts p ON p.id = b.post_id
-                INNER JOIN blogs bl ON bl.id = p.blog_id
-                WHERE b.user_id = ? AND p.status = 'published' AND p.visibility = 'public'
-                ORDER BY b.created_at DESC";
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE post_id = ? AND user_id = ?",
+            [$postId, $userId]
+        ) > 0;
+    }
 
-        return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);
+    /**
+     * One page of the reader's saved posts, newest save first.
+     *
+     * Ordered by the save, not the post: the list is a reading queue in the
+     * order things were put on it. The id tiebreak keeps rows from swapping
+     * across a page boundary when two saves share a timestamp.
+     *
+     * @param  int  $userId  Owner of the list
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  Rows per page
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
+     */
+    public function pageForUser(int $userId, int $page = 1, int $perPage = 20): array
+    {
+        return $this->pageOfEngagedPosts($userId, $page, $perPage);
     }
 }

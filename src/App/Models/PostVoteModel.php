@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\ListsEngagedPosts;
+
 /**
  * One vote per user per post, with the same toggle behaviour as comments.
  *
@@ -13,6 +15,8 @@ namespace App\Models;
  */
 class PostVoteModel extends AppModel
 {
+    use ListsEngagedPosts;
+
     public const UP = 1;
 
     public const DOWN = -1;
@@ -46,10 +50,7 @@ class PostVoteModel extends AppModel
     {
         return $this->transaction(function () use ($userId, $postId, $value): array {
             if ($this->userVote($userId, $postId) === $value) {
-                $this->database->execute(
-                    "DELETE FROM {$this->getTable()} WHERE post_id = ? AND user_id = ?",
-                    [$postId, $userId]
-                );
+                $this->remove($userId, $postId);
                 $mine = 0;
             } else {
                 // A unique key on (post_id, user_id) turns the flip into an
@@ -71,20 +72,35 @@ class PostVoteModel extends AppModel
     }
 
     /**
-     * Published public posts the user has voted up, newest first.
+     * Delete the user's vote on a post, whichever direction it was.
      *
-     * @return array<int, array<string, mixed>>
+     * Unconditional, unlike apply(): the reader's Liked page means "remove
+     * this", and a toggle would re-cast a vote another tab already cleared.
+     *
+     * @return bool True when a row was actually deleted
      */
-    public function likedPosts(int $userId): array
+    public function remove(int $userId, int $postId): bool
     {
-        $sql = "SELECT p.id, p.title, p.slug, p.excerpt, b.blog_slug, b.blog_name, l.created_at AS liked_at
-                FROM {$this->getTable()} l
-                INNER JOIN posts p ON p.id = l.post_id
-                INNER JOIN blogs b ON b.id = p.blog_id
-                WHERE l.user_id = ? AND l.value = 1 AND p.status = 'published' AND p.visibility = 'public'
-                ORDER BY l.created_at DESC";
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE post_id = ? AND user_id = ?",
+            [$postId, $userId]
+        ) > 0;
+    }
 
-        return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);
+    /**
+     * One page of the reader's liked posts, newest like first.
+     *
+     * Up votes only. A down vote is a signal for the blog, never something the
+     * reader is handed back as a list of things they disliked.
+     *
+     * @param  int  $userId  Owner of the list
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  Rows per page
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
+     */
+    public function pageOfLikesForUser(int $userId, int $page = 1, int $perPage = 20): array
+    {
+        return $this->pageOfEngagedPosts($userId, $page, $perPage, 'e.value = ?', [self::UP]);
     }
 
     /**

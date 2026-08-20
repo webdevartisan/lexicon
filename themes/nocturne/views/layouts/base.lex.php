@@ -37,6 +37,9 @@
   <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" />
 
+  <?php /* Lexicon's own controls, identical on every theme. */ ?>
+  <link rel="stylesheet" href="/assets/css/platform-chrome.css">
+  <script defer src="/assets/js/platform-menu.js"></script>
   <link rel="stylesheet" href="<?= $asset('css/style.css') ?>">
   {% yield styles %}
 </head>

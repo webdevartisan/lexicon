@@ -20,7 +20,7 @@ return [
     'front' => [
         ['label' => 'Home', 'href' => '/', 'auth' => null, 'key' => 'navigation.home'],
         ['label' => 'Create a Blog', 'href' => '/login', 'auth' => false, 'key' => 'navigation.createBlog'],
-        ['label' => 'Create a Blog', 'href' => '/dashboard', 'auth' => true, 'key' => 'navigation.createBlog'],
+        ['label' => 'Create a Blog', 'href' => '/dashboard/blog/new', 'auth' => true, 'key' => 'navigation.createBlog'],
         ['label' => 'Explore Blogs', 'href' => '/blogs', 'auth' => null, 'key' => 'navigation.exploreBlogs'],
         ['label' => 'Getting Started', 'href' => '/getting-started', 'auth' => null, 'key' => 'navigation.gettingStarted'],
         ['label' => 'About', 'href' => '/about', 'auth' => null, 'key' => 'navigation.about'],
@@ -68,63 +68,6 @@ return [
             'scope' => 'global',
             'key' => 'navigation.createNewBlog',
         ],*/
-
-        // === READER ITEMS ===
-        // Every account reads, only some write, so these stay visible after a
-        // reader starts a blog. Gating them on isReader used to orphan a
-        // creator's saves and subscriptions: the pages kept working but
-        // nothing linked to them any more.
-        [
-            'label' => 'Library',
-            'href' => '/library',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.library',
-            // Collapsible group. The parent is a real link to the hub, and the
-            // sidebar auto-expands it whenever the current path sits under it.
-            'children' => [
-                [
-                    'label' => 'Liked',
-                    'href' => '/library/likes',
-                    'key' => 'navigation.liked',
-                ],
-                [
-                    'label' => 'Saved',
-                    'href' => '/library/saved',
-                    'key' => 'navigation.saved',
-                ],
-                [
-                    'label' => 'Subscriptions',
-                    'href' => '/library/subscriptions',
-                    'key' => 'navigation.subscriptions',
-                ],
-                [
-                    'label' => 'Activity',
-                    'href' => '/library/activity',
-                    'key' => 'navigation.activity',
-                ],
-            ],
-        ],
-        [
-            // Creators already reach this from the topbar user menu, so it
-            // only needs a sidebar slot for reader-only accounts.
-            'label' => 'Profile',
-            'href' => '/dashboard/profile',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isReader',
-            'key' => 'navigation.profile',
-        ],
-        [
-            // Same reasoning as Profile: readers have no topbar user menu entry
-            // for the private settings, so they get a sidebar slot instead.
-            'label' => 'Account',
-            'href' => '/dashboard/account',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isReader',
-            'key' => 'navigation.account',
-        ],
 
         // === CONTEXTUAL ITEMS ===
 

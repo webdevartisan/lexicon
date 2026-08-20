@@ -96,12 +96,16 @@ test('pressing the other direction flips the existing vote in place', function (
         ->toBe(['up' => 0, 'down' => 1, 'mine' => -1]);
 });
 
-test('the liked library only counts up votes', function () {
+test('the liked list only counts up votes', function () {
+    // Two statements per page: the count and the rows. Both carry the same
+    // filter, so a page that disagreed with its own total would fail here.
     $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::pattern('/l\.value = 1/'), [7])
+        ->twice()
+        ->with(Mockery::pattern('/e\.value = \?/'), [7, PostVoteModel::UP])
         ->andReturn($this->stmtMock);
+    $this->stmtMock->shouldReceive('fetchColumn')->once()->andReturn(0);
     $this->stmtMock->shouldReceive('fetchAll')->once()->andReturn([]);
 
-    expect($this->model->likedPosts(7))->toBe([]);
+    expect($this->model->pageOfLikesForUser(7))
+        ->toBe(['items' => [], 'total' => 0, 'page' => 1, 'perPage' => 20]);
 });

@@ -732,61 +732,49 @@ class CommentModel extends AppModel
     }
 
     /**
-     * The user's comments with enough post/blog context to link back to them.
+     * One page of the comments the user wrote, newest first.
      *
-     * Removed comments are left out: a tombstone is a placeholder the thread
-     * needs, not something its author should still find in their own activity.
+     * Pending comments are included and carry their status, because it is the
+     * viewer's own writing and hiding it while a moderator looks at it reads as
+     * data loss. Spam and tombstones are not: one is a verdict the author does
+     * not need repeated back, the other is a placeholder the thread keeps.
      *
-     * @return array<int, array<string, mixed>> Newest first
+     * @param  int  $userId  Author
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  Rows per page
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
      */
-    public function byUserWithContext(int $userId, int $limit = 20): array
+    public function pageForAuthor(int $userId, int $page = 1, int $perPage = 20): array
     {
-        $limit = max(1, min(50, $limit));
+        $perPage = max(1, min(100, $perPage));
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
 
-        $sql = "SELECT c.id, c.content, c.status, c.created_at, c.parent_comment_id,
-                       p.title AS post_title, p.slug AS post_slug,
-                       b.blog_slug, b.blog_name
-                FROM {$this->getTable()} c
-                INNER JOIN posts p ON c.post_id = p.id
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                WHERE c.user_id = ? AND c.deleted_at IS NULL
-                ORDER BY c.created_at DESC
-                LIMIT {$limit}";
+        $from = "FROM {$this->getTable()} c
+                 INNER JOIN posts p ON p.id = c.post_id
+                 INNER JOIN blogs b ON b.id = p.blog_id
+                 WHERE c.user_id = ?
+                   AND c.deleted_at IS NULL
+                   AND c.status IN ('approved', 'pending')";
 
-        return $this->database->query($sql, [$userId])->fetchAll(\PDO::FETCH_ASSOC);
-    }
+        $total = (int) $this->database->query("SELECT COUNT(*) {$from}", [$userId])->fetchColumn();
 
-    /**
-     * Approved replies other people left on the user's comments.
-     *
-     * @return array<int, array<string, mixed>> Newest first
-     */
-    public function repliesToUser(int $userId, int $limit = 20): array
-    {
-        $limit = max(1, min(50, $limit));
+        $items = $this->database->query(
+            "SELECT c.id, c.content, c.status, c.created_at, c.parent_comment_id,
+                    p.title AS post_title, p.slug AS post_slug,
+                    b.blog_name, b.blog_slug
+             {$from}
+             ORDER BY c.created_at DESC, c.id DESC
+             LIMIT ".(int) $perPage.' OFFSET '.(int) $offset,
+            [$userId]
+        )->fetchAll(\PDO::FETCH_ASSOC);
 
-        $sql = "SELECT r.id, r.content, r.created_at, r.parent_comment_id,
-                       p.title AS post_title, p.slug AS post_slug,
-                       b.blog_slug, b.blog_name,
-                       COALESCE(
-                           u.display_name_cached,
-                           NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
-                           u.username,
-                           'A guest'
-                       ) AS author_name
-                FROM {$this->getTable()} r
-                INNER JOIN {$this->getTable()} parent ON r.parent_comment_id = parent.id
-                INNER JOIN posts p ON r.post_id = p.id
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                LEFT JOIN users u ON r.user_id = u.id
-                WHERE parent.user_id = ?
-                  AND (r.user_id IS NULL OR r.user_id != ?)
-                  AND r.status = 'approved'
-                  AND r.deleted_at IS NULL
-                ORDER BY r.created_at DESC
-                LIMIT {$limit}";
-
-        return $this->database->query($sql, [$userId, $userId])->fetchAll(\PDO::FETCH_ASSOC);
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+        ];
     }
 
     /**

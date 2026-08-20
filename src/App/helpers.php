@@ -19,6 +19,27 @@ use App\Services\LocaleRegistry;
 use App\Services\TranslationService;
 
 /**
+ * Translate an interface string outside a view.
+ *
+ * $t() is a view global, so anything resolved before rendering -- a flash read
+ * on the next request, a redirect message, a mail subject -- needs this. Same
+ * chrome locale, same service, memoized per locale: a bare static here would
+ * serve whichever locale it happened to build first to every locale after it.
+ *
+ * @param  string|string[]  $key  Dotted key or pre-split path
+ * @param  array<string, mixed>  $params  Placeholder name => value pairs
+ * @return string The translation, or the key itself when there is no entry
+ */
+function chrome_translate(string|array $key, array $params = []): string
+{
+    static $translators = [];
+    $locale = App\Services\LocaleState::get()->chromeLocale;
+    $translators[$locale] ??= new TranslationService($locale);
+
+    return $translators[$locale]->translate($key, $params);
+}
+
+/**
  * Editable site text with translation fallback.
  *
  * Resolution order: admin override for the current locale, then a
@@ -55,12 +76,7 @@ function site_content(string $name, ?string $default = null): string
         return $default;
     }
 
-    // Keyed by locale, same as $t()'s memo: a bare static here served the
-    // first locale it ever built to every locale after it.
-    static $translators = [];
-    $translators[$chromeLocale] ??= new TranslationService($chromeLocale);
-
-    return $translators[$chromeLocale]->translate($name);
+    return chrome_translate($name);
 }
 
 /**
@@ -84,14 +100,8 @@ function nav_label(array $item): string
         return $label;
     }
 
-    // Navigation is interface text, so it follows the chrome locale, and the
-    // service is memoized per locale the same way the $t global does it —
-    // it cannot be autowired because its constructor takes a locale string.
-    static $translators = [];
-    $locale = App\Services\LocaleState::get()->chromeLocale;
-    $translators[$locale] ??= new TranslationService($locale);
-
-    $translated = $translators[$locale]->translate($key);
+    // Navigation is interface text, so it follows the chrome locale.
+    $translated = chrome_translate($key);
 
     // The service echoes the key back when the lookup misses.
     return $translated === $key ? $label : $translated;

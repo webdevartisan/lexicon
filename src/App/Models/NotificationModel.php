@@ -117,6 +117,168 @@ class NotificationModel extends AppModel
     }
 
     /**
+     * What makes a reply worth showing: it still exists and is still public.
+     *
+     * Held apart from the join because two statements need the same answer and
+     * ask it in opposite directions. The listing joins through and keeps what
+     * matches; the sweep below looks for rows where nothing matches. If these
+     * ever drifted, the badge would count rows the list cannot show, which is
+     * exactly the stuck badge this const exists to prevent.
+     *
+     * The comment id lives inside the JSON payload, so the join extracts it
+     * rather than reading a column. Joining at all is not optional: it is also
+     * where the live slugs come from. The slugs stored in the payload are a
+     * snapshot and point at a 404 once a post is renamed.
+     */
+    private const REPLY_LIVE = "c.deleted_at IS NULL
+                   AND c.status = 'approved'
+                   AND p.status = 'published' AND p.visibility = 'public'
+                   AND b.status = 'published'";
+
+    /**
+     * The join every reply listing shares.
+     */
+    private const REPLY_JOIN = "FROM notifications n
+                 INNER JOIN comments c ON c.id = CAST(n.data->>'$.comment_id' AS UNSIGNED)
+                 INNER JOIN posts p ON p.id = c.post_id
+                 INNER JOIN blogs b ON b.id = p.blog_id
+                 WHERE n.user_id = ?
+                   AND ".self::REPLY_LIVE;
+
+    /**
+     * One page of replies to things the viewer wrote.
+     *
+     * Read rows stay in the list. It is a history, not a queue to drain, so
+     * read_at only decides whether a row is marked, never whether it appears.
+     *
+     * @param  int  $userId  Recipient
+     * @param  array<int, string>  $types  Notification types that count as a reply
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  Rows per page
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
+     */
+    public function pageOfRepliesForUser(int $userId, array $types, int $page = 1, int $perPage = 20): array
+    {
+        if ($types === []) {
+            return ['items' => [], 'total' => 0, 'page' => max(1, $page), 'perPage' => $perPage];
+        }
+
+        $perPage = max(1, min(100, $perPage));
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $placeholders = implode(', ', array_fill(0, count($types), '?'));
+        $from = self::REPLY_JOIN." AND n.type IN ({$placeholders})";
+        $bindings = array_merge([$userId], array_values($types));
+
+        $total = (int) $this->database->query("SELECT COUNT(*) {$from}", $bindings)->fetchColumn();
+
+        $items = $this->database->query(
+            "SELECT n.id, n.data, n.read_at, n.created_at,
+                    p.slug AS post_slug, b.blog_slug, b.blog_name
+             {$from}
+             ORDER BY n.created_at DESC, n.id DESC
+             LIMIT ".(int) $perPage.' OFFSET '.(int) $offset,
+            $bindings
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+        ];
+    }
+
+    /**
+     * Unread replies for the masthead badge.
+     *
+     * Deliberately does not join: the badge answers "is there anything new",
+     * and it runs on every page. idx_user_read covers it outright. A reply
+     * whose comment has since been removed therefore still counts until it is
+     * marked read, which is the cheaper wrong answer of the two.
+     *
+     * @param  array<int, string>  $types  Notification types that count as a reply
+     */
+    public function unreadReplyCount(int $userId, array $types): int
+    {
+        if ($types === []) {
+            return 0;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($types), '?'));
+
+        return (int) $this->database->query(
+            "SELECT COUNT(*) FROM notifications
+             WHERE user_id = ? AND read_at IS NULL AND type IN ({$placeholders})",
+            array_merge([$userId], array_values($types))
+        )->fetchColumn();
+    }
+
+    /**
+     * Mark read every reply the list can never show.
+     *
+     * A reply notification outlives its comment: the comment is deleted,
+     * unapproved, or its post or blog is taken down, and the row stays unread
+     * forever while never appearing in the list. The badge would then sit on a
+     * number the reader has no way to clear, which is worse than a wrong count.
+     *
+     * Called alongside the ordinary mark-read, so visiting Replies settles both
+     * the rows the reader just saw and the ones they never could.
+     *
+     * @param  array<int, string>  $types  Notification types that count as a reply
+     * @return int Rows marked
+     */
+    public function markUnreachableRepliesRead(int $userId, array $types): int
+    {
+        if ($types === []) {
+            return 0;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($types), '?'));
+
+        return $this->database->execute(
+            "UPDATE notifications n SET n.read_at = UTC_TIMESTAMP()
+             WHERE n.user_id = ? AND n.read_at IS NULL AND n.type IN ({$placeholders})
+               AND NOT EXISTS (
+                   SELECT 1 FROM comments c
+                   INNER JOIN posts p ON p.id = c.post_id
+                   INNER JOIN blogs b ON b.id = p.blog_id
+                   WHERE c.id = CAST(n.data->>'$.comment_id' AS UNSIGNED)
+                     AND ".self::REPLY_LIVE.'
+               )',
+            array_merge([$userId], array_values($types))
+        );
+    }
+
+    /**
+     * Mark the given notifications read, ignoring any the user does not own.
+     *
+     * Foreign ids are dropped by the WHERE clause rather than rejected, so a
+     * stale tab posting ids from a previous session is a no-op and not an
+     * error the reader has to see.
+     *
+     * @param  array<int, int>  $ids  Notification ids rendered on the page
+     * @return int Rows marked
+     */
+    public function markReadForUser(int $userId, array $ids): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0));
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+
+        return $this->database->execute(
+            "UPDATE notifications SET read_at = UTC_TIMESTAMP()
+             WHERE user_id = ? AND read_at IS NULL AND id IN ({$placeholders})",
+            array_merge([$userId], $ids)
+        );
+    }
+
+    /**
      * Return paginated notifications for a user with total count.
      *
      * @param  int  $userId  Recipient

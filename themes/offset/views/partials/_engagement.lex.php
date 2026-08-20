@@ -9,10 +9,6 @@ $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
 <style>
-  .engage-menu { position: relative; }
-  .engage-menu-list { position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 150px; padding: .3rem; border-radius: 6px; background: var(--comment-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
-  .engage-menu-list button { display: block; width: 100%; padding: .5rem .6rem; border: 0; border-radius: 4px; background: none; color: var(--comment-menu-fg, #f2f2f2); font: inherit; font-size: .85em; text-align: left; cursor: pointer; }
-  .engage-menu-list button:hover { background: rgba(128, 128, 128, .22); }
   .post-engagement { display: flex; align-items: center; gap: .5rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); position: relative; }
   .post-engagement .engage-btn { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem 1.05rem; border: 1px solid var(--rule); border-radius: 0; background: var(--porcelain); color: var(--slate); font-family: var(--mono); font-size: var(--type-mono); letter-spacing: .12em; text-transform: uppercase; line-height: 1; cursor: pointer; transition: border-color .18s var(--ease-out), color .18s var(--ease-out), background .18s var(--ease-out); }
   .post-engagement .engage-btn:hover { border-color: var(--carbon); color: var(--carbon); }
@@ -82,12 +78,12 @@ $loginUrl = e(lurl('/login'));
     </a>
   </div>
 
-  <div class="engage-menu" data-engage-menu>
+  <div class="platform-menu" data-engage-menu>
     <button type="button" class="engage-btn" data-engage-menu-toggle
             aria-haspopup="true" aria-expanded="false" aria-label="More actions on this post">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
-    <div class="engage-menu-list" data-engage-menu-list hidden>
+    <div class="platform-menu-list engage-menu-list" data-engage-menu-list hidden>
       <button type="button" data-report-post data-url="/posts/<?= (int) ($post['id'] ?? 0) ?>/report">Report</button>
     </div>
   </div>

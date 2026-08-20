@@ -2592,7 +2592,305 @@ label {
 }
 
 /* ==========================================================================
-   18. Language switcher, back-to-top, misc
+   18. Reader surfaces
+   Saved, Liked, Replies, Your comments, Subscriptions. A destination, not a
+   workspace: one narrow column of hairline-separated rows, no cards, no
+   panels, no sidebar. The measure is tighter than the rest of the front
+   because every row is a line of prose, not a grid cell.
+   ========================================================================== */
+
+.lx-main > .lx-reader {
+    max-width: 50rem;
+}
+
+.lx-reader-head {
+    margin-bottom: 2rem;
+}
+
+.lx-reader-title {
+    margin: 0;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    line-height: 1.1;
+}
+
+/* Text tabs, underlined. Pills would read as buttons and cards as panels;
+   these are two views of one page and should look like it. */
+.lx-reader-tabs {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-reader-tab {
+    padding: 0.5rem 0;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    color: var(--lx-ink-2);
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.lx-reader-tab:hover {
+    color: var(--lx-ink);
+    text-decoration: none;
+}
+
+.lx-reader-tab.is-current {
+    color: var(--lx-ink);
+    border-bottom-color: var(--lx-gilt-deep);
+}
+
+.lx-reader-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-reader-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.1rem;
+    padding: 1.4rem 0;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-reader-row:first-child {
+    padding-top: 0;
+}
+
+.lx-reader-thumb {
+    flex: none;
+    width: 5.5rem;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-sunk);
+}
+
+.lx-reader-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lx-reader-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.lx-reader-blog {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--lx-gilt-deep);
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.lx-reader-row-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+
+.lx-reader-row-title a {
+    color: var(--lx-ink);
+}
+
+.lx-reader-context {
+    margin: 0 0 0.35rem;
+    color: var(--lx-ink-2);
+    font-size: 0.95rem;
+}
+
+/* One line of it. The row is a pointer to the thing, not the thing. */
+.lx-reader-excerpt {
+    margin: 0 0 0.4rem;
+    color: var(--lx-ink-2);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.lx-reader-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    color: var(--lx-ink-3);
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+}
+
+.lx-reader-flag,
+.lx-reader-dot {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 999px;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.lx-reader-dot {
+    border-color: var(--lx-gilt-deep);
+    color: var(--lx-gilt-deep);
+}
+
+.lx-reader-row.is-unread .lx-reader-context strong {
+    color: var(--lx-ink);
+}
+
+/* The action is always in the DOM. Hover and focus-within reveal it together,
+   so reaching it with a keyboard works exactly as reaching it with a mouse. */
+.lx-reader-act {
+    flex: none;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 0.15s var(--lx-ease);
+}
+
+.lx-reader-row:hover .lx-reader-act,
+.lx-reader-act:focus-within {
+    opacity: 1;
+}
+
+.lx-reader-act-btn {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: var(--lx-ink-2);
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+}
+
+.lx-reader-act-btn:hover {
+    border-color: var(--lx-danger);
+    color: var(--lx-danger);
+}
+
+/* A pointer that cannot hover has no way to discover a hidden control. */
+@media (pointer: coarse) {
+    .lx-reader-act {
+        opacity: 1;
+    }
+}
+
+.lx-reader-undo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+}
+
+.lx-reader-undo p,
+.lx-reader-undo form {
+    margin: 0;
+}
+
+.lx-reader-empty {
+    padding: 3rem 0;
+    color: var(--lx-ink-2);
+}
+
+.lx-reader-empty p {
+    max-width: 42ch;
+    font-size: 1.05rem;
+}
+
+.lx-reader-markread {
+    margin: 1.5rem 0 0;
+}
+
+.lx-reader-pages {
+    margin-top: 2.5rem;
+}
+
+.lx-reader-pages ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-reader-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    color: var(--lx-ink-2);
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+}
+
+.lx-reader-page:hover {
+    border-color: var(--lx-rule-strong);
+    color: var(--lx-ink);
+    text-decoration: none;
+}
+
+.lx-reader-page.is-current {
+    border-color: var(--lx-ink);
+    color: var(--lx-ink);
+    font-weight: 600;
+}
+
+.lx-reader-gap {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.25rem;
+    color: var(--lx-ink-3);
+}
+
+@media (max-width: 40rem) {
+    .lx-reader-thumb {
+        width: 4rem;
+    }
+
+    .lx-reader-row {
+        flex-wrap: wrap;
+    }
+
+    .lx-reader-act {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lx-reader-act {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   19. Language switcher, back-to-top, misc
    ========================================================================== */
 
 .lang-switcher {
@@ -2777,7 +3075,7 @@ label {
 }
 
 /* ==========================================================================
-   19. Motion
+   20. Motion
    ========================================================================== */
 
 [data-reveal] {
@@ -2856,7 +3154,7 @@ label {
 }
 
 /* ==========================================================================
-   20. Print
+   21. Print
    ========================================================================== */
 
 @media print {

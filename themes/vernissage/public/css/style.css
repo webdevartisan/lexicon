@@ -523,93 +523,6 @@ a {
   position: relative;
 }
 
-.nav-user-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.35rem 0.6rem;
-  background: none;
-  border: 1px solid transparent;
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: var(--type-small);
-  cursor: pointer;
-  transition: border-color 0.2s var(--ease-soft);
-}
-
-.nav-user-btn:hover,
-.nav-user.is-open .nav-user-btn {
-  border-color: var(--rule-strong);
-}
-
-.nav-avatar {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 50%;
-  background: var(--sage);
-  color: var(--viridian);
-  font-family: var(--disp);
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-}
-
-.nav-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.nav-user-name {
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-user-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  inset-inline-end: 0;
-  min-width: 170px;
-  background: var(--mat);
-  border: 1px solid var(--rule-strong);
-  box-shadow: var(--frame-shadow);
-  padding: 0.35rem;
-  display: none;
-  z-index: 120;
-}
-
-.nav-user.is-open .nav-user-menu {
-  display: block;
-}
-
-.nav-user-menu a,
-.nav-user-menu button {
-  display: block;
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 0;
-  background: none;
-  font-family: inherit;
-  font-size: var(--type-small);
-  line-height: inherit;
-  text-align: inherit;
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.nav-user-menu a:hover,
-.nav-user-menu button:hover {
-  background: var(--plaster-2);
-  color: var(--ink);
-}
-
 /* hamburger, mobile only */
 .nav-toggle {
   display: none;
@@ -673,9 +586,6 @@ a {
     display: flex;
   }
 
-  .nav-user-name {
-    display: none;
-  }
 }
 
 /* ---------- footer: the viridian wall ---------- */
@@ -790,7 +700,6 @@ footer.site {
   color: var(--sage);
   border-color: var(--sage);
 }
-
 
 /* ---------- language switcher ---------- */
 /* Shared markup from views/partials/_language_switcher.lex.php. An entry is a

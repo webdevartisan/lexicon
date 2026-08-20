@@ -590,7 +590,9 @@ CREATE TABLE IF NOT EXISTS blog_subscribers (
     UNIQUE KEY uq_subscriber_token (token),
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_subscriber_blog (blog_id)
+    INDEX idx_subscriber_blog (blog_id),
+    INDEX idx_subscriber_user (user_id),
+    INDEX idx_subscriber_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Per-blog email subscribers for new post notifications';
 

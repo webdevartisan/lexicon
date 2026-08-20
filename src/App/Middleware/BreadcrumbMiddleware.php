@@ -136,9 +136,7 @@ class BreadcrumbMiddleware implements MiddlewareInterface
         if (str_starts_with($path, '/admin')) {
             return 'admin';
         }
-        // The library shares the control panel shell, so any path under it that
-        // has no explicit pattern still falls back to the dashboard nav trail.
-        if (str_starts_with($path, '/dashboard') || str_starts_with($path, '/library')) {
+        if (str_starts_with($path, '/dashboard')) {
             return 'back';
         }
 

@@ -44,14 +44,14 @@ it('casts, flips and clears a vote', function () {
         ->and($this->voteModel->userVote($this->userId, $this->postId))->toBe(0);
 });
 
-it('keeps down votes out of the liked library', function () {
+it('keeps down votes out of the liked list', function () {
     $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::DOWN);
 
-    expect($this->voteModel->likedPosts($this->userId))->toBeEmpty();
+    expect($this->voteModel->pageOfLikesForUser($this->userId)['items'])->toBeEmpty();
 
     $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::UP);
 
-    expect($this->voteModel->likedPosts($this->userId))->toHaveCount(1);
+    expect($this->voteModel->pageOfLikesForUser($this->userId)['items'])->toHaveCount(1);
 });
 
 it('toggles a bookmark on and off', function () {
@@ -84,7 +84,7 @@ it('lists bookmarked posts newest first', function () {
     $this->bookmarkModel->toggle($this->userId, $this->postId);
     $this->bookmarkModel->toggle($this->userId, $secondPost);
 
-    $saved = $this->bookmarkModel->bookmarkedPosts($this->userId);
+    $saved = $this->bookmarkModel->pageForUser($this->userId)['items'];
 
     expect($saved)->toHaveCount(2)
         ->and(array_column($saved, 'id'))->toContain($this->postId, $secondPost);

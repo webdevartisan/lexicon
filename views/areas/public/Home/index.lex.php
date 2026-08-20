@@ -57,15 +57,22 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // Actions before the usage note: it keeps the call to action above the
         // fold on short laptops, and a dictionary puts the usage paragraph at
         // the end of an entry anyway.
+        //
+        // Three viewers, three destinations. A reader has no dashboard to go
+        // to -- /dashboard would bounce them back to this very page -- so they
+        // get the same invitation a guest gets, pointed at the form rather
+        // than at sign-up, since they are already registered.
+        $homeViewerIsReader = !empty($viewer['is_reader']);
+$homeCtaUrl = !auth()->check()
+    ? '/register'
+    : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
+$homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
+    ? site_content('banner.cta')
+    : site_content('banner.ctaDashboard');
 ?>
         <div class="lx-cover__actions">
-            {% if (!auth()->check()): %}
-                <a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.cta')) ?></a>
-                <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
-            {% else %}
-                <a href="<?= e(lurl('/dashboard')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.ctaDashboard')) ?></a>
-                <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
-            {% endif %}
+            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e($homeCtaLabel) ?></a>
+            <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
         </div>
 
         <p class="lx-cover__note">
@@ -241,11 +248,7 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
             <p><?= e(site_content('cta.body')) ?></p>
         </div>
         <div class="lx-close__actions">
-            {% if (!auth()->check()): %}
-                <a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.cta')) ?></a>
-            {% else %}
-                <a href="<?= e(lurl('/dashboard')) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e(site_content('banner.ctaDashboard')) ?></a>
-            {% endif %}
+            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e($homeCtaLabel) ?></a>
         </div>
     </div>
 </section>

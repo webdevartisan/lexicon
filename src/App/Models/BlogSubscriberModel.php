@@ -14,23 +14,27 @@ class BlogSubscriberModel extends AppModel
     /**
      * Add an email to a blog's subscriber list.
      *
-     * Idempotent: re-subscribing an existing address succeeds quietly.
+     * Idempotent: re-subscribing an existing address succeeds quietly, whether
+     * that is a guest submitting the form twice or a reader undoing an
+     * unsubscribe they have already undone.
+     *
+     * The unique key is handled by the statement rather than by catching the
+     * violation, because Database::query() rewraps PDOException as a
+     * RuntimeException and a catch for the former never fires. The existing
+     * token is deliberately left alone: it is live in an already-delivered
+     * email and rotating it here would break that unsubscribe link. Only
+     * user_id moves, which also adopts a row subscribed before the account
+     * existed.
      *
      * @return bool True when subscribed (new or already present)
      */
     public function subscribe(int $blogId, string $email, ?int $userId = null): bool
     {
-        try {
-            $this->database->query(
-                "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token) VALUES (?, ?, ?, ?)",
-                [$blogId, $userId, $email, bin2hex(random_bytes(32))]
-            );
-        } catch (\PDOException $e) {
-            // Unique key on (blog_id, email): already subscribed is a success
-            if ((string) $e->getCode() !== '23000') {
-                throw $e;
-            }
-        }
+        $this->database->execute(
+            "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token) VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id)",
+            [$blogId, $userId, $email, bin2hex(random_bytes(32))]
+        );
 
         return true;
     }
@@ -124,62 +128,83 @@ class BlogSubscriberModel extends AppModel
     }
 
     /**
-     * Blogs the user subscribes to, for the reader dashboard.
+     * One page of the blogs the reader follows.
      *
-     * Matches by user_id OR email so subscriptions made while logged out
-     * (same address) still show up after the reader creates an account.
+     * Grouped by blog, not by row. A reader who subscribed once as a guest and
+     * again after signing up owns two rows for one blog, and the page is a list
+     * of blogs; the unsubscribe is scoped by blog for the same reason. An
+     * unavailable blog is still listed, with its status, because a subscription
+     * you cannot see is a subscription you cannot cancel.
      *
-     * @return array<int, array<string, mixed>>
+     * @param  int  $userId  Viewer
+     * @param  string  $email  The viewer's own address
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  Rows per page
+     * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
      */
-    public function forUser(int $userId, string $email): array
+    public function pageForUser(int $userId, string $email, int $page = 1, int $perPage = 20): array
     {
-        $sql = "SELECT s.id, s.blog_id, s.email, s.created_at,
-                       b.blog_name, b.blog_slug, b.description, b.status AS blog_status,
-                       (SELECT MAX(p.published_at) FROM posts p
-                        WHERE p.blog_id = s.blog_id AND p.status = 'published' AND p.visibility = 'public') AS latest_post_at,
-                       (SELECT COUNT(*) FROM posts p
-                        WHERE p.blog_id = s.blog_id AND p.status = 'published' AND p.visibility = 'public') AS post_count
-                FROM {$this->getTable()} s
-                INNER JOIN blogs b ON b.id = s.blog_id
-                WHERE s.user_id = ? OR s.email = ?
-                ORDER BY s.created_at DESC";
+        $perPage = max(1, min(100, $perPage));
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
 
-        return $this->database->query($sql, [$userId, $email])->fetchAll(\PDO::FETCH_ASSOC);
+        $from = "FROM {$this->getTable()} s
+                 INNER JOIN blogs b ON b.id = s.blog_id
+                 WHERE s.user_id = ? OR s.email = ?";
+
+        $total = (int) $this->database
+            ->query("SELECT COUNT(DISTINCT b.id) {$from}", [$userId, $email])
+            ->fetchColumn();
+
+        $items = $this->database->query(
+            "SELECT b.id AS blog_id, b.blog_name, b.blog_slug, b.description,
+                    b.status AS blog_status,
+                    MIN(s.created_at) AS subscribed_at
+             {$from}
+             GROUP BY b.id, b.blog_name, b.blog_slug, b.description, b.status
+             ORDER BY subscribed_at DESC, b.id DESC
+             LIMIT ".(int) $perPage.' OFFSET '.(int) $offset,
+            [$userId, $email]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+        ];
     }
 
     /**
-     * Latest public posts across the user's subscribed blogs — the reading feed.
+     * Attach the account to subscriptions it owns only by email.
      *
-     * @return array<int, array<string, mixed>>
+     * Called when the reader looks at their list, so the orphan state heals
+     * itself instead of lasting forever. Without it a subscription made before
+     * signing up stays invisible to every query that matches on user_id alone.
+     *
+     * @return int Rows claimed
      */
-    public function feedForUser(int $userId, string $email, int $limit = 12): array
-    {
-        $limit = max(1, min(50, $limit));
-
-        // DISTINCT guards against the same blog matching via both user_id and
-        // a second subscription row under a different email
-        $sql = "SELECT DISTINCT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at,
-                       b.blog_name, b.blog_slug
-                FROM {$this->getTable()} s
-                INNER JOIN blogs b ON b.id = s.blog_id AND b.status = 'published'
-                INNER JOIN posts p ON p.blog_id = s.blog_id
-                WHERE (s.user_id = ? OR s.email = ?)
-                  AND p.status = 'published' AND p.visibility = 'public'
-                ORDER BY p.published_at DESC
-                LIMIT {$limit}";
-
-        return $this->database->query($sql, [$userId, $email])->fetchAll(\PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Remove a subscription by row id, scoped to the reader who owns it
-     * (their account or their email address).
-     */
-    public function deleteByIdForUser(int $id, int $userId, string $email): bool
+    public function claimOrphansForUser(int $userId, string $email): int
     {
         return $this->database->execute(
-            "DELETE FROM {$this->getTable()} WHERE id = ? AND (user_id = ? OR email = ?) LIMIT 1",
-            [$id, $userId, $email]
+            "UPDATE {$this->getTable()} SET user_id = ? WHERE email = ? AND user_id IS NULL",
+            [$userId, $email]
+        );
+    }
+
+    /**
+     * Drop every subscription the reader holds on one blog.
+     *
+     * Scoped by the same either-identity rule as the list, so what the page
+     * shows and what the button removes can never disagree.
+     *
+     * @return bool True when at least one row went away
+     */
+    public function deleteForUserAndBlog(int $blogId, int $userId, string $email): bool
+    {
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE blog_id = ? AND (user_id = ? OR email = ?)",
+            [$blogId, $userId, $email]
         ) > 0;
     }
 }

@@ -187,7 +187,7 @@
             <span class="font-medium">Blogs you follow</span><br>
             <span class="text-[11px] text-slate-500 dark:text-zink-300">
               New posts from blogs you subscribed to. Manage those per blog on your
-              <a href="<?= lurl('/library/subscriptions') ?>"
+              <a href="<?= lurl('/subscriptions') ?>"
                  class="font-medium underline text-custom-500 hover:text-custom-600">subscriptions page</a>.
             </span>
           </div>
