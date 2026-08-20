@@ -138,7 +138,7 @@ $renderComment = static function (array $comment, int $depth) use (
           <?php
             // What this person said, kept in one box so the deep-link flash can
             // land on it without washing over the replies hanging underneath.
-          ?>
+    ?>
           <div class="comment-block">
             <p class="comment-meta">
               <?php if ($removed) { ?>
@@ -168,9 +168,9 @@ $renderComment = static function (array $comment, int $depth) use (
                     <span data-vote-count="up"><?= $up > 0 ? number_format($up) : '' ?></span>
                   </button>
                   <?php
-                    // No count on the down vote, the way YouTube settled it in
-                    // 2021: a public dislike tally invited pile-ons and told
-                    // readers nothing.
+              // No count on the down vote, the way YouTube settled it in
+              // 2021: a public dislike tally invited pile-ons and told
+              // readers nothing.
                 ?>
                   <button type="button" class="comment-vote<?= $myVote === -1 ? ' is-active' : '' ?>"
                           data-vote="down" aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>"
