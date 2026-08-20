@@ -1,0 +1,222 @@
+/*
+ * Platform chrome.
+ *
+ * Controls Lexicon renders on top of a blog's theme: the post action bar's
+ * overflow menu, the comment menus, and the viewer's account menu. They are
+ * Lexicon speaking rather than the blog, so they look the same on every theme.
+ *
+ * A theme repaints them through --platform-menu-bg and --platform-menu-fg
+ * instead of restyling the rules. That pair is the whole escape hatch; a theme
+ * that needs more than a repaint should say so rather than fork the markup.
+ */
+
+.platform-menu {
+  position: relative;
+}
+
+.platform-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  min-width: 170px;
+  padding: .3rem;
+  border-radius: 6px;
+  background: var(--platform-menu-bg, #1c1c1c);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+}
+
+.platform-menu-list form,
+.platform-menu-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Separates the reader's own things from the account controls below them. */
+.platform-menu-list hr {
+  margin: .3rem .2rem;
+  border: 0;
+  border-top: 1px solid rgba(128, 128, 128, .28);
+}
+
+.platform-menu-list button,
+.platform-menu-list a {
+  display: block;
+  width: 100%;
+  padding: .5rem .6rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--platform-menu-fg, #f2f2f2);
+  font: inherit;
+  font-size: .85em;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.platform-menu-list button:hover,
+.platform-menu-list a:hover {
+  background: rgba(128, 128, 128, .22);
+  /* Restated because the surrounding stylesheet underlines links on hover and
+     a menu row is a row, not prose. The highlight is the hover affordance. */
+  text-decoration: none;
+}
+
+/* The post action bar's own geometry: it clears a taller trigger and layers
+   above the sticky post chrome some themes park at the same edge. */
+.engage-menu-list {
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 150px;
+}
+
+/* ---------------------------------------------------------------------------
+   Account menu trigger.
+
+   One definition, like the dropdown it opens. Every masthead used to style
+   these three classes itself, which meant six copies of the same button and a
+   reader meeting a different one on every blog.
+
+   It carries no colours of its own: the text is currentColor, so it follows
+   whatever masthead it lands in, and the two surfaces are neutral greys that
+   read on paper and on a dark bar alike. That is what makes one rule survive
+   five themes plus the platform front, and what keeps it legible when a
+   sticky bar swaps its background mid-scroll.
+   --------------------------------------------------------------------------- */
+
+.nav-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.25rem;
+  padding: .25rem .6rem .25rem .25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav-user-btn:hover,
+.nav-user-btn[aria-expanded='true'] {
+  background: rgba(128, 128, 128, .16);
+  border-color: rgba(128, 128, 128, .28);
+}
+
+.nav-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.nav-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, .28);
+  color: inherit;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.nav-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The name is the widest part and the least load-bearing: the avatar already
+   says whose account this is. It goes first when the bar runs out of room. */
+.nav-user-name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 60rem) {
+  .nav-user-name {
+    display: none;
+  }
+}
+
+/* The account menu is the one consumer whose items carry a trailing badge, so
+   only it needs a row rather than a block. The comment menus keep the block. */
+.nav-user-menu a,
+.nav-user-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+/* Unread marker on the bar: centred on the circle's edge along the diagonal,
+   the placement Material uses for badges on circular children. */
+.nav-dot {
+  position: absolute;
+  top: 14%;
+  right: 14%;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  /* Only red that clears 3:1 on all five mastheads; the deeper error red dies
+     at 2.9:1 on nocturne's near-black bar. */
+  background: #dc2626;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+/* Instead of a ring in the bar's colour, which differs per theme, the avatar
+   gives up a bite and the gap shows whatever is behind. */
+.nav-avatar-wrap:has(.nav-dot) .nav-avatar {
+  -webkit-mask-image: radial-gradient(circle at 86% 14%, transparent .375rem, #000 .4rem);
+  mask-image: radial-gradient(circle at 86% 14%, transparent .375rem, #000 .4rem);
+}
+
+/* Unread count, in the menu beside Replies. Proportions follow Primer and
+   Bootstrap: glyph two thirds of the pill, sides a quarter of it. */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  /* Round at one digit, grows to a pill from there. "99+" comes to 27px. */
+  min-width: .9375rem;
+  height: .9375rem;
+  /* Optical centring, not spacing: the font reserves 1.079em above the baseline
+     against 0.251em below, so a centred digit lands 0.6px low. */
+  padding: 0 .25rem 1px;
+  border-radius: 999px;
+  /* Material's dark-scheme error pair. The dot's red only reaches 2.6:1 on this
+     near-black menu. A theme repainting the surface must repaint these too. */
+  background: var(--platform-badge-bg, #ffb4ab);
+  color: var(--platform-badge-fg, #690005);
+  /* Pinned, or the digit inherits a theme's display serif and shifts height and
+     width per surface. lining-nums since a text serif may serve old-style. */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .625rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Trims the box to cap height, centring the glyph exactly. Hands back the 1px. */
+@supports (text-box-edge: cap alphabetic) {
+  .nav-badge {
+    padding-bottom: 0;
+    text-box: trim-both cap alphabetic;
+  }
+}
