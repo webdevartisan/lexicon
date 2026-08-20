@@ -39,7 +39,7 @@ class DatabaseHelper
             'users',
 
             // Post-related
-            'post_likes',
+            'post_votes',
             'post_bookmarks',
             'post_reviewers',
             'post_tags',
@@ -47,6 +47,9 @@ class DatabaseHelper
             'submissions',
             'reviews',
             'posts',
+            'post_reports',
+            'comment_votes',
+            'comment_reports',
             'comments',
 
             // Blog-related

@@ -148,6 +148,11 @@ $statusBadge = [
                             <?php if (!empty($post['comment_count'])) { ?>
                             <span><?= (int) $post['comment_count'] ?> comment<?= (int) $post['comment_count'] === 1 ? '' : 's' ?></span>
                             <?php } ?>
+                            <?php if ((int) ($post['reports_count'] ?? 0) > 0) { ?>
+                            <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
+                                Reported &times;<?= (int) $post['reports_count'] ?>
+                            </span>
+                            <?php } ?>
                         </p>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">

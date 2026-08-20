@@ -364,11 +364,6 @@
   margin: 0 0 var(--step-2);
 }
 
-.comment-item {
-  padding: 1.4rem 0;
-  border-bottom: 1px solid var(--rule);
-}
-
 .comment-meta {
   font-family: var(--mono);
   font-size: 0.78rem;
@@ -388,17 +383,8 @@
   color: var(--paper-2);
 }
 
-.comment-replies {
-  margin: 1rem 0 0;
-  padding: 0 0 0 2.25rem;
-  border-left: 2px solid var(--rule);
-}
-
 .comment-replies .comment-item {
   font-size: 95%;
-  margin-bottom: 0.75rem;
-  border-bottom: 0;
-  padding: 0.75rem 0;
 }
 
 .reply-toggle {
@@ -589,27 +575,41 @@
   }
 }
 
-/* ---------- deep-linked comment ---------- */
-
-.comment-item.comment-target {
-  animation: comment-target-flash 3s ease-out forwards;
+.engage-menu {
+  position: relative;
 }
 
-@keyframes comment-target-flash {
-  0%, 55% {
-    background: var(--glow);
-    box-shadow: inset 3px 0 0 var(--brass);
-  }
-  100% {
-    background: transparent;
-    box-shadow: inset 3px 0 0 transparent;
-  }
+.engage-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 150px;
+  padding: 0.3rem;
+  border-radius: 6px;
+  background: var(--comment-menu-bg, #1c1c1c);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .comment-item.comment-target {
-    animation: none;
-    background: var(--glow);
-    box-shadow: inset 3px 0 0 var(--brass);
-  }
+.engage-menu-list button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--comment-menu-fg, #f2f2f2);
+  font: inherit;
+  font-size: 0.85em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.engage-menu-list button:hover {
+  background: rgba(128, 128, 128, 0.22);
+}
+
+/* Accent the shared comment thread borrows for votes and @mentions. */
+.comment-thread-root {
+  --comment-accent: var(--brass-bright);
 }

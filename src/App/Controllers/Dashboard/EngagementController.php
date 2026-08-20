@@ -6,7 +6,7 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Models\PostBookmarkModel;
-use App\Models\PostLikeModel;
+use App\Models\PostVoteModel;
 use Framework\Core\Response;
 
 /**
@@ -15,7 +15,7 @@ use Framework\Core\Response;
 class EngagementController extends AppController
 {
     public function __construct(
-        private PostLikeModel $likeModel,
+        private PostVoteModel $voteModel,
         private PostBookmarkModel $bookmarkModel,
     ) {}
 
@@ -34,7 +34,7 @@ class EngagementController extends AppController
         $userId = (int) auth()->user()['id'];
 
         $posts = $tab === 'likes'
-            ? $this->likeModel->likedPosts($userId)
+            ? $this->voteModel->likedPosts($userId)
             : $this->bookmarkModel->bookmarkedPosts($userId);
 
         return $this->view('engagement.index', [

@@ -368,11 +368,6 @@
   text-transform: uppercase;
 }
 
-.comment-item {
-  padding: var(--step-2) 0;
-  border-top: 1px solid var(--rule);
-}
-
 .comment-meta {
   font-family: var(--mono);
   font-size: var(--type-mono);
@@ -531,27 +526,7 @@
   }
 }
 
-/* ---------- deep-linked comment ---------- */
-
-.comment-item.comment-target {
-  animation: comment-target-flash 3s ease-out forwards;
-}
-
-@keyframes comment-target-flash {
-  0%, 55% {
-    background: var(--tint);
-    box-shadow: inset 3px 0 0 var(--cobalt);
-  }
-  100% {
-    background: transparent;
-    box-shadow: inset 3px 0 0 transparent;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .comment-item.comment-target {
-    animation: none;
-    background: var(--tint);
-    box-shadow: inset 3px 0 0 var(--cobalt);
-  }
+/* Accent the shared comment thread borrows for votes and @mentions. */
+.comment-thread-root {
+  --comment-accent: var(--cobalt);
 }

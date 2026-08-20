@@ -78,6 +78,19 @@ $router->add('/comments/create', [
     'method' => 'POST',
 ]);
 
+// Reader actions on an existing comment. Both need an identity: removal is
+// scoped to your own comment or a blog you moderate, and a vote has to belong
+// to somebody to be toggled off again.
+$router->group([
+    'prefix' => '/comments',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/{id:\d+}/delete', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/{id:\d+}/vote', ['controller' => 'CommentController', 'action' => 'vote', 'method' => 'POST']);
+    $r->add('/{id:\d+}/report', ['controller' => 'CommentController', 'action' => 'report', 'method' => 'POST']);
+    $r->add('/{id:\d+}/pin', ['controller' => 'CommentController', 'action' => 'pin', 'method' => 'POST']);
+});
+
 // Blog subscriptions (guests allowed; unsubscribe is a signed token link from email)
 $router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/subscribe', [
     'controller' => 'SubscriptionController',
@@ -95,8 +108,9 @@ $router->group([
     'prefix' => '/posts',
     'middleware' => ['auth'],
 ], function (Router $r) {
-    $r->add('/{id:\d+}/like', ['controller' => 'PostEngagementController', 'action' => 'toggleLike', 'method' => 'POST']);
+    $r->add('/{id:\d+}/vote', ['controller' => 'PostEngagementController', 'action' => 'vote', 'method' => 'POST']);
     $r->add('/{id:\d+}/bookmark', ['controller' => 'PostEngagementController', 'action' => 'toggleBookmark', 'method' => 'POST']);
+    $r->add('/{id:\d+}/report', ['controller' => 'PostEngagementController', 'action' => 'report', 'method' => 'POST']);
 });
 
 // Public blog invitation landing (reached from the email link; no auth required)

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\PostBookmarkModel;
-use App\Models\PostLikeModel;
 use App\Models\PostModel;
+use App\Models\PostVoteModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 
 /**
- * Integration tests for like and bookmark toggling against a real database.
+ * Integration tests for post voting and bookmarking against a real database.
  */
 beforeEach(function () {
-    $this->likeModel = new PostLikeModel($this->db);
+    $this->voteModel = new PostVoteModel($this->db);
     $this->bookmarkModel = new PostBookmarkModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
@@ -29,15 +29,29 @@ beforeEach(function () {
         ->create();
 });
 
-it('toggles a like on and off', function () {
-    expect($this->likeModel->userLikes($this->userId, $this->postId))->toBeFalse();
+it('casts, flips and clears a vote', function () {
+    expect($this->voteModel->userVote($this->userId, $this->postId))->toBe(0);
 
-    expect($this->likeModel->toggle($this->userId, $this->postId))->toBeTrue()
-        ->and($this->likeModel->userLikes($this->userId, $this->postId))->toBeTrue()
-        ->and($this->likeModel->countByPost($this->postId))->toBe(1);
+    expect($this->voteModel->apply($this->userId, $this->postId, PostVoteModel::UP))
+        ->toBe(['up' => 1, 'down' => 0, 'mine' => 1]);
 
-    expect($this->likeModel->toggle($this->userId, $this->postId))->toBeFalse()
-        ->and($this->likeModel->countByPost($this->postId))->toBe(0);
+    // The other direction replaces the row rather than adding a second one.
+    expect($this->voteModel->apply($this->userId, $this->postId, PostVoteModel::DOWN))
+        ->toBe(['up' => 0, 'down' => 1, 'mine' => -1]);
+
+    expect($this->voteModel->apply($this->userId, $this->postId, PostVoteModel::DOWN))
+        ->toBe(['up' => 0, 'down' => 0, 'mine' => 0])
+        ->and($this->voteModel->userVote($this->userId, $this->postId))->toBe(0);
+});
+
+it('keeps down votes out of the liked library', function () {
+    $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::DOWN);
+
+    expect($this->voteModel->likedPosts($this->userId))->toBeEmpty();
+
+    $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::UP);
+
+    expect($this->voteModel->likedPosts($this->userId))->toHaveCount(1);
 });
 
 it('toggles a bookmark on and off', function () {

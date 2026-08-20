@@ -78,12 +78,17 @@ return [
         '/consent/withdraw' => 0,
 
         '/comments/create' => 0,
+        '/comments/*/delete' => 0,
+        '/comments/*/vote' => 0,
+        '/comments/*/report' => 0,
+        '/comments/*/pin' => 0,
 
         '/blog/*/subscribe' => 0,
         '/subscriptions/unsubscribe/*' => 0,
 
-        '/posts/*/like' => 0,
+        '/posts/*/vote' => 0,
         '/posts/*/bookmark' => 0,
+        '/posts/*/report' => 0,
 
         '/invite/*' => 0,
         '/invite/*/accept' => 0,
@@ -139,7 +144,7 @@ return [
 
         '/getting-started/*' => [],
 
-        '/blog/*' => ['page'],
+        '/blog/*' => ['page', 'comments'],
         '/blog/*/archive' => ['page'],
         '/blog/*/category/*' => ['page'],
         '/blog/*/tag/*' => ['page'],
@@ -187,6 +192,10 @@ return [
         '/consent/withdraw',
         '/csp-report',
         '/comments/create',
+        '/comments/*/delete',
+        '/comments/*/vote',
+        '/comments/*/report',
+        '/comments/*/pin',
         '/account*',
         '/password/reset*',
         '/subscriptions/unsubscribe/*',
