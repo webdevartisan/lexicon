@@ -25,7 +25,9 @@ test('a platform page adopts the reader language', function (string $target, str
     ['/el/dashboard', '/en/dashboard'],
     ['/el/dashboard/account', '/en/dashboard/account'],
     ['/el/blogs', '/en/blogs'],
-    ['/el/library/saved', '/en/library/saved'],
+    ['/el/saved', '/en/saved'],
+    ['/el/replies/mine', '/en/replies/mine'],
+    ['/el/subscriptions', '/en/subscriptions'],
     ['/el/profile/someone', '/en/profile/someone'],
 ]);
 
