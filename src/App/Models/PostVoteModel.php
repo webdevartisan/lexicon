@@ -103,7 +103,6 @@ class PostVoteModel extends AppModel
         return $this->pageOfEngagedPosts($userId, $page, $perPage, 'e.value = ?', [self::UP]);
     }
 
-
     /**
      * Votes of one direction on a post.
      *

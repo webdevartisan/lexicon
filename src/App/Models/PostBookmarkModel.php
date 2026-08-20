@@ -92,5 +92,4 @@ class PostBookmarkModel extends AppModel
     {
         return $this->pageOfEngagedPosts($userId, $page, $perPage);
     }
-
 }

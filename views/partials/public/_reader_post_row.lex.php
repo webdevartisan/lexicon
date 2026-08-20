@@ -33,7 +33,7 @@ $rowPostId = (int) ($row['id'] ?? 0);
     <?php
     // Always in the DOM, revealed by hover or focus-within and always visible
     // on touch. Inserting it on hover would put it out of reach of a keyboard.
-    ?>
+?>
     <form class="lx-reader-act" method="post"
           action="<?= e(lurl($readerRemoveBase.'/'.$rowPostId.'/remove')) ?>">
         <?= csrf_field() ?>

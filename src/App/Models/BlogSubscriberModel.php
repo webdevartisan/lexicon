@@ -127,7 +127,6 @@ class BlogSubscriberModel extends AppModel
         ) > 0;
     }
 
-
     /**
      * One page of the blogs the reader follows.
      *
@@ -208,6 +207,4 @@ class BlogSubscriberModel extends AppModel
             [$blogId, $userId, $email]
         ) > 0;
     }
-
-
 }

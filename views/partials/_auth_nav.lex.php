@@ -64,7 +64,7 @@ $renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnrea
                 // away next to Replies. A dot on the avatar is what every other
                 // platform does, and it survives the narrow bar where the name
                 // is already hidden.
-                ?>
+                    ?>
                 <span class="nav-dot" data-reader-dot aria-hidden="true"></span>
                 <?php } ?>
             </span>
@@ -118,20 +118,20 @@ if ($navVariant === 'platform') {
             <?php
             // A reader is already registered, so this goes to the form that
             // makes a blog, not to sign-up. A creator gets their dashboard.
-            ?>
+        ?>
             <a href="<?= e(lurl($navIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>" class="lx-btn lx-btn--primary">
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>
         <li><?php $renderAccountMenu(); ?></li>
     <?php }
-} else {
-    if ($navIsGuest) { ?>
+    } else {
+        if ($navIsGuest) { ?>
         <a href="<?= e($loginUrl) ?>" class="nav-pill"><?= e($tr('header.signIn')) ?></a>
     <?php } else {
         $renderAccountMenu();
     }
-}
+    }
 // Must close the tag. Includes are spliced into the layout as raw text, so
 // leaving PHP mode open here would swallow the markup that follows.
 ?>

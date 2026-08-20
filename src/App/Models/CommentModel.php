@@ -731,7 +731,6 @@ class CommentModel extends AppModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-
     /**
      * One page of the comments the user wrote, newest first.
      *
@@ -777,7 +776,6 @@ class CommentModel extends AppModel
             'perPage' => $perPage,
         ];
     }
-
 
     /**
      * @return array<string, mixed>|null Comment row or null if not found

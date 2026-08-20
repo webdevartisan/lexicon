@@ -137,7 +137,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     // drawer offers them the blog form instead of a redirect
                     // back to where they already are.
                     $drawerIsReader = !empty($viewer['is_reader']);
-                    ?>
+?>
                     <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>

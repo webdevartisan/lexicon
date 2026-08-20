@@ -245,8 +245,8 @@ class NotificationModel extends AppModel
                    INNER JOIN posts p ON p.id = c.post_id
                    INNER JOIN blogs b ON b.id = p.blog_id
                    WHERE c.id = CAST(n.data->>'$.comment_id' AS UNSIGNED)
-                     AND ".self::REPLY_LIVE."
-               )",
+                     AND ".self::REPLY_LIVE.'
+               )',
             array_merge([$userId], array_values($types))
         );
     }

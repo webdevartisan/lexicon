@@ -296,5 +296,4 @@ final class ReaderController extends AppController
     {
         return (string) (auth()->user()['email'] ?? '');
     }
-
 }

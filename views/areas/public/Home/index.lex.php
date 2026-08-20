@@ -63,12 +63,12 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // get the same invitation a guest gets, pointed at the form rather
         // than at sign-up, since they are already registered.
         $homeViewerIsReader = !empty($viewer['is_reader']);
-        $homeCtaUrl = !auth()->check()
-            ? '/register'
-            : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
-        $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
-            ? site_content('banner.cta')
-            : site_content('banner.ctaDashboard');
+$homeCtaUrl = !auth()->check()
+    ? '/register'
+    : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
+$homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
+    ? site_content('banner.cta')
+    : site_content('banner.ctaDashboard');
 ?>
         <div class="lx-cover__actions">
             <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e($homeCtaLabel) ?></a>

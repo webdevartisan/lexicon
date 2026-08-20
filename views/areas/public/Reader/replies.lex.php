@@ -34,7 +34,7 @@
                     <?php
                     // Display text comes from the payload snapshot; the link is
                     // rebuilt from the live slugs, so a renamed post keeps working.
-                    ?>
+            ?>
                     <strong><?= e($payload['commenter_name'] ?? $t('reader.someone')) ?></strong>
                     <?= e($t('reader.replyContext', ['title' => (string) ($payload['post_title'] ?? '')])) ?>
                 </p>
@@ -56,7 +56,7 @@
     // The button is always rendered rather than being a scripting-off fallback,
     // so there is one code path and a reader without JavaScript keeps control of
     // their own badge.
-    ?>
+        ?>
     <form class="lx-reader-markread" method="post" action="<?= e(lurl('/replies/mark-read')) ?>" data-reader-markread>
         <?= csrf_field() ?>
         <?php foreach ($renderedIds as $renderedId) { ?>
