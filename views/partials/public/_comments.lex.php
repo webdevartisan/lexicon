@@ -8,7 +8,8 @@
  *
  * Expects from the controller: $comments, $comments_enabled, $post, $blog,
  * $comment_votes, $can_remove_comment, $can_moderate_comments, $comment_sort,
- * $comment_sort_urls, $viewer_name, $viewer_avatar.
+ * $comment_sort_urls, $viewer_name, $viewer_avatar, $comment_author,
+ * $comment_author_hearts.
  *
  * A theme sets $comment_labels before including this to keep its own voice;
  * every key falls back to neutral wording. See the defaults below.
@@ -19,9 +20,28 @@ $postId = (int) ($post['id'] ?? 0);
 $viewerVotes = $comment_votes ?? [];
 $canRemove = $can_remove_comment ?? static fn (array $c): bool => false;
 $canModerate = !empty($can_moderate_comments);
+
+// Pinning is offered to the blog team and to whoever wrote the post; the
+// endpoint checks the same pair. Wider than moderation on purpose, and only
+// for pinning — removal stays with $canRemove.
+$viewerId = auth()->check() ? (int) (auth()->user()['id'] ?? 0) : 0;
+$canPin = $canModerate || ($viewerId > 0 && $viewerId === (int) ($post['author_id'] ?? 0));
 $sort = ($comment_sort ?? 'top') === 'new' ? 'new' : 'top';
 $sortUrls = $comment_sort_urls ?? ['top' => '?comments=top#comments', 'new' => '?comments=new#comments'];
 $viewerIsGuest = !auth()->check();
+
+// Whoever wrote the post gets their name badged in their own thread, the way a
+// channel owner is badged under their own video. It follows the post, not the
+// blog: on a multi-author blog the owner is not the voice readers came for.
+$postAuthorId = (int) ($post['author_id'] ?? 0);
+
+// The post's author, and which comments they upvoted. Both drive the author's
+// face appearing in their own thread: a heart on a comment they endorsed, and
+// the replies toggle of a thread they joined. Flipped to a set so the lookup
+// is by key rather than a scan per comment.
+$postAuthor = $comment_author ?? null;
+
+$heartedIds = array_flip(array_map('intval', $comment_author_hearts ?? []));
 
 // The indent steps as far as replies are allowed to nest, no further. The data
 // cap is the one that matters, so read it from the model rather than guessing.
@@ -80,6 +100,34 @@ $avatar = static function (string $name, ?string $url): string {
 };
 
 /**
+ * Did the post's author answer anywhere inside this set of replies?
+ *
+ * Costs nothing at the database: the whole tree for the post is already in
+ * memory by the time anything renders, so this is a walk over an array we are
+ * holding rather than a question worth storing an answer to.
+ *
+ * @param  array<int, array<string, mixed>>  $nodes  Replies to search, at any depth
+ * @param  int  $authorId  The post author's user id
+ */
+$authorInThread = static function (array $nodes, int $authorId) use (&$authorInThread): bool {
+    if ($authorId <= 0) {
+        return false;
+    }
+
+    foreach ($nodes as $node) {
+        if (empty($node['deleted_at']) && (int) ($node['user_id'] ?? 0) === $authorId) {
+            return true;
+        }
+
+        if ($authorInThread($node['replies'] ?? [], $authorId)) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+/**
  * Render one comment and everything hanging off it.
  *
  * Recursive rather than two hard-coded levels: a reply at depth six is the
@@ -92,13 +140,19 @@ $avatar = static function (string $name, ?string $url): string {
  */
 $renderComment = static function (array $comment, int $depth) use (
     &$renderComment, $postId, $commentsOpen, $viewerVotes, $canRemove,
-    $canModerate, $viewerIsGuest, $indentCap, $replyBatch, $avatar
+    $canPin, $viewerIsGuest, $indentCap, $replyBatch, $avatar, $postAuthorId,
+    $postAuthor, $heartedIds, $authorInThread
 ): void {
     $id = (int) $comment['id'];
     $removed = !empty($comment['deleted_at']);
     $pinned = !empty($comment['pinned_at']);
     $authorName = (string) ($comment['user_name'] ?? 'Guest');
     $myVote = (int) ($viewerVotes[$id] ?? 0);
+    $byAuthor = $postAuthorId > 0 && (int) ($comment['user_id'] ?? 0) === $postAuthorId;
+
+    // The author endorsing their own comment is not an endorsement, it is a
+    // person agreeing with themselves, so it earns no heart.
+    $hearted = isset($heartedIds[$id]) && $postAuthor !== null && !$byAuthor;
     $up = (int) ($comment['upvotes'] ?? 0);
     $replies = $comment['replies'] ?? [];
     $childDepth = $depth + 1;
@@ -119,7 +173,7 @@ $renderComment = static function (array $comment, int $depth) use (
     // one thing it is not.
     $mentionLabel = $answeredGone
         ? 'in reply to [removed]'
-        : '@'.(string) ($comment['parent_name'] ?? '');
+        : '@'.(string) (($comment['parent_handle'] ?? '') ?: ($comment['parent_name'] ?? ''));
 
     // A removed comment keeps its slot and its timestamp so the replies under
     // it still read in order, but it stops being a person saying something:
@@ -129,13 +183,6 @@ $renderComment = static function (array $comment, int $depth) use (
         : 'This comment was deleted by its author.';
     ?>
     <li class="comment-item<?= $depth === 0 ? ' reveal' : '' ?><?= $removed ? ' is-removed' : '' ?>" id="comment-<?= $id ?>">
-      <?php if ($pinned && !empty($comment['pinned_by_name'])) { ?>
-        <p class="comment-pinned">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3v2l1.5 1.5V11l2 2v2h-6v6l-1 1-1-1v-6h-6v-2l2-2V6.5L9 5V3z"/></svg>
-          Pinned by @<?= e($comment['pinned_by_name']) ?>
-        </p>
-      <?php } ?>
-
       <div class="comment-row">
         <?= $removed ? '<span class="comment-avatar is-ghost"></span>' : $avatar($authorName, $comment['author_avatar'] ?? null) ?>
         <?php if ($hasThread) { ?><span class="comment-thread-rail" aria-hidden="true"></span><?php } ?>
@@ -146,11 +193,18 @@ $renderComment = static function (array $comment, int $depth) use (
             // land on it without washing over the replies hanging underneath.
     ?>
           <div class="comment-block">
+            <?php if ($pinned && !empty($comment['pinned_by_name'])) { ?>
+              <p class="comment-pinned">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3v2l1.5 1.5V11l2 2v2h-6v6l-1 1-1-1v-6h-6v-2l2-2V6.5L9 5V3z"/></svg>
+                Pinned by @<?= e(($comment['pinned_by_handle'] ?? '') ?: $comment['pinned_by_name']) ?>
+              </p>
+            <?php } ?>
+
             <p class="comment-meta">
               <?php if ($removed) { ?>
                 <strong class="comment-ghost">[removed]</strong>
               <?php } else { ?>
-                <strong><?= profile_link($authorName, $comment['author_profile_slug'] ?? null) ?></strong>
+                <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorName, $comment['author_profile_slug'] ?? null) ?></strong>
               <?php } ?>
               <?php if (!empty($comment['created_at'])) { ?>
                 <time><?= e(relative_time($comment['created_at'])) ?></time>
@@ -185,6 +239,14 @@ $renderComment = static function (array $comment, int $depth) use (
                   </button>
                 </div>
 
+                <?php if ($hearted) { ?>
+                  <span class="comment-heart" title="<?= e(($postAuthor['name'] ?? 'The author').' liked this') ?>">
+                    <?= $avatar((string) ($postAuthor['name'] ?? ''), $postAuthor['avatar'] ?? null) ?>
+                    <svg class="comment-heart-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-8-4.9-8-10.4A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 3.6C20 16.1 12 21 12 21z"/></svg>
+                    <span class="sr-only"><?= e(($postAuthor['name'] ?? 'The author').' liked this comment') ?></span>
+                  </span>
+                <?php } ?>
+
                 <?php if ($commentsOpen) { ?>
                   <button type="button" class="reply-toggle" data-reply-toggle="<?= $id ?>">Reply</button>
                 <?php } ?>
@@ -213,12 +275,22 @@ $renderComment = static function (array $comment, int $depth) use (
             <?php
             $replyTotal = count($replies);
               $replyWord = $replyTotal === 1 ? 'reply' : 'replies';
+
+              // The author's face on the toggle says the person who wrote the
+              // post is somewhere down there, which is the thing that decides
+              // whether a collapsed thread is worth opening.
+              $authorAnswered = $postAuthor !== null && $authorInThread($replies, $postAuthorId);
               ?>
-            <button type="button" class="reply-toggle replies-toggle" aria-expanded="false"
+            <button type="button" class="reply-toggle replies-toggle<?= $authorAnswered ? ' has-author' : '' ?>"
+                    aria-expanded="false"
                     aria-controls="replies-<?= $id ?>"
                     data-collapse-toggle="<?= $id ?>"
                     data-label-show="<?= $replyTotal ?> <?= $replyWord ?>"
                     data-label-hide="Hide <?= $replyWord ?>">
+              <?php if ($authorAnswered) { ?>
+                <?= $avatar((string) ($postAuthor['name'] ?? ''), $postAuthor['avatar'] ?? null) ?>
+                <span class="sr-only"><?= e(($postAuthor['name'] ?? 'The author').' replied') ?></span>
+              <?php } ?>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
               <span data-collapse-label><?= $replyTotal ?> <?= $replyWord ?></span>
             </button>
@@ -239,7 +311,7 @@ $renderComment = static function (array $comment, int $depth) use (
                 <button type="button" data-report-comment data-comment-id="<?= $id ?>">Report</button>
               <?php } ?>
 
-              <?php if ($canModerate && $depth === 0) { ?>
+              <?php if ($canPin && $depth === 0) { ?>
                 <form action="/comments/<?= $id ?>/pin" method="post">
                   <?= csrf_field() ?>
                   <button type="submit"><?= $pinned ? 'Unpin' : 'Pin to top' ?></button>
@@ -300,11 +372,12 @@ $renderComment = static function (array $comment, int $depth) use (
      Everything belonging to one comment sits tight; the air goes between
      comments. That spacing is what separates them, not a rule. */
   .comment-thread { list-style: none; margin: 0; padding: 0; }
-  .comment-item { position: relative; margin: 0 0 1.75rem; padding: 0; border: 0; }
+  .comment-item { position: relative; margin: 0 0 1.5rem; padding: 0; border: 0; }
   .comment-replies .comment-item { margin-bottom: var(--ct-row-gap); }
   .comment-thread > .comment-item:last-child { margin-bottom: 0; }
 
-  .comment-row { position: relative; display: flex; align-items: flex-start; gap: .75rem; }
+  .comment-row { position: relative; display: flex; align-items: flex-start; gap: 1rem; }
+  .comment-replies .comment-row { gap: .75rem; }
   .comment-main { flex: 1 1 auto; min-width: 0; }
 
   /* Sized off --ct-rail rather than the other way round, so one token per
@@ -320,11 +393,11 @@ $renderComment = static function (array $comment, int $depth) use (
      text-indent would bias it the same way. */
   .comment-avatar.is-letter {
     background: hsl(var(--avatar-hue, 210) 42% 42%); color: #fff;
-    font-size: .95rem; font-weight: 600; line-height: 1;
-    letter-spacing: normal; text-indent: 0;
+    font-size: 16px; font-weight: 600; line-height: 1;
+    letter-spacing: normal; text-indent: 0; text-transform: none;
   }
   .comment-avatar.is-ghost { background: currentColor; opacity: .12; }
-  .comment-replies .comment-avatar.is-letter { font-size: .78rem; }
+  .comment-replies .comment-avatar.is-letter { font-size: 13px; }
 
   /* The stem of the connector tree: it runs down the centre line of a comment's
      own avatar, starting --ct-clear below it, to the bottom of the row — which
@@ -350,15 +423,48 @@ $renderComment = static function (array $comment, int $depth) use (
     border-bottom-left-radius: var(--ct-radius);
   }
 
-  .comment-pinned {
-    display: flex; align-items: center; gap: .3rem;
-    margin: 0 0 .3rem; font-size: .66em; letter-spacing: .02em; opacity: .6;
+  /* Sits inside the text column, not above the whole row: it is a note about
+     the comment, so it lines up with the name it is a note about rather than
+     hanging over the avatar. */
+  .comment-thread-root .comment-pinned {
+    display: flex; align-items: center; gap: .35rem;
+    margin: 0 0 .35rem; font-size: var(--c-time); line-height: 1.4;
+    letter-spacing: normal; text-transform: none; opacity: .6;
   }
-  .comment-pinned svg { width: 11px; height: 11px; }
+  .comment-thread-root .comment-pinned svg { flex: none; width: 14px; height: 14px; }
 
-  .comment-item .comment-meta { margin: 0 0 .15rem; font-size: .78em; line-height: 1.35; }
-  .comment-item .comment-meta time { margin-left: .45rem; opacity: .55; font-size: .8em; }
-  .comment-item .comment-body { margin: 0; line-height: 1.55; }
+  /* baseline, not center: the name and the time are different sizes and it is
+     their baselines a reader lines up, not their boxes. */
+  .comment-thread-root .comment-meta {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 .45rem;
+    margin: 0 0 .25rem; font-size: var(--c-name); line-height: 1.4;
+  }
+  /* Themes size the name off their own small-text token, which is what put it
+     out of step with the body beneath it. Family and colour still theirs. */
+  .comment-thread-root .comment-meta strong {
+    font-size: inherit; line-height: inherit;
+  }
+  .comment-thread-root .comment-meta time {
+    margin: 0; font-size: var(--c-time); letter-spacing: normal;
+    text-transform: none; opacity: .6;
+  }
+
+  /* The author of the post, badged in their own thread. A neutral grey wash,
+     not a tint of the name's own colour: themes paint the name in their accent,
+     and 14% of an accent over that same accent on a dark ground is invisible —
+     which is exactly how the first attempt at this disappeared. Mid-grey at low
+     alpha lifts off a dark background and settles onto a light one, so one
+     value covers every theme. */
+  .comment-thread-root .comment-author.is-post-author {
+    display: inline-block; padding: .1rem .55rem; border-radius: 999px;
+    background: rgba(128, 128, 128, .28);
+  }
+  .comment-thread-root .comment-author.is-post-author a { text-decoration: none; }
+
+  .comment-thread-root .comment-body {
+    margin: 0; font-size: var(--c-body); line-height: 1.45;
+    letter-spacing: normal; text-transform: none;
+  }
   .comment-mention { font-weight: 600; text-decoration: none; color: var(--comment-accent, currentColor); }
   .comment-mention:hover { text-decoration: underline; }
   .comment-removed { font-style: italic; opacity: .6; }
@@ -394,19 +500,59 @@ $renderComment = static function (array $comment, int $depth) use (
     to { background: transparent; box-shadow: 0 0 0 .6rem transparent; }
   }
 
-  .comment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .9rem; margin-top: .3rem; }
-  .comment-votes { display: inline-flex; align-items: center; gap: .25rem; margin-left: -.4rem; }
-  .comment-vote { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .4rem; border: 0; border-radius: 999px; background: none; color: inherit; opacity: .65; font: inherit; font-size: .72em; line-height: 1; cursor: pointer; transition: opacity .15s ease, background .15s ease; }
+  /* One row, one height. Every control in it is 32px tall and centred, so the
+     thumbs, the count and the word Reply share a midline instead of each
+     sitting wherever its own text box happens to land. */
+  .comment-thread-root .comment-actions {
+    display: flex; align-items: center; flex-wrap: wrap; gap: .25rem;
+    margin-top: .15rem;
+  }
+  .comment-votes { display: inline-flex; align-items: center; gap: .1rem; margin-left: -.5rem; }
+  .comment-vote { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; height: 32px; padding: 0 .55rem; border: 0; border-radius: 999px; background: none; color: inherit; opacity: .7; font: inherit; font-size: var(--c-chrome); line-height: 1; letter-spacing: normal; text-transform: none; cursor: pointer; transition: opacity .15s ease, background .15s ease; }
   .comment-vote:hover { opacity: 1; background: rgba(128, 128, 128, .14); }
-  .comment-vote svg { width: 15px; height: 15px; display: block; }
+  .comment-vote svg { width: 18px; height: 18px; display: block; }
   .comment-vote.is-active { opacity: 1; color: var(--comment-accent, currentColor); }
-  .comment-vote span { min-width: .5em; font-variant-numeric: tabular-nums; }
+  .comment-vote span:empty { display: none; }
+  .comment-vote span { font-variant-numeric: tabular-nums; }
   .comment-vote[data-vote="down"] svg { transform: translateY(1px); }
-  /* These read as chrome, not prose, so they sit below the comment body rather
-     than beside it. Themes that set the body smaller than 1em (and uppercase
-     these controls) otherwise end up with the toggle looking the larger of the
-     two, which inverts the hierarchy. */
-  .comment-item .reply-toggle { font-size: .72em; }
+
+  /* The author's face with a heart clipped to its corner, sitting in the action
+     row after the votes. The notch is punched out of the avatar rather than the
+     heart being laid on top of it, so the heart reads as a badge on the picture
+     whatever colour the theme paints behind it. */
+  .comment-heart {
+    position: relative; flex: none; display: inline-flex;
+    width: 24px; height: 24px; margin: 0 .35rem;
+  }
+  .comment-heart .comment-avatar {
+    width: 24px; height: 24px;
+    -webkit-mask: radial-gradient(circle 8px at 84% 84%, transparent 99%, #000 100%);
+    mask: radial-gradient(circle 8px at 84% 84%, transparent 99%, #000 100%);
+  }
+  .comment-heart .comment-avatar.is-letter { font-size: 11px; }
+  .comment-heart-mark {
+    position: absolute; right: -3px; bottom: -3px;
+    width: 13px; height: 13px; color: #f0284a;
+  }
+
+  /* Chrome, not prose. Themes tend to shout these in tracked-out capitals,
+     which makes the controls louder than the comment they belong to — so the
+     thread sets them back to sentence case at a fixed size. Zero margin is
+     what puts Reply on the thumbs' midline rather than below it. */
+  .comment-thread-root .reply-toggle,
+  .comment-thread-root .btn-reply,
+  .comment-thread-root .btn-submit {
+    letter-spacing: normal; text-transform: none;
+  }
+  .comment-thread-root .comment-actions .reply-toggle {
+    display: inline-flex; align-items: center; height: 32px; margin: 0;
+    padding: 0 .75rem; border-radius: 999px;
+    font-size: var(--c-chrome); line-height: 1; opacity: .8;
+    transition: opacity .15s ease, background .15s ease;
+  }
+  .comment-thread-root .comment-actions .reply-toggle:hover {
+    opacity: 1; background: rgba(128, 128, 128, .14);
+  }
 
   /* A request is out and the reader has to wait on the answer, so the control
      dims and stops taking clicks rather than sitting there looking idle, which
@@ -428,13 +574,25 @@ $renderComment = static function (array $comment, int $depth) use (
      it hangs off the *parent's* rail, so .comment-replies takes a copy of the
      value it inherited as --ct-from before the children overwrite it. */
   .comment-thread-root {
-    --ct-gutter: 2.25rem;     /* one indent step */
-    --ct-rail: 1.125rem;      /* half a top-level avatar */
+    --ct-gutter: 2.75rem;     /* one indent step */
+    --ct-rail: 20px;          /* half a top-level avatar */
     --ct-gap: .9rem;          /* space between a comment and its first reply */
     --ct-clear: .3rem;        /* daylight between a line and an avatar */
-    --ct-toggle-mid: 6.5px;   /* row bottom up to a collapsed toggle's midline */
+    --ct-toggle-mid: 8px;     /* row bottom up to a collapsed toggle's midline */
     --ct-radius: 9px;         /* corner radius shared by every elbow */
     --ct-row-gap: 1.15rem;    /* space between one reply and the next */
+
+    /* ---- type scale -----------------------------------------------------
+       Absolute, not em, and that is the point. A thread rendered in em takes
+       whatever the theme set for body copy, so the same comment reads at 13px
+       under one theme and 17px under another while the avatar beside it stays
+       put — which is how the picture ends up out of proportion. Fixing the
+       scale here keeps the comment legible and the geometry honest whichever
+       theme is mounted; themes still own colour and family. */
+    --c-body: 16px;           /* what someone actually said */
+    --c-name: 14px;           /* who said it */
+    --c-time: 12px;           /* when, and it may recede */
+    --c-chrome: 13px;         /* votes, reply, pinned, the toggles */
   }
 
   .comment-replies {
@@ -446,7 +604,7 @@ $renderComment = static function (array $comment, int $depth) use (
     border-left: 0;
   }
 
-  .comment-replies > .comment-item { --ct-rail: .875rem; }
+  .comment-replies > .comment-item { --ct-rail: 16px; }
 
   /* Bridges the gap between a comment and the first reply's elbow. */
   .comment-replies::before {
@@ -515,18 +673,44 @@ $renderComment = static function (array $comment, int $depth) use (
      scripting off the whole form is simply there and works. */
   .comment-form { margin: 0 0 2.25rem; }
   .comment-form h4 { display: none; }
-  .comment-form textarea,
-  .reply-form textarea {
+  .comment-thread-root .comment-form textarea,
+  .comment-thread-root .reply-form textarea {
     width: 100%; padding: .35rem 0; border: 0; border-bottom: 1px solid currentColor;
     border-radius: 0; background: transparent; color: inherit; font: inherit;
-    line-height: 1.5; resize: none; overflow: hidden;
+    font-size: var(--c-body); line-height: 1.45; letter-spacing: normal;
+    text-transform: none; resize: none; overflow: hidden;
   }
   .comment-form textarea::placeholder,
   .reply-form textarea::placeholder { opacity: .5; }
   .comment-form textarea:focus,
   .reply-form textarea:focus { outline: 0; border-bottom-width: 2px; }
-  .comment-form-note { margin: .6rem 0 0; font-size: .78em; opacity: .6; }
-  .comment-form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: .7rem; }
+  .comment-thread-root .comment-form-note { margin: .6rem 0 0; font-size: var(--c-time); line-height: 1.4; letter-spacing: normal; text-transform: none; opacity: .6; }
+  /* Themes hang their own margin-top off the submit button, which stacked on
+     top of this one and floated the row well clear of the line it belongs to.
+     The row owns the gap now and the controls inside it own none. */
+  .comment-thread-root .comment-form-actions {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: .5rem; margin-top: .35rem;
+  }
+
+  /* Cancel and the submit button are the same control in two weights, so they
+     get one geometry: same height, same radius, same type. Themes keep the
+     colours — only the filled one is asked to carry any. */
+  .comment-thread-root .comment-form-actions .reply-toggle,
+  .comment-thread-root .comment-form-actions .btn-reply,
+  .comment-thread-root .comment-form-actions .btn-submit {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 36px; margin: 0; padding: 0 1.15rem; border-radius: 999px;
+    font-size: var(--c-chrome); line-height: 1; letter-spacing: normal;
+    text-transform: none;
+  }
+  .comment-thread-root .comment-form-actions .reply-toggle {
+    background: none; opacity: .8;
+    transition: opacity .15s ease, background .15s ease;
+  }
+  .comment-thread-root .comment-form-actions .reply-toggle:hover {
+    opacity: 1; background: rgba(128, 128, 128, .14);
+  }
 
   .comment-form.is-collapsed .comment-form-note,
   .comment-form.is-collapsed .comment-form-actions { display: none; }
@@ -540,11 +724,21 @@ $renderComment = static function (array $comment, int $depth) use (
      line-height pinned to the chevron, the control is exactly 13px tall
      whatever type the theme is wearing, which is what lets the collapsed elbow
      land on its midline from a fixed --ct-toggle-mid instead of a guess. */
-  .replies-toggle {
+  .comment-thread-root .replies-toggle {
     display: flex; width: fit-content; align-items: center; gap: .4rem;
-    margin-top: .5rem; line-height: 13px;
+    margin-top: .55rem; padding: 0; font-size: var(--c-chrome);
+    line-height: 16px; opacity: .85;
   }
-  .replies-toggle svg { width: 13px; height: 13px; transition: transform .18s ease; }
+  .comment-thread-root .replies-toggle:hover { opacity: 1; }
+  .replies-toggle svg { flex: none; width: 16px; height: 16px; transition: transform .18s ease; }
+
+  /* When the author is down there, their face leads and the chevron moves to
+     the end, so the row reads face, count, control rather than burying the one
+     piece of information that decides whether the thread is worth opening. */
+  .replies-toggle.has-author .comment-avatar { flex: none; width: 24px; height: 24px; }
+  .replies-toggle.has-author .comment-avatar.is-letter { font-size: 11px; }
+  .replies-toggle.has-author svg { order: 3; }
+  .replies-toggle.has-author [data-collapse-label]::before { content: "• "; opacity: .55; }
 
   /* Open, the toggle's job is done — the rail carries on into the replies
      themselves, so the row it sat in just closes back up around the comment. */
@@ -568,8 +762,9 @@ $renderComment = static function (array $comment, int $depth) use (
     /* One avatar size at every depth here, and a step only slightly wider than
        it: the gutter cannot go below the avatar without the elbow having no
        room left to curve in. Everything else follows from the tokens. */
-    .comment-thread-root { --ct-gutter: 1.9rem; --ct-rail: .925rem; }
-    .comment-replies > .comment-item { --ct-rail: .925rem; }
+    .comment-thread-root { --ct-gutter: 2.1rem; --ct-rail: 16px; }
+    .comment-replies > .comment-item { --ct-rail: 16px; }
+    .comment-row { gap: .75rem; }
     .comment-menu-button { opacity: .7; }
   }
 

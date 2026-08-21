@@ -63,13 +63,19 @@ class CommentModel extends AppModel
                         NULLIF(CONCAT_WS(' ', pu.first_name, pu.last_name), ' '),
                         pu.username
                     ) AS parent_name,
+                    -- The one-word handle behind an @mention. The display name
+                    -- is two words with a space in it, which is the one thing an
+                    -- @handle cannot be, so the profile slug leads and the
+                    -- username stands in when there is no public profile.
+                    COALESCE(NULLIF(pup.slug, ''), pu.username) AS parent_handle,
                     COALESCE(c.reply_to_comment_id, c.parent_comment_id) AS answered_id,
                     parent.deleted_at AS answered_deleted_at,
                     COALESCE(
                         piu.display_name_cached,
                         NULLIF(CONCAT_WS(' ', piu.first_name, piu.last_name), ' '),
                         piu.username
-                    ) AS pinned_by_name
+                    ) AS pinned_by_name,
+                    COALESCE(NULLIF(piup.slug, ''), piu.username) AS pinned_by_handle
                 FROM {$this->getTable()} c
                 LEFT JOIN users u ON c.user_id = u.id
                 LEFT JOIN user_profiles up ON up.user_id = c.user_id AND up.is_public = 1
@@ -79,7 +85,9 @@ class CommentModel extends AppModel
                 -- a removed parent must not hand its author's name to the
                 -- mention, but the reply still needs to know it is there.
                 LEFT JOIN users pu ON pu.id = parent.user_id AND parent.deleted_at IS NULL
+                LEFT JOIN user_profiles pup ON pup.user_id = pu.id AND pup.is_public = 1
                 LEFT JOIN users piu ON piu.id = c.pinned_by
+                LEFT JOIN user_profiles piup ON piup.user_id = piu.id AND piup.is_public = 1
                 WHERE c.post_id = ? AND c.status = 'approved'
                 ORDER BY c.created_at ASC";
 
@@ -618,6 +626,29 @@ class CommentModel extends AppModel
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         return $row ? (int) $row['blog_id'] : null;
+    }
+
+    /**
+     * Who wrote the post a comment sits under.
+     *
+     * Pinning asks this: the author runs the conversation beneath their own
+     * post, so the check is one join rather than a second model dependency.
+     *
+     * @param  int  $commentId  Comment id
+     * @return int|null The post's author id, or null if the comment is gone
+     */
+    public function postAuthorForComment(int $commentId): ?int
+    {
+        $sql = "SELECT p.author_id
+                FROM {$this->getTable()} c
+                INNER JOIN posts p ON c.post_id = p.id
+                WHERE c.id = ?
+                LIMIT 1";
+
+        $stmt = $this->database->query($sql, [$commentId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $row ? (int) $row['author_id'] : null;
     }
 
     /**

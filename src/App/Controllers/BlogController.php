@@ -526,6 +526,32 @@ class BlogController extends AppController
             ? ($this->profiles->getProfileAvatar($viewerId)['avatar_url'] ?? null)
             : null;
 
+        // A comment the post's author upvoted wears their face with a heart on
+        // it, the way a channel owner hearts a comment under their own video.
+        // The author, not the blog owner: those are different people on roughly
+        // half the posts here, and it is the author's thread. Their own votes
+        // are the signal, so there is no separate gesture to store — one extra
+        // indexed read, and it turns on who wrote the post rather than on who
+        // is reading it, which is what keeps the thread cacheable.
+        $authorId = (int) ($post['author_id'] ?? 0);
+        $authorHearts = [];
+        $authorIdentity = null;
+
+        if ($commentsEnabled && $authorId > 0) {
+            $authorHearts = array_keys(array_filter(
+                $this->commentVotes->votesForPost($authorId, $engagementPostId),
+                static fn (int $value): bool => $value === 1
+            ));
+
+            $author = $this->postModel->author($authorId);
+
+            $authorIdentity = [
+                'id' => $authorId,
+                'name' => (string) ($author['display_name_cached'] ?? $author['username'] ?? ''),
+                'avatar' => $this->profiles->getProfileAvatar($authorId)['avatar_url'] ?? null,
+            ];
+        }
+
         // Only the up count is published, matching the comment thread: the
         // down vote registers without handing readers a pile-on to watch.
         $engagement = [
@@ -555,6 +581,8 @@ class BlogController extends AppController
             'comment_sort_urls' => $commentSortUrls,
             'viewer_name' => $viewer['display_name_cached'] ?? ($viewer['username'] ?? null),
             'viewer_avatar' => $viewerAvatar,
+            'comment_author_hearts' => $authorHearts,
+            'comment_author' => $authorIdentity,
         ]));
     }
 
