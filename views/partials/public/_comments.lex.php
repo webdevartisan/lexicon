@@ -301,7 +301,7 @@ $renderComment = static function (array $comment, int $depth) use (
      comments. That spacing is what separates them, not a rule. */
   .comment-thread { list-style: none; margin: 0; padding: 0; }
   .comment-item { position: relative; margin: 0 0 1.75rem; padding: 0; border: 0; }
-  .comment-replies .comment-item { margin-bottom: 1.15rem; }
+  .comment-replies .comment-item { margin-bottom: var(--ct-row-gap); }
   .comment-thread > .comment-item:last-child { margin-bottom: 0; }
 
   .comment-row { position: relative; display: flex; align-items: flex-start; gap: .75rem; }
@@ -314,9 +314,14 @@ $renderComment = static function (array $comment, int $depth) use (
     border-radius: 50%; overflow: hidden; display: grid; place-items: center;
   }
   .comment-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* letter-spacing is reset, not inherited: a theme that tracks out its body
+     type would add a trailing space after the single letter, and the grid
+     centres the glyph *plus* that space, pushing the letter off to the left.
+     text-indent would bias it the same way. */
   .comment-avatar.is-letter {
     background: hsl(var(--avatar-hue, 210) 42% 42%); color: #fff;
     font-size: .95rem; font-weight: 600; line-height: 1;
+    letter-spacing: normal; text-indent: 0;
   }
   .comment-avatar.is-ghost { background: currentColor; opacity: .12; }
   .comment-replies .comment-avatar.is-letter { font-size: .78rem; }
@@ -342,7 +347,7 @@ $renderComment = static function (array $comment, int $depth) use (
     background: none;
     border-left: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
-    border-bottom-left-radius: 9px;
+    border-bottom-left-radius: var(--ct-radius);
   }
 
   .comment-pinned {
@@ -352,7 +357,7 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-pinned svg { width: 11px; height: 11px; }
 
   .comment-item .comment-meta { margin: 0 0 .15rem; font-size: .78em; line-height: 1.35; }
-  .comment-item .comment-meta time { margin-left: .45rem; opacity: .55; font-size: .88em; }
+  .comment-item .comment-meta time { margin-left: .45rem; opacity: .55; font-size: .8em; }
   .comment-item .comment-body { margin: 0; line-height: 1.55; }
   .comment-mention { font-weight: 600; text-decoration: none; color: var(--comment-accent, currentColor); }
   .comment-mention:hover { text-decoration: underline; }
@@ -391,13 +396,17 @@ $renderComment = static function (array $comment, int $depth) use (
 
   .comment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .9rem; margin-top: .3rem; }
   .comment-votes { display: inline-flex; align-items: center; gap: .25rem; margin-left: -.4rem; }
-  .comment-vote { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .4rem; border: 0; border-radius: 999px; background: none; color: inherit; opacity: .65; font: inherit; font-size: .8em; line-height: 1; cursor: pointer; transition: opacity .15s ease, background .15s ease; }
+  .comment-vote { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .4rem; border: 0; border-radius: 999px; background: none; color: inherit; opacity: .65; font: inherit; font-size: .72em; line-height: 1; cursor: pointer; transition: opacity .15s ease, background .15s ease; }
   .comment-vote:hover { opacity: 1; background: rgba(128, 128, 128, .14); }
   .comment-vote svg { width: 15px; height: 15px; display: block; }
   .comment-vote.is-active { opacity: 1; color: var(--comment-accent, currentColor); }
   .comment-vote span { min-width: .5em; font-variant-numeric: tabular-nums; }
   .comment-vote[data-vote="down"] svg { transform: translateY(1px); }
-  .comment-item .reply-toggle { font-size: .78em; }
+  /* These read as chrome, not prose, so they sit below the comment body rather
+     than beside it. Themes that set the body smaller than 1em (and uppercase
+     these controls) otherwise end up with the toggle looking the larger of the
+     two, which inverts the hierarchy. */
+  .comment-item .reply-toggle { font-size: .72em; }
 
   /* A request is out and the reader has to wait on the answer, so the control
      dims and stops taking clicks rather than sitting there looking idle, which
@@ -424,6 +433,8 @@ $renderComment = static function (array $comment, int $depth) use (
     --ct-gap: .9rem;          /* space between a comment and its first reply */
     --ct-clear: .3rem;        /* daylight between a line and an avatar */
     --ct-toggle-mid: 6.5px;   /* row bottom up to a collapsed toggle's midline */
+    --ct-radius: 9px;         /* corner radius shared by every elbow */
+    --ct-row-gap: 1.15rem;    /* space between one reply and the next */
   }
 
   .comment-replies {
@@ -457,12 +468,19 @@ $renderComment = static function (array $comment, int $depth) use (
     top: 0; height: var(--ct-rail);
     width: calc(var(--ct-gutter) - var(--ct-from) - var(--ct-clear));
     border-bottom: 2px solid currentColor;
-    border-bottom-left-radius: 9px;
+    border-bottom-left-radius: var(--ct-radius);
   }
 
   /* Carries the rail on to the next sibling; the last reply ends the branch.
-     Reaching into the sibling gap keeps the line unbroken between replies. */
-  .comment-replies > .comment-item::after { top: var(--ct-rail); bottom: -1.15rem; }
+     Reaching into the sibling gap keeps the line unbroken between replies.
+
+     It starts one radius high rather than at the avatar's centre line: the
+     elbow above has already begun curving away by then, so picking up at the
+     centre would leave a notch the width of the corner. */
+  .comment-replies > .comment-item::after {
+    top: calc(var(--ct-rail) - var(--ct-radius));
+    bottom: calc(var(--ct-row-gap) * -1);
+  }
   .comment-replies > .comment-item:last-child::after { display: none; }
 
   /* Past the indent cap the elbows would march off the right edge, so the
