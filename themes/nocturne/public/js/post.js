@@ -26,35 +26,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Reply forms and collapsed reply threads under each comment
-  document.addEventListener("click", function (ev) {
-    var replyBtn = ev.target.closest("[data-reply-toggle]");
-    if (replyBtn) {
-      var form = document.getElementById("reply-form-" + replyBtn.getAttribute("data-reply-toggle"));
-      if (form) {
-        var hidden = form.toggleAttribute("hidden");
-        if (!hidden) {
-          var textarea = form.querySelector("textarea");
-          if (textarea) textarea.focus();
-        }
-      }
-      return;
-    }
-
-    var cancelBtn = ev.target.closest("[data-reply-cancel]");
-    if (cancelBtn) {
-      var cancelForm = document.getElementById("reply-form-" + cancelBtn.getAttribute("data-reply-cancel"));
-      if (cancelForm) cancelForm.setAttribute("hidden", "");
-      return;
-    }
-
-    var collapseBtn = ev.target.closest("[data-collapse-toggle]");
-    if (collapseBtn) {
-      var replies = document.getElementById("replies-" + collapseBtn.getAttribute("data-collapse-toggle"));
-      if (!replies) return;
-      var isHidden = replies.toggleAttribute("hidden");
-      var label = isHidden ? collapseBtn.getAttribute("data-label-show") : collapseBtn.getAttribute("data-label-hide");
-      if (label) collapseBtn.textContent = label;
-    }
-  });
 });
