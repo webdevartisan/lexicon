@@ -88,6 +88,7 @@ class PostController extends AppController
             'blog' => 'b.blog_name',
             'author' => 'au.username',
             'status' => 'p.status',
+            'comments' => 'comment_count',
             'published' => 'p.published_at',
             'updated' => 'p.updated_at',
         ], defaultKey: 'updated', defaultDirection: 'desc', tiebreaker: 'p.id DESC');

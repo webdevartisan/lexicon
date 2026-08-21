@@ -68,6 +68,7 @@ $selectedBlogKey = $blogId > 0 ? (string) $blogId : '';
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="blog" label="Blog" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="author" label="Author" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="comments" label="Comments" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="updated" label="Updated" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
@@ -81,17 +82,34 @@ $editUrl = '/admin/posts/'.$post['id'].'/edit';
 $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
 $featuredOnHome = (int) ($post['featured_on_home'] ?? 0) === 1;
 $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front page';
+$commentCount = (int) ($post['comment_count'] ?? 0);
+
+// Both slugs are needed to reach the post on the front; a draft that never got
+// one, or an orphaned post, has no public page to open.
+$postSlug = (string) ($post['slug'] ?? '');
+$blogSlug = (string) ($post['blog_slug'] ?? '');
+$publicUrl = $postSlug !== '' && $blogSlug !== ''
+    ? lurl('/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug))
+    : '';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['id']) ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50 max-w-xs truncate">
-                            <?= e(truncate((string) $post['title'], 60)) ?>
+                            <?php if ($publicUrl !== '') { ?>
+                                <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
+                                   class="hover:text-custom-500 dark:hover:text-custom-500 transition-colors">
+                                    <?= e(truncate((string) $post['title'], 60)) ?>
+                                </a>
+                            <?php } else { ?>
+                                <?= e(truncate((string) $post['title'], 60)) ?>
+                            <?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($post['blog_name'] ?? '—')) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($post['author_username'] ?? '—')) ?></td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$postStatus}" %}
                         </td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= $commentCount ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
