@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Services\PublicCacheInvalidator;
+use App\Services\ThemeService;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -18,7 +19,8 @@ class BlogController extends AppController
 
     public function __construct(
         private BlogModel $blogModel,
-        private PublicCacheInvalidator $publicCache
+        private PublicCacheInvalidator $publicCache,
+        private ThemeService $themes
     ) {}
 
     /**
@@ -70,6 +72,16 @@ class BlogController extends AppController
         $featured = trim((string) $this->request->getParam('featured', ''));
         $page = max(1, (int) $this->request->getParam('page', 1));
 
+        $themes = $this->themes->available();
+
+        // An installed theme wins over the "unset" sentinel, so a theme whose
+        // directory really is called "none" stays selectable. Anything else is
+        // dropped rather than passed through to the query.
+        $theme = trim((string) $this->request->getParam('theme', ''));
+        if (!isset($themes[$theme]) && $theme !== 'none') {
+            $theme = '';
+        }
+
         $sort = TableSort::fromRequest($this->request, [
             'id' => 'b.id',
             'name' => 'b.blog_name',
@@ -77,10 +89,16 @@ class BlogController extends AppController
             'posts' => 'post_count',
             'team' => 'author_count',
             'status' => 'b.status',
+            'theme' => 'bs.theme',
             'created' => 'b.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC');
 
-        $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy());
+        $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy(), $theme);
+
+        $themeChoices = ['' => 'All themes', 'none' => 'No theme set'];
+        foreach ($themes as $key => $meta) {
+            $themeChoices[$key] = (string) $meta['name'];
+        }
 
         return $this->view('blog.index', [
             'blogs' => $result['data'],
@@ -88,6 +106,8 @@ class BlogController extends AppController
             'q' => $q,
             'status' => $status,
             'featured' => $featured,
+            'theme' => $theme,
+            'themeChoices' => $themeChoices,
             'statusOptions' => BlogModel::STATUSES,
             'sort' => $sort,
         ]);

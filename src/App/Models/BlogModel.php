@@ -191,6 +191,11 @@ class BlogModel extends AppModel
     /**
      * Paginated admin listing with optional name/slug/owner search.
      *
+     * @param  string  $theme  Theme directory name to match; the literal
+     *                         'none' matches blogs with no theme set. A theme
+     *                         that really is called "none" would be ambiguous
+     *                         here, so the caller resolves that first and only
+     *                         passes the sentinel once it has ruled the key out.
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>} Same shape as UserModel::findAllForAdmin()
      */
     public function findAllForAdmin(
@@ -199,7 +204,8 @@ class BlogModel extends AppModel
         string $q = '',
         string $status = '',
         string $featured = '',
-        string $orderBy = 'b.published_at DESC'
+        string $orderBy = 'b.published_at DESC',
+        string $theme = ''
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
@@ -225,19 +231,31 @@ class BlogModel extends AppModel
             $params[':featured'] = $featured === 'yes' ? 1 : 0;
         }
 
+        if ($theme === 'none') {
+            $conditions[] = "(bs.theme IS NULL OR bs.theme = '')";
+        } elseif ($theme !== '') {
+            $conditions[] = 'bs.theme = :theme';
+            $params[':theme'] = $theme;
+        }
+
         $where = $conditions === [] ? '' : 'WHERE '.implode(' AND ', $conditions);
 
+        // LEFT, not INNER: a blog with no settings row yet still belongs in the
+        // listing, and is exactly what the 'none' theme filter is looking for.
+        $joins = 'INNER JOIN users u ON b.owner_id = u.id
+                  LEFT JOIN blog_settings bs ON bs.blog_id = b.id';
+
         $total = (int) $this->database->query(
-            "SELECT COUNT(*) FROM blogs b INNER JOIN users u ON b.owner_id = u.id {$where}",
+            "SELECT COUNT(*) FROM blogs b {$joins} {$where}",
             $params
         )->fetchColumn();
 
         // $orderBy comes from a TableSort whitelist, never from raw input.
-        $sql = "SELECT b.*, u.username as owner_name,
+        $sql = "SELECT b.*, u.username as owner_name, bs.theme as theme,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
-                INNER JOIN users u ON b.owner_id = u.id
+                {$joins}
                 {$where}
                 ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
