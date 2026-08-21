@@ -101,6 +101,11 @@ $renderComment = static function (array $comment, int $depth) use (
     $myVote = (int) ($viewerVotes[$id] ?? 0);
     $up = (int) ($comment['upvotes'] ?? 0);
     $replies = $comment['replies'] ?? [];
+    $childDepth = $depth + 1;
+
+    // Past the indent cap the elbow system is switched off in favour of the
+    // @mention, so a rail pointing at nothing there would be a loose end.
+    $hasThread = $replies !== [] && $childDepth <= $indentCap;
 
     // The @mention earns its place from depth two down: at depth one the
     // comment sits directly under what it answered, so naming it is noise.
@@ -133,6 +138,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
       <div class="comment-row">
         <?= $removed ? '<span class="comment-avatar is-ghost"></span>' : $avatar($authorName, $comment['author_avatar'] ?? null) ?>
+        <?php if ($hasThread) { ?><span class="comment-thread-rail" aria-hidden="true"></span><?php } ?>
 
         <div class="comment-main">
           <?php
@@ -207,8 +213,6 @@ $renderComment = static function (array $comment, int $depth) use (
             <?php
             $replyTotal = count($replies);
               $replyWord = $replyTotal === 1 ? 'reply' : 'replies';
-              $childDepth = $depth + 1;
-              $hidden = max(0, $replyTotal - $replyBatch);
               ?>
             <button type="button" class="reply-toggle replies-toggle" aria-expanded="false"
                     aria-controls="replies-<?= $id ?>"
@@ -218,32 +222,6 @@ $renderComment = static function (array $comment, int $depth) use (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
               <span data-collapse-label><?= $replyTotal ?> <?= $replyWord ?></span>
             </button>
-
-            <ol class="comment-replies<?= $childDepth > $indentCap ? ' is-flush' : '' ?>" id="replies-<?= $id ?>" hidden>
-              <?php foreach ($replies as $index => $reply) { ?>
-                <?php
-                  // Replies past the first batch are rendered but held back, so
-                  // "Show more" costs nothing at click time and still works for a
-                  // reader who arrived on a deep link into one of them.
-                  $batched = $index >= $replyBatch;
-                  ob_start();
-                  $renderComment($reply, $childDepth);
-                  $markup = (string) ob_get_clean();
-
-                  echo $batched
-                      ? preg_replace('/^(\s*)<li /', '$1<li hidden data-batched="'.$id.'" ', $markup, 1)
-                      : $markup;
-                  ?>
-              <?php } ?>
-
-              <?php if ($hidden > 0) { ?>
-                <li class="comment-more" data-more-row="<?= $id ?>">
-                  <button type="button" class="reply-toggle" data-show-more="<?= $id ?>">
-                    Show <?= $hidden ?> more <?= $hidden === 1 ? 'reply' : 'replies' ?>
-                  </button>
-                </li>
-              <?php } ?>
-            </ol>
           <?php } ?>
         </div>
 
@@ -279,6 +257,35 @@ $renderComment = static function (array $comment, int $depth) use (
           </div>
         <?php } ?>
       </div>
+
+      <?php if ($replies !== []) { ?>
+        <?php $hidden = max(0, count($replies) - $replyBatch); ?>
+        <ol class="comment-replies<?= $childDepth > $indentCap ? ' is-flush' : '' ?>" id="replies-<?= $id ?>" hidden>
+          <?php foreach ($replies as $index => $reply) { ?>
+            <?php
+              // Replies past the first batch are rendered but held back, so
+              // "Show more" costs nothing at click time and still works for a
+              // reader who arrived on a deep link into one of them.
+              $batched = $index >= $replyBatch;
+              ob_start();
+              $renderComment($reply, $childDepth);
+              $markup = (string) ob_get_clean();
+
+              echo $batched
+                  ? preg_replace('/^(\s*)<li /', '$1<li hidden data-batched="'.$id.'" ', $markup, 1)
+                  : $markup;
+              ?>
+          <?php } ?>
+
+          <?php if ($hidden > 0) { ?>
+            <li class="comment-more" data-more-row="<?= $id ?>">
+              <button type="button" class="reply-toggle" data-show-more="<?= $id ?>">
+                Show <?= $hidden ?> more <?= $hidden === 1 ? 'reply' : 'replies' ?>
+              </button>
+            </li>
+          <?php } ?>
+        </ol>
+      <?php } ?>
     </li>
   <?php
 };
@@ -297,12 +304,14 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-replies .comment-item { margin-bottom: 1.15rem; }
   .comment-thread > .comment-item:last-child { margin-bottom: 0; }
 
-  .comment-row { display: flex; align-items: flex-start; gap: .75rem; }
+  .comment-row { position: relative; display: flex; align-items: flex-start; gap: .75rem; }
   .comment-main { flex: 1 1 auto; min-width: 0; }
 
+  /* Sized off --ct-rail rather than the other way round, so one token per
+     level fixes both how big the avatar is and where its centre line falls. */
   .comment-avatar {
-    flex: none; width: 2.25rem; height: 2.25rem; border-radius: 50%;
-    overflow: hidden; display: grid; place-items: center;
+    flex: none; width: calc(var(--ct-rail) * 2); height: calc(var(--ct-rail) * 2);
+    border-radius: 50%; overflow: hidden; display: grid; place-items: center;
   }
   .comment-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .comment-avatar.is-letter {
@@ -310,8 +319,31 @@ $renderComment = static function (array $comment, int $depth) use (
     font-size: .95rem; font-weight: 600; line-height: 1;
   }
   .comment-avatar.is-ghost { background: currentColor; opacity: .12; }
-  .comment-replies .comment-avatar { width: 1.75rem; height: 1.75rem; }
   .comment-replies .comment-avatar.is-letter { font-size: .78rem; }
+
+  /* The stem of the connector tree: it runs down the centre line of a comment's
+     own avatar, starting --ct-clear below it, to the bottom of the row — which
+     is the replies toggle while the thread is collapsed. Opening the thread
+     hides the toggle, the row shrinks to fit, and the stem ends up meeting
+     .comment-replies::before instead: the two pieces just happen to touch. */
+  .comment-thread-rail {
+    position: absolute; width: 2px; background: currentColor; opacity: .16;
+    left: calc(var(--ct-rail) - 1px);
+    top: calc(var(--ct-rail) * 2 + var(--ct-clear));
+    bottom: 0;
+  }
+
+  /* Collapsed, the stem has a toggle to land on rather than a reply, so it ends
+     in the same elbow the replies get. Without :has() it stays the plain line
+     it was, which is the state this replaced and still reads correctly. */
+  .comment-row:has(+ .comment-replies[hidden]) .comment-thread-rail {
+    width: calc(var(--ct-rail) + .75rem);
+    bottom: var(--ct-toggle-mid);
+    background: none;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    border-bottom-left-radius: 9px;
+  }
 
   .comment-pinned {
     display: flex; align-items: center; gap: .3rem;
@@ -379,12 +411,23 @@ $renderComment = static function (array $comment, int $depth) use (
      Drawn per reply rather than as one rule down the whole list: the rail is
      the left edge of each reply's elbow, and only replies that have a sibling
      below them continue it. That is what stops the line overshooting past the
-     last reply, which a single full-height rule cannot avoid. */
+     last reply, which a single full-height rule cannot avoid.
+
+     --ct-rail is half the avatar at the level it is read from, so it doubles as
+     that avatar's size and as its centre line. Replies wear a smaller avatar,
+     so the token is re-set on them — but an elbow is drawn on the reply while
+     it hangs off the *parent's* rail, so .comment-replies takes a copy of the
+     value it inherited as --ct-from before the children overwrite it. */
+  .comment-thread-root {
+    --ct-gutter: 2.25rem;     /* one indent step */
+    --ct-rail: 1.125rem;      /* half a top-level avatar */
+    --ct-gap: .9rem;          /* space between a comment and its first reply */
+    --ct-clear: .3rem;        /* daylight between a line and an avatar */
+    --ct-toggle-mid: 6.5px;   /* row bottom up to a collapsed toggle's midline */
+  }
+
   .comment-replies {
-    --ct-gutter: 2.25rem;  /* one indent step */
-    --ct-rail: .7rem;      /* rail offset inside that step */
-    --ct-elbow: .9rem;     /* drop to the vertical centre of a reply's avatar */
-    --ct-gap: .9rem;       /* space between a comment and its first reply */
+    --ct-from: var(--ct-rail);
     list-style: none;
     position: relative;
     margin: var(--ct-gap) 0 0;
@@ -392,9 +435,11 @@ $renderComment = static function (array $comment, int $depth) use (
     border-left: 0;
   }
 
+  .comment-replies > .comment-item { --ct-rail: .875rem; }
+
   /* Bridges the gap between a comment and the first reply's elbow. */
   .comment-replies::before {
-    content: ""; position: absolute; left: var(--ct-rail);
+    content: ""; position: absolute; left: calc(var(--ct-rail) - 1px);
     top: calc(var(--ct-gap) * -1); height: var(--ct-gap);
     border-left: 2px solid currentColor; opacity: .16;
   }
@@ -402,20 +447,22 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-replies > .comment-item::before,
   .comment-replies > .comment-item::after {
     content: ""; position: absolute;
-    left: calc(var(--ct-rail) - var(--ct-gutter));
+    left: calc(var(--ct-from) - var(--ct-gutter) - 1px);
     border-left: 2px solid currentColor; opacity: .16;
   }
 
-  /* Down from the rail and curving into this reply. */
+  /* Down from the parent's rail and curving in to meet this reply's avatar,
+     stopping --ct-clear short of it rather than running into the picture. */
   .comment-replies > .comment-item::before {
-    top: 0; height: var(--ct-elbow); width: calc(var(--ct-gutter) * .5);
+    top: 0; height: var(--ct-rail);
+    width: calc(var(--ct-gutter) - var(--ct-from) - var(--ct-clear));
     border-bottom: 2px solid currentColor;
     border-bottom-left-radius: 9px;
   }
 
   /* Carries the rail on to the next sibling; the last reply ends the branch.
      Reaching into the sibling gap keeps the line unbroken between replies. */
-  .comment-replies > .comment-item::after { top: var(--ct-elbow); bottom: -1.15rem; }
+  .comment-replies > .comment-item::after { top: var(--ct-rail); bottom: -1.15rem; }
   .comment-replies > .comment-item:last-child::after { display: none; }
 
   /* Past the indent cap the elbows would march off the right edge, so the
@@ -468,9 +515,22 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-form.is-collapsed .comment-avatar { opacity: .55; }
 
   .reply-form { margin-top: .65rem; }
-  .replies-toggle { display: inline-flex; align-items: center; gap: .4rem; margin-top: .5rem; }
+
+  /* Block-level flex, not inline-flex: as an inline box it would sit on a line
+     box and carry the parent's descender space below it, putting the bottom of
+     the row lower than the bottom of the control. With that gone and the
+     line-height pinned to the chevron, the control is exactly 13px tall
+     whatever type the theme is wearing, which is what lets the collapsed elbow
+     land on its midline from a fixed --ct-toggle-mid instead of a guess. */
+  .replies-toggle {
+    display: flex; width: fit-content; align-items: center; gap: .4rem;
+    margin-top: .5rem; line-height: 13px;
+  }
   .replies-toggle svg { width: 13px; height: 13px; transition: transform .18s ease; }
-  .replies-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+  /* Open, the toggle's job is done — the rail carries on into the replies
+     themselves, so the row it sat in just closes back up around the comment. */
+  .replies-toggle[aria-expanded="true"] { display: none; }
 
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
@@ -487,8 +547,11 @@ $renderComment = static function (array $comment, int $depth) use (
   @media (max-width: 640px) {
     /* A phone has room for a narrower step; the tree still reads, the text
        column survives. Only the tokens move, the geometry follows. */
-    .comment-replies { --ct-gutter: 1.3rem; --ct-rail: .35rem; }
-    .comment-avatar { width: 1.85rem; height: 1.85rem; }
+    /* One avatar size at every depth here, and a step only slightly wider than
+       it: the gutter cannot go below the avatar without the elbow having no
+       room left to curve in. Everything else follows from the tokens. */
+    .comment-thread-root { --ct-gutter: 1.9rem; --ct-rail: .925rem; }
+    .comment-replies > .comment-item { --ct-rail: .925rem; }
     .comment-menu-button { opacity: .7; }
   }
 

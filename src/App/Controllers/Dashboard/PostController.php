@@ -80,6 +80,12 @@ final class PostController extends AppController
     {
         $user = auth()->user();
 
+        // Same rule as the dashboard home: no owned or shared blogs means
+        // there is no workspace to show, only the blank slate at "/".
+        if (empty($this->blogModel->getAccessibleBlogs((int) $user['id']))) {
+            return $this->redirect('/');
+        }
+
         $blogs = $this->blogModel->getBlogsByOwnerId($user['id']);
         $blogSlugs = array_column($blogs, 'blog_slug', 'id');
         $validBlogIds = array_column($blogs, 'id');

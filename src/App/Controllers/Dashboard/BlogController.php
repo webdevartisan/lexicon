@@ -45,6 +45,12 @@ final class BlogController extends AppController
     {
         $user = auth()->user();
 
+        // Same rule as the dashboard home: no owned or shared blogs means
+        // there is no workspace to show, only the blank slate at "/".
+        if (empty($this->blogModel->getAccessibleBlogs((int) $user['id']))) {
+            return $this->redirect('/');
+        }
+
         $q = trim((string) ($this->request->get['q'] ?? ''));
         $status = trim((string) ($this->request->get['status'] ?? ''));
         $sort = (string) ($this->request->get['sort'] ?? 'updated');
