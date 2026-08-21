@@ -26,7 +26,7 @@ $username = (string) ($user['username'] ?? '');
             <?php
             // The username is here so a password manager can associate the
             // current-password field below with this account.
-            ?>
+?>
             <input type="text" name="username" value="<?= e($username) ?>" autocomplete="username" class="lx-visually-hidden" aria-hidden="true" tabindex="-1" readonly>
 
             <h2 class="lx-account-section"><?= e($t('account.preferences.signInSection')) ?></h2>

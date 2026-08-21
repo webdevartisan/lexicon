@@ -305,7 +305,7 @@ foreach ($socialNetworks as $network) {
                         aria-label="<?= e($t('a11y.dismiss')) ?>">&times;</button>
             </div>
             <?php }
-            } ?>
+                } ?>
         </div>
         <?php } ?>
 

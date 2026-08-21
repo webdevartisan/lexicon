@@ -23,7 +23,7 @@ $items = [
     <ul>
         <?php foreach ($items as $item) {
             $isCurrent = $section === $item['key'];
-        ?>
+            ?>
         <li>
             <a href="<?= e(lurl($item['href'])) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?>>
                 <?= e($tr($item['label'])) ?>

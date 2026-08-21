@@ -68,8 +68,8 @@ class EmailChangedMail extends Mailable
             ."The email address on your {$appName} account was changed to {$this->newEmail} "
             ."on {$this->changedAt} (UTC).\n\n"
             ."If you made this change, no action is needed.\n\n"
-            ."If this was not you, your account may have been accessed by someone else. "
+            .'If this was not you, your account may have been accessed by someone else. '
             ."Reset your password immediately and contact support.\n\n"
-            ."You are receiving this at your previous address because it was the one on the account when the change was made.";
+            .'You are receiving this at your previous address because it was the one on the account when the change was made.';
     }
 }

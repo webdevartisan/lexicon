@@ -37,7 +37,7 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
 
         <form method="post" action="<?= e(lurl('/account/security/password')) ?>" class="lx-account-form" autocomplete="on">
             <?= csrf_field() ?>
-            <?php // Username here so a password manager associates the credential with this account. ?>
+            <?php // Username here so a password manager associates the credential with this account.?>
             <input type="text" name="username" value="<?= e($username) ?>" autocomplete="username" class="lx-visually-hidden" aria-hidden="true" tabindex="-1" readonly>
 
             <?php $passwordField('current_password', $t('account.security.currentPassword'), 'current-password'); ?>

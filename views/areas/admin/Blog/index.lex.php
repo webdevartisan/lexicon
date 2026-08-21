@@ -80,7 +80,7 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $blog['id']) ?></td>
                         <td class="px-3.5 py-2.5">
-                            <?php // A blog with no slug has no public page to open, so it stays plain text. ?>
+                            <?php // A blog with no slug has no public page to open, so it stays plain text.?>
                             <?php if ($publicUrl !== '') { ?>
                                 <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
                                    class="font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 dark:hover:text-custom-500 transition-colors">
