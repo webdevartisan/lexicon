@@ -44,6 +44,51 @@ class BlogController extends AppController
         private HeadI18nBuilder $headI18n
     ) {}
 
+    /** @var array<int, array{name: string, slug: ?string}> Per-request cache, keyed by user id. */
+    private array $authorCache = [];
+
+    /**
+     * Resolve the display name and public profile slug for a post's author.
+     *
+     * @return array{name: string, slug: ?string}
+     */
+    private function resolveAuthor(int $authorId): array
+    {
+        if (isset($this->authorCache[$authorId])) {
+            return $this->authorCache[$authorId];
+        }
+
+        $author = $this->userModel->findById($authorId);
+
+        $resolved = [
+            'name' => empty($author['display_name_cached']) ? ($author['username'] ?? '') : $author['display_name_cached'],
+            'slug' => $this->profiles->publicSlugFor($authorId),
+        ];
+
+        $this->authorCache[$authorId] = $resolved;
+
+        return $resolved;
+    }
+
+    /**
+     * Attach each post's author display name and profile slug, so cards and
+     * archive rows link to the post's actual author.
+     *
+     * @param  array<int, array<string, mixed>>  $posts
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichPostAuthors(array $posts): array
+    {
+        foreach ($posts as &$post) {
+            $author = $this->resolveAuthor((int) $post['author_id']);
+            $post['author_name'] = $author['name'];
+            $post['author_profile_slug'] = $author['slug'];
+        }
+        unset($post);
+
+        return $posts;
+    }
+
     /**
      * Swap in translated title/content/excerpt for the viewer's locale on
      * blogs with localized posts enabled. Posts without a translation (and
@@ -234,7 +279,7 @@ class BlogController extends AppController
         }
         unset($post);
 
-        return $posts;
+        return $this->enrichPostAuthors($posts);
     }
 
     public function archiveBlog(string $blogSlug): Response
@@ -254,7 +299,7 @@ class BlogController extends AppController
         $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($postsData['data'], $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($postsData['data']), $ctx['settings']),
             'pagination' => [
                 'totalPages' => $postsData['totalPages'],
                 'currentPage' => $postsData['currentPage'],
@@ -285,7 +330,7 @@ class BlogController extends AppController
         $name = e($category['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($posts, $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Category &mdash; '.$name,
             'archiveTitle' => $name,
@@ -314,7 +359,7 @@ class BlogController extends AppController
         $name = e($tag['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($posts, $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Tagged &mdash; '.$name,
             'archiveTitle' => '#'.$name,
@@ -383,14 +428,10 @@ class BlogController extends AppController
         $dt = new \DateTime($post['published_at_raw'], new \DateTimeZone('UTC'));
         $post['published_at'] = $this->formatDateWithOrdinal($dt, blog_timezone((int) ($ctx['blog']['id'] ?? 0)));
 
-        // Enrich display fields. The byline follows the post's own author since a
-        // blog serves every member's posts; the owner is only the fallback.
-        $author = $ctx['user'];
-        if (!empty($post['author_id']) && (int) $post['author_id'] !== (int) $ctx['user']['id']) {
-            $author = $this->userModel->findById((int) $post['author_id']) ?: $ctx['user'];
-        }
-
-        $post['author_name'] = empty($author['display_name_cached']) ? $author['username'] : $author['display_name_cached'];
+        // Enrich display fields. The byline follows the post's own author, not the blog owner.
+        $author = $this->resolveAuthor((int) $post['author_id']);
+        $post['author_name'] = $author['name'];
+        $post['author_profile_slug'] = $author['slug'];
         $post['cover_url'] = $post['cover_url'] ?? null; // TODO update the key
 
         // --- comments enabled logic ---
