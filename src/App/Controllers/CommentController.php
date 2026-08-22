@@ -348,6 +348,11 @@ class CommentController extends AppController
         return $authorId !== null && $authorId === (int) $user['id'];
     }
 
+    /**
+     * Whether the viewer moderates the blog a comment was left on.
+     *
+     * @param  array<string, mixed>|null  $user  Signed-in user, or null
+     */
     private function moderatesComment(int $commentId, ?array $user): bool
     {
         if ($user === null) {
