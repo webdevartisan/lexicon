@@ -36,18 +36,20 @@ class InvitationService
      *
      * @param  int  $blogId  Target blog
      * @param  string  $email  Invitee email
-     * @param  string  $role  Must be in BlogModel::ROLES
+     * @param  string  $role  Must be an assignable blog role
      * @param  int  $invitedBy  Owner issuing the invite
      * @param  string  $ip  Client IP for audit
      * @return bool Whether the invitation email was delivered. The invite row
      *              exists either way, but the accept link only travels by
      *              email, so a false here means the invitee cannot act on it.
      *
-     * @throws \InvalidArgumentException If role is not in BlogModel::ROLES
+     * @throws \InvalidArgumentException If role is not an assignable blog role
      */
     public function invite(int $blogId, string $email, string $role, int $invitedBy, string $ip): bool
     {
-        if (!in_array($role, BlogModel::ROLES, true)) {
+        // Same assignable-role source as role-change and validation, so an
+        // owner can invite into any shipped or custom blog role.
+        if (!in_array($role, $this->blogModel->availableCollaboratorRoles(), true)) {
             throw new \InvalidArgumentException("Invalid role: {$role}");
         }
 

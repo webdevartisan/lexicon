@@ -37,16 +37,17 @@ class BlogModel extends AppModel
      */
     public function availableCollaboratorRoles(bool $workflowEnabled = true): array
     {
-        $roles = $workflowEnabled ? self::ROLES : array_values(array_diff(self::ROLES, ['reviewer']));
-
-        $custom = $this->database->query(
-            "SELECT role_slug FROM roles WHERE scope = 'blog' AND is_system = 0 ORDER BY level DESC"
+        $roles = $this->database->query(
+            "SELECT role_slug FROM roles
+             WHERE scope = 'blog' AND role_slug <> 'blog_owner'
+             ORDER BY level DESC"
         )->fetchAll(\PDO::FETCH_COLUMN);
 
-        foreach ($custom as $slug) {
-            if (!in_array($slug, $roles, true)) {
-                $roles[] = (string) $slug;
-            }
+        $roles = array_map('strval', $roles);
+
+        // Reviewer has nothing to do when the editorial pipeline is off.
+        if (!$workflowEnabled) {
+            $roles = array_values(array_diff($roles, ['reviewer']));
         }
 
         return $roles;
@@ -90,6 +91,74 @@ class BlogModel extends AppModel
         }
 
         return $resolved[$role] = $base;
+    }
+
+    /**
+     * The blog role slug a user holds on a blog, straight from blog_users.
+     *
+     * Returns the stored slug (a shipped role or a custom admin-created one),
+     * or null when the user is not an active collaborator. Ownership is
+     * structural and lives in blogs.owner_id, so it is resolved separately.
+     *
+     * @return string|null Stored role slug, or null if not a member
+     */
+    public function storedRoleFor(int $blogId, int $userId): ?string
+    {
+        $role = $this->database->query(
+            'SELECT role FROM blog_users WHERE blog_id = ? AND user_id = ? AND is_active = 1 LIMIT 1',
+            [$blogId, $userId]
+        )->fetchColumn();
+
+        return $role === false ? null : (string) $role;
+    }
+
+    /**
+     * Permission slugs granted by a role slug, read from role_permissions.
+     *
+     * This is the single source of truth for what a blog role can do. Custom
+     * admin-created roles resolve through their own permissions here, so they
+     * work natively without being mapped onto a shipped role.
+     *
+     * @return string[] Permission slugs (empty when the role has none or is unknown)
+     */
+    public function permissionsForRole(string $roleSlug): array
+    {
+        static $cache = [];
+        if (array_key_exists($roleSlug, $cache)) {
+            return $cache[$roleSlug];
+        }
+
+        $rows = $this->database->query(
+            'SELECT p.permission_slug
+             FROM roles r
+             JOIN role_permissions rp ON rp.role_id = r.id
+             JOIN permissions p ON p.id = rp.permission_id
+             WHERE r.role_slug = ?',
+            [$roleSlug]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        return $cache[$roleSlug] = $rows ?: [];
+    }
+
+    /**
+     * Effective blog-level permission slugs for a user on one blog.
+     *
+     * Structural owners implicitly hold the full owner bundle (the blog_owner
+     * role's permissions); everyone else gets exactly their collaborator role's
+     * permissions. Non-members get nothing. This is what policies consult
+     * instead of comparing hardcoded role names.
+     *
+     * @return string[] Permission slugs the user holds on this blog
+     */
+    public function blogPermissionsFor(int $blogId, int $userId, int $ownerId): array
+    {
+        if ($ownerId === $userId) {
+            return $this->permissionsForRole('blog_owner');
+        }
+
+        $role = $this->storedRoleFor($blogId, $userId);
+
+        return $role === null ? [] : $this->permissionsForRole($role);
     }
 
     /**
@@ -437,6 +506,24 @@ class BlogModel extends AppModel
     }
 
     /**
+     * The structural owner of a blog (blogs.owner_id), with identity fields.
+     *
+     * Ownership lives on the blog itself, not in blog_users, so the admin
+     * roster reads it separately to show the full team.
+     *
+     * @return array<string, mixed>|null Owner user row, or null if missing
+     */
+    public function getBlogOwner(int $blogId): ?array
+    {
+        $sql = 'SELECT u.id, u.username, u.email
+                FROM blogs b
+                INNER JOIN users u ON u.id = b.owner_id
+                WHERE b.id = ?';
+
+        return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
      * Get all active users not yet assigned to a blog.
      *
      * Returns users available for assignment, excluding those already active on the blog.
@@ -470,16 +557,17 @@ class BlogModel extends AppModel
      *
      * @param  int  $blogId  Blog ID
      * @param  int  $userId  User ID to assign
-     * @param  string  $role  Collaborative role (must be one of ROLES constants)
+     * @param  string  $role  Collaborative role (any assignable blog role)
      * @param  int  $assignedBy  User ID performing the assignment
      * @return bool True on success
      *
-     * @throws \InvalidArgumentException If role is not in ROLES constant
+     * @throws \InvalidArgumentException If role is not an assignable blog role
      */
     public function addUserToBlog(int $blogId, int $userId, string $role, int $assignedBy): bool
     {
-        // Validate role against allowed collaborative roles only
-        if (!in_array($role, self::ROLES, true)) {
+        // Validate against the assignable blog roles (shipped plus custom),
+        // never the hardcoded const, so custom admin-created roles can be assigned.
+        if (!in_array($role, $this->availableCollaboratorRoles(), true)) {
             throw new \InvalidArgumentException("Invalid role: {$role}");
         }
 

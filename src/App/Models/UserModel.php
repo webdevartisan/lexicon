@@ -159,8 +159,43 @@ class UserModel extends AppModel
      * @param  int[]  $roles  Array of role IDs to assign
      * @return bool True on success
      */
+    /**
+     * Keep only the role ids that are system-scoped.
+     *
+     * The account-wide user_roles table is for control-panel roles; blog roles
+     * belong in blog_users. Enforcing that here means no controller or crafted
+     * request can bind a blog role globally.
+     *
+     * @param  int[]|string[]  $roleIds  Candidate role ids
+     * @return int[] The subset that is system-scoped
+     */
+    private function keepSystemRoleIds(array $roleIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $roleIds))));
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $rows = $this->database->query(
+            "SELECT id FROM roles WHERE scope = 'system' AND id IN ($placeholders)",
+            $ids
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        return array_map('intval', $rows ?: []);
+    }
+
+    /**
+     * Insert system roles for a user.
+     *
+     * @param  int[]  $roles
+     */
     public function insertUserRoles(int $userId, array $roles): bool
     {
+        // Accounts hold system roles only; drop any blog-scoped ids so a crafted
+        // request can never bind a blog role globally.
+        $roles = $this->keepSystemRoleIds($roles);
+
         // If there are no roles, treat this as a no-op success
         if (empty($roles)) {
             return true;
@@ -197,6 +232,10 @@ class UserModel extends AppModel
      */
     public function updateUserRoles(int $userId, array $newRoles): bool
     {
+        // Accounts hold system roles only. Filtering here keeps the diff below
+        // from ever removing or adding a blog-scoped assignment.
+        $newRoles = $this->keepSystemRoleIds($newRoles);
+
         try {
             // Step 1: Get current role assignments to compute changes
             $stmt = $this->database->query('SELECT role_id FROM user_roles WHERE user_id = ?', [$userId]);
@@ -289,12 +328,17 @@ class UserModel extends AppModel
         $offset = ($page - 1) * $perPage;
 
         // $orderBy comes from a TableSort whitelist, never from raw input.
+        // The roles column is the account's site role only (scope=system);
+        // blog involvement is summarized separately as owned/member counts so
+        // the list shows all three access axes at a glance.
         $sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name,
                        u.is_active, u.created_at, u.last_login, u.posts_count,
-                       COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles
+                       COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles,
+                       (SELECT COUNT(*) FROM blogs b2 WHERE b2.owner_id = u.id) AS owned_blogs,
+                       (SELECT COUNT(*) FROM blog_users bu2 WHERE bu2.user_id = u.id AND bu2.is_active = 1) AS member_blogs
                 FROM {$this->getTable()} u
                 LEFT JOIN user_roles ur ON ur.user_id = u.id
-                LEFT JOIN roles r ON r.id = ur.role_id
+                LEFT JOIN roles r ON r.id = ur.role_id AND r.scope = 'system'
                 {$where}
                 GROUP BY u.id
                 ORDER BY {$orderBy}
@@ -330,10 +374,13 @@ class UserModel extends AppModel
      */
     public function getUserRoles(int $userId): array
     {
-        $sql = 'SELECT r.role_slug
+        // Only system-scoped roles live on an account globally. Blog roles are
+        // held per blog in blog_users, so they must never surface here or they
+        // would grant their permissions site-wide with no blog binding.
+        $sql = "SELECT r.role_slug
                 FROM user_roles ur
                 JOIN roles r ON ur.role_id = r.id
-                WHERE ur.user_id = ?';
+                WHERE ur.user_id = ? AND r.scope = 'system'";
 
         $stmt = $this->database->query($sql, [$userId]);
 
@@ -353,11 +400,15 @@ class UserModel extends AppModel
      */
     public function getUserPermissions(int $userId): array
     {
-        $sql = 'SELECT DISTINCT p.permission_slug
+        // Global permissions come only from system-scoped roles. Blog-role
+        // permissions are contextual (resolved per blog in BlogModel), never
+        // part of the account-wide set.
+        $sql = "SELECT DISTINCT p.permission_slug
                 FROM user_roles ur
+                JOIN roles r ON r.id = ur.role_id
                 JOIN role_permissions rp ON ur.role_id = rp.role_id
                 JOIN permissions p ON rp.permission_id = p.id
-                WHERE ur.user_id = ?';
+                WHERE ur.user_id = ? AND r.scope = 'system'";
 
         $stmt = $this->database->query($sql, [$userId]);
 

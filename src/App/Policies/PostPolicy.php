@@ -10,14 +10,17 @@ use Framework\Interfaces\PolicyInterface;
 /**
  * PostPolicy
  *
- * Controls who may view, edit, publish, assign reviewers, or perform
- * review actions on a post. Structural blog owner is always allowed;
- * per-blog roles define collaboration permissions.
+ * Controls who may view, edit, publish, assign reviewers, or perform review
+ * actions on a post. Every decision is driven by the acting user's blog-level
+ * permissions on the post's blog (BlogResource::userCan). Structural owners
+ * hold the full owner bundle, so they are not special-cased. Ownership and
+ * workflow-state guards (own posts only, in-review lock, draft-only delete)
+ * layer on top of the permission check.
  */
 final class PostPolicy implements PolicyInterface
 {
     /**
-     * View a post in dashboard context.
+     * View a post in dashboard context. Any collaborator with read access.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -25,23 +28,15 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $userRole = $blog->roleForUser((int) $user['id']);
-        $allowedRoles = ['editor', 'author', 'contributor', 'reviewer'];
-
-        return in_array($userRole, $allowedRoles, true);
+        return $post->blog()->userCan((int) $user['id'], 'view_all_posts');
     }
 
     /**
      * Update a post's content/metadata.
      *
-     * Owner and editors can edit any post. Authors/contributors can edit their
-     * own posts — unless the post is currently in_review (in-review lock).
+     * Editors (and owner) edit any post via edit_blog_posts. Authors and
+     * contributors edit their own posts via edit_own_posts, but are locked out
+     * while the post is in review.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -49,33 +44,27 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
+        $uid = (int) $user['id'];
         $blog = $post->blog();
 
-        if ($blog->ownerId() === $user['id']) {
+        if ($blog->userCan($uid, 'edit_blog_posts')) {
             return true;
         }
 
-        $role = $blog->roleForUser((int) $user['id']);
-
-        if ($role === 'editor') {
-            return true;
-        }
-
-        // Authors and contributors are locked out while a post is in review.
-        if (in_array($role, ['author', 'contributor'], true)) {
+        if ($blog->userCan($uid, 'edit_own_posts')) {
+            // Authors and contributors are locked out while a post is in review.
             if ($post->workflowState() === 'in_review') {
                 return false;
             }
 
-            return $post->authorId() === (int) $user['id'];
+            return $post->authorId() === $uid;
         }
 
         return false;
     }
 
     /**
-     * Publish or unpublish a post (change visibility).
-     * Only owner or editor can do this.
+     * Publish or unpublish a post. Owner or editor.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -83,20 +72,12 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $role = $blog->roleForUser((int) $user['id']);
-
-        return $role === 'editor';
+        return $post->blog()->userCan((int) $user['id'], 'publish_blog_posts');
     }
 
     /**
-     * Delete a post.
-     * Owner or editors always; authors may delete only their own un-published posts.
+     * Delete a post. Owner or editor delete any; authors delete only their own
+     * un-published (draft) posts.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -104,19 +85,14 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
+        $uid = (int) $user['id'];
         $blog = $post->blog();
 
-        if ($blog->ownerId() === $user['id']) {
+        if ($blog->userCan($uid, 'delete_blog_posts')) {
             return true;
         }
 
-        $role = $blog->roleForUser((int) $user['id']);
-
-        if ($role === 'editor') {
-            return true;
-        }
-
-        if ($role === 'author' && $post->authorId() === (int) $user['id']) {
+        if ($blog->userCan($uid, 'delete_own_posts') && $post->authorId() === $uid) {
             return $post->status() === 'draft';
         }
 
@@ -124,8 +100,8 @@ final class PostPolicy implements PolicyInterface
     }
 
     /**
-     * Mark a post as needing changes (send back to author for revision).
-     * Owner, editor, and reviewer may do this.
+     * Mark a post as needing changes (send back to the author for revision).
+     * Owner, editor, and reviewer.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -133,20 +109,11 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $userRole = $blog->roleForUser((int) $user['id']);
-
-        return in_array($userRole, ['editor', 'reviewer'], true);
+        return $post->blog()->userCan((int) $user['id'], 'reject_posts');
     }
 
     /**
-     * Approve a post (advance to approved state).
-     * Owner, editor, and reviewer may do this.
+     * Approve a post (advance to approved state). Owner, editor, and reviewer.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -154,23 +121,13 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $userRole = $blog->roleForUser((int) $user['id']);
-
-        return in_array($userRole, ['editor', 'reviewer'], true);
+        return $post->blog()->userCan((int) $user['id'], 'approve_posts');
     }
 
     /**
-     * Assign a reviewer to a post.
-     *
-     * Owner and editor may assign any reviewer. Reviewer role may self-assign
-     * (the WorkflowService enforces the self-assign constraint — the policy
-     * only checks that the acting user has reviewer capability or above).
+     * Assign a reviewer to a post. Owner and editor assign any reviewer;
+     * reviewers may self-assign (WorkflowService enforces the self-assign
+     * constraint — the policy only checks reviewer capability or above).
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -178,20 +135,12 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $userRole = $blog->roleForUser((int) $user['id']);
-
-        return in_array($userRole, ['editor', 'reviewer'], true);
+        return $post->blog()->userCan((int) $user['id'], 'assign_reviewers');
     }
 
     /**
      * Perform a review action (approve or request changes) on a post.
-     * Owner, editor, and reviewer can take review actions.
+     * Owner, editor, and reviewer.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -199,14 +148,6 @@ final class PostPolicy implements PolicyInterface
     {
         assert($post instanceof PostResource);
 
-        $blog = $post->blog();
-
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
-
-        $userRole = $blog->roleForUser((int) $user['id']);
-
-        return in_array($userRole, ['editor', 'reviewer'], true);
+        return $post->blog()->userCan((int) $user['id'], 'review_posts');
     }
 }
