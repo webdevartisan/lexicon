@@ -10,7 +10,6 @@ use App\Helpers\TimezoneHelper;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
-use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
@@ -35,7 +34,6 @@ final class BlogController extends AppController
         private UserPreferencesModel $preference,
         private BlogDeletionService $blogDeletion,
         private WorkflowService $workflowService,
-        private RoleModel $roles,
     ) {}
 
     /**
@@ -158,8 +156,6 @@ final class BlogController extends AppController
             // Set as default blog
             $this->preference->setDefaultBlogId($userId, $blogId);
 
-            $this->upgradeReaderToCreator((int) $userId);
-
             audit()->log(
                 $userId,
                 'blog.created',
@@ -178,28 +174,6 @@ final class BlogController extends AppController
                 'error' => 'Blog slug already exists or database error',
                 'old' => $this->request->post,
             ]);
-        }
-    }
-
-    /**
-     * Grant the author role to reader-only accounts on their first blog.
-     *
-     * Registration defaults everyone to reader; the moment someone starts a
-     * blog they become a creator, so author-gated policies recognize them
-     * without a separate signup or onboarding step.
-     */
-    private function upgradeReaderToCreator(int $userId): void
-    {
-        $systemRoles = $this->user->getUserRoles($userId);
-
-        $creatorRoles = ['administrator', 'content_manager', 'blog_owner', 'author', 'editor'];
-        if (!in_array('reader', $systemRoles, true) || array_intersect($systemRoles, $creatorRoles) !== []) {
-            return;
-        }
-
-        $author = $this->roles->findBySlug('author');
-        if ($author !== null) {
-            $this->user->insertUserRoles($userId, [(int) $author['id']]);
         }
     }
 

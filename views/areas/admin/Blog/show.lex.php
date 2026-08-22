@@ -46,6 +46,38 @@ $statusBadge = [
         </div>
     </div>
 
+    <?php
+    $ownerBadge = 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800';
+$memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500';
+?>
+    <div class="card mb-5">
+        <div class="card-body">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-3">Team</h3>
+            <ul class="divide-y divide-slate-100 dark:divide-zink-600">
+                <?php if (!empty($owner)) { ?>
+                <li class="flex items-center justify-between gap-3 py-2">
+                    <div class="min-w-0">
+                        <a href="/admin/users/<?= e((string) $owner['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $owner['username']) ?></a>
+                        <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) $owner['email']) ?></span>
+                    </div>
+                    <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $ownerBadge ?>">owner</span>
+                </li>
+                <?php } foreach ($blogUsers as $m) { ?>
+                <li class="flex items-center justify-between gap-3 py-2">
+                    <div class="min-w-0">
+                        <a href="/admin/users/<?= e((string) $m['user_id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) ($m['username'] ?? '')) ?></a>
+                        <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) ($m['email'] ?? '')) ?></span>
+                    </div>
+                    <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $memberBadge ?>"><?= e((string) ($m['role'] ?? '')) ?></span>
+                </li>
+                <?php } ?>
+            </ul>
+            <?php if (empty($blogUsers)) { ?>
+            <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">No collaborators yet — owner only.</p>
+            <?php } ?>
+        </div>
+    </div>
+
     <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-3">Posts in this blog</h3>
 
     {% if posts|empty %}

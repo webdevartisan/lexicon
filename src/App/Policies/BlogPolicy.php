@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Resources\BlogResource;
 use Framework\Interfaces\PolicyInterface;
 
 /**
  * BlogPolicy
  *
- * We use this policy for actions that are scoped to the blog itself:
- * viewing, updating identity/settings, deleting, and creating posts in this blog.
+ * Actions scoped to a blog itself: viewing, updating identity/settings,
+ * deleting, managing the team, and creating posts in this blog.
+ *
+ * Every per-blog decision is driven by the acting user's blog-level
+ * permissions (BlogResource::userCan), resolved from the role they hold on
+ * this blog. Structural owners implicitly hold the full owner bundle, so they
+ * are not special-cased here. Custom admin-created blog roles work natively
+ * because they carry their own permissions.
  */
 class BlogPolicy implements PolicyInterface
 {
@@ -23,38 +30,27 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * View a blog in dashboard context.
-     * Owner always allowed; per-blog roles editor/author/viewer/contributor/reviewer can view.
+     * View a blog in dashboard context. Any collaborator with read access.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function view(array $user, object $blog): bool
     {
-        // owner always allowed
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
+        assert($blog instanceof BlogResource);
 
-        // if ($this->hasRole($user, 'administrator')) {
-        //     return true;
-        // }
-
-        // per-blog roles: editor, author, viewer can view
-        $blogRole = $blog->roleForUser((int) $user['id']); // method on BlogResource
-        $allowedRoles = ['editor', 'author', 'viewer', 'contributor', 'reviewer'];
-
-        return in_array($blogRole, $allowedRoles, true);
+        return $blog->userCan((int) $user['id'], 'view_all_posts');
     }
 
     /**
+     * Start a new blog. This is a global (system) decision, not per-blog:
+     * any registered account may create one. Readers start here and are
+     * upgraded to a creator on their first blog.
+     *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function create(array $user): bool
     {
-        // 'reader' is here on purpose: any registered account may start a blog.
-        // The creator upgrade (author role) happens on first successful creation.
-        $allowedRoles = ['administrator', 'editor', 'author', 'content_manager', 'blog_owner', 'reader'];
-        foreach ($allowedRoles as $role) {
+        foreach (['administrator', 'content_manager', 'reader'] as $role) {
             if ($this->hasRole($user, $role)) {
                 return true;
             }
@@ -64,81 +60,64 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * Update blog identity/settings.
-     * Owner or editor per-blog.
+     * Update blog identity/settings. Owner and editors.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function update(array $user, object $blog): bool
     {
-        // owner always allowed
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
+        assert($blog instanceof BlogResource);
 
-        /*
-        if ($this->hasRole($user, 'administrator')) {
-            return true;
-        }*/
-
-        // per-blog: editors can update
-        $blogRole = $blog->roleForUser((int) $user['id']);
-
-        return $blogRole === 'editor';
+        return $blog->userCan((int) $user['id'], 'edit_own_blog');
     }
 
     /**
-     * Manage users attached to this blog.
-     * Owner only — editors no longer manage the collaborator roster.
+     * Manage the collaborator roster. Owner (and any custom delegated-owner
+     * role holding manage_team); editors do not manage the roster.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function manageUsers(array $user, object $blog): bool
     {
-        return $blog->ownerId() === $user['id'];
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'manage_team');
     }
 
     /**
-     * Invite a new collaborator to this blog.
-     * Owner only.
+     * Invite a new collaborator. Same gate as managing the roster.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function invite(array $user, object $blog): bool
     {
-        return $blog->ownerId() === $user['id'];
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'manage_team');
     }
 
     /**
-     * Create a post in this blog.
-     * Owner, editor, author, contributor can start a post.
+     * Create a post in this blog. Owner, editor, author, contributor.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function createPost(array $user, object $blog): bool
     {
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
+        assert($blog instanceof BlogResource);
 
-        $blogRole = $blog->roleForUser((int) $user['id']);
-
-        return in_array($blogRole, ['editor', 'author', 'contributor'], true);
+        return $blog->userCan((int) $user['id'], 'create_posts');
     }
 
     /**
-     * Delete blog.
-     * Keep strict: owner only.
+     * Delete the blog. Owner only (delete_own_blog is in the owner bundle and
+     * granted to no collaborator role).
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function delete(array $user, object $blog): bool
     {
-        // strict: only owner , ignore per-blog roles
-        if ($blog->ownerId() === $user['id']) {
-            return true;
-        }
+        assert($blog instanceof BlogResource);
 
-        return false;
+        return $blog->userCan((int) $user['id'], 'delete_own_blog');
     }
 }

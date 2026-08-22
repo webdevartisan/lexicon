@@ -1002,7 +1002,8 @@ INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) V
 ('Author', 'author', 'Can create and edit posts within assigned blog(s)', 'blog', 1, 40),
 ('Reviewer', 'reviewer', 'Can review drafts and provide feedback, cannot edit or publish', 'blog', 1, 30),
 ('Contributor', 'contributor', 'Can submit drafts or ideas for review', 'blog', 1, 20),
-('Reader', 'reader', 'Default account role: can subscribe, save posts, and join discussions', 'system', 1, 10);
+('Reader', 'reader', 'Default account role: can subscribe, save posts, and join discussions', 'system', 1, 10),
+('Editor', 'editor', 'Manages all content and the review pipeline within a blog, but not its team or settings deletion', 'blog', 1, 50);
 
 -- ----------------------------------------------------------------------------
 -- Seed Permissions
@@ -1027,6 +1028,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Delete Own Blog', 'delete_own_blog', 'blogs', 'delete_own', 'Delete blogs you own'),
 ('View All Blogs', 'view_all_blogs', 'blogs', 'read', 'View all blogs on the platform'),
 ('Assign Authors', 'assign_authors', 'blogs', 'assign', 'Assign authors to blogs'),
+('Manage Team', 'manage_team', 'blogs', 'manage_team', 'Manage collaborators and invitations on blogs you manage'),
 
 -- Post Management (All Posts) Permissions
 ('Manage All Posts', 'manage_all_posts', 'posts', 'manage', 'Full management of all posts site-wide'),
@@ -1049,6 +1051,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Approve Posts', 'approve_posts', 'posts', 'approve', 'Approve posts for publication'),
 ('Reject Posts', 'reject_posts', 'posts', 'reject', 'Reject posts and request changes'),
 ('Provide Feedback', 'provide_feedback', 'posts', 'feedback', 'Provide feedback on posts'),
+('Assign Reviewers', 'assign_reviewers', 'posts', 'assign_reviewers', 'Assign reviewers to posts in blogs you manage'),
 
 -- Submissions Permissions
 ('Submit Ideas', 'submit_ideas', 'submissions', 'create', 'Submit content ideas for review'),
@@ -1099,12 +1102,27 @@ WHERE permission_slug IN (
 -- including the ability to manage blog membership.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 3, id FROM permissions 
+SELECT 3, id FROM permissions
 WHERE permission_slug IN (
     'create_blogs', 'edit_own_blog', 'delete_own_blog', 'view_all_blogs',
-    'assign_authors', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
+    'assign_authors', 'manage_team', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
     'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
-    'reject_posts', 'provide_feedback', 'review_submissions'
+    'reject_posts', 'assign_reviewers', 'provide_feedback', 'review_submissions'
+);
+
+-- ----------------------------------------------------------------------------
+-- Assign Permissions to Editor Role
+-- ----------------------------------------------------------------------------
+-- Editors run a blog's content and review pipeline in full, but cannot manage
+-- the collaborator roster or delete the blog. Role id resolved by slug so this
+-- stays correct regardless of insert order.
+-- ----------------------------------------------------------------------------
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE role_slug = 'editor'), id FROM permissions
+WHERE permission_slug IN (
+    'edit_own_blog', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
+    'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
+    'reject_posts', 'provide_feedback', 'review_submissions', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1127,10 +1145,10 @@ WHERE permission_slug IN (
 -- to maintain editorial separation between authorship and review.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 5, id FROM permissions 
+SELECT 5, id FROM permissions
 WHERE permission_slug IN (
     'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts',
-    'provide_feedback', 'review_submissions'
+    'assign_reviewers', 'provide_feedback', 'review_submissions'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1140,9 +1158,10 @@ WHERE permission_slug IN (
 -- consideration by authors or blog owners.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 6, id FROM permissions 
+SELECT 6, id FROM permissions
 WHERE permission_slug IN (
-    'submit_ideas', 'view_own_submissions', 'view_all_posts'
+    'submit_ideas', 'view_own_submissions', 'view_all_posts',
+    'create_posts', 'edit_own_posts'
 );
 
 -- ============================================================================

@@ -15,6 +15,9 @@ class BlogResource
     /** @var array<string, mixed> */
     private array $data;
 
+    /** @var array<int, string[]> Per-user blog permission cache */
+    private array $permissionCache = [];
+
     /**
      * @param  array<string, mixed>  $data  Blog row from the database
      */
@@ -122,6 +125,35 @@ class BlogResource
             'post_count' => $this->postCount(),
             'user_count' => $this->userCount(),
         ]);
+    }
+
+    /**
+     * Effective blog-level permission slugs for a user on this blog.
+     *
+     * Memoized per user for the resource's lifetime because policies ask
+     * repeatedly (once per post in a listing).
+     *
+     * @return string[] Permission slugs
+     */
+    public function permissionsForUser(int $userId): array
+    {
+        if (isset($this->permissionCache[$userId])) {
+            return $this->permissionCache[$userId];
+        }
+
+        return $this->permissionCache[$userId] = $this->model->blogPermissionsFor(
+            $this->id(),
+            $userId,
+            $this->ownerId()
+        );
+    }
+
+    /**
+     * Whether a user holds a given blog permission on this blog.
+     */
+    public function userCan(int $userId, string $permission): bool
+    {
+        return in_array($permission, $this->permissionsForUser($userId), true);
     }
 
     public function roleForUser(int $userId): ?string

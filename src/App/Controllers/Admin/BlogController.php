@@ -208,13 +208,13 @@ class BlogController extends AppController
 
         $posts = $this->blogModel->getBlogPosts((int) $id);
         $blogUsers = $this->blogModel->getBlogUsers((int) $id);
-        $availableUsers = $this->blogModel->getAvailableUsers((int) $id);
+        $owner = $this->blogModel->getBlogOwner((int) $id);
 
         return $this->view('blog.show', [
             'blog' => $blog->toArray(),
             'posts' => $posts,
             'blogUsers' => $blogUsers,
-            'availableUsers' => $availableUsers,
+            'owner' => $owner,
         ]);
     }
 

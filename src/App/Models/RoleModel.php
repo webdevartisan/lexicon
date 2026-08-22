@@ -42,6 +42,19 @@ class RoleModel extends AppModel
     }
 
     /**
+     * Roles of a given scope, ordered by authority.
+     *
+     * @param  string  $scope  'system' or 'blog'
+     * @return array<int, array<string, mixed>> Matching roles, highest level first
+     */
+    public function findByScope(string $scope): array
+    {
+        $sql = "SELECT * FROM {$this->getTable()} WHERE scope = ? ORDER BY level DESC";
+
+        return $this->database->query($sql, [$scope])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * All roles with how many users hold each, grouped counts in one query.
      *
      * @return array<int, array<string, mixed>> Roles ordered by scope then level, each with users_count

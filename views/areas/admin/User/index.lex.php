@@ -51,7 +51,8 @@ foreach ($roleOptions as $r) {
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="username" label="Username" %}
                         <th class="px-3.5 py-2.5 font-semibold">Name</th>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="email" label="Email" %}
-                        <th class="px-3.5 py-2.5 font-semibold">Roles</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Site role</th>
+                        <th class="px-3.5 py-2.5 font-semibold">Blogs</th>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="active" label="Status" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="created" label="Joined" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
@@ -73,11 +74,29 @@ $activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
                         </td>
                         <td class="px-3.5 py-2.5">{{ user['email'] }}</td>
                         <td class="px-3.5 py-2.5">
-                            <?php foreach (array_filter(explode(',', (string) $user['roles'])) as $roleName) { ?>
+                            <?php
+                                $siteRoles = array_filter(explode(',', (string) $user['roles']));
+if ($siteRoles === []) { ?>
+                            <span class="text-xs text-slate-400 dark:text-zink-400">—</span>
+                            <?php } foreach ($siteRoles as $roleName) { ?>
                             <span class="inline-flex items-center px-2 py-0.5 mr-1 text-[10px] font-medium rounded-full border bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500">
                                 <?= e($roleName) ?>
                             </span>
                             <?php } ?>
+                        </td>
+                        <td class="px-3.5 py-2.5 text-xs text-slate-500 dark:text-zink-300">
+                            <?php
+$owned = (int) ($user['owned_blogs'] ?? 0);
+$member = (int) ($user['member_blogs'] ?? 0);
+$bits = [];
+if ($owned > 0) {
+    $bits[] = 'owns '.$owned;
+}
+if ($member > 0) {
+    $bits[] = 'in '.$member;
+}
+echo $bits === [] ? '<span class="text-slate-400 dark:text-zink-400">—</span>' : e(implode(' · ', $bits));
+?>
                         </td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$activeStatus}" label="{$activeLabel}" %}

@@ -14,14 +14,17 @@ use Faker\Generator;
  */
 final class UserSeeder extends Seeder
 {
-    /** Role ids from the schema seed (roles table). */
-    private const ROLE_ADMINISTRATOR = 1;
-
-    private const ROLE_CONTENT_MANAGER = 2;
-
-    private const ROLE_READER = 7;
-
     private const SOCIAL_NETWORKS = ['twitter', 'github', 'linkedin', 'website', 'mastodon', 'instagram'];
+
+    /**
+     * Resolve a system role slug to its id at seed time.
+     *
+     * Role ids drift across environments (roles get added and re-seeded), so
+     * never hardcode them. Resolving by slug is the single robust approach.
+     *
+     * @var array<string, int>
+     */
+    private array $roleIdBySlug = [];
 
     public function seed(SeedConfig $config, SeedContext $context, Generator $faker): void
     {
@@ -30,6 +33,12 @@ final class UserSeeder extends Seeder
         $sharedHash = $config->password !== null
             ? password_hash($config->password, PASSWORD_DEFAULT)
             : null;
+
+        // Map system role slugs to their ids once; blog roles never land in
+        // user_roles, so only system-scoped roles are relevant here.
+        $this->roleIdBySlug = $this->db
+            ->query("SELECT role_slug, id FROM roles WHERE scope = 'system'")
+            ->fetchAll(\PDO::FETCH_KEY_PAIR);
 
         $profiles = [];
         $preferences = [];
@@ -79,7 +88,7 @@ final class UserSeeder extends Seeder
 
             $roles[] = [
                 'user_id' => $userId,
-                'role_id' => $this->roleForIndex($i, $faker),
+                'role_id' => $this->roleIdBySlug[$this->roleSlugForIndex($i, $faker)],
             ];
         }
 
@@ -90,15 +99,15 @@ final class UserSeeder extends Seeder
     }
 
     /**
-     * Decide a site-wide role: the very first user administers the site, roughly
-     * one in eight of the rest manage content, everyone else reads.
+     * Decide a site-wide role slug: the very first user administers the site,
+     * roughly one in eight of the rest manage content, everyone else reads.
      */
-    private function roleForIndex(int $index, Generator $faker): int
+    private function roleSlugForIndex(int $index, Generator $faker): string
     {
         if ($index === 0) {
-            return self::ROLE_ADMINISTRATOR;
+            return 'administrator';
         }
 
-        return $faker->boolean(12) ? self::ROLE_CONTENT_MANAGER : self::ROLE_READER;
+        return $faker->boolean(12) ? 'content_manager' : 'reader';
     }
 }

@@ -535,7 +535,7 @@ class BlogController extends AppController
             'article_modified_time' => !empty($post['updated_at'])
                 ? gmdate('c', strtotime((string) $post['updated_at']))
                 : null,
-            'article_author' => $post['author_name'] ?? null,
+            'article_author' => $post['author_name'],
             'canonical' => !empty($post['canonical_url']) ? $post['canonical_url'] : $shareUrl,
             'robots' => $robots !== [] ? implode(', ', $robots) : null,
         ]);

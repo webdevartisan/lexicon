@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Models\BlogModel;
 use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\ValueObjects\TableSort;
@@ -20,6 +21,7 @@ class UserController extends AppController
     public function __construct(
         private UserModel $model,
         private RoleModel $roleModel,
+        private BlogModel $blogModel,
         protected Database $database,
     ) {}
 
@@ -48,15 +50,18 @@ class UserController extends AppController
             'q' => $q,
             'active' => $active,
             'role' => $role,
-            'roleOptions' => $this->roleModel->findAll(),
+            // Only system roles live on an account, so only they make sense as a
+            // filter. Blog roles are per-blog and never appear in user_roles.
+            'roleOptions' => $this->roleModel->findByScope('system'),
             'sort' => $sort,
         ]);
     }
 
     public function new(): Response
     {
-        // $roleModel = new RoleModel($this->database);
-        $roles = $this->roleModel->findAll();
+        // Accounts carry system roles only; blog roles are assigned per blog
+        // on the blog's team page, never globally here.
+        $roles = $this->roleModel->findByScope('system');
 
         return $this->view('user.new', [
             'roles' => $roles,
@@ -119,12 +124,14 @@ class UserController extends AppController
 
         $user['roles'] = $this->model->getUserRoles($user['id']);
 
-        // $roleModel = new RoleModel($this->database);
-        $roles = $this->roleModel->findAll();
+        $roles = $this->roleModel->findByScope('system');
 
         return $this->view('user.edit', [
             'user' => $user,
             'roles' => $roles,
+            // The full access picture: which blogs this account owns or
+            // collaborates on, and the role held on each.
+            'blogs' => $this->blogModel->getAccessibleBlogs((int) $user['id']),
         ]);
     }
 
