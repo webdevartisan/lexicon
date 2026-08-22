@@ -3,8 +3,6 @@
 // (rendered standalone by BlogController::indexFeed). Each row carries its
 // cover in data attributes so the light table can proof it on hover.
 $blogSlug = urlencode($blog['blog_slug'] ?? '');
-$ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Editor';
-$ownerName = e($ownerNameRaw);
 $validImg = '#^(https?://|/|data:)#i';
 
 foreach (($cards ?? []) as $i => $post) {
@@ -15,7 +13,7 @@ foreach (($cards ?? []) as $i => $post) {
     $cat = trim((string) ($post['category'] ?? 'Post'));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
+    $author = profile_link($post['author_name'], $post['author_profile_slug']);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>

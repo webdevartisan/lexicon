@@ -31,6 +31,12 @@ final class SharedController extends AppController
         $user = auth()->user();
         $userId = (int) $user['id'];
 
+        // Same rule as the dashboard home: no owned or shared blogs means
+        // there is no workspace to show, only the blank slate at "/".
+        if (empty($this->blogModel->getAccessibleBlogs($userId))) {
+            return $this->redirect('/');
+        }
+
         $sharedBlogs = $this->blogModel->getSharedBlogsForUser($userId);
 
         $cards = array_map(

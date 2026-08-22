@@ -218,7 +218,7 @@ class CommentController extends AppController
     }
 
     /**
-     * Pin or unpin a top-level comment. Blog moderators only.
+     * Pin or unpin a top-level comment. Blog moderators and the post's author.
      */
     public function pin(string $id): Response
     {
@@ -228,7 +228,7 @@ class CommentController extends AppController
         $user = auth()->user();
         $comment = $this->commentModel->findById($commentId);
 
-        if ($comment === null || !$this->moderatesComment($commentId, $user)) {
+        if ($comment === null || !$this->canPinComment($commentId, $user)) {
             $this->flash('error', 'You cannot pin that comment.');
 
             return $this->redirectBack();
@@ -317,6 +317,41 @@ class CommentController extends AppController
      * viewer already had, not a second way of granting it.
      *
      * @param  array<string, mixed>|null  $user  Authenticated viewer, null for guests
+     */
+    /**
+     * May this person pin a comment on this post?
+     *
+     * Wider than moderatesComment() by exactly one person: whoever wrote the
+     * post. They run the conversation underneath it, the way a channel owner
+     * does under their own video, and pinning is a presentation choice about
+     * their own thread.
+     *
+     * Deliberately not folded into moderatesComment(), which also gates
+     * removal — an author choosing what to highlight is a smaller power than
+     * an author deleting what other people said.
+     *
+     * @param  int  $commentId  Comment being pinned or unpinned
+     * @param  array<string, mixed>|null  $user  Signed-in user, or null
+     */
+    private function canPinComment(int $commentId, ?array $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($this->moderatesComment($commentId, $user)) {
+            return true;
+        }
+
+        $authorId = $this->commentModel->postAuthorForComment($commentId);
+
+        return $authorId !== null && $authorId === (int) $user['id'];
+    }
+
+    /**
+     * Whether the viewer moderates the blog a comment was left on.
+     *
+     * @param  array<string, mixed>|null  $user  Signed-in user, or null
      */
     private function moderatesComment(int $commentId, ?array $user): bool
     {

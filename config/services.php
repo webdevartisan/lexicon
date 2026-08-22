@@ -709,6 +709,14 @@ $container->set(App\Resources\UserResource::class, function ($c) {
     );
 });
 
+// UserDeletionService type-hints the interface, which the reflection autowirer
+// cannot instantiate on its own. Bind it to the concrete so UserDeletionService
+// (and anything that depends on it, such as the account deletion controller)
+// resolves. UploadService itself has no constructor, so the container autowires it.
+$container->setShared(App\Interfaces\UploadServiceInterface::class, function ($c) {
+    return $c->get(App\Services\UploadService::class);
+});
+
 // ============================================================================
 // OPTIONAL SERVICES (Commented - Auto-Discovery via Constructor Injection)
 // ============================================================================

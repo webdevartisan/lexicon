@@ -71,20 +71,8 @@ return [
      * ]
      */
     'patterns' => [
-        // Settings patterns. Listed explicitly rather than via segment_labels so
-        // "notifications" here reads as the email preferences without renaming
-        // the notification feed at /dashboard/notifications.
-        '/dashboard/account' => [
-            ['label' => 'Account', 'url' => null, 'key' => 'breadcrumbs.account'],
-        ],
-        '/dashboard/account/security' => [
-            ['label' => 'Account', 'url' => '/dashboard/account', 'key' => 'breadcrumbs.account'],
-            ['label' => 'Security', 'url' => null, 'key' => 'breadcrumbs.security'],
-        ],
-        '/dashboard/account/notifications' => [
-            ['label' => 'Account', 'url' => '/dashboard/account', 'key' => 'breadcrumbs.account'],
-            ['label' => 'Email Notifications', 'url' => null, 'key' => 'breadcrumbs.emailNotifications'],
-        ],
+        // Account settings moved to the front under /account, which has no
+        // breadcrumb, so the old dashboard settings patterns were removed here.
 
         // Blog management patterns
         '/dashboard/blog/{id}/edit' => [

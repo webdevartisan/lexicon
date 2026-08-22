@@ -73,10 +73,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = profile_link(
-        $featuredPost['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
-        $user['public_profile_slug'] ?? null
-    );
+    $fAuthor = profile_link($featuredPost['author_name'], $featuredPost['author_profile_slug']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $fCat = e($featuredPost['category'] ?? 'Article');
     $fMin = reading_time($featuredPost['content'] ?? '');
@@ -159,7 +156,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     $ncTitle = e($nightcapPost['title'] ?? 'Untitled');
     $ncUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($nightcapPost['slug'] ?? ''));
     $ncMinutes = reading_time($nightcapPost['content'] ?? '');
-    $ncAuthor = profile_link($nightcapPost['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
+    $ncAuthor = profile_link($nightcapPost['author_name'], $nightcapPost['author_profile_slug']);
 
     $excerpt = trim((string) ($nightcapPost['excerpt'] ?? ''));
     $quote = trim(preg_replace('/\s+/', ' ', $excerpt !== ''

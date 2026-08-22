@@ -6,9 +6,9 @@
 {% block body %}
 <?php
 $basePath = '/admin/blogs';
-$hasFilters = $q !== '' || $status !== '' || $featured !== '';
+$hasFilters = $q !== '' || $status !== '' || $featured !== '' || $theme !== '';
 $emptyTitle = $hasFilters ? 'No blogs match these filters' : 'No blogs yet';
-$emptyMessage = $hasFilters ? 'Try a different name, owner, status, or featured state.' : 'Create the first blog to get the site going.';
+$emptyMessage = $hasFilters ? 'Try a different name, owner, status, theme, or featured state.' : 'Create the first blog to get the site going.';
 
 $statusChoices = ['' => 'All statuses'];
 foreach ($statusOptions as $opt) {
@@ -23,6 +23,7 @@ $featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'No
         <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
             {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search name, slug, or owner..." %}
             {% cmp="select" name="status" options="{$statusChoices}" selectedKey="{$status}" onchange="this.form.submit()" %}
+            {% cmp="select" name="theme" options="{$themeChoices}" selectedKey="{$theme}" onchange="this.form.submit()" %}
             {% cmp="select" name="featured" options="{$featuredChoices}" selectedKey="{$featured}" onchange="this.form.submit()" %}
             {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
             <?php /* Marked for table-sort.js: the region swap does not reach
@@ -52,6 +53,7 @@ $featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'No
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="owner" label="Owner" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="posts" label="Posts" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="team" label="Team" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="theme" label="Theme" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
@@ -68,16 +70,31 @@ $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
 $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
 $featuredOnExplore = (int) ($blog['is_featured'] ?? 0) === 1;
 $featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on explore page';
+$blogTheme = (string) ($blog['theme'] ?? '');
+// The stored key is what the filter matches on, so show that rather than the
+// display name; they differ, and a mismatch here would read as a broken filter.
+$themeLabel = $blogTheme !== '' ? $blogTheme : '—';
+$blogSlug = (string) ($blog['blog_slug'] ?? '');
+$publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $blog['id']) ?></td>
                         <td class="px-3.5 py-2.5">
-                            <span class="font-medium text-slate-900 dark:text-zink-50"><?= e($blog['blog_name']) ?></span>
-                            <span class="block text-xs text-slate-400 dark:text-zink-300">/<?= e((string) ($blog['blog_slug'] ?? '')) ?></span>
+                            <?php // A blog with no slug has no public page to open, so it stays plain text.?>
+                            <?php if ($publicUrl !== '') { ?>
+                                <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
+                                   class="font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 dark:hover:text-custom-500 transition-colors">
+                                    <?= e($blog['blog_name']) ?>
+                                </a>
+                            <?php } else { ?>
+                                <span class="font-medium text-slate-900 dark:text-zink-50"><?= e($blog['blog_name']) ?></span>
+                            <?php } ?>
+                            <span class="block text-xs text-slate-400 dark:text-zink-300">/<?= e($blogSlug) ?></span>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($blog['owner_name'] ?? '—')) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['post_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['author_count'] ?? 0) ?></td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e($themeLabel) ?></td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$blogStatus}" label="{$statusLabel}" %}
                         </td>

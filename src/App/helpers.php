@@ -284,9 +284,22 @@ function relative_time(?string $utc, bool $short = false): string
     } elseif ($seconds < 86400) {
         $count = (int) round($seconds / 3600);
         $text = $short ? $count.'h' : plural_unit($count, 'hour');
-    } else {
+    } elseif ($seconds < 604800) {
         $count = (int) round($seconds / 86400);
         $text = $short ? $count.'d' : plural_unit($count, 'day');
+    } elseif ($seconds < 2592000) {
+        // Floor, not round, from here up: rounding lets five and a half weeks
+        // read as "6 weeks" when the next unit has already taken over.
+        $count = (int) floor($seconds / 604800);
+        $text = $short ? $count.'w' : plural_unit($count, 'week');
+    } elseif ($seconds < 31536000) {
+        // Capped at 11 so a 30-day month never counts its way to "12 months",
+        // which is a year by any reader's arithmetic.
+        $count = min(11, (int) floor($seconds / 2592000));
+        $text = $short ? $count.'mo' : plural_unit($count, 'month');
+    } else {
+        $count = (int) floor($seconds / 31536000);
+        $text = $short ? $count.'y' : plural_unit($count, 'year');
     }
 
     return $ahead ? 'in '.$text : $text.' ago';

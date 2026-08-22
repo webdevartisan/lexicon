@@ -1642,7 +1642,8 @@ class PostModel extends AppModel
         $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
                        p.featured_on_home, p.is_featured, p.visibility, p.published_at,
                        b.blog_name, b.blog_slug,
-                       au.username AS author_username
+                       au.username AS author_username,
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users au ON au.id = p.author_id

@@ -2,51 +2,58 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Dashboard;
+namespace App\Controllers;
 
-use App\Controllers\AppController;
+use App\Mail\EmailChangedMail;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\DisplayNameService;
 use App\Services\LocaleRegistry;
+use App\Services\MailQueueService;
+use App\Services\PasswordConfirmRateLimiter;
 use App\Services\SessionLocaleSync;
 use DateTimeZone;
 use Exception;
 use Framework\Core\Response;
 
 /**
- * Private account settings: email, posting defaults, timezone, interface
- * language, email notifications.
+ * Private preferences on the front: email, interface language, timezone and the
+ * default visibility applied to new posts. Public identity lives in
+ * AccountProfileController and credentials in AccountSecurityController.
  *
- * Public identity lives in ProfileController and credentials in SecurityController.
+ * Email is a credential, not a preference sitting next to timezone. Changing it
+ * requires the current password, verified only when the submitted address
+ * differs from the stored one, and that check is rate limited so a stolen
+ * session is not an unlimited password oracle.
  */
-class AccountController extends AppController
+final class AccountPreferencesController extends AppController
 {
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
         private DisplayNameService $displayNames,
         private LocaleRegistry $locales,
-        private SessionLocaleSync $localeSync
+        private SessionLocaleSync $localeSync,
+        private PasswordConfirmRateLimiter $passwordThrottle,
+        private MailQueueService $mailQueue
     ) {}
 
     /**
-     * Display the account preferences form.
+     * Display the preferences form.
      */
     public function edit(): Response
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->view([
+        return $this->view('public.Account.preferences', [
             'user' => $this->loadAccount($userId),
             'timezones' => $this->getGroupedTimezones(),
             'locales' => $this->localeOptions(),
-            'noBreadcrumb' => false,
         ]);
     }
 
     /**
-     * Persist email address and posting preferences.
+     * Persist email and posting preferences.
      */
     public function update(): Response
     {
@@ -54,6 +61,31 @@ class AccountController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
+        $currentEmail = (string) (auth()->user()['email'] ?? '');
+        $submittedEmail = strtolower(trim((string) $this->request->postParam('email')));
+        $emailChanging = $submittedEmail !== '' && $submittedEmail !== strtolower($currentEmail);
+
+        // Email is a credential: gate the change behind the current password, and
+        // throttle that check. A refused attempt fails on the same field with the
+        // same wording as any other validation failure, so the field never
+        // becomes a password oracle with a nicer error. The hash is verified
+        // explicitly rather than through the validation rule, because
+        // validateOrFail redirects on failure before the throttle could observe
+        // the miss.
+        if ($emailChanging) {
+            if ($this->passwordThrottle->tooManyAttempts($userId)) {
+                return $this->rejectEmailChange($userId);
+            }
+
+            $password = (string) $this->request->postParam('current_password');
+            if ($password === '' || !$this->users->verifyPassword($userId, $password)) {
+                $this->passwordThrottle->hit($userId);
+
+                return $this->rejectEmailChange($userId);
+            }
+
+            $this->passwordThrottle->clear($userId);
+        }
 
         $validator = $this->validateOrFail([
             'email' => 'required|email|unique:users,email,'.$userId,
@@ -63,7 +95,7 @@ class AccountController extends AppController
             // Built from the registry so adding a locale never means editing this file.
             'locale' => 'in:auto,'.implode(',', $this->locales->supported()),
         ], [
-            'email.unique' => 'This email address is already in use.',
+            'email.unique' => chrome_translate('account.flash.emailInUse'),
             'timezone.timezone' => 'Please select a valid timezone.',
             'locale.in' => 'Please choose a language from the list.',
         ]);
@@ -90,52 +122,45 @@ class AccountController extends AppController
         // the display preference decides whether the cached name is the real name or the handle
         $this->displayNames->refreshCached($userId);
 
-        // Picking a language here has to move the URL too, or the redirect below
-        // lands back on the locale the visitor was already on and the choice
-        // looks like it did nothing.
-        $this->localeSync->apply($userId);
-
-        $this->flash('success', 'Account settings saved.');
-
-        return $this->redirect('/dashboard/account');
-    }
-
-    /**
-     * Display the email notification preferences.
-     */
-    public function notifications(): Response
-    {
-        $userId = (int) auth()->user()['id'];
-
-        return $this->view([
-            'user' => $this->loadNotificationPrefs($userId),
-            'noBreadcrumb' => false,
-        ]);
-    }
-
-    /**
-     * Save email notification preferences.
-     */
-    public function updateNotifications(): Response
-    {
-        // enforce CSRF protection
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $userId = (int) auth()->user()['id'];
-
-        // unchecked boxes are absent from the request, so absence means off.
-        // Driving this off NOTIFY_KEYS means adding a toggle is a one-line
-        // change to the model, not another entry to remember here.
-        $data = [];
-        foreach (UserPreferencesModel::NOTIFY_KEYS as $key) {
-            $data[$key] = $this->request->postParam($key) ? 1 : 0;
+        if ($emailChanging) {
+            // Queued, not sent inline, so a mail outage cannot fail the save. The
+            // old address is told the change happened; the new address is not
+            // asked to confirm anything, which is the token flow left to follow-up.
+            $this->mailQueue->enqueue(
+                new EmailChangedMail($currentEmail, $submittedEmail, gmdate('c')),
+                'account',
+                $userId
+            );
         }
 
-        $this->prefs->upsert($userId, $data);
+        // Picking a language here has to move the URL too, or the redirect below
+        // lands on the locale the visitor was already on and the choice looks
+        // like it did nothing. apply() writes the session locale, but lurl() in
+        // this same request still resolves the locale captured at bootstrap, so
+        // the redirect has to use the language apply() reports rather than the
+        // stale one. A null answer means "auto", where the current URL's locale
+        // is exactly what should carry over.
+        $adopted = $this->localeSync->apply($userId);
 
-        $this->flash('success', 'Notification settings saved.');
+        $this->flash('success', chrome_translate('account.flash.preferencesSaved'));
 
-        return $this->redirect('/dashboard/account/notifications');
+        return $this->redirect(lurl('/account/preferences', $adopted));
+    }
+
+    /**
+     * Refuse an email change without disclosing whether the throttle or the
+     * password was the reason. Nothing is written, including the other fields in
+     * the same submission.
+     */
+    private function rejectEmailChange(int $userId): Response
+    {
+        $this->session->set('_errors', [
+            'current_password' => [chrome_translate('account.flash.preferencesUnchanged')],
+        ]);
+        $this->session->set('_old_input', $this->request->all());
+        $this->flash('error', chrome_translate('account.flash.preferencesUnchanged'));
+
+        return $this->redirect(lurl('/account/preferences'));
     }
 
     /**
@@ -159,42 +184,11 @@ class AccountController extends AppController
         $merged['timezone'] = $preferences['timezone'] ?? 'UTC';
         $merged['locale'] = $preferences['locale'] ?? 'auto';
 
-        // the delete-account modal spells out what deletion will affect
-        // denormalized counters are unreliable (often stale at 0), so recount when empty
-        $merged['post_count'] = !empty($merged['posts_count'])
-            ? (int) $merged['posts_count']
-            : $this->users->countPosts($userId);
-        $merged['comment_count'] = !empty($merged['comments_received_count'])
-            ? (int) $merged['comments_received_count']
-            : $this->users->countCommentsReceived($userId);
-
         return $merged;
     }
 
     /**
-     * Load the notification toggles, defaulting each to enabled.
-     *
-     * @return array<string, mixed>
-     */
-    private function loadNotificationPrefs(int $userId): array
-    {
-        $preferences = $this->prefs->findOrCreate($userId) ?: [];
-
-        $toggles = [];
-        foreach (UserPreferencesModel::NOTIFY_KEYS as $key) {
-            $toggles[$key] = isset($preferences[$key]) ? (int) $preferences[$key] : 1;
-        }
-
-        return $toggles;
-    }
-
-    /**
      * Get timezones grouped by region for the select dropdown.
-     *
-     * Groups identifiers like "America/New_York" by their region prefix so the
-     * select can render optgroups.
-     *
-     * TODO: Cache this result as it's expensive and static.
      *
      * @return array<string, string[]>
      */
@@ -219,13 +213,13 @@ class AccountController extends AppController
     }
 
     /**
-     * Language options for the account form, each named in its own language.
+     * Language options for the form, each named in its own language.
      *
      * @return array<string, string> Locale code => label, led by the "auto" entry
      */
     private function localeOptions(): array
     {
-        $options = ['auto' => 'Automatic (follow page language)'];
+        $options = ['auto' => chrome_translate('account.preferences.languageAuto')];
 
         foreach ($this->locales->supported() as $code) {
             $options[$code] = $this->locales->nativeName($code);

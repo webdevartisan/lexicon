@@ -8,8 +8,6 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'Closest');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Surveyor';
-  $ownerName = e($ownerNameRaw);
 
   $current = (int) ($pagination['currentPage'] ?? 1);
   $total = (int) ($pagination['totalPages'] ?? 1);
@@ -64,7 +62,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
             $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
             $title = e($post['title'] ?? 'Untitled');
             $cat = trim((string) ($post['category'] ?? 'Field note'));
-            $author = profile_link($post['author_name'] ?? $ownerNameRaw, $user['public_profile_slug'] ?? null);
+            $author = profile_link($post['author_name'], $post['author_profile_slug']);
             $minutes = reading_time($post['content'] ?? '');
             $n = $first + $i;
 

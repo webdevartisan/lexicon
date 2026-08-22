@@ -3176,3 +3176,170 @@ label {
         background: #fff;
     }
 }
+
+/* Flash toasts for front POST results. A fixed overlay in the top inline-end
+   corner, so a save confirmation never shoves the page down. The dashboard has
+   the same behaviour in Tailwind/cp.css, which the front does not load, so the
+   look is rebuilt here. Logical properties keep it in the right corner in RTL. */
+.lx-toasts {
+    position: fixed;
+    inset-block-start: 1rem;
+    inset-inline-end: 1rem;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 20rem;
+    max-width: calc(100vw - 2rem);
+    pointer-events: none;
+}
+.lx-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-block: 0.75rem;
+    padding-inline: 1rem 2.5rem;
+    position: relative;
+    border-radius: 8px;
+    border-inline-start: 4px solid currentColor;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(16, 35, 63, 0.14);
+    pointer-events: auto;
+    animation: lx-toast-in 0.25s ease;
+}
+.lx-toast.is-hiding { opacity: 0; transform: translateX(0.5rem); transition: opacity 0.25s ease, transform 0.25s ease; }
+.lx-toast-msg { color: #16233f; font-size: 0.9rem; line-height: 1.4; }
+.lx-toast.is-success { color: #1a7f4b; }
+.lx-toast.is-error   { color: #b3261e; }
+.lx-toast.is-warning { color: #b5730f; }
+.lx-toast.is-info    { color: #2036e6; }
+.lx-toast-close {
+    position: absolute;
+    inset-block-start: 0.35rem;
+    inset-inline-end: 0.4rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.25rem 0.4rem;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.lx-toast-close:hover { background: rgba(16, 35, 63, 0.06); }
+@keyframes lx-toast-in {
+    from { opacity: 0; transform: translateX(0.75rem); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lx-toast { animation: none; }
+    .lx-toast.is-hiding { transition: none; }
+}
+
+/* /account section shell: a rail on the inline-start, content beside it. The
+   rail is a plain stacked list on narrow viewports, never a scroll strip that
+   would hide its own last item. */
+.lx-account { display: grid; gap: 2rem; }
+.lx-account-head { margin-block-end: 0.5rem; }
+.lx-account-nav ul { list-style: none; margin: 0; padding: 0; }
+.lx-account-nav a {
+    display: block;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    border-radius: 6px;
+    border-inline-start: 3px solid transparent;
+    color: var(--lx-ink-2);
+    text-decoration: none;
+}
+.lx-account-nav a[aria-current="page"] {
+    font-weight: 600;
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    border-inline-start-color: var(--lx-gilt);
+}
+@media (min-width: 720px) {
+    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; }
+}
+
+/* Account pages: cards, fields layout, avatar, checkboxes. Front-native, since
+   the dashboard's equivalents are Tailwind/cp.css which the front never loads. */
+.lx-muted { color: #5b6472; font-size: 0.85rem; }
+.lx-account-head { margin-block-end: 1.5rem; }
+.lx-account-head h1 { margin: 0 0 0.25rem; }
+.lx-account-body { display: grid; gap: 2rem; }
+/* The head and the danger zone are full-width strips; only the form and the
+   sidebar (aside, when a page has one) share the two-column row below the
+   head. Without this, grid auto-placement drops the head into column 1 and
+   the form into column 2 of the SAME row, leaving the row under the head
+   empty until whatever's left wraps down. */
+.lx-account-body > .lx-account-head,
+.lx-account-body > .lx-danger-zone {
+    grid-column: 1 / -1;
+}
+@media (min-width: 900px) {
+    .lx-account-body { grid-template-columns: 1fr 18rem; align-items: start; }
+}
+.lx-account-section {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5b6472;
+    margin-block: 1.5rem 0.75rem;
+}
+.lx-account-section:first-of-type { margin-block-start: 0; }
+.lx-account-actions { margin-block-start: 1.5rem; display: flex; justify-content: flex-end; }
+.lx-grid-2 { display: grid; gap: 1rem; }
+@media (min-width: 560px) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
+
+.lx-card {
+    border: 1px solid #e3e7ee;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-block-end: 1.25rem;
+    background: #fff;
+}
+.lx-card-title { font-size: 0.9rem; margin: 0 0 0.75rem; }
+.lx-stat { display: flex; justify-content: space-between; gap: 1rem; margin: 0.35rem 0; font-size: 0.85rem; }
+
+.lx-check { display: flex; align-items: flex-start; gap: 0.6rem; margin-block: 0.75rem; font-size: 0.9rem; }
+.lx-check input { margin-block-start: 0.2rem; }
+.lx-check-title { display: block; font-weight: 600; }
+.lx-check-help { display: block; color: #5b6472; font-size: 0.8rem; }
+
+.lx-avatar {
+    inline-size: 6rem;
+    block-size: 6rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #eef1f6;
+    display: grid;
+    place-items: center;
+    margin-block-end: 0.75rem;
+}
+.lx-avatar-img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.lx-avatar-initials { font-size: 1.5rem; font-weight: 600; color: #5b6472; }
+.lx-avatar-help { margin-block: 0.4rem 0.75rem; }
+
+.lx-linkbtn { border: 0; background: none; color: #2036e6; cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+.lx-visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.lx-btn--danger { color: #fff; background: #b3261e; border-color: #b3261e; }
+.lx-btn--danger:hover { background: #97201a; border-color: #97201a; }
+.lx-danger-zone {
+    margin-block-start: 2rem;
+    padding: 1.25rem;
+    border: 1px solid #f2c9c6;
+    border-radius: 10px;
+    background: #fdf3f2;
+}
+.lx-danger-zone h2 { color: #b3261e; font-size: 0.95rem; margin: 0 0 0.35rem; }
+.lx-always { margin-block: 0.75rem; }
+.lx-always .lx-check-title { margin: 0; }
+
+/* Delete page: narrow single column, reached from Preferences. */
+.lx-account-narrow { max-inline-size: 40rem; }
+.lx-delete-list { margin-block: 0.75rem 1.5rem; padding-inline-start: 1.25rem; }
+.lx-delete-list li { margin-block: 0.4rem; }
+.lx-account-actions--split { justify-content: space-between; gap: 1rem; }

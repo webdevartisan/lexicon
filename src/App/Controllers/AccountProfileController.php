@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Dashboard;
+namespace App\Controllers;
 
-use App\Controllers\AppController;
 use App\Helpers\LinksHelper;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
@@ -16,12 +15,14 @@ use Exception;
 use Framework\Core\Response;
 
 /**
- * Public identity settings: name, bio, avatar, public profile URL, social links.
+ * Public identity on the front: name, bio, avatar, public profile URL, social
+ * links. The private preferences live in AccountPreferencesController and
+ * credentials in AccountSecurityController.
  *
- * Private preferences live in AccountController and credentials in
- * SecurityController, so this page only ever touches what readers can see.
+ * Moved out of the dashboard: settings belong to the person, not to a blog, so
+ * they live on the front for every account whatever its role.
  */
-class ProfileController extends AppController
+final class AccountProfileController extends AppController
 {
     public function __construct(
         private UserModel $users,
@@ -33,16 +34,23 @@ class ProfileController extends AppController
     ) {}
 
     /**
+     * /account lands here rather than showing a page of its own.
+     */
+    public function redirectToProfile(): Response
+    {
+        return $this->redirect(lurl('/account/profile'));
+    }
+
+    /**
      * Display the public identity form.
      */
     public function edit(): Response
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->view([
+        return $this->view('public.Account.profile', [
             'user' => $this->loadIdentity($userId),
             'profileUrlPrefix' => rtrim(base_url(), '/').lurl('/profile').'/',
-            'noBreadcrumb' => false,
         ]);
     }
 
@@ -91,9 +99,9 @@ class ProfileController extends AppController
                 'public_profile_url' => ['This profile URL is already taken.'],
             ]);
             $this->session->set('_old_input', $this->request->all());
-            $this->flash('error', 'That profile URL is already taken. Please choose another.');
+            $this->flash('error', chrome_translate('account.flash.profileUrlTaken'));
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect(lurl('/account/profile'));
         }
 
         $user = auth()->user();
@@ -146,16 +154,16 @@ class ProfileController extends AppController
         // a name change moves the cached display name when the preference is 'name'
         $this->displayNames->refreshCached($userId);
 
-        $this->flash('success', 'Profile updated successfully.');
+        $this->flash('success', chrome_translate('account.flash.profileSaved'));
 
-        return $this->redirect('/dashboard/profile');
+        return $this->redirect(lurl('/account/profile'));
     }
 
     /**
      * Upload user profile avatar.
      *
-     * Handles file validation, storage, and database update. Old avatar is
-     * automatically replaced.
+     * The dropzone submits this form from JavaScript, which drops the clicked
+     * button's name and value, so no validation rule may key on a button here.
      */
     public function uploadAvatar(): Response
     {
@@ -166,9 +174,9 @@ class ProfileController extends AppController
         $avatarFile = $this->request->files['avatar'] ?? null;
 
         if (empty($avatarFile['name']) || $avatarFile['error'] !== UPLOAD_ERR_OK) {
-            $this->flash('error', 'Please select an image to upload.');
+            $this->flash('error', chrome_translate('account.flash.avatarSelectImage'));
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect(lurl('/account/profile'));
         }
 
         try {
@@ -190,15 +198,15 @@ class ProfileController extends AppController
 
             $this->profiles->upsert($userId, ['avatar_url' => $avatarUrl]);
 
-            $this->flash('success', 'Avatar uploaded successfully.');
+            $this->flash('success', chrome_translate('account.flash.avatarUploaded'));
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect(lurl('/account/profile'));
 
         } catch (Exception $e) {
             error_log("Avatar upload failed for user {$userId}: ".$e->getMessage());
-            $this->flash('error', 'Failed to upload avatar. '.$e->getMessage());
+            $this->flash('error', chrome_translate('account.flash.avatarError'));
 
-            return $this->redirect('/dashboard/profile');
+            return $this->redirect(lurl('/account/profile'));
         }
     }
 
@@ -219,9 +227,9 @@ class ProfileController extends AppController
 
         $this->profiles->upsert($userId, ['avatar_url' => null]);
 
-        $this->flash('success', 'Avatar removed successfully.');
+        $this->flash('success', chrome_translate('account.flash.avatarRemoved'));
 
-        return $this->redirect('/dashboard/profile');
+        return $this->redirect(lurl('/account/profile'));
     }
 
     /**
@@ -229,9 +237,6 @@ class ProfileController extends AppController
      *
      * Failures are logged rather than thrown: the database update matters more
      * than reclaiming the file.
-     *
-     * @param  int  $userId  User ID
-     * @param  string  $avatarUrl  Avatar URL to delete
      */
     private function deleteAvatarFile(int $userId, string $avatarUrl): void
     {

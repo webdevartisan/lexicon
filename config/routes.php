@@ -173,6 +173,36 @@ $router->group([
     $r->add('/{blogId:\d+}/resubscribe', ['controller' => 'ReaderController', 'action' => 'resubscribe', 'method' => 'POST']);
 });
 
+// Personal account settings, on the front for every account whatever its role.
+// Cut on ownership: anything belonging to the person lives here; anything
+// belonging to a blog stays in the dashboard. No namespace key, so these
+// controllers sit at App\Controllers and resolve by auto-discovery like
+// ReaderController. Deletion keeps its own confirm/destroy pair, reached from
+// the foot of Preferences rather than from the rail.
+$router->group([
+    'prefix' => '/account',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
+
+    $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
+    $r->add('/profile/avatar/remove', ['controller' => 'AccountProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
+
+    $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/preferences/update', ['controller' => 'AccountPreferencesController', 'action' => 'update', 'method' => 'POST']);
+
+    $r->add('/notifications', ['controller' => 'AccountNotificationsController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);
+
+    $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
+
+    $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'confirm', 'method' => 'GET']);
+    $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'destroy', 'method' => 'POST']);
+});
+
 // Grouped routes for user dashboard - all require authentication middleware
 $router->group([
     'prefix' => '/dashboard',
@@ -183,21 +213,8 @@ $router->group([
     $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
     $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
     $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
-    // Settings are split across four pages: public identity (profile), private
-    // preferences (account), credentials (security) and email toggles. Each has
-    // its own POST target so a save returns to the page it was made on.
-    $r->add('/profile', ['controller' => 'ProfileController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/profile/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/profile/avatar', ['controller' => 'ProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
-    $r->add('/profile/avatar/remove', ['controller' => 'ProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
-
-    $r->add('/account', ['controller' => 'AccountController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/account/update', ['controller' => 'AccountController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/account/notifications', ['controller' => 'AccountController', 'action' => 'notifications', 'method' => 'GET']);
-    $r->add('/account/notifications/update', ['controller' => 'AccountController', 'action' => 'updateNotifications', 'method' => 'POST']);
-
-    $r->add('/account/security', ['controller' => 'SecurityController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/account/security/password', ['controller' => 'SecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
+    // Personal account settings moved to the front under /account. The old
+    // dashboard settings routes are deleted, not redirected.
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.
@@ -270,18 +287,6 @@ $router->group([
     $r->add('/comment/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
 
-    $r->add('/export', ['controller' => 'DataExport', 'action' => 'start', 'method' => 'GET']);
-    $r->add('/delete-account', [
-        'controller' => 'AccountDeletionController',
-        'action' => 'confirm',
-        'method' => 'GET',
-    ]);
-    $r->add('/delete-account', [
-        'controller' => 'AccountDeletionController',
-        'action' => 'destroy',
-        'method' => 'POST',
-    ]);
-
     $r->add('/upload', [
         'controller' => 'FileUploadController',
         'action' => 'upload',
@@ -314,9 +319,6 @@ $router->group([
     // The plural spellings are deliberate: several views post to /blogs/... and
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
-    $r->add('/account/{id:\d+}/update', ['controller' => 'AccountController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/profile/{id:\d+}/update', ['controller' => 'ProfileController', 'action' => 'update', 'method' => 'POST']);
-
     $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/show', ['controller' => 'BlogController', 'action' => 'show', 'method' => 'GET']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);

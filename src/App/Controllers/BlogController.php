@@ -44,6 +44,51 @@ class BlogController extends AppController
         private HeadI18nBuilder $headI18n
     ) {}
 
+    /** @var array<int, array{name: string, slug: ?string}> Per-request cache, keyed by user id. */
+    private array $authorCache = [];
+
+    /**
+     * Resolve the display name and public profile slug for a post's author.
+     *
+     * @return array{name: string, slug: ?string}
+     */
+    private function resolveAuthor(int $authorId): array
+    {
+        if (isset($this->authorCache[$authorId])) {
+            return $this->authorCache[$authorId];
+        }
+
+        $author = $this->userModel->findById($authorId);
+
+        $resolved = [
+            'name' => empty($author['display_name_cached']) ? ($author['username'] ?? '') : $author['display_name_cached'],
+            'slug' => $this->profiles->publicSlugFor($authorId),
+        ];
+
+        $this->authorCache[$authorId] = $resolved;
+
+        return $resolved;
+    }
+
+    /**
+     * Attach each post's author display name and profile slug, so cards and
+     * archive rows link to the post's actual author.
+     *
+     * @param  array<int, array<string, mixed>>  $posts
+     * @return array<int, array<string, mixed>>
+     */
+    private function enrichPostAuthors(array $posts): array
+    {
+        foreach ($posts as &$post) {
+            $author = $this->resolveAuthor((int) $post['author_id']);
+            $post['author_name'] = $author['name'];
+            $post['author_profile_slug'] = $author['slug'];
+        }
+        unset($post);
+
+        return $posts;
+    }
+
     /**
      * Swap in translated title/content/excerpt for the viewer's locale on
      * blogs with localized posts enabled. Posts without a translation (and
@@ -234,7 +279,7 @@ class BlogController extends AppController
         }
         unset($post);
 
-        return $posts;
+        return $this->enrichPostAuthors($posts);
     }
 
     public function archiveBlog(string $blogSlug): Response
@@ -254,7 +299,7 @@ class BlogController extends AppController
         $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($postsData['data'], $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($postsData['data']), $ctx['settings']),
             'pagination' => [
                 'totalPages' => $postsData['totalPages'],
                 'currentPage' => $postsData['currentPage'],
@@ -285,7 +330,7 @@ class BlogController extends AppController
         $name = e($category['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($posts, $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Category &mdash; '.$name,
             'archiveTitle' => $name,
@@ -314,7 +359,7 @@ class BlogController extends AppController
         $name = e($tag['name']);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
-            'posts' => $this->localizePosts($posts, $ctx['settings']),
+            'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
             'archiveKicker' => 'Tagged &mdash; '.$name,
             'archiveTitle' => '#'.$name,
@@ -383,14 +428,10 @@ class BlogController extends AppController
         $dt = new \DateTime($post['published_at_raw'], new \DateTimeZone('UTC'));
         $post['published_at'] = $this->formatDateWithOrdinal($dt, blog_timezone((int) ($ctx['blog']['id'] ?? 0)));
 
-        // Enrich display fields. The byline follows the post's own author since a
-        // blog serves every member's posts; the owner is only the fallback.
-        $author = $ctx['user'];
-        if (!empty($post['author_id']) && (int) $post['author_id'] !== (int) $ctx['user']['id']) {
-            $author = $this->userModel->findById((int) $post['author_id']) ?: $ctx['user'];
-        }
-
-        $post['author_name'] = empty($author['display_name_cached']) ? $author['username'] : $author['display_name_cached'];
+        // Enrich display fields. The byline follows the post's own author, not the blog owner.
+        $author = $this->resolveAuthor((int) $post['author_id']);
+        $post['author_name'] = $author['name'];
+        $post['author_profile_slug'] = $author['slug'];
         $post['cover_url'] = $post['cover_url'] ?? null; // TODO update the key
 
         // --- comments enabled logic ---
@@ -526,6 +567,32 @@ class BlogController extends AppController
             ? ($this->profiles->getProfileAvatar($viewerId)['avatar_url'] ?? null)
             : null;
 
+        // A comment the post's author upvoted wears their face with a heart on
+        // it, the way a channel owner hearts a comment under their own video.
+        // The author, not the blog owner: those are different people on roughly
+        // half the posts here, and it is the author's thread. Their own votes
+        // are the signal, so there is no separate gesture to store — one extra
+        // indexed read, and it turns on who wrote the post rather than on who
+        // is reading it, which is what keeps the thread cacheable.
+        $authorId = (int) ($post['author_id'] ?? 0);
+        $authorHearts = [];
+        $authorIdentity = null;
+
+        if ($commentsEnabled && $authorId > 0) {
+            $authorHearts = array_keys(array_filter(
+                $this->commentVotes->votesForPost($authorId, $engagementPostId),
+                static fn (int $value): bool => $value === 1
+            ));
+
+            $author = $this->postModel->author($authorId);
+
+            $authorIdentity = [
+                'id' => $authorId,
+                'name' => (string) ($author['display_name_cached'] ?? $author['username'] ?? ''),
+                'avatar' => $this->profiles->getProfileAvatar($authorId)['avatar_url'] ?? null,
+            ];
+        }
+
         // Only the up count is published, matching the comment thread: the
         // down vote registers without handing readers a pile-on to watch.
         $engagement = [
@@ -555,6 +622,8 @@ class BlogController extends AppController
             'comment_sort_urls' => $commentSortUrls,
             'viewer_name' => $viewer['display_name_cached'] ?? ($viewer['username'] ?? null),
             'viewer_avatar' => $viewerAvatar,
+            'comment_author_hearts' => $authorHearts,
+            'comment_author' => $authorIdentity,
         ]));
     }
 

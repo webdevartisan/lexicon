@@ -9,10 +9,7 @@
 <?php
 $title = e($post['title'] ?? 'Untitled');
   $date = e($post['published_at'] ?? '');
-  $author = profile_link(
-      $post['author_name'] ?? ($user['display_name_cached'] ?? $user['username'] ?? ''),
-      $user['public_profile_slug'] ?? null
-  );
+  $author = profile_link($post['author_name'], $post['author_profile_slug']);
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;
   $cover = $post['featured_image'] ?? ($post['cover_url'] ?? null);

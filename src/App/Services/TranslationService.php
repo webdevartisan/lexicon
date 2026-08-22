@@ -13,6 +13,9 @@ class TranslationService
     /** @var array<string,mixed> Parsed translations for the active locale. */
     private array $translations = [];
 
+    /** @var array<string,mixed> English strings, loaded only when locale !== 'en'. */
+    private array $fallback = [];
+
     /** @var string Separator used to split a path like "sidebar.menu.title" into segments. */
     private string $separator;
 
@@ -28,6 +31,16 @@ class TranslationService
             $json = file_get_contents($path); // Read file once per request; upstream caching can optimize further.
             $this->translations = json_decode($json, true) ?? []; // Decode to associative array for key access.
         }
+
+        // A missing key must degrade to English for a reader, not to the raw key.
+        // Only non-English visitors pay the second read; an en visitor's fallback
+        // is the same file already loaded above, so it stays empty here.
+        if ($locale !== 'en') {
+            $enPath = ROOT_PATH.'/locales/en.json';
+            if (file_exists($enPath)) {
+                $this->fallback = json_decode(file_get_contents($enPath), true) ?? [];
+            }
+        }
     }
 
     /**
@@ -40,16 +53,24 @@ class TranslationService
      */
     public function translate(string|array $key, array $params = []): string
     {
-        // Step 1: exact-key lookup supports flat JSON like {"nav.dashboard": "Dashboard"}.
-        if (is_string($key) && array_key_exists($key, $this->translations)) {
-            $value = $this->translations[$key]; // Direct hit—no traversal needed.
-        } else {
-            // Step 2: traverse nested arrays for structured JSON like {"nav": {"dashboard": "Dashboard"}}.
-            $segments = is_array($key) ? $key : explode($this->separator, (string) $key); // Split "a.b.c" => ["a","b","c"].
-            $value = $this->getByPath($this->translations, $segments); // Walk the nested arrays safely.
+        $value = $this->lookup($this->translations, $key);
+
+        // A miss in the active locale degrades to English rather than to the raw
+        // key, so a Greek reader never sees "account.changePassword" on the page.
+        if (!is_string($value) && $this->fallback !== []) {
+            $fallbackValue = $this->lookup($this->fallback, $key);
+            if (is_string($fallbackValue)) {
+                if (env('APP_DEBUG')) {
+                    // error_log is the idiom already used in CacheMiddleware; a
+                    // logger for one call site would be overkill.
+                    error_log('i18n miss, fell back to en: '.(is_array($key) ? implode($this->separator, $key) : $key));
+                }
+                $value = $fallbackValue;
+            }
         }
 
-        // Fallback: if not found or not a string, return the key so missing strings are visible.
+        // Only when both the active locale and English miss do we surface the raw
+        // key, which keeps a genuinely undefined string visible during development.
         if (!is_string($value)) {
             $value = is_array($key) ? implode($this->separator, $key) : (string) $key; // Human-friendly fallback.
         }
@@ -60,6 +81,26 @@ class TranslationService
         }
 
         return $value; // Return the final translated string ready for rendering.
+    }
+
+    /**
+     * Two-step lookup against one map: exact flat key, then nested traversal.
+     *
+     * @param  array<string,mixed>  $map  Translations tree to search
+     * @param  string|string[]  $key  Dotted key or pre-split path segments
+     * @return mixed String leaf on a hit, null or a non-string on a miss
+     */
+    private function lookup(array $map, string|array $key): mixed
+    {
+        // Step 1: exact-key lookup supports flat JSON like {"nav.dashboard": "Dashboard"}.
+        if (is_string($key) && array_key_exists($key, $map)) {
+            return $map[$key]; // Direct hit—no traversal needed.
+        }
+
+        // Step 2: traverse nested arrays for structured JSON like {"nav": {"dashboard": "Dashboard"}}.
+        $segments = is_array($key) ? $key : explode($this->separator, (string) $key); // Split "a.b.c" => ["a","b","c"].
+
+        return $this->getByPath($map, $segments); // Walk the nested arrays safely.
     }
 
     /**
