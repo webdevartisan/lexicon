@@ -88,7 +88,11 @@
             var card = e.target.closest('[data-picker-pick]');
             if (!card) return;
             var url = card.getAttribute('data-picker-pick');
-            if (state.onSelect) state.onSelect({ url: url, id: card.getAttribute('data-picker-id') });
+            if (state.onSelect) state.onSelect({
+                url: url,
+                id: card.getAttribute('data-picker-id'),
+                alt: card.getAttribute('data-picker-alt') || '',
+            });
             close();
         });
 
@@ -113,15 +117,27 @@
             .replace(/'/g, '&#39;');
     }
 
+    // Cache-bust the thumbnail with the row's updated_at so an image edited in place
+    // (same URL, new bytes) shows the processed version instead of the browser's cache.
+    // The picked value stays the clean URL — only the preview <img> is versioned.
+    function versioned(url, item) {
+        var stamp = item.updated_at || item.created_at || '';
+        if (!stamp) return url;
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + 'v=' + encodeURIComponent(stamp);
+    }
+
     function cardHtml(item) {
         var url = esc(item.url);
         var id = esc(item.id);
-        var name = esc(item.filename || '');
+        // Prefer the friendly/renamed display name over the hashed disk filename.
+        var name = esc(item.original_name || item.filename || '');
+        var alt = esc(item.alt_text || '');
+        var thumb = esc(versioned(item.url, item));
         return ''
-            + '<button type="button" data-picker-pick="' + url + '" data-picker-id="' + id + '" '
+            + '<button type="button" data-picker-pick="' + url + '" data-picker-id="' + id + '" data-picker-alt="' + alt + '" '
             + 'class="group relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-600 hover:ring-2 hover:ring-custom-500 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">'
             + '  <div class="aspect-square overflow-hidden">'
-            + '    <img src="' + url + '" alt="" loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105">'
+            + '    <img src="' + thumb + '" alt="' + alt + '" loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105">'
             + '  </div>'
             + '  <span class="block px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate text-left" title="' + name + '">' + name + '</span>'
             + '</button>';
@@ -248,6 +264,16 @@
                 if (previewId) {
                     var img = document.getElementById(previewId);
                     if (img) img.src = picked.url;
+                }
+                // Optionally carry the media's alt text into a companion field, but
+                // only when it's empty so we never overwrite what the user typed.
+                var altTargetId = btn.getAttribute('data-media-alt-target');
+                if (altTargetId) {
+                    var altEl = document.getElementById(altTargetId);
+                    if (altEl && picked.alt && !altEl.value.trim()) {
+                        altEl.value = picked.alt;
+                        altEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 }
             },
         });

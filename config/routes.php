@@ -188,6 +188,7 @@ $router->group([
     $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
+    $r->add('/profile/avatar/crop', ['controller' => 'AccountProfileController', 'action' => 'cropAvatar', 'method' => 'POST']);
     $r->add('/profile/avatar/remove', ['controller' => 'AccountProfileController', 'action' => 'removeAvatar', 'method' => 'POST']);
 
     $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
@@ -258,6 +259,11 @@ $router->group([
     // Media library (blog-scoped).
     $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'index',   'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/media/list', ['controller' => 'MediaController', 'action' => 'list',    'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/details', ['controller' => 'MediaController', 'action' => 'details', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/process', ['controller' => 'MediaController', 'action' => 'process', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/{id:\d+}/meta', ['controller' => 'MediaController', 'action' => 'saveMeta', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/optimize', ['controller' => 'MediaController', 'action' => 'optimize', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/rescan', ['controller' => 'MediaController', 'action' => 'rescan', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 

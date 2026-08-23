@@ -709,10 +709,25 @@ $container->set(App\Resources\UserResource::class, function ($c) {
     );
 });
 
-// UserDeletionService type-hints the interface, which the reflection autowirer
-// cannot instantiate on its own. Bind it to the concrete so UserDeletionService
-// (and anything that depends on it, such as the account deletion controller)
-// resolves. UploadService itself has no constructor, so the container autowires it.
+// Image processing carries an array config (driver, pixel cap) that the reflection
+// autowirer cannot supply, so it is wired explicitly. Imagick is preferred only where
+// the extension exists; the service falls back to GD otherwise.
+$container->setShared(App\Interfaces\ImageProcessorInterface::class, function ($c) {
+    return new App\Services\ImageProcessor([
+        'driver' => getenv('IMAGE_DRIVER') ?: 'gd',
+        'max_pixels' => 40_000_000,
+    ]);
+});
+
+// UploadService now depends on the image processor, so bind it explicitly rather than
+// relying on autowiring. UserDeletionService (and the account deletion controller)
+// type-hint UploadServiceInterface, so map the interface to this concrete instance.
+$container->setShared(App\Services\UploadService::class, function ($c) {
+    return new App\Services\UploadService(
+        $c->get(App\Interfaces\ImageProcessorInterface::class)
+    );
+});
+
 $container->setShared(App\Interfaces\UploadServiceInterface::class, function ($c) {
     return $c->get(App\Services\UploadService::class);
 });

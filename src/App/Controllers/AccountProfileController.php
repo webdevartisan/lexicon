@@ -160,54 +160,134 @@ final class AccountProfileController extends AppController
     }
 
     /**
-     * Upload user profile avatar.
-     *
-     * The dropzone submits this form from JavaScript, which drops the clicked
-     * button's name and value, so no validation rule may key on a button here.
+     * Store a newly uploaded avatar as the crop source and render a first avatar
+     * from a centred square. Responds with JSON so the profile page can open the
+     * cropper on the returned source without a full reload.
      */
     public function uploadAvatar(): Response
     {
-        // enforce CSRF protection
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
         $avatarFile = $this->request->files['avatar'] ?? null;
 
         if (empty($avatarFile['name']) || $avatarFile['error'] !== UPLOAD_ERR_OK) {
-            $this->flash('error', chrome_translate('account.flash.avatarSelectImage'));
-
-            return $this->redirect(lurl('/account/profile'));
+            return $this->json(['error' => chrome_translate('account.flash.avatarSelectImage')], 400);
         }
 
         try {
-            [$dir, $url] = $this->uploader->userProfilePath($userId);
-
-            // delete old avatar before uploading new one
             $profile = $this->profiles->findOrCreate($userId);
+
+            // clear the previous avatar and its source so we don't leave orphans
+            foreach (['avatar_url', 'avatar_source_url'] as $key) {
+                if (!empty($profile[$key])) {
+                    $this->deleteAvatarFile($userId, $profile[$key]);
+                }
+            }
+
+            $source = $this->uploader->storeAvatarSource($avatarFile, $userId);
+            $rect = $this->centeredSquare($source['width'], $source['height']);
+            $avatarUrl = $this->uploader->renderAvatar($userId, $source['path'], $rect);
+
+            $this->profiles->upsert($userId, [
+                'avatar_url' => $avatarUrl,
+                'avatar_source_url' => $source['url'],
+                'avatar_crop' => $this->packCrop($rect),
+            ]);
+
+            return $this->json([
+                'avatar_url' => $avatarUrl,
+                'source_url' => $source['url'],
+                'source_width' => $source['width'],
+                'source_height' => $source['height'],
+                'crop' => $rect,
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Avatar upload failed for user {$userId}: ".$e->getMessage());
+
+            return $this->json(['error' => chrome_translate('account.flash.avatarError')], 500);
+        }
+    }
+
+    /**
+     * Re-render the avatar from the stored source using a crop rectangle chosen in
+     * the browser. No file is uploaded here, so a user can re-frame their avatar
+     * any number of times without re-uploading.
+     */
+    public function cropAvatar(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $userId = (int) auth()->user()['id'];
+        $profile = $this->profiles->findOrCreate($userId);
+
+        if (empty($profile['avatar_source_url'])) {
+            return $this->json(['error' => chrome_translate('account.flash.avatarError')], 400);
+        }
+
+        [$dir] = $this->uploader->userProfilePath($userId);
+        $sourcePath = $dir.'/'.basename((string) $profile['avatar_source_url']);
+        if (!is_file($sourcePath)) {
+            return $this->json(['error' => chrome_translate('account.flash.avatarError')], 400);
+        }
+
+        $rect = [
+            'x' => max(0, (int) $this->request->postParam('crop_x')),
+            'y' => max(0, (int) $this->request->postParam('crop_y')),
+            'width' => (int) $this->request->postParam('crop_w'),
+            'height' => (int) $this->request->postParam('crop_h'),
+        ];
+
+        if ($rect['width'] < 1 || $rect['height'] < 1) {
+            return $this->json(['error' => chrome_translate('account.flash.avatarError')], 400);
+        }
+
+        try {
             if (!empty($profile['avatar_url'])) {
                 $this->deleteAvatarFile($userId, $profile['avatar_url']);
             }
 
-            $avatarUrl = $this->uploader->storeImage($avatarFile, [
-                'dir' => $dir,
-                'base_url' => $url,
-                'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
-                'max_bytes' => 2 * 1024 * 1024, // 2MB max
-                'rename' => 'avatar',
+            $avatarUrl = $this->uploader->renderAvatar($userId, $sourcePath, $rect);
+
+            $this->profiles->upsert($userId, [
+                'avatar_url' => $avatarUrl,
+                'avatar_crop' => $this->packCrop($rect),
             ]);
 
-            $this->profiles->upsert($userId, ['avatar_url' => $avatarUrl]);
-
-            $this->flash('success', chrome_translate('account.flash.avatarUploaded'));
-
-            return $this->redirect(lurl('/account/profile'));
+            return $this->json(['avatar_url' => $avatarUrl]);
 
         } catch (Exception $e) {
-            error_log("Avatar upload failed for user {$userId}: ".$e->getMessage());
-            $this->flash('error', chrome_translate('account.flash.avatarError'));
+            error_log("Avatar crop failed for user {$userId}: ".$e->getMessage());
 
-            return $this->redirect(lurl('/account/profile'));
+            return $this->json(['error' => chrome_translate('account.flash.avatarError')], 500);
         }
+    }
+
+    /**
+     * The largest centred square that fits the source, used as the default crop so
+     * an avatar exists even if the user never opens the cropper.
+     *
+     * @return array{x: int, y: int, width: int, height: int}
+     */
+    private function centeredSquare(int $width, int $height): array
+    {
+        $side = max(1, min($width, $height));
+
+        return [
+            'x' => (int) (($width - $side) / 2),
+            'y' => (int) (($height - $side) / 2),
+            'width' => $side,
+            'height' => $side,
+        ];
+    }
+
+    /**
+     * @param  array{x: int, y: int, width: int, height: int}  $rect
+     */
+    private function packCrop(array $rect): string
+    {
+        return $rect['x'].','.$rect['y'].','.$rect['width'].','.$rect['height'];
     }
 
     /**
@@ -221,11 +301,18 @@ final class AccountProfileController extends AppController
         $userId = (int) auth()->user()['id'];
         $profile = $this->profiles->findOrCreate($userId);
 
-        if (!empty($profile['avatar_url'])) {
-            $this->deleteAvatarFile($userId, $profile['avatar_url']);
+        // clear both the rendered avatar and its re-crop source so nothing lingers
+        foreach (['avatar_url', 'avatar_source_url'] as $key) {
+            if (!empty($profile[$key])) {
+                $this->deleteAvatarFile($userId, $profile[$key]);
+            }
         }
 
-        $this->profiles->upsert($userId, ['avatar_url' => null]);
+        $this->profiles->upsert($userId, [
+            'avatar_url' => null,
+            'avatar_source_url' => null,
+            'avatar_crop' => null,
+        ]);
 
         $this->flash('success', chrome_translate('account.flash.avatarRemoved'));
 

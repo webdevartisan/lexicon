@@ -10,6 +10,9 @@ $type = $type ?? str_replace(' ', '_', strtolower($label));
 // `library` is the blog id; when set, a "Pick from Library" button appears
 // next to the dropzone and the picked URL flows in via {name}_library_url.
 $library = $library ?? '';
+// Optional: id of a field to receive the picked image's alt text (only filled
+// when that field is empty, so it never clobbers what the user typed).
+$altTarget = $altTarget ?? '';
 
 if (empty($imageClass)) {
     $imageClass = match ($type) {
@@ -68,6 +71,14 @@ $maxSizeText = $maxsize >= 1
                 
                 <?php $dataAction = 'remove-image'; ?>
                 {% cmp="btn" type="button" variant="slate" icon="trash-2" label="{$removeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
+
+                <?php if (!empty($library) && !empty($path)) { ?>
+                <a href="<?= e(lurl('/dashboard/blog/'.$library.'/media').'?editUrl='.rawurlencode($path)) ?>"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                    {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="size-3.5"></i>{% endcache %}
+                    Edit / optimize
+                </a>
+                <?php } ?>
             </div>
         </div>
 
@@ -121,7 +132,8 @@ $maxSizeText = $maxsize >= 1
                     class="mt-2 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors"
                     data-media-picker="<?= e((string) $library) ?>"
                     data-media-target="<?= e($elementName) ?>_library_url"
-                    data-media-preview="<?= e($elementName) ?>_library_preview">
+                    data-media-preview="<?= e($elementName) ?>_library_preview"
+                    <?php if (!empty($altTarget)) { ?>data-media-alt-target="<?= e($altTarget) ?>"<?php } ?>>
                 {% cache 'lucide:image-plus' ttl=31536000 %}<i data-lucide="image-plus" class="size-3.5"></i>{% endcache %}
                 Pick from Media Library
             </button>

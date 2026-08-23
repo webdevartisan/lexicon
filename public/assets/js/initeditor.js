@@ -111,7 +111,11 @@ tinymce.init({
         window.MediaPicker.open(blogId, {
           csrfToken: token,
           onSelect: function (picked) {
-            editor.insertContent('<img src="' + picked.url + '" alt="">');
+            // Reuse the image's stored alt text so inserted images aren't left undescribed.
+            var alt = (picked.alt || '')
+              .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+              .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            editor.insertContent('<img src="' + picked.url + '" alt="' + alt + '">');
           },
         });
       },

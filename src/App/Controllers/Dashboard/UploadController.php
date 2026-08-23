@@ -43,6 +43,7 @@ class UploadController extends AppController
                 'base_url' => $baseUrl,
                 'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
                 'max_bytes' => 2 * 1024 * 1024,
+                'preset' => 'post_inline',
                 'rename' => 'post-image', // base part; UploadService will add hash
             ]);
         } catch (\InvalidArgumentException $e) {
