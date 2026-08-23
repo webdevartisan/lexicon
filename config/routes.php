@@ -123,7 +123,7 @@ $router->group([
     'namespace' => 'Auth',
 ], function (Router $r) {
     $r->add('/login', ['controller' => 'AuthController',   'action' => 'index', 'method' => 'GET']);
-    $r->add('/login/submit', ['controller' => 'AuthController',   'action' => 'submit', 'method' => 'POST']);
+    $r->add('/login', ['controller' => 'AuthController',   'action' => 'submit', 'method' => 'POST']);
     $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
     $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
     $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'POST']);
