@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\ImageProcessorInterface;
 use App\Interfaces\UploadServiceInterface;
 use InvalidArgumentException;
 use RuntimeException;
@@ -16,6 +17,29 @@ use RuntimeException;
  */
 final class UploadService implements UploadServiceInterface
 {
+    /**
+     * Named processing presets keyed by upload intent. Callers pass a preset name
+     * instead of raw pixel numbers so sizing policy for each surface lives in one
+     * place. scaleDown never upscales, so a smaller source is left as-is.
+     *
+     * @var array<string, array{max_w: int, max_h: int, quality: int}>
+     */
+    private const PROCESS_PRESETS = [
+        'avatar' => ['max_w' => 512, 'max_h' => 512, 'quality' => 85],
+        'avatar_source' => ['max_w' => 1024, 'max_h' => 1024, 'quality' => 88],
+        'post_inline' => ['max_w' => 1600, 'max_h' => 1600, 'quality' => 82],
+        'post_featured' => ['max_w' => 1920, 'max_h' => 1920, 'quality' => 82],
+        'media' => ['max_w' => 2048, 'max_h' => 2048, 'quality' => 82],
+        'banner' => ['max_w' => 2560, 'max_h' => 1440, 'quality' => 82],
+        'logo' => ['max_w' => 800, 'max_h' => 800, 'quality' => 90],
+        'favicon' => ['max_w' => 256, 'max_h' => 256, 'quality' => 90],
+    ];
+
+    /**
+     * @param  ImageProcessorInterface  $images  Resizes and re-encodes every stored upload
+     */
+    public function __construct(private readonly ImageProcessorInterface $images) {}
+
     /**
      * Store uploaded image with security validation.
      *
@@ -76,13 +100,44 @@ final class UploadService implements UploadServiceInterface
         $safeBase = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $baseName) ?: 'file';
         $filename = $safeBase.'-'.$hash.'.'.$ext;
 
-        // Move uploaded file to permanent location
+        // Confirm this is a genuine HTTP upload before we read it. move_uploaded_file()
+        // used to enforce this for us; now that we process the file in place we check it
+        // ourselves so a caller cannot point us at an arbitrary server path.
+        if (!is_uploaded_file($file['tmp_name'])) {
+            throw new InvalidArgumentException('Upload error.');
+        }
+
+        // Resize and re-encode straight to the destination. The raw upload never lands
+        // on disk, and the re-encode strips any EXIF/embedded payload the source carried.
         $dest = $targetDir.'/'.$filename;
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+        try {
+            $this->images->process($file['tmp_name'], $dest, $this->resolveProcessOptions($opts));
+        } catch (\Throwable $e) {
+            error_log('Image processing failed: '.$e->getMessage());
+
             return null;
         }
 
         return $baseUrl.'/'.$filename;
+    }
+
+    /**
+     * Resolve the processing options for a stored upload. An explicit 'process'
+     * array wins; otherwise a named 'preset' expands to its settings. Falls back
+     * to the processor's own defaults when neither is given.
+     *
+     * @param  array<string, mixed>  $opts  The storeImage options
+     * @return array<string, mixed> Options passed straight to the image processor
+     */
+    private function resolveProcessOptions(array $opts): array
+    {
+        if (!empty($opts['process']) && is_array($opts['process'])) {
+            return $opts['process'];
+        }
+
+        $preset = $opts['preset'] ?? null;
+
+        return $preset !== null ? (self::PROCESS_PRESETS[$preset] ?? []) : [];
     }
 
     /**
@@ -98,6 +153,69 @@ final class UploadService implements UploadServiceInterface
         $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
 
         return [$dir, $url];
+    }
+
+    /**
+     * Store an uploaded avatar as the re-crop source: sanitised, EXIF-stripped and
+     * capped, but not yet cropped. The returned path is what the cropper reads and
+     * what renderAvatar() later crops, so its pixels match the coordinates the
+     * browser reports.
+     *
+     * @param  array<string, mixed>  $file  PHP $_FILES array entry
+     * @return array{url: string, path: string, width: int, height: int}
+     *
+     * @throws InvalidArgumentException|RuntimeException
+     */
+    public function storeAvatarSource(array $file, int $userId): array
+    {
+        [$dir, $baseUrl] = $this->userProfilePath($userId);
+
+        $url = $this->storeImage($file, [
+            'dir' => $dir,
+            'base_url' => $baseUrl,
+            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
+            'max_bytes' => 2 * 1024 * 1024,
+            'preset' => 'avatar_source',
+            'rename' => 'avatar-source',
+        ]);
+
+        if ($url === null) {
+            throw new RuntimeException('Avatar upload failed.');
+        }
+
+        $path = $dir.'/'.basename($url);
+        $size = getimagesize($path) ?: [0, 0];
+
+        return ['url' => $url, 'path' => $path, 'width' => (int) $size[0], 'height' => (int) $size[1]];
+    }
+
+    /**
+     * Render the square avatar by cropping the stored source to the given rectangle.
+     * Each render gets a fresh content-hashed filename so browser caches pick up the
+     * change; the caller is responsible for deleting the previous avatar file.
+     *
+     * @param  array{x: int, y: int, width: int, height: int}  $rect  Crop rect in source pixels
+     * @return string Public URL of the rendered avatar
+     */
+    public function renderAvatar(int $userId, string $sourcePath, array $rect): string
+    {
+        [$dir, $baseUrl] = $this->userProfilePath($userId);
+
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        $hash = substr(sha1(json_encode($rect).'|'.basename($sourcePath).'|'.microtime()), 0, 12);
+        $filename = 'avatar-'.$hash.'.jpg';
+
+        $this->images->crop($sourcePath, $dir.'/'.$filename, $rect, [
+            'out_w' => 512,
+            'out_h' => 512,
+            'quality' => 85,
+            'format' => 'jpeg',
+        ]);
+
+        return $baseUrl.'/'.$filename;
     }
 
     /**
@@ -201,6 +319,9 @@ final class UploadService implements UploadServiceInterface
             'base_url' => $tempUrl,
             'max_bytes' => 5 * 1024 * 1024, // 5MB
             'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
+            // Temp uploads are mostly featured images; the 1920 cap is a safe upper
+            // bound for branding banners too, and leaves smaller logos/favicons alone.
+            'preset' => 'post_featured',
         ]);
 
         if (!$url) {
@@ -324,6 +445,17 @@ final class UploadService implements UploadServiceInterface
         }
 
         $destPath = $dir.'/'.$newFilename;
+
+        // Branding assets each get their own size (a favicon must not stay banner-sized),
+        // so reprocess to the matching preset here where the intent is known. Flows with
+        // no branding preset (for example featured_image, already sized at temp) are a
+        // straight copy so we don't re-encode an image twice.
+        $preset = self::PROCESS_PRESETS[$prefix] ?? null;
+        if ($preset !== null) {
+            $this->images->process($tempPath, $destPath, $preset);
+
+            return $baseUrl.'/'.$newFilename;
+        }
 
         if (!copy($tempPath, $destPath)) {
             throw new RuntimeException('Failed to copy file to folder');

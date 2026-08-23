@@ -111,7 +111,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
         <!-- Featured Image -->
         <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
-        {% cmp="dropzone" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" %}
+        {% cmp="dropzone" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" altTarget="og_image_alt" %}
 
         <!-- Organize -->
         <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">

@@ -136,7 +136,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
             "default-src 'self'",
             $scriptSrc,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "img-src 'self' data:",
+            "img-src 'self' data: https://picsum.photos https://fastly.picsum.photos https://cdn.jsdelivr.net https://www.gravatar.com",
             "font-src 'self' data: https://fonts.gstatic.com",
             "connect-src 'self'",
             "frame-ancestors 'self'",

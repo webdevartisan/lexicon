@@ -23,9 +23,9 @@ $registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnT
 {% block body %}
 <?php
 $returnTo = !empty($return_to) ? $return_to : '';
-$email = old('email') ?? '';
+$email = $email ?? '';
 ?>
-<form action="/login/submit" method="post">
+<form action="/login" method="post">
     <?= csrf_field() ?>
     <?php if ($returnTo !== '') { ?>
         <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">

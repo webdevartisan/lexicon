@@ -179,6 +179,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     slug VARCHAR(100) DEFAULT NULL COMMENT 'URL-friendly username for public profiles',
     bio TEXT DEFAULT NULL,
     avatar_url VARCHAR(512) DEFAULT NULL,
+    avatar_source_url VARCHAR(512) DEFAULT NULL COMMENT 'Uncropped original kept for re-cropping',
+    avatar_crop VARCHAR(64) DEFAULT NULL COMMENT 'Last crop rect as x,y,w,h in source pixels',
     location VARCHAR(120) DEFAULT NULL,
     occupation VARCHAR(120) DEFAULT NULL,
     is_public BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Whether profile is publicly viewable',
@@ -974,6 +976,36 @@ CREATE TABLE IF NOT EXISTS site_content (
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Editable site text; overrides the locale file defaults';
+
+-- ============================================================================
+-- MEDIA LIBRARY (per-blog index of uploaded images)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS media (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    blog_id INT NOT NULL,
+    user_id INT DEFAULT NULL,
+    disk_path VARCHAR(500) NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255) DEFAULT NULL,
+    alt_text VARCHAR(255) DEFAULT NULL,
+    mime_type VARCHAR(100) DEFAULT NULL,
+    extension VARCHAR(10) DEFAULT NULL,
+    size_bytes INT NOT NULL DEFAULT 0,
+    width INT DEFAULT NULL,
+    height INT DEFAULT NULL,
+    source ENUM('upload','post_image','branding','backfill') NOT NULL DEFAULT 'upload',
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_blog_path (blog_id, disk_path),
+    INDEX idx_media_user (user_id),
+    INDEX idx_blog_created (blog_id, created_at),
+    INDEX idx_blog_source (blog_id, source),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-blog index of uploaded media files';
 
 -- ============================================================================
 -- ADD FOREIGN KEY FOR USER PREFERENCES (After blogs table exists)
