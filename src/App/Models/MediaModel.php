@@ -195,6 +195,6 @@ class MediaModel extends AppModel
 
         $sql = 'UPDATE '.$this->getTable().' SET '.implode(', ', $sets).' WHERE id = ? AND blog_id = ?';
 
-        return $this->database->query($sql, $params)->rowCount() >= 0;
+        return $this->database->query($sql, $params)->rowCount() > 0;
     }
 }
