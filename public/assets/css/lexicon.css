@@ -2521,74 +2521,200 @@ label {
 }
 
 /* ==========================================================================
-   17. Profile page
+   17. Public profile page
+
+   The identity (avatar, name, role, meta, actions, stats, bio) reads as one
+   raised card so a visitor takes in who this is and what they write about at a
+   glance; the posts feed sits below as the separate second movement.
    ========================================================================== */
 
-.profile-card {
+.lx-profile-card {
     background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
 }
 
-.profile-image img,
-.profile-image .profile-initials {
-    width: 100%;
-    max-width: 11rem;
-    aspect-ratio: 1;
+/* Identity row: avatar beside the name block, wrapping to a stack on narrow
+   screens. align-items:center keeps a short identity vertically centred on the
+   avatar; a long one grows downward without dragging the avatar with it. */
+.lx-profile-id {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.lx-profile-avatar {
+    flex: 0 0 auto;
+}
+
+.lx-profile-avatar img,
+.lx-profile-initials {
+    display: block;
+    width: clamp(5.5rem, 13vw, 9.5rem);
+    height: clamp(5.5rem, 13vw, 9.5rem);
     border-radius: 50%;
     object-fit: cover;
+    background: var(--lx-paper-sunk);
 }
 
-.profile-image .profile-initials {
+.lx-profile-initials {
     display: grid;
     place-items: center;
     background: var(--lx-bind);
     color: var(--lx-gilt);
     font-family: var(--lx-serif);
-    font-size: 3.5rem;
+    font-size: clamp(2.25rem, 6vw, 3.5rem);
+    line-height: 1;
 }
 
-.profile-right h1 {
-    margin: 0 0 0.25rem;
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+/* min-width:0 lets a long unbroken name wrap instead of forcing the flex row
+   wider than the card. */
+.lx-profile-headline {
+    flex: 1 1 16rem;
+    min-width: 0;
 }
 
-.profile-meta {
+.lx-profile-headline h1 {
+    margin: 0 0 0.2rem;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    line-height: 1.12;
+    overflow-wrap: break-word;
+}
+
+.lx-profile-role {
+    margin: 0 0 1rem;
+    font-family: var(--lx-sans);
+    font-size: 1rem;
+    color: var(--lx-ink-2);
+}
+
+.lx-profile-meta {
     list-style: none;
     margin: 0 0 1.25rem;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
+    gap: 0.4rem 1.5rem;
     font-family: var(--lx-sans);
     font-size: 0.85rem;
     color: var(--lx-ink-2);
 }
 
-.profile-meta li .icon {
+.lx-profile-meta li {
+    display: inline-flex;
+    align-items: center;
+}
+
+.lx-profile-meta .icon {
     color: var(--lx-gilt-deep);
-    margin-inline-end: 0.35rem;
+    margin-inline-end: 0.4rem;
 }
 
-.profile-stats {
-    margin-top: 1.5rem;
-    font-family: var(--lx-sans);
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+.lx-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+}
+
+.lx-profile-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2.75rem keeps each icon a comfortable touch target while reading as a quiet
+   glyph until hovered/focused. */
+.lx-profile-social a {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
     color: var(--lx-ink-2);
+    font-size: 1.05rem;
+    transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease);
 }
 
-.profile-stats strong {
-    display: inline-block;
+.lx-profile-social a:hover,
+.lx-profile-social a:focus-visible {
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+}
+
+/* Stats as a description list: the number is the value, the word its label.
+   column-reverse shows the number on top while the DOM keeps "Posts 31" order
+   for a screen reader. */
+.lx-profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    margin: 1.75rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--lx-rule);
+}
+
+.lx-profile-stat {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.15rem;
+}
+
+.lx-profile-stat dt {
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-profile-stat dd {
+    margin: 0;
     font-family: var(--lx-serif);
     font-size: 1.75rem;
     font-weight: 400;
+    line-height: 1;
     letter-spacing: -0.02em;
-    text-transform: none;
     color: var(--lx-ink);
 }
 
-.profile-social {
-    margin-top: 1.25rem;
+/* Bio measure is capped so the prose stays readable inside the wide card. */
+.lx-profile-bio {
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--lx-rule);
+}
+
+.lx-profile-bio h2 {
+    margin: 0 0 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--lx-sans);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-profile-bio p {
+    max-width: 62ch;
+    margin: 0;
+    color: var(--lx-ink);
+    line-height: 1.7;
+}
+
+.lx-profile-bio-empty {
+    color: var(--lx-ink-2);
+    font-style: italic;
+}
+
+.lx-profile-feed-empty {
+    color: var(--lx-ink-2);
 }
 
 /* ==========================================================================
