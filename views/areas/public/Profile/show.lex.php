@@ -1,6 +1,6 @@
 {% extends "front.lex.php" %}
 
-{% block title %}<?= e($profile->displayName() ?? $profile->username() ?? 'Profile'); ?> — Profile{% endblock %}
+{% block title %}<?= e($profile->displayName() ?? $profile->username() ?? 'Profile'); ?> | <?= e(site_setting('site_name', 'Lexicon')); ?>{% endblock %}
 
 {% block meta %}
 <?php
@@ -49,146 +49,140 @@
     $postCount = (int) ($stats['posts'] ?? 0);
     $commentCount = (int) ($stats['comments'] ?? 0);
     $hasStats = $postCount > 0 || $commentCount > 0;
+
+    // Topic chips are derived from the blogs this author actually publishes on,
+    // read straight out of the posts we already loaded, so no extra query and
+    // nothing invented. Keyed by slug to dedupe, capped so the row stays tidy.
+    $authorBlogs = [];
+    foreach ($posts as $chipPost) {
+        $chipSlug = $chipPost['blog_slug'] ?? null;
+        $chipName = $chipPost['blog_name'] ?? null;
+        if ($chipSlug !== null && $chipName !== null && !isset($authorBlogs[$chipSlug])) {
+            $authorBlogs[$chipSlug] = $chipName;
+        }
+    }
+    $authorBlogs = array_slice($authorBlogs, 0, 4, true);
 ?>
 
-  {# Identity: avatar, name, role, meta, actions, stats and bio as one unit #}
   <section class="lx-profile" aria-labelledby="profile-name">
     <div class="lx-profile-card">
 
-      <div class="lx-profile-id">
-        <div class="lx-profile-avatar">
-          <?php if (!empty($profileAvatar)) { ?>
-            <?php // Name sits beside the image as the h1, so the avatar is decorative to a screen reader. ?>
-            <img src="<?= e($profileAvatar); ?>" alt="" width="152" height="152" decoding="async">
-          <?php } else { ?>
-            <span class="lx-profile-initials" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim($profileName), 0, 1))); ?></span>
-          <?php } ?>
-        </div>
-
-        <div class="lx-profile-headline">
-          <h1 id="profile-name"><?= e($profileName); ?></h1>
-          <p class="lx-profile-role"><?= e($profile->occupation() ?? 'Creator on Lexicon'); ?></p>
-
-          <?php if (!empty($profile->location()) || !empty($profile->memberSince())) { ?>
-            <ul class="lx-profile-meta">
-              <?php if (!empty($profile->location())) { ?>
-                <li>
-                  <span class="icon solid fa fa-location-dot" aria-hidden="true"></span>
-                  <?= e($profile->location()); ?>
-                </li>
-              <?php } ?>
-              <?php if (!empty($profile->memberSince())) { ?>
-                <li>
-                  <span class="icon solid fa fa-calendar" aria-hidden="true"></span>
-                  Member since <?= e(local_datetime($profile->memberSince(), 'F Y', site_timezone())); ?>
-                </li>
-              <?php } ?>
-            </ul>
-          <?php } ?>
-
-          <?php if (!empty($websiteUrl) || !empty($socialLinks)) { ?>
-            <div class="lx-profile-actions">
-              <?php if (!empty($websiteUrl)) { ?>
-                <a href="<?= e($websiteUrl); ?>" class="lx-btn lx-btn--primary lx-btn--small"
-                  target="_blank" rel="noopener noreferrer nofollow">Visit website</a>
-              <?php } ?>
-
-              <?php if (!empty($socialLinks)) { ?>
-                <ul class="lx-profile-social">
-                  <?php foreach ($socialLinks as $socialLink) { ?>
-                    <li>
-                      <a href="<?= e($socialLink['url']); ?>"
-                        class="icon <?= e($socialLink['iconStyle']); ?> fa <?= e($socialLink['icon']); ?>"
-                        target="_blank" rel="noopener noreferrer nofollow">
-                        <span class="label"><?= e(ucfirst($socialLink['network'])); ?></span>
-                      </a>
-                    </li>
-                  <?php } ?>
-                </ul>
-              <?php } ?>
-            </div>
-          <?php } ?>
-        </div>
+      <div class="lx-profile-avatar">
+        <?php if (!empty($profileAvatar)) { ?>
+          <?php // Name follows immediately as the h1, so the avatar is decorative to a screen reader. ?>
+          <img src="<?= e($profileAvatar); ?>" alt="" width="132" height="132" decoding="async">
+        <?php } else { ?>
+          <span class="lx-profile-initials" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim($profileName), 0, 1))); ?></span>
+        <?php } ?>
       </div>
+
+      <h1 id="profile-name"><?= e($profileName); ?></h1>
+      <?php if (!empty($profile->occupation())) { ?>
+        <p class="lx-profile-role"><?= e($profile->occupation()); ?></p>
+      <?php } ?>
 
       <?php if ($hasStats) { ?>
         <dl class="lx-profile-stats">
           <?php if ($postCount > 0) { ?>
-            <div class="lx-profile-stat">
-              <dt>Posts</dt>
-              <dd><?= e(number_format($postCount)); ?></dd>
-            </div>
+            <div class="lx-profile-stat"><dd><?= e(number_format($postCount)); ?></dd><dt>Posts</dt></div>
           <?php } ?>
           <?php if ($commentCount > 0) { ?>
-            <div class="lx-profile-stat">
-              <dt>Comments received</dt>
-              <dd><?= e(number_format($commentCount)); ?></dd>
-            </div>
+            <div class="lx-profile-stat"><dd><?= e(number_format($commentCount)); ?></dd><dt>Comments</dt></div>
           <?php } ?>
         </dl>
       <?php } ?>
 
-      <div class="lx-profile-bio">
-        <h2>About</h2>
-        <?php if (!empty($profile->bio())) { ?>
-          <p><?= nl2br(e($profile->bio())); ?></p>
-        <?php } else { ?>
-          <p class="lx-profile-bio-empty"><?= e($profileName); ?> hasn&rsquo;t written a bio yet.</p>
-        <?php } ?>
-      </div>
+      <?php if (!empty($profile->location()) || !empty($profile->memberSince())) { ?>
+        <ul class="lx-profile-meta">
+          <?php if (!empty($profile->location())) { ?>
+            <li><span class="icon solid fa fa-location-dot" aria-hidden="true"></span><?= e($profile->location()); ?></li>
+          <?php } ?>
+          <?php if (!empty($profile->memberSince())) { ?>
+            <li><span class="icon solid fa fa-calendar" aria-hidden="true"></span>Member since <?= e(local_datetime($profile->memberSince(), 'F Y', site_timezone())); ?></li>
+          <?php } ?>
+        </ul>
+      <?php } ?>
+
+      <?php if (!empty($profile->bio())) { ?>
+        <p class="lx-profile-bio"><?= nl2br(e($profile->bio())); ?></p>
+      <?php } ?>
+
+      <?php if (!empty($authorBlogs)) { ?>
+        <ul class="lx-profile-tags" aria-label="Publishes on">
+          <?php foreach ($authorBlogs as $blogSlug => $blogName) { ?>
+            <li><a href="/blog/<?= e(rawurlencode((string) $blogSlug)); ?>"><?= e($blogName); ?></a></li>
+          <?php } ?>
+        </ul>
+      <?php } ?>
+
+      <?php if (!empty($websiteUrl)) { ?>
+        <div class="lx-profile-cta">
+          <a href="<?= e($websiteUrl); ?>" class="lx-btn lx-btn--primary"
+            target="_blank" rel="noopener noreferrer nofollow">Visit website</a>
+        </div>
+      <?php } ?>
+
+      <?php if (!empty($socialLinks)) { ?>
+        <ul class="lx-profile-social" aria-label="Social links">
+          <?php foreach ($socialLinks as $socialLink) { ?>
+            <?php // FontAwesome 6 splits families: brand glyphs need fa-brands, not the solid-default fa. ?>
+            <?php $iconFamily = $socialLink['iconStyle'] === 'brands' ? 'fa-brands' : 'fa-solid'; ?>
+            <li>
+              <a href="<?= e($socialLink['url']); ?>"
+                class="<?= e($iconFamily); ?> <?= e($socialLink['icon']); ?>"
+                target="_blank" rel="noopener noreferrer nofollow">
+                <span class="label"><?= e(ucfirst($socialLink['network'])); ?></span>
+              </a>
+            </li>
+          <?php } ?>
+        </ul>
+      <?php } ?>
 
     </div>
   </section>
 
-  {# Recent posts feed (reuses the shared .posts grid) #}
+  <?php // Only creators with public posts get a feed; a reader's profile ends at the card. ?>
+  <?php if (!empty($posts)) { ?>
   <section id="profile-posts" class="lx-profile-feed" aria-labelledby="profile-posts-heading">
     <header class="major"><h2 id="profile-posts-heading">Recent posts</h2></header>
 
-    <?php if (empty($posts)) { ?>
-      <p class="lx-profile-feed-empty"><?= e($profileName); ?> hasn&rsquo;t published anything public yet. Check back soon.</p>
-    <?php } else { ?>
-      <div class="posts">
+      <div class="lx-gallery">
         <?php foreach ($posts as $post) { ?>
           <?php
             $postUrl = '/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']);
             $postTitle = $post['title'] ?? 'Untitled';
             // Excerpts are stored as free text and some carry markup; strip it so
-            // cards show prose, not literal tags, and keep the height uniform.
+            // cards show prose, not literal tags.
             $postExcerpt = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($post['excerpt'] ?? ''))));
+            $hasImage = !empty($post['featured_image']);
             ?>
-          <article>
-            <a href="<?= e($postUrl); ?>" class="image post-thumb" tabindex="-1" aria-hidden="true">
-              <?php if (!empty($post['featured_image'])) { ?>
+          <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
+            <a href="<?= e($postUrl); ?>" class="lx-gallery-media" tabindex="-1" aria-hidden="true">
+              <?php if ($hasImage) { ?>
                 <img src="<?= e($post['featured_image']); ?>" alt="" loading="lazy">
               <?php } else { ?>
-                <span class="post-thumb-fallback" aria-hidden="true">
-                  <?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))); ?>
-                </span>
+                <span class="lx-gallery-fallback" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))); ?></span>
               <?php } ?>
             </a>
 
-            <p class="meta">
-              <?= e($post['blog_name'] ?? 'Blog'); ?>
-              <?php if (!empty($post['published_at'])) { ?>
-                &middot; <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)); ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())); ?></time>
+            <div class="lx-gallery-body">
+              <p class="meta">
+                <?= e($post['blog_name'] ?? 'Blog'); ?>
+                <?php if (!empty($post['published_at'])) { ?>
+                  &middot; <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)); ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())); ?></time>
+                <?php } ?>
+              </p>
+
+              <h3><a href="<?= e($postUrl); ?>"><?= e($postTitle); ?></a></h3>
+
+              <?php if ($postExcerpt !== '') { ?>
+                <p class="lx-gallery-excerpt"><?= e(truncate($postExcerpt, 140)); ?></p>
               <?php } ?>
-            </p>
-
-            <h3>
-              <a href="<?= e($postUrl); ?>"><?= e($postTitle); ?></a>
-            </h3>
-
-            <?php if ($postExcerpt !== '') { ?>
-              <p><?= e(truncate($postExcerpt, 160)); ?></p>
-            <?php } ?>
-
-            <ul class="actions">
-              <li><a class="lx-btn lx-btn--subtle lx-btn--small" href="<?= e($postUrl); ?>">Read more<span class="label"> about <?= e($postTitle); ?></span></a></li>
-            </ul>
+            </div>
           </article>
         <?php } ?>
       </div>
-    <?php } ?>
   </section>
+  <?php } ?>
 
 {% endblock %}

@@ -1,21 +1,7 @@
-/*
- * Lexicon front-end design system.
- *
- * Replaces the Editorial template stylesheet for the public layout. The page
- * is built as a bound reference volume: a dark cover, then paper, with every
- * section using the apparatus of a dictionary entry (headword, pronunciation,
- * senses, citations, usage notes).
- *
- * Sections: fonts, tokens, base, primitives, nav, cover, band, senses,
- * entries, citations, notes, closing panel, footer, buttons, legacy component
- * shims (Editorial classes still used by the other public views), auth,
- * profile, utilities, motion.
- */
+/* Lexicon front-end design system. */
 
 /* ==========================================================================
    1. Fonts
-   Self-hosted so the front page makes no third-party request; the cookie
-   banner would otherwise have to account for Google Fonts.
    ========================================================================== */
 
 @font-face {
@@ -79,27 +65,21 @@
    ========================================================================== */
 
 :root {
-    /* Paper: a cool book stock, deliberately not cream. */
     --lx-paper: #f0f1ec;
     --lx-paper-raised: #fbfbf8;
     --lx-paper-sunk: #e7e9e1;
 
-    /* Binding: the cloth cover of a reference volume. */
     --lx-bind: #16233f;
     --lx-bind-deep: #0d1526;
     --lx-bind-soft: #24355a;
 
-    /* Foil. Two values: the bright one only ever sits on the binding, the
-       deep one only on paper. Bright gold on paper is 2.5:1, and even a
-       mid ochre lands at 4.3, so the paper value is pushed to 5.2:1. */
+    /* Bright foil only sits on the binding; the deep value holds AA on paper. */
     --lx-gilt: #c9a227;
     --lx-gilt-deep: #7a5d0e;
 
     --lx-ink: #171a1c;
     --lx-ink-2: #5c6470;
-    /* Tertiary grey. Kept at AA on paper rather than the lighter tone the
-       hierarchy wanted, because it carries real text: dates, bylines,
-       placeholders. Separation from --lx-ink-2 comes from size and case. */
+    /* Kept at AA on paper: it carries real text (dates, bylines, placeholders). */
     --lx-ink-3: #646b76;
     --lx-rule: #d3d7cd;
     --lx-rule-strong: #b9bfb2;
@@ -107,8 +87,7 @@
 
     --lx-on-bind: #f0f1ec;
     --lx-on-bind-2: #a8b2c6;
-    /* The quiet tone for the binding. --lx-ink-3 is tuned for paper and drops
-       to 3.4:1 down here, so dark panels get their own tertiary. */
+    /* Dark panels need their own tertiary; --lx-ink-3 drops below AA on them. */
     --lx-on-bind-3: #7e8798;
     --lx-rule-bind: rgba(240, 241, 236, 0.16);
 
@@ -120,14 +99,11 @@
     --lx-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
     --lx-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
-    /* One measure for the whole site so sections never drift out of alignment. */
     --lx-measure: 76rem;
     --lx-gutter: clamp(1.25rem, 5vw, 4rem);
     --lx-section-y: clamp(4.5rem, 10vw, 8.5rem);
 
-    /* The cover slides under the masthead by exactly this much, so the bar can
-       carry no border: a 1px border would leave a sliver of paper above the
-       dark hero. The stuck rule is drawn with an inset shadow instead. */
+    /* The cover underlaps the masthead by this much, so the bar carries no border. */
     --lx-nav-h: 4.5rem;
 
     --lx-radius: 4px;
@@ -135,10 +111,7 @@
 
     --lx-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-    /* Consumed by partials written against the old theme. consent.css builds
-       the cookie FAB with `rgb(var(--primary-color-token) / 0.5)`, so the token
-       has to be bare channels and it has to exist: undefined, the whole
-       declaration is invalid and the FAB paints a white icon on nothing. */
+    /* Bare RGB channels for consent.css `rgb(var(--primary-color-token)/.5)`; must stay defined. */
     --primary-color: #1b3a6b;
     --primary-color-token: 27 58 107;
 }
@@ -300,7 +273,6 @@ hr {
     padding-block: var(--lx-section-y);
 }
 
-/* Small-caps utility voice: eyebrows, labels, data captions. */
 .lx-eyebrow {
     display: flex;
     align-items: center;
@@ -329,7 +301,6 @@ hr {
     background: var(--lx-rule-bind);
 }
 
-/* Grammar label: "n.", "v.", "adj." — always italic, always the serif. */
 .lx-pos {
     font-family: var(--lx-serif);
     font-style: italic;
@@ -343,7 +314,6 @@ hr {
     letter-spacing: 0.01em;
 }
 
-/* Syllable divider inside a headword. */
 .lx-dot {
     color: var(--lx-gilt-deep);
     font-style: normal;
@@ -361,8 +331,6 @@ hr {
    5. Navigation
    ========================================================================== */
 
-/* Everything in the bar inherits `color`, so the paper/cover flip is two
-   declarations rather than a per-element override for each state. */
 .lx-nav {
     position: sticky;
     top: 0;
@@ -387,7 +355,6 @@ hr {
     box-shadow: inset 0 -1px 0 var(--lx-rule);
 }
 
-/* On the home page the bar starts transparent over the cover. */
 .lx-nav.is-over {
     background: transparent;
     color: var(--lx-on-bind);
@@ -538,9 +505,7 @@ hr {
     overflow-y: auto;
     opacity: 0;
     transform: translateY(-1rem);
-    /* Hiding is the `hidden` attribute's job, not visibility's: a transitioning
-       `visibility` leaves the close button unfocusable at the moment the menu
-       opens, so focus never moves into the drawer. */
+    /* Hidden via the [hidden] attribute, not visibility, so focus can enter the drawer. */
     pointer-events: none;
     transition: opacity 0.3s var(--lx-ease), transform 0.3s var(--lx-ease);
 }
@@ -655,7 +620,6 @@ body.lx-drawer-open {
     isolation: isolate;
 }
 
-/* Cloth grain: two very low-opacity gradients, no image request. */
 .lx-cover::before {
     content: '';
     position: absolute;
@@ -667,7 +631,6 @@ body.lx-drawer-open {
         linear-gradient(178deg, var(--lx-bind) 0%, var(--lx-bind-deep) 100%);
 }
 
-/* The foil rule that runs down the spine edge. */
 .lx-cover::after {
     content: '';
     position: absolute;
@@ -705,7 +668,6 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-/* The headword: the single loudest element on the site. */
 .lx-headword {
     margin: 0;
     font-family: var(--lx-serif);
@@ -745,7 +707,6 @@ body.lx-drawer-open {
     transform: translateY(-0.3em);
 }
 
-/* Senses: the actual product promise, typeset as numbered definitions. */
 .lx-senses {
     list-style: none;
     counter-reset: sense;
@@ -785,7 +746,6 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-/* Usage note: the long-form paragraph, set as marginal apparatus. */
 .lx-cover__note {
     margin: clamp(2rem, 4vw, 2.75rem) 0 0;
     padding-inline-start: 1.25rem;
@@ -810,9 +770,7 @@ body.lx-drawer-open {
     margin-top: clamp(2.25rem, 5vw, 3rem);
 }
 
-/* Wide but short, i.e. most laptops. The entry is sized off viewport width,
-   which on a 768px-tall screen pushes the call to action past the fold, so the
-   whole stack tightens against height instead. */
+/* Short viewports: size against height so the call to action stays above the fold. */
 @media (min-width: 1000px) and (max-height: 900px) {
     .lx-cover__inner {
         padding-block: clamp(2.5rem, 7vh, 4.5rem);
@@ -1114,7 +1072,6 @@ body.lx-drawer-open {
     transform: scale(1.04);
 }
 
-/* No featured image: set the post's initial as a plate. */
 .lx-cite__plate {
     position: absolute;
     inset: 0;
@@ -1148,7 +1105,6 @@ body.lx-drawer-open {
     text-decoration: none;
 }
 
-/* The attribution line, the part that makes it read as a citation. */
 .lx-cite__attr {
     margin: 0 0 0.75rem;
     font-family: var(--lx-sans);
@@ -1539,7 +1495,6 @@ input[type='button']:hover {
     color: #fff;
 }
 
-/* Buttons that sit on the binding. */
 .lx-btn--gilt {
     background: var(--lx-gilt);
     border-color: var(--lx-gilt);
@@ -1622,17 +1577,9 @@ input[type='button']:hover {
 
 /* ==========================================================================
    15. Legacy component shims
-   Editorial class names still used by the explore, page, profile, auth and
-   invite views. Restyled to the new system rather than reproduced.
    ========================================================================== */
 
-/* Views written against the old theme drop bare sections into the body block,
-   so the main element supplies the measure. Anything that must reach the
-   viewport edge opts out with .lx-bleed and carries its own .lx-wrap. */
-/* :not(.lx-bleed) is carrying specificity as well as intent here. Legacy
-   components set their own shorthand margins (.explore-tabs, ul.pagination),
-   and a plain `.lx-main > *` ties or loses against them, which knocks those
-   blocks out of the column. */
+/* :not(.lx-bleed) also buys specificity over legacy components' own margins. */
 .lx-main > *:not(.lx-bleed) {
     width: 100%;
     max-width: var(--lx-measure);
@@ -1640,9 +1587,7 @@ input[type='button']:hover {
     padding-inline: var(--lx-gutter);
 }
 
-/* Scoped with :not() so a bleed section keeps whatever padding its own
-   component rule sets; without it the descendant selector here would outrank
-   .lx-section and flatten the home page rhythm. */
+/* Scoped so a .lx-bleed section keeps its own padding. */
 .lx-main > section:not(.lx-bleed),
 .lx-main > article:not(.lx-bleed) {
     padding-block: clamp(2.25rem, 4.5vw, 3.5rem);
@@ -1669,7 +1614,6 @@ header.major > p {
     max-width: 56ch;
 }
 
-/* Section hero used by the explore page. */
 #banner {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
@@ -2015,9 +1959,7 @@ textarea:focus {
     box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.14);
 }
 
-/* The soft ring above is a pointer affordance and is far too faint to be a
-   keyboard indicator. Suppressing the outline only for :not(:focus-visible)
-   keeps the real ring for keyboard users without depending on source order. */
+/* Suppress the outline only for :not(:focus-visible); keyboard focus keeps it. */
 input:focus:not(:focus-visible),
 select:focus:not(:focus-visible),
 textarea:focus:not(:focus-visible) {
@@ -2138,9 +2080,6 @@ label {
 
 /* ==========================================================================
    16. Auth pages
-   Sign in, sign up, password reset and the invite outcomes. These run on
-   layouts/auth.lex.php, which drops the masthead and the footer site map:
-   the page has one job and everything else is a distraction from it.
    ========================================================================== */
 
 .lx-authpage {
@@ -2151,7 +2090,6 @@ label {
     background: var(--lx-paper);
 }
 
-/* Slim bar: an escape hatch on one side, the opposite journey on the other. */
 .lx-authbar {
     display: flex;
     align-items: center;
@@ -2195,8 +2133,6 @@ label {
     padding: clamp(0.5rem, 4vh, 2.5rem) clamp(1.25rem, 4vw, 2.75rem) clamp(2rem, 5vh, 3.5rem);
 }
 
-/* One narrow column. No card, no border, no shadow: on a page this empty a
-   panel only draws a box around nothing. */
 .lx-authcol {
     width: 100%;
     max-width: 25rem;
@@ -2273,10 +2209,7 @@ label {
     margin-bottom: 1.6rem;
 }
 
-/* Wraps the input and its show/hide button. The toggle used to be positioned
-   against .lx-field, which is fine on the login form where the input is the
-   last thing in it, but on registration the hint and the strength meter sit
-   below the input, so the button landed at the bottom of all of that. */
+/* Wraps input + show/hide toggle so the toggle positions against the input, not the field. */
 .lx-field__control {
     position: relative;
 }
@@ -2292,8 +2225,7 @@ label {
     color: var(--lx-ink-2);
 }
 
-/* Two classes deep on purpose: the generic `input[type="email"]` rule in the
-   component shims is (0,1,1) and would otherwise repaint these as boxes. */
+/* Two classes deep to beat the (0,1,1) input rule in the component shims. */
 .lx-field .lx-field__input {
     width: 100%;
     min-height: 2.75rem;
@@ -2314,20 +2246,11 @@ label {
     font-family: var(--lx-serif);
 }
 
-/* Only inputs that carry a toggle get a wrapper, so this can be unconditional
-   and a long password never runs underneath the button. */
 .lx-field__control .lx-field__input {
     padding-inline-end: 3.75rem;
 }
 
-/* The rule itself is the focus indicator here, so the outline is suppressed
-   for both modalities rather than just for pointer focus. Browsers match
-   :focus-visible on any text-input focus, so :not(:focus-visible) would not
-   have removed it on click anyway.
-
-   That makes the underline load-bearing for keyboard users, so it is not
-   subtle: 1px of --lx-rule-strong becomes 2px of --lx-ink at 15.6:1 against
-   paper, drawn as a shadow so nothing shifts by a pixel. */
+/* The underline is the focus indicator, so it thickens to 2px --lx-ink (drawn as a shadow). */
 .lx-field .lx-field__input:focus,
 .lx-field .lx-field__input:focus-visible {
     outline: none;
@@ -2346,7 +2269,6 @@ label {
     gap: 0.5rem;
 }
 
-/* Show/hide sits inside the field, on the input's own baseline. */
 .lx-field__toggle {
     position: absolute;
     inset-inline-end: 0;
@@ -2384,11 +2306,7 @@ label {
     color: var(--lx-ink-2);
 }
 
-/* --- Password strength -------------------------------------------------
-   Advisory only. The server enforces `password:basic`, which is a six
-   character minimum and nothing else, so the meter must never look like a
-   gate: the requirement is stated in words above it, and the bar only rates
-   what the reader typed. */
+/* --- Password strength: advisory only; the server enforces password:basic (6 char min). --- */
 
 .lx-meter {
     margin-top: 0.75rem;
@@ -2522,41 +2440,43 @@ label {
 
 /* ==========================================================================
    17. Public profile page
-
-   The identity (avatar, name, role, meta, actions, stats, bio) reads as one
-   raised card so a visitor takes in who this is and what they write about at a
-   glance; the posts feed sits below as the separate second movement.
    ========================================================================== */
 
-.lx-profile-card {
-    background: var(--lx-paper-raised);
-    border: 1px solid var(--lx-rule);
-    border-radius: var(--lx-radius-lg);
-    padding: clamp(1.5rem, 3vw, 2.5rem);
+.lx-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(24rem, 52vh, 36rem);
 }
 
-/* Identity row: avatar beside the name block, wrapping to a stack on narrow
-   screens. align-items:center keeps a short identity vertically centred on the
-   avatar; a long one grows downward without dragging the avatar with it. */
-.lx-profile-id {
+.lx-profile-card {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
-    gap: clamp(1.25rem, 3vw, 2.25rem);
+    text-align: center;
+    width: 100%;
+    max-width: 44rem;
+    margin-inline: auto;
+    padding: clamp(2.25rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3.5rem);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: 20px;
+    box-shadow: 0 1px 2px rgba(22, 35, 63, 0.04), 0 22px 48px -28px rgba(22, 35, 63, 0.28);
 }
 
 .lx-profile-avatar {
-    flex: 0 0 auto;
+    margin-bottom: 1.1rem;
 }
 
 .lx-profile-avatar img,
 .lx-profile-initials {
     display: block;
-    width: clamp(5.5rem, 13vw, 9.5rem);
-    height: clamp(5.5rem, 13vw, 9.5rem);
+    width: clamp(6rem, 16vw, 8.25rem);
+    height: clamp(6rem, 16vw, 8.25rem);
     border-radius: 50%;
     object-fit: cover;
     background: var(--lx-paper-sunk);
+    box-shadow: 0 0 0 1px var(--lx-rule), 0 0 0 6px var(--lx-paper-raised);
 }
 
 .lx-profile-initials {
@@ -2565,37 +2485,66 @@ label {
     background: var(--lx-bind);
     color: var(--lx-gilt);
     font-family: var(--lx-serif);
-    font-size: clamp(2.25rem, 6vw, 3.5rem);
+    font-size: clamp(2.5rem, 7vw, 3.25rem);
     line-height: 1;
 }
 
-/* min-width:0 lets a long unbroken name wrap instead of forcing the flex row
-   wider than the card. */
-.lx-profile-headline {
-    flex: 1 1 16rem;
-    min-width: 0;
-}
-
-.lx-profile-headline h1 {
+.lx-profile-card h1 {
     margin: 0 0 0.2rem;
-    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-    line-height: 1.12;
+    font-size: clamp(1.7rem, 4vw, 2.35rem);
+    line-height: 1.1;
     overflow-wrap: break-word;
 }
 
 .lx-profile-role {
-    margin: 0 0 1rem;
+    margin: 0;
     font-family: var(--lx-sans);
     font-size: 1rem;
     color: var(--lx-ink-2);
 }
 
+.lx-profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 2.25rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+}
+
+.lx-profile-stat {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0.05rem;
+}
+
+.lx-profile-stat dt {
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-profile-stat dd {
+    margin: 0;
+    font-family: var(--lx-serif);
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--lx-ink);
+}
+
 .lx-profile-meta {
     list-style: none;
-    margin: 0 0 1.25rem;
+    margin: 1.25rem 0 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.4rem 1.5rem;
     font-family: var(--lx-sans);
     font-size: 0.85rem;
@@ -2612,24 +2561,61 @@ label {
     margin-inline-end: 0.4rem;
 }
 
-.lx-profile-actions {
+.lx-profile-bio {
+    max-width: 40rem;
+    margin: 1.25rem auto 0;
+    text-align: start;
+    color: var(--lx-ink);
+    line-height: 1.7;
+}
+
+.lx-profile-tags {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem 1.25rem;
+    justify-content: center;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 1.35rem 0 0;
+    padding: 0;
+}
+
+.lx-profile-tags a {
+    display: inline-block;
+    padding: 0.3rem 0.85rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 999px;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    color: var(--lx-ink-2);
+    transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease);
+}
+
+.lx-profile-tags a:hover,
+.lx-profile-tags a:focus-visible {
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    border-color: var(--lx-ink-3);
+}
+
+.lx-profile-cta {
+    margin-top: 1.6rem;
+}
+
+.lx-profile-cta .lx-btn {
+    padding-inline: 2rem;
+    border-radius: 999px;
 }
 
 .lx-profile-social {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.25rem;
     list-style: none;
-    margin: 0;
+    margin: 1.1rem 0 0;
     padding: 0;
 }
 
-/* 2.75rem keeps each icon a comfortable touch target while reading as a quiet
-   glyph until hovered/focused. */
 .lx-profile-social a {
     display: grid;
     place-items: center;
@@ -2647,82 +2633,93 @@ label {
     background: var(--lx-paper-sunk);
 }
 
-/* Stats as a description list: the number is the value, the word its label.
-   column-reverse shows the number on top while the DOM keeps "Posts 31" order
-   for a screen reader. */
-.lx-profile-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem 2.5rem;
-    margin: 1.75rem 0 0;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--lx-rule);
-}
-
-.lx-profile-stat {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 0.15rem;
-}
-
-.lx-profile-stat dt {
-    font-family: var(--lx-sans);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--lx-ink-3);
-}
-
-.lx-profile-stat dd {
-    margin: 0;
-    font-family: var(--lx-serif);
-    font-size: 1.75rem;
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--lx-ink);
-}
-
-/* Bio measure is capped so the prose stays readable inside the wide card. */
-.lx-profile-bio {
-    margin-top: 1.75rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--lx-rule);
-}
-
-.lx-profile-bio h2 {
-    margin: 0 0 0.6rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    font-family: var(--lx-sans);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--lx-ink-3);
-}
-
-.lx-profile-bio p {
-    max-width: 62ch;
-    margin: 0;
-    color: var(--lx-ink);
-    line-height: 1.7;
-}
-
-.lx-profile-bio-empty {
-    color: var(--lx-ink-2);
-    font-style: italic;
-}
-
 .lx-profile-feed-empty {
     color: var(--lx-ink-2);
 }
 
+.lx-gallery {
+    column-width: 17rem;
+    column-gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.lx-gallery-card {
+    break-inside: avoid;
+    margin: 0 0 clamp(1rem, 2vw, 1.5rem);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    overflow: hidden;
+    transition: transform 0.25s var(--lx-ease), box-shadow 0.25s var(--lx-ease);
+}
+
+.lx-gallery-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px -22px rgba(22, 35, 63, 0.35);
+}
+
+.lx-gallery-media {
+    display: block;
+    overflow: hidden;
+    background: var(--lx-paper-sunk);
+}
+
+.lx-gallery-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 22rem;
+    object-fit: cover;
+    transition: transform 0.6s var(--lx-ease);
+}
+
+.lx-gallery-card:hover .lx-gallery-media img {
+    transform: scale(1.04);
+}
+
+.is-textonly .lx-gallery-media {
+    aspect-ratio: 5 / 3;
+}
+
+.lx-gallery-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: var(--lx-bind);
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: 2.75rem;
+    line-height: 1;
+}
+
+.lx-gallery-body {
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.lx-gallery-body .meta {
+    margin: 0 0 0.4rem;
+}
+
+.lx-gallery-body h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 550;
+    line-height: 1.3;
+}
+
+.lx-gallery-body h3 a {
+    color: var(--lx-ink);
+}
+
+.lx-gallery-excerpt {
+    margin: 0.5rem 0 0;
+    color: var(--lx-ink-2);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
 /* ==========================================================================
    18. Reader surfaces
-   Saved, Liked, Replies, Your comments, Subscriptions. A destination, not a
-   workspace: one narrow column of hairline-separated rows, no cards, no
-   panels, no sidebar. The measure is tighter than the rest of the front
-   because every row is a line of prose, not a grid cell.
    ========================================================================== */
 
 .lx-main > .lx-reader {
@@ -2739,8 +2736,6 @@ label {
     line-height: 1.1;
 }
 
-/* Text tabs, underlined. Pills would read as buttons and cards as panels;
-   these are two views of one page and should look like it. */
 .lx-reader-tabs {
     display: flex;
     gap: 1.5rem;
@@ -2834,7 +2829,6 @@ label {
     font-size: 0.95rem;
 }
 
-/* One line of it. The row is a pointer to the thing, not the thing. */
 .lx-reader-excerpt {
     margin: 0 0 0.4rem;
     color: var(--lx-ink-2);
@@ -2876,8 +2870,7 @@ label {
     color: var(--lx-ink);
 }
 
-/* The action is always in the DOM. Hover and focus-within reveal it together,
-   so reaching it with a keyboard works exactly as reaching it with a mouse. */
+/* Hover and focus-within reveal the action together, so keyboard matches mouse. */
 .lx-reader-act {
     flex: none;
     margin: 0;
@@ -3047,9 +3040,7 @@ label {
     background: transparent;
 }
 
-/* The footer language menu reuses the account menu's dropdown styling by
-   carrying the .platform-menu-list class, so both dropdowns look identical.
-   Only placement differs: it opens upward from the footer rather than down. */
+/* Reuses the account menu dropdown via .platform-menu-list; only opens upward. */
 .lang-switcher__menu { display: none; }
 .lang-switcher .lang-switcher__menu {
     top: auto;
@@ -3058,15 +3049,10 @@ label {
 }
 .lang-switcher__menu.show { display: block; }
 
-/* platform-menu-list sizes rows with .85em, which is relative to the inherited
-   font-size. The footer's base is smaller than the masthead's, so the shared
-   class renders these rows smaller than the account menu's. Pin an absolute
-   size so both dropdowns match. */
+/* Pin an absolute row size so the footer and masthead dropdowns match (.85em would differ). */
 .lang-switcher .lang-switcher__menu button,
 .lang-switcher .lang-switcher__menu a { font-size: 0.9rem; }
 
-/* The current language keeps a gilt marker; the account menu has no equivalent
-   state, so this is the one switcher-specific rule left. */
 .lang-switcher__item button[aria-current='true'],
 .lang-switcher__item a[aria-current='true'] {
     color: var(--lx-gilt);
@@ -3123,9 +3109,7 @@ label {
     outline-offset: 2px;
 }
 
-/* Cookie banner buttons. consent.css lays the banner out but defines no button
-   rules at all: it leaned on the old theme's. Its panel is near-black, so the
-   default .button here would put ink on ink. */
+/* Cookie banner buttons: consent.css defines none and its panel is near-black. */
 .consent-banner__inner .button {
     border-color: var(--lx-rule-bind);
     color: var(--lx-on-bind);
