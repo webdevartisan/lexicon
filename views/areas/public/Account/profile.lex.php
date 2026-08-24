@@ -6,15 +6,11 @@
 <meta name="robots" content="noindex" />
 <link rel="stylesheet" href="/assets/vendor/cropper/cropper.min.css" />
 <style>
-  .lx-modal[hidden]{display:none}
-  .lx-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
-  .lx-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-  .lx-modal-panel{position:relative;background:#fff;color:#1a1a1a;border-radius:.75rem;max-width:32rem;width:100%;padding:1.25rem;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-  .lx-modal-title{margin:0 0 .75rem;font-size:1.15rem}
-  .lx-cropper-stage{max-height:60vh;overflow:hidden;background:#f2f2f2}
+  /* Cropper-specific bits; the generic .lx-modal styles live in lexicon.css. */
+  #avatar-cropper-modal .lx-modal-panel{max-inline-size:32rem}
+  .lx-cropper-stage{max-height:60vh;overflow:hidden;background:var(--lx-paper-sunk);border-radius:var(--lx-radius)}
   .lx-cropper-stage img{max-width:100%;display:block}
   .lx-modal .cropper-view-box,.lx-modal .cropper-face{border-radius:50%}
-  .lx-modal-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
 </style>
 {% endblock %}
 
@@ -51,14 +47,14 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 ?>
 <section class="lx-wrap lx-account">
     <?php $accountSection = 'profile'; ?>
+    <header class="lx-account-head">
+        <h1><?= e($t('account.profile.heading')) ?></h1>
+        <p class="lx-muted"><?= e($t('account.profile.intro')) ?></p>
+    </header>
+
     {% include "partials/_account_shell.lex.php" %}
 
     <div class="lx-account-body">
-        <header class="lx-account-head">
-            <h1><?= e($t('account.profile.heading')) ?></h1>
-            <p class="lx-muted"><?= e($t('account.profile.intro')) ?></p>
-        </header>
-
         <form method="post" action="<?= e(lurl('/account/profile/update')) ?>" class="lx-account-form">
             <?= csrf_field() ?>
 
@@ -96,15 +92,22 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             </div>
 
             <div class="lx-account-actions">
+                <button type="reset" class="lx-btn lx-btn--subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn--primary"><?= e($t('account.profile.save')) ?></button>
             </div>
         </form>
 
         <aside class="lx-account-aside">
-            <section class="lx-card">
+            <?php
+            $hasAvatar = !empty($user['avatar_url']);
+$hasSource = !empty($user['avatar_source_url']);
+$isPublic = !empty($user['is_public']) && $slug !== '';
+?>
+            <section class="lx-card lx-card--avatar">
                 <h2 class="lx-card-title"><?= e($t('account.profile.avatarHeading')) ?></h2>
+
                 <div class="lx-avatar" id="avatar-box">
-                    <?php if (!empty($user['avatar_url'])) { ?>
+                    <?php if ($hasAvatar) { ?>
                     <img id="avatar-preview" class="lx-avatar-img" src="<?= e($user['avatar_url']) ?>" alt="">
                     <?php } else { ?>
                     <div id="avatar-placeholder" class="lx-avatar-initials"><?= e($user['initials'] ?? '?') ?></div>
@@ -114,26 +117,43 @@ $field = function (string $name, string $label, string $type = 'text', string $v
                 <form id="avatar-form" method="post" action="<?= e(lurl('/account/profile/avatar')) ?>" enctype="multipart/form-data">
                     <?= csrf_field() ?>
                     <input id="avatar-input" name="avatar" type="file" class="lx-visually-hidden"
-                           accept="image/jpeg,image/png,image/webp" data-max-size="2097152">
-                    <label for="avatar-input" class="lx-btn lx-btn--ghost lx-btn--fit"><?= e($t('account.profile.changeAvatar')) ?></label>
-                    <p class="lx-muted lx-avatar-help"><?= e($t('account.profile.avatarConstraints')) ?></p>
+                           accept="image/jpeg,image/png,image/webp" data-max-size="20971520">
 
-                    <div id="upload-loading" hidden><span class="lx-muted"><?= e($t('account.profile.uploading')) ?></span></div>
+                    <div class="lx-avatar-controls" role="group" aria-label="<?= e($t('account.profile.avatarHeading')) ?>">
+                        <label for="avatar-input" class="lx-icon-btn" id="avatar-upload-btn"
+                               title="<?= e($t('account.profile.changeAvatar')) ?>">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M4 8h3l1.5-2h7L18 8h2a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.2"/>
+                            </svg>
+                            <span class="lx-visually-hidden"><?= e($t('account.profile.changeAvatar')) ?></span>
+                        </label>
+
+                        <button type="button" id="recrop-avatar-btn" class="lx-icon-btn"
+                                title="<?= e($t('account.profile.recropAvatar')) ?>"
+                                data-source="<?= e($user['avatar_source_url'] ?? '') ?>" data-crop="<?= e($user['avatar_crop'] ?? '') ?>"
+                                <?= $hasSource ? '' : 'hidden' ?>>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/>
+                            </svg>
+                            <span class="lx-visually-hidden"><?= e($t('account.profile.recropAvatar')) ?></span>
+                        </button>
+
+                        <button type="button" id="remove-avatar-btn" class="lx-icon-btn lx-icon-btn--danger"
+                                data-confirm-open="confirm-remove-avatar"
+                                title="<?= e($t('account.profile.removeAvatar')) ?>" <?= $hasAvatar ? '' : 'hidden' ?>>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/>
+                            </svg>
+                            <span class="lx-visually-hidden"><?= e($t('account.profile.removeAvatar')) ?></span>
+                        </button>
+                    </div>
+
+                    <div id="upload-loading" class="lx-avatar-status" hidden><span class="lx-muted"><?= e($t('account.profile.uploading')) ?></span></div>
                 </form>
 
-                <?php if (!empty($user['avatar_source_url'])) { ?>
-                <button type="button" id="recrop-avatar-btn" class="lx-btn lx-btn--ghost lx-btn--fit"
-                        data-source="<?= e($user['avatar_source_url']) ?>" data-crop="<?= e($user['avatar_crop'] ?? '') ?>">
-                    <?= e($t('account.profile.recropAvatar')) ?>
-                </button>
-                <?php } ?>
-
-                <?php if (!empty($user['avatar_url'])) { ?>
-                <form id="remove-avatar-form" method="post" action="<?= e(lurl('/account/profile/avatar/remove')) ?>">
+                <form id="remove-avatar-form" method="post" action="<?= e(lurl('/account/profile/avatar/remove')) ?>" class="lx-visually-hidden">
                     <?= csrf_field() ?>
-                    <button type="button" id="remove-avatar-btn" class="lx-btn lx-btn--danger lx-btn--fit"><?= e($t('account.profile.removeAvatar')) ?></button>
                 </form>
-                <?php } ?>
 
                 <?php foreach ($fieldErrors['avatar'] ?? [] as $message) { ?>
                 <p class="lx-field__error"><?= e($message) ?></p>
@@ -142,17 +162,43 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 
             <section class="lx-card">
                 <h2 class="lx-card-title"><?= e($t('account.profile.activityHeading')) ?></h2>
-                <p class="lx-stat"><span><?= e($t('account.profile.totalPosts')) ?></span><strong><?= e((string) ($user['post_count'] ?? 0)) ?></strong></p>
-                <p class="lx-stat"><span><?= e($t('account.profile.commentsReceived')) ?></span><strong><?= e((string) ($user['comment_count'] ?? 0)) ?></strong></p>
+                <dl class="lx-statgrid">
+                    <div class="lx-stat-item">
+                        <dd class="lx-stat-num"><?= e((string) ($user['post_count'] ?? 0)) ?></dd>
+                        <dt class="lx-stat-label"><?= e($t('account.profile.totalPosts')) ?></dt>
+                    </div>
+                    <div class="lx-stat-item">
+                        <dd class="lx-stat-num"><?= e((string) ($user['comment_count'] ?? 0)) ?></dd>
+                        <dt class="lx-stat-label"><?= e($t('account.profile.commentsReceived')) ?></dt>
+                    </div>
+                    <?php if (!empty($user['created_at'])) {
+                        $memberSince = date('M Y', strtotime((string) $user['created_at']));
+                        ?>
+                    <div class="lx-stat-item">
+                        <dd class="lx-stat-num lx-stat-num--sm"><?= e($memberSince) ?></dd>
+                        <dt class="lx-stat-label"><?= e($t('account.profile.memberSince')) ?></dt>
+                    </div>
+                    <?php } ?>
+                </dl>
             </section>
 
-            <section class="lx-card">
-                <h2 class="lx-card-title"><?= e($t('account.profile.publicPageHeading')) ?></h2>
-                <?php if (!empty($slug)) { ?>
-                <a class="lx-btn lx-btn--ghost lx-btn--fit" href="<?= e(lurl('/profile/'.$slug)) ?>" target="_blank" rel="noopener">
+            <section class="lx-card lx-card--public">
+                <div class="lx-pubcard-head">
+                    <h2 class="lx-card-title"><?= e($t('account.profile.publicPageHeading')) ?></h2>
+                    <span class="lx-badge <?= $isPublic ? 'lx-badge--on' : 'lx-badge--off' ?>">
+                        <?= e($isPublic ? $t('account.profile.statusLive') : $t('account.profile.statusHidden')) ?>
+                    </span>
+                </div>
+
+                <?php if ($slug !== '') { ?>
+                <p class="lx-pubcard-url"><?= e(rtrim((string) ($profileUrlPrefix ?? ''), '/').'/'.$slug) ?></p>
+                <a class="lx-btn lx-btn--primary lx-btn--fit" href="<?= e(lurl('/profile/'.$slug)) ?>" target="_blank" rel="noopener">
                     <?= e($t('account.profile.viewPublicProfile')) ?>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
                 </a>
-                <p class="lx-muted lx-avatar-help"><?= e($t('account.profile.makePublicHelp')) ?></p>
+                <?php if (!$isPublic) { ?>
+                <p class="lx-muted lx-pubcard-note"><?= e($t('account.profile.makePublicHelp')) ?></p>
+                <?php } ?>
                 <?php } else { ?>
                 <p class="lx-muted"><?= e($t('account.profile.publicPageDisabledHelp')) ?></p>
                 <?php } ?>
@@ -169,14 +215,26 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             <img id="avatar-cropper-image" alt="">
         </div>
         <div class="lx-modal-actions">
-            <button type="button" class="lx-btn lx-btn--ghost" data-close><?= e($t('account.profile.cropCancel')) ?></button>
+            <button type="button" class="lx-btn lx-btn--subtle" data-close><?= e($t('account.profile.cropCancel')) ?></button>
             <button type="button" id="avatar-cropper-apply" class="lx-btn lx-btn--primary"><?= e($t('account.profile.cropApply')) ?></button>
         </div>
     </div>
 </div>
+
+<?php
+$cmId = 'confirm-remove-avatar';
+$cmFormId = 'remove-avatar-form';
+$cmTone = 'danger';
+$cmTitle = $t('account.profile.removeAvatarConfirmTitle');
+$cmMessage = $t('account.profile.removeAvatarConfirmText');
+$cmConfirm = $t('account.profile.removeAvatar');
+$cmCancel = $t('account.profile.cropCancel');
+?>
+{% include "partials/_confirm_modal.lex.php" %}
 {% endblock %}
 
 {% block scripts %}
+{% include "partials/_confirm_modal_js.lex.php" %}
 <script src="/assets/vendor/cropper/cropper.min.js" nonce="<?= csp_nonce() ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   // Avatar flow: picking a file uploads it as a crop source, then the cropper opens
@@ -191,7 +249,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
     const box = document.getElementById('avatar-box');
     const removeBtn = document.getElementById('remove-avatar-btn');
     const removeForm = document.getElementById('remove-avatar-form');
-    const initials = '<?= e($user['initials'] ?? '?') ?>';
+    const recropBtn = document.getElementById('recrop-avatar-btn');
 
     const modal = document.getElementById('avatar-cropper-modal');
     const modalImage = document.getElementById('avatar-cropper-image');
@@ -245,23 +303,15 @@ $field = function (string $name, string $label, string $type = 'text', string $v
       modalImage.removeAttribute('src');
     }
 
-    // Make sure a re-crop button exists after the first upload so the user can
-    // re-frame without re-uploading.
-    function ensureRecropButton(sourceUrl, crop) {
-      let btn = document.getElementById('recrop-avatar-btn');
-      if (!btn) {
-        btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'recrop-avatar-btn';
-        btn.className = 'lx-btn lx-btn--ghost lx-btn--fit';
-        btn.textContent = '<?= e($t('account.profile.recropAvatar')) ?>';
-        btn.addEventListener('click', function () {
-          openCropper(btn.dataset.source, parseCrop(btn.dataset.crop));
-        });
-        form.insertAdjacentElement('afterend', btn);
+    // Reveal the re-crop and remove controls once an avatar exists, so a fresh
+    // upload can be re-framed or removed without a page reload.
+    function revealAvatarControls(sourceUrl, crop) {
+      if (recropBtn) {
+        recropBtn.dataset.source = sourceUrl;
+        recropBtn.dataset.crop = crop ? [crop.x, crop.y, crop.width, crop.height].join(',') : '';
+        recropBtn.hidden = false;
       }
-      btn.dataset.source = sourceUrl;
-      btn.dataset.crop = crop ? [crop.x, crop.y, crop.width, crop.height].join(',') : '';
+      if (removeBtn) removeBtn.hidden = false;
     }
 
     function parseCrop(str) {
@@ -277,7 +327,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 
       const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!validTypes.includes(file.type)) { alert('Please select a valid image (JPG, PNG or WebP).'); input.value = ''; return; }
-      if (file.size > (parseInt(input.dataset.maxSize, 10) || 2097152)) { alert('File size must be less than 2MB.'); input.value = ''; return; }
+      if (file.size > (parseInt(input.dataset.maxSize, 10) || 20971520)) { alert('File size must be less than 20MB.'); input.value = ''; return; }
 
       const data = new FormData();
       data.append('_token', token());
@@ -291,15 +341,14 @@ $field = function (string $name, string $label, string $type = 'text', string $v
           input.value = '';
           if (res.error) { alert(res.error); return; }
           setPreview(res.avatar_url);
-          ensureRecropButton(res.source_url, res.crop);
+          revealAvatarControls(res.source_url, res.crop);
           openCropper(res.source_url, res.crop);
         })
         .catch(function () { if (loading) loading.hidden = true; alert('Upload failed. Please try again.'); });
     });
 
-    const existingRecrop = document.getElementById('recrop-avatar-btn');
-    if (existingRecrop) existingRecrop.addEventListener('click', function () {
-      openCropper(existingRecrop.dataset.source, parseCrop(existingRecrop.dataset.crop));
+    if (recropBtn) recropBtn.addEventListener('click', function () {
+      openCropper(recropBtn.dataset.source, parseCrop(recropBtn.dataset.crop));
     });
 
     applyBtn.addEventListener('click', function () {
@@ -329,10 +378,8 @@ $field = function (string $name, string $label, string $type = 'text', string $v
     modal.querySelectorAll('[data-close]').forEach(function (el) {
       el.addEventListener('click', closeCropper);
     });
-
-    if (removeBtn && removeForm) removeBtn.addEventListener('click', function () {
-      if (confirm('Remove your profile avatar?')) removeForm.submit();
-    });
+    // Avatar removal is confirmed through the shared _confirm_modal dialog,
+    // wired by data-confirm-open on the remove button.
   })();
 </script>
 {% endblock %}

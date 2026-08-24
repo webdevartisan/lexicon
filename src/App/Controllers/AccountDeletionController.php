@@ -38,13 +38,16 @@ final class AccountDeletionController extends AppController
             return $this->notFound('User not found');
         }
 
-        Gate::authorize('delete', $userResource, auth()->user());
-
+        // This is the confirmation screen, not the deletion itself: gate softly
+        // so a user who cannot delete (e.g. the last administrator) sees the
+        // page explain why, rather than a hard "Access denied". The real
+        // enforcement is the throwing Gate::authorize in destroy().
         $deletionCheck = $this->deletionService->canDeleteUser($userId);
+        $policyAllows = Gate::allows('delete', $userResource, auth()->user());
 
         return $this->view('public.Account.delete', [
             'user' => $userResource->toArray(),
-            'canDelete' => $deletionCheck['canDelete'],
+            'canDelete' => $deletionCheck['canDelete'] && $policyAllows,
             'deleteReason' => $deletionCheck['reason'],
         ]);
     }

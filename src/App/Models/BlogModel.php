@@ -162,6 +162,52 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Every blog-scoped permission slug a user holds across all their blogs.
+     *
+     * Unions the owner bundle (for blogs they own) with each collaborator role's
+     * permissions (for blogs they are an active member of), de-duplicated. One
+     * query, so callers can answer "can this user ever do X anywhere?" with a
+     * cheap array check instead of resolving permissions blog by blog.
+     *
+     * @return string[] Distinct permission slugs (empty for a reader-only user)
+     */
+    public function aggregateBlogPermissions(int $userId): array
+    {
+        $sql = "
+            SELECT p.permission_slug
+            FROM blogs b
+            JOIN roles r ON r.role_slug = 'blog_owner'
+            JOIN role_permissions rp ON rp.role_id = r.id
+            JOIN permissions p ON p.id = rp.permission_id
+            WHERE b.owner_id = ?
+
+            UNION
+
+            SELECT p.permission_slug
+            FROM blog_users bu
+            JOIN roles r ON r.role_slug = bu.role
+            JOIN role_permissions rp ON rp.role_id = r.id
+            JOIN permissions p ON p.id = rp.permission_id
+            WHERE bu.user_id = ? AND bu.is_active = 1
+        ";
+
+        return $this->database->query($sql, [$userId, $userId])->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+    }
+
+    /**
+     * Whether the user owns at least one blog.
+     *
+     * Ownership is structural (blogs.owner_id), so this is distinct from holding
+     * a permission. Drives the owner-only comment firehose toggle.
+     */
+    public function userOwnsAnyBlog(int $userId): bool
+    {
+        $sql = 'SELECT EXISTS(SELECT 1 FROM blogs WHERE owner_id = ?)';
+
+        return (bool) $this->database->query($sql, [$userId])->fetchColumn();
+    }
+
+    /**
      * Update a blog and invalidate related caches.
      *
      * Invalidates all cached blog URLs and post listings when blog data changes.

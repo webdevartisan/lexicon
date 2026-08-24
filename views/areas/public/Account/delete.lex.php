@@ -17,7 +17,7 @@
     <?php if (empty($canDelete)) { ?>
     <div class="lx-danger-zone">
         <p><strong><?= e($t('account.delete.cannotDeleteStrong')) ?></strong> <?= e($deleteReason ?? '') ?></p>
-        <a class="lx-btn lx-btn--ghost lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
+        <a class="lx-btn lx-btn--subtle lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
     </div>
     <?php } else { ?>
 
@@ -50,23 +50,38 @@
         </label>
 
         <div class="lx-account-actions lx-account-actions--split">
-            <a class="lx-btn lx-btn--ghost lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
+            <a class="lx-btn lx-btn--subtle lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
             <button type="submit" class="lx-btn lx-btn--danger"><?= e($t('account.delete.submit')) ?></button>
         </div>
     </form>
     <?php } ?>
 </section>
+
+<?php if (!empty($canDelete)) {
+    $cmId = 'confirm-delete-account';
+    $cmFormId = 'deleteForm';
+    $cmTone = 'danger';
+    $cmTitle = $t('account.delete.confirmModalTitle');
+    $cmMessage = $t('account.delete.confirmModalText');
+    $cmConfirm = $t('account.delete.submit');
+    $cmCancel = $t('account.delete.cancel');
+    ?>
+{% include "partials/_confirm_modal.lex.php" %}
+<?php } ?>
 {% endblock %}
 
 {% block scripts %}
+{% include "partials/_confirm_modal_js.lex.php" %}
 <script nonce="<?= csp_nonce() ?>">
-  // Belt-and-braces confirmation on top of the required checkbox, since deletion
-  // cannot be undone.
+  // The submit fires only after the browser's own required-field validation on
+  // the password and checkbox passes; we then intercept it and route through the
+  // confirmation dialog instead of the native confirm() prompt. The dialog's
+  // confirm button submits the form programmatically, which does not refire this
+  // handler.
   document.getElementById('deleteForm')?.addEventListener('submit', function (e) {
-    const check = document.getElementById('confirmCheck');
-    const pw = document.getElementById('password');
-    if (!check?.checked || !pw?.value) { return; }
-    if (!confirm('This permanently closes your account. Continue?')) { e.preventDefault(); }
+    e.preventDefault();
+    const modal = document.getElementById('confirm-delete-account');
+    if (modal && modal.open) { modal.open(this.querySelector('[type="submit"]')); }
   });
 </script>
 {% endblock %}

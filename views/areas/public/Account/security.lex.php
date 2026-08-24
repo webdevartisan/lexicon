@@ -27,14 +27,14 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
 ?>
 <section class="lx-wrap lx-account">
     <?php $accountSection = 'security'; ?>
+    <header class="lx-account-head">
+        <h1><?= e($t('account.security.heading')) ?></h1>
+        <p class="lx-muted"><?= e($t('account.security.intro')) ?></p>
+    </header>
+
     {% include "partials/_account_shell.lex.php" %}
 
     <div class="lx-account-body">
-        <header class="lx-account-head">
-            <h1><?= e($t('account.security.heading')) ?></h1>
-            <p class="lx-muted"><?= e($t('account.security.intro')) ?></p>
-        </header>
-
         <form method="post" action="<?= e(lurl('/account/security/password')) ?>" class="lx-account-form" autocomplete="on">
             <?= csrf_field() ?>
             <?php // Username here so a password manager associates the credential with this account.?>
@@ -47,6 +47,7 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
             </div>
 
             <div class="lx-account-actions">
+                <button type="reset" class="lx-btn lx-btn--subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn--primary"><?= e($t('account.security.save')) ?></button>
             </div>
         </form>

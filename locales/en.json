@@ -857,7 +857,13 @@
             "publicPageHeading": "Your public page",
             "viewPublicProfile": "View your public profile",
             "publicPageDisabledHelp": "Set a public profile URL above to enable your public page.",
-            "save": "Save changes"
+            "save": "Save changes",
+            "reset": "Reset",
+            "memberSince": "Member since",
+            "statusLive": "Live",
+            "statusHidden": "Hidden",
+            "removeAvatarConfirmTitle": "Remove avatar?",
+            "removeAvatarConfirmText": "Your profile photo will be removed and replaced with your initials. You can upload a new one at any time."
         },
         "preferences": {
             "heading": "Preferences",
@@ -950,7 +956,9 @@
             "confirmPasswordHelp": "Password confirmation is required for security.",
             "confirmCheckbox": "I understand that this action is permanent and cannot be undone.",
             "submit": "Delete my account permanently",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "confirmModalTitle": "Close your account?",
+            "confirmModalText": "This permanently closes your account and cannot be undone. Your posts and comments are kept, but your identity and files are removed."
         },
         "flash": {
             "profileSaved": "Profile updated successfully.",
@@ -970,6 +978,9 @@
             "deletionNotAuthorized": "You are not authorized to delete this account.",
             "deletionFailed": "Failed to delete account. Please contact support.",
             "userNotFound": "User not found."
+        },
+        "common": {
+            "reset": "Reset"
         }
     }
 }

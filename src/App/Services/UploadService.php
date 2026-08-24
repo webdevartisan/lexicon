@@ -174,7 +174,7 @@ final class UploadService implements UploadServiceInterface
             'dir' => $dir,
             'base_url' => $baseUrl,
             'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
-            'max_bytes' => 2 * 1024 * 1024,
+            'max_bytes' => 20 * 1024 * 1024,
             'preset' => 'avatar_source',
             'rename' => 'avatar-source',
         ]);

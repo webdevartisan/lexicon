@@ -2921,57 +2921,26 @@ label {
     background: transparent;
 }
 
-.lang-switcher__menu {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 0.5rem);
-    inset-inline-start: 0;
-    z-index: 20;
-    min-width: 10rem;
-    margin: 0;
-    padding: 0.35rem;
-    list-style: none;
-    background: var(--lx-bind);
-    border: 1px solid var(--lx-rule-bind);
-    border-radius: var(--lx-radius);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+/* The footer language menu reuses the account menu's dropdown styling by
+   carrying the .platform-menu-list class, so both dropdowns look identical.
+   Only placement differs: it opens upward from the footer rather than down. */
+.lang-switcher__menu { display: none; }
+.lang-switcher .lang-switcher__menu {
+    top: auto;
+    bottom: calc(100% + 4px);
+    inset-inline: auto 0;
 }
+.lang-switcher__menu.show { display: block; }
 
-.lang-switcher__menu.show {
-    display: block;
-}
+/* platform-menu-list sizes rows with .85em, which is relative to the inherited
+   font-size. The footer's base is smaller than the masthead's, so the shared
+   class renders these rows smaller than the account menu's. Pin an absolute
+   size so both dropdowns match. */
+.lang-switcher .lang-switcher__menu button,
+.lang-switcher .lang-switcher__menu a { font-size: 0.9rem; }
 
-/* Two shapes on purpose: the switcher renders POST buttons for a signed-in
-   reader and plain links for a guest (see _language_switcher). Both need the
-   same box, so both selectors carry it. */
-.lang-switcher__item button,
-.lang-switcher__item a {
-    display: block;
-    width: 100%;
-    min-height: 2.25rem;
-    padding: 0.45rem 0.7rem;
-    background: transparent;
-    border: 0;
-    border-radius: var(--lx-radius);
-    color: var(--lx-on-bind-2);
-    font-family: var(--lx-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.4;
-    text-align: start;
-    text-decoration: none;
-    letter-spacing: normal;
-    text-transform: none;
-    cursor: pointer;
-}
-
-.lang-switcher__item button:hover,
-.lang-switcher__item a:hover {
-    background: rgba(240, 241, 236, 0.08);
-    color: var(--lx-on-bind);
-    text-decoration: none;
-}
-
+/* The current language keeps a gilt marker; the account menu has no equivalent
+   state, so this is the one switcher-specific rule left. */
 .lang-switcher__item button[aria-current='true'],
 .lang-switcher__item a[aria-current='true'] {
     color: var(--lx-gilt);
@@ -2993,10 +2962,12 @@ label {
     background: var(--lx-paper-raised);
     color: var(--lx-ink);
     box-shadow: 0 10px 30px rgba(22, 35, 63, 0.14);
+    cursor: pointer;
     opacity: 0;
     visibility: hidden;
     transform: translateY(0.5rem);
-    transition: opacity 0.25s var(--lx-ease), transform 0.25s var(--lx-ease), visibility 0.25s;
+    transition: opacity 0.25s var(--lx-ease), transform 0.25s var(--lx-ease), visibility 0.25s,
+        background 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
 }
 
 .fab.scroll-top-btn::before {
@@ -3020,35 +2991,42 @@ label {
     color: var(--lx-paper);
 }
 
+/* Matches the consent FAB's focus ring so both floating buttons agree. */
+.fab.scroll-top-btn:focus-visible {
+    outline: 2px solid var(--lx-gilt);
+    outline-offset: 2px;
+}
+
 /* Cookie banner buttons. consent.css lays the banner out but defines no button
    rules at all: it leaned on the old theme's. Its panel is near-black, so the
    default .button here would put ink on ink. */
 .consent-banner__inner .button {
-    border-color: rgba(255, 255, 255, 0.35);
-    color: #fff;
+    border-color: var(--lx-rule-bind);
+    color: var(--lx-on-bind);
     background: transparent;
 }
 
 .consent-banner__inner .button:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: #fff;
-    color: #fff;
+    background: rgba(240, 241, 236, 0.1);
+    border-color: var(--lx-on-bind-2);
+    color: var(--lx-on-bind);
 }
 
 .consent-banner__inner .button.primary {
-    background: #fff;
-    border-color: #fff;
-    color: #111827;
-}
-
-.consent-banner__inner .button.primary:hover {
     background: var(--lx-gilt);
     border-color: var(--lx-gilt);
     color: var(--lx-bind-deep);
 }
 
+.consent-banner__inner .button.primary:hover {
+    background: #ddb943;
+    border-color: #ddb943;
+    color: var(--lx-bind-deep);
+}
+
 .consent-banner__inner .button.alt {
     border-color: transparent;
+    color: var(--lx-on-bind-2);
     text-decoration: underline;
 }
 
@@ -3239,8 +3217,7 @@ label {
 /* /account section shell: a rail on the inline-start, content beside it. The
    rail is a plain stacked list on narrow viewports, never a scroll strip that
    would hide its own last item. */
-.lx-account { display: grid; gap: 2rem; }
-.lx-account-head { margin-block-end: 0.5rem; }
+.lx-account { display: grid; gap: 1.5rem; }
 .lx-account-nav ul { list-style: none; margin: 0; padding: 0; }
 .lx-account-nav a {
     display: block;
@@ -3258,13 +3235,18 @@ label {
     border-inline-start-color: var(--lx-gilt);
 }
 @media (min-width: 720px) {
-    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; }
+    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: 2.5rem; }
+    /* The page heading spans the full width above both the nav rail and the
+       body, so the rail top-aligns with the form instead of the tall H1. */
+    .lx-account-head { grid-column: 1 / -1; }
 }
 
 /* Account pages: cards, fields layout, avatar, checkboxes. Front-native, since
    the dashboard's equivalents are Tailwind/cp.css which the front never loads. */
 .lx-muted { color: #5b6472; font-size: 0.85rem; }
-.lx-account-head { margin-block-end: 1.5rem; }
+/* No bottom margin: the grid gap already separates the head from the nav and
+   body, and a margin on top of the gap opens an awkward void under the title. */
+.lx-account-head { margin-block-end: 0; }
 .lx-account-head h1 { margin: 0 0 0.25rem; }
 .lx-account-body { display: grid; gap: 2rem; }
 /* The head and the danger zone are full-width strips; only the form and the
@@ -3272,12 +3254,28 @@ label {
    head. Without this, grid auto-placement drops the head into column 1 and
    the form into column 2 of the SAME row, leaving the row under the head
    empty until whatever's left wraps down. */
-.lx-account-body > .lx-account-head,
 .lx-account-body > .lx-danger-zone {
     grid-column: 1 / -1;
 }
+/* Below the two-column breakpoint the aside stacks BEFORE the form, so the
+   avatar and reference cards read as context first and the Save action stays
+   the last thing on the page instead of stranding cards beneath it. Scoped to
+   max-width so it never reorders the desktop columns. */
+@media (max-width: 899px) {
+    .lx-account-aside { order: -1; }
+}
 @media (min-width: 900px) {
     .lx-account-body { grid-template-columns: 1fr 18rem; align-items: start; }
+    /* Stretch the form to the row height (set by the taller aside) and let the
+       action bar fall to the bottom, so a short form — e.g. a reader with a
+       single toggle — doesn't strand its buttons up beside a tall aside. On a
+       form taller than the aside there is no free space to absorb, so the auto
+       margin collapses and the padding below keeps the usual gap. */
+    .lx-account-form { align-self: stretch; display: flex; flex-direction: column; }
+    .lx-account-form .lx-account-actions {
+        margin-block-start: auto;
+        padding-block-start: 2.25rem;
+    }
 }
 .lx-account-section {
     font-size: 0.75rem;
@@ -3287,19 +3285,251 @@ label {
     margin-block: 1.5rem 0.75rem;
 }
 .lx-account-section:first-of-type { margin-block-start: 0; }
-.lx-account-actions { margin-block-start: 1.5rem; display: flex; justify-content: flex-end; }
+/* Every account form closes with the same action bar. No top rule: the fields
+   are underline-style, so a full-width border here would just read as one more
+   field line. The buttons themselves mark the end of the form; whitespace does
+   the separating. */
+.lx-account-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-block-start: 2.25rem;
+}
 .lx-grid-2 { display: grid; gap: 1rem; }
 @media (min-width: 560px) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
 
+/* Front dialog, shared by the avatar cropper, avatar-remove and account-delete
+   confirmations. Backdrop is fixed (not absolute) so it always covers the
+   viewport regardless of any positioned ancestor. */
+.lx-modal[hidden] { display: none; }
+.lx-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+.lx-modal-backdrop { position: fixed; inset: 0; background: rgba(23, 26, 28, 0.6); }
+.lx-modal-panel {
+    position: relative;
+    z-index: 1;
+    inline-size: 100%;
+    max-inline-size: 30rem;
+    padding: 1.5rem;
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    box-shadow: 0 24px 60px rgba(13, 21, 38, 0.35);
+}
+.lx-modal-title { margin: 0 0 0.6rem; font-size: 1.15rem; font-family: var(--lx-serif); }
+.lx-modal-text { margin: 0; color: var(--lx-ink-2); font-size: 0.9rem; line-height: 1.55; }
+.lx-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* Cards recede into the paper rather than floating above it as bright white
+   boxes: the sunk tone matches the active nav item, so the aside reads as part
+   of the same stock as the rest of the page. Data chips inside use the raised
+   tone to lift off this surface. */
 .lx-card {
-    border: 1px solid #e3e7ee;
-    border-radius: 10px;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
     padding: 1.25rem;
     margin-block-end: 1.25rem;
-    background: #fff;
+    background: var(--lx-paper-sunk);
 }
-.lx-card-title { font-size: 0.9rem; margin: 0 0 0.75rem; }
+.lx-card:last-child { margin-block-end: 0; }
+/* Card titles echo the form section labels: small caps, quiet, so the aside
+   reads as reference material subordinate to the form. */
+.lx-card-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--lx-ink-2);
+    margin: 0 0 0.85rem;
+}
 .lx-stat { display: flex; justify-content: space-between; gap: 1rem; margin: 0.35rem 0; font-size: 0.85rem; }
+
+/* Avatar card: centred subject with a compact icon control bar under it. */
+.lx-card--avatar { text-align: center; }
+.lx-card--avatar .lx-card-title { text-align: start; }
+.lx-card--avatar .lx-avatar { margin-inline: auto; inline-size: 7rem; block-size: 7rem; }
+
+.lx-avatar-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-block-start: 0.9rem;
+}
+/* Compact, transparent icon controls. 44px hit area keeps them usable on
+   touch (WCAG 2.5.5). The visible label text is kept for assistive tech via
+   .lx-visually-hidden, and title gives a pointer tooltip. */
+.lx-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    cursor: pointer;
+    transition: background 0.15s var(--lx-ease), border-color 0.15s var(--lx-ease), color 0.15s var(--lx-ease);
+}
+.lx-icon-btn:hover { background: var(--lx-ink); border-color: var(--lx-ink); color: var(--lx-paper); }
+.lx-icon-btn:focus-visible,
+.lx-icon-btn:focus-within { outline: 2px solid var(--lx-spot); outline-offset: 2px; }
+.lx-icon-btn[hidden] { display: none; }
+.lx-icon-btn--danger { color: var(--lx-danger); border-color: #e4c2be; }
+.lx-icon-btn--danger:hover { background: var(--lx-danger); border-color: var(--lx-danger); color: #fff; }
+.lx-avatar-status { margin-block-start: 0.5rem; }
+
+/* Activity: a compact three-up stat grid, numbers first for scannability. */
+.lx-statgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+}
+.lx-stat-item {
+    text-align: center;
+    padding: 0.6rem 0.35rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+}
+.lx-stat-num { margin: 0; font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: var(--lx-ink); font-variant-numeric: tabular-nums; }
+.lx-stat-num--sm { font-size: 1rem; padding-block: 0.18rem; }
+.lx-stat-label { margin: 0.2rem 0 0; font-size: 0.7rem; color: var(--lx-ink-2); }
+
+/* Public page: a preview card with a visibility badge and a distinct primary link. */
+.lx-pubcard-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-block-end: 0.6rem; }
+.lx-pubcard-head .lx-card-title { margin: 0; }
+.lx-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+}
+.lx-badge--on { color: var(--lx-ok); background: var(--lx-ok-bg); }
+.lx-badge--off { color: var(--lx-ink-2); background: var(--lx-paper-sunk); }
+.lx-pubcard-url {
+    margin: 0 0 0.85rem;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    color: var(--lx-ink-2);
+    word-break: break-all;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    padding: 0.45rem 0.6rem;
+}
+.lx-pubcard-note { margin-block-start: 0.7rem; }
+
+/* Secondary form button: readable on paper, unlike the binding-only ghost. */
+.lx-btn--subtle { border-color: var(--lx-rule-strong); color: var(--lx-ink-2); }
+.lx-btn--subtle:hover { background: var(--lx-paper-sunk); color: var(--lx-ink); border-color: var(--lx-rule-strong); }
+
+/* Choices.js (searchable timezone) restyled to match the underline selects it
+   sits beside: the vendor default is a boxed white control with a blue accent,
+   which clashes with the paper + serif fields. Scoped to the account pages so
+   the dashboard's own Choices styling is untouched. */
+.lx-account .choices { margin-block-end: 0; }
+/* Specificity mirrors the vendor's own `.choices[data-type*=select-one]
+   .choices__inner` (0,3,0) so our transparent paper wins over its white. */
+.lx-account .choices[data-type*="select-one"] .choices__inner {
+    min-height: 2.75rem;
+    padding: 0.45rem 1.5rem 0.45rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--lx-rule-strong);
+    border-radius: 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices[data-type*="select-one"].is-focused .choices__inner,
+.lx-account .choices[data-type*="select-one"].is-open .choices__inner {
+    background: transparent;
+    border-bottom-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+}
+.lx-account .choices__list--single { padding: 0; }
+.lx-account .choices__list--single .choices__item { color: var(--lx-ink); }
+.lx-account .choices__placeholder { color: var(--lx-ink-3); opacity: 1; }
+/* Recolour the vendor caret to match the field ink. */
+.lx-account .choices[data-type*="select-one"]::after { border-color: var(--lx-ink-2) transparent transparent; }
+
+/* The popover sits on the same paper as the page, defined by a crisp rule and
+   a shallow shadow rather than a bright white card with a material drop. Both
+   classes are named so this out-specifies the vendor's `.choices__list
+   [aria-expanded]` rule (0,2,0), which otherwise wins the tie by load order. */
+.lx-account .choices__list--dropdown.choices__list {
+    margin-block-start: 0.35rem;
+    background: var(--lx-paper-sunk);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    box-shadow: 0 6px 18px rgba(13, 21, 38, 0.12);
+}
+/* The search box is an underline field, like every other input on the page,
+   not a boxed widget input. Doubled dropdown class keeps this at 0,4,0 so it
+   beats the vendor's `.choices[data-type*=select-one] .choices__input` (0,3,0),
+   which sets a white fill and would otherwise win the tie by load order. */
+.lx-account .choices__list--dropdown.choices__list .choices__input {
+    margin: 0.25rem 0.75rem 0.35rem;
+    padding: 0.35rem 0;
+    inline-size: calc(100% - 1.5rem);
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-block-end: 1px solid var(--lx-rule-strong);
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+    font-family: var(--lx-serif);
+    font-size: 1rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices__list--dropdown.choices__list .choices__input:focus {
+    border-block-end-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+    outline: none;
+}
+.lx-account .choices__list--dropdown.choices__list .choices__item {
+    font-family: var(--lx-serif);
+    font-size: 1rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices__list--dropdown.choices__list .choices__heading {
+    margin: 0;
+    padding: 0.5rem 0.9rem 0.35rem;
+    color: var(--lx-ink-3);
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-block-end: 1px solid var(--lx-rule);
+}
+/* Doubled dropdown class again, so the highlight beats the vendor's #f2f2f2
+   (0,4,0) rather than tying and losing by load order. */
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable.is-highlighted,
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable:hover {
+    background: var(--lx-rule);
+    color: var(--lx-ink);
+}
+/* The chosen row keeps a hairline gilt marker, echoing the active nav rail. */
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable[aria-selected="true"] {
+    box-shadow: inset 3px 0 0 0 var(--lx-gilt);
+}
 
 .lx-check { display: flex; align-items: flex-start; gap: 0.6rem; margin-block: 0.75rem; font-size: 0.9rem; }
 .lx-check input { margin-block-start: 0.2rem; }
