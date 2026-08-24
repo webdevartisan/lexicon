@@ -2587,6 +2587,7 @@ label {
     font-family: var(--lx-sans);
     font-size: 0.8rem;
     color: var(--lx-ink-2);
+    text-decoration: none;
     transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease);
 }
 
@@ -2595,6 +2596,7 @@ label {
     color: var(--lx-ink);
     background: var(--lx-paper-sunk);
     border-color: var(--lx-ink-3);
+    text-decoration: none;
 }
 
 .lx-profile-cta {
@@ -2624,6 +2626,7 @@ label {
     border-radius: 50%;
     color: var(--lx-ink-2);
     font-size: 1.05rem;
+    text-decoration: none;
     transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease);
 }
 
@@ -2631,6 +2634,7 @@ label {
 .lx-profile-social a:focus-visible {
     color: var(--lx-ink);
     background: var(--lx-paper-sunk);
+    text-decoration: none;
 }
 
 .lx-profile-feed-empty {

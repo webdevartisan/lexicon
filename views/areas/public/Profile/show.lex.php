@@ -8,24 +8,24 @@
     // so the head meta computes its own identity rather than sharing with the body.
     $profileName = $profile->displayName() ?? $profile->username() ?? 'Profile';
 
-    // Description for search results and link previews: the bio reads best, but
-    // it is free text with markup and newlines, so flatten it before truncating.
-    $profileDesc = trim((string) ($profile->bio() ?? ''));
-    if ($profileDesc === '') {
-        $profileDesc = $profile->occupation() ?? ($profileName.' on Lexicon');
-    }
-    $profileDesc = truncate(trim((string) preg_replace('/\s+/', ' ', strip_tags($profileDesc))), 160);
+// Description for search results and link previews: the bio reads best, but
+// it is free text with markup and newlines, so flatten it before truncating.
+$profileDesc = trim((string) ($profile->bio() ?? ''));
+if ($profileDesc === '') {
+    $profileDesc = $profile->occupation() ?? ($profileName.' on Lexicon');
+}
+$profileDesc = truncate(trim((string) preg_replace('/\s+/', ' ', strip_tags($profileDesc))), 160);
 
-    // Open Graph needs an absolute image URL; stored avatars are root-relative.
-    $profileImage = '';
-    $metaAvatar = $profile->avatarUrl();
-    if (!empty($metaAvatar)) {
-        $profileImage = preg_match('#^https?://#i', $metaAvatar)
-            ? $metaAvatar
-            : rtrim(base_url(), '/').$metaAvatar;
-    }
+// Open Graph needs an absolute image URL; stored avatars are root-relative.
+$profileImage = '';
+$metaAvatar = $profile->avatarUrl();
+if (!empty($metaAvatar)) {
+    $profileImage = preg_match('#^https?://#i', $metaAvatar)
+        ? $metaAvatar
+        : rtrim(base_url(), '/').$metaAvatar;
+}
 
-    $profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($profile->slug());
+$profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($profile->slug());
 ?>
 <meta name="description" content="<?= e($profileDesc); ?>" />
 <meta property="og:type" content="profile" />
@@ -45,23 +45,23 @@
 
 <?php
     $profileName = $profile->displayName() ?? $profile->username() ?? 'Profile';
-    $profileAvatar = $profile->avatarUrl();
-    $postCount = (int) ($stats['posts'] ?? 0);
-    $commentCount = (int) ($stats['comments'] ?? 0);
-    $hasStats = $postCount > 0 || $commentCount > 0;
+$profileAvatar = $profile->avatarUrl();
+$postCount = (int) ($stats['posts'] ?? 0);
+$commentCount = (int) ($stats['comments'] ?? 0);
+$hasStats = $postCount > 0 || $commentCount > 0;
 
-    // Topic chips are derived from the blogs this author actually publishes on,
-    // read straight out of the posts we already loaded, so no extra query and
-    // nothing invented. Keyed by slug to dedupe, capped so the row stays tidy.
-    $authorBlogs = [];
-    foreach ($posts as $chipPost) {
-        $chipSlug = $chipPost['blog_slug'] ?? null;
-        $chipName = $chipPost['blog_name'] ?? null;
-        if ($chipSlug !== null && $chipName !== null && !isset($authorBlogs[$chipSlug])) {
-            $authorBlogs[$chipSlug] = $chipName;
-        }
+// Topic chips are derived from the blogs this author actually publishes on,
+// read straight out of the posts we already loaded, so no extra query and
+// nothing invented. Keyed by slug to dedupe, capped so the row stays tidy.
+$authorBlogs = [];
+foreach ($posts as $chipPost) {
+    $chipSlug = $chipPost['blog_slug'] ?? null;
+    $chipName = $chipPost['blog_name'] ?? null;
+    if ($chipSlug !== null && $chipName !== null && !isset($authorBlogs[$chipSlug])) {
+        $authorBlogs[$chipSlug] = $chipName;
     }
-    $authorBlogs = array_slice($authorBlogs, 0, 4, true);
+}
+$authorBlogs = array_slice($authorBlogs, 0, 4, true);
 ?>
 
   <section class="lx-profile" aria-labelledby="profile-name">
@@ -69,7 +69,7 @@
 
       <div class="lx-profile-avatar">
         <?php if (!empty($profileAvatar)) { ?>
-          <?php // Name follows immediately as the h1, so the avatar is decorative to a screen reader. ?>
+          <?php // Name follows immediately as the h1, so the avatar is decorative to a screen reader.?>
           <img src="<?= e($profileAvatar); ?>" alt="" width="132" height="132" decoding="async">
         <?php } else { ?>
           <span class="lx-profile-initials" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim($profileName), 0, 1))); ?></span>
@@ -125,7 +125,7 @@
       <?php if (!empty($socialLinks)) { ?>
         <ul class="lx-profile-social" aria-label="Social links">
           <?php foreach ($socialLinks as $socialLink) { ?>
-            <?php // FontAwesome 6 splits families: brand glyphs need fa-brands, not the solid-default fa. ?>
+            <?php // FontAwesome 6 splits families: brand glyphs need fa-brands, not the solid-default fa.?>
             <?php $iconFamily = $socialLink['iconStyle'] === 'brands' ? 'fa-brands' : 'fa-solid'; ?>
             <li>
               <a href="<?= e($socialLink['url']); ?>"
@@ -141,7 +141,7 @@
     </div>
   </section>
 
-  <?php // Only creators with public posts get a feed; a reader's profile ends at the card. ?>
+  <?php // Only creators with public posts get a feed; a reader's profile ends at the card.?>
   <?php if (!empty($posts)) { ?>
   <section id="profile-posts" class="lx-profile-feed" aria-labelledby="profile-posts-heading">
     <header class="major"><h2 id="profile-posts-heading">Recent posts</h2></header>
