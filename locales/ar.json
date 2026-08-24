@@ -857,7 +857,13 @@
       "publicPageHeading": "صفحتك العامة",
       "viewPublicProfile": "عرض ملفك العام",
       "publicPageDisabledHelp": "أدخل رابط ملف عام أعلاه لتفعيل صفحتك العامة.",
-      "save": "حفظ التغييرات"
+      "save": "حفظ التغييرات",
+      "reset": "إعادة تعيين",
+      "memberSince": "عضو منذ",
+      "statusLive": "مباشر",
+      "statusHidden": "مخفي",
+      "removeAvatarConfirmTitle": "إزالة الصورة؟",
+      "removeAvatarConfirmText": "ستتم إزالة صورة ملفك الشخصي واستبدالها بالأحرف الأولى من اسمك. يمكنك رفع صورة جديدة في أي وقت."
     },
     "preferences": {
       "heading": "التفضيلات",
@@ -950,7 +956,9 @@
       "confirmPasswordHelp": "تأكيد كلمة المرور مطلوب للأمان.",
       "confirmCheckbox": "أدرك أن هذا الإجراء دائم ولا يمكن التراجع عنه.",
       "submit": "حذف حسابي نهائياً",
-      "cancel": "إلغاء"
+      "cancel": "إلغاء",
+      "confirmModalTitle": "إغلاق حسابك؟",
+      "confirmModalText": "هذا يغلق حسابك نهائيًا ولا يمكن التراجع عنه. يتم الاحتفاظ بمنشوراتك وتعليقاتك، لكن تتم إزالة هويتك وملفاتك."
     },
     "flash": {
       "profileSaved": "تم تحديث الملف بنجاح.",
@@ -970,6 +978,9 @@
       "deletionNotAuthorized": "لست مخولاً بحذف هذا الحساب.",
       "deletionFailed": "فشل حذف الحساب. يرجى التواصل مع الدعم.",
       "userNotFound": "المستخدم غير موجود."
+    },
+    "common": {
+      "reset": "إعادة تعيين"
     }
   }
 }

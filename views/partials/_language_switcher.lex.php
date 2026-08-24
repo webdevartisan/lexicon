@@ -40,7 +40,7 @@ $localPath = static function (string $href): string {
     </button>
 
     <?php if ($isSignedIn) { ?>
-    <div class="lang-switcher__menu" data-lang-menu>
+    <div class="lang-switcher__menu platform-menu-list" data-lang-menu>
         <?php foreach ($alternates as $alt) { ?>
         <form method="post" action="/language" class="lang-switcher__item">
             <?= csrf_field() ?>
@@ -55,7 +55,7 @@ $localPath = static function (string $href): string {
         <?php } ?>
     </div>
     <?php } else { ?>
-    <ul class="lang-switcher__menu" data-lang-menu>
+    <ul class="lang-switcher__menu platform-menu-list" data-lang-menu>
         <?php foreach ($alternates as $alt) { ?>
         <li class="lang-switcher__item">
             <a href="<?= e($alt['href']) ?>"

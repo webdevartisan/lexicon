@@ -4,6 +4,7 @@
 
 {% block meta %}
 <meta name="robots" content="noindex" />
+<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 {% endblock %}
 
 {% block body %}
@@ -13,14 +14,14 @@ $username = (string) ($user['username'] ?? '');
 ?>
 <section class="lx-wrap lx-account">
     <?php $accountSection = 'preferences'; ?>
+    <header class="lx-account-head">
+        <h1><?= e($t('account.preferences.heading')) ?></h1>
+        <p class="lx-muted"><?= e($t('account.preferences.intro')) ?></p>
+    </header>
+
     {% include "partials/_account_shell.lex.php" %}
 
     <div class="lx-account-body">
-        <header class="lx-account-head">
-            <h1><?= e($t('account.preferences.heading')) ?></h1>
-            <p class="lx-muted"><?= e($t('account.preferences.intro')) ?></p>
-        </header>
-
         <form method="post" action="<?= e(lurl('/account/preferences/update')) ?>" class="lx-account-form" autocomplete="on">
             <?= csrf_field() ?>
             <?php
@@ -109,6 +110,7 @@ $username = (string) ($user['username'] ?? '');
             </div>
 
             <div class="lx-account-actions">
+                <button type="reset" class="lx-btn lx-btn--subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn--primary"><?= e($t('account.preferences.save')) ?></button>
             </div>
         </form>
@@ -120,4 +122,25 @@ $username = (string) ($user['username'] ?? '');
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js" nonce="<?= csp_nonce() ?>"></script>
+<script nonce="<?= csp_nonce() ?>">
+  // Enhance every account select with Choices so the dropdowns share one themed
+  // look. Search is switched on only for long lists (the timezone picker);
+  // short selects keep their authored order and need no filter box.
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Choices === 'undefined') return;
+    document.querySelectorAll('.lx-account-form select').forEach(function (el) {
+      new Choices(el, {
+        shouldSort: false,
+        allowHTML: false,
+        searchEnabled: el.options.length > 10,
+        itemSelectText: '',
+        placeholder: false,
+      });
+    });
+  });
+</script>
 {% endblock %}
