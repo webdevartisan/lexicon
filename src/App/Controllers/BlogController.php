@@ -155,7 +155,7 @@ class BlogController extends AppController
             'items' => $items,
             'pagination' => $pagination,
             'searchQuery' => $searchQuery,
-            'featuredCreators' => $this->model->getFeaturedCreators(),
+            'featuredCreators' => $this->model->getFeaturedCreators(20),
         ]);
     }
 
