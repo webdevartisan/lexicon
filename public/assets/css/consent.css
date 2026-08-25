@@ -9,7 +9,7 @@
   padding: 12px;
 }
 
-.consent-banner__inner {
+.consent-banner-inner {
   max-width: 980px;
   margin: 0 auto;
   background: var(--lx-bind);
@@ -23,19 +23,19 @@
   box-shadow: 0 16px 48px rgba(0,0,0,0.28);
 }
 
-.consent-banner__text {
+.consent-banner-text {
   margin: 0;
   font-size: 0.95em;
   opacity: 0.9;
 }
 
-.consent-banner__actions {
+.consent-banner-actions {
   display: flex;
   gap: 8px;
 }
 
 @media screen and (max-width: 736px) {
-  .consent-banner__actions {
+  .consent-banner-actions {
     flex-wrap: wrap;
     flex-direction: column;
   }
@@ -47,13 +47,13 @@
   z-index: 13000;
 }
 
-.consent-modal__backdrop {
+.consent-modal-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(23,26,28,0.6);
 }
 
-.consent-modal__panel {
+.consent-modal-panel {
   position: relative;
   z-index: 1;
   width: min(720px, calc(100vw - 24px));
@@ -65,8 +65,8 @@
   overflow: hidden;
 }
 
-.consent-modal__header,
-.consent-modal__footer {
+.consent-modal-header,
+.consent-modal-footer {
   padding: 14px 16px;
   border-bottom: 1px solid var(--lx-rule);
   display: flex;
@@ -75,13 +75,13 @@
   gap: 12px;
 }
 
-.consent-modal__footer {
+.consent-modal-footer {
   border-bottom: 0;
   border-top: 1px solid var(--lx-rule);
   justify-content: flex-end;
 }
 
-.consent-modal__title {
+.consent-modal-title {
   margin: 0;
   font-size: 1.1em;
   color: var(--lx-ink);
@@ -96,14 +96,14 @@
   border-bottom: 1px solid var(--lx-rule);
 }
 
-.consent-row__label { font-weight: 600; color: var(--lx-ink); }
-.consent-row__hint { font-size: 0.9em; color: var(--lx-ink-2); margin-top: 2px; }
+.consent-row-label { font-weight: 600; color: var(--lx-ink); }
+.consent-row-hint { font-size: 0.9em; color: var(--lx-ink-2); margin-top: 2px; }
 
 /* ------------------------------------------------------------------------------ */
 
 
 /* keep this scoped so it can’t break other checkboxes on the site. */
-#consentModal .consent-row__control { display: flex; align-items: center; }
+#consentModal .consent-row-control { display: flex; align-items: center; }
 
 #consentModal .sr-only {
   position: absolute;
@@ -123,7 +123,7 @@
   height: 26px;
 }
 
-#consentModal .consent-switch__input {
+#consentModal .consent-switch-input {
   position: absolute;
   inset: 0;
   width: 46px;
@@ -136,7 +136,7 @@
   cursor: pointer;
 }
 
-#consentModal .consent-switch__label {
+#consentModal .consent-switch-label {
   display: block;
   width: 46px;
   height: 26px;
@@ -147,7 +147,7 @@
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
 }
 
-#consentModal .consent-switch__label::after {
+#consentModal .consent-switch-label::after {
   content: "";
   position: absolute;
   top: 3px;
@@ -160,13 +160,13 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.18);
 }
 
-#consentModal .consent-switch__input:checked + .consent-switch__label { background: var(--lx-ok); }
-#consentModal .consent-switch__input:checked + .consent-switch__label::after { transform: translateX(20px); }
+#consentModal .consent-switch-input:checked + .consent-switch-label { background: var(--lx-ok); }
+#consentModal .consent-switch-input:checked + .consent-switch-label::after { transform: translateX(20px); }
 
-#consentModal .consent-switch__input:disabled { cursor: not-allowed; }
-#consentModal .consent-switch__input:disabled + .consent-switch__label { opacity: 0.65; cursor: not-allowed; }
+#consentModal .consent-switch-input:disabled { cursor: not-allowed; }
+#consentModal .consent-switch-input:disabled + .consent-switch-label { opacity: 0.65; cursor: not-allowed; }
 
-#consentModal .consent-switch--locked .consent-switch__label { background: var(--lx-ink-3); }
+#consentModal .consent-switch-locked .consent-switch-label { background: var(--lx-ink-3); }
 
 /* position the cookie settings FAB at bottom-left and keep it above the banner. */
 .consent-fab {
@@ -257,7 +257,7 @@ html.consent-banner-visible .consent-fab {
 
 
 /* neutralize the theme's checkbox->label pseudo UI inside the consent modal only. */
-#consentModal .consent-switch__input + .consent-switch__label {
+#consentModal .consent-switch-input + .consent-switch-label {
   padding-left: 0;
   padding-right: 0;
   font-size: inherit;
@@ -266,12 +266,12 @@ html.consent-banner-visible .consent-fab {
 }
 
 /* remove the theme-drawn checkbox square. */
-#consentModal .consent-switch__input + .consent-switch__label::before {
+#consentModal .consent-switch-input + .consent-switch-label::before {
   content: none !important;
   display: none !important;
 }
 
 /* ensure our label doesn't inherit any unexpected layout behavior. */
-#consentModal .consent-switch__label {
+#consentModal .consent-switch-label {
   line-height: 1;
 }

@@ -225,8 +225,8 @@ hr {
     outline-color: var(--lx-gilt);
 }
 
-/* Screen-reader-only text. */
-.lx-sr,
+/* Screen-reader-only text. `.label` is used by legacy accessible labels
+   (e.g. inside social icon links). */
 .label {
     position: absolute;
     width: 1px;
@@ -293,14 +293,6 @@ hr {
     background: var(--lx-rule);
 }
 
-.lx-eyebrow--bind {
-    color: var(--lx-gilt);
-}
-
-.lx-eyebrow--bind::after {
-    background: var(--lx-rule-bind);
-}
-
 .lx-pos {
     font-family: var(--lx-serif);
     font-style: italic;
@@ -341,7 +333,7 @@ hr {
         color 0.3s var(--lx-ease), backdrop-filter 0.3s var(--lx-ease);
 }
 
-.lx-nav__inner {
+.lx-nav-inner {
     display: flex;
     align-items: center;
     gap: clamp(1rem, 3vw, 2.5rem);
@@ -382,7 +374,7 @@ hr {
     text-decoration: none;
 }
 
-.lx-logo__mark {
+.lx-logo-mark {
     width: 0.4rem;
     height: 0.4rem;
     background: var(--lx-gilt);
@@ -391,7 +383,7 @@ hr {
     transform: translateY(-0.15em);
 }
 
-.lx-nav__links {
+.lx-nav-links {
     display: flex;
     align-items: center;
     gap: clamp(0.75rem, 2vw, 1.75rem);
@@ -401,7 +393,7 @@ hr {
     margin-inline-end: auto;
 }
 
-.lx-nav__link {
+.lx-nav-link {
     font-family: var(--lx-sans);
     font-size: 0.875rem;
     font-weight: 500;
@@ -412,7 +404,7 @@ hr {
     transition: opacity 0.2s var(--lx-ease);
 }
 
-.lx-nav__link::after {
+.lx-nav-link::after {
     content: '';
     position: absolute;
     inset-inline: 0;
@@ -424,18 +416,18 @@ hr {
     transition: transform 0.25s var(--lx-ease);
 }
 
-.lx-nav__link:hover,
-.lx-nav__link[aria-current] {
+.lx-nav-link:hover,
+.lx-nav-link[aria-current] {
     opacity: 1;
     text-decoration: none;
 }
 
-.lx-nav__link:hover::after,
-.lx-nav__link[aria-current]::after {
+.lx-nav-link:hover::after,
+.lx-nav-link[aria-current]::after {
     transform: scaleX(1);
 }
 
-.lx-nav__actions {
+.lx-nav-actions {
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -444,11 +436,11 @@ hr {
     list-style: none;
 }
 
-.lx-nav__actions form {
+.lx-nav-actions form {
     margin: 0;
 }
 
-.lx-nav__toggle {
+.lx-nav-toggle {
     display: none;
     width: 2.75rem;
     height: 2.75rem;
@@ -463,13 +455,13 @@ hr {
     border-color: var(--lx-rule-strong);
 }
 
-.lx-nav.is-over .lx-nav__toggle {
+.lx-nav.is-over .lx-nav-toggle {
     border-color: var(--lx-rule-bind);
 }
 
-.lx-nav__toggle span,
-.lx-nav__toggle span::before,
-.lx-nav__toggle span::after {
+.lx-nav-toggle span,
+.lx-nav-toggle span::before,
+.lx-nav-toggle span::after {
     display: block;
     width: 1.1rem;
     height: 1px;
@@ -477,17 +469,17 @@ hr {
     transition: transform 0.25s var(--lx-ease), opacity 0.2s var(--lx-ease);
 }
 
-.lx-nav__toggle span::before,
-.lx-nav__toggle span::after {
+.lx-nav-toggle span::before,
+.lx-nav-toggle span::after {
     content: '';
     position: absolute;
 }
 
-.lx-nav__toggle span::before {
+.lx-nav-toggle span::before {
     transform: translateY(-0.32rem);
 }
 
-.lx-nav__toggle span::after {
+.lx-nav-toggle span::after {
     transform: translateY(0.32rem);
 }
 
@@ -520,7 +512,7 @@ hr {
     pointer-events: auto;
 }
 
-.lx-drawer__head {
+.lx-drawer-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -528,7 +520,7 @@ hr {
     margin-bottom: 2.5rem;
 }
 
-.lx-drawer__close {
+.lx-drawer-close {
     width: 2.75rem;
     height: 2.75rem;
     border: 1px solid var(--lx-rule-bind);
@@ -540,17 +532,17 @@ hr {
     cursor: pointer;
 }
 
-.lx-drawer__links {
+.lx-drawer-links {
     list-style: none;
     margin: 0 0 2.5rem;
     padding: 0;
 }
 
-.lx-drawer__links li + li {
+.lx-drawer-links li + li {
     border-top: 1px solid var(--lx-rule-bind);
 }
 
-.lx-drawer__links a {
+.lx-drawer-links a {
     display: block;
     padding: 0.9rem 0;
     font-family: var(--lx-serif);
@@ -558,19 +550,19 @@ hr {
     color: var(--lx-on-bind);
 }
 
-.lx-drawer__links a:hover {
+.lx-drawer-links a:hover {
     color: var(--lx-gilt);
     text-decoration: none;
 }
 
-.lx-drawer__actions {
+.lx-drawer-actions {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     margin-top: auto;
 }
 
-.lx-drawer__actions form {
+.lx-drawer-actions form {
     margin: 0;
 }
 
@@ -579,29 +571,29 @@ body.lx-drawer-open {
 }
 
 @media (max-width: 900px) {
-    .lx-nav__links {
+    .lx-nav-links {
         display: none;
     }
 
-    .lx-nav__actions {
+    .lx-nav-actions {
         margin-inline-start: auto;
     }
 
-    .lx-nav__actions .lx-btn {
+    .lx-nav-actions .lx-btn {
         display: none;
     }
 
-    .lx-nav__actions .lx-btn--primary {
+    .lx-nav-actions .lx-btn-primary {
         display: inline-flex;
     }
 
-    .lx-nav__toggle {
+    .lx-nav-toggle {
         display: inline-flex;
     }
 }
 
 @media (max-width: 480px) {
-    .lx-nav__actions .lx-btn--primary {
+    .lx-nav-actions .lx-btn-primary {
         display: none;
     }
 }
@@ -641,7 +633,7 @@ body.lx-drawer-open {
     opacity: 0.55;
 }
 
-.lx-cover__inner {
+.lx-cover-inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
@@ -650,7 +642,7 @@ body.lx-drawer-open {
     align-content: center;
 }
 
-.lx-cover__meta {
+.lx-cover-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -664,7 +656,7 @@ body.lx-drawer-open {
     color: var(--lx-gilt);
 }
 
-.lx-cover__meta span:not(:first-child) {
+.lx-cover-meta span:not(:first-child) {
     color: var(--lx-on-bind-2);
 }
 
@@ -685,7 +677,7 @@ body.lx-drawer-open {
     padding-inline: 0.03em;
 }
 
-.lx-cover__pron {
+.lx-cover-pron {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -695,11 +687,11 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-.lx-cover__pron .lx-pos {
+.lx-cover-pron .lx-pos {
     color: var(--lx-gilt);
 }
 
-.lx-cover__pron .lx-cover__rule {
+.lx-cover-pron .lx-cover-rule {
     flex: 1;
     min-width: 2rem;
     height: 1px;
@@ -746,7 +738,7 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-.lx-cover__note {
+.lx-cover-note {
     margin: clamp(2rem, 4vw, 2.75rem) 0 0;
     padding-inline-start: 1.25rem;
     border-inline-start: 1px solid var(--lx-rule-bind);
@@ -756,14 +748,14 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-.lx-cover__note .lx-label {
+.lx-cover-note .lx-label {
     font-family: var(--lx-serif);
     font-style: italic;
     color: var(--lx-gilt);
     margin-inline-end: 0.4rem;
 }
 
-.lx-cover__actions {
+.lx-cover-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
@@ -772,7 +764,7 @@ body.lx-drawer-open {
 
 /* Short viewports: size against height so the call to action stays above the fold. */
 @media (min-width: 1000px) and (max-height: 900px) {
-    .lx-cover__inner {
+    .lx-cover-inner {
         padding-block: clamp(2.5rem, 7vh, 4.5rem);
         min-height: 0;
     }
@@ -781,7 +773,7 @@ body.lx-drawer-open {
         font-size: min(15.5vw, 21vh);
     }
 
-    .lx-cover__meta {
+    .lx-cover-meta {
         margin-bottom: 1.5rem;
     }
 
@@ -789,11 +781,11 @@ body.lx-drawer-open {
         margin-top: 1.75rem;
     }
 
-    .lx-cover__actions {
+    .lx-cover-actions {
         margin-top: 2rem;
     }
 
-    .lx-cover__note {
+    .lx-cover-note {
         margin-top: 2rem;
     }
 }
@@ -807,22 +799,22 @@ body.lx-drawer-open {
     border-bottom: 1px solid var(--lx-rule);
 }
 
-.lx-band__inner {
+.lx-band-inner {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding-block: clamp(2rem, 4vw, 3rem);
 }
 
-.lx-band__item {
+.lx-band-item {
     padding-inline: clamp(0.5rem, 3vw, 2rem);
     text-align: center;
 }
 
-.lx-band__item + .lx-band__item {
+.lx-band-item + .lx-band-item {
     border-inline-start: 1px solid var(--lx-rule);
 }
 
-.lx-band__n {
+.lx-band-n {
     display: block;
     font-family: var(--lx-serif);
     font-weight: 400;
@@ -833,7 +825,7 @@ body.lx-drawer-open {
     color: var(--lx-ink);
 }
 
-.lx-band__label {
+.lx-band-label {
     display: block;
     margin-top: 0.5rem;
     font-family: var(--lx-sans);
@@ -845,12 +837,12 @@ body.lx-drawer-open {
 }
 
 @media (max-width: 560px) {
-    .lx-band__inner {
+    .lx-band-inner {
         grid-template-columns: minmax(0, 1fr);
         gap: 0;
     }
 
-    .lx-band__item {
+    .lx-band-item {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
@@ -859,12 +851,12 @@ body.lx-drawer-open {
         padding-block: 0.85rem;
     }
 
-    .lx-band__item + .lx-band__item {
+    .lx-band-item + .lx-band-item {
         border-inline-start: 0;
         border-top: 1px solid var(--lx-rule);
     }
 
-    .lx-band__label {
+    .lx-band-label {
         margin-top: 0;
     }
 }
@@ -893,7 +885,7 @@ body.lx-drawer-open {
     font-size: clamp(1.1rem, 2vw, 1.5rem);
 }
 
-.lx-entryhead__rule {
+.lx-entryhead-rule {
     flex: 1;
     min-width: 2rem;
     height: 1px;
@@ -988,7 +980,7 @@ body.lx-drawer-open {
     background: rgba(255, 255, 255, 0.5);
 }
 
-.lx-entry__word {
+.lx-entry-word {
     font-family: var(--lx-serif);
     font-size: clamp(1.5rem, 2.6vw, 2rem);
     font-weight: 500;
@@ -997,23 +989,23 @@ body.lx-drawer-open {
     margin: 0;
 }
 
-.lx-entry__pos {
+.lx-entry-pos {
     display: block;
     margin-top: 0.25rem;
     font-size: 0.95rem;
 }
 
-.lx-entry__def {
+.lx-entry-def {
     margin: 0;
 }
 
-.lx-entry__def h3 {
+.lx-entry-def h3 {
     margin: 0 0 0.5rem;
     font-size: clamp(1.15rem, 1.9vw, 1.4rem);
     font-weight: 550;
 }
 
-.lx-entry__def p {
+.lx-entry-def p {
     margin: 0;
     max-width: 62ch;
     color: var(--lx-ink-2);
@@ -1026,7 +1018,7 @@ body.lx-drawer-open {
         gap: 0.75rem;
     }
 
-    .lx-entry__pos {
+    .lx-entry-pos {
         display: inline;
         margin-inline-start: 0.5rem;
     }
@@ -1051,7 +1043,7 @@ body.lx-drawer-open {
     position: relative;
 }
 
-.lx-cite__media {
+.lx-cite-media {
     display: block;
     position: relative;
     aspect-ratio: 4 / 3;
@@ -1061,18 +1053,18 @@ body.lx-drawer-open {
     margin-bottom: 1.15rem;
 }
 
-.lx-cite__media img {
+.lx-cite-media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.7s var(--lx-ease), filter 0.5s var(--lx-ease);
 }
 
-.lx-cite:hover .lx-cite__media img {
+.lx-cite:hover .lx-cite-media img {
     transform: scale(1.04);
 }
 
-.lx-cite__plate {
+.lx-cite-plate {
     position: absolute;
     inset: 0;
     display: grid;
@@ -1084,14 +1076,14 @@ body.lx-drawer-open {
     line-height: 1;
 }
 
-.lx-cite__title {
+.lx-cite-title {
     margin: 0 0 0.5rem;
     font-size: clamp(1.15rem, 1.8vw, 1.35rem);
     font-weight: 550;
     line-height: 1.3;
 }
 
-.lx-cite__title a {
+.lx-cite-title a {
     color: var(--lx-ink);
     background-image: linear-gradient(var(--lx-gilt-deep), var(--lx-gilt-deep));
     background-repeat: no-repeat;
@@ -1100,12 +1092,12 @@ body.lx-drawer-open {
     transition: background-size 0.35s var(--lx-ease);
 }
 
-.lx-cite:hover .lx-cite__title a {
+.lx-cite:hover .lx-cite-title a {
     background-size: 100% 1px;
     text-decoration: none;
 }
 
-.lx-cite__attr {
+.lx-cite-attr {
     margin: 0 0 0.75rem;
     font-family: var(--lx-sans);
     font-size: 0.72rem;
@@ -1115,20 +1107,20 @@ body.lx-drawer-open {
     color: var(--lx-ink-3);
 }
 
-.lx-cite__attr::before {
+.lx-cite-attr::before {
     content: '—';
     margin-inline-end: 0.4rem;
     color: var(--lx-gilt-deep);
 }
 
-.lx-cite__excerpt {
+.lx-cite-excerpt {
     margin: 0 0 1rem;
     color: var(--lx-ink-2);
     font-size: 0.9875rem;
     line-height: 1.65;
 }
 
-.lx-cite__more {
+.lx-cite-more {
     margin-top: auto;
     font-family: var(--lx-sans);
     font-size: 0.8rem;
@@ -1137,16 +1129,16 @@ body.lx-drawer-open {
     color: var(--lx-spot);
 }
 
-.lx-cite__more span {
+.lx-cite-more span {
     display: inline-block;
     transition: transform 0.25s var(--lx-ease);
 }
 
-.lx-cite:hover .lx-cite__more span {
+.lx-cite:hover .lx-cite-more span {
     transform: translateX(0.25rem);
 }
 
-[dir='rtl'] .lx-cite:hover .lx-cite__more span {
+[dir='rtl'] .lx-cite:hover .lx-cite-more span {
     transform: translateX(-0.25rem);
 }
 
@@ -1185,7 +1177,7 @@ body.lx-drawer-open {
     color: var(--lx-spot);
 }
 
-.lx-note__n {
+.lx-note-n {
     font-family: var(--lx-sans);
     font-size: 0.7rem;
     font-weight: 600;
@@ -1193,7 +1185,7 @@ body.lx-drawer-open {
     color: var(--lx-gilt-deep);
 }
 
-.lx-note__sign {
+.lx-note-sign {
     justify-self: end;
     position: relative;
     width: 0.85rem;
@@ -1201,8 +1193,8 @@ body.lx-drawer-open {
     align-self: center;
 }
 
-.lx-note__sign::before,
-.lx-note__sign::after {
+.lx-note-sign::before,
+.lx-note-sign::after {
     content: '';
     position: absolute;
     inset-inline: 0;
@@ -1212,15 +1204,15 @@ body.lx-drawer-open {
     transition: transform 0.3s var(--lx-ease);
 }
 
-.lx-note__sign::after {
+.lx-note-sign::after {
     transform: rotate(90deg);
 }
 
-.lx-note[open] .lx-note__sign::after {
+.lx-note[open] .lx-note-sign::after {
     transform: rotate(0deg);
 }
 
-.lx-note__body {
+.lx-note-body {
     padding-block: 0 1.6rem;
     padding-inline: 2.75rem 2rem;
     margin: 0;
@@ -1234,7 +1226,7 @@ body.lx-drawer-open {
         grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
     }
 
-    .lx-note__body {
+    .lx-note-body {
         padding-inline: 1.75rem 0;
     }
 }
@@ -1261,7 +1253,7 @@ body.lx-drawer-open {
         linear-gradient(2deg, var(--lx-bind) 0%, var(--lx-bind-deep) 100%);
 }
 
-.lx-close__inner {
+.lx-close-inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
@@ -1283,14 +1275,14 @@ body.lx-drawer-open {
     color: var(--lx-on-bind-2);
 }
 
-.lx-close__actions {
+.lx-close-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
 }
 
 @media (max-width: 800px) {
-    .lx-close__inner {
+    .lx-close-inner {
         grid-template-columns: minmax(0, 1fr);
         align-items: start;
     }
@@ -1306,26 +1298,26 @@ body.lx-drawer-open {
     font-size: 0.9375rem;
 }
 
-.lx-foot__inner {
+.lx-foot-inner {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
     gap: clamp(2rem, 4vw, 3.5rem);
     padding-block: clamp(3rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
 }
 
-.lx-foot__brand .lx-logo {
+.lx-foot-brand .lx-logo {
     color: var(--lx-on-bind);
     margin-bottom: 1rem;
 }
 
-.lx-foot__tagline {
+.lx-foot-tagline {
     font-family: var(--lx-serif);
     font-style: italic;
     color: var(--lx-gilt);
     margin: 0 0 1rem;
 }
 
-.lx-foot__about {
+.lx-foot-about {
     margin: 0 0 1.5rem;
     max-width: 42ch;
     line-height: 1.7;
@@ -1360,13 +1352,13 @@ body.lx-drawer-open {
     text-decoration: none;
 }
 
-.lx-foot__contact li {
+.lx-foot-contact li {
     display: flex;
     gap: 0.6rem;
     align-items: baseline;
 }
 
-.lx-foot__contact svg {
+.lx-foot-contact svg {
     flex: none;
     width: 0.9rem;
     height: 0.9rem;
@@ -1374,7 +1366,7 @@ body.lx-drawer-open {
     transform: translateY(0.1em);
 }
 
-.lx-foot__bottom {
+.lx-foot-bottom {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1384,13 +1376,13 @@ body.lx-drawer-open {
     font-size: 0.8125rem;
 }
 
-.lx-foot__copy {
+.lx-foot-copy {
     margin: 0;
     margin-inline-end: auto;
     color: var(--lx-on-bind-3);
 }
 
-.lx-foot__social {
+.lx-foot-social {
     display: flex;
     gap: 0.5rem;
     list-style: none;
@@ -1398,7 +1390,7 @@ body.lx-drawer-open {
     padding: 0;
 }
 
-.lx-foot__social a {
+.lx-foot-social a {
     display: grid;
     place-items: center;
     width: 2.25rem;
@@ -1409,28 +1401,28 @@ body.lx-drawer-open {
     transition: border-color 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
 }
 
-.lx-foot__social a:hover {
+.lx-foot-social a:hover {
     border-color: var(--lx-gilt);
     color: var(--lx-gilt);
 }
 
-.lx-foot__social svg {
+.lx-foot-social svg {
     width: 0.95rem;
     height: 0.95rem;
 }
 
 @media (max-width: 900px) {
-    .lx-foot__inner {
+    .lx-foot-inner {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .lx-foot__brand {
+    .lx-foot-brand {
         grid-column: 1 / -1;
     }
 }
 
 @media (max-width: 520px) {
-    .lx-foot__inner {
+    .lx-foot-inner {
         grid-template-columns: minmax(0, 1fr);
     }
 }
@@ -1449,9 +1441,9 @@ input[type='button'] {
     justify-content: center;
     gap: 0.5rem;
     min-height: 2.875rem;
-    padding: 0.7rem 1.4rem;
+    padding: 0.7rem 1.75rem;
     border: 1px solid var(--lx-ink);
-    border-radius: var(--lx-radius);
+    border-radius: 999px;
     background: transparent;
     color: var(--lx-ink);
     font-family: var(--lx-sans);
@@ -1481,90 +1473,92 @@ input[type='button']:hover {
     transform: translateY(1px);
 }
 
-.lx-btn--primary,
+/* Every .lx-btn is a pill now — shape is inherited from the base rule above.
+   Variants only differ by fill, border and text colour. */
+.lx-btn-primary,
 .button.primary {
     background: var(--lx-ink);
     border-color: var(--lx-ink);
     color: var(--lx-paper);
 }
 
-.lx-btn--primary:hover,
+.lx-btn-primary:hover,
 .button.primary:hover {
     background: var(--lx-spot);
     border-color: var(--lx-spot);
     color: #fff;
 }
 
-.lx-btn--gilt {
+.lx-btn-gilt {
     background: var(--lx-gilt);
     border-color: var(--lx-gilt);
     color: var(--lx-bind-deep);
 }
 
-.lx-btn--gilt:hover {
+.lx-btn-gilt:hover {
     background: #ddb943;
     border-color: #ddb943;
     color: var(--lx-bind-deep);
 }
 
-.lx-btn--ghost {
+.lx-btn-ghost {
     border-color: var(--lx-rule-bind);
     color: var(--lx-on-bind);
 }
 
-.lx-btn--ghost:hover {
+.lx-btn-ghost:hover {
     background: rgba(240, 241, 236, 0.1);
     border-color: var(--lx-on-bind-2);
     color: var(--lx-on-bind);
 }
 
-.lx-btn--quiet {
+.lx-btn-quiet {
     border-color: transparent;
     padding-inline: 0.75rem;
 }
 
-.lx-btn--quiet:hover {
+.lx-btn-quiet:hover {
     background: transparent;
     color: var(--lx-spot);
     border-color: transparent;
     text-decoration: underline;
 }
 
-.lx-nav.is-over .lx-btn--quiet {
+.lx-nav.is-over .lx-btn-quiet {
     color: var(--lx-on-bind);
 }
 
-.lx-nav.is-over .lx-btn--quiet:hover {
+.lx-nav.is-over .lx-btn-quiet:hover {
     color: var(--lx-gilt);
 }
 
-.lx-nav.is-over .lx-btn--primary {
+.lx-nav.is-over .lx-btn-primary {
     background: var(--lx-gilt);
     border-color: var(--lx-gilt);
     color: var(--lx-bind-deep);
 }
 
-.lx-nav.is-over .lx-btn--primary:hover {
+.lx-nav.is-over .lx-btn-primary:hover {
     background: #ddb943;
     border-color: #ddb943;
 }
 
 .button.big,
-.lx-btn--big {
+.lx-btn-big {
     min-height: 3.25rem;
     padding-inline: 1.9rem;
     font-size: 0.95rem;
 }
 
 .button.small,
-.lx-btn--small {
+.lx-btn-small {
     min-height: 2.25rem;
     padding: 0.4rem 0.9rem;
     font-size: 0.8rem;
 }
 
 .button.fit,
-.lx-btn--fit {
+.lx-btn-fit {
     width: 100%;
 }
 
@@ -1573,6 +1567,26 @@ input[type='button']:hover {
 .button[disabled] {
     opacity: 0.45;
     pointer-events: none;
+}
+
+/* Shared keyboard-focus ring. Colour-only focus (hover fill reused as focus)
+   fails WCAG 2.4.7 for anyone navigating without a pointer, so every primitive
+   that carries a real hit target gets the same visible outline. Kept on
+   :focus-visible so mouse clicks stay quiet. */
+.lx-btn:focus-visible,
+.button:focus-visible,
+.lx-chip a:focus-visible,
+.lx-social a:focus-visible,
+.lx-gallery-body h3 a:focus-visible {
+    outline: 2px solid var(--lx-spot);
+    outline-offset: 2px;
+}
+
+/* On the transparent-over-hero nav the spot navy vanishes into the binding;
+   the gilt reads on both paper and the dark bar. */
+.lx-nav.is-over .lx-btn:focus-visible,
+.lx-nav.is-over .button:focus-visible {
+    outline-color: var(--lx-gilt);
 }
 
 /* ==========================================================================
@@ -1590,89 +1604,418 @@ input[type='button']:hover {
 /* Scoped so a .lx-bleed section keeps its own padding. */
 .lx-main > section:not(.lx-bleed),
 .lx-main > article:not(.lx-bleed) {
-    padding-block: clamp(2.25rem, 4.5vw, 3.5rem);
+    padding-block: clamp(1.25rem, 4.5vw, 2.5rem);
 }
 
 .lx-main > section:not(.lx-bleed) + section:not(.lx-bleed) {
     border-top: 1px solid var(--lx-rule);
 }
 
-header.major {
+/* Section header used by directory pages. Element-agnostic — put the class on
+   whatever tag suits the section (usually <header>). */
+.lx-section-head {
     margin-bottom: 1.75rem;
 }
 
-header.major h2 {
+.lx-section-head h2 {
     margin: 0 0 0.4rem;
     font-size: clamp(1.6rem, 3vw, 2.25rem);
     font-weight: 500;
 }
 
-header.major h2 + p,
-header.major > p {
+.lx-section-head h2 + p,
+.lx-section-head > p {
     margin: 0;
     color: var(--lx-ink-2);
     max-width: 56ch;
 }
 
-#banner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    align-items: center;
-    gap: clamp(1.5rem, 5vw, 4rem);
-    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
-    border-bottom: 1px solid var(--lx-rule);
+/* Compact editorial header used at the top of directory pages. */
+.lx-page-head {
+    padding-block: clamp(1rem, 2.5vw, 1.5rem) clamp(0.25rem, 0.5vw, 0.5rem);
 }
 
-#banner h1 {
-    margin: 0 0 0.6rem;
+.lx-page-head h1 {
+    margin: 0 0 0.5rem;
     font-size: clamp(2rem, 4.5vw, 3.25rem);
     font-weight: 500;
     letter-spacing: -0.025em;
 }
 
-#banner header > p {
-    margin: 0 0 1.5rem;
+.lx-page-head > p {
+    margin: 0;
+    max-width: 48ch;
     font-size: clamp(1.05rem, 1.7vw, 1.2rem);
     color: var(--lx-ink-2);
-    max-width: 48ch;
 }
 
-#banner .image img {
+/* Featured slider — one slide per viewport, native scroll-snap under the hood,
+   arrows and dots driven by front.js. Reduced-motion viewers get instant scroll
+   and no autoplay. */
+.lx-slider {
+    position: relative;
+    padding: clamp(1.5rem, 3vw, 2.25rem) 0 clamp(1rem, 2vw, 1.5rem);
+    background: var(--lx-paper-sunk);
+    border-block: 1px solid var(--lx-rule);
+}
+
+/* Clone slides used to fake seamless loop-around; hidden from AT and the
+   dot count. */
+.lx-slider-rail [data-slider-clone] {
+    pointer-events: auto;
+}
+
+/* Rail holds a peek of the neighbouring cards on either side so the scroll
+   reads as "next card" rather than "whole page slid across." Snap centers the
+   card in the viewport at rest. */
+.lx-slider-rail {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lx-slider-rail::-webkit-scrollbar { display: none; }
+
+/* One slide fills the viewport width — snap step is a full viewport, so the
+   next card comes into view cleanly with no other card visible alongside. */
+.lx-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--lx-gutter);
+}
+
+/* Each slide is a self-contained card — bordered, raised paper, subtle shadow —
+   so the featured blog reads as a plate in a book instead of a bare image
+   floating next to text. */
+.lx-slide-card {
     width: 100%;
+    max-width: 72rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
     border-radius: var(--lx-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(22, 35, 63, 0.04), 0 22px 48px -28px rgba(22, 35, 63, 0.28);
 }
 
 @media (max-width: 800px) {
-    #banner {
+    .lx-slide-card {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    #banner .image {
-        display: none;
     }
 }
 
-/* Actions list */
-ul.actions {
+.lx-slide-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--lx-bind);
+}
+
+.lx-slide-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.lx-slide-media-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: clamp(4rem, 10vw, 7rem);
+    line-height: 1;
+}
+
+.lx-slide-body {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
-    list-style: none;
-    margin: 0 0 1.5rem;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: clamp(1.75rem, 3.5vw, 2.75rem);
+    justify-content: center;
+}
+
+.lx-slide-eyebrow {
+    margin: 0;
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-gilt-deep);
+}
+
+.lx-slide-title {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.lx-slide-title a { color: var(--lx-ink); }
+
+.lx-slide-meta {
+    margin: 0;
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-slide-desc {
+    margin: 0;
+    color: var(--lx-ink-2);
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 42ch;
+}
+
+.lx-slide-cta {
+    margin-top: 0.5rem;
+    align-self: start;
+}
+
+/* Prev / next arrows sit on the card at vertical middle. Paper-white fill so
+   they stay legible on both the dark image side and the light body side of
+   the card. Positioned relative to the .lx-slider section, nudged to the
+   card's edges (card is max 72rem wide, centered). */
+.lx-slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 50%;
+    color: var(--lx-ink);
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(22, 35, 63, 0.35);
+    transition: background 0.2s var(--lx-ease), color 0.2s var(--lx-ease), transform 0.2s var(--lx-ease);
+    z-index: 2;
+}
+
+.lx-slider-nav:hover {
+    background: var(--lx-ink);
+    border-color: var(--lx-ink);
+    color: var(--lx-paper);
+    transform: translateY(-50%) scale(1.06);
+}
+
+/* Land the arrows on the card's edges: card is max 72rem centered, so the
+   arrows sit at half-card-width from the viewport centre. Falls back to a
+   small inset on narrow screens. */
+.lx-slider-prev { left: max(0.75rem, calc(50% - 35rem)); }
+.lx-slider-next { right: max(0.75rem, calc(50% - 35rem)); }
+
+@media (max-width: 640px) {
+    .lx-slider-nav { display: none; }
+}
+
+.lx-slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
     padding: 0;
 }
 
-ul.actions:last-child {
-    margin-bottom: 0;
+.lx-slider-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    padding: 0;
+    background: var(--lx-rule-strong);
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s var(--lx-ease), transform 0.2s var(--lx-ease);
 }
 
-ul.actions.stacked {
-    flex-direction: column;
+.lx-slider-dot:hover { background: var(--lx-ink-3); }
+
+.lx-slider-dot.is-active {
+    background: var(--lx-ink);
+    transform: scale(1.15);
+}
+
+/* Search field with the submit affordance inside the input.
+   Uses a real <button> so click and Enter both work. */
+.lx-search-field {
+    position: relative;
+    display: flex;
     align-items: stretch;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
-/* Grid */
+.lx-search-field input[type='search'] {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.4rem 2.75rem 0.4rem 1rem;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 999px;
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: 0.95rem;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
+}
+
+.lx-search-field input[type='search']:focus,
+.lx-search-field input[type='search']:focus-visible {
+    outline: none;
+    border-color: var(--lx-ink);
+    box-shadow: 0 0 0 3px rgba(23, 26, 28, 0.08);
+}
+
+.lx-search-field input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.lx-search-field-submit {
+    position: absolute;
+    inset-inline-end: 0.3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--lx-ink-2);
+    cursor: pointer;
+    transition: background 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-search-field-submit:hover,
+.lx-search-field-submit:focus-visible {
+    background: var(--lx-ink);
+    color: var(--lx-paper);
+    outline: none;
+}
+
+/* Modern minimal pagination: text-first prev/next with plain numbered links,
+   underlined current page. Generous spacing so the numbers can breathe. */
+.lx-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 3rem 0 clamp(3rem, 6vw, 5rem);
+    padding: 0;
+    list-style: none;
+    font-family: var(--lx-sans);
+    font-size: 0.95rem;
+}
+
+.lx-pagination a,
+.lx-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.9rem;
+    color: var(--lx-ink-2);
+    text-decoration: none;
+    border-radius: var(--lx-radius);
+    transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease);
+}
+
+.lx-pagination a:hover {
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    text-decoration: none;
+}
+
+.lx-pagination a:focus-visible {
+    outline: 2px solid var(--lx-spot);
+    outline-offset: 2px;
+}
+
+.lx-pagination [aria-current='page'] {
+    color: var(--lx-ink);
+    font-weight: 600;
+    background: transparent;
+    box-shadow: inset 0 -2px 0 0 var(--lx-ink);
+    border-radius: 0;
+    padding-bottom: 0.6rem;
+}
+
+.lx-pagination-step {
+    color: var(--lx-ink-3);
+    padding-inline: 0.4rem;
+}
+
+.lx-pagination-gap {
+    color: var(--lx-ink-3);
+    padding-inline: 0.4rem;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Explore toolbar: tabs on the left, slim search on the right. Wraps under 640px.
+   Top margin gives the toolbar breathing room from the slider band above. */
+.lx-explore-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: clamp(2rem, 4vw, 3rem) 0 2rem;
+    padding-bottom: 0;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-explore-toolbar > .lx-explore-tabs {
+    margin: 0;
+    border-bottom: 0;
+}
+
+.lx-explore-toolbar > .lx-explore-search {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+    margin: 0 0 0.5rem;
+    max-width: 22rem;
+    flex: 1 1 16rem;
+}
+
+/* Search input styling now lives on .lx-search-field so any page can reuse it;
+   .lx-explore-search is just the form wrapper the toolbar aligns. */
+
+@media (max-width: 640px) {
+    .lx-explore-toolbar > .lx-explore-search {
+        max-width: none;
+        flex-basis: 100%;
+    }
+}
+
+/* Grid — legacy Editorial 12-column shim. Kept because the Folio theme still
+   uses .row on its blog listing; nothing in the front lexicon uses these. */
 .row {
     display: flex;
     flex-wrap: wrap;
@@ -1723,11 +2066,8 @@ ul.actions.stacked {
     .col-12-xsmall { width: 100%; }
 }
 
-/* Post/article grids */
-.posts,
-.features,
-.guide-cards,
-.blog-cards {
+/* Blog directory grid. */
+.lx-blog-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
     gap: clamp(1.5rem, 3vw, 2.5rem);
@@ -1736,74 +2076,26 @@ ul.actions.stacked {
     list-style: none;
 }
 
-.posts > article,
-.features > article {
-    display: flex;
-    flex-direction: column;
-}
-
-.posts > article > .image,
-.posts > article > .image.post-thumb {
-    display: block;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    border-radius: var(--lx-radius);
-    background: var(--lx-paper-sunk);
-    margin-bottom: 1rem;
-    position: relative;
-}
-
-.posts > article > .image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s var(--lx-ease);
-}
-
-.posts > article:hover > .image img {
-    transform: scale(1.04);
-}
-
-.post-thumb-fallback {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background: var(--lx-bind);
-    color: var(--lx-gilt);
-    font-family: var(--lx-serif);
-    font-size: 3rem;
-    line-height: 1;
-}
-
-.posts > article h3,
-.features > article h3,
-.blog-card h3 {
+.lx-blog-card h3 {
     margin: 0 0 0.4rem;
     font-size: 1.25rem;
     font-weight: 550;
     line-height: 1.3;
 }
 
-.posts > article h3 a,
-.blog-card h3 a {
+.lx-blog-card h3 a {
     color: var(--lx-ink);
 }
 
-.posts > article p,
-.features > article p {
-    color: var(--lx-ink-2);
-    font-size: 0.9875rem;
-    line-height: 1.65;
-}
-
-.posts > article .actions,
-.blog-card .actions {
+/* Sticks primary action to the bottom of the card so cards of varying content
+   height still line up. */
+.lx-blog-card .lx-blog-card-actions {
     margin-top: auto;
     margin-bottom: 0;
     padding-top: 0.75rem;
 }
 
+/* Metadata line: sans, small, uppercase, tracked. Used on cards and post rows. */
 p.meta,
 .meta {
     font-family: var(--lx-sans);
@@ -1814,96 +2106,12 @@ p.meta,
     color: var(--lx-ink-3);
 }
 
-.features > article {
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--lx-rule);
-}
-
-.features > article > .icon {
-    color: var(--lx-gilt-deep);
-    font-size: 1.15rem;
-    margin-bottom: 0.75rem;
-    display: inline-block;
-}
-
-.mini-posts article {
-    display: grid;
-    grid-template-columns: 4.5rem minmax(0, 1fr);
-    gap: 0.9rem;
-    align-items: start;
-    padding-block: 0.9rem;
-    border-bottom: 1px solid var(--lx-rule);
-}
-
-.mini-posts article .image {
-    display: block;
-    aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: var(--lx-radius);
-}
-
-.mini-posts article .image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.mini-posts article p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.image.fit img,
-.image.fit {
-    width: 100%;
-}
-
-.box {
-    padding: clamp(1.5rem, 3vw, 2.25rem);
-    background: var(--lx-paper-raised);
-    border: 1px solid var(--lx-rule);
-    border-radius: var(--lx-radius-lg);
-}
-
-.box > :last-child {
-    margin-bottom: 0;
-}
-
+/* Admin/dashboard container primitive; not used by the front. */
 .card {
     background: var(--lx-paper-raised);
     border: 1px solid var(--lx-rule);
     border-radius: var(--lx-radius-lg);
     padding: clamp(1.25rem, 2.5vw, 1.75rem);
-}
-
-/* Icon lists */
-ul.icons {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-ul.contact {
-    list-style: none;
-    margin: 0 0 1.5rem;
-    padding: 0;
-}
-
-ul.contact li {
-    padding-block: 0.4rem;
-    position: relative;
-    padding-inline-start: 1.75rem;
-}
-
-ul.contact li::before {
-    position: absolute;
-    inset-inline-start: 0;
-    top: 0.55rem;
-    color: var(--lx-gilt-deep);
 }
 
 /* Pagination */
@@ -1978,14 +2186,14 @@ label {
 }
 
 /* Explore page tabs */
-.explore-tabs {
+.lx-explore-tabs {
     display: flex;
     gap: 1.75rem;
     margin: 0 0 2rem;
     border-bottom: 1px solid var(--lx-rule);
 }
 
-.explore-tab {
+.lx-explore-tab {
     position: relative;
     padding-block: 0.9rem;
     font-family: var(--lx-sans);
@@ -1996,7 +2204,7 @@ label {
     color: var(--lx-ink-2);
 }
 
-.explore-tab::after {
+.lx-explore-tab::after {
     content: '';
     position: absolute;
     inset-inline: 0;
@@ -2007,20 +2215,20 @@ label {
     transition: transform 0.25s var(--lx-ease);
 }
 
-.explore-tab:hover {
+.lx-explore-tab:hover {
     color: var(--lx-ink);
     text-decoration: none;
 }
 
-.explore-tab.active {
+.lx-explore-tab.active {
     color: var(--lx-ink);
 }
 
-.explore-tab.active::after {
+.lx-explore-tab.active::after {
     transform: scaleX(1);
 }
 
-.blog-card {
+.lx-blog-card {
     display: flex;
     flex-direction: column;
     padding: clamp(1.25rem, 2.5vw, 1.75rem);
@@ -2030,47 +2238,43 @@ label {
     transition: border-color 0.25s var(--lx-ease), transform 0.25s var(--lx-ease);
 }
 
-.blog-card:hover {
+.lx-blog-card:hover {
     border-color: var(--lx-rule-strong);
     transform: translateY(-2px);
 }
 
-.blog-card .meta {
+.lx-blog-card .meta {
     margin-bottom: 0.75rem;
 }
 
-.search-meta {
+.lx-search-meta {
     margin-top: 1rem;
     font-family: var(--lx-sans);
     font-size: 0.85rem;
     color: var(--lx-ink-2);
 }
 
-.home-search {
-    margin: 0;
-}
-
 /* Static content pages */
-.page-content {
+.lx-page-content {
     max-width: 42rem;
 }
 
-.page-content h2 {
+.lx-page-content h2 {
     margin-top: 2.5rem;
     font-size: clamp(1.4rem, 2.4vw, 1.85rem);
 }
 
-.page-content ul,
-.page-content ol {
+.lx-page-content ul,
+.lx-page-content ol {
     margin: 0 0 1.5rem;
     padding-inline-start: 1.25rem;
 }
 
-.page-content li + li {
+.lx-page-content li + li {
     margin-top: 0.4rem;
 }
 
-.page-content blockquote {
+.lx-page-content blockquote {
     margin: 2rem 0;
     padding-inline-start: 1.25rem;
     border-inline-start: 2px solid var(--lx-gilt-deep);
@@ -2098,8 +2302,8 @@ label {
     padding: clamp(1.1rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2.75rem);
 }
 
-.lx-authbar__back,
-.lx-authbar__alt a {
+.lx-authbar-back,
+.lx-authbar-alt a {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -2111,18 +2315,18 @@ label {
     color: var(--lx-ink);
 }
 
-.lx-authbar__back:hover,
-.lx-authbar__alt a:hover {
+.lx-authbar-back:hover,
+.lx-authbar-alt a:hover {
     color: var(--lx-spot);
     text-decoration: none;
 }
 
-.lx-authbar__back svg {
+.lx-authbar-back svg {
     width: 0.85rem;
     height: 0.85rem;
 }
 
-[dir='rtl'] .lx-authbar__back svg {
+[dir='rtl'] .lx-authbar-back svg {
     transform: scaleX(-1);
 }
 
@@ -2150,7 +2354,7 @@ label {
     text-decoration: none;
 }
 
-.lx-authmark__dot {
+.lx-authmark-dot {
     width: 0.4rem;
     height: 0.4rem;
     border-radius: 50%;
@@ -2158,7 +2362,7 @@ label {
     flex: none;
 }
 
-.lx-authmark__word {
+.lx-authmark-word {
     font-family: var(--lx-sans);
     font-size: 0.78rem;
     font-weight: 700;
@@ -2210,11 +2414,11 @@ label {
 }
 
 /* Wraps input + show/hide toggle so the toggle positions against the input, not the field. */
-.lx-field__control {
+.lx-field-control {
     position: relative;
 }
 
-.lx-field__label {
+.lx-field-label {
     display: block;
     margin-bottom: 0.35rem;
     font-family: var(--lx-sans);
@@ -2226,7 +2430,7 @@ label {
 }
 
 /* Two classes deep to beat the (0,1,1) input rule in the component shims. */
-.lx-field .lx-field__input {
+.lx-field .lx-field-input {
     width: 100%;
     min-height: 2.75rem;
     padding: 0.45rem 0;
@@ -2241,35 +2445,28 @@ label {
     transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
 }
 
-.lx-field .lx-field__input::placeholder {
+.lx-field .lx-field-input::placeholder {
     color: var(--lx-ink-3);
     font-family: var(--lx-serif);
 }
 
-.lx-field__control .lx-field__input {
+.lx-field-control .lx-field-input {
     padding-inline-end: 3.75rem;
 }
 
 /* The underline is the focus indicator, so it thickens to 2px --lx-ink (drawn as a shadow). */
-.lx-field .lx-field__input:focus,
-.lx-field .lx-field__input:focus-visible {
+.lx-field .lx-field-input:focus,
+.lx-field .lx-field-input:focus-visible {
     outline: none;
     border-bottom-color: var(--lx-ink);
     box-shadow: 0 1px 0 0 var(--lx-ink);
 }
 
-.lx-field--invalid .lx-field__input {
+.lx-field-invalid .lx-field-input {
     border-bottom-color: var(--lx-danger);
 }
 
-.lx-field__labelrow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.lx-field__toggle {
+.lx-field-toggle {
     position: absolute;
     inset-inline-end: 0;
     bottom: 0.55rem;
@@ -2287,23 +2484,69 @@ label {
     cursor: pointer;
 }
 
-.lx-field__toggle:hover {
+.lx-field-toggle:hover {
     background: none;
     color: var(--lx-ink);
 }
 
-.lx-field__error {
+.lx-field-error {
     margin: 0.5rem 0 0;
     font-family: var(--lx-sans);
     font-size: 0.78rem;
     color: var(--lx-danger);
 }
 
-.lx-field__hint {
+.lx-field-hint {
     margin: 0.5rem 0 0;
     font-family: var(--lx-sans);
     font-size: 0.78rem;
     color: var(--lx-ink-2);
+}
+
+/* Small utilities that go with the form primitive. */
+
+.lx-form-actions {
+    margin-top: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Honeypot: kept in the DOM for form submission but off-screen for humans. */
+.lx-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Page-level flash / status messages. Left rule keeps it close to the bound-book
+   palette; the two variants only change the accent + text colour, not the base. */
+.lx-msg {
+    display: block;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1.05rem;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-left: 3px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.lx-msg-success {
+    border-left-color: var(--lx-gilt-deep);
+}
+
+.lx-msg-error {
+    background: var(--lx-danger-bg);
+    border-color: var(--lx-danger);
+    border-left-color: var(--lx-danger);
+    color: var(--lx-danger);
 }
 
 /* --- Password strength: advisory only; the server enforces password:basic (6 char min). --- */
@@ -2316,23 +2559,23 @@ label {
     display: none;
 }
 
-.lx-meter__track {
+.lx-meter-track {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.25rem;
     height: 3px;
 }
 
-.lx-meter__seg {
+.lx-meter-seg {
     background: var(--lx-rule);
     border-radius: 2px;
     transition: background 0.25s var(--lx-ease);
 }
 
-.lx-meter[data-level='1'] .lx-meter__seg:nth-child(-n + 1),
-.lx-meter[data-level='2'] .lx-meter__seg:nth-child(-n + 2),
-.lx-meter[data-level='3'] .lx-meter__seg:nth-child(-n + 3),
-.lx-meter[data-level='4'] .lx-meter__seg {
+.lx-meter[data-level='1'] .lx-meter-seg:nth-child(-n + 1),
+.lx-meter[data-level='2'] .lx-meter-seg:nth-child(-n + 2),
+.lx-meter[data-level='3'] .lx-meter-seg:nth-child(-n + 3),
+.lx-meter[data-level='4'] .lx-meter-seg {
     background: var(--lx-meter-fill, var(--lx-ink-2));
 }
 
@@ -2350,14 +2593,14 @@ label {
     --lx-meter-fill: var(--lx-ok);
 }
 
-.lx-meter__label {
+.lx-meter-label {
     margin: 0.5rem 0 0;
     font-family: var(--lx-sans);
     font-size: 0.78rem;
     color: var(--lx-ink-2);
 }
 
-.lx-meter__level {
+.lx-meter-level {
     font-weight: 600;
     color: var(--lx-meter-fill, var(--lx-ink-2));
 }
@@ -2569,7 +2812,7 @@ label {
     line-height: 1.7;
 }
 
-.lx-profile-tags {
+.lx-chip {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -2579,7 +2822,7 @@ label {
     padding: 0;
 }
 
-.lx-profile-tags a {
+.lx-chip a {
     display: inline-block;
     padding: 0.3rem 0.85rem;
     border: 1px solid var(--lx-rule-strong);
@@ -2591,8 +2834,8 @@ label {
     transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease);
 }
 
-.lx-profile-tags a:hover,
-.lx-profile-tags a:focus-visible {
+.lx-chip a:hover,
+.lx-chip a:focus-visible {
     color: var(--lx-ink);
     background: var(--lx-paper-sunk);
     border-color: var(--lx-ink-3);
@@ -2602,13 +2845,10 @@ label {
 .lx-profile-cta {
     margin-top: 1.6rem;
 }
+/* Profile CTA no longer needs a local pill override — .lx-btn-primary is a
+   pill globally now. */
 
-.lx-profile-cta .lx-btn {
-    padding-inline: 2rem;
-    border-radius: 999px;
-}
-
-.lx-profile-social {
+.lx-social {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -2618,7 +2858,7 @@ label {
     padding: 0;
 }
 
-.lx-profile-social a {
+.lx-social a {
     display: grid;
     place-items: center;
     width: 2.75rem;
@@ -2630,15 +2870,11 @@ label {
     transition: color 0.2s var(--lx-ease), background 0.2s var(--lx-ease);
 }
 
-.lx-profile-social a:hover,
-.lx-profile-social a:focus-visible {
+.lx-social a:hover,
+.lx-social a:focus-visible {
     color: var(--lx-ink);
     background: var(--lx-paper-sunk);
     text-decoration: none;
-}
-
-.lx-profile-feed-empty {
-    color: var(--lx-ink-2);
 }
 
 .lx-gallery {
@@ -2945,53 +3181,6 @@ label {
     margin: 1.5rem 0 0;
 }
 
-.lx-reader-pages {
-    margin-top: 2.5rem;
-}
-
-.lx-reader-pages ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.lx-reader-page {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.25rem;
-    min-height: 2.25rem;
-    padding: 0 0.5rem;
-    border: 1px solid var(--lx-rule);
-    border-radius: var(--lx-radius);
-    color: var(--lx-ink-2);
-    font-family: var(--lx-sans);
-    font-size: 0.85rem;
-}
-
-.lx-reader-page:hover {
-    border-color: var(--lx-rule-strong);
-    color: var(--lx-ink);
-    text-decoration: none;
-}
-
-.lx-reader-page.is-current {
-    border-color: var(--lx-ink);
-    color: var(--lx-ink);
-    font-weight: 600;
-}
-
-.lx-reader-gap {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.25rem;
-    padding: 0 0.25rem;
-    color: var(--lx-ink-3);
-}
-
 @media (max-width: 40rem) {
     .lx-reader-thumb {
         width: 4rem;
@@ -3020,7 +3209,7 @@ label {
     position: relative;
 }
 
-.lang-switcher__toggle {
+.lang-switcher-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -3038,27 +3227,27 @@ label {
     cursor: pointer;
 }
 
-.lang-switcher__toggle:hover {
+.lang-switcher-toggle:hover {
     color: var(--lx-gilt);
     border-color: var(--lx-gilt);
     background: transparent;
 }
 
 /* Reuses the account menu dropdown via .platform-menu-list; only opens upward. */
-.lang-switcher__menu { display: none; }
-.lang-switcher .lang-switcher__menu {
+.lang-switcher-menu { display: none; }
+.lang-switcher .lang-switcher-menu {
     top: auto;
     bottom: calc(100% + 4px);
     inset-inline: auto 0;
 }
-.lang-switcher__menu.show { display: block; }
+.lang-switcher-menu.show { display: block; }
 
 /* Pin an absolute row size so the footer and masthead dropdowns match (.85em would differ). */
-.lang-switcher .lang-switcher__menu button,
-.lang-switcher .lang-switcher__menu a { font-size: 0.9rem; }
+.lang-switcher .lang-switcher-menu button,
+.lang-switcher .lang-switcher-menu a { font-size: 0.9rem; }
 
-.lang-switcher__item button[aria-current='true'],
-.lang-switcher__item a[aria-current='true'] {
+.lang-switcher-item button[aria-current='true'],
+.lang-switcher-item a[aria-current='true'] {
     color: var(--lx-gilt);
 }
 
@@ -3183,23 +3372,23 @@ label {
 
 /* Cover load sequence: one orchestrated moment, nothing else on the page
    animates on load. */
-.lx-cover__meta,
+.lx-cover-meta,
 .lx-headword,
-.lx-cover__pron,
+.lx-cover-pron,
 .lx-senses li,
-.lx-cover__note,
-.lx-cover__actions {
+.lx-cover-note,
+.lx-cover-actions {
     animation: lx-rise 0.9s var(--lx-ease) both;
 }
 
-.lx-cover__meta { animation-delay: 0.05s; }
+.lx-cover-meta { animation-delay: 0.05s; }
 .lx-headword { animation-delay: 0.12s; animation-name: lx-unveil; }
-.lx-cover__pron { animation-delay: 0.4s; }
+.lx-cover-pron { animation-delay: 0.4s; }
 .lx-senses li:nth-child(1) { animation-delay: 0.5s; }
 .lx-senses li:nth-child(2) { animation-delay: 0.58s; }
 .lx-senses li:nth-child(3) { animation-delay: 0.66s; }
-.lx-cover__note { animation-delay: 0.74s; }
-.lx-cover__actions { animation-delay: 0.8s; }
+.lx-cover-note { animation-delay: 0.74s; }
+.lx-cover-actions { animation-delay: 0.8s; }
 
 @keyframes lx-rise {
     from {
@@ -3254,7 +3443,7 @@ label {
     .lx-drawer,
     .fab,
     .lx-close,
-    .lx-foot__social {
+    .lx-foot-social {
         display: none !important;
     }
 
@@ -3466,9 +3655,9 @@ label {
 .lx-stat { display: flex; justify-content: space-between; gap: 1rem; margin: 0.35rem 0; font-size: 0.85rem; }
 
 /* Avatar card: centred subject with a compact icon control bar under it. */
-.lx-card--avatar { text-align: center; }
-.lx-card--avatar .lx-card-title { text-align: start; }
-.lx-card--avatar .lx-avatar { margin-inline: auto; inline-size: 7rem; block-size: 7rem; }
+.lx-card-avatar { text-align: center; }
+.lx-card-avatar .lx-card-title { text-align: start; }
+.lx-card-avatar .lx-avatar { margin-inline: auto; inline-size: 7rem; block-size: 7rem; }
 
 .lx-avatar-controls {
     display: flex;
@@ -3497,8 +3686,8 @@ label {
 .lx-icon-btn:focus-visible,
 .lx-icon-btn:focus-within { outline: 2px solid var(--lx-spot); outline-offset: 2px; }
 .lx-icon-btn[hidden] { display: none; }
-.lx-icon-btn--danger { color: var(--lx-danger); border-color: #e4c2be; }
-.lx-icon-btn--danger:hover { background: var(--lx-danger); border-color: var(--lx-danger); color: #fff; }
+.lx-icon-btn-danger { color: var(--lx-danger); border-color: #e4c2be; }
+.lx-icon-btn-danger:hover { background: var(--lx-danger); border-color: var(--lx-danger); color: #fff; }
 .lx-avatar-status { margin-block-start: 0.5rem; }
 
 /* Activity: a compact three-up stat grid, numbers first for scannability. */
@@ -3516,7 +3705,7 @@ label {
     background: var(--lx-paper-raised);
 }
 .lx-stat-num { margin: 0; font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: var(--lx-ink); font-variant-numeric: tabular-nums; }
-.lx-stat-num--sm { font-size: 1rem; padding-block: 0.18rem; }
+.lx-stat-num-sm { font-size: 1rem; padding-block: 0.18rem; }
 .lx-stat-label { margin: 0.2rem 0 0; font-size: 0.7rem; color: var(--lx-ink-2); }
 
 /* Public page: a preview card with a visibility badge and a distinct primary link. */
@@ -3532,8 +3721,8 @@ label {
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
 }
-.lx-badge--on { color: var(--lx-ok); background: var(--lx-ok-bg); }
-.lx-badge--off { color: var(--lx-ink-2); background: var(--lx-paper-sunk); }
+.lx-badge-on { color: var(--lx-ok); background: var(--lx-ok-bg); }
+.lx-badge-off { color: var(--lx-ink-2); background: var(--lx-paper-sunk); }
 .lx-pubcard-url {
     margin: 0 0 0.85rem;
     font-family: var(--lx-sans);
@@ -3548,8 +3737,8 @@ label {
 .lx-pubcard-note { margin-block-start: 0.7rem; }
 
 /* Secondary form button: readable on paper, unlike the binding-only ghost. */
-.lx-btn--subtle { border-color: var(--lx-rule-strong); color: var(--lx-ink-2); }
-.lx-btn--subtle:hover { background: var(--lx-paper-sunk); color: var(--lx-ink); border-color: var(--lx-rule-strong); }
+.lx-btn-subtle { border-color: var(--lx-rule-strong); color: var(--lx-ink-2); }
+.lx-btn-subtle:hover { background: var(--lx-paper-sunk); color: var(--lx-ink); border-color: var(--lx-rule-strong); }
 
 /* Choices.js (searchable timezone) restyled to match the underline selects it
    sits beside: the vendor default is a boxed white control with a blue accent,
@@ -3662,15 +3851,13 @@ label {
 }
 .lx-avatar-img { inline-size: 100%; block-size: 100%; object-fit: cover; }
 .lx-avatar-initials { font-size: 1.5rem; font-weight: 600; color: #5b6472; }
-.lx-avatar-help { margin-block: 0.4rem 0.75rem; }
 
-.lx-linkbtn { border: 0; background: none; color: #2036e6; cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
 .lx-visually-hidden {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-.lx-btn--danger { color: #fff; background: #b3261e; border-color: #b3261e; }
-.lx-btn--danger:hover { background: #97201a; border-color: #97201a; }
+.lx-btn-danger { color: #fff; background: #b3261e; border-color: #b3261e; }
+.lx-btn-danger:hover { background: #97201a; border-color: #97201a; }
 .lx-danger-zone {
     margin-block-start: 2rem;
     padding: 1.25rem;
@@ -3686,4 +3873,4 @@ label {
 .lx-account-narrow { max-inline-size: 40rem; }
 .lx-delete-list { margin-block: 0.75rem 1.5rem; padding-inline-start: 1.25rem; }
 .lx-delete-list li { margin-block: 0.4rem; }
-.lx-account-actions--split { justify-content: space-between; gap: 1rem; }
+.lx-account-actions-split { justify-content: space-between; gap: 1rem; }
