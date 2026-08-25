@@ -8,8 +8,10 @@ trait TemplateVariablesTrait
 {
     private function removeComments(string $code): string
     {
+        // `s` flag so `.+?` matches across newlines — multi-line `{# ... #}`
+        // comments must be stripped too, not just single-line ones.
         return preg_replace_callback(
-            '#{\#\s*(.+?)\s*\#}#',
+            '#{\#\s*(.+?)\s*\#}#s',
             function ($m) {
                 return '';
             },
