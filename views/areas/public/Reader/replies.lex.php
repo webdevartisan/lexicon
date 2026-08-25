@@ -62,7 +62,7 @@
         <?php foreach ($renderedIds as $renderedId) { ?>
         <input type="hidden" name="ids[]" value="<?= (int) $renderedId ?>" />
         <?php } ?>
-        <button type="submit" class="lx-btn lx-btn--quiet lx-btn--small"><?= e($t('reader.markRead')) ?></button>
+        <button type="submit" class="lx-btn lx-btn-quiet lx-btn-small"><?= e($t('reader.markRead')) ?></button>
     </form>
 
     {% include "partials/public/_reader_pagination.lex.php" %}

@@ -26,9 +26,9 @@ $fieldErrors = errors();
         <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
     <?php } ?>
 
-    <div class="lx-field<?= !empty($fieldErrors['email']) ? ' lx-field--invalid' : '' ?>">
-        <label class="lx-field__label" for="email"><?= e($t('auth.emailLabel')) ?></label>
-        <input class="lx-field__input"
+    <div class="lx-field<?= !empty($fieldErrors['email']) ? ' lx-field-invalid' : '' ?>">
+        <label class="lx-field-label" for="email"><?= e($t('auth.emailLabel')) ?></label>
+        <input class="lx-field-input"
                type="email"
                name="email"
                id="email"
@@ -39,15 +39,15 @@ $fieldErrors = errors();
                required
                autofocus>
         <?php foreach ($fieldErrors['email'] ?? [] as $message) { ?>
-            <p class="lx-field__error"><?= e($message) ?></p>
+            <p class="lx-field-error"><?= e($message) ?></p>
         <?php } ?>
     </div>
 
-    <div class="lx-field<?= !empty($fieldErrors['password']) ? ' lx-field--invalid' : '' ?>">
-        <label class="lx-field__label" for="password"><?= e($t('auth.passwordLabel')) ?></label>
+    <div class="lx-field<?= !empty($fieldErrors['password']) ? ' lx-field-invalid' : '' ?>">
+        <label class="lx-field-label" for="password"><?= e($t('auth.passwordLabel')) ?></label>
 
-        <div class="lx-field__control">
-            <input class="lx-field__input"
+        <div class="lx-field-control">
+            <input class="lx-field-input"
                    type="password"
                    name="password"
                    id="password"
@@ -56,7 +56,7 @@ $fieldErrors = errors();
                    minlength="6"
                    required>
             <button type="button"
-                    class="lx-field__toggle"
+                    class="lx-field-toggle"
                     data-password-toggle="password"
                     data-label-show="<?= e($t('auth.show')) ?>"
                     data-label-hide="<?= e($t('auth.hide')) ?>"
@@ -67,7 +67,7 @@ $fieldErrors = errors();
         </div>
 
         <?php foreach ($fieldErrors['password'] ?? [] as $message) { ?>
-            <p class="lx-field__error"><?= e($message) ?></p>
+            <p class="lx-field-error"><?= e($message) ?></p>
         <?php } ?>
 
         <?php
@@ -75,7 +75,7 @@ $fieldErrors = errors();
         // rates what has been typed. Keeping them separate stops the meter
         // from reading like a rule the server does not actually enforce.
 ?>
-        <p class="lx-field__hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
 
         <?php
 // Rating labels ride along as data so the script stays free of copy.
@@ -92,13 +92,13 @@ $meterLevels = implode('|', [
              data-hint-from="email"
              data-levels="<?= e($meterLevels) ?>"
              hidden>
-            <div class="lx-meter__track" aria-hidden="true">
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
+            <div class="lx-meter-track" aria-hidden="true">
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
             </div>
-            <p class="lx-meter__label" data-meter-label role="status" aria-live="polite"></p>
+            <p class="lx-meter-label" data-meter-label role="status" aria-live="polite"></p>
         </div>
     </div>
 

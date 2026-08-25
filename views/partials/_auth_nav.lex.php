@@ -111,15 +111,15 @@ if ($navVariant === 'platform') {
     // navigates is the inconsistency. The modal stays bound to the blog themes'
     // .nav-pill trigger, where interrupting the reader is the whole point.
     if ($navIsGuest) { ?>
-        <li><a href="<?= e($loginUrl) ?>" class="lx-btn lx-btn--quiet"><?= e($tr('header.signIn')) ?></a></li>
-        <li><a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn--primary"><?= e($tr('navigation.createBlog')) ?></a></li>
+        <li><a href="<?= e($loginUrl) ?>" class="lx-btn lx-btn-quiet"><?= e($tr('header.signIn')) ?></a></li>
+        <li><a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn-primary"><?= e($tr('navigation.createBlog')) ?></a></li>
     <?php } else { ?>
         <li>
             <?php
             // A reader is already registered, so this goes to the form that
             // makes a blog, not to sign-up. A creator gets their dashboard.
         ?>
-            <a href="<?= e(lurl($navIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>" class="lx-btn lx-btn--primary">
+            <a href="<?= e(lurl($navIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>" class="lx-btn lx-btn-primary">
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>

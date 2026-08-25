@@ -1,13 +1,13 @@
 <?php
-// Plain numbered pages, the same shape the rest of the front uses. No infinite
-// scroll: these lists are finite, personal, and worth linking into at ?page=3.
+// Numbered pages, using the shared .lx-pagination primitive so reader lists
+// paginate with the same shape as the rest of the front. Finite personal
+// lists, no infinite scroll — worth linking into at ?page=3.
 $readerTotalPages = (int) ($pagination['totalPages'] ?? 1);
 
 if ($readerTotalPages > 1) {
     $readerCurrent = (int) ($pagination['page'] ?? 1);
     $readerBase = (string) ($pagination['basePath'] ?? '/saved');
 
-    // Window around the current page, with both ends always reachable.
     $readerWindow = 2;
     $readerPages = [1, $readerTotalPages];
     for ($p = $readerCurrent - $readerWindow; $p <= $readerCurrent + $readerWindow; $p++) {
@@ -20,21 +20,38 @@ if ($readerTotalPages > 1) {
 
     $readerPageUrl = static fn (int $p): string => lurl($readerBase).($p > 1 ? '?page='.$p : '');
     ?>
-<nav class="lx-reader-pages" aria-label="<?= e($t('reader.paginationAria')) ?>">
-    <ul>
+<nav aria-label="<?= e($t('reader.paginationAria')) ?>">
+    <ul class="lx-pagination">
+        <?php if ($readerCurrent > 1) { ?>
+        <li>
+            <a href="<?= e($readerPageUrl($readerCurrent - 1)) ?>" class="lx-pagination-step" rel="prev">
+                <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+                <span class="lx-visually-hidden"><?= e($t('reader.paginationPrev') ?: 'Previous page') ?></span>
+            </a>
+        </li>
+        <?php } ?>
+
         <?php $readerPrevious = 0; ?>
         <?php foreach ($readerPages as $p) { ?>
             <?php if ($p - $readerPrevious > 1) { ?>
-            <li><span class="lx-reader-gap">&hellip;</span></li>
+            <li><span class="lx-pagination-gap" aria-hidden="true">&hellip;</span></li>
             <?php } ?>
             <li>
-                <?php if ($p === $readerCurrent) { ?>
-                <span class="lx-reader-page is-current" aria-current="page"><?= (int) $p ?></span>
-                <?php } else { ?>
-                <a class="lx-reader-page" href="<?= e($readerPageUrl($p)) ?>"><?= (int) $p ?></a>
-                <?php } ?>
+                <a href="<?= e($readerPageUrl($p)) ?>"
+                   <?= $p === $readerCurrent ? 'aria-current="page"' : '' ?>>
+                    <?= (int) $p ?>
+                </a>
             </li>
             <?php $readerPrevious = $p; ?>
+        <?php } ?>
+
+        <?php if ($readerCurrent < $readerTotalPages) { ?>
+        <li>
+            <a href="<?= e($readerPageUrl($readerCurrent + 1)) ?>" class="lx-pagination-step" rel="next">
+                <span class="lx-visually-hidden"><?= e($t('reader.paginationNext') ?: 'Next page') ?></span>
+                <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+            </a>
+        </li>
         <?php } ?>
     </ul>
 </nav>

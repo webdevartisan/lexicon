@@ -4,143 +4,182 @@
 
 {% block body %}
 
-    <!-- Hero / banner -->
-    <section id="banner">
-        <div class="content">
-            <header>
-                <h1>{{ t('explore.heroTitle') }}</h1>
-                <p>{{ t('explore.heroSubtitle') }}</p>
-            </header>
-
-            <form method="get" action="/blogs" class="home-search">
-                <input type="hidden" name="tab" value="{{ tab }}" />
-                <div class="row gtr-50 gtr-uniform">
-                    <div class="col-9 col-12-small">
-                        <input
-                            type="text"
-                            name="q"
-                            id="q"
-                            value="{{ searchQuery }}"
-                            placeholder="<?= e($tab === 'posts' ? $t('explore.searchPlaceholderPosts') : $t('explore.searchPlaceholderBlogs')) ?>"
-                        />
-                    </div>
-                    <div class="col-3 col-6-small">
-                        <ul class="actions">
-                            <li>
-                                <button type="submit" class="button primary icon solid fa-search">
-                                    {{ t('explore.searchButton') }}
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                {% if (!empty($searchQuery)): %}
-                    <p class="search-meta">
-                        <strong><?= (int) ($pagination['total'] ?? 0) ?></strong>
-                        {{ t('explore.resultsFor') }}
-                        <strong>"{{ searchQuery }}"</strong>
-                    </p>
-                {% endif %}
-            </form>
-        </div>
-        <span class="image">
-            <img src="/images/DiscoverGreatWritingsIlustration.webp" alt="" />
-        </span>
+    <section class="lx-page-head" aria-labelledby="explore-heading">
+        <h1 id="explore-heading">{{ t('explore.heroTitle') }}</h1>
     </section>
 
-    <?php
-    // Tab links keep the search term; page resets when switching context.
-    $blogsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'blogs', 'q' => $searchQuery]));
-                            $postsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'posts', 'q' => $searchQuery]));
-                            ?>
+    {% if (!empty($featuredCreators)): %}
+        <section class="lx-bleed lx-slider" aria-label="{{ t('explore.featuredTitle') }}" data-slider>
+            <div class="lx-slider-rail" data-slider-rail>
+                {% foreach ($featuredCreators as $creatorBlog): %}
+                <?php
+                $creatorUrl = '/blog/'.rawurlencode($creatorBlog['blog_slug']);
+                $creatorInitial = mb_strtoupper(mb_substr(trim((string) ($creatorBlog['blog_name'] ?? '?')), 0, 1));
+                $creatorPosts = (int) ($creatorBlog['postcount'] ?? 0);
+                $creatorWriters = (int) ($creatorBlog['authorcount'] ?? 1);
+                $creatorBanner = trim((string) ($creatorBlog['banner_path'] ?? ''));
+                // Stored paths are root-relative under /uploads; leave absolute URLs alone.
+                if ($creatorBanner !== '' && !preg_match('#^https?://#i', $creatorBanner) && $creatorBanner[0] !== '/') {
+                    $creatorBanner = '/'.$creatorBanner;
+                }
+                ?>
+                <article class="lx-slide" data-slider-slide>
+                    <div class="lx-slide-card">
+                        <a href="<?= e($creatorUrl) ?>" class="lx-slide-media" tabindex="-1" aria-hidden="true">
+                            {% if creatorBanner %}
+                                <img src="<?= e($creatorBanner) ?>" alt="" loading="lazy" />
+                            {% else %}
+                                <span class="lx-slide-media-fallback" aria-hidden="true"><?= e($creatorInitial) ?></span>
+                            {% endif %}
+                        </a>
+                        <div class="lx-slide-body">
+                            <p class="lx-slide-eyebrow">{{ t('explore.featuredTitle') }}</p>
+                            <h2 class="lx-slide-title"><a href="<?= e($creatorUrl) ?>">{{ creatorBlog.blog_name }}</a></h2>
+                            <p class="lx-slide-meta">
+                                <?= $creatorPosts ?> {{ t('explore.postsLabel') }}
+                                {% if ($creatorWriters > 1): %}
+                                    &middot; <?= $creatorWriters ?> {{ t('explore.writersLabel') }}
+                                {% endif %}
+                            </p>
+                            {% if creatorBlog.description %}
+                                <p class="lx-slide-desc"><?= e(truncate((string) $creatorBlog['description'], 220)) ?></p>
+                            {% endif %}
+                            <a href="<?= e($creatorUrl) ?>" class="lx-btn lx-btn-primary lx-slide-cta">{{ t('explore.visitBlog') }}</a>
+                        </div>
+                    </div>
+                </article>
+                {% endforeach; %}
+            </div>
+            <button type="button" class="lx-slider-nav lx-slider-prev" data-slider-prev aria-label="Previous featured blog">
+                <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="lx-slider-nav lx-slider-next" data-slider-next aria-label="Next featured blog">
+                <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+            </button>
+            <div class="lx-slider-dots" data-slider-dots aria-label="Slide navigation"></div>
+        </section>
+    {% endif %}
 
-    <!-- Tabs -->
-    <div class="explore-tabs" role="tablist">
-        <a href="<?= e($blogsTabUrl) ?>" role="tab" class="explore-tab <?= $tab === 'blogs' ? 'active' : '' ?>"
-           aria-selected="<?= $tab === 'blogs' ? 'true' : 'false' ?>">{{ t('explore.tabBlogs') }}</a>
-        <a href="<?= e($postsTabUrl) ?>" role="tab" class="explore-tab <?= $tab === 'posts' ? 'active' : '' ?>"
-           aria-selected="<?= $tab === 'posts' ? 'true' : 'false' ?>">{{ t('explore.tabPosts') }}</a>
+    <?php
+    $blogsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'blogs', 'q' => $searchQuery]));
+    $postsTabUrl = '/blogs?'.http_build_query(array_filter(['tab' => 'posts', 'q' => $searchQuery]));
+    ?>
+
+    <div class="lx-explore-toolbar">
+        <div class="lx-explore-tabs" role="tablist">
+            <a href="<?= e($blogsTabUrl) ?>" role="tab" class="lx-explore-tab <?= $tab === 'blogs' ? 'active' : '' ?>"
+               aria-selected="<?= $tab === 'blogs' ? 'true' : 'false' ?>">{{ t('explore.tabBlogs') }}</a>
+            <a href="<?= e($postsTabUrl) ?>" role="tab" class="lx-explore-tab <?= $tab === 'posts' ? 'active' : '' ?>"
+               aria-selected="<?= $tab === 'posts' ? 'true' : 'false' ?>">{{ t('explore.tabPosts') }}</a>
+        </div>
+
+        <form method="get" action="/blogs" class="lx-explore-search" role="search" aria-label="{{ t('explore.searchButton') }}">
+            <input type="hidden" name="tab" value="{{ tab }}" />
+            <label class="lx-visually-hidden" for="explore-q">{{ t('explore.searchButton') }}</label>
+            <div class="lx-search-field">
+                <input
+                    type="search"
+                    name="q"
+                    id="explore-q"
+                    value="{{ searchQuery }}"
+                    placeholder="<?= e($tab === 'posts' ? $t('explore.searchPlaceholderPosts') : $t('explore.searchPlaceholderBlogs')) ?>"
+                />
+                <button type="submit" class="lx-search-field-submit" aria-label="{{ t('explore.searchButton') }}">
+                    <span class="fa-solid fa-magnifying-glass" aria-hidden="true"></span>
+                </button>
+            </div>
+        </form>
     </div>
 
+    {% if (!empty($searchQuery)): %}
+        <p class="lx-search-meta" role="status">
+            <strong><?= (int) ($pagination['total'] ?? 0) ?></strong>
+            {{ t('explore.resultsFor') }}
+            <strong>"{{ searchQuery }}"</strong>
+        </p>
+    {% endif %}
+
     {% if ($tab === 'posts'): %}
-    <!-- Latest posts / search results -->
-    <section id="explore-posts">
-        <header class="major">
-            <h2><?= e($searchQuery !== '' ? $t('explore.searchResults') : $t('explore.tabPosts')) ?></h2>
+    <section id="explore-posts" aria-label="{{ t('explore.tabPosts') }}">
+        {% if ($searchQuery !== ''): %}
+        <header class="lx-section-head">
+            <h2>{{ t('explore.searchResults') }}</h2>
         </header>
+        {% endif %}
 
         {% if (empty($items)): %}
             <p>{{ t('explore.noPosts') }}</p>
         {% else %}
-            <div class="posts">
+            <div class="lx-gallery">
                 {% foreach ($items as $post): %}
                 <?php
-                                            $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
-                            $excerpt = ($post['excerpt'] ?? '') !== '' && $post['excerpt'] !== null
-                                ? $post['excerpt']
-                                : truncate(strip_tags($post['content'] ?? ''), 160);
-                            ?>
-                <article>
-                    {% if post.featured_image %}
-                    <a href="<?= e($postUrl) ?>" class="image">
-                        <img src="{{ post.featured_image }}" alt="{{ post.title }}" loading="lazy" />
-                    </a>
-                    {% endif %}
-
-                    <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
-
-                    <p class="meta">
-                        {{ post.blog_name }}
-                        {% if post.published_at %}
-                        &middot;
-                        <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
+                $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+                $rawExcerpt = ($post['excerpt'] ?? '') !== '' && $post['excerpt'] !== null
+                    ? $post['excerpt']
+                    : ($post['content'] ?? '');
+                $excerpt = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $rawExcerpt)));
+                $hasImage = !empty($post['featured_image']);
+                ?>
+                <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
+                    <a href="<?= e($postUrl) ?>" class="lx-gallery-media" tabindex="-1" aria-hidden="true">
+                        {% if post.featured_image %}
+                            <img src="{{ post.featured_image }}" alt="" loading="lazy" />
+                        {% else %}
+                            <span class="lx-gallery-fallback" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim((string) $post['title']), 0, 1))); ?></span>
                         {% endif %}
-                    </p>
-
-                    <p>{{ excerpt }}</p>
-
-                    <ul class="actions">
-                        <li><a href="<?= e($postUrl) ?>" class="button">{{ t('explore.readMore') }}</a></li>
-                    </ul>
+                    </a>
+                    <div class="lx-gallery-body">
+                        <p class="meta">
+                            {{ post.blog_name }}
+                            {% if post.published_at %}
+                                &middot; <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
+                            {% endif %}
+                        </p>
+                        <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
+                        {% if excerpt %}
+                            <p class="lx-gallery-excerpt"><?= e(truncate($excerpt, 160)) ?></p>
+                        {% endif %}
+                    </div>
                 </article>
                 {% endforeach; %}
             </div>
         {% endif %}
     </section>
     {% else %}
-    <!-- Blog directory -->
-    <section id="explore-blogs">
-        <header class="major">
-            <h2><?= e($searchQuery !== '' ? $t('explore.searchResults') : $t('explore.tabBlogs')) ?></h2>
+    <section id="explore-blogs" aria-label="{{ t('explore.tabBlogs') }}">
+        {% if ($searchQuery !== ''): %}
+        <header class="lx-section-head">
+            <h2>{{ t('explore.searchResults') }}</h2>
         </header>
+        {% endif %}
 
         {% if (empty($items)): %}
             <p>{{ t('explore.noBlogs') }}</p>
         {% else %}
-            <div class="blog-cards">
+            <div class="lx-blog-cards">
                 {% foreach ($items as $blog): %}
                 <?php $blogUrl = '/blog/'.rawurlencode($blog['blog_slug']); ?>
-                <article class="blog-card">
+                <article class="lx-blog-card">
                     <h3><a href="<?= e($blogUrl) ?>">{{ blog.blog_name }}</a></h3>
                     <p class="meta">
                         {{ t('explore.byLabel') }} {{ blog.owner_name }}
                         &middot; <?= (int) $blog['post_count'] ?> {{ t('explore.postsLabel') }}
                         {% if ((int) ($blog['author_count'] ?? 0) > 1): %}
-                        &middot; <?= (int) $blog['author_count'] ?> {{ t('explore.writersLabel') }}
+                            &middot; <?= (int) $blog['author_count'] ?> {{ t('explore.writersLabel') }}
                         {% endif %}
                     </p>
                     {% if blog.description %}
-                    <p><?= e(truncate((string) $blog['description'], 180)) ?></p>
+                        <p><?= e(truncate((string) $blog['description'], 180)) ?></p>
                     {% endif %}
-                    <p class="meta">
-                        {% if blog.last_post_at %}
-                        {{ t('explore.lastPostLabel') }}:
-                        <time datetime="<?= e(iso_datetime($blog['last_post_at'] ?? null)) ?>"><?= e(local_datetime($blog['last_post_at'] ?? null, 'M j, Y', blog_timezone((int) ($blog['id'] ?? 0)))) ?></time>
-                        {% endif %}
-                    </p>
-                    <ul class="actions">
-                        <li><a href="<?= e($blogUrl) ?>" class="button">{{ t('explore.visitBlog') }}</a></li>
-                    </ul>
+                    {% if blog.last_post_at %}
+                        <p class="meta">
+                            {{ t('explore.lastPostLabel') }}:
+                            <time datetime="<?= e(iso_datetime($blog['last_post_at'] ?? null)) ?>"><?= e(local_datetime($blog['last_post_at'] ?? null, 'M j, Y', blog_timezone((int) ($blog['id'] ?? 0)))) ?></time>
+                        </p>
+                    {% endif %}
+                    <div class="lx-form-actions lx-blog-card-actions">
+                        <a href="<?= e($blogUrl) ?>" class="lx-btn lx-btn-primary">{{ t('explore.visitBlog') }}</a>
+                    </div>
                 </article>
                 {% endforeach; %}
             </div>
@@ -148,75 +187,64 @@
     </section>
     {% endif %}
 
-    <!-- Windowed pagination shared by both tabs -->
     {% if ((int) ($pagination['totalPages'] ?? 0) > 1): %}
         <?php
         $totalPages = (int) $pagination['totalPages'];
-                            $currentPage = (int) $pagination['currentPage'];
+        $currentPage = (int) $pagination['currentPage'];
 
-                            // Window of pages around the current one; edges always visible.
-                            $window = 2;
-                            $pagesToShow = [1, $totalPages];
-                            for ($p = $currentPage - $window; $p <= $currentPage + $window; $p++) {
-                                if ($p >= 1 && $p <= $totalPages) {
-                                    $pagesToShow[] = $p;
-                                }
-                            }
-                            $pagesToShow = array_unique($pagesToShow);
-                            sort($pagesToShow);
+        $window = 2;
+        $pagesToShow = [1, $totalPages];
+        for ($p = $currentPage - $window; $p <= $currentPage + $window; $p++) {
+            if ($p >= 1 && $p <= $totalPages) {
+                $pagesToShow[] = $p;
+            }
+        }
+        $pagesToShow = array_unique($pagesToShow);
+        sort($pagesToShow);
 
-                            $pageUrl = function (int $p) use ($tab, $searchQuery): string {
-                                return '/blogs?'.http_build_query(array_filter([
-                                    'tab' => $tab,
-                                    'q' => $searchQuery,
-                                    'page' => $p > 1 ? $p : null,
-                                ]));
-                            };
-                            ?>
-        <ul class="pagination" aria-label="{{ t('explore.paginationAria') }}">
-            <?php $previous = 0; ?>
-            {% foreach ($pagesToShow as $p): %}
-                {% if ($p - $previous > 1): %}
-                    <li><span class="pagination-gap">&hellip;</span></li>
+        $pageUrl = function (int $p) use ($tab, $searchQuery): string {
+            return '/blogs?'.http_build_query(array_filter([
+                'tab' => $tab,
+                'q' => $searchQuery,
+                'page' => $p > 1 ? $p : null,
+            ]));
+        };
+        ?>
+        <nav aria-label="{{ t('explore.paginationAria') }}">
+            <ul class="lx-pagination">
+                {% if ($currentPage > 1): %}
+                    <li>
+                        <a href="<?= e($pageUrl($currentPage - 1)) ?>" class="lx-pagination-step" rel="prev">
+                            <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+                            <span class="lx-visually-hidden">Previous page</span>
+                        </a>
+                    </li>
                 {% endif %}
-                <li>
-                    <a href="<?= e($pageUrl($p)) ?>"
-                       class="button small <?= $p === $currentPage ? 'primary' : '' ?>"
-                       <?= $p === $currentPage ? 'aria-current="page"' : '' ?>>
-                        {{ p }}
-                    </a>
-                </li>
-                <?php $previous = $p; ?>
-            {% endforeach; %}
-        </ul>
-    {% endif %}
 
-    <!-- Featured blogs: admin picks only -->
-    {% if (!empty($featuredCreators)): %}
-        <section id="featured-creators">
-            <header class="major">
-                <h2>{{ t('explore.featuredTitle') }}</h2>
-            </header>
-            <div class="features">
-                {% foreach ($featuredCreators as $creatorBlog): %}
-                <?php $creatorUrl = '/blog/'.rawurlencode($creatorBlog['blog_slug']); ?>
-                    <article>
-                        <span class="icon solid fa-user"></span>
-                        <div class="content">
-                            <h3><a href="<?= e($creatorUrl) ?>">{{ creatorBlog.blog_name }}</a></h3>
-                            <p>
-                                {{ t('explore.postsLabel') }}: <?= (int) ($creatorBlog['postcount'] ?? 0) ?>
-                                &middot;
-                                {{ t('explore.writersLabel') }}: <?= (int) ($creatorBlog['authorcount'] ?? 1) ?>
-                            </p>
-                            {% if creatorBlog.description %}
-                            <p><?= e(truncate((string) $creatorBlog['description'], 160)) ?></p>
-                            {% endif %}
-                        </div>
-                    </article>
+                <?php $previous = 0; ?>
+                {% foreach ($pagesToShow as $p): %}
+                    {% if ($p - $previous > 1): %}
+                        <li><span class="lx-pagination-gap" aria-hidden="true">&hellip;</span></li>
+                    {% endif %}
+                    <li>
+                        <a href="<?= e($pageUrl($p)) ?>"
+                           <?= $p === $currentPage ? 'aria-current="page"' : '' ?>>
+                            <?= (int) $p ?>
+                        </a>
+                    </li>
+                    <?php $previous = $p; ?>
                 {% endforeach; %}
-            </div>
-        </section>
+
+                {% if ($currentPage < $totalPages): %}
+                    <li>
+                        <a href="<?= e($pageUrl($currentPage + 1)) ?>" class="lx-pagination-step" rel="next">
+                            <span class="lx-visually-hidden">Next page</span>
+                            <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
     {% endif %}
 
 {% endblock %}

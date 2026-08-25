@@ -108,7 +108,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <?php } ?>
 
       <?php if (!empty($authorBlogs)) { ?>
-        <ul class="lx-profile-tags" aria-label="Publishes on">
+        <ul class="lx-chip" aria-label="Publishes on">
           <?php foreach ($authorBlogs as $blogSlug => $blogName) { ?>
             <li><a href="/blog/<?= e(rawurlencode((string) $blogSlug)); ?>"><?= e($blogName); ?></a></li>
           <?php } ?>
@@ -117,13 +117,13 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
 
       <?php if (!empty($websiteUrl)) { ?>
         <div class="lx-profile-cta">
-          <a href="<?= e($websiteUrl); ?>" class="lx-btn lx-btn--primary"
+          <a href="<?= e($websiteUrl); ?>" class="lx-btn lx-btn-primary"
             target="_blank" rel="noopener noreferrer nofollow">Visit website</a>
         </div>
       <?php } ?>
 
       <?php if (!empty($socialLinks)) { ?>
-        <ul class="lx-profile-social" aria-label="Social links">
+        <ul class="lx-social" aria-label="Social links">
           <?php foreach ($socialLinks as $socialLink) { ?>
             <?php // FontAwesome 6 splits families: brand glyphs need fa-brands, not the solid-default fa.?>
             <?php $iconFamily = $socialLink['iconStyle'] === 'brands' ? 'fa-brands' : 'fa-solid'; ?>
@@ -144,7 +144,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
   <?php // Only creators with public posts get a feed; a reader's profile ends at the card.?>
   <?php if (!empty($posts)) { ?>
   <section id="profile-posts" class="lx-profile-feed" aria-labelledby="profile-posts-heading">
-    <header class="major"><h2 id="profile-posts-heading">Recent posts</h2></header>
+    <header class="lx-section-head"><h2 id="profile-posts-heading">Recent posts</h2></header>
 
       <div class="lx-gallery">
         <?php foreach ($posts as $post) { ?>

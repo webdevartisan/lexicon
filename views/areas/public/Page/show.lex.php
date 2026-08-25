@@ -9,19 +9,19 @@
 {% endblock %}
 
 {% block body %}
-<section>
-    <header class="main">
-        <h1>{{ page.title }}</h1>
+<section aria-labelledby="page-heading">
+    <header class="lx-section-head">
+        <h1 id="page-heading">{{ page.title }}</h1>
     </header>
 
-    <div class="page-content">
+    <div class="lx-page-content">
         {{ page.content|raw }}
     </div>
 
     {% if (!empty($backToGuides)): %}
-    <ul class="actions">
-        <li><a href="/getting-started" class="button">{{ t('pages.backToGuides') }}</a></li>
-    </ul>
+    <div class="lx-form-actions">
+        <a href="/getting-started" class="lx-btn">{{ t('pages.backToGuides') }}</a>
+    </div>
     {% endif %}
 </section>
 {% endblock %}

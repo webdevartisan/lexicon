@@ -28,19 +28,19 @@ $field = function (string $name, string $label, string $type = 'text', string $v
     $invalid = !empty($fieldErrors[$name]);
     $describedBy = $invalid ? $name.'_error' : ($hint !== '' ? $name.'_hint' : '');
     ?>
-    <div class="lx-field<?= $invalid ? ' lx-field--invalid' : '' ?>">
-        <label class="lx-field__label" for="<?= e($name) ?>"><?= e($label) ?></label>
+    <div class="lx-field<?= $invalid ? ' lx-field-invalid' : '' ?>">
+        <label class="lx-field-label" for="<?= e($name) ?>"><?= e($label) ?></label>
         <?php if ($type === 'textarea') { ?>
-        <textarea class="lx-field__input" name="<?= e($name) ?>" id="<?= e($name) ?>" rows="4"
+        <textarea class="lx-field-input" name="<?= e($name) ?>" id="<?= e($name) ?>" rows="4"
                   <?= $invalid ? 'aria-invalid="true"' : '' ?> <?= $describedBy !== '' ? 'aria-describedby="'.e($describedBy).'"' : '' ?>><?= e(old($name) ?? $value) ?></textarea>
         <?php } else { ?>
-        <input class="lx-field__input" type="<?= e($type) ?>" name="<?= e($name) ?>" id="<?= e($name) ?>"
+        <input class="lx-field-input" type="<?= e($type) ?>" name="<?= e($name) ?>" id="<?= e($name) ?>"
                value="<?= e(old($name) ?? $value) ?>"<?= $placeholder !== '' ? ' placeholder="'.e($placeholder).'"' : '' ?>
                <?= $invalid ? 'aria-invalid="true"' : '' ?> <?= $describedBy !== '' ? 'aria-describedby="'.e($describedBy).'"' : '' ?>>
         <?php } ?>
-        <?php if ($hint !== '') { ?><p class="lx-field__hint" id="<?= e($name) ?>_hint"><?= e($hint) ?></p><?php } ?>
+        <?php if ($hint !== '') { ?><p class="lx-field-hint" id="<?= e($name) ?>_hint"><?= e($hint) ?></p><?php } ?>
         <?php foreach ($fieldErrors[$name] ?? [] as $message) { ?>
-        <p class="lx-field__error" id="<?= e($name) ?>_error"><?= e($message) ?></p>
+        <p class="lx-field-error" id="<?= e($name) ?>_error"><?= e($message) ?></p>
         <?php } ?>
     </div>
 <?php };
@@ -92,8 +92,8 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             </div>
 
             <div class="lx-account-actions">
-                <button type="reset" class="lx-btn lx-btn--subtle"><?= e($t('account.common.reset')) ?></button>
-                <button type="submit" class="lx-btn lx-btn--primary"><?= e($t('account.profile.save')) ?></button>
+                <button type="reset" class="lx-btn lx-btn-subtle"><?= e($t('account.common.reset')) ?></button>
+                <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('account.profile.save')) ?></button>
             </div>
         </form>
 
@@ -103,7 +103,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 $hasSource = !empty($user['avatar_source_url']);
 $isPublic = !empty($user['is_public']) && $slug !== '';
 ?>
-            <section class="lx-card lx-card--avatar">
+            <section class="lx-card lx-card-avatar">
                 <h2 class="lx-card-title"><?= e($t('account.profile.avatarHeading')) ?></h2>
 
                 <div class="lx-avatar" id="avatar-box">
@@ -138,7 +138,7 @@ $isPublic = !empty($user['is_public']) && $slug !== '';
                             <span class="lx-visually-hidden"><?= e($t('account.profile.recropAvatar')) ?></span>
                         </button>
 
-                        <button type="button" id="remove-avatar-btn" class="lx-icon-btn lx-icon-btn--danger"
+                        <button type="button" id="remove-avatar-btn" class="lx-icon-btn lx-icon-btn-danger"
                                 data-confirm-open="confirm-remove-avatar"
                                 title="<?= e($t('account.profile.removeAvatar')) ?>" <?= $hasAvatar ? '' : 'hidden' ?>>
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -156,7 +156,7 @@ $isPublic = !empty($user['is_public']) && $slug !== '';
                 </form>
 
                 <?php foreach ($fieldErrors['avatar'] ?? [] as $message) { ?>
-                <p class="lx-field__error"><?= e($message) ?></p>
+                <p class="lx-field-error"><?= e($message) ?></p>
                 <?php } ?>
             </section>
 
@@ -175,24 +175,24 @@ $isPublic = !empty($user['is_public']) && $slug !== '';
                         $memberSince = date('M Y', strtotime((string) $user['created_at']));
                         ?>
                     <div class="lx-stat-item">
-                        <dd class="lx-stat-num lx-stat-num--sm"><?= e($memberSince) ?></dd>
+                        <dd class="lx-stat-num lx-stat-num-sm"><?= e($memberSince) ?></dd>
                         <dt class="lx-stat-label"><?= e($t('account.profile.memberSince')) ?></dt>
                     </div>
                     <?php } ?>
                 </dl>
             </section>
 
-            <section class="lx-card lx-card--public">
+            <section class="lx-card lx-card-public">
                 <div class="lx-pubcard-head">
                     <h2 class="lx-card-title"><?= e($t('account.profile.publicPageHeading')) ?></h2>
-                    <span class="lx-badge <?= $isPublic ? 'lx-badge--on' : 'lx-badge--off' ?>">
+                    <span class="lx-badge <?= $isPublic ? 'lx-badge-on' : 'lx-badge-off' ?>">
                         <?= e($isPublic ? $t('account.profile.statusLive') : $t('account.profile.statusHidden')) ?>
                     </span>
                 </div>
 
                 <?php if ($slug !== '') { ?>
                 <p class="lx-pubcard-url"><?= e(rtrim((string) ($profileUrlPrefix ?? ''), '/').'/'.$slug) ?></p>
-                <a class="lx-btn lx-btn--primary lx-btn--fit" href="<?= e(lurl('/profile/'.$slug)) ?>" target="_blank" rel="noopener">
+                <a class="lx-btn lx-btn-primary lx-btn-fit" href="<?= e(lurl('/profile/'.$slug)) ?>" target="_blank" rel="noopener">
                     <?= e($t('account.profile.viewPublicProfile')) ?>
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
                 </a>
@@ -215,8 +215,8 @@ $isPublic = !empty($user['is_public']) && $slug !== '';
             <img id="avatar-cropper-image" alt="">
         </div>
         <div class="lx-modal-actions">
-            <button type="button" class="lx-btn lx-btn--subtle" data-close><?= e($t('account.profile.cropCancel')) ?></button>
-            <button type="button" id="avatar-cropper-apply" class="lx-btn lx-btn--primary"><?= e($t('account.profile.cropApply')) ?></button>
+            <button type="button" class="lx-btn lx-btn-subtle" data-close><?= e($t('account.profile.cropCancel')) ?></button>
+            <button type="button" id="avatar-cropper-apply" class="lx-btn lx-btn-primary"><?= e($t('account.profile.cropApply')) ?></button>
         </div>
     </div>
 </div>

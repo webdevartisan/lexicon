@@ -17,7 +17,7 @@
     <?php if (empty($canDelete)) { ?>
     <div class="lx-danger-zone">
         <p><strong><?= e($t('account.delete.cannotDeleteStrong')) ?></strong> <?= e($deleteReason ?? '') ?></p>
-        <a class="lx-btn lx-btn--subtle lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
+        <a class="lx-btn lx-btn-subtle lx-btn-fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
     </div>
     <?php } else { ?>
 
@@ -36,12 +36,12 @@
     <form method="post" action="<?= e(lurl('/account/delete')) ?>" id="deleteForm" class="lx-account-form">
         <?= csrf_field() ?>
 
-        <div class="lx-field<?= !empty($fieldErrors['password']) ? ' lx-field--invalid' : '' ?>">
-            <label class="lx-field__label" for="password"><?= e($t('account.delete.confirmPassword')) ?></label>
-            <input class="lx-field__input" type="password" name="password" id="password"
+        <div class="lx-field<?= !empty($fieldErrors['password']) ? ' lx-field-invalid' : '' ?>">
+            <label class="lx-field-label" for="password"><?= e($t('account.delete.confirmPassword')) ?></label>
+            <input class="lx-field-input" type="password" name="password" id="password"
                    autocomplete="current-password" placeholder="<?= e($t('account.delete.confirmPasswordPlaceholder')) ?>"
                    aria-describedby="pw_hint" required>
-            <p class="lx-field__hint" id="pw_hint"><?= e($t('account.delete.confirmPasswordHelp')) ?></p>
+            <p class="lx-field-hint" id="pw_hint"><?= e($t('account.delete.confirmPasswordHelp')) ?></p>
         </div>
 
         <label class="lx-check">
@@ -49,9 +49,9 @@
             <span class="lx-check-title"><?= e($t('account.delete.confirmCheckbox')) ?></span>
         </label>
 
-        <div class="lx-account-actions lx-account-actions--split">
-            <a class="lx-btn lx-btn--subtle lx-btn--fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
-            <button type="submit" class="lx-btn lx-btn--danger"><?= e($t('account.delete.submit')) ?></button>
+        <div class="lx-account-actions lx-account-actions-split">
+            <a class="lx-btn lx-btn-subtle lx-btn-fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
+            <button type="submit" class="lx-btn lx-btn-danger"><?= e($t('account.delete.submit')) ?></button>
         </div>
     </form>
     <?php } ?>

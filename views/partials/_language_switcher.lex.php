@@ -31,18 +31,18 @@ $localPath = static function (string $href): string {
 <?php if (count($alternates) > 1) { ?>
 <div class="lang-switcher" data-lang-switcher>
     <button type="button"
-            class="lang-switcher__toggle"
+            class="lang-switcher-toggle"
             aria-haspopup="true"
             aria-expanded="false"
             data-lang-toggle>
-        <span class="lang-switcher__current"><?= e(strtoupper($currentCode)) ?></span>
-        <span class="lang-switcher__caret" aria-hidden="true">&#9662;</span>
+        <span class="lang-switcher-current"><?= e(strtoupper($currentCode)) ?></span>
+        <span class="lang-switcher-caret" aria-hidden="true">&#9662;</span>
     </button>
 
     <?php if ($isSignedIn) { ?>
-    <div class="lang-switcher__menu platform-menu-list" data-lang-menu>
+    <div class="lang-switcher-menu platform-menu-list" data-lang-menu>
         <?php foreach ($alternates as $alt) { ?>
-        <form method="post" action="/language" class="lang-switcher__item">
+        <form method="post" action="/language" class="lang-switcher-item">
             <?= csrf_field() ?>
             <input type="hidden" name="locale" value="<?= e($alt['hreflang']) ?>">
             <input type="hidden" name="return_to" value="<?= e($localPath($alt['href'])) ?>">
@@ -55,9 +55,9 @@ $localPath = static function (string $href): string {
         <?php } ?>
     </div>
     <?php } else { ?>
-    <ul class="lang-switcher__menu platform-menu-list" data-lang-menu>
+    <ul class="lang-switcher-menu platform-menu-list" data-lang-menu>
         <?php foreach ($alternates as $alt) { ?>
-        <li class="lang-switcher__item">
+        <li class="lang-switcher-item">
             <a href="<?= e($alt['href']) ?>"
                hreflang="<?= e($alt['hreflang']) ?>"
                lang="<?= e($alt['hreflang']) ?>"

@@ -9,11 +9,3 @@ $currentConsent = $consentService->current();
 
 <link rel="stylesheet" href="/assets/css/consent.css">
 <script defer src="/assets/js/consent.js"></script>
-
-<?php if ($consentService->allows('analytics')) { ?>
-  <!-- <script defer src="/assets/js/analytics.js"></script> -->
-<?php } ?>
-
-<?php if ($consentService->allows('marketing')) { ?>
-  <!-- <script defer src="/assets/js/marketing.js"></script> -->
-<?php } ?>

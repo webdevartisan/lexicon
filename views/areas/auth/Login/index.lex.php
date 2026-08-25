@@ -32,8 +32,8 @@ $email = $email ?? '';
     <?php } ?>
 
     <div class="lx-field">
-        <label class="lx-field__label" for="email"><?= e($t('auth.emailLabel')) ?></label>
-        <input class="lx-field__input"
+        <label class="lx-field-label" for="email"><?= e($t('auth.emailLabel')) ?></label>
+        <input class="lx-field-input"
                type="email"
                name="email"
                id="email"
@@ -46,9 +46,9 @@ $email = $email ?? '';
     </div>
 
     <div class="lx-field">
-        <label class="lx-field__label" for="password"><?= e($t('auth.passwordLabel')) ?></label>
-        <div class="lx-field__control">
-            <input class="lx-field__input"
+        <label class="lx-field-label" for="password"><?= e($t('auth.passwordLabel')) ?></label>
+        <div class="lx-field-control">
+            <input class="lx-field-input"
                    type="password"
                    name="password"
                    id="password"
@@ -56,7 +56,7 @@ $email = $email ?? '';
                    required
                    <?= $email !== '' ? 'autofocus' : '' ?>>
             <button type="button"
-                    class="lx-field__toggle"
+                    class="lx-field-toggle"
                     data-password-toggle="password"
                     data-label-show="<?= e($t('auth.show')) ?>"
                     data-label-hide="<?= e($t('auth.hide')) ?>"
