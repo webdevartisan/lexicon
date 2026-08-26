@@ -333,6 +333,25 @@
     });
 })();
 
+/* Explore toolbar auto-scroll: when the page URL carries a filter, tab or
+   page-change query string, jump the viewport to the toolbar on load so the
+   user lands on their filter change rather than the hero slider above it.
+   Runs only on pages that actually have the toolbar. */
+(function () {
+    var toolbar = document.querySelector('.lx-explore-toolbar');
+    if (!toolbar) return;
+
+    var params = new URLSearchParams(window.location.search);
+    var triggered = params.has('tab') || params.has('q') || params.has('page');
+    if (!triggered) return;
+
+    // rAF so layout is settled before we measure — otherwise the initial
+    // scroll can land short on Chrome when web fonts shift the toolbar.
+    window.requestAnimationFrame(function () {
+        toolbar.scrollIntoView({ behavior: 'auto', block: 'start' });
+    });
+})();
+
 /* Featured-blogs slider: native scroll-snap under the hood, arrows step one
    card, dots reflect the real position. Seamless loop is faked by cloning
    the first and last slides at the opposite ends — when the user (or autoplay)
