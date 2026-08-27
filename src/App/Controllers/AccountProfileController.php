@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Helpers\LinksHelper;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
 use App\Services\DisplayNameService;
@@ -28,6 +29,7 @@ final class AccountProfileController extends AppController
         private UserModel $users,
         private UserProfileModel $profiles,
         private UserSocialLinkModel $socials,
+        private UserPreferencesModel $prefs,
         private UploadService $uploader,
         private PublicCacheInvalidator $cacheInvalidator,
         private DisplayNameService $displayNames
@@ -125,16 +127,9 @@ final class AccountProfileController extends AppController
 
         if (!empty($profileData)) {
             $this->profiles->upsert($userId, $profileData);
-
-            // Author links are baked into cached blog pages, so a visibility or
-            // slug change has to clear them or the stale links outlive the TTL.
-            // The old slug is purged, since that's the URL already cached.
-            if (array_key_exists('is_public', $profileData) || array_key_exists('slug', $profileData)) {
-                $this->cacheInvalidator->purgeAuthorSurfaces(
-                    is_string($currentSlug) && $currentSlug !== '' ? $currentSlug : null
-                );
-            }
         }
+
+        $identityMoved = array_key_exists('is_public', $profileData) || array_key_exists('slug', $profileData);
 
         $socialLinks = $this->socials->getKeyValueArrayLinks($userId);
         $socialData = changedFields([
@@ -151,8 +146,22 @@ final class AccountProfileController extends AppController
             }
         }
 
+        // Must be written before the recompute below, which re-reads it.
+        $this->prefs->upsert($userId, [
+            'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'username',
+        ]);
+
         // a name change moves the cached display name when the preference is 'name'
-        $this->displayNames->refreshCached($userId);
+        $newDisplayName = $this->displayNames->refreshCached($userId);
+
+        // Author names and links are baked into cached blog pages, so any of
+        // them moving has to clear those or the stale copy outlives the TTL.
+        // The OLD slug is purged, since that is the URL already cached.
+        if ($identityMoved || $newDisplayName !== ($user['display_name_cached'] ?? null)) {
+            $this->cacheInvalidator->purgeAuthorSurfaces(
+                is_string($currentSlug) && $currentSlug !== '' ? $currentSlug : null
+            );
+        }
 
         $this->flash('success', chrome_translate('account.flash.profileSaved'));
 
@@ -356,8 +365,17 @@ final class AccountProfileController extends AppController
 
         $profile = $this->profiles->findOrCreate($userId);
         $links = $this->socials->listByUser($userId);
+        $preferences = $this->prefs->findOrCreate($userId) ?: [];
 
         $merged = array_merge($user, $profile ?: [], LinksHelper::linksToFlatInputs($links));
+
+        // The handle readers see. Same rule as CommentModel's @mention join:
+        // the profile slug leads, the username stands in until one is chosen.
+        $merged['handle'] = ($merged['slug'] ?? '') !== ''
+            ? (string) $merged['slug']
+            : (string) ($merged['username'] ?? '');
+
+        $merged['show_name'] = ($preferences['display_name_preference'] ?? 'username') === 'name';
 
         $merged['avatar'] = $merged['avatar_url'] ?? null;
         $merged['initials'] = $this->computeInitials(

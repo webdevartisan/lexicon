@@ -64,6 +64,22 @@ $field = function (string $name, string $label, string $type = 'text', string $v
                 <?php $field('last_name', $t('account.profile.lastName'), 'text', (string) ($user['last_name'] ?? '')); ?>
             </div>
 
+            <div class="lx-readout lx-readout-plain">
+                <div class="lx-readout-text">
+                    <span class="lx-field-label" id="handle-label"><?= e($t('account.profile.handle')) ?></span>
+                    <p class="lx-readout-value" aria-labelledby="handle-label">@<?= e($user['handle']) ?></p>
+                </div>
+            </div>
+            <p class="lx-field-hint"><?= e($t($slug !== '' ? 'account.profile.handleHelp' : 'account.profile.handleFromUsername')) ?></p>
+
+            <label class="lx-check">
+                <input type="checkbox" name="show_name" value="1" <?= $user['show_name'] ? 'checked' : '' ?>>
+                <span>
+                    <span class="lx-check-title"><?= e($t('account.profile.showName')) ?></span>
+                    <span class="lx-check-help"><?= e($t('account.profile.showNameHelp')) ?></span>
+                </span>
+            </label>
+
             <h2 class="lx-account-section"><?= e($t('account.profile.aboutSection')) ?></h2>
             <div class="lx-grid-2">
                 <?php $field('occupation', $t('account.profile.occupation'), 'text', (string) ($user['occupation'] ?? ''), $t('account.profile.occupationPlaceholder')); ?>
@@ -92,7 +108,6 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             </div>
 
             <div class="lx-account-actions">
-                <button type="reset" class="lx-btn lx-btn-subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('account.profile.save')) ?></button>
             </div>
         </form>

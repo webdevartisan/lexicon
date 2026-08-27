@@ -47,7 +47,6 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
             </div>
 
             <div class="lx-account-actions">
-                <button type="reset" class="lx-btn lx-btn-subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('account.security.save')) ?></button>
             </div>
         </form>
