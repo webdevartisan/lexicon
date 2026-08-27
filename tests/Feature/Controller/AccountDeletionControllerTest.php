@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 use App\Controllers\AccountDeletionController;
 use App\Models\UserModel;
+use App\Services\PasswordConfirmRateLimiter;
 use App\Services\UserDeletionService;
+use Framework\Helpers\RateLimiter;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\ThrottleTestHelper;
 
 /**
  * Deletion moved to the front. The UserDeletionService is a mock so the REAL
@@ -40,7 +43,9 @@ beforeEach(function () {
 
     $this->deletion = Mockery::mock(UserDeletionService::class);
 
-    $this->controller = new AccountDeletionController($this->users, $this->deletion);
+    $this->throttle = new PasswordConfirmRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()));
+
+    $this->controller = new AccountDeletionController($this->users, $this->deletion, $this->throttle);
 
     $this->viewer = new class() implements TemplateViewerInterface
     {

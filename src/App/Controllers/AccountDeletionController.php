@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Gate;
 use App\Models\UserModel;
+use App\Services\PasswordConfirmRateLimiter;
 use App\Services\UserDeletionService;
 use Exception;
 use Framework\Core\Response;
@@ -22,7 +23,8 @@ final class AccountDeletionController extends AppController
 {
     public function __construct(
         private UserModel $users,
-        private UserDeletionService $deletionService
+        private UserDeletionService $deletionService,
+        private PasswordConfirmRateLimiter $passwordThrottle
     ) {}
 
     /**
@@ -78,15 +80,27 @@ final class AccountDeletionController extends AppController
             return $this->redirect(lurl('/account/preferences'));
         }
 
+        // Throttled like every other password confirmation here: without a limit
+        // this form is an unlimited oracle for guessing the password of whichever
+        // account a stolen session belongs to.
+        if ($this->passwordThrottle->tooManyAttempts($userId)) {
+            $this->flash('error', chrome_translate('account.flash.deletionThrottled'));
+
+            return $this->redirect(lurl('/account/preferences'));
+        }
+
         // Require password confirmation. Read through postParam(), the convention
         // used everywhere else, rather than the raw request array.
         $password = (string) $this->request->postParam('password');
 
         if (!$this->users->verifyPassword($userId, $password)) {
+            $this->passwordThrottle->hit($userId);
             $this->flash('error', chrome_translate('account.flash.deletionCancelled'));
 
             return $this->redirect(lurl('/account/preferences'));
         }
+
+        $this->passwordThrottle->clear($userId);
 
         $deletionCheck = $this->deletionService->canDeleteUser($userId);
 

@@ -17,7 +17,7 @@
     <?php if (empty($canDelete)) { ?>
     <div class="lx-danger-zone">
         <p><strong><?= e($t('account.delete.cannotDeleteStrong')) ?></strong> <?= e($deleteReason ?? '') ?></p>
-        <a class="lx-btn lx-btn-subtle lx-btn-fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
+        <a class="lx-btn lx-btn-subtle" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
     </div>
     <?php } else { ?>
 
@@ -50,7 +50,7 @@
         </label>
 
         <div class="lx-account-actions lx-account-actions-split">
-            <a class="lx-btn lx-btn-subtle lx-btn-fit" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
+            <a class="lx-btn lx-btn-subtle" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.cancel')) ?></a>
             <button type="submit" class="lx-btn lx-btn-danger"><?= e($t('account.delete.submit')) ?></button>
         </div>
     </form>
