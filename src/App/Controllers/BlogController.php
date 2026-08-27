@@ -112,53 +112,6 @@ class BlogController extends AppController
         return $this->translations->overlay($posts, $viewerLocale);
     }
 
-    /**
-     * Explore page: a blog directory first, latest posts second.
-     *
-     * Two tabs share one search box. The featured section shows only blogs
-     * an administrator flagged, so nobody can spam their way onto it.
-     */
-    public function index(): Response
-    {
-        $tab = $this->request->get['tab'] ?? 'blogs';
-        if (!in_array($tab, ['blogs', 'posts'], true)) {
-            $tab = 'blogs';
-        }
-
-        $searchQuery = trim($this->request->get['q'] ?? '');
-        $page = max(1, (int) ($this->request->get['page'] ?? 1));
-
-        if ($tab === 'posts') {
-            $postsData = $searchQuery !== ''
-                ? $this->postModel->searchPublishedPosts($searchQuery, $page, 8)
-                : $this->postModel->getRecentPublishedWithPagination($page, 8);
-
-            $items = $postsData['data'];
-            $pagination = [
-                'totalPages' => $postsData['totalPages'],
-                'currentPage' => $postsData['currentPage'],
-                'total' => $postsData['totalPosts'],
-            ];
-        } else {
-            $blogsData = $this->model->getDirectoryWithPagination($page, 12, $searchQuery);
-
-            $items = $blogsData['data'];
-            $pagination = [
-                'totalPages' => $blogsData['totalPages'],
-                'currentPage' => $blogsData['currentPage'],
-                'total' => $blogsData['totalBlogs'],
-            ];
-        }
-
-        return $this->view([
-            'tab' => $tab,
-            'items' => $items,
-            'pagination' => $pagination,
-            'searchQuery' => $searchQuery,
-            'featuredCreators' => $this->model->getFeaturedCreators(20),
-        ]);
-    }
-
     public function showBlog(string $blogSlug): Response
     {
         $ctx = $this->loadBlogContext($blogSlug);

@@ -104,7 +104,7 @@ return [
         '/' => 300,
         '/home' => 300,
 
-        '/blogs' => 1800,
+        '/discover' => 1800,
 
         '/about' => 3600,
         '/contact' => 0,          // GET page may contain CSRF form; safest uncached
@@ -139,7 +139,7 @@ return [
      * Format: 'route' => ['param1', 'param2']
      */
     'query_whitelist' => [
-        '/blogs' => ['page', 'q'],
+        '/discover' => ['page', 'q', 'tab'],
         '/profile/*' => [],
 
         '/getting-started/*' => [],

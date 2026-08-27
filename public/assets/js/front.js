@@ -333,37 +333,45 @@
     });
 })();
 
-/* Explore toolbar auto-scroll: when the page URL carries a filter, tab or
-   page-change query string, jump the viewport to the toolbar on load so the
-   user lands on their filter change rather than the hero slider above it.
-   Runs only on pages that actually have the toolbar. */
 (function () {
-    var toolbar = document.querySelector('.lx-explore-toolbar');
-    if (!toolbar) return;
+    var target = document.querySelector('.lx-explore-head') || document.querySelector('.lx-explore-toolbar');
+    if (!target) return;
 
     var params = new URLSearchParams(window.location.search);
-    var triggered = params.has('tab') || params.has('q') || params.has('page');
-    if (!triggered) return;
+    if (!params.has('tab') && !params.has('q') && !params.has('page')) return;
 
-    // rAF so layout is settled before we measure — otherwise the initial
-    // scroll can land short on Chrome when web fonts shift the toolbar.
-    window.requestAnimationFrame(function () {
-        toolbar.scrollIntoView({ behavior: 'auto', block: 'start' });
+    function scrollToTarget() {
+        var nav = document.querySelector('.lx-nav');
+        var navH = nav ? nav.offsetHeight : 0;
+        var y = target.getBoundingClientRect().top + window.scrollY - navH - 16;
+        // 'instant' beats html { scroll-behavior: smooth }; 'auto' inherits it.
+        window.scrollTo({ top: Math.max(0, y), behavior: 'instant' });
+    }
+
+    window.requestAnimationFrame(scrollToTarget);
+    // Re-run after fonts / images finish loading; late reflow can shift the target.
+    window.addEventListener('load', scrollToTarget);
+})();
+
+(function () {
+    var clear = document.querySelector('.lx-search-field-clear');
+    var input = document.querySelector('.lx-search-field input[type="search"]');
+    if (!input || !clear) return;
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && input.value !== '') {
+            e.preventDefault();
+            window.location.href = clear.getAttribute('href');
+        }
     });
 })();
 
-/* Featured-blogs slider: native scroll-snap under the hood, arrows step one
-   card, dots reflect the real position. Seamless loop is faked by cloning
-   the first and last slides at the opposite ends — when the user (or autoplay)
-   crosses onto a clone, we snap back to the corresponding real slide with no
-   animation, so it feels continuous instead of rewinding across the page.
-   Autoplay pauses on hover/focus/tab-hidden, off entirely under reduced motion. */
 (function () {
     var sliders = document.querySelectorAll('[data-slider]');
     if (!sliders.length) return;
 
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var SMOOTH_MS = 650; // give the smooth scroll enough time to settle before we teleport.
+    var SMOOTH_MS = 650;
 
     sliders.forEach(function (root) {
         var rail = root.querySelector('[data-slider-rail]');
@@ -372,8 +380,7 @@
 
         var realCount = realSlides.length;
 
-        // Clone the last slide before the first, and the first slide after the
-        // last. Rail order becomes: [cloneLast, real0, real1, ..., realN-1, cloneFirst].
+        // Clone the ends so scrolling past the last wraps to the first without a visible rewind.
         var cloneLast = realSlides[realCount - 1].cloneNode(true);
         var cloneFirst = realSlides[0].cloneNode(true);
         cloneLast.setAttribute('aria-hidden', 'true');
@@ -384,13 +391,12 @@
         rail.appendChild(cloneFirst);
 
         var allSlides = Array.prototype.slice.call(rail.querySelectorAll('[data-slider-slide]'));
-        // Real slides now sit at DOM indices 1..realCount. Clones at 0 and realCount+1.
         var realOffset = 1;
 
         var prev = root.querySelector('[data-slider-prev]');
         var next = root.querySelector('[data-slider-next]');
         var dotsWrap = root.querySelector('[data-slider-dots]');
-        var current = 0; // logical index into real slides, 0..realCount-1.
+        var current = 0;
         var isLooping = false;
 
         var dots = [];
@@ -421,17 +427,13 @@
             var railRect = rail.getBoundingClientRect();
             var targetRect = target.getBoundingClientRect();
             var delta = targetRect.left - railRect.left;
-            // 'instant' beats the CSS `scroll-behavior: smooth` we set on the
-            // rail; 'auto' would fall back to it and re-animate the teleport,
-            // which is exactly the "long rewind" we're trying to hide.
+            // 'instant' bypasses the rail's CSS scroll-behavior: smooth so the teleport is invisible.
             rail.scrollTo({
                 left: rail.scrollLeft + delta,
                 behavior: (reducedMotion || instant) ? 'instant' : 'smooth',
             });
         }
 
-        // Direct jump used by dots — no seamless-loop dance because dots are
-        // arbitrary destinations, not next/prev.
         function jumpTo(realIdx) {
             if (isLooping) return;
             current = ((realIdx % realCount) + realCount) % realCount;
@@ -439,15 +441,11 @@
             updateDots();
         }
 
-        // Step one card in either direction; handles the seamless loop when
-        // we cross a real→clone boundary.
         function step(dir) {
             if (isLooping) return;
             var nextReal = current + dir;
 
             if (nextReal >= realCount) {
-                // Animate forward onto the cloned first-slide, then teleport
-                // back to the real first slide once the smooth-scroll settles.
                 isLooping = true;
                 scrollToDom(realCount + realOffset, false);
                 current = 0;
@@ -457,8 +455,6 @@
                     isLooping = false;
                 }, SMOOTH_MS);
             } else if (nextReal < 0) {
-                // Same trick going backward: animate onto the prepended clone
-                // of the last slide, then teleport to the real last slide.
                 isLooping = true;
                 scrollToDom(0, false);
                 current = realCount - 1;

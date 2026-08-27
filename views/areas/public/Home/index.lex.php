@@ -69,7 +69,7 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
 ?>
         <div class="lx-cover-actions">
             <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a>
-            <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.exploreBlogs') }}</a>
+            <a href="<?= e(lurl('/discover')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.discover') }}</a>
         </div>
 
         <p class="lx-cover-note">

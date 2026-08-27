@@ -1617,12 +1617,14 @@ input[type='button']:hover {
     margin-bottom: 1.75rem;
 }
 
+.lx-section-head h1,
 .lx-section-head h2 {
     margin: 0 0 0.4rem;
     font-size: clamp(1.6rem, 3vw, 2.25rem);
     font-weight: 500;
 }
 
+.lx-section-head h1 + p,
 .lx-section-head h2 + p,
 .lx-section-head > p {
     margin: 0;
@@ -1916,6 +1918,36 @@ input[type='button']:hover {
     outline: none;
 }
 
+/* Clear link — only rendered when the input has a value. Sits to the left of
+   the submit magnifier; input padding widens to make room. */
+.lx-search-field.has-value input[type='search'] {
+    padding-inline-end: 4.5rem;
+}
+
+.lx-search-field-clear {
+    position: absolute;
+    inset-inline-end: 2.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.9rem;
+    height: 1.9rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--lx-ink-3);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: background 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-search-field-clear:hover,
+.lx-search-field-clear:focus-visible {
+    background: var(--lx-paper-sunk);
+    color: var(--lx-ink);
+    outline: none;
+    text-decoration: none;
+}
+
 /* Modern minimal pagination: text-first prev/next with plain numbered links,
    underlined current page. Generous spacing so the numbers can breathe. */
 .lx-pagination {
@@ -1978,16 +2010,24 @@ input[type='button']:hover {
 }
 
 /* Explore toolbar: tabs on the left, slim search on the right. Wraps under 640px.
-   Top margin gives the toolbar breathing room from the slider band above. */
+   Top margin gives the toolbar breathing room from the slider band above.
+   scroll-margin-top clears the sticky nav plus a bit of air, so the JS auto-scroll
+   after a tab / search / paginator change doesn't leave the toolbar hidden. */
+.lx-explore-head {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    scroll-margin-top: calc(var(--lx-nav-h) + 1rem);
+}
+
 .lx-explore-toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: end;
     justify-content: space-between;
     gap: 1rem;
-    margin: clamp(2rem, 4vw, 3rem) 0 2rem;
+    margin: 0 0 2rem;
     padding-bottom: 0;
     border-bottom: 1px solid var(--lx-rule);
+    scroll-margin-top: calc(var(--lx-nav-h) + 1rem);
 }
 
 .lx-explore-toolbar > .lx-explore-tabs {

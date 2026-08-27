@@ -19,7 +19,7 @@
         "home": "Home",
         "dashboard": "Dashboard",
         "createBlog": "Create a Blog",
-        "exploreBlogs": "Discover",
+        "discover": "Discover",
         "admin": "Admin",
         "createNewBlog": "Create New Blog",
         "allBlogs": "All Blogs",
@@ -662,13 +662,14 @@
             }
         }
     },
-    "explore": {
+    "discover": {
         "metaTitle": "Discover blogs and writing on Lexicon",
-        "heroTitle": "Discover great writing",
+        "heroTitle": "Great writing",
         "heroSubtitle": "Browse blogs and the latest posts from writers across Lexicon.",
         "searchPlaceholderBlogs": "Search blogs...",
         "searchPlaceholderPosts": "Search posts...",
         "searchButton": "Search",
+        "searchClear": "Clear search",
         "tabBlogs": "Blogs",
         "tabPosts": "Posts",
         "searchResults": "Search results",
@@ -702,7 +703,7 @@
         "emptyReplies": "No replies yet. When someone answers one of your comments it shows up here.",
         "emptyMyComments": "You have not commented yet.",
         "emptySubscriptions": "You are not following any blogs. Following one helps you keep track of that blog's new posts.",
-        "exploreBlogs": "Explore blogs",
+        "discover": "Discover",
         "outOfRange": "There is nothing on this page.",
         "outOfRangeAction": "Back to the first page",
         "remove": "Remove",

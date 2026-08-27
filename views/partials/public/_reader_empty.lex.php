@@ -12,6 +12,6 @@ $readerBase = (string) ($pagination['basePath'] ?? '/saved');
         <a class="lx-btn lx-btn-quiet" href="<?= e(lurl($readerBase)) ?>"><?= e($t('reader.outOfRangeAction')) ?></a>
     <?php } else { ?>
         <p><?= e($readerEmptyMessage ?? '') ?></p>
-        <a class="lx-btn lx-btn-primary" href="<?= e(lurl('/blogs')) ?>"><?= e($t('reader.exploreBlogs')) ?></a>
+        <a class="lx-btn lx-btn-primary" href="<?= e(lurl('/discover')) ?>"><?= e($t('reader.discover')) ?></a>
     <?php } ?>
 </div>

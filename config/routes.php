@@ -49,7 +49,7 @@ $router->add('/consent/withdraw', [
 $router->add('/', ['controller' => 'HomeController',    'action' => 'index', 'method' => 'GET']);
 $router->add('/home', ['controller' => 'HomeController',    'action' => 'index', 'method' => 'GET']);
 
-$router->add('/blogs', ['controller' => 'BlogController',   'action' => 'index', 'method' => 'GET']);
+$router->add('/discover', ['controller' => 'DiscoverController', 'action' => 'index', 'method' => 'GET']);
 
 // Static pages: explicit slugs only, so the pages table can never expose
 // anything that was not deliberately routed.

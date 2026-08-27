@@ -22,7 +22,7 @@ class SitemapController extends AppController
     /**
      * Static paths always present in the sitemap.
      */
-    private const STATIC_PATHS = ['/', '/blogs', '/getting-started', '/about', '/contact', '/privacy', '/terms', '/cookies'];
+    private const STATIC_PATHS = ['/', '/discover', '/getting-started', '/about', '/contact', '/privacy', '/terms', '/cookies'];
 
     public function __construct(
         private PostModel $postModel,
