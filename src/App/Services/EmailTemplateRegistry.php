@@ -61,6 +61,28 @@ class EmailTemplateRegistry
                     'expiresInMinutes' => 60,
                 ],
             ],
+            'email_change_verification' => [
+                'name' => 'Email Change Verification',
+                'description' => 'Sent to the new address to confirm an email change before it takes effect',
+                'group' => 'Account',
+                'class' => 'App\\Mail\\EmailChangeVerificationMail',
+                'sample_data' => [
+                    'newEmail' => 'new@example.com',
+                    'token' => 'SAMPLE_TOKEN_HERE',
+                    'expiresInMinutes' => 60,
+                ],
+            ],
+            'email_changed' => [
+                'name' => 'Email Address Changed',
+                'description' => 'Sent to the previous address after an email change completes',
+                'group' => 'Account',
+                'class' => 'App\\Mail\\EmailChangedMail',
+                'sample_data' => [
+                    'oldEmail' => 'old@example.com',
+                    'newEmail' => 'new@example.com',
+                    'changedAt' => '2026-01-01T12:00:00+00:00',
+                ],
+            ],
 
             // Collaboration and team management
             'blog_invite' => [
