@@ -73,8 +73,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 
             <h2 class="lx-account-section"><?= e($t('account.profile.publicPageSection')) ?></h2>
             <?php
-            // The slug is the @tag as well as the URL, so the hint names the tag it
-            // produces rather than repeating the value in a readout of its own.
+            // The slug is the @tag as well as the URL, so the hint names the tag.
             $field(
                 'public_profile_url',
                 $t('account.profile.publicUrl'),

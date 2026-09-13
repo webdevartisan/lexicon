@@ -15,16 +15,12 @@ use Framework\Core\Response;
 /**
  * Changing the address an account signs in and recovers with.
  *
- * Two gates, because either one alone leaves a hole. The current password
- * proves the person at the keyboard owns the account, which stops a borrowed
- * session from moving the address; the emailed token proves they own the inbox
- * they are moving to, which stops a typo or a hostile address from taking over
- * account recovery. Nothing is written to users.email until the token comes
- * back, so a request that is never confirmed leaves the account exactly as it
- * was.
+ * Two gates, because either alone leaves a hole: the password stops a borrowed
+ * session moving the address, the emailed token stops it moving to an inbox the
+ * requester does not own. users.email is not written until the token comes back.
  *
- * The password check is throttled, or a stolen session would be an unlimited
- * oracle for confirming that password.
+ * The password check is throttled, or a stolen session is an unlimited oracle
+ * for that password.
  */
 final class AccountEmailController extends AppController
 {
@@ -41,8 +37,7 @@ final class AccountEmailController extends AppController
     /**
      * Start a change: verify the password, then mail a token to the new address.
      *
-     * Named requestChange rather than request because BaseController::request()
-     * already exists and returns the Request object.
+     * Not request(): BaseController::request() returns the Request object.
      */
     public function requestChange(): Response
     {
@@ -72,8 +67,7 @@ final class AccountEmailController extends AppController
 
         $newEmail = strtolower(trim((string) $validator->validated()['new_email']));
 
-        // Asking to change to the address already on the account is a no-op, not
-        // an error, and mailing a token for it would be confusing.
+        // A no-op rather than an error, and mailing a token for it would confuse.
         if ($newEmail === strtolower($currentEmail)) {
             return $this->reject(chrome_translate('account.flash.emailChangeSameAddress'));
         }

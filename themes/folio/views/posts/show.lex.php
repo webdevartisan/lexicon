@@ -9,7 +9,7 @@
 <?php
 $title = e($post['title'] ?? 'Untitled');
   $date = e($post['published_at'] ?? '');
-  $author = profile_link($post['author_name'], $post['author_profile_slug']);
+  $author = author_byline($post['author_name'], $post['author_handle'] ?? null, $post['author_profile_slug']);
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;
   $cover = $post['featured_image'] ?? ($post['cover_url'] ?? null);

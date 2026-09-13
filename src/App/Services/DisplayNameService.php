@@ -53,10 +53,6 @@ class DisplayNameService
     /**
      * Resolve the display name for a given preference and name set.
      *
-     * Hiding the name shows the handle, not `users.username`. The two are
-     * different strings whenever someone has chosen a profile slug, and showing
-     * one person as "admin" beside "@theboss" reads as two different people.
-     *
      * @param  string  $preference  Either 'name' or 'username'
      * @param  string  $handle  The public handle, from handle()
      * @return string The resolved name, falling back to the handle when empty
@@ -73,8 +69,8 @@ class DisplayNameService
     }
 
     /**
-     * The one-word handle readers see, matching the @mention join in CommentModel:
-     * the profile slug leads and the username stands in until one is chosen.
+     * The one-word handle readers see: the profile slug, or the username until
+     * one is chosen. Mirrors the @mention join in CommentModel.
      */
     public function handle(?string $slug, string $username): string
     {

@@ -57,6 +57,9 @@ class CommentModel extends AppModel
                         u.username
                     ) AS user_name,
                     NULLIF(up.slug, '') AS author_profile_slug,
+                    -- Ungated, unlike up above: the tag names a person whether or
+                    -- not their profile is reachable; up decides whether it links.
+                    COALESCE(NULLIF(uh.slug, ''), u.username) AS author_handle,
                     up.avatar_url AS author_avatar,
                     COALESCE(
                         pu.display_name_cached,
@@ -79,6 +82,7 @@ class CommentModel extends AppModel
                 FROM {$this->getTable()} c
                 LEFT JOIN users u ON c.user_id = u.id
                 LEFT JOIN user_profiles up ON up.user_id = c.user_id AND up.is_public = 1
+                LEFT JOIN user_profiles uh ON uh.user_id = c.user_id
                 LEFT JOIN {$this->getTable()} parent
                     ON parent.id = COALESCE(c.reply_to_comment_id, c.parent_comment_id)
                 -- The deleted check sits on the user join, not the comment one:

@@ -210,6 +210,24 @@ class UserProfileModel extends AppModel
     }
 
     /**
+     * The slug behind someone's @tag, whether or not their profile is reachable.
+     *
+     * Ungated, unlike publicSlugFor(): a tag names a person the same way on every
+     * surface. Whether it becomes a link is publicSlugFor()'s question.
+     *
+     * @param  int  $userId  User ID to look up
+     * @return string|null Slug when one is set, null otherwise
+     */
+    public function slugFor(int $userId): ?string
+    {
+        $sql = 'SELECT slug FROM user_profiles WHERE user_id = ? LIMIT 1';
+
+        $slug = $this->database->query($sql, [$userId])->fetchColumn();
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
+    /**
      * Check whether a slug is available for assignment.
      *
      * Validates against reserved slugs table and existing user profiles.

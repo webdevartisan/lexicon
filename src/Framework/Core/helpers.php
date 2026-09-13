@@ -123,6 +123,49 @@ function profile_link(?string $name, ?string $slug, string $class = ''): string
 }
 
 /**
+ * Render someone's byline: their name with their @tag beside it, or the tag alone.
+ *
+ * Which form you get is not a separate flag. `display_name_cached` already equals
+ * the handle for anyone with their name turned off, so a name that IS the handle
+ * prints once instead of as "theboss @theboss".
+ *
+ * Both parts sit inside one anchor, so tabbing a byline hits one link.
+ *
+ * The return value is already escaped — echo it raw, never through e().
+ *
+ * @param  string|null  $name  Display name, already resolved for the viewer
+ * @param  string|null  $handle  The @tag, without its leading @
+ * @param  string|null  $slug  Public profile slug, or null when not reachable
+ * @param  string  $class  Optional CSS class for the anchor
+ * @return string Escaped HTML
+ */
+function author_byline(?string $name, ?string $handle, ?string $slug, string $class = ''): string
+{
+    $name = trim((string) $name);
+    $handle = trim((string) $handle);
+
+    if ($handle === '') {
+        return profile_link($name, $slug, $class);
+    }
+
+    $tag = '<span class="lx-tag">@'.e($handle).'</span>';
+    $inner = $name === '' || $name === $handle
+        ? $tag
+        : '<span class="lx-byline-name">'.e($name).'</span> '.$tag;
+
+    if ($slug === null || $slug === '') {
+        $attr = $class !== '' ? ' class="'.e($class).'"' : '';
+
+        return '<span'.$attr.'>'.$inner.'</span>';
+    }
+
+    $href = e(lurl('/profile/'.rawurlencode($slug)));
+    $attr = ' class="lx-byline'.($class !== '' ? ' '.e($class) : '').'"';
+
+    return '<a href="'.$href.'"'.$attr.' rel="author">'.$inner.'</a>';
+}
+
+/**
  * Turn a label into a URL-friendly slug.
  *
  * Lowercases, strips accents where possible, and collapses anything that

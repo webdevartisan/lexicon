@@ -104,8 +104,16 @@ beforeEach(function () {
         new \App\Models\PostBookmarkModel($this->db),
         new \App\Models\PostTranslationModel($this->db),
         new \App\Models\UserProfileModel($this->db),
+        new \App\Models\CommentModel($this->db),
+        new \App\Models\CommentVoteModel($this->db),
+        \Framework\Core\App::container()->get(\App\Services\CommentRemovalService::class),
         new \App\Services\ContentLocaleResolver(new \App\Services\LocaleRegistry(ROOT_PATH)),
-        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH))
+        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH)),
+        new \App\Services\DisplayNameService(
+            $this->userModel,
+            new \App\Models\UserPreferencesModel($this->db),
+            new \App\Models\UserProfileModel($this->db)
+        )
     );
 
     // Pre-routing has already stripped the prefix by the time a controller runs,

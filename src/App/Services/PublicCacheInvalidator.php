@@ -65,10 +65,8 @@ class PublicCacheInvalidator
     {
         $this->purgeBlogSurfaces();
 
-        // Comment threads are fragment-cached with the author name rendered
-        // into them, under their own keys rather than a page path, so the page
-        // purge above never reaches them. Without this a renamed author kept
-        // their old name in every thread until the fragment TTL ran out.
+        // Threads cache the rendered author name under their own keys, not a
+        // page path, so the pattern above cannot reach them.
         fragment()->forgetPattern('post-comments:*');
 
         if ($slug !== null && $slug !== '') {

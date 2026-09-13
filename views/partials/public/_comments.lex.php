@@ -147,6 +147,11 @@ $renderComment = static function (array $comment, int $depth) use (
     $removed = !empty($comment['deleted_at']);
     $pinned = !empty($comment['pinned_at']);
     $authorName = (string) ($comment['user_name'] ?? 'Guest');
+    // Everyone in a thread is named the same way: a mix of real names and tags
+    // reads as two kinds of person.
+    $authorHandle = (string) ($comment['author_handle'] ?? '');
+    $authorSeed = $authorHandle !== '' ? $authorHandle : $authorName;
+    $authorLabel = $authorHandle !== '' ? '@'.$authorHandle : $authorName;
     $myVote = (int) ($viewerVotes[$id] ?? 0);
     $byAuthor = $postAuthorId > 0 && (int) ($comment['user_id'] ?? 0) === $postAuthorId;
 
@@ -184,7 +189,7 @@ $renderComment = static function (array $comment, int $depth) use (
     ?>
     <li class="comment-item<?= $depth === 0 ? ' reveal' : '' ?><?= $removed ? ' is-removed' : '' ?>" id="comment-<?= $id ?>">
       <div class="comment-row">
-        <?= $removed ? '<span class="comment-avatar is-ghost"></span>' : $avatar($authorName, $comment['author_avatar'] ?? null) ?>
+        <?= $removed ? '<span class="comment-avatar is-ghost"></span>' : $avatar($authorSeed, $comment['author_avatar'] ?? null) ?>
         <?php if ($hasThread) { ?><span class="comment-thread-rail" aria-hidden="true"></span><?php } ?>
 
         <div class="comment-main">
@@ -204,7 +209,7 @@ $renderComment = static function (array $comment, int $depth) use (
               <?php if ($removed) { ?>
                 <strong class="comment-ghost">[removed]</strong>
               <?php } else { ?>
-                <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorName, $comment['author_profile_slug'] ?? null) ?></strong>
+                <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorLabel, $comment['author_profile_slug'] ?? null) ?></strong>
               <?php } ?>
               <?php if (!empty($comment['created_at'])) { ?>
                 <time><?= e(relative_time($comment['created_at'])) ?></time>
@@ -258,7 +263,7 @@ $renderComment = static function (array $comment, int $depth) use (
                   <input type="hidden" name="post_id" value="<?= $postId ?>">
                   <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
                   <textarea name="content" rows="1" maxlength="2000"
-                            placeholder="Reply to <?= e($authorName) ?>…" required></textarea>
+                            placeholder="Reply to <?= e($authorLabel) ?>…" required></textarea>
                   <?php if ($viewerIsGuest) { ?>
                     <p class="comment-form-note">You'll be asked to log in — your reply is kept.</p>
                   <?php } ?>

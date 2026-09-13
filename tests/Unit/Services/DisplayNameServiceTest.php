@@ -7,12 +7,6 @@ use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\DisplayNameService;
 
-/**
- * One person must not read as two. Hiding the name falls back to the handle,
- * never to `users.username`, because the two are different strings as soon as
- * somebody picks a profile slug - which is how "admin" ended up displayed
- * beside "@theboss".
- */
 beforeEach(function () {
     $this->service = new DisplayNameService(
         Mockery::mock(UserModel::class),
@@ -43,8 +37,6 @@ test('showing the name falls back to the handle when the name is blank', functio
 });
 
 test('hiding the name gives the handle, not the username', function () {
-    // The regression: this used to return the raw username, so a reader saw
-    // "admin" as the name and "@theboss" as the tag on the same comment.
     expect($this->service->compute('username', 'Ada', 'Lovelace', 'theboss'))->toBe('theboss');
 });
 
