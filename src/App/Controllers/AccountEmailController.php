@@ -24,7 +24,6 @@ use Framework\Core\Response;
  */
 final class AccountEmailController extends AppController
 {
-    /** How long a confirmation link stays usable. */
     private const TOKEN_TTL_MINUTES = 60;
 
     public function __construct(

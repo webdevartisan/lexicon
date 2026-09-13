@@ -85,7 +85,7 @@
     --lx-rule-strong: #b9bfb2;
     /* A field's underline is the only thing marking where it is, so it has to
        clear WCAG 1.4.11's 3:1 for UI component boundaries. --lx-rule-strong is
-       1.66:1 on paper, which is fine for a decorative rule and not for this. */
+       too faint for that, being drawn for decorative rules. */
     --lx-field-line: #7d8375;
     --lx-spot: #1b3a6b;
 
@@ -3662,8 +3662,8 @@ label {
 }
 .lx-account-main { display: grid; gap: 2rem; }
 
-/* A value the page states but this form does not edit, with its own action
-   beside it. Wraps to two rows before the address is allowed to truncate. */
+/* A value the page states but does not edit, with its own action beside it.
+   Wraps to two rows before the address is allowed to truncate. */
 .lx-readout {
     display: flex;
     flex-wrap: wrap;
@@ -4001,7 +4001,6 @@ label {
 .lx-btn-danger-outline { color: #8f1d16; background: transparent; border-color: #b57068; }
 .lx-btn-danger-outline:hover { background: #b3261e; border-color: #b3261e; color: #fff; }
 
-/* Inline action sitting beside a value rather than closing a form. */
 .lx-btn-sm { min-height: 2.25rem; padding: 0.35rem 1rem; font-size: 0.82rem; }
 
 .lx-danger-zone {
