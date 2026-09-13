@@ -3624,12 +3624,21 @@ label {
         padding-block-start: 2.25rem;
     }
 }
+/* A section heading has to read as a different kind of thing from the field
+   labels under it. Both being small uppercase grey made "Public page" and
+   "Public profile URL" look like one repeated label. The heading keeps the
+   serif voice at reading size in full ink, over a rule; the labels stay small,
+   uppercase and grey. */
 .lx-account-section {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #5b6472;
-    margin-block: 1.5rem 0.75rem;
+    font-family: var(--lx-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--lx-ink);
+    margin-block: 2.5rem 1.25rem;
+    padding-block-end: 0.5rem;
+    border-block-end: 1px solid var(--lx-rule);
 }
 .lx-account-section:first-of-type { margin-block-start: 0; }
 /* Every account form closes with the same action bar. No top rule: the fields
@@ -3665,9 +3674,6 @@ label {
     border-block-end: 1px solid var(--lx-rule-strong);
 }
 .lx-readout-text { min-inline-size: 0; }
-/* Same row, without the underline that would make a stated value look editable
-   when it sits among real fields. */
-.lx-readout-plain { border-block-end: 0; padding-block-end: 0; }
 .lx-readout-value {
     margin: 0.35rem 0 0;
     font-family: var(--lx-serif);

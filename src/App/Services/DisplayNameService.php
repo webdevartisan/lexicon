@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Models\UserProfileModel;
 
 /**
  * Keeps the denormalized users.display_name_cached column in sync.
@@ -18,7 +19,8 @@ class DisplayNameService
 {
     public function __construct(
         private UserModel $users,
-        private UserPreferencesModel $prefs
+        private UserPreferencesModel $prefs,
+        private UserProfileModel $profiles
     ) {}
 
     /**
@@ -34,12 +36,13 @@ class DisplayNameService
     {
         $user = $this->users->findById($userId) ?: [];
         $pref = $this->prefs->findOrCreate($userId) ?: [];
+        $profile = $this->profiles->findOrCreate($userId) ?: [];
 
         $display = $this->compute(
             $pref['display_name_preference'] ?? 'username',
             $user['first_name'] ?? '',
             $user['last_name'] ?? '',
-            $user['username'] ?? ''
+            $this->handle($profile['slug'] ?? null, $user['username'] ?? '')
         );
 
         $this->users->updateById($userId, ['display_name_cached' => $display]);
@@ -50,17 +53,31 @@ class DisplayNameService
     /**
      * Resolve the display name for a given preference and name set.
      *
+     * Hiding the name shows the handle, not `users.username`. The two are
+     * different strings whenever someone has chosen a profile slug, and showing
+     * one person as "admin" beside "@theboss" reads as two different people.
+     *
      * @param  string  $preference  Either 'name' or 'username'
-     * @return string The resolved name, falling back to username when empty
+     * @param  string  $handle  The public handle, from handle()
+     * @return string The resolved name, falling back to the handle when empty
      */
-    public function compute(string $preference, string $first, string $last, string $username): string
+    public function compute(string $preference, string $first, string $last, string $handle): string
     {
         if ($preference === 'name') {
             $full = trim($first.' '.$last);
 
-            return $full !== '' ? $full : $username;
+            return $full !== '' ? $full : $handle;
         }
 
-        return $username;
+        return $handle;
+    }
+
+    /**
+     * The one-word handle readers see, matching the @mention join in CommentModel:
+     * the profile slug leads and the username stands in until one is chosen.
+     */
+    public function handle(?string $slug, string $username): string
+    {
+        return $slug !== null && $slug !== '' ? $slug : $username;
     }
 }

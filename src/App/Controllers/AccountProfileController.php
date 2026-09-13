@@ -369,11 +369,10 @@ final class AccountProfileController extends AppController
 
         $merged = array_merge($user, $profile ?: [], LinksHelper::linksToFlatInputs($links));
 
-        // The handle readers see. Same rule as CommentModel's @mention join:
-        // the profile slug leads, the username stands in until one is chosen.
-        $merged['handle'] = ($merged['slug'] ?? '') !== ''
-            ? (string) $merged['slug']
-            : (string) ($merged['username'] ?? '');
+        $merged['handle'] = $this->displayNames->handle(
+            $merged['slug'] ?? null,
+            (string) ($merged['username'] ?? '')
+        );
 
         $merged['show_name'] = ($preferences['display_name_preference'] ?? 'username') === 'name';
 
