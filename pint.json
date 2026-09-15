@@ -25,5 +25,8 @@
         "node_modules",
         "storage",
         "bootstrap/cache"
+    ],
+    "notName": [
+        "*.lex.php"
     ]
 }

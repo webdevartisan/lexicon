@@ -1,0 +1,2 @@
+# Pint checks files as they sit on disk and expects LF, so Windows checkouts must not convert to CRLF.
+* text=auto eol=lf
