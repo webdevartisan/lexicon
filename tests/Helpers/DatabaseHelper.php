@@ -30,6 +30,7 @@ class DatabaseHelper
             'account_deletion_requests',
             'data_export_requests',
             'password_resets',
+            'pending_email_changes',
             'notifications',
             'activity_log',
             'user_social_links',

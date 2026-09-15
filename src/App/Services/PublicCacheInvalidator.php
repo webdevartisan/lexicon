@@ -65,6 +65,10 @@ class PublicCacheInvalidator
     {
         $this->purgeBlogSurfaces();
 
+        // Threads cache the rendered author name under their own keys, not a
+        // page path, so the pattern above cannot reach them.
+        fragment()->forgetPattern('post-comments:*');
+
         if ($slug !== null && $slug !== '') {
             cache()->deletePattern("*:GET:/profile/{$slug}*");
         }

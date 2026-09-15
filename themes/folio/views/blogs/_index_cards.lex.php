@@ -12,7 +12,7 @@ foreach (($cards ?? []) as $i => $post) {
     $cat = trim((string) ($post['category'] ?? 'Post'));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $author = profile_link($post['author_name'], $post['author_profile_slug']);
+    $author = author_byline($post['author_name'], $post['author_handle'] ?? null, $post['author_profile_slug']);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
     ?>

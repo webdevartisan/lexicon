@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AccountProfileController;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
 use App\Services\DisplayNameService;
@@ -48,6 +49,7 @@ beforeEach(function () {
         $this->userModel,
         new UserProfileModel($this->db),
         new UserSocialLinkModel($this->db),
+        new UserPreferencesModel($this->db),
         $c->get(UploadService::class),
         $c->get(PublicCacheInvalidator::class),
         $c->get(DisplayNameService::class),

@@ -19,6 +19,7 @@ use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
+use App\Services\DisplayNameService;
 use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
 use Framework\Core\Response;
@@ -41,16 +42,20 @@ class BlogController extends AppController
         private CommentVoteModel $commentVotes,
         private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
-        private HeadI18nBuilder $headI18n
+        private HeadI18nBuilder $headI18n,
+        private DisplayNameService $displayNames
     ) {}
 
-    /** @var array<int, array{name: string, slug: ?string}> Per-request cache, keyed by user id. */
+    /** @var array<int, array{name: string, handle: string, slug: ?string}> Per-request cache, keyed by user id. */
     private array $authorCache = [];
 
     /**
-     * Resolve the display name and public profile slug for a post's author.
+     * Resolve the display name, @tag and public profile slug for a post's author.
      *
-     * @return array{name: string, slug: ?string}
+     * `slug` is null for a private profile, so the byline degrades to plain text
+     * rather than a dead link; `handle` is present either way.
+     *
+     * @return array{name: string, handle: string, slug: ?string}
      */
     private function resolveAuthor(int $authorId): array
     {
@@ -59,9 +64,14 @@ class BlogController extends AppController
         }
 
         $author = $this->userModel->findById($authorId);
+        $handle = $this->displayNames->handle(
+            $this->profiles->slugFor($authorId),
+            (string) ($author['username'] ?? '')
+        );
 
         $resolved = [
             'name' => empty($author['display_name_cached']) ? ($author['username'] ?? '') : $author['display_name_cached'],
+            'handle' => $handle,
             'slug' => $this->profiles->publicSlugFor($authorId),
         ];
 
@@ -82,6 +92,7 @@ class BlogController extends AppController
         foreach ($posts as &$post) {
             $author = $this->resolveAuthor((int) $post['author_id']);
             $post['author_name'] = $author['name'];
+            $post['author_handle'] = $author['handle'];
             $post['author_profile_slug'] = $author['slug'];
         }
         unset($post);
@@ -384,6 +395,7 @@ class BlogController extends AppController
         // Enrich display fields. The byline follows the post's own author, not the blog owner.
         $author = $this->resolveAuthor((int) $post['author_id']);
         $post['author_name'] = $author['name'];
+        $post['author_handle'] = $author['handle'];
         $post['author_profile_slug'] = $author['slug'];
         $post['cover_url'] = $post['cover_url'] ?? null; // TODO update the key
 

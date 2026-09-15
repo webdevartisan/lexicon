@@ -55,7 +55,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
           $title = e($post['title'] ?? 'Untitled');
           $cat = trim((string) ($post['category'] ?? 'Post'));
           $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-          $author = profile_link($post['author_name'], $post['author_profile_slug']);
+          $author = author_byline($post['author_name'], $post['author_handle'] ?? null, $post['author_profile_slug']);
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
           ?>

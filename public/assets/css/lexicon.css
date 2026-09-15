@@ -83,6 +83,10 @@
     --lx-ink-3: #646b76;
     --lx-rule: #d3d7cd;
     --lx-rule-strong: #b9bfb2;
+    /* A field's underline is the only thing marking where it is, so it has to
+       clear WCAG 1.4.11's 3:1 for UI component boundaries. --lx-rule-strong is
+       too faint for that, being drawn for decorative rules. */
+    --lx-field-line: #7d8375;
     --lx-spot: #1b3a6b;
 
     --lx-on-bind: #f0f1ec;
@@ -2476,7 +2480,7 @@ label {
     padding: 0.45rem 0;
     background: transparent;
     border: 0;
-    border-bottom: 1px solid var(--lx-rule-strong);
+    border-bottom: 1px solid var(--lx-field-line);
     border-radius: 0;
     font-family: var(--lx-serif);
     font-size: 1.15rem;
@@ -3620,12 +3624,21 @@ label {
         padding-block-start: 2.25rem;
     }
 }
+/* A section heading has to read as a different kind of thing from the field
+   labels under it. Both being small uppercase grey made "Public page" and
+   "Public profile URL" look like one repeated label. The heading keeps the
+   serif voice at reading size in full ink, over a rule; the labels stay small,
+   uppercase and grey. */
 .lx-account-section {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #5b6472;
-    margin-block: 1.5rem 0.75rem;
+    font-family: var(--lx-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--lx-ink);
+    margin-block: 2.5rem 1.25rem;
+    padding-block-end: 0.5rem;
+    border-block-end: 1px solid var(--lx-rule);
 }
 .lx-account-section:first-of-type { margin-block-start: 0; }
 /* Every account form closes with the same action bar. No top rule: the fields
@@ -3640,6 +3653,89 @@ label {
 }
 .lx-grid-2 { display: grid; gap: 1rem; }
 @media (min-width: 560px) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
+
+/* Pages with no aside span the full row, the way the danger zone already does,
+   so the 900px two-column rule above cannot pull their sections side by side. */
+.lx-account-body > .lx-account-main,
+.lx-account-body > .lx-account-close {
+    grid-column: 1 / -1;
+}
+.lx-account-main { display: grid; gap: 2rem; }
+
+/* A value the page states but does not edit, with its own action beside it.
+   Wraps to two rows before the address is allowed to truncate. */
+.lx-readout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding-block-end: 0.6rem;
+    border-block-end: 1px solid var(--lx-rule-strong);
+}
+.lx-readout-text { min-inline-size: 0; }
+.lx-readout-value {
+    margin: 0.35rem 0 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* Standing state the page is reporting, not an error and not a flash: it
+   survives reloads because it describes a row in the database. */
+.lx-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-start: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-inline-start: 3px solid var(--lx-spot);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-sunk);
+}
+.lx-notice p { margin: 0; font-size: 0.88rem; line-height: 1.5; }
+.lx-notice-warn { border-inline-start-color: var(--lx-danger); }
+
+/* Closing the account is the last thing on the page and reads as an exit, not
+   as an offer: a hairline and a lot of air instead of a tinted panel, and a
+   heading no louder than the section labels above it. */
+.lx-account-close {
+    margin-block-start: 1.5rem;
+    padding-block-start: 1.75rem;
+    border-block-start: 1px solid var(--lx-rule-strong);
+}
+.lx-account-close h2 {
+    margin: 0 0 0.35rem;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+.lx-account-close p { margin: 0 0 1rem; max-inline-size: 44ch; }
+
+/* Native dialog, so focus trapping, Escape and background inertness come from
+   the browser instead of being reimplemented. Shares the panel treatment with
+   the older .lx-modal markup. */
+.lx-dialog {
+    inline-size: 100%;
+    max-inline-size: 30rem;
+    padding: 0;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    box-shadow: 0 24px 60px rgba(13, 21, 38, 0.35);
+}
+.lx-dialog::backdrop { background: rgba(23, 26, 28, 0.6); }
+.lx-dialog-form { padding: 1.5rem; }
+.lx-dialog .lx-modal-text { margin-block-end: 1.5rem; }
+.lx-dialog .lx-field:last-of-type { margin-block-end: 0; }
 
 /* Front dialog, shared by the avatar cropper, avatar-remove and account-delete
    confirmations. Backdrop is fixed (not absolute) so it always covers the
@@ -3792,7 +3888,7 @@ label {
     padding: 0.45rem 1.5rem 0.45rem 0;
     background: transparent;
     border: 0;
-    border-bottom: 1px solid var(--lx-rule-strong);
+    border-bottom: 1px solid var(--lx-field-line);
     border-radius: 0;
     font-family: var(--lx-serif);
     font-size: 1.15rem;
@@ -3898,6 +3994,15 @@ label {
 }
 .lx-btn-danger { color: #fff; background: #b3261e; border-color: #b3261e; }
 .lx-btn-danger:hover { background: #97201a; border-color: #97201a; }
+
+/* Destructive but not advertised: the outline reads as a warning where a solid
+   red fill competes with the page's own primary action. Used for the way out of
+   a settings page, never for the confirmation that actually destroys something. */
+.lx-btn-danger-outline { color: #8f1d16; background: transparent; border-color: #b57068; }
+.lx-btn-danger-outline:hover { background: #b3261e; border-color: #b3261e; color: #fff; }
+
+.lx-btn-sm { min-height: 2.25rem; padding: 0.35rem 1rem; font-size: 0.82rem; }
+
 .lx-danger-zone {
     margin-block-start: 2rem;
     padding: 1.25rem;

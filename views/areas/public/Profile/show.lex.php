@@ -45,6 +45,9 @@ $profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($prof
 
 <?php
     $profileName = $profile->displayName() ?? $profile->username() ?? 'Profile';
+// A name equal to the tag means the name is turned off; printing both repeats it.
+$profileHandle = $profile->slug();
+$showBothNames = $profileName !== $profileHandle;
 $profileAvatar = $profile->avatarUrl();
 $postCount = (int) ($stats['posts'] ?? 0);
 $commentCount = (int) ($stats['comments'] ?? 0);
@@ -76,7 +79,10 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
         <?php } ?>
       </div>
 
-      <h1 id="profile-name"><?= e($profileName); ?></h1>
+      <h1 id="profile-name"><?= e($showBothNames ? $profileName : '@'.$profileHandle); ?></h1>
+      <?php if ($showBothNames) { ?>
+        <p class="lx-profile-tag">@<?= e($profileHandle); ?></p>
+      <?php } ?>
       <?php if (!empty($profile->occupation())) { ?>
         <p class="lx-profile-role"><?= e($profile->occupation()); ?></p>
       <?php } ?>

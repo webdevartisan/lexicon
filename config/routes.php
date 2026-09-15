@@ -194,6 +194,13 @@ $router->group([
     $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/preferences/update', ['controller' => 'AccountPreferencesController', 'action' => 'update', 'method' => 'POST']);
 
+    // The sign-in address is a credential, so it has its own password-gated,
+    // token-confirmed flow rather than being a field in the preferences form.
+    // Confirmation stays behind 'auth' so a leaked link is useless on its own.
+    $r->add('/email', ['controller' => 'AccountEmailController', 'action' => 'requestChange', 'method' => 'POST']);
+    $r->add('/email/cancel', ['controller' => 'AccountEmailController', 'action' => 'cancel', 'method' => 'POST']);
+    $r->add('/email/confirm/{token:[a-f0-9]{64}}', ['controller' => 'AccountEmailController', 'action' => 'confirm', 'method' => 'GET']);
+
     $r->add('/notifications', ['controller' => 'AccountNotificationsController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);
 

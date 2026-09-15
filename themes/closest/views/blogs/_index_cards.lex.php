@@ -15,7 +15,7 @@ foreach (($cards ?? []) as $i => $post) {
     $title = e($post['title'] ?? 'Untitled');
     $cat = trim((string) ($post['category'] ?? 'Field note'));
     $catSlug = (string) ($post['category_slug'] ?? '');
-    $author = profile_link($post['author_name'], $post['author_profile_slug']);
+    $author = author_byline($post['author_name'], $post['author_handle'] ?? null, $post['author_profile_slug']);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
 

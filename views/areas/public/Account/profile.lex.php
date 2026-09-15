@@ -72,7 +72,25 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             <?php $field('bio', $t('account.profile.bio'), 'textarea', (string) ($user['bio'] ?? '')); ?>
 
             <h2 class="lx-account-section"><?= e($t('account.profile.publicPageSection')) ?></h2>
-            <?php $field('public_profile_url', $t('account.profile.publicUrl'), 'text', (string) $slug, $t('account.profile.publicUrlPlaceholder'), $t('account.profile.publicUrlHelp')); ?>
+            <?php
+            // The slug is the @tag as well as the URL, so the hint names the tag.
+            $field(
+                'public_profile_url',
+                $t('account.profile.publicUrl'),
+                'text',
+                (string) $slug,
+                $t('account.profile.publicUrlPlaceholder'),
+                $t('account.profile.publicUrlHelp', ['tag' => $user['handle']])
+            );
+            ?>
+
+            <label class="lx-check">
+                <input type="checkbox" name="show_name" value="1" <?= $user['show_name'] ? 'checked' : '' ?>>
+                <span>
+                    <span class="lx-check-title"><?= e($t('account.profile.showName')) ?></span>
+                    <span class="lx-check-help"><?= e($t('account.profile.showNameHelp', ['tag' => $user['handle']])) ?></span>
+                </span>
+            </label>
 
             <label class="lx-check">
                 <input type="checkbox" name="is_public" value="1" <?= !empty($user['is_public']) ? 'checked' : '' ?>>
@@ -92,7 +110,6 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             </div>
 
             <div class="lx-account-actions">
-                <button type="reset" class="lx-btn lx-btn-subtle"><?= e($t('account.common.reset')) ?></button>
                 <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('account.profile.save')) ?></button>
             </div>
         </form>
