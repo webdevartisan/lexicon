@@ -43,7 +43,7 @@ beforeEach(function () {
 it('returns author data for valid user ID', function () {
     $userId = UserFactory::new($this->userModel)
         ->withAttributes([
-            'username' => 'authoruser',
+            'handle' => 'authoruser',
             'first_name' => 'John',
             'last_name' => 'Doe',
         ])
@@ -52,7 +52,7 @@ it('returns author data for valid user ID', function () {
     $author = $this->postModel->author($userId);
 
     expect($author)->toBeArray()
-        ->and($author['username'])->toBe('authoruser')
+        ->and($author['handle'])->toBe('authoruser')
         ->and($author['first_name'])->toBe('John')
         ->and($author['last_name'])->toBe('Doe');
 });

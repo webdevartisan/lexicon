@@ -9,7 +9,7 @@ class CollaboratorRemovedMail extends Mailable
     public function __construct(
         private string $toEmail,
         private string $blogName,
-        private string $removedByUsername
+        private string $actorHandle
     ) {
         parent::__construct();
     }
@@ -25,7 +25,7 @@ class CollaboratorRemovedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $blog = htmlspecialchars($this->blogName);
-        $by = htmlspecialchars($this->removedByUsername);
+        $by = htmlspecialchars($this->actorHandle);
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
@@ -40,6 +40,6 @@ class CollaboratorRemovedMail extends Mailable
 
     private function buildTextBody(): string
     {
-        return "Your access to {$this->blogName} was revoked by {$this->removedByUsername}.\n";
+        return "Your access to {$this->blogName} was revoked by {$this->actorHandle}.\n";
     }
 }

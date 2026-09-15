@@ -238,7 +238,7 @@ describe('DatabaseValidator Exists Rule', function () {
     /**
      * Test exists rule works with non-id columns.
      *
-     * Support validation against unique columns like email or username.
+     * Support validation against unique columns like email or handle.
      */
     test('exists works with non-id column', function () {
         $email = faker()->unique()->safeEmail();

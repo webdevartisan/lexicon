@@ -17,7 +17,7 @@
 {% block body %}
 <?php
 $fieldErrors = errors();
-$slug = $user['slug'] ?? '';
+$handle = (string) $user['handle'];
 
 /**
  * One field row, reusing the auth pages' lx-field markup. $type covers text /
@@ -73,14 +73,14 @@ $field = function (string $name, string $label, string $type = 'text', string $v
 
             <h2 class="lx-account-section"><?= e($t('account.profile.publicPageSection')) ?></h2>
             <?php
-            // The slug is the @tag as well as the URL, so the hint names the tag.
+            // The handle is the @tag as well as the URL, so the hint names the tag.
             $field(
-                'public_profile_url',
-                $t('account.profile.publicUrl'),
+                'handle',
+                $t('account.profile.tag'),
                 'text',
-                (string) $slug,
-                $t('account.profile.publicUrlPlaceholder'),
-                $t('account.profile.publicUrlHelp', ['tag' => $user['handle']])
+                $handle,
+                $t('account.profile.tagPlaceholder'),
+                $t('account.profile.tagHelp', ['tag' => $handle])
             );
             ?>
 
@@ -88,7 +88,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
                 <input type="checkbox" name="show_name" value="1" <?= $user['show_name'] ? 'checked' : '' ?>>
                 <span>
                     <span class="lx-check-title"><?= e($t('account.profile.showName')) ?></span>
-                    <span class="lx-check-help"><?= e($t('account.profile.showNameHelp', ['tag' => $user['handle']])) ?></span>
+                    <span class="lx-check-help"><?= e($t('account.profile.showNameHelp', ['tag' => $handle])) ?></span>
                 </span>
             </label>
 
@@ -118,7 +118,7 @@ $field = function (string $name, string $label, string $type = 'text', string $v
             <?php
             $hasAvatar = !empty($user['avatar_url']);
 $hasSource = !empty($user['avatar_source_url']);
-$isPublic = !empty($user['is_public']) && $slug !== '';
+$isPublic = !empty($user['is_public']);
 ?>
             <section class="lx-card lx-card-avatar">
                 <h2 class="lx-card-title"><?= e($t('account.profile.avatarHeading')) ?></h2>
@@ -207,17 +207,13 @@ $isPublic = !empty($user['is_public']) && $slug !== '';
                     </span>
                 </div>
 
-                <?php if ($slug !== '') { ?>
-                <p class="lx-pubcard-url"><?= e(rtrim((string) ($profileUrlPrefix ?? ''), '/').'/'.$slug) ?></p>
-                <a class="lx-btn lx-btn-primary lx-btn-fit" href="<?= e(lurl('/profile/'.$slug)) ?>" target="_blank" rel="noopener">
+                <p class="lx-pubcard-url"><?= e(rtrim((string) ($profileUrlPrefix ?? ''), '/').'/'.$handle) ?></p>
+                <a class="lx-btn lx-btn-primary lx-btn-fit" href="<?= e(lurl('/profile/'.$handle)) ?>" target="_blank" rel="noopener">
                     <?= e($t('account.profile.viewPublicProfile')) ?>
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
                 </a>
                 <?php if (!$isPublic) { ?>
                 <p class="lx-muted lx-pubcard-note"><?= e($t('account.profile.makePublicHelp')) ?></p>
-                <?php } ?>
-                <?php } else { ?>
-                <p class="lx-muted"><?= e($t('account.profile.publicPageDisabledHelp')) ?></p>
                 <?php } ?>
             </section>
         </aside>

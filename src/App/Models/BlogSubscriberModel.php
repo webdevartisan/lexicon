@@ -103,7 +103,7 @@ class BlogSubscriberModel extends AppModel
         $offset = ($page - 1) * $perPage;
 
         $rows = $this->database->query(
-            "SELECT s.id, s.email, s.user_id, s.created_at, u.username
+            "SELECT s.id, s.email, s.user_id, s.created_at, u.handle
              FROM {$this->getTable()} s
              LEFT JOIN users u ON u.id = s.user_id
              WHERE {$where}

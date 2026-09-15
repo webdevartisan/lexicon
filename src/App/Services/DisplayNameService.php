@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
-use App\Models\UserProfileModel;
+use RuntimeException;
 
 /**
  * Keeps the denormalized users.display_name_cached column in sync.
@@ -19,8 +19,7 @@ class DisplayNameService
 {
     public function __construct(
         private UserModel $users,
-        private UserPreferencesModel $prefs,
-        private UserProfileModel $profiles
+        private UserPreferencesModel $prefs
     ) {}
 
     /**
@@ -31,18 +30,22 @@ class DisplayNameService
      *
      * @param  int  $userId  User whose cached name should be refreshed
      * @return string The newly persisted display name
+     *
+     * @throws RuntimeException If the user no longer exists
      */
     public function refreshCached(int $userId): string
     {
-        $user = $this->users->findById($userId) ?: [];
-        $pref = $this->prefs->findOrCreate($userId) ?: [];
-        $profile = $this->profiles->findOrCreate($userId) ?: [];
+        $user = $this->users->findById($userId);
+
+        if ($user === null) {
+            throw new RuntimeException("Cannot refresh the display name of missing user {$userId}.");
+        }
 
         $display = $this->compute(
-            $pref['display_name_preference'] ?? 'username',
+            $this->prefs->findOrCreate($userId)['display_name_preference'],
             $user['first_name'] ?? '',
             $user['last_name'] ?? '',
-            $this->handle($profile['slug'] ?? null, $user['username'] ?? '')
+            (string) $user['handle']
         );
 
         $this->users->updateById($userId, ['display_name_cached' => $display]);
@@ -53,8 +56,8 @@ class DisplayNameService
     /**
      * Resolve the display name for a given preference and name set.
      *
-     * @param  string  $preference  Either 'name' or 'username'
-     * @param  string  $handle  The public handle, from handle()
+     * @param  string  $preference  Either 'name' or 'handle'
+     * @param  string  $handle  The account handle
      * @return string The resolved name, falling back to the handle when empty
      */
     public function compute(string $preference, string $first, string $last, string $handle): string
@@ -66,14 +69,5 @@ class DisplayNameService
         }
 
         return $handle;
-    }
-
-    /**
-     * The one-word handle readers see: the profile slug, or the username until
-     * one is chosen. Mirrors the @mention join in CommentModel.
-     */
-    public function handle(?string $slug, string $username): string
-    {
-        return $slug !== null && $slug !== '' ? $slug : $username;
     }
 }

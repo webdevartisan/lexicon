@@ -580,16 +580,16 @@ test('updateById constructs dynamic UPDATE with positional parameters', function
         ->with(
             Mockery::on(function ($sql) {
                 return str_contains($sql, 'UPDATE users')
-                    && str_contains($sql, 'SET email = ?, username = ?')
+                    && str_contains($sql, 'SET email = ?, handle = ?')
                     && str_contains($sql, 'WHERE id = ?');
             }),
-            [$email, $username, $userId]
+            [$email, $handle, $userId]
         )
         ->andReturn(1);
 
     $result = $this->userModel->updateById($userId, [
         'email' => $email,
-        'username' => $username,
+        'handle' => $handle,
     ]);
 
     expect($result)->toBeTrue();

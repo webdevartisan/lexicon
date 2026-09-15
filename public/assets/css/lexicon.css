@@ -2691,13 +2691,6 @@ label {
     color: var(--lx-spot);
 }
 
-.lx-authnote {
-    margin: 1.25rem 0 0;
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--lx-ink-2);
-}
-
 .lx-authlegal {
     padding: 0 clamp(1.25rem, 4vw, 2.75rem) clamp(1.5rem, 4vh, 2.5rem);
     text-align: center;

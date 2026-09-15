@@ -207,7 +207,7 @@ $rows = [
                                 <?= e(truncate((string) $p['title'], 60)) ?>
                             </a>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300">
-                                <?= e((string) ($p['blog_name'] ?? '')) ?> · <?= e((string) ($p['author_username'] ?? '')) ?> · <?= e(local_datetime($p['updated_at'] ?? null, 'M j')) ?>
+                                <?= e((string) ($p['blog_name'] ?? '')) ?> · <?= e((string) $p['author_handle']) ?> · <?= e(local_datetime($p['updated_at'] ?? null, 'M j')) ?>
                             </span>
                         </div>
                         <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $statusBadge[$p['status']] ?? $statusBadge['draft'] ?>">
@@ -235,7 +235,7 @@ $rows = [
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
                             <a href="/admin/users/<?= e((string) $u['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
-                                <?= e((string) $u['username']) ?>
+                                <?= e((string) $u['handle']) ?>
                             </a>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e((string) $u['email']) ?></span>
                         </div>
@@ -263,7 +263,7 @@ $rows = [
                     <?php foreach ($recentActivity as $a) { ?>
                     <div class="py-2 flex items-center justify-between gap-3 text-sm">
                         <div class="min-w-0">
-                            <span class="font-medium text-slate-900 dark:text-zink-50"><?= e((string) ($a['username'] ?? 'system')) ?></span>
+                            <span class="font-medium text-slate-900 dark:text-zink-50"><?= e((string) ($a['handle'] ?? 'system')) ?></span>
                             <span class="text-slate-500 dark:text-zink-300"><?= e((string) $a['action']) ?></span>
                             <span class="text-slate-400 dark:text-zink-300 text-xs"><?= e((string) $a['resource_type']) ?><?= $a['resource_id'] !== null ? ' #'.e((string) $a['resource_id']) : '' ?></span>
                         </div>

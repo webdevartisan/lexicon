@@ -34,7 +34,7 @@ class UserController extends AppController
 
         $sort = TableSort::fromRequest($this->request, [
             'id' => 'u.id',
-            'username' => 'u.username',
+            'handle' => 'u.handle',
             'email' => 'u.email',
             'posts' => 'u.posts_count',
             'active' => 'u.is_active',
@@ -73,7 +73,7 @@ class UserController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $validator = $this->validateOrFail([
-            'username' => 'required|min:3|max:50|unique:users,username',
+            'handle' => 'required|min:3|max:50|unique:users,handle',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'first_name' => 'max:50',
@@ -82,7 +82,7 @@ class UserController extends AppController
         $input = $validator->validated();
 
         $data = [
-            'username' => $input['username'],
+            'handle' => $input['handle'],
             'email' => $input['email'],
             // The model layer stores columns verbatim, so hash here like
             // RegisterController does or the account cannot log in
@@ -104,7 +104,7 @@ class UserController extends AppController
                 'user.created',
                 'user',
                 (int) $userId,
-                ['username' => $data['username'], 'email' => $data['email'], 'roles' => $roles],
+                ['handle' => $data['handle'], 'email' => $data['email'], 'roles' => $roles],
                 $this->request->ip()
             );
 
@@ -142,7 +142,7 @@ class UserController extends AppController
         $user = $this->getUser($id);
 
         $validator = $this->validateOrFail([
-            'username' => 'required|min:3|max:50|unique:users,username,'.(int) $id,
+            'handle' => 'required|min:3|max:50|unique:users,handle,'.(int) $id,
             'email' => 'required|email|unique:users,email,'.(int) $id,
             'password' => 'min:4',
             'first_name' => 'max:50',
@@ -151,7 +151,7 @@ class UserController extends AppController
         $input = $validator->validated();
 
         $data = [
-            'username' => $input['username'],
+            'handle' => $input['handle'],
             'email' => $input['email'],
             'first_name' => $input['first_name'] ?? $user['first_name'],
             'last_name' => $input['last_name'] ?? $user['last_name'],
@@ -233,7 +233,7 @@ class UserController extends AppController
             'user.deleted',
             'user',
             (int) $id,
-            ['username' => $user['username'] ?? null, 'email' => $user['email'] ?? null],
+            ['handle' => $user['handle'], 'email' => $user['email']],
             $this->request->ip()
         );
 

@@ -85,7 +85,7 @@ class BlogController extends AppController
         $sort = TableSort::fromRequest($this->request, [
             'id' => 'b.id',
             'name' => 'b.blog_name',
-            'owner' => 'u.username',
+            'owner' => 'u.handle',
             'posts' => 'post_count',
             'team' => 'author_count',
             'status' => 'b.status',

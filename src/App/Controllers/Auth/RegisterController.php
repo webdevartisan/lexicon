@@ -14,14 +14,14 @@ use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\CommentService;
 use App\Services\InvitationService;
-use App\Services\UsernameValidationService;
+use App\Services\UserHandleValidator;
 use Exception;
 use Framework\Core\Response;
 
 /**
  * Handle user registration.
  *
- * Two fields only (email + password): the username is generated from the
+ * Two fields only (email + password): the handle is generated from the
  * email local part and everything else is progressive profiling later.
  * New accounts start as readers; the creator upgrade happens when they
  * create their first blog.
@@ -42,7 +42,7 @@ final class RegisterController extends AppController
         protected UserModel $users,
         private UserProfileModel $profiles,
         private UserPreferencesModel $user_preferences,
-        private UsernameValidationService $usernameValidator,
+        private UserHandleValidator $userHandleValidator,
         private BlogInvitationModel $invitationModel,
         private InvitationService $invitationService,
         private RoleModel $roles,
@@ -92,11 +92,11 @@ final class RegisterController extends AppController
         $validated = $validator->validated();
         $returnTo = safe_return_to((string) ($this->request->post['return_to'] ?? ''));
 
-        $username = $this->generateUsername($validated['email']);
+        $handle = $this->deriveUserHandleFromEmail($validated['email']);
 
         $userId = $this->users->insert([
             'email' => $validated['email'],
-            'username' => $username,
+            'handle' => $handle,
             'password' => password_hash($validated['password'], PASSWORD_DEFAULT),
         ]);
 
@@ -116,10 +116,7 @@ final class RegisterController extends AppController
             $this->users->insertUserRoles($userId, [(int) $readerRole['id']]);
         }
 
-        // generate and assign a unique slug for the public profile URL
-        $slug = $this->generateUniqueSlug($username, $userId);
         $this->profiles->upsert($userId, [
-            'slug' => $slug,
             'is_public' => 1, // default new profiles to public
         ]);
 
@@ -129,7 +126,7 @@ final class RegisterController extends AppController
         try {
             mail_queue()->enqueue(new WelcomeEmail([
                 'email' => $validated['email'],
-                'username' => $username,
+                'handle' => $handle,
             ]), 'user', $userId);
         } catch (Exception $e) {
             // queueing is a single insert, so this only fires if the database
@@ -198,73 +195,36 @@ final class RegisterController extends AppController
     }
 
     /**
-     * Build a username from the email local part.
+     * Build the account handle from the email local part.
      *
      * Sanitized to the same alphanumeric 3-20 charset the profile editor
-     * enforces. Collisions and reserved-word matches get a short random
-     * suffix; a fully random handle is the terminal fallback because the
-     * fuzzy reserved-word filter can reject every variant of a local part.
+     * enforces. A taken or reserved local part gets a short random suffix.
      *
      * @param  string  $email  The registration email
-     * @return string An available username
+     * @return string An available handle
      */
-    private function generateUsername(string $email): string
+    private function deriveUserHandleFromEmail(string $email): string
     {
         $base = strtolower((string) strstr($email, '@', true));
         $base = (string) preg_replace('/[^a-z0-9]/', '', $base);
         $base = substr($base, 0, 20);
 
-        if (strlen($base) >= 3 && $this->usernameValidator->isAvailable($base)) {
+        if (strlen($base) >= 3 && $this->userHandleValidator->isAvailable($base)) {
             return $base;
         }
 
         $stem = strlen($base) >= 3 ? substr($base, 0, 15) : 'reader';
         for ($i = 0; $i < 10; $i++) {
             $candidate = $stem.bin2hex(random_bytes(2));
-            if ($this->usernameValidator->isAvailable($candidate)) {
+            if ($this->userHandleValidator->isAvailable($candidate)) {
                 return $candidate;
             }
         }
 
         do {
             $candidate = 'u'.bin2hex(random_bytes(4));
-        } while (!$this->usernameValidator->isAvailable($candidate));
+        } while (!$this->userHandleValidator->isAvailable($candidate));
 
         return $candidate;
-    }
-
-    /**
-     * Generate a unique slug for a new user profile.
-     *
-     * prefer using the username as the slug for consistency and simplicity.
-     * If the username is reserved or already used as a slug by another profile,
-     * fall back to generating a unique identifier.
-     *
-     * @param  string  $username  The user's generated username
-     * @param  int  $userId  The newly created user ID
-     * @return string A guaranteed unique slug
-     */
-    private function generateUniqueSlug(string $username, int $userId): string
-    {
-        // first try to use the username directly as the slug
-        if ($this->profiles->isSlugAvailable($username)) {
-            return $username;
-        }
-
-        // If username is taken/reserved, generate a unique fallback
-        // Using a short random suffix keeps URLs reasonably clean
-        $maxAttempts = 10;
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            // create slugs like: username-a3f2, username-b8d1, etc.
-            $candidate = $username.'-'.bin2hex(random_bytes(2));
-
-            if ($this->profiles->isSlugAvailable($candidate)) {
-                return $candidate;
-            }
-        }
-
-        // If all random attempts fail (extremely unlikely), fall back to user ID
-        // This guarantees uniqueness but is less user-friendly
-        return 'user-'.$userId;
     }
 }

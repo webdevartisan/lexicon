@@ -33,7 +33,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
         <?php
         // Reviewer chip — only meaningful while a post is in the review pipeline.
         if ($status === 'pending') {
-            if (!empty($post['reviewer_username'])) {
+            if (!empty($post['reviewer_handle'])) {
                 $claimedAgo = !empty($post['reviewer_assigned_at'])
                     ? local_datetime($post['reviewer_assigned_at'] ?? null, 'M j')
                     : '';
@@ -42,7 +42,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
                           title="Currently under review">
                         {% cache 'lucide:lock:sm' ttl=31536000 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
-                        Reviewed by <?= e($post['reviewer_username']) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
+                        Reviewed by <?= e($post['reviewer_handle']) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
                     </span>
                 </div>
                 <?php

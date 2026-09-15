@@ -102,7 +102,7 @@ final class PostReviewController extends AppController
         $currentReviewerIds = array_map('intval', array_column($reviewers, 'reviewer_id'));
         $isSelfAssigned = in_array($currentUserId, $currentReviewerIds, true);
         $lockedByOther = !empty($reviewers) && !$isSelfAssigned;
-        $lockedByReviewer = $lockedByOther ? ($reviewers[0]['reviewer_username'] ?? 'another reviewer') : null;
+        $lockedByReviewer = $lockedByOther ? (string) $reviewers[0]['reviewer_handle'] : null;
         $lockedAt = $lockedByOther ? ($reviewers[0]['assigned_at'] ?? null) : null;
 
         // Reviewers see a read-only lock screen when someone else has claimed it.

@@ -44,7 +44,7 @@ describe('NotificationService::dispatch', function () {
     test('always writes the in-app notification row, even when email is muted', function () {
         $notif = Mockery::mock(NotificationModel::class);
         $notif->shouldReceive('create')
-            ->with(7, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_username' => 'r'])
+            ->with(7, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r'])
             ->once()
             ->andReturn(true);
 
@@ -58,7 +58,7 @@ describe('NotificationService::dispatch', function () {
         $queue->shouldReceive('enqueue')->never();
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'post.approved', [
-            'post_id' => 1, 'post_title' => 'T', 'reviewer_username' => 'r',
+            'post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r',
         ]);
 
         expect(true)->toBeTrue();
@@ -81,7 +81,7 @@ describe('NotificationService::dispatch', function () {
             ->andReturn(1);
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'post.approved', [
-            'post_id' => 1, 'post_title' => 'My Post', 'reviewer_username' => 'bob',
+            'post_id' => 1, 'post_title' => 'My Post', 'reviewer_handle' => 'bob',
         ]);
 
         expect(true)->toBeTrue();
@@ -112,7 +112,7 @@ describe('NotificationService::dispatch', function () {
             ->andReturn(1);
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'post.needs_changes', [
-            'post_id' => 1, 'post_title' => 'My Post', 'reviewer_username' => 'r',
+            'post_id' => 1, 'post_title' => 'My Post', 'reviewer_handle' => 'r',
             'feedback' => 'Please fix the intro',
         ]);
 
@@ -133,7 +133,7 @@ describe('NotificationService::dispatch', function () {
         $queue->shouldReceive('enqueue')->once()->with(Mockery::type(CollaboratorRemovedMail::class), 'notification', 7)->andReturn(1);
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'collaborator.removed', [
-            'blog_name' => 'My Blog', 'removed_by_username' => 'admin',
+            'blog_name' => 'My Blog', 'actor_handle' => 'admin',
         ]);
 
         expect(true)->toBeTrue();
@@ -153,7 +153,7 @@ describe('NotificationService::dispatch', function () {
         $queue->shouldReceive('enqueue')->never();
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'post.reviewer_assigned', [
-            'post_id' => 1, 'post_title' => 'T', 'assigned_by_username' => 'owner',
+            'post_id' => 1, 'post_title' => 'T', 'actor_handle' => 'owner',
         ]);
 
         expect(true)->toBeTrue();
@@ -193,7 +193,7 @@ describe('NotificationService::dispatch', function () {
         $queue->shouldReceive('enqueue')->never();
 
         makeNotificationService($notif, $users, $prefs, $queue)->dispatch(7, 'post.approved', [
-            'post_id' => 1, 'post_title' => 'T', 'reviewer_username' => 'r',
+            'post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r',
         ]);
 
         expect(true)->toBeTrue();

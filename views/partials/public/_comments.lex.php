@@ -209,7 +209,7 @@ $renderComment = static function (array $comment, int $depth) use (
               <?php if ($removed) { ?>
                 <strong class="comment-ghost">[removed]</strong>
               <?php } else { ?>
-                <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorLabel, $comment['author_profile_slug'] ?? null) ?></strong>
+                <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorLabel, $comment['author_profile_handle']) ?></strong>
               <?php } ?>
               <?php if (!empty($comment['created_at'])) { ?>
                 <time><?= e(relative_time($comment['created_at'])) ?></time>

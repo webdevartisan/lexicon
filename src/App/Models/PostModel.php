@@ -1202,7 +1202,7 @@ class PostModel extends AppModel
                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
                        pr.reviewer_id AS reviewer_id,
                        pr.assigned_at AS reviewer_assigned_at,
-                       ru.username AS reviewer_username
+                       ru.handle AS reviewer_handle
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN categories c ON p.category_id = c.id
@@ -1428,11 +1428,11 @@ class PostModel extends AppModel
         $offset = ($page - 1) * $perPage;
 
         $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
-                       au.username AS author_username,
+                       au.handle AS author_handle,
                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
                        pr.reviewer_id AS reviewer_id,
                        pr.assigned_at AS reviewer_assigned_at,
-                       ru.username AS reviewer_username
+                       ru.handle AS reviewer_handle
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users au ON au.id = p.author_id
@@ -1642,7 +1642,7 @@ class PostModel extends AppModel
         $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
                        p.featured_on_home, p.is_featured, p.visibility, p.published_at,
                        b.blog_name, b.blog_slug,
-                       au.username AS author_username,
+                       au.handle AS author_handle,
                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
@@ -1680,8 +1680,8 @@ class PostModel extends AppModel
     public function findReviewQueueForBlog(int $blogId): array
     {
         $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,
-                       au.username AS author_username,
-                       pr.reviewer_id, ru.username AS reviewer_username,
+                       au.handle AS author_handle,
+                       pr.reviewer_id, ru.handle AS reviewer_handle,
                        pr.assigned_at
                 FROM {$this->getTable()} p
                 INNER JOIN users au ON au.id = p.author_id

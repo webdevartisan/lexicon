@@ -10,7 +10,7 @@ class CollaboratorRoleChangedMail extends Mailable
         private string $toEmail,
         private string $blogName,
         private string $newRole,
-        private string $changedByUsername
+        private string $actorHandle
     ) {
         parent::__construct();
     }
@@ -27,7 +27,7 @@ class CollaboratorRoleChangedMail extends Mailable
     {
         $blog = htmlspecialchars($this->blogName);
         $role = htmlspecialchars($this->newRole);
-        $by = htmlspecialchars($this->changedByUsername);
+        $by = htmlspecialchars($this->actorHandle);
 
         return <<<HTML
         <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
@@ -43,6 +43,6 @@ class CollaboratorRoleChangedMail extends Mailable
     private function buildTextBody(): string
     {
         return "Your role on {$this->blogName} is now {$this->newRole}.\n"
-             ."Changed by {$this->changedByUsername}.\n";
+             ."Changed by {$this->actorHandle}.\n";
     }
 }

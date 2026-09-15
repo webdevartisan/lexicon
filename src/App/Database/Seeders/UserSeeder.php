@@ -48,10 +48,11 @@ final class UserSeeder extends Seeder
         for ($i = 0; $i < $config->users; $i++) {
             $firstName = $faker->firstName();
             $lastName = $faker->lastName();
-            $username = $faker->unique()->userName();
+            // Handles are URLs now, so strip what the /profile route will not match.
+            $handle = preg_replace('/[^a-z0-9]/', '', strtolower($faker->unique()->userName())).$i;
 
             $userId = $this->insertOne('users', [
-                'username' => $username,
+                'handle' => $handle,
                 'email' => $faker->unique()->safeEmail(),
                 'password' => $sharedHash ?? password_hash($faker->password(12), PASSWORD_DEFAULT),
                 'first_name' => $firstName,
@@ -65,7 +66,6 @@ final class UserSeeder extends Seeder
 
             $profiles[] = [
                 'user_id' => $userId,
-                'slug' => $username,
                 'bio' => $faker->sentence(12),
                 'location' => $faker->city(),
                 'occupation' => $faker->jobTitle(),
@@ -74,7 +74,7 @@ final class UserSeeder extends Seeder
 
             $preferences[] = [
                 'user_id' => $userId,
-                'display_name_preference' => $faker->randomElement(['name', 'username']),
+                'display_name_preference' => $faker->randomElement(['name', 'handle']),
                 'timezone' => $faker->timezone(),
             ];
 

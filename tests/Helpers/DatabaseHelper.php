@@ -65,7 +65,7 @@ class DatabaseHelper
             'categories',
 
             // Misc
-            'reserved_slugs',
+            'reserved_handles',
             'settings',
             'pages',
             'site_content',

@@ -80,7 +80,7 @@ foreach ($resourceTypeOptions as $opt) {
                             <?= e(local_datetime($entry['created_at'] ?? null, 'M j, Y · g:i a')) ?>
                         </td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
-                            <?= e((string) ($entry['username'] ?? 'system')) ?>
+                            <?= e((string) ($entry['handle'] ?? 'system')) ?>
                         </td>
                         <td class="px-3.5 py-2.5">
                             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $actionColor((string) $entry['action']) ?>">

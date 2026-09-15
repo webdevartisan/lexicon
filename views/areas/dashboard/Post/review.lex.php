@@ -73,7 +73,7 @@
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-medium text-slate-700 dark:text-zink-100">
-                                <?= e($rev['reviewer_username'] ?? 'Unknown') ?>
+                                <?= e($rev['reviewer_handle']) ?>
                             </span>
                             <span class="text-[11px] font-semibold <?= $decisionClass ?>">
                                 <?= e($decisionLabel) ?>
@@ -234,7 +234,7 @@
                         <div class="flex items-center justify-between gap-2 text-slate-600 dark:text-zink-200">
                             <div class="flex items-center gap-2 min-w-0">
                                 <i data-lucide="user-check" class="size-3.5 text-emerald-500 shrink-0"></i>
-                                <span class="truncate"><?= e($r['reviewer_username'] ?? 'Unknown') ?></span>
+                                <span class="truncate"><?= e($r['reviewer_handle']) ?></span>
                             </div>
                             <?php if ($canUnassignThis) { ?>
                             <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/unassign-reviewer" class="m-0 shrink-0"
@@ -270,7 +270,7 @@
                         <?php
                                 $reviewerOptions = [];
                         foreach ($availableReviewers as $reviewer) {
-                            $reviewerOptions[(int) $reviewer['user_id']] = e($reviewer['username']).' ('.ucfirst((string) $reviewer['role']).')';
+                            $reviewerOptions[(int) $reviewer['user_id']] = e($reviewer['handle']).' ('.ucfirst((string) $reviewer['role']).')';
                         }
                         ?>
                         {% cmp="select" label="Assign reviewer" name="reviewer_id" options="{$reviewerOptions}" emptyDefault=true %}

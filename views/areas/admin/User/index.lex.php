@@ -21,7 +21,7 @@ foreach ($roleOptions as $r) {
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
         <form method="GET" action="<?= e($basePath) ?>" data-table-filter class="flex flex-col sm:flex-row sm:items-center gap-3 grow">
-            {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search username, email, or name..." %}
+            {% cmp="input" type="search" name="q" value="{$q}" placeholder="Search tag, email, or name..." %}
             {% cmp="select" name="role" options="{$roleChoices}" selectedKey="{$role}" onchange="this.form.submit()" %}
             {% cmp="select" name="active" options="{$activeChoices}" selectedKey="{$active}" onchange="this.form.submit()" %}
             {% cmp="btn" type="submit" variant="blue" icon="search" label="Search" %}
@@ -48,7 +48,7 @@ foreach ($roleOptions as $r) {
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
-                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="username" label="Username" %}
+                        {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="handle" label="Tag" %}
                         <th class="px-3.5 py-2.5 font-semibold">Name</th>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="email" label="Email" %}
                         <th class="px-3.5 py-2.5 font-semibold">Site role</th>
@@ -68,7 +68,7 @@ $activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
-                        <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">{{ user['username'] }}</td>
+                        <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">{{ user['handle'] }}</td>
                         <td class="px-3.5 py-2.5">
                             <?= e(trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')) ?: '—') ?>
                         </td>

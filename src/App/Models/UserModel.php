@@ -280,7 +280,7 @@ class UserModel extends AppModel
      *
      * @param  int  $page  Current page (1-based)
      * @param  int  $perPage  Rows per page (capped at 100)
-     * @param  string  $q  Optional username/email/name search term
+     * @param  string  $q  Optional handle/email/name search term
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findAllForAdmin(
@@ -298,10 +298,10 @@ class UserModel extends AppModel
         $params = [];
 
         if ($q !== '') {
-            $where .= " AND (u.username LIKE :q_username OR u.email LIKE :q_email
+            $where .= " AND (u.handle LIKE :q_handle OR u.email LIKE :q_email
                         OR CONCAT_WS(' ', u.first_name, u.last_name) LIKE :q_name)";
             $term = '%'.$q.'%';
-            $params[':q_username'] = $term;
+            $params[':q_handle'] = $term;
             $params[':q_email'] = $term;
             $params[':q_name'] = $term;
         }
@@ -331,7 +331,7 @@ class UserModel extends AppModel
         // The roles column is the account's site role only (scope=system);
         // blog involvement is summarized separately as owned/member counts so
         // the list shows all three access axes at a glance.
-        $sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name,
+        $sql = "SELECT u.id, u.handle, u.email, u.first_name, u.last_name,
                        u.is_active, u.created_at, u.last_login, u.posts_count,
                        COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles,
                        (SELECT COUNT(*) FROM blogs b2 WHERE b2.owner_id = u.id) AS owned_blogs,
@@ -419,14 +419,14 @@ class UserModel extends AppModel
     }
 
     /**
-     * Convenience wrapper: find users by username.
+     * Convenience wrapper: find users by handle.
      *
-     * @param  string  $userName  Username to search
+     * @param  string  $handle  Handle to search
      * @return array<int,array<string,mixed>>
      */
-    public function findByUsername(string $userName): array
+    public function findByHandle(string $handle): array
     {
-        return $this->findBy('username', $userName);
+        return $this->findBy('handle', $handle);
     }
 
     /**
@@ -609,23 +609,23 @@ class UserModel extends AppModel
     }
 
     /**
-     * Check if username is unique among existing users.
+     * Check if a handle is unique among existing users.
      *
-     * @param  string  $username  Username to check
+     * @param  string  $handle  Handle to check
      * @param  int|null  $ignoreUserId  User ID to exclude from check (for profile updates)
      * @return bool True if unique
      */
-    public function isUsernameUnique(string $username, ?int $ignoreUserId = null): bool
+    public function isHandleUnique(string $handle, ?int $ignoreUserId = null): bool
     {
         $sql = '
             SELECT 1
             FROM users
-            WHERE username = :username
+            WHERE handle = :handle
             '.($ignoreUserId !== null ? 'AND id <> :ignore_id' : '').'
             LIMIT 1
         ';
 
-        $params = [':username' => $username];
+        $params = [':handle' => $handle];
         if ($ignoreUserId !== null) {
             $params[':ignore_id'] = $ignoreUserId;
         }

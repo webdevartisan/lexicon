@@ -47,15 +47,14 @@ class UserDeletionService
         // Generate unique anonymous identifiers to avoid collisions
         $timestamp = time();
         $anonymousEmail = "deleted_user_{$userId}_{$timestamp}@deleted.local";
-        $anonymousUsername = "deleted_user_{$userId}";
-        $anonymousSlug = "deleted_{$userId}";
+        $anonymousHandle = "deleted_user_{$userId}";
 
-        return $this->users->transaction(function () use ($userId, $anonymousEmail, $anonymousUsername, $anonymousSlug) {
+        return $this->users->transaction(function () use ($userId, $anonymousEmail, $anonymousHandle) {
 
             // Step 1: Anonymize core user record
             $this->users->updateById($userId, [
                 'email' => $anonymousEmail,
-                'username' => $anonymousUsername,
+                'handle' => $anonymousHandle,
                 'first_name' => 'Deleted',
                 'last_name' => 'User',
                 'password' => '',
@@ -64,7 +63,6 @@ class UserDeletionService
 
             // Step 2: Clear user profile PII
             $this->profiles->updateByUserId($userId, [
-                'slug' => $anonymousSlug,
                 'bio' => null,
                 'occupation' => null,
                 'location' => null,
@@ -166,13 +164,12 @@ class UserDeletionService
     {
         $timestamp = time();
         $anonymousEmail = "deleted_user_{$userId}_{$timestamp}@deleted.local";
-        $anonymousUsername = "deleted_user_{$userId}";
-        $anonymousSlug = "deleted_{$userId}";
+        $anonymousHandle = "deleted_user_{$userId}";
 
         // Anonymize core user record
         $this->users->updateById($userId, [
             'email' => $anonymousEmail,
-            'username' => $anonymousUsername,
+            'handle' => $anonymousHandle,
             'first_name' => 'Deleted',
             'last_name' => 'User',
             'password' => '',
@@ -181,7 +178,6 @@ class UserDeletionService
 
         // Clear user profile PII
         $this->profiles->updateByUserId($userId, [
-            'slug' => $anonymousSlug,
             'bio' => null,
             'occupation' => null,
             'location' => null,

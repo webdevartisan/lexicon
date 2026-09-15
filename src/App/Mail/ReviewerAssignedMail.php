@@ -10,7 +10,7 @@ class ReviewerAssignedMail extends Mailable
         private string $toEmail,
         private int $postId,
         private string $postTitle,
-        private string $assignedByUsername
+        private string $actorHandle
     ) {
         parent::__construct();
     }
@@ -33,7 +33,7 @@ class ReviewerAssignedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $by = htmlspecialchars($this->assignedByUsername);
+        $by = htmlspecialchars($this->actorHandle);
         $url = htmlspecialchars($this->reviewUrl());
 
         return <<<HTML
@@ -50,7 +50,7 @@ class ReviewerAssignedMail extends Mailable
     private function buildTextBody(): string
     {
         return "Assigned to review: {$this->postTitle}\n"
-             ."{$this->assignedByUsername} assigned you.\n"
+             ."{$this->actorHandle} assigned you.\n"
              ."Open: {$this->reviewUrl()}\n";
     }
 }

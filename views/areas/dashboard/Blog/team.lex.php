@@ -106,8 +106,8 @@ $initials = static function (string $name): string {
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate group-hover:text-custom-500"><?= e($row['title']) ?></p>
                                 <p class="text-xs text-slate-500 dark:text-zink-400 mt-0.5">
-                                    by <?= e($row['author_username']) ?>
-                                    · reviewed by <?= e($row['reviewer_username']) ?>
+                                    by <?= e($row['author_handle']) ?>
+                                    · reviewed by <?= e($row['reviewer_handle']) ?>
                                 </p>
                             </div>
                             <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 group-hover:text-custom-500"></i>
@@ -140,10 +140,10 @@ $initials = static function (string $name): string {
                     {% foreach ($members as $m): %}
                     <li class="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
                         <span class="flex items-center justify-center size-9 rounded-full bg-custom-100 text-custom-600 dark:bg-custom-500/20 dark:text-custom-300 text-xs font-semibold shrink-0">
-                            <?= e($initials((string) ($m['username'] ?? 'U'))) ?>
+                            <?= e($initials((string) $m['handle'])) ?>
                         </span>
                         <div class="min-w-0 grow">
-                            <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate"><?= e($m['username'] ?? 'Unknown') ?></p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate"><?= e($m['handle']) ?></p>
                             <p class="text-xs text-slate-500 dark:text-zink-300 truncate"><?= e($m['email'] ?? '') ?></p>
                         </div>
 
@@ -160,7 +160,7 @@ $initials = static function (string $name): string {
                         </form>
 
                         <?php
-                        $revokeConfirmMsg = 'Remove '.($m['username'] ?? 'this collaborator').' from this blog? They will need a new invitation to rejoin.';
+                        $revokeConfirmMsg = 'Remove '.$m['handle'].' from this blog? They will need a new invitation to rejoin.';
 $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
 ?>
                         <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/<?= (int) ($m['user_id'] ?? 0) ?>/revoke" class="m-0 shrink-0">

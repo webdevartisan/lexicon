@@ -14,7 +14,7 @@ class PostSubmittedMail extends Mailable
         private string $toEmail,
         private int $postId,
         private string $postTitle,
-        private string $authorUsername,
+        private string $authorHandle,
         private bool $unassigned
     ) {
         parent::__construct();
@@ -39,7 +39,7 @@ class PostSubmittedMail extends Mailable
     {
         $appName = htmlspecialchars((string) (env('APP_NAME', 'Blog Platform')));
         $title = htmlspecialchars($this->postTitle);
-        $author = htmlspecialchars($this->authorUsername);
+        $author = htmlspecialchars($this->authorHandle);
         $url = htmlspecialchars($this->reviewUrl());
         $intro = $this->unassigned
             ? '<p><em>No reviewer is assigned yet. Any reviewer on this blog can claim it.</em></p>'
@@ -71,7 +71,7 @@ class PostSubmittedMail extends Mailable
             : '';
 
         return "Review requested: {$this->postTitle}\n"
-             ."{$this->authorUsername} has submitted this post for review."
+             ."{$this->authorHandle} has submitted this post for review."
              ."{$unassigned}\n"
              ."Open the review page: {$this->reviewUrl()}\n";
     }

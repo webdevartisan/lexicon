@@ -224,63 +224,7 @@ class BlogSettingsModel extends AppModel
     }
 
     /**
-     * Find theme for a specific blog by username and blog slug.
-     *
-     * Used for route: /{username}/b/{blog_slug}
-     * Joins users and blogs tables to resolve theme from URL path.
-     *
-     * @param  string  $username  User's username
-     * @param  string  $blogSlug  Blog URL slug
-     * @return string|null Theme name or null if not found
-     */
-    public function findThemeByUsernameAndBlogSlug(string $username, string $blogSlug): ?string
-    {
-        $sql = '
-          SELECT bs.theme
-          FROM blogs b
-          JOIN users u ON u.id = b.owner_id
-          LEFT JOIN blog_settings bs ON bs.blog_id = b.id
-          WHERE u.username = ? AND b.blog_slug = ?
-          LIMIT 1
-        ';
-
-        $stmt = $this->database->query($sql, [$username, $blogSlug]);
-        $theme = $stmt->fetchColumn();
-
-        return $theme !== false ? (string) $theme : null;
-    }
-
-    /**
-     * Find theme for user's primary blog by username.
-     *
-     * Used for route: /{username}
-     * Prioritizes blog marked as primary, falls back to oldest blog.
-     *
-     * @param  string  $username  User's username
-     * @return string|null Theme name or null if not found
-     */
-    public function findPrimaryThemeByUsername(string $username): ?string
-    {
-        $sql = '
-          SELECT bs.theme
-          FROM blogs b
-          JOIN users u ON u.id = b.owner_id
-          LEFT JOIN blog_settings bs ON bs.blog_id = b.id
-          WHERE u.username = ?
-          ORDER BY (bs.is_primary = 1) DESC, b.created_at ASC
-          LIMIT 1
-        ';
-
-        $stmt = $this->database->query($sql, [$username]);
-        $theme = $stmt->fetchColumn();
-
-        return $theme !== false ? (string) $theme : null;
-    }
-
-    /**
      * Find theme by blog slug only.
-     *
-     * Utility method for direct blog slug lookups without username context.
      *
      * @param  string  $blogSlug  Blog URL slug
      * @return string|null Theme name or null if not found

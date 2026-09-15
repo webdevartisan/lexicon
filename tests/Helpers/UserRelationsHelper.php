@@ -20,13 +20,12 @@ class UserRelationsHelper
      *
      * @param  Database  $db  Database connection
      * @param  int  $userId  User ID
-     * @param  array  $data  Profile data (slug, bio, occupation, location, avatar_url)
+     * @param  array  $data  Profile data (bio, occupation, location, avatar_url)
      * @return int Profile ID (user_id)
      */
     public static function createUserProfile(Database $db, int $userId, array $data = []): int
     {
         $defaults = [
-            'slug' => $data['slug'] ?? "user_{$userId}",
             'bio' => $data['bio'] ?? 'Test bio',
             'occupation' => $data['occupation'] ?? 'Software Developer',
             'location' => $data['location'] ?? 'Cyprus',
@@ -37,11 +36,10 @@ class UserRelationsHelper
         $profileData = array_merge($defaults, $data);
 
         $db->query('
-            INSERT INTO user_profiles (user_id, slug, bio, occupation, location, avatar_url, is_public)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO user_profiles (user_id, bio, occupation, location, avatar_url, is_public)
+            VALUES (?, ?, ?, ?, ?, ?)
         ', [
             $userId,
-            $profileData['slug'],
             $profileData['bio'],
             $profileData['occupation'],
             $profileData['location'],
@@ -97,7 +95,7 @@ class UserRelationsHelper
     {
         $columns = [
             'timezone' => $preferences['timezone'] ?? 'Europe/Nicosia',
-            'display_name_preference' => $preferences['display_name_preference'] ?? 'username',
+            'display_name_preference' => $preferences['display_name_preference'] ?? 'handle',
             'default_post_visibility' => $preferences['default_post_visibility'] ?? 'public',
         ];
 
@@ -159,20 +157,19 @@ class UserRelationsHelper
     public static function assertUserAnonymized(Database $db, int $userId): void
     {
         // Check core user record
-        $stmt = $db->query('SELECT email, username, first_name, last_name, password FROM users WHERE id = ?', [$userId]);
+        $stmt = $db->query('SELECT email, handle, first_name, last_name, password FROM users WHERE id = ?', [$userId]);
         $user = $stmt->fetch();
 
         expect($user['email'])->toStartWith('deleted_user_');
-        expect($user['username'])->toBe("deleted_user_{$userId}");
+        expect($user['handle'])->toBe("deleted_user_{$userId}");
         expect($user['first_name'])->toBe('Deleted');
         expect($user['last_name'])->toBe('User');
         expect($user['password'])->toBe('');
 
         // Check profile anonymization
-        $stmt = $db->query('SELECT slug, bio, occupation, location, avatar_url FROM user_profiles WHERE user_id = ?', [$userId]);
+        $stmt = $db->query('SELECT bio, occupation, location, avatar_url FROM user_profiles WHERE user_id = ?', [$userId]);
         $profile = $stmt->fetch();
 
-        expect($profile['slug'])->toBe("deleted_{$userId}");
         expect($profile['bio'])->toBeNull();
         expect($profile['occupation'])->toBeNull();
         expect($profile['location'])->toBeNull();

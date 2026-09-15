@@ -151,27 +151,27 @@ class NotificationService
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['author_username'] ?? ''),
+                (string) $data['author_handle'],
                 false
             ),
             'post.submitted_unassigned' => new PostSubmittedMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['author_username'] ?? ''),
+                (string) $data['author_handle'],
                 true
             ),
             'post.approved' => new PostApprovedMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['reviewer_username'] ?? '')
+                (string) $data['reviewer_handle']
             ),
             'post.needs_changes' => new PostNeedsChangesMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['reviewer_username'] ?? ''),
+                (string) $data['reviewer_handle'],
                 (string) ($data['feedback'] ?? '')
             ),
             'post.published' => new PostPublishedMail(
@@ -184,13 +184,13 @@ class NotificationService
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['assigned_by_username'] ?? '')
+                (string) $data['actor_handle']
             ),
             'post.reviewer_stale' => new ReviewerStaleMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) ($data['former_reviewer_username'] ?? '')
+                (string) $data['former_reviewer_handle']
             ),
             'post.workflow_disabled' => new WorkflowDisabledMail(
                 $to,
@@ -202,12 +202,12 @@ class NotificationService
                 $to,
                 (string) ($data['blog_name'] ?? ''),
                 (string) ($data['new_role'] ?? ''),
-                (string) ($data['changed_by_username'] ?? '')
+                (string) $data['actor_handle']
             ),
             'collaborator.removed' => new CollaboratorRemovedMail(
                 $to,
                 (string) ($data['blog_name'] ?? ''),
-                (string) ($data['removed_by_username'] ?? '')
+                (string) $data['actor_handle']
             ),
             CommentAudienceResolver::TYPE_REPLY,
             CommentAudienceResolver::TYPE_AUTHORED,

@@ -32,7 +32,7 @@ class PostReviewerModel extends AppModel
     }
 
     /**
-     * Get all reviewer assignments for a post, with reviewer usernames.
+     * Get all reviewer assignments for a post, with reviewer handles.
      *
      * @param  int  $postId  Post ID
      * @return array<int, array<string, mixed>> List of assignment rows
@@ -40,7 +40,7 @@ class PostReviewerModel extends AppModel
     public function findByPost(int $postId): array
     {
         $sql = 'SELECT pr.id, pr.post_id, pr.reviewer_id, pr.assigned_by, pr.assigned_at, pr.review_status,
-                       u.username AS reviewer_username
+                       u.handle AS reviewer_handle
                 FROM post_reviewers pr
                 LEFT JOIN users u ON u.id = pr.reviewer_id
                 WHERE pr.post_id = ?';
@@ -63,7 +63,7 @@ class PostReviewerModel extends AppModel
     public function findPendingForReviewer(int $reviewerId): array
     {
         $sql = 'SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at,
-                       b.blog_name, u.username AS author_username,
+                       b.blog_name, u.handle AS author_handle,
                        (pr.reviewer_id IS NOT NULL) AS is_assigned
                 FROM posts p
                 INNER JOIN blogs b ON b.id = p.blog_id
@@ -133,8 +133,8 @@ class PostReviewerModel extends AppModel
 
         $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.status,
                        b.id AS blog_id, b.blog_name,
-                       au.username AS author_username,
-                       ru.username AS reviewer_username,
+                       au.handle AS author_handle,
+                       ru.handle AS reviewer_handle,
                        pr.reviewer_id, pr.assigned_at
                 FROM posts p
                 INNER JOIN post_reviewers pr ON pr.post_id = p.id

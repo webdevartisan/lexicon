@@ -532,7 +532,7 @@ it('gets all active users for a blog', function () {
 
     expect($blogUsers)->toBeArray()
         ->and($blogUsers)->toHaveCount(2)
-        ->and($blogUsers[0])->toHaveKeys(['username', 'email', 'role']);
+        ->and($blogUsers[0])->toHaveKeys(['handle', 'email', 'role']);
 });
 
 /**

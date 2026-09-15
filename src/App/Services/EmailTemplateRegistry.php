@@ -42,7 +42,7 @@ class EmailTemplateRegistry
                 'sample_data' => [
                     'user' => [
                         'first_name' => 'John',
-                        'username' => 'johndoe',
+                        'handle' => 'johndoe',
                         'email' => 'john@example.com',
                     ],
                 ],
@@ -106,7 +106,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'collaborator@example.com',
                     'blogName' => 'Travel Stories',
                     'newRole' => 'reviewer',
-                    'changedByUsername' => 'blogowner',
+                    'actorHandle' => 'blogowner',
                 ],
             ],
             'collaborator_removed' => [
@@ -117,7 +117,7 @@ class EmailTemplateRegistry
                 'sample_data' => [
                     'toEmail' => 'collaborator@example.com',
                     'blogName' => 'Travel Stories',
-                    'removedByUsername' => 'blogowner',
+                    'actorHandle' => 'blogowner',
                 ],
             ],
             'invite_declined' => [
@@ -142,7 +142,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'reviewer@example.com',
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
-                    'authorUsername' => 'johndoe',
+                    'authorHandle' => 'johndoe',
                     'unassigned' => false,
                 ],
             ],
@@ -155,7 +155,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'reviewer@example.com',
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
-                    'assignedByUsername' => 'blogowner',
+                    'actorHandle' => 'blogowner',
                 ],
             ],
             'reviewer_stale' => [
@@ -167,7 +167,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'reviewer@example.com',
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
-                    'formerReviewerUsername' => 'oldreviewer',
+                    'formerReviewerHandle' => 'oldreviewer',
                 ],
             ],
             'post_approved' => [
@@ -179,7 +179,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'author@example.com',
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
-                    'reviewerUsername' => 'janereviewer',
+                    'reviewerHandle' => 'janereviewer',
                 ],
             ],
             'post_needs_changes' => [
@@ -191,7 +191,7 @@ class EmailTemplateRegistry
                     'toEmail' => 'author@example.com',
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
-                    'reviewerUsername' => 'janereviewer',
+                    'reviewerHandle' => 'janereviewer',
                     'feedback' => 'Great start! Please add photo credits and tighten the intro paragraph.',
                 ],
             ],

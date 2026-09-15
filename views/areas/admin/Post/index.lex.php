@@ -105,7 +105,7 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                             <?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($post['blog_name'] ?? '—')) ?></td>
-                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($post['author_username'] ?? '—')) ?></td>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['author_handle']) ?></td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$postStatus}" %}
                         </td>

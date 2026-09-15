@@ -12,7 +12,7 @@
     $desc = e($meta['description'] ?? ($user['blog_name'] ?? 'Blog'));
   ?>
   <meta name="description" content="<?= $desc ?>" />
-  <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['username'] ?? 'Author') ?>" />
+  <meta name="author" content="<?= e($user['display_name_cached'] ?? $user['handle']) ?>" />
   <?php if (!empty($meta['robots'])) { ?><meta name="robots" content="<?= e($meta['robots']) ?>" /><?php } ?>
   <?php if (!empty($meta['canonical'])) { ?><link rel="canonical" href="<?= e($meta['canonical']) ?>" /><?php } ?>
   <?php // One alternate per language this page genuinely exists in; a monolingual blog emits none.?>
