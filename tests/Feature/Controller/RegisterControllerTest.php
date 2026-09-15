@@ -11,10 +11,10 @@ use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
-use App\Services\UserHandleValidator;
 use App\Services\InvitationService;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
+use App\Services\UserHandleValidator;
 use Framework\Core\Response;
 use Tests\Factories\UserFactory;
 
