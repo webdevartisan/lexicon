@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\ReservedHandleModel;
 use App\Models\UserModel;
+use UnexpectedValueException;
 
 /**
  * Decides whether a users.handle value can be claimed.
@@ -50,6 +51,7 @@ final class UserHandleValidator
             $matches = match ($matchType) {
                 'exact' => $candidate === $reserved,
                 'contains' => str_contains($candidate, $reserved),
+                default => throw new UnexpectedValueException("Reserved handle '{$word}' has unknown match type '{$matchType}'."),
             };
 
             if ($matches) {

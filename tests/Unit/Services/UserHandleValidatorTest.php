@@ -8,7 +8,7 @@ use App\Services\UserHandleValidator;
 
 beforeEach(function () {
     $reservedHandles = Mockery::mock(ReservedHandleModel::class);
-    $reservedHandles->shouldReceive('matchTypesByHandle')->once()->andReturn([
+    $reservedHandles->shouldReceive('matchTypesByHandle')->atMost()->once()->andReturn([
         'me' => 'exact',
         'login' => 'exact',
         'staff' => 'exact',
@@ -47,6 +47,16 @@ test('names a few edits away from a reserved word stay available', function () {
     expect($this->validator->isReserved('adrian'))->toBeFalse()
         ->and($this->validator->isReserved('amin'))->toBeFalse()
         ->and($this->validator->isReserved('sport'))->toBeFalse();
+});
+
+test('an unknown match type fails loudly instead of letting the handle through', function () {
+    $reservedHandles = Mockery::mock(ReservedHandleModel::class);
+    $reservedHandles->shouldReceive('matchTypesByHandle')->andReturn(['admin' => 'prefix']);
+
+    $validator = new UserHandleValidator($this->users, $reservedHandles);
+
+    expect(fn () => $validator->isReserved('adminx'))
+        ->toThrow(UnexpectedValueException::class, "Reserved handle 'admin' has unknown match type 'prefix'.");
 });
 
 test('a reserved handle is unavailable without asking whether it is taken', function () {
