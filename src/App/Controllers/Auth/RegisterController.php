@@ -195,34 +195,29 @@ final class RegisterController extends AppController
     }
 
     /**
-     * Build the account handle from the email local part.
+     * Build the account handle from the email local part, reduced to letters and digits.
      *
-     * Sanitized to the same alphanumeric 3-20 charset the profile editor
-     * enforces. A taken or reserved local part gets a short random suffix.
+     * A taken local part gets a short random suffix. One that is too short or
+     * reserved starts from "reader" instead, since suffixing support@ still reads as support.
      *
      * @param  string  $email  The registration email
      * @return string An available handle
      */
     private function deriveUserHandleFromEmail(string $email): string
     {
-        $base = strtolower((string) strstr($email, '@', true));
-        $base = (string) preg_replace('/[^a-z0-9]/', '', $base);
-        $base = substr($base, 0, 20);
+        $localPart = strtolower(explode('@', $email, 2)[0]);
+        $base = substr(preg_replace('/[^a-z0-9]/', '', $localPart), 0, 20);
 
-        if (strlen($base) >= 3 && $this->userHandleValidator->isAvailable($base)) {
+        $usableBase = strlen($base) >= 3 && !$this->userHandleValidator->isReserved($base);
+
+        if ($usableBase && !$this->userHandleValidator->isTaken($base)) {
             return $base;
         }
 
-        $stem = strlen($base) >= 3 ? substr($base, 0, 15) : 'reader';
-        for ($i = 0; $i < 10; $i++) {
-            $candidate = $stem.bin2hex(random_bytes(2));
-            if ($this->userHandleValidator->isAvailable($candidate)) {
-                return $candidate;
-            }
-        }
+        $stem = $usableBase ? substr($base, 0, 15) : 'reader';
 
         do {
-            $candidate = 'u'.bin2hex(random_bytes(4));
+            $candidate = $stem.bin2hex(random_bytes(2));
         } while (!$this->userHandleValidator->isAvailable($candidate));
 
         return $candidate;

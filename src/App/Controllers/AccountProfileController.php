@@ -67,7 +67,6 @@ final class AccountProfileController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
-        $handleInput = strtolower(trim((string) $this->request->postParam('handle')));
 
         $rules = [
             'first_name' => 'required|name|min:2|max:50',
@@ -80,14 +79,15 @@ final class AccountProfileController extends AppController
             'instagram' => 'url',
             'linkedin' => 'url',
             'github' => 'url',
-            'handle' => 'required|slug|min:2|max:50',
+            'handle' => 'required|user_handle|min:2|max:50',
         ];
 
         $validator = $this->validateOrFail($rules, [
-            'handle.slug' => 'A tag may only contain lowercase letters, numbers, and single hyphens.',
+            'handle.user_handle' => 'A tag may only contain lowercase letters, numbers, and single hyphens.',
         ]);
 
         $validated = $validator->validated();
+        $handleInput = $validated['handle'];
 
         $user = auth()->user();
         $profile = $this->profiles->findOrCreate($userId);
@@ -153,8 +153,8 @@ final class AccountProfileController extends AppController
         // Author names and links are baked into cached blog pages, so any of
         // them moving has to clear those or the stale copy outlives the TTL.
         // The OLD handle is purged, since that is the URL already cached.
-        if ($identityMoved || $newDisplayName !== ($user['display_name_cached'] ?? null)) {
-            $this->cacheInvalidator->purgeAuthorSurfaces($currentHandle !== '' ? $currentHandle : null);
+        if ($identityMoved || $newDisplayName !== $user['display_name_cached']) {
+            $this->cacheInvalidator->purgeAuthorSurfaces($currentHandle);
         }
 
         $this->flash('success', chrome_translate('account.flash.profileSaved'));

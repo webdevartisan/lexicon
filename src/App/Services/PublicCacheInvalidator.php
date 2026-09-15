@@ -54,14 +54,14 @@ class PublicCacheInvalidator
     /**
      * Blog surfaces that render author names, plus one public profile page.
      *
-     * Author links are baked into cached blog pages, so flipping a profile to
-     * private has to clear them. Which blogs an author has posted to isn't
-     * tracked, so this purges all blog surfaces — acceptable because profile
-     * visibility changes are rare.
+     * Author names and links are baked into cached blog pages, so renaming or
+     * hiding an author has to clear them. Which blogs an author has posted to
+     * isn't tracked, so this purges all blog surfaces, which is acceptable
+     * because identity changes are rare.
      *
-     * @param  string|null  $slug  Profile slug to purge, when the user has one
+     * @param  string  $handle  The handle whose profile page is cached, the old one after a rename
      */
-    public function purgeAuthorSurfaces(?string $slug = null): void
+    public function purgeAuthorSurfaces(string $handle): void
     {
         $this->purgeBlogSurfaces();
 
@@ -69,9 +69,7 @@ class PublicCacheInvalidator
         // page path, so the pattern above cannot reach them.
         fragment()->forgetPattern('post-comments:*');
 
-        if ($slug !== null && $slug !== '') {
-            cache()->deletePattern("*:GET:/profile/{$slug}*");
-        }
+        cache()->deletePattern("*:GET:/profile/{$handle}*");
     }
 
     /**
