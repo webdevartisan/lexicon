@@ -66,11 +66,11 @@ it('toggles a bookmark on and off', function () {
 it('keeps likes and bookmarks independent per user', function () {
     $secondUser = UserFactory::new($this->userModel)->create();
 
-    $this->likeModel->toggle($this->userId, $this->postId);
-    $this->likeModel->toggle($secondUser, $this->postId);
+    $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::UP);
+    $this->voteModel->apply($secondUser, $this->postId, PostVoteModel::UP);
     $this->bookmarkModel->toggle($secondUser, $this->postId);
 
-    expect($this->likeModel->countByPost($this->postId))->toBe(2)
+    expect($this->voteModel->countByPost($this->postId))->toBe(2)
         ->and($this->bookmarkModel->countByPost($this->postId))->toBe(1)
         ->and($this->bookmarkModel->userBookmarks($this->userId, $this->postId))->toBeFalse();
 });
@@ -91,11 +91,11 @@ it('lists bookmarked posts newest first', function () {
 });
 
 it('cascades likes and bookmarks when the post is removed', function () {
-    $this->likeModel->toggle($this->userId, $this->postId);
+    $this->voteModel->apply($this->userId, $this->postId, PostVoteModel::UP);
     $this->bookmarkModel->toggle($this->userId, $this->postId);
 
     $this->db->query('DELETE FROM posts WHERE id = ?', [$this->postId]);
 
-    expect($this->likeModel->countByPost($this->postId))->toBe(0)
+    expect($this->voteModel->countByPost($this->postId))->toBe(0)
         ->and($this->bookmarkModel->countByPost($this->postId))->toBe(0);
 });

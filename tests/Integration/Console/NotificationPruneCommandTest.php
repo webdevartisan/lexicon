@@ -22,7 +22,11 @@ beforeEach(function () {
 });
 
 test('handle returns 0 when nothing to prune', function () {
-    expect($this->command->handle())->toBe(0);
+    ob_start();
+    $exit = $this->command->handle();
+    ob_end_clean();
+
+    expect($exit)->toBe(0);
 });
 
 test('handle deletes read notifications older than 30 days', function () {

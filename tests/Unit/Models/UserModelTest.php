@@ -573,7 +573,7 @@ test('updateById returns true for empty data without database call', function ()
 test('updateById constructs dynamic UPDATE with positional parameters', function () {
     $userId = $this->faker->numberBetween(1, 1000);
     $email = $this->faker->email();
-    $username = $this->faker->userName();
+    $handle = $this->faker->userName();
 
     $this->dbMock->shouldReceive('execute')
         ->once()
@@ -604,6 +604,19 @@ test('insertUserRoles executes INSERT for each role', function () {
     $userId = $this->faker->numberBetween(1, 1000);
     $roles = [1, 2, 3];
 
+    // ids are checked against the roles table first; all three are system-scoped here
+    $scopeStmt = Mockery::mock(PDOStatement::class);
+    $scopeStmt->shouldReceive('fetchAll')->with(\PDO::FETCH_COLUMN)->andReturn($roles);
+    $this->dbMock->shouldReceive('query')
+        ->once()
+        ->with(
+            Mockery::on(function ($sql) {
+                return str_contains($sql, "FROM roles WHERE scope = 'system'");
+            }),
+            $roles
+        )
+        ->andReturn($scopeStmt);
+
     // expect three separate execute calls, one per role
     $this->dbMock->shouldReceive('execute')
         ->times(3)
@@ -624,6 +637,25 @@ test('insertUserRoles executes INSERT for each role', function () {
 });
 
 /**
+ * Accounts carry system roles only, so a blog-scoped id must never reach user_roles
+ * even when a crafted request asks for it.
+ */
+test('insertUserRoles drops blog-scoped role ids', function () {
+    $userId = $this->faker->numberBetween(1, 1000);
+
+    $scopeStmt = Mockery::mock(PDOStatement::class);
+    $scopeStmt->shouldReceive('fetchAll')->with(\PDO::FETCH_COLUMN)->andReturn([1]);
+    $this->dbMock->shouldReceive('query')->once()->andReturn($scopeStmt);
+
+    $this->dbMock->shouldReceive('execute')
+        ->once()
+        ->with(Mockery::any(), [$userId, 1])
+        ->andReturn(1);
+
+    expect($this->userModel->insertUserRoles($userId, [1, 9]))->toBeTrue();
+});
+
+/**
  * Tests that updateUserRoles synchronizes role assignments correctly.
  *
  * Verifies differential updates: delete removed roles, insert new roles.
@@ -632,6 +664,19 @@ test('updateUserRoles synchronizes roles with differential updates', function ()
     $userId = $this->faker->numberBetween(1, 1000);
     $currentRoles = [1, 2];
     $newRoles = [2, 3];
+
+    // Step 0: keep only system-scoped ids
+    $scopeStmt = Mockery::mock(PDOStatement::class);
+    $scopeStmt->shouldReceive('fetchAll')->with(\PDO::FETCH_COLUMN)->andReturn($newRoles);
+    $this->dbMock->shouldReceive('query')
+        ->once()
+        ->with(
+            Mockery::on(function ($sql) {
+                return str_contains($sql, "FROM roles WHERE scope = 'system'");
+            }),
+            $newRoles
+        )
+        ->andReturn($scopeStmt);
 
     // Step 1: Query current roles
     $this->dbMock->shouldReceive('query')

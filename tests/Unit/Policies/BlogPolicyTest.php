@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use App\Policies\BlogPolicy;
+use App\Resources\BlogResource;
 
 /**
  * Unit tests for BlogPolicy.
  *
- * All blog object interactions are mocked to isolate pure authorization logic.
+ * Every per-blog decision is a blog permission lookup, so the blog is mocked
+ * with a fixed permission set and the tests check which slug each action asks for.
  */
 
 // ============================================================================
@@ -15,13 +17,27 @@ use App\Policies\BlogPolicy;
 // ============================================================================
 
 /**
- * Build a mock blog object with controllable ownerId and roleForUser responses.
+ * Every blog permission a policy can ask for, used to prove an action needs its own slug.
  */
-function mockBlog(int $ownerId, string $roleForUser = ''): object
+const BLOG_PERMISSIONS = [
+    'view_all_posts',
+    'edit_own_blog',
+    'manage_team',
+    'create_posts',
+    'delete_own_blog',
+];
+
+/**
+ * Build a blog whose userCan answers from the given permission set.
+ *
+ * @param  string[]  $permissions
+ */
+function blogWith(array $permissions): BlogResource
 {
-    $blog = Mockery::mock();
-    $blog->shouldReceive('ownerId')->andReturn($ownerId);
-    $blog->shouldReceive('roleForUser')->andReturn($roleForUser);
+    $blog = Mockery::mock(BlogResource::class);
+    $blog->shouldReceive('userCan')->andReturnUsing(
+        static fn (int $userId, string $permission): bool => in_array($permission, $permissions, true)
+    );
 
     return $blog;
 }
@@ -39,42 +55,37 @@ function makeUser(int $id, array $roles = []): array
 afterEach(fn () => Mockery::close());
 
 // ============================================================================
-// view()
+// Per-blog actions
 // ============================================================================
 
-describe('BlogPolicy::view', function () {
+describe('BlogPolicy per-blog actions', function () {
 
-    test('owner can always view their blog', function () {
+    test('an action is allowed when the user holds its permission', function (string $action, string $permission) {
         $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
 
-        expect($policy->view($user, $blog))->toBeTrue();
-    });
+        expect($policy->{$action}(makeUser(2), blogWith([$permission])))->toBeTrue();
+    })->with([
+        ['view', 'view_all_posts'],
+        ['update', 'edit_own_blog'],
+        ['manageUsers', 'manage_team'],
+        ['invite', 'manage_team'],
+        ['createPost', 'create_posts'],
+        ['delete', 'delete_own_blog'],
+    ]);
 
-    test('non-owner with allowed per-blog role can view', function (string $role) {
+    test('holding every other permission does not grant the action', function (string $action, string $permission) {
         $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: $role);
+        $others = array_values(array_diff(BLOG_PERMISSIONS, [$permission]));
 
-        expect($policy->view($user, $blog))->toBeTrue();
-    })->with(['editor', 'author', 'viewer', 'contributor', 'reviewer']);
-
-    test('non-owner with no blog role cannot view', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->view($user, $blog))->toBeFalse();
-    });
-
-    test('non-owner with unknown blog role cannot view', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'guest');
-
-        expect($policy->view($user, $blog))->toBeFalse();
-    });
+        expect($policy->{$action}(makeUser(2), blogWith($others)))->toBeFalse();
+    })->with([
+        ['view', 'view_all_posts'],
+        ['update', 'edit_own_blog'],
+        ['manageUsers', 'manage_team'],
+        ['invite', 'manage_team'],
+        ['createPost', 'create_posts'],
+        ['delete', 'delete_own_blog'],
+    ]);
 });
 
 // ============================================================================
@@ -83,203 +94,28 @@ describe('BlogPolicy::view', function () {
 
 describe('BlogPolicy::create', function () {
 
-    test('user with allowed global role can create blog', function (string $role) {
+    test('a system role that may start a blog can create one', function (string $role) {
         $policy = new BlogPolicy();
-        $user = makeUser(1, [$role]);
 
-        expect($policy->create($user))->toBeTrue();
-    })->with(['administrator', 'editor', 'author', 'content_manager', 'blog_owner']);
+        expect($policy->create(makeUser(1, [$role])))->toBeTrue();
+    })->with(['administrator', 'content_manager', 'reader']);
+
+    // Blog roles live in blog_users and say nothing about starting a blog of your own.
+    test('a blog role does not let the account start a blog', function (string $role) {
+        $policy = new BlogPolicy();
+
+        expect($policy->create(makeUser(1, [$role])))->toBeFalse();
+    })->with(['editor', 'author', 'contributor', 'reviewer', 'viewer']);
 
     test('user with no roles cannot create blog', function () {
         $policy = new BlogPolicy();
-        $user = makeUser(1, []);
 
-        expect($policy->create($user))->toBeFalse();
+        expect($policy->create(makeUser(1, [])))->toBeFalse();
     });
 
     test('user with unknown role cannot create blog', function () {
         $policy = new BlogPolicy();
-        $user = makeUser(1, ['subscriber']);
 
-        expect($policy->create($user))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// update()
-// ============================================================================
-
-describe('BlogPolicy::update', function () {
-
-    test('owner can always update their blog', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
-
-        expect($policy->update($user, $blog))->toBeTrue();
-    });
-
-    test('per-blog editor can update blog', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
-
-        expect($policy->update($user, $blog))->toBeTrue();
-    });
-
-    test('per-blog author cannot update blog', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'author');
-
-        expect($policy->update($user, $blog))->toBeFalse();
-    });
-
-    test('non-owner with no blog role cannot update', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->update($user, $blog))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// manageUsers()
-// ============================================================================
-
-describe('BlogPolicy::manageUsers', function () {
-
-    test('owner can manage users', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
-
-        expect($policy->manageUsers($user, $blog))->toBeTrue();
-    });
-
-    test('per-blog editor cannot manage users (owner-only now)', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
-
-        expect($policy->manageUsers($user, $blog))->toBeFalse();
-    });
-
-    test('per-blog author cannot manage users', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'author');
-
-        expect($policy->manageUsers($user, $blog))->toBeFalse();
-    });
-
-    test('non-owner with no blog role cannot manage users', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->manageUsers($user, $blog))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// invite()
-// ============================================================================
-
-describe('BlogPolicy::invite', function () {
-
-    test('owner can invite', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
-
-        expect($policy->invite($user, $blog))->toBeTrue();
-    });
-
-    test('per-blog editor cannot invite', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
-
-        expect($policy->invite($user, $blog))->toBeFalse();
-    });
-
-    test('non-member cannot invite', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(99);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->invite($user, $blog))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// createPost()
-// ============================================================================
-
-describe('BlogPolicy::createPost', function () {
-
-    test('owner can always create a post', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
-
-        expect($policy->createPost($user, $blog))->toBeTrue();
-    });
-
-    test('non-owner with allowed per-blog role can create post', function (string $role) {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: $role);
-
-        expect($policy->createPost($user, $blog))->toBeTrue();
-    })->with(['editor', 'author', 'contributor']);
-
-    test('viewer cannot create a post', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'viewer');
-
-        expect($policy->createPost($user, $blog))->toBeFalse();
-    });
-
-    test('non-owner with no blog role cannot create a post', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->createPost($user, $blog))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// delete()
-// ============================================================================
-
-describe('BlogPolicy::delete', function () {
-
-    test('owner can delete their blog', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(1);
-        $blog = mockBlog(ownerId: 1);
-
-        expect($policy->delete($user, $blog))->toBeTrue();
-    });
-
-    test('editor cannot delete blog even with per-blog role', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: 'editor');
-
-        expect($policy->delete($user, $blog))->toBeFalse();
-    });
-
-    test('non-owner with no role cannot delete blog', function () {
-        $policy = new BlogPolicy();
-        $user = makeUser(2);
-        $blog = mockBlog(ownerId: 1, roleForUser: '');
-
-        expect($policy->delete($user, $blog))->toBeFalse();
+        expect($policy->create(makeUser(1, ['subscriber'])))->toBeFalse();
     });
 });
