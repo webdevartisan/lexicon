@@ -33,19 +33,16 @@ $headwordHtml = static function (string $word): string {
 $coverHeadword = site_content('banner.headword');
 $statsPosts = (int) ($stats['posts'] ?? 0);
 ?>
-
-<!-- Cover: the bound front matter of the volume. Everything here is the
-     banner content the admin already edits, re-set as a dictionary entry. -->
 <section class="lx-cover lx-bleed">
-    <div class="lx-wrap lx-cover__inner">
-        <p class="lx-cover__meta"><?= e(site_content('banner.eyebrow')) ?></p>
+    <div class="lx-wrap lx-cover-inner">
+        <p class="lx-cover-meta"><?= e(site_content('banner.eyebrow')) ?></p>
 
         <h1 class="lx-headword"><?= $headwordHtml($coverHeadword) ?></h1>
 
-        <p class="lx-cover__pron">
+        <p class="lx-cover-pron">
             <span class="lx-pron"><?= e(site_content('banner.pronunciation')) ?></span>
             <em class="lx-pos"><?= e(site_content('banner.pos')) ?></em>
-            <span class="lx-cover__rule" aria-hidden="true"></span>
+            <span class="lx-cover-rule" aria-hidden="true"></span>
         </p>
 
         <ol class="lx-senses">
@@ -70,39 +67,34 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
     ? site_content('banner.cta')
     : site_content('banner.ctaDashboard');
 ?>
-        <div class="lx-cover__actions">
-            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e($homeCtaLabel) ?></a>
-            <a href="<?= e(lurl('/blogs')) ?>" class="lx-btn lx-btn--ghost lx-btn--big">{{ t('navigation.exploreBlogs') }}</a>
+        <div class="lx-cover-actions">
+            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a>
+            <a href="<?= e(lurl('/discover')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.discover') }}</a>
         </div>
 
-        <p class="lx-cover__note">
+        <p class="lx-cover-note">
             <span class="lx-label"><?= e(site_content('banner.noteLabel')) ?></span> <?= e(site_content('banner.body')) ?>
         </p>
     </div>
 </section>
-
-<!-- The turn from cover to paper, carrying the only numbers on the page. -->
 {% if ($statsPosts > 0): %}
 <section class="lx-band lx-bleed" aria-label="{{ t('stats.posts') }}">
-    <div class="lx-wrap lx-band__inner">
-        <div class="lx-band__item">
-            <span class="lx-band__n"><?= number_format($statsPosts) ?></span>
-            <span class="lx-band__label">{{ t('stats.posts') }}</span>
+    <div class="lx-wrap lx-band-inner">
+        <div class="lx-band-item">
+            <span class="lx-band-n"><?= number_format($statsPosts) ?></span>
+            <span class="lx-band-label">{{ t('stats.posts') }}</span>
         </div>
-        <div class="lx-band__item">
-            <span class="lx-band__n"><?= number_format((int) ($stats['blogs'] ?? 0)) ?></span>
-            <span class="lx-band__label">{{ t('stats.blogs') }}</span>
+        <div class="lx-band-item">
+            <span class="lx-band-n"><?= number_format((int) ($stats['blogs'] ?? 0)) ?></span>
+            <span class="lx-band-label">{{ t('stats.blogs') }}</span>
         </div>
-        <div class="lx-band__item">
-            <span class="lx-band__n"><?= number_format((int) ($stats['writers'] ?? 0)) ?></span>
-            <span class="lx-band__label">{{ t('stats.writers') }}</span>
+        <div class="lx-band-item">
+            <span class="lx-band-n"><?= number_format((int) ($stats['writers'] ?? 0)) ?></span>
+            <span class="lx-band-label">{{ t('stats.writers') }}</span>
         </div>
     </div>
 </section>
 {% endif %}
-
-<!-- How it works. The three steps are a real sequence, so they are numbered;
-     the headword above them names the verb they add up to. -->
 <section class="lx-section lx-bleed" id="how">
     <div class="lx-wrap">
         <p class="lx-eyebrow"><?= e(site_content('how.title')) ?></p>
@@ -110,7 +102,7 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
         <div class="lx-entryhead" data-reveal="0">
             <h2><?= $headwordHtml(site_content('how.entryWord')) ?></h2>
             <em class="lx-pos"><?= e(site_content('how.entryPos')) ?></em>
-            <span class="lx-entryhead__rule" aria-hidden="true"></span>
+            <span class="lx-entryhead-rule" aria-hidden="true"></span>
         </div>
 
         <ol class="lx-steps">
@@ -123,9 +115,6 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
         </ol>
     </div>
 </section>
-
-<!-- Features as a run of related entries: a headword, a grammar label and a
-     definition, which is what each of these actually is. -->
 <section class="lx-section lx-bleed" id="entries">
     <div class="lx-wrap">
         <p class="lx-eyebrow"><?= e(site_content('features.title')) ?></p>
@@ -134,10 +123,10 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
             <?php foreach (['writing', 'team', 'ownership', 'readers'] as $entryIndex => $entryKey) { ?>
             <article class="lx-entry" data-reveal="<?= $entryIndex ?>">
                 <div>
-                    <h3 class="lx-entry__word"><?= $headwordHtml(site_content('features.items.'.$entryKey.'.word')) ?></h3>
-                    <em class="lx-pos lx-entry__pos"><?= e(site_content('features.items.'.$entryKey.'.pos')) ?></em>
+                    <h3 class="lx-entry-word"><?= $headwordHtml(site_content('features.items.'.$entryKey.'.word')) ?></h3>
+                    <em class="lx-pos lx-entry-pos"><?= e(site_content('features.items.'.$entryKey.'.pos')) ?></em>
                 </div>
-                <div class="lx-entry__def">
+                <div class="lx-entry-def">
                     <h3><?= e(site_content('features.items.'.$entryKey.'.title')) ?></h3>
                     <p><?= e(site_content('features.items.'.$entryKey.'.body')) ?></p>
                 </div>
@@ -146,10 +135,6 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
         </div>
     </div>
 </section>
-
-<!-- Citations: a dictionary shows a word in real use, attributed. That is
-     exactly what the editors' picks are. With no picks, the guides keep the
-     section presentable instead of promoting random user content. -->
 <section class="lx-section lx-bleed" id="citations">
     <div class="lx-wrap">
         {% if (!empty($showcase)): %}
@@ -164,17 +149,17 @@ $excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160)
 $postTitle = (string) ($post['title'] ?? '');
 ?>
             <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">
-                <a href="<?= e($postUrl) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
+                <a href="<?= e($postUrl) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
                     <?php if (!empty($post['featured_image'])) { ?>
                         <img src="<?= e($post['featured_image']) ?>" alt="" loading="lazy" />
                     <?php } else { ?>
-                        <span class="lx-cite__plate"><?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))) ?></span>
+                        <span class="lx-cite-plate"><?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))) ?></span>
                     <?php } ?>
                 </a>
 
-                <h3 class="lx-cite__title"><a href="<?= e($postUrl) ?>"><?= e($postTitle) ?></a></h3>
+                <h3 class="lx-cite-title"><a href="<?= e($postUrl) ?>"><?= e($postTitle) ?></a></h3>
 
-                <p class="lx-cite__attr">
+                <p class="lx-cite-attr">
                     <?= e($post['blog_name'] ?? '') ?>
                     <?php if (!empty($post['published_at'])) { ?>
                         <span aria-hidden="true">&middot;</span>
@@ -182,9 +167,9 @@ $postTitle = (string) ($post['title'] ?? '');
                     <?php } ?>
                 </p>
 
-                <p class="lx-cite__excerpt"><?= e($excerpt) ?></p>
+                <p class="lx-cite-excerpt"><?= e($excerpt) ?></p>
 
-                <p class="lx-cite__more">
+                <p class="lx-cite-more">
                     <a href="<?= e($postUrl) ?>">{{ t('showcase.readPost') }} <span aria-hidden="true">&rarr;</span></a>
                 </p>
             </li>
@@ -205,12 +190,12 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
     $guideTitle = trim((string) strtok($guideBlurb, '.'));
     ?>
             <li class="lx-cite" data-reveal="<?= $guideIndex ?>">
-                <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite__media" tabindex="-1" aria-hidden="true">
+                <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
                     <img src="<?= e($guideImage) ?>" alt="" loading="lazy" />
                 </a>
-                <h3 class="lx-cite__title"><a href="<?= e(lurl($guideHref)) ?>"><?= e($guideTitle !== '' ? $guideTitle : $guideBlurb) ?></a></h3>
-                <p class="lx-cite__excerpt"><?= e($guideBlurb) ?></p>
-                <p class="lx-cite__more">
+                <h3 class="lx-cite-title"><a href="<?= e(lurl($guideHref)) ?>"><?= e($guideTitle !== '' ? $guideTitle : $guideBlurb) ?></a></h3>
+                <p class="lx-cite-excerpt"><?= e($guideBlurb) ?></p>
+                <p class="lx-cite-more">
                     <a href="<?= e(lurl($guideHref)) ?>">{{ t('pages.readGuide') }} <span aria-hidden="true">&rarr;</span></a>
                 </p>
             </li>
@@ -219,8 +204,6 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
         {% endif %}
     </div>
 </section>
-
-<!-- Usage notes. -->
 <section class="lx-section lx-bleed" id="faq">
     <div class="lx-wrap">
         <p class="lx-eyebrow"><?= e(site_content('faq.title')) ?></p>
@@ -229,26 +212,24 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
             <?php foreach (['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as $noteIndex => $noteKey) { ?>
             <details class="lx-note">
                 <summary>
-                    <span class="lx-note__n"><?= str_pad((string) ($noteIndex + 1), 2, '0', STR_PAD_LEFT) ?></span>
+                    <span class="lx-note-n"><?= str_pad((string) ($noteIndex + 1), 2, '0', STR_PAD_LEFT) ?></span>
                     <span><?= e(site_content('faq.items.'.$noteKey.'.q')) ?></span>
-                    <span class="lx-note__sign" aria-hidden="true"></span>
+                    <span class="lx-note-sign" aria-hidden="true"></span>
                 </summary>
-                <p class="lx-note__body"><?= e(site_content('faq.items.'.$noteKey.'.a')) ?></p>
+                <p class="lx-note-body"><?= e(site_content('faq.items.'.$noteKey.'.a')) ?></p>
             </details>
             <?php } ?>
         </div>
     </div>
 </section>
-
-<!-- Back cover. -->
 <section class="lx-close lx-bleed">
-    <div class="lx-wrap lx-close__inner">
+    <div class="lx-wrap lx-close-inner">
         <div>
             <h2><?= e(site_content('cta.title')) ?></h2>
             <p><?= e(site_content('cta.body')) ?></p>
         </div>
-        <div class="lx-close__actions">
-            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn--gilt lx-btn--big"><?= e($homeCtaLabel) ?></a>
+        <div class="lx-close-actions">
+            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a>
         </div>
     </div>
 </section>

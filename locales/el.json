@@ -19,7 +19,7 @@
         "home": "Αρχική",
         "dashboard": "Πίνακας ελέγχου",
         "createBlog": "Δημιουργία blog",
-        "exploreBlogs": "Εξερεύνηση blogs",
+        "discover": "Ανακαλύψτε",
         "admin": "Διαχείριση",
         "createNewBlog": "Νέο ιστολόγιο",
         "allBlogs": "Όλα τα ιστολόγια",
@@ -662,15 +662,16 @@
             }
         }
     },
-    "explore": {
+    "discover": {
         "metaTitle": "Ανακάλυψε blogs και κείμενα στο Lexicon",
-        "heroTitle": "Ανακάλυψε σπουδαία κείμενα",
+        "heroTitle": "Σπουδαία κείμενα",
         "heroSubtitle": "Ξεφύλλισε blogs και τα πιο πρόσφατα άρθρα από συγγραφείς σε όλο το Lexicon.",
         "searchPlaceholderBlogs": "Αναζήτηση blogs...",
         "searchPlaceholderPosts": "Αναζήτηση άρθρων...",
         "searchButton": "Αναζήτηση",
+        "searchClear": "Καθαρισμός αναζήτησης",
         "tabBlogs": "Blogs",
-        "tabPosts": "Πρόσφατα άρθρα",
+        "tabPosts": "Άρθρα",
         "searchResults": "Αποτελέσματα αναζήτησης",
         "resultsFor": "αποτελέσματα για",
         "noBlogs": "Δεν βρέθηκαν blogs. Δοκίμασε άλλη αναζήτηση.",
@@ -702,7 +703,7 @@
         "emptyReplies": "Καμία απάντηση ακόμη. Όταν κάποιος απαντήσει σε σχόλιό σας, θα εμφανιστεί εδώ.",
         "emptyMyComments": "Δεν έχετε σχολιάσει ακόμη.",
         "emptySubscriptions": "Δεν ακολουθείτε κανένα ιστολόγιο. Ακολουθώντας ένα, παρακολουθείτε τις νέες του αναρτήσεις.",
-        "exploreBlogs": "Εξερευνήστε ιστολόγια",
+        "discover": "Ανακαλύψτε",
         "outOfRange": "Δεν υπάρχει τίποτα σε αυτή τη σελίδα.",
         "outOfRangeAction": "Επιστροφή στην πρώτη σελίδα",
         "remove": "Αφαίρεση",

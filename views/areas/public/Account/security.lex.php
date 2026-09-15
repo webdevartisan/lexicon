@@ -14,13 +14,13 @@ $username = (string) ($user['username'] ?? '');
 $passwordField = function (string $name, string $label, string $autocomplete) use ($fieldErrors): void {
     $invalid = !empty($fieldErrors[$name]);
     ?>
-    <div class="lx-field<?= $invalid ? ' lx-field--invalid' : '' ?>">
-        <label class="lx-field__label" for="<?= e($name) ?>"><?= e($label) ?></label>
-        <input class="lx-field__input" type="password" name="<?= e($name) ?>" id="<?= e($name) ?>"
+    <div class="lx-field<?= $invalid ? ' lx-field-invalid' : '' ?>">
+        <label class="lx-field-label" for="<?= e($name) ?>"><?= e($label) ?></label>
+        <input class="lx-field-input" type="password" name="<?= e($name) ?>" id="<?= e($name) ?>"
                autocomplete="<?= e($autocomplete) ?>"
                <?= $invalid ? 'aria-invalid="true" aria-describedby="'.e($name).'_error"' : '' ?> required>
         <?php foreach ($fieldErrors[$name] ?? [] as $message) { ?>
-        <p class="lx-field__error" id="<?= e($name) ?>_error"><?= e($message) ?></p>
+        <p class="lx-field-error" id="<?= e($name) ?>_error"><?= e($message) ?></p>
         <?php } ?>
     </div>
 <?php };
@@ -47,8 +47,8 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
             </div>
 
             <div class="lx-account-actions">
-                <button type="reset" class="lx-btn lx-btn--subtle"><?= e($t('account.common.reset')) ?></button>
-                <button type="submit" class="lx-btn lx-btn--primary"><?= e($t('account.security.save')) ?></button>
+                <button type="reset" class="lx-btn lx-btn-subtle"><?= e($t('account.common.reset')) ?></button>
+                <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('account.security.save')) ?></button>
             </div>
         </form>
 

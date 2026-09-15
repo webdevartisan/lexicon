@@ -19,7 +19,7 @@
     "home": "الرئيسية",
     "dashboard": "لوحة التحكم",
     "createBlog": "أنشئ مدونة",
-    "exploreBlogs": "استكشف المدونات",
+    "discover": "اكتشف",
     "admin": "الإدارة",
     "createNewBlog": "إنشاء مدونة جديدة",
     "allBlogs": "كل المدونات",
@@ -662,15 +662,16 @@
       }
     }
   },
-  "explore": {
+  "discover": {
     "metaTitle": "اكتشف المدونات والكتابات على Lexicon",
-    "heroTitle": "اكتشف كتابات رائعة",
+    "heroTitle": "كتابات رائعة",
     "heroSubtitle": "تصفح المدونات وأحدث التدوينات من كتّاب عبر Lexicon.",
     "searchPlaceholderBlogs": "ابحث في المدونات...",
     "searchPlaceholderPosts": "ابحث في التدوينات...",
     "searchButton": "بحث",
+        "searchClear": "مسح البحث",
     "tabBlogs": "المدونات",
-    "tabPosts": "أحدث التدوينات",
+    "tabPosts": "المنشورات",
     "searchResults": "نتائج البحث",
     "resultsFor": "نتائج البحث عن",
     "noBlogs": "لم يتم العثور على مدونات. جرّب بحثاً آخر.",
@@ -702,7 +703,7 @@
     "emptyReplies": "لا ردود بعد. عندما يجيب أحدهم على تعليق لك سيظهر هنا.",
     "emptyMyComments": "لم تعلّق بعد.",
     "emptySubscriptions": "لا تتابع أي مدونة. متابعة مدونة تساعدك على تتبع مقالاتها الجديدة.",
-    "exploreBlogs": "استكشف المدونات",
+    "discover": "اكتشف",
     "outOfRange": "لا يوجد شيء في هذه الصفحة.",
     "outOfRangeAction": "العودة إلى الصفحة الأولى",
     "remove": "إزالة",

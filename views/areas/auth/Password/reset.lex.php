@@ -13,9 +13,9 @@
     <input type="hidden" name="email" value="<?= e($email ?? '') ?>">
 
     <div class="lx-field">
-        <label class="lx-field__label" for="password"><?= e($t('auth.newPasswordLabel')) ?></label>
-        <div class="lx-field__control">
-            <input class="lx-field__input"
+        <label class="lx-field-label" for="password"><?= e($t('auth.newPasswordLabel')) ?></label>
+        <div class="lx-field-control">
+            <input class="lx-field-input"
                    type="password"
                    name="password"
                    id="password"
@@ -25,7 +25,7 @@
                    required
                    autofocus>
             <button type="button"
-                    class="lx-field__toggle"
+                    class="lx-field-toggle"
                     data-password-toggle="password"
                     data-label-show="<?= e($t('auth.show')) ?>"
                     data-label-hide="<?= e($t('auth.hide')) ?>"
@@ -34,7 +34,7 @@
                     aria-label="<?= e($t('auth.showPassword')) ?>"
                     aria-pressed="false"><?= e($t('auth.show')) ?></button>
         </div>
-        <p class="lx-field__hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
 
         <?php
         // Same advisory meter as registration: this is the other screen where
@@ -51,20 +51,20 @@
              data-password-meter="password"
              data-levels="<?= e($meterLevels) ?>"
              hidden>
-            <div class="lx-meter__track" aria-hidden="true">
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
-                <span class="lx-meter__seg"></span>
+            <div class="lx-meter-track" aria-hidden="true">
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
+                <span class="lx-meter-seg"></span>
             </div>
-            <p class="lx-meter__label" data-meter-label role="status" aria-live="polite"></p>
+            <p class="lx-meter-label" data-meter-label role="status" aria-live="polite"></p>
         </div>
     </div>
 
     <div class="lx-field">
         <?php // The `required` here was misspelled `requiredd`, so the confirm field was optional.?>
-        <label class="lx-field__label" for="password_confirm"><?= e($t('auth.confirmPasswordLabel')) ?></label>
-        <input class="lx-field__input"
+        <label class="lx-field-label" for="password_confirm"><?= e($t('auth.confirmPasswordLabel')) ?></label>
+        <input class="lx-field-input"
                type="password"
                name="password_confirm"
                id="password_confirm"

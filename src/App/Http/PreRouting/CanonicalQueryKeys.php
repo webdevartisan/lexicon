@@ -46,7 +46,7 @@ final class CanonicalQueryKeys
         // Configure per-path whitelists.
         // Keys not listed here will be dropped from the canonical URL.
         $whitelistByPath = [
-            '/blogs' => ['page', 'q'],
+            '/discover' => ['page', 'q', 'tab'],
             // '/search' => ['q', 'lang', 'sort'],
         ];
 

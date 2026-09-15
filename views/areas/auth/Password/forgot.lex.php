@@ -15,8 +15,8 @@
     <?= csrf_field() ?>
 
     <div class="lx-field">
-        <label class="lx-field__label" for="email"><?= e($t('auth.emailLabel')) ?></label>
-        <input class="lx-field__input"
+        <label class="lx-field-label" for="email"><?= e($t('auth.emailLabel')) ?></label>
+        <input class="lx-field-input"
                type="email"
                name="email"
                id="email"

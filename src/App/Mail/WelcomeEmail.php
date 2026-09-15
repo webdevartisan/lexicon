@@ -53,7 +53,7 @@ class WelcomeEmail extends Mailable
         $appUrl = htmlspecialchars(env('APP_URL', 'http://localhost'));
         // Explore, not a personal page: a brand new account has nothing on
         // its own lists yet, so the useful first destination is the catalog.
-        $exploreUrl = $appUrl.'/blogs';
+        $exploreUrl = $appUrl.'/discover';
 
         return <<<HTML
         <!DOCTYPE html>
@@ -106,7 +106,7 @@ class WelcomeEmail extends Mailable
     private function buildTextBody(string $firstName, string $username): string
     {
         $appName = env('APP_NAME', 'Blog Platform');
-        $exploreUrl = (env('APP_URL', 'http://localhost')).'/blogs';
+        $exploreUrl = (env('APP_URL', 'http://localhost')).'/discover';
 
         return <<<TEXT
         Welcome to {$appName}!

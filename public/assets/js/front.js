@@ -134,7 +134,7 @@
         // Built once and only ever updated through textContent, so nothing
         // typed into the field can reach the DOM as markup.
         var levelText = document.createElement('span');
-        levelText.className = 'lx-meter__level';
+        levelText.className = 'lx-meter-level';
         label.appendChild(levelText);
 
         var render = function () {
@@ -330,5 +330,191 @@
 
     revealTargets.forEach(function (el) {
         observer.observe(el);
+    });
+})();
+
+(function () {
+    var target = document.querySelector('.lx-explore-head') || document.querySelector('.lx-explore-toolbar');
+    if (!target) return;
+
+    var params = new URLSearchParams(window.location.search);
+    if (!params.has('tab') && !params.has('q') && !params.has('page')) return;
+
+    function scrollToTarget() {
+        var nav = document.querySelector('.lx-nav');
+        var navH = nav ? nav.offsetHeight : 0;
+        var y = target.getBoundingClientRect().top + window.scrollY - navH - 16;
+        // 'instant' beats html { scroll-behavior: smooth }; 'auto' inherits it.
+        window.scrollTo({ top: Math.max(0, y), behavior: 'instant' });
+    }
+
+    window.requestAnimationFrame(scrollToTarget);
+    // Re-run after fonts / images finish loading; late reflow can shift the target.
+    window.addEventListener('load', scrollToTarget);
+})();
+
+(function () {
+    var clear = document.querySelector('.lx-search-field-clear');
+    var input = document.querySelector('.lx-search-field input[type="search"]');
+    if (!input || !clear) return;
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && input.value !== '') {
+            e.preventDefault();
+            window.location.href = clear.getAttribute('href');
+        }
+    });
+})();
+
+(function () {
+    var sliders = document.querySelectorAll('[data-slider]');
+    if (!sliders.length) return;
+
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var SMOOTH_MS = 650;
+
+    sliders.forEach(function (root) {
+        var rail = root.querySelector('[data-slider-rail]');
+        var realSlides = rail ? Array.prototype.slice.call(rail.querySelectorAll('[data-slider-slide]')) : [];
+        if (!rail || realSlides.length < 2) return;
+
+        var realCount = realSlides.length;
+
+        // Clone the ends so scrolling past the last wraps to the first without a visible rewind.
+        var cloneLast = realSlides[realCount - 1].cloneNode(true);
+        var cloneFirst = realSlides[0].cloneNode(true);
+        cloneLast.setAttribute('aria-hidden', 'true');
+        cloneFirst.setAttribute('aria-hidden', 'true');
+        cloneLast.setAttribute('data-slider-clone', 'true');
+        cloneFirst.setAttribute('data-slider-clone', 'true');
+        rail.insertBefore(cloneLast, realSlides[0]);
+        rail.appendChild(cloneFirst);
+
+        var allSlides = Array.prototype.slice.call(rail.querySelectorAll('[data-slider-slide]'));
+        var realOffset = 1;
+
+        var prev = root.querySelector('[data-slider-prev]');
+        var next = root.querySelector('[data-slider-next]');
+        var dotsWrap = root.querySelector('[data-slider-dots]');
+        var current = 0;
+        var isLooping = false;
+
+        var dots = [];
+        if (dotsWrap) {
+            for (var i = 0; i < realCount; i++) {
+                var dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'lx-slider-dot';
+                dot.setAttribute('aria-label', 'Slide ' + (i + 1) + ' of ' + realCount);
+                (function (idx) {
+                    dot.addEventListener('click', function () { jumpTo(idx); });
+                })(i);
+                dotsWrap.appendChild(dot);
+                dots.push(dot);
+            }
+        }
+
+        function updateDots() {
+            dots.forEach(function (d, idx) {
+                d.classList.toggle('is-active', idx === current);
+                d.setAttribute('aria-current', idx === current ? 'true' : 'false');
+            });
+        }
+
+        function scrollToDom(domIdx, instant) {
+            var target = allSlides[domIdx];
+            if (!target) return;
+            var railRect = rail.getBoundingClientRect();
+            var targetRect = target.getBoundingClientRect();
+            var delta = targetRect.left - railRect.left;
+            // 'instant' bypasses the rail's CSS scroll-behavior: smooth so the teleport is invisible.
+            rail.scrollTo({
+                left: rail.scrollLeft + delta,
+                behavior: (reducedMotion || instant) ? 'instant' : 'smooth',
+            });
+        }
+
+        function jumpTo(realIdx) {
+            if (isLooping) return;
+            current = ((realIdx % realCount) + realCount) % realCount;
+            scrollToDom(current + realOffset, false);
+            updateDots();
+        }
+
+        function step(dir) {
+            if (isLooping) return;
+            var nextReal = current + dir;
+
+            if (nextReal >= realCount) {
+                isLooping = true;
+                scrollToDom(realCount + realOffset, false);
+                current = 0;
+                updateDots();
+                setTimeout(function () {
+                    scrollToDom(realOffset, true);
+                    isLooping = false;
+                }, SMOOTH_MS);
+            } else if (nextReal < 0) {
+                isLooping = true;
+                scrollToDom(0, false);
+                current = realCount - 1;
+                updateDots();
+                setTimeout(function () {
+                    scrollToDom(realCount - 1 + realOffset, true);
+                    isLooping = false;
+                }, SMOOTH_MS);
+            } else {
+                current = nextReal;
+                scrollToDom(current + realOffset, false);
+                updateDots();
+            }
+        }
+
+        if (prev) prev.addEventListener('click', function () { step(-1); });
+        if (next) next.addEventListener('click', function () { step(1); });
+
+        // Manual scroll (swipe / trackpad) updates the active dot after
+        // a short debounce; suppressed while a loop teleport is in progress.
+        var scrollTimer;
+        rail.addEventListener('scroll', function () {
+            if (isLooping) return;
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(function () {
+                var width = rail.clientWidth;
+                if (width <= 0) return;
+                var domIdx = Math.round(rail.scrollLeft / width);
+                // Map DOM index back to real; clones show as their neighbouring real slide.
+                if (domIdx <= 0) current = 0;
+                else if (domIdx >= realCount + 1) current = realCount - 1;
+                else current = domIdx - realOffset;
+                updateDots();
+            }, 120);
+        });
+
+        // Land on the real first slide, past the prepended clone, before the
+        // user sees anything. Waits for layout so widths are correct.
+        window.requestAnimationFrame(function () {
+            scrollToDom(realOffset, true);
+            updateDots();
+        });
+
+        // Autoplay — quiet when the user is interacting or prefers reduced motion.
+        var autoplay = null;
+        function startAutoplay() {
+            if (reducedMotion || autoplay) return;
+            autoplay = setInterval(function () { step(1); }, 6000);
+        }
+        function stopAutoplay() {
+            if (autoplay) { clearInterval(autoplay); autoplay = null; }
+        }
+        root.addEventListener('mouseenter', stopAutoplay);
+        root.addEventListener('mouseleave', startAutoplay);
+        root.addEventListener('focusin', stopAutoplay);
+        root.addEventListener('focusout', startAutoplay);
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) stopAutoplay(); else startAutoplay();
+        });
+
+        startAutoplay();
     });
 })();

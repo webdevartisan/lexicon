@@ -44,19 +44,19 @@ $siteName = site_setting('site_name', 'Lexicon');
         <a class="lx-skip" href="#lx-auth-main"><?= e($t('a11y.skipToContent')) ?></a>
 
         <header class="lx-authbar">
-            <a class="lx-authbar__back" href="<?= e($homeHref) ?>">
+            <a class="lx-authbar-back" href="<?= e($homeHref) ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
                 <?= e($t('auth.back')) ?>
             </a>
-            <div class="lx-authbar__alt">{% yield altAction %}</div>
+            <div class="lx-authbar-alt">{% yield altAction %}</div>
         </header>
 
         <main class="lx-authmain" id="lx-auth-main">
             <div class="lx-authcol">
 
                 <a class="lx-authmark" href="<?= e($homeHref) ?>" aria-label="<?= e($siteName) ?>">
-                    <span class="lx-authmark__dot" aria-hidden="true"></span>
-                    <span class="lx-authmark__word"><?= e($siteName) ?></span>
+                    <span class="lx-authmark-dot" aria-hidden="true"></span>
+                    <span class="lx-authmark-word"><?= e($siteName) ?></span>
                 </a>
 
                 <h1 class="lx-authtitle">{% yield heading %}</h1>

@@ -21,7 +21,7 @@ return [
         ['label' => 'Home', 'href' => '/', 'auth' => null, 'key' => 'navigation.home'],
         ['label' => 'Create a Blog', 'href' => '/login', 'auth' => false, 'key' => 'navigation.createBlog'],
         ['label' => 'Create a Blog', 'href' => '/dashboard/blog/new', 'auth' => true, 'key' => 'navigation.createBlog'],
-        ['label' => 'Explore Blogs', 'href' => '/blogs', 'auth' => null, 'key' => 'navigation.exploreBlogs'],
+        ['label' => 'Discover', 'href' => '/discover', 'auth' => null, 'key' => 'navigation.discover'],
         ['label' => 'Getting Started', 'href' => '/getting-started', 'auth' => null, 'key' => 'navigation.gettingStarted'],
         ['label' => 'About', 'href' => '/about', 'auth' => null, 'key' => 'navigation.about'],
         ['label' => 'Contact', 'href' => '/contact', 'auth' => null, 'key' => 'navigation.contact'],

@@ -41,7 +41,6 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon/apple-touch-icon.png" />
         <link rel="manifest" href="/assets/icon/site.webmanifest" />
 
-		<!-- Canonical and alternates -->
 		<link rel="canonical" href="{{ head.canonicalUrl }}" />
 
         {% foreach ($head['alternates'] as $alt): %}
@@ -52,7 +51,6 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <link rel="alternate" href="{{ head.xDefaultUrl }}" hreflang="x-default" />
         {% endif; %}
 
-        <!-- Open Graph locale -->
         <meta property="og:locale" content="{{ head.ogLocale }}" />
 
         {% foreach ($head['ogLocaleAlternates'] as $ogl): %}
@@ -80,30 +78,30 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <a class="lx-skip" href="#main"><?= e($t('a11y.skipToContent')) ?></a>
 
         <header class="lx-nav<?= $navMode === 'over' ? ' is-over' : '' ?>" data-lx-nav="<?= e($navMode) ?>">
-            <div class="lx-wrap lx-nav__inner">
+            <div class="lx-wrap lx-nav-inner">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo__mark" aria-hidden="true"></span>
+                    <span class="lx-logo-mark" aria-hidden="true"></span>
                     <?= e($siteName) ?>
                 </a>
 
-                <ul class="lx-nav__links">
+                <ul class="lx-nav-links">
                     <?php
             // NavigationService hands over a translation key alongside the
             // English label; rendering the label alone is what left the
             // menu in English on /el and /ar.
             foreach ($barNav as $it) { ?>
                     <li>
-                        <a class="lx-nav__link" href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a>
+                        <a class="lx-nav-link" href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a>
                     </li>
                     <?php } ?>
                 </ul>
 
-                <ul class="lx-nav__actions" data-auth-nav="platform">
+                <ul class="lx-nav-actions" data-auth-nav="platform">
                     <?php $authNavVariant = 'platform'; ?>
                     {% include "partials/_auth_nav.lex.php" %}
                 </ul>
 
-                <button type="button" class="lx-nav__toggle" data-lx-drawer-open
+                <button type="button" class="lx-nav-toggle" data-lx-drawer-open
                         aria-expanded="false" aria-controls="lx-drawer"
                         aria-label="<?= e($t('a11y.openMenu')) ?>">
                     <span aria-hidden="true"></span>
@@ -112,25 +110,25 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         </header>
 
         <div class="lx-drawer" id="lx-drawer" hidden>
-            <div class="lx-drawer__head">
+            <div class="lx-drawer-head">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo__mark" aria-hidden="true"></span>
+                    <span class="lx-logo-mark" aria-hidden="true"></span>
                     <?= e($siteName) ?>
                 </a>
-                <button type="button" class="lx-drawer__close" data-lx-drawer-close
+                <button type="button" class="lx-drawer-close" data-lx-drawer-close
                         aria-label="<?= e($t('a11y.closeMenu')) ?>">&times;</button>
             </div>
 
-            <ul class="lx-drawer__links">
+            <ul class="lx-drawer-links">
                 <?php foreach ($frontNav as $it) { ?>
                 <li><a href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a></li>
                 <?php } ?>
             </ul>
 
-            <div class="lx-drawer__actions">
+            <div class="lx-drawer-actions">
                 {% if (!auth()->check()): %}
-                    <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl('/register')) ?>">{{ t('navigation.createBlog') }}</a>
-                    <a class="lx-btn lx-btn--ghost lx-btn--fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl('/register')) ?>">{{ t('navigation.createBlog') }}</a>
+                    <a class="lx-btn lx-btn-ghost lx-btn-fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
                 {% else %}
                     <?php
                     // Same rule as the bar: a reader has no dashboard, so the
@@ -138,10 +136,10 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     // back to where they already are.
                     $drawerIsReader = !empty($viewer['is_reader']);
 ?>
-                    <a class="lx-btn lx-btn--gilt lx-btn--fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>
-                        <button type="submit" class="lx-btn lx-btn--ghost lx-btn--fit">{{ t('header.signOut') }}</button>
+                        <button type="submit" class="lx-btn lx-btn-ghost lx-btn-fit">{{ t('header.signOut') }}</button>
                     </form>
                 {% endif %}
             </div>
@@ -192,14 +190,14 @@ foreach ($socialNetworks as $network) {
 }
 ?>
         <footer class="lx-foot" role="contentinfo">
-            <div class="lx-wrap lx-foot__inner">
-                <div class="lx-foot__brand">
+            <div class="lx-wrap lx-foot-inner">
+                <div class="lx-foot-brand">
                     <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                        <span class="lx-logo__mark" aria-hidden="true"></span>
+                        <span class="lx-logo-mark" aria-hidden="true"></span>
                         <?= e($siteName) ?>
                     </a>
-                    <p class="lx-foot__tagline">{{ t('header.logoTagline') }}</p>
-                    <p class="lx-foot__about"><?= e(site_content('footer.aboutText')) ?></p>
+                    <p class="lx-foot-tagline">{{ t('header.logoTagline') }}</p>
+                    <p class="lx-foot-about"><?= e(site_content('footer.aboutText')) ?></p>
                 </div>
 
                 <nav aria-label="{{ t('footer.quickLinksTitle') }}">
@@ -230,7 +228,7 @@ foreach ($socialNetworks as $network) {
                     </ul>
 
                     <h2 style="margin-top:2rem">{{ t('contact.title') }}</h2>
-                    <ul class="lx-foot__contact">
+                    <ul class="lx-foot-contact">
                         {% if (!empty($footerEmail)): %}
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m3 6 9 6.5L21 6"/></svg>
@@ -257,15 +255,15 @@ foreach ($socialNetworks as $network) {
                 </div>
             </div>
 
-            <div class="lx-wrap lx-foot__bottom">
-                <p class="lx-foot__copy">
+            <div class="lx-wrap lx-foot-bottom">
+                <p class="lx-foot-copy">
                     &copy; <?= date('Y') ?> <?= e($siteName) ?>. {{ t('footer.rightsReserved') }}
                 </p>
 
                 {% include "partials/_language_switcher.lex.php" %}
 
                 {% if (!empty($configuredSocials)): %}
-                <ul class="lx-foot__social" aria-label="{{ t('footer.socialAria') }}">
+                <ul class="lx-foot-social" aria-label="{{ t('footer.socialAria') }}">
                     {% foreach ($configuredSocials as $social): %}
                     <li>
                         <a href="{{ social.url }}" rel="noopener noreferrer" target="_blank"
@@ -314,7 +312,6 @@ foreach ($socialNetworks as $network) {
 
         <button type="button" class="fab scroll-top-btn" title="<?= e($t('a11y.backToTop')) ?>" aria-label="<?= e($t('a11y.backToTop')) ?>"></button>
 
-		<!-- Scripts -->
 		<script src="/assets/js/platform-menu.js" defer></script>
 		<script src="/assets/js/flash-toast.js" defer></script>
 		<script src="/assets/js/front.js" defer></script>

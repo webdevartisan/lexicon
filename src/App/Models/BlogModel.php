@@ -765,10 +765,12 @@ class BlogModel extends AppModel
     {
         $sql = "
             SELECT b.*, u.username AS ownername,
+                bs.banner_path AS banner_path,
                 (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS postcount,
                 (SELECT COUNT(*) FROM blog_users bu WHERE bu.blog_id = b.id AND bu.is_active = 1) AS authorcount
             FROM blogs b
             INNER JOIN users u ON b.owner_id = u.id
+            LEFT JOIN blog_settings bs ON bs.blog_id = b.id
             WHERE b.is_featured = 1 AND b.status = 'published'
             ORDER BY b.published_at DESC
             LIMIT ?

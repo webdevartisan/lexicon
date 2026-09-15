@@ -12,70 +12,78 @@
 <?php
 $flashMessages = flash();
 $formErrors = errors();
+
+$fieldError = static function ($errors) {
+    if (empty($errors)) {
+        return null;
+    }
+    return is_array($errors) ? implode(' ', $errors) : $errors;
+};
 ?>
-<section>
-    <header class="main">
-        <h1>{{ page.title }}</h1>
+<section aria-labelledby="contact-heading">
+    <header class="lx-section-head">
+        <h1 id="contact-heading">{{ page.title }}</h1>
     </header>
 
-    <div class="page-content">
-        {{ page.content|raw }}
-    </div>
+    <?php if (!empty(trim((string) ($page->content ?? '')))) { ?>
+        <div class="lx-page-content">{{ page.content|raw }}</div>
+    <?php } ?>
 
-    {% if (!empty($flashMessages['success'])): %}
-        {% foreach ($flashMessages['success'] as $msg): %}
-        <p class="search-meta"><strong>{{ msg }}</strong></p>
-        {% endforeach; %}
-    {% endif %}
-    {% if (!empty($flashMessages['error'])): %}
-        {% foreach ($flashMessages['error'] as $msg): %}
-        <p class="search-meta"><strong>{{ msg }}</strong></p>
-        {% endforeach; %}
-    {% endif %}
+    <?php foreach (($flashMessages['success'] ?? []) as $msg) { ?>
+        <p class="lx-msg lx-msg-success" role="status"><?= e($msg); ?></p>
+    <?php } ?>
+    <?php foreach (($flashMessages['error'] ?? []) as $msg) { ?>
+        <p class="lx-msg lx-msg-error" role="alert"><?= e($msg); ?></p>
+    <?php } ?>
 
-    <form method="POST" action="/contact">
+    <form method="POST" action="/contact" novalidate>
         {{ csrf_field() }}
 
-        <!-- Honeypot: humans never see this field, bots fill it -->
-        <div style="position:absolute;left:-9999px;" aria-hidden="true">
+        <div class="lx-hp" aria-hidden="true">
             <label>Website
                 <input type="text" name="website" tabindex="-1" autocomplete="off" />
             </label>
         </div>
 
-        <div class="row gtr-uniform">
-            <div class="col-6 col-12-xsmall">
-                <input type="text" name="name" placeholder="<?= e($t('pages.contactForm.name')) ?>"
-                       value="<?= e(old('name', '')) ?>" required />
-                <?php if (!empty($formErrors['name'])) { ?>
-                    <p class="search-meta"><?= e(is_array($formErrors['name']) ? implode(' ', $formErrors['name']) : $formErrors['name']) ?></p>
+        <div class="lx-grid-2">
+            <div class="lx-field<?= !empty($formErrors['name']) ? ' lx-field-invalid' : ''; ?>">
+                <label class="lx-field-label" for="contact-name"><?= e($t('pages.contactForm.name')) ?></label>
+                <input class="lx-field-input" id="contact-name" type="text" name="name"
+                       value="<?= e(old('name', '')) ?>" required autocomplete="name" />
+                <?php if ($err = $fieldError($formErrors['name'] ?? null)) { ?>
+                    <p class="lx-field-error"><?= e($err); ?></p>
                 <?php } ?>
             </div>
-            <div class="col-6 col-12-xsmall">
-                <input type="email" name="email" placeholder="<?= e($t('pages.contactForm.email')) ?>"
-                       value="<?= e(old('email', '')) ?>" required />
-                <?php if (!empty($formErrors['email'])) { ?>
-                    <p class="search-meta"><?= e(is_array($formErrors['email']) ? implode(' ', $formErrors['email']) : $formErrors['email']) ?></p>
+
+            <div class="lx-field<?= !empty($formErrors['email']) ? ' lx-field-invalid' : ''; ?>">
+                <label class="lx-field-label" for="contact-email"><?= e($t('pages.contactForm.email')) ?></label>
+                <input class="lx-field-input" id="contact-email" type="email" name="email"
+                       value="<?= e(old('email', '')) ?>" required autocomplete="email" />
+                <?php if ($err = $fieldError($formErrors['email'] ?? null)) { ?>
+                    <p class="lx-field-error"><?= e($err); ?></p>
                 <?php } ?>
             </div>
-            <div class="col-12">
-                <input type="text" name="subject" placeholder="<?= e($t('pages.contactForm.subject')) ?>"
-                       value="<?= e(old('subject', '')) ?>" required />
-                <?php if (!empty($formErrors['subject'])) { ?>
-                    <p class="search-meta"><?= e(is_array($formErrors['subject']) ? implode(' ', $formErrors['subject']) : $formErrors['subject']) ?></p>
-                <?php } ?>
-            </div>
-            <div class="col-12">
-                <textarea name="message" placeholder="<?= e($t('pages.contactForm.message')) ?>" rows="6" required><?= e(old('message', '')) ?></textarea>
-                <?php if (!empty($formErrors['message'])) { ?>
-                    <p class="search-meta"><?= e(is_array($formErrors['message']) ? implode(' ', $formErrors['message']) : $formErrors['message']) ?></p>
-                <?php } ?>
-            </div>
-            <div class="col-12">
-                <ul class="actions">
-                    <li><button type="submit" class="button primary"><?= e($t('pages.contactForm.send')) ?></button></li>
-                </ul>
-            </div>
+        </div>
+
+        <div class="lx-field<?= !empty($formErrors['subject']) ? ' lx-field-invalid' : ''; ?>">
+            <label class="lx-field-label" for="contact-subject"><?= e($t('pages.contactForm.subject')) ?></label>
+            <input class="lx-field-input" id="contact-subject" type="text" name="subject"
+                   value="<?= e(old('subject', '')) ?>" required />
+            <?php if ($err = $fieldError($formErrors['subject'] ?? null)) { ?>
+                <p class="lx-field-error"><?= e($err); ?></p>
+            <?php } ?>
+        </div>
+
+        <div class="lx-field<?= !empty($formErrors['message']) ? ' lx-field-invalid' : ''; ?>">
+            <label class="lx-field-label" for="contact-message"><?= e($t('pages.contactForm.message')) ?></label>
+            <textarea class="lx-field-input" id="contact-message" name="message" rows="6" required><?= e(old('message', '')) ?></textarea>
+            <?php if ($err = $fieldError($formErrors['message'] ?? null)) { ?>
+                <p class="lx-field-error"><?= e($err); ?></p>
+            <?php } ?>
+        </div>
+
+        <div class="lx-form-actions">
+            <button type="submit" class="lx-btn lx-btn-primary"><?= e($t('pages.contactForm.send')) ?></button>
         </div>
     </form>
 </section>
