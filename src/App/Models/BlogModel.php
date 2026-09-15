@@ -269,7 +269,7 @@ class BlogModel extends AppModel
      */
     public function getAllBlogsWithOwnerAndCounts(): array
     {
-        $sql = 'SELECT b.*, u.username as owner_name,
+        $sql = 'SELECT b.*, u.handle as owner_name,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
@@ -329,7 +329,7 @@ class BlogModel extends AppModel
         $params = [];
 
         if ($q !== '') {
-            $conditions[] = '(b.blog_name LIKE :q_name OR b.blog_slug LIKE :q_slug OR u.username LIKE :q_owner)';
+            $conditions[] = '(b.blog_name LIKE :q_name OR b.blog_slug LIKE :q_slug OR u.handle LIKE :q_owner)';
             $term = '%'.$q.'%';
             $params[':q_name'] = $term;
             $params[':q_slug'] = $term;
@@ -366,7 +366,7 @@ class BlogModel extends AppModel
         )->fetchColumn();
 
         // $orderBy comes from a TableSort whitelist, never from raw input.
-        $sql = "SELECT b.*, u.username as owner_name, bs.theme as theme,
+        $sql = "SELECT b.*, u.handle as owner_name, bs.theme as theme,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
@@ -402,7 +402,7 @@ class BlogModel extends AppModel
      */
     public function getBlogsByOwnerWithCounts(int $ownerId): array
     {
-        $sql = 'SELECT b.*, u.username as owner_name,
+        $sql = 'SELECT b.*, u.handle as owner_name,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
@@ -422,7 +422,7 @@ class BlogModel extends AppModel
      */
     public function getBlogByIdWithCounts(int $blogId): ?array
     {
-        $sql = 'SELECT b.*, u.username as owner_name,
+        $sql = 'SELECT b.*, u.handle as owner_name,
                     (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) as post_count,
                     (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) as author_count
                 FROM blogs b
@@ -498,14 +498,14 @@ class BlogModel extends AppModel
     }
 
     /**
-     * Get a blog by ID with owner username.
+     * Get a blog by ID with the owner handle.
      *
      * @param  int  $id  Blog ID
      * @return array<string, mixed>|null Blog record with owner_name, or null if not found
      */
     public function getBlogById(int $id): ?array
     {
-        $sql = 'SELECT b.*, u.username as owner_name
+        $sql = 'SELECT b.*, u.handle as owner_name
                 FROM blogs b
                 INNER JOIN users u ON b.owner_id = u.id
                 WHERE b.id = ?';
@@ -537,11 +537,11 @@ class BlogModel extends AppModel
      * Returns users assigned to the blog with their role and contact info.
      *
      * @param  int  $blogId  Blog ID
-     * @return array<int, array<string, mixed>> Array of blog_users records with username and email
+     * @return array<int, array<string, mixed>> Array of blog_users records with handle and email
      */
     public function getBlogUsers(int $blogId): array
     {
-        $sql = 'SELECT bu.*, u.username, u.email
+        $sql = 'SELECT bu.*, u.handle, u.email
                 FROM blog_users bu
                 INNER JOIN users u ON bu.user_id = u.id
                 WHERE bu.blog_id = ? AND bu.is_active = 1';
@@ -561,7 +561,7 @@ class BlogModel extends AppModel
      */
     public function getBlogOwner(int $blogId): ?array
     {
-        $sql = 'SELECT u.id, u.username, u.email
+        $sql = 'SELECT u.id, u.handle, u.email
                 FROM blogs b
                 INNER JOIN users u ON u.id = b.owner_id
                 WHERE b.id = ?';
@@ -576,11 +576,11 @@ class BlogModel extends AppModel
      * Global user roles do not affect per-blog role eligibility.
      *
      * @param  int  $blogId  Blog ID
-     * @return array<int, array<string, mixed>> Array of user records with id, username, email
+     * @return array<int, array<string, mixed>> Array of user records with id, handle, email
      */
     public function getAvailableUsers(int $blogId): array
     {
-        $sql = 'SELECT u.id, u.username, u.email
+        $sql = 'SELECT u.id, u.handle, u.email
                 FROM users u
                 WHERE u.is_active = 1
                 AND u.id NOT IN (
@@ -588,7 +588,7 @@ class BlogModel extends AppModel
                     FROM blog_users 
                     WHERE blog_id = ? AND is_active = 1
                 )
-                ORDER BY u.username ASC';
+                ORDER BY u.handle ASC';
 
         $stmt = $this->database->query($sql, [$blogId]);
 
@@ -764,7 +764,7 @@ class BlogModel extends AppModel
     public function getFeaturedCreators(int $limit = 4): array
     {
         $sql = "
-            SELECT b.*, u.username AS ownername,
+            SELECT b.*, u.handle AS ownername,
                 bs.banner_path AS banner_path,
                 (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS postcount,
                 (SELECT COUNT(*) FROM blog_users bu WHERE bu.blog_id = b.id AND bu.is_active = 1) AS authorcount
@@ -835,7 +835,7 @@ class BlogModel extends AppModel
             $params
         )->fetchColumn();
 
-        $sql = "SELECT b.*, u.username AS owner_name,
+        $sql = "SELECT b.*, u.handle AS owner_name,
                     (SELECT COUNT(*) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS post_count,
                     (SELECT COUNT(*) FROM blog_users bu WHERE bu.blog_id = b.id AND bu.is_active = 1) AS author_count,
                     (SELECT MAX(p.published_at) FROM posts p WHERE p.blog_id = b.id AND p.status = 'published') AS last_post_at
@@ -903,7 +903,7 @@ class BlogModel extends AppModel
     public function getAccessibleBlogs(int $userId): array
     {
         $sql = "
-            SELECT b.*, u.username AS owner_name,
+            SELECT b.*, u.handle AS owner_name,
                 (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) AS post_count,
                 (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) AS author_count,
                 'owner' AS user_role
@@ -913,7 +913,7 @@ class BlogModel extends AppModel
 
             UNION
 
-            SELECT b.*, u.username AS owner_name,
+            SELECT b.*, u.handle AS owner_name,
                 (SELECT COUNT(*) FROM posts WHERE blog_id = b.id) AS post_count,
                 (SELECT COUNT(*) FROM blog_users WHERE blog_id = b.id AND is_active = 1) AS author_count,
                 bu.role AS user_role
@@ -958,12 +958,12 @@ class BlogModel extends AppModel
     /**
      * Get active users on a blog who hold any of the given roles.
      *
-     * Returns rows of user_id + username + role, including the owner when
+     * Returns rows of user_id + handle + role, including the owner when
      * 'owner' is in the role list (owner data lives on the blog row, not
      * blog_users). Used by workflow notifications to find recipients.
      *
      * @param  array<int,string>  $roles  e.g. ['owner','editor','reviewer']
-     * @return array<int,array{user_id:int,username:string,email:string,role:string}>
+     * @return array<int,array{user_id:int,handle:string,email:string,role:string}>
      */
     public function getActiveUsersWithRoles(int $blogId, array $roles): array
     {
@@ -978,7 +978,7 @@ class BlogModel extends AppModel
         $collabRoles = array_values(array_diff($roles, ['owner']));
 
         if ($includeOwner) {
-            $sql = 'SELECT u.id AS user_id, u.username, u.email, ? AS role
+            $sql = 'SELECT u.id AS user_id, u.handle, u.email, ? AS role
                     FROM blogs b
                     INNER JOIN users u ON u.id = b.owner_id
                     WHERE b.id = ?';
@@ -987,7 +987,7 @@ class BlogModel extends AppModel
 
         if (!empty($collabRoles)) {
             $placeholders = implode(',', array_fill(0, count($collabRoles), '?'));
-            $sql = "SELECT u.id AS user_id, u.username, u.email, bu.role AS role
+            $sql = "SELECT u.id AS user_id, u.handle, u.email, bu.role AS role
                     FROM blog_users bu
                     INNER JOIN users u ON u.id = bu.user_id
                     WHERE bu.blog_id = ?
@@ -1067,7 +1067,7 @@ class BlogModel extends AppModel
     public function getSharedBlogsForUser(int $userId): array
     {
         $sql = 'SELECT b.id, b.blog_name, b.blog_slug, b.status, b.owner_id,
-                       u.username AS owner_name,
+                       u.handle AS owner_name,
                        bu.role AS user_role
                 FROM blogs b
                 INNER JOIN users u ON u.id = b.owner_id

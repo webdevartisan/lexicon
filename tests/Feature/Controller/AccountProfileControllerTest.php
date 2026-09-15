@@ -10,6 +10,7 @@ use App\Models\UserSocialLinkModel;
 use App\Services\DisplayNameService;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
+use App\Services\UserHandleValidator;
 use Framework\Core\Response;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
@@ -53,6 +54,7 @@ beforeEach(function () {
         $c->get(UploadService::class),
         $c->get(PublicCacheInvalidator::class),
         $c->get(DisplayNameService::class),
+        $c->get(UserHandleValidator::class),
     );
 
     $this->viewer = new class() implements TemplateViewerInterface
@@ -116,6 +118,7 @@ test('a profile save persists and redirects back to the profile page', function 
         'first_name' => 'Ada',
         'last_name' => 'Lovelace',
         'bio' => 'Mathematician.',
+        'handle' => 'ada-lovelace',
     ]);
     setupController($this->controller, $request, $this->viewer);
 

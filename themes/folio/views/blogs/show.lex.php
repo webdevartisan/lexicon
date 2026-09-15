@@ -8,7 +8,7 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Author';
+  $ownerNameRaw = $user['display_name_cached'] ?? $user['handle'];
   $ownerName = e($ownerNameRaw);
   $postCount = (int) ($totalPosts ?? count($posts ?? []));
   $featuredPost = !empty($posts) ? $posts[0] : null;
@@ -64,7 +64,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'] ?? null, $featuredPost['author_profile_slug']);
+    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $fCat = e($featuredPost['category'] ?? 'Article');
     ?>
@@ -148,7 +148,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     $lrTitle = e($longReadPost['title'] ?? 'Untitled');
     $lrUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($longReadPost['slug'] ?? ''));
     $lrMinutes = reading_time($longReadPost['content'] ?? '');
-    $lrAuthor = author_byline($longReadPost['author_name'], $longReadPost['author_handle'] ?? null, $longReadPost['author_profile_slug']);
+    $lrAuthor = author_byline($longReadPost['author_name'], $longReadPost['author_handle'], $longReadPost['author_profile_handle']);
 
     $excerpt = trim((string) ($longReadPost['excerpt'] ?? ''));
     $quote = trim(preg_replace('/\s+/', ' ', $excerpt !== ''
@@ -216,7 +216,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
             <?= e($blog['blog_name'] ?? 'FOLIO') ?> — a place for slow reading.
           <?php } ?>
         </p>
-        <span class="colophon-sign reveal">&mdash; <?= e($user['display_name_cached'] ?? $user['username'] ?? 'The Author') ?></span>
+        <span class="colophon-sign reveal">&mdash; <?= e($user['display_name_cached'] ?? $user['handle']) ?></span>
       </div>
     </div>
   </div>

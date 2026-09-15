@@ -52,7 +52,7 @@ describe('UserDeletionService Integration', function () {
             $userId = $this->userFactory
                 ->withAttributes([
                     'email' => 'john.doe@example.com',
-                    'username' => 'johndoe',
+                    'handle' => 'johndoe',
                     'first_name' => 'John',
                     'last_name' => 'Doe',
                 ])
@@ -153,25 +153,23 @@ describe('UserDeletionService Integration', function () {
             $this->service->pseudonymizeUser($userId);
 
             // Verify data persisted (not rolled back)
-            $stmt = $this->db->query('SELECT username FROM users WHERE id = ?', [$userId]);
+            $stmt = $this->db->query('SELECT handle FROM users WHERE id = ?', [$userId]);
             $user = $stmt->fetch();
 
-            expect($user['username'])->toBe("deleted_user_{$userId}");
+            expect($user['handle'])->toBe("deleted_user_{$userId}");
         });
 
         it('rolls back transaction when operation fails', function () {
             $userId = $this->userFactory->create();
 
-            UserRelationsHelper::createUserProfile($this->db, $userId, [
-                'slug' => 'original-slug',
-            ]);
+            UserRelationsHelper::createUserProfile($this->db, $userId);
 
             // Force failure by using invalid user ID in the service
             // expect transaction to roll back any changes
-            $originalSlug = $this->db->query(
-                'SELECT slug FROM user_profiles WHERE user_id = ?',
+            $originalHandle = $this->db->query(
+                'SELECT handle FROM users WHERE id = ?',
                 [$userId]
-            )->fetch()['slug'];
+            )->fetch()['handle'];
 
             try {
                 // Create a service with broken dependency to trigger rollback
@@ -195,10 +193,10 @@ describe('UserDeletionService Integration', function () {
             }
 
             // Verify data NOT changed (rolled back)
-            $stmt = $this->db->query('SELECT slug FROM user_profiles WHERE user_id = ?', [$userId]);
-            $profile = $stmt->fetch();
+            $stmt = $this->db->query('SELECT handle FROM users WHERE id = ?', [$userId]);
+            $user = $stmt->fetch();
 
-            expect($profile['slug'])->toBe($originalSlug);
+            expect($user['handle'])->toBe($originalHandle);
         });
     });
 
@@ -248,7 +246,7 @@ describe('UserDeletionService Integration', function () {
             $userId = $this->userFactory
                 ->withAttributes([
                     'email' => 'delete.me@example.com',
-                    'username' => 'deleteme',
+                    'handle' => 'deleteme',
                 ])
                 ->create();
 
@@ -279,13 +277,13 @@ describe('UserDeletionService Integration', function () {
 
             // Verify all operations completed atomically
             $stmt = $this->db->query(
-                'SELECT email, username, deleted_at FROM users WHERE id = ?',
+                'SELECT email, handle, deleted_at FROM users WHERE id = ?',
                 [$userId]
             );
             $user = $stmt->fetch();
 
             expect($user['email'])->toStartWith('deleted_user_');
-            expect($user['username'])->toBe("deleted_user_{$userId}");
+            expect($user['handle'])->toBe("deleted_user_{$userId}");
             expect($user['deleted_at'])->not->toBeNull();
             expect(UserRelationsHelper::getSocialLinkCount($this->db, $userId))->toBe(0);
         });
@@ -316,7 +314,7 @@ describe('UserDeletionService Integration', function () {
             $userId = $this->userFactory
                 ->withAttributes([
                     'email' => 'gdpr.test@example.com',
-                    'username' => 'gdprtest',
+                    'handle' => 'gdprtest',
                     'first_name' => 'GDPR',
                     'last_name' => 'Test',
                 ])

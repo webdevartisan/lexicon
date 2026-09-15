@@ -35,7 +35,7 @@ class AuditLogController extends AppController
 
         $sort = TableSort::fromRequest($this->request, [
             'when' => 'a.created_at',
-            'user' => 'u.username',
+            'user' => 'u.handle',
             'action' => 'a.action',
             'resource' => 'a.resource_type',
             'ip' => 'a.ip_address',

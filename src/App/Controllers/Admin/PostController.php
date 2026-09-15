@@ -86,7 +86,7 @@ class PostController extends AppController
             'id' => 'p.id',
             'title' => 'p.title',
             'blog' => 'b.blog_name',
-            'author' => 'au.username',
+            'author' => 'au.handle',
             'status' => 'p.status',
             'comments' => 'comment_count',
             'published' => 'p.published_at',

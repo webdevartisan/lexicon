@@ -29,10 +29,10 @@ class UserProfileResource
         return (int) $this->data['user_id'];
     }
 
-    /** Public profile slug used in /profile/{slug}. */
-    public function slug(): string
+    /** Account handle, used in /profile/{handle}. */
+    public function handle(): string
     {
-        return (string) $this->data['slug'];
+        return (string) $this->data['handle'];
     }
 
     /** Whether this profile is visible publicly. */
@@ -62,12 +62,6 @@ class UserProfileResource
     public function occupation(): ?string
     {
         return $this->data['occupation'] ?? null;
-    }
-
-    /** Account username, used as a display-name fallback. */
-    public function username(): ?string
-    {
-        return $this->data['username'] ?? null;
     }
 
     /** When the user joined (users.created_at), or null if not loaded. */

@@ -47,7 +47,7 @@ class AuthTestHelper
             'id' => 1,
             'email' => 'mock@example.com',
             'password' => password_hash('password123', PASSWORD_DEFAULT),
-            'username' => 'mockuser',
+            'handle' => 'mockuser',
             'created_at' => date('Y-m-d H:i:s'),
         ], $overrides);
     }

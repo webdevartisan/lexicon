@@ -9,7 +9,7 @@
 {% block body %}
 <?php
 $fieldErrors = errors();
-$username = (string) ($user['username'] ?? '');
+$signInEmail = (string) ($user['email'] ?? '');
 
 $passwordField = function (string $name, string $label, string $autocomplete) use ($fieldErrors): void {
     $invalid = !empty($fieldErrors[$name]);
@@ -37,8 +37,8 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
     <div class="lx-account-body">
         <form method="post" action="<?= e(lurl('/account/security/password')) ?>" class="lx-account-form" autocomplete="on">
             <?= csrf_field() ?>
-            <?php // Username here so a password manager associates the credential with this account.?>
-            <input type="text" name="username" value="<?= e($username) ?>" autocomplete="username" class="lx-visually-hidden" aria-hidden="true" tabindex="-1" readonly>
+            <?php // The sign-in identifier, so a password manager files the new credential under it.?>
+            <input type="text" name="username" value="<?= e($signInEmail) ?>" autocomplete="username" class="lx-visually-hidden" aria-hidden="true" tabindex="-1" readonly>
 
             <?php $passwordField('current_password', $t('account.security.currentPassword'), 'current-password'); ?>
             <div class="lx-grid-2">

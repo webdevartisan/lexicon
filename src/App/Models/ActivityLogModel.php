@@ -56,7 +56,7 @@ class ActivityLogModel extends AppModel
         $offset = ($page - 1) * $perPage;
 
         // $orderBy comes from a TableSort whitelist, never from raw input.
-        $sql = "SELECT a.*, u.username
+        $sql = "SELECT a.*, u.handle
                 FROM {$this->getTable()} a
                 LEFT JOIN users u ON u.id = a.user_id
                 {$whereSql}
@@ -104,13 +104,13 @@ class ActivityLogModel extends AppModel
     /**
      * Most recent entries for the control panel overview.
      *
-     * @return array<int, array<string, mixed>> Latest audit rows with username
+     * @return array<int, array<string, mixed>> Latest audit rows with the actor handle
      */
     public function latestEntries(int $limit = 8): array
     {
         $limit = max(1, min(50, $limit));
 
-        $sql = "SELECT a.*, u.username
+        $sql = "SELECT a.*, u.handle
                 FROM {$this->getTable()} a
                 LEFT JOIN users u ON u.id = a.user_id
                 ORDER BY a.created_at DESC, a.id DESC

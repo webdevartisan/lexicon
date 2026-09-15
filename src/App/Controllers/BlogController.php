@@ -19,7 +19,6 @@ use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
-use App\Services\DisplayNameService;
 use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
 use Framework\Core\Response;
@@ -42,20 +41,19 @@ class BlogController extends AppController
         private CommentVoteModel $commentVotes,
         private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
-        private HeadI18nBuilder $headI18n,
-        private DisplayNameService $displayNames
+        private HeadI18nBuilder $headI18n
     ) {}
 
-    /** @var array<int, array{name: string, handle: string, slug: ?string}> Per-request cache, keyed by user id. */
+    /** @var array<int, array{name: string, handle: string, link_handle: ?string}> Per-request cache, keyed by user id. */
     private array $authorCache = [];
 
     /**
      * Resolve the display name, @tag and public profile slug for a post's author.
      *
-     * `slug` is null for a private profile, so the byline degrades to plain text
-     * rather than a dead link; `handle` is present either way.
+     * `link_handle` is null for a private profile, so the byline degrades to
+     * plain text rather than a dead link; `handle` is present either way.
      *
-     * @return array{name: string, handle: string, slug: ?string}
+     * @return array{name: string, handle: string, link_handle: ?string}
      */
     private function resolveAuthor(int $authorId): array
     {
@@ -64,15 +62,17 @@ class BlogController extends AppController
         }
 
         $author = $this->userModel->findById($authorId);
-        $handle = $this->displayNames->handle(
-            $this->profiles->slugFor($authorId),
-            (string) ($author['username'] ?? '')
-        );
+
+        if ($author === null) {
+            throw new PageNotFoundException("Post author {$authorId} no longer exists", 404);
+        }
+
+        $handle = (string) $author['handle'];
 
         $resolved = [
-            'name' => empty($author['display_name_cached']) ? ($author['username'] ?? '') : $author['display_name_cached'],
+            'name' => empty($author['display_name_cached']) ? $handle : $author['display_name_cached'],
             'handle' => $handle,
-            'slug' => $this->profiles->publicSlugFor($authorId),
+            'link_handle' => $this->profiles->publicHandleFor($authorId),
         ];
 
         $this->authorCache[$authorId] = $resolved;
@@ -81,7 +81,7 @@ class BlogController extends AppController
     }
 
     /**
-     * Attach each post's author display name and profile slug, so cards and
+     * Attach each post's author display name and handle, so cards and
      * archive rows link to the post's actual author.
      *
      * @param  array<int, array<string, mixed>>  $posts
@@ -93,7 +93,7 @@ class BlogController extends AppController
             $author = $this->resolveAuthor((int) $post['author_id']);
             $post['author_name'] = $author['name'];
             $post['author_handle'] = $author['handle'];
-            $post['author_profile_slug'] = $author['slug'];
+            $post['author_profile_handle'] = $author['link_handle'];
         }
         unset($post);
 
@@ -396,7 +396,7 @@ class BlogController extends AppController
         $author = $this->resolveAuthor((int) $post['author_id']);
         $post['author_name'] = $author['name'];
         $post['author_handle'] = $author['handle'];
-        $post['author_profile_slug'] = $author['slug'];
+        $post['author_profile_handle'] = $author['link_handle'];
         $post['cover_url'] = $post['cover_url'] ?? null; // TODO update the key
 
         // --- comments enabled logic ---
@@ -474,7 +474,7 @@ class BlogController extends AppController
 
         $serpTitle = !empty($post['meta_title'])
             ? $post['meta_title']
-            : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['username']."'s Blog");
+            : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
         $serpDescription = !empty($post['meta_description'])
             ? $post['meta_description']
             : ($post['excerpt'] ?? $ctx['meta']['description'] ?? '');
@@ -553,7 +553,7 @@ class BlogController extends AppController
 
             $authorIdentity = [
                 'id' => $authorId,
-                'name' => (string) ($author['display_name_cached'] ?? $author['username'] ?? ''),
+                'name' => (string) ($author['display_name_cached'] ?? $author['handle']),
                 'avatar' => $this->profiles->getProfileAvatar($authorId)['avatar_url'] ?? null,
             ];
         }
@@ -585,7 +585,7 @@ class BlogController extends AppController
             'can_moderate_comments' => $moderatesComments,
             'comment_sort' => $commentSort,
             'comment_sort_urls' => $commentSortUrls,
-            'viewer_name' => $viewer['display_name_cached'] ?? ($viewer['username'] ?? null),
+            'viewer_name' => $viewer === null ? null : ($viewer['display_name_cached'] ?? $viewer['handle']),
             'viewer_avatar' => $viewerAvatar,
             'comment_author_hearts' => $authorHearts,
             'comment_author' => $authorIdentity,
@@ -660,11 +660,11 @@ class BlogController extends AppController
         ];
 
         // 4) Back-compat field some templates expect
-        $user['blog_name'] = $blog['blog_name'] ?? ($user['username']."'s Blog");
+        $user['blog_name'] = $blog['blog_name'] ?? ($user['handle']."'s Blog");
 
         // Every themed surface renders the owner as the author (the post guard
         // enforces it), so one lookup covers bylines, cards, and archives
-        $user['public_profile_slug'] = $this->profiles->publicSlugFor((int) $user['id']);
+        $user['public_profile_handle'] = $this->profiles->publicHandleFor((int) $user['id']);
 
         // 5) Logged-in reader shown in the theme masthead. Full-page cache only
         // serves guests, so viewer-specific markup never leaks between users.

@@ -33,14 +33,14 @@ class ProfileService
      * public posts enriched with blog slugs. Throws NotFoundException
      * for both missing and private profiles to avoid information disclosure.
      *
-     * @param  string  $slug  Public profile slug
+     * @param  string  $handle  Public profile handle
      * @return array<string, mixed> Profile data with keys: profile, socialLinks, posts
      *
      * @throws NotFoundException If profile not found or not public
      */
-    public function getPublicProfile(string $slug): array
+    public function getPublicProfile(string $handle): array
     {
-        $profile = $this->profiles->findBySlug($slug);
+        $profile = $this->profiles->findByHandle($handle);
 
         // Don't reveal whether profile is private or nonexistent
         if ($profile === null || !$profile->isPublic()) {

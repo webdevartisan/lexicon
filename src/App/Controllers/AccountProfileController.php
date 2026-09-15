@@ -12,6 +12,7 @@ use App\Models\UserSocialLinkModel;
 use App\Services\DisplayNameService;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
+use App\Services\UserHandleValidator;
 use Exception;
 use Framework\Core\Response;
 
@@ -32,7 +33,8 @@ final class AccountProfileController extends AppController
         private UserPreferencesModel $prefs,
         private UploadService $uploader,
         private PublicCacheInvalidator $cacheInvalidator,
-        private DisplayNameService $displayNames
+        private DisplayNameService $displayNames,
+        private UserHandleValidator $userHandleValidator
     ) {}
 
     /**
@@ -65,7 +67,7 @@ final class AccountProfileController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
-        $slugInput = strtolower(trim((string) $this->request->postParam('public_profile_url')));
+        $handleInput = strtolower(trim((string) $this->request->postParam('handle')));
 
         $rules = [
             'first_name' => 'required|name|min:2|max:50',
@@ -78,38 +80,34 @@ final class AccountProfileController extends AppController
             'instagram' => 'url',
             'linkedin' => 'url',
             'github' => 'url',
+            'handle' => 'required|slug|min:2|max:50',
         ];
 
-        // the slug rule rejects empty values, so only apply it when a slug was submitted
-        if ($slugInput !== '') {
-            $rules['public_profile_url'] = 'slug|min:2|max:50';
-        }
-
         $validator = $this->validateOrFail($rules, [
-            'public_profile_url.slug' => 'Profile URL may only contain lowercase letters, numbers, and single hyphens.',
+            'handle.slug' => 'A tag may only contain lowercase letters, numbers, and single hyphens.',
         ]);
 
         $validated = $validator->validated();
 
+        $user = auth()->user();
         $profile = $this->profiles->findOrCreate($userId);
-        $currentSlug = $profile['slug'] ?? null;
+        $currentHandle = (string) $user['handle'];
 
-        // reserved and taken slugs would hit the unique index at write time; reject them with a
-        // friendly error. Unchanged slugs are skipped so a grandfathered reserved slug stays usable.
-        if ($slugInput !== '' && $slugInput !== $currentSlug && !$this->profiles->isSlugAvailable($slugInput, $userId)) {
-            $this->session->set('_errors', [
-                'public_profile_url' => ['This profile URL is already taken.'],
-            ]);
+        // An unchanged tag is not re-checked, so one claimed before its word was reserved stays usable.
+        $handleRejection = $handleInput === $currentHandle ? null : $this->handleRejection($handleInput, $userId);
+
+        if ($handleRejection !== null) {
+            $this->session->set('_errors', ['handle' => [$handleRejection]]);
             $this->session->set('_old_input', $this->request->all());
-            $this->flash('error', chrome_translate('account.flash.profileUrlTaken'));
+            $this->flash('error', $handleRejection);
 
             return $this->redirect(lurl('/account/profile'));
         }
 
-        $user = auth()->user();
         $userUpdate = changedFields([
             'first_name' => $validated['first_name'] ?? '',
             'last_name' => $validated['last_name'] ?? '',
+            'handle' => $handleInput,
         ], $user);
 
         if (!empty($userUpdate)) {
@@ -118,8 +116,6 @@ final class AccountProfileController extends AppController
 
         $profileData = changedFields([
             'bio' => $validated['bio'] ?? '',
-            // empty slug must be NULL: the unique index tolerates many NULLs but only one ''
-            'slug' => $slugInput !== '' ? $slugInput : null,
             'occupation' => $validated['occupation'] ?? '',
             'location' => $validated['location'] ?? '',
             'is_public' => $this->request->postParam('is_public') ? '1' : '0',
@@ -129,7 +125,7 @@ final class AccountProfileController extends AppController
             $this->profiles->upsert($userId, $profileData);
         }
 
-        $identityMoved = array_key_exists('is_public', $profileData) || array_key_exists('slug', $profileData);
+        $identityMoved = array_key_exists('is_public', $profileData) || array_key_exists('handle', $userUpdate);
 
         $socialLinks = $this->socials->getKeyValueArrayLinks($userId);
         $socialData = changedFields([
@@ -148,7 +144,7 @@ final class AccountProfileController extends AppController
 
         // Must be written before the recompute below, which re-reads it.
         $this->prefs->upsert($userId, [
-            'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'username',
+            'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'handle',
         ]);
 
         // a name change moves the cached display name when the preference is 'name'
@@ -156,11 +152,9 @@ final class AccountProfileController extends AppController
 
         // Author names and links are baked into cached blog pages, so any of
         // them moving has to clear those or the stale copy outlives the TTL.
-        // The OLD slug is purged, since that is the URL already cached.
+        // The OLD handle is purged, since that is the URL already cached.
         if ($identityMoved || $newDisplayName !== ($user['display_name_cached'] ?? null)) {
-            $this->cacheInvalidator->purgeAuthorSurfaces(
-                is_string($currentSlug) && $currentSlug !== '' ? $currentSlug : null
-            );
+            $this->cacheInvalidator->purgeAuthorSurfaces($currentHandle !== '' ? $currentHandle : null);
         }
 
         $this->flash('success', chrome_translate('account.flash.profileSaved'));
@@ -365,22 +359,17 @@ final class AccountProfileController extends AppController
 
         $profile = $this->profiles->findOrCreate($userId);
         $links = $this->socials->listByUser($userId);
-        $preferences = $this->prefs->findOrCreate($userId) ?: [];
+        $preferences = $this->prefs->findOrCreate($userId);
 
         $merged = array_merge($user, $profile ?: [], LinksHelper::linksToFlatInputs($links));
 
-        $merged['handle'] = $this->displayNames->handle(
-            $merged['slug'] ?? null,
-            (string) ($merged['username'] ?? '')
-        );
-
-        $merged['show_name'] = ($preferences['display_name_preference'] ?? 'username') === 'name';
+        $merged['show_name'] = $preferences['display_name_preference'] === 'name';
 
         $merged['avatar'] = $merged['avatar_url'] ?? null;
         $merged['initials'] = $this->computeInitials(
             $merged['first_name'] ?? '',
             $merged['last_name'] ?? '',
-            $merged['username'] ?? ''
+            $merged['handle']
         );
 
         // denormalized counters are unreliable (often stale at 0), so recount when empty
@@ -395,14 +384,30 @@ final class AccountProfileController extends AppController
     }
 
     /**
-     * Build the avatar placeholder initials from name, falling back to username.
+     * Why a new handle cannot be claimed, or null when it can.
      */
-    private function computeInitials(string $first, string $last, string $username): string
+    private function handleRejection(string $handle, int $userId): ?string
+    {
+        if ($this->userHandleValidator->isReserved($handle)) {
+            return chrome_translate('account.flash.tagReserved');
+        }
+
+        if ($this->userHandleValidator->isTaken($handle, $userId)) {
+            return chrome_translate('account.flash.tagTaken');
+        }
+
+        return null;
+    }
+
+    /**
+     * Build the avatar placeholder initials from name, falling back to the tag.
+     */
+    private function computeInitials(string $first, string $last, string $handle): string
     {
         $initials = mb_strtoupper(mb_substr(trim($first), 0, 1).mb_substr(trim($last), 0, 1));
 
         if ($initials === '') {
-            $initials = mb_strtoupper(mb_substr(trim($username), 0, 1));
+            $initials = mb_strtoupper(mb_substr(trim($handle), 0, 1));
         }
 
         return $initials !== '' ? $initials : '?';

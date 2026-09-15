@@ -52,7 +52,7 @@ final class ViewerContext
         $userId = (int) $user['id'];
 
         return $this->current = [
-            'name' => $user['display_name_cached'] ?? ($user['username'] ?? ''),
+            'name' => $user['display_name_cached'] ?? $user['handle'],
             'avatar_url' => $this->profiles->getProfileAvatar($userId)['avatar_url'] ?? null,
             // Decides which primary button the masthead shows. Deliberately not
             // the back area's isReader, which is only computed on dashboard

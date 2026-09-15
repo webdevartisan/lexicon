@@ -57,7 +57,7 @@ $memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 da
                 <?php if (!empty($owner)) { ?>
                 <li class="flex items-center justify-between gap-3 py-2">
                     <div class="min-w-0">
-                        <a href="/admin/users/<?= e((string) $owner['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $owner['username']) ?></a>
+                        <a href="/admin/users/<?= e((string) $owner['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $owner['handle']) ?></a>
                         <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) $owner['email']) ?></span>
                     </div>
                     <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $ownerBadge ?>">owner</span>
@@ -65,7 +65,7 @@ $memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 da
                 <?php } foreach ($blogUsers as $m) { ?>
                 <li class="flex items-center justify-between gap-3 py-2">
                     <div class="min-w-0">
-                        <a href="/admin/users/<?= e((string) $m['user_id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) ($m['username'] ?? '')) ?></a>
+                        <a href="/admin/users/<?= e((string) $m['user_id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $m['handle']) ?></a>
                         <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) ($m['email'] ?? '')) ?></span>
                     </div>
                     <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $memberBadge ?>"><?= e((string) ($m['role'] ?? '')) ?></span>

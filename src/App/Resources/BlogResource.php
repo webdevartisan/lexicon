@@ -80,7 +80,7 @@ class BlogResource
     /**
      * We should prefer users() naming for clarity going forward.
      *
-     * @return array<int, array<string, mixed>> Active blog_users rows with username and email
+     * @return array<int, array<string, mixed>> Active blog_users rows with handle and email
      */
     public function users(): array
     {

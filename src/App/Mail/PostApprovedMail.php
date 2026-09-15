@@ -10,7 +10,7 @@ class PostApprovedMail extends Mailable
         private string $toEmail,
         private int $postId,
         private string $postTitle,
-        private string $reviewerUsername
+        private string $reviewerHandle
     ) {
         parent::__construct();
     }
@@ -33,7 +33,7 @@ class PostApprovedMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $reviewer = htmlspecialchars($this->reviewerUsername);
+        $reviewer = htmlspecialchars($this->reviewerHandle);
         $url = htmlspecialchars($this->postUrl());
 
         return <<<HTML
@@ -50,7 +50,7 @@ class PostApprovedMail extends Mailable
     private function buildTextBody(): string
     {
         return "Approved: {$this->postTitle}\n"
-             ."{$this->reviewerUsername} approved this post. An editor can now publish it.\n"
+             ."{$this->reviewerHandle} approved this post. An editor can now publish it.\n"
              ."Open: {$this->postUrl()}\n";
     }
 }

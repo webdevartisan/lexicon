@@ -65,7 +65,7 @@ $router->add('/sitemap.xml', ['controller' => 'SitemapController', 'action' => '
 $router->add('/robots.txt', ['controller' => 'SitemapController', 'action' => 'robots', 'method' => 'GET']);
 
 // Profile route.
-$router->add('/profile/{slug:[A-Za-z0-9_\-]+}', [
+$router->add('/profile/{handle:[A-Za-z0-9_\-]+}', [
     'controller' => 'PublicProfileController',
     'action' => 'show',
     'method' => 'GET',

@@ -6,7 +6,7 @@ use App\Controllers\Auth\RegisterController;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
-use App\Models\ReservedSlugModel;
+use App\Models\ReservedHandleModel;
 use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
@@ -14,14 +14,14 @@ use App\Models\UserProfileModel;
 use App\Services\InvitationService;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
-use App\Services\UsernameValidationService;
+use App\Services\UserHandleValidator;
 use Framework\Core\Response;
 use Tests\Factories\UserFactory;
 
 /**
  * Feature tests for RegisterController.
  *
- * Registration is email + password only: the username is generated from the
+ * Registration is email + password only: the handle is generated from the
  * email local part, new accounts get the reader role, and a validated
  * return_to sends the reader back to the page they came from.
  */
@@ -40,9 +40,9 @@ beforeEach(function () {
     $this->roleModel = new RoleModel($this->db);
     $this->auth = auth();
 
-    $this->usernameValidator = new UsernameValidationService(
+    $this->userHandleValidator = new UserHandleValidator(
         $this->userModel,
-        new ReservedSlugModel($this->db)
+        new ReservedHandleModel($this->db)
     );
 
     // Invitation plumbing: real models against the test DB, mocked mail queue so
@@ -70,7 +70,7 @@ beforeEach(function () {
         $this->userModel,
         $this->profileModel,
         $this->preferencesModel,
-        $this->usernameValidator,
+        $this->userHandleValidator,
         $invitationModel,
         $invitationService,
         $this->roleModel
@@ -113,7 +113,7 @@ afterEach(function () {
 /**
  * Test successful registration with just email and password.
  *
- * Verifies the complete flow: user creation, generated username, reader role,
+ * Verifies the complete flow: user creation, generated handle, reader role,
  * profile creation, preferences, and auto-login.
  */
 it('registers user with email and password only', function () {
@@ -134,7 +134,7 @@ it('registers user with email and password only', function () {
     $user = $this->userModel->findByEmail($email);
     expect($user)->toBeArray()
         ->and($user['email'])->toBe($email)
-        ->and($user['username'])->toBe($local);
+        ->and($user['handle'])->toBe($local);
 
     expect(password_verify($password, $user['password']))->toBeTrue();
 
@@ -144,7 +144,6 @@ it('registers user with email and password only', function () {
 
     $profile = $this->profileModel->findOrCreate($user['id']);
     expect($profile)->toBeArray()
-        ->and($profile['slug'])->not->toBeNull()
         ->and($profile['is_public'])->toBe(1);
 
     $preferences = $this->preferencesModel->findOrCreate($user['id']);
@@ -333,17 +332,17 @@ it('requires password on registration', function () {
 });
 
 // ============================================================================
-// USERNAME GENERATION
+// HANDLE GENERATION
 // ============================================================================
 
 /**
- * Test that the generated username gets a suffix when the local part is taken.
+ * Test that the generated handle gets a suffix when the local part is taken.
  */
-it('suffixes the generated username on collision', function () {
+it('suffixes the generated handle on collision', function () {
     $local = 'taken'.bin2hex(random_bytes(3));
 
     UserFactory::new($this->userModel)
-        ->withAttributes(['username' => $local])
+        ->withAttributes(['handle' => $local])
         ->create();
 
     $email = $local.'@example.test';
@@ -360,15 +359,15 @@ it('suffixes the generated username on collision', function () {
     $user = $this->userModel->findByEmail($email);
 
     expect($user)->toBeArray()
-        ->and($user['username'])->not->toBe($local)
-        ->and($user['username'])->toStartWith(substr($local, 0, 15))
-        ->and(strlen($user['username']))->toBeLessThanOrEqual(20);
+        ->and($user['handle'])->not->toBe($local)
+        ->and($user['handle'])->toStartWith(substr($local, 0, 15))
+        ->and(strlen($user['handle']))->toBeLessThanOrEqual(20);
 });
 
 /**
  * Test that non-alphanumeric characters in the local part are stripped.
  */
-it('sanitizes the email local part into the username', function () {
+it('sanitizes the email local part into the handle', function () {
     $suffix = bin2hex(random_bytes(3));
     $email = 'first.last+tag'.$suffix.'@example.test';
 
@@ -384,31 +383,5 @@ it('sanitizes the email local part into the username', function () {
     $user = $this->userModel->findByEmail($email);
 
     expect($user)->toBeArray()
-        ->and($user['username'])->toMatch('/^[a-z0-9]{3,20}$/');
-});
-
-// ============================================================================
-// PROFILE SLUG GENERATION
-// ============================================================================
-
-/**
- * Test that profile slug uses the generated username when available.
- */
-it('creates profile slug from generated username', function () {
-    $local = 'slugger'.bin2hex(random_bytes(3));
-    $email = $local.'@example.test';
-
-    $request = makeRequest('/register', 'POST', [
-        '_token' => $this->csrfToken,
-        'email' => $email,
-        'password' => 'SecurePass123!',
-    ]);
-
-    setupController($this->controller, $request, $this->mockViewer);
-    callController($this->controller, 'submit', $request);
-
-    $user = $this->userModel->findByEmail($email);
-    $profile = $this->profileModel->findOrCreate($user['id']);
-
-    expect($profile['slug'])->toBe($local);
+        ->and($user['handle'])->toMatch('/^[a-z0-9]{3,20}$/');
 });

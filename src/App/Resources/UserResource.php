@@ -24,9 +24,9 @@ class UserResource
         return (int) $this->data['id'];
     }
 
-    public function username(): string
+    public function handle(): string
     {
-        return (string) $this->data['username'];
+        return (string) $this->data['handle'];
     }
 
     public function email(): string

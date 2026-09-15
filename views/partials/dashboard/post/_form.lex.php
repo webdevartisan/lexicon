@@ -102,7 +102,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                     <?= e($latestReview['feedback']) ?>
                 </p>
                 <p class="text-[11px] text-amber-600 dark:text-amber-400">
-                    — <?= e($latestReview['reviewer_username'] ?? 'Reviewer') ?>,
+                    — <?= e($latestReview['reviewer_handle']) ?>,
                     <?= e(local_datetime($latestReview['reviewed_at'] ?? null, 'M j, Y')) ?>
                 </p>
             </div>

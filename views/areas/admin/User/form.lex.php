@@ -1,12 +1,12 @@
 <?php
-$username = $user['username'] ?? '';
+$handle = $user['handle'] ?? '';
 $email = $user['email'] ?? '';
 $firstName = $user['first_name'] ?? '';
 $lastName = $user['last_name'] ?? '';
 $passwordHint = !empty($user['id']) ? 'Leave blank to keep the current password.' : '';
 ?>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-    {% cmp="input" type="text" label="Username" name="username" value="{$username}" required %}
+    {% cmp="input" type="text" label="Tag" name="handle" value="{$handle}" required %}
     {% cmp="input" type="email" label="Email" name="email" value="{$email}" required %}
     {% cmp="input" type="text" label="First Name" name="first_name" value="{$firstName}" %}
     {% cmp="input" type="text" label="Last Name" name="last_name" value="{$lastName}" %}

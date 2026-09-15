@@ -8,7 +8,7 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerName = e($user['display_name_cached'] ?? $user['username'] ?? 'The Editor');
+  $ownerName = e($user['display_name_cached'] ?? $user['handle']);
   $postCount = (int) ($totalPosts ?? count($posts ?? []));
   $featuredPost = !empty($posts) ? $posts[0] : null;
   $gridPosts = !empty($posts) ? array_slice($posts, 1, 6) : []; // landing lists 6; the rest lives on /archive
@@ -60,7 +60,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'] ?? null, $featuredPost['author_profile_slug']);
+    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $fCat = e($featuredPost['category'] ?? 'Article');
     $fMinutes = reading_time($featuredPost['content'] ?? '');

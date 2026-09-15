@@ -89,7 +89,7 @@ class UserFactory
     {
         $data = array_merge([
             'email' => fake()->unique()->safeEmail(),
-            'username' => fake()->unique()->userName(),
+            'handle' => preg_replace('/[^a-z0-9]/', '', strtolower(fake()->unique()->userName())),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'password' => password_hash(fake()->password(12), PASSWORD_DEFAULT),

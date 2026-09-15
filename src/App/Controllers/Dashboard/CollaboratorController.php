@@ -203,7 +203,7 @@ final class CollaboratorController extends AppController
             $this->notifications->dispatch((int) $userId, 'collaborator.role_changed', [
                 'blog_name' => $blog->name(),
                 'new_role' => $role,
-                'changed_by_username' => (string) ($actor['username'] ?? ''),
+                'actor_handle' => (string) $actor['handle'],
             ]);
         }
 
@@ -248,7 +248,7 @@ final class CollaboratorController extends AppController
         if ($target && !empty($target['email'])) {
             $this->notifications->dispatch((int) $userId, 'collaborator.removed', [
                 'blog_name' => $blog->name(),
-                'removed_by_username' => (string) ($actor['username'] ?? ''),
+                'actor_handle' => (string) $actor['handle'],
             ]);
         }
 

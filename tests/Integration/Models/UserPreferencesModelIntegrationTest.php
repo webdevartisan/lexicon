@@ -84,7 +84,7 @@ test('upsert applies schema defaults when inserting a brand new row', function (
     $row = $this->prefs->findOrCreate($freshId);
 
     expect($row['timezone'])->toBe('Europe/Athens')
-        ->and($row['display_name_preference'])->toBe('username')
+        ->and($row['display_name_preference'])->toBe('handle')
         ->and($row['default_post_visibility'])->toBe('public')
         ->and((int) $row['notify_comments_blog'])->toBe(1);
 });

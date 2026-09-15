@@ -160,7 +160,7 @@ trait TemplateComponentsTrait
      *
      * We support:
      * - "{$var}"                       -> ($var ?? '')
-     * - "/profile/{$username}"         -> ('/profile/' . ($username ?? ''))
+     * - "/profile/{$handle}"           -> ('/profile/' . ($handle ?? ''))
      * - "Hello {$name}, id={$id}"      -> ('Hello ' . ($name ?? '') . ', id=' . ($id ?? ''))
      */
     private function serializeAttributeValuePhp(mixed $value): string

@@ -13,7 +13,7 @@ namespace App\Mail;
 class WelcomeEmail extends Mailable
 {
     /**
-     * @param  array<string, mixed>  $user  User row (first_name, username, email)
+     * @param  array<string, mixed>  $user  User row (first_name, handle, email)
      */
     public function __construct(private array $user)
     {
@@ -29,12 +29,12 @@ class WelcomeEmail extends Mailable
     public function build(): void
     {
         $firstName = $this->user['first_name'] ?? 'there';
-        $username = $this->user['username'] ?? '';
+        $handle = (string) $this->user['handle'];
 
         $this->to($this->user['email'], $firstName)
             ->subject('Welcome to '.(env('APP_NAME', 'Our Blog Platform')))
-            ->html($this->buildHtmlBody($firstName, $username))
-            ->textAlternative($this->buildTextBody($firstName, $username));
+            ->html($this->buildHtmlBody($firstName, $handle))
+            ->textAlternative($this->buildTextBody($firstName, $handle));
     }
 
     /**
@@ -44,10 +44,10 @@ class WelcomeEmail extends Mailable
      * the base Mailable class. This is purely for internal organization.
      *
      * @param  string  $firstName  User's first name
-     * @param  string  $username  User's username
+     * @param  string  $handle  User's handle
      * @return string HTML content
      */
-    private function buildHtmlBody(string $firstName, string $username): string
+    private function buildHtmlBody(string $firstName, string $handle): string
     {
         $appName = htmlspecialchars(env('APP_NAME', 'Blog Platform'));
         $appUrl = htmlspecialchars(env('APP_URL', 'http://localhost'));
@@ -77,7 +77,7 @@ class WelcomeEmail extends Mailable
                 <div class="content">
                     <h2>Hello {$firstName},</h2>
                     <p>Thank you for joining our community! Your account has been successfully created.</p>
-                    <p><strong>Username:</strong> @{$username}</p>
+                    <p><strong>Your tag:</strong> @{$handle}</p>
                     <p>Save posts for later, follow the blogs you love, and join the discussions. When you feel like writing, you can start a blog of your own any time.</p>
                     <a href="{$exploreUrl}" class="button">Find something to read</a>
                     <p>If you have any questions, feel free to reach out to our support team.</p>
@@ -100,10 +100,10 @@ class WelcomeEmail extends Mailable
      * method signature conflicts with the base class.
      *
      * @param  string  $firstName  User's first name
-     * @param  string  $username  User's username
+     * @param  string  $handle  User's handle
      * @return string Plain text content
      */
-    private function buildTextBody(string $firstName, string $username): string
+    private function buildTextBody(string $firstName, string $handle): string
     {
         $appName = env('APP_NAME', 'Blog Platform');
         $exploreUrl = (env('APP_URL', 'http://localhost')).'/discover';
@@ -115,7 +115,7 @@ class WelcomeEmail extends Mailable
         
         Thank you for joining our community! Your account has been successfully created.
         
-        Username: @{$username}
+        Your tag: @{$handle}
 
         Save posts for later, follow the blogs you love, and join the discussions.
         When you feel like writing, you can start a blog of your own any time.

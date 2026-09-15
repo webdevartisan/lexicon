@@ -34,7 +34,7 @@ SET time_zone = '+00:00';
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
+    handle VARCHAR(100) NOT NULL COMMENT 'Public @tag, editable on the profile page',
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL COMMENT 'bcrypt or password_hash() hashed',
     first_name VARCHAR(100) DEFAULT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMP NULL,
     deleted_at TIMESTAMP NULL COMMENT 'Soft delete timestamp',
     INDEX idx_email (email),
-    INDEX idx_username (username),
+    UNIQUE KEY uq_users_handle (handle),
     INDEX idx_is_active (is_active),
     INDEX idx_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -138,17 +138,19 @@ CREATE TABLE IF NOT EXISTS settings (
 COMMENT='Application-wide configuration settings';
 
 -- ----------------------------------------------------------------------------
--- Reserved Slugs Table
+-- Reserved Handles Table
 -- ----------------------------------------------------------------------------
--- We maintain a registry of reserved slugs to prevent users from claiming
--- slugs that conflict with routing or system functionality.
+-- Words nobody may claim as their @tag. `exact` rejects the word itself;
+-- `contains` also rejects it inside a longer handle. Both compare after
+-- look-alike characters are collapsed, so adm1n is judged as admin.
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS reserved_slugs (
-    slug VARCHAR(100) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS reserved_handles (
+    handle VARCHAR(100) PRIMARY KEY,
+    match_type ENUM('exact','contains') NOT NULL DEFAULT 'exact',
     reason VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Registry of reserved slugs for routing protection';
+COMMENT='Words that cannot be claimed as a user handle';
 
 -- ----------------------------------------------------------------------------
 -- Migrations Table
@@ -176,7 +178,6 @@ COMMENT='Migration history for schema version control';
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_profiles (
     user_id INT PRIMARY KEY,
-    slug VARCHAR(100) DEFAULT NULL COMMENT 'URL-friendly username for public profiles',
     bio TEXT DEFAULT NULL,
     avatar_url VARCHAR(512) DEFAULT NULL,
     avatar_source_url VARCHAR(512) DEFAULT NULL COMMENT 'Uncropped original kept for re-cropping',
@@ -187,7 +188,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uq_user_profiles_slug (slug),
     INDEX idx_is_public (is_public)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Extended user profile information and public display settings';
@@ -219,7 +219,7 @@ COMMENT='User social media links and external profiles';
 CREATE TABLE IF NOT EXISTS user_preferences (
     user_id INT PRIMARY KEY,
     default_blog_id INT DEFAULT NULL COMMENT 'Users default blog for quick post creation',
-    display_name_preference ENUM('name','username') NOT NULL DEFAULT 'username',
+    display_name_preference ENUM('name','handle') NOT NULL DEFAULT 'handle',
     default_post_visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone identifier (e.g., Europe/Athens)',
     locale VARCHAR(5) DEFAULT NULL COMMENT 'Preferred interface language (ISO 639-1); NULL follows page content',
@@ -1223,44 +1223,51 @@ WHERE permission_slug IN (
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- System Reserved Slugs
+-- Reserved Handles
 -- ----------------------------------------------------------------------------
--- We reserve common system paths to prevent routing conflicts and maintain
--- clean URL structure for administrative and system functions.
+-- Site areas are reserved exactly, so nobody can be @login or @settings. Words
+-- that lend authority are reserved by containment, so nobody can pass as staff;
+-- staff and security stay exact because real handles contain them.
 -- ----------------------------------------------------------------------------
-INSERT INTO reserved_slugs (slug, reason) VALUES
-  ('admin',       'Reserved for admin area'),
-  ('account',     'Reserved for account routes'),
-  ('dashboard',   'Reserved for dashboards'),
-  ('profile',     'Reserved base for profiles'),
-  ('login',       'Reserved for login route'),
-  ('logout',      'Reserved for logout route'),
-  ('register',    'Reserved for registration route'),
-  ('signup',      'Reserved for registration route'),
-  ('settings',    'Reserved for generic settings'),
-  ('api',         'Reserved for API routes'),
-  ('blog',        'Reserved for blog routes'),
-  ('blogs',       'Reserved for blog index'),
-  ('posts',       'Reserved for posts index'),
-  ('categories',  'Reserved for category routes'),
-  ('tags',        'Reserved for tag routes'),
-  ('search',      'Reserved for search route'),
-  ('feed',        'Reserved for feeds'),
-  ('rss',         'Reserved for feeds'),
-  ('atom',        'Reserved for Atom feeds'),
-  ('sitemap',     'Reserved for sitemap generation'),
-  ('robots',      'Reserved for robots.txt'),
-  ('me',          'Reserved for internal profile shortcut'),
-  ('auth',        'Reserved for authentication routes'),
-  ('oauth',       'Reserved for OAuth routes'),
-  ('callback',    'Reserved for OAuth callbacks'),
-  ('static',      'Reserved for static assets'),
-  ('assets',      'Reserved for asset serving'),
-  ('public',      'Reserved for public routes'),
-  ('private',     'Reserved for private routes'),
-  ('user',        'Reserved for user routes'),
-  ('users',       'Reserved for user index')
-ON DUPLICATE KEY UPDATE reason = VALUES(reason);
+INSERT INTO reserved_handles (handle, match_type, reason) VALUES
+  ('admin',        'contains',  'Reads as site staff'),
+  ('moderator',    'contains',  'Reads as site staff'),
+  ('support',      'contains',  'Reads as site staff'),
+  ('official',     'contains',  'Reads as site staff'),
+  ('lexicon',      'contains',  'Reads as the site itself'),
+  ('staff',        'exact',     'Reads as site staff'),
+  ('security',     'exact',     'Reads as site staff'),
+  ('account',      'exact',     'Reserved for account routes'),
+  ('dashboard',    'exact',     'Reserved for dashboards'),
+  ('profile',      'exact',     'Reserved base for profiles'),
+  ('login',        'exact',     'Reserved for login route'),
+  ('logout',       'exact',     'Reserved for logout route'),
+  ('register',     'exact',     'Reserved for registration route'),
+  ('signup',       'exact',     'Reserved for registration route'),
+  ('settings',     'exact',     'Reserved for generic settings'),
+  ('api',          'exact',     'Reserved for API routes'),
+  ('blog',         'exact',     'Reserved for blog routes'),
+  ('blogs',        'exact',     'Reserved for blog index'),
+  ('posts',        'exact',     'Reserved for posts index'),
+  ('categories',   'exact',     'Reserved for category routes'),
+  ('tags',         'exact',     'Reserved for tag routes'),
+  ('search',       'exact',     'Reserved for search route'),
+  ('feed',         'exact',     'Reserved for feeds'),
+  ('rss',          'exact',     'Reserved for feeds'),
+  ('atom',         'exact',     'Reserved for Atom feeds'),
+  ('sitemap',      'exact',     'Reserved for sitemap generation'),
+  ('robots',       'exact',     'Reserved for robots.txt'),
+  ('me',           'exact',     'Reserved for internal profile shortcut'),
+  ('auth',         'exact',     'Reserved for authentication routes'),
+  ('oauth',        'exact',     'Reserved for OAuth routes'),
+  ('callback',     'exact',     'Reserved for OAuth callbacks'),
+  ('static',       'exact',     'Reserved for static assets'),
+  ('assets',       'exact',     'Reserved for asset serving'),
+  ('public',       'exact',     'Reserved for public routes'),
+  ('private',      'exact',     'Reserved for private routes'),
+  ('user',         'exact',     'Reserved for user routes'),
+  ('users',        'exact',     'Reserved for user index')
+ON DUPLICATE KEY UPDATE match_type = VALUES(match_type), reason = VALUES(reason);
 
 -- ============================================================================
 -- FINALIZATION

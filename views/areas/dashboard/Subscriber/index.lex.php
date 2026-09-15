@@ -50,9 +50,9 @@
               <tr class="border-b border-slate-100 dark:border-zink-600 last:border-b-0">
                 <td class="px-3 py-2.5 text-sm text-slate-800 dark:text-zink-100"><?= e($sub['email']) ?></td>
                 <td class="px-3 py-2.5 text-sm text-slate-500 dark:text-zink-300">
-                  <?php if (!empty($sub['username'])) { ?>
+                  <?php if (!empty($sub['handle'])) { ?>
                     <span class="inline-flex items-center gap-1">
-                      <i data-lucide="user" class="size-3.5"></i><?= e($sub['username']) ?>
+                      <i data-lucide="user" class="size-3.5"></i><?= e($sub['handle']) ?>
                     </span>
                   <?php } else { ?>
                     <span class="text-slate-400 dark:text-zink-400">Guest</span>

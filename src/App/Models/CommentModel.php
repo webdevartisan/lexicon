@@ -30,7 +30,7 @@ class CommentModel extends AppModel
     /**
      * Approved comments for a post as a flat list, oldest first.
      *
-     * `author_profile_slug` and `author_avatar` are null for guest commenters
+     * `author_profile_handle` and `author_avatar` are null for guest commenters
      * and for registered commenters whose profile is private. A private profile
      * gets the initial-letter fallback rather than their photo: hiding the
      * profile and then publishing the face attached to it would be odd.
@@ -54,44 +54,36 @@ class CommentModel extends AppModel
                     COALESCE(
                         u.display_name_cached,
                         NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
-                        u.username
+                        u.handle
                     ) AS user_name,
-                    NULLIF(up.slug, '') AS author_profile_slug,
-                    -- Ungated, unlike up above: the tag names a person whether or
-                    -- not their profile is reachable; up decides whether it links.
-                    COALESCE(NULLIF(uh.slug, ''), u.username) AS author_handle,
+                    -- up is joined on is_public, so a row here means the tag links.
+                    IF(up.user_id IS NULL, NULL, u.handle) AS author_profile_handle,
+                    u.handle AS author_handle,
                     up.avatar_url AS author_avatar,
                     COALESCE(
                         pu.display_name_cached,
                         NULLIF(CONCAT_WS(' ', pu.first_name, pu.last_name), ' '),
-                        pu.username
+                        pu.handle
                     ) AS parent_name,
-                    -- The one-word handle behind an @mention. The display name
-                    -- is two words with a space in it, which is the one thing an
-                    -- @handle cannot be, so the profile slug leads and the
-                    -- username stands in when there is no public profile.
-                    COALESCE(NULLIF(pup.slug, ''), pu.username) AS parent_handle,
+                    pu.handle AS parent_handle,
                     COALESCE(c.reply_to_comment_id, c.parent_comment_id) AS answered_id,
                     parent.deleted_at AS answered_deleted_at,
                     COALESCE(
                         piu.display_name_cached,
                         NULLIF(CONCAT_WS(' ', piu.first_name, piu.last_name), ' '),
-                        piu.username
+                        piu.handle
                     ) AS pinned_by_name,
-                    COALESCE(NULLIF(piup.slug, ''), piu.username) AS pinned_by_handle
+                    piu.handle AS pinned_by_handle
                 FROM {$this->getTable()} c
                 LEFT JOIN users u ON c.user_id = u.id
                 LEFT JOIN user_profiles up ON up.user_id = c.user_id AND up.is_public = 1
-                LEFT JOIN user_profiles uh ON uh.user_id = c.user_id
                 LEFT JOIN {$this->getTable()} parent
                     ON parent.id = COALESCE(c.reply_to_comment_id, c.parent_comment_id)
                 -- The deleted check sits on the user join, not the comment one:
                 -- a removed parent must not hand its author's name to the
                 -- mention, but the reply still needs to know it is there.
                 LEFT JOIN users pu ON pu.id = parent.user_id AND parent.deleted_at IS NULL
-                LEFT JOIN user_profiles pup ON pup.user_id = pu.id AND pup.is_public = 1
                 LEFT JOIN users piu ON piu.id = c.pinned_by
-                LEFT JOIN user_profiles piup ON piup.user_id = piu.id AND piup.is_public = 1
                 WHERE c.post_id = ? AND c.status = 'approved'
                 ORDER BY c.created_at ASC";
 
@@ -449,7 +441,7 @@ class CommentModel extends AppModel
                     COALESCE(
                         u.display_name_cached,
                         NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
-                        u.username,
+                        u.handle,
                         'Anonymous'
                     ) AS user_name,
                     u.email AS user_email,
@@ -540,7 +532,7 @@ class CommentModel extends AppModel
                     COALESCE(
                         u.display_name_cached,
                         NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
-                        u.username,
+                        u.handle,
                         'Anonymous'
                     ) AS user_name,
                     u.email AS user_email,
@@ -884,7 +876,7 @@ class CommentModel extends AppModel
                     COALESCE(
                         u.display_name_cached,
                         NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '),
-                        u.username,
+                        u.handle,
                         'Anonymous'
                     ) AS user_name
                 FROM {$this->getTable()} c

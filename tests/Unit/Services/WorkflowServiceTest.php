@@ -35,7 +35,7 @@ function makeWorkflowService(
 ): WorkflowService {
     if ($users === null) {
         $users = Mockery::mock(UserModel::class);
-        $users->shouldReceive('findById')->andReturn(['id' => 0, 'username' => 'tester'])->byDefault();
+        $users->shouldReceive('findById')->andReturn(['id' => 0, 'handle' => 'tester'])->byDefault();
     }
 
     if ($blogs === null) {
@@ -273,7 +273,7 @@ describe('WorkflowService::checkStaleReviewer', function () {
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([
-            ['reviewer_id' => 7, 'reviewer_username' => 'jane'],
+            ['reviewer_id' => 7, 'reviewer_handle' => 'jane'],
         ]);
         $postReviewer->shouldReceive('clearByPost')->with(10)->once();
 
@@ -294,7 +294,7 @@ describe('WorkflowService::checkStaleReviewer', function () {
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([
-            ['reviewer_id' => 7, 'reviewer_username' => 'jane'],
+            ['reviewer_id' => 7, 'reviewer_handle' => 'jane'],
         ]);
         $postReviewer->shouldReceive('clearByPost')->never();
 

@@ -8,7 +8,7 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerNameRaw = $user['display_name_cached'] ?? $user['username'] ?? 'The Author';
+  $ownerNameRaw = $user['display_name_cached'] ?? $user['handle'];
   $ownerName = e($ownerNameRaw);
   $postCount = (int) ($totalPosts ?? count($posts ?? []));
   $featuredPost = !empty($posts) ? $posts[0] : null;
@@ -73,7 +73,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'] ?? null, $featuredPost['author_profile_slug']);
+    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $fCat = e($featuredPost['category'] ?? 'Article');
     $fMin = reading_time($featuredPost['content'] ?? '');
@@ -156,7 +156,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     $ncTitle = e($nightcapPost['title'] ?? 'Untitled');
     $ncUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($nightcapPost['slug'] ?? ''));
     $ncMinutes = reading_time($nightcapPost['content'] ?? '');
-    $ncAuthor = author_byline($nightcapPost['author_name'], $nightcapPost['author_handle'] ?? null, $nightcapPost['author_profile_slug']);
+    $ncAuthor = author_byline($nightcapPost['author_name'], $nightcapPost['author_handle'], $nightcapPost['author_profile_handle']);
 
     $excerpt = trim((string) ($nightcapPost['excerpt'] ?? ''));
     $quote = trim(preg_replace('/\s+/', ' ', $excerpt !== ''

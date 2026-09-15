@@ -62,7 +62,7 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                             <?= e($p['title']) ?>
                         </a>
                         <p class="text-xs text-slate-500 dark:text-zink-400 mt-0.5 flex flex-wrap items-center gap-2">
-                            <span>by <?= e($p['author_username']) ?></span>
+                            <span>by <?= e($p['author_handle']) ?></span>
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border <?= $workflowBadge[$state] ?? '' ?>">
                                 <?= e($workflowLabel[$state] ?? $state) ?>
                             </span>
@@ -71,7 +71,7 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                             <?php } elseif ($assignedToMe) { ?>
                                 <span class="text-emerald-600 dark:text-emerald-400">Assigned to you</span>
                             <?php } else { ?>
-                                <span>Reviewing: <?= e($p['reviewer_username'] ?? 'someone') ?></span>
+                                <span>Reviewing: <?= e($p['reviewer_handle']) ?></span>
                             <?php } ?>
                         </p>
                     </div>
@@ -92,7 +92,7 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                         </form>
                         <?php } elseif (!$unassigned && (in_array($blogRole, ['editor', 'owner'], true) || !empty($isAdmin))) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/unassign-reviewer" class="m-0"
-                              data-confirm="Unassign <?= e($p['reviewer_username'] ?? 'this reviewer') ?>?">
+                              data-confirm="Unassign <?= e($p['reviewer_handle']) ?>?">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($p['reviewer_id'] ?? 0) ?>">
                             {% cmp="btn" type="submit" variant="slate" icon="user-minus" label="Unassign" %}

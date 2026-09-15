@@ -10,7 +10,7 @@ class PostNeedsChangesMail extends Mailable
         private string $toEmail,
         private int $postId,
         private string $postTitle,
-        private string $reviewerUsername,
+        private string $reviewerHandle,
         private string $feedback
     ) {
         parent::__construct();
@@ -34,7 +34,7 @@ class PostNeedsChangesMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $reviewer = htmlspecialchars($this->reviewerUsername);
+        $reviewer = htmlspecialchars($this->reviewerHandle);
         $feedback = nl2br(htmlspecialchars($this->feedback));
         $url = htmlspecialchars($this->editUrl());
 
@@ -60,7 +60,7 @@ class PostNeedsChangesMail extends Mailable
         $fb = $this->feedback === '' ? '' : "\nFeedback:\n{$this->feedback}\n";
 
         return "Changes requested: {$this->postTitle}\n"
-             ."{$this->reviewerUsername} reviewed this post and asked for changes.{$fb}\n"
+             ."{$this->reviewerHandle} reviewed this post and asked for changes.{$fb}\n"
              ."Edit: {$this->editUrl()}\n";
     }
 }

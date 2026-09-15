@@ -12,7 +12,7 @@ use PDO;
  * UserProfileModel
  *
  * Manages user profile data including bio, avatar, location, and public visibility.
- * Profiles are created on-demand and support public slug-based URLs.
+ * Profiles are created on-demand; the public URL is keyed on users.handle.
  */
 class UserProfileModel extends AppModel
 {
@@ -141,25 +141,24 @@ class UserProfileModel extends AppModel
     }
 
     /**
-     * Find a public profile by slug.
+     * Find a public profile by handle.
      *
      * Joins user, profile, and preferences data for public display.
      * Returns null if profile not found.
      *
-     * @param  string  $slug  Profile slug
+     * @param  string  $handle  Profile handle
      * @return UserProfileResource|null Profile resource or null
      */
-    public function findBySlug(string $slug): ?UserProfileResource
+    public function findByHandle(string $handle): ?UserProfileResource
     {
         $sql = '
             SELECT
                 u.id                    AS user_id,
-                u.username,
+                u.handle,
                 u.display_name_cached,
                 u.posts_count,
                 u.comments_received_count,
                 u.created_at            AS user_created_at,
-                up.slug,
                 up.bio,
                 up.avatar_url,
                 up.location,
@@ -175,11 +174,11 @@ class UserProfileModel extends AppModel
                 ON u.id = up.user_id
             LEFT JOIN user_preferences pref
                 ON pref.user_id = u.id
-            WHERE up.slug = ?
+            WHERE u.handle = ?
             LIMIT 1
         ';
 
-        $stmt = $this->database->query($sql, [$slug]);
+        $stmt = $this->database->query($sql, [$handle]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row === false) {
@@ -191,104 +190,49 @@ class UserProfileModel extends AppModel
     }
 
     /**
-     * Public profile slug for a user, or null when they have none.
+     * The handle a profile is reachable at, or null when it is not public.
      *
-     * Returns null for private profiles and for users who never set a slug, so
-     * callers can treat null as "render plain text, not a link" without
-     * disclosing whether a private profile exists.
-     *
-     * @param  int  $userId  User ID to look up
-     * @return string|null Slug when publicly reachable, null otherwise
-     */
-    public function publicSlugFor(int $userId): ?string
-    {
-        $sql = 'SELECT slug FROM user_profiles WHERE user_id = ? AND is_public = 1 LIMIT 1';
-
-        $slug = $this->database->query($sql, [$userId])->fetchColumn();
-
-        return is_string($slug) && $slug !== '' ? $slug : null;
-    }
-
-    /**
-     * The slug behind someone's @tag, whether or not their profile is reachable.
-     *
-     * Ungated, unlike publicSlugFor(): a tag names a person the same way on every
-     * surface. Whether it becomes a link is publicSlugFor()'s question.
+     * Callers treat null as "render plain text, not a link" without learning
+     * whether a private profile exists.
      *
      * @param  int  $userId  User ID to look up
-     * @return string|null Slug when one is set, null otherwise
+     * @return string|null Handle when publicly reachable, null otherwise
      */
-    public function slugFor(int $userId): ?string
+    public function publicHandleFor(int $userId): ?string
     {
-        $sql = 'SELECT slug FROM user_profiles WHERE user_id = ? LIMIT 1';
-
-        $slug = $this->database->query($sql, [$userId])->fetchColumn();
-
-        return is_string($slug) && $slug !== '' ? $slug : null;
-    }
-
-    /**
-     * Check whether a slug is available for assignment.
-     *
-     * Validates against reserved slugs table and existing user profiles.
-     * Used during account settings validation.
-     *
-     * @param  string  $slug  Slug to check
-     * @param  int|null  $ignoreUserId  User ID whose current slug should be ignored
-     * @return bool True if available
-     */
-    public function isSlugAvailable(string $slug, ?int $ignoreUserId = null): bool
-    {
-        // check reserved slugs first to fail fast on known reserved values
-        $sqlReserved = 'SELECT 1 FROM reserved_slugs WHERE slug = ? LIMIT 1';
-        $stmtReserved = $this->database->query($sqlReserved, [$slug]);
-
-        if ($stmtReserved->fetchColumn()) {
-            return false;
-        }
-
-        // check existing user profiles, optionally excluding current user's slug
         $sql = '
-            SELECT 1
-            FROM user_profiles
-            WHERE slug = ?
-            '.($ignoreUserId !== null ? 'AND user_id <> ?' : '').'
+            SELECT u.handle
+            FROM users u
+            INNER JOIN user_profiles up ON up.user_id = u.id
+            WHERE u.id = ? AND up.is_public = 1
             LIMIT 1
         ';
 
-        $params = [$slug];
+        $handle = $this->database->query($sql, [$userId])->fetchColumn();
 
-        if ($ignoreUserId !== null) {
-            $params[] = $ignoreUserId;
-        }
-
-        $stmt = $this->database->query($sql, $params);
-
-        return $stmt->fetchColumn() === false;
+        return is_string($handle) && $handle !== '' ? $handle : null;
     }
 
     /**
-     * Update a user's profile slug and basic profile fields.
+     * Update a user's basic profile fields.
      *
      * Simple persistence layer for profile updates from account settings.
      *
      * @param  int  $userId  User ID
-     * @param  array<string, mixed>  $data  Profile data (slug, bio, avatar_url, is_public)
+     * @param  array<string, mixed>  $data  Profile data (bio, avatar_url, is_public)
      * @return bool True on success
      */
     public function updateProfile(int $userId, array $data): bool
     {
         $sql = '
             UPDATE user_profiles
-            SET slug = ?,
-                bio = ?,
+            SET bio = ?,
                 avatar_url = ?,
                 is_public = ?
             WHERE user_id = ?
         ';
 
         $params = [
-            $data['slug'],
             $data['bio'] ?? null,
             $data['avatar_url'] ?? null,
             !empty($data['is_public']) ? 1 : 0,

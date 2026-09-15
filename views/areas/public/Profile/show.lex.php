@@ -1,12 +1,12 @@
 {% extends "front.lex.php" %}
 
-{% block title %}<?= e($profile->displayName() ?? $profile->username() ?? 'Profile'); ?> | <?= e(site_setting('site_name', 'Lexicon')); ?>{% endblock %}
+{% block title %}<?= e($profile->displayName() ?? $profile->handle()); ?> | <?= e(site_setting('site_name', 'Lexicon')); ?>{% endblock %}
 
 {% block meta %}
 <?php
     // Only block contents run (code outside blocks is discarded by the compiler),
     // so the head meta computes its own identity rather than sharing with the body.
-    $profileName = $profile->displayName() ?? $profile->username() ?? 'Profile';
+    $profileName = $profile->displayName() ?? $profile->handle();
 
 // Description for search results and link previews: the bio reads best, but
 // it is free text with markup and newlines, so flatten it before truncating.
@@ -25,7 +25,7 @@ if (!empty($metaAvatar)) {
         : rtrim(base_url(), '/').$metaAvatar;
 }
 
-$profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($profile->slug());
+$profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($profile->handle());
 ?>
 <meta name="description" content="<?= e($profileDesc); ?>" />
 <meta property="og:type" content="profile" />
@@ -44,9 +44,9 @@ $profileUrl = rtrim(base_url(), '/').'/'.locale().'/profile/'.rawurlencode($prof
 {% block body %}
 
 <?php
-    $profileName = $profile->displayName() ?? $profile->username() ?? 'Profile';
+    $profileName = $profile->displayName() ?? $profile->handle();
 // A name equal to the tag means the name is turned off; printing both repeats it.
-$profileHandle = $profile->slug();
+$profileHandle = $profile->handle();
 $showBothNames = $profileName !== $profileHandle;
 $profileAvatar = $profile->avatarUrl();
 $postCount = (int) ($stats['posts'] ?? 0);

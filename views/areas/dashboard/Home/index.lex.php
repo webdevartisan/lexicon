@@ -57,7 +57,7 @@
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
         <div>
             <h1 class="text-xl font-semibold text-slate-900 dark:text-zink-50">
-                <?= e($t('common.welcome')) ?>, <?= e(auth()->user()['username'] ?? '') ?>
+                <?= e($t('common.welcome')) ?>, <?= e(auth()->user()['handle']) ?>
             </h1>
             <p class="text-sm text-slate-500 dark:text-zink-300 mt-1">
                 Here's what's happening in <span class="font-medium text-slate-700 dark:text-zink-100"><?= e($blogIds[$selectedBlogId] ?? '') ?></span>.

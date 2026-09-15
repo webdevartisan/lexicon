@@ -8,7 +8,7 @@
 <?php
 $blogTitle = e($blog['blog_name'] ?? 'Closest');
   $blogSlug = urlencode($blog['blog_slug'] ?? '');
-  $ownerName = e($user['display_name_cached'] ?? $user['username'] ?? 'The Surveyor');
+  $ownerName = e($user['display_name_cached'] ?? $user['handle']);
   $postCount = (int) ($totalPosts ?? count($posts ?? []));
   $featuredPost = !empty($posts) ? $posts[0] : null;
   $gridPosts = !empty($posts) ? array_slice($posts, 1, 6) : [];
@@ -68,7 +68,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
-    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'] ?? null, $featuredPost['author_profile_slug']);
+    $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e($fmtDate($featuredPost['published_at'] ?? ''));
     $fCat = e($featuredPost['category'] ?? 'Field note');
     $fMinutes = reading_time($featuredPost['content'] ?? '');

@@ -76,7 +76,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
           $title = e($post['title'] ?? 'Untitled');
           $cat = trim((string) ($post['category'] ?? 'Work'));
           $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-          $author = author_byline($post['author_name'], $post['author_handle'] ?? null, $post['author_profile_slug']);
+          $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
 

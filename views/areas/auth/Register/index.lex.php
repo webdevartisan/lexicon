@@ -103,8 +103,6 @@ $meterLevels = implode('|', [
     </div>
 
     <button type="submit" class="lx-btn lx-authsubmit"><?= e($t('auth.registerSubmit')) ?></button>
-
-    <p class="lx-authnote"><?= e($t('auth.registerUsernameNote')) ?></p>
 </form>
 {% endblock %}
 

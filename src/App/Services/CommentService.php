@@ -284,7 +284,7 @@ class CommentService
             'blog_id' => (int) $post['blog_id'],
             'blog_slug' => $blog->slug(),
             'commenter_name' => $commenter
-                ? (string) ($commenter['display_name'] ?? $commenter['username'] ?? 'A reader')
+                ? (string) ($commenter['display_name'] ?? $commenter['handle'])
                 : 'A guest',
             'comment_excerpt' => truncate($content, 140),
             'awaiting_moderation' => $awaitingModeration,

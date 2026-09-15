@@ -118,21 +118,21 @@ it('returns null when finding soft-deleted user by email', function () {
 });
 
 /**
- * Test finding users by username.
+ * Test finding users by handle.
  *
- * Verifies findByUsername returns array of matching users.
+ * Verifies findByHandle returns array of matching users.
  */
-it('finds users by username', function () {
-    $username = faker()->unique()->userName();
+it('finds users by handle', function () {
+    $handle = preg_replace('/[^a-z0-9]/', '', strtolower(faker()->unique()->userName()));
     $userId = UserFactory::new($this->userModel)
-        ->withAttributes(['username' => $username])
+        ->withAttributes(['handle' => $handle])
         ->create();
 
-    $users = $this->userModel->findByUsername($username);
+    $users = $this->userModel->findByHandle($handle);
 
     expect($users)->toBeArray()
         ->and($users)->toHaveCount(1)
-        ->and($users[0]['username'])->toBe($username);
+        ->and($users[0]['handle'])->toBe($handle);
 });
 
 /**

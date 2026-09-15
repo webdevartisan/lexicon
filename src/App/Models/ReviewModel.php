@@ -53,7 +53,7 @@ class ReviewModel extends AppModel
     public function findByPost(int $postId): array
     {
         $sql = 'SELECT r.id, r.reviewer_id, r.decision, r.feedback, r.reviewed_at,
-                       u.username AS reviewer_username
+                       u.handle AS reviewer_handle
                 FROM reviews r
                 LEFT JOIN users u ON u.id = r.reviewer_id
                 WHERE r.post_id = ?
@@ -74,7 +74,7 @@ class ReviewModel extends AppModel
     public function findLatestByPost(int $postId): ?array
     {
         $sql = 'SELECT r.id, r.reviewer_id, r.decision, r.feedback, r.reviewed_at,
-                       u.username AS reviewer_username
+                       u.handle AS reviewer_handle
                 FROM reviews r
                 LEFT JOIN users u ON u.id = r.reviewer_id
                 WHERE r.post_id = ?

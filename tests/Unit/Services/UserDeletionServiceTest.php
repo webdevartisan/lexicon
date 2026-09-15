@@ -55,7 +55,7 @@ describe('UserDeletionService', function () {
                 ->once()
                 ->with($userId, m::on(function ($data) use ($userId) {
                     return str_starts_with($data['email'], 'deleted_user_')
-                        && $data['username'] === "deleted_user_{$userId}"
+                        && $data['handle'] === "deleted_user_{$userId}"
                         && $data['first_name'] === 'Deleted'
                         && $data['last_name'] === 'User'
                         && $data['password'] === ''

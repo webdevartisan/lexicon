@@ -12,6 +12,7 @@ use App\Models\ReviewModel;
 use App\Models\UserModel;
 use App\Policies\PostPolicy;
 use App\Resources\PostResource;
+use RuntimeException;
 
 /**
  * WorkflowService owns all editorial pipeline state transitions.
@@ -34,13 +35,20 @@ class WorkflowService
     ) {}
 
     /**
-     * Resolve a username from a user id, returning '' when the user is missing.
+     * Resolve the handle of the user who triggered an event.
+     *
+     * @throws RuntimeException If the user is gone, since every payload built
+     *                          here names a person the recipient will see
      */
-    private function username(int $userId): string
+    private function userHandle(int $userId): string
     {
         $row = $this->users->findById($userId);
 
-        return (string) ($row['username'] ?? '');
+        if ($row === null) {
+            throw new RuntimeException("Cannot name the actor of a workflow event: user {$userId} not found.");
+        }
+
+        return (string) $row['handle'];
     }
 
     /**
@@ -88,7 +96,7 @@ class WorkflowService
             }
 
             $payload = $this->postPayload($resource);
-            $payload['author_username'] = $this->username($userId);
+            $payload['author_handle'] = $this->userHandle($userId);
 
             $assignments = $this->postReviewer->findByPost($postId);
             if (!empty($assignments)) {
@@ -185,7 +193,7 @@ class WorkflowService
             }
 
             $payload = $this->postPayload($post);
-            $payload['reviewer_username'] = $this->username($reviewerId);
+            $payload['reviewer_handle'] = $this->userHandle($reviewerId);
             $payload['feedback'] = $feedback;
 
             $this->notifications->dispatch($authorId, $type, $payload);
@@ -239,7 +247,7 @@ class WorkflowService
         $this->notifications->dispatch($reviewerId, 'post.reviewer_assigned', [
             'post_id' => $postId,
             'post_title' => $resource ? $resource->title() : '',
-            'assigned_by_username' => $this->username($assignedBy),
+            'actor_handle' => $this->userHandle($assignedBy),
         ]);
     }
 
@@ -270,7 +278,7 @@ class WorkflowService
                 $this->notifications->dispatch($ownerId, 'post.reviewer_stale', [
                     'post_id' => $postId,
                     'post_title' => $post->title(),
-                    'former_reviewer_username' => (string) ($assignment['reviewer_username'] ?? ''),
+                    'former_reviewer_handle' => (string) $assignment['reviewer_handle'],
                 ]);
 
                 break;

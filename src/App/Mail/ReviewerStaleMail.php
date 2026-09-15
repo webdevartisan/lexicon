@@ -14,7 +14,7 @@ class ReviewerStaleMail extends Mailable
         private string $toEmail,
         private int $postId,
         private string $postTitle,
-        private string $formerReviewerUsername
+        private string $formerReviewerHandle
     ) {
         parent::__construct();
     }
@@ -37,7 +37,7 @@ class ReviewerStaleMail extends Mailable
     private function buildHtmlBody(): string
     {
         $title = htmlspecialchars($this->postTitle);
-        $former = htmlspecialchars($this->formerReviewerUsername);
+        $former = htmlspecialchars($this->formerReviewerHandle);
         $url = htmlspecialchars($this->reviewUrl());
 
         return <<<HTML
@@ -55,7 +55,7 @@ class ReviewerStaleMail extends Mailable
     private function buildTextBody(): string
     {
         return "Reviewer reset on: {$this->postTitle}\n"
-             ."{$this->formerReviewerUsername} can no longer review this post. Reopened to all reviewers.\n"
+             ."{$this->formerReviewerHandle} can no longer review this post. Reopened to all reviewers.\n"
              ."Open: {$this->reviewUrl()}\n";
     }
 }

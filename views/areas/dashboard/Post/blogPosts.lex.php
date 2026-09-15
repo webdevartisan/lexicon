@@ -136,7 +136,7 @@ $statusBadge = [
                             <?= e($post['title']) ?>
                         </a>
                         <p class="mt-0.5 text-xs text-slate-500 dark:text-zink-400 flex flex-wrap items-center gap-2">
-                            <span>by <?= e($post['author_username'] ?? 'unknown') ?></span>
+                            <span>by <?= e($post['author_handle']) ?></span>
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded capitalize <?= $statusBadge[$postStatus] ?? 'bg-slate-100 text-slate-600' ?>">
                                 <?= e($postStatus) ?>
                             </span>
