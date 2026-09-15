@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Interfaces\ImageProcessorInterface;
 use App\Services\UploadService;
 
 /**
@@ -11,7 +12,19 @@ use App\Services\UploadService;
  * /uploads, so anything scriptable that gets stored is stored XSS.
  */
 beforeEach(function () {
-    $this->uploader = new UploadService();
+    // These tests are about the validation gate, so the image pipeline is a no-op double.
+    $this->uploader = new UploadService(new class() implements ImageProcessorInterface
+    {
+        public function process(string $sourcePath, string $destPath, array $opts = []): array
+        {
+            return ['width' => 1, 'height' => 1];
+        }
+
+        public function crop(string $sourcePath, string $destPath, array $rect, array $opts = []): array
+        {
+            return ['width' => 1, 'height' => 1];
+        }
+    });
 
     $this->tmpDir = sys_get_temp_dir().'/lexicon-upload-test-'.bin2hex(random_bytes(4));
     @mkdir($this->tmpDir, 0775, true);
@@ -88,9 +101,9 @@ test('rejects a file whose contents do not match its extension', function () {
 /**
  * Regression guard: a genuine PNG must still clear every validation step.
  *
- * storeImage() returns null rather than a URL because move_uploaded_file()
- * refuses a file that did not arrive via a real upload. Reaching that point at
- * all means validation passed.
+ * It ends on "Upload error." because is_uploaded_file() refuses a file that did
+ * not arrive over HTTP. Size, extension and MIME all passed to get that far, and
+ * a file rejected earlier carries a different message.
  */
 test('accepts a genuine PNG through validation', function () {
     $png = base64_decode(
@@ -98,5 +111,6 @@ test('accepts a genuine PNG through validation', function () {
     );
     $file = ($this->makeFile)('pixel.png', $png);
 
-    expect($this->uploader->storeImage($file, $this->opts))->toBeNull();
+    expect(fn () => $this->uploader->storeImage($file, $this->opts))
+        ->toThrow(InvalidArgumentException::class, 'Upload error.');
 });

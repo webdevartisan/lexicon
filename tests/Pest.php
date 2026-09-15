@@ -272,6 +272,28 @@ function callController($controller, $method, $request, ...$args): \Framework\Co
 }
 
 /**
+ * Look up role ids by slug.
+ *
+ * Seed ids shift as roles are added, and a test that hardcodes them silently
+ * ends up asserting against the wrong role, or a blog role the model filters out.
+ *
+ * @param  string[]  $slugs
+ * @return int[]
+ */
+function roleIds(\Framework\Database $db, array $slugs): array
+{
+    $placeholders = implode(',', array_fill(0, count($slugs), '?'));
+    $rows = $db->query("SELECT id FROM roles WHERE role_slug IN ($placeholders)", $slugs)
+        ->fetchAll(\PDO::FETCH_COLUMN);
+
+    if (count($rows) !== count($slugs)) {
+        throw new RuntimeException('Unknown role slug in: '.implode(', ', $slugs));
+    }
+
+    return array_map('intval', $rows);
+}
+
+/**
  * Provide Faker instance for generating test data.
  *
  * We use a singleton pattern to avoid creating multiple Faker instances,

@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use App\Policies\PostPolicy;
+use App\Resources\BlogResource;
 use App\Resources\PostResource;
 
 /**
  * Unit tests for PostPolicy.
  *
- * Blog and post objects are mocked to isolate pure authorization logic.
+ * Decisions come from the acting user's permissions on the post's blog, with
+ * ownership and workflow guards on top, so the blog is mocked with a fixed
+ * permission set and the post with an author, status and workflow state.
  */
 
 // ============================================================================
@@ -16,28 +19,36 @@ use App\Resources\PostResource;
 // ============================================================================
 
 /**
- * Build a mock blog with controllable ownerId and roleForUser.
+ * Every post permission a policy can ask for, used to prove an action needs its own slug.
  */
-function mockPostBlog(int $ownerId, string $role = ''): object
-{
-    $blog = Mockery::mock(\App\Resources\BlogResource::class);
-    $blog->shouldReceive('ownerId')->andReturn($ownerId);
-    $blog->shouldReceive('roleForUser')->andReturn($role);
-
-    return $blog;
-}
+const POST_PERMISSIONS = [
+    'view_all_posts',
+    'edit_blog_posts',
+    'edit_own_posts',
+    'publish_blog_posts',
+    'delete_blog_posts',
+    'delete_own_posts',
+    'reject_posts',
+    'approve_posts',
+    'assign_reviewers',
+    'review_posts',
+];
 
 /**
- * Build a mock PostResource with controllable blog, authorId, status, and workflowState.
+ * Build a post on a blog whose userCan answers from the given permission set.
+ *
+ * @param  string[]  $permissions
  */
-function mockPost(
-    int $blogOwnerId,
-    string $blogRole = '',
-    int $authorId = 0,
+function postWith(
+    array $permissions,
+    int $authorId = 7,
     string $status = 'draft',
     string $workflowState = 'draft'
 ): PostResource {
-    $blog = mockPostBlog($blogOwnerId, $blogRole);
+    $blog = Mockery::mock(BlogResource::class);
+    $blog->shouldReceive('userCan')->andReturnUsing(
+        static fn (int $userId, string $permission): bool => in_array($permission, $permissions, true)
+    );
 
     $post = Mockery::mock(PostResource::class);
     $post->shouldReceive('blog')->andReturn($blog);
@@ -48,48 +59,45 @@ function mockPost(
     return $post;
 }
 
+function postActor(int $id = 2): array
+{
+    return ['id' => $id, 'roles' => []];
+}
+
 afterEach(fn () => Mockery::close());
 
 // ============================================================================
-// view()
+// Straight permission checks
 // ============================================================================
 
-describe('PostPolicy::view', function () {
+describe('PostPolicy permission mapping', function () {
 
-    test('blog owner can always view post', function () {
+    test('an action is allowed when the user holds its permission', function (string $action, string $permission) {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '');
 
-        expect($policy->view(['id' => 1], $post))->toBeTrue();
-    });
+        expect($policy->{$action}(postActor(), postWith([$permission])))->toBeTrue();
+    })->with([
+        ['view', 'view_all_posts'],
+        ['publish', 'publish_blog_posts'],
+        ['markAsNeedsChanges', 'reject_posts'],
+        ['approve', 'approve_posts'],
+        ['assignReviewer', 'assign_reviewers'],
+        ['reviewPost', 'review_posts'],
+    ]);
 
-    test('non-owner with allowed per-blog role can view post', function (string $role) {
+    test('holding every other permission does not grant the action', function (string $action, string $permission) {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: $role);
+        $others = array_values(array_diff(POST_PERMISSIONS, [$permission]));
 
-        expect($policy->view(['id' => 2], $post))->toBeTrue();
-    })->with(['editor', 'author', 'contributor', 'reviewer']);
-
-    test('non-owner with no blog role cannot view post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '');
-
-        expect($policy->view(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('non-owner with unknown blog role cannot view post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'guest');
-
-        expect($policy->view(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('viewer role cannot view post (role removed from system)', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'viewer');
-
-        expect($policy->view(['id' => 2], $post))->toBeFalse();
-    });
+        expect($policy->{$action}(postActor(), postWith($others)))->toBeFalse();
+    })->with([
+        ['view', 'view_all_posts'],
+        ['publish', 'publish_blog_posts'],
+        ['markAsNeedsChanges', 'reject_posts'],
+        ['approve', 'approve_posts'],
+        ['assignReviewer', 'assign_reviewers'],
+        ['reviewPost', 'review_posts'],
+    ]);
 });
 
 // ============================================================================
@@ -98,123 +106,40 @@ describe('PostPolicy::view', function () {
 
 describe('PostPolicy::update', function () {
 
-    test('blog owner can always update any post', function () {
+    test('edit_blog_posts updates anyone else\'s post, in review or not', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 99);
+        $post = postWith(['edit_blog_posts'], authorId: 99, workflowState: 'in_review');
 
-        expect($policy->update(['id' => 1], $post))->toBeTrue();
+        expect($policy->update(postActor(), $post))->toBeTrue();
     });
 
-    test('editor can update any post', function () {
+    test('edit_own_posts updates the user\'s own post', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor', authorId: 99);
+        $post = postWith(['edit_own_posts'], authorId: 2);
 
-        expect($policy->update(['id' => 2], $post))->toBeTrue();
+        expect($policy->update(postActor(), $post))->toBeTrue();
     });
 
-    test('author can update their own post', function () {
+    test('edit_own_posts does not reach someone else\'s post', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2);
+        $post = postWith(['edit_own_posts'], authorId: 99);
 
-        expect($policy->update(['id' => 2], $post))->toBeTrue();
+        expect($policy->update(postActor(), $post))->toBeFalse();
     });
 
-    test('author cannot update another author post', function () {
+    // The author gets their post back once a reviewer sends it back for changes.
+    test('a post in review is locked for its own author', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 99);
+        $post = postWith(['edit_own_posts'], authorId: 2, workflowState: 'in_review');
 
-        expect($policy->update(['id' => 2], $post))->toBeFalse();
+        expect($policy->update(postActor(), $post))->toBeFalse();
     });
 
-    test('viewer cannot update a post', function () {
+    test('without an edit permission nobody updates the post', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'viewer', authorId: 2);
+        $post = postWith(['view_all_posts'], authorId: 2);
 
-        expect($policy->update(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('non-member cannot update a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 2);
-
-        expect($policy->update(['id' => 2], $post))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// update() — in-review lock
-// ============================================================================
-
-describe('PostPolicy::update — in-review lock', function () {
-
-    test('author cannot edit their own post when it is in_review', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, workflowState: 'in_review');
-
-        expect($policy->update(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('contributor cannot edit their own post when it is in_review', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor', authorId: 2, workflowState: 'in_review');
-
-        expect($policy->update(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('editor can edit any post even when in_review', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor', authorId: 3, workflowState: 'in_review');
-
-        expect($policy->update(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('owner can edit any post even when in_review', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 3, workflowState: 'in_review');
-
-        expect($policy->update(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('author can edit their own post when in needs_changes (not locked)', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, workflowState: 'needs_changes');
-
-        expect($policy->update(['id' => 2], $post))->toBeTrue();
-    });
-});
-
-// ============================================================================
-// publish()
-// ============================================================================
-
-describe('PostPolicy::publish', function () {
-
-    test('blog owner can publish a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1);
-
-        expect($policy->publish(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('editor can publish a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
-
-        expect($policy->publish(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('author cannot publish a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
-
-        expect($policy->publish(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('reviewer cannot publish a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
-
-        expect($policy->publish(['id' => 2], $post))->toBeFalse();
+        expect($policy->update(postActor(), $post))->toBeFalse();
     });
 });
 
@@ -224,199 +149,38 @@ describe('PostPolicy::publish', function () {
 
 describe('PostPolicy::delete', function () {
 
-    test('blog owner can delete any post', function () {
+    test('delete_blog_posts deletes any post whatever its status', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: '', authorId: 99, status: 'published');
+        $post = postWith(['delete_blog_posts'], authorId: 99, status: 'published');
 
-        expect($policy->delete(['id' => 1], $post))->toBeTrue();
+        expect($policy->delete(postActor(), $post))->toBeTrue();
     });
 
-    test('editor can delete any post', function () {
+    test('delete_own_posts deletes the user\'s own draft', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor', authorId: 99, status: 'published');
+        $post = postWith(['delete_own_posts'], authorId: 2, status: 'draft');
 
-        expect($policy->delete(['id' => 2], $post))->toBeTrue();
+        expect($policy->delete(postActor(), $post))->toBeTrue();
     });
 
-    test('author can delete their own draft', function () {
+    test('delete_own_posts stops at a published post', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, status: 'draft');
+        $post = postWith(['delete_own_posts'], authorId: 2, status: 'published');
 
-        expect($policy->delete(['id' => 2], $post))->toBeTrue();
+        expect($policy->delete(postActor(), $post))->toBeFalse();
     });
 
-    test('author cannot delete their own published post', function () {
+    test('delete_own_posts does not reach someone else\'s draft', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 2, status: 'published');
+        $post = postWith(['delete_own_posts'], authorId: 99, status: 'draft');
 
-        expect($policy->delete(['id' => 2], $post))->toBeFalse();
+        expect($policy->delete(postActor(), $post))->toBeFalse();
     });
 
-    test('author cannot delete another authors post', function () {
+    test('without a delete permission nobody deletes the post', function () {
         $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author', authorId: 99, status: 'draft');
+        $post = postWith(['edit_blog_posts'], authorId: 2, status: 'draft');
 
-        expect($policy->delete(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('viewer cannot delete a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'viewer', authorId: 2, status: 'draft');
-
-        expect($policy->delete(['id' => 2], $post))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// markAsNeedsChanges()
-// ============================================================================
-
-describe('PostPolicy::markAsNeedsChanges', function () {
-
-    test('blog owner can mark post as needs changes', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1);
-
-        expect($policy->markAsNeedsChanges(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('reviewer can mark post as needs changes', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
-
-        expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('editor can mark post as needs changes', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
-
-        expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('author cannot mark post as needs changes', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
-
-        expect($policy->markAsNeedsChanges(['id' => 2], $post))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// approve()
-// ============================================================================
-
-describe('PostPolicy::approve', function () {
-
-    test('blog owner can approve a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1);
-
-        expect($policy->approve(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('reviewer can approve a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
-
-        expect($policy->approve(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('editor can approve a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
-
-        expect($policy->approve(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('author cannot approve a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
-
-        expect($policy->approve(['id' => 2], $post))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// assignReviewer()
-// ============================================================================
-
-describe('PostPolicy::assignReviewer', function () {
-
-    test('owner can assign a reviewer', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1);
-
-        expect($policy->assignReviewer(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('editor can assign a reviewer', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
-
-        expect($policy->assignReviewer(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('reviewer can assign (self-assign enforced by controller not policy)', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
-
-        expect($policy->assignReviewer(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('author cannot assign a reviewer', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
-
-        expect($policy->assignReviewer(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('contributor cannot assign a reviewer', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor');
-
-        expect($policy->assignReviewer(['id' => 2], $post))->toBeFalse();
-    });
-});
-
-// ============================================================================
-// reviewPost()
-// ============================================================================
-
-describe('PostPolicy::reviewPost', function () {
-
-    test('owner can review a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1);
-
-        expect($policy->reviewPost(['id' => 1], $post))->toBeTrue();
-    });
-
-    test('editor can review a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'editor');
-
-        expect($policy->reviewPost(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('reviewer can review a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'reviewer');
-
-        expect($policy->reviewPost(['id' => 2], $post))->toBeTrue();
-    });
-
-    test('author cannot review a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'author');
-
-        expect($policy->reviewPost(['id' => 2], $post))->toBeFalse();
-    });
-
-    test('contributor cannot review a post', function () {
-        $policy = new PostPolicy();
-        $post = mockPost(blogOwnerId: 1, blogRole: 'contributor');
-
-        expect($policy->reviewPost(['id' => 2], $post))->toBeFalse();
+        expect($policy->delete(postActor(), $post))->toBeFalse();
     });
 });

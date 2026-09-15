@@ -294,14 +294,31 @@ it('restores soft-deleted user', function () {
 it('inserts user roles', function () {
     $userId = UserFactory::new($this->userModel)->create();
 
-    $roleIds = [2, 3];
-    $result = $this->userModel->insertUserRoles($userId, $roleIds);
+    $result = $this->userModel->insertUserRoles($userId, roleIds($this->db, ['content_manager', 'reader']));
 
     expect($result)->toBeTrue();
 
     $roles = $this->userModel->getUserRoles($userId);
     expect($roles)->toBeArray()
-        ->and(count($roles))->toBeGreaterThanOrEqual(2);
+        ->and($roles)->toContain('content_manager')
+        ->and($roles)->toContain('reader');
+});
+
+/**
+ * Test that a blog-scoped role cannot be attached to the account itself.
+ *
+ * Verifies insertUserRoles keeps blog roles out of user_roles.
+ */
+it('ignores blog-scoped ids when inserting user roles', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+
+    $result = $this->userModel->insertUserRoles(
+        $userId,
+        roleIds($this->db, ['reader', 'editor', 'blog_owner'])
+    );
+
+    expect($result)->toBeTrue()
+        ->and($this->userModel->getUserRoles($userId))->toBe(['reader']);
 });
 
 /**
@@ -324,17 +341,19 @@ it('handles inserting empty roles array', function () {
  */
 it('updates user roles by replacing existing roles', function () {
     $userId = UserFactory::new($this->userModel)
-        ->withRoles([2])
+        ->withRoles(roleIds($this->db, ['content_manager']))
         ->create();
 
-    $result = $this->userModel->updateUserRoles($userId, [3, 4]);
+    $result = $this->userModel->updateUserRoles($userId, roleIds($this->db, ['administrator', 'reader']));
 
     expect($result)->toBeTrue();
 
     $roles = $this->userModel->getUserRoles($userId);
 
     expect($roles)->toBeArray()
-        ->and(count($roles))->toBeGreaterThanOrEqual(2);
+        ->and($roles)->toContain('administrator')
+        ->and($roles)->toContain('reader')
+        ->and($roles)->not->toContain('content_manager');
 });
 
 /**

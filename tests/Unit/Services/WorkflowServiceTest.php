@@ -268,8 +268,8 @@ describe('WorkflowService::checkStaleReviewer', function () {
     test('clears assignment and notifies owner when reviewer lost review capability', function () {
         $post = mockPostResource(authorId: 3, workflowState: 'in_review');
         $blog = $post->blog();
-        // Reviewer (id=7) now has 'author' role — lost review rights
-        $blog->shouldReceive('roleForUser')->with(7)->andReturn('author');
+        // Reviewer (id=7) is now an author on this blog, so they lost review_posts
+        $blog->shouldReceive('userCan')->with(7, 'review_posts')->andReturn(false);
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([
@@ -290,7 +290,7 @@ describe('WorkflowService::checkStaleReviewer', function () {
     test('does nothing when assigned reviewer still has review capability', function () {
         $post = mockPostResource(authorId: 3, workflowState: 'in_review');
         $blog = $post->blog();
-        $blog->shouldReceive('roleForUser')->with(7)->andReturn('reviewer');
+        $blog->shouldReceive('userCan')->with(7, 'review_posts')->andReturn(true);
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([
