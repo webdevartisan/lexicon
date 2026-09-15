@@ -13,7 +13,19 @@ use Framework\Database;
 class DatabaseHelper
 {
     /**
-     * Truncate all test tables in safe order.
+     * Seeded once by schema.sql and read by the code under test, so they outlive each test.
+     */
+    private const PRESERVED_TABLES = [
+        'migrations',
+        'permissions',
+        'reserved_handles',
+        'role_permissions',
+        'roles',
+        'scheduled_tasks',
+    ];
+
+    /**
+     * Truncate every table a test can write to, leaving the seeded ones in place.
      *
      * We disable foreign key checks temporarily to avoid constraint violations,
      * then truncate tables in reverse dependency order for safety.
@@ -65,28 +77,22 @@ class DatabaseHelper
             'categories',
 
             // Misc
-            'reserved_handles',
+            'media',
             'settings',
             'pages',
             'site_content',
             'mail_queue',
             'scheduled_task_runs',
-            'scheduled_tasks',
         ];
 
         foreach ($tables as $table) {
-            try {
-                $db->getConnection()->exec("TRUNCATE TABLE {$table}");
-            } catch (\PDOException $e) {
-                // Table might not exist in all test scenarios
-                error_log("Could not truncate {$table}: ".$e->getMessage());
-            }
+            $db->getConnection()->exec("TRUNCATE TABLE {$table}");
         }
 
         $db->getConnection()->exec('SET FOREIGN_KEY_CHECKS=1');
 
         // Guard: fail loudly if a new migration adds a table not listed above
-        self::assertAllTablesClean($db, $tables);
+        self::assertEveryTableAccountedFor($db, [...$tables, ...self::PRESERVED_TABLES]);
     }
 
     /**
@@ -121,12 +127,11 @@ class DatabaseHelper
     }
 
     /**
-     * Verify all expected tables were cleaned.
-     * Fail loudly if a table is missing from the cleanup list.
+     * Fail loudly if a table is neither truncated nor deliberately preserved.
      *
-     * @param  array  $cleaned  List of tables that were truncated
+     * @param  array<int, string>  $accountedFor  Tables truncated or preserved
      */
-    public static function assertAllTablesClean(Database $db, array $cleaned): void
+    private static function assertEveryTableAccountedFor(Database $db, array $accountedFor): void
     {
         $stmt = $db->getConnection()->query("
             SELECT TABLE_NAME 
@@ -136,11 +141,11 @@ class DatabaseHelper
         ");
 
         $allTables = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-        $missing = array_diff($allTables, $cleaned);
+        $missing = array_diff($allTables, $accountedFor);
 
         if (!empty($missing)) {
             throw new \RuntimeException(
-                'cleanDatabase() is missing these tables: '.implode(', ', $missing)
+                'cleanDatabase() neither truncates nor preserves these tables: '.implode(', ', $missing)
             );
         }
     }

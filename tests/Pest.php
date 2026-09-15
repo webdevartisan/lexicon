@@ -41,15 +41,11 @@ uses()->beforeEach(function () {
 uses()
     ->beforeEach(function () {
         // Reset unique constraints to prevent ID collisions in parallel test execution
-        if (class_exists('Faker\Factory')) {
-            \Faker\Factory::create()->unique(true);
-        }
+        \Faker\Factory::create()->unique(true);
     })
     ->afterEach(function () {
         // Close mock expectations to prevent memory leaks across test iterations
-        if (class_exists('Mockery')) {
-            Mockery::close();
-        }
+        Mockery::close();
     })
     ->in('Unit');
 
@@ -72,16 +68,11 @@ uses()
         \Faker\Factory::create()->unique(true);
     })
     ->afterEach(function () {
-        try {
-            if ($this->db->inTransaction()) {
-                $this->db->rollback();
-            }
-
-            \Tests\Helpers\DatabaseHelper::cleanDatabase($this->db);
-
-        } catch (\Exception $e) {
-            error_log('Test cleanup failed: '.$e->getMessage());
+        if ($this->db->inTransaction()) {
+            $this->db->rollback();
         }
+
+        \Tests\Helpers\DatabaseHelper::cleanDatabase($this->db);
     })
     ->in('Integration');
 
@@ -112,20 +103,11 @@ uses()
             session_destroy();
         }
 
-        // Clear cache to prevent stale data affecting HTTP response tests
-        if (function_exists('cache_clear')) {
-            cache_clear();
-        }
-
         \Faker\Factory::create()->unique(true);
     })
     ->afterEach(function () {
-        try {
-            if ($this->db->getConnection()->inTransaction()) {
-                $this->db->getConnection()->rollBack();
-            }
-        } catch (\Exception $e) {
-            error_log('Feature test rollback failed: '.$e->getMessage());
+        if ($this->db->getConnection()->inTransaction()) {
+            $this->db->getConnection()->rollBack();
         }
 
         if (session_status() === PHP_SESSION_ACTIVE) {
