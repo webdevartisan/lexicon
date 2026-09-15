@@ -451,6 +451,40 @@ describe('Validator String Rules', function () {
         expect($validator->fails())->toBeTrue();
     });
 
+    // ==================== User Handle Rule ====================
+
+    /**
+     * Test user_handle rule passes for lowercase words, numbers and single hyphens.
+     */
+    test('user_handle passes for a well-formed handle', function (string $handle) {
+        $validator = new Validator(['handle' => $handle]);
+        $validator->rules(['handle' => 'user_handle']);
+
+        expect($validator->passes())->toBeTrue();
+    })->with(['ada', 'ada-lovelace', 'reader1a2b', '42']);
+
+    /**
+     * Test user_handle rule rejects anything that would not read cleanly as an @tag or URL segment.
+     */
+    test('user_handle fails for a malformed handle', function (string $handle) {
+        $validator = new Validator(['handle' => $handle]);
+        $validator->rules(['handle' => 'user_handle']);
+
+        expect($validator->fails())->toBeTrue();
+    })->with(['', 'Ada', 'ada lovelace', 'ada_lovelace', '-ada', 'ada-', 'ada--lovelace', 'adá']);
+
+    /**
+     * Test user_handle rule explains which characters are allowed rather than just "is invalid".
+     */
+    test('user_handle failure message names the allowed characters', function () {
+        $validator = new Validator(['handle' => 'Ada']);
+        $validator->rules(['handle' => 'user_handle']);
+        $validator->fails();
+
+        expect($validator->errors()['handle'][0])
+            ->toBe('Handle may only contain lowercase letters, numbers, and single hyphens.');
+    });
+
     // ==================== Title Rule ====================
 
     /**

@@ -66,13 +66,12 @@ describe('UserDeletionService', function () {
             // Expect profile anonymization
             $this->profileModel->shouldReceive('updateByUserId')
                 ->once()
-                ->with($userId, m::on(function ($data) use ($userId) {
-                    return $data['slug'] === "deleted_{$userId}"
-                        && $data['bio'] === null
-                        && $data['occupation'] === null
-                        && $data['location'] === null
-                        && $data['avatar_url'] === null;
-                }))
+                ->with($userId, [
+                    'bio' => null,
+                    'occupation' => null,
+                    'location' => null,
+                    'avatar_url' => null,
+                ])
                 ->andReturn(true);
 
             // Expect social links deletion

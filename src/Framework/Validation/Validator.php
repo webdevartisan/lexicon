@@ -217,6 +217,7 @@ class Validator
             // Format validation
             'email' => "{$fieldName} must be a valid email address.",
             'url' => "{$fieldName} must be a valid URL.",
+            'user_handle' => "{$fieldName} may only contain lowercase letters, numbers, and single hyphens.",
             'numeric' => "{$fieldName} must be a number.",
             'integer' => "{$fieldName} must be an integer.",
             'datetime' => "{$fieldName} must be a valid date in format: {$parameter}.",
@@ -508,6 +509,16 @@ class Validator
         }
 
         // Lowercase letters, numbers, hyphens (no consecutive hyphens, no leading/trailing)
+        return preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $value) === 1;
+    }
+
+    protected function validateUserHandle(mixed $value, ?string $param, string $field): bool
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return false;
+        }
+
+        // Same shape as a slug today, kept separate so handles and post URLs can change independently
         return preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $value) === 1;
     }
 

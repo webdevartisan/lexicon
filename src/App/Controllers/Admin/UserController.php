@@ -8,6 +8,8 @@ use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\Services\DisplayNameService;
+use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Database;
@@ -22,6 +24,8 @@ class UserController extends AppController
         private UserModel $model,
         private RoleModel $roleModel,
         private BlogModel $blogModel,
+        private DisplayNameService $displayNames,
+        private PublicCacheInvalidator $cacheInvalidator,
         protected Database $database,
     ) {}
 
@@ -73,7 +77,7 @@ class UserController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $validator = $this->validateOrFail([
-            'handle' => 'required|min:3|max:50|unique:users,handle',
+            'handle' => 'required|user_handle|min:2|max:50|unique:users,handle',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'first_name' => 'max:50',
@@ -142,7 +146,7 @@ class UserController extends AppController
         $user = $this->getUser($id);
 
         $validator = $this->validateOrFail([
-            'handle' => 'required|min:3|max:50|unique:users,handle,'.(int) $id,
+            'handle' => 'required|user_handle|min:2|max:50|unique:users,handle,'.(int) $id,
             'email' => 'required|email|unique:users,email,'.(int) $id,
             'password' => 'min:4',
             'first_name' => 'max:50',
@@ -185,6 +189,8 @@ class UserController extends AppController
         $rolesUpdated = $this->model->updateUserRoles((int) $id, $newRoles);
 
         if ($userUpdated && $rolesUpdated) {
+            $this->refreshPublicIdentity($user, $changes);
+
             audit()->log(
                 (int) auth()->user()['id'],
                 'user.updated',
@@ -240,6 +246,26 @@ class UserController extends AppController
         $this->flash('success', 'User deleted.');
 
         return $this->redirect('/admin/users');
+    }
+
+    /**
+     * Recompute the cached display name and clear public pages after a name or handle edit,
+     * the same as the profile form does, or readers keep seeing the old identity until the TTL.
+     *
+     * @param  array<string, mixed>  $user  The record as it was before the edit
+     * @param  array<string, mixed>  $changes  Columns that were written
+     */
+    private function refreshPublicIdentity(array $user, array $changes): void
+    {
+        if (array_intersect_key($changes, array_flip(['handle', 'first_name', 'last_name'])) === []) {
+            return;
+        }
+
+        $newDisplayName = $this->displayNames->refreshCached((int) $user['id']);
+
+        if (isset($changes['handle']) || $newDisplayName !== $user['display_name_cached']) {
+            $this->cacheInvalidator->purgeAuthorSurfaces($user['handle']);
+        }
     }
 
     /**

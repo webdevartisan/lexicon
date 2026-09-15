@@ -365,6 +365,32 @@ it('suffixes the generated handle on collision', function () {
 });
 
 /**
+ * Test that a reserved local part is not suffixed, since support1a2b still reads as support.
+ */
+it('starts the generated handle from reader when the local part is reserved', function () {
+    $this->db->query(
+        "INSERT INTO reserved_handles (handle, match_type) VALUES ('support', 'contains')
+         ON DUPLICATE KEY UPDATE match_type = 'contains'"
+    );
+
+    $email = 'support.'.bin2hex(random_bytes(3)).'@example.test';
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+    ]);
+
+    setupController($this->controller, $request, $this->mockViewer);
+    callController($this->controller, 'submit', $request);
+
+    $user = $this->userModel->findByEmail($email);
+
+    expect($user)->toBeArray()
+        ->and($user['handle'])->toMatch('/^reader[0-9a-f]{4}$/');
+});
+
+/**
  * Test that non-alphanumeric characters in the local part are stripped.
  */
 it('sanitizes the email local part into the handle', function () {
