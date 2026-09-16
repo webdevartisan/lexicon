@@ -7,11 +7,10 @@ namespace App\Privacy;
 use Framework\HttpUtils;
 
 /**
- * Signed, HttpOnly consent cookie store.
+ * Signed consent cookie store.
  *
  * The consent cookie is:
  * - Signed with HMAC (SHA-256) using a secret (APP_KEY-backed)
- * - HttpOnly to prevent JavaScript access
  * - Marked SameSite=Lax by default to reduce CSRF risk
  */
 final class ConsentCookieStore
@@ -71,29 +70,22 @@ final class ConsentCookieStore
 
     public function write(Consent $consent): void
     {
-        $value = $this->encodeCookieValue($consent);
-        $isHttps = HttpUtils::isHttps();
-
-        setcookie($this->cookieName, $value, [
-            'expires' => time() + ($this->ttlDays * 86400),
-            'path' => '/',
-            'domain' => '',
-            'secure' => $isHttps,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        $this->setCookie($this->encodeCookieValue($consent), time() + ($this->ttlDays * 86400));
     }
 
     public function clear(): void
     {
-        $isHttps = HttpUtils::isHttps();
+        $this->setCookie('', time() - 3600);
+    }
 
-        setcookie($this->cookieName, '', [
-            'expires' => time() - 3600,
+    private function setCookie(string $value, int $expires): void
+    {
+        setcookie($this->cookieName, $value, [
+            'expires' => $expires,
             'path' => '/',
             'domain' => '',
-            'secure' => $isHttps,
-            'httponly' => true,
+            'secure' => HttpUtils::isHttps(),
+            'httponly' => false,
             'samesite' => 'Lax',
         ]);
     }

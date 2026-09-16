@@ -34,9 +34,7 @@ class CacheKey
     /**
      * Generate cache key for a request.
      *
-     * Format: "{locale}:{method}:{path}?{canonical_query}#{consent_state}"
-     *
-     * Varies cache based on consent cookie to ensure homepage shows correct banner state.
+     * Format: "{locale}:{method}:{path}?{canonical_query}"
      *
      * The locale segment looks redundant now that every URL carries a locale
      * prefix, but it is not: LocalePrefixIntake strips that prefix from
@@ -55,10 +53,6 @@ class CacheKey
         if ($query !== '') {
             $key .= "?{$query}";
         }
-
-        // Include consent cookie state in cache key to vary by consent status
-        $hasConsent = isset($_COOKIE['app_consent']) ? '1' : '0';
-        $key .= "#{$hasConsent}";
 
         return $key;
     }

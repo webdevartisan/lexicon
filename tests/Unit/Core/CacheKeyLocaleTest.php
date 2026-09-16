@@ -14,7 +14,7 @@ use Framework\Core\Request;
  * and every locale collapses onto one entry, serving Greek readers English.
  */
 afterEach(function () {
-    unset($_SESSION['locale']);
+    unset($_SESSION['locale'], $_COOKIE['app_consent']);
 });
 
 test('two locales of the same stripped path get different keys', function () {
@@ -33,6 +33,18 @@ test('two locales of the same stripped path get different keys', function () {
 test('the static builder keeps the same guarantee', function () {
     expect(CacheKey::for('/blogs', [], 'en'))
         ->not->toBe(CacheKey::for('/blogs', [], 'el'));
+});
+
+test('consent does not split the cache', function () {
+    $request = new Request('/blogs', 'GET', [], [], [], [], [], []);
+    $generator = new CacheKey();
+
+    $_SESSION['locale'] = 'en';
+    $withoutConsent = $generator->forRequest($request);
+
+    $_COOKIE['app_consent'] = 'anything';
+
+    expect($generator->forRequest($request))->toBe($withoutConsent);
 });
 
 /**
