@@ -1,83 +1,49 @@
 (function () {
-    var stateEl = document.getElementById('consent-state');
+    var versionEl = document.querySelector('script[data-consent-version]');
     var banner = document.getElementById('consentBanner');
     var modal = document.getElementById('consentModal');
     var form = document.getElementById('consentForm');
-    
-    if (!stateEl || !banner || !modal || !form) return;
-    
-    // Read consent cookie directly (works with cached pages)
+
+    if (!versionEl || !banner || !modal || !form) return;
+
+    var siteVersion = parseInt(versionEl.getAttribute('data-consent-version'), 10);
+
     function readConsentCookie() {
-        var cookieName = 'app_consent';
+        var prefix = 'app_consent=';
         var cookies = document.cookie.split('; ');
-        
+
         for (var i = 0; i < cookies.length; i++) {
-            var parts = cookies[i].split('=');
-            if (parts[0] === cookieName && parts[1]) {
-                try {
-                    // Cookie format: "base64(json).hmac_signature"
-                    // Use only the base64 part; the signature is verified server‑side.
-                    var cookieValue = parts[1];
-                    var base64Part = cookieValue.split('.')[0]; // Get part before "."
-                    
-                    if (!base64Part) {
-                        console.warn('Invalid consent cookie format');
-                        return null;
-                    }
-                    
-                    // Decode base64 to get JSON string
-                    var jsonString = atob(base64Part);
-                    
-                    // Parse JSON to get consent object
-                    var payload = JSON.parse(jsonString);
-                    
-                    return payload;
-                } catch (e) {
-                    console.warn('Failed to parse consent cookie:', e);
-                    return null;
-                }
+            if (cookies[i].indexOf(prefix) === 0) {
+                var value = decodeURIComponent(cookies[i].slice(prefix.length));
+
+                return value ? JSON.parse(atob(value.split('.')[0])) : null;
             }
         }
         return null;
     }
 
-    
+
     // CSRF token management
     var cachedToken = null;
     
     async function fetchCsrfToken() {
         if (cachedToken) return cachedToken;
-        
-        try {
-            var response = await fetch('/csrf-token', {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: { 'Accept': 'application/json' }
-            });
-            
-            if (!response.ok) throw new Error('Failed to fetch CSRF token');
-            
-            var data = await response.json();
-            cachedToken = data.token;
-            return cachedToken;
-        } catch (e) {
-            console.error('CSRF token fetch failed:', e);
-            return '';
-        }
-    }
-    
-    function readState() {
-        // Read from cookie FIRST (client-side, not cached)
-        var cookieState = readConsentCookie();
-        if (cookieState) return cookieState;
-        
-        // Fallback to server-rendered state (for first visit before cache)
-        try { return JSON.parse(stateEl.textContent || 'null'); }
-        catch (e) { return null; }
+
+        var response = await fetch('/csrf-token', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Consent: CSRF token request failed with ' + response.status);
+
+        cachedToken = (await response.json()).token;
+
+        return cachedToken;
     }
     
     function hasDecision(state) {
-        return !!(state && state.c && typeof state.ts === 'number');
+        return !!(state && state.c && typeof state.ts === 'number' && state.v === siteVersion);
     }
     
     function setBannerVisible(isVisible) {
@@ -98,8 +64,8 @@
     async function postConsent(payload) {
         var token = await fetchCsrfToken();
         payload._token = token;
-        
-        return fetch('/consent', {
+
+        var response = await fetch('/consent', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -107,7 +73,11 @@
             },
             credentials: 'same-origin',
             body: new URLSearchParams(payload).toString()
-        }).then(function (r) { return r.json(); });
+        });
+
+        if (!response.ok) throw new Error('Consent: save failed with ' + response.status);
+
+        return response.json();
     }
     
     function syncForm(state) {
@@ -123,8 +93,7 @@
         }, 200);
     }
     
-    // Initial state from cookie (not cached HTML)
-    var state = readState();
+    var state = readConsentCookie();
     if (!hasDecision(state)) {
         setBannerVisible(true);
     } else {
@@ -146,7 +115,7 @@
         if (!action) return;
         
         postConsent({ action: action }).then(function (res) {
-            if (!res || !res.ok) return;
+            if (!res.ok) throw new Error('Consent: server rejected ' + action);
             setBannerVisible(false);
             reloadAfterFade();
         });
@@ -161,7 +130,7 @@
             analytics: form.elements.analytics.checked ? '1' : '',
             marketing: form.elements.marketing.checked ? '1' : ''
         }).then(function (res) {
-            if (!res || !res.ok) return;
+            if (!res.ok) throw new Error('Consent: server rejected the saved options');
             closeModal();
             setBannerVisible(false);
             reloadAfterFade();

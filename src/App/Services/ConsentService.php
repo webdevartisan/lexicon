@@ -20,6 +20,11 @@ final class ConsentService
         private readonly array $config,
     ) {}
 
+    public function version(): int
+    {
+        return (int) ($this->config['version'] ?? 1);
+    }
+
     public function current(): ?Consent
     {
         $consent = $this->store->read();
@@ -27,8 +32,7 @@ final class ConsentService
             return null;
         }
 
-        $expectedVersion = (int) ($this->config['version'] ?? 1);
-        if ($consent->version !== $expectedVersion) {
+        if ($consent->version !== $this->version()) {
             // force a re-prompt after consent schema changes.
             return null;
         }
@@ -69,7 +73,7 @@ final class ConsentService
         }
 
         $consent = new Consent(
-            (int) ($this->config['version'] ?? 1),
+            $this->version(),
             time(),
             $final
         );

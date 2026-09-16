@@ -11,7 +11,6 @@ use App\Privacy\ConsentCookieStore;
  * Verifies:
  * - Cookies are signed and verified correctly.
  * - Tampered cookies are rejected.
- * - HttpOnly, SameSite and secure flags are set as expected.
  */
 beforeEach(function () {
     $_COOKIE = [];
@@ -45,6 +44,15 @@ test('write and read round-trips a valid consent cookie', function () {
         ->and($read->allows('analytics'))->toBeTrue()
         ->and($read->allows('marketing'))->toBeFalse()
         ->and($read->allows('necessary'))->toBeTrue();
+});
+
+test('the part before the signature is the plain payload the banner script reads', function () {
+    $store = new ConsentCookieStore('app_consent_test', 30, bin2hex(random_bytes(16)));
+    $consent = new Consent(version: 1, timestamp: 1789516910, categories: ['necessary' => true, 'analytics' => false]);
+
+    $readable = explode('.', $store->encodeCookieValue($consent))[0];
+
+    expect(json_decode(base64_decode($readable), true))->toBe($consent->toPayload());
 });
 
 test('tampered consent cookie is rejected', function () {
