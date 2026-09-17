@@ -1,8 +1,7 @@
 -- A private, admin-only trail of who an erased account used to be, kept only long
 -- enough to answer a late report or a legal request. Not shown to anyone publicly,
 -- and pruned automatically by privacy:prune once it ages past config/privacy.php's
--- retention period. This does not weaken erasure: after that window it is gone,
--- same as everything else the account owned.
+-- retention period.
 CREATE TABLE IF NOT EXISTS account_erasure_records (
     id                INT AUTO_INCREMENT PRIMARY KEY,
     original_user_id  INT NOT NULL COMMENT 'The users.id that no longer exists',

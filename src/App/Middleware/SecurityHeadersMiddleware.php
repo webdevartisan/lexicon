@@ -104,11 +104,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * header.
      *
      * Known remaining inline scripts to clear before enforcing: the per-page
-     * TinyMCE/Dropzone init blocks. The window.AppLocales block is gone, dropped
-     * with the client-side locale rewriting it existed to feed.
-     *
-     * Fonts are self-hosted and style-src/font-src stay first-party: loading
-     * them from Google hands every visitor's IP address to Google without consent.
+     * TinyMCE/Dropzone init blocks.
      */
     private function applyContentSecurityPolicy(Response $response): void
     {

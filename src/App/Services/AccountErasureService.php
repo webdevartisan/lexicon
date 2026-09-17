@@ -12,19 +12,12 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Erases an account: the person's data is deleted, not renamed.
+ * Erases an account and everything it owns.
  *
- * The account holder's own posts, comments and blogs are always erased.
- * There is no "keep them, hidden" choice, because the 30-day grace period
- * already covers wanting the account back, and the private accountability
- * trail already covers legal or abuse follow-up. A post goes with its
- * author, comments and all, since a comment has no life apart from the post
- * it is on. A blog goes with its owner the same way, including a departed
- * collaborator's old post: a blog with an active collaborator already blocks
- * erasure (see `blockers()`), so the owner transfers it deliberately through
- * the team page first if it should survive. Renaming the account in place
- * would not count as erasure, since the row would still tie everything back
- * to one person.
+ * The account row is deleted, along with its posts, comments and blogs. A post
+ * takes its comments with it and a blog takes its posts, so anything other
+ * people wrote on them goes too. A blog with an active collaborator blocks
+ * erasure until the owner transfers it from the team page (see `blockers()`).
  */
 class AccountErasureService
 {
@@ -123,10 +116,8 @@ class AccountErasureService
         $postIds = array_map('intval', $this->database->query('SELECT id FROM posts WHERE author_id = ?', [$userId])->fetchAll(\PDO::FETCH_COLUMN));
         $commentIds = array_map('intval', $this->database->query('SELECT id FROM comments WHERE user_id = ?', [$userId])->fetchAll(\PDO::FETCH_COLUMN));
 
-        // Active collaborators already blocked erasure above, so nothing here
-        // has a stake worth protecting. Each blog deletes in its own
-        // transaction with its files, so a retry after a failure carries on
-        // with whatever is left.
+        // Each blog deletes in its own transaction with its files, so a retry
+        // after a failure carries on with whatever is left.
         foreach ($this->ownedBlogIds($userId) as $blogId) {
             $this->blogDeletion->deleteBlog($blogId, $userId);
         }
