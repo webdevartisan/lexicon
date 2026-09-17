@@ -6,6 +6,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\BlogModel;
+use App\Services\BlogDeletionService;
+use App\Services\BlogOwnershipService;
 use App\Services\PublicCacheInvalidator;
 use App\Services\ThemeService;
 use App\ValueObjects\TableSort;
@@ -20,7 +22,9 @@ class BlogController extends AppController
     public function __construct(
         private BlogModel $blogModel,
         private PublicCacheInvalidator $publicCache,
-        private ThemeService $themes
+        private ThemeService $themes,
+        private BlogOwnershipService $ownership,
+        private BlogDeletionService $blogDeletion,
     ) {}
 
     /**
@@ -166,7 +170,37 @@ class BlogController extends AppController
 
         return $this->view('blog.edit', [
             'blog' => $blog,
+            'owner' => $this->blogModel->getBlogOwner((int) $id),
+            'members' => $this->blogModel->getBlogUsers((int) $id),
         ]);
+    }
+
+    /**
+     * Hand the blog to one of its active collaborators.
+     */
+    public function transferOwnership(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->getBlog($id);
+
+        try {
+            $this->ownership->transfer(
+                (int) $blog['id'],
+                (int) $blog['owner_id'],
+                (int) $this->request->postParam('new_owner_id'),
+                (int) auth()->user()['id'],
+                $this->request->ip()
+            );
+        } catch (\InvalidArgumentException $e) {
+            $this->flash('error', $e->getMessage());
+
+            return $this->redirect('/admin/blogs/'.(int) $blog['id'].'/edit');
+        }
+
+        $this->flash('success', 'Ownership transferred. The previous owner stays on as an editor.');
+
+        return $this->redirect('/admin/blogs/'.(int) $blog['id'].'/edit');
     }
 
     /**
@@ -239,14 +273,14 @@ class BlogController extends AppController
 
         $blog = $this->getBlog($id);
 
-        $this->blogModel->delete($id);
+        $stats = $this->blogDeletion->deleteBlog((int) $id, (int) $blog['owner_id']);
 
         audit()->log(
             (int) auth()->user()['id'],
             'blog.deleted',
             'blog',
             (int) $id,
-            ['blog_name' => $blog['blog_name'] ?? null],
+            ['blog_name' => $blog['blog_name'] ?? null, 'deleted_posts' => $stats['deleted_posts']],
             $this->request->ip()
         );
 

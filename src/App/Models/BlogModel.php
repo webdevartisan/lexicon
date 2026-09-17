@@ -604,12 +604,12 @@ class BlogModel extends AppModel
      * @param  int  $blogId  Blog ID
      * @param  int  $userId  User ID to assign
      * @param  string  $role  Collaborative role (any assignable blog role)
-     * @param  int  $assignedBy  User ID performing the assignment
+     * @param  int|null  $assignedBy  User ID performing the assignment, null when that account no longer exists
      * @return bool True on success
      *
      * @throws \InvalidArgumentException If role is not an assignable blog role
      */
-    public function addUserToBlog(int $blogId, int $userId, string $role, int $assignedBy): bool
+    public function addUserToBlog(int $blogId, int $userId, string $role, ?int $assignedBy): bool
     {
         // Validate against the assignable blog roles (shipped plus custom),
         // never the hardcoded const, so custom admin-created roles can be assigned.
@@ -629,6 +629,30 @@ class BlogModel extends AppModel
         $rowCount = $this->database->execute($sql, [$blogId, $userId, $role, $assignedBy]);
 
         return $rowCount > 0;
+    }
+
+    /**
+     * Make an active collaborator the owner. The previous owner stays on as an editor.
+     *
+     * @throws \RuntimeException If the blog is no longer owned by $previousOwnerId
+     */
+    public function transferOwnership(int $blogId, int $newOwnerId, int $previousOwnerId): void
+    {
+        $this->transaction(function () use ($blogId, $newOwnerId, $previousOwnerId): void {
+            $moved = $this->database->execute(
+                'UPDATE blogs SET owner_id = ? WHERE id = ? AND owner_id = ?',
+                [$newOwnerId, $blogId, $previousOwnerId]
+            );
+
+            if ($moved !== 1) {
+                throw new \RuntimeException("Blog {$blogId} is not owned by user {$previousOwnerId}.");
+            }
+
+            // Ownership is structural, so the new owner's membership row would only duplicate it.
+            $this->database->execute('DELETE FROM blog_users WHERE blog_id = ? AND user_id = ?', [$blogId, $newOwnerId]);
+
+            $this->addUserToBlog($blogId, $previousOwnerId, 'editor', $newOwnerId);
+        });
     }
 
     /**

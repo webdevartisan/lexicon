@@ -85,6 +85,18 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
+     * Hand the blog to someone else. Only the owner, since it gives away their own blog.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function transferOwnership(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->ownerId() === (int) $user['id'];
+    }
+
+    /**
      * Invite a new collaborator. Same gate as managing the roster.
      *
      * @param  array<string, mixed>  $user  Authenticated user record

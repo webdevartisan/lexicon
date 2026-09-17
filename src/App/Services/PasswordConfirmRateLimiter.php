@@ -9,10 +9,10 @@ use Framework\Helpers\RateLimiter;
 /**
  * Throttles password-confirmation attempts per user.
  *
- * The Preferences email gate and the Security current-password field both
- * verify the account password against a hash. Without a limit, a stolen session
- * is an unlimited oracle for confirming that password. Keyed on the user id
- * because both flows already have an authenticated session.
+ * Changing an email, changing a password, deleting an account and handing a blog
+ * to someone else all verify the account password against a hash. Without a limit,
+ * a stolen session is an unlimited oracle for confirming that password. Keyed on
+ * the user id because every one of those flows already has an authenticated session.
  *
  * The underlying RateLimiter is a fixed window whose block does not extend when
  * further attempts arrive, so the ceiling is deliberately low and the window

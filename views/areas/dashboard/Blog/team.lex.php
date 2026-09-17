@@ -253,6 +253,34 @@ $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
         </aside>
     </div>
 
+    <?php if ($canTransfer && !empty($members)) { ?>
+    <section class="card mt-6">
+        <div class="card-body">
+            <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1 flex items-center gap-2">
+                <i data-lucide="key-round" class="size-4 text-custom-500"></i>
+                Transfer ownership
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">Hand this blog to one of its collaborators. They get full control, including deleting it, and you stay on as an editor.</p>
+
+            <?php $transferConfirm = 'data-confirm="'.e('Transfer ownership of this blog? You cannot undo this yourself.').'"'; ?>
+            <form method="POST" action="/dashboard/blog/{{ blog.id }}/team/transfer" class="grid grid-cols-1 lg:grid-cols-3 gap-3 items-end">
+                {{ csrf_field() }}
+                <div>
+                    <label for="new-owner" class="text-sm font-medium text-slate-700 dark:text-zink-100 mb-1 block">New owner</label>
+                    <select id="new-owner" name="new_owner_id" required
+                        class="form-select w-full border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 text-sm py-2">
+                        <?php foreach ($members as $m) { ?>
+                            <option value="<?= (int) $m['user_id'] ?>"><?= e($m['handle']) ?> (<?= e((string) $m['role']) ?>)</option>
+                        <?php } ?>
+                    </select>
+                </div>
+                {% cmp="input" type="password" name="password" label="Your password" required="true" %}
+                {% cmp="btn" type="submit" variant="red" icon="key-round" label="Transfer ownership" dataBtn="{$transferConfirm}" %}
+            </form>
+        </div>
+    </section>
+    <?php } ?>
+
     <!-- Role reference -->
     <section class="card mt-6">
         <div class="card-body">
