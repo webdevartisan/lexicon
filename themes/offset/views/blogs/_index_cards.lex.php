@@ -7,7 +7,7 @@ $validImg = '#^(https?://|/|data:)#i';
 
 foreach (($cards ?? []) as $i => $post) {
     $cover = (string) ($post['featured_image'] ?? '');
-    $img = preg_match($validImg, $cover) ? $cover : 'https://picsum.photos/seed/offset-row-'.($i + 1).'/900/680';
+    $img = preg_match($validImg, $cover) ? $cover : $asset('img/cover-placeholder.svg');
     $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
     $title = e($post['title'] ?? 'Untitled');
     $cat = trim((string) ($post['category'] ?? 'Post'));

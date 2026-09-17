@@ -69,7 +69,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
 <?php if ($featuredPost) {
     $fCover = (string) ($featuredPost['featured_image'] ?? '');
-    $fImg = preg_match($validImg, $fCover) ? e($fCover) : 'https://picsum.photos/seed/nocturne-cover/1400/1750';
+    $fImg = preg_match($validImg, $fCover) ? e($fCover) : $asset('img/cover-placeholder.svg');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');

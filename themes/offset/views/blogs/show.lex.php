@@ -56,7 +56,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
 <?php if ($featuredPost) {
     $fCover = (string) ($featuredPost['featured_image'] ?? '');
-    $fImg = preg_match($validImg, $fCover) ? e($fCover) : 'https://picsum.photos/seed/offset-lead/1400/1050';
+    $fImg = preg_match($validImg, $fCover) ? e($fCover) : $asset('img/cover-placeholder.svg');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');
@@ -132,7 +132,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     $firstCap = '';
     if (!empty($gridPosts)) {
         $c0 = (string) ($gridPosts[0]['featured_image'] ?? '');
-        $firstCover = preg_match($validImg, $c0) ? $c0 : 'https://picsum.photos/seed/offset-row-1/900/680';
+        $firstCover = preg_match($validImg, $c0) ? $c0 : $asset('img/cover-placeholder.svg');
         $firstCap = (string) ($gridPosts[0]['title'] ?? '');
     }
     ?>

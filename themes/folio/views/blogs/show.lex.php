@@ -60,7 +60,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
 <?php if ($featuredPost) {
     $fCover = (string) ($featuredPost['featured_image'] ?? '');
-    $fImg = preg_match($validImg, $fCover) ? e($fCover) : 'https://picsum.photos/seed/folio-lead/1400/1750';
+    $fImg = preg_match($validImg, $fCover) ? e($fCover) : $asset('img/cover-placeholder.svg');
     $fUrl = lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? ''));
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e($featuredPost['excerpt'] ?? '');

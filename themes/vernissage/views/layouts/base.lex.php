@@ -32,10 +32,7 @@
   ?>
   <link rel="shortcut icon" href="<?= $fav ?: '' ?>" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Hanken+Grotesk:ital,wght@0,300..800;1,300..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&family=Fragment+Mono:ital@0;1&display=swap" />
+  <link rel="stylesheet" href="<?= $asset('css/fonts.css') ?>">
 
   <?php /* Lexicon's own controls, identical on every theme. */ ?>
   <link rel="stylesheet" href="/assets/css/platform-chrome.css">
