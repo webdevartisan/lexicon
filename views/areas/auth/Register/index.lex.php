@@ -53,7 +53,8 @@ $fieldErrors = errors();
                    id="password"
                    autocomplete="new-password"
                    aria-describedby="password_help"
-                   minlength="6"
+                   minlength="<?= password_length_bounds()['min'] ?>"
+                   maxlength="<?= password_length_bounds()['max'] ?>"
                    required>
             <button type="button"
                     class="lx-field-toggle"
@@ -75,7 +76,7 @@ $fieldErrors = errors();
         // rates what has been typed. Keeping them separate stops the meter
         // from reading like a rule the server does not actually enforce.
 ?>
-        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
 
         <?php
 // Rating labels ride along as data so the script stays free of copy.
@@ -101,6 +102,21 @@ $meterLevels = implode('|', [
             <p class="lx-meter-label" data-meter-label role="status" aria-live="polite"></p>
         </div>
     </div>
+
+    <div class="lx-field<?= !empty($fieldErrors['age_confirmed']) ? ' lx-field-invalid' : '' ?>">
+        <label class="lx-check">
+            <input type="checkbox" name="age_confirmed" value="1" required<?= old('age_confirmed') === '1' ? ' checked' : '' ?>>
+            <span class="lx-check-title"><?= e($t('auth.ageConfirm', ['age' => minimum_signup_age()])) ?></span>
+        </label>
+        <?php foreach ($fieldErrors['age_confirmed'] ?? [] as $message) { ?>
+            <p class="lx-field-error"><?= e($message) ?></p>
+        <?php } ?>
+    </div>
+
+    <p class="lx-field-hint"><?= strtr(e($t('auth.legalNotice')), [
+        '{terms}' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
+        '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
+    ]) ?></p>
 
     <button type="submit" class="lx-btn lx-authsubmit"><?= e($t('auth.registerSubmit')) ?></button>
 </form>

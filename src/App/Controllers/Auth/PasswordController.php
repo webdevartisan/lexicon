@@ -232,11 +232,10 @@ final class PasswordController extends AppController
 
         // Validate password fields
         $validator = $this->validateOrFail([
-            'password' => 'required|password:basic',
+            'password' => 'required|password:'.password_policy_preset(),
             'password_confirm' => 'required|same:password',
         ], [
             'password.required' => 'Password is required.',
-            'password.password' => 'Password must be at least 8 characters.',
             'password_confirm.required' => 'Password confirmation is required.',
             'password_confirm.same' => 'Password confirmation does not match.',
         ]);

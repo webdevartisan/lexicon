@@ -125,6 +125,7 @@ it('registers user with email and password only', function () {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => $password,
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -149,6 +150,8 @@ it('registers user with email and password only', function () {
     $preferences = $this->preferencesModel->findOrCreate($user['id']);
     expect($preferences)->toBeArray();
 
+    expect($user['age_confirmed_at'])->not->toBeNull();
+
     expect($response)->toBeInstanceOf(Response::class)
         ->and($response->getHeader('Location'))->toContain('/dashboard');
 });
@@ -163,6 +166,7 @@ it('redirects to a safe return_to after registration', function () {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
         'return_to' => '/blog/some-blog/some-post',
     ]);
 
@@ -184,6 +188,7 @@ it('ignores unsafe return_to values', function (string $unsafe) {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
         'return_to' => $unsafe,
     ]);
 
@@ -211,6 +216,7 @@ it('requires CSRF token on registration', function () {
     $request = makeRequest('/register', 'POST', [
         'email' => faker()->safeEmail(),
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -227,6 +233,7 @@ it('rejects invalid CSRF token', function () {
         '_token' => 'invalid-token-12345',
         'email' => faker()->safeEmail(),
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -246,6 +253,7 @@ it('requires email on registration', function () {
     $request = makeRequest('/register', 'POST', [
         '_token' => $this->csrfToken,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -263,6 +271,7 @@ it('validates email format', function (string $invalidEmail) {
         '_token' => $this->csrfToken,
         'email' => $invalidEmail,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -293,6 +302,7 @@ it('rejects duplicate email', function () {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -331,6 +341,47 @@ it('requires password on registration', function () {
     expect($response)->toBeInstanceOf(Response::class);
 });
 
+it('rejects a password the policy does not allow', function (string $password, string $message) {
+    $email = faker()->unique()->safeEmail();
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => $password,
+        'age_confirmed' => '1',
+    ]);
+
+    setupController($this->controller, $request, $this->mockViewer);
+    callController($this->controller, 'submit', $request);
+
+    $errors = \Framework\Core\App::container()->get(\Framework\Session::class)->get('_errors');
+
+    expect($this->userModel->findByEmail($email))->toBeNull()
+        ->and($errors['password'][0])->toContain($message);
+})->with([
+    'shorter than the minimum' => ['abc12', 'at least 6 characters'],
+    'longer than the maximum' => [str_repeat('Long-enough-', 6), 'not exceed 64 characters'],
+    'on the common password list' => ['Password123', 'too common'],
+]);
+
+it('refuses registration without the age confirmation', function () {
+    $email = faker()->unique()->safeEmail();
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+    ]);
+
+    setupController($this->controller, $request, $this->mockViewer);
+    callController($this->controller, 'submit', $request);
+
+    $errors = \Framework\Core\App::container()->get(\Framework\Session::class)->get('_errors');
+
+    expect($this->userModel->findByEmail($email))->toBeNull()
+        ->and($errors)->toHaveKey('age_confirmed');
+});
+
 // ============================================================================
 // HANDLE GENERATION
 // ============================================================================
@@ -351,6 +402,7 @@ it('suffixes the generated handle on collision', function () {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -379,6 +431,7 @@ it('starts the generated handle from reader when the local part is reserved', fu
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);
@@ -401,6 +454,7 @@ it('sanitizes the email local part into the handle', function () {
         '_token' => $this->csrfToken,
         'email' => $email,
         'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
     ]);
 
     setupController($this->controller, $request, $this->mockViewer);

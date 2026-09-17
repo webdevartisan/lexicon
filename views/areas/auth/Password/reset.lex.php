@@ -21,7 +21,8 @@
                    id="password"
                    autocomplete="new-password"
                    aria-describedby="password_help"
-                   minlength="6"
+                   minlength="<?= password_length_bounds()['min'] ?>"
+                   maxlength="<?= password_length_bounds()['max'] ?>"
                    required
                    autofocus>
             <button type="button"
@@ -34,7 +35,7 @@
                     aria-label="<?= e($t('auth.showPassword')) ?>"
                     aria-pressed="false"><?= e($t('auth.show')) ?></button>
         </div>
-        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin')) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
 
         <?php
         // Same advisory meter as registration: this is the other screen where

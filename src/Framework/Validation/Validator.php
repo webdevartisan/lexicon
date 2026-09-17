@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Framework\Validation;
 
+use RuntimeException;
+
 /**
  * Validation service for structured input validation.
  *
@@ -33,6 +35,15 @@ class Validator
 
     /** @var array<string, string> */
     protected array $messages = [];
+
+    /** @var array<string, 'max'|'common'> Which password check failed, keyed by field, for fields where it wasn't the length/composition requirements */
+    protected array $passwordFailureReasons = [];
+
+    /** @var array<string, true>|null Lazily loaded once per process; the list is ~100k lines */
+    private static ?array $commonPasswords = null;
+
+    /** @var array<string, mixed>|null */
+    private static ?array $authConfig = null;
 
     /**
      * accept the raw input data to validate.
@@ -223,7 +234,7 @@ class Validator
             'datetime' => "{$fieldName} must be a valid date in format: {$parameter}.",
 
             // Password validation
-            'password' => $this->getPasswordErrorMessage($parameter),
+            'password' => $this->getPasswordErrorMessage($parameter, $field),
             'regex' => "{$fieldName} format is invalid.",
 
             // Comparison validation
@@ -263,9 +274,21 @@ class Validator
     /**
      * Generate user-friendly password error message based on requirements.
      */
-    protected function getPasswordErrorMessage(?string $param): string
+    protected function getPasswordErrorMessage(?string $param, string $field): string
     {
-        $requirements = $this->parsePasswordRequirements($param);
+        $reason = $this->passwordFailureReasons[$field] ?? null;
+
+        if ($reason === 'common') {
+            return 'This password is too common and easy to guess. Please choose another.';
+        }
+
+        if ($reason === 'max') {
+            $max = (int) self::authConfig()['password_max_length'];
+
+            return "Password must not exceed {$max} characters.";
+        }
+
+        $requirements = self::parsePasswordRequirements($param);
         $messages = [];
 
         $messages[] = "at least {$requirements['min']} characters";
@@ -651,11 +674,14 @@ class Validator
      * Or shorthand: "strong" (equivalent to min:8 with all requirements)
      *
      * check for:
-     * - Minimum length
+     * - Minimum length (per preset/param) and a maximum (config/auth.php, applies regardless
+     *   of preset, since bcrypt ignores everything past 72 bytes)
      * - Uppercase letters
      * - Lowercase letters
      * - Numbers
      * - Special symbols
+     * - Not on the breached-password list (config/auth.php, applies regardless of preset,
+     *   since a breached password can satisfy every composition rule and still be a bad one)
      *
      * Examples:
      * - 'password' => 'password:strong'
@@ -663,15 +689,25 @@ class Validator
      */
     protected function validatePassword(mixed $value, ?string $param, string $field): bool
     {
+        unset($this->passwordFailureReasons[$field]);
+
         if (!is_string($value) || trim($value) === '') {
             return true;
         }
 
+        // bcrypt ignores everything past 72 bytes, so a much longer password would only look safer
+        $maxLength = (int) self::authConfig()['password_max_length'];
+        if (mb_strlen($value) > $maxLength) {
+            $this->passwordFailureReasons[$field] = 'max';
+
+            return false;
+        }
+
         // parse password requirements
-        $requirements = $this->parsePasswordRequirements($param);
+        $requirements = self::parsePasswordRequirements($param);
 
         // check minimum length
-        if (strlen($value) < $requirements['min']) {
+        if (mb_strlen($value) < $requirements['min']) {
             return false;
         }
 
@@ -703,7 +739,44 @@ class Validator
             }
         }
 
+        if (self::isCommonPassword($value)) {
+            $this->passwordFailureReasons[$field] = 'common';
+
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * UK NCSC list of the 100,000 passwords seen most often in breaches, compared case-insensitively.
+     */
+    private static function isCommonPassword(string $value): bool
+    {
+        if (self::$commonPasswords === null) {
+            $path = (string) self::authConfig()['common_passwords_file'];
+
+            if (!is_file($path)) {
+                throw new RuntimeException("Common password list not found at {$path}.");
+            }
+
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false) {
+                throw new RuntimeException("Could not read the common password list at {$path}.");
+            }
+
+            self::$commonPasswords = array_fill_keys(array_map('mb_strtolower', $lines), true);
+        }
+
+        return isset(self::$commonPasswords[mb_strtolower($value)]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function authConfig(): array
+    {
+        return self::$authConfig ??= require ROOT_PATH.'/config/auth.php';
     }
 
     /**
@@ -736,9 +809,12 @@ class Validator
     /**
      * Parse password requirements from parameter string.
      *
+     * Public and static so callers building a form's minlength/hint text can ask
+     * a preset what it requires without duplicating this parsing.
+     *
      * @return array{min: int, uppercase: int, lowercase: int, numbers: int, symbols: int}
      */
-    protected function parsePasswordRequirements(?string $param): array
+    public static function parsePasswordRequirements(?string $param): array
     {
         $defaults = [
             'min' => 8,

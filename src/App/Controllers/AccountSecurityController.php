@@ -82,10 +82,9 @@ final class AccountSecurityController extends AppController
         $this->passwordThrottle->clear($userId);
 
         $validator = $this->validateOrFail([
-            'new_password' => 'required|password:basic',
-            'new_password_confirm' => 'required|password:basic|same:new_password',
+            'new_password' => 'required|password:'.password_policy_preset(),
+            'new_password_confirm' => 'required|same:new_password',
         ], [
-            'new_password.min' => 'Password must be at least 8 characters for security.',
             'new_password_confirm.same' => 'Password confirmation does not match.',
         ]);
 

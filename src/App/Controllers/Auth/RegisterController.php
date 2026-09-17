@@ -72,10 +72,14 @@ final class RegisterController extends AppController
 
         $rules = [
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|password:basic',
+            'password' => 'required|password:'.password_policy_preset(),
+            'age_confirmed' => 'required|in:1',
         ];
+        $ageRequired = chrome_translate('auth.ageRequired', ['age' => minimum_signup_age()]);
         $messages = [
             'email.unique' => 'This email address is already registered. Try logging in instead.',
+            'age_confirmed.required' => $ageRequired,
+            'age_confirmed.in' => $ageRequired,
         ];
 
         // The modal needs errors as JSON; the full page keeps the
@@ -98,6 +102,7 @@ final class RegisterController extends AppController
             'email' => $validated['email'],
             'handle' => $handle,
             'password' => password_hash($validated['password'], PASSWORD_DEFAULT),
+            'age_confirmed_at' => gmdate('Y-m-d H:i:s'),
         ]);
 
         if (!$userId) {

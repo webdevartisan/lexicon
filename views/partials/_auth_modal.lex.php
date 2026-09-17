@@ -31,8 +31,18 @@ if (!auth()->check()) {
         <button class="lex-auth-toggle" type="button" data-auth-toggle aria-pressed="false">Show</button>
       </div>
       <input class="lex-auth-input" type="password" id="lex-auth-password" name="password"
-             autocomplete="current-password" required>
-      <p class="lex-auth-hint" data-auth-hint hidden>At least 6 characters.</p>
+             autocomplete="current-password" data-min-length="<?= password_length_bounds()['min'] ?>" required>
+      <p class="lex-auth-hint" data-auth-hint hidden>At least <?= password_length_bounds()['min'] ?> characters.</p>
+      <div data-auth-register-only hidden>
+        <label class="lex-auth-hint">
+          <input type="checkbox" data-auth-age value="1" data-error="Please confirm you are <?= minimum_signup_age() ?> or older.">
+          I am <?= minimum_signup_age() ?> or older.
+        </label>
+        <p class="lex-auth-hint">
+          By creating an account you agree to the <a href="<?= e(lurl('/terms')) ?>">Terms of Service</a>
+          and confirm you have read the <a href="<?= e(lurl('/privacy')) ?>">Privacy Policy</a>.
+        </p>
+      </div>
       <button class="lex-auth-btn" type="submit" data-auth-submit>Log in &rarr;</button>
       <div class="lex-auth-links">
         <a href="<?= e(lurl('/password/forgot')) ?>" data-auth-forgot>Forgot password?</a>
