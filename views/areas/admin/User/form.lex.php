@@ -12,6 +12,18 @@ $passwordHint = !empty($user['id']) ? 'Leave blank to keep the current password.
     {% cmp="input" type="text" label="Last Name" name="last_name" value="{$lastName}" %}
     {% cmp="input" type="password" label="Password" name="password" underlabel="{$passwordHint}" %}
 
+    <?php if (!empty($user['id'])) { ?>
+    <div class="md:col-span-2">
+        <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" name="is_active" value="1"
+                   class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500"
+                <?php if ((int) $user['is_active'] === 1) { ?>checked<?php } ?>>
+            Active
+        </label>
+        <p class="text-xs text-slate-400 dark:text-zink-400 mt-1">Untick to suspend. A suspended account cannot sign in and is signed out on its next page load.</p>
+    </div>
+    <?php } ?>
+
     <div class="md:col-span-2">
         <span class="inline-block mb-2 text-base font-medium">Control panel roles</span>
         <p class="text-xs text-slate-400 dark:text-zink-400 mb-2">Unlock admin areas through their permissions. Blog collaboration roles are assigned per blog on each blog's team page, not here.</p>

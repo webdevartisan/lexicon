@@ -720,8 +720,8 @@ $container->setShared(App\Interfaces\ImageProcessorInterface::class, function ($
 });
 
 // UploadService now depends on the image processor, so bind it explicitly rather than
-// relying on autowiring. UserDeletionService (and the account deletion controller)
-// type-hint UploadServiceInterface, so map the interface to this concrete instance.
+// relying on autowiring. The erasure and blog deletion services type-hint
+// UploadServiceInterface, so map the interface to this concrete instance.
 $container->setShared(App\Services\UploadService::class, function ($c) {
     return new App\Services\UploadService(
         $c->get(App\Interfaces\ImageProcessorInterface::class)
@@ -730,6 +730,32 @@ $container->setShared(App\Services\UploadService::class, function ($c) {
 
 $container->setShared(App\Interfaces\UploadServiceInterface::class, function ($c) {
     return $c->get(App\Services\UploadService::class);
+});
+
+$container->setShared(App\Services\AccountErasureService::class, function ($c) {
+    $config = require ROOT_PATH.'/config/privacy.php';
+
+    return new App\Services\AccountErasureService(
+        $c->get(Framework\Database::class),
+        $c->get(App\Models\UserModel::class),
+        $c->get(App\Services\BlogDeletionService::class),
+        $c->get(App\Interfaces\UploadServiceInterface::class),
+        $c->get(App\Services\MediaUsageResolver::class),
+        $c->get(App\Services\PublicCacheInvalidator::class),
+        $c->get(App\Models\AccountErasureRecordModel::class),
+        (string) $config['deleted_user_handle']
+    );
+});
+
+$container->setShared(App\Services\AccountErasureSchedulerService::class, function ($c) {
+    $config = require ROOT_PATH.'/config/privacy.php';
+
+    return new App\Services\AccountErasureSchedulerService(
+        $c->get(App\Models\UserModel::class),
+        $c->get(App\Models\PendingErasureModel::class),
+        $c->get(App\Services\AccountErasureService::class),
+        (int) $config['erasure_grace_period_days']
+    );
 });
 
 // ============================================================================
@@ -778,23 +804,14 @@ $container->setShared(App\Services\ProfileService::class, function ($c) {
     );
 });
 
-$container->setShared(App\Services\UserDeletionService::class, function ($c) {
-    return new App\Services\UserDeletionService(
-        $c->get(App\Models\UserModel::class),
-        $c->get(App\Models\UserProfileModel::class),
-        $c->get(App\Models\UserSocialLinkModel::class),
-        $c->get(App\Models\UserPreferencesModel::class),
-        $c->get(App\Services\UploadService::class)
-    );
-});
-
 $container->setShared(App\Services\BlogDeletionService::class, function ($c) {
     return new App\Services\BlogDeletionService(
         $c->get(App\Models\BlogModel::class),
         $c->get(App\Models\PostModel::class),
         $c->get(App\Models\BlogSettingsModel::class),
         $c->get(App\Models\UserPreferencesModel::class),
-        $c->get(App\Services\UploadService::class)
+        $c->get(App\Interfaces\UploadServiceInterface::class),
+        $c->get(App\Services\PublicCacheInvalidator::class)
     );
 });
 

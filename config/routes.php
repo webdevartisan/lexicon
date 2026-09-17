@@ -97,6 +97,16 @@ $router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/subscribe', [
     'action' => 'subscribe',
     'method' => 'POST',
 ]);
+$router->add('/subscriptions/confirm/{token:[a-f0-9]{64}}', [
+    'controller' => 'SubscriptionController',
+    'action' => 'showConfirm',
+    'method' => 'GET',
+]);
+$router->add('/subscriptions/confirm/{token:[a-f0-9]{64}}', [
+    'controller' => 'SubscriptionController',
+    'action' => 'confirm',
+    'method' => 'POST',
+]);
 $router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
     'controller' => 'SubscriptionController',
     'action' => 'unsubscribe',
@@ -207,6 +217,8 @@ $router->group([
     $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
 
+    $r->add('/export', ['controller' => 'AccountExportController', 'action' => 'download', 'method' => 'POST']);
+
     $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'confirm', 'method' => 'GET']);
     $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'destroy', 'method' => 'POST']);
 });
@@ -289,6 +301,7 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/team/invite', ['controller' => 'CollaboratorController', 'action' => 'invite', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/cancel-invite', ['controller' => 'CollaboratorController', 'action' => 'cancelInvite', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/leave', ['controller' => 'CollaboratorController', 'action' => 'leave', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/team/transfer', ['controller' => 'CollaboratorController', 'action' => 'transferOwnership', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/role', ['controller' => 'CollaboratorController', 'action' => 'changeRole', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/revoke', ['controller' => 'CollaboratorController', 'action' => 'revoke', 'method' => 'POST']);
 
@@ -407,6 +420,7 @@ $router->group([
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'GET']);
     $r->add('/blogs/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/transfer', ['controller' => 'BlogController', 'action' => 'transferOwnership', 'method' => 'POST']);
 
     // Post management
     $r->add('/posts', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);

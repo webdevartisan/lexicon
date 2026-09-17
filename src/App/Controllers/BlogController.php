@@ -69,6 +69,8 @@ class BlogController extends AppController
 
         $handle = (string) $author['handle'];
 
+        // A post's author is only ever a real, current account: erasing an
+        // account deletes its posts along with it rather than reassigning them.
         $resolved = [
             'name' => empty($author['display_name_cached']) ? $handle : $author['display_name_cached'],
             'handle' => $handle,

@@ -10,6 +10,8 @@ use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
 use App\Console\Commands\MailQueueWorkCommand;
 use App\Console\Commands\NotificationPruneCommand;
+use App\Console\Commands\PrivacyPruneCommand;
+use App\Console\Commands\ProcessDueErasuresCommand;
 use App\Console\Commands\PublishDuePostsCommand;
 use App\Console\Commands\SchedulePruneRunsCommand;
 use App\Console\Commands\ScheduleRunCommand;
@@ -47,6 +49,12 @@ class Kernel extends ConsoleKernel
 
             // Notification management
             'notifications:prune' => NotificationPruneCommand::class,
+
+            // Deletes personal data past the retention periods in config/privacy.php
+            'privacy:prune' => PrivacyPruneCommand::class,
+
+            // Runs self-requested erasures whose grace period has passed
+            'privacy:process-due-erasures' => ProcessDueErasuresCommand::class,
 
             // Promotes scheduled posts once published_at arrives; run every minute
             'posts:publish-due' => PublishDuePostsCommand::class,

@@ -85,7 +85,7 @@ $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front pag
 $commentCount = (int) ($post['comment_count'] ?? 0);
 
 // Both slugs are needed to reach the post on the front; a draft that never got
-// one, or an orphaned post, has no public page to open.
+// one has no public page to open.
 $postSlug = (string) ($post['slug'] ?? '');
 $blogSlug = (string) ($post['blog_slug'] ?? '');
 $publicUrl = $postSlug !== '' && $blogSlug !== ''

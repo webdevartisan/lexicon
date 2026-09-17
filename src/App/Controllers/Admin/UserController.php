@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\Services\AccountErasureService;
 use App\Services\DisplayNameService;
 use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\TableSort;
@@ -26,6 +27,7 @@ class UserController extends AppController
         private BlogModel $blogModel,
         private DisplayNameService $displayNames,
         private PublicCacheInvalidator $cacheInvalidator,
+        private AccountErasureService $erasure,
         protected Database $database,
     ) {}
 
@@ -46,7 +48,7 @@ class UserController extends AppController
             'created' => 'u.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'u.id DESC');
 
-        $result = $this->model->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy());
+        $result = $this->model->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy(), $this->erasure->deletedUserId());
 
         return $this->view('user.index', [
             'users' => $result['data'],
@@ -79,7 +81,7 @@ class UserController extends AppController
         $validator = $this->validateOrFail([
             'handle' => 'required|user_handle|min:2|max:50|unique:users,handle',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+            'password' => 'required|password:'.password_policy_preset(),
             'first_name' => 'max:50',
             'last_name' => 'max:50',
         ]);
@@ -148,7 +150,7 @@ class UserController extends AppController
         $validator = $this->validateOrFail([
             'handle' => 'required|user_handle|min:2|max:50|unique:users,handle,'.(int) $id,
             'email' => 'required|email|unique:users,email,'.(int) $id,
-            'password' => 'min:4',
+            'password' => 'password:'.password_policy_preset(),
             'first_name' => 'max:50',
             'last_name' => 'max:50',
         ]);
@@ -164,6 +166,18 @@ class UserController extends AppController
         // Only update password if provided, hashed like every other auth path
         if (!empty($input['password'])) {
             $data['password'] = password_hash($input['password'], PASSWORD_DEFAULT);
+        }
+
+        $isActive = empty($this->request->post['is_active']) ? 0 : 1;
+
+        if ($isActive !== (int) $user['is_active']) {
+            if ($isActive === 0 && (int) $id === (int) auth()->user()['id']) {
+                $this->flash('error', 'You cannot suspend your own account.');
+
+                return $this->redirect('/admin/users/'.(int) $id.'/edit');
+            }
+
+            $data['is_active'] = $isActive;
         }
 
         $newRoles = array_map('intval', (array) ($this->request->post['roles'] ?? []));
@@ -216,6 +230,8 @@ class UserController extends AppController
 
         return $this->view('user.delete', [
             'user' => $user,
+            'blockers' => $this->erasure->blockers((int) $user['id']),
+            'canDelete' => $this->erasure->canErase((int) $user['id']),
         ]);
     }
 
@@ -232,14 +248,18 @@ class UserController extends AppController
 
         $user = $this->getUser($id);
 
-        $this->model->delete($id);
+        if (!$this->erasure->canErase((int) $user['id'])) {
+            return $this->redirect('/admin/users/'.(int) $user['id'].'/delete');
+        }
+
+        $this->erasure->erase((int) $user['id'], (int) auth()->user()['id'], $this->request->ip());
 
         audit()->log(
             (int) auth()->user()['id'],
-            'user.deleted',
+            'user.erased',
             'user',
             (int) $id,
-            ['handle' => $user['handle'], 'email' => $user['email']],
+            [],
             $this->request->ip()
         );
 
@@ -275,7 +295,7 @@ class UserController extends AppController
     {
         $user = $this->model->find($id);
 
-        if (!$user) {
+        if (!$user || $this->erasure->isDeletedUserAccount((int) $user['id'])) {
             throw new PageNotFoundException("User with ID '$id' not found.");
         }
 

@@ -39,12 +39,12 @@ class DatabaseHelper
         // Order matters: child tables first, parent tables last
         $tables = [
             // User-related
-            'account_deletion_requests',
-            'data_export_requests',
             'password_resets',
             'pending_email_changes',
             'notifications',
             'activity_log',
+            'account_erasure_records',
+            'pending_erasures',
             'user_social_links',
             'user_preferences',
             'user_profiles',

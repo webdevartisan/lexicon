@@ -273,33 +273,6 @@ test('findAll excludes soft-deleted users in SQL query', function () {
 });
 
 /**
- * Tests that restoreDeleted constructs proper SQL to clear deleted_at.
- *
- * Verifies SQL sets deleted_at to NULL only for soft-deleted users.
- */
-test('restoreDeleted constructs correct SQL to clear timestamp', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    // verify SQL clears deleted_at and targets only soft-deleted users
-    $this->dbMock->shouldReceive('execute')
-        ->once()
-        ->with(
-            Mockery::on(function ($sql) {
-                return str_contains($sql, 'UPDATE users')
-                    && str_contains($sql, 'deleted_at = NULL')
-                    && str_contains($sql, 'WHERE id = ?')
-                    && str_contains($sql, 'deleted_at IS NOT NULL');
-            }),
-            [$userId]
-        )
-        ->andReturn(1);
-
-    $result = $this->userModel->restoreDeleted($userId);
-
-    expect($result)->toBeTrue();
-});
-
-/**
  * Tests that getUserRoles constructs proper JOIN query.
  *
  * Verifies SQL joins user_roles with roles table to fetch role slugs.
@@ -504,50 +477,6 @@ test('countCommentsReceived constructs correct JOIN COUNT query', function () {
 });
 
 /**
- * Tests that canDelete returns false when user has posts.
- *
- * Verifies business rule preventing deletion of users with content.
- */
-test('canDelete returns false when user has posts', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::any(), [$userId])
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetchColumn')
-        ->once()
-        ->andReturn(5);
-
-    $result = $this->userModel->canDelete($userId);
-
-    expect($result)->toBeFalse();
-});
-
-/**
- * Tests that canDelete returns true when user has no posts.
- *
- * Verifies business rule allows deletion of users without content.
- */
-test('canDelete returns true when user has zero posts', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::any(), [$userId])
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetchColumn')
-        ->once()
-        ->andReturn(0);
-
-    $result = $this->userModel->canDelete($userId);
-
-    expect($result)->toBeTrue();
-});
-
-/**
  * Tests that updateById returns true for empty data array.
  *
  * Verifies early return optimization without database call.
@@ -736,6 +665,7 @@ test('countAdministrators constructs correct parameterless query', function () {
         ->withArgs(function ($sql, $params = null) {
             $sqlValid = str_contains($sql, 'SELECT COUNT(DISTINCT u.id)')
                 && str_contains($sql, "r.role_slug = 'administrator'")
+                && str_contains($sql, 'u.is_active = 1')
                 && str_contains($sql, 'u.deleted_at IS NULL');
 
             // accept either no second param or empty array/null

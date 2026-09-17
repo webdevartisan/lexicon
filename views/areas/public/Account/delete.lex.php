@@ -16,7 +16,24 @@
 
     <?php if (empty($canDelete)) { ?>
     <div class="lx-danger-zone">
-        <p><strong><?= e($t('account.delete.cannotDeleteStrong')) ?></strong> <?= e($deleteReason ?? '') ?></p>
+        <p><strong><?= e($t('account.delete.cannotDeleteStrong')) ?></strong></p>
+        <?php if ($blockers['last_administrator']) { ?>
+        <p><?= e($t('account.delete.blockedLastAdmin')) ?></p>
+        <?php } ?>
+        <?php if ($blockers['reported_content']) { ?>
+        <p><?= e($t('account.delete.blockedReportedContent')) ?></p>
+        <?php } ?>
+        <?php if ($blockers['shared_blogs'] !== []) { ?>
+        <p><?= e($t('account.delete.blockedSharedBlogs')) ?></p>
+        <ul class="lx-delete-list">
+            <?php foreach ($blockers['shared_blogs'] as $sharedBlog) { ?>
+            <li>
+                <?= e($sharedBlog['blog_name']) ?> ·
+                <a href="<?= e(lurl('/dashboard/blog/'.$sharedBlog['id'].'/team')) ?>"><?= e($t('account.delete.transferBlog')) ?></a>
+            </li>
+            <?php } ?>
+        </ul>
+        <?php } ?>
         <a class="lx-btn lx-btn-subtle" href="<?= e(lurl('/account/preferences')) ?>"><?= e($t('account.delete.backToPreferences')) ?></a>
     </div>
     <?php } else { ?>
@@ -28,9 +45,10 @@
     <h2 class="lx-account-section"><?= e($t('account.delete.removedHeading')) ?></h2>
     <ul class="lx-delete-list">
         <li><?= e($t('account.delete.removedAccount')) ?></li>
+        <li><?= e($t('account.delete.removedTiming', ['days' => erasure_grace_period_days()])) ?></li>
+        <li><?= e($t('account.delete.removedContent')) ?></li>
         <li><?= e($t('account.delete.removedIdentity')) ?></li>
         <li><?= e($t('account.delete.removedFiles')) ?></li>
-        <li><?= e($t('account.delete.keptPostsComments')) ?></li>
     </ul>
 
     <form method="post" action="<?= e(lurl('/account/delete')) ?>" id="deleteForm" class="lx-account-form">
