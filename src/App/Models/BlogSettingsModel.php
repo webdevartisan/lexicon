@@ -108,7 +108,7 @@ class BlogSettingsModel extends AppModel
 
         $params = [
             $blogId,
-            $data['theme'] ?? 'default',
+            $data['theme'] ?? 'folio',
             $data['default_locale'] ?? 'en',
             $data['timezone'] ?? 'UTC',
             $data['meta_title'] ?? '',
