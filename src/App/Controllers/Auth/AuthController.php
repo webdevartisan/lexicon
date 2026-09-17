@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
+use App\Exceptions\AccountSuspendedException;
 use Framework\Core\Response;
 
 /**
@@ -26,7 +27,10 @@ final class AuthController extends AppController
     public function index(): Response
     {
         if (auth()->check()) {
-            return $this->redirect('/');
+            // See the same query string in Dashboard\HomeController::index():
+            // a guest's browser can hold a cached, logged-out "/" for up to a
+            // minute, and this redirect would otherwise replay it unchanged.
+            return $this->redirect('/?welcome=1');
         }
 
         return $this->view('auth.login.index', [
@@ -177,8 +181,19 @@ final class AuthController extends AppController
 
         // ---------------------------------------------------------
 
-        // Delegate authentication to the Auth service
-        if (auth()->login($email, $password)) {
+        try {
+            $loggedIn = auth()->login($email, $password);
+        } catch (AccountSuspendedException $e) {
+            if ($isAjax) {
+                return $this->jsonError($e->getMessage(), 403);
+            }
+
+            $this->flash('error', $e->getMessage());
+
+            return $this->redirectBack();
+        }
+
+        if ($loggedIn) {
 
             $limiter->clear($ip, $email);
 
