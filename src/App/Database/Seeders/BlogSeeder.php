@@ -85,6 +85,7 @@ final class BlogSeeder extends Seeder
                     'user_id' => (int) $subscriberUserId,
                     'email' => $faker->unique()->safeEmail(),
                     'token' => bin2hex(random_bytes(32)),
+                    'confirmed_at' => date('Y-m-d H:i:s'),
                 ];
             }
 

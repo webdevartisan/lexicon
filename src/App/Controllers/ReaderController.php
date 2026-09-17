@@ -161,7 +161,7 @@ final class ReaderController extends AppController
             return $this->afterAction(false, '/subscriptions', null);
         }
 
-        $this->subscribers->subscribe((int) $blogId, $email, $this->viewerId());
+        $this->subscribers->subscribe((int) $blogId, $email, $this->viewerId(), confirmed: true);
         $this->flash('success', chrome_translate('reader.resubscribed', ['blog' => (string) ($blog['blog_name'] ?? '')]));
 
         return $this->redirect($this->backTo('/subscriptions'));

@@ -24,19 +24,46 @@ class BlogSubscriberModel extends AppModel
      * token is deliberately left alone: it is live in an already-delivered
      * email and rotating it here would break that unsubscribe link. Only
      * user_id moves, which also adopts a row subscribed before the account
-     * existed.
+     * existed. A confirmed row never goes back to unconfirmed.
      *
-     * @return bool True when subscribed (new or already present)
+     * @param  bool  $confirmed  True only when the caller already knows the inbox belongs to the subscriber
+     * @return array{token: string, confirmed_at: string|null} The stored row, so the caller can tell whether to send a confirmation
      */
-    public function subscribe(int $blogId, string $email, ?int $userId = null): bool
+    public function subscribe(int $blogId, string $email, ?int $userId = null, bool $confirmed = false): array
     {
         $this->database->execute(
-            "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token) VALUES (?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id)",
-            [$blogId, $userId, $email, bin2hex(random_bytes(32))]
+            "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token, confirmed_at)
+             VALUES (?, ?, ?, ?, IF(?, NOW(), NULL))
+             ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id),
+                                     confirmed_at = COALESCE(confirmed_at, VALUES(confirmed_at))",
+            [$blogId, $userId, $email, bin2hex(random_bytes(32)), (int) $confirmed]
         );
 
-        return true;
+        return $this->database->query(
+            "SELECT token, confirmed_at FROM {$this->getTable()} WHERE blog_id = ? AND email = ?",
+            [$blogId, $email]
+        )->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @return array<string, mixed>|null The subscription, or null for an unknown token
+     */
+    public function confirmByToken(string $token): ?array
+    {
+        $this->database->execute(
+            "UPDATE {$this->getTable()} SET confirmed_at = COALESCE(confirmed_at, NOW()) WHERE token = ?",
+            [$token]
+        );
+
+        return $this->findByToken($token);
+    }
+
+    public function deleteUnconfirmedOlderThan(int $days): int
+    {
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()} WHERE confirmed_at IS NULL AND created_at < NOW() - INTERVAL ? DAY",
+            [$days]
+        );
     }
 
     /**
@@ -66,14 +93,14 @@ class BlogSubscriberModel extends AppModel
      */
     public function forBlog(int $blogId): array
     {
-        $sql = "SELECT email, token FROM {$this->getTable()} WHERE blog_id = ? ORDER BY id";
+        $sql = "SELECT email, token FROM {$this->getTable()} WHERE blog_id = ? AND confirmed_at IS NOT NULL ORDER BY id";
 
         return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public function countForBlog(int $blogId): int
     {
-        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = ?";
+        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = ? AND confirmed_at IS NOT NULL";
 
         return (int) $this->database->query($sql, [$blogId])->fetchColumn();
     }
@@ -86,7 +113,8 @@ class BlogSubscriberModel extends AppModel
      */
     public function pageForBlog(int $blogId, int $page = 1, int $perPage = 25, string $q = ''): array
     {
-        $where = 's.blog_id = ?';
+        // An unconfirmed address may belong to someone who never asked to subscribe.
+        $where = 's.blog_id = ? AND s.confirmed_at IS NOT NULL';
         $params = [$blogId];
 
         if ($q !== '') {
@@ -150,7 +178,7 @@ class BlogSubscriberModel extends AppModel
 
         $from = "FROM {$this->getTable()} s
                  INNER JOIN blogs b ON b.id = s.blog_id
-                 WHERE s.user_id = ? OR s.email = ?";
+                 WHERE (s.user_id = ? OR s.email = ?) AND s.confirmed_at IS NOT NULL";
 
         $total = (int) $this->database
             ->query("SELECT COUNT(DISTINCT b.id) {$from}", [$userId, $email])
