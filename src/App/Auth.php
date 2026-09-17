@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Exceptions\AccountSuspendedException;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use Framework\Interfaces\AuthInterface;
@@ -39,6 +40,8 @@ class Auth implements AuthInterface
      * Attempt to log in with email and password.
      *
      * Returns true on success, false on failure.
+     *
+     * @throws AccountSuspendedException When the credentials are right but the account is suspended
      */
     public function login(string $email, string $password): bool
     {
@@ -46,6 +49,10 @@ class Auth implements AuthInterface
 
         if (!$user || !isset($user['password']) || !\password_verify($password, $user['password'])) {
             return false;
+        }
+
+        if ((int) $user['is_active'] !== 1) {
+            throw new AccountSuspendedException();
         }
 
         // Optional: transparently upgrade old hashes if algorithm/cost changes.
@@ -108,7 +115,10 @@ class Auth implements AuthInterface
 
         $record = $this->users->find($userId);
 
-        if (!$record) {
+        // Checked on every request, so deleting or suspending an account ends the sessions it already has.
+        if (!$record || $record['deleted_at'] !== null || (int) $record['is_active'] !== 1) {
+            $this->session->remove('user_id');
+
             return null;
         }
 

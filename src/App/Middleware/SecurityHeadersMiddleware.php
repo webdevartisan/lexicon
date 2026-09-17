@@ -104,13 +104,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * header.
      *
      * Known remaining inline scripts to clear before enforcing: the per-page
-     * TinyMCE/Dropzone init blocks. The window.AppLocales block is gone, dropped
-     * with the client-side locale rewriting it existed to feed.
-     *
-     * style-src/font-src allow Google Fonts because cp-assets/css/fonts.css
-     * and every theme's base layout pull Public Sans (and theme-specific
-     * families) from fonts.googleapis.com/fonts.gstatic.com - those aren't
-     * stray third-party calls, they're how this app has always served fonts.
+     * TinyMCE/Dropzone init blocks.
      */
     private function applyContentSecurityPolicy(Response $response): void
     {
@@ -135,9 +129,9 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         $csp = implode('; ', [
             "default-src 'self'",
             $scriptSrc,
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "img-src 'self' data: https://picsum.photos https://fastly.picsum.photos https://cdn.jsdelivr.net https://www.gravatar.com",
-            "font-src 'self' data: https://fonts.gstatic.com",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: https://cdn.jsdelivr.net https://www.gravatar.com",
+            "font-src 'self' data:",
             "connect-src 'self'",
             "frame-ancestors 'self'",
             "base-uri 'self'",

@@ -407,4 +407,41 @@ describe('Validator Password Rules', function () {
         expect($validator->fails())->toBeTrue();
     })->with('invalid_passwords');
 
+    // ==================== Length Cap and Breach List ====================
+
+    /**
+     * bcrypt ignores everything past 72 bytes, so config/auth.php caps password length
+     * regardless of which preset is otherwise in effect.
+     */
+    test('password fails when longer than the configured maximum', function () {
+        $password = str_repeat('Ab1!', 20); // 80 characters
+        $validator = new Validator(['password' => $password]);
+        $validator->rules(['password' => 'password:basic']);
+
+        expect($validator->fails())->toBeTrue()
+            ->and($validator->errors()['password'][0])
+            ->toContain('not exceed 64 characters');
+    });
+
+    /**
+     * A breached password can satisfy every composition rule and still be one of the
+     * first guesses an attacker tries, which is why the blocklist check runs on every
+     * preset, not just as an alternative to composition rules.
+     */
+    test('password fails the breach list even when it satisfies strong composition', function () {
+        $validator = new Validator(['password' => 'Password1!']);
+        $validator->rules(['password' => 'password:strong']);
+
+        expect($validator->fails())->toBeTrue()
+            ->and($validator->errors()['password'][0])
+            ->toContain('too common');
+    });
+
+    test('password on the breach list is rejected under every preset', function (string $preset) {
+        $validator = new Validator(['password' => 'Password1!']);
+        $validator->rules(['password' => "password:{$preset}"]);
+
+        expect($validator->fails())->toBeTrue();
+    })->with(['basic', 'medium', 'strong']);
+
 });

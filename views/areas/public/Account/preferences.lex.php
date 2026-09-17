@@ -89,6 +89,15 @@ $emailErrors = $fieldErrors['new_email'] ?? [];
         </div>
 
         <div class="lx-account-close">
+            <h2><?= e($t('account.preferences.dataHeading')) ?></h2>
+            <p class="lx-muted"><?= e($t('account.preferences.dataText')) ?></p>
+            <form method="post" action="<?= e(lurl('/account/export')) ?>">
+                <?= csrf_field() ?>
+                <button type="submit" class="lx-btn lx-btn-subtle lx-btn-sm"><?= e($t('account.preferences.dataDownload')) ?></button>
+            </form>
+        </div>
+
+        <div class="lx-account-close">
             <h2><?= e($t('account.preferences.dangerHeading')) ?></h2>
             <p class="lx-muted"><?= e($t('account.preferences.dangerText')) ?></p>
             <a class="lx-btn lx-btn-danger-outline lx-btn-sm" href="<?= e(lurl('/account/delete')) ?>"><?= e($t('account.preferences.deleteLink')) ?></a>

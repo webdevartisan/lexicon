@@ -6,8 +6,9 @@ namespace App\Controllers;
 
 use App\Gate;
 use App\Models\UserModel;
+use App\Services\AccountErasureSchedulerService;
+use App\Services\AccountErasureService;
 use App\Services\PasswordConfirmRateLimiter;
-use App\Services\UserDeletionService;
 use Exception;
 use Framework\Core\Response;
 
@@ -15,15 +16,13 @@ use Framework\Core\Response;
  * Account deletion on the front, reached from the foot of Preferences rather
  * than from the section rail: an irreversible action should not sit beside
  * "change your display name" with equal weight.
- *
- * Deletion pseudonymises then soft-deletes. Posts and comments are left in
- * place, attributed to a deleted user; the page copy says so plainly.
  */
 final class AccountDeletionController extends AppController
 {
     public function __construct(
         private UserModel $users,
-        private UserDeletionService $deletionService,
+        private AccountErasureService $erasure,
+        private AccountErasureSchedulerService $scheduler,
         private PasswordConfirmRateLimiter $passwordThrottle
     ) {}
 
@@ -41,16 +40,14 @@ final class AccountDeletionController extends AppController
         }
 
         // This is the confirmation screen, not the deletion itself: gate softly
-        // so a user who cannot delete (e.g. the last administrator) sees the
-        // page explain why, rather than a hard "Access denied". The real
-        // enforcement is the throwing Gate::authorize in destroy().
-        $deletionCheck = $this->deletionService->canDeleteUser($userId);
-        $policyAllows = Gate::allows('delete', $userResource, auth()->user());
+        // so a user who cannot delete sees the page explain why, rather than a
+        // hard "Access denied". The real enforcement is in destroy().
+        $blockers = $this->erasure->blockers($userId);
 
         return $this->view('public.Account.delete', [
             'user' => $userResource->toArray(),
-            'canDelete' => $deletionCheck['canDelete'] && $policyAllows,
-            'deleteReason' => $deletionCheck['reason'],
+            'blockers' => $blockers,
+            'canDelete' => $this->erasure->canErase($userId) && Gate::allows('delete', $userResource, auth()->user()),
         ]);
     }
 
@@ -59,7 +56,6 @@ final class AccountDeletionController extends AppController
      */
     public function destroy(): Response
     {
-        // Enforce CSRF protection on destructive actions
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
@@ -89,11 +85,7 @@ final class AccountDeletionController extends AppController
             return $this->redirect(lurl('/account/preferences'));
         }
 
-        // Require password confirmation. Read through postParam(), the convention
-        // used everywhere else, rather than the raw request array.
-        $password = (string) $this->request->postParam('password');
-
-        if (!$this->users->verifyPassword($userId, $password)) {
+        if (!$this->users->verifyPassword($userId, (string) $this->request->postParam('password'))) {
             $this->passwordThrottle->hit($userId);
             $this->flash('error', chrome_translate('account.flash.deletionCancelled'));
 
@@ -102,40 +94,18 @@ final class AccountDeletionController extends AppController
 
         $this->passwordThrottle->clear($userId);
 
-        $deletionCheck = $this->deletionService->canDeleteUser($userId);
-
-        if (!$deletionCheck['canDelete']) {
-            $this->flash('error', $deletionCheck['reason']);
-
-            return $this->redirect(lurl('/account/preferences'));
+        if (!$this->erasure->canErase($userId)) {
+            return $this->redirect(lurl('/account/delete'));
         }
 
-        try {
-            // Audit log before deletion (capture email before pseudonymization)
-            audit()->log(
-                $userId,
-                'user.account_deleted',
-                'user',
-                $userId,
-                ['email' => $userResource->email()],
-                $this->request->ip()
-            );
+        $this->scheduler->schedule($userId, $userId, $this->request->ip());
 
-            // Perform the deletion via service (handles transaction)
-            $this->deletionService->deleteUser($userId);
+        audit()->log($userId, 'user.erasure_scheduled', 'user', $userId, [], $this->request->ip());
 
-            // Destroy session to log out
-            auth()->logout();
+        auth()->logout();
 
-            $this->flash('success', chrome_translate('account.flash.accountDeleted'));
+        $this->flash('success', chrome_translate('account.flash.accountDeletionScheduled', ['days' => erasure_grace_period_days()]));
 
-            return $this->redirect(lurl('/'));
-
-        } catch (Exception $e) {
-            error_log("Account deletion failed for user {$userId}: ".$e->getMessage());
-            $this->flash('error', chrome_translate('account.flash.deletionFailed'));
-
-            return $this->redirect(lurl('/account/preferences'));
-        }
+        return $this->redirect(lurl('/'));
     }
 }

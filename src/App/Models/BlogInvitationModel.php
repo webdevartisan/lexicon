@@ -40,7 +40,7 @@ class BlogInvitationModel extends AppModel
      * Find a valid (non-expired, not yet accepted/declined) invite by token hash.
      *
      * @param  string  $tokenHash  sha256 of the raw token
-     * @return array{id: int, blog_id: int, email: string, role: string, invited_by: int, expires_at: string}|false
+     * @return array{id: int, blog_id: int, email: string, role: string, invited_by: int|null, expires_at: string}|false
      */
     public function findValidByToken(string $tokenHash): array|false
     {
@@ -99,6 +99,21 @@ class BlogInvitationModel extends AppModel
                   AND accepted_at IS NULL AND declined_at IS NULL';
 
         return $this->database->execute($sql, [$blogId, $email]) > 0;
+    }
+
+    /**
+     * Delete accepted or declined invitations. Once answered, the invitee's email has no use here.
+     *
+     * @return int Rows deleted
+     */
+    public function deleteSettled(int $days): int
+    {
+        return $this->database->execute(
+            'DELETE FROM blog_invitations
+             WHERE (accepted_at IS NOT NULL OR declined_at IS NOT NULL)
+               AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
+            [$days]
+        );
     }
 
     /**

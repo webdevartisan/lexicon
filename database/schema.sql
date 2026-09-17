@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(100) DEFAULT NULL,
     last_name VARCHAR(100) DEFAULT NULL,
     display_name_cached VARCHAR(150) DEFAULT NULL COMMENT 'Cached computed display name',
-    is_active BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    age_confirmed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'When the person confirmed the minimum age at sign-up',
     posts_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalized count for performance',
     comments_received_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalized count for performance',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -314,13 +315,13 @@ CREATE TABLE IF NOT EXISTS blog_users (
     blog_id INT NOT NULL,
     user_id INT NOT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'author' COMMENT 'Blog-specific role (author, editor, etc)',
-    assigned_by INT NOT NULL COMMENT 'User ID who granted this blog membership',
+    assigned_by INT NULL COMMENT 'User ID who granted this blog membership',
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     revoked_at TIMESTAMP NULL,
     is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE KEY unique_blog_user (blog_id, user_id),
     INDEX idx_blog (blog_id),
     INDEX idx_user (user_id),
@@ -341,13 +342,13 @@ CREATE TABLE IF NOT EXISTS blog_invitations (
     email       VARCHAR(255) NOT NULL,
     role        VARCHAR(32) NOT NULL,
     token       VARCHAR(64) NOT NULL UNIQUE COMMENT 'sha256 hash of raw token',
-    invited_by  INT NOT NULL,
+    invited_by  INT NULL,
     expires_at  TIMESTAMP NOT NULL,
     accepted_at TIMESTAMP NULL DEFAULT NULL,
     declined_at TIMESTAMP NULL DEFAULT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
-    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_token (token),
     INDEX idx_email_blog (email, blog_id),
     INDEX idx_expires (expires_at)
@@ -462,12 +463,12 @@ CREATE TABLE IF NOT EXISTS post_reviewers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
     reviewer_id INT NOT NULL,
-    assigned_by INT NOT NULL,
+    assigned_by INT NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     review_status ENUM('pending','in_progress','completed') DEFAULT 'pending',
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE KEY unique_post_reviewer (post_id, reviewer_id),
     INDEX idx_post (post_id),
     INDEX idx_reviewer (reviewer_id),
@@ -565,12 +566,12 @@ COMMENT='One row per user per voted comment';
 CREATE TABLE IF NOT EXISTS comment_reports (
     id INT AUTO_INCREMENT PRIMARY KEY,
     comment_id INT NOT NULL,
-    user_id INT NOT NULL,
+    user_id INT NULL,
     reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_comment_report (comment_id, user_id),
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_comment_report_comment (comment_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='One row per user per reported comment; reporting twice is a no-op';
@@ -579,7 +580,8 @@ COMMENT='One row per user per reported comment; reporting twice is a no-op';
 -- Blog Subscribers Table
 -- ----------------------------------------------------------------------------
 -- Readers leave an email per blog and get notified when a new post is
--- published. Token drives one-click unsubscribe links.
+-- published. Token drives one-click unsubscribe links and the confirmation
+-- link; nothing is sent until confirmed_at is set.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS blog_subscribers (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -587,6 +589,7 @@ CREATE TABLE IF NOT EXISTS blog_subscribers (
     user_id INT DEFAULT NULL COMMENT 'Set when a logged-in user subscribes',
     email VARCHAR(255) NOT NULL,
     token CHAR(64) NOT NULL COMMENT 'Unsubscribe token',
+    confirmed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set when the inbox owner follows the confirmation link',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_subscriber_blog_email (blog_id, email),
     UNIQUE KEY uq_subscriber_token (token),
@@ -708,7 +711,9 @@ INSERT INTO scheduled_tasks (label, command, arguments, schedule_type, interval_
 ('Mail, bulk', 'mail:queue-work', '{"tier":"bulk"}', 'every_n_minutes', 10, NULL, 'UTC', 600, 1, UTC_TIMESTAMP()),
 ('Prune expired cache', 'cache:prune', NULL, 'daily', NULL, '03:20:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
 ('Prune old notifications', 'notifications:prune', NULL, 'daily', NULL, '03:40:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
-('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP());
+('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
+('Apply data retention periods', 'privacy:prune', NULL, 'daily', NULL, '03:50:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
+('Process due account erasures', 'privacy:process-due-erasures', NULL, 'daily', NULL, '04:10:00', 'UTC', 300, 1, UTC_TIMESTAMP());
 
 -- ----------------------------------------------------------------------------
 -- Post Translations Table
@@ -762,15 +767,56 @@ COMMENT='One row per user per voted post; only the up count is published';
 CREATE TABLE IF NOT EXISTS post_reports (
     id INT AUTO_INCREMENT PRIMARY KEY,
     post_id INT NOT NULL,
-    user_id INT NOT NULL,
+    user_id INT NULL,
     reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_post_report (post_id, user_id),
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_post_report_post (post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='One row per user per reported post; reporting twice is a no-op';
+
+-- ----------------------------------------------------------------------------
+-- Account Erasure Records Table
+-- ----------------------------------------------------------------------------
+-- A private, admin-only trail of who an erased account used to be, kept only
+-- long enough to answer a late report or a legal request, then pruned by
+-- privacy:prune. Not shown to anyone publicly.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS account_erasure_records (
+    id                INT AUTO_INCREMENT PRIMARY KEY,
+    original_user_id  INT NOT NULL COMMENT 'The users.id that no longer exists',
+    handle            VARCHAR(100) NOT NULL,
+    email             VARCHAR(150) NOT NULL,
+    post_ids          JSON NOT NULL COMMENT 'Posts authored by this account at the moment of erasure',
+    comment_ids       JSON NOT NULL COMMENT 'Comments authored by this account at the moment of erasure',
+    erased_by         INT NULL COMMENT 'Who triggered it: the account itself, or an administrator',
+    erased_by_ip      VARCHAR(45) NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_erasure_record_user (original_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Admin-only, time-limited record of erased accounts, for abuse reports and legal requests';
+
+-- ----------------------------------------------------------------------------
+-- Pending Erasures Table
+-- ----------------------------------------------------------------------------
+-- Self-requested erasure is deferred: the account is deactivated right away,
+-- but AccountErasureService does not run until the grace period in
+-- config/privacy.php has passed, so a first offense nobody has reported yet
+-- still has a window to be caught before the content is gone.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pending_erasures (
+    id                INT AUTO_INCREMENT PRIMARY KEY,
+    user_id           INT NOT NULL UNIQUE,
+    erased_by         INT NULL COMMENT 'Who requested it: always the account itself today',
+    erased_by_ip      VARCHAR(45) NULL,
+    scheduled_for     DATETIME NOT NULL COMMENT 'When privacy:process-due-erasures may run this one',
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_pending_erasure_due (scheduled_for)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Self-requested account deletions waiting out a grace period before erasure runs';
 
 -- ----------------------------------------------------------------------------
 -- Post Bookmarks Table
@@ -876,44 +922,6 @@ CREATE TABLE IF NOT EXISTS activity_log (
     INDEX idx_action (action)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Comprehensive audit log of user actions';
-
--- ----------------------------------------------------------------------------
--- Data Export Requests Table
--- ----------------------------------------------------------------------------
--- We track GDPR-compliant data export requests with status tracking to
--- enable asynchronous processing of potentially large exports.
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS data_export_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    status ENUM('requested','processing','completed','failed') NOT NULL DEFAULT 'requested',
-    file_path VARCHAR(512) DEFAULT NULL COMMENT 'Path to generated export file',
-    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_status (user_id, status),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='User data export requests for GDPR compliance';
-
--- ----------------------------------------------------------------------------
--- Account Deletion Requests Table
--- ----------------------------------------------------------------------------
--- We implement a multi-step deletion process with confirmation to prevent
--- accidental account loss and comply with right-to-erasure regulations.
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS account_deletion_requests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    status ENUM('requested','confirmed','processed','canceled') NOT NULL DEFAULT 'requested',
-    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    confirmed_at TIMESTAMP NULL,
-    processed_at TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_status (user_id, status),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Account deletion requests with multi-step confirmation';
 
 -- ----------------------------------------------------------------------------
 -- Password Resets Table
@@ -1266,8 +1274,19 @@ INSERT INTO reserved_handles (handle, match_type, reason) VALUES
   ('public',       'exact',     'Reserved for public routes'),
   ('private',      'exact',     'Reserved for private routes'),
   ('user',         'exact',     'Reserved for user routes'),
-  ('users',        'exact',     'Reserved for user index')
+  ('users',        'exact',     'Reserved for user index'),
+  ('deleted',      'contains',  'Reads as a removed account')
 ON DUPLICATE KEY UPDATE match_type = VALUES(match_type), reason = VALUES(reason);
+
+-- ----------------------------------------------------------------------------
+-- Deleted User Account
+-- ----------------------------------------------------------------------------
+-- Posts and comments kept after an account is deleted belong to this account.
+-- It is shared by every deleted person, so kept content cannot be grouped back
+-- by author. It cannot sign in and has no public profile.
+-- ----------------------------------------------------------------------------
+INSERT INTO users (handle, email, password, display_name_cached, is_active)
+VALUES ('deleted-user', 'deleted-user@lexicon.invalid', '', 'Deleted user', 0);
 
 -- ============================================================================
 -- FINALIZATION

@@ -17,6 +17,8 @@
   var submitBtn = modal.querySelector('[data-auth-submit]');
   var hint = modal.querySelector('[data-auth-hint]');
   var forgot = modal.querySelector('[data-auth-forgot]');
+  var registerOnly = modal.querySelector('[data-auth-register-only]');
+  var ageInput = modal.querySelector('[data-auth-age]');
   var toggle = modal.querySelector('[data-auth-toggle]');
   var pageToken = modal.querySelector('input[name="_token"]').value;
   var freshToken = null;
@@ -154,6 +156,7 @@
         submitBtn.textContent = 'Log in →';
         passInput.setAttribute('autocomplete', 'current-password');
         hint.setAttribute('hidden', '');
+        registerOnly.setAttribute('hidden', '');
         forgot.removeAttribute('hidden');
       } else {
         title.textContent = 'Create your account';
@@ -161,6 +164,8 @@
         submitBtn.textContent = 'Create account →';
         passInput.setAttribute('autocomplete', 'new-password');
         hint.removeAttribute('hidden');
+        registerOnly.removeAttribute('hidden');
+        ageInput.checked = false;
         forgot.setAttribute('hidden', '');
       }
 
@@ -175,15 +180,23 @@
     clearError();
 
     if (passInput.value === '') { showError('Password is required.'); return; }
-    if (state.mode === 'register' && passInput.value.length < 6) {
-      showError('Your password needs at least 6 characters.');
+    var minLength = parseInt(passInput.getAttribute('data-min-length'), 10);
+    if (state.mode === 'register' && passInput.value.length < minLength) {
+      showError('Your password needs at least ' + minLength + ' characters.');
+      return;
+    }
+    if (state.mode === 'register' && !ageInput.checked) {
+      showError(ageInput.getAttribute('data-error'));
       return;
     }
 
     var url = state.mode === 'register' ? '/register/submit' : '/login/submit';
     submitBtn.disabled = true;
 
-    post(url, { email: state.email, password: passInput.value, return_to: returnTo }).then(function (res) {
+    var body = { email: state.email, password: passInput.value, return_to: returnTo };
+    if (state.mode === 'register') { body.age_confirmed = ageInput.checked ? '1' : ''; }
+
+    post(url, body).then(function (res) {
       submitBtn.disabled = false;
       if (!res.ok) { showError(res.json.error || 'Something went wrong. Please try again.'); return; }
 

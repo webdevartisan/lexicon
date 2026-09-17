@@ -13,8 +13,10 @@ use App\Models\PostModel;
 use App\Models\PostReviewerModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
+use App\Services\BlogOwnershipService;
 use App\Services\InvitationService;
 use App\Services\NotificationService;
+use App\Services\PasswordConfirmRateLimiter;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -35,6 +37,8 @@ final class CollaboratorController extends AppController
         private readonly PostModel $postModel,
         private readonly PostReviewerModel $postReviewerModel,
         private readonly BlogSettingsModel $blogSettingsModel,
+        private readonly BlogOwnershipService $ownership,
+        private readonly PasswordConfirmRateLimiter $passwordThrottle,
     ) {}
 
     /**
@@ -95,6 +99,7 @@ final class CollaboratorController extends AppController
             'roles' => $availableRoles,
             'workflowEnabled' => $workflowEnabled,
             'workflowHealth' => $workflowHealth,
+            'canTransfer' => Gate::allows('transferOwnership', $blog, $user),
         ]);
     }
 
@@ -255,6 +260,59 @@ final class CollaboratorController extends AppController
         $this->flash('success', 'Collaborator access revoked.');
 
         return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
+    }
+
+    /**
+     * Hand the blog to an active collaborator. Password confirmed, like deleting the blog.
+     *
+     * @param  string  $blogId  Blog ID
+     */
+    public function transferOwnership(string $blogId): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->getBlog($blogId);
+        $user = auth()->user();
+        Gate::authorize('transferOwnership', $blog, $user);
+
+        $userId = (int) $user['id'];
+        $teamUrl = lurl("/dashboard/blog/{$blog->id()}/team");
+
+        // Throttled like every other password confirmation here: without a limit
+        // this form is an unlimited oracle for guessing the password of whichever
+        // account a stolen session belongs to.
+        if ($this->passwordThrottle->tooManyAttempts($userId)) {
+            $this->flash('error', 'Too many incorrect passwords. Try again later.');
+
+            return $this->redirect($teamUrl);
+        }
+
+        if (!$this->userModel->verifyPassword($userId, (string) $this->request->postParam('password'))) {
+            $this->passwordThrottle->hit($userId);
+            $this->flash('error', 'Incorrect password. Ownership was not transferred.');
+
+            return $this->redirect($teamUrl);
+        }
+
+        $this->passwordThrottle->clear($userId);
+
+        try {
+            $this->ownership->transfer(
+                $blog->id(),
+                $userId,
+                (int) $this->request->postParam('new_owner_id'),
+                $userId,
+                $this->request->ip()
+            );
+        } catch (\InvalidArgumentException $e) {
+            $this->flash('error', $e->getMessage());
+
+            return $this->redirect($teamUrl);
+        }
+
+        $this->flash('success', 'Ownership transferred. You stay on the blog as an editor.');
+
+        return $this->redirect(lurl('/dashboard/shared'));
     }
 
     /**

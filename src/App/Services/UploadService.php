@@ -482,48 +482,118 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Delete all uploaded files for a user.
+     * Delete a person's own files: profile images and abandoned temp uploads.
      *
-     * Remove entire user upload directory including avatars and attachments.
-     * Used during account deletion. Failures are logged but don't throw
-     * exceptions since file cleanup can be performed later if needed.
+     * Blog files are not here even when this person uploaded them. They belong to
+     * the blog, and a blog that outlives the account still shows them.
      *
      * @param  int  $userId  User ID
      */
-    public function deleteUserUploads(int $userId): void
+    public function deleteProfileUploads(int $userId): void
     {
-        try {
-            [$uploadDir, $urlBase] = $this->userProfilePath($userId);
+        [$profileDir] = $this->userProfilePath($userId);
 
-            if (is_dir($uploadDir)) {
-                // Delete profile directory
-                $this->deleteDirectory($uploadDir);
-            }
+        $this->deleteDirectory($profileDir);
+        $this->cleanupTempFiles($userId);
+    }
 
-            // Also clean up blogs directory if exists
-            $userBlogsDir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs';
-            if (is_dir($userBlogsDir)) {
-                $this->deleteDirectory($userBlogsDir);
-            }
+    /**
+     * Delete every file uploaded to a blog, whoever uploaded it.
+     *
+     * Files live under the uploader's folder, so a blog with several writers has
+     * one folder per writer.
+     *
+     * @param  int  $blogId  Blog ID
+     */
+    public function deleteBlogUploads(int $blogId): void
+    {
+        $dirs = glob(ROOT_PATH.'/storage/uploads/users/*/blogs/'.$blogId, GLOB_ONLYDIR);
 
-            // Clean up temp files
-            $this->cleanupTempFiles($userId);
+        if ($dirs === false) {
+            throw new RuntimeException("Could not list upload folders for blog {$blogId}.");
+        }
 
-        } catch (\Exception $e) {
-            // Log but don't throw - file deletion failure shouldn't
-            // block account deletion (files can be cleaned up later)
-            error_log("Failed to delete uploads for user {$userId}: ".$e->getMessage());
+        foreach ($dirs as $dir) {
+            $this->deleteDirectory($dir);
         }
     }
 
     /**
-     * Recursively delete directory and all contents.
+     * Every file a person uploaded to blogs, as public URLs grouped by blog.
      *
-     * Use when removing user uploads or clearing temporary files.
-     * Handles nested directories and files safely. Operates recursively
-     * since rmdir() only works on empty directories.
+     * @return array<int, list<string>>
+     */
+    public function blogUploadsBy(int $userId): array
+    {
+        $root = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs';
+        $uploads = [];
+
+        if (!is_dir($root)) {
+            return $uploads;
+        }
+
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+
+        foreach ($files as $file) {
+            if (!$file->isFile()) {
+                continue;
+            }
+
+            $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), strlen($root) + 1));
+            $blogId = (int) strtok($relative, '/');
+            $uploads[$blogId][] = '/uploads/users/'.$userId.'/blogs/'.$relative;
+        }
+
+        return $uploads;
+    }
+
+    /**
+     * Delete one stored upload by its public URL.
+     */
+    public function deleteUpload(string $url): void
+    {
+        if (!str_starts_with($url, '/uploads/') || str_contains($url, '..')) {
+            throw new InvalidArgumentException("Not a stored upload: {$url}");
+        }
+
+        $path = ROOT_PATH.'/storage'.$url;
+
+        if (is_file($path) && !unlink($path)) {
+            throw new RuntimeException("Could not delete file {$path}.");
+        }
+    }
+
+    /**
+     * Remove a person's upload folder once nothing is left in it, empty subfolders included.
+     */
+    public function deleteEmptyUserFolder(int $userId): void
+    {
+        $root = ROOT_PATH.'/storage/uploads/users/'.$userId;
+
+        if (!is_dir($root)) {
+            return;
+        }
+
+        $entries = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($entries as $entry) {
+            if ($entry->isFile()) {
+                return;
+            }
+        }
+
+        $this->deleteDirectory($root);
+    }
+
+    /**
+     * Recursively delete a directory and everything in it. Missing is fine.
      *
      * @param  string  $dir  Directory path to delete
+     *
+     * @throws RuntimeException If any file or folder could not be removed
      */
     public function deleteDirectory(string $dir): void
     {
@@ -532,6 +602,10 @@ final class UploadService implements UploadServiceInterface
         }
 
         $items = scandir($dir);
+
+        if ($items === false) {
+            throw new RuntimeException("Could not read directory {$dir}.");
+        }
 
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
@@ -542,11 +616,13 @@ final class UploadService implements UploadServiceInterface
 
             if (is_dir($path)) {
                 $this->deleteDirectory($path);
-            } else {
-                unlink($path);
+            } elseif (!unlink($path)) {
+                throw new RuntimeException("Could not delete file {$path}.");
             }
         }
 
-        rmdir($dir);
+        if (!rmdir($dir)) {
+            throw new RuntimeException("Could not delete directory {$dir}.");
+        }
     }
 }

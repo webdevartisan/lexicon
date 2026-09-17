@@ -467,7 +467,6 @@ final class BlogController extends AppController
 
         $userId = (int) $user['id'];
         $blogId = (int) $id;
-        $ownerId = $blog->ownerId();
         $blogArray = $blog->toArray();
 
         // Require password confirmation for security
@@ -480,7 +479,7 @@ final class BlogController extends AppController
 
         try {
             // Delegate to service (handles 6 tables + files + preferences)
-            $stats = $this->blogDeletion->deleteBlog($blogId, $userId, $ownerId);
+            $stats = $this->blogDeletion->deleteBlog($blogId, $userId);
 
             audit()->log(
                 $userId,

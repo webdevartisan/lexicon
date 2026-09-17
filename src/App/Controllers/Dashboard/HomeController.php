@@ -47,7 +47,14 @@ class HomeController extends AppController
             // front now, one click away in the account menu. Keeping the
             // redirect here means login and signup can go on sending everyone
             // to /dashboard.
-            return $this->redirect('/');
+            //
+            // The query string is not decorative: a guest's browser caches "/"
+            // for up to a minute (Cache-Control: public, max-age=60), and
+            // landing back on that exact URL right after registering or logging
+            // in can replay that stale, logged-out copy straight from the
+            // browser's own cache before the request ever reaches the server.
+            // A URL the guest copy was never served under can't collide with it.
+            return $this->redirect('/?welcome=1');
         }
 
         // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is the natural landing.

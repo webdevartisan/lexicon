@@ -146,3 +146,29 @@ it('logs out and clears session', function () {
 
     expect($this->auth->check())->toBeFalse();
 });
+
+it('refuses to sign in a suspended account even with the right password', function () {
+    $password = faker()->password(12);
+    $email = faker()->unique()->safeEmail();
+
+    UserFactory::new($this->userModel)
+        ->withAttributes(['email' => $email, 'password' => password_hash($password, PASSWORD_DEFAULT), 'is_active' => 0])
+        ->create();
+
+    expect(fn () => $this->auth->login($email, $password))->toThrow(\App\Exceptions\AccountSuspendedException::class)
+        ->and($this->auth->check())->toBeFalse();
+});
+
+it('ends the session of an account that was suspended or deleted while signed in', function (string $change) {
+    $userId = UserFactory::new($this->userModel)->create();
+    $_SESSION['user_id'] = $userId;
+
+    if ($change === 'suspended') {
+        $this->userModel->updateById($userId, ['is_active' => 0]);
+    } else {
+        $this->db->execute('DELETE FROM users WHERE id = ?', [$userId]);
+    }
+
+    expect($this->auth->user())->toBeNull()
+        ->and($_SESSION)->not->toHaveKey('user_id');
+})->with(['suspended', 'deleted']);

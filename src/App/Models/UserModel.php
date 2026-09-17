@@ -131,25 +131,6 @@ class UserModel extends AppModel
     }
 
     /**
-     * Restore a soft-deleted user account.
-     *
-     * Clear the deleted_at timestamp to reactivate the account.
-     *
-     * @param  int  $userId  User ID to restore
-     * @return bool True if user was restored
-     */
-    public function restoreDeleted(int $userId): bool
-    {
-        $sql = 'UPDATE '.$this->getTable().' 
-                SET deleted_at = NULL 
-                WHERE id = ? AND deleted_at IS NOT NULL';
-
-        $rowCount = $this->database->execute($sql, [$userId]);
-
-        return $rowCount > 0;
-    }
-
-    /**
      * Insert multiple role assignments for a user.
      *
      * Returns true on success, false on failure.
@@ -289,13 +270,19 @@ class UserModel extends AppModel
         string $q = '',
         string $active = '',
         string $role = '',
-        string $orderBy = 'u.created_at DESC'
+        string $orderBy = 'u.created_at DESC',
+        ?int $excludeUserId = null
     ): array {
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
         $where = 'WHERE u.deleted_at IS NULL';
         $params = [];
+
+        if ($excludeUserId !== null) {
+            $where .= ' AND u.id <> :exclude_id';
+            $params[':exclude_id'] = $excludeUserId;
+        }
 
         if ($q !== '') {
             $where .= " AND (u.handle LIKE :q_handle OR u.email LIKE :q_email
@@ -529,6 +516,7 @@ class UserModel extends AppModel
                 FROM posts p
                 JOIN users u ON u.id = p.author_id
                 WHERE p.status = 'published'
+                AND u.is_active = 1
                 AND u.deleted_at IS NULL";
 
         return (int) $this->database->query($sql)->fetchColumn();
@@ -548,6 +536,7 @@ class UserModel extends AppModel
                 JOIN user_roles ur ON u.id = ur.user_id
                 JOIN roles r ON ur.role_id = r.id
                 WHERE r.role_slug = 'administrator'
+                AND u.is_active = 1
                 AND u.deleted_at IS NULL";
 
         $stmt = $this->database->query($sql);
@@ -569,21 +558,6 @@ class UserModel extends AppModel
         $rowCount = $this->database->execute($sql, [$hash, $userId]);
 
         return $rowCount > 0;
-    }
-
-    /**
-     * Check if a user can be deleted (simple content check).
-     *
-     * Prevent deletion if user has published content.
-     * This is a simple data query, not complex business logic.
-     * For full business rule validation, use UserDeletionService::canDeleteUser().
-     *
-     * @param  int  $userId  User ID
-     * @return bool True if user has no posts
-     */
-    public function canDelete(int $userId): bool
-    {
-        return $this->countPosts($userId) === 0;
     }
 
     /**

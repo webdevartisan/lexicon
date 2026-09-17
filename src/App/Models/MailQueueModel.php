@@ -347,4 +347,18 @@ class MailQueueModel extends AppModel
             [$days]
         );
     }
+
+    /**
+     * Delete rows that gave up delivering, once they are older than the retention window.
+     *
+     * @return int Rows deleted
+     */
+    public function pruneFailed(int $days = 30): int
+    {
+        return $this->database->execute(
+            "DELETE FROM {$this->getTable()}
+             WHERE status = 'failed' AND updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)",
+            [$days]
+        );
+    }
 }

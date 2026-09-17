@@ -13,9 +13,29 @@ namespace App\Interfaces;
 interface UploadServiceInterface
 {
     /**
-     * Delete all uploaded files for a user.
-     *
-     * @param  int  $userId  User ID
+     * Delete a person's profile images and temp uploads.
      */
-    public function deleteUserUploads(int $userId): void;
+    public function deleteProfileUploads(int $userId): void;
+
+    /**
+     * Delete every file uploaded to a blog, whoever uploaded it.
+     */
+    public function deleteBlogUploads(int $blogId): void;
+
+    /**
+     * Every file a person uploaded to blogs, as public URLs grouped by blog.
+     *
+     * @return array<int, list<string>>
+     */
+    public function blogUploadsBy(int $userId): array;
+
+    /**
+     * Delete one stored upload by its public URL.
+     */
+    public function deleteUpload(string $url): void;
+
+    /**
+     * Remove a person's upload folder once nothing is left in it.
+     */
+    public function deleteEmptyUserFolder(int $userId): void;
 }

@@ -9,9 +9,9 @@ use Framework\Database;
 /**
  * Audit logging service for tracking user actions and system events.
  *
- * Records all significant actions to the activity_log table for compliance,
- * security monitoring, and debugging purposes. Failures are logged but do
- * not interrupt normal operations.
+ * Records significant actions to the activity_log table for accountability and
+ * security monitoring. A failed write throws, because a missing audit entry
+ * nobody noticed is worse than a visible error.
  */
 class AuditService
 {
@@ -28,7 +28,6 @@ class AuditService
      * @param  int|null  $resourceId  ID of affected resource
      * @param  array<mixed>  $details  Additional context (old/new values, metadata)
      * @param  string|null  $ipAddress  Client IP address for security tracking
-     * @return bool True on success, false on failure
      */
     public function log(
         ?int $userId,
@@ -37,30 +36,19 @@ class AuditService
         ?int $resourceId = null,
         array $details = [],
         ?string $ipAddress = null
-    ): bool {
-        try {
-            $sql = 'INSERT INTO activity_log
-                    (user_id, action, resource_type, resource_id, details, ip_address, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, NOW())';
-
-            // Serialize details as JSON for flexible storage of arbitrary metadata
-            $detailsJson = !empty($details) ? json_encode($details) : null;
-
-            $rowCount = $this->database->execute($sql, [
+    ): void {
+        $this->database->execute(
+            'INSERT INTO activity_log
+                (user_id, action, resource_type, resource_id, details, ip_address, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW())',
+            [
                 $userId,
                 $action,
                 $resourceType,
                 $resourceId,
-                $detailsJson,
+                $details === [] ? null : json_encode($details, JSON_THROW_ON_ERROR),
                 $ipAddress,
-            ]);
-
-            return $rowCount > 0;
-        } catch (\Throwable $e) {
-            // Swallow exceptions to prevent audit failures from breaking operations
-            error_log('Audit log failed: '.$e->getMessage());
-
-            return false;
-        }
+            ]
+        );
     }
 }

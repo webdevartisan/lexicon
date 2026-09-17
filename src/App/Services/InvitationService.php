@@ -104,7 +104,7 @@ class InvitationService
             (int) $invite['blog_id'],
             $acceptingUserId,
             $invite['role'],
-            (int) $invite['invited_by']
+            $invite['invited_by'] === null ? null : (int) $invite['invited_by']
         );
 
         audit()->log(

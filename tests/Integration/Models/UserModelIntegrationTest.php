@@ -265,23 +265,6 @@ it('handles soft deleting already deleted user', function () {
     expect($result)->toBeTrue();
 });
 
-/**
- * Test restoring soft-deleted user.
- *
- * Verifies restoreDeleted clears deleted_at and makes user queryable again.
- */
-it('restores soft-deleted user', function () {
-    $userId = UserFactory::new($this->userModel)->deleted()->create();
-
-    $result = $this->userModel->restoreDeleted($userId);
-
-    expect($result)->toBeTrue();
-
-    $user = $this->userModel->findById($userId);
-    expect($user)->toBeArray()
-        ->and($user['id'])->toBe($userId);
-});
-
 // ============================================================================
 // ROLE MANAGEMENT
 // ============================================================================
@@ -390,37 +373,6 @@ it('gets user permissions from assigned roles', function () {
 // ============================================================================
 // BUSINESS LOGIC & VALIDATION
 // ============================================================================
-
-/**
- * Test that user with posts cannot be deleted.
- *
- * Verifies canDelete prevents deletion when user has authored content.
- */
-it('prevents deletion when user has authored posts', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
-        ->create();
-
-    $canDelete = $this->userModel->canDelete($userId);
-
-    expect($canDelete)->toBeFalse();
-});
-
-/**
- * Test that user without posts can be deleted.
- *
- * Verifies canDelete allows deletion when no content exists.
- */
-it('allows deletion when user has no posts', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-
-    $canDelete = $this->userModel->canDelete($userId);
-
-    expect($canDelete)->toBeTrue();
-});
 
 // ============================================================================
 // COUNTING METHODS

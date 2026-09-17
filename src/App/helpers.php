@@ -123,6 +123,53 @@ function site_setting(string $name, ?string $default = null): ?string
 }
 
 /**
+ * The age people confirm when they sign up, from config/privacy.php.
+ */
+function minimum_signup_age(): int
+{
+    static $age = null;
+    $age ??= (int) (require ROOT_PATH.'/config/privacy.php')['minimum_age'];
+
+    return $age;
+}
+
+/**
+ * Days between a self-requested account deletion and AccountErasureService
+ * actually running it.
+ */
+function erasure_grace_period_days(): int
+{
+    static $days = null;
+    $days ??= (int) (require ROOT_PATH.'/config/privacy.php')['erasure_grace_period_days'];
+
+    return $days;
+}
+
+/**
+ * Which of Framework\Validation\Validator's password presets this app's forms enforce.
+ */
+function password_policy_preset(): string
+{
+    static $preset = null;
+    $preset ??= (string) (require ROOT_PATH.'/config/auth.php')['password_policy_preset'];
+
+    return $preset;
+}
+
+/**
+ * The active preset's length bounds, for form minlength/maxlength attributes.
+ *
+ * @return array{min: int, max: int}
+ */
+function password_length_bounds(): array
+{
+    return [
+        'min' => \Framework\Validation\Validator::parsePasswordRequirements(password_policy_preset())['min'],
+        'max' => (int) (require ROOT_PATH.'/config/auth.php')['password_max_length'],
+    ];
+}
+
+/**
  * Timezone configured for the site as a whole.
  *
  * Last resort for both of the resolvers below, so it never returns something

@@ -15,6 +15,19 @@ class ActivityLogModel extends AppModel
     protected ?string $table = 'activity_log';
 
     /**
+     * Delete audit entries past the retention period, IP addresses included.
+     *
+     * @return int Rows deleted
+     */
+    public function pruneOlderThan(int $days): int
+    {
+        return $this->database->execute(
+            'DELETE FROM activity_log WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
+            [$days]
+        );
+    }
+
+    /**
      * Paginated audit trail with optional action and resource-type filters.
      *
      * @param  string  $action  Exact action filter (e.g. 'comment.deleted')
