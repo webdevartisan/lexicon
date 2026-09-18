@@ -25,6 +25,12 @@
   var returnTo = modal.getAttribute('data-return-to') || '/';
   // Locale-prefixed so the nav fetch does not eat a 308 on every login
   var authNavUrl = modal.getAttribute('data-nav-url') || '/auth/nav';
+  var urls = {
+    identify: modal.getAttribute('data-identify-url') || '/login/identify',
+    login: modal.getAttribute('data-login-url') || '/login',
+    register: modal.getAttribute('data-register-url') || '/register/submit',
+    forgot: modal.getAttribute('data-forgot-url') || '/password/forgot'
+  };
 
   // Public pages come from the full-page guest cache, so the token baked
   // into the HTML can belong to another session. Fetch a live one before
@@ -34,7 +40,10 @@
     return fetch('/csrf-token', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (j) { freshToken = j.token || pageToken; return freshToken; })
-      .catch(function () { return pageToken; });
+      .catch(function (err) {
+        console.warn('Could not fetch a fresh security token, using the one on the page:', err);
+        return pageToken;
+      });
   }
 
   // Reader-first titles keyed by what the visitor was trying to do
@@ -47,6 +56,8 @@
 
   var state = { mode: 'login', email: '', onSuccess: null, lastFocus: null };
 
+  // Resolves for every answer the server gives, including errors, so only a
+  // request that never got an answer ends up in a .catch.
   function post(url, body) {
     return getToken().then(function (t) {
       var fd = new FormData();
@@ -56,11 +67,32 @@
         method: 'POST',
         body: fd,
         credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
       }).then(function (r) {
-        return r.json().then(function (j) { return { ok: r.ok && j.success, json: j }; });
+        var isJson = (r.headers.get('Content-Type') || '').indexOf('application/json') !== -1;
+        var parsed = isJson ? r.json().catch(function () { return null; }) : Promise.resolve(null);
+
+        return parsed.then(function (j) {
+          if (r.status === 419) freshToken = null;
+          return { ok: r.ok && !!(j && j.success), status: r.status, json: j || {} };
+        });
       });
     });
+  }
+
+  function failureMessage(res) {
+    if (res.status === 419) {
+      return 'Your session expired while this was open. Please try again.';
+    }
+    if (res.status >= 500 || !res.json.error) {
+      return 'Something went wrong on our side (error ' + res.status + '). Please try again in a moment.';
+    }
+    return res.json.error;
+  }
+
+  function networkFailure(err) {
+    console.error('Auth request failed:', err);
+    showError('Could not reach the server. Check your connection and try again.');
   }
 
   // The theme script bound its user-menu handler at load, when this page was
@@ -103,7 +135,7 @@
           bindUserMenu(host);
         }
       })
-      .catch(function () { /* leave the header alone, the next page load fixes it */ });
+      .catch(function (err) { console.error('Could not refresh the header after logging in:', err); });
   }
 
   function showError(msg) { errEl.textContent = msg; errEl.removeAttribute('hidden'); }
@@ -144,8 +176,8 @@
     var email = emailInput.value.trim();
     if (!email || email.indexOf('@') < 1) { showError('Please enter a valid email address.'); return; }
 
-    post('/login/identify', { email: email }).then(function (res) {
-      if (!res.ok) { showError(res.json.error || 'Something went wrong. Please try again.'); return; }
+    post(urls.identify, { email: email }).then(function (res) {
+      if (!res.ok) { showError(failureMessage(res)); return; }
       state.email = email;
       var exists = !!(res.json.data && res.json.data.exists);
       state.mode = exists ? 'login' : 'register';
@@ -172,7 +204,7 @@
       passInput.value = '';
       showStep('password');
       passInput.focus();
-    }).catch(function () { showError('Network error. Please try again.'); });
+    }).catch(networkFailure);
   });
 
   passForm.addEventListener('submit', function (ev) {
@@ -190,7 +222,7 @@
       return;
     }
 
-    var url = state.mode === 'register' ? '/register/submit' : '/login/submit';
+    var url = state.mode === 'register' ? urls.register : urls.login;
     submitBtn.disabled = true;
 
     var body = { email: state.email, password: passInput.value, return_to: returnTo };
@@ -198,7 +230,7 @@
 
     post(url, body).then(function (res) {
       submitBtn.disabled = false;
-      if (!res.ok) { showError(res.json.error || 'Something went wrong. Please try again.'); return; }
+      if (!res.ok) { showError(failureMessage(res)); return; }
 
       successMsg.textContent = state.mode === 'register'
         ? 'Welcome to Lexicon! Your reader account is ready.'
@@ -218,9 +250,9 @@
         refreshAuthNav();
         done();
       }, 700);
-    }).catch(function () {
+    }).catch(function (err) {
       submitBtn.disabled = false;
-      showError('Network error. Please try again.');
+      networkFailure(err);
     });
   });
 
@@ -240,14 +272,14 @@
     clearError();
     forgotSend.disabled = true;
 
-    post('/password/forgot', { email: state.email }).then(function (res) {
+    post(urls.forgot, { email: state.email }).then(function (res) {
       forgotSend.disabled = false;
-      if (!res.ok) { showError(res.json.error || 'Something went wrong. Please try again.'); return; }
+      if (!res.ok) { showError(failureMessage(res)); return; }
       forgotText.textContent = (res.json.data && res.json.data.message) || 'If that email exists in our system, a reset link has been sent.';
       forgotSend.setAttribute('hidden', '');
-    }).catch(function () {
+    }).catch(function (err) {
       forgotSend.disabled = false;
-      showError('Network error. Please try again.');
+      networkFailure(err);
     });
   });
 
