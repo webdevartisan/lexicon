@@ -447,6 +447,6 @@ class ScheduledTaskController extends AppController
      */
     private function cronLine(): string
     {
-        return '* * * * * cd '.ROOT_PATH.' && php cli schedule:run >> /dev/null 2>&1';
+        return '* * * * * cd '.ROOT_PATH.' && php cli schedule:run >> storage/logs/cron.log 2>&1';
     }
 }

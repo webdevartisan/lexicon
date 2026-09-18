@@ -736,6 +736,10 @@ $container->setShared(App\Services\ExternalMediaGuard::class, function ($c) {
     return new App\Services\ExternalMediaGuard((string) base_url());
 });
 
+$container->setShared(App\Services\LogFileService::class, function ($c) {
+    return new App\Services\LogFileService(ROOT_PATH.'/storage/logs');
+});
+
 $container->setShared(App\Services\AccountErasureService::class, function ($c) {
     $config = require ROOT_PATH.'/config/privacy.php';
 

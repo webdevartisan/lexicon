@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Cron only ever calls one command:
  *
- *   * * * * * cd /path/to/app && php cli schedule:run >> /dev/null 2>&1
+ *   * * * * * cd /path/to/app && php cli schedule:run >> storage/logs/cron.log 2>&1
  *
  * Everything else is set up in the control panel under System. These values
  * are the bounds the dispatcher works inside, not the schedules themselves.

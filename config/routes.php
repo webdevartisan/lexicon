@@ -491,6 +491,7 @@ $router->group([
 
     // System diagnostics
     $r->add('/system', ['controller' => 'SystemController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/system/logs/clear', ['controller' => 'SystemController', 'action' => 'clearLog', 'method' => 'POST']);
 
     // Outbound mail queue: inspect and recover failed sends
     $r->add('/mail-queue', ['controller' => 'MailQueueController', 'action' => 'index', 'method' => 'GET']);

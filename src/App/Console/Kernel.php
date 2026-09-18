@@ -64,7 +64,7 @@ class Kernel extends ConsoleKernel
 
             // The only entry cron needs. Everything else is configured under
             // System, Scheduled Tasks.
-            // * * * * * cd /var/www/html && php cli schedule:run >> /dev/null 2>&1
+            // * * * * * cd /var/www/html && php cli schedule:run >> storage/logs/cron.log 2>&1
             'schedule:run' => ScheduleRunCommand::class,
 
             // Started by schedule:run for one task, not meant to be run by hand

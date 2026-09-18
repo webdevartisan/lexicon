@@ -5,24 +5,26 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Gate;
+use App\Resources\SystemResource;
+use App\Services\LogFileService;
 use Framework\Core\Response;
 use Framework\Database;
 
 /**
- * Read-only system diagnostics: PHP runtime, database footprint, and
- * application log files. Nothing here mutates state.
+ * System diagnostics: PHP runtime, database footprint, and application logs,
+ * which an administrator can empty.
  */
 class SystemController extends AppController
 {
     // Enforced for every action by AppController::beforeAction()
     protected ?string $areaAbility = 'viewSystem';
 
-    private const LOG_DIR = 'storage/logs';
-
     private const LOG_TAIL_LINES = 200;
 
     public function __construct(
-        protected Database $database
+        protected Database $database,
+        private LogFileService $logFiles,
     ) {}
 
     /**
@@ -30,13 +32,19 @@ class SystemController extends AppController
      */
     public function index(): Response
     {
-        $logs = $this->logFiles();
+        $logs = $this->logFiles->all();
 
-        // only ever open a file that scandir itself listed
         $selected = (string) ($this->request->get['log'] ?? '');
         $logContent = null;
+        $logError = null;
+
         if ($selected !== '' && array_key_exists($selected, $logs)) {
-            $logContent = $this->tail($logs[$selected]['path'], self::LOG_TAIL_LINES);
+            try {
+                $logContent = $this->logFiles->tail($selected, self::LOG_TAIL_LINES);
+            } catch (\RuntimeException $e) {
+                error_log('System log viewer: '.$e->getMessage());
+                $logError = $e->getMessage();
+            }
         } else {
             $selected = '';
         }
@@ -47,7 +55,44 @@ class SystemController extends AppController
             'logs' => $logs,
             'selectedLog' => $selected,
             'logContent' => $logContent,
+            'logError' => $logError,
+            'canClearLogs' => Gate::allows('clearLogs', SystemResource::class, auth()->user() ?? []),
         ]);
+    }
+
+    /**
+     * Empty one log file, keeping the file itself.
+     */
+    public function clearLog(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        Gate::authorize('clearLogs', SystemResource::class, $user);
+
+        $name = (string) ($this->request->postParam('log') ?? '');
+
+        try {
+            $bytes = $this->logFiles->clear($name);
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            error_log('Clearing log failed: '.$e->getMessage());
+            $this->flash('error', 'The log was not cleared. '.$e->getMessage());
+
+            return $this->redirect('/admin/system?log='.rawurlencode($name));
+        }
+
+        audit()->log(
+            (int) $user['id'],
+            'system.log_cleared',
+            'log',
+            null,
+            ['file' => $name, 'bytes' => $bytes],
+            $this->request->ip()
+        );
+
+        $this->flash('success', "{$name} was emptied.");
+
+        return $this->redirect('/admin/system?log='.rawurlencode($name));
     }
 
     /**
@@ -81,47 +126,5 @@ class SystemController extends AppController
                 ORDER BY size_bytes DESC';
 
         return $this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
-    }
-
-    /**
-     * Log files available in storage/logs, keyed by filename.
-     *
-     * @return array<string, array<string, mixed>> Filename => path, size, modified
-     */
-    private function logFiles(): array
-    {
-        $dir = dirname(__DIR__, 4).DIRECTORY_SEPARATOR.self::LOG_DIR;
-        $files = [];
-
-        if (is_dir($dir)) {
-            foreach (scandir($dir) ?: [] as $file) {
-                $path = $dir.DIRECTORY_SEPARATOR.$file;
-                if (is_file($path) && preg_match('/^[A-Za-z0-9._-]+\.log$/', $file)) {
-                    $files[$file] = [
-                        'path' => $path,
-                        'size' => filesize($path),
-                        'modified' => filemtime($path),
-                    ];
-                }
-            }
-        }
-
-        // newest first so the interesting log is on top
-        uasort($files, fn ($a, $b) => $b['modified'] <=> $a['modified']);
-
-        return $files;
-    }
-
-    /**
-     * Last N lines of a file without loading the whole thing.
-     */
-    private function tail(string $path, int $lines): string
-    {
-        $content = @file($path, FILE_IGNORE_NEW_LINES);
-        if ($content === false) {
-            return '';
-        }
-
-        return implode("\n", array_slice($content, -$lines));
     }
 }
