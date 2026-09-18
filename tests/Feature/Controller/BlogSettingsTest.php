@@ -109,7 +109,7 @@ it('refuses an unknown visibility and leaves the blog as it was', function () {
 
 it('shows the blog address and no editable slug', function () {
     $blog = ($this->newBlog)();
-    $viewer = new class implements TemplateViewerInterface
+    $viewer = new class() implements TemplateViewerInterface
     {
         public array $data = [];
 
