@@ -3060,9 +3060,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--sc-custom-50) / var(--tw-bg-opacity, 1));
 }
-.hover\:bg-custom-50\/40:hover {
-  background-color: rgb(var(--sc-custom-50) / 0.4);
-}
 .hover\:bg-custom-600:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--sc-custom-600) / var(--tw-bg-opacity, 1));
@@ -3840,6 +3837,19 @@ input[type=range]:focus::-webkit-slider-thumb {
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
   }
 }
+@media not all and (min-width: 768px) {
+  .max-md\:sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
 @media not all and (min-width: 640px) {
   .max-sm\:sr-only {
     position: absolute;
@@ -3851,6 +3861,9 @@ input[type=range]:focus::-webkit-slider-thumb {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+  }
+  .max-sm\:hidden {
+    display: none;
   }
   .max-sm\:w-11 {
     width: 2.75rem;
@@ -4935,10 +4948,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .dark\:hover\:bg-zink-700\/40:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(var(--sc-zink-700) / 0.4);
-}
-.dark\:hover\:bg-zink-800:hover:where([data-mode="dark"], [data-mode="dark"] *) {
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--sc-zink-800) / var(--tw-bg-opacity, 1));
 }
 .dark\:hover\:bg-zink-800\/30:hover:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(var(--sc-zink-800) / 0.3);

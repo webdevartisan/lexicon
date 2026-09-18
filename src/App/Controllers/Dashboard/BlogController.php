@@ -228,13 +228,14 @@ final class BlogController extends AppController
             'indexable' => 1,
             'timezone' => 'UTC',
             'comments_enabled' => 1,
-            'comments_auto_publish' => 0,
+            'comments_auto_publish' => 1,
             'replies_auto_publish' => 1,
             'workflow_enabled' => 0,
         ];
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'blogUrl' => base_url().'/blog/'.$blog->slug(),
             'settings' => $settings,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
@@ -286,7 +287,7 @@ final class BlogController extends AppController
         $identityChanges = changedFields([
             'blog_name' => $validated['name'] ?? '',
             'description' => $validated['description'] ?? '',
-            'status' => $validated['status'] ?? 'draft',
+            'status' => $validated['status'] ?? $blog->status(),
         ], [
             'blog_name' => $blog->name(),
             'description' => $blog->description(),

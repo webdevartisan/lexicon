@@ -359,7 +359,12 @@
                 "appearance": "Appearance",
                 "seo": "SEO",
                 "discussion": "Discussion & Workflow"
-            }
+            },
+            "address": {
+                "label": "Blog address",
+                "help": "Readers can open this link once the blog is published. The address is fixed after creation."
+            },
+            "visibilityHint": "Visibility takes effect when you save."
         },
         "themes": {
             "pageTitle": "Themes",
