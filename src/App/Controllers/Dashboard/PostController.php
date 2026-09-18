@@ -152,13 +152,13 @@ final class PostController extends AppController
             }
         }
 
-        // Personal surface: only posts living in blogs the user owns. Anything
-        // they wrote on someone else's blog belongs to that blog's shared
-        // context, not here.
+        // Every post in the blogs this user owns, whoever wrote it. The same
+        // scope as the dashboard cards, so the counts match. Posts they wrote on
+        // someone else's blog belong to that blog's shared context, not here.
         $ownedScope = (int) $user['id'];
 
         $result = $this->model->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
+            authorId: null,
             page: $page,
             perPage: $perPage,
             blogId: $blogId,
@@ -180,7 +180,7 @@ final class PostController extends AppController
         // Per-status totals power the filter chip badges (respecting the active
         // category/tag filter so the numbers match what's shown).
         $counts = $this->model->countsByStatusForAuthor(
-            authorId: (int) $user['id'],
+            authorId: null,
             blogId: $blogId,
             searchQuery: $q,
             categoryId: $categoryId,

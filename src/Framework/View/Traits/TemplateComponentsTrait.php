@@ -294,10 +294,12 @@ trait TemplateComponentsTrait
     /**
      * Runtime: Render component by name and attributes.
      *
-     * This method assumes you have a view file at:
-     * - views/components/{name}.php
+     * A component that fails to render fails the page, the same as any other
+     * template error, so a broken card can never leave a list looking empty.
      *
      * @param  array<string, mixed>  $attrs
+     *
+     * @throws \InvalidArgumentException When the name is not a valid component name
      */
     public function renderComponent(string $name, array $attrs = []): string
     {
@@ -305,19 +307,12 @@ trait TemplateComponentsTrait
 
         // should block path traversal and weird names early.
         if (!preg_match('/^[a-z0-9_-]+$/', $name)) {
-            return $this->renderUnknownComponent($name);
+            throw new \InvalidArgumentException("Invalid component name '{$name}'.");
         }
 
         // intentionally do NOT htmlspecialchars() here to avoid double-escaping.
         // Component view files should escape output using $this->e(...).
-        try {
-            return $this->render('components/'.$name.'.lex.php', $attrs);
-        } catch (\Throwable $e) {
-            // should log this so missing components are visible in production logs.
-            error_log("Component render failed: '{$name}' (".$e->getMessage().')');
-
-            return $this->renderUnknownComponent($name);
-        }
+        return $this->render('components/'.$name.'.lex.php', $attrs);
     }
 
     /**
@@ -345,13 +340,5 @@ trait TemplateComponentsTrait
         }
 
         return in_array($v, $allowed, true) ? $v : $default;
-    }
-
-    /**
-     * Unknown component fallback.
-     */
-    private function renderUnknownComponent(string $name): string
-    {
-        return '<!-- Unknown component: '.htmlspecialchars($name, ENT_QUOTES, 'UTF-8').' -->';
     }
 }

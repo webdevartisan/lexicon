@@ -83,7 +83,7 @@
          The Pending tile only renders when this blog uses the editorial pipeline. -->
     <?php $kpiCols = !empty($workflowEnabled) ? 'lg:grid-cols-3 xl:grid-cols-6' : 'lg:grid-cols-5'; ?>
     <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
-        <a href="/dashboard/post?status=published" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+        <a href="/dashboard/post?status=published&amp;blog_id={{ selectedBlogId }}" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.published') }}</span>
@@ -94,7 +94,7 @@
                 <div class="text-2xl font-semibold text-slate-900 dark:text-zink-50">{{ stats.published }}</div>
             </div>
         </a>
-        <a href="/dashboard/post?status=draft" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+        <a href="/dashboard/post?status=draft&amp;blog_id={{ selectedBlogId }}" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.drafts') }}</span>
@@ -106,7 +106,7 @@
             </div>
         </a>
         <?php if (!empty($workflowEnabled)) { ?>
-        <a href="/dashboard/post?status=pending" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+        <a href="/dashboard/post?status=pending&amp;blog_id={{ selectedBlogId }}" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.pending') }}</span>
@@ -118,7 +118,7 @@
             </div>
         </a>
         <?php } ?>
-        <a href="/dashboard/post?status=archived" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+        <a href="/dashboard/post?status=archived&amp;blog_id={{ selectedBlogId }}" class="card hover:border-custom-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide">{{ t('dashboard.stats.archived') }}</span>
@@ -170,7 +170,7 @@
                         {{ t('dashboard.sections.needsAttention') }}
                     </h2>
                     {% if needsAttention|notempty %}
-                    <a href="/dashboard/post?status=draft" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
+                    <a href="/dashboard/post?status=draft&amp;blog_id={{ selectedBlogId }}" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
                     {% endif %}
                 </div>
 
@@ -218,7 +218,7 @@
                         {{ t('dashboard.sections.recent') }}
                     </h2>
                     {% if recent|notempty %}
-                    <a href="/dashboard/post?status=published" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.actions.managePosts') }}</a>
+                    <a href="/dashboard/post?status=published&amp;blog_id={{ selectedBlogId }}" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.actions.managePosts') }}</a>
                     {% endif %}
                 </div>
 
@@ -273,7 +273,7 @@
                             <?php } ?>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-zink-300">
-                            <?= (int) $b['post_count'] ?> posts · <?= e(ucfirst((string) $b['status'])) ?>
+                            <?= (int) $b['published_count'] ?> published · Blog is <?= e((string) $b['status']) ?>
                         </p>
                     </button>
                 </form>

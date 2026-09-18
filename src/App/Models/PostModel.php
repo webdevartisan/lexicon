@@ -1155,7 +1155,7 @@ class PostModel extends AppModel
      * Separates data retrieval from count query for efficiency and clarity.
      * Returns both paginated results and metadata for navigation.
      *
-     * @param  int  $authorId  Author user ID
+     * @param  int|null  $authorId  Author user ID, or null for every author
      * @param  int  $page  Current page number (1-based indexing)
      * @param  int  $perPage  Number of records per page
      * @param  int|null  $blogId  Optional blog ID filter
@@ -1164,7 +1164,7 @@ class PostModel extends AppModel
      * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
      */
     public function findByAuthorWithFiltersPagination(
-        int $authorId,
+        ?int $authorId,
         int $page = 1,
         int $perPage = 10,
         ?int $blogId = null,
@@ -1199,12 +1199,14 @@ class PostModel extends AppModel
 
         // v1 enforces single reviewer per post, so a plain LEFT JOIN is safe (no row multiplication).
         $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
+                       au.handle AS author_handle,
                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
                        pr.reviewer_id AS reviewer_id,
                        pr.assigned_at AS reviewer_assigned_at,
                        ru.handle AS reviewer_handle
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
+                LEFT JOIN users au ON au.id = p.author_id
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN post_reviewers pr ON pr.post_id = p.id
                 LEFT JOIN users ru ON ru.id = pr.reviewer_id
@@ -1489,7 +1491,7 @@ class PostModel extends AppModel
      * @return array<string, int> Keys: all, published, draft, pending, needs_changes, archived
      */
     public function countsByStatusForAuthor(
-        int $authorId,
+        ?int $authorId,
         ?int $blogId = null,
         string $searchQuery = '',
         ?int $categoryId = null,
@@ -1527,14 +1529,64 @@ class PostModel extends AppModel
     /**
      * Run one GROUP BY status query and shape it into the badge-count array.
      *
-     * needs_changes is a workflow_state living on posts of any status, so it
-     * is summed across the groups rather than counted as its own status.
-     *
      * @param  string  $whereClause  Prepared WHERE clause (aliased as p)
      * @param  array<string, mixed>  $params  Bindings for the WHERE clause
      * @return array<string, int>
      */
     private function groupedStatusCounts(string $whereClause, array $params): array
+    {
+        $sql = "SELECT p.status, COUNT(*) AS cnt,
+                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
+                FROM {$this->getTable()} p
+                {$whereClause}
+                GROUP BY p.status";
+
+        return $this->shapeStatusCounts($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC));
+    }
+
+    /**
+     * Per-status totals for several blogs at once, every author included.
+     *
+     * This is the definition of a blog's post counts that the dashboard
+     * cards, the "Your blogs" list and the All Posts badges all read, so the
+     * three can never disagree. Blogs with no posts still get a zeroed entry.
+     *
+     * @param  int[]  $blogIds
+     * @return array<int, array<string, int>> blog id => same keys as countsByStatusForBlog()
+     */
+    public function countsByStatusForBlogs(array $blogIds): array
+    {
+        $blogIds = array_values(array_unique(array_map('intval', $blogIds)));
+        $byBlog = array_fill_keys($blogIds, []);
+
+        if ($blogIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($blogIds), '?'));
+        $sql = "SELECT p.blog_id, p.status, COUNT(*) AS cnt,
+                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
+                FROM {$this->getTable()} p
+                WHERE p.blog_id IN ({$placeholders})
+                GROUP BY p.blog_id, p.status";
+
+        foreach ($this->database->query($sql, $blogIds)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $byBlog[(int) $row['blog_id']][] = $row;
+        }
+
+        return array_map(fn (array $rows): array => $this->shapeStatusCounts($rows), $byBlog);
+    }
+
+    /**
+     * Fold GROUP BY status rows into the badge-count array.
+     *
+     * needs_changes is a workflow_state living on posts of any status, so it
+     * is summed across the groups rather than counted as its own status.
+     *
+     * @param  array<int, array<string, mixed>>  $rows  Rows with status, cnt and needs_changes
+     * @return array<string, int>
+     */
+    private function shapeStatusCounts(array $rows): array
     {
         $counts = [
             'all' => 0,
@@ -1546,13 +1598,7 @@ class PostModel extends AppModel
             'archived' => 0,
         ];
 
-        $sql = "SELECT p.status, COUNT(*) AS cnt,
-                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
-                FROM {$this->getTable()} p
-                {$whereClause}
-                GROUP BY p.status";
-
-        foreach ($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+        foreach ($rows as $row) {
             $status = (string) $row['status'];
             if (isset($counts[$status])) {
                 $counts[$status] = (int) $row['cnt'];
@@ -1758,7 +1804,7 @@ class PostModel extends AppModel
      * @return array{string, array<string, mixed>} Tuple of [WHERE clause, parameters]
      */
     private function buildFilterClauses(
-        int $authorId,
+        ?int $authorId,
         ?int $blogId,
         string $status,
         string $searchQuery,
@@ -1767,8 +1813,13 @@ class PostModel extends AppModel
         string $workflowState = '',
         ?int $blogOwnerId = null
     ): array {
-        $whereClause = 'WHERE p.author_id = :author_id';
-        $params = [':author_id' => $authorId];
+        $whereClause = 'WHERE 1 = 1';
+        $params = [];
+
+        if ($authorId !== null) {
+            $whereClause .= ' AND p.author_id = :author_id';
+            $params[':author_id'] = $authorId;
+        }
 
         // Apply blog filter if provided
         if ($blogId !== null) {

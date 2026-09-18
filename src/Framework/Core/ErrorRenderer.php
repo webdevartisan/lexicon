@@ -30,6 +30,12 @@ final class ErrorRenderer
     {
         [$status, $template] = $this->mapException($e);
 
+        // ErrorHandler logs everything in production. In development a 500 still
+        // needs a trace somewhere when APP_DEBUG hides it from the page.
+        if ($this->isDev && $status >= 500) {
+            error_log($e::class.': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine().PHP_EOL.$e->getTraceAsString());
+        }
+
         $this->response->setStatusCode($status);
         $this->response->addHeader('Content-Type', 'text/html; charset=utf-8');
         $this->response->addHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
