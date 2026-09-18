@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use DOMDocument;
-use DOMElement;
+use RuntimeException;
 
 /**
  * Finds images and embeds in post HTML that load from another site.
@@ -73,15 +73,20 @@ final class ExternalMediaGuard
 
         $document = new DOMDocument();
         $previous = libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="UTF-8"><div>'.$html.'</div>', LIBXML_NONET | LIBXML_HTML_NODEFDTD);
+        // Malformed markup is routine in pasted HTML, so parser warnings are not failures. A parse that
+        // returns nothing is, because an empty document would let every outside source through.
+        $parsed = $document->loadHTML('<?xml encoding="UTF-8"><div>'.$html.'</div>', LIBXML_NONET | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
+
+        if ($parsed === false) {
+            throw new RuntimeException('The post content could not be read to check its images and embeds.');
+        }
 
         $found = [];
 
         foreach (self::LOADING_ATTRIBUTES as $tag => $attributes) {
             foreach ($document->getElementsByTagName($tag) as $element) {
-                assert($element instanceof DOMElement);
                 foreach ($attributes as $attribute) {
                     foreach ($this->urlsIn($attribute, $element->getAttribute($attribute)) as $url) {
                         if (!$this->isFirstParty($url)) {
