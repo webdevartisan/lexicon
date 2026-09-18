@@ -16,6 +16,7 @@ use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
+use App\Services\ExternalMediaGuard;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
 use App\Services\PostAuthorService;
@@ -73,6 +74,7 @@ final class PostController extends AppController
         private PostTranslationModel $translationModel,
         private LocaleRegistry $localeRegistry,
         private PostAuthorService $postAuthors,
+        private ExternalMediaGuard $mediaGuard,
     ) {}
 
     /**
@@ -363,8 +365,14 @@ final class PostController extends AppController
         try {
             $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
         } catch (\InvalidArgumentException $e) {
-            return $this->rejectAuthor($e->getMessage());
+            return $this->rejectField('author_id', $e->getMessage());
         }
+
+        $outside = $this->mediaGuard->newExternalSources((string) $data['content']);
+        if ($outside !== []) {
+            return $this->rejectField('content', $this->mediaGuard->rejectionMessage($outside));
+        }
+
         $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
         [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
@@ -624,8 +632,14 @@ final class PostController extends AppController
         try {
             $authorId = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), $post->authorId());
         } catch (\InvalidArgumentException $e) {
-            return $this->rejectAuthor($e->getMessage());
+            return $this->rejectField('author_id', $e->getMessage());
         }
+
+        $outside = $this->mediaGuard->newExternalSources((string) $newData['content'], $post->content());
+        if ($outside !== []) {
+            return $this->rejectField('content', $this->mediaGuard->rejectionMessage($outside));
+        }
+
         if ($authorId !== $post->authorId()) {
             $data['author_id'] = $authorId;
         }
@@ -807,10 +821,12 @@ final class PostController extends AppController
 
             return $this->json($result, $statusCode);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            error_log('Autosave failed: '.$e->getMessage());
+
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'The server could not save your draft. Your text is still here, so keep the page open and try saving again.',
             ], 500);
         }
     }
@@ -1334,9 +1350,12 @@ final class PostController extends AppController
         ];
     }
 
-    private function rejectAuthor(string $message): Response
+    /**
+     * Send the writer back to the form with one field's problem spelled out.
+     */
+    private function rejectField(string $field, string $message): Response
     {
-        $this->session->set('_errors', ['author_id' => [$message]]);
+        $this->session->set('_errors', [$field => [$message]]);
         $this->flash('error', $message);
 
         return $this->redirectBack();

@@ -19,7 +19,8 @@ final class PostAutosaveService
 {
     public function __construct(
         private PostModel $posts,
-        private UserPreferencesModel $preferences
+        private UserPreferencesModel $preferences,
+        private ExternalMediaGuard $mediaGuard,
     ) {}
 
     /**
@@ -68,6 +69,11 @@ final class PostAutosaveService
             // Don't allow slug changes on autosave
             unset($data['slug']);
 
+            $rejection = $this->outsideMediaRejection((string) ($data['content'] ?? ''), $post->content());
+            if ($rejection !== null) {
+                return $rejection;
+            }
+
             $this->posts->update($postId, $data);
 
         } else {
@@ -76,6 +82,11 @@ final class PostAutosaveService
 
             if (!$defaultBlogId) {
                 return ['success' => false, 'error' => 'No default blog set'];
+            }
+
+            $rejection = $this->outsideMediaRejection((string) ($data['content'] ?? ''), '');
+            if ($rejection !== null) {
+                return $rejection;
             }
 
             $data['blog_id'] = $defaultBlogId;
@@ -92,5 +103,20 @@ final class PostAutosaveService
             'id' => $postId,
             'saved_at' => $dt->format('g:i:s A'),
         ];
+    }
+
+    /**
+     * @return array{success: false, error: string, errors: array<string, string[]>}|null
+     */
+    private function outsideMediaRejection(string $content, string $previous): ?array
+    {
+        $outside = $this->mediaGuard->newExternalSources($content, $previous);
+        if ($outside === []) {
+            return null;
+        }
+
+        $message = $this->mediaGuard->rejectionMessage($outside);
+
+        return ['success' => false, 'error' => $message, 'errors' => ['content' => [$message]]];
     }
 }

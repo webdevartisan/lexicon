@@ -20,8 +20,8 @@ use Tests\Factories\UserFactory;
 use Tests\Helpers\MiddlewareTestHelper;
 
 /**
- * Saving a post whose featured image fails must keep the post, keep the writer
- * on it, and say what went wrong.
+ * Images on a post: a featured image that fails must not throw the post away or
+ * hide the failure, and media from other sites is refused on save.
  */
 beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
@@ -157,4 +157,23 @@ it('refuses an image upload request whose token has expired with a 419 the uploa
 
     expect($response->getStatusCode())->toBe(419)
         ->and(json_decode($response->getBody(), true)['success'])->toBeFalse();
+});
+
+it('refuses a body that adds an image from another site', function () {
+    ($this->save)(['content' => '<p>Hi</p><img src="https://images.example.com/cat.jpg">']);
+
+    $errors = App::container()->get(Session::class)->get('_errors', []);
+
+    expect($this->posts->find($this->postId)['title'])->toBe('Before')
+        ->and($errors['content'][0] ?? '')->toContain('images.example.com');
+});
+
+it('keeps an outside image the post already had and saves the edit', function () {
+    $old = '<p>Old</p><img src="https://images.unsplash.com/photo-1.jpg">';
+    $this->posts->update($this->postId, ['content' => $old]);
+
+    ($this->save)(['content' => $old.'<p>Added a line</p>']);
+
+    expect($this->posts->find($this->postId)['content'])->toContain('Added a line')
+        ->and($this->posts->find($this->postId)['content'])->toContain('images.unsplash.com');
 });
