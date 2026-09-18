@@ -1385,6 +1385,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .w-\[37\.5px\] {
   width: 37.5px;
 }
+.w-auto {
+  width: auto;
+}
 .w-full {
   width: 100%;
 }

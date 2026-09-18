@@ -25,6 +25,9 @@
         onSelect: null,
     };
 
+    // Same field classes as views/components/input and select, so the picker reads as part of the form.
+    var FIELD_CLASS = 'border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
+
     function ensureMount() {
         var el = document.getElementById(MOUNT_ID);
         if (el) return el;
@@ -42,8 +45,8 @@
             + '    </button>'
             + '  </header>'
             + '  <div class="px-4 py-3 border-b border-slate-200 dark:border-zink-500 flex items-center gap-2">'
-            + '    <input type="search" data-picker-q placeholder="Search filename…" class="form-input grow border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">'
-            + '    <select data-picker-sort class="form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500">'
+            + '    <input type="search" data-picker-q placeholder="Search filename…" aria-label="Search images by filename" class="form-input grow ' + FIELD_CLASS + '">'
+            + '    <select data-picker-sort aria-label="Sort images" class="form-select w-auto ' + FIELD_CLASS + '">'
             + '      <option value="newest">Newest</option>'
             + '      <option value="oldest">Oldest</option>'
             + '      <option value="largest">Largest</option>'
@@ -55,7 +58,7 @@
             + '  </div>'
             + '  <div class="flex-1 overflow-y-auto p-4">'
             + '    <div data-picker-grid class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>'
-            + '    <p data-picker-empty class="text-sm text-slate-500 dark:text-zink-300 py-10 text-center hidden">No images yet — use Upload to add one.</p>'
+            + '    <p data-picker-empty class="text-sm text-slate-500 dark:text-zink-300 py-10 text-center hidden">No images yet. Use Upload to add one.</p>'
             + '    <div data-picker-more-wrap class="flex justify-center mt-4 hidden">'
             + '      <button type="button" data-picker-more class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">Load more</button>'
             + '    </div>'
