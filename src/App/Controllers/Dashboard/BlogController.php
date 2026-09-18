@@ -128,10 +128,18 @@ final class BlogController extends AppController
 
         Gate::authorize('create', BlogResource::class, $user);
 
+        // Without JavaScript nothing fills the address in, so build it from the name the same way.
+        if (trim((string) ($this->request->post['slug'] ?? '')) === '') {
+            $this->request->post['slug'] = slugify((string) ($this->request->post['name'] ?? ''));
+        }
+
         $validator = $this->validateOrFail([
             'name' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:blogs,blog_slug',
             'description' => 'max:1000',
+        ], [
+            'slug.required' => 'We could not build a web address from that name. Please type one using letters, numbers and hyphens.',
+            'slug.slug' => 'The address can only use lowercase letters, numbers and single hyphens, with no hyphen at the start or end.',
         ]);
 
         $validated = $validator->validated();

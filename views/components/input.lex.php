@@ -19,7 +19,8 @@ $step = $step ?? null;
 
 $classLabel = 'inline-block mb-2 text-base font-medium';
 $classInput = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 disabled:bg-slate-100 dark:disabled:bg-zink-600 disabled:border-slate-300 dark:disabled:border-zink-500 dark:disabled:text-zink-200 disabled:text-slate-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
-$classInvalid = 'valid:border-green-500 invalid:border-red-500 dark:valid:border-green-800 dark:invalid:border-red-800';
+// A server-side rejection is always red, whatever the browser's own constraint check thinks of the value.
+$classInvalid = '!border-red-500 dark:!border-red-800';
 $classPrefix = 'ltr:rounded-l-none rtl:rounded-r-none flex-1 min-w-0';
 
 if (!empty($name)) {
@@ -79,7 +80,7 @@ $old = old($elementName);
         }  ?>
         <?php if (!empty($errors[$elementName])) { ?>
             aria-invalid="true"
-            aria-describedby="<?= e($elementName) ?>"
+            aria-describedby="<?= e($elementName) ?>_error"
         <?php } ?>
     >
 <?php if (!empty($prefix)) { ?>
@@ -93,9 +94,7 @@ $old = old($elementName);
     <?php } ?>
 
     <?php if (!empty($errors["$elementName"])) { ?>
-        <?php foreach ($errors["$elementName"] as $msg) {  ?>
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400"> <?= $msg ?> </p>
-        <?php }  ?>
+        <p id="<?= e($elementName) ?>_error" data-server-error class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e(implode(' ', (array) $errors[$elementName])) ?></p>
     <?php } ?>
 </div>
 

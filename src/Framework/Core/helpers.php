@@ -168,19 +168,23 @@ function author_byline(?string $name, ?string $handle, ?string $slug, string $cl
 /**
  * Turn a label into a URL-friendly slug.
  *
- * Lowercases, strips accents where possible, and collapses anything that
- * isn't a letter/number into single hyphens.
+ * Lowercases, strips accents, and collapses anything that isn't a letter or
+ * number into single hyphens, so the result always passes the slug rule or is
+ * empty. public/cp-assets/js/slug-field.js does exactly the same in the browser.
  */
 function slugify(string $value): string
 {
-    $value = trim($value);
+    // Letters that do not decompose into a base letter plus an accent.
+    $value = strtr(trim($value), [
+        'ß' => 'ss', 'ẞ' => 'ss', 'æ' => 'ae', 'Æ' => 'ae', 'œ' => 'oe', 'Œ' => 'oe',
+        'ø' => 'o', 'Ø' => 'o', 'đ' => 'd', 'Đ' => 'd', 'ł' => 'l', 'Ł' => 'l', 'þ' => 'th', 'Þ' => 'th',
+    ]);
 
-    // Drop accents when the intl/iconv path is available, otherwise carry on.
-    if (function_exists('iconv')) {
-        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        if ($converted !== false) {
-            $value = $converted;
-        }
+    if (class_exists(\Normalizer::class)) {
+        $value = \Normalizer::normalize($value, \Normalizer::FORM_D) ?: $value;
+        $value = preg_replace('/\p{Mn}+/u', '', $value) ?? $value;
+    } elseif (function_exists('iconv')) {
+        $value = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
     }
 
     $value = strtolower($value);
