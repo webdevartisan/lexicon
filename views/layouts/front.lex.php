@@ -34,12 +34,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#16233f" />
 
-        <link rel="icon" type="image/png" href="/assets/icon/favicon-32x32.png" sizes="32x32" />
-        <link rel="icon" type="image/png" href="/assets/icon/favicon-16x16.png" sizes="16x16" />
-        <link rel="icon" type="image/svg+xml" href="/assets/icon/favicon.svg" />
-        <link rel="shortcut icon" href="/assets/icon/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon/apple-touch-icon.png" />
-        <link rel="manifest" href="/assets/icon/site.webmanifest" />
+        {% include "partials/_favicons.lex.php" %}
 
 		<link rel="canonical" href="{{ head.canonicalUrl }}" />
 
