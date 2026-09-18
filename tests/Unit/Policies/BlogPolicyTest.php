@@ -119,3 +119,11 @@ describe('BlogPolicy::create', function () {
         expect($policy->create(makeUser(1, ['subscriber'])))->toBeFalse();
     });
 });
+
+test('reassigning a post author needs edit_blog_posts', function () {
+    $policy = new BlogPolicy();
+
+    expect($policy->assignPostAuthor(makeUser(1), blogWith(['edit_blog_posts'])))->toBeTrue()
+        ->and($policy->assignPostAuthor(makeUser(1), blogWith(['edit_own_posts', 'create_posts'])))->toBeFalse()
+        ->and($policy->assignPostAuthor(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
+});

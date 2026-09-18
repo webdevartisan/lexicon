@@ -18,6 +18,7 @@ use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
+use App\Services\PostAuthorService;
 use App\Services\PostAutosaveService;
 use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
@@ -71,6 +72,7 @@ final class PostController extends AppController
         private SubscriberNotificationService $subscriberNotifier,
         private PostTranslationModel $translationModel,
         private LocaleRegistry $localeRegistry,
+        private PostAuthorService $postAuthors,
     ) {}
 
     /**
@@ -302,7 +304,7 @@ final class PostController extends AppController
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
             'actions' => PostActionPresenter::for('draft', $blogRole, $workflowEnabled),
-        ]);
+        ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
     /**
@@ -357,7 +359,12 @@ final class PostController extends AppController
         );
 
         $data['blog_id'] = $blog->id();
-        $data['author_id'] = $user['id'];
+
+        try {
+            $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
+        } catch (\InvalidArgumentException $e) {
+            return $this->rejectAuthor($e->getMessage());
+        }
         $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
         [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
@@ -482,6 +489,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(
                 $status,
                 $blogRole,
@@ -612,6 +620,15 @@ final class PostController extends AppController
         }
 
         $blog = $post->blog();
+
+        try {
+            $authorId = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), $post->authorId());
+        } catch (\InvalidArgumentException $e) {
+            return $this->rejectAuthor($e->getMessage());
+        }
+        if ($authorId !== $post->authorId()) {
+            $data['author_id'] = $authorId;
+        }
 
         [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
         if ($featuredImagePath) {
@@ -1295,6 +1312,34 @@ final class PostController extends AppController
 
             return [null, 'The server could not store it. Please try again.'];
         }
+    }
+
+    /**
+     * What the author field needs: the choices when the user may reassign, the
+     * current author's handle either way.
+     *
+     * @param  array<string, mixed>  $user
+     * @return array{canAssignAuthor: bool, authorOptions: array<int, string>, authorId: int, authorHandle: string}
+     */
+    private function authorFieldData(\App\Resources\BlogResource $blog, array $user, int $authorId): array
+    {
+        $candidates = $this->postAuthors->candidates($blog);
+        $canAssign = Gate::allows('assignPostAuthor', $blog, $user);
+
+        return [
+            'canAssignAuthor' => $canAssign,
+            'authorOptions' => $canAssign ? $candidates : [],
+            'authorId' => $authorId,
+            'authorHandle' => $candidates[$authorId] ?? (string) ($this->model->author($authorId)['handle'] ?? ''),
+        ];
+    }
+
+    private function rejectAuthor(string $message): Response
+    {
+        $this->session->set('_errors', ['author_id' => [$message]]);
+        $this->flash('error', $message);
+
+        return $this->redirectBack();
     }
 
     /**

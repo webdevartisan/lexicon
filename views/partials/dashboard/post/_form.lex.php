@@ -13,7 +13,6 @@ $postStatus = ($post['status'] ?? 'draft');
 $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 ?>
     <input type="hidden" name="_method" value="PUT">
-    <input type="hidden" name="author_id" value="<?= e($currentUser['id'] ?? $post['author_id'] ?? '') ?>">
     {{ csrf_field() }}
 
     {% include "partials/dashboard/post/_action_bar.lex.php" %}
@@ -154,6 +153,22 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
         <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
           <div class="space-y-4 p-4">
             <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Post settings</h3>
+
+            <?php if (!empty($canAssignAuthor)) { ?>
+              <?php
+              $authorChoices = [];
+              foreach ($authorOptions as $candidateId => $candidateHandle) {
+                  $authorChoices[$candidateId] = '@'.$candidateHandle;
+              }
+              $selectedAuthor = (string) (old('author_id') ?? $authorId ?? '');
+              ?>
+              {% cmp="select" name="author_id" label="Author" options="{$authorChoices}" selectedKey="{$selectedAuthor}" underlabel="Anyone on this blog's team who can write posts." %}
+            <?php } elseif (!empty($authorHandle)) { ?>
+            <div>
+              <p class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Author</p>
+              <p class="text-sm text-slate-700 dark:text-zink-100">@<?= e($authorHandle) ?></p>
+            </div>
+            <?php } ?>
 
             <?php if ($showScheduling) { ?>
             <div>

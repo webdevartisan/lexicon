@@ -7,6 +7,8 @@ $selectedKey = $selectedKey ?? '';
 $groups = $groups ?? [];
 $onchange = $onchange ?? '';
 $emptyDefault = $emptyDefault ?? false;
+$underlabel = $underlabel ?? '';
+$fieldErrors = errors()[$name] ?? [];
 
 if (!empty($name)) {
     $elementName = str_replace(' ', '_', strtolower($name));
@@ -45,6 +47,9 @@ if (!is_assoc($options)) {
         class="<?= $classSelect ?>" 
         id="<?= $elementName ?>" 
         name="<?= $elementName ?>"
+        <?php if ($fieldErrors !== []) { ?>
+            aria-invalid="true" aria-describedby="<?= e($elementName) ?>_error"
+        <?php } ?>
         <?php if (!empty($onchange)) { ?>
             data-auto-submit
         <?php } ?>
@@ -54,11 +59,17 @@ if (!is_assoc($options)) {
         <?php } ?>
 
         <?php foreach ($options as $key => $lbl) { ?>
-            <option value="<?= $key ?>" <?= $selectedKey == $key ? 'selected' : ''; ?>><?= $lbl ?></option>
+            <option value="<?= e((string) $key) ?>" <?= (string) $selectedKey === (string) $key ? 'selected' : ''; ?>><?= e((string) $lbl) ?></option>
         <?php } ?>
     </select>
     
     <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zink-300"> ▼ </span>
+    <?php if ($underlabel !== '') { ?>
+        <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300"><?= e($underlabel) ?></p>
+    <?php } ?>
+    <?php if ($fieldErrors !== []) { ?>
+        <p id="<?= e($elementName) ?>_error" class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e(implode(' ', (array) $fieldErrors)) ?></p>
+    <?php } ?>
 </div>
 
 <?php } else { ?>
