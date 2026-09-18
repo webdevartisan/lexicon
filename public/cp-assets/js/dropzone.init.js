@@ -11,6 +11,65 @@
         if (DEBUG) console.log.apply(console, arguments);
     }
 
+    function csrfToken() {
+        var input = document.querySelector('input[name="_token"]');
+        if (input && input.value) return input.value;
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function refreshToken() {
+        return fetch('/csrf-token', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(j) {
+                if (!j || !j.token) return;
+                document.querySelectorAll('input[name="_token"]').forEach(function(input) { input.value = j.token; });
+            })
+            .catch(function(err) { console.error('Could not refresh the security token:', err); });
+    }
+
+    function describeFailure(label, errorMessage, xhr) {
+        var what = 'Failed to upload ' + label.toLowerCase() + ': ';
+        var status = xhr ? xhr.status : 0;
+        var serverSays = errorMessage && typeof errorMessage === 'object' ? errorMessage.error : null;
+
+        if (status === 419) {
+            return what + 'the security token had expired. It has been renewed, so please save again to retry.';
+        }
+        if (status === 0 && xhr) {
+            return what + 'the connection dropped before the upload finished. Please try again.';
+        }
+        if (status >= 500) {
+            return what + 'the server could not store it. Please try again.';
+        }
+        if (serverSays) {
+            return what + serverSays;
+        }
+
+        return what + (typeof errorMessage === 'string' ? errorMessage : 'unknown error.');
+    }
+
+    function showCardError(dz, message) {
+        var card = dz.element.closest('[data-dropzone-card]');
+        var box = card && card.querySelector('[data-dropzone-error]');
+        if (!box) return;
+        box.textContent = message;
+        box.hidden = message === '';
+    }
+
+    function requeueFailedFiles(dz) {
+        dz.files.forEach(function(file) {
+            if (file.status !== Dropzone.ERROR) return;
+            file.status = Dropzone.ADDED;
+            if (file.previewElement) {
+                file.previewElement.classList.remove('dz-error');
+                var msg = file.previewElement.querySelector('[data-dz-errormessage]');
+                if (msg) msg.textContent = '';
+            }
+            dz.enqueueFile(file);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         Dropzone.autoDiscover = false;
 
@@ -140,6 +199,11 @@
             var dropzone = new Dropzone(element, {
                 url: uploadUrl,
                 method: "post",
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
                 previewTemplate: previewTemplate,
                 previewsContainer: "#" + previewId,
                 autoProcessQueue: false,
@@ -151,25 +215,45 @@
             
             dropzone.uploadedFiles = [];
             dropzone.fieldName = fieldName;
-            
+            dropzone.failure = null;
+
+            var card = element.closest('[data-dropzone-card]');
+            var label = card && card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : 'image';
+
+            // A token passed at construction goes stale once it is refreshed after a 419.
+            dropzone.on("sending", function(file, xhr) {
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken());
+            });
+
             dropzone.on("success", function(file, response) {
-                if (response.success && response.data.filename) {
+                if (response && response.success && response.data && response.data.filename) {
                     dropzone.uploadedFiles.push(response.data.filename);
-                    log("✅ Uploaded:", response.data.filename);
+                    return;
+                }
+                dropzone.failure = 'Failed to upload ' + label.toLowerCase() + ': the server sent an unexpected reply. Please try again.';
+            });
+
+            dropzone.on("error", function(file, errorMessage, xhr) {
+                dropzone.failure = describeFailure(label, errorMessage, xhr);
+                if (xhr && xhr.status === 419) {
+                    refreshToken();
                 }
             });
-            
-            dropzone.on("error", function(file, errorMessage) {
-                console.error("Upload failed:", errorMessage);
-            });
-            
+
             dropzone.on("queuecomplete", function() {
                 completedDropzones.add(fieldName);
-                log("📊", completedDropzones.size, "/", dropzones.length, "complete");
-                
-                if (completedDropzones.size === dropzones.length && !formSubmitted) {
-                    submitForm();
+
+                if (completedDropzones.size !== dropzones.length || formSubmitted) {
+                    return;
                 }
+
+                var failed = dropzones.filter(function(dz) { return dz.failure; });
+                if (failed.length > 0) {
+                    stopSubmission(failed);
+                    return;
+                }
+
+                submitForm();
             });
             
             return dropzone;
@@ -188,6 +272,13 @@
             }
 
             if (formSubmitted) return false;
+
+            completedDropzones.clear();
+            dropzones.forEach(function(dz) {
+                dz.failure = null;
+                showCardError(dz, '');
+                requeueFailedFiles(dz);
+            });
 
             var dropzonesToProcess = dropzones.filter(function(dz) {
                 return dz.getQueuedFiles().length > 0;
@@ -211,6 +302,15 @@
             
             return false;
         }, true);
+
+        function stopSubmission(failed) {
+            failed.forEach(function(dz) { showCardError(dz, dz.failure); });
+
+            var first = failed[0].element.closest('[data-dropzone-card]');
+            if (first) {
+                first.scrollIntoView({ block: 'center' });
+            }
+        }
 
         function submitForm() {
             if (formSubmitted) return;

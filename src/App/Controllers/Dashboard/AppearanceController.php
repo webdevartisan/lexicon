@@ -304,7 +304,7 @@ final class AppearanceController extends AppController
             try {
                 $path = $this->uploader->moveTempToBranding(
                     $fileName,
-                    $ownerId,
+                    $userId,
                     $blogId,
                     $type,
                     $dir,

@@ -122,6 +122,9 @@ $maxSizeText = $maxsize >= 1
                 </li>
             </ul>
 
+            <p data-dropzone-error role="alert" hidden
+               class="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"></p>
+
             {% if path|notempty %}
                 <?php $dataAction = 'cancel-change'; ?>
                 {% cmp="btn" type="button" variant="slate" icon="x" label="{$cancelBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}

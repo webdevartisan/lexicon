@@ -81,7 +81,7 @@ final class MediaService
 
         $path = $this->uploads->moveTempToBranding(
             $tempFilename,
-            $blog->ownerId(),
+            $uploaderId,
             $blog->id(),
             'featured_image',
             $dir,
@@ -592,11 +592,22 @@ final class MediaService
      */
     private function urlToDiskPath(string $url): ?string
     {
-        $url = ltrim($url, '/');
-        if (!str_starts_with($url, 'uploads/')) {
+        if (!$this->isLocalUploadUrl($url)) {
             return null;
         }
 
-        return $url;
+        return ltrim($url, '/');
+    }
+
+    /**
+     * Whether a URL points at a file this site stored under /uploads.
+     *
+     * Anything else, an external address in particular, is refused wherever a
+     * library pick is accepted, since the Content-Security-Policy would block it.
+     */
+    public function isLocalUploadUrl(string $url): bool
+    {
+        return preg_match('#^/uploads/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*/)*[A-Za-z0-9_-][A-Za-z0-9._-]*$#', $url) === 1
+            && !str_contains($url, '..');
     }
 }

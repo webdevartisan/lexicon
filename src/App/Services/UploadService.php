@@ -272,11 +272,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function moveTempToPageThumbnail(string $tempFilename, int $userId): string
     {
-        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
-
-        if (!file_exists($tempPath)) {
-            throw new InvalidArgumentException("Temporary file not found: $tempFilename");
-        }
+        $tempPath = $this->tempFilePath($tempFilename, $userId);
 
         $ext = strtolower(pathinfo($tempFilename, PATHINFO_EXTENSION));
         $hash = substr(sha1_file($tempPath), 0, 12);
@@ -408,15 +404,15 @@ final class UploadService implements UploadServiceInterface
      * Generates content-based hash and applies semantic prefix (banner, logo, favicon).
      * Example output: /uploads/users/32/blogs/25/branding/banner-db56fa563064.webp
      *
-     * @param  string  $tempFilename  Filename in temp directory
-     * @param  int  $userId  User ID
+     * @param  string  $tempFilename  Filename in temp directory, as the browser reported it
+     * @param  int  $userId  The user who uploaded the temp file (whose temp folder holds it)
      * @param  int  $blogId  Blog ID
      * @param  string  $prefix  Semantic prefix: 'banner', 'logo', or 'favicon'
      * @param  string  $dir  Target directory path
      * @param  string  $baseUrl  Target URL base
      * @return string Public URL of moved file
      *
-     * @throws InvalidArgumentException If temp file not found
+     * @throws InvalidArgumentException If the filename is not a temp image name or the file is gone
      * @throws RuntimeException If copy operation fails
      */
     public function moveTempToBranding(
@@ -427,11 +423,7 @@ final class UploadService implements UploadServiceInterface
         string $dir,
         string $baseUrl
     ): string {
-        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
-
-        if (!file_exists($tempPath)) {
-            throw new InvalidArgumentException("Temporary file not found: $tempFilename");
-        }
+        $tempPath = $this->tempFilePath($tempFilename, $userId);
 
         $ext = strtolower(pathinfo($tempFilename, PATHINFO_EXTENSION));
 
@@ -624,5 +616,28 @@ final class UploadService implements UploadServiceInterface
         if (!rmdir($dir)) {
             throw new RuntimeException("Could not delete directory {$dir}.");
         }
+    }
+
+    /**
+     * Resolve a browser-supplied temp filename to its file in the uploader's temp folder.
+     *
+     * The name comes from the posted form, so anything other than a bare image
+     * filename is refused. Otherwise "../../.env" would be copied into a public folder.
+     *
+     * @throws InvalidArgumentException If the name is not a temp image name or the file is gone
+     */
+    private function tempFilePath(string $tempFilename, int $userId): string
+    {
+        if (preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*\.(jpe?g|png|webp)$/i', $tempFilename) !== 1) {
+            throw new InvalidArgumentException('That upload reference is not valid. Please upload the image again.');
+        }
+
+        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
+
+        if (!file_exists($tempPath)) {
+            throw new InvalidArgumentException('The uploaded image has expired. Please upload it again.');
+        }
+
+        return $tempPath;
     }
 }

@@ -360,8 +360,7 @@ final class PostController extends AppController
         $data['author_id'] = $user['id'];
         $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
-        // Handle featured image upload
-        $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
+        [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
         if ($featuredImagePath) {
             $data['featured_image'] = $featuredImagePath;
         }
@@ -384,6 +383,10 @@ final class PostController extends AppController
                 ['title' => $data['title'], 'status' => $data['status']],
                 $this->request->ip()
             );
+
+            if ($imageFailure !== null) {
+                return $this->redirectAfterImageFailure($postId, $imageFailure);
+            }
 
             $this->flash('success', 'Post saved.');
 
@@ -610,24 +613,14 @@ final class PostController extends AppController
 
         $blog = $post->blog();
 
-        // Handle featured image upload
-        $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
+        [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
         if ($featuredImagePath) {
             $data['featured_image'] = $featuredImagePath;
         }
 
-        // Handle explicit featured image removal
-        if (($this->request->post['remove_featured_image'] ?? '0') === '1') {
+        // The file stays in the media library, only the post lets go of it.
+        if (($this->request->post['remove_featured_image'] ?? '0') === '1' && !$featuredImagePath) {
             $data['featured_image'] = null;
-
-            // Delete physical file
-            $oldImagePath = $post->toArray()['featured_image'] ?? null;
-            if ($oldImagePath) {
-                $fullPath = ROOT_PATH.'/public'.$oldImagePath;
-                if (file_exists($fullPath)) {
-                    @unlink($fullPath);
-                }
-            }
         }
 
         // Set published_at when transitioning to published
@@ -696,6 +689,10 @@ final class PostController extends AppController
             }
         }
 
+        if ($imageFailure !== null) {
+            return $this->redirectAfterImageFailure((int) $id, $imageFailure);
+        }
+
         $return = $this->consumeReturnToken(
             $this->request->postParam('r'),
             '/dashboard/post',
@@ -703,9 +700,6 @@ final class PostController extends AppController
         );
 
         return $this->redirect($return);
-        // return $this->redirect("/dashboard/post/{$id}/edit");
-        // return $this->redirect("/dashboard/post");
-        // return $this->redirect($return);
     }
 
     /**
@@ -1263,11 +1257,12 @@ final class PostController extends AppController
      */
     private function handleFeaturedImageUpload(int $userId, \App\Resources\BlogResource $blog): ?string
     {
-        // If the user picked from the media library, prefer that.
         $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
         if ($picked !== '') {
-            // Make sure brand-new picks (e.g. someone pasted a URL by hand)
-            // end up in the library.
+            if (!$this->mediaService->isLocalUploadUrl($picked)) {
+                throw new \InvalidArgumentException('Featured images must come from your media library or an upload, not an outside address.');
+            }
+
             $this->mediaService->register((int) $blog->id(), $userId, $picked, 'post_image');
 
             return $picked;
@@ -1277,19 +1272,42 @@ final class PostController extends AppController
             $this->request->post['uploaded_featured_image_files'] ?? []
         );
 
-        // Take first file only
         if (empty($uploadedFiles[0])) {
             return null;
         }
 
-        try {
-            return $this->mediaService->storeFeaturedImage($uploadedFiles[0], $blog, $userId);
-        } catch (\Throwable $e) {
-            error_log("Featured image upload failed for blog {$blog->id()}: ".$e->getMessage());
-            $this->flash('error', 'Featured image upload failed: '.$e->getMessage());
+        return $this->mediaService->storeFeaturedImage((string) $uploadedFiles[0], $blog, $userId);
+    }
 
-            return null;
+    /**
+     * Store the featured image without letting a failure throw away the post.
+     *
+     * @return array{0: string|null, 1: string|null} [stored path, reason it failed]
+     */
+    private function storeFeaturedImageSafely(int $userId, \App\Resources\BlogResource $blog): array
+    {
+        try {
+            return [$this->handleFeaturedImageUpload($userId, $blog), null];
+        } catch (\InvalidArgumentException $e) {
+            return [null, $e->getMessage()];
+        } catch (\Throwable $e) {
+            error_log("Featured image failed for blog {$blog->id()}: ".$e->getMessage());
+
+            return [null, 'The server could not store it. Please try again.'];
         }
+    }
+
+    /**
+     * Keep the writer on the post when its featured image did not save, saying why.
+     */
+    private function redirectAfterImageFailure(int $postId, string $reason): Response
+    {
+        $this->flash('error', 'Post saved, but the featured image could not be added. '.$reason);
+
+        $returnToken = (string) ($this->request->postParam('r') ?? '');
+        $query = $returnToken !== '' ? '?r='.rawurlencode($returnToken) : '';
+
+        return $this->redirect("/dashboard/post/{$postId}/edit{$query}");
     }
 
     /**
