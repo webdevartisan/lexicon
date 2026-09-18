@@ -163,7 +163,7 @@ tinymce.init({
       });
     });
 
-    // Custom toolbar button — opens the per-blog Media Library picker
+    // Custom toolbar button that opens the per-blog Media Library picker
     // and inserts the chosen image at the cursor.
     editor.ui.registry.addButton('medialibrary', {
       icon: 'gallery',

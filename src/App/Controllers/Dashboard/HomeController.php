@@ -149,9 +149,8 @@ class HomeController extends AppController
 
         $user = auth()->user();
 
-        // Missing field used to fatal on an undefined index. The owner check
-        // below already covers authorization, this just stops a malformed
-        // post returning a 500.
+        // The owner check below covers authorization. The default only stops a
+        // malformed post from failing on a missing field.
         $selectedBlogId = (int) ($this->request->post['blog'] ?? 0);
 
         // Default-blog is the OWNER workspace context.

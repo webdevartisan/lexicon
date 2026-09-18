@@ -699,7 +699,6 @@ final class PostController extends AppController
 
         // Auto-trigger review pipeline when author moves status to pending,
         // or re-triggers when resubmitting after needs_changes.
-        // Replaces the old standalone "Submit for Review" button.
         $currentWorkflowState = $post->workflowState();
         $shouldSubmit = $newStatus === 'pending'
             && (
@@ -1418,8 +1417,8 @@ final class PostController extends AppController
      * enforces who may publish.
      *
      * The whitelist lives here rather than in the validation rules because a
-     * form can be submitted with no submitter at all — pressing Enter in a
-     * text field does it — and that should quietly mean "just save", not
+     * form can be submitted with no submitter at all (pressing Enter in a
+     * text field does it), and that should quietly mean "just save", not
      * reject the whole post.
      *
      * @param  string  $currentStatus  Status the post holds today

@@ -31,7 +31,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             </span>
 
         <?php
-        // Reviewer chip — only meaningful while a post is in the review pipeline.
+        // The reviewer chip only means something while a post is in the review pipeline.
         if ($status === 'pending') {
             if (!empty($post['reviewer_handle'])) {
                 $claimedAgo = !empty($post['reviewer_assigned_at'])

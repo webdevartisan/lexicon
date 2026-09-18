@@ -122,7 +122,7 @@
 
     // Cache-bust the thumbnail with the row's updated_at so an image edited in place
     // (same URL, new bytes) shows the processed version instead of the browser's cache.
-    // The picked value stays the clean URL — only the preview <img> is versioned.
+    // The picked value stays the clean URL. Only the preview <img> is versioned.
     function versioned(url, item) {
         var stamp = item.updated_at || item.created_at || '';
         if (!stamp) return url;

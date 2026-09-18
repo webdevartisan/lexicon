@@ -51,7 +51,7 @@ final class PostTranslationController extends AppController
         ], true);
 
         // Explicit path: the dispatcher lowercases route controller names, so
-        // inference would look in "Posttranslation/" — wrong on case-sensitive filesystems.
+        // inference would look in "Posttranslation/", which breaks on case-sensitive filesystems.
         return $this->view('areas/dashboard/PostTranslation/edit.lex.php', [
             'post' => $post->toArray(),
             'blog' => $blog,
@@ -143,8 +143,8 @@ final class PostTranslationController extends AppController
     /**
      * Resolve post + blog, authorize, and reject invalid locales.
      *
-     * The blog's default locale is not translatable — that content lives on
-     * the base post — and blogs without the feature enabled have no
+     * The blog's default locale is not translatable (that content lives on
+     * the base post), and blogs without the feature enabled have no
      * translation surface at all.
      *
      * @return array{0: PostResource, 1: array<string, mixed>, 2: array<string, mixed>}

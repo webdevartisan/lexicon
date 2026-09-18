@@ -100,9 +100,8 @@ final class UploadService implements UploadServiceInterface
         $safeBase = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $baseName) ?: 'file';
         $filename = $safeBase.'-'.$hash.'.'.$ext;
 
-        // Confirm this is a genuine HTTP upload before we read it. move_uploaded_file()
-        // used to enforce this for us; now that we process the file in place we check it
-        // ourselves so a caller cannot point us at an arbitrary server path.
+        // The file is processed in place rather than through move_uploaded_file(), so
+        // check it is a genuine HTTP upload or a caller could point us at any server path.
         if (!is_uploaded_file($file['tmp_name'])) {
             throw new InvalidArgumentException('Upload error.');
         }

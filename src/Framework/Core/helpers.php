@@ -101,7 +101,7 @@ function truncate(string $string, int $limit = 50): string
  *
  * Returns the escaped name alone when no slug is given, so private profiles
  * and guest commenters degrade to plain text instead of a dead link. The
- * return value is already escaped — echo it raw, never through e().
+ * return value is already escaped, so echo it raw, never through e().
  *
  * @param  string|null  $name  Display name to render
  * @param  string|null  $slug  Public profile slug, or null when unavailable
@@ -131,7 +131,7 @@ function profile_link(?string $name, ?string $slug, string $class = ''): string
  *
  * Both parts sit inside one anchor, so tabbing a byline hits one link.
  *
- * The return value is already escaped — echo it raw, never through e().
+ * The return value is already escaped, so echo it raw, never through e().
  *
  * @param  string|null  $name  Display name, already resolved for the viewer
  * @param  string|null  $handle  The @tag, without its leading @

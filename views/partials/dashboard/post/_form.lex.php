@@ -89,7 +89,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
       <aside class="w-full shrink-0 space-y-4 lg:sticky lg:top-[calc(theme('spacing.header')_+_5rem)] lg:w-72 lg:self-start">
 
-        <!-- Reviewer feedback — shown to the author when a reviewer has requested changes -->
+        <!-- Reviewer feedback, shown to the author when a reviewer has requested changes -->
         <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
         <section class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
             <div class="flex items-center gap-2 border-b border-amber-200 p-4 dark:border-amber-500/30">

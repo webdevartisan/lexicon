@@ -13,7 +13,7 @@ use Tests\Factories\UserFactory;
 
 /**
  * Blog settings: new blogs publish comments instantly, visibility is saved from the
- * action bar, and the address is shown but no longer editable.
+ * action bar, and the address is shown read only.
  */
 beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
