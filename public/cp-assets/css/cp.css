@@ -1053,6 +1053,10 @@ input[type=range]:focus::-webkit-slider-thumb {
   margin-left: auto;
   margin-right: auto;
 }
+.my-1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
 .my-1\.5 {
   margin-top: 0.375rem;
   margin-bottom: 0.375rem;
@@ -1366,6 +1370,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .w-40 {
   width: 10rem;
+}
+.w-48 {
+  width: 12rem;
 }
 .w-5 {
   width: 1.25rem;
@@ -3307,9 +3314,17 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-bg-opacity: 1;
   background-color: rgb(234 88 12 / var(--tw-bg-opacity, 1));
 }
+.focus\:bg-red-50:focus {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 242 242 / var(--tw-bg-opacity, 1));
+}
 .focus\:bg-red-600:focus {
   --tw-bg-opacity: 1;
   background-color: rgb(220 38 38 / var(--tw-bg-opacity, 1));
+}
+.focus\:bg-slate-100:focus {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
 }
 .focus\:bg-slate-300:focus {
   --tw-bg-opacity: 1;
@@ -4978,6 +4993,13 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .dark\:focus\:bg-custom-500\/10:focus:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(var(--sc-custom-500) / 0.1);
+}
+.dark\:focus\:bg-red-500\/10:focus:where([data-mode="dark"], [data-mode="dark"] *) {
+  background-color: rgb(239 68 68 / 0.1);
+}
+.dark\:focus\:bg-zink-600:focus:where([data-mode="dark"], [data-mode="dark"] *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--sc-zink-600) / var(--tw-bg-opacity, 1));
 }
 .dark\:focus\:text-custom-500:focus:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-text-opacity: 1;

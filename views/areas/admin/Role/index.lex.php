@@ -64,11 +64,15 @@ foreach ($roles as $r) {
                             <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($role['users_count'] ?? 0) ?></td>
                             <td class="px-3.5 py-2.5">
                                 <div class="flex items-center justify-end gap-1">
-                                    {% cmp="icon-action" href="{$showUrl}" icon="shield" tip="Manage permissions" %}
-                                    {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit role" %}
-                                    <?php if (!$isSystem) { ?>
-                                    {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete role" danger %}
-                                    <?php } ?>
+                                    <?php
+                                    $rowTitle = (string) $role['role_name'];
+                                    $rowActions = [
+                                        ['label' => 'Manage permissions', 'icon' => 'shield', 'href' => $showUrl],
+                                        ['label' => 'Edit role', 'icon' => 'pencil', 'href' => $editUrl],
+                                        ['label' => 'Delete role', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true, 'can' => !$isSystem],
+                                    ];
+                                    ?>
+                                    {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                                 </div>
                             </td>
                         </tr>

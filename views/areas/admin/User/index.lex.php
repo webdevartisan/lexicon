@@ -104,8 +104,14 @@ echo $bits === [] ? '<span class="text-slate-400 dark:text-zink-400">—</span>'
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($user['created_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit user" %}
-                                {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete user" danger %}
+                                <?php
+                                $rowTitle = '@'.$user['handle'];
+                                $rowActions = [
+                                    ['label' => 'Edit user', 'icon' => 'pencil', 'href' => $editUrl],
+                                    ['label' => 'Delete user', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true, 'can' => (int) $user['id'] !== (int) auth()->user()['id']],
+                                ];
+                                ?>
+                                {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                             </div>
                         </td>
                     </tr>
