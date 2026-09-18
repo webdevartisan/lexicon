@@ -1041,10 +1041,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 .m-0 {
   margin: 0px;
 }
-.-mx-4 {
-  margin-left: -1rem;
-  margin-right: -1rem;
-}
 .mx-0\.5 {
   margin-left: 0.125rem;
   margin-right: 0.125rem;
@@ -3790,10 +3786,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   .max-lg\:z-40 {
     z-index: 40;
   }
-  .max-lg\:mx-0 {
-    margin-left: 0px;
-    margin-right: 0px;
-  }
   .max-lg\:mb-0 {
     margin-bottom: 0px;
   }
@@ -3822,9 +3814,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
   .max-lg\:border-b-0 {
     border-bottom-width: 0px;
-  }
-  .max-lg\:border-t {
-    border-top-width: 1px;
   }
   .max-lg\:p-3 {
     padding: 0.75rem;

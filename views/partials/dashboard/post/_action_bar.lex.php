@@ -32,10 +32,10 @@ $primaryClass = $primary['variant'] === 'green'
 ?>
 <div
   data-post-actionbar
-  class="sticky top-header z-30 -mx-4 mb-4 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur
+  class="sticky top-header z-30 mb-4 rounded-lg border border-slate-200 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur
          dark:border-zink-600 dark:bg-zink-700/95
-         max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:z-40 max-lg:mx-0 max-lg:mb-0
-         max-lg:border-b-0 max-lg:border-t max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]
+         max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:z-40 max-lg:mb-0 max-lg:rounded-none
+         max-lg:border-x-0 max-lg:border-b-0 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]
          max-lg:pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
   <div class="flex items-center gap-2">
 
