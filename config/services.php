@@ -799,7 +799,6 @@ $container->setShared(App\Services\UploadService::class, function ($c) {
 $container->setShared(App\Services\PostAutosaveService::class, function ($c) {
     return new App\Services\PostAutosaveService(
         $c->get(App\Models\PostModel::class),
-        $c->get(App\Models\UserPreferencesModel::class),
         $c->get(App\Services\ExternalMediaGuard::class)
     );
 });

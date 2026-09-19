@@ -129,7 +129,7 @@
         }
         
         // Regular text/textarea fields
-        const fieldsToSave = ['title', 'slug', 'content', 'excerpt', 'published_at', 'timezone'];
+        const fieldsToSave = ['blog_id', 'title', 'slug', 'content', 'excerpt', 'published_at', 'timezone'];
         
         fieldsToSave.forEach(fieldName => {
             const field = form.querySelector(`[name="${fieldName}"]`);
@@ -163,7 +163,9 @@
             
             const clonedRes = res.clone();
             
-            if (!res.ok && res.status !== 422) {
+            const isJson = (res.headers.get('Content-Type') || '').includes('application/json');
+
+            if (!res.ok && res.status !== 422 && !isJson) {
                 return clonedRes.text().then(html => {
                     console.error('❌ Server returned error:');
                     console.error('Status:', res.status);
@@ -184,13 +186,23 @@
             log('Response data:', data);
             
             if (data.success) {
-                showSaveIndicator('Auto-saved at ' + data.saved_at, 'success');
                 clearFieldErrors();
+                if (data.errors) {
+                    showFieldErrors(data.errors);
+                    showSaveIndicator('Auto-saved at ' + data.saved_at + ', except the fields marked in red', 'error');
+                } else {
+                    showSaveIndicator('Auto-saved at ' + data.saved_at, 'success');
+                }
                 
                 if (data.id && !postId) {
                     const newAction = form.action.replace('/create', '/' + data.id + '/update');
                     form.action = newAction;
                     log('Form action updated to:', newAction);
+
+                    const slugField = form.querySelector('[name="slug"]');
+                    if (slugField && data.slug) {
+                        slugField.dispatchEvent(new CustomEvent('slug:saved', { detail: { slug: data.slug } }));
+                    }
                 }
             } else {
                 console.error('Not Saved:', data.error);

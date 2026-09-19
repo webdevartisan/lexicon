@@ -190,11 +190,9 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                 data-enable-time=""
                 readonly="readonly"
                 placeholder="Publish immediately">
-                {% if errors.published_at|notempty %}
-                    {% foreach ($errors['published_at'] as $msg): %}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ msg }}</p>
-                    {% endforeach %}
-                {% endif %}
+                <?php foreach (errors()['published_at'] ?? [] as $dateError) { ?>
+                  <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($dateError) ?></p>
+                <?php } ?>
               <div class="mt-1.5 flex items-start justify-between gap-2">
                 <p data-schedule-hint class="text-[11px] leading-relaxed text-slate-500 dark:text-zink-400">
                   Leave empty to go live as soon as you publish.

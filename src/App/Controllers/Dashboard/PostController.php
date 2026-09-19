@@ -6,6 +6,7 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Gate;
+use App\Helpers\TimezoneHelper;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
@@ -334,7 +335,7 @@ final class PostController extends AppController
             'content' => 'required|max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'datetime:d.m.y H:i',
+            'published_at' => 'max:20',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
 
@@ -344,11 +345,12 @@ final class PostController extends AppController
 
         // Convert published_at to UTC before resolving the intent, because
         // whether the date is in the future decides publish versus schedule.
-        if (!empty($data['timezone']) && !empty($data['published_at'])) {
-            $data['published_at'] = $this->normalizePublishedAt(
-                $data['published_at'],
-                $data['timezone']
-            );
+        if (!empty($data['published_at'])) {
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            if ($utc === null) {
+                return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
+            }
+            $data['published_at'] = $utc;
         } else {
             unset($data['published_at']);
         }
@@ -361,9 +363,9 @@ final class PostController extends AppController
         );
 
         $data['blog_id'] = $blog->id();
+        $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
 
         try {
-        $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
             $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
         } catch (\InvalidArgumentException $e) {
             return $this->rejectField('author_id', $e->getMessage());
@@ -559,7 +561,7 @@ final class PostController extends AppController
             'content' => 'required|max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'datetime:d.m.y H:i',
+            'published_at' => 'max:20',
             'remove_featured_image' => 'boolean',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
@@ -572,10 +574,11 @@ final class PostController extends AppController
 
         // Normalize published_at to UTC for comparison
         if (!empty($newData['published_at'])) {
-            $newData['published_at'] = $this->normalizePublishedAt(
-                $newData['published_at'],
-                $timezone
-            );
+            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $timezone);
+            if ($utc === null) {
+                return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
+            }
+            $newData['published_at'] = $utc;
         }
 
         // Build original data for comparison
@@ -784,23 +787,18 @@ final class PostController extends AppController
             return $this->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
-        $slugRule = 'slug|min:2|max:100|unique:posts,slug';
-        if (!empty($this->request->post['id'])) {
-            $slugRule .= ','.(int) $this->request->post['id'];
-        }
-
         try {
             $validator = $this->validator($this->request->post);
             $validator->rules([
                 'id' => 'integer',
                 'title' => 'required|title|min:2|max:100',
-                'slug' => $slugRule,
+                'slug' => 'slug|min:2|max:100',
                 // No status rule: autosave never sends one, and the "in" rule
                 // rejects an absent value rather than skipping it.
                 'content' => 'required|max:60000',
                 'excerpt' => 'max:300',
                 'timezone' => 'timezone',
-                'published_at' => 'datetime:d.m.y H:i',
+                'published_at' => 'max:20',
             ]);
 
             if ($validator->fails()) {
@@ -814,8 +812,17 @@ final class PostController extends AppController
             $validated = $validator->validated();
             $postId = !empty($validated['id']) ? (int) $validated['id'] : null;
 
-            // Delegate to service
-            $result = $this->autosaveService->save($validated, (int) $user['id'], $postId);
+            $blogId = null;
+            if ($postId === null) {
+                $blogId = (int) ($this->request->post['blog_id'] ?? 0)
+                    ?: (int) ($this->preference->getDefaultBlogId((int) $user['id']) ?? 0);
+                $blog = $blogId > 0 ? $this->blogModel->getBlog($blogId) : null;
+                if (!$blog || !Gate::allows('createPost', $blog, $user)) {
+                    return $this->json(['success' => false, 'error' => 'You cannot write in this blog.'], 403);
+                }
+            }
+
+            $result = $this->autosaveService->save($validated, (int) $user['id'], $postId, $blogId);
 
             $statusCode = $result['success'] ? 200 : 400;
 
@@ -1355,6 +1362,9 @@ final class PostController extends AppController
      */
     private function rejectField(string $field, string $message): Response
     {
+        $oldInput = $this->request->all();
+        unset($oldInput['_token']);
+        $this->session->set('_old_input', $oldInput);
         $this->session->set('_errors', [$field => [$message]]);
         $this->flash('error', $message);
 
@@ -1438,38 +1448,5 @@ final class PostController extends AppController
             && strtotime($publishedAtUtc.' UTC') > time();
 
         return PostActionPresenter::statusForIntent($intent, $currentStatus, $hasFutureDate);
-    }
-
-    /**
-     * Normalize published_at datetime to UTC database format.
-     *
-     * Convert user-inputted datetime (in their timezone) to UTC for database storage.
-     * Ensures accurate change detection when comparing old and new data.
-     *
-     * @param  string  $publishedAt  Datetime in format 'd.m.y H:i'
-     * @param  string  $timezone  User's timezone (e.g., 'Europe/Athens')
-     * @return string Normalized datetime in UTC 'Y-m-d H:i:s'
-     */
-    private function normalizePublishedAt(string $publishedAt, string $timezone): string
-    {
-        try {
-            $userTz = new DateTimeZone($timezone);
-            $dt = DateTime::createFromFormat('d.m.y H:i', $publishedAt, $userTz);
-
-            if ($dt === false) {
-                error_log("Failed to parse published_at: {$publishedAt}");
-
-                return $publishedAt;
-            }
-
-            $dt->setTimezone(new DateTimeZone('UTC'));
-
-            return $dt->format('Y-m-d H:i:s');
-
-        } catch (\Exception $e) {
-            error_log('Timezone conversion error: '.$e->getMessage());
-
-            return $publishedAt;
-        }
     }
 }
