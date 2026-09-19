@@ -49,3 +49,9 @@ test('data action and target are escaped', function () {
     expect($html)->not->toContain('"><script>')
         ->and($html)->toContain('data-target="a&quot;b"');
 });
+
+test('a button that opens a modal names it for the modal script', function () {
+    $html = renderButton(['label' => 'Clear log', 'dataModalTarget' => 'clearLogModal']);
+
+    expect($html)->toContain('data-modal-target="clearLogModal"');
+});

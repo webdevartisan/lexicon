@@ -45,6 +45,9 @@ $class = $variants[$variant] ?? $variants['slate'];
           <?php if ($dataTarget) { ?>
             data-target="<?= e($dataTarget) ?>"
           <?php } ?>
+          <?php if ($dataModalTarget) { ?>
+            data-modal-target="<?= e($dataModalTarget) ?>"
+          <?php } ?>
           <?= $dataBtn ?><?= $extraAttributes ?>
 
           <?php if ($name) { ?>
