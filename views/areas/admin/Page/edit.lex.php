@@ -69,7 +69,7 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
 
 {% block scripts %}
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
-<script src="/cp-assets/js/dropzone.init.js"></script>
+<script src="/cp-assets/js/dropzone.init.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/dropzone.init.js') ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 (function () {
     var isDark = localStorage.getItem('data-mode') === 'dark';

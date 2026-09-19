@@ -200,7 +200,6 @@
                 url: uploadUrl,
                 method: "post",
                 headers: {
-                    'X-CSRF-TOKEN': csrfToken(),
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
@@ -220,7 +219,6 @@
             var card = element.closest('[data-dropzone-card]');
             var label = card && card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : 'image';
 
-            // A token passed at construction goes stale once it is refreshed after a 419.
             dropzone.on("sending", function(file, xhr) {
                 xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken());
             });

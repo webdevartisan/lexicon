@@ -65,16 +65,16 @@ $maxSizeText = $maxsize >= 1
             </div>
             {% endif %}
             
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <?php $dataAction = 'change-image'; ?>
-                {% cmp="btn" type="button" variant="slate" icon="refresh-cw" label="{$changeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
+                {% cmp="btn" type="button" variant="slate" icon="refresh-cw" label="{$changeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" addClass="flex-1" %}
                 
                 <?php $dataAction = 'remove-image'; ?>
-                {% cmp="btn" type="button" variant="slate" icon="trash-2" label="{$removeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" %}
+                {% cmp="btn" type="button" variant="slate" icon="trash-2" label="{$removeBtnLabel}" dataAction="{$dataAction}" dataTarget="{$elementName}" addClass="flex-1" %}
 
                 <?php if (!empty($library) && !empty($path)) { ?>
                 <?php $editHref = lurl('/dashboard/blog/'.$library.'/media').'?editUrl='.rawurlencode($path); ?>
-                {% cmp="btn" href="{$editHref}" variant="slate" icon="sliders-horizontal" label="Edit / optimize" %}
+                {% cmp="btn" href="{$editHref}" variant="slate" icon="sliders-horizontal" label="Edit / optimize" addClass="w-full" %}
                 <?php } ?>
             </div>
         </div>
