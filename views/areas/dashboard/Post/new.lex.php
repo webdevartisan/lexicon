@@ -34,11 +34,11 @@
 <script src="/cp-assets/js/autosave.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/autosave.js') ?>"></script>
 <script src="/cp-assets/js/pages/post.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/pages/post.js') ?>"></script>
 <script src="/cp-assets/js/media-picker.js"></script>
-<script src="/cp-assets/js/slug-field.js"></script>
+<script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
 
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
-    SlugField.bind({ source: 'title', target: 'slug', min: 2, max: 100 });
+    SlugField.bind({ source: 'title', target: 'slug', min: 2, max: 100, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=post&blog_id=<?= (int) ($blog['id'] ?? 0) ?>' });
 
     const excerptField = document.getElementById('excerpt');
 

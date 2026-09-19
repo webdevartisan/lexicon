@@ -279,6 +279,40 @@ class PostModel extends AppModel
     }
 
     /**
+     * The address a post will actually get in its blog: the one asked for when it is
+     * free, otherwise the first free numbered variant (hello, hello-2, hello-3...).
+     *
+     * @param  int  $blogId  Blog the post belongs to
+     * @param  string  $slug  Requested, already valid slug
+     * @param  int|null  $exceptId  The post itself, so its own address never counts as taken
+     * @param  int  $maxLength  Longest slug the column and validator accept
+     * @return string A slug no other post in the blog uses
+     */
+    public function availableSlug(int $blogId, string $slug, ?int $exceptId = null, int $maxLength = 100): string
+    {
+        $sql = "SELECT slug FROM {$this->getTable()}
+                WHERE blog_id = :blog_id AND id <> :except_id AND (slug = :slug OR slug LIKE :pattern)";
+        $taken = array_flip(array_column($this->database->query($sql, [
+            ':blog_id' => $blogId,
+            ':except_id' => $exceptId ?? 0,
+            ':slug' => $slug,
+            ':pattern' => $slug.'-%',
+        ])->fetchAll(), 'slug'));
+
+        if (!isset($taken[$slug])) {
+            return $slug;
+        }
+
+        for ($n = 2; ; $n++) {
+            $suffix = '-'.$n;
+            $candidate = rtrim(substr($slug, 0, $maxLength - strlen($suffix)), '-').$suffix;
+            if (!isset($taken[$candidate])) {
+                return $candidate;
+            }
+        }
+    }
+
+    /**
      * Get the author (User) of a post.
      *
      * @param  int  $userId  User ID

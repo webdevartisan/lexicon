@@ -330,7 +330,7 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
-            'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
+            'slug' => 'required|slug|min:2|max:100',
             'content' => 'required|max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
@@ -363,6 +363,7 @@ final class PostController extends AppController
         $data['blog_id'] = $blog->id();
 
         try {
+        $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
             $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
         } catch (\InvalidArgumentException $e) {
             return $this->rejectField('author_id', $e->getMessage());

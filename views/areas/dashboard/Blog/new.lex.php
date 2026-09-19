@@ -79,10 +79,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/slug-field.js"></script>
+<script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener('DOMContentLoaded', function () {
-    SlugField.bind({ source: 'name', target: 'slug', min: 2, max: 50 });
+    SlugField.bind({ source: 'name', target: 'slug', min: 2, max: 50, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=blog' });
   });
 </script>
 {% endblock %}
