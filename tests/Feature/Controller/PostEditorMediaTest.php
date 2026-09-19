@@ -177,3 +177,11 @@ it('keeps an outside image the post already had and saves the edit', function ()
     expect($this->posts->find($this->postId)['content'])->toContain('Added a line')
         ->and($this->posts->find($this->postId)['content'])->toContain('images.unsplash.com');
 });
+
+it('saves a post whose excerpt was left empty and clears the old one', function () {
+    $response = ($this->save)(['excerpt' => '']);
+
+    expect($response->getHeader('Location'))->not->toContain('/edit')
+        ->and(flashedErrors())->toBeEmpty()
+        ->and((string) $this->posts->find($this->postId)['excerpt'])->toBe('');
+});

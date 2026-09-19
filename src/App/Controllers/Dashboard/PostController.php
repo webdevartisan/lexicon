@@ -332,7 +332,7 @@ final class PostController extends AppController
             'title' => 'required|title|min:2|max:100',
             'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
             'content' => 'required|max:60000',
-            'excerpt' => 'required|max:300',
+            'excerpt' => 'max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
             'comments_enabled' => 'boolean',
@@ -556,7 +556,7 @@ final class PostController extends AppController
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
             'content' => 'required|max:60000',
-            'excerpt' => 'required|max:300',
+            'excerpt' => 'max:300',
             'timezone' => 'timezone',
             'published_at' => 'datetime:d.m.y H:i',
             'remove_featured_image' => 'boolean',
@@ -797,7 +797,7 @@ final class PostController extends AppController
                 // No status rule: autosave never sends one, and the "in" rule
                 // rejects an absent value rather than skipping it.
                 'content' => 'required|max:60000',
-                'excerpt' => 'required|max:300',
+                'excerpt' => 'max:300',
                 'timezone' => 'timezone',
                 'published_at' => 'datetime:d.m.y H:i',
             ]);

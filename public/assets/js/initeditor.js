@@ -137,6 +137,7 @@ tinymce.init({
   setup: function (editor) {
     editor.on('change', function () {
       tinymce.triggerSave();
+      if (window.refreshPostPreviews) window.refreshPostPreviews();
     });
 
     // Paste and the image dialog both route through the parser, so this catches

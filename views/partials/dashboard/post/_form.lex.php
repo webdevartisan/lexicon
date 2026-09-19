@@ -77,7 +77,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             </div>
 
             <?php $excerpt = old('excerpt') ?? $post['excerpt'] ?? ''; ?>
-            {% cmp="input" type="textarea" label="excerpt" value="{$excerpt}" rows="4" placeholder="Optional short summary used in listings and meta description when not set explicitly." %}
+            {% cmp="input" type="textarea" label="excerpt" value="{$excerpt}" rows="4" placeholder="Optional. Leave it empty and listings and search results use the opening of the post." %}
 
           </div>
         </section>

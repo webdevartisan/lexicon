@@ -62,7 +62,7 @@ trait ListsEngagedPosts
         // came from the request is bound.
         $items = $this->database
             ->query(
-                "SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at,
+                "SELECT p.id, p.title, p.slug, p.excerpt, LEFT(p.content, 1000) AS content, p.featured_image, p.published_at,
                         b.id AS blog_id, b.blog_name, b.blog_slug,
                         e.created_at AS engaged_at
                  {$from}

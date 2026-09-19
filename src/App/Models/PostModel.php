@@ -423,7 +423,7 @@ class PostModel extends AppModel
         $inClause = implode(',', $placeholders);
         $params[':limit'] = $limit;
 
-        $sql = "SELECT id, blog_id, slug, title, excerpt, featured_image, visibility, published_at
+        $sql = "SELECT id, blog_id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image, visibility, published_at
                 FROM posts
                 WHERE author_id = :author_id
                 AND status = 'published'
@@ -556,7 +556,7 @@ class PostModel extends AppModel
      */
     public function findRecentByAuthorExcludingSlug(int $authorId, string $excludeSlug, int $limit = 4): array
     {
-        $sql = "SELECT id, slug, title, excerpt, featured_image AS cover_url, published_at
+        $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
                 FROM {$this->getTable()}
                 WHERE author_id = :author_id
                 AND status = 'published'
@@ -585,7 +585,7 @@ class PostModel extends AppModel
         $cacheKey = 'post-related:'.$blogId.':'.$excludeSlug.':'.$limit;
 
         $loadRelated = function () use ($blogId, $excludeSlug, $limit): array {
-            $sql = "SELECT id, slug, title, excerpt, featured_image AS cover_url, published_at
+            $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
                     FROM {$this->getTable()}
                     WHERE blog_id = :blog_id
                     AND status = 'published'

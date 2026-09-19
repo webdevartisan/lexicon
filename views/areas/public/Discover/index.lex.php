@@ -14,10 +14,7 @@
                 {% foreach ($items as $post): %}
                 <?php
                 $postUrl = lurl('/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']));
-                $rawExcerpt = ($post['excerpt'] ?? '') !== '' && $post['excerpt'] !== null
-                    ? $post['excerpt']
-                    : ($post['content'] ?? '');
-                $excerpt = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $rawExcerpt)));
+                $excerpt = post_excerpt($post);
                 $hasImage = !empty($post['featured_image']);
                 ?>
                 <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
@@ -37,7 +34,7 @@
                         </p>
                         <h3><a href="<?= e($postUrl) ?>">{{ post.title }}</a></h3>
                         {% if excerpt %}
-                            <p class="lx-gallery-excerpt"><?= e(truncate($excerpt, 160)) ?></p>
+                            <p class="lx-gallery-excerpt"><?= e($excerpt) ?></p>
                         {% endif %}
                     </div>
                 </article>

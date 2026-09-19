@@ -97,6 +97,37 @@ function truncate(string $string, int $limit = 50): string
 }
 
 /**
+ * The summary a listing shows for a post: the writer's own excerpt, or the start of
+ * the content when none was written. Plain text, so escape it like any other string.
+ *
+ * @param  array<string, mixed>  $post  Post row with excerpt and, ideally, content
+ * @param  int  $limit  Maximum length in characters before the ellipsis
+ * @return string Plain text summary, empty only when the post has no text at all
+ */
+function post_excerpt(array $post, int $limit = 160): string
+{
+    $source = trim((string) ($post['excerpt'] ?? ''));
+    if ($source === '') {
+        $source = (string) ($post['content'] ?? '');
+    }
+    // Tags are spaced out first so adjacent paragraphs do not run their words together.
+    $source = strip_tags(str_replace('<', ' <', $source));
+
+    $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($source, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+    if (mb_strlen($text) <= $limit) {
+        return $text;
+    }
+
+    $cut = mb_substr($text, 0, $limit);
+    $lastSpace = mb_strrpos($cut, ' ');
+    if ($lastSpace !== false && $lastSpace > $limit * 0.6) {
+        $cut = mb_substr($cut, 0, $lastSpace);
+    }
+
+    return rtrim($cut, ' ,;:.-').'…';
+}
+
+/**
  * Render an author name, linked to their public profile when they have one.
  *
  * Returns the escaped name alone when no slug is given, so private profiles
@@ -184,7 +215,7 @@ function slugify(string $value): string
         $value = \Normalizer::normalize($value, \Normalizer::FORM_D) ?: $value;
         $value = preg_replace('/\p{Mn}+/u', '', $value) ?? $value;
     } elseif (function_exists('iconv')) {
-        $value = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
+        $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
     }
 
     $value = strtolower($value);

@@ -120,7 +120,7 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
           <?= e($post['meta_title'] ?? $post['title'] ?? 'Your post title will appear here') ?>
         </div>
         <div id="seo_preview_desc" class="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-600 dark:text-zink-300">
-          <?= e($post['meta_description'] ?? $post['excerpt'] ?? 'Your meta description or excerpt will appear here in search results...') ?>
+          <?= e(($post['meta_description'] ?? '') ?: (post_excerpt($post ?? []) ?: 'Your meta description or excerpt will appear here in search results...')) ?>
         </div>
       </div>
       <p class="mt-2 text-[11px] text-slate-400 dark:text-zink-400">

@@ -72,11 +72,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             </a>
         </h6>
         <p class="text-slate-500 dark:text-zink-200 line-clamp-3 text-sm flex-1">
-            <?php if (!empty($post['excerpt'])) { ?>
-              <?= e(truncate($post['excerpt'], 120)) ?>
-            <?php } elseif (!empty($post['content'])) { ?>
-              <?= e(truncate(strip_tags($post['content']), 120)) ?>
-            <?php } ?>
+            <?= e(post_excerpt($post, 120)) ?>
         </p>
 
         <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-[11px] text-slate-500 dark:text-zink-300">
