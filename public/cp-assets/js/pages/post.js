@@ -183,7 +183,7 @@ function initSocialTabs() {
  */
 function initScheduleAwareness() {
   const dateField = document.getElementById('published_at');
-  const primary = document.querySelector('[data-post-primary-action]');
+  const primary = document.querySelector('[data-actionbar-primary]');
   const hint = document.querySelector('[data-schedule-hint]');
   const clearBtn = document.querySelector('[data-clear-schedule]');
   if (!dateField) return;
@@ -232,20 +232,6 @@ function initScheduleAwareness() {
   refresh();
 }
 
-/** Close the overflow menu on outside click and on Escape. */
-function initActionMenu() {
-  const menu = document.querySelector('[data-post-menu]');
-  if (!menu) return;
-
-  document.addEventListener('click', (e) => {
-    if (!menu.contains(e.target)) menu.open = false;
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') menu.open = false;
-  });
-}
-
 function initCanonicalFill() {
   const button = document.querySelector('[data-canonical-fill]');
   const field = document.getElementById('canonical_url');
@@ -282,7 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSocialTabs();
   initScheduleAwareness();
-  initActionMenu();
   initCanonicalFill();
 
   updateSeoPreview();

@@ -12,6 +12,7 @@ use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Presenters\BlogActionPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
 use App\Services\WorkflowService;
@@ -236,6 +237,8 @@ final class BlogController extends AppController
         return $this->view([
             'blog' => $blog->toArray(),
             'blogUrl' => base_url().'/blog/'.$blog->slug(),
+            'actions' => BlogActionPresenter::for($blog->status()),
+            'backUrl' => '/dashboard',
             'settings' => $settings,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
@@ -261,7 +264,6 @@ final class BlogController extends AppController
 
         $rules = [
             'name' => 'required|title|min:2|max:50',
-            'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
             'locale' => 'max:10',
             'timezone' => 'max:100',
@@ -278,7 +280,6 @@ final class BlogController extends AppController
         $validator = $this->validateOrFail($rules, [
             'name.required' => 'Blog name is required.',
             'name.title' => 'Blog name contains invalid characters.',
-            'status.in' => 'Invalid status value.',
         ]);
 
         $validated = $validator->validated();
@@ -287,7 +288,7 @@ final class BlogController extends AppController
         $identityChanges = changedFields([
             'blog_name' => $validated['name'] ?? '',
             'description' => $validated['description'] ?? '',
-            'status' => $validated['status'] ?? $blog->status(),
+            'status' => BlogActionPresenter::statusForIntent($this->request->postParam('intent'), $blog->status()),
         ], [
             'blog_name' => $blog->name(),
             'description' => $blog->description(),

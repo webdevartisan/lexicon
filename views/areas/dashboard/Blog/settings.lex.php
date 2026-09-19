@@ -9,11 +9,6 @@
 {% endblock %}
 
 {% block body %}
-<?php
-$blogStatus = in_array($blog['status'] ?? '', ['draft', 'published', 'archived'], true) ? $blog['status'] : 'draft';
-$backUrl = '/dashboard';
-?>
-
 {% set nameLabel = t('blog.form.fields.name.label') %}
 {% set namePlaceholder = t('blog.form.fields.name.placeholder') %}
 {% set descLabel = t('blog.form.fields.description.label') %}
@@ -54,7 +49,7 @@ $backUrl = '/dashboard';
     <input type="hidden" name="active_section" id="active_section" value="general">
     {{ csrf_field() }}
 
-    {% include "partials/dashboard/blog/_settings_action_bar.lex.php" %}
+    {% include "partials/dashboard/_action_bar.lex.php" %}
 
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
       <div class="p-4 md:p-5">

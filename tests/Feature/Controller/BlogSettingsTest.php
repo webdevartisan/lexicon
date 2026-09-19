@@ -12,8 +12,8 @@ use Framework\Security\Csrf;
 use Tests\Factories\UserFactory;
 
 /**
- * Blog settings: new blogs publish comments instantly, visibility is saved from the
- * action bar, and the address is shown read only.
+ * Blog settings: new blogs publish comments instantly, status changes come from the
+ * shared action bar, and the address is shown read only.
  */
 beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
@@ -89,20 +89,20 @@ it('still honours an explicit choice to hold comments for review', function () {
     expect((int) $this->settings->findByBlogId((int) $blog['id'])['comments_auto_publish'])->toBe(0);
 });
 
-it('saves the visibility chosen in the action bar', function () {
+it('publishes the blog from the action bar', function () {
     $blog = ($this->newBlog)();
 
-    ($this->save)($blog, ['status' => 'published']);
+    ($this->save)($blog, ['intent' => 'publish']);
 
     $saved = $this->blogs->find((int) $blog['id']);
     expect($saved['status'])->toBe('published')
         ->and($saved['published_at'])->not->toBeNull();
 });
 
-it('refuses an unknown visibility and leaves the blog as it was', function () {
+it('ignores an unknown intent and leaves the blog as it was', function () {
     $blog = ($this->newBlog)();
 
-    ($this->save)($blog, ['status' => 'deleted']);
+    ($this->save)($blog, ['intent' => 'delete_everything', 'status' => 'published']);
 
     expect($this->blogs->find((int) $blog['id'])['status'])->toBe('draft');
 });
@@ -142,10 +142,28 @@ it('shows the blog address and no editable slug', function () {
     $captured = $viewer->data;
 
     $view = file_get_contents(ROOT_PATH.'/views/areas/dashboard/Blog/settings.lex.php');
-    $bar = file_get_contents(ROOT_PATH.'/views/partials/dashboard/blog/_settings_action_bar.lex.php');
 
     expect($captured['blogUrl'])->toBe(base_url().'/blog/'.$blog['blog_slug'])
         ->and($view)->not->toContain('name="slug"')
-        ->and($view)->not->toContain('name="status"')
-        ->and($bar)->toContain('name="status"');
+        ->and($view)->toContain('partials/dashboard/_action_bar.lex.php')
+        ->and($captured['actions']['primary']['intent'])->toBe('publish');
+});
+
+it('keeps the status when the form is submitted without a button', function () {
+    $blog = ($this->newBlog)();
+    ($this->save)($blog, ['intent' => 'publish']);
+
+    ($this->save)($blog, []);
+
+    expect($this->blogs->find((int) $blog['id'])['status'])->toBe('published');
+});
+
+it('archives and brings back a blog through its intents', function () {
+    $blog = ($this->newBlog)();
+
+    ($this->save)($blog, ['intent' => 'archive']);
+    expect($this->blogs->find((int) $blog['id'])['status'])->toBe('archived');
+
+    ($this->save)($blog, ['intent' => 'save_draft']);
+    expect($this->blogs->find((int) $blog['id'])['status'])->toBe('draft');
 });

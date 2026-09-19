@@ -15,7 +15,8 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     <input type="hidden" name="_method" value="PUT">
     {{ csrf_field() }}
 
-    {% include "partials/dashboard/post/_action_bar.lex.php" %}
+    <?php $showAutosave = true; ?>
+    {% include "partials/dashboard/_action_bar.lex.php" %}
 
     <?php /* Most fields render no inline error, so a rejected save used to say only "correct the errors". */ ?>
     <?php if (!empty($errors)) { ?>

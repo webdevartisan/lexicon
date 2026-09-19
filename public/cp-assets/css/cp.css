@@ -3852,19 +3852,6 @@ input[type=range]:focus::-webkit-slider-thumb {
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
   }
 }
-@media not all and (min-width: 768px) {
-  .max-md\:sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-}
 @media not all and (min-width: 640px) {
   .max-sm\:sr-only {
     position: absolute;
@@ -3876,9 +3863,6 @@ input[type=range]:focus::-webkit-slider-thumb {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
-  }
-  .max-sm\:hidden {
-    display: none;
   }
   .max-sm\:w-11 {
     width: 2.75rem;
