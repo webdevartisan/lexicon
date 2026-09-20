@@ -20,6 +20,7 @@ final class PostAutosaveService
     public function __construct(
         private PostModel $posts,
         private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
     ) {}
 
     /**
@@ -33,6 +34,10 @@ final class PostAutosaveService
      */
     public function save(array $data, int $userId, ?int $postId = null, ?int $blogId = null): array
     {
+        if (isset($data['content'])) {
+            $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
+        }
+
         // A date that cannot be read is left out and reported, and the rest of the draft still saves.
         $fieldErrors = [];
         if (!empty($data['published_at'])) {

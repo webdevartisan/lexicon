@@ -13,6 +13,7 @@ use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PrivacyPruneCommand;
 use App\Console\Commands\ProcessDueErasuresCommand;
 use App\Console\Commands\PublishDuePostsCommand;
+use App\Console\Commands\SanitizePostContentCommand;
 use App\Console\Commands\SchedulePruneRunsCommand;
 use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
@@ -58,6 +59,9 @@ class Kernel extends ConsoleKernel
 
             // Promotes scheduled posts once published_at arrives; run every minute
             'posts:publish-due' => PublishDuePostsCommand::class,
+
+            // Runs stored post bodies through the content sanitizer; reports unless --apply
+            'posts:sanitize-content' => SanitizePostContentCommand::class,
 
             // Delivers queued email at a paced rate, scheduled from the panel
             'mail:queue-work' => MailQueueWorkCommand::class,

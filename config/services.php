@@ -736,6 +736,10 @@ $container->setShared(App\Services\ExternalMediaGuard::class, function ($c) {
     return new App\Services\ExternalMediaGuard((string) base_url());
 });
 
+$container->setShared(App\Services\PostContentSanitizer::class, function ($c) {
+    return new App\Services\PostContentSanitizer();
+});
+
 $container->setShared(App\Services\LogFileService::class, function ($c) {
     return new App\Services\LogFileService(ROOT_PATH.'/storage/logs');
 });
@@ -799,7 +803,8 @@ $container->setShared(App\Services\UploadService::class, function ($c) {
 $container->setShared(App\Services\PostAutosaveService::class, function ($c) {
     return new App\Services\PostAutosaveService(
         $c->get(App\Models\PostModel::class),
-        $c->get(App\Services\ExternalMediaGuard::class)
+        $c->get(App\Services\ExternalMediaGuard::class),
+        $c->get(App\Services\PostContentSanitizer::class)
     );
 });
 

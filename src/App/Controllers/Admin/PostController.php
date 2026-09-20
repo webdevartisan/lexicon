@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Services\ExternalMediaGuard;
+use App\Services\PostContentSanitizer;
 use App\Services\MediaService;
 use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\TableSort;
@@ -32,6 +33,7 @@ class PostController extends AppController
         protected Database $database,
         private PublicCacheInvalidator $publicCache,
         private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
         private MediaService $media,
     ) {}
 
@@ -309,7 +311,7 @@ class PostController extends AppController
      */
     private function validatePostInput(): array
     {
-        return $this->validateOrFail([
+        $input = $this->validateOrFail([
             'title' => 'required|min:3|max:200',
             'slug' => 'max:220',
             'content' => 'required',
@@ -318,6 +320,10 @@ class PostController extends AppController
             'status' => 'required|in:draft,published,archived',
             'blog_id' => 'required|integer|exists:blogs,id',
         ])->validated();
+
+        $input['content'] = $this->contentSanitizer->clean((string) $input['content']);
+
+        return $input;
     }
 
     /**

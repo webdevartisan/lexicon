@@ -11,6 +11,7 @@ use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Resources\PostResource;
 use App\Services\ExternalMediaGuard;
+use App\Services\PostContentSanitizer;
 use App\Services\LocaleRegistry;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -30,6 +31,7 @@ final class PostTranslationController extends AppController
         private BlogSettingsModel $blogSettings,
         private LocaleRegistry $localeRegistry,
         private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
     ) {}
 
     /**
@@ -81,6 +83,7 @@ final class PostTranslationController extends AppController
             'excerpt' => 'max:300',
         ]);
         $data = $validator->validated();
+        $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
 
         $previous = (string) ($this->translations->findOne((int) $post->id(), $locale)['content'] ?? '');
         $outside = $this->mediaGuard->newExternalSources((string) $data['content'], $previous);

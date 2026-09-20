@@ -18,6 +18,7 @@ use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
 use App\Services\ExternalMediaGuard;
+use App\Services\PostContentSanitizer;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
 use App\Services\PostAuthorService;
@@ -76,6 +77,7 @@ final class PostController extends AppController
         private LocaleRegistry $localeRegistry,
         private PostAuthorService $postAuthors,
         private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
     ) {}
 
     /**
@@ -340,6 +342,7 @@ final class PostController extends AppController
         ] + self::SEO_RULES);
 
         $data = $validator->validated();
+        $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
         $data['comments_enabled'] = !empty($data['comments_enabled']) ? 1 : 0;
         $data = $this->normalizeSeoFields($data);
 
@@ -567,6 +570,7 @@ final class PostController extends AppController
         ] + self::SEO_RULES);
 
         $newData = $validator->validated();
+        $newData['content'] = $this->contentSanitizer->clean((string) $newData['content']);
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
         $newData = $this->normalizeSeoFields($newData);
 
