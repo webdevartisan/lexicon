@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\AccountSuspendedException;
 use Tests\Helpers\AuthTestHelper;
 
 it('authenticates with valid credentials using mocked dependencies', function () {
@@ -220,3 +221,52 @@ it('clears session on logout and user is no longer authenticated', function () {
     // Verify user is no longer authenticated
     expect($mocks['auth']->check())->toBeFalse();
 });
+
+it('refuses a suspended account even with the right password', function () {
+    $mocks = AuthTestHelper::createMockedAuth();
+    $email = $this->faker->email();
+    $password = $this->faker->password(12);
+
+    $mocks['userModel']
+        ->shouldReceive('findByEmail')
+        ->once()
+        ->with($email)
+        ->andReturn(AuthTestHelper::mockUserData([
+            'email' => $email,
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'is_active' => 0,
+        ]));
+
+    $mocks['session']->shouldNotReceive('regenerate');
+    $mocks['session']->shouldNotReceive('set');
+    $mocks['userModel']->shouldNotReceive('updateById');
+
+    $mocks['auth']->login($email, $password);
+})->throws(AccountSuspendedException::class);
+
+it('ends the session of an account suspended or deleted after it signed in', function (array $state) {
+    $mocks = AuthTestHelper::createMockedAuth();
+
+    $mocks['session']
+        ->shouldReceive('get')
+        ->with('user_id')
+        ->andReturn(7);
+
+    $mocks['userModel']
+        ->shouldReceive('find')
+        ->once()
+        ->with(7)
+        ->andReturn(AuthTestHelper::mockUserData(['id' => 7] + $state));
+
+    $mocks['session']
+        ->shouldReceive('remove')
+        ->once()
+        ->with('user_id');
+
+    $mocks['userModel']->shouldNotReceive('getUserRoles');
+
+    expect($mocks['auth']->user())->toBeNull();
+})->with([
+    'suspended' => [['is_active' => 0]],
+    'deleted' => [['deleted_at' => '2026-09-01 10:00:00']],
+]);
