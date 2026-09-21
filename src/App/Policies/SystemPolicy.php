@@ -173,6 +173,44 @@ class SystemPolicy implements PolicyInterface
     }
 
     /**
+     * Grant or revoke system roles. Administrators only.
+     *
+     * manage_all_users can be delegated, and administrator is itself a system
+     * role, so letting that permission edit roles would let a delegate make
+     * themselves an administrator.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function assignSystemRoles(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
+     * Sign in as another account. Administrators only, never delegated: this
+     * is account takeover by design, so it stays with the top tier.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function impersonateUsers(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
+     * Suspend, delete, reset the password of, or edit an administrator.
+     *
+     * A delegate with manage_all_users may manage ordinary accounts, but must
+     * not be able to lock out or take over the people above them.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function actOnAdministrators(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
      * Manage the response and compiled view caches (view stats, prune, clear).
      *
      * @param  array<string, mixed>  $user  Authenticated user record

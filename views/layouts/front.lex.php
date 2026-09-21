@@ -69,6 +69,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 	</head>
 
 	<body>
+{% include "partials/_impersonation_banner.lex.php" %}
 
         <a class="lx-skip" href="#main"><?= e($t('a11y.skipToContent')) ?></a>
 

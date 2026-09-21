@@ -45,6 +45,7 @@
   {% yield styles %}
 </head>
 <body>
+{% include "partials/_impersonation_banner.lex.php" %}
 
   <?php if (!empty($flashes ?? [])) { ?>
   <div class="flash-wrap">

@@ -16,7 +16,8 @@ use Framework\Database;
 class AuditService
 {
     public function __construct(
-        private readonly Database $database
+        private readonly Database $database,
+        private readonly ImpersonationService $impersonation
     ) {}
 
     /**
@@ -37,6 +38,16 @@ class AuditService
         array $details = [],
         ?string $ipAddress = null
     ): void {
+        // A write made while impersonating belongs to the target in the app but
+        // to the administrator in the trail. Rewriting it here rather than at
+        // every call site is what makes that true of actions written later too.
+        $impersonatorId = $this->impersonation->impersonatorId();
+
+        if ($impersonatorId !== null) {
+            $details['acting_as'] = $userId;
+            $userId = $impersonatorId;
+        }
+
         $this->database->execute(
             'INSERT INTO activity_log
                 (user_id, action, resource_type, resource_id, details, ip_address, created_at)

@@ -7,6 +7,7 @@ use App\Mail\EmailChangedMail;
 use App\Mail\EmailChangeVerificationMail;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
+use App\Services\EmailChangeIssuer;
 use App\Services\MailQueueService;
 use App\Services\PasswordConfirmRateLimiter;
 use Framework\Helpers\RateLimiter;
@@ -76,6 +77,7 @@ beforeEach(function () {
         $this->pending,
         $this->throttle,
         $mailQueue,
+        new EmailChangeIssuer($this->pending, $mailQueue),
     );
 
     $this->requestChange = function (string $newEmail, string $password) {

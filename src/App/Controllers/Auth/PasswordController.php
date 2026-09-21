@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
-use App\Mail\PasswordResetEmail;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Services\PasswordResetIssuer;
 use App\Services\PasswordResetRateLimiter;
 use Exception;
 use Framework\Core\Response;
@@ -29,7 +29,8 @@ final class PasswordController extends AppController
     public function __construct(
         private UserModel $users,
         private PasswordResetModel $passwordResets,
-        private PasswordResetRateLimiter $limiter
+        private PasswordResetRateLimiter $limiter,
+        private PasswordResetIssuer $resetIssuer
     ) {}
 
     /**
@@ -94,34 +95,9 @@ final class PasswordController extends AppController
             return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
         }
 
-        // Generate secure token
-        $token = bin2hex(random_bytes(32));
-        $tokenHash = hash('sha256', $token);
-        $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hour
-
-        // Store token (replaces any existing for this email)
-        if (!$this->passwordResets->replaceForEmail($email, $tokenHash, $expiresAt)) {
-            error_log("Failed to store password reset token for {$email}");
-
-            // Still show success to prevent enumeration
-            return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
-        }
-
-        // Send email
         try {
-            if (env('MAIL_ENABLED', false) === false) {
-                error_log("MAIL_ENABLED is false. Skipping password reset email to {$email}");
+            $this->resetIssuer->issue($user);
 
-                // Show success anyway to prevent enumeration
-                return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
-            }
-
-            // Queued rather than sent inline. Inline was the one mode with no
-            // retry, so a transport blip lost the reset outright. The critical
-            // tier worker runs every minute, so this still lands in seconds.
-            mail_queue()->enqueue(new PasswordResetEmail($user, $token, 60), 'user', (int) $user['id']);
-
-            // Audit successful email send
             audit()->log(
                 (int) $user['id'],
                 'password_reset.email_sent',
@@ -131,10 +107,9 @@ final class PasswordController extends AppController
                 $ip
             );
         } catch (Exception $e) {
-            error_log('Failed to send password reset email: '.$e->getMessage());
-
-            // Still show success to prevent enumeration
-            return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);
+            // Logged, not shown: a different message here would tell a stranger
+            // this address has an account.
+            error_log('Password reset link not sent: '.$e->getMessage());
         }
 
         return $this->forgotResponse(true, self::RESET_SENT_MESSAGE);

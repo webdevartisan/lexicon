@@ -17,9 +17,26 @@ class BlogModel extends AppModel
     protected ?string $table = 'blogs';
 
     /**
-     * Valid blog status values.
+     * Blog statuses an operator may choose.
+     *
+     * STATUS_SUSPENDED is deliberately not in here: it is written only by the
+     * owner-suspension cascade and must not be selectable on a form, or a blog
+     * could be put into a state nothing knows how to restore from.
      */
     public const STATUSES = ['draft', 'published', 'archived'];
+
+    /**
+     * Set by UserSuspensionService while the blog's sole owner is suspended.
+     * Public queries filter on 'published', so this hides the blog everywhere
+     * at once; blogs.status_before_suspension is what the lift restores.
+     */
+    public const STATUS_SUSPENDED = 'suspended';
+
+    /**
+     * Statuses the admin blog list may filter by, so a suspended blog can still
+     * be found even though nobody can set that status by hand.
+     */
+    public const FILTERABLE_STATUSES = ['draft', 'published', 'archived', self::STATUS_SUSPENDED];
 
     /**
      * Valid collaborative roles for blog_users.
@@ -225,17 +242,23 @@ class BlogModel extends AppModel
             return false;
         }
 
+        // A suspended blog is mid-cascade. Letting an ordinary edit write status
+        // here would strand status_before_suspension and the lift would have
+        // nothing to restore to, so the suspension has to be lifted first.
+        if ($blog->status() === self::STATUS_SUSPENDED && isset($data['status'])) {
+            throw new \RuntimeException(
+                'This blog is hidden because its owner is suspended. Lift the suspension before changing its status.'
+            );
+        }
+
         $result = parent::update($id, $data);
 
         if ($result) {
-            // Invalidate old blog URL and all its posts
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/*");
-            fragment()->forget('blog-by-slug:'.$blog->slug(), false);
+            $this->forgetPublicCaches($blog->slug());
 
             // If slug changed, invalidate new URL too
             if (isset($data['slug']) && $data['slug'] !== $blog->slug()) {
-                cache()->deletePattern("*:GET:/blog/{$data['slug']}/*");
-                fragment()->forget('blog-by-slug:'.$data['slug'], false);
+                $this->forgetPublicCaches((string) $data['slug']);
             }
 
             // Invalidate blog listings
@@ -243,6 +266,22 @@ class BlogModel extends AppModel
         }
 
         return $result;
+    }
+
+    /**
+     * Drop every cached public copy of one blog: its pages and the looked-up row.
+     *
+     * Anything that changes a blog without going through update() must call
+     * this, or the cached row keeps answering "published" and the blog stays up.
+     * The home page is listed on its own because "/blog/{slug}/*" does not
+     * match "/blog/{slug}".
+     */
+    public function forgetPublicCaches(string $slug): void
+    {
+        cache()->deletePattern("*:GET:/blog/{$slug}");
+        cache()->deletePattern("*:GET:/blog/{$slug}?*");
+        cache()->deletePattern("*:GET:/blog/{$slug}/*");
+        fragment()->forget('blog-by-slug:'.$slug, false);
     }
 
     /**
@@ -336,7 +375,7 @@ class BlogModel extends AppModel
             $params[':q_owner'] = $term;
         }
 
-        if (in_array($status, self::STATUSES, true)) {
+        if (in_array($status, self::FILTERABLE_STATUSES, true)) {
             $conditions[] = 'b.status = :status';
             $params[':status'] = $status;
         }
@@ -968,9 +1007,7 @@ class BlogModel extends AppModel
         $result = parent::delete($id);
 
         if ($result && $blog) {
-            // Invalidate all posts in this blog
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/*");
-            fragment()->forget('blog-by-slug:'.$blog->slug(), false);
+            $this->forgetPublicCaches($blog->slug());
 
             // Invalidate blog listings
             cache()->deletePattern('*:GET:/blogs*');

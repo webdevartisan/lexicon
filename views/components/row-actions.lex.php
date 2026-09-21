@@ -10,6 +10,7 @@
  *     label   visible text
  *     icon    lucide icon name
  *     href    link target, for actions that open a page
+ *     newTab  open the href in a new tab, announced to screen readers
  *     post    form action, for actions that change something (sent with CSRF)
  *     confirm question asked before a post action is sent
  *     danger  destructive styling, grouped after a divider at the end
@@ -39,7 +40,10 @@ $renderItem = static function (array $item, string $class): string {
             .'</form>';
     }
 
-    return '<a href="'.e((string) ($item['href'] ?? '#')).'" role="menuitem" tabindex="-1" class="'.$class.'">'.$icon.$label.'</a>';
+    $newTab = empty($item['newTab']) ? '' : ' target="_blank" rel="noopener"';
+    $newTabNote = empty($item['newTab']) ? '' : '<span class="sr-only"> (opens in a new tab)</span>';
+
+    return '<a href="'.e((string) ($item['href'] ?? '#')).'" role="menuitem" tabindex="-1"'.$newTab.' class="'.$class.'">'.$icon.$label.$newTabNote.'</a>';
 };
 ?>
 <?php if ($items !== []) { ?>

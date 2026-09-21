@@ -7,6 +7,7 @@ namespace Tests\Helpers;
 use App\Auth;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\UserSuspensionService;
 use Framework\Session;
 use Mockery;
 
@@ -14,9 +15,9 @@ class AuthTestHelper
 {
     /**
      * Creates a fully mocked Auth instance for unit testing.
-     * All dependencies (Session, UserModel, UserProfileModel) are mocked to ensure isolation.
+     * All dependencies (Session, UserModel, UserProfileModel, UserSuspensionService) are mocked to ensure isolation.
      *
-     * @return array{auth: Auth, session: Mockery\MockInterface, userModel: Mockery\MockInterface, profileModel: Mockery\MockInterface}
+     * @return array{auth: Auth, session: Mockery\MockInterface, userModel: Mockery\MockInterface, profileModel: Mockery\MockInterface, suspensions: Mockery\MockInterface}
      */
     public static function createMockedAuth(): array
     {
@@ -24,13 +25,16 @@ class AuthTestHelper
         $userModel = Mockery::mock(UserModel::class);
         $profileModel = Mockery::mock(UserProfileModel::class);
 
-        $auth = new Auth($session, $userModel, $profileModel);
+        $suspensions = Mockery::mock(UserSuspensionService::class);
+
+        $auth = new Auth($session, $userModel, $profileModel, $suspensions);
 
         return [
             'auth' => $auth,
             'session' => $session,
             'userModel' => $userModel,
             'profileModel' => $profileModel,
+            'suspensions' => $suspensions,
         ];
     }
 

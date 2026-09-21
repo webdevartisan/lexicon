@@ -45,6 +45,8 @@ class DatabaseHelper
             'activity_log',
             'account_erasure_records',
             'pending_erasures',
+            'user_suspensions',
+            'impersonation_sessions',
             'user_social_links',
             'user_preferences',
             'user_profiles',

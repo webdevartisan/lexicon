@@ -13,6 +13,7 @@ return [
         App\Middleware\LocaleMiddleware::class,
         App\Middleware\TranslationGlobalsMiddleware::class,
         App\Middleware\NavGlobalsMiddleware::class,
+        App\Middleware\ImpersonationGlobalsMiddleware::class,
         App\Middleware\HeadI18nGlobals::class,
         App\Middleware\LocalizeAnchorHrefs::class,
         App\Middleware\BreadcrumbMiddleware::class,

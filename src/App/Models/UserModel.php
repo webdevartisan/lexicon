@@ -320,6 +320,7 @@ class UserModel extends AppModel
         // the list shows all three access axes at a glance.
         $sql = "SELECT u.id, u.handle, u.email, u.first_name, u.last_name,
                        u.is_active, u.created_at, u.last_login, u.posts_count,
+                       u.suspended_at, u.suspended_until,
                        COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles,
                        (SELECT COUNT(*) FROM blogs b2 WHERE b2.owner_id = u.id) AS owned_blogs,
                        (SELECT COUNT(*) FROM blog_users bu2 WHERE bu2.user_id = u.id AND bu2.is_active = 1) AS member_blogs
@@ -516,6 +517,7 @@ class UserModel extends AppModel
                 FROM posts p
                 JOIN users u ON u.id = p.author_id
                 WHERE p.status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
                 AND u.is_active = 1
                 AND u.deleted_at IS NULL";
 
@@ -542,6 +544,58 @@ class UserModel extends AppModel
         $stmt = $this->database->query($sql);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Give the account exactly one system role, replacing whatever it held.
+     *
+     * One transaction, and it throws: a half-applied role change is how an
+     * account ends up with no role, or with two, without anyone noticing.
+     *
+     * @throws \InvalidArgumentException When $roleId is not a system-scope role
+     */
+    public function setSystemRole(int $userId, int $roleId, int $assignedBy): void
+    {
+        $isSystemRole = $this->database
+            ->query("SELECT 1 FROM roles WHERE id = ? AND scope = 'system'", [$roleId])
+            ->fetchColumn();
+
+        if ($isSystemRole === false) {
+            throw new \InvalidArgumentException("Role {$roleId} is not a site role.");
+        }
+
+        $apply = function () use ($userId, $roleId, $assignedBy): void {
+            $this->database->execute(
+                "DELETE ur FROM user_roles ur
+                   JOIN roles r ON r.id = ur.role_id
+                  WHERE ur.user_id = ? AND r.scope = 'system'",
+                [$userId]
+            );
+
+            $this->database->execute(
+                'INSERT INTO user_roles (user_id, role_id, assigned_by) VALUES (?, ?, ?)',
+                [$userId, $roleId, $assignedBy]
+            );
+        };
+
+        // Joins a caller's transaction rather than opening a second one, which
+        // Database refuses, so this stays safe to call from inside one.
+        $this->database->inTransaction() ? $apply() : $this->transaction($apply);
+    }
+
+    /**
+     * End every session this account has open, on each one's next request.
+     *
+     * Sessions live in PHP's own store with no index by user, so they cannot be
+     * found and deleted. Each remembers the epoch it signed in under instead,
+     * and Auth drops any whose epoch no longer matches.
+     */
+    public function bumpSessionEpoch(int $userId): bool
+    {
+        return $this->database->execute(
+            'UPDATE users SET session_epoch = session_epoch + 1 WHERE id = ?',
+            [$userId]
+        ) === 1;
     }
 
     /**

@@ -174,7 +174,11 @@ class UserProfileModel extends AppModel
                 ON u.id = up.user_id
             LEFT JOIN user_preferences pref
                 ON pref.user_id = u.id
+            -- A suspended or deleted account has no public page, whatever its
+            -- is_public flag says; the profile would otherwise outlive the ban.
             WHERE u.handle = ?
+              AND u.is_active = 1
+              AND u.deleted_at IS NULL
             LIMIT 1
         ';
 
@@ -205,6 +209,7 @@ class UserProfileModel extends AppModel
             FROM users u
             INNER JOIN user_profiles up ON up.user_id = u.id
             WHERE u.id = ? AND up.is_public = 1
+              AND u.is_active = 1 AND u.deleted_at IS NULL
             LIMIT 1
         ';
 

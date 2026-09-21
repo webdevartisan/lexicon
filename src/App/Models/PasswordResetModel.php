@@ -75,6 +75,19 @@ final class PasswordResetModel extends AppModel
     }
 
     /**
+     * Drop every outstanding reset link for an address.
+     *
+     * Used when an administrator sets the password directly: a link mailed
+     * earlier must not still be able to replace it afterwards.
+     *
+     * @return int Number deleted
+     */
+    public function deleteForEmail(string $email): int
+    {
+        return $this->database->execute("DELETE FROM {$this->table} WHERE email = ?", [$email]);
+    }
+
+    /**
      * Clean up all expired reset tokens.
      *
      * @return int Number deleted

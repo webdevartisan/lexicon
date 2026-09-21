@@ -203,6 +203,7 @@ class CategoryModel extends AppModel
         $sql = "SELECT * FROM posts 
                 WHERE category_id = ? 
                 AND status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
                 ORDER BY created_at DESC";
 
         $stmt = $this->database->query($sql, [$categoryId]);
@@ -237,6 +238,7 @@ class CategoryModel extends AppModel
         $sql = "SELECT c.name, COUNT(p.id) AS post_count
                 FROM categories c
                 JOIN posts p ON p.category_id = c.id AND p.status = 'published'
+                JOIN blogs pb ON pb.id = p.blog_id AND pb.status = 'published'
                 GROUP BY c.name
                 ORDER BY c.name ASC";
 

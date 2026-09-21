@@ -132,6 +132,7 @@ class NotificationModel extends AppModel
      */
     private const REPLY_LIVE = "c.deleted_at IS NULL
                    AND c.status = 'approved'
+                   AND c.hidden_at IS NULL
                    AND p.status = 'published' AND p.visibility = 'public'
                    AND b.status = 'published'";
 

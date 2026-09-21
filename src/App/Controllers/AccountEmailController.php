@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Mail\EmailChangedMail;
-use App\Mail\EmailChangeVerificationMail;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
+use App\Services\EmailChangeIssuer;
 use App\Services\MailQueueService;
 use App\Services\PasswordConfirmRateLimiter;
 use Framework\Core\Response;
@@ -24,13 +24,12 @@ use Framework\Core\Response;
  */
 final class AccountEmailController extends AppController
 {
-    private const TOKEN_TTL_MINUTES = 60;
-
     public function __construct(
         private UserModel $users,
         private PendingEmailChangeModel $pending,
         private PasswordConfirmRateLimiter $passwordThrottle,
-        private MailQueueService $mailQueue
+        private MailQueueService $mailQueue,
+        private EmailChangeIssuer $emailChanges
     ) {}
 
     /**
@@ -71,16 +70,7 @@ final class AccountEmailController extends AppController
             return $this->reject(chrome_translate('account.flash.emailChangeSameAddress'));
         }
 
-        $token = bin2hex(random_bytes(32));
-        $expiresAt = gmdate('Y-m-d H:i:s', time() + self::TOKEN_TTL_MINUTES * 60);
-
-        $this->pending->replaceForUser($userId, $newEmail, hash('sha256', $token), $expiresAt);
-
-        $this->mailQueue->enqueue(
-            new EmailChangeVerificationMail($newEmail, $token, self::TOKEN_TTL_MINUTES),
-            'account',
-            $userId
-        );
+        $this->emailChanges->issue($userId, $newEmail);
 
         $this->flash('success', chrome_translate('account.flash.emailChangePending', ['email' => $newEmail]));
 

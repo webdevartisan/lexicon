@@ -33,7 +33,7 @@ beforeEach(function () {
  */
 it('finds previous post by author and date', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -64,7 +64,7 @@ it('finds previous post by author and date', function () {
  */
 it('returns null when no previous post exists by author', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -87,7 +87,7 @@ it('returns null when no previous post exists by author', function () {
  */
 it('finds next post by author and date', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -118,7 +118,7 @@ it('finds next post by author and date', function () {
  */
 it('returns null when no next post exists by author', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -145,7 +145,7 @@ it('returns null when no next post exists by author', function () {
  */
 it('finds previous post by blog ID and date', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -178,7 +178,7 @@ it('finds previous post by blog ID and date', function () {
  */
 it('finds next post by blog ID and date', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -215,7 +215,7 @@ it('finds next post by blog ID and date', function () {
  */
 it('finds recent posts by author excluding current slug', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $currentSlug = 'current-post-'.faker()->unique()->numberBetween(1000, 9999);
 
@@ -261,7 +261,7 @@ it('finds recent posts by author excluding current slug', function () {
  */
 it('finds recent posts by blog ID excluding current slug', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $currentSlug = 'current-post-'.faker()->unique()->numberBetween(1000, 9999);
 
@@ -305,7 +305,7 @@ it('finds recent posts by blog ID excluding current slug', function () {
  */
 it('respects limit when finding recent posts by author', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $currentSlug = 'post-1-'.faker()->unique()->numberBetween(1000, 9999);
 
@@ -335,7 +335,7 @@ it('respects limit when finding recent posts by author', function () {
  */
 it('returns only admin picked posts for the home showcase', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $pickedId = PostFactory::new($this->postModel)
         ->withAttributes([
@@ -369,7 +369,7 @@ it('returns only admin picked posts for the home showcase', function () {
  */
 it('excludes unpublished and non public posts from the home showcase', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $draftId = PostFactory::new($this->postModel)
         ->withAttributes([
@@ -400,7 +400,7 @@ it('excludes unpublished and non public posts from the home showcase', function 
  */
 it('removes a post from the showcase when the flag is turned off', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $postId = PostFactory::new($this->postModel)
         ->withAttributes([

@@ -136,6 +136,7 @@ class TagModel extends AppModel
                 INNER JOIN post_tags pt ON p.id = pt.post_id
                 WHERE pt.tag_id = :tag_id
                 AND p.status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
                 ORDER BY p.created_at DESC";
         $stmt = $this->database->query($sql, [':tag_id' => $tagId]);
 

@@ -112,7 +112,8 @@ $container->setShared(App\Auth::class, function ($c) {
     return new App\Auth(
         $c->get(Framework\Session::class),
         $c->get(App\Models\UserModel::class),
-        $c->get(App\Models\UserProfileModel::class)
+        $c->get(App\Models\UserProfileModel::class),
+        $c->get(App\Services\UserSuspensionService::class)
     );
 });
 $container->setShared(Framework\Interfaces\AuthInterface::class, function ($c) {
@@ -424,9 +425,30 @@ $container->setShared(App\Services\BreadcrumbService::class, function ($c) {
  * We register as singleton to batch audit log writes and maintain
  * consistent logging context throughout the request.
  */
+// Shared because AuditService holds one to annotate writes made while
+// impersonating, and the controllers resolve the same session state.
+$container->setShared(App\Services\ImpersonationService::class, function ($c) {
+    return new App\Services\ImpersonationService(
+        $c->get(Framework\Session::class),
+        $c->get(Framework\Database::class),
+        $c->get(App\Models\UserModel::class),
+        $c->get(Framework\Security\Csrf::class)
+    );
+});
+
+$container->setShared(App\Services\UserSuspensionService::class, function ($c) {
+    return new App\Services\UserSuspensionService(
+        $c->get(Framework\Database::class),
+        $c->get(App\Services\PublicCacheInvalidator::class),
+        $c->get(App\Models\CommentModel::class),
+        $c->get(App\Models\BlogModel::class)
+    );
+});
+
 $container->setShared(App\Services\AuditService::class, function ($c) {
     return new App\Services\AuditService(
-        $c->get(Framework\Database::class)
+        $c->get(Framework\Database::class),
+        $c->get(App\Services\ImpersonationService::class)
     );
 });
 
