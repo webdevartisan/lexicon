@@ -90,6 +90,7 @@ class UserController extends ManagedUserController
             // be allowed. The actions re-check on the server regardless.
             'actorId' => $this->actorId(),
             'actorIsAdmin' => Gate::allows('actOnAdministrators', SystemResource::class, $actor),
+            'canHandleReports' => Gate::allows('handleReports', SystemResource::class, $actor),
             'canAssignSiteRoles' => Gate::allows('assignSystemRoles', SystemResource::class, $actor),
             'canImpersonate' => Gate::allows('impersonateUsers', SystemResource::class, $actor),
         ]);

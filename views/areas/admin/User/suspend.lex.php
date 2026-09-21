@@ -31,7 +31,9 @@ $oldReason = (string) old('reason', '');
             <h3 class="<?= $heading ?> mb-2">Lift the suspension on <?= e($handle) ?>?</h3>
             <p class="<?= $muted ?> mb-3">
                 <?= $current['expires_at'] ? 'Temporary, due to end '.e(local_datetime($current['expires_at'], 'M j, Y H:i T')).'.' : 'Permanent: it only ends when someone lifts it.' ?>
-                Applied by @<?= e((string) ($current['suspended_by_handle'] ?? 'unknown')) ?> on <?= e(local_datetime($current['suspended_at'], 'M j, Y H:i')) ?>.
+                <?= ($current['source'] ?? 'moderator') === 'rule'
+                    ? 'Applied automatically by the '.e((string) $current['rule']).' rule'
+                    : 'Applied by @'.e((string) ($current['suspended_by_handle'] ?? 'unknown')) ?> on <?= e(local_datetime($current['suspended_at'], 'M j, Y H:i')) ?>.
             </p>
             <p class="<?= $muted ?> mb-3"><strong>Reason given:</strong> <?= e((string) ($current['reason'] ?? '')) ?></p>
             <p class="<?= $muted ?>">
@@ -43,9 +45,21 @@ $oldReason = (string) old('reason', '');
     </form>
 
     <?php } else { ?>
+    <?php if ($caseError) { ?>
+    <div class="mb-4 p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-700 dark:bg-red-900/40 dark:border-red-800 dark:text-red-200" role="alert"><?= e($caseError) ?></div>
+    <?php } ?>
     <form method="post" action="<?= e($showUrl) ?>/suspend" class="card" data-suspend-form>
         {{ csrf_field() }}
+        <?php if ($case) { ?>
+        <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
+        <?php } ?>
         <div class="card-body flex flex-col gap-5">
+            <?php if ($case) { ?>
+            <p class="<?= $muted ?>">
+                For <a href="/admin/reports/<?= (int) $case['id'] ?>" class="text-custom-500 hover:underline">report case #<?= (int) $case['id'] ?></a>.
+                Suspending closes the case as upheld.
+            </p>
+            <?php } ?>
             <fieldset>
                 <legend class="<?= $heading ?> mb-2">How long</legend>
                 <div class="flex flex-col gap-2">
@@ -102,7 +116,8 @@ $oldReason = (string) old('reason', '');
                 </ul>
             </div>
         </div>
-        {% cmp="form-footer" cancelHref="{$showUrl}" submitLabel="Suspend account" submitIcon="ban" danger %}
+        <?php $cancelHref = $case ? '/admin/reports/'.(int) $case['id'] : $showUrl; ?>
+        {% cmp="form-footer" cancelHref="{$cancelHref}" submitLabel="Suspend account" submitIcon="ban" danger %}
     </form>
     <?php } ?>
 </div>

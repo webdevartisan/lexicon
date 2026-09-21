@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Exceptions\ReportRejectedException;
 use App\Models\PostBookmarkModel;
 use App\Models\PostModel;
-use App\Models\PostReportModel;
 use App\Models\PostVoteModel;
+use App\Services\CommentRateLimiter;
+use App\Services\ReportIntakeService;
+use App\Traits\ThrottlesReaderInteractions;
 use Framework\Core\Response;
 
 /**
@@ -18,11 +21,14 @@ use Framework\Core\Response;
  */
 class PostEngagementController extends AppController
 {
+    use ThrottlesReaderInteractions;
+
     public function __construct(
         private PostModel $postModel,
         private PostVoteModel $voteModel,
         private PostBookmarkModel $bookmarkModel,
-        private PostReportModel $reports,
+        private ReportIntakeService $intake,
+        private CommentRateLimiter $throttle,
     ) {}
 
     /**
@@ -72,14 +78,18 @@ class PostEngagementController extends AppController
     }
 
     /**
-     * Flag a post for the blog team.
+     * Report a post to the moderators.
      *
-     * Same contract as reporting a comment: nothing hides on its own, the
-     * count is what a person acts on.
+     * Same contract as reporting a comment: the report joins the post's case,
+     * and the category's rule decides whether a person has to act first.
      */
     public function report(string $id): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
+
+        if ($blocked = $this->interactionThrottleResponse()) {
+            return $blocked;
+        }
 
         $post = $this->readablePost((int) $id);
 
@@ -94,18 +104,36 @@ class PostEngagementController extends AppController
             return $this->jsonError('You cannot report your own post.', 422);
         }
 
-        $reason = (string) ($this->request->post['reason'] ?? 'other');
-        $recorded = $this->reports->report($userId, (int) $id, $reason);
+        $details = $this->request->post['details'] ?? null;
 
-        if ($recorded) {
-            audit()->log($userId, 'post.reported', 'post', (int) $id, ['reason' => $reason], $this->request->ip());
+        try {
+            $result = $this->intake->file(
+                $userId,
+                'post',
+                (int) $id,
+                (string) ($this->request->post['reason'] ?? ''),
+                is_string($details) ? $details : null
+            );
+        } catch (ReportRejectedException $e) {
+            return $this->jsonError($e->getMessage(), 422);
+        }
+
+        if ($result['recorded']) {
+            audit()->log(
+                $userId,
+                'post.reported',
+                'post',
+                (int) $id,
+                ['category' => $result['category'], 'case_id' => $result['case_id']],
+                $this->request->ip()
+            );
         }
 
         return $this->jsonSuccess([
             'reported' => true,
             // A repeat report is not an error; it just does not count twice.
-            'message' => $recorded
-                ? 'Thanks — this post has been sent to the blog team.'
+            'message' => $result['recorded']
+                ? 'Thanks. This post has been sent to the moderators.'
                 : 'You already reported this post.',
         ]);
     }

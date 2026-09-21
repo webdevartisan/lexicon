@@ -8,7 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
-use App\Models\CommentReportModel;
+use App\Models\ContentReportModel;
 use App\Resources\BlogResource;
 use App\Services\CommentRemovalService;
 use Framework\Core\Response;
@@ -20,7 +20,7 @@ class CommentController extends AppController
         private CommentModel $model,
         private BlogModel $blogModel,
         private CommentRemovalService $removal,
-        private CommentReportModel $reports
+        private ContentReportModel $reports
     ) {}
 
     public function index(string $blogId): Response
@@ -141,6 +141,12 @@ class CommentController extends AppController
             ? $this->removeMany($ids)
             : $this->model->bulkUpdateStatus($ids, $statusMap[$action]);
 
+        if ($action === 'approve') {
+            foreach ($ids as $id) {
+                $this->reports->markBlogReviewed('comment', $id);
+            }
+        }
+
         audit()->log(
             (int) $user['id'],
             "comment.bulk_{$action}",
@@ -183,10 +189,10 @@ class CommentController extends AppController
 
         $this->model->updateStatus($id, $status);
 
-        // Ruling a comment fine settles the reports against it. Leaving them
-        // would keep the queue arguing with a decision it already made.
+        // Approving settles the blog team's own Reported badge. The platform
+        // case stays open: the reports may be about the blog team itself.
         if ($status === 'approved') {
-            $this->reports->clearFor($id);
+            $this->reports->markBlogReviewed('comment', $id);
         }
 
         audit()->log(

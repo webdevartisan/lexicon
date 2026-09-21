@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Gate;
 use App\Models\ActivityLogModel;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
+use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use App\Presenters\ModerationCasePresenter;
+use App\Resources\SystemResource;
 use App\Services\CacheManagementService;
 use Framework\Core\Response;
 
@@ -28,7 +32,8 @@ class ControlPanelController extends AppController
         private UserModel $users,
         private BlogModel $blogs,
         private ActivityLogModel $activityLog,
-        private CacheManagementService $cacheService
+        private CacheManagementService $cacheService,
+        private ModerationCaseModel $cases,
     ) {}
 
     public function index(): Response
@@ -39,12 +44,9 @@ class ControlPanelController extends AppController
         $stats = [
             'posts' => array_sum($postCounts),
             'comments' => $commentCounts['all'],
-            'pending_comments' => $commentCounts['pending'],
             'users' => $this->users->count(),
             'blogs' => $this->blogs->count(),
         ];
-
-        $pendingComments = $this->comments->findAllWithFilters('pending', '', 1, 5);
 
         // top blogs by post volume for the insights column
         $topBlogs = $this->blogs->getAllBlogsWithOwnerAndCounts();
@@ -58,13 +60,35 @@ class ControlPanelController extends AppController
             'signups' => $this->users->signupsByDay(30),
             'topBlogs' => $topBlogs,
             'recentPosts' => $this->posts->findAllForAdmin(1, 5)['data'],
-            'pendingComments' => $pendingComments['data'],
+            'reports' => $this->reportsSummary(),
             'recentUsers' => $this->users->latest(5),
             'recentActivity' => $this->activityLog->latestEntries(8),
             'cacheStats' => $this->cacheService->getStats(),
             'health' => $this->systemHealth(),
             'user' => auth()->user(),
         ]);
+    }
+
+    /**
+     * The open report cases, most urgent first, for anyone who may handle
+     * them. Null hides the report widgets from everyone else.
+     *
+     * @return array{active: int, escalated: int, cases: array<int, array<string, mixed>>}|null
+     */
+    private function reportsSummary(): ?array
+    {
+        if (!Gate::allows('handleReports', SystemResource::class, auth()->user() ?? [])) {
+            return null;
+        }
+
+        $counts = $this->cases->statusCounts();
+        $top = $this->cases->findForQueue(['status' => 'active'], 1, 5, 'mc.priority DESC, mc.id DESC');
+
+        return [
+            'active' => $counts['open'] + $counts['in_review'] + $counts['escalated'],
+            'escalated' => $counts['escalated'],
+            'cases' => array_map(ModerationCasePresenter::present(...), $top['data']),
+        ];
     }
 
     /**

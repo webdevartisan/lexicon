@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
+use App\Gate;
+use App\Models\ModerationCaseModel;
 use App\Models\UserModel;
+use App\Resources\SystemResource;
 use App\Services\AccountErasureService;
+use App\Services\ModerationCaseService;
 use App\Services\UserSuspensionService;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -41,6 +45,8 @@ class UserSuspensionController extends ManagedUserController
         UserModel $users,
         AccountErasureService $erasure,
         private UserSuspensionService $suspensions,
+        private ModerationCaseModel $cases,
+        private ModerationCaseService $moderation,
     ) {
         parent::__construct($users, $erasure);
     }
@@ -49,6 +55,17 @@ class UserSuspensionController extends ManagedUserController
     {
         $user = $this->target($id);
         $this->guardAdministratorTarget($user);
+        $caseId = (int) ($this->request->get['case'] ?? 0);
+        $case = null;
+        $caseError = null;
+
+        if ($caseId > 0) {
+            try {
+                $case = $this->caseFor($caseId, (int) $user['id']);
+            } catch (RuntimeException $e) {
+                $caseError = $e->getMessage().' Suspending from here will not close it.';
+            }
+        }
 
         return $this->view('user.suspend', [
             'user' => $user,
@@ -57,6 +74,8 @@ class UserSuspensionController extends ManagedUserController
             'durations' => self::DURATIONS,
             'isSelf' => (int) $user['id'] === $this->actorId(),
             'viewerTimezone' => viewer_timezone(),
+            'case' => $case,
+            'caseError' => $caseError,
         ]);
     }
 
@@ -96,12 +115,20 @@ class UserSuspensionController extends ManagedUserController
             }
         }
 
+        $caseId = (int) $this->request->postParam('case_id', 0);
+        $reason = trim((string) $input['reason']);
+
         try {
-            $hidden = $this->suspensions->suspend($userId, $expiresAt, trim((string) $input['reason']), $this->actorId());
+            if ($caseId > 0) {
+                $case = $this->caseFor($caseId, $userId);
+                $hidden = $this->moderation->suspendAuthor($case, $this->actorId(), $expiresAt, $reason);
+            } else {
+                $hidden = $this->suspensions->suspend($userId, $expiresAt, $reason, $this->actorId());
+            }
         } catch (RuntimeException $e) {
             $this->flash('error', 'The account was not suspended. '.$e->getMessage());
 
-            return $this->redirect($back);
+            return $this->redirect($back.($caseId > 0 ? '?case='.$caseId : ''));
         }
 
         audit()->log(
@@ -112,9 +139,10 @@ class UserSuspensionController extends ManagedUserController
             [
                 'type' => $input['type'],
                 'expires_at' => $expiresAt,
-                'reason' => trim((string) $input['reason']),
+                'reason' => $reason,
                 'blogs_hidden' => $hidden['blogs'],
                 'comments_hidden' => $hidden['comments'],
+                'case_id' => $caseId > 0 ? $caseId : null,
             ],
             $this->request->ip()
         );
@@ -129,7 +157,7 @@ class UserSuspensionController extends ManagedUserController
             $hidden['comments'] === 1 ? 'comment' : 'comments'
         ));
 
-        return $this->redirect($this->showUrl($userId));
+        return $this->redirect($caseId > 0 ? '/admin/reports/'.$caseId : $this->showUrl($userId));
     }
 
     public function lift(string $id): Response
@@ -167,6 +195,33 @@ class UserSuspensionController extends ManagedUserController
         ));
 
         return $this->redirect($this->showUrl($userId));
+    }
+
+    /**
+     * The open report case a suspension is being applied for.
+     *
+     * Closing a case is a moderation decision, so it needs handleReports on
+     * top of the manageUsers this page already requires.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws RuntimeException When the case is closed or is not about this account
+     */
+    private function caseFor(int $caseId, int $userId): array
+    {
+        Gate::authorize('handleReports', SystemResource::class, $this->actor());
+
+        $case = $this->cases->findDetail($caseId);
+
+        if ($case === null || (int) ($case['subject_author_id'] ?? 0) !== $userId) {
+            throw new RuntimeException("Report case {$caseId} is not about this account.");
+        }
+
+        if ($case['status'] === 'resolved') {
+            throw new RuntimeException("Report case {$caseId} is already closed.");
+        }
+
+        return $case;
     }
 
     private function suspendRefusal(int $userId): ?string

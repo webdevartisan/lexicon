@@ -855,4 +855,5 @@ $renderComment = static function (array $comment, int $depth) use (
   <form class="comment-token" hidden aria-hidden="true"><?= csrf_field() ?></form>
 </div>
 
+<script defer src="/assets/js/report-dialog.js"></script>
 <script defer src="/assets/js/comments.js"></script>

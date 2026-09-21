@@ -6,7 +6,10 @@
  *
  * Attributes:
  * - status: one of published|scheduled|draft|archived|pending|approved|spam|active|inactive
- *           |suspended (accounts and blogs)|sending|sent|failed (mail queue)
+ *           |suspended (accounts and blogs)|moderated (posts hidden by moderation)
+ *           |open|in_review|escalated|resolved|hidden (report cases)
+ *           |upheld|dismissed|unfounded (how a report ended)
+ *           |sending|sent|failed (mail queue)
  * - label: optional display text (defaults to ucfirst of status)
  */
 $status = (string) ($status ?? 'draft');
@@ -22,7 +25,19 @@ $map = [
     'inactive' => 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500',
     'spam' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
     'suspended' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
+    'moderated' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
     'archived' => 'bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100 dark:border-zink-600',
+
+    // Report case states: open work in amber, a case waiting on someone with
+    // more authority in red, and hidden content in red too.
+    'open' => 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800',
+    'in_review' => 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:border-sky-800',
+    'escalated' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
+    'resolved' => 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500',
+    'hidden' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
+    'upheld' => 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800',
+    'dismissed' => 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500',
+    'unfounded' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
 
     // Mail queue states, reusing the palette above so no new utility classes
     // enter the compiled control panel stylesheet.

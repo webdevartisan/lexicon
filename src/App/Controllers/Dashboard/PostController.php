@@ -914,6 +914,7 @@ final class PostController extends AppController
 
         $applied = 0;
         $skipped = 0;
+        $moderated = 0;
 
         foreach ($ids as $id) {
             $post = $this->model->findResource($id);
@@ -925,6 +926,11 @@ final class PostController extends AppController
             $gateAction = $action === 'delete' ? 'delete' : 'publish';
             if (!Gate::allows($gateAction, $post, $user)) {
                 $skipped++;
+                continue;
+            }
+
+            if ($action !== 'delete' && $post->status() === 'moderated') {
+                $moderated++;
                 continue;
             }
 
@@ -966,6 +972,9 @@ final class PostController extends AppController
         if ($skipped > 0) {
             $msg .= ", {$skipped} skipped";
         }
+        if ($moderated > 0) {
+            $msg .= ", {$moderated} left as they are because a moderator hid them";
+        }
         $this->flash('success', $msg.'.');
 
         return $this->redirect('/dashboard/post');
@@ -983,6 +992,10 @@ final class PostController extends AppController
         $user = auth()->user();
         $post = $this->getPost((int) $id);
         Gate::authorize('publish', $post, $user);
+
+        if ($held = $this->refuseWhileModerated($post)) {
+            return $held;
+        }
 
         // Workflow precondition only applies when the blog opted into the review pipeline.
         // Without it there is no "approved" state to wait for a draft is publishable on demand.
@@ -1025,6 +1038,10 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
         Gate::authorize('publish', $post, $user);
 
+        if ($held = $this->refuseWhileModerated($post)) {
+            return $held;
+        }
+
         $this->model->unpublishPost((int) $id);
         $this->model->transitionWorkflow((int) $id, 'approved', $user['id']);
 
@@ -1055,6 +1072,10 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
         Gate::authorize('publish', $post, $user);
 
+        if ($held = $this->refuseWhileModerated($post)) {
+            return $held;
+        }
+
         $this->model->updateStatus((int) $id, 'draft');
 
         audit()->log(
@@ -1083,6 +1104,10 @@ final class PostController extends AppController
         $user = auth()->user();
         $post = $this->getPost((int) $id);
         Gate::authorize('publish', $post, $user);
+
+        if ($held = $this->refuseWhileModerated($post)) {
+            return $held;
+        }
 
         $this->model->updateStatus((int) $id, 'archived');
 
@@ -1253,6 +1278,24 @@ final class PostController extends AppController
         }
 
         return $post;
+    }
+
+    /**
+     * Refuse a status change on a post a moderator hid, and say why.
+     *
+     * The model refuses the write on its own; this is what stops the action
+     * reporting success, notifying subscribers, and logging a publish that
+     * never happened.
+     */
+    private function refuseWhileModerated(PostResource $post): ?Response
+    {
+        if ($post->status() !== 'moderated') {
+            return null;
+        }
+
+        $this->flash('error', 'A moderator hid this post after readers reported it, so its status cannot be changed here.');
+
+        return $this->redirectBack();
     }
 
     /**

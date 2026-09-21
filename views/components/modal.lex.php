@@ -1,14 +1,27 @@
 <?php
+/**
+ * Modal dialog, opened by any element with data-modal-target="{id}" and
+ * driven by /cp-assets/js/modal.js (focus, Escape, and Tab kept inside).
+ *
+ * Attributes:
+ * - message: plain text, escaped here
+ * - body: pre-escaped HTML shown instead of message, for a modal holding form
+ *         fields; the caller is responsible for escaping everything in it
+ * - form: id of the form the confirm button submits
+ * - openOnLoad: open as soon as the page loads, e.g. to show validation errors
+ */
 $id = $id ?? 'modal';
 $title = $title ?? 'Modal Title';
 $icon = $icon ?? null;
 $variant = $variant ?? 'default';
 $size = $size ?? 'md';
-$message = $message ?? ''; // Simple text message
+$message = $message ?? '';
+$body = $body ?? null;
 $cancelText = $cancelText ?? 'Cancel';
 $confirmText = $confirmText ?? 'Confirm';
 $confirmIcon = $confirmIcon ?? null;
 $form = $form ?? null;
+$openOnLoad = !empty($openOnLoad);
 
 // Variant-based styling
 $headerClasses = match ($variant) {
@@ -39,19 +52,20 @@ $headerTextColor = ($variant === 'default')
     : 'text-white';
 ?>
 
-<div id="<?= $id ?>" modal-center
+<div id="<?= e($id) ?>" modal-center role="dialog" aria-modal="true" aria-labelledby="<?= e($id) ?>-title" tabindex="-1"
+    <?= $openOnLoad ? 'data-modal-open-on-load' : '' ?>
     class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show">
     <div class="w-screen <?= $modalWidths ?> bg-white shadow rounded-md dark:bg-zink-600 flex flex-col h-full">
-        
+
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b <?= $headerClasses ?>">
-            <h5 class="text-16 <?= $headerTextColor ?> flex items-center gap-2">
+            <h5 id="<?= e($id) ?>-title" class="text-16 <?= $headerTextColor ?> flex items-center gap-2">
                 <?php if ($icon) { ?>
-                    {% cache 'lucide:modal-header:' . $icon ttl=31536000 %}<i data-lucide="<?= $icon ?>" class="size-5"></i>{% endcache %}
+                    {% cache 'lucide:modal-header:' . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="size-5" aria-hidden="true"></i>{% endcache %}
                 <?php } ?>
-                <?= $title ?>
+                <?= e($title) ?>
             </h5>
-            <button data-modal-close="<?= $id ?>"
+            <button type="button" data-modal-close="<?= e($id) ?>" aria-label="Close"
                 class="transition-all duration-200 ease-linear <?= ($variant === 'default') ? 'text-slate-500 hover:text-slate-700' : 'text-white hover:text-white/80' ?>">
                 {% cache 'lucide:x:close5' ttl=31536000 %}<i data-lucide="x" class="size-5"></i>{% endcache %}
             </button>
@@ -59,22 +73,26 @@ $headerTextColor = ($variant === 'default')
 
         <!-- Content -->
         <div class="max-h-[calc(theme('height.screen')_-_180px)] p-4 overflow-y-auto">
-            <p class="text-slate-600 dark:text-zink-300"><?= $message ?></p>
+            <?php if ($body !== null) { ?>
+                <?= $body ?>
+            <?php } else { ?>
+                <p class="text-slate-600 dark:text-zink-300"><?= e($message) ?></p>
+            <?php } ?>
         </div>
 
         <!-- Footer -->
         <div class="flex items-center justify-end gap-2 p-4 mt-auto border-t border-slate-200 dark:border-zink-500">
-            <button type="button" data-modal-close="<?= $id ?>"
+            <button type="button" data-modal-close="<?= e($id) ?>"
                 class="text-slate-500 btn bg-slate-200 border-slate-200 hover:text-slate-600 hover:bg-slate-300 hover:border-slate-300 focus:text-slate-600 focus:bg-slate-300 focus:border-slate-300 focus:ring focus:ring-slate-100 active:text-slate-600 active:bg-slate-300 active:border-slate-300 active:ring active:ring-slate-100 dark:bg-zink-600 dark:hover:bg-zink-500 dark:border-zink-600 dark:hover:border-zink-500 dark:text-zink-200 dark:ring-zink-400/50">
-                <?= $cancelText ?>
+                <?= e($cancelText) ?>
             </button>
-            <button type="<?= $form ? 'submit' : 'button' ?>" 
-                    <?php if ($form) { ?>form="<?= $form ?>"<?php } ?>
+            <button type="<?= $form ? 'submit' : 'button' ?>"
+                    <?php if ($form) { ?>form="<?= e($form) ?>"<?php } ?>
                     class="<?= $confirmBtnClasses ?>">
                 <?php if ($confirmIcon) { ?>
-                    {% cache 'lucide:modal-confirm:' . $confirmIcon ttl=31536000 %}<i data-lucide="<?= $confirmIcon ?>" class="inline-block size-4 mr-1"></i>{% endcache %}
+                    {% cache 'lucide:modal-confirm:' . $confirmIcon ttl=31536000 %}<i data-lucide="<?= e($confirmIcon) ?>" class="inline-block size-4 mr-1" aria-hidden="true"></i>{% endcache %}
                 <?php } ?>
-                <?= $confirmText ?>
+                <?= e($confirmText) ?>
             </button>
         </div>
 

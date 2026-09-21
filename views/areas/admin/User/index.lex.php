@@ -65,11 +65,21 @@ foreach ($roleOptions as $r) {
 $isSuspended = $user['suspended_at'] !== null;
 $activeStatus = $isSuspended ? 'suspended' : (!empty($user['is_active']) ? 'active' : 'inactive');
 $activeLabel = $isSuspended ? 'Suspended' : (!empty($user['is_active']) ? 'Active' : 'Inactive');
+$openCases = (int) ($user['open_cases'] ?? 0);
+$unfounded = (int) ($user['unfounded_reports'] ?? 0);
+$reportingPaused = \App\Services\ReporterStandingService::pausedUntil($user) !== null;
+$openCasesLabel = $openCases.' open report'.($openCases === 1 ? '' : 's');
+$openCasesHref = $canHandleReports ? '/admin/reports?status=active&author='.rawurlencode((string) $user['handle']) : '';
+$unfoundedLabel = $unfounded.' unfounded report'.($unfounded === 1 ? '' : 's');
+$reporterHref = $canHandleReports ? '/admin/reports/reporters/'.(int) $user['id'] : '';
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
                             <a href="<?= e($rowBase) ?>" class="hover:text-custom-500 hover:underline">{{ user['handle'] }}</a>
+                            <?php if ($openCases > 0) { ?><div>{% cmp="report-pill" label="{$openCasesLabel}" href="{$openCasesHref}" %}</div><?php } ?>
+                            <?php if ($unfounded > 0) { ?><div>{% cmp="report-pill" tone="amber" label="{$unfoundedLabel}" href="{$reporterHref}" %}</div><?php } ?>
+                            <?php if ($reportingPaused) { ?><div>{% cmp="report-pill" tone="slate" label="Reporting paused" href="{$reporterHref}" %}</div><?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5">
                             <?= e(trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')) ?: '—') ?>

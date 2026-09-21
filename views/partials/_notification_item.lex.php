@@ -20,6 +20,9 @@ $label = match ($type) {
     'comment.reply' => ($payload['commenter_name'] ?? 'Someone').' replied to your comment on '.($payload['post_title'] ?? 'a post'),
     'comment.on_your_post' => ($payload['commenter_name'] ?? 'A reader').' commented on your post '.($payload['post_title'] ?? ''),
     'comment.awaiting_moderation' => 'A comment needs approval on '.($payload['post_title'] ?? 'a post'),
+    'moderation.warning' => 'A moderator warned you about your '.($payload['subject_type'] ?? 'content').' '.($payload['subject_label'] ?? ''),
+    'moderation.reporter_warning' => 'A moderator warned you about unfounded reports',
+    'moderation.reporting_paused' => 'Your reports are paused until '.($payload['until_label'] ?? 'further notice'),
     // comment.created rows predate the split into four types
     'comment.on_blog', 'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
         .(!empty($payload['awaiting_moderation']) ? ' (awaiting moderation)' : ''),
@@ -37,6 +40,8 @@ $icon = match ($type) {
     'collaborator.role_changed', 'collaborator.removed' => 'users',
     'comment.reply' => 'reply',
     'comment.awaiting_moderation' => 'shield-alert',
+    'moderation.warning', 'moderation.reporter_warning' => 'alert-triangle',
+    'moderation.reporting_paused' => 'flag-off',
     'comment.on_your_post', 'comment.on_blog', 'comment.created' => 'message-circle',
     default => 'bell',
 };
@@ -44,7 +49,7 @@ $icon = match ($type) {
 $color = match (true) {
     in_array($type, ['post.approved', 'post.published'], true) => 'bg-emerald-50 text-emerald-500',
     in_array($type, ['post.needs_changes', 'post.workflow_disabled', 'comment.awaiting_moderation'], true) => 'bg-amber-50 text-amber-600',
-    in_array($type, ['collaborator.removed'], true) => 'bg-red-50 text-red-500',
+    in_array($type, ['collaborator.removed', 'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused'], true) => 'bg-red-50 text-red-500',
     default => 'bg-sky-50 text-sky-500',
 };
 

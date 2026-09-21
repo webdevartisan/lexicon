@@ -67,12 +67,60 @@
             }
         });
 
+        // Keyboard and focus behaviour of a modal dialog (WAI-ARIA APG): focus
+        // moves in on open, Tab stays inside, Escape closes, and focus goes
+        // back to whatever opened it.
+        const focusable = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        let modalTrigger = null;
+
+        function openModal(modalId, trigger) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modalTrigger = trigger || document.activeElement;
+            toggleElementState(modalId, true, 200);
+            const first = modal.querySelector(focusable);
+            (first || modal).focus();
+        }
+
+        function closeModal(modalId) {
+            toggleElementState(modalId, false, 200);
+            if (modalTrigger && document.body.contains(modalTrigger)) {
+                modalTrigger.focus();
+            }
+            modalTrigger = null;
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (!openModalId) return;
+            const modal = document.getElementById(openModalId);
+            if (!modal || !modal.hasAttribute('modal-center')) return;
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeModal(openModalId);
+                return;
+            }
+
+            if (event.key !== 'Tab') return;
+            const items = Array.prototype.filter.call(modal.querySelectorAll(focusable), el => el.offsetParent !== null);
+            if (items.length === 0) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
         // Attach click event listeners to modal buttons
         allModalButtons.forEach(element => {
             const modalId = element.getAttribute('data-modal-target');
             if (modalId) {
                 element.addEventListener('click', function () {
-                    toggleElementState(modalId, true, 200);
+                    openModal(modalId, element);
                 });
             }
         });
@@ -82,18 +130,27 @@
             const modalId = element.getAttribute('data-modal-close');
             if (modalId) {
                 element.addEventListener('click', function () {
-                    toggleElementState(modalId, false, 200);
+                    closeModal(modalId);
                 });
             }
         });
 
+        // A form that failed validation reopens its modal so the errors are in view.
+        const openOnLoad = document.querySelector('[data-modal-open-on-load]');
+        if (openOnLoad && openOnLoad.id) {
+            if (allModalButtons.length === 0 && allDrawerButtons.length === 0) {
+                document.body.appendChild(backDropOverlay);
+            }
+            openModal(openOnLoad.id, document.querySelector('[data-modal-target="' + openOnLoad.id + '"]'));
+        }
+
         // Attach click event listener to backdrop-overlay
         backDropOverlay?.addEventListener('click', function () {
-            if (openDrawerId) {
+            const open = openModalId ? document.getElementById(openModalId) : null;
+            if (open && open.hasAttribute('modal-center')) {
+                closeModal(openModalId);
+            } else if (openDrawerId) {
                 toggleElementState(openDrawerId, false, 0);
-            }
-            if (openModalId) {
-                toggleElementState(openModalId, false, 200);
             }
         });
     }

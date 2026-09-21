@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\BlogModel;
+use App\Models\ContentReportModel;
+use App\Models\ModerationCaseModel;
 use Framework\Database;
 
 /**
@@ -25,6 +27,8 @@ class UserDossierService
         private BlogModel $blogs,
         private UserSuspensionService $suspensions,
         private ImpersonationService $impersonation,
+        private ModerationCaseModel $cases,
+        private ContentReportModel $reports,
     ) {}
 
     /**
@@ -44,6 +48,12 @@ class UserDossierService
             'pendingEmail' => $this->pendingEmail($userId),
             'pendingErasure' => $this->pendingErasure($userId),
             'counts' => $this->counts($userId),
+            'moderation' => [
+                'asAuthor' => $this->cases->authorRecord($userId, 0),
+                'warnings' => $this->cases->warningsFor($userId),
+                'asReporter' => $this->reports->reporterSummary($userId),
+                'reportsPausedUntil' => ReporterStandingService::pausedUntil($user),
+            ],
             'recentPosts' => $this->recentPosts($userId),
             'recentComments' => $this->recentComments($userId),
             'suspension' => $this->suspensions->current($userId),
@@ -130,11 +140,8 @@ class UserDossierService
                 (SELECT COUNT(*) FROM posts WHERE author_id = ?) AS posts,
                 (SELECT COUNT(*) FROM posts WHERE author_id = ? AND status = 'published') AS published_posts,
                 (SELECT COUNT(*) FROM comments WHERE user_id = ?) AS comments,
-                (SELECT COUNT(*) FROM comments WHERE user_id = ? AND hidden_at IS NOT NULL) AS hidden_comments,
-                (SELECT COUNT(*) FROM comment_reports cr JOIN comments c ON c.id = cr.comment_id WHERE c.user_id = ?) AS reports_on_comments,
-                (SELECT COUNT(*) FROM post_reports pr JOIN posts p ON p.id = pr.post_id WHERE p.author_id = ?) AS reports_on_posts,
-                (SELECT COUNT(*) FROM comment_reports WHERE user_id = ?) + (SELECT COUNT(*) FROM post_reports WHERE user_id = ?) AS reports_filed",
-            array_fill(0, 8, $userId)
+                (SELECT COUNT(*) FROM comments WHERE user_id = ? AND hidden_at IS NOT NULL) AS hidden_comments",
+            array_fill(0, 4, $userId)
         ) ?? [];
 
         return array_map('intval', $row);

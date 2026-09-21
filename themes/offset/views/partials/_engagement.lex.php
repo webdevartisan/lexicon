@@ -91,4 +91,5 @@ $loginUrl = e(lurl('/login'));
   <form id="engage-token" hidden aria-hidden="true"><?= csrf_field() ?></form>
 </div>
 
+<script defer src="/assets/js/report-dialog.js"></script>
 <script defer src="<?= $asset('js/engagement.js') ?>"></script>

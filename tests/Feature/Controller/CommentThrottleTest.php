@@ -18,10 +18,10 @@ declare(strict_types=1);
 use App\Controllers\CommentController;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
-use App\Models\CommentReportModel;
 use App\Models\CommentVoteModel;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
+use App\Services\ReportIntakeService;
 use Framework\Core\Response;
 use Tests\Helpers\ThrottleTestHelper;
 
@@ -40,7 +40,7 @@ function makeThrottledCommentController(): array
         $comments,
         Mockery::mock(CommentModel::class),
         Mockery::mock(CommentVoteModel::class),
-        Mockery::mock(CommentReportModel::class),
+        Mockery::mock(ReportIntakeService::class),
         Mockery::mock(CommentRemovalService::class),
         Mockery::mock(BlogModel::class),
         $throttle,

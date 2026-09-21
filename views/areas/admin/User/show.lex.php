@@ -27,6 +27,10 @@ $empty = 'text-sm text-slate-500 dark:text-zink-300';
 
 $when = static fn (?string $ts): string => $ts ? local_datetime($ts, 'M j, Y H:i') : '—';
 $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (string) $v;
+// A rule-applied suspension has no person behind it and must never read as if one did.
+$suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') === 'rule'
+    ? 'Automatically, by the '.($s['rule'] ?? 'unknown').' rule'
+    : '@'.$text($s['suspended_by_handle']);
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
@@ -34,7 +38,7 @@ $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (st
     <div class="mb-5 p-4 rounded-md border border-red-200 bg-red-50 text-red-700 dark:bg-red-900/40 dark:border-red-800 dark:text-red-200 text-sm" role="status">
         <strong>Suspended <?= $suspension['expires_at'] ? 'until '.e($when($suspension['expires_at'])) : 'permanently' ?>.</strong>
         <?= e($text($suspension['reason'])) ?>
-        <span class="block mt-1">By @<?= e($text($suspension['suspended_by_handle'])) ?> on <?= e($when($suspension['suspended_at'])) ?>. <?= (int) $suspension['blogs_hidden'] ?> blog(s) and <?= (int) $suspension['comments_hidden'] ?> comment(s) hidden.</span>
+        <span class="block mt-1">By <?= e($suspendedBy($suspension)) ?> on <?= e($when($suspension['suspended_at'])) ?>. <?= (int) $suspension['blogs_hidden'] ?> blog(s) and <?= (int) $suspension['comments_hidden'] ?> comment(s) hidden.</span>
     </div>
     <?php } ?>
 
@@ -69,6 +73,7 @@ $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (st
         <a href="#account" class="text-custom-500 hover:underline">Account</a>
         <a href="#access" class="text-custom-500 hover:underline">Access</a>
         <a href="#content" class="text-custom-500 hover:underline">Content</a>
+        <a href="#reports" class="text-custom-500 hover:underline">Reports</a>
         <a href="#moderation" class="text-custom-500 hover:underline">Moderation</a>
         <a href="#security" class="text-custom-500 hover:underline">Security</a>
         <a href="#activity" class="text-custom-500 hover:underline">Activity</a>
@@ -166,8 +171,6 @@ $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (st
             <dl class="<?= $dl ?> mb-4">
                 <dt class="<?= $dt ?>">Posts</dt><dd class="<?= $dd ?>"><?= $counts['posts'] ?? 0 ?> (<?= $counts['published_posts'] ?? 0 ?> published)</dd>
                 <dt class="<?= $dt ?>">Comments</dt><dd class="<?= $dd ?>"><?= $counts['comments'] ?? 0 ?> (<?= $counts['hidden_comments'] ?? 0 ?> hidden by suspension)</dd>
-                <dt class="<?= $dt ?>">Reports against them</dt><dd class="<?= $dd ?>"><?= ($counts['reports_on_posts'] ?? 0) + ($counts['reports_on_comments'] ?? 0) ?> (<?= $counts['reports_on_posts'] ?? 0 ?> on posts, <?= $counts['reports_on_comments'] ?? 0 ?> on comments)</dd>
-                <dt class="<?= $dt ?>">Reports they filed</dt><dd class="<?= $dd ?>"><?= $counts['reports_filed'] ?? 0 ?></dd>
             </dl>
 
             <p class="<?= $hint ?> mb-2">Latest posts</p>
@@ -209,6 +212,33 @@ $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (st
         </div>
     </section>
 
+    <?php
+    $asAuthor = $moderation['asAuthor'];
+    $asReporter = $moderation['asReporter'];
+    $authorQueueHref = '/admin/reports?status=all&author='.rawurlencode((string) $user['handle']);
+    $reporterHref = '/admin/reports/reporters/'.(int) $user['id'];
+    ?>
+    <section id="reports" class="<?= $card ?>" aria-labelledby="reports-h">
+        <div class="card-body">
+            <h3 id="reports-h" class="<?= $heading ?> mb-3">Reports</h3>
+            <dl class="<?= $dl ?>">
+                <dt class="<?= $dt ?>">Cases about their content</dt>
+                <dd class="<?= $dd ?>">
+                    <?= $asAuthor['total'] ?> (<?= $asAuthor['open'] ?> open, <?= $asAuthor['upheld'] ?> upheld, <?= $asAuthor['dismissed'] ?> dismissed)
+                    <?php if ($canHandleReports && $asAuthor['total'] > 0) { ?> · <a href="<?= e($authorQueueHref) ?>" class="text-custom-500 hover:underline">See the cases</a><?php } ?>
+                </dd>
+                <dt class="<?= $dt ?>">Warnings from moderators</dt><dd class="<?= $dd ?>"><?= (int) $moderation['warnings'] ?></dd>
+                <dt class="<?= $dt ?>">Reports they filed</dt>
+                <dd class="<?= $dd ?>">
+                    <?= $asReporter['filed'] ?> (<?= $asReporter['upheld'] ?> upheld, <?= $asReporter['dismissed'] ?> dismissed, <?= $asReporter['unfounded'] ?> unfounded, <?= $asReporter['pending'] ?> waiting)
+                    <?php if ($canHandleReports) { ?> · <a href="<?= e($reporterHref) ?>" class="text-custom-500 hover:underline">Reporter record</a><?php } ?>
+                </dd>
+                <dt class="<?= $dt ?>">Reporting</dt>
+                <dd class="<?= $dd ?>"><?= $moderation['reportsPausedUntil'] === null ? 'Allowed' : 'Paused until '.e(local_datetime($moderation['reportsPausedUntil'], 'M j, Y')) ?></dd>
+            </dl>
+        </div>
+    </section>
+
     <section id="moderation" class="<?= $card ?>" aria-labelledby="moderation-h">
         <div class="card-body">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -230,7 +260,7 @@ $text = static fn (mixed $v): string => ($v === null || $v === '') ? '—' : (st
                             <td class="<?= $td ?> capitalize"><?= e($row['type']) ?></td>
                             <td class="<?= $td ?>"><?= e($when($row['suspended_at'])) ?></td>
                             <td class="<?= $td ?>"><?= $row['expires_at'] ? e($when($row['expires_at'])) : 'Permanent' ?></td>
-                            <td class="<?= $td ?>">@<?= e($text($row['suspended_by_handle'])) ?></td>
+                            <td class="<?= $td ?>"><?= e($suspendedBy($row)) ?></td>
                             <td class="<?= $td ?>"><?= $row['lifted_at'] ? e($when($row['lifted_at'])).' ('.e((string) $row['lift_kind']).($row['lifted_by_handle'] ? ', @'.e($row['lifted_by_handle']) : '').')' : 'In force' ?></td>
                             <td class="px-3.5 py-2.5 whitespace-normal"><?= e($text($row['reason'])) ?></td>
                         </tr>

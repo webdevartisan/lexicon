@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 use App\Models\PostModel;
 
-test('STATUSES contains the public lifecycle values', function () {
-    expect(PostModel::STATUSES)->toBe(['draft', 'pending', 'scheduled', 'published', 'archived']);
+test('STATUSES contains the public lifecycle values and the moderation hide', function () {
+    expect(PostModel::STATUSES)->toBe(['draft', 'pending', 'scheduled', 'published', 'archived', 'moderated']);
+});
+
+test('no editorial transition leads into or out of a moderation hide', function () {
+    $targets = array_merge(...array_values(PostModel::STATUS_TRANSITIONS));
+
+    expect(PostModel::STATUS_TRANSITIONS)->not->toHaveKey('moderated')
+        ->and($targets)->not->toContain('moderated');
 });
 
 test('STATUSES does not contain legacy values', function () {

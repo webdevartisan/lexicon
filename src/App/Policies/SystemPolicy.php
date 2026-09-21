@@ -47,7 +47,7 @@ class SystemPolicy implements PolicyInterface
         'manageUsers' => 'manage_all_users',
         'manageBlogs' => 'manage_all_blogs',
         'managePosts' => 'manage_all_posts',
-        'moderateComments' => 'moderate_comments',
+        'handleReports' => 'handle_reports',
         'manageTaxonomy' => 'manage_taxonomy',
         'manageRoles' => 'manage_roles',
         'viewAuditLog' => 'view_audit_log',
@@ -112,13 +112,14 @@ class SystemPolicy implements PolicyInterface
     }
 
     /**
-     * Approve, unapprove, mark spam, and delete comments.
+     * Work the reports queue: read cases, dismiss or uphold them, hide
+     * content and warn authors. Suspending an author still needs manageUsers.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
-    public function moderateComments(array $user): bool
+    public function handleReports(array $user): bool
     {
-        return $this->allowsArea($user, 'moderateComments');
+        return $this->allowsArea($user, 'handleReports');
     }
 
     /**
@@ -168,6 +169,18 @@ class SystemPolicy implements PolicyInterface
      * @param  array<string, mixed>  $user  Authenticated user record
      */
     public function clearLogs(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
+     * Change report reasons, their rules and the moderation safeguards.
+     * Administrators only: these decide when the system may act against
+     * people with nobody looking first.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function configureModeration(array $user): bool
     {
         return $this->isAdministrator($user);
     }

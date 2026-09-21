@@ -781,6 +781,20 @@ $container->setShared(App\Services\AccountErasureService::class, function ($c) {
     );
 });
 
+$container->setShared(App\Services\ReportIntakeService::class, function ($c) {
+    $config = require ROOT_PATH.'/config/privacy.php';
+
+    return new App\Services\ReportIntakeService(
+        $c->get(Framework\Database::class),
+        $c->get(App\Models\ModerationCategoryModel::class),
+        $c->get(App\Models\ModerationCaseModel::class),
+        $c->get(App\Models\ContentReportModel::class),
+        $c->get(App\Services\ModerationSettings::class),
+        $c->get(App\Services\ModerationRuleEngine::class),
+        (string) $config['deleted_user_handle']
+    );
+});
+
 $container->setShared(App\Services\AccountErasureSchedulerService::class, function ($c) {
     $config = require ROOT_PATH.'/config/privacy.php';
 

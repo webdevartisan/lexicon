@@ -25,7 +25,7 @@ class UserSuspensionService
     public const TYPE_PERMANENT = 'permanent';
 
     /** Marks the comments this cascade hid, so lifting cannot un-hide a comment hidden for some other reason later. */
-    private const COMMENT_REASON = 'author_suspended';
+    private const COMMENT_REASON = CommentModel::HIDDEN_BY_SUSPENSION;
 
     public function __construct(
         private Database $database,
@@ -37,13 +37,31 @@ class UserSuspensionService
     /**
      * Suspend an account and hide the content the cascade covers.
      *
+     * A suspension comes either from a person ($actorId) or from a moderation
+     * rule ($rule, with no actor), and the history row records which, so the
+     * two are never mistaken for each other later.
+     *
      * @param  string|null  $expiresAt  UTC 'Y-m-d H:i:s' for a temporary suspension, null for permanent
+     * @param  int|null  $actorId  The person applying it; null only when a rule applied it
+     * @param  string|null  $rule  Moderation category whose rule applied it
+     * @param  int|null  $caseId  Moderation case behind it, when there is one
      * @return array{blogs: int, comments: int} What the cascade actually hid, for the admin to read back
      *
      * @throws RuntimeException When the account is already suspended or the cascade cannot complete
+     * @throws \InvalidArgumentException When neither a person nor a rule is named
      */
-    public function suspend(int $userId, ?string $expiresAt, ?string $reason, int $actorId): array
-    {
+    public function suspend(
+        int $userId,
+        ?string $expiresAt,
+        ?string $reason,
+        ?int $actorId,
+        ?string $rule = null,
+        ?int $caseId = null,
+    ): array {
+        if ($actorId === null && $rule === null) {
+            throw new \InvalidArgumentException('A suspension needs the person or the moderation rule that applied it.');
+        }
+
         $user = $this->database
             ->query('SELECT id, suspended_at FROM users WHERE id = ? AND deleted_at IS NULL', [$userId])
             ->fetch();
@@ -58,7 +76,9 @@ class UserSuspensionService
 
         $type = $expiresAt === null ? self::TYPE_PERMANENT : self::TYPE_TEMPORARY;
 
-        $result = $this->atomically(function () use ($userId, $expiresAt, $reason, $actorId, $type): array {
+        $source = $actorId === null ? 'rule' : 'moderator';
+
+        $result = $this->atomically(function () use ($userId, $expiresAt, $reason, $actorId, $type, $source, $rule, $caseId): array {
             $this->database->execute(
                 'UPDATE users
                     SET is_active = 0,
@@ -75,9 +95,10 @@ class UserSuspensionService
 
             $this->database->execute(
                 'INSERT INTO user_suspensions
-                    (user_id, type, reason, suspended_by, suspended_at, expires_at, blogs_hidden, comments_hidden)
-                 VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), ?, ?, ?)',
-                [$userId, $type, $reason, $actorId, $expiresAt, $blogs, $comments]
+                    (user_id, type, reason, suspended_by, source, rule, case_id, suspended_at, expires_at,
+                     blogs_hidden, comments_hidden)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), ?, ?, ?)',
+                [$userId, $type, $reason, $actorId, $source, $rule, $caseId, $expiresAt, $blogs, $comments]
             );
 
             return ['blogs' => $blogs, 'comments' => $comments];
@@ -224,6 +245,22 @@ class UserSuspensionService
                 [$userId]
             )
             ->fetchAll();
+    }
+
+    /**
+     * Whether a moderation rule suspended this account within the last $days.
+     */
+    public function suspendedByRuleWithin(int $userId, int $days): bool
+    {
+        return (bool) $this->database
+            ->query(
+                "SELECT EXISTS(
+                    SELECT 1 FROM user_suspensions
+                     WHERE user_id = ? AND source = 'rule' AND suspended_at >= UTC_TIMESTAMP() - INTERVAL ? DAY
+                 )",
+                [$userId, $days]
+            )
+            ->fetchColumn();
     }
 
     /**
