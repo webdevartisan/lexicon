@@ -109,6 +109,32 @@ class EmailTemplateRegistry
                     'actorHandle' => 'blogowner',
                 ],
             ],
+            'moderation_warning' => [
+                'name' => 'Moderation Warning',
+                'description' => 'Tells an author a moderator upheld reports against their post or comment',
+                'group' => 'Account',
+                'class' => 'App\\Mail\\ModerationWarningMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'handle' => 'johndoe',
+                    'subjectKind' => 'comment',
+                    'subjectLabel' => 'Buy cheap followers at...',
+                    'category' => 'Spam',
+                    'message' => 'Please stop posting the same link under every post.',
+                ],
+            ],
+            'reporter_warning' => [
+                'name' => 'Reporter Warning',
+                'description' => 'Warns a reader that several of their reports were unfounded, before any pause of their reporting',
+                'group' => 'Account',
+                'class' => 'App\Mail\ReporterWarningMail',
+                'sample_data' => [
+                    'toEmail' => 'reader@example.com',
+                    'handle' => 'johndoe',
+                    'unfounded' => 4,
+                    'message' => 'Several of your recent reports were about posts you disagreed with, not posts that broke the rules.',
+                ],
+            ],
             'collaborator_removed' => [
                 'name' => 'Collaborator Removed',
                 'description' => 'Notifies a collaborator they were removed from a blog',

@@ -26,6 +26,8 @@ final class DatabaseSeeder
      * deliberately excluded so a reseed never disturbs them.
      */
     private const CONTENT_TABLES = [
+        'content_reports',
+        'moderation_cases',
         'reviews',
         'post_reviewers',
         'submissions',

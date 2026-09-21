@@ -50,6 +50,7 @@ class UserDetailController extends ManagedUserController
                 ? $this->impersonation->refusalReason($actor, $userId)
                 : 'Only administrators can sign in as another account.',
             'publicVisibility' => $this->publicVisibility($user),
+            'canHandleReports' => Gate::allows('handleReports', SystemResource::class, $actor),
         ]));
     }
 

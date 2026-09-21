@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Gate;
 use App\Models\BlogModel;
 use App\Models\PostModel;
+use App\Resources\SystemResource;
 use App\Services\ExternalMediaGuard;
 use App\Services\MediaService;
 use App\Services\PostContentSanitizer;
@@ -117,6 +119,7 @@ class PostController extends AppController
             'visibilityOptions' => PostModel::VISIBILITIES,
             'blogOptions' => $this->blogModel->getAllForSelect(),
             'sort' => $sort,
+            'canHandleReports' => Gate::allows('handleReports', SystemResource::class, auth()->user() ?? []),
         ]);
     }
 
@@ -215,18 +218,24 @@ class PostController extends AppController
             return $rejected;
         }
 
+        // Reversing a moderation hide belongs to its report case, where the
+        // decision is recorded, so the edit form cannot republish the post.
+        $staysHidden = ($post['status'] ?? '') === 'moderated';
+
         $data = [
             'title' => $input['title'],
             'slug' => $input['slug'] ?? $post['slug'],
             'content' => $input['content'],
             'excerpt' => $input['excerpt'] ?? null,
             'featured_image' => $input['featured_image'] ?? null,
-            'status' => $input['status'],
+            'status' => $staysHidden ? 'moderated' : $input['status'],
             'blog_id' => (int) $input['blog_id'],
         ];
 
         if ($this->model->update($id, $data)) {
-            $this->flash('success', 'Post updated.');
+            $this->flash('success', $staysHidden
+                ? 'Post updated. It stays hidden because of a moderation decision; restore it from its report case.'
+                : 'Post updated.');
 
             return $this->redirectToList('/admin/posts');
         }

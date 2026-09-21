@@ -58,15 +58,13 @@ class AccountErasureService
                 fn (array $blog): array => ['id' => (int) $blog['id'], 'blog_name' => (string) $blog['blog_name']],
                 $sharedBlogs
             ),
-            // A report has no separate "resolved" state here: it stands until the blog
-            // team acts on the post or comment itself, so any row at all still counts.
+            // Read from the moderation case, not the blog's badge: a blog owner
+            // approving their own comment clears the badge but settles nothing.
             'reported_content' => (bool) $this->database->query(
-                'SELECT EXISTS(
-                    SELECT 1 FROM posts WHERE author_id = ? AND reports_count > 0
-                    UNION ALL
-                    SELECT 1 FROM comments WHERE user_id = ? AND reports_count > 0
-                 )',
-                [$userId, $userId]
+                "SELECT EXISTS(
+                    SELECT 1 FROM moderation_cases WHERE subject_author_id = ? AND status <> 'resolved'
+                 )",
+                [$userId]
             )->fetchColumn(),
         ];
     }

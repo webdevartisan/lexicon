@@ -17,6 +17,7 @@ class DatabaseHelper
      */
     private const PRESERVED_TABLES = [
         'migrations',
+        'moderation_categories',
         'permissions',
         'reserved_handles',
         'role_permissions',
@@ -62,10 +63,12 @@ class DatabaseHelper
             'submissions',
             'reviews',
             'posts',
-            'post_reports',
             'comment_votes',
-            'comment_reports',
             'comments',
+
+            // Moderation
+            'content_reports',
+            'moderation_cases',
 
             // Blog-related
             'blog_subscribers',

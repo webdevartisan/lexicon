@@ -198,3 +198,32 @@ it('previews the same blogs and comments the cascade then hides', function () {
 
     expect($hidden)->toBe(['blogs' => count($impact['solo_blogs']), 'comments' => $impact['comments']]);
 });
+
+it('records a person-applied suspension as a moderator one', function () {
+    $this->service->suspend($this->personId, null, 'Spam', $this->adminId);
+
+    $row = $this->service->current($this->personId);
+
+    expect($row['source'])->toBe('moderator')
+        ->and($row['rule'])->toBeNull()
+        ->and((int) $row['suspended_by'])->toBe($this->adminId);
+});
+
+it('records a rule-applied suspension with the rule and case and no person behind it', function () {
+    $this->service->suspend($this->personId, '2030-01-01 00:00:00', 'Harassment threshold', null, 'harassment', 17);
+
+    $row = $this->service->current($this->personId);
+
+    expect($row['source'])->toBe('rule')
+        ->and($row['rule'])->toBe('harassment')
+        ->and((int) $row['case_id'])->toBe(17)
+        ->and($row['suspended_by'])->toBeNull()
+        ->and($this->service->suspendedByRuleWithin($this->personId, 30))->toBeTrue();
+});
+
+it('refuses a suspension that names neither a person nor a rule', function () {
+    expect(fn () => $this->service->suspend($this->personId, null, 'Nobody', null))
+        ->toThrow(InvalidArgumentException::class);
+
+    expect($this->service->current($this->personId))->toBeNull();
+});

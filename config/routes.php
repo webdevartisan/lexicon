@@ -12,6 +12,12 @@ $router->add('/csrf-token', [
     'method' => 'GET',
 ]);
 
+$router->add('/report-reasons', [
+    'controller' => 'ReportReasonController',
+    'action' => 'index',
+    'method' => 'GET',
+]);
+
 $router->add('/geo', [
     'controller' => 'GeoController',
     'action' => 'timezone',
@@ -478,13 +484,25 @@ $router->group([
     $r->add('/tags/{id:\d+}/delete', ['controller' => 'TagController', 'action' => 'delete', 'method' => 'GET']);
     $r->add('/tags/{id:\d+}/destroy', ['controller' => 'TagController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Comment moderation
-    $r->add('/comments', ['controller' => 'CommentController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/comments/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
-    $r->add('/comments/{id:\d+}/unapprove', ['controller' => 'CommentController', 'action' => 'unapprove', 'method' => 'POST']);
-    $r->add('/comments/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
-    $r->add('/comments/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
-    $r->add('/comments/bulk', ['controller' => 'CommentController', 'action' => 'bulk', 'method' => 'POST']);
+    // Reports queue: one case per reported item. Suspending from a case goes
+    // through the regular /users/{id}/suspend page with ?case= attached.
+    $r->add('/reports', ['controller' => 'ReportController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/reports/{id:\d+}', ['controller' => 'ReportController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/reports/{id:\d+}/review', ['controller' => 'ReportController', 'action' => 'review', 'method' => 'POST']);
+    $r->add('/reports/{id:\d+}/escalate', ['controller' => 'ReportController', 'action' => 'escalate', 'method' => 'POST']);
+    $r->add('/reports/{id:\d+}/dismiss', ['controller' => 'ReportController', 'action' => 'dismiss', 'method' => 'POST']);
+    $r->add('/reports/{id:\d+}/uphold', ['controller' => 'ReportController', 'action' => 'uphold', 'method' => 'POST']);
+
+    // A reporter's record, and the warning and pause for unfounded reports (DSA Art. 23)
+    $r->add('/reports/reporters/{id:\d+}', ['controller' => 'ReporterController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/reports/reporters/{id:\d+}/warn', ['controller' => 'ReporterController', 'action' => 'warn', 'method' => 'POST']);
+    $r->add('/reports/reporters/{id:\d+}/pause', ['controller' => 'ReporterController', 'action' => 'pause', 'method' => 'POST']);
+    $r->add('/reports/reporters/{id:\d+}/resume', ['controller' => 'ReporterController', 'action' => 'resume', 'method' => 'POST']);
+
+    // Report reasons, their rules and the safeguards. Administrators only.
+    $r->add('/reports/settings', ['controller' => 'ModerationSettingsController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/reports/settings/safeguards', ['controller' => 'ModerationSettingsController', 'action' => 'updateSafeguards', 'method' => 'POST']);
+    $r->add('/reports/settings/reasons/{slug:[a-z_]+}', ['controller' => 'ModerationSettingsController', 'action' => 'updateReason', 'method' => 'POST']);
 
     // Roles and permissions
     $r->add('/roles', ['controller' => 'RoleController', 'action' => 'index', 'method' => 'GET']);

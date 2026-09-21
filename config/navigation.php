@@ -213,12 +213,12 @@ return [
      * panel still renders coherent sections.
      */
     'admin' => [
-        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'moderate_comments', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_site_settings'], 'key' => 'navigation.home'],
+        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_site_settings'], 'key' => 'navigation.home'],
 
-        ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'moderate_comments', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
+        ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
         ['label' => 'Blogs', 'href' => '/admin/blogs', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs'], 'key' => 'navigation.blogs'],
         ['label' => 'Posts', 'href' => '/admin/posts', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_posts'], 'key' => 'navigation.posts'],
-        ['label' => 'Moderation', 'href' => '/admin/comments', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['moderate_comments'], 'key' => 'navigation.moderation'],
+        ['label' => 'Moderation', 'href' => '/admin/reports', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['handle_reports'], 'key' => 'navigation.moderation'],
         ['label' => 'Categories', 'href' => '/admin/categories', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.categories'],
         ['label' => 'Tags', 'href' => '/admin/tags', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.tags'],
 

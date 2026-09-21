@@ -23,8 +23,10 @@ class PostModel extends AppModel
      * 'scheduled' = approved to go live, waiting on published_at. Deliberately
      * distinct from 'published' so the public queries, which all filter on
      * status = 'published', exclude it without needing a date check.
+     * 'moderated' = hidden by a moderation decision. It has no entry in
+     * STATUS_TRANSITIONS, so only the moderation flow can take a post out of it.
      */
-    public const STATUSES = ['draft', 'pending', 'scheduled', 'published', 'archived'];
+    public const STATUSES = ['draft', 'pending', 'scheduled', 'published', 'archived', 'moderated'];
 
     /**
      * Valid workflow state values for the editorial pipeline.
@@ -1070,7 +1072,7 @@ class PostModel extends AppModel
      */
     public function unpublishPost(int $id): bool
     {
-        $sql = "UPDATE posts SET status = 'draft' WHERE id = :id";
+        $sql = "UPDATE posts SET status = 'draft' WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [':id' => $id]);
 
         return $affected > 0;
@@ -1084,7 +1086,9 @@ class PostModel extends AppModel
      */
     public function publishPost(int $id): bool
     {
-        $sql = "UPDATE posts SET status = 'published' WHERE id = :id";
+        // A post a moderator hid comes back only through the moderation flow,
+        // never through a publish button or a bulk action.
+        $sql = "UPDATE posts SET status = 'published' WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [':id' => $id]);
 
         return $affected > 0;
@@ -1102,25 +1106,83 @@ class PostModel extends AppModel
         // Fetch before the change so we know which blog/URL to invalidate.
         $post = $this->findResource($id);
 
-        $sql = 'UPDATE posts SET status = :status WHERE id = :id';
+        $sql = "UPDATE posts SET status = :status WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [
             ':status' => $status,
             ':id' => $id,
         ]);
 
         if ($affected > 0 && $post) {
-            $blog = $post->blog();
-
-            // Publishing/archiving changes what listings and the post page show.
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-            cache()->deletePattern('*:GET:/blogs*');
-
-            // Neighbour/related lists filter on status='published', so a status
-            // flip shifts them for the whole blog.
-            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+            $this->forgetStatusSurfaces($post);
         }
 
         return $affected > 0;
+    }
+
+    /**
+     * Hide a post from readers because of a moderation decision.
+     *
+     * The old status is kept beside it, so reversing the decision restores the
+     * post exactly rather than guessing what it was.
+     *
+     * @return bool False when it was already hidden or no longer exists
+     */
+    public function hideForModeration(int $id): bool
+    {
+        $post = $this->findResource($id);
+
+        $affected = $this->database->execute(
+            "UPDATE posts
+                SET status_before_moderation = status, status = 'moderated'
+              WHERE id = ? AND status <> 'moderated'",
+            [$id]
+        );
+
+        if ($affected > 0 && $post) {
+            $this->forgetStatusSurfaces($post);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
+     * Put a post a moderation decision hid back to the status it had.
+     *
+     * @return bool False when it is not hidden by moderation, or has no status
+     *              recorded to go back to (that needs a person, not a guess)
+     */
+    public function restoreFromModeration(int $id): bool
+    {
+        $post = $this->findResource($id);
+
+        $affected = $this->database->execute(
+            "UPDATE posts
+                SET status = status_before_moderation, status_before_moderation = NULL
+              WHERE id = ? AND status = 'moderated' AND status_before_moderation IS NOT NULL",
+            [$id]
+        );
+
+        if ($affected > 0 && $post) {
+            $this->forgetStatusSurfaces($post);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
+     * Clear what a status change makes stale: the post page, the listings, and
+     * the neighbour and related lists across its blog.
+     */
+    private function forgetStatusSurfaces(PostResource $post): void
+    {
+        $blog = $post->blog();
+
+        cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
+        cache()->deletePattern('*:GET:/blogs*');
+
+        // Neighbour/related lists filter on status='published', so a status
+        // flip shifts them for the whole blog.
+        $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
     }
 
     /**
@@ -1727,10 +1789,12 @@ class PostModel extends AppModel
                        p.featured_on_home, p.is_featured, p.visibility, p.published_at,
                        b.blog_name, b.blog_slug,
                        au.handle AS author_handle,
-                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count
+                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
+                       mc.id AS open_case_id, mc.report_count AS open_case_reports
                 FROM {$this->getTable()} p
                 LEFT JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN users au ON au.id = p.author_id
+                LEFT JOIN moderation_cases mc ON mc.open_key = CONCAT('post:', p.id)
                 {$where}
                 ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";

@@ -7,6 +7,7 @@ use App\Models\AccountErasureRecordModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
+use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
@@ -187,7 +188,7 @@ test('the shared deleted-user account cannot be erased', function () {
 });
 
 test('a reported post blocks erasure until the report is resolved', function () {
-    $this->db->execute('UPDATE posts SET reports_count = 1 WHERE id = ?', [$this->postId]);
+    (new ModerationCaseModel($this->db))->openFor('post', $this->postId, $this->personId, null, null, null);
 
     expect($this->service->blockers($this->personId)['reported_content'])->toBeTrue()
         ->and($this->service->canErase($this->personId))->toBeFalse()
@@ -199,9 +200,17 @@ test('a reported post blocks erasure until the report is resolved', function () 
 
 test('a reported comment blocks erasure the same way', function () {
     $ownCommentId = CommentFactory::new($this->comments)->create($this->postId, $this->personId);
-    $this->db->execute('UPDATE comments SET reports_count = 1 WHERE id = ?', [$ownCommentId]);
+    (new ModerationCaseModel($this->db))->openFor('comment', $ownCommentId, $this->personId, null, null, null);
 
     expect($this->service->canErase($this->personId))->toBeFalse();
+});
+
+test('a resolved case, or only the blog badge, no longer blocks erasure', function () {
+    $caseId = (new ModerationCaseModel($this->db))->openFor('post', $this->postId, $this->personId, null, null, null);
+    $this->db->execute("UPDATE moderation_cases SET status = 'resolved', open_key = NULL WHERE id = ?", [$caseId]);
+    $this->db->execute('UPDATE posts SET reports_count = 3 WHERE id = ?', [$this->postId]);
+
+    expect($this->service->blockers($this->personId)['reported_content'])->toBeFalse();
 });
 
 test('erasing keeps a private record of who the account was', function () {

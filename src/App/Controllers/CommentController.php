@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Exceptions\ReportRejectedException;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
-use App\Models\CommentReportModel;
 use App\Models\CommentVoteModel;
 use App\Services\CommentRateLimiter;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
+use App\Services\ReportIntakeService;
+use App\Traits\ThrottlesReaderInteractions;
 use Framework\Core\Response;
 
 /**
@@ -24,11 +26,13 @@ use Framework\Core\Response;
  */
 class CommentController extends AppController
 {
+    use ThrottlesReaderInteractions;
+
     public function __construct(
         private CommentService $comments,
         private CommentModel $commentModel,
         private CommentVoteModel $votes,
-        private CommentReportModel $reports,
+        private ReportIntakeService $intake,
         private CommentRemovalService $removal,
         private BlogModel $blogModel,
         private CommentRateLimiter $throttle,
@@ -175,10 +179,11 @@ class CommentController extends AppController
     }
 
     /**
-     * Flag a comment for the blog team.
+     * Report a comment to the moderators.
      *
-     * Reporting hides nothing on its own. It raises the comment in the owner's
-     * moderation queue with a reason attached, and a person decides from there.
+     * The report joins the comment's moderation case. Whether anything
+     * happens on its own is up to the rule for the chosen category and its
+     * safeguards; by default a person decides.
      */
     public function report(string $id): Response
     {
@@ -189,7 +194,6 @@ class CommentController extends AppController
         }
 
         $commentId = (int) $id;
-        $reason = (string) ($this->request->post['reason'] ?? 'other');
 
         if (($comment = $this->votableComment($commentId)) === null) {
             return $this->jsonError('That comment is not available.', 404);
@@ -202,17 +206,36 @@ class CommentController extends AppController
             return $this->jsonError('You cannot report your own comment.', 422);
         }
 
-        $recorded = $this->reports->report($userId, $commentId, $reason);
+        $details = $this->request->post['details'] ?? null;
 
-        if ($recorded) {
-            audit()->log($userId, 'comment.reported', 'comment', $commentId, ['reason' => $reason], $this->request->ip());
+        try {
+            $result = $this->intake->file(
+                $userId,
+                'comment',
+                $commentId,
+                (string) ($this->request->post['reason'] ?? ''),
+                is_string($details) ? $details : null
+            );
+        } catch (ReportRejectedException $e) {
+            return $this->jsonError($e->getMessage(), 422);
+        }
+
+        if ($result['recorded']) {
+            audit()->log(
+                $userId,
+                'comment.reported',
+                'comment',
+                $commentId,
+                ['category' => $result['category'], 'case_id' => $result['case_id']],
+                $this->request->ip()
+            );
         }
 
         return $this->jsonSuccess([
             'reported' => true,
             // A repeat report is not an error; it just does not count twice.
-            'message' => $recorded
-                ? 'Thanks — this comment has been sent to the blog team.'
+            'message' => $result['recorded']
+                ? 'Thanks. This comment has been sent to the moderators.'
                 : 'You already reported this comment.',
         ]);
     }
@@ -251,46 +274,6 @@ class CommentController extends AppController
         $this->flash('success', $pinning ? 'Comment pinned to the top.' : 'Comment unpinned.');
 
         return $this->redirect($this->backUrlPath().'#comment-'.$commentId);
-    }
-
-    /**
-     * Record a vote/report attempt and build the 429 when the caller is over.
-     *
-     * @return Response|null The refusal to return, or null to carry on
-     */
-    private function interactionThrottleResponse(): ?Response
-    {
-        $ip = $this->clientIp();
-
-        if (!$this->throttle->hitInteraction($ip)) {
-            return null;
-        }
-
-        $wait = $this->throttle->interactionAvailableIn($ip);
-        $this->response->addHeader('Retry-After', (string) $wait);
-
-        return $this->jsonError($this->waitMessage($wait), 429);
-    }
-
-    private function clientIp(): string
-    {
-        return $this->request->ip() ?? 'unknown';
-    }
-
-    /**
-     * Phrase the refusal in minutes so it reads like a pause, not a failure.
-     *
-     * @param  int  $seconds  Seconds left on the throttle
-     */
-    private function waitMessage(int $seconds): string
-    {
-        if ($seconds < 60) {
-            return 'You are going a little fast. Try again in a few seconds.';
-        }
-
-        $minutes = (int) ceil($seconds / 60);
-
-        return "You are going a little fast. Try again in {$minutes} minute".($minutes === 1 ? '' : 's').'.';
     }
 
     /**

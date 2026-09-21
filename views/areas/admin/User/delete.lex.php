@@ -13,7 +13,7 @@
             <p class="text-sm text-slate-500 dark:text-zink-300 mb-2">This is the only administrator. Give someone else the Administrator role first.</p>
             <?php } ?>
             <?php if ($blockers['reported_content']) { ?>
-            <p class="text-sm text-slate-500 dark:text-zink-300 mb-2">Some of what they wrote has an open report. Resolve it on the post or comment itself first.</p>
+            <p class="text-sm text-slate-500 dark:text-zink-300 mb-2">Some of what they wrote is under an open report case. Resolve the case first.</p>
             <?php } ?>
             <?php if ($blockers['shared_blogs'] !== []) { ?>
             <p class="text-sm text-slate-500 dark:text-zink-300 mb-2">They own blogs that other people write in. Transfer each one to a collaborator, or delete it, first:</p>

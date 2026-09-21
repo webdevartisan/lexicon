@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted_at TIMESTAMP NULL COMMENT 'Soft delete timestamp',
     suspended_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set while a suspension is in force; NULL means not suspended',
     suspended_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC end of a temporary suspension; NULL alongside suspended_at means permanent',
+    reports_paused_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC; reports from this account are refused until then',
     suspension_reason VARCHAR(500) DEFAULT NULL,
     suspended_by INT DEFAULT NULL COMMENT 'Administrator who applied the suspension',
     session_epoch INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Bumped to invalidate every existing session for the account',
@@ -398,7 +399,8 @@ CREATE TABLE IF NOT EXISTS posts (
     content LONGTEXT DEFAULT NULL,
     excerpt TEXT DEFAULT NULL,
     featured_image VARCHAR(255) DEFAULT NULL,
-    status ENUM('draft','pending','scheduled','published','archived') NOT NULL DEFAULT 'draft',
+    status ENUM('draft','pending','scheduled','published','archived','moderated') NOT NULL DEFAULT 'draft',
+    status_before_moderation VARCHAR(20) DEFAULT NULL COMMENT 'Status to restore if a moderation hide is reversed',
     workflow_state ENUM('draft','in_review','needs_changes','approved') NOT NULL DEFAULT 'draft',
     visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Post-level comment override',
@@ -433,7 +435,7 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_status (status),
     INDEX idx_workflow_state (workflow_state),
     INDEX idx_visibility (visibility),
-    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from post_reports',
+    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Open reports the blog team has not reviewed',
     INDEX idx_blog (blog_id),
     INDEX idx_author (author_id),
     INDEX idx_category (category_id),
@@ -516,7 +518,7 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     upvotes INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_votes',
     downvotes INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_votes',
-    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalised from comment_reports',
+    reports_count INT NOT NULL DEFAULT 0 COMMENT 'Open reports the blog team has not reviewed',
     status ENUM('pending','approved','spam') NOT NULL DEFAULT 'approved' COMMENT 'Moderation state; new public comments default to pending in app layer',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Tombstone marker; row survives so its replies keep their thread',
     deleted_by ENUM('author','moderator') DEFAULT NULL COMMENT 'Who removed it; drives the tombstone wording',
@@ -567,24 +569,108 @@ CREATE TABLE IF NOT EXISTS comment_votes (
 COMMENT='One row per user per voted comment';
 
 -- ----------------------------------------------------------------------------
--- Comment Reports Table
+-- Moderation Tables
 -- ----------------------------------------------------------------------------
--- Readers flag a comment for the blog team. One row per reporter keeps the
--- count honest, and the running total is denormalised onto comments so the
--- moderation queue can sort by it without an aggregate.
+-- A report is a signal and a case is the decision. content_reports has no
+-- foreign key to the reported row, so complaints (and the record of which
+-- were unfounded) outlive the post or comment they were about.
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS comment_reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    comment_id INT NOT NULL,
-    user_id INT NULL,
-    reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
+CREATE TABLE IF NOT EXISTS moderation_categories (
+    slug VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'Stored on every report, so it never changes once used',
+    label VARCHAR(60) NOT NULL,
+    description VARCHAR(255) DEFAULT NULL,
+    severity ENUM('low','medium','high','critical') NOT NULL DEFAULT 'low',
+    auto_action ENUM('none','hide_content','suspend','escalate') NOT NULL DEFAULT 'none',
+    threshold SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Counted reports that trigger auto_action; NULL when auto_action is none',
+    suspension_hours INT UNSIGNED DEFAULT NULL COMMENT 'Length of an automatic suspension',
+    execution ENUM('automatic','confirm') NOT NULL DEFAULT 'confirm' COMMENT 'confirm = the rule proposes and a person applies it',
+    automation_acknowledged_by INT DEFAULT NULL COMMENT 'Administrator who accepted the risk of automating a high severity category',
+    automation_acknowledged_at TIMESTAMP NULL DEFAULT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Inactive categories stay on old reports but cannot be chosen',
+    sort_order SMALLINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_comment_report (comment_id, user_id),
-    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_comment_report_comment (comment_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='One row per user per reported comment; reporting twice is a no-op';
+COMMENT='What readers can report content for, and what the system does about it';
+
+-- Only spam is automatic out of the box. Everything harsher proposes an action
+-- for a person to confirm, and illegal content only ever escalates.
+INSERT INTO moderation_categories
+    (slug, label, description, severity, auto_action, threshold, suspension_hours, execution, sort_order)
+VALUES
+    ('spam', 'Spam', 'Advertising, scams, or repetitive content', 'low', 'hide_content', 3, NULL, 'automatic', 10),
+    ('harassment', 'Harassment', 'Targets or intimidates a person', 'high', 'suspend', 3, 168, 'confirm', 20),
+    ('hate', 'Hate speech', 'Attacks people for who they are', 'high', 'suspend', 3, 168, 'confirm', 30),
+    ('misinformation', 'Misinformation', 'Presents false claims as fact', 'medium', 'hide_content', 5, NULL, 'confirm', 40),
+    ('illegal', 'Illegal content', 'Breaks the law', 'critical', 'escalate', 1, NULL, 'confirm', 50),
+    ('other', 'Something else', 'Tell us what is wrong', 'low', 'none', NULL, NULL, 'confirm', 60);
+
+-- ----------------------------------------------------------------------------
+-- Cases
+-- ----------------------------------------------------------------------------
+-- One live case per reported item. open_key holds "post:12" while the case is
+-- unresolved and NULL after, and a UNIQUE key allows any number of NULLs, so
+-- the database itself guarantees a second report joins the open case instead
+-- of racing to open another. A report after a resolution starts a fresh case.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS moderation_cases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subject_type ENUM('post','comment') NOT NULL,
+    subject_id INT NOT NULL,
+    open_key VARCHAR(40) DEFAULT NULL COMMENT 'subject_type:subject_id while unresolved, NULL once resolved',
+    subject_author_id INT DEFAULT NULL,
+    subject_author_handle VARCHAR(50) DEFAULT NULL COMMENT 'Kept so the case still names the author after erasure',
+    blog_id INT DEFAULT NULL,
+    subject_snapshot TEXT DEFAULT NULL COMMENT 'Title or text as it read when the case opened',
+    status ENUM('open','in_review','escalated','resolved') NOT NULL DEFAULT 'open' COMMENT 'The moderator work state',
+    content_status ENUM('visible','hidden','removed') NOT NULL DEFAULT 'visible' COMMENT 'What readers see, independent of status',
+    report_count INT NOT NULL DEFAULT 0,
+    counted_report_count INT NOT NULL DEFAULT 0 COMMENT 'Reports that met the reporter standing rules',
+    top_category VARCHAR(32) DEFAULT NULL COMMENT 'Most severe category among the reports',
+    priority INT NOT NULL DEFAULT 0,
+    pending_action VARCHAR(20) DEFAULT NULL COMMENT 'Action a rule proposed and a person has to confirm',
+    pending_rule VARCHAR(32) DEFAULT NULL,
+    pending_note VARCHAR(255) DEFAULT NULL COMMENT 'Why the rule did not act on its own',
+    fired_rules JSON DEFAULT NULL COMMENT 'Categories whose rule already fired on this case',
+    last_error VARCHAR(500) DEFAULT NULL COMMENT 'An automatic action that failed, shown in the queue until someone acts',
+    first_reported_at TIMESTAMP NULL DEFAULT NULL,
+    last_reported_at TIMESTAMP NULL DEFAULT NULL,
+    resolution ENUM('dismissed','upheld') DEFAULT NULL,
+    resolution_note VARCHAR(1000) DEFAULT NULL,
+    resolved_by INT DEFAULT NULL,
+    resolved_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_case_open (open_key),
+    INDEX idx_case_subject (subject_type, subject_id),
+    INDEX idx_case_queue (status, priority),
+    INDEX idx_case_author (subject_author_id, resolution),
+    INDEX idx_case_last_reported (last_reported_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One moderation case per reported item; no foreign keys so it outlives the item and its author';
+
+CREATE TABLE IF NOT EXISTS content_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    subject_type ENUM('post','comment') NOT NULL,
+    subject_id INT NOT NULL,
+    reporter_id INT DEFAULT NULL,
+    reporter_handle VARCHAR(50) DEFAULT NULL,
+    category VARCHAR(32) NOT NULL,
+    details VARCHAR(1000) DEFAULT NULL,
+    counts_toward_threshold TINYINT(1) NOT NULL DEFAULT 1,
+    not_counted_reason VARCHAR(32) DEFAULT NULL COMMENT 'new_account, unfounded_history, filed_before_rules',
+    outcome ENUM('pending','upheld','dismissed','unfounded') NOT NULL DEFAULT 'pending',
+    outcome_by INT DEFAULT NULL,
+    outcome_at TIMESTAMP NULL DEFAULT NULL,
+    blog_reviewed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'The blog team approved the item; clears their badge, not the case',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_report_once (subject_type, subject_id, reporter_id),
+    INDEX idx_report_case (case_id),
+    INDEX idx_report_reporter (reporter_id, outcome, created_at),
+    CONSTRAINT fk_report_case FOREIGN KEY (case_id) REFERENCES moderation_cases(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per reader per reported item, kept after the item is gone';
 
 -- ----------------------------------------------------------------------------
 -- Blog Subscribers Table
@@ -772,26 +858,6 @@ CREATE TABLE IF NOT EXISTS post_votes (
 COMMENT='One row per user per voted post; only the up count is published';
 
 -- ----------------------------------------------------------------------------
--- Post Reports Table
--- ----------------------------------------------------------------------------
--- Mirrors comment_reports. Separate tables rather than one polymorphic table,
--- because a real foreign key is what guarantees reports disappear with the
--- thing they were about.
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS post_reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    post_id INT NOT NULL,
-    user_id INT NULL,
-    reason ENUM('spam','harassment','hate','misinformation','other') NOT NULL DEFAULT 'other',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_post_report (post_id, user_id),
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_post_report_post (post_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='One row per user per reported post; reporting twice is a no-op';
-
--- ----------------------------------------------------------------------------
 -- Account Erasure Records Table
 -- ----------------------------------------------------------------------------
 -- A private, admin-only trail of who an erased account used to be, kept only
@@ -927,6 +993,9 @@ CREATE TABLE IF NOT EXISTS user_suspensions (
     type ENUM('temporary','permanent') NOT NULL,
     reason VARCHAR(500) DEFAULT NULL,
     suspended_by INT DEFAULT NULL,
+    source ENUM('moderator','rule') NOT NULL DEFAULT 'moderator',
+    rule VARCHAR(32) DEFAULT NULL COMMENT 'Category whose rule applied it',
+    case_id INT DEFAULT NULL COMMENT 'Moderation case that led to it',
     suspended_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC; NULL for a permanent suspension',
     lifted_at TIMESTAMP NULL DEFAULT NULL,
@@ -1186,17 +1255,17 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 
 -- Control Panel Area Permissions
 -- Administrators pass every Gate check by role; these let other roles be
--- granted individual admin areas (e.g. a moderator holding moderate_comments).
+-- granted individual admin areas (e.g. a moderator holding handle_reports).
 ('Access Control Panel', 'access_control_panel', 'admin', 'read', 'Open the control panel dashboard'),
 ('Manage All Blogs', 'manage_all_blogs', 'blogs', 'manage', 'Full blog management in the control panel'),
-('Moderate Comments', 'moderate_comments', 'comments', 'manage', 'Approve, unapprove, mark spam, and delete comments'),
 ('Manage Taxonomy', 'manage_taxonomy', 'taxonomy', 'manage', 'Manage categories and tags in the control panel'),
 ('Manage Roles', 'manage_roles', 'roles', 'manage', 'Create custom roles and edit role permissions'),
 ('View Audit Log', 'view_audit_log', 'audit', 'read', 'Read the audit trail'),
 ('View System Health', 'view_system_health', 'system', 'read', 'View system diagnostics'),
 ('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
 ('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
-('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output');
+('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
+('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role
@@ -1218,7 +1287,7 @@ WHERE permission_slug IN (
     'view_users', 'view_all_blogs', 'manage_all_posts', 'edit_all_posts', 
     'delete_all_posts', 'publish_all_posts', 'view_all_posts',
     'review_posts', 'approve_posts', 'reject_posts', 'provide_feedback',
-    'review_submissions'
+    'review_submissions', 'handle_reports'
 );
 
 -- ----------------------------------------------------------------------------

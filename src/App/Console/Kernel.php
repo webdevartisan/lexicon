@@ -19,6 +19,7 @@ use App\Console\Commands\SchedulePruneRunsCommand;
 use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
 use App\Console\Commands\SeedCommand;
+use App\Console\Commands\SeedModerationCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -82,6 +83,9 @@ class Kernel extends ConsoleKernel
 
             // Populates the database with realistic fake content for local dev
             'db:seed' => SeedCommand::class,
+
+            // Moderation cases in every state, through the real services (--reset clears them)
+            'moderation:seed' => SeedModerationCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'make:controller' => MakeControllerCommand::class,

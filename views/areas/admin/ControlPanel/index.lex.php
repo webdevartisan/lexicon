@@ -27,23 +27,36 @@ $statusBadge = [
             </div>
         </a>
 
-        <a href="/admin/comments?status=pending" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+        <?php if ($reports !== null) { ?>
+        <a href="/admin/reports" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+            <div class="card-body flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Open reports</p>
+                    <p class="text-3xl font-semibold text-slate-900 dark:text-zink-50 mt-2"><?= number_format($reports['active']) ?></p>
+                    <?php if ($reports['escalated'] > 0) { ?>
+                    <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:border-red-800">
+                        <?= number_format($reports['escalated']) ?> escalated
+                    </span>
+                    <?php } ?>
+                </div>
+                <div class="flex items-center justify-center size-12 bg-green-100 rounded-md dark:bg-green-500/20">
+                    {% cache 'lucide:flag' ttl=31536000 %}<i class="text-green-500 dark:text-green-200" data-lucide="flag"></i>{% endcache %}
+                </div>
+            </div>
+        </a>
+        <?php } else { ?>
+        <div class="card">
             <div class="card-body flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Comments</p>
                     <p class="text-3xl font-semibold text-slate-900 dark:text-zink-50 mt-2"><?= number_format($stats['comments']) ?></p>
-                    <?php if ($stats['pending_comments'] > 0) { ?>
-                    <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/40 dark:border-amber-800">
-                        <?= number_format($stats['pending_comments']) ?> pending
-                    </span>
-                    <?php } ?>
                 </div>
                 <div class="flex items-center justify-center size-12 bg-green-100 rounded-md dark:bg-green-500/20">
                     {% cache 'lucide:message-square' ttl=31536000 %}<i class="text-green-500 dark:text-green-200" data-lucide="message-square"></i>{% endcache %}
                 </div>
             </div>
-        </a>
-
+        </div>
+        <?php } ?>
         <a href="/admin/users" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
             <div class="card-body flex items-center justify-between">
                 <div>
@@ -74,9 +87,11 @@ $statusBadge = [
         {% cmp="btn" href="/admin/posts/new" variant="blue" icon="pen" label="New Post" %}
         {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
         {% cmp="btn" href="/admin/blogs/new" variant="blue" icon="file-plus" label="New Blog" %}
-        <a href="/admin/comments?status=pending" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            {% cache 'lucide:message-square' ttl=31536000 %}<i data-lucide="message-square" class="size-4"></i>{% endcache %} Moderate Comments
+        <?php if ($reports !== null) { ?>
+        <a href="/admin/reports" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+            {% cache 'lucide:flag:sm' ttl=31536000 %}<i data-lucide="flag" class="size-4"></i>{% endcache %} Moderation
         </a>
+        <?php } ?>
         <a href="/admin/cache" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:database-zap' ttl=31536000 %}<i data-lucide="database-zap" class="size-4"></i>{% endcache %} Cache Tools
         </a>
@@ -164,31 +179,32 @@ $rows = [
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
-        <!-- Pending comments -->
+        <?php if ($reports !== null) { ?>
         <div class="card">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Awaiting moderation</h3>
-                    <a href="/admin/comments?status=pending" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Reports needing a decision</h3>
+                    <a href="/admin/reports" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
                 </div>
-                <?php if (empty($pendingComments)) { ?>
-                <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">All caught up — no pending comments.</p>
+                <?php if ($reports['cases'] === []) { ?>
+                <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No open reports.</p>
                 <?php } else { ?>
                 <div class="divide-y divide-slate-100 dark:divide-zink-600">
-                    <?php foreach ($pendingComments as $c) { ?>
+                    <?php foreach ($reports['cases'] as $case) { ?>
                     <div class="py-2.5">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-sm font-medium text-slate-900 dark:text-zink-50"><?= e((string) ($c['user_name'] ?? 'Anonymous')) ?></span>
-                            <span class="text-[11px] text-slate-400 dark:text-zink-300">on <?= e(truncate((string) ($c['post_title'] ?? ''), 40)) ?></span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-zink-300"><?= e(truncate((string) $c['content'], 110)) ?></p>
+                        <a href="/admin/reports/<?= (int) $case['id'] ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
+                            <?= e(truncate((string) ($case['subject_snapshot'] ?? 'Reported '.$case['subject_type']), 80)) ?>
+                        </a>
+                        <span class="text-[11px] text-slate-400 dark:text-zink-300">
+                            <?= e(ucfirst((string) $case['subject_type'])) ?> · <?= (int) $case['report_count'] ?> report<?= (int) $case['report_count'] === 1 ? '' : 's' ?> · <?= e((string) $case['status_label']) ?> · <?= e((string) $case['content_label']) ?>
+                        </span>
                     </div>
                     <?php } ?>
                 </div>
                 <?php } ?>
             </div>
         </div>
-
+        <?php } ?>
         <!-- Recent posts -->
         <div class="card">
             <div class="card-body">

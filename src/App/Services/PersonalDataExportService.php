@@ -109,10 +109,11 @@ class PersonalDataExportService
                  WHERE s.user_id = ? OR s.email = ?',
                 [$userId, $account['email']]
             ),
-            'reports_filed' => [
-                'posts' => $this->rows('SELECT post_id, reason, created_at FROM post_reports WHERE user_id = ?', [$userId]),
-                'comments' => $this->rows('SELECT comment_id, reason, created_at FROM comment_reports WHERE user_id = ?', [$userId]),
-            ],
+            'reports_filed' => $this->rows(
+                'SELECT subject_type, subject_id, category, details, outcome, created_at
+                 FROM content_reports WHERE reporter_id = ? ORDER BY created_at',
+                [$userId]
+            ),
             'notifications' => $this->rows(
                 'SELECT type, data, read_at, created_at FROM notifications WHERE user_id = ? ORDER BY created_at',
                 [$userId]

@@ -18,8 +18,6 @@
   var loginUrl = root.getAttribute('data-login');
   var tokenInput = root.querySelector('.comment-token input[name="_token"]');
 
-  var REPORT_REASONS = ['spam', 'harassment', 'hate', 'misinformation', 'other'];
-
   function token() {
     return tokenInput ? tokenInput.value : '';
   }
@@ -235,37 +233,17 @@
   }
 
   function reportComment(button) {
-    if (button.classList.contains('is-busy')) return;
-
-    var reason = window.prompt(
-      'Why are you reporting this comment?\n' + REPORT_REASONS.join(', '),
-      'spam'
-    );
-
-    // Cancelled, or typed something we do not recognise: fall back to "other"
-    // rather than dropping a report the reader meant to file.
-    if (reason === null) return;
-    reason = REPORT_REASONS.indexOf(reason.trim().toLowerCase()) === -1
-      ? 'other'
-      : reason.trim().toLowerCase();
-
     closeMenus(null);
-    button.classList.add('is-busy');
 
-    post('/comments/' + button.getAttribute('data-comment-id') + '/report', { reason: reason })
-      .then(function (data) {
-        window.alert((data && data.message) || 'Thanks for the report.');
-      })
-      .catch(function (error) {
-        if (error.kind === 'auth') {
-          authenticateThen(button, 'report');
-
-          return;
-        }
-
-        window.alert(error.message);
-      })
-      .finally(function () { button.classList.remove('is-busy'); });
+    window.LexiconReport.open({
+      subject: 'comment',
+      opener: button,
+      send: function (fields) {
+        return post('/comments/' + button.getAttribute('data-comment-id') + '/report', fields)
+          .then(function (data) { return data && data.message; });
+      },
+      onAuth: function () { authenticateThen(button, 'report'); }
+    });
   }
 
   // ------------------------------------------------------------------ votes

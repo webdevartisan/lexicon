@@ -323,7 +323,10 @@ class UserModel extends AppModel
                        u.suspended_at, u.suspended_until,
                        COALESCE(GROUP_CONCAT(r.role_slug ORDER BY r.role_slug SEPARATOR ','), '') AS roles,
                        (SELECT COUNT(*) FROM blogs b2 WHERE b2.owner_id = u.id) AS owned_blogs,
-                       (SELECT COUNT(*) FROM blog_users bu2 WHERE bu2.user_id = u.id AND bu2.is_active = 1) AS member_blogs
+                       (SELECT COUNT(*) FROM blog_users bu2 WHERE bu2.user_id = u.id AND bu2.is_active = 1) AS member_blogs,
+                       u.reports_paused_until,
+                       (SELECT COUNT(*) FROM moderation_cases mc WHERE mc.subject_author_id = u.id AND mc.resolution IS NULL) AS open_cases,
+                       (SELECT COUNT(*) FROM content_reports cr WHERE cr.reporter_id = u.id AND cr.outcome = 'unfounded') AS unfounded_reports
                 FROM {$this->getTable()} u
                 LEFT JOIN user_roles ur ON ur.user_id = u.id
                 LEFT JOIN roles r ON r.id = ur.role_id AND r.scope = 'system'
@@ -596,6 +599,14 @@ class UserModel extends AppModel
             'UPDATE users SET session_epoch = session_epoch + 1 WHERE id = ?',
             [$userId]
         ) === 1;
+    }
+
+    /**
+     * Pause this account's reporting until a UTC time, or end a pause with null.
+     */
+    public function setReportsPausedUntil(int $userId, ?string $until): void
+    {
+        $this->database->execute('UPDATE users SET reports_paused_until = ? WHERE id = ?', [$until, $userId]);
     }
 
     /**

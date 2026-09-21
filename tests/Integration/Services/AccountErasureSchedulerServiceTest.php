@@ -7,6 +7,7 @@ use App\Models\AccountErasureRecordModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
+use App\Models\ModerationCaseModel;
 use App\Models\PendingErasureModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
@@ -152,7 +153,7 @@ test('processDue leaves it queued when a report landed during the grace period',
     $scheduler->schedule($this->personId, $this->personId, null);
     $this->db->execute('UPDATE pending_erasures SET scheduled_for = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 MINUTE) WHERE user_id = ?', [$this->personId]);
 
-    $this->db->execute('UPDATE posts SET reports_count = 1 WHERE id = ?', [$postId]);
+    (new ModerationCaseModel($this->db))->openFor('post', $postId, $this->personId, null, null, null);
 
     $counts = $scheduler->processDue();
 

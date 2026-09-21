@@ -27,6 +27,12 @@ class CommentModel extends AppModel
      */
     public const MAX_DEPTH = 3;
 
+    /** hidden_reason for a comment a moderation decision hid. */
+    public const HIDDEN_BY_MODERATION = 'moderation';
+
+    /** hidden_reason for a comment hidden because its author is suspended. */
+    public const HIDDEN_BY_SUSPENSION = 'author_suspended';
+
     /**
      * Approved comments for a post as a flat list, oldest first.
      *
@@ -344,12 +350,67 @@ class CommentModel extends AppModel
         $affected = $this->database->execute($sql, [$by, $id]);
 
         if ($affected > 0) {
+            // Reports stay: they belong to the moderation case, which outlives
+            // the comment. Only the blog team's badge was zeroed above.
             $this->database->execute('DELETE FROM comment_votes WHERE comment_id = ?', [$id]);
-            $this->database->execute('DELETE FROM comment_reports WHERE comment_id = ?', [$id]);
 
             if ($postId !== null) {
                 $this->forgetThreadCache($postId);
             }
+        }
+
+        return $affected > 0;
+    }
+
+    /**
+     * Hide a comment from readers because of a moderation decision.
+     *
+     * A comment already hidden by its author's suspension is taken over, so
+     * lifting that suspension does not bring back something a moderator ruled
+     * on separately.
+     *
+     * @return bool False when it was already hidden by moderation or is gone
+     */
+    public function hideForModeration(int $id): bool
+    {
+        $affected = $this->database->execute(
+            "UPDATE {$this->getTable()}
+                SET hidden_at = COALESCE(hidden_at, NOW()), hidden_reason = ?
+              WHERE id = ? AND (hidden_at IS NULL OR hidden_reason <> ?)",
+            [self::HIDDEN_BY_MODERATION, $id, self::HIDDEN_BY_MODERATION]
+        );
+
+        $postId = $this->postIdForComment($id);
+
+        if ($affected > 0 && $postId !== null) {
+            $this->forgetThreadCache($postId);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
+     * Undo a moderation hide. If the author is suspended right now the comment
+     * goes back under the suspension instead, so lifting it later is what
+     * brings the comment back.
+     *
+     * @return bool False when it was not hidden by moderation
+     */
+    public function unhideFromModeration(int $id): bool
+    {
+        $affected = $this->database->execute(
+            "UPDATE {$this->getTable()} c
+               LEFT JOIN users u ON u.id = c.user_id
+                SET c.hidden_at = IF(u.suspended_at IS NULL, NULL, c.hidden_at),
+                    c.hidden_reason = IF(u.suspended_at IS NULL, NULL, ?)
+              WHERE c.id = ? AND c.hidden_reason = ?",
+            [self::HIDDEN_BY_SUSPENSION, $id, self::HIDDEN_BY_MODERATION]
+        );
+
+        $postId = $this->postIdForComment($id);
+
+        if ($affected > 0 && $postId !== null) {
+            $this->forgetThreadCache($postId);
         }
 
         return $affected > 0;

@@ -48,7 +48,7 @@ final class UserSeeder extends Seeder
         for ($i = 0; $i < $config->users; $i++) {
             $firstName = $faker->firstName();
             $lastName = $faker->lastName();
-            // Handles are URLs now, so strip what the /profile route will not match.
+            // Letters and digits only, so every handle passes the user_handle rule the forms enforce.
             $handle = preg_replace('/[^a-z0-9]/', '', strtolower($faker->unique()->userName())).$i;
 
             $userId = $this->insertOne('users', [

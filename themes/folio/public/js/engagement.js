@@ -17,8 +17,6 @@
   var menu = bar.querySelector('[data-engage-menu-list]');
   var menuBtn = bar.querySelector('[data-engage-menu-toggle]');
 
-  var REPORT_REASONS = ['spam', 'harassment', 'hate', 'misinformation', 'other'];
-
   function post(url, fields) {
     var body = new FormData();
     body.append('_token', tokenInput ? tokenInput.value : '');
@@ -34,7 +32,10 @@
       body: body,
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403 || r.status === 419 || r.redirected) throw { kind: 'auth' };
+      return r.json();
+    });
   }
 
   /** Send the viewer through auth, then re-fire the control they pressed. */
@@ -89,24 +90,22 @@
   }
 
   function reportPost(button) {
-    var reason = window.prompt('Why are you reporting this post?', 'spam');
-
-    // Cancelled, or typed something we do not recognise: fall back to "other"
-    // rather than dropping a report the reader meant to file.
-    if (reason === null) return;
-    reason = REPORT_REASONS.indexOf(reason.trim().toLowerCase()) === -1
-      ? 'other'
-      : reason.trim().toLowerCase();
-
     closeMenu();
 
-    post(button.getAttribute('data-url'), { reason: reason })
-      .then(function (json) {
-        window.alert(json.error || (json.data && json.data.message) || 'Thanks for the report.');
-      })
-      .catch(function () {
-        window.alert('That report could not be sent. Please try again.');
-      });
+    window.LexiconReport.open({
+      subject: 'post',
+      opener: button,
+      send: function (fields) {
+        return post(button.getAttribute('data-url'), fields).then(function (json) {
+          if (json.success === false) throw { message: json.error };
+          return json.data && json.data.message;
+        }, function (error) {
+          // An error page is not JSON, and its parse error means nothing to a reader
+          throw error && error.kind === 'auth' ? error : { message: 'That report could not be sent. Please try again.' };
+        });
+      },
+      onAuth: function () { authenticateThen(button); }
+    });
   }
 
   bar.addEventListener('click', function (ev) {

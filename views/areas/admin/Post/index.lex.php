@@ -108,6 +108,13 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['author_handle']) ?></td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$postStatus}" %}
+                            <?php if (!empty($post['open_case_id'])) {
+                                $caseReports = (int) $post['open_case_reports'];
+                                $caseLabel = $caseReports.' report'.($caseReports === 1 ? '' : 's');
+                                $caseHref = $canHandleReports ? '/admin/reports/'.(int) $post['open_case_id'] : '';
+                                ?>
+                            <div>{% cmp="report-pill" label="{$caseLabel}" href="{$caseHref}" %}</div>
+                            <?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= $commentCount ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
