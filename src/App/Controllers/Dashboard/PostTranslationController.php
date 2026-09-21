@@ -11,8 +11,8 @@ use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Resources\PostResource;
 use App\Services\ExternalMediaGuard;
-use App\Services\PostContentSanitizer;
 use App\Services\LocaleRegistry;
+use App\Services\PostContentSanitizer;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
