@@ -12,6 +12,7 @@ use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Presenters\BlogActionPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
 use App\Services\WorkflowService;
@@ -128,10 +129,18 @@ final class BlogController extends AppController
 
         Gate::authorize('create', BlogResource::class, $user);
 
+        // Without JavaScript nothing fills the address in, so build it from the name the same way.
+        if (trim((string) ($this->request->post['slug'] ?? '')) === '') {
+            $this->request->post['slug'] = slugify((string) ($this->request->post['name'] ?? ''));
+        }
+
         $validator = $this->validateOrFail([
             'name' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:blogs,blog_slug',
             'description' => 'max:1000',
+        ], [
+            'slug.required' => 'We could not build a web address from that name. Please type one using letters, numbers and hyphens.',
+            'slug.slug' => 'The address can only use lowercase letters, numbers and single hyphens, with no hyphen at the start or end.',
         ]);
 
         $validated = $validator->validated();
@@ -220,13 +229,16 @@ final class BlogController extends AppController
             'indexable' => 1,
             'timezone' => 'UTC',
             'comments_enabled' => 1,
-            'comments_auto_publish' => 0,
+            'comments_auto_publish' => 1,
             'replies_auto_publish' => 1,
             'workflow_enabled' => 0,
         ];
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'blogUrl' => base_url().'/blog/'.$blog->slug(),
+            'actions' => BlogActionPresenter::for($blog->status()),
+            'backUrl' => '/dashboard',
             'settings' => $settings,
             'locales' => ['en', 'fr', 'de', 'el', 'ar'],
             'current_locale' => $settings['default_locale'],
@@ -252,7 +264,6 @@ final class BlogController extends AppController
 
         $rules = [
             'name' => 'required|title|min:2|max:50',
-            'status' => 'in:draft,published,archived',
             'description' => 'max:1000',
             'locale' => 'max:10',
             'timezone' => 'max:100',
@@ -269,7 +280,6 @@ final class BlogController extends AppController
         $validator = $this->validateOrFail($rules, [
             'name.required' => 'Blog name is required.',
             'name.title' => 'Blog name contains invalid characters.',
-            'status.in' => 'Invalid status value.',
         ]);
 
         $validated = $validator->validated();
@@ -278,7 +288,7 @@ final class BlogController extends AppController
         $identityChanges = changedFields([
             'blog_name' => $validated['name'] ?? '',
             'description' => $validated['description'] ?? '',
-            'status' => $validated['status'] ?? 'draft',
+            'status' => BlogActionPresenter::statusForIntent($this->request->postParam('intent'), $blog->status()),
         ], [
             'blog_name' => $blog->name(),
             'description' => $blog->description(),

@@ -479,7 +479,7 @@ class BlogController extends AppController
             : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
         $serpDescription = !empty($post['meta_description'])
             ? $post['meta_description']
-            : ($post['excerpt'] ?? $ctx['meta']['description'] ?? '');
+            : (post_excerpt($post) ?: ($ctx['meta']['description'] ?? ''));
 
         $meta = array_merge($ctx['meta'], [
             'title' => $serpTitle,

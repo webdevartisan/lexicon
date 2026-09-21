@@ -8,6 +8,10 @@ use App\Controllers\AppController;
 use App\Services\UploadService;
 use Framework\Core\Response;
 
+/**
+ * Receives Dropzone uploads into the uploader's temp folder until the form they
+ * belong to is saved.
+ */
 class FileUploadController extends AppController
 {
     public function __construct(
@@ -15,29 +19,25 @@ class FileUploadController extends AppController
     ) {}
 
     /**
-     * Handle Dropzone AJAX upload
+     * Store one Dropzone file and return its temp filename.
      */
     public function upload(): Response
     {
-        // Dropzone sends file with name 'file' by default
-        if (!isset($_FILES['file'])) {
-            return $this->jsonError('No file uploaded', 400);
+        $file = $this->request->files['file'] ?? null;
+        if (!is_array($file)) {
+            return $this->jsonError('No file was received.', 400);
         }
 
-        $file = $_FILES['file'];
-        $userId = auth()->user()['id']; // or however you get user ID
+        $userId = (int) auth()->user()['id'];
 
         try {
-            $result = $this->uploadService->storeTempImage($file, $userId);
-
-            // Dropzone expects success response
-            return $this->jsonSuccess($result);
-
+            return $this->jsonSuccess($this->uploadService->storeTempImage($file, $userId));
         } catch (\InvalidArgumentException $e) {
-            // Dropzone shows this message to user
-            return $this->jsonError($e->getMessage(), 400);
-        } catch (\Exception $e) {
-            return $this->jsonError('Upload failed. Please try again.', 500);
+            return $this->jsonError($e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            error_log("Temp upload failed for user {$userId}: ".$e->getMessage());
+
+            return $this->jsonError('The server could not store the image.', 500);
         }
     }
 }

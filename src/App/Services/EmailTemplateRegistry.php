@@ -222,6 +222,17 @@ class EmailTemplateRegistry
                     'unsubscribeToken' => str_repeat('ab', 32),
                 ],
             ],
+            'subscription_confirm' => [
+                'name' => 'Confirm Subscription',
+                'description' => 'Asks a new subscriber to confirm the address before any post notifications go out',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\SubscriptionConfirmMail',
+                'sample_data' => [
+                    'toEmail' => 'reader@example.com',
+                    'blogName' => 'Travel Stories',
+                    'token' => str_repeat('cd', 32),
+                ],
+            ],
             'new_comment_reply' => [
                 'name' => 'New Comment — Reply',
                 'description' => 'Tells you someone replied to a comment you wrote',

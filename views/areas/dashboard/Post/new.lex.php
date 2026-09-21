@@ -26,32 +26,21 @@
 {% block scripts %}
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
 <script nonce="<?= csp_nonce() ?>">window.editorBlogId = <?= (int) ($selected_blog_id ?? 0) ?>;</script>
-<script src="/assets/js/initeditor.js" referrerpolicy="origin"></script>
+<script src="/assets/js/initeditor.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/initeditor.js') ?>" referrerpolicy="origin"></script>
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="/cp-assets/libs/flatpickr/flatpickr.min.js"></script>
-<script src="/cp-assets/js/dropzone.init.js"></script>
+<script src="/cp-assets/js/dropzone.init.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/dropzone.init.js') ?>"></script>
 <script src="/cp-assets/js/flatpickr.init.js"></script>
-<script src="/cp-assets/js/autosave.js"></script>
-<script src="/cp-assets/js/pages/post.js"></script>
+<script src="/cp-assets/js/autosave.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/autosave.js') ?>"></script>
+<script src="/cp-assets/js/pages/post.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/pages/post.js') ?>"></script>
 <script src="/cp-assets/js/media-picker.js"></script>
+<script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
 
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
-    const NameInput = document.getElementById('title');
-    const SlugInput = document.getElementById('slug');
-    const excerptField = document.getElementById('excerpt');
+    SlugField.bind({ source: 'title', target: 'slug', min: 2, max: 100, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=post&blog_id=<?= (int) ($blog['id'] ?? 0) ?>' });
 
-    if (NameInput && SlugInput) {
-      NameInput.addEventListener('input', function () {
-        let slug = NameInput.value
-          .toLowerCase()               // convert to lowercase
-          .trim()                     // remove leading/trailing spaces
-          .replace(/[^\w\s-]/g, '')   // remove non-word characters except spaces/dashes
-          .replace(/\s+/g, '-')       // replace spaces with dashes
-          .replace(/-+/g, '-');       // collapse multiple dashes
-        SlugInput.value = slug;
-      });
-    }
+    const excerptField = document.getElementById('excerpt');
 
   if (!excerptField || typeof tinymce === 'undefined') {
     return;

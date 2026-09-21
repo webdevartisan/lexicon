@@ -157,9 +157,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
           <?php
             $postUrl = '/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']);
             $postTitle = $post['title'] ?? 'Untitled';
-            // Excerpts are stored as free text and some carry markup; strip it so
-            // cards show prose, not literal tags.
-            $postExcerpt = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($post['excerpt'] ?? ''))));
+            $postExcerpt = post_excerpt($post, 140);
             $hasImage = !empty($post['featured_image']);
             ?>
           <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
@@ -182,7 +180,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
               <h3><a href="<?= e($postUrl); ?>"><?= e($postTitle); ?></a></h3>
 
               <?php if ($postExcerpt !== '') { ?>
-                <p class="lx-gallery-excerpt"><?= e(truncate($postExcerpt, 140)); ?></p>
+                <p class="lx-gallery-excerpt"><?= e($postExcerpt); ?></p>
               <?php } ?>
             </div>
           </article>

@@ -26,10 +26,7 @@ $siteName = site_setting('site_name', 'Lexicon');
         <?php // Credential screens have no business in an index.?>
         <meta name="robots" content="noindex, nofollow" />
 
-        <link rel="icon" type="image/png" href="/assets/icon/favicon-32x32.png" sizes="32x32" />
-        <link rel="icon" type="image/svg+xml" href="/assets/icon/favicon.svg" />
-        <link rel="shortcut icon" href="/assets/icon/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/icon/apple-touch-icon.png" />
+        {% include "partials/_favicons.lex.php" %}
 
         <link rel="preload" href="/assets/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />

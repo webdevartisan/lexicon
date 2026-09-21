@@ -101,28 +101,20 @@ class HomeController extends AppController
         $settings = $this->blogSettings->findByBlogId($selectedBlogId);
         $workflowEnabled = !empty($settings['workflow_enabled']);
 
-        // Pull each status bucket once: we use the pagination total for stats,
-        // and the first few rows as the "what's in this bucket" preview.
-        $publishedResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'published'
-        );
-        $draftResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'draft'
-        );
-        $pendingResult = $workflowEnabled
-            ? $this->post->findByAuthorWithFiltersPagination(
-                authorId: $user['id'], page: 1, perPage: 4, blogId: $selectedBlogId, status: 'pending'
-            )
-            : ['data' => [], 'pagination' => ['total_records' => 0]];
-        $archivedResult = $this->post->findByAuthorWithFiltersPagination(
-            authorId: $user['id'], page: 1, perPage: 1, blogId: $selectedBlogId, status: 'archived'
-        );
+        $postCounts = $this->post->countsByStatusForBlogs(array_keys($blogIds));
+        $blogCounts = $postCounts[$selectedBlogId];
+
+        $recent = $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'published')['data'];
+        $drafts = $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'draft')['data'];
+        $pending = $workflowEnabled
+            ? $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'pending')['data']
+            : [];
 
         $stats = [
-            'published' => (int) $publishedResult['pagination']['total_records'],
-            'draft' => (int) $draftResult['pagination']['total_records'],
-            'pending' => (int) $pendingResult['pagination']['total_records'],
-            'archived' => (int) $archivedResult['pagination']['total_records'],
+            'published' => $blogCounts['published'],
+            'draft' => $blogCounts['draft'],
+            'pending' => $workflowEnabled ? $blogCounts['pending'] : 0,
+            'archived' => $blogCounts['archived'],
             'comments' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'approved'),
             'comments_pending' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'pending'),
             'subscribers' => $this->subscribers->countForBlog($selectedBlogId),
@@ -131,13 +123,7 @@ class HomeController extends AppController
 
         // "Needs attention" = drafts (+ pending when the review pipeline is on).
         // We surface them so the creator sees unfinished work the moment they land.
-        $needsAttention = array_slice(
-            $workflowEnabled
-                ? array_merge($draftResult['data'], $pendingResult['data'])
-                : $draftResult['data'],
-            0,
-            4
-        );
+        $needsAttention = array_slice(array_merge($drafts, $pending), 0, 4);
 
         breadcrumbs()->clear();
 
@@ -147,9 +133,9 @@ class HomeController extends AppController
             'selectedBlogId' => $selectedBlogId,
             'hasNoBlogs' => false,
             'stats' => $stats,
-            'recent' => $publishedResult['data'],
+            'recent' => $recent,
             'needsAttention' => $needsAttention,
-            'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id']) : [],
+            'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id'], $postCounts) : [],
             'isAdmin' => $isAdmin,
             'blogRole' => $blogRole,
             'workflowEnabled' => $workflowEnabled,
@@ -163,9 +149,8 @@ class HomeController extends AppController
 
         $user = auth()->user();
 
-        // Missing field used to fatal on an undefined index. The owner check
-        // below already covers authorization, this just stops a malformed
-        // post returning a 500.
+        // The owner check below covers authorization. The default only stops a
+        // malformed post from failing on a missing field.
         $selectedBlogId = (int) ($this->request->post['blog'] ?? 0);
 
         // Default-blog is the OWNER workspace context.
@@ -190,17 +175,22 @@ class HomeController extends AppController
     /**
      * Per-blog summary cards (only relevant when the user has 2+ blogs).
      *
-     * @return array<int, array{id:int,name:string,slug:string,post_count:int}>
+     * @param  array<int, array<string, int>>  $postCounts  countsByStatusForBlogs() output, fetched here when empty
+     * @return array<int, array{id:int,name:string,slug:string,published_count:int,status:string}>
      */
-    private function buildBlogsSummary(int $userId): array
+    private function buildBlogsSummary(int $userId, array $postCounts = []): array
     {
-        $rows = $this->blogModel->getBlogsByOwnerWithCounts($userId);
+        $rows = $this->blogModel->getBlogsByOwnerId($userId);
+        $missing = array_diff(array_map(static fn (array $row): int => (int) $row['id'], $rows), array_keys($postCounts));
+        if ($missing !== []) {
+            $postCounts += $this->post->countsByStatusForBlogs($missing);
+        }
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
             'name' => (string) ($row['blog_name'] ?? ''),
             'slug' => (string) ($row['blog_slug'] ?? ''),
-            'post_count' => (int) ($row['post_count'] ?? 0),
+            'published_count' => $postCounts[(int) $row['id']]['published'],
             'status' => (string) ($row['status'] ?? 'draft'),
         ], $rows);
     }

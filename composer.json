@@ -7,7 +7,8 @@
     "php": "^8.3",
     "doctrine/inflector": "^2.1",
     "intervention/image": "^3.0",
-    "phpmailer/phpmailer": "^7.0"
+    "phpmailer/phpmailer": "^7.0",
+    "symfony/html-sanitizer": "^7.4"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.28",

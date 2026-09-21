@@ -46,8 +46,31 @@ function postTitle() {
 
 function postExcerpt() {
   const el = document.querySelector('[name="excerpt"]');
-  return el ? el.value.trim() : '';
+  const own = el ? el.value.trim() : '';
+  return own || contentSummary(160);
 }
+
+// Mirrors post_excerpt() in helpers.php so the previews show what readers and search engines get.
+function contentSummary(limit) {
+  const field = document.getElementById('content');
+  const html = field ? field.value : '';
+  if (!html) return '';
+
+  const doc = new DOMParser().parseFromString(html.replace(/</g, ' <'), 'text/html');
+  const text = (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= limit) return text;
+
+  let cut = text.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(' ');
+  if (lastSpace > limit * 0.6) cut = cut.slice(0, lastSpace);
+
+  return cut.replace(/[\s,;:.-]+$/, '') + '…';
+}
+
+window.refreshPostPreviews = function () {
+  updateSeoPreview();
+  updateSocialPreview();
+};
 
 function updateSeoPreview() {
   const title = document.getElementById('seo_preview_title');
@@ -160,7 +183,7 @@ function initSocialTabs() {
  */
 function initScheduleAwareness() {
   const dateField = document.getElementById('published_at');
-  const primary = document.querySelector('[data-post-primary-action]');
+  const primary = document.querySelector('[data-actionbar-primary]');
   const hint = document.querySelector('[data-schedule-hint]');
   const clearBtn = document.querySelector('[data-clear-schedule]');
   if (!dateField) return;
@@ -209,20 +232,6 @@ function initScheduleAwareness() {
   refresh();
 }
 
-/** Close the overflow menu on outside click and on Escape. */
-function initActionMenu() {
-  const menu = document.querySelector('[data-post-menu]');
-  if (!menu) return;
-
-  document.addEventListener('click', (e) => {
-    if (!menu.contains(e.target)) menu.open = false;
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') menu.open = false;
-  });
-}
-
 function initCanonicalFill() {
   const button = document.querySelector('[data-canonical-fill]');
   const field = document.getElementById('canonical_url');
@@ -259,7 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSocialTabs();
   initScheduleAwareness();
-  initActionMenu();
   initCanonicalFill();
 
   updateSeoPreview();

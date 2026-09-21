@@ -2,13 +2,15 @@
 // Blog-front auth modal, shared by every theme (resolved from global views/).
 // Email-first: one email field decides between login and inline registration,
 // so readers never leave the page they were reading. Server endpoints:
-// POST /login/identify, /login/submit, /register/submit (AJAX/JSON branches).
+// POST /login/identify, /login, /register/submit, /password/forgot (AJAX/JSON branches).
 // With JS off, every trigger keeps its normal link to the full login page.
 if (!auth()->check()) {
     $authModalReturnTo = (string) ($_SERVER['REQUEST_URI'] ?? '/');
     ?>
 <div class="lex-auth-overlay" id="lex-auth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lex-auth-title"
-     data-return-to="<?= e($authModalReturnTo) ?>" data-nav-url="<?= e(lurl('/auth/nav')) ?>">
+     data-return-to="<?= e($authModalReturnTo) ?>" data-nav-url="<?= e(lurl('/auth/nav')) ?>"
+     data-identify-url="<?= e(lurl('/login/identify')) ?>" data-login-url="<?= e(lurl('/login')) ?>"
+     data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>">
   <div class="lex-auth-card">
     <button type="button" class="lex-auth-close" data-auth-close aria-label="Close">&times;</button>
 
@@ -120,5 +122,5 @@ if (!auth()->check()) {
   }
 </style>
 
-<script defer src="/assets/js/auth-modal.js"></script>
+<script defer src="/assets/js/auth-modal.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/auth-modal.js') ?>"></script>
 <?php } ?>

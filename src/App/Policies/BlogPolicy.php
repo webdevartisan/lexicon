@@ -121,6 +121,19 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
+     * Choose who a post in this blog is credited to. The same permission that
+     * lets someone edit every post in the blog, so owner and editor only.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function assignPostAuthor(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
      * Delete the blog. Owner only (delete_own_blog is in the owner bundle and
      * granted to no collaborator role).
      *

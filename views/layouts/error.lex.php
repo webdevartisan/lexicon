@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <meta name="googlebot" content="noindex, nofollow">
-    <link rel="icon" type="image/svg+xml" href="/assets/icon/favicon.svg" />
-    <link rel="shortcut icon" href="/assets/icon/favicon.ico" />
+    {% include "partials/_favicons.lex.php" %}
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title>{% yield title %}</title>
 

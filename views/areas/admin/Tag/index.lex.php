@@ -66,8 +66,14 @@ $deleteUrl = '/admin/tags/'.$tag['id'].'/delete';
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300 tabular-nums"><?= (int) ($tag['post_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit" %}
-                                {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete" danger %}
+                                <?php
+                                $rowTitle = (string) $tag['name'];
+                                $rowActions = [
+                                    ['label' => 'Edit', 'icon' => 'pencil', 'href' => $editUrl],
+                                    ['label' => 'Delete', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true],
+                                ];
+                                ?>
+                                {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                             </div>
                         </td>
                     </tr>

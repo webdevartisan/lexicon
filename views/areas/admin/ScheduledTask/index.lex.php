@@ -189,29 +189,16 @@ $heartbeatText = $heartbeatAge === null ? '' : relative_time(gmdate('Y-m-d H:i:s
                                         </button>
                                     </form>
 
-                                    {% cmp="icon-action" href="{$historyUrl}" icon="scroll-text" tip="Run history" %}
-                                    {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit task" %}
-
-                                    <form method="POST" action="<?= e(lurl($basePath.'/'.$taskId.'/toggle')) ?>" class="m-0">
-                                        {{ csrf_field() }}
-                                        <button type="submit"
-                                                data-tooltip data-tooltip-content="<?= e($toggleTip) ?>" data-tooltip-placement="top"
-                                                aria-label="<?= e($toggleTip) ?>"
-                                                class="p-2 rounded-md text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
-                                            {% cache 'lucide:sched-toggle:' . $toggleIcon ttl=31536000 %}<i data-lucide="<?= e($toggleIcon) ?>" class="size-4"></i>{% endcache %}
-                                        </button>
-                                    </form>
-
-                                    <form method="POST" action="<?= e(lurl($basePath.'/'.$taskId.'/delete')) ?>" class="m-0">
-                                        {{ csrf_field() }}
-                                        <button type="submit"
-                                                data-confirm="Delete this task and its history?"
-                                                data-tooltip data-tooltip-content="Delete task" data-tooltip-placement="top"
-                                                aria-label="Delete task"
-                                                class="p-2 rounded-md text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
-                                            {% cache 'lucide:sched:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
-                                        </button>
-                                    </form>
+                                    <?php
+                                    $rowTitle = (string) $task['command'];
+                                    $rowActions = [
+                                        ['label' => 'Run history', 'icon' => 'scroll-text', 'href' => $historyUrl],
+                                        ['label' => 'Edit task', 'icon' => 'pencil', 'href' => $editUrl],
+                                        ['label' => $toggleTip, 'icon' => $toggleIcon, 'post' => lurl($basePath.'/'.$taskId.'/toggle')],
+                                        ['label' => 'Delete task', 'icon' => 'trash-2', 'post' => lurl($basePath.'/'.$taskId.'/delete'), 'confirm' => 'Delete this task and its history?', 'danger' => true],
+                                    ];
+                                    ?>
+                                    {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                                 </div>
                             </td>
                         </tr>

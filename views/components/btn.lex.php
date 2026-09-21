@@ -6,12 +6,23 @@ $icon = $icon ?? null;
 $href = $href ?? null;
 $name = $name ?? null;
 $value = $value ?? null;
+$addClass = $addClass ?? '';
 
 $dataBtn = $dataBtn ?? '';
 
 $dataAction = $dataAction ?? '';
 $dataTarget = $dataTarget ?? '';
 $dataModalTarget = $dataModalTarget ?? '';
+
+// Extra attributes as name => value pairs, escaped here so callers never build attribute strings by hand.
+$attrs = $attrs ?? [];
+$extraAttributes = '';
+foreach ($attrs as $attrName => $attrValue) {
+    if ($attrValue === null || $attrValue === '') {
+        continue;
+    }
+    $extraAttributes .= ' '.e($attrName).'="'.e((string) $attrValue).'"';
+}
 
 $variants = [
     'blue' => 'inline-flex items-center justify-center gap-2 rounded-md font-medium bg-white text-custom-500 btn border-custom-500 hover:text-white hover:bg-custom-600 hover:border-custom-600 focus:text-white focus:bg-custom-600 focus:border-custom-600 focus:ring focus:ring-custom-100 active:text-white active:bg-custom-600 active:border-custom-600 active:ring active:ring-custom-100 dark:bg-zink-700 dark:hover:bg-custom-500 dark:ring-custom-400/20 dark:focus:bg-custom-500',
@@ -27,14 +38,17 @@ $class = $variants[$variant] ?? $variants['slate'];
 <?php if (empty($href)) { ?>
 
   <button type="<?= e($type) ?>"
-          class="<?= e($class) ?> <?= $addClass ?? '' ?>"
+          class="<?= e(trim($class.' '.$addClass)) ?>"
           <?php if ($dataAction) { ?>
-            data-action="<?= ($dataAction) ?>"
+            data-action="<?= e($dataAction) ?>"
           <?php } ?>
           <?php if ($dataTarget) { ?>
-            data-target="<?= ($dataTarget) ?>"
+            data-target="<?= e($dataTarget) ?>"
           <?php } ?>
-          <?= $dataBtn ?>
+          <?php if ($dataModalTarget) { ?>
+            data-modal-target="<?= e($dataModalTarget) ?>"
+          <?php } ?>
+          <?= $dataBtn ?><?= $extraAttributes ?>
 
           <?php if ($name) { ?>
             name="<?= e($name) ?>"
@@ -53,7 +67,7 @@ $class = $variants[$variant] ?? $variants['slate'];
 
   <a
     href="<?= e($href) ?>"
-    class="<?= e($class) ?>">
+    class="<?= e(trim($class.' '.$addClass)) ?>"<?= $extraAttributes ?>>
       <?php if ($icon) { ?>
         {% cache "lucide:btn:" . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}
       <?php } ?>

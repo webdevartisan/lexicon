@@ -56,7 +56,7 @@ class PostResource
 
     public function excerpt(): string
     {
-        return $this->data['excerpt'];
+        return (string) ($this->data['excerpt'] ?? '');
     }
 
     public function publishedAt(): ?string

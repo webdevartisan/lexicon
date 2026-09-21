@@ -114,7 +114,7 @@ $title = e($post['title'] ?? 'Untitled');
           $rUrl = lurl('/blog/'.$blogSlug.'/'.$rSlug);
           $rCover = $rel['featured_image'] ?? ($rel['cover_url'] ?? null);
           $rImg = $rCover ? e($rCover) : null;
-          $rExc = e($rel['excerpt'] ?? '');
+          $rExc = e(post_excerpt($rel, 140));
           $rMin = reading_time($rel['content'] ?? '');
           ?>
       <div class="related-item reveal">

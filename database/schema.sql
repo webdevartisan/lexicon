@@ -288,7 +288,7 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     social_links TEXT DEFAULT NULL COMMENT 'JSON map of social platform => profile URL, shown by themes',
     indexable BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Allow search engine indexing',
     comments_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Blog-wide comment setting',
-    comments_auto_publish BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When on, new comments publish instantly; owner moderates retroactively',
+    comments_auto_publish BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'When on, new comments publish instantly; owner moderates retroactively',
     replies_auto_publish BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'When on, replies publish instantly; owner moderates retroactively',
     banner_path VARCHAR(255) DEFAULT NULL,
     logo_path VARCHAR(255) DEFAULT NULL,

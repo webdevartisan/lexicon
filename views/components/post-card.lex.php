@@ -31,7 +31,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             </span>
 
         <?php
-        // Reviewer chip — only meaningful while a post is in the review pipeline.
+        // The reviewer chip only means something while a post is in the review pipeline.
         if ($status === 'pending') {
             if (!empty($post['reviewer_handle'])) {
                 $claimedAgo = !empty($post['reviewer_assigned_at'])
@@ -72,11 +72,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             </a>
         </h6>
         <p class="text-slate-500 dark:text-zink-200 line-clamp-3 text-sm flex-1">
-            {% if post.excerpt|notempty %}
-              <?= e(truncate($post['excerpt'], 120)) ?>
-            {% elseif post.content|isset %}
-              <?= e(truncate(strip_tags($post['content']), 120)) ?>
-            {% endif %}
+            <?= e(post_excerpt($post, 120)) ?>
         </p>
 
         <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-[11px] text-slate-500 dark:text-zink-300">
@@ -90,6 +86,12 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <span class="inline-flex items-center gap-1" title="<?= (int) $post['comment_count'] ?> comments">
                 {% cache 'lucide:message-square:sm' ttl=31536000 %}<i data-lucide="message-square" class="size-3"></i>{% endcache %}
                 <?= (int) $post['comment_count'] ?>
+            </span>
+            <?php } ?>
+            <?php if (!empty($post['author_handle']) && (int) ($post['author_id'] ?? 0) !== (int) (auth()->user()['id'] ?? 0)) { ?>
+            <span class="inline-flex items-center gap-1">
+                {% cache 'lucide:user:sm' ttl=31536000 %}<i data-lucide="user" class="size-3"></i>{% endcache %}
+                @<?= e((string) $post['author_handle']) ?>
             </span>
             <?php } ?>
             <?php if (!empty($post['blog_name'])) { ?>

@@ -13,10 +13,10 @@ $postStatus = ($post['status'] ?? 'draft');
 $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 ?>
     <input type="hidden" name="_method" value="PUT">
-    <input type="hidden" name="author_id" value="<?= e($currentUser['id'] ?? $post['author_id'] ?? '') ?>">
     {{ csrf_field() }}
 
-    {% include "partials/dashboard/post/_action_bar.lex.php" %}
+    <?php $showAutosave = true; ?>
+    {% include "partials/dashboard/_action_bar.lex.php" %}
 
     <?php /* Most fields render no inline error, so a rejected save used to say only "correct the errors". */ ?>
     <?php if (!empty($errors)) { ?>
@@ -78,7 +78,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             </div>
 
             <?php $excerpt = old('excerpt') ?? $post['excerpt'] ?? ''; ?>
-            {% cmp="input" type="textarea" label="excerpt" value="{$excerpt}" rows="4" placeholder="Optional short summary used in listings and meta description when not set explicitly." %}
+            {% cmp="input" type="textarea" label="excerpt" value="{$excerpt}" rows="4" placeholder="Optional. Leave it empty and listings and search results use the opening of the post." %}
 
           </div>
         </section>
@@ -90,7 +90,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
       <aside class="w-full shrink-0 space-y-4 lg:sticky lg:top-[calc(theme('spacing.header')_+_5rem)] lg:w-72 lg:self-start">
 
-        <!-- Reviewer feedback — shown to the author when a reviewer has requested changes -->
+        <!-- Reviewer feedback, shown to the author when a reviewer has requested changes -->
         <?php if (!empty($latestReview) && !empty($latestReview['feedback']) && ($workflowState ?? '') === 'needs_changes') { ?>
         <section class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
             <div class="flex items-center gap-2 border-b border-amber-200 p-4 dark:border-amber-500/30">
@@ -155,6 +155,22 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
           <div class="space-y-4 p-4">
             <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Post settings</h3>
 
+            <?php if (!empty($canAssignAuthor)) { ?>
+              <?php
+              $authorChoices = [];
+              foreach ($authorOptions as $candidateId => $candidateHandle) {
+                  $authorChoices[$candidateId] = '@'.$candidateHandle;
+              }
+              $selectedAuthor = (string) (old('author_id') ?? $authorId ?? '');
+              ?>
+              {% cmp="select" name="author_id" label="Author" options="{$authorChoices}" selectedKey="{$selectedAuthor}" underlabel="Anyone on this blog's team who can write posts." %}
+            <?php } elseif (!empty($authorHandle)) { ?>
+            <div>
+              <p class="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Author</p>
+              <p class="text-sm text-slate-700 dark:text-zink-100">@<?= e($authorHandle) ?></p>
+            </div>
+            <?php } ?>
+
             <?php if ($showScheduling) { ?>
             <div>
               <label for="published_at" class="mb-1.5 block text-xs font-medium text-slate-500 dark:text-zink-300">
@@ -174,11 +190,9 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                 data-enable-time=""
                 readonly="readonly"
                 placeholder="Publish immediately">
-                {% if errors.published_at|notempty %}
-                    {% foreach ($errors['published_at'] as $msg): %}
-                      <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ msg }}</p>
-                    {% endforeach %}
-                {% endif %}
+                <?php foreach (errors()['published_at'] ?? [] as $dateError) { ?>
+                  <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($dateError) ?></p>
+                <?php } ?>
               <div class="mt-1.5 flex items-start justify-between gap-2">
                 <p data-schedule-hint class="text-[11px] leading-relaxed text-slate-500 dark:text-zink-400">
                   Leave empty to go live as soon as you publish.

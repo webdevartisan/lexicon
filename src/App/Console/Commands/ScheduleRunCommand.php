@@ -17,7 +17,7 @@ use Throwable;
  * possible at all.
  *
  * Usage: php cli schedule:run
- * Cron:  * * * * * cd /var/www/html && php cli schedule:run >> /dev/null 2>&1
+ * Cron:  * * * * * cd /var/www/html && php cli schedule:run >> storage/logs/cron.log 2>&1
  */
 class ScheduleRunCommand
 {

@@ -79,23 +79,10 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
-  document.addEventListener("DOMContentLoaded", function () {
-    const NameInput = document.getElementById('name');
-    const SlugInput = document.getElementById('slug');
-
-    if (NameInput && SlugInput) {
-      NameInput.addEventListener('input', function () {
-        // generate a URL-friendly slug from the blog name
-        let slug = NameInput.value
-          .toLowerCase()               // Convert to lowercase
-          .trim()                      // Remove leading/trailing spaces
-          .replace(/[^\w\s-]/g, '')    // Remove non-word characters except spaces/dashes
-          .replace(/\s+/g, '-')        // Replace spaces with dashes
-          .replace(/-+/g, '-');        // Collapse multiple dashes
-        SlugInput.value = slug;
-      });
-    }
+  document.addEventListener('DOMContentLoaded', function () {
+    SlugField.bind({ source: 'name', target: 'slug', min: 2, max: 50, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=blog' });
   });
 </script>
 {% endblock %}

@@ -9,17 +9,8 @@
 {% endblock %}
 
 {% block body %}
-<?php
-$blogStatus = (!empty($blog['status']) ? $blog['status'] : 'draft');
-$isDraft = $blogStatus === 'draft';
-$isPublished = $blogStatus === 'published';
-$isArchived = $blogStatus === 'archived';
-?>
-
 {% set nameLabel = t('blog.form.fields.name.label') %}
 {% set namePlaceholder = t('blog.form.fields.name.placeholder') %}
-{% set slugLabel = t('blog.form.fields.slug.label') %}
-{% set slugUnderlabel = t('blog.form.fields.slug.underlabel') %}
 {% set descLabel = t('blog.form.fields.description.label') %}
 {% set descPlaceholder = t('blog.form.fields.description.placeholder') %}
 {% set metaTitleLabel = t('blog.form.fields.metaTitle.label') %}
@@ -28,9 +19,6 @@ $isArchived = $blogStatus === 'archived';
 {% set metaDescPlaceholder = t('blog.form.fields.metaDescription.placeholder') %}
 {% set localeLabel = t('blog.form.fields.locale.label') %}
 {% set timezoneLabel = t('blog.form.fields.timezone.label') %}
-{% set updateBtnLabel = t('blog.form.actions.update') %}
-{% set saveDraftBtnLabel = t('blog.form.actions.saveDraft') %}
-{% set backBtnLabel = t('blog.form.actions.back') %}
 
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
 
@@ -52,29 +40,38 @@ $isArchived = $blogStatus === 'archived';
   </div>
   {% endif %}
 
-  <!-- Section tabs -->
-  <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 dark:border-zink-600" role="tablist" aria-label="{{ t('blog.settings.pageTitle') }}">
-    <button type="button" data-settings-tab="general" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-      {{ t('blog.settings.tabs.general') }}
-    </button>
-    <button type="button" data-settings-tab="seo" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-      {{ t('blog.settings.tabs.seo') }}
-    </button>
-    <button type="button" data-settings-tab="discussion" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-      {{ t('blog.settings.tabs.discussion') }}
-    </button>
-  </div>
-
   <form
     id="blog-settings-form"
     method="post"
-    action="/dashboard/blogs/{{ blog.id }}/update">
+    action="/dashboard/blogs/{{ blog.id }}/update"
+    class="max-lg:pb-20">
     <input type="hidden" name="_method" value="PUT">
     <input type="hidden" name="active_section" id="active_section" value="general">
     {{ csrf_field() }}
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_auto] max-lg:pb-20">
-      <main>
+    {% include "partials/dashboard/_action_bar.lex.php" %}
+
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
+      <div class="p-4 md:p-5">
+        <h2 class="mb-2 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.settings.address.label') }}</h2>
+        {% cmp="urlWithOpenButton" previewUrl="{$blogUrl}" %}
+        <p class="mt-2 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.settings.address.help') }}</p>
+      </div>
+    </section>
+
+    <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 dark:border-zink-600" role="tablist" aria-label="{{ t('blog.settings.pageTitle') }}">
+      <button type="button" data-settings-tab="general" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
+        {{ t('blog.settings.tabs.general') }}
+      </button>
+      <button type="button" data-settings-tab="seo" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
+        {{ t('blog.settings.tabs.seo') }}
+      </button>
+      <button type="button" data-settings-tab="discussion" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
+        {{ t('blog.settings.tabs.discussion') }}
+      </button>
+    </div>
+
+    <div>
 
         <!-- ============ General ============ -->
         <div data-settings-panel="general">
@@ -87,42 +84,8 @@ $isArchived = $blogStatus === 'archived';
               <?php $value = $blog['blog_name'] ?? ''; ?>
               {% cmp="input" type="text" name="name" label="{$nameLabel}" value="{$value}" placeholder="{$namePlaceholder}" required="true" %}
 
-              <?php $value = $blog['blog_slug'] ?? ''; ?>
-              <?php $baseUrl = base_url().'/blog/'; ?>
-              {% cmp="input" type="text" name="slug" label="{$slugLabel}" value="{$value}" prefix="{$baseUrl}" underlabel="{$slugUnderlabel}" disabled="true" %}
-
               <?php $value = $blog['description'] ?? ''; ?>
               {% cmp="input" type="textarea" name="description" label="{$descLabel}" value="{$value}" rows="4" placeholder="{$descPlaceholder}" %}
-
-              <!-- Visibility -->
-              <div>
-                <label class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500300">
-                  {{ t('blog.form.fields.visibility.label') }}
-                </label>
-                <div class="grid gap-3 md:grid-cols-3">
-                  <label class="flex items-start gap-2 p-3 text-xs border rounded-md cursor-pointer border-slate-200 hover:border-custom-400 hover:bg-custom-50/40 dark:border-zink-600 dark:hover:border-custom-400 dark:hover:bg-zink-800">
-                    <input type="radio" name="status" value="draft" class="mt-1 text-custom-500 border-slate-300 rounded dark:border-zink-600" {% if isDraft %}checked{% endif %}>
-                    <span>
-                      <span class="block font-medium text-slate-900 dark:text-zink-100">{{ t('blog.form.fields.visibility.options.draft.title') }}</span>
-                      <span class="text-[11px] text-slate-500 dark:text-zink-300">{{ t('blog.form.fields.visibility.options.draft.description') }}</span>
-                    </span>
-                  </label>
-                  <label class="flex items-start gap-2 p-3 text-xs border rounded-md cursor-pointer border-slate-200 hover:border-custom-400 hover:bg-custom-50/40 dark:border-zink-600 dark:hover:border-custom-400 dark:hover:bg-zink-800">
-                    <input type="radio" name="status" value="published" class="mt-1 text-custom-500 border-slate-300 rounded dark:border-zink-600" {% if isPublished %}checked{% endif %}>
-                    <span>
-                      <span class="block font-medium text-slate-900 dark:text-zink-100">{{ t('blog.form.fields.visibility.options.published.title') }}</span>
-                      <span class="text-[11px] text-slate-500 dark:text-zink-300">{{ t('blog.form.fields.visibility.options.published.description') }}</span>
-                    </span>
-                  </label>
-                  <label class="flex items-start gap-2 p-3 text-xs border rounded-md cursor-pointer border-slate-200 hover:border-custom-400 hover:bg-custom-50/40 dark:border-zink-600 dark:hover:border-custom-400 dark:hover:bg-zink-800">
-                    <input type="radio" name="status" value="archived" class="mt-1 text-custom-500 border-slate-300 rounded dark:border-zink-600" {% if isArchived %}checked{% endif %}>
-                    <span>
-                      <span class="block font-medium text-slate-900 dark:text-zink-100">{{ t('blog.form.fields.visibility.options.archived.title') }}</span>
-                      <span class="text-[11px] text-slate-500 dark:text-zink-300">{{ t('blog.form.fields.visibility.options.archived.description') }}</span>
-                    </span>
-                  </label>
-                </div>
-              </div>
             </div>
           </section>
 
@@ -293,26 +256,6 @@ $isArchived = $blogStatus === 'archived';
             </div>
           </section>
         </div>
-      </main>
-
-      <aside class="lg:sticky lg:top-4 space-y-4 shrink-0 w-full lg:w-64">
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 max-lg:fixed max-lg:bottom-0 max-lg:inset-x-0 max-lg:z-40 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
-          <div class="p-4 space-y-4 max-lg:p-3">
-            <div class="flex w-full gap-2">
-              <?php $label = $isPublished ? $updateBtnLabel : $saveDraftBtnLabel ?>
-              {% cmp="btn" type="submit" variant="blue" icon="save" label="{$label}" addClass="flex-1 " %}
-              {% cmp="btn" href="/dashboard" variant="slate" icon="step-back" label="{$backBtnLabel}" %}
-            </div>
-          </div>
-        </section>
-
-        <div class="p-4 text-xs bg-slate-50 border border-dashed border-slate-200 rounded-lg dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100">
-          <h3 class="mb-1 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sidebar.tips.title') }}</h3>
-          <p class="text-[11px] text-slate-600 dark:text-zink-300">
-            {{ t('blog.form.sidebar.tips.content') }}
-          </p>
-        </div>
-      </aside>
     </div>
   </form>
 

@@ -50,3 +50,12 @@ test('empty user array is denied everywhere', function () {
     expect($this->policy->accessDashboard([]))->toBeFalse()
         ->and($this->policy->manageCache([]))->toBeFalse();
 });
+
+test('only administrators may clear logs, even someone allowed to read them', function () {
+    $healthViewer = ['id' => 4, 'roles' => ['ops'], 'permissions' => ['view_system_health']];
+
+    expect($this->policy->clearLogs($this->admin))->toBeTrue()
+        ->and($this->policy->viewSystem($healthViewer))->toBeTrue()
+        ->and($this->policy->clearLogs($healthViewer))->toBeFalse()
+        ->and($this->policy->clearLogs($this->regular))->toBeFalse();
+});

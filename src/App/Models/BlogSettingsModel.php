@@ -118,7 +118,7 @@ class BlogSettingsModel extends AppModel
             $data['logo_path'] ?? null,
             $data['favicon_path'] ?? null,
             $commentsEnabled,
-            array_key_exists('comments_auto_publish', $data) ? (int) (bool) $data['comments_auto_publish'] : 0,
+            array_key_exists('comments_auto_publish', $data) ? (int) (bool) $data['comments_auto_publish'] : 1,
             array_key_exists('replies_auto_publish', $data) ? (int) (bool) $data['replies_auto_publish'] : 1,
         ];
 

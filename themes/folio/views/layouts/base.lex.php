@@ -30,7 +30,11 @@
     $logo = $settings['logo_path'] ?? null;
   $fav = $settings['favicon_path'] ?? null;
   ?>
-  <link rel="shortcut icon" href="<?= $fav ?: '' ?>" />
+  <?php if (!empty($fav)) { ?>
+  <link rel="icon" href="<?= e($fav) ?>" />
+  <?php } else { ?>
+  {% include "partials/_favicons.lex.php" %}
+  <?php } ?>
 
   <link rel="stylesheet" href="<?= $asset('css/fonts.css') ?>">
 

@@ -145,7 +145,7 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
             {% foreach ($showcase as $citeIndex => $post): %}
             <?php
         $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
-$excerpt = $post['excerpt'] ?: truncate(strip_tags($post['content'] ?? ''), 160);
+$excerpt = post_excerpt($post);
 $postTitle = (string) ($post['title'] ?? '');
 ?>
             <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">

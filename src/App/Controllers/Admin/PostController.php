@@ -7,6 +7,9 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\PostModel;
+use App\Services\ExternalMediaGuard;
+use App\Services\PostContentSanitizer;
+use App\Services\MediaService;
 use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
@@ -28,7 +31,10 @@ class PostController extends AppController
         private PostModel $model,
         private BlogModel $blogModel,
         protected Database $database,
-        private PublicCacheInvalidator $publicCache
+        private PublicCacheInvalidator $publicCache,
+        private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
+        private MediaService $media,
     ) {}
 
     /**
@@ -150,6 +156,11 @@ class PostController extends AppController
 
         $input = $this->validatePostInput();
 
+        $rejected = $this->rejectOutsideMedia($input, '');
+        if ($rejected !== null) {
+            return $rejected;
+        }
+
         $data = [
             'title' => $input['title'],
             'slug' => $input['slug'] ?? '',
@@ -198,6 +209,11 @@ class PostController extends AppController
         $post = $this->getPost($id);
 
         $input = $this->validatePostInput();
+
+        $rejected = $this->rejectOutsideMedia($input, (string) ($post['content'] ?? ''), (string) ($post['featured_image'] ?? ''));
+        if ($rejected !== null) {
+            return $rejected;
+        }
 
         $data = [
             'title' => $input['title'],
@@ -259,13 +275,43 @@ class PostController extends AppController
     }
 
     /**
+     * Refuse new outside images or embeds in the body, and a featured image that
+     * is not one of this site's uploads unless the post already had it.
+     *
+     * @param  array<string, mixed>  $input  Validated fields
+     */
+    private function rejectOutsideMedia(array $input, string $previousContent, string $previousImage = ''): ?Response
+    {
+        $errors = [];
+
+        $outside = $this->mediaGuard->newExternalSources((string) $input['content'], $previousContent);
+        if ($outside !== []) {
+            $errors['content'] = [$this->mediaGuard->rejectionMessage($outside)];
+        }
+
+        $image = trim((string) ($input['featured_image'] ?? ''));
+        if ($image !== '' && $image !== $previousImage && !$this->media->isLocalUploadUrl($image)) {
+            $errors['featured_image'] = ['The featured image must be one of this site\'s uploads, for example /uploads/....'];
+        }
+
+        if ($errors === []) {
+            return null;
+        }
+
+        $this->session->set('_errors', $errors);
+        $this->flash('error', implode(' ', array_merge(...array_values($errors))));
+
+        return $this->redirectBack();
+    }
+
+    /**
      * Shared validation for create and update submissions.
      *
      * @return array<string, mixed> Validated input fields
      */
     private function validatePostInput(): array
     {
-        return $this->validateOrFail([
+        $input = $this->validateOrFail([
             'title' => 'required|min:3|max:200',
             'slug' => 'max:220',
             'content' => 'required',
@@ -274,6 +320,10 @@ class PostController extends AppController
             'status' => 'required|in:draft,published,archived',
             'blog_id' => 'required|integer|exists:blogs,id',
         ])->validated();
+
+        $input['content'] = $this->contentSanitizer->clean((string) $input['content']);
+
+        return $input;
     }
 
     /**

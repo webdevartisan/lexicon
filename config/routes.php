@@ -337,6 +337,11 @@ $router->group([
         'action' => 'autosave',
         'method' => 'POST',
     ]);
+    $r->add('/slug-check', [
+        'controller' => 'SlugCheckController',
+        'action' => 'check',
+        'method' => 'GET',
+    ]);
 
     // Explicit routes for everything that used to be served only by the generic
     // wildcards below. Written out so the dashboard route table is enumerable
@@ -491,6 +496,7 @@ $router->group([
 
     // System diagnostics
     $r->add('/system', ['controller' => 'SystemController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/system/logs/clear', ['controller' => 'SystemController', 'action' => 'clearLog', 'method' => 'POST']);
 
     // Outbound mail queue: inspect and recover failed sends
     $r->add('/mail-queue', ['controller' => 'MailQueueController', 'action' => 'index', 'method' => 'GET']);

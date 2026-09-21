@@ -162,6 +162,17 @@ class SystemPolicy implements PolicyInterface
     }
 
     /**
+     * Empty an application log. Administrators only: reading logs can be
+     * delegated with view_system_health, erasing the evidence in them cannot.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function clearLogs(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
      * Manage the response and compiled view caches (view stats, prune, clear).
      *
      * @param  array<string, mixed>  $user  Authenticated user record

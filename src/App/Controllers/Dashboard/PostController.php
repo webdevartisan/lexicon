@@ -6,6 +6,7 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Gate;
+use App\Helpers\TimezoneHelper;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
@@ -16,8 +17,11 @@ use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
+use App\Services\ExternalMediaGuard;
+use App\Services\PostContentSanitizer;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
+use App\Services\PostAuthorService;
 use App\Services\PostAutosaveService;
 use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
@@ -71,6 +75,9 @@ final class PostController extends AppController
         private SubscriberNotificationService $subscriberNotifier,
         private PostTranslationModel $translationModel,
         private LocaleRegistry $localeRegistry,
+        private PostAuthorService $postAuthors,
+        private ExternalMediaGuard $mediaGuard,
+        private PostContentSanitizer $contentSanitizer,
     ) {}
 
     /**
@@ -152,13 +159,13 @@ final class PostController extends AppController
             }
         }
 
-        // Personal surface: only posts living in blogs the user owns. Anything
-        // they wrote on someone else's blog belongs to that blog's shared
-        // context, not here.
+        // Every post in the blogs this user owns, whoever wrote it. The same
+        // scope as the dashboard cards, so the counts match. Posts they wrote on
+        // someone else's blog belong to that blog's shared context, not here.
         $ownedScope = (int) $user['id'];
 
         $result = $this->model->findByAuthorWithFiltersPagination(
-            authorId: $user['id'],
+            authorId: null,
             page: $page,
             perPage: $perPage,
             blogId: $blogId,
@@ -180,7 +187,7 @@ final class PostController extends AppController
         // Per-status totals power the filter chip badges (respecting the active
         // category/tag filter so the numbers match what's shown).
         $counts = $this->model->countsByStatusForAuthor(
-            authorId: (int) $user['id'],
+            authorId: null,
             blogId: $blogId,
             searchQuery: $q,
             categoryId: $categoryId,
@@ -302,7 +309,7 @@ final class PostController extends AppController
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
             'actions' => PostActionPresenter::for('draft', $blogRole, $workflowEnabled),
-        ]);
+        ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
     /**
@@ -326,25 +333,27 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
-            'slug' => 'required|slug|min:2|max:100|unique:posts,slug',
+            'slug' => 'required|slug|min:2|max:100',
             'content' => 'required|max:60000',
-            'excerpt' => 'required|max:300',
+            'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'datetime:d.m.y H:i',
+            'published_at' => 'max:20',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
 
         $data = $validator->validated();
+        $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
         $data['comments_enabled'] = !empty($data['comments_enabled']) ? 1 : 0;
         $data = $this->normalizeSeoFields($data);
 
         // Convert published_at to UTC before resolving the intent, because
         // whether the date is in the future decides publish versus schedule.
-        if (!empty($data['timezone']) && !empty($data['published_at'])) {
-            $data['published_at'] = $this->normalizePublishedAt(
-                $data['published_at'],
-                $data['timezone']
-            );
+        if (!empty($data['published_at'])) {
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            if ($utc === null) {
+                return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
+            }
+            $data['published_at'] = $utc;
         } else {
             unset($data['published_at']);
         }
@@ -357,11 +366,22 @@ final class PostController extends AppController
         );
 
         $data['blog_id'] = $blog->id();
-        $data['author_id'] = $user['id'];
+        $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
+
+        try {
+            $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
+        } catch (\InvalidArgumentException $e) {
+            return $this->rejectField('author_id', $e->getMessage());
+        }
+
+        $outside = $this->mediaGuard->newExternalSources((string) $data['content']);
+        if ($outside !== []) {
+            return $this->rejectField('content', $this->mediaGuard->rejectionMessage($outside));
+        }
+
         $data['category_id'] = $this->resolveCategoryId((int) $blog->id());
 
-        // Handle featured image upload
-        $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
+        [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
         if ($featuredImagePath) {
             $data['featured_image'] = $featuredImagePath;
         }
@@ -384,6 +404,10 @@ final class PostController extends AppController
                 ['title' => $data['title'], 'status' => $data['status']],
                 $this->request->ip()
             );
+
+            if ($imageFailure !== null) {
+                return $this->redirectAfterImageFailure($postId, $imageFailure);
+            }
 
             $this->flash('success', 'Post saved.');
 
@@ -479,6 +503,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(
                 $status,
                 $blogRole,
@@ -537,14 +562,15 @@ final class PostController extends AppController
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
             'content' => 'required|max:60000',
-            'excerpt' => 'required|max:300',
+            'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'datetime:d.m.y H:i',
+            'published_at' => 'max:20',
             'remove_featured_image' => 'boolean',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
 
         $newData = $validator->validated();
+        $newData['content'] = $this->contentSanitizer->clean((string) $newData['content']);
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
         $newData = $this->normalizeSeoFields($newData);
 
@@ -552,10 +578,11 @@ final class PostController extends AppController
 
         // Normalize published_at to UTC for comparison
         if (!empty($newData['published_at'])) {
-            $newData['published_at'] = $this->normalizePublishedAt(
-                $newData['published_at'],
-                $timezone
-            );
+            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $timezone);
+            if ($utc === null) {
+                return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
+            }
+            $newData['published_at'] = $utc;
         }
 
         // Build original data for comparison
@@ -610,24 +637,29 @@ final class PostController extends AppController
 
         $blog = $post->blog();
 
-        // Handle featured image upload
-        $featuredImagePath = $this->handleFeaturedImageUpload($user['id'], $blog);
+        try {
+            $authorId = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), $post->authorId());
+        } catch (\InvalidArgumentException $e) {
+            return $this->rejectField('author_id', $e->getMessage());
+        }
+
+        $outside = $this->mediaGuard->newExternalSources((string) $newData['content'], $post->content());
+        if ($outside !== []) {
+            return $this->rejectField('content', $this->mediaGuard->rejectionMessage($outside));
+        }
+
+        if ($authorId !== $post->authorId()) {
+            $data['author_id'] = $authorId;
+        }
+
+        [$featuredImagePath, $imageFailure] = $this->storeFeaturedImageSafely((int) $user['id'], $blog);
         if ($featuredImagePath) {
             $data['featured_image'] = $featuredImagePath;
         }
 
-        // Handle explicit featured image removal
-        if (($this->request->post['remove_featured_image'] ?? '0') === '1') {
+        // The file stays in the media library, only the post lets go of it.
+        if (($this->request->post['remove_featured_image'] ?? '0') === '1' && !$featuredImagePath) {
             $data['featured_image'] = null;
-
-            // Delete physical file
-            $oldImagePath = $post->toArray()['featured_image'] ?? null;
-            if ($oldImagePath) {
-                $fullPath = ROOT_PATH.'/public'.$oldImagePath;
-                if (file_exists($fullPath)) {
-                    @unlink($fullPath);
-                }
-            }
         }
 
         // Set published_at when transitioning to published
@@ -675,7 +707,6 @@ final class PostController extends AppController
 
         // Auto-trigger review pipeline when author moves status to pending,
         // or re-triggers when resubmitting after needs_changes.
-        // Replaces the old standalone "Submit for Review" button.
         $currentWorkflowState = $post->workflowState();
         $shouldSubmit = $newStatus === 'pending'
             && (
@@ -696,6 +727,10 @@ final class PostController extends AppController
             }
         }
 
+        if ($imageFailure !== null) {
+            return $this->redirectAfterImageFailure((int) $id, $imageFailure);
+        }
+
         $return = $this->consumeReturnToken(
             $this->request->postParam('r'),
             '/dashboard/post',
@@ -703,9 +738,6 @@ final class PostController extends AppController
         );
 
         return $this->redirect($return);
-        // return $this->redirect("/dashboard/post/{$id}/edit");
-        // return $this->redirect("/dashboard/post");
-        // return $this->redirect($return);
     }
 
     /**
@@ -759,23 +791,18 @@ final class PostController extends AppController
             return $this->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
-        $slugRule = 'slug|min:2|max:100|unique:posts,slug';
-        if (!empty($this->request->post['id'])) {
-            $slugRule .= ','.(int) $this->request->post['id'];
-        }
-
         try {
             $validator = $this->validator($this->request->post);
             $validator->rules([
                 'id' => 'integer',
                 'title' => 'required|title|min:2|max:100',
-                'slug' => $slugRule,
+                'slug' => 'slug|min:2|max:100',
                 // No status rule: autosave never sends one, and the "in" rule
                 // rejects an absent value rather than skipping it.
                 'content' => 'required|max:60000',
-                'excerpt' => 'required|max:300',
+                'excerpt' => 'max:300',
                 'timezone' => 'timezone',
-                'published_at' => 'datetime:d.m.y H:i',
+                'published_at' => 'max:20',
             ]);
 
             if ($validator->fails()) {
@@ -789,17 +816,28 @@ final class PostController extends AppController
             $validated = $validator->validated();
             $postId = !empty($validated['id']) ? (int) $validated['id'] : null;
 
-            // Delegate to service
-            $result = $this->autosaveService->save($validated, (int) $user['id'], $postId);
+            $blogId = null;
+            if ($postId === null) {
+                $blogId = (int) ($this->request->post['blog_id'] ?? 0)
+                    ?: (int) ($this->preference->getDefaultBlogId((int) $user['id']) ?? 0);
+                $blog = $blogId > 0 ? $this->blogModel->getBlog($blogId) : null;
+                if (!$blog || !Gate::allows('createPost', $blog, $user)) {
+                    return $this->json(['success' => false, 'error' => 'You cannot write in this blog.'], 403);
+                }
+            }
+
+            $result = $this->autosaveService->save($validated, (int) $user['id'], $postId, $blogId);
 
             $statusCode = $result['success'] ? 200 : 400;
 
             return $this->json($result, $statusCode);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            error_log('Autosave failed: '.$e->getMessage());
+
             return $this->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'The server could not save your draft. Your text is still here, so keep the page open and try saving again.',
             ], 500);
         }
     }
@@ -1263,11 +1301,12 @@ final class PostController extends AppController
      */
     private function handleFeaturedImageUpload(int $userId, \App\Resources\BlogResource $blog): ?string
     {
-        // If the user picked from the media library, prefer that.
         $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
         if ($picked !== '') {
-            // Make sure brand-new picks (e.g. someone pasted a URL by hand)
-            // end up in the library.
+            if (!$this->mediaService->isLocalUploadUrl($picked)) {
+                throw new \InvalidArgumentException('Featured images must come from your media library or an upload, not an outside address.');
+            }
+
             $this->mediaService->register((int) $blog->id(), $userId, $picked, 'post_image');
 
             return $picked;
@@ -1277,19 +1316,76 @@ final class PostController extends AppController
             $this->request->post['uploaded_featured_image_files'] ?? []
         );
 
-        // Take first file only
         if (empty($uploadedFiles[0])) {
             return null;
         }
 
-        try {
-            return $this->mediaService->storeFeaturedImage($uploadedFiles[0], $blog, $userId);
-        } catch (\Throwable $e) {
-            error_log("Featured image upload failed for blog {$blog->id()}: ".$e->getMessage());
-            $this->flash('error', 'Featured image upload failed: '.$e->getMessage());
+        return $this->mediaService->storeFeaturedImage((string) $uploadedFiles[0], $blog, $userId);
+    }
 
-            return null;
+    /**
+     * Store the featured image without letting a failure throw away the post.
+     *
+     * @return array{0: string|null, 1: string|null} [stored path, reason it failed]
+     */
+    private function storeFeaturedImageSafely(int $userId, \App\Resources\BlogResource $blog): array
+    {
+        try {
+            return [$this->handleFeaturedImageUpload($userId, $blog), null];
+        } catch (\InvalidArgumentException $e) {
+            return [null, $e->getMessage()];
+        } catch (\Throwable $e) {
+            error_log("Featured image failed for blog {$blog->id()}: ".$e->getMessage());
+
+            return [null, 'The server could not store it. Please try again.'];
         }
+    }
+
+    /**
+     * What the author field needs: the choices when the user may reassign, the
+     * current author's handle either way.
+     *
+     * @param  array<string, mixed>  $user
+     * @return array{canAssignAuthor: bool, authorOptions: array<int, string>, authorId: int, authorHandle: string}
+     */
+    private function authorFieldData(\App\Resources\BlogResource $blog, array $user, int $authorId): array
+    {
+        $candidates = $this->postAuthors->candidates($blog);
+        $canAssign = Gate::allows('assignPostAuthor', $blog, $user);
+
+        return [
+            'canAssignAuthor' => $canAssign,
+            'authorOptions' => $canAssign ? $candidates : [],
+            'authorId' => $authorId,
+            'authorHandle' => $candidates[$authorId] ?? (string) ($this->model->author($authorId)['handle'] ?? ''),
+        ];
+    }
+
+    /**
+     * Send the writer back to the form with one field's problem spelled out.
+     */
+    private function rejectField(string $field, string $message): Response
+    {
+        $oldInput = $this->request->all();
+        unset($oldInput['_token']);
+        $this->session->set('_old_input', $oldInput);
+        $this->session->set('_errors', [$field => [$message]]);
+        $this->flash('error', $message);
+
+        return $this->redirectBack();
+    }
+
+    /**
+     * Keep the writer on the post when its featured image did not save, saying why.
+     */
+    private function redirectAfterImageFailure(int $postId, string $reason): Response
+    {
+        $this->flash('error', 'Post saved, but the featured image could not be added. '.$reason);
+
+        $returnToken = (string) ($this->request->postParam('r') ?? '');
+        $query = $returnToken !== '' ? '?r='.rawurlencode($returnToken) : '';
+
+        return $this->redirect("/dashboard/post/{$postId}/edit{$query}");
     }
 
     /**
@@ -1336,8 +1432,8 @@ final class PostController extends AppController
      * enforces who may publish.
      *
      * The whitelist lives here rather than in the validation rules because a
-     * form can be submitted with no submitter at all — pressing Enter in a
-     * text field does it — and that should quietly mean "just save", not
+     * form can be submitted with no submitter at all (pressing Enter in a
+     * text field does it), and that should quietly mean "just save", not
      * reject the whole post.
      *
      * @param  string  $currentStatus  Status the post holds today
@@ -1356,38 +1452,5 @@ final class PostController extends AppController
             && strtotime($publishedAtUtc.' UTC') > time();
 
         return PostActionPresenter::statusForIntent($intent, $currentStatus, $hasFutureDate);
-    }
-
-    /**
-     * Normalize published_at datetime to UTC database format.
-     *
-     * Convert user-inputted datetime (in their timezone) to UTC for database storage.
-     * Ensures accurate change detection when comparing old and new data.
-     *
-     * @param  string  $publishedAt  Datetime in format 'd.m.y H:i'
-     * @param  string  $timezone  User's timezone (e.g., 'Europe/Athens')
-     * @return string Normalized datetime in UTC 'Y-m-d H:i:s'
-     */
-    private function normalizePublishedAt(string $publishedAt, string $timezone): string
-    {
-        try {
-            $userTz = new DateTimeZone($timezone);
-            $dt = DateTime::createFromFormat('d.m.y H:i', $publishedAt, $userTz);
-
-            if ($dt === false) {
-                error_log("Failed to parse published_at: {$publishedAt}");
-
-                return $publishedAt;
-            }
-
-            $dt->setTimezone(new DateTimeZone('UTC'));
-
-            return $dt->format('Y-m-d H:i:s');
-
-        } catch (\Exception $e) {
-            error_log('Timezone conversion error: '.$e->getMessage());
-
-            return $publishedAt;
-        }
     }
 }

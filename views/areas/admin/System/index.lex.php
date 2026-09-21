@@ -3,6 +3,10 @@
 {% block title %}System{% endblock %}
 {% block subtitle %}Runtime configuration, database footprint, and application logs.{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
+{% endblock %}
+
 {% block body %}
 <?php
 $fmtBytes = static function ($bytes): string {
@@ -96,10 +100,22 @@ foreach ($phpLabels as $key => $label) { ?>
             </div>
 
             <?php if ($selectedLog !== '') { ?>
-            <p class="text-xs text-slate-500 dark:text-zink-300 mb-2">
-                Last 200 lines of <?= e($selectedLog) ?> · updated <?= e(date('M j, Y · g:i a', $logs[$selectedLog]['modified'])) ?>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <p class="text-xs text-slate-500 dark:text-zink-300">
+                    Last 200 lines of <?= e($selectedLog) ?> · updated <?= e(date('M j, Y · g:i a', $logs[$selectedLog]['modified'])) ?>
+                </p>
+                <?php if (!empty($canClearLogs)) { ?>
+                    <?php $clearLabel = 'Clear log'; ?>
+                    {% cmp="btn" type="button" variant="red" icon="eraser" label="{$clearLabel}" size="xs" dataModalTarget="clearLogModal" %}
+                <?php } ?>
+            </div>
+            <?php if ($logError !== null) { ?>
+            <p role="alert" class="p-3 text-sm rounded-md border border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                This log could not be read: <?= e($logError) ?>
             </p>
+            <?php } else { ?>
             <pre class="p-4 text-xs leading-relaxed rounded-md bg-slate-900 text-slate-100 dark:bg-zink-900 overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap break-words"><?= e($logContent === '' ? '(empty file)' : $logContent) ?></pre>
+            <?php } ?>
             <?php } else { ?>
             <p class="text-sm text-slate-500 dark:text-zink-300">Pick a log file to view its tail.</p>
             <?php } ?>
@@ -107,4 +123,17 @@ foreach ($phpLabels as $key => $label) { ?>
         </div>
     </div>
 </div>
+
+<?php if (!empty($canClearLogs) && $selectedLog !== '') { ?>
+    <?php $clearMessage = 'Everything in '.$selectedLog.' will be erased. The file stays, so anything writing to it carries on. This cannot be undone.'; ?>
+    {% cmp="modal" id="clearLogModal" title="Clear this log?" icon="alert-circle" variant="danger" message="{$clearMessage}" confirmText="Clear log" cancelText="Cancel" form="clearLogForm" %}
+    <form method="POST" action="/admin/system/logs/clear" id="clearLogForm">
+        {{ csrf_field() }}
+        <input type="hidden" name="log" value="<?= e($selectedLog) ?>">
+    </form>
+<?php } ?>
+{% endblock %}
+
+{% block scripts %}
+<script src="/cp-assets/js/modal.js"></script>
 {% endblock %}

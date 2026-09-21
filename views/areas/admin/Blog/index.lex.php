@@ -114,9 +114,15 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                                             <?php } ?>
                                     </button>
                                 </form>
-                                {% cmp="icon-action" href="{$showUrl}" icon="eye" tip="View" %}
-                                {% cmp="icon-action" href="{$editUrl}" icon="pencil" tip="Edit" %}
-                                {% cmp="icon-action" href="{$deleteUrl}" icon="trash-2" tip="Delete" danger %}
+                                <?php
+                                $rowTitle = (string) $blog['blog_name'];
+                                $rowActions = [
+                                    ['label' => 'View', 'icon' => 'eye', 'href' => $showUrl],
+                                    ['label' => 'Edit', 'icon' => 'pencil', 'href' => $editUrl],
+                                    ['label' => 'Delete', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true],
+                                ];
+                                ?>
+                                {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                             </div>
                         </td>
                     </tr>

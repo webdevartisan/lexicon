@@ -11,7 +11,7 @@ $old = old();
     <meta charset="utf-8">
     <title>{% yield title %} | Lexicon CP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="shortcut icon" href="/assets/icon/favicon.ico">
+    {% include "partials/_favicons.lex.php" %}
     <script src="/cp-assets/js/layout.js"></script>
 
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
@@ -140,6 +140,7 @@ $old = old();
 <script src="/cp-assets/libs/simplebar/simplebar.min.js"></script>
 <!-- <script src="/cp-assets/libs/prismjs/prism.js"></script> -->
 <script src="/cp-assets/js/dropdown.js"></script>
+<script src="/cp-assets/js/row-actions.js"></script>
 <script src="/cp-assets/js/blog-switcher.js"></script>
 <script src="/cp-assets/js/table-sort.js"></script>
 

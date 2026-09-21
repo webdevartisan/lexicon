@@ -6,7 +6,7 @@
 {% block head %}
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
 <script nonce="<?= csp_nonce() ?>">window.editorBlogId = <?= (int) ($post['blog_id'] ?? 0) ?>;</script>
-<script src="/assets/js/initeditor.js" referrerpolicy="origin"></script>
+<script src="/assets/js/initeditor.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/initeditor.js') ?>" referrerpolicy="origin"></script>
 {% endblock %}
 
 {% block body %}

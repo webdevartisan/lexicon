@@ -97,11 +97,42 @@ function truncate(string $string, int $limit = 50): string
 }
 
 /**
+ * The summary a listing shows for a post: the writer's own excerpt, or the start of
+ * the content when none was written. Plain text, so escape it like any other string.
+ *
+ * @param  array<string, mixed>  $post  Post row with excerpt and, ideally, content
+ * @param  int  $limit  Maximum length in characters before the ellipsis
+ * @return string Plain text summary, empty only when the post has no text at all
+ */
+function post_excerpt(array $post, int $limit = 160): string
+{
+    $source = trim((string) ($post['excerpt'] ?? ''));
+    if ($source === '') {
+        $source = (string) ($post['content'] ?? '');
+    }
+    // Tags are spaced out first so adjacent paragraphs do not run their words together.
+    $source = strip_tags(str_replace('<', ' <', $source));
+
+    $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($source, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+    if (mb_strlen($text) <= $limit) {
+        return $text;
+    }
+
+    $cut = mb_substr($text, 0, $limit);
+    $lastSpace = mb_strrpos($cut, ' ');
+    if ($lastSpace !== false && $lastSpace > $limit * 0.6) {
+        $cut = mb_substr($cut, 0, $lastSpace);
+    }
+
+    return rtrim($cut, ' ,;:.-').'…';
+}
+
+/**
  * Render an author name, linked to their public profile when they have one.
  *
  * Returns the escaped name alone when no slug is given, so private profiles
  * and guest commenters degrade to plain text instead of a dead link. The
- * return value is already escaped — echo it raw, never through e().
+ * return value is already escaped, so echo it raw, never through e().
  *
  * @param  string|null  $name  Display name to render
  * @param  string|null  $slug  Public profile slug, or null when unavailable
@@ -131,7 +162,7 @@ function profile_link(?string $name, ?string $slug, string $class = ''): string
  *
  * Both parts sit inside one anchor, so tabbing a byline hits one link.
  *
- * The return value is already escaped — echo it raw, never through e().
+ * The return value is already escaped, so echo it raw, never through e().
  *
  * @param  string|null  $name  Display name, already resolved for the viewer
  * @param  string|null  $handle  The @tag, without its leading @
@@ -168,19 +199,23 @@ function author_byline(?string $name, ?string $handle, ?string $slug, string $cl
 /**
  * Turn a label into a URL-friendly slug.
  *
- * Lowercases, strips accents where possible, and collapses anything that
- * isn't a letter/number into single hyphens.
+ * Lowercases, strips accents, and collapses anything that isn't a letter or
+ * number into single hyphens, so the result always passes the slug rule or is
+ * empty. public/cp-assets/js/slug-field.js does exactly the same in the browser.
  */
 function slugify(string $value): string
 {
-    $value = trim($value);
+    // Letters that do not decompose into a base letter plus an accent.
+    $value = strtr(trim($value), [
+        'ß' => 'ss', 'ẞ' => 'ss', 'æ' => 'ae', 'Æ' => 'ae', 'œ' => 'oe', 'Œ' => 'oe',
+        'ø' => 'o', 'Ø' => 'o', 'đ' => 'd', 'Đ' => 'd', 'ł' => 'l', 'Ł' => 'l', 'þ' => 'th', 'Þ' => 'th',
+    ]);
 
-    // Drop accents when the intl/iconv path is available, otherwise carry on.
-    if (function_exists('iconv')) {
-        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        if ($converted !== false) {
-            $value = $converted;
-        }
+    if (class_exists(\Normalizer::class)) {
+        $value = \Normalizer::normalize($value, \Normalizer::FORM_D) ?: $value;
+        $value = preg_replace('/\p{Mn}+/u', '', $value) ?? $value;
+    } elseif (function_exists('iconv')) {
+        $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
     }
 
     $value = strtolower($value);
