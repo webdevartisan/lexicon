@@ -49,6 +49,17 @@ final class Csrf
     }
 
     /**
+     * Discard the current token so the next getToken() issues a new one.
+     *
+     * For moments the session changes whose identity it carries: a token
+     * issued to one identity must not stay valid for another.
+     */
+    public function rotate(): void
+    {
+        $this->session->remove(self::SESSION_KEY);
+    }
+
+    /**
      * Check whether the provided token matches the session token.
      *
      * Returns false if either the stored token or the provided token

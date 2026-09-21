@@ -61,14 +61,16 @@ foreach ($roleOptions as $r) {
                 <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
                     {% foreach ($users as $user): %}
                     <?php
-                        $editUrl = '/admin/users/'.$user['id'].'/edit';
-$deleteUrl = '/admin/users/'.$user['id'].'/delete';
-$activeStatus = !empty($user['is_active']) ? 'active' : 'inactive';
-$activeLabel = !empty($user['is_active']) ? 'Active' : 'Inactive';
+                        $rowBase = '/admin/users/'.(int) $user['id'];
+$isSuspended = $user['suspended_at'] !== null;
+$activeStatus = $isSuspended ? 'suspended' : (!empty($user['is_active']) ? 'active' : 'inactive');
+$activeLabel = $isSuspended ? 'Suspended' : (!empty($user['is_active']) ? 'Active' : 'Inactive');
 ?>
                     <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
-                        <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">{{ user['handle'] }}</td>
+                        <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
+                            <a href="<?= e($rowBase) ?>" class="hover:text-custom-500 hover:underline">{{ user['handle'] }}</a>
+                        </td>
                         <td class="px-3.5 py-2.5">
                             <?= e(trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')) ?: '—') ?>
                         </td>
@@ -100,15 +102,30 @@ echo $bits === [] ? '<span class="text-slate-400 dark:text-zink-400">—</span>'
                         </td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$activeStatus}" label="{$activeLabel}" %}
+                            <?php if ($isSuspended) { ?>
+                            <span class="block text-[10px] text-slate-400 dark:text-zink-400 mt-0.5"><?= $user['suspended_until'] ? 'until '.e(local_datetime($user['suspended_until'], 'M j, Y')) : 'permanent' ?></span>
+                            <?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($user['created_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
                                 <?php
                                 $rowTitle = '@'.$user['handle'];
+                                $isSelfRow = (int) $user['id'] === (int) $actorId;
+                                $rowIsAdmin = in_array('administrator', explode(',', (string) $user['roles']), true);
+                                // An administrator row is only actionable by another administrator.
+                                $mayAct = !$rowIsAdmin || $actorIsAdmin;
+                                $canLogInAs = $canImpersonate && !$isSelfRow && !$rowIsAdmin && !$isSuspended && !empty($user['is_active']);
                                 $rowActions = [
-                                    ['label' => 'Edit user', 'icon' => 'pencil', 'href' => $editUrl],
-                                    ['label' => 'Delete user', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true, 'can' => (int) $user['id'] !== (int) auth()->user()['id']],
+                                    ['label' => 'View user', 'icon' => 'eye', 'href' => $rowBase],
+                                    ['label' => 'Preview profile', 'icon' => 'external-link', 'href' => $rowBase.'/preview', 'newTab' => true],
+                                    ['label' => 'Edit profile', 'icon' => 'pencil', 'href' => $rowBase.'/edit', 'can' => $mayAct],
+                                    ['label' => 'Reset password', 'icon' => 'key-round', 'href' => $rowBase.'/password', 'can' => $mayAct && !$isSelfRow],
+                                    ['label' => 'Change site role', 'icon' => 'shield', 'href' => $rowBase.'/site-role', 'can' => $canAssignSiteRoles],
+                                    ['label' => 'Change blog roles', 'icon' => 'users', 'href' => $rowBase.'/blog-roles', 'can' => $mayAct],
+                                    ['label' => 'Log in as', 'icon' => 'log-in', 'href' => $rowBase.'/impersonate', 'can' => $canLogInAs],
+                                    ['label' => $isSuspended ? 'Lift suspension' : 'Suspend user', 'icon' => $isSuspended ? 'unlock' : 'ban', 'href' => $rowBase.'/suspend', 'danger' => true, 'can' => $mayAct && !$isSelfRow],
+                                    ['label' => 'Delete user', 'icon' => 'trash-2', 'href' => $rowBase.'/delete', 'danger' => true, 'can' => $mayAct && !$isSelfRow],
                                 ];
                                 ?>
                                 {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}

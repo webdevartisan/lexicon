@@ -7,6 +7,7 @@ namespace App;
 use App\Exceptions\AccountSuspendedException;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\UserSuspensionService;
 use Framework\Interfaces\AuthInterface;
 use Framework\Session;
 
@@ -33,7 +34,8 @@ class Auth implements AuthInterface
     public function __construct(
         private Session $session,
         private UserModel $users,
-        private UserProfileModel $profiles
+        private UserProfileModel $profiles,
+        private UserSuspensionService $suspensions
     ) {}
 
     /**
@@ -52,7 +54,11 @@ class Auth implements AuthInterface
         }
 
         if ((int) $user['is_active'] !== 1) {
-            throw new AccountSuspendedException();
+            // A temporary suspension whose time is up should not need the hourly
+            // task to have run first, so the sign-in that hits it lifts it.
+            if (!$this->suspensions->liftIfExpired((int) $user['id'])) {
+                throw new AccountSuspendedException();
+            }
         }
 
         // Optional: transparently upgrade old hashes if algorithm/cost changes.
@@ -66,6 +72,7 @@ class Auth implements AuthInterface
         $this->session->regenerate(true);
 
         $this->session->set('user_id', (int) $user['id']);
+        $this->session->set('session_epoch', (int) ($user['session_epoch'] ?? 0));
 
         $this->users->updateById((int) $user['id'], [
             'last_login' => (new \DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
@@ -116,7 +123,14 @@ class Auth implements AuthInterface
         $record = $this->users->find($userId);
 
         // Checked on every request, so deleting or suspending an account ends the sessions it already has.
-        if (!$record || $record['deleted_at'] !== null || (int) $record['is_active'] !== 1) {
+        // The epoch does the same for a password an administrator reset: every
+        // session signed in before the bump stops matching and is dropped.
+        if (
+            !$record
+            || $record['deleted_at'] !== null
+            || (int) $record['is_active'] !== 1
+            || (int) $this->session->get('session_epoch', 0) !== (int) ($record['session_epoch'] ?? 0)
+        ) {
             $this->session->remove('user_id');
 
             return null;

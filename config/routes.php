@@ -149,6 +149,15 @@ $router->group([
 
 });
 
+// Ending an impersonation. Outside /admin because the session asking is the
+// impersonated account, which cannot reach the control panel.
+$router->group([
+    'prefix' => '/impersonation',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/exit', ['controller' => 'ImpersonationController', 'action' => 'exit', 'method' => 'POST']);
+});
+
 // The reader's own things. Top level and on the front, because reading is not
 // a sub-feature of the creator dashboard: every account reads, only some write.
 // A creator reaches the same pages from the same menu a reader does.
@@ -415,6 +424,21 @@ $router->group([
     $r->add('/users/{id:\d+}/update', ['controller' => 'UserController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/delete', ['controller' => 'UserController', 'action' => 'delete', 'method' => 'GET']);
     $r->add('/users/{id:\d+}/destroy', ['controller' => 'UserController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}', ['controller' => 'UserDetailController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/preview', ['controller' => 'UserDetailController', 'action' => 'preview', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/password', ['controller' => 'UserSecurityController', 'action' => 'password', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/password/send-reset', ['controller' => 'UserSecurityController', 'action' => 'sendResetLink', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/password/set', ['controller' => 'UserSecurityController', 'action' => 'setPassword', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'confirmImpersonate', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'impersonate', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/site-role', ['controller' => 'UserRoleController', 'action' => 'siteRole', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/site-role', ['controller' => 'UserRoleController', 'action' => 'updateSiteRole', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/blog-roles', ['controller' => 'UserRoleController', 'action' => 'blogRoles', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/blog-roles/{blogId:\d+}', ['controller' => 'UserRoleController', 'action' => 'updateBlogRole', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/blog-roles/{blogId:\d+}/remove', ['controller' => 'UserRoleController', 'action' => 'removeBlogRole', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/suspend', ['controller' => 'UserSuspensionController', 'action' => 'confirm', 'method' => 'GET']);
+    $r->add('/users/{id:\d+}/suspend', ['controller' => 'UserSuspensionController', 'action' => 'suspend', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/lift-suspension', ['controller' => 'UserSuspensionController', 'action' => 'lift', 'method' => 'POST']);
 
     // Blog management
     $r->add('/blogs', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);

@@ -406,6 +406,7 @@ class PostModel extends AppModel
                 FROM posts
                 WHERE author_id = :author_id
                 AND status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
                 AND visibility IN ($inClause)";
 
         $stmt = $this->database->query($sql, $params);
@@ -426,8 +427,10 @@ class PostModel extends AppModel
                 JOIN posts p ON p.id = c.post_id
                 WHERE p.author_id = ?
                 AND p.status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
                 AND p.visibility = 'public'
-                AND c.status = 'approved'";
+                AND c.status = 'approved'
+                AND c.hidden_at IS NULL";
 
         $stmt = $this->database->query($sql, [$authorId]);
 
@@ -461,6 +464,7 @@ class PostModel extends AppModel
                 FROM posts
                 WHERE author_id = :author_id
                 AND status = 'published'
+                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
                 AND visibility IN ($inClause)
                 ORDER BY published_at DESC
                 LIMIT :limit";
@@ -761,7 +765,7 @@ class PostModel extends AppModel
         $countSql = "
             SELECT COUNT(*)
             FROM posts p
-            JOIN blogs b ON p.blog_id = b.id
+            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             WHERE p.status = 'published' 
             AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
             {$categoryClause}
@@ -775,7 +779,7 @@ class PostModel extends AppModel
         $sql = "
             SELECT p.*, b.blog_name, b.blog_slug, c.name as category_name, c.slug as category_slug
             FROM posts p
-            JOIN blogs b ON p.blog_id = b.id
+            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.status = 'published'
             AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
@@ -821,7 +825,7 @@ class PostModel extends AppModel
         }
 
         // Count total published posts with optional category filter
-        $countSql = "SELECT COUNT(*) FROM posts p WHERE p.status = 'published' {$categoryClause}";
+        $countSql = "SELECT COUNT(*) FROM posts p WHERE p.status = 'published' AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published') {$categoryClause}";
         $countStmt = $this->database->query($countSql, $params);
         $totalPosts = (int) $countStmt->fetchColumn();
         $totalPages = (int) ceil($totalPosts / $perPage);
@@ -830,7 +834,7 @@ class PostModel extends AppModel
         $sql = "
             SELECT p.*, b.blog_name, b.blog_slug, c.name AS category_name, c.slug AS category_slug
             FROM posts p
-            JOIN blogs b ON p.blog_id = b.id
+            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.status = 'published'
         ";
@@ -972,7 +976,7 @@ class PostModel extends AppModel
     {
         $sql = "SELECT p.*, b.blog_name, b.blog_slug
                 FROM posts p
-                JOIN blogs b ON p.blog_id = b.id
+                JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
                 WHERE p.featured_on_home = 1
                   AND p.status = 'published'
                   AND p.visibility = 'public'

@@ -34,6 +34,11 @@ it('authenticates with valid credentials using mocked dependencies', function ()
         ->once()
         ->with('user_id', 42);
 
+    $mocks['session']
+        ->shouldReceive('set')
+        ->once()
+        ->with('session_epoch', 0);
+
     // Mock last_login update
     $mocks['userModel']
         ->shouldReceive('updateById')
@@ -118,6 +123,11 @@ it('returns authenticated user data from session', function () {
         ->with('user_id')
         ->andReturn(99);
 
+    $mocks['session']
+        ->shouldReceive('get')
+        ->with('session_epoch', 0)
+        ->andReturn(0);
+
     $mocks['userModel']
         ->shouldReceive('find')
         ->once()
@@ -168,6 +178,11 @@ it('checks that authenticated user returns true', function () {
         ->shouldReceive('get')
         ->with('user_id')
         ->andReturn(123);
+
+    $mocks['session']
+        ->shouldReceive('get')
+        ->with('session_epoch', 0)
+        ->andReturn(0);
 
     // check() calls user() internally, which needs these mocks
     $mocks['userModel']
@@ -237,6 +252,7 @@ it('refuses a suspended account even with the right password', function () {
             'is_active' => 0,
         ]));
 
+    $mocks['suspensions']->shouldReceive('liftIfExpired')->once()->andReturn(false);
     $mocks['session']->shouldNotReceive('regenerate');
     $mocks['session']->shouldNotReceive('set');
     $mocks['userModel']->shouldNotReceive('updateById');

@@ -84,7 +84,9 @@ class CommentModel extends AppModel
                 -- mention, but the reply still needs to know it is there.
                 LEFT JOIN users pu ON pu.id = parent.user_id AND parent.deleted_at IS NULL
                 LEFT JOIN users piu ON piu.id = c.pinned_by
-                WHERE c.post_id = ? AND c.status = 'approved'
+                -- hidden_at is the suspension cascade, kept apart from status so a
+                -- moderation verdict survives being hidden and comes back with it.
+                WHERE c.post_id = ? AND c.status = 'approved' AND c.hidden_at IS NULL
                 ORDER BY c.created_at ASC";
 
         $stmt = $this->database->query($sql, [$postId]);

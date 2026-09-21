@@ -4,32 +4,56 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
-use App\Controllers\AppController;
+use App\Gate;
 use App\Models\BlogModel;
 use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
+use App\Models\UserProfileModel;
+use App\Models\UserSocialLinkModel;
+use App\Resources\SystemResource;
 use App\Services\AccountErasureService;
 use App\Services\DisplayNameService;
+use App\Services\EmailChangeIssuer;
+use App\Services\LocaleRegistry;
+use App\Services\NotificationPreferenceScope;
 use App\Services\PublicCacheInvalidator;
+use App\Services\UserDossierService;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
-use Framework\Database;
-use Framework\Exceptions\PageNotFoundException;
 
-class UserController extends AppController
+/**
+ * The users list, account creation, the general edit form and deletion.
+ *
+ * The edit form covers every field that has no dedicated flow of its own.
+ * Password, site role, blog roles and suspension each have their own screen
+ * with their own safeguards, so they are deliberately absent here: two
+ * controls for one thing is how one of them ends up skipping a check.
+ */
+class UserController extends ManagedUserController
 {
-    // Enforced for every action by AppController::beforeAction()
-    protected ?string $areaAbility = 'manageUsers';
+    public const SOCIAL_NETWORKS = ['website', 'twitter', 'instagram', 'linkedin', 'github'];
+
+    /** New accounts get this site role unless an administrator picks another. */
+    private const DEFAULT_SITE_ROLE = 'reader';
 
     public function __construct(
-        private UserModel $model,
+        UserModel $users,
+        AccountErasureService $erasure,
         private RoleModel $roleModel,
         private BlogModel $blogModel,
+        private UserProfileModel $profiles,
+        private UserPreferencesModel $preferences,
+        private UserSocialLinkModel $socials,
         private DisplayNameService $displayNames,
         private PublicCacheInvalidator $cacheInvalidator,
-        private AccountErasureService $erasure,
-        protected Database $database,
-    ) {}
+        private EmailChangeIssuer $emailChanges,
+        private NotificationPreferenceScope $notificationScope,
+        private LocaleRegistry $locales,
+        private UserDossierService $dossier,
+    ) {
+        parent::__construct($users, $erasure);
+    }
 
     public function index(): Response
     {
@@ -48,7 +72,9 @@ class UserController extends AppController
             'created' => 'u.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'u.id DESC');
 
-        $result = $this->model->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy(), $this->erasure->deletedUserId());
+        $result = $this->users->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy(), $this->erasure->deletedUserId());
+
+        $actor = $this->actor();
 
         return $this->view('user.index', [
             'users' => $result['data'],
@@ -60,17 +86,21 @@ class UserController extends AppController
             // filter. Blog roles are per-blog and never appear in user_roles.
             'roleOptions' => $this->roleModel->findByScope('system'),
             'sort' => $sort,
+            // Decided once here so the row menu offers only what will actually
+            // be allowed. The actions re-check on the server regardless.
+            'actorId' => $this->actorId(),
+            'actorIsAdmin' => Gate::allows('actOnAdministrators', SystemResource::class, $actor),
+            'canAssignSiteRoles' => Gate::allows('assignSystemRoles', SystemResource::class, $actor),
+            'canImpersonate' => Gate::allows('impersonateUsers', SystemResource::class, $actor),
         ]);
     }
 
     public function new(): Response
     {
-        // Accounts carry system roles only; blog roles are assigned per blog
-        // on the blog's team page, never globally here.
-        $roles = $this->roleModel->findByScope('system');
-
         return $this->view('user.new', [
-            'roles' => $roles,
+            'roles' => $this->roleModel->findByScope('system'),
+            'defaultRole' => self::DEFAULT_SITE_ROLE,
+            'canAssignSiteRoles' => Gate::allows('assignSystemRoles', SystemResource::class, $this->actor()),
         ]);
     }
 
@@ -87,7 +117,15 @@ class UserController extends AppController
         ]);
         $input = $validator->validated();
 
-        $data = [
+        $roleId = $this->roleForNewAccount();
+
+        if ($roleId === null) {
+            $this->flash('error', 'Choose one of the site roles listed.');
+
+            return $this->redirectBack();
+        }
+
+        $inserted = $this->users->insert([
             'handle' => $input['handle'],
             'email' => $input['email'],
             // The model layer stores columns verbatim, so hash here like
@@ -96,48 +134,47 @@ class UserController extends AppController
             'first_name' => $input['first_name'] ?? null,
             'last_name' => $input['last_name'] ?? null,
             'is_active' => 1,
-        ];
+        ]);
 
-        $roles = array_map('intval', (array) ($this->request->post['roles'] ?? []));
+        if (!$inserted) {
+            $this->flash('error', 'Could not create the user. Check the logs.');
 
-        if ($this->model->insert($data)) {
-            $userId = $this->model->getInsertID();
-
-            $this->model->insertUserRoles((int) $userId, $roles);
-
-            audit()->log(
-                (int) auth()->user()['id'],
-                'user.created',
-                'user',
-                (int) $userId,
-                ['handle' => $data['handle'], 'email' => $data['email'], 'roles' => $roles],
-                $this->request->ip()
-            );
-
-            $this->flash('success', 'User created.');
-
-            return $this->redirect('/admin/users');
+            return $this->redirect('/admin/users/new');
         }
 
-        $this->flash('error', 'Could not create the user. Check the logs.');
+        $userId = (int) $this->users->getInsertID();
+        $this->users->setSystemRole($userId, $roleId, $this->actorId());
 
-        return $this->redirect('/admin/users/new');
+        audit()->log(
+            $this->actorId(),
+            'user.created',
+            'user',
+            $userId,
+            ['handle' => $input['handle'], 'email' => $input['email'], 'role_id' => $roleId],
+            $this->request->ip()
+        );
+
+        $this->flash('success', 'User created.');
+
+        return $this->redirect($this->showUrl($userId));
     }
 
     public function edit(string $id): Response
     {
-        $user = $this->getUser($id);
-
-        $user['roles'] = $this->model->getUserRoles($user['id']);
-
-        $roles = $this->roleModel->findByScope('system');
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
+        $userId = (int) $user['id'];
 
         return $this->view('user.edit', [
             'user' => $user,
-            'roles' => $roles,
-            // The full access picture: which blogs this account owns or
-            // collaborates on, and the role held on each.
-            'blogs' => $this->blogModel->getAccessibleBlogs((int) $user['id']),
+            'profile' => $this->dossier->profile($userId) ?? [],
+            'preferences' => $this->dossier->preferences($userId) ?? [],
+            'socialLinks' => $this->dossier->socialLinks($userId),
+            'networks' => self::SOCIAL_NETWORKS,
+            'notifyKeys' => $this->notificationScope->applicableKeys($userId),
+            'blogChoices' => $this->accessibleBlogChoices($userId),
+            'locales' => $this->locales->supported(),
+            'pendingEmail' => $this->dossier->pendingEmail($userId),
         ]);
     }
 
@@ -145,88 +182,62 @@ class UserController extends AppController
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
-        $user = $this->getUser($id);
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
+        $userId = (int) $user['id'];
 
-        $validator = $this->validateOrFail([
-            'handle' => 'required|user_handle|min:2|max:50|unique:users,handle,'.(int) $id,
-            'email' => 'required|email|unique:users,email,'.(int) $id,
-            'password' => 'password:'.password_policy_preset(),
-            'first_name' => 'max:50',
-            'last_name' => 'max:50',
-        ]);
-        $input = $validator->validated();
+        $input = $this->validateOrFail($this->updateRules($userId))->validated();
 
-        $data = [
+        $defaultBlogId = (int) ($input['default_blog_id'] ?? 0);
+
+        if ($defaultBlogId !== 0 && !array_key_exists($defaultBlogId, $this->accessibleBlogChoices($userId))) {
+            $this->flash('error', 'The default blog has to be one this account owns or belongs to.');
+
+            return $this->redirectBack();
+        }
+
+        $userChanges = changedFields([
             'handle' => $input['handle'],
-            'email' => $input['email'],
-            'first_name' => $input['first_name'] ?? $user['first_name'],
-            'last_name' => $input['last_name'] ?? $user['last_name'],
-        ];
+            'first_name' => $input['first_name'] ?? '',
+            'last_name' => $input['last_name'] ?? '',
+        ], $user);
 
-        // Only update password if provided, hashed like every other auth path
-        if (!empty($input['password'])) {
-            $data['password'] = password_hash($input['password'], PASSWORD_DEFAULT);
+        if ($userChanges !== [] && !$this->users->updateById($userId, $userChanges)) {
+            $this->flash('error', 'Nothing was saved: the account details could not be written.');
+
+            return $this->redirect('/admin/users/'.$userId.'/edit');
         }
 
-        $isActive = empty($this->request->post['is_active']) ? 0 : 1;
+        $profileChanges = $this->saveProfile($userId, $input);
+        $this->saveSocialLinks($userId, $input);
+        $this->savePreferences($userId, $input, $defaultBlogId);
+        $emailPending = $this->startEmailChange($user, (string) $input['email']);
 
-        if ($isActive !== (int) $user['is_active']) {
-            if ($isActive === 0 && (int) $id === (int) auth()->user()['id']) {
-                $this->flash('error', 'You cannot suspend your own account.');
+        $this->refreshPublicIdentity($user, $userChanges, $profileChanges);
 
-                return $this->redirect('/admin/users/'.(int) $id.'/edit');
-            }
+        audit()->log(
+            $this->actorId(),
+            'user.updated',
+            'user',
+            $userId,
+            [
+                'fields' => array_merge(array_keys($userChanges), array_keys($profileChanges)),
+                'email_change_requested' => $emailPending,
+            ],
+            $this->request->ip()
+        );
 
-            $data['is_active'] = $isActive;
-        }
+        $this->flash('success', $emailPending
+            ? 'Saved. The new email address takes effect once they confirm it from that inbox.'
+            : 'Saved.');
 
-        $newRoles = array_map('intval', (array) ($this->request->post['roles'] ?? []));
-
-        // Never let the last administrator lose the role, or the whole
-        // control panel becomes unreachable
-        $adminRole = $this->roleModel->findBySlug('administrator');
-        $targetIsAdmin = in_array('administrator', $this->model->getUserRoles((int) $id), true);
-        $keepsAdmin = $adminRole && in_array((int) $adminRole['id'], $newRoles, true);
-
-        if ($targetIsAdmin && !$keepsAdmin && $this->model->countAdministrators() <= 1) {
-            $this->flash('error', 'This is the last administrator account. Give another user the Administrator role before removing it here.');
-
-            return $this->redirect('/admin/users/'.(int) $id.'/edit');
-        }
-
-        // Only write columns that actually changed; resubmitting the form
-        // unchanged is a no-op, not an error (update() reports 0 rows as false)
-        $changes = changedFields($data, $user);
-        $userUpdated = $changes === [] || $this->model->update($id, $changes);
-
-        // Update roles in one call (model handles diff + transaction)
-        $rolesUpdated = $this->model->updateUserRoles((int) $id, $newRoles);
-
-        if ($userUpdated && $rolesUpdated) {
-            $this->refreshPublicIdentity($user, $changes);
-
-            audit()->log(
-                (int) auth()->user()['id'],
-                'user.updated',
-                'user',
-                (int) $id,
-                ['fields' => array_keys($changes), 'roles' => $newRoles],
-                $this->request->ip()
-            );
-
-            $this->flash('success', 'User updated.');
-
-            return $this->redirect('/admin/users');
-        }
-
-        $this->flash('error', 'Could not update the user. Check the logs.');
-
-        return $this->redirect('/admin/users/'.(int) $id.'/edit');
+        return $this->redirect($this->showUrl($userId));
     }
 
     public function delete(string $id): Response
     {
-        $user = $this->getUser($id);
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
 
         return $this->view('user.delete', [
             'user' => $user,
@@ -240,26 +251,31 @@ class UserController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         // Deleting yourself from the admin panel would orphan the session mid-request
-        if ((int) $id === (int) auth()->user()['id']) {
+        if ((int) $id === $this->actorId()) {
             $this->flash('error', 'You cannot delete your own account from here.');
 
             return $this->redirect('/admin/users');
         }
 
-        $user = $this->getUser($id);
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
 
         if (!$this->erasure->canErase((int) $user['id'])) {
+            $this->flash('error', 'This account cannot be deleted yet. The reasons are listed below.');
+
             return $this->redirect('/admin/users/'.(int) $user['id'].'/delete');
         }
 
-        $this->erasure->erase((int) $user['id'], (int) auth()->user()['id'], $this->request->ip());
+        $this->erasure->erase((int) $user['id'], $this->actorId(), $this->request->ip());
 
+        // Written after the erase succeeds, so it never claims a deletion that
+        // failed. It survives the row because activity_log has no foreign key.
         audit()->log(
-            (int) auth()->user()['id'],
+            $this->actorId(),
             'user.erased',
             'user',
-            (int) $id,
-            [],
+            (int) $user['id'],
+            ['handle' => $user['handle']],
             $this->request->ip()
         );
 
@@ -269,36 +285,182 @@ class UserController extends AppController
     }
 
     /**
-     * Recompute the cached display name and clear public pages after a name or handle edit,
-     * the same as the profile form does, or readers keep seeing the old identity until the TTL.
-     *
-     * @param  array<string, mixed>  $user  The record as it was before the edit
-     * @param  array<string, mixed>  $changes  Columns that were written
+     * @return array<string, string>
      */
-    private function refreshPublicIdentity(array $user, array $changes): void
+    private function updateRules(int $userId): array
     {
-        if (array_intersect_key($changes, array_flip(['handle', 'first_name', 'last_name'])) === []) {
-            return;
+        $rules = [
+            'handle' => 'required|user_handle|min:2|max:50|unique:users,handle,'.$userId,
+            'email' => 'required|email|unique:users,email,'.$userId,
+            'first_name' => 'max:50',
+            'last_name' => 'max:50',
+            'bio' => 'max:1000',
+            'occupation' => 'max:100',
+            'location' => 'max:100',
+            'timezone' => 'timezone',
+            'locale' => 'in:auto,'.implode(',', $this->locales->supported()),
+            'default_blog_id' => 'integer',
+        ];
+
+        foreach (self::SOCIAL_NETWORKS as $network) {
+            $rules[$network] = 'url|max:255';
         }
 
-        $newDisplayName = $this->displayNames->refreshCached((int) $user['id']);
+        return $rules;
+    }
 
-        if (isset($changes['handle']) || $newDisplayName !== $user['display_name_cached']) {
-            $this->cacheInvalidator->purgeAuthorSurfaces($user['handle']);
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed> Columns that changed
+     */
+    private function saveProfile(int $userId, array $input): array
+    {
+        $current = $this->dossier->profile($userId) ?? [];
+
+        $changes = changedFields([
+            'bio' => $input['bio'] ?? '',
+            'occupation' => $input['occupation'] ?? '',
+            'location' => $input['location'] ?? '',
+            'is_public' => $this->request->postParam('is_public') ? '1' : '0',
+        ], $current);
+
+        // Moderation removes an avatar, it never uploads one on someone's behalf.
+        if ($this->request->postParam('remove_avatar') && !empty($current['avatar_url'])) {
+            $changes['avatar_url'] = null;
+            $changes['avatar_source_url'] = null;
+            $changes['avatar_crop'] = null;
+        }
+
+        if ($changes !== []) {
+            $this->profiles->upsert($userId, $changes);
+        }
+
+        return $changes;
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     */
+    private function saveSocialLinks(int $userId, array $input): void
+    {
+        $changes = changedFields(
+            array_combine(self::SOCIAL_NETWORKS, array_map(static fn (string $n): string => (string) ($input[$n] ?? ''), self::SOCIAL_NETWORKS)),
+            $this->dossier->socialLinks($userId)
+        );
+
+        foreach ($changes as $network => $url) {
+            $this->socials->upsertLink($userId, $network, $url);
         }
     }
 
     /**
-     * @return array<string, mixed> User record
+     * Only the notification toggles this account is shown on its own settings
+     * page are written. A hidden toggle is absent from the POST as well, and
+     * writing 0 for it would switch off a notification they never saw.
+     *
+     * @param  array<string, mixed>  $input
      */
-    private function getUser(string $id): array
+    private function savePreferences(int $userId, array $input, int $defaultBlogId): void
     {
-        $user = $this->model->find($id);
+        $data = [
+            'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'handle',
+            'timezone' => ($input['timezone'] ?? '') === '' ? null : $input['timezone'],
+            'locale' => ($input['locale'] ?? 'auto') === 'auto' ? null : $input['locale'],
+        ];
 
-        if (!$user || $this->erasure->isDeletedUserAccount((int) $user['id'])) {
-            throw new PageNotFoundException("User with ID '$id' not found.");
+        foreach ($this->notificationScope->applicableKeys($userId) as $key) {
+            $data[$key] = $this->request->postParam($key) ? 1 : 0;
         }
 
-        return $user;
+        $this->preferences->upsert($userId, $data);
+
+        // Not an upsert column: these two also clear the cached dashboard sidebar.
+        if ($defaultBlogId === 0) {
+            $this->preferences->clearDefaultBlogId($userId);
+        } else {
+            $this->preferences->setDefaultBlogId($userId, $defaultBlogId);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $user
+     * @return bool True when a confirmation link was sent
+     */
+    private function startEmailChange(array $user, string $newEmail): bool
+    {
+        $newEmail = strtolower(trim($newEmail));
+
+        if ($newEmail === strtolower((string) $user['email'])) {
+            return false;
+        }
+
+        $this->emailChanges->issue((int) $user['id'], $newEmail);
+
+        return true;
+    }
+
+    /**
+     * @return array<int, string> blog id => name, for the default blog choice
+     */
+    private function accessibleBlogChoices(int $userId): array
+    {
+        $choices = [];
+
+        foreach ($this->blogModel->getAccessibleBlogs($userId) as $blog) {
+            $choices[(int) $blog['id']] = (string) $blog['blog_name'];
+        }
+
+        return $choices;
+    }
+
+    private function roleForNewAccount(): ?int
+    {
+        $roles = $this->roleModel->findByScope('system');
+        $canAssign = Gate::allows('assignSystemRoles', SystemResource::class, $this->actor());
+
+        // A delegate may create accounts but not choose their role: that choice
+        // includes Administrator. Whatever they post, the default applies.
+        $wanted = $canAssign ? (int) $this->request->postParam('role_id', 0) : 0;
+
+        foreach ($roles as $role) {
+            if ($wanted !== 0 && (int) $role['id'] === $wanted) {
+                return (int) $role['id'];
+            }
+        }
+
+        if ($wanted !== 0) {
+            return null;
+        }
+
+        foreach ($roles as $role) {
+            if ($role['role_slug'] === self::DEFAULT_SITE_ROLE) {
+                return (int) $role['id'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Recompute the cached display name and clear public pages after anything
+     * readers see moved, the same as the profile form does, or they keep seeing
+     * the old identity until the cache TTL.
+     *
+     * @param  array<string, mixed>  $user  The record as it was before the edit
+     * @param  array<string, mixed>  $userChanges
+     * @param  array<string, mixed>  $profileChanges
+     */
+    private function refreshPublicIdentity(array $user, array $userChanges, array $profileChanges): void
+    {
+        $newDisplayName = $this->displayNames->refreshCached((int) $user['id']);
+
+        $moved = isset($userChanges['handle'])
+            || isset($profileChanges['is_public'])
+            || array_key_exists('avatar_url', $profileChanges)
+            || $newDisplayName !== $user['display_name_cached'];
+
+        if ($moved) {
+            $this->cacheInvalidator->purgeAuthorSurfaces((string) $user['handle']);
+        }
     }
 }

@@ -8,6 +8,7 @@ use App\Console\Commands\CacheClearCommand;
 use App\Console\Commands\CachePruneCommand;
 use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
+use App\Console\Commands\LiftDueSuspensionsCommand;
 use App\Console\Commands\MailQueueWorkCommand;
 use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PrivacyPruneCommand;
@@ -56,6 +57,9 @@ class Kernel extends ConsoleKernel
 
             // Runs self-requested erasures whose grace period has passed
             'privacy:process-due-erasures' => ProcessDueErasuresCommand::class,
+
+            // Ends temporary suspensions once their time is up, restoring the cascade
+            'users:lift-due-suspensions' => LiftDueSuspensionsCommand::class,
 
             // Promotes scheduled posts once published_at arrives; run every minute
             'posts:publish-due' => PublishDuePostsCommand::class,

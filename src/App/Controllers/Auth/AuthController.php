@@ -271,6 +271,11 @@ final class AuthController extends AppController
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
+        // Signing out while impersonating must still close the impersonation
+        // record, or the trail shows a session that was never ended. The admin
+        // is then signed out as well, which is what the button said it would do.
+        app(\App\Services\ImpersonationService::class)->stop('logout', $this->request->ip());
+
         auth()->logout();
 
         // Otherwise the next person at this browser starts out in the language

@@ -36,7 +36,7 @@ beforeEach(function () {
  */
 it('finds posts by title content', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -73,7 +73,7 @@ it('finds posts by title content', function () {
  */
 it('finds posts by content', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -102,6 +102,7 @@ it('finds posts by blog name', function () {
 
     $blogId = BlogFactory::new($this->blogModel)
         ->withAttributes(['blog_name' => 'DevOps Daily'])
+        ->published()
         ->create($userId);
 
     PostFactory::new($this->postModel)
@@ -127,7 +128,7 @@ it('finds posts by blog name', function () {
  */
 it('filters search results by category', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $categoryId = CategoryFactory::new($this->categoryModel)
         ->forBlog($blogId)
@@ -176,7 +177,7 @@ it('filters search results by category', function () {
  */
 it('returns paginated search results', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     for ($i = 1; $i <= 15; $i++) {
         PostFactory::new($this->postModel)
@@ -204,7 +205,7 @@ it('returns paginated search results', function () {
  */
 it('returns empty results for non-matching search', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -233,7 +234,7 @@ it('returns empty results for non-matching search', function () {
  */
 it('returns recent published posts with pagination', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     for ($i = 1; $i <= 10; $i++) {
         PostFactory::new($this->postModel)
@@ -261,7 +262,7 @@ it('returns recent published posts with pagination', function () {
  */
 it('filters recent posts by category', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     $categoryId = CategoryFactory::new($this->categoryModel)->forBlog($blogId)
         ->withAttributes(['name' => 'Technology'])
@@ -311,7 +312,7 @@ it('filters recent posts by category', function () {
  */
 it('returns recent posts when no search query provided', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     for ($i = 1; $i <= 5; $i++) {
         PostFactory::new($this->postModel)
@@ -337,7 +338,7 @@ it('returns recent posts when no search query provided', function () {
  */
 it('performs search when query provided in index feed', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -377,7 +378,7 @@ it('performs search when query provided in index feed', function () {
  */
 it('returns all author posts without filters', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
@@ -397,8 +398,8 @@ it('returns all author posts without filters', function () {
 it('filters author posts by blog ID', function () {
     $userId = UserFactory::new($this->userModel)->create();
 
-    $blog1Id = BlogFactory::new($this->blogModel)->create($userId);
-    $blog2Id = BlogFactory::new($this->blogModel)->create($userId);
+    $blog1Id = BlogFactory::new($this->blogModel)->published()->create($userId);
+    $blog2Id = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blog1Id, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
@@ -422,7 +423,7 @@ it('filters author posts by blog ID', function () {
  */
 it('filters author posts by status', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
@@ -446,7 +447,7 @@ it('filters author posts by status', function () {
  */
 it('filters author posts by search query', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -487,7 +488,7 @@ it('filters author posts by search query', function () {
  */
 it('returns paginated filtered author posts', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     for ($i = 1; $i <= 15; $i++) {
         PostFactory::new($this->postModel)
@@ -517,7 +518,7 @@ it('returns paginated filtered author posts', function () {
  */
 it('caps perPage at 100 for security', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
@@ -540,7 +541,7 @@ it('caps perPage at 100 for security', function () {
  */
 it('lists posts by author with specified visibility', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     PostFactory::new($this->postModel)
         ->withAttributes([
@@ -574,7 +575,7 @@ it('lists posts by author with specified visibility', function () {
  */
 it('respects limit when listing by visibility', function () {
     $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
 
     for ($i = 1; $i <= 20; $i++) {
         PostFactory::new($this->postModel)

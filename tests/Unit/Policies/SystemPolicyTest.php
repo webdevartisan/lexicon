@@ -59,3 +59,12 @@ test('only administrators may clear logs, even someone allowed to read them', fu
         ->and($this->policy->clearLogs($healthViewer))->toBeFalse()
         ->and($this->policy->clearLogs($this->regular))->toBeFalse();
 });
+
+test('a user-management delegate cannot assign site roles, sign in as others, or act on administrators', function (string $ability) {
+    $delegate = ['id' => 5, 'roles' => ['user_manager'], 'permissions' => ['manage_all_users']];
+
+    expect($this->policy->manageUsers($delegate))->toBeTrue()
+        ->and($this->policy->{$ability}($delegate))->toBeFalse()
+        ->and($this->policy->{$ability}($this->admin))->toBeTrue()
+        ->and($this->policy->{$ability}([]))->toBeFalse();
+})->with(['assignSystemRoles', 'impersonateUsers', 'actOnAdministrators']);
