@@ -265,6 +265,73 @@ it('updates post status to any valid value', function () {
     expect($post['status'])->toBe('archived');
 });
 
+/**
+ * Test that updateStatus refuses a moderated post.
+ *
+ * Reversing a moderation hide belongs to its report case; a status write
+ * that bypassed it here would let a hidden post slip back into view.
+ */
+it('does not change the status of a moderated post', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'moderated'])
+        ->create();
+
+    $result = $this->postModel->updateStatus($postId, 'published');
+
+    expect($result)->toBeFalse();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('moderated');
+});
+
+/**
+ * Test updating post visibility.
+ *
+ * Verifies updateVisibility changes visibility independently of status.
+ */
+it('updates post visibility to any valid value', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'visibility' => 'public'])
+        ->create();
+
+    $result = $this->postModel->updateVisibility($postId, 'unlisted');
+
+    expect($result)->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['visibility'])->toBe('unlisted')
+        ->and($post['status'])->toBe('published');
+});
+
+/**
+ * Test that updateVisibility does not touch status, even on a moderated post.
+ *
+ * Visibility does not gate public access on its own, status does; there is
+ * nothing for this to bypass, so unlike updateStatus it needs no guard.
+ */
+it('updates visibility on a moderated post without lifting the moderation status', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'moderated', 'visibility' => 'public'])
+        ->create();
+
+    $result = $this->postModel->updateVisibility($postId, 'private');
+
+    expect($result)->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['visibility'])->toBe('private')
+        ->and($post['status'])->toBe('moderated');
+});
+
 // ============================================================================
 // COUNTING & BLOG OPERATIONS
 // ============================================================================

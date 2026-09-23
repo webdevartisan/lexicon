@@ -237,25 +237,21 @@ if ($q !== '') {
         </div>
     </div>
     {% else %}
-    <!-- The bulk form holds only its own fields. Cards must stay outside it:
-         each card carries its own action forms, and nesting forms makes the
-         browser drop the inner ones. Checkboxes attach via form="bulk-form". -->
-    <form id="bulk-form" method="POST" action="/dashboard/post/bulk">
-        {{ csrf_field() }}
-        <input type="hidden" name="bulk_action" id="bulk-action" value="">
-    </form>
-
-    <div class="flex items-center justify-between mb-3 text-xs">
-            <label class="inline-flex items-center gap-2 text-slate-600 dark:text-zink-200 cursor-pointer">
-                <input
-                    type="checkbox"
-                    id="select-all"
-                    class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500"
-                >
-                <span>Select all on this page</span>
-            </label>
-            <span id="selected-count" class="text-slate-500 dark:text-zink-300"></span>
-        </div>
+    <?php
+    $bulkActions = [
+        ['action' => 'publish', 'label' => 'Publish', 'icon' => 'send', 'hover' => 'hover:bg-green-600/30', 'confirm' => 'Publish {n}?'],
+        ['action' => 'draft', 'label' => 'Move to draft', 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => 'Move {n} to draft?'],
+    ];
+    if ($showReviewPills) {
+        $bulkActions[] = ['action' => 'review', 'label' => 'Send for review', 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => 'Send {n} for review?'];
+    }
+    $bulkActions[] = ['action' => 'archive', 'label' => 'Archive', 'icon' => 'archive', 'hover' => 'hover:bg-orange-600/30', 'confirm' => 'Archive {n}?'];
+    $bulkActions[] = ['action' => 'delete', 'label' => 'Delete', 'icon' => 'trash-2', 'hover' => 'hover:bg-red-600/30', 'danger' => true, 'confirm' => 'Permanently delete {n}? This cannot be undone.'];
+    ?>
+    <!-- Cards must stay outside the bulk form: each card carries its own
+         action forms, and nesting forms makes the browser drop the inner
+         ones. Checkboxes attach via form="bulk-form" instead. -->
+    {% cmp="bulk-actions-bar" actionUrl="/dashboard/post/bulk" itemLabel="post" actions="{$bulkActions}" %}
 
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {% foreach ($posts as $post): %}
@@ -276,34 +272,6 @@ if ($q !== '') {
         <div class="mt-6">
             {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="/dashboard/post" %}
         </div>
-
-        <div id="bulk-bar" class="hidden fixed bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[9999]">
-            <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-2xl sm:rounded-full shadow-lg border border-slate-700">
-                <span id="bulk-count" class="text-sm font-medium pr-2 border-r border-slate-700"></span>
-
-                <button type="button" data-bulk="publish" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-green-600/30 transition-colors">
-                    <i data-lucide="send" class="size-3.5"></i> Publish
-                </button>
-
-                <button type="button" data-bulk="draft" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-600/50 transition-colors">
-                    <i data-lucide="pencil-ruler" class="size-3.5"></i> Move to draft
-                </button>
-
-                <?php if ($showReviewPills) { ?>
-                <button type="button" data-bulk="review" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-slate-600/50 transition-colors">
-                    <i data-lucide="pencil-ruler" class="size-3.5"></i> Send for review
-                </button>
-                <?php } ?>
-
-                <button type="button" data-bulk="archive" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-orange-600/30 transition-colors">
-                    <i data-lucide="archive" class="size-3.5"></i> Archive
-                </button>
-
-                <button type="button" data-bulk="delete" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-red-600/30 transition-colors text-red-300">
-                    <i data-lucide="trash-2" class="size-3.5"></i> Delete
-                </button>
-            </div>
-        </div>
     {% endif %}
 
 </div>
@@ -311,75 +279,4 @@ if ($q !== '') {
 
 {% block scripts %}
 <script src="/cp-assets/js/tooltip.js"></script>
-<script nonce="<?= csp_nonce() ?>">
-(function () {
-    const form = document.getElementById('bulk-form');
-    if (!form) return;
-
-    // The checkboxes live outside the form element and attach via form="bulk-form",
-    // so query the document rather than the form subtree.
-    const checkboxes = document.querySelectorAll('.bulk-checkbox');
-    const selectAll = document.getElementById('select-all');
-    const bulkBar = document.getElementById('bulk-bar');
-    const bulkCount = document.getElementById('bulk-count');
-    const selectedCount = document.getElementById('selected-count');
-    const actionInput = document.getElementById('bulk-action');
-
-    document.body.appendChild(bulkBar);
-
-    function getSelectedCount() {
-        return Array.from(checkboxes).filter((checkbox) => checkbox.checked).length;
-    }
-
-    function updateBulkUi() {
-        const selected = getSelectedCount();
-
-        if (selected > 0) {
-            bulkBar.classList.remove('hidden');
-            bulkCount.textContent = selected + ' selected';
-            selectedCount.textContent = selected + ' selected';
-        } else {
-            bulkBar.classList.add('hidden');
-            selectedCount.textContent = '';
-        }
-
-        selectAll.checked = selected > 0 && selected === checkboxes.length;
-        selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
-    }
-
-    checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', updateBulkUi);
-    });
-
-    selectAll.addEventListener('change', function () {
-        checkboxes.forEach((checkbox) => {
-            checkbox.checked = selectAll.checked;
-        });
-
-        updateBulkUi();
-    });
-
-    bulkBar.querySelectorAll('[data-bulk]').forEach((button) => {
-        button.addEventListener('click', function () {
-            const action = button.dataset.bulk;
-            const selected = getSelectedCount();
-
-            const messages = {
-                delete: 'Permanently delete ' + selected + ' post(s)? This cannot be undone.',
-                archive: 'Archive ' + selected + ' post(s)?',
-                publish: 'Publish ' + selected + ' post(s)?',
-                draft: 'Move ' + selected + ' post(s) to draft?',
-                review: 'Send ' + selected + ' post(s) for review?',
-            };
-
-            if (!confirm(messages[action])) {
-                return;
-            }
-
-            actionInput.value = action;
-            form.submit();
-        });
-    });
-})();
-</script>
 {% endblock %}

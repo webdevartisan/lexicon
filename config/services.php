@@ -791,6 +791,7 @@ $container->setShared(App\Services\ReportIntakeService::class, function ($c) {
         $c->get(App\Models\ContentReportModel::class),
         $c->get(App\Services\ModerationSettings::class),
         $c->get(App\Services\ModerationRuleEngine::class),
+        $c->get(App\Services\AdminNotificationDispatcher::class),
         (string) $config['deleted_user_handle']
     );
 });

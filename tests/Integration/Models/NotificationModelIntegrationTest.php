@@ -162,3 +162,127 @@ test('findPageForUser returns paginated rows + total', function () {
         ->and($page1['items'])->toHaveCount(5)
         ->and($page3['items'])->toHaveCount(2);
 });
+
+// ============================================================================
+// SCOPE: the personal/content/admin inboxes are one table, kept apart by a
+// scope filter rather than three tables, so the filter itself is what these
+// tests are protecting.
+// ============================================================================
+
+test('create defaults to personal scope and rejects an unknown one', function () {
+    $this->model->create($this->userId, 'blog.invite', ['blog_id' => 1]);
+    $this->model->create($this->userId, 'post.submitted', ['post_id' => 2], 'not-a-real-scope');
+
+    $rows = $this->model->findForUser($this->userId);
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0]['scope'])->toBe('personal')
+        ->and($rows[1]['scope'])->toBe('personal');
+});
+
+test('findForUser, unreadCount, markAllRead, and deleteAllForUser each isolate by scope', function () {
+    $this->model->create($this->userId, 'blog.invite', ['blog_id' => 1], 'personal');
+    $this->model->create($this->userId, 'post.submitted', ['post_id' => 2], 'content');
+    $this->model->create($this->userId, 'admin.report_threshold', ['case_id' => 3], 'admin');
+
+    expect($this->model->findForUser($this->userId, scope: 'content'))->toHaveCount(1)
+        ->and($this->model->unreadCount($this->userId, 'content'))->toBe(1)
+        ->and($this->model->unreadCount($this->userId))->toBe(3);
+
+    $this->model->markAllRead($this->userId, 'content');
+    expect($this->model->unreadCount($this->userId, 'content'))->toBe(0)
+        ->and($this->model->unreadCount($this->userId, 'personal'))->toBe(1)
+        ->and($this->model->unreadCount($this->userId, 'admin'))->toBe(1);
+
+    $deleted = $this->model->deleteAllForUser($this->userId, 'admin');
+    expect($deleted)->toBe(1)
+        ->and($this->model->findForUser($this->userId))->toHaveCount(2);
+});
+
+test('markRead ignores an id from a different scope than the one the caller passes', function () {
+    $this->model->create($this->userId, 'post.submitted', ['post_id' => 1], 'content');
+    $id = (int) $this->model->findForUser($this->userId)[0]['id'];
+
+    expect($this->model->markRead($id, $this->userId, 'personal'))->toBeFalse()
+        ->and($this->model->unreadCount($this->userId, 'content'))->toBe(1)
+        ->and($this->model->markRead($id, $this->userId, 'content'))->toBeTrue()
+        ->and($this->model->unreadCount($this->userId, 'content'))->toBe(0);
+});
+
+test('deleteForUser ignores an id from a different scope than the one the caller passes', function () {
+    $this->model->create($this->userId, 'admin.mail_queue_failures', ['failed_count' => 5], 'admin');
+    $id = (int) $this->model->findForUser($this->userId)[0]['id'];
+
+    expect($this->model->deleteForUser($id, $this->userId, 'content'))->toBeFalse()
+        ->and($this->model->findForUser($this->userId))->toHaveCount(1)
+        ->and($this->model->deleteForUser($id, $this->userId, 'admin'))->toBeTrue()
+        ->and($this->model->findForUser($this->userId))->toHaveCount(0);
+});
+
+test('existsRecentAdminNotification finds a type inside the window and not outside it', function () {
+    $this->model->create($this->userId, 'admin.scheduler_stalled', [], 'admin');
+
+    expect($this->model->existsRecentAdminNotification('admin.scheduler_stalled', 60))->toBeTrue()
+        ->and($this->model->existsRecentAdminNotification('admin.mail_queue_failures', 60))->toBeFalse();
+
+    $this->db->execute(
+        'UPDATE notifications SET created_at = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 90 MINUTE) WHERE user_id = ?',
+        [$this->userId]
+    );
+
+    expect($this->model->existsRecentAdminNotification('admin.scheduler_stalled', 60))->toBeFalse();
+});
+
+test('existsRecentAdminNotification with a dedupe key only matches that same incident', function () {
+    $this->model->create($this->userId, 'admin.report_threshold', ['case_id' => 1, 'dedupe_key' => '1'], 'admin');
+
+    expect($this->model->existsRecentAdminNotification('admin.report_threshold', 60, '1'))->toBeTrue()
+        ->and($this->model->existsRecentAdminNotification('admin.report_threshold', 60, '2'))->toBeFalse();
+});
+
+// ============================================================================
+// SINGLE ROW AND THE UNREAD FILTER: what the open endpoint and the unread tab
+// are built on.
+// ============================================================================
+
+test('findOneForUser returns the row, and only to its owner and its own inbox', function () {
+    $otherUser = UserFactory::new($this->userModel)->create();
+    $this->model->create($this->userId, 'post.approved', ['post_id' => 5], 'content');
+    $id = (int) $this->model->findForUser($this->userId)[0]['id'];
+
+    expect($this->model->findOneForUser($id, $this->userId)['type'])->toBe('post.approved')
+        ->and($this->model->findOneForUser($id, $this->userId, 'content')['id'])->toEqual($id)
+        ->and($this->model->findOneForUser($id, $this->userId, 'personal'))->toBeNull()
+        ->and($this->model->findOneForUser($id, $otherUser))->toBeNull()
+        ->and($this->model->findOneForUser(999999, $this->userId))->toBeNull();
+});
+
+test('findPageForUser can return only what is unread, counted the same way', function () {
+    $this->model->create($this->userId, 'blog.invite', ['blog_id' => 1]);
+    $this->model->create($this->userId, 'post.approved', ['post_id' => 5]);
+    $this->model->create($this->userId, 'post.published', ['post_id' => 6]);
+
+    $first = (int) $this->model->findForUser($this->userId)[0]['id'];
+    $this->model->markRead($first, $this->userId);
+
+    $unread = $this->model->findPageForUser($this->userId, onlyUnread: true);
+    $all = $this->model->findPageForUser($this->userId);
+
+    expect($unread['total'])->toBe(2)
+        ->and($unread['items'])->toHaveCount(2)
+        ->and($all['total'])->toBe(3);
+});
+
+test('rows created in the same second still come back newest first', function () {
+    foreach (range(1, 6) as $i) {
+        $this->model->create($this->userId, 'post.approved', ['post_id' => $i]);
+    }
+
+    $newestIds = array_column($this->model->findForUser($this->userId, 3), 'id');
+    $allIds = array_column($this->model->findForUser($this->userId), 'id');
+    $expected = array_slice($allIds, 0, 3);
+
+    // Same second for all six, so only the id tiebreaker keeps this stable.
+    expect($newestIds)->toBe($expected)
+        ->and((int) $newestIds[0])->toBeGreaterThan((int) $newestIds[2]);
+});

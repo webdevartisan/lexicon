@@ -17,6 +17,7 @@
     },
     "navigation": {
         "home": "Αρχική",
+        "adminNotifications": "Ειδοποιήσεις",
         "dashboard": "Πίνακας ελέγχου",
         "createBlog": "Δημιουργία blog",
         "discover": "Ανακαλύψτε",
@@ -695,6 +696,7 @@
         "metaReplies": "Απαντήσεις",
         "metaMyComments": "Τα σχόλιά σας",
         "metaSubscriptions": "Συνδρομές",
+        "notificationsTitle": "Ειδοποιήσεις",
         "savedTitle": "Αποθηκευμένα",
         "repliesTitle": "Απαντήσεις",
         "subscriptionsTitle": "Συνδρομές",
@@ -731,6 +733,24 @@
         "paginationAria": "Σελιδοποίηση",
         "accountMenu": "Ο λογαριασμός σας",
         "accountMenuUnread": "Ο λογαριασμός σας, {count} μη αναγνωσμένες απαντήσεις"
+    },
+    "notifications": {
+        "tabAll": "Όλες",
+        "tabUnread": "Μη αναγνωσμένες",
+        "tally": "{total} συνολικά, {unread} μη αναγνωσμένες",
+        "markAllRead": "Σήμανση όλων ως αναγνωσμένων",
+        "markRead": "Σήμανση ως αναγνωσμένης",
+        "clearAll": "Διαγραφή όλων",
+        "clearAllConfirm": "Να διαγραφούν όλες οι ειδοποιήσεις; Η ενέργεια δεν αναιρείται.",
+        "empty": "Δεν υπάρχει τίποτα ακόμη. Εδώ φτάνουν απαντήσεις, προσκλήσεις και ειδοποιήσεις συντονισμού που σας αφορούν.",
+        "emptyUnread": "Καμία μη αναγνωσμένη. Είστε ενημερωμένοι.",
+        "today": "Σήμερα",
+        "yesterday": "Χθες",
+        "seeAll": "Όλες οι ειδοποιήσεις",
+        "loading": "Φόρτωση...",
+        "loadFailed": "Δεν ήταν δυνατή η φόρτωση αυτή τη στιγμή.",
+        "bellUnread": "Ειδοποιήσεις, {count} μη αναγνωσμένες",
+        "cancel": "Άκυρο"
     },
     "pages": {
         "gettingStartedTitle": "Ξεκινώντας",

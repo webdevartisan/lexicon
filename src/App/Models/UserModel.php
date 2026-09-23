@@ -550,6 +550,32 @@ class UserModel extends AppModel
     }
 
     /**
+     * Active users who can act on a given SystemPolicy permission slug.
+     *
+     * An administrator role always qualifies, matching SystemPolicy's own
+     * "administrators pass everything" rule, so this never has to be kept in
+     * sync with the AREA_PERMISSIONS map by hand.
+     *
+     * @param  string  $permission  A SystemPolicy::AREA_PERMISSIONS slug
+     * @return array<int, array{id: int, handle: string}>
+     */
+    public function findAllWithPermission(string $permission): array
+    {
+        $sql = "SELECT DISTINCT u.id, u.handle
+                FROM users u
+                JOIN user_roles ur ON u.id = ur.user_id
+                JOIN roles r ON r.id = ur.role_id
+                LEFT JOIN role_permissions rp ON rp.role_id = r.id
+                LEFT JOIN permissions p ON p.id = rp.permission_id
+                WHERE r.scope = 'system'
+                  AND u.is_active = 1
+                  AND u.deleted_at IS NULL
+                  AND (r.role_slug = 'administrator' OR p.permission_slug = ?)";
+
+        return $this->database->query($sql, [$permission])->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Give the account exactly one system role, replacing whatever it held.
      *
      * One transaction, and it throws: a half-applied role change is how an

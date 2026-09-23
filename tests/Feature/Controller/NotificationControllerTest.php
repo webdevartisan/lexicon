@@ -96,8 +96,8 @@ afterEach(function () {
 // ============================================================================
 
 it('renders the notifications index for the authenticated user', function () {
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
-    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 5, 'post_title' => 'Hi']);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 5, 'post_title' => 'Hi'], 'content');
 
     $request = makeRequest('/dashboard/notifications', 'GET');
     setupController($this->controller, $request, $this->mockViewer);
@@ -116,8 +116,8 @@ it('renders the notifications index for the authenticated user', function () {
 it('only shows notifications belonging to the authenticated user', function () {
     $otherUserId = UserFactory::new($this->userModel)->create();
 
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
-    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 99]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 99], 'content');
 
     $request = makeRequest('/dashboard/notifications', 'GET');
     setupController($this->controller, $request, $this->mockViewer);
@@ -130,7 +130,7 @@ it('only shows notifications belonging to the authenticated user', function () {
 
 it('paginates the index using the ?page query parameter', function () {
     for ($i = 0; $i < 25; $i++) {
-        $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => $i]);
+        $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => $i], 'content');
     }
 
     $request = makeRequest('/dashboard/notifications', 'GET', [], ['page' => '2']);
@@ -143,48 +143,30 @@ it('paginates the index using the ?page query parameter', function () {
         ->and($this->mockViewer->capturedData['notificationRows'])->toHaveCount(5);
 });
 
+it('narrows the list to unread when asked', function () {
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 5], 'content');
+    $read = (int) $this->notifications->findForUser($this->userId)[0]['id'];
+    $this->notifications->markRead($read, $this->userId, 'content');
+
+    $request = makeRequest('/dashboard/notifications', 'GET', [], ['filter' => 'unread']);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $this->controller->index();
+
+    expect($this->mockViewer->capturedData['onlyUnread'])->toBeTrue()
+        ->and($this->mockViewer->capturedData['total'])->toBe(1)
+        ->and($this->mockViewer->capturedData['notificationRows'])->toHaveCount(1)
+        // The count beside the tab stays the real one, not the filtered total.
+        ->and($this->mockViewer->capturedData['unreadCount'])->toBe(1);
+});
+
 // ============================================================================
 // markRead()
 // ============================================================================
 
-it('marks the notification as read and redirects to a local target', function () {
-    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 42]);
-    $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
-
-    $target = '/dashboard/post/42/edit';
-    $request = makeRequest('/dashboard/notifications/'.$id.'/read', 'POST', [
-        'target' => $target,
-    ]);
-    setupController($this->controller, $request, $this->mockViewer);
-
-    $response = $this->controller->markRead((string) $id);
-
-    expect($response->getStatusCode())->toBe(302)
-        ->and($response->getHeader('Location'))->toContain($target)
-        ->and($this->notifications->unreadCount($this->userId))->toBe(0);
-});
-
-it('rejects a non-local target and falls back to the notifications list', function () {
-    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 42]);
-    $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
-
-    foreach (['https://evil.example/x', '//evil.example/x', 'javascript:alert(1)'] as $bad) {
-        $request = makeRequest('/dashboard/notifications/'.$id.'/read', 'POST', [
-            'target' => $bad,
-        ]);
-        setupController($this->controller, $request, $this->mockViewer);
-
-        $response = $this->controller->markRead((string) $id);
-
-        expect($response->getStatusCode())->toBe(302)
-            ->and($response->getHeader('Location'))->toContain('/dashboard/notifications')
-            ->and($response->getHeader('Location'))->not->toContain('evil.example')
-            ->and($response->getHeader('Location'))->not->toContain('javascript');
-    }
-});
-
-it('redirects to the notifications list when no target is provided', function () {
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
+it('marks the notification as read and returns to the list', function () {
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 42], 'content');
     $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
 
     $request = makeRequest('/dashboard/notifications/'.$id.'/read', 'POST');
@@ -193,17 +175,16 @@ it('redirects to the notifications list when no target is provided', function ()
     $response = $this->controller->markRead((string) $id);
 
     expect($response->getStatusCode())->toBe(302)
-        ->and($response->getHeader('Location'))->toContain('/dashboard/notifications');
+        ->and($response->getHeader('Location'))->toContain('/dashboard/notifications')
+        ->and($this->notifications->unreadCount($this->userId))->toBe(0);
 });
 
 it('cannot mark a notification belonging to another user', function () {
     $otherUserId = UserFactory::new($this->userModel)->create();
-    $this->notifications->create($otherUserId, 'blog.invite', ['blog_id' => 1]);
+    $this->notifications->create($otherUserId, 'blog.invite', ['blog_id' => 1], 'content');
     $foreignId = (int) $this->notifications->findForUser($otherUserId)[0]['id'];
 
-    $request = makeRequest('/dashboard/notifications/'.$foreignId.'/read', 'POST', [
-        'target' => '/dashboard/notifications',
-    ]);
+    $request = makeRequest('/dashboard/notifications/'.$foreignId.'/read', 'POST');
     setupController($this->controller, $request, $this->mockViewer);
 
     $this->controller->markRead((string) $foreignId);
@@ -213,13 +194,105 @@ it('cannot mark a notification belonging to another user', function () {
 });
 
 // ============================================================================
+// open()
+// ============================================================================
+
+it('opens a notification by marking it read and going where it points', function () {
+    $this->notifications->create($this->userId, 'comment.reply', [
+        'blog_slug' => 'field-notes',
+        'post_slug' => 'on-rivers',
+        'comment_id' => 77,
+    ], 'content');
+    $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
+
+    $request = makeRequest('/dashboard/notifications/'.$id.'/open', 'GET');
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = $this->controller->open((string) $id);
+
+    expect($response->getStatusCode())->toBe(302)
+        ->and($response->getHeader('Location'))->toContain('/blog/field-notes/on-rivers#comment-77')
+        ->and($this->notifications->unreadCount($this->userId))->toBe(0);
+});
+
+it('sends a notification with nowhere to go back to the list, focused on itself', function () {
+    // A moderator's warning is the message; there is no page behind it.
+    $this->notifications->create($this->userId, 'moderation.warning', [
+        'subject_type' => 'comment',
+        'subject_label' => 'a comment',
+        'message' => 'Please keep it civil.',
+    ], 'content');
+    $id = (int) $this->notifications->findForUser($this->userId)[0]['id'];
+
+    $request = makeRequest('/dashboard/notifications/'.$id.'/open', 'GET');
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = $this->controller->open((string) $id);
+
+    expect($response->getHeader('Location'))->toContain('/dashboard/notifications?focus='.$id)
+        ->and($response->getHeader('Location'))->toContain('#notification-'.$id)
+        ->and($this->notifications->unreadCount($this->userId))->toBe(0);
+});
+
+it('will not open, or read, a notification belonging to someone else', function () {
+    $otherUserId = UserFactory::new($this->userModel)->create();
+    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 9], 'content');
+    $foreignId = (int) $this->notifications->findForUser($otherUserId)[0]['id'];
+
+    $request = makeRequest('/dashboard/notifications/'.$foreignId.'/open', 'GET');
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = $this->controller->open((string) $foreignId);
+
+    expect($response->getHeader('Location'))->toContain('/dashboard/notifications')
+        ->and($response->getHeader('Location'))->not->toContain('/dashboard/post/9')
+        ->and($this->notifications->unreadCount($otherUserId))->toBe(1);
+});
+
+it('will not open an id that belongs to one of the other inboxes', function () {
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 9], 'personal');
+    $personalId = (int) $this->notifications->findForUser($this->userId, 20, false, 'personal')[0]['id'];
+
+    $request = makeRequest('/dashboard/notifications/'.$personalId.'/open', 'GET');
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = $this->controller->open((string) $personalId);
+
+    expect($response->getHeader('Location'))->not->toContain('/dashboard/post/9')
+        ->and($this->notifications->unreadCount($this->userId, 'personal'))->toBe(1);
+});
+
+// ============================================================================
+// panel()
+// ============================================================================
+
+it('renders the masthead panel with the latest notifications and the unread count', function () {
+    foreach (range(1, 10) as $i) {
+        $this->notifications->create($this->userId, 'post.approved', ['post_id' => $i, 'post_title' => 'Post '.$i], 'content');
+    }
+
+    $request = makeRequest('/dashboard/notifications/panel', 'GET');
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = $this->controller->panel();
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and($this->mockViewer->capturedTemplate)->toBe('partials/public/_notification_panel.lex.php')
+        // Eight of the ten, newest first, with everything the row needs to draw.
+        ->and($this->mockViewer->capturedData['panelItems'])->toHaveCount(8)
+        ->and($this->mockViewer->capturedData['unreadCount'])->toBe(10)
+        ->and($this->mockViewer->capturedData['panelItems'][0]['title'])->toContain('Post 10')
+        ->and($this->mockViewer->capturedData['panelItems'][0]['isUnread'])->toBeTrue();
+});
+
+// ============================================================================
 // markAllRead()
 // ============================================================================
 
 it('marks every unread notification for the user as read', function () {
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
-    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2]);
-    $this->notifications->create($this->userId, 'post.published', ['post_id' => 3]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2], 'content');
+    $this->notifications->create($this->userId, 'post.published', ['post_id' => 3], 'content');
 
     $request = makeRequest('/dashboard/notifications/read-all', 'POST');
     setupController($this->controller, $request, $this->mockViewer);
@@ -235,8 +308,8 @@ it('marks every unread notification for the user as read', function () {
 
 it('does not touch another user\'s notifications when marking all read', function () {
     $otherUserId = UserFactory::new($this->userModel)->create();
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
-    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 2]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($otherUserId, 'post.approved', ['post_id' => 2], 'content');
 
     $request = makeRequest('/dashboard/notifications/read-all', 'POST');
     setupController($this->controller, $request, $this->mockViewer);
@@ -252,8 +325,8 @@ it('does not touch another user\'s notifications when marking all read', functio
 // ============================================================================
 
 it('returns the unread count as JSON', function () {
-    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1]);
-    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2]);
+    $this->notifications->create($this->userId, 'blog.invite', ['blog_id' => 1], 'content');
+    $this->notifications->create($this->userId, 'post.approved', ['post_id' => 2], 'content');
 
     $request = makeRequest('/dashboard/notifications/unread-count', 'GET');
     setupController($this->controller, $request, $this->mockViewer);

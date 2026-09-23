@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Notifications{% endblock %}
-{% block subtitle %}Your in-app notification history.{% endblock %}
+{% block subtitle %}Blog activity that needs your attention as a manager, like posts to review and comments to moderate.{% endblock %}
 
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
@@ -16,14 +16,14 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <?php if ($unreadCount > 0) { ?>
-                    <form method="post" action="/dashboard/notifications/read-all">
+                    <form method="post" action="<?= e(buildLocalizedUrl($listPath.'/read-all')) ?>">
                         {{ csrf_field() }}
                         {% cmp="btn" type="submit" variant="slate" icon="check-check" label="Mark all read" %}
                     </form>
                     <?php } ?>
                     <?php if ($total > 0) { ?>
-                    <form method="post" action="/dashboard/notifications/clear-all"
-                        onsubmit="return confirm('Clear all notifications? This cannot be undone.');">
+                    <form method="post" action="<?= e(buildLocalizedUrl($listPath.'/clear-all')) ?>"
+                        data-confirm="Clear all notifications? This cannot be undone.">
                         {{ csrf_field() }}
                         {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Clear all" %}
                     </form>
@@ -53,13 +53,13 @@
                 </p>
                 <div class="flex gap-2">
                     <?php if ($page > 1) { ?>
-                    <a href="/dashboard/notifications?page=<?= $page - 1 ?>"
+                    <a href="<?= e(lurl($listPath.'?page='.($page - 1))) ?>"
                        class="px-3 py-1.5 text-xs border border-slate-200 dark:border-zink-500 rounded hover:bg-slate-50 dark:hover:bg-zink-600">
                         Previous
                     </a>
                     <?php } ?>
                     <?php if ($page < $totalPages) { ?>
-                    <a href="/dashboard/notifications?page=<?= $page + 1 ?>"
+                    <a href="<?= e(lurl($listPath.'?page='.($page + 1))) ?>"
                        class="px-3 py-1.5 text-xs border border-slate-200 dark:border-zink-500 rounded hover:bg-slate-50 dark:hover:bg-zink-600">
                         Next
                     </a>

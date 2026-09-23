@@ -198,6 +198,24 @@ $router->group([
     $r->add('/{blogId:\d+}/resubscribe', ['controller' => 'ReaderController', 'action' => 'resubscribe', 'method' => 'POST']);
 });
 
+// The reader's personal notification inbox. Same reasoning as /saved above:
+// most people who get a reply never open the dashboard, so this cannot live
+// there. No namespace key, resolves to App\Controllers\PersonalNotificationController.
+$router->group([
+    'prefix' => '/notifications',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'PersonalNotificationController', 'action' => 'index', 'method' => 'GET']);
+    // What the masthead bell loads the first time it is opened.
+    $r->add('/panel', ['controller' => 'PersonalNotificationController', 'action' => 'panel', 'method' => 'GET']);
+    $r->add('/{id:\d+}/open', ['controller' => 'PersonalNotificationController', 'action' => 'open', 'method' => 'GET']);
+    $r->add('/unread-count', ['controller' => 'PersonalNotificationController', 'action' => 'unreadCount', 'method' => 'GET']);
+    $r->add('/read-all', ['controller' => 'PersonalNotificationController', 'action' => 'markAllRead', 'method' => 'POST']);
+    $r->add('/{id:\d+}/read', ['controller' => 'PersonalNotificationController', 'action' => 'markRead', 'method' => 'POST']);
+    $r->add('/clear-all', ['controller' => 'PersonalNotificationController', 'action' => 'clearAll', 'method' => 'POST']);
+    $r->add('/{id:\d+}/delete', ['controller' => 'PersonalNotificationController', 'action' => 'destroy', 'method' => 'POST']);
+});
+
 // Personal account settings, on the front for every account whatever its role.
 // Cut on ownership: anything belonging to the person lives here; anything
 // belonging to a blog stays in the dashboard. No namespace key, so these
@@ -336,6 +354,7 @@ $router->group([
 
     // Notifications
     $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
+    $r->add('/notifications/{id:\d+}/open', ['controller' => 'NotificationController', 'action' => 'open',        'method' => 'GET']);
     $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
     $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
     $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
@@ -456,6 +475,8 @@ $router->group([
     $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'GET']);
     $r->add('/blogs/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/transfer', ['controller' => 'BlogController', 'action' => 'transferOwnership', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/publish', ['controller' => 'BlogController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/blogs/{id:\d+}/unpublish', ['controller' => 'BlogController', 'action' => 'unpublish', 'method' => 'POST']);
 
     // Post management
     $r->add('/posts', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
@@ -466,6 +487,12 @@ $router->group([
     $r->add('/posts/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'GET']);
     $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/draft', ['controller' => 'PostController', 'action' => 'draft', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/archive', ['controller' => 'PostController', 'action' => 'archive', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/make-public', ['controller' => 'PostController', 'action' => 'makePublic', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/make-private', ['controller' => 'PostController', 'action' => 'makePrivate', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/unlist', ['controller' => 'PostController', 'action' => 'unlist', 'method' => 'POST']);
 
     // Taxonomy management
     $r->add('/categories', ['controller' => 'CategoryController', 'action' => 'index', 'method' => 'GET']);
@@ -540,9 +567,24 @@ $router->group([
     $r->add('/system', ['controller' => 'SystemController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/system/logs/clear', ['controller' => 'SystemController', 'action' => 'clearLog', 'method' => 'POST']);
 
+    // Admin operations inbox: report thresholds, mail failures, a stalled scheduler
+    $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/notifications/{id:\d+}/open', ['controller' => 'NotificationController', 'action' => 'open', 'method' => 'GET']);
+    $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount', 'method' => 'GET']);
+    $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead', 'method' => 'POST']);
+    $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead', 'method' => 'POST']);
+    $r->add('/notifications/clear-all', ['controller' => 'NotificationController', 'action' => 'clearAll', 'method' => 'POST']);
+    $r->add('/notifications/{id:\d+}/delete', ['controller' => 'NotificationController', 'action' => 'destroy', 'method' => 'POST']);
+
     // Outbound mail queue: inspect and recover failed sends
     $r->add('/mail-queue', ['controller' => 'MailQueueController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/mail-queue/bulk', ['controller' => 'MailQueueController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/mail-queue/{id:\d+}/retry', ['controller' => 'MailQueueController', 'action' => 'retry', 'method' => 'POST']);
+    $r->add('/mail-queue/{id:\d+}/cancel', ['controller' => 'MailQueueController', 'action' => 'cancel', 'method' => 'POST']);
+    $r->add('/mail-queue/{id:\d+}/resend', ['controller' => 'MailQueueController', 'action' => 'resend', 'method' => 'POST']);
+    $r->add('/mail-queue/{id:\d+}/restore', ['controller' => 'MailQueueController', 'action' => 'restore', 'method' => 'POST']);
+    $r->add('/mail-queue/{id:\d+}/preview', ['controller' => 'MailQueueController', 'action' => 'preview', 'method' => 'GET']);
+    $r->add('/mail-queue/{id:\d+}/preview/render', ['controller' => 'MailQueueController', 'action' => 'renderHtml', 'method' => 'GET']);
     $r->add('/mail-queue/retry-all', ['controller' => 'MailQueueController', 'action' => 'retryAll', 'method' => 'POST']);
     $r->add('/mail-queue/prune', ['controller' => 'MailQueueController', 'action' => 'prune', 'method' => 'POST']);
 

@@ -26,6 +26,7 @@ final class TableSort
         private readonly array $columns,
         private readonly string $tiebreaker,
         private readonly array $query,
+        private readonly string $pinned = '',
     ) {}
 
     /**
@@ -35,13 +36,16 @@ final class TableSort
      * @param  string  $defaultKey  Key to use when the request names none (or names a bad one)
      * @param  string  $defaultDirection  `asc` or `desc`
      * @param  string  $tiebreaker  SQL appended after the sort column so paging stays stable
+     * @param  string  $pinned  SQL put before the sort column, for rows that should
+     *                          stay at the top whatever the table is sorted by
      */
     public static function fromRequest(
         Request $request,
         array $columns,
         string $defaultKey,
         string $defaultDirection = 'desc',
-        string $tiebreaker = ''
+        string $tiebreaker = '',
+        string $pinned = ''
     ): self {
         // `?sort[]=x` hands us an array, and casting one to string is a fatal.
         // Anything that is not a scalar is simply not a sort key.
@@ -60,7 +64,7 @@ final class TableSort
             $direction = $defaultDirection;
         }
 
-        return new self($key, $direction, $columns, $tiebreaker, $request->get ?? []);
+        return new self($key, $direction, $columns, $tiebreaker, $request->get ?? [], $pinned);
     }
 
     /**
@@ -69,6 +73,12 @@ final class TableSort
     public function orderBy(): string
     {
         $clause = $this->columns[$this->key].' '.strtoupper($this->direction);
+
+        // Pinned rows lead every page, so a featured row cannot fall off page
+        // four and out of sight just because the table is sorted by name.
+        if ($this->pinned !== '') {
+            $clause = $this->pinned.', '.$clause;
+        }
 
         // Without a unique tiebreaker, rows sharing a sort value can swap places
         // between pages and appear twice (or not at all) while paging.

@@ -13,6 +13,7 @@ $tiles = [
     ['status' => 'sending', 'label' => 'Sending', 'icon' => 'send'],
     ['status' => 'sent', 'label' => 'Sent', 'icon' => 'check-circle'],
     ['status' => 'failed', 'label' => 'Failed', 'icon' => 'alert-circle'],
+    ['status' => 'cancelled', 'label' => 'Cancelled', 'icon' => 'ban'],
 ];
 
 // Relative wording reads better than a timestamp for something due imminently.
@@ -74,7 +75,7 @@ $tierBadges = [
     <?php } ?>
 
     <!-- Status summary, each tile filters the table below -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
         <?php foreach ($tiles as $tile) {
             $isActive = $statusFilter === $tile['status'];
             $count = (int) ($counts[$tile['status']] ?? 0);
@@ -154,11 +155,32 @@ foreach ($tierOptions as $tierOpt) {
     {% if entries|empty %}
         {% cmp="empty-state" icon="mail-check" title="Nothing in the queue" message="Everything the platform sends passes through here and clears as the tier workers deliver it." %}
     {% else %}
+    <?php
+    // appliesTo mirrors the status each model call is scoped to, so the bar can
+    // say up front how much of a mixed selection an action will really touch.
+    $bulkActions = [
+        ['action' => 'retry', 'label' => 'Retry', 'icon' => 'refresh-cw', 'hover' => 'hover:bg-yellow-600/30', 'appliesTo' => ['failed'], 'confirm' => 'Queue {n} again for the next worker run?'],
+        ['action' => 'cancel', 'label' => 'Cancel', 'icon' => 'ban', 'hover' => 'hover:bg-slate-600/50', 'appliesTo' => ['pending'], 'confirm' => 'Cancel {n} before they send?'],
+        ['action' => 'resend', 'label' => 'Resend', 'icon' => 'send', 'hover' => 'hover:bg-blue-600/30', 'appliesTo' => ['sent'], 'confirm' => 'Send a fresh copy of {n}?'],
+        ['action' => 'restore', 'label' => 'Put back', 'icon' => 'undo-2', 'hover' => 'hover:bg-green-600/30', 'appliesTo' => ['cancelled'], 'confirm' => 'Put {n} back in the queue?'],
+    ];
+    ?>
+    <?php
+    // The filter travels with the request so a selection that outgrows the page
+    // can be applied to everything it matches, and the server re-reads it.
+    $bulkHiddenFields = ['status' => $statusFilter, 'q' => $searchFilter, 'tier' => $tierFilter];
+    ?>
+    {% cmp="bulk-actions-bar" actionUrl="/admin/mail-queue/bulk" itemLabel="email" actions="{$bulkActions}" headerSelectAll="1" hiddenFields="{$bulkHiddenFields}" matchTotal="{$matchTotal}" matchCounts="{$matchCounts}" %}
+
     <div class="card">
         <div class="card-body p-0 overflow-x-auto">
             <table class="w-full whitespace-nowrap">
                 <thead class="text-left bg-slate-100 dark:bg-zink-600">
                     <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
+                        <th class="px-3.5 py-2.5 w-8">
+                            <input type="checkbox" id="select-all" aria-label="Select every email on this page"
+                                   class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500">
+                        </th>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="recipient" label="Recipient" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="subject" label="Subject" %}
@@ -181,7 +203,13 @@ $error = (string) ($entry['last_error'] ?? '');
 $entryTier = (string) ($entry['tier'] ?? 'standard');
 [$entryTierBadge, $entryTierLabel] = $tierBadges[$entryTier] ?? ['draft', ucfirst($entryTier)];
 ?>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors align-top">
+                    <tr data-bulk-row class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors align-top">
+                        <td class="px-3.5 py-2.5">
+                            <input type="checkbox" name="mail_ids[]" form="bulk-form" value="<?= (int) $entry['id'] ?>"
+                                   data-bulk-state="<?= e($entryStatus) ?>"
+                                   aria-label="Select email #<?= (int) $entry['id'] ?>"
+                                   class="bulk-checkbox form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-2 focus:ring-custom-500">
+                        </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) $entry['id'] ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
                             <?= e((string) $entry['to_email']) ?>
@@ -213,34 +241,62 @@ $entryTier = (string) ($entry['tier'] ?? 'standard');
                                 <?= e(local_datetime($entry['sent_at'] ?? null, 'M j, g:i a')) ?>
                             <?php } elseif ($entryStatus === 'pending') { ?>
                                 <?= e($dueIn($entry['due_in_seconds'] ?? null)) ?>
+                            <?php } elseif ($entryStatus === 'cancelled') { ?>
+                                <?php // Who stopped it is the first thing asked when one turns up cancelled.?>
+                                <?= e(local_datetime($entry['cancelled_at'] ?? null, 'M j, g:i a')) ?>
+                                <?php if (!empty($entry['cancelled_by_name'])) { ?>
+                                <span class="block text-slate-400 dark:text-zink-400">
+                                    by <?= e((string) $entry['cancelled_by_name']) ?>
+                                </span>
+                                <?php } ?>
+                            <?php } elseif ($entryStatus === 'sending') { ?>
+                                <span class="italic">waiting for worker</span>
                             <?php } else { ?>
                                 —
                             <?php } ?>
                         </td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                <?php if ($isFailed) { ?>
-                                <form method="POST" action="<?= buildLocalizedUrl($basePath.'/'.(int) $entry['id'].'/retry') ?>" class="m-0">
-                                    {{ csrf_field() }}
-                                    <button type="submit"
-                                            data-tooltip data-tooltip-content="Queue this email again" data-tooltip-placement="top"
-                                            aria-label="Queue this email again"
-                                            class="p-2 rounded-md text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
-                                        {% cache 'lucide:refresh-cw:one' ttl=31536000 %}<i data-lucide="refresh-cw" class="size-4"></i>{% endcache %}
-                                    </button>
-                                </form>
-                                <?php } elseif ($entryStatus === 'sent') { ?>
-                                {% cache 'lucide:check-mq' ttl=31536000 %}<i data-lucide="check" class="size-4 text-green-500" aria-label="Delivered"></i>{% endcache %}
-                                <?php } else { ?>
-                                <?php // pending or sending: nothing to do, the worker owns it?>
-                                <span class="text-slate-400 dark:text-zink-300 text-xs italic">waiting for worker</span>
-                                <?php } ?>
+                                <?php
+                                $entryId = (int) $entry['id'];
+$entryUrl = static fn (string $action): string => buildLocalizedUrl($basePath.'/'.$entryId.'/'.$action);
+// Read out as "Actions for #4605 to reader@example.test", which is the only
+// pair that identifies a row when twenty of them share a subject.
+$rowTitle = '#'.$entryId.' to '.$entry['to_email'];
+$rowActions = [
+    ['label' => 'Preview', 'icon' => 'eye', 'href' => $entryUrl('preview')],
+    [
+        'label' => 'Retry now', 'icon' => 'refresh-cw',
+        'post' => $entryUrl('retry'),
+        'can' => $isFailed,
+    ],
+    [
+        'label' => 'Cancel', 'icon' => 'ban',
+        'post' => $entryUrl('cancel'),
+        'confirm' => 'Cancel this email? It will not be sent.',
+        'can' => $entryStatus === 'pending',
+    ],
+    [
+        'label' => 'Send a fresh copy', 'icon' => 'send',
+        'post' => $entryUrl('resend'),
+        'confirm' => 'Send a fresh copy of this email?',
+        'can' => $entryStatus === 'sent',
+    ],
+    [
+        'label' => 'Put back in the queue', 'icon' => 'undo-2',
+        'post' => $entryUrl('restore'),
+        'confirm' => 'Put this email back in the queue? It will go out on the next worker run.',
+        'can' => $entryStatus === 'cancelled',
+    ],
+];
+?>
+                                {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
                             </div>
                         </td>
                     </tr>
                     <?php if ($isFailed && $error !== '') { ?>
                     <tr class="bg-red-50/50 dark:bg-red-900/10">
-                        <td colspan="8" class="px-3.5 pb-2.5 pt-0 text-xs text-red-700 dark:text-red-300 whitespace-normal break-words">
+                        <td colspan="10" class="px-3.5 pb-2.5 pt-0 text-xs text-red-700 dark:text-red-300 whitespace-normal break-words">
                             <?= e(truncate($error, 240)) ?>
                         </td>
                     </tr>
@@ -257,8 +313,4 @@ $entryTier = (string) ($entry['tier'] ?? 'standard');
     {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
 {% endblock %}

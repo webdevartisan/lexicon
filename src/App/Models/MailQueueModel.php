@@ -189,7 +189,7 @@ class MailQueueModel extends AppModel
     /**
      * Count rows per status, for the dashboard and the worker summary.
      *
-     * @return array{pending: int, sending: int, sent: int, failed: int}
+     * @return array{pending: int, sending: int, sent: int, failed: int, cancelled: int}
      */
     public function statusCounts(): array
     {
@@ -197,7 +197,7 @@ class MailQueueModel extends AppModel
             "SELECT status, COUNT(*) AS total FROM {$this->getTable()} GROUP BY status"
         )->fetchAll(\PDO::FETCH_ASSOC);
 
-        $counts = ['pending' => 0, 'sending' => 0, 'sent' => 0, 'failed' => 0];
+        $counts = ['pending' => 0, 'sending' => 0, 'sent' => 0, 'failed' => 0, 'cancelled' => 0];
 
         foreach ($rows as $row) {
             $counts[$row['status']] = (int) $row['total'];
@@ -225,25 +225,11 @@ class MailQueueModel extends AppModel
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
-        $where = [];
-        $params = [];
-
-        if ($status !== '') {
-            $where[] = 'status = :status';
-            $params[':status'] = $status;
-        }
-
-        if ($search !== '') {
-            $where[] = 'to_email LIKE :search';
-            $params[':search'] = '%'.$search.'%';
-        }
-
-        if ($tier !== '') {
-            $where[] = 'tier = :tier';
-            $params[':tier'] = $tier;
-        }
-
-        $whereSql = $where ? 'WHERE '.implode(' AND ', $where) : '';
+        [$whereSql, $params] = $this->filterClause([
+            'status' => $status,
+            'search' => $search,
+            'tier' => $tier,
+        ]);
 
         $total = (int) $this->database->query(
             "SELECT COUNT(*) FROM {$this->getTable()} {$whereSql}",
@@ -256,16 +242,23 @@ class MailQueueModel extends AppModel
         // reads comes from the same clock that decides what claimBatch() picks
         // up. This used to be hours out when PHP did the subtraction on a
         // connection that followed the database host zone.
+        // cancelled_by is read through a subquery rather than a join: the sort
+        // whitelist and the filters above all name their columns unqualified,
+        // and joining users would make half of them ambiguous. It only runs for
+        // rows that carry one, and it reads a primary key.
         $sql = "SELECT id, to_email, to_name, subject, status, tier, attempts, max_attempts,
                        TIMESTAMPDIFF(SECOND, NOW(), next_attempt_at) AS due_in_seconds,
-                       last_error, related_type, related_id, next_attempt_at, sent_at, created_at
+                       last_error, related_type, related_id, next_attempt_at, sent_at, created_at,
+                       cancelled_at,
+                       (SELECT COALESCE(u.display_name_cached, u.handle)
+                        FROM users u WHERE u.id = {$this->getTable()}.cancelled_by) AS cancelled_by_name
                 FROM {$this->getTable()}
                 {$whereSql}
                 ORDER BY {$orderBy}
-                LIMIT :limit OFFSET :offset";
+                LIMIT ? OFFSET ?";
 
-        $params[':limit'] = $perPage;
-        $params[':offset'] = ($page - 1) * $perPage;
+        $params[] = $perPage;
+        $params[] = ($page - 1) * $perPage;
 
         $rows = $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
 
@@ -285,18 +278,31 @@ class MailQueueModel extends AppModel
     }
 
     /**
+     * How many rows gave up delivering (reached 'failed') in the last N minutes.
+     *
+     * Reads updated_at rather than created_at: a row queued hours ago that
+     * only just exhausted its retries failed *now*, and that is the moment an
+     * admin needs to hear about it.
+     */
+    public function failedCountSince(int $minutes): int
+    {
+        return (int) $this->database->query(
+            "SELECT COUNT(*) FROM {$this->getTable()}
+             WHERE status = 'failed' AND updated_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)",
+            [$minutes]
+        )->fetchColumn();
+    }
+
+    /**
      * Put every failed row back in line for another attempt.
      *
      * @return int Rows requeued
      */
     public function retryAllFailed(): int
     {
-        return $this->database->execute(
-            "UPDATE {$this->getTable()}
-             SET status = 'pending', attempts = 0, last_error = NULL,
-                 claim_token = NULL, next_attempt_at = NOW()
-             WHERE status = 'failed'"
-        );
+        // The same operation as a whole-filter retry with no filter on it, and
+        // kept as one statement rather than two copies of the same UPDATE.
+        return $this->retryAllMatching([]);
     }
 
     /**
@@ -331,6 +337,364 @@ class MailQueueModel extends AppModel
              WHERE id = ? AND status = 'failed'",
             [$id]
         ) > 0;
+    }
+
+    /**
+     * Put back in line every selected row that is actually failed.
+     *
+     * An id for a row that is pending, sent, or gone is simply not touched;
+     * the caller sees how many of its ids landed via the return value rather
+     * than the request failing over a stale selection.
+     *
+     * @param  array<int, int>  $ids
+     * @return int Rows requeued
+     */
+    public function retryMany(array $ids): int
+    {
+        $ids = $this->sanitizeIds($ids);
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'pending', attempts = 0, last_error = NULL,
+                 claim_token = NULL, next_attempt_at = NOW()
+             WHERE status = 'failed' AND id IN ({$placeholders})",
+            $ids
+        );
+    }
+
+    /**
+     * Stop a row the worker has not claimed yet.
+     *
+     * Scoped to 'pending' only: a 'sending' row may already be mid-transport,
+     * so cancelling it here could race a worker that is about to mark it
+     * sent, leaving the admin unsure whether the email actually went out.
+     */
+    public function cancel(int $id, int $cancelledBy): bool
+    {
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'cancelled', cancelled_at = NOW(), cancelled_by = ?
+             WHERE id = ? AND status = 'pending'",
+            [$cancelledBy, $id]
+        ) > 0;
+    }
+
+    /**
+     * Cancel every selected row that is still pending.
+     *
+     * @param  array<int, int>  $ids
+     * @return int Rows cancelled
+     */
+    public function cancelMany(array $ids, int $cancelledBy): int
+    {
+        $ids = $this->sanitizeIds($ids);
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'cancelled', cancelled_at = NOW(), cancelled_by = ?
+             WHERE status = 'pending' AND id IN ({$placeholders})",
+            array_merge([$cancelledBy], $ids)
+        );
+    }
+
+    /**
+     * Take a cancelled row off hold and put it back in line.
+     *
+     * Cancelling is something an admin does by hand, so undoing it has to be
+     * possible; without this a mis-click was permanent. The row itself is
+     * restored rather than copied the way resend does it, because a cancelled
+     * email never went anywhere and a copy would just be a duplicate.
+     *
+     * attempts and last_error are deliberately left alone. Only a pending row
+     * can be cancelled, and a pending row may already be several failed tries
+     * into its backoff, so zeroing them here would quietly hand it delivery
+     * attempts it never earned and erase why it was struggling.
+     */
+    public function restore(int $id): bool
+    {
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'pending', cancelled_at = NULL, cancelled_by = NULL,
+                 claim_token = NULL, next_attempt_at = NOW()
+             WHERE id = ? AND status = 'cancelled'",
+            [$id]
+        ) > 0;
+    }
+
+    /**
+     * Put back in line every selected row that is actually cancelled.
+     *
+     * @param  array<int, int>  $ids
+     * @return int Rows restored
+     */
+    public function restoreMany(array $ids): int
+    {
+        $ids = $this->sanitizeIds($ids);
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'pending', cancelled_at = NULL, cancelled_by = NULL,
+                 claim_token = NULL, next_attempt_at = NOW()
+             WHERE status = 'cancelled' AND id IN ({$placeholders})",
+            $ids
+        );
+    }
+
+    /**
+     * Queue a fresh copy of a delivered email.
+     *
+     * Only 'sent' rows qualify: a pending or failed row already has a copy in
+     * line, and resending it would double up rather than help. The new row
+     * remembers where it came from via resent_from_id, purely for the admin
+     * view; the worker treats it like any other pending email.
+     *
+     * @return int|null The new row's ID, or null when the source is not sent
+     */
+    public function resend(int $id): ?int
+    {
+        $source = $this->database->query(
+            "SELECT to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts
+             FROM {$this->getTable()} WHERE id = ? AND status = 'sent'",
+            [$id]
+        )->fetch(\PDO::FETCH_ASSOC);
+
+        if ($source === false) {
+            return null;
+        }
+
+        $this->database->execute(
+            "INSERT INTO {$this->getTable()}
+                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, resent_from_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $source['to_email'],
+                $source['to_name'],
+                $source['subject'],
+                $source['body_html'],
+                $source['body_text'],
+                $source['tier'],
+                $source['related_type'],
+                $source['related_id'],
+                $source['max_attempts'],
+                $id,
+            ]
+        );
+
+        return (int) $this->database->lastInsertId();
+    }
+
+    /**
+     * Resend every selected row that is actually sent.
+     *
+     * @param  array<int, int>  $ids
+     * @return int Rows resent
+     */
+    public function resendMany(array $ids): int
+    {
+        $resent = 0;
+
+        foreach ($this->sanitizeIds($ids) as $id) {
+            if ($this->resend($id) !== null) {
+                $resent++;
+            }
+        }
+
+        return $resent;
+    }
+
+    /**
+     * Normalise a bulk id selection: positive integers only, no duplicates.
+     *
+     * @param  array<int, mixed>  $ids
+     * @return array<int, int>
+     */
+    private function sanitizeIds(array $ids): array
+    {
+        return array_values(array_unique(array_filter(
+            array_map('intval', $ids),
+            static fn (int $id): bool => $id > 0
+        )));
+    }
+
+    /**
+     * The WHERE clause behind both the listing and every whole-filter action.
+     *
+     * Shared on purpose. The page tells an admin that 4,415 emails match, and
+     * the action they then run has to reach exactly those; two copies of this
+     * would drift the moment a filter is added to one of them.
+     *
+     * Positional placeholders, because the database binds by position: a named
+     * set assembled in a different order than the SQL reads binds the wrong
+     * value to the wrong column.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return array{0: string, 1: array<int, string>} The clause and its params, in SQL order
+     */
+    private function filterClause(array $filters): array
+    {
+        $where = [];
+        $params = [];
+
+        if (($filters['status'] ?? '') !== '') {
+            $where[] = 'status = ?';
+            $params[] = $filters['status'];
+        }
+
+        if (($filters['search'] ?? '') !== '') {
+            $where[] = 'to_email LIKE ?';
+            $params[] = '%'.$filters['search'].'%';
+        }
+
+        if (($filters['tier'] ?? '') !== '') {
+            $where[] = 'tier = ?';
+            $params[] = $filters['tier'];
+        }
+
+        return [$where === [] ? '' : 'WHERE '.implode(' AND ', $where), $params];
+    }
+
+    /**
+     * How many rows of each status match a filter.
+     *
+     * The bulk bar needs this to say what a whole-filter action will really
+     * touch. statusCounts() above answers for the queue as a whole, which is
+     * what the tiles want; this answers for what is on screen.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return array{pending: int, sending: int, sent: int, failed: int, cancelled: int}
+     */
+    public function statusCountsMatching(array $filters): array
+    {
+        [$whereSql, $params] = $this->filterClause($filters);
+
+        $rows = $this->database->query(
+            "SELECT status, COUNT(*) AS total FROM {$this->getTable()} {$whereSql} GROUP BY status",
+            $params
+        )->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $counts = ['pending' => 0, 'sending' => 0, 'sent' => 0, 'failed' => 0, 'cancelled' => 0];
+
+        foreach ($rows as $row) {
+            $counts[$row['status']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Cancel every pending row matching a filter.
+     *
+     * The filter widens which rows are considered; it never widens which
+     * statuses may be touched. A filter holding sent mail still only cancels
+     * the pending part of it, exactly as the by-id version does.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return int Rows cancelled
+     */
+    public function cancelAllMatching(array $filters, int $cancelledBy): int
+    {
+        [$whereSql, $params] = $this->scopedClause($filters, 'pending');
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'cancelled', cancelled_at = NOW(), cancelled_by = ?
+             {$whereSql}",
+            array_merge([$cancelledBy], $params)
+        );
+    }
+
+    /**
+     * Requeue every failed row matching a filter.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return int Rows requeued
+     */
+    public function retryAllMatching(array $filters): int
+    {
+        [$whereSql, $params] = $this->scopedClause($filters, 'failed');
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'pending', attempts = 0, last_error = NULL,
+                 claim_token = NULL, next_attempt_at = NOW()
+             {$whereSql}",
+            $params
+        );
+    }
+
+    /**
+     * Put back every cancelled row matching a filter.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return int Rows restored
+     */
+    public function restoreAllMatching(array $filters): int
+    {
+        [$whereSql, $params] = $this->scopedClause($filters, 'cancelled');
+
+        return $this->database->execute(
+            "UPDATE {$this->getTable()}
+             SET status = 'pending', cancelled_at = NULL, cancelled_by = NULL,
+                 claim_token = NULL, next_attempt_at = NOW()
+             {$whereSql}",
+            $params
+        );
+    }
+
+    /**
+     * Queue a fresh copy of every sent row matching a filter.
+     *
+     * The only one of these that writes rows rather than updating them, so it
+     * is one INSERT ... SELECT rather than a loop: a filter matching thousands
+     * would otherwise be thousands of round trips.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return int Copies queued
+     */
+    public function resendAllMatching(array $filters): int
+    {
+        [$whereSql, $params] = $this->scopedClause($filters, 'sent');
+
+        return $this->database->execute(
+            "INSERT INTO {$this->getTable()}
+                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, resent_from_id)
+             SELECT to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, id
+             FROM {$this->getTable()}
+             {$whereSql}",
+            $params
+        );
+    }
+
+    /**
+     * A filter's WHERE clause with the status an action is scoped to folded in.
+     *
+     * @param  array{status?: string, search?: string, tier?: string}  $filters
+     * @return array{0: string, 1: array<int, string>}
+     */
+    private function scopedClause(array $filters, string $status): array
+    {
+        [$whereSql, $params] = $this->filterClause($filters);
+        $params[] = $status;
+
+        return [$whereSql === '' ? 'WHERE status = ?' : $whereSql.' AND status = ?', $params];
     }
 
     /**

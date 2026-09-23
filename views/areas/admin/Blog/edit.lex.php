@@ -15,7 +15,7 @@
         {% cmp="form-footer" cancelHref="/admin/blogs" submitLabel="Save Changes" submitIcon="save" %}
     </form>
 
-    <div class="card">
+    <div class="card" id="ownership">
         <div class="card-body">
             <h6 class="mb-1 text-15">Owner</h6>
             <p class="text-sm text-slate-500 dark:text-zink-200 mb-4">

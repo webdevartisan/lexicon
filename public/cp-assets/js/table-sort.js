@@ -33,6 +33,10 @@
         if (typeof window.initTooltip === 'function') {
             window.initTooltip();
         }
+
+        // Progressive enhancement that binds to rows, such as bulk-actions.js,
+        // lost its elements in the swap and has to pick the new ones up.
+        document.dispatchEvent(new CustomEvent('table:swapped'));
     }
 
     /**

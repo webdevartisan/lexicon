@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\BlogModel;
+use App\Models\NotificationModel;
 use App\Models\UserProfileModel;
 
 /**
@@ -21,22 +22,23 @@ use App\Models\UserProfileModel;
 final class ViewerContext
 {
     /**
-     * @var array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int}|null|false
-     *                                                                                                    False means "not resolved yet"; null is a real answer meaning nobody is signed in.
+     * @var array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int, unread_notifications: int}|null|false
+     *                                                                                                                               False means "not resolved yet"; null is a real answer meaning nobody is signed in.
      */
     private array|null|false $current = false;
 
     public function __construct(
         private BlogModel $blogs,
         private UserProfileModel $profiles,
-        private ReaderService $reader
+        private ReaderService $reader,
+        private NotificationModel $notifications
     ) {}
 
     /**
      * Summary of the current user for masthead rendering.
      *
-     * @return array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int}|null
-     *                                                                                                 Null when nobody is logged in.
+     * @return array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int, unread_notifications: int}|null
+     *                                                                                                                            Null when nobody is logged in.
      */
     public function current(): ?array
     {
@@ -59,6 +61,7 @@ final class ViewerContext
             // pages and is therefore always false out on the front.
             'is_reader' => $this->blogs->userIsReaderOnly($userId),
             'unread_replies' => $this->reader->unreadReplyCount($userId),
+            'unread_notifications' => $this->notifications->unreadCount($userId, 'personal'),
         ];
     }
 }

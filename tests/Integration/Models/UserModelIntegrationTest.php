@@ -445,3 +445,57 @@ it('updates user password hash', function () {
 
     expect($user['password'])->toBe($newHash);
 });
+
+// ============================================================================
+// findAllWithPermission (admin notification fan-out)
+// ============================================================================
+
+/**
+ * Administrators qualify for any permission through the role itself, and a
+ * role that genuinely holds the permission qualifies too; a role with other
+ * permissions, or none at all, does not.
+ */
+it('finds administrators and permission holders, and excludes everyone else', function () {
+    $adminId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['administrator']))->create();
+    $otherAdminId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['administrator']))->create();
+    $contentManagerId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['content_manager']))->create();
+    $readerId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['reader']))->create();
+
+    $recipients = $this->userModel->findAllWithPermission('manage_mail_queue');
+    $ids = array_column($recipients, 'id');
+
+    expect($ids)->toContain($adminId)
+        ->and($ids)->toContain($otherAdminId)
+        ->and($ids)->not->toContain($contentManagerId)
+        ->and($ids)->not->toContain($readerId);
+});
+
+it('excludes an inactive or soft-deleted administrator from findAllWithPermission', function () {
+    $activeId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['administrator']))->create();
+    $inactiveId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['administrator']))
+        ->withAttributes(['is_active' => 0])->create();
+    $deletedId = UserFactory::new($this->userModel)
+        ->withRoles(roleIds($this->db, ['administrator']))
+        ->deleted()->create();
+
+    $ids = array_column($this->userModel->findAllWithPermission('manage_mail_queue'), 'id');
+
+    expect($ids)->toContain($activeId)
+        ->and($ids)->not->toContain($inactiveId)
+        ->and($ids)->not->toContain($deletedId);
+});
+
+it('returns each qualifying user once even when a permission is reachable through more than one role', function () {
+    $roleIds = roleIds($this->db, ['administrator', 'content_manager']);
+    $userId = UserFactory::new($this->userModel)->withRoles($roleIds)->create();
+
+    $ids = array_column($this->userModel->findAllWithPermission('manage_mail_queue'), 'id');
+
+    expect(array_count_values($ids)[$userId] ?? 0)->toBe(1);
+});

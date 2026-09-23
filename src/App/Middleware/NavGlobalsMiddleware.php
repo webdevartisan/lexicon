@@ -174,16 +174,21 @@ class NavGlobalsMiddleware
         ]);
         $user = $this->auth->user();
 
-        // Build notifications payload for the topbar bell (back area only).
-        $notifications = ['enabled' => false, 'items' => [], 'count' => 0];
-        if ($area === 'back' && $user !== null) {
+        // Build notifications payload for the topbar bell. Dashboard pages get
+        // the 'content' inbox (posts to review, comments to moderate); admin
+        // pages get the 'admin' ops inbox. Front pages have their own bell in
+        // the account menu (_auth_nav.lex.php), driven by PersonalNotificationController.
+        $notifications = ['enabled' => false, 'items' => [], 'count' => 0, 'listPath' => '/dashboard/notifications'];
+        $bellScope = $area === 'back' ? 'content' : ($area === 'admin' ? 'admin' : null);
+
+        if ($bellScope !== null && $user !== null) {
             try {
-                $unreadCount = $this->notificationModel->unreadCount((int) $user['id']);
-                $notifItems = $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true);
+                $listPath = $bellScope === 'admin' ? '/admin/notifications' : '/dashboard/notifications';
                 $notifications = [
                     'enabled' => true,
-                    'items' => $notifItems,
-                    'count' => $unreadCount,
+                    'items' => $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true, scope: $bellScope),
+                    'count' => $this->notificationModel->unreadCount((int) $user['id'], $bellScope),
+                    'listPath' => $listPath,
                 ];
             } catch (\Throwable $e) {
                 error_log('Notifications query failed: '.$e->getMessage());

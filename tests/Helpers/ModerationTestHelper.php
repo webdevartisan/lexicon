@@ -14,6 +14,7 @@ use App\Models\NotificationModel;
 use App\Models\PostModel;
 use App\Models\SettingModel;
 use App\Models\UserModel;
+use App\Services\AdminNotificationDispatcher;
 use App\Services\AuditService;
 use App\Services\ImpersonationService;
 use App\Services\MailQueueService;
@@ -61,7 +62,8 @@ final class ModerationTestHelper
         $actions ??= self::actions($db, $cases, $suspensions);
 
         $engine = new ModerationRuleEngine($db, $cases, $categories, $reports, $moderationSettings, $actions, $suspensions, $users);
-        $intake = new ReportIntakeService($db, $categories, $cases, $reports, $moderationSettings, $engine, self::DELETED_USER_HANDLE);
+        $adminNotifier = new AdminNotificationDispatcher(new NotificationModel($db), $users);
+        $intake = new ReportIntakeService($db, $categories, $cases, $reports, $moderationSettings, $engine, $adminNotifier, self::DELETED_USER_HANDLE);
 
         return [
             'intake' => $intake,

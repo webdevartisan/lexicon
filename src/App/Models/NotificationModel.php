@@ -14,19 +14,27 @@ class NotificationModel extends AppModel
 {
     protected ?string $table = 'notifications';
 
+    /** Valid values for the `scope` column, deciding which inbox a row belongs in. */
+    public const SCOPES = ['personal', 'content', 'admin'];
+
     /**
      * Create a notification for a user.
      *
      * @param  int  $userId  Recipient
      * @param  string  $type  e.g. 'blog.invite', 'post.approved', 'collaborator.role_changed'
      * @param  array<string, mixed>  $data  JSON-serialisable payload
+     * @param  string  $scope  One of self::SCOPES; defaults to the safest choice
      * @return bool True on success
      */
-    public function create(int $userId, string $type, array $data): bool
+    public function create(int $userId, string $type, array $data, string $scope = 'personal'): bool
     {
-        $sql = 'INSERT INTO notifications (user_id, type, data) VALUES (?, ?, ?)';
+        if (!in_array($scope, self::SCOPES, true)) {
+            $scope = 'personal';
+        }
 
-        return $this->database->execute($sql, [$userId, $type, json_encode($data)]) > 0;
+        $sql = 'INSERT INTO notifications (user_id, type, scope, data) VALUES (?, ?, ?, ?)';
+
+        return $this->database->execute($sql, [$userId, $type, $scope, json_encode($data)]) > 0;
     }
 
     /**
@@ -35,18 +43,27 @@ class NotificationModel extends AppModel
      * @param  int  $userId  Recipient
      * @param  int  $limit  Max rows
      * @param  bool  $onlyUnread  Limit to rows where read_at is NULL
+     * @param  string  $scope  Restrict to one scope, '' for every scope
      * @return array<int, array<string, mixed>> List of notifications
      */
-    public function findForUser(int $userId, int $limit = 20, bool $onlyUnread = false): array
+    public function findForUser(int $userId, int $limit = 20, bool $onlyUnread = false, string $scope = ''): array
     {
-        $sql = 'SELECT id, type, data, read_at, created_at
+        $params = [$userId];
+        $sql = 'SELECT id, type, scope, data, read_at, created_at
                 FROM notifications
-                WHERE user_id = :user_id'
-                .($onlyUnread ? ' AND read_at IS NULL' : '').'
-                ORDER BY created_at DESC
-                LIMIT :limit';
+                WHERE user_id = ?'
+                .($onlyUnread ? ' AND read_at IS NULL' : '');
 
-        return $this->database->query($sql, [':user_id' => $userId, ':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
+        if ($scope !== '') {
+            $sql .= ' AND scope = ?';
+            $params[] = $scope;
+        }
+
+        // id breaks the tie: several notifications can land in the same second,
+        // and without it the newest few are whichever ones the engine felt like.
+        $sql .= ' ORDER BY created_at DESC, id DESC LIMIT '.max(0, $limit);
+
+        return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -54,25 +71,33 @@ class NotificationModel extends AppModel
      *
      * @param  int  $id  Notification ID
      * @param  int  $userId  Owner — prevents marking another user's notification
+     * @param  string  $scope  Restrict to one scope, '' for any. Callers pass their
+     *                         own inbox's scope so an id copied from one inbox can't
+     *                         be replayed against another.
      * @return bool True if an unread notification was marked
      */
-    public function markRead(int $id, int $userId): bool
+    public function markRead(int $id, int $userId, string $scope = ''): bool
     {
         $sql = 'UPDATE notifications SET read_at = UTC_TIMESTAMP()
-                WHERE id = ? AND user_id = ? AND read_at IS NULL';
+                WHERE id = ? AND user_id = ? AND read_at IS NULL'
+                .($scope !== '' ? ' AND scope = ?' : '');
+        $params = $scope !== '' ? [$id, $userId, $scope] : [$id, $userId];
 
-        return $this->database->execute($sql, [$id, $userId]) > 0;
+        return $this->database->execute($sql, $params) > 0;
     }
 
     /**
      * Count unread notifications for a user.
      *
      * @param  int  $userId  Recipient
+     * @param  string  $scope  Restrict to one scope, '' for every scope
      */
-    public function unreadCount(int $userId): int
+    public function unreadCount(int $userId, string $scope = ''): int
     {
-        $sql = 'SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read_at IS NULL';
-        $row = $this->database->query($sql, [$userId])->fetch(\PDO::FETCH_ASSOC);
+        $sql = 'SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read_at IS NULL'
+                .($scope !== '' ? ' AND scope = ?' : '');
+        $params = $scope !== '' ? [$userId, $scope] : [$userId];
+        $row = $this->database->query($sql, $params)->fetch(\PDO::FETCH_ASSOC);
 
         return (int) ($row['c'] ?? 0);
     }
@@ -81,14 +106,17 @@ class NotificationModel extends AppModel
      * Mark every unread notification for the user as read.
      *
      * @param  int  $userId  Recipient
+     * @param  string  $scope  Restrict to one scope, '' for every scope
      * @return int Rows affected
      */
-    public function markAllRead(int $userId): int
+    public function markAllRead(int $userId, string $scope = ''): int
     {
         $sql = 'UPDATE notifications SET read_at = UTC_TIMESTAMP()
-                WHERE user_id = ? AND read_at IS NULL';
+                WHERE user_id = ? AND read_at IS NULL'
+                .($scope !== '' ? ' AND scope = ?' : '');
+        $params = $scope !== '' ? [$userId, $scope] : [$userId];
 
-        return $this->database->execute($sql, [$userId]);
+        return $this->database->execute($sql, $params);
     }
 
     /**
@@ -96,24 +124,36 @@ class NotificationModel extends AppModel
      *
      * @param  int  $id  Notification ID
      * @param  int  $userId  Owner — prevents deleting another user's notification
+     * @param  string  $scope  Restrict to one scope, '' for any. Callers pass their
+     *                         own inbox's scope so an id copied from one inbox can't
+     *                         be replayed against another.
      * @return bool True if a row was removed
      */
-    public function deleteForUser(int $id, int $userId): bool
+    public function deleteForUser(int $id, int $userId, string $scope = ''): bool
     {
-        $sql = 'DELETE FROM notifications WHERE id = ? AND user_id = ?';
+        $sql = 'DELETE FROM notifications WHERE id = ? AND user_id = ?'
+                .($scope !== '' ? ' AND scope = ?' : '');
+        $params = $scope !== '' ? [$id, $userId, $scope] : [$id, $userId];
 
-        return $this->database->execute($sql, [$id, $userId]) > 0;
+        return $this->database->execute($sql, $params) > 0;
     }
 
     /**
      * Delete every notification belonging to a user.
      *
      * @param  int  $userId  Recipient
+     * @param  string  $scope  Restrict to one scope, '' for every scope. Callers
+     *                         always pass their own inbox's scope in practice,
+     *                         since leaving it empty would let "clear all" on
+     *                         one inbox wipe the other two.
      * @return int Rows deleted
      */
-    public function deleteAllForUser(int $userId): int
+    public function deleteAllForUser(int $userId, string $scope = ''): int
     {
-        return $this->database->execute('DELETE FROM notifications WHERE user_id = ?', [$userId]);
+        $sql = 'DELETE FROM notifications WHERE user_id = ?'.($scope !== '' ? ' AND scope = ?' : '');
+        $params = $scope !== '' ? [$userId, $scope] : [$userId];
+
+        return $this->database->execute($sql, $params);
     }
 
     /**
@@ -285,26 +325,31 @@ class NotificationModel extends AppModel
      * @param  int  $userId  Recipient
      * @param  int  $perPage  Page size
      * @param  int  $page  1-based page index
+     * @param  string  $scope  Restrict to one scope, '' for every scope
+     * @param  bool  $onlyUnread  Limit to rows where read_at is NULL, for the unread filter
      * @return array{items: array<int, array<string, mixed>>, total: int, page: int, perPage: int}
      */
-    public function findPageForUser(int $userId, int $perPage = 20, int $page = 1): array
+    public function findPageForUser(int $userId, int $perPage = 20, int $page = 1, string $scope = '', bool $onlyUnread = false): array
     {
         $perPage = max(1, min(100, $perPage));
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
+        $scopeSql = $scope !== '' ? ' AND scope = ?' : '';
+        $unreadSql = $onlyUnread ? ' AND read_at IS NULL' : '';
+        $params = $scope !== '' ? [$userId, $scope] : [$userId];
 
         $countRow = $this->database
-            ->query('SELECT COUNT(*) AS c FROM notifications WHERE user_id = ?', [$userId])
+            ->query("SELECT COUNT(*) AS c FROM notifications WHERE user_id = ?{$scopeSql}{$unreadSql}", $params)
             ->fetch(\PDO::FETCH_ASSOC);
 
         $items = $this->database
             ->query(
-                'SELECT id, type, data, read_at, created_at
+                "SELECT id, type, scope, data, read_at, created_at
                  FROM notifications
-                 WHERE user_id = ?
-                 ORDER BY created_at DESC
-                 LIMIT '.(int) $perPage.' OFFSET '.(int) $offset,
-                [$userId]
+                 WHERE user_id = ?{$scopeSql}{$unreadSql}
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT ".(int) $perPage.' OFFSET '.(int) $offset,
+                $params
             )
             ->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -314,6 +359,64 @@ class NotificationModel extends AppModel
             'page' => $page,
             'perPage' => $perPage,
         ];
+    }
+
+    /**
+     * One notification belonging to this user.
+     *
+     * Scoped the same way markRead is: an id lifted from another inbox finds
+     * nothing here either, so opening one cannot read across scopes.
+     *
+     * @param  int  $id  Notification ID
+     * @param  int  $userId  Owner
+     * @param  string  $scope  Restrict to one scope, '' for any
+     * @return array<string, mixed>|null The row, or null when it is not theirs
+     */
+    public function findOneForUser(int $id, int $userId, string $scope = ''): ?array
+    {
+        $params = [$id, $userId];
+        $sql = 'SELECT id, type, scope, data, read_at, created_at
+                FROM notifications
+                WHERE id = ? AND user_id = ?';
+
+        if ($scope !== '') {
+            $sql .= ' AND scope = ?';
+            $params[] = $scope;
+        }
+
+        $row = $this->database->query($sql.' LIMIT 1', $params)->fetch(\PDO::FETCH_ASSOC);
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * Whether an admin-scoped notification of this type already exists inside
+     * the cooldown window.
+     *
+     * Fan-out events (a burst of mail failures, a stalled scheduler) would
+     * otherwise write one row per administrator on every check that finds the
+     * condition still true, so AdminNotificationDispatcher checks this before
+     * writing anything.
+     *
+     * @param  string  $type  Notification type, e.g. 'admin.mail_queue_failures'
+     * @param  int  $withinMinutes  How recently is "already notified"
+     * @param  string|null  $dedupeKey  When given, narrows the check to rows whose
+     *                                  payload carries this same key (e.g. a case
+     *                                  id) instead of every row of this type
+     */
+    public function existsRecentAdminNotification(string $type, int $withinMinutes, ?string $dedupeKey = null): bool
+    {
+        $sql = "SELECT 1 FROM notifications
+                WHERE scope = 'admin' AND type = ?
+                  AND created_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? MINUTE)";
+        $params = [$type, $withinMinutes];
+
+        if ($dedupeKey !== null) {
+            $sql .= " AND data->>'$.dedupe_key' = ?";
+            $params[] = $dedupeKey;
+        }
+
+        return (bool) $this->database->query($sql.' LIMIT 1', $params)->fetchColumn();
     }
 
     /**

@@ -3239,6 +3239,139 @@ label {
 }
 
 /* ==========================================================================
+   18b. Notifications
+   ========================================================================== */
+
+/*
+ * The reader's inbox. It borrows the reader surface wholesale (head, tabs,
+ * list, rows, pagination) and adds only what a notification has that a saved
+ * post does not: a type icon, a day heading, and the message itself.
+ */
+
+.lx-notif-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.lx-notif-tally {
+    margin: 0;
+    color: var(--lx-ink-3);
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+}
+
+.lx-notif-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* A date, not a row: it names the run of notifications under it. */
+.lx-notif-day {
+    padding: 1.4rem 0 0.5rem;
+    color: var(--lx-ink-3);
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.lx-notif-day:first-child {
+    padding-top: 0;
+}
+
+.lx-notif-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--lx-paper-sunk);
+    color: var(--lx-ink-2);
+}
+
+.lx-notif-icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+/* The tone says what kind of news this is before the sentence is read. */
+.lx-notif-icon[data-tone='positive'] { color: #1f6f43; }
+.lx-notif-icon[data-tone='attention'] { color: var(--lx-gilt-deep); }
+.lx-notif-icon[data-tone='critical'] { color: var(--lx-danger); }
+
+.lx-notif-title {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.lx-notif-row.is-unread .lx-notif-title {
+    font-weight: 600;
+}
+
+.lx-notif-title a {
+    color: inherit;
+}
+
+/* Shown in full. For a moderator's note this is the note, and a notification
+   nobody can read the whole of is not worth sending. */
+.lx-notif-message {
+    margin: 0.4rem 0 0;
+    padding: 0.6rem 0.8rem;
+    border-inline-start: 2px solid var(--lx-rule-strong);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink-2);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.lx-notif-row .lx-reader-meta {
+    margin-top: 0.5rem;
+}
+
+/* Two controls stacked in the space one usually holds. */
+.lx-notif-act {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Arrived here from the bell with nowhere else to go, so the row says which
+   one it was rather than leaving the reader to find it. */
+.lx-notif-row.is-focused {
+    outline: 2px solid var(--lx-gilt-deep);
+    outline-offset: 0.35rem;
+    border-radius: 2px;
+}
+
+.lx-reader-tab-badge {
+    display: inline-block;
+    margin-inline-start: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: var(--lx-gilt-deep);
+    color: var(--lx-paper);
+    font-size: 0.65rem;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+@media (max-width: 40rem) {
+    .lx-notif-act {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+}
+
+/* ==========================================================================
    19. Language switcher, back-to-top, misc
    ========================================================================== */
 

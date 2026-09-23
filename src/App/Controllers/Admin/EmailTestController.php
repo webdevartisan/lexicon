@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Services\EmailTemplateRegistry;
 use App\Services\MailService;
+use App\Traits\SandboxesPreviewHtml;
 use Exception;
 use Framework\Core\Response;
 
@@ -22,6 +23,8 @@ use Framework\Core\Response;
  */
 class EmailTestController extends AppController
 {
+    use SandboxesPreviewHtml;
+
     // Enforced for every action by AppController::beforeAction()
     protected ?string $areaAbility = 'manageSettings';
 
@@ -111,14 +114,16 @@ class EmailTestController extends AppController
      * Render email HTML in iframe.
      *
      * output raw HTML for iframe rendering, isolating email
-     * styles from the admin panel to prevent CSS conflicts.
+     * styles from the admin panel to prevent CSS conflicts. A template's
+     * rendered body is not trusted markup, so every path out of here is
+     * sandboxed.
      */
     public function renderHtml(): Response
     {
         $templateKey = (string) $this->request->getParam('template', '');
 
         if (!$templateKey) {
-            return $this->response->html('<p>Template not specified</p>');
+            return $this->sandboxedHtml('<p>Template not specified</p>');
         }
 
         try {
@@ -127,12 +132,12 @@ class EmailTestController extends AppController
             $preview = $this->mailService->preview($mailable);
 
             // output raw HTML without any layout
-            return $this->response->html($preview['body']);
+            return $this->sandboxedHtml((string) $preview['body']);
 
         } catch (Exception $e) {
             error_log('Email HTML render failed: '.$e->getMessage());
 
-            return $this->response->html(
+            return $this->sandboxedHtml(
                 '<p style="color:red;">Error: '.e($e->getMessage()).'</p>'
             );
         }

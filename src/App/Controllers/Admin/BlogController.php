@@ -69,6 +69,57 @@ class BlogController extends AppController
         return $this->redirectToList('/admin/blogs');
     }
 
+    /**
+     * Publish a blog.
+     *
+     * Refuses a suspended blog: that status is written only by the
+     * owner-suspension cascade, and publishing over it would leave the
+     * lift-suspension flow with nothing to restore.
+     */
+    public function publish(string $id): Response
+    {
+        return $this->changeStatus($id, 'published', 'Blog published.');
+    }
+
+    /**
+     * Move a blog back to draft.
+     */
+    public function unpublish(string $id): Response
+    {
+        return $this->changeStatus($id, 'draft', 'Blog moved to draft.');
+    }
+
+    /**
+     * Shared body for publish/unpublish above.
+     */
+    private function changeStatus(string $id, string $status, string $successMessage): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->getBlog($id);
+
+        if (($blog['status'] ?? '') === BlogModel::STATUS_SUSPENDED) {
+            $this->flash('error', 'This blog is suspended, so its status cannot be changed here.');
+
+            return $this->redirectToList('/admin/blogs');
+        }
+
+        $status === 'published' ? $this->blogModel->publishBlog((int) $id) : $this->blogModel->unpublishBlog((int) $id);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            'blog.status_changed',
+            'blog',
+            (int) $id,
+            ['status' => $status],
+            $this->request->ip()
+        );
+
+        $this->flash('success', $successMessage);
+
+        return $this->redirectToList('/admin/blogs');
+    }
+
     public function index(): Response
     {
         $q = trim((string) $this->request->getParam('q', ''));
@@ -95,7 +146,9 @@ class BlogController extends AppController
             'status' => 'b.status',
             'theme' => 'bs.theme',
             'created' => 'b.created_at',
-        ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC');
+        ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC',
+            // Explore picks lead the list, the same way featured posts do.
+            pinned: 'b.is_featured DESC');
 
         $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy(), $theme);
 

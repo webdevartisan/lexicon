@@ -57,6 +57,24 @@ class NotificationService
     ];
 
     /**
+     * Maps a notification type to the inbox it belongs in.
+     *
+     * 'personal' (the default, see NotificationModel::create()) is things that
+     * happened to the recipient or their own content. 'content' is a
+     * blog-management concern the dashboard already contextualizes, such as a
+     * post needing review, a comment awaiting moderation, or blog-wide
+     * activity, scoped to whoever manages that blog rather than to a reader.
+     * There is no 'admin' entry here: admin-scoped notifications are fanned
+     * out by AdminNotificationDispatcher, never through this per-recipient map.
+     */
+    public const TYPE_TO_SCOPE = [
+        'post.submitted' => 'content',
+        'post.submitted_unassigned' => 'content',
+        CommentAudienceResolver::TYPE_MODERATION => 'content',
+        CommentAudienceResolver::TYPE_BLOG => 'content',
+    ];
+
+    /**
      * Comment notification type → the reason string NewCommentMail renders from.
      */
     private const COMMENT_MAIL_REASON = [
@@ -104,7 +122,8 @@ class NotificationService
             return;
         }
 
-        $this->notifications->create($userId, $orderedTypes[0], $data);
+        $scope = self::TYPE_TO_SCOPE[$orderedTypes[0]] ?? 'personal';
+        $this->notifications->create($userId, $orderedTypes[0], $data, $scope);
 
         // Loaded lazily and once: an unmapped-only type list never touches the DB.
         $user = null;
