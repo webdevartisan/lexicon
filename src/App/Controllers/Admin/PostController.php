@@ -79,6 +79,113 @@ class PostController extends AppController
     }
 
     /**
+     * Publish a post.
+     */
+    public function publish(string $id): Response
+    {
+        return $this->changeStatus($id, 'published', 'Post published.');
+    }
+
+    /**
+     * Move a post back to draft.
+     */
+    public function draft(string $id): Response
+    {
+        return $this->changeStatus($id, 'draft', 'Post moved to draft.');
+    }
+
+    /**
+     * Archive a post.
+     */
+    public function archive(string $id): Response
+    {
+        return $this->changeStatus($id, 'archived', 'Post archived.');
+    }
+
+    /**
+     * Make a post publicly visible.
+     */
+    public function makePublic(string $id): Response
+    {
+        return $this->changeVisibility($id, 'public', 'Post is now public.');
+    }
+
+    /**
+     * Restrict a post to its collaborators.
+     */
+    public function makePrivate(string $id): Response
+    {
+        return $this->changeVisibility($id, 'private', 'Post is now private.');
+    }
+
+    /**
+     * Keep a post reachable only by direct link.
+     */
+    public function unlist(string $id): Response
+    {
+        return $this->changeVisibility($id, 'unlisted', 'Post is now unlisted.');
+    }
+
+    /**
+     * Shared body for the three quick status actions above.
+     *
+     * Status changes on a moderated post belong to its report case; a quick
+     * action here would either silently no-op against the model's own guard
+     * or, worse, look like it worked.
+     */
+    private function changeStatus(string $id, string $status, string $successMessage): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $post = $this->getPost($id);
+
+        if (($post['status'] ?? '') === 'moderated') {
+            $this->flash('error', 'This post is hidden by a moderation decision. Change its status from the report case instead.');
+
+            return $this->redirectToList('/admin/posts');
+        }
+
+        $this->model->updateStatus((int) $id, $status);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            'post.status_changed',
+            'post',
+            (int) $id,
+            ['status' => $status],
+            $this->request->ip()
+        );
+
+        $this->flash('success', $successMessage);
+
+        return $this->redirectToList('/admin/posts');
+    }
+
+    /**
+     * Shared body for the three quick visibility actions above.
+     */
+    private function changeVisibility(string $id, string $visibility, string $successMessage): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $this->getPost($id);
+        $this->model->updateVisibility((int) $id, $visibility);
+
+        audit()->log(
+            (int) auth()->user()['id'],
+            'post.visibility_changed',
+            'post',
+            (int) $id,
+            ['visibility' => $visibility],
+            $this->request->ip()
+        );
+
+        $this->flash('success', $successMessage);
+
+        return $this->redirectToList('/admin/posts');
+    }
+
+    /**
      * List posts across every blog with status filter, search, and paging.
      */
     public function index(): Response
@@ -99,7 +206,10 @@ class PostController extends AppController
             'comments' => 'comment_count',
             'published' => 'p.published_at',
             'updated' => 'p.updated_at',
-        ], defaultKey: 'updated', defaultDirection: 'desc', tiebreaker: 'p.id DESC');
+        ], defaultKey: 'updated', defaultDirection: 'desc', tiebreaker: 'p.id DESC',
+            // Front-page picks lead the list, so an admin can see what the site
+            // is currently showing without hunting for it through the pages.
+            pinned: 'p.featured_on_home DESC');
 
         $result = $this->model->findAllForAdmin(
             $page, 20, $status, $q,

@@ -31,10 +31,13 @@ $tr = isset($t) && is_callable($t) ? $t : static fn (string $key, array $p = [])
 $navIsGuest = !auth()->check() || empty($navViewer);
 $navIsReader = !empty($navViewer['is_reader']);
 $navUnread = (int) ($navViewer['unread_replies'] ?? 0);
+$navUnreadNotifications = (int) ($navViewer['unread_notifications'] ?? 0);
 
 // The count is part of the button's name, not a bare number floating next to
 // it: "Your account, 14 unread replies" is what a screen reader should say.
-// The pill is the same fact drawn, so it is hidden from the tree.
+// The pill is the same fact drawn, so it is hidden from the tree. Notifications
+// are not added in here: they have the bell beside this button, and counting
+// them twice would put a dot on the avatar for something already showing.
 $navMenuLabel = $navUnread > 0
     ? $tr('reader.accountMenuUnread', ['count' => $navUnread])
     : $tr('reader.accountMenu');
@@ -42,9 +45,39 @@ $navMenuLabel = $navUnread > 0
 // Both variants use the same id, and only one of them is ever on a page.
 $navMenuId = 'account-menu';
 
+// The bell: the reader's notifications, one click from anywhere on the
+// platform or inside any theme. It is a link first, so without JavaScript it
+// goes to the inbox; platform-menu.js turns it into a disclosure that loads
+// the panel below on first open.
+$renderBell = static function () use ($navUnreadNotifications, $tr): void {
+    $bellLabel = $navUnreadNotifications > 0
+        ? $tr('notifications.bellUnread', ['count' => $navUnreadNotifications])
+        : $tr('reader.notificationsTitle');
+    ?>
+    <div class="nav-bell platform-menu" data-platform-menu>
+        <a class="nav-bell-btn" href="<?= e(lurl('/notifications')) ?>"
+           data-platform-menu-toggle
+           aria-expanded="false" aria-controls="notification-panel"
+           aria-label="<?= e($bellLabel) ?>">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+            </svg>
+            <?php if ($navUnreadNotifications > 0) { ?>
+            <span class="nav-badge nav-bell-badge" aria-hidden="true"><?= $navUnreadNotifications > 99 ? '99+' : $navUnreadNotifications ?></span>
+            <?php } ?>
+        </a>
+
+        <div class="platform-menu-list notif-panel" id="notification-panel" data-platform-menu-list
+             data-panel-url="<?= e(lurl('/notifications/panel')) ?>"
+             data-panel-error="<?= e($tr('notifications.loadFailed')) ?>" hidden>
+            <p class="notif-panel-empty"><?= e($tr('notifications.loading')) ?></p>
+        </div>
+    </div>
+<?php };
+
 // A disclosure, not an ARIA menu. The contents are ordinary navigation links,
 // so role="menu" would promise arrow-key semantics that do not exist here.
-$renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnread, $navMenuLabel, $navMenuId, $logoutUrl, $navReturn, $tr): void { ?>
+$renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnread, $navUnreadNotifications, $navMenuLabel, $navMenuId, $logoutUrl, $navReturn, $tr): void { ?>
     <div class="nav-user platform-menu" data-platform-menu>
         <button type="button" class="nav-user-btn" data-platform-menu-toggle
                 aria-expanded="false" aria-controls="<?= e($navMenuId) ?>"
@@ -75,6 +108,14 @@ $renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnrea
         <nav class="platform-menu-list nav-user-menu" id="<?= e($navMenuId) ?>" data-platform-menu-list hidden
              aria-label="<?= e($tr('reader.accountMenu')) ?>">
             <ul>
+                <li>
+                    <a href="<?= e(lurl('/notifications')) ?>">
+                        <?= e($tr('reader.notificationsTitle')) ?>
+                        <?php if ($navUnreadNotifications > 0) { ?>
+                        <span class="nav-badge" aria-hidden="true"><?= $navUnreadNotifications > 99 ? '99+' : $navUnreadNotifications ?></span>
+                        <?php } ?>
+                    </a>
+                </li>
                 <li><a href="<?= e(lurl('/saved')) ?>"><?= e($tr('reader.savedTitle')) ?></a></li>
                 <li>
                     <a href="<?= e(lurl('/replies')) ?>">
@@ -123,12 +164,14 @@ if ($navVariant === 'platform') {
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>
+        <li><?php $renderBell(); ?></li>
         <li><?php $renderAccountMenu(); ?></li>
     <?php }
     } else {
         if ($navIsGuest) { ?>
         <a href="<?= e($loginUrl) ?>" class="nav-pill"><?= e($tr('header.signIn')) ?></a>
     <?php } else {
+        $renderBell();
         $renderAccountMenu();
     }
     }

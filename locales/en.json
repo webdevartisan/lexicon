@@ -17,6 +17,7 @@
     },
     "navigation": {
         "home": "Home",
+        "adminNotifications": "Notifications",
         "dashboard": "Dashboard",
         "createBlog": "Create a Blog",
         "discover": "Discover",
@@ -695,6 +696,7 @@
         "metaReplies": "Replies",
         "metaMyComments": "Your comments",
         "metaSubscriptions": "Subscriptions",
+        "notificationsTitle": "Notifications",
         "savedTitle": "Saved",
         "repliesTitle": "Replies",
         "subscriptionsTitle": "Subscriptions",
@@ -731,6 +733,24 @@
         "paginationAria": "Pagination",
         "accountMenu": "Your account",
         "accountMenuUnread": "Your account, {count} unread replies"
+    },
+    "notifications": {
+        "tabAll": "All",
+        "tabUnread": "Unread",
+        "tally": "{total} in total, {unread} unread",
+        "markAllRead": "Mark all read",
+        "markRead": "Mark read",
+        "clearAll": "Clear all",
+        "clearAllConfirm": "Clear every notification? This cannot be undone.",
+        "empty": "Nothing here yet. Replies, invites and moderation notices about you arrive here.",
+        "emptyUnread": "Nothing unread. You are all caught up.",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "seeAll": "See all notifications",
+        "loading": "Loading...",
+        "loadFailed": "Could not load these right now.",
+        "bellUnread": "Notifications, {count} unread",
+        "cancel": "Cancel"
     },
     "pages": {
         "gettingStartedTitle": "Getting started",

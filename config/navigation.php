@@ -214,6 +214,7 @@ return [
      */
     'admin' => [
         ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_site_settings'], 'key' => 'navigation.home'],
+        ['label' => 'Notifications', 'href' => '/admin/notifications', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel'], 'key' => 'navigation.adminNotifications'],
 
         ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
         ['label' => 'Blogs', 'href' => '/admin/blogs', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs'], 'key' => 'navigation.blogs'],

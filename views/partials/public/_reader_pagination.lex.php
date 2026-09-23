@@ -18,7 +18,10 @@ if ($readerTotalPages > 1) {
     $readerPages = array_unique($readerPages);
     sort($readerPages);
 
-    $readerPageUrl = static fn (int $p): string => lurl($readerBase).($p > 1 ? '?page='.$p : '');
+    // A filtered list keeps its filter across pages, so the separator depends
+    // on whether the base path already carries a query.
+    $readerPageJoin = str_contains($readerBase, '?') ? '&' : '?';
+    $readerPageUrl = static fn (int $p): string => lurl($readerBase).($p > 1 ? $readerPageJoin.'page='.$p : '');
     ?>
 <nav aria-label="<?= e($t('reader.paginationAria')) ?>">
     <ul class="lx-pagination">

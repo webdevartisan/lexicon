@@ -121,6 +121,7 @@ trait TemplateCacheTrait
      * - $area . ':sidebar:nav'
      * - "sidebar:$area:nav"
      * - 'prefix:' . $var . ':suffix'
+     * - 'prefix:' . $row['icon']
      */
     private function compileKeyExpression(string $rawKey): string
     {
@@ -139,7 +140,9 @@ trait TemplateCacheTrait
         if (!$this->isSafeCacheExpression($rawKey)) {
             error_log("Warning: Invalid cache key expression: {$rawKey}");
 
-            return "'invalid_cache_key'";
+            // One shared fallback key would have every rejected block serving
+            // the first one's HTML for the whole TTL, so each keeps its own.
+            return "'invalid_cache_key:".md5($rawKey)."'";
         }
 
         return $rawKey;
@@ -165,14 +168,19 @@ trait TemplateCacheTrait
      * Validate that a cache key expression contains only allowed syntax.
      *
      * Allowed:
-     * - Variables: $key
+     * - Variables: $key and $row['key']
      * - Concatenation: .
      * - Quotes: ' and "
      * - Characters used in cache keys: letters, digits, underscore, colon, hyphen, spaces
+     *
+     * Brackets are allowed because a key built off a row, such as
+     * 'icon:' . $tile['icon'], is the common case inside a loop. Parentheses
+     * stay out, which is what keeps a template from compiling a function call
+     * into the key.
      */
     private function isSafeCacheExpression(string $expression): bool
     {
-        return preg_match('/^[\$\w\.\s:\-\'"]+$/', $expression) === 1;
+        return preg_match('/^[\$\w\.\s:\-\[\]\'"]+$/', $expression) === 1;
     }
 
     /**

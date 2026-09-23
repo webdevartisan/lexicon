@@ -102,23 +102,18 @@ $statusBadge = [
             </div>
         </div>
     {% else %}
-        <!-- Bulk action form -->
-        <form id="bulk-form" method="POST" action="/dashboard/comment/bulk">
-            {{ csrf_field() }}
-            <input type="hidden" name="bulk_action" id="bulk-action" value="">
-            <input type="hidden" name="blog_id" value="<?= e((string) $blog['id']) ?>">
-            <input type="hidden" name="return_status" value="<?= e($status) ?>">
-        </form>
+        <?php
+        $bulkActions = [
+            ['action' => 'approve', 'label' => 'Approve', 'icon' => 'check', 'hover' => 'hover:bg-green-600/30'],
+            ['action' => 'unapprove', 'label' => 'Pending', 'icon' => 'undo-2', 'hover' => 'hover:bg-amber-600/30'],
+            ['action' => 'spam', 'label' => 'Spam', 'icon' => 'shield-alert', 'hover' => 'hover:bg-orange-600/30'],
+            ['action' => 'delete', 'label' => 'Delete', 'icon' => 'trash-2', 'hover' => 'hover:bg-red-600/30', 'danger' => true, 'confirm' => 'Permanently delete {n}? This cannot be undone.'],
+        ];
+        $bulkHiddenFields = ['blog_id' => (string) $blog['id'], 'return_status' => $status];
+        ?>
+        {% cmp="bulk-actions-bar" actionUrl="/dashboard/comment/bulk" itemLabel="comment" actions="{$bulkActions}" hiddenFields="{$bulkHiddenFields}" %}
 
         <div>
-            <div class="flex items-center justify-between mb-3 text-xs">
-                <label class="inline-flex items-center gap-2 text-slate-600 dark:text-zink-200 cursor-pointer">
-                    <input type="checkbox" id="select-all" class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500">
-                    <span>Select all on this page</span>
-                </label>
-                <span id="selected-count" class="text-slate-500 dark:text-zink-300"></span>
-            </div>
-
             <div class="card">
                 <div class="divide-y divide-slate-100 dark:divide-zink-600">
                     {% foreach ($comments as $c): %}
@@ -243,77 +238,8 @@ $statusBadge = [
             <div class="mt-6">
                 {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" %}
             </div>
-
-            <!-- Floating bulk action bar -->
-            <div id="bulk-bar" class="hidden" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999;">
-                <div class="flex items-center gap-2 px-4 py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-full shadow-lg border border-slate-700">
-                    <span id="bulk-count" class="text-sm font-medium pr-2 border-r border-slate-700"></span>
-                    <button type="button" data-bulk="approve" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-green-600/30 transition-colors">
-                        {% cache 'lucide:check:bulk' ttl=31536000 %}<i data-lucide="check" class="size-3.5"></i>{% endcache %} Approve
-                    </button>
-                    <button type="button" data-bulk="unapprove" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-amber-600/30 transition-colors">
-                        {% cache 'lucide:undo-2:bulk' ttl=31536000 %}<i data-lucide="undo-2" class="size-3.5"></i>{% endcache %} Pending
-                    </button>
-                    <button type="button" data-bulk="spam" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-orange-600/30 transition-colors">
-                        {% cache 'lucide:shield-alert:bulk' ttl=31536000 %}<i data-lucide="shield-alert" class="size-3.5"></i>{% endcache %} Spam
-                    </button>
-                    <button type="button" data-bulk="delete" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md hover:bg-red-600/30 transition-colors text-red-300">
-                        {% cache 'lucide:trash-2:bulk' ttl=31536000 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %} Delete
-                    </button>
-                </div>
-            </div>
         </div>
     {% endif %}
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script nonce="<?= csp_nonce() ?>">
-// Bulk comment selection + floating action bar
-(function () {
-    const form = document.getElementById('bulk-form');
-    if (!form) return;
-
-    const checkboxes = Array.from(document.querySelectorAll('.bulk-checkbox'));
-    const selectAll  = document.getElementById('select-all');
-    const bar   = document.getElementById('bulk-bar');
-    const count = document.getElementById('bulk-count');
-    const counter = document.getElementById('selected-count');
-    const actionInput= document.getElementById('bulk-action');
-
-    document.body.appendChild(bar);
-
-    function refresh() {
-        const n = checkboxes.filter(c => c.checked).length;
-        if (n > 0) {
-            bar.classList.remove('hidden');
-            count.textContent = n + ' selected';
-            counter.textContent = n + ' selected';
-        } else {
-            bar.classList.add('hidden');
-            counter.textContent = '';
-        }
-
-        selectAll.checked = n === checkboxes.length && n > 0;
-        selectAll.indeterminate = n > 0 && n < checkboxes.length;
-    }
-
-    checkboxes.forEach(c => c.addEventListener('change', refresh));
-    selectAll.addEventListener('change', () => {
-        checkboxes.forEach(c => c.checked = selectAll.checked);
-        refresh();
-    });
-
-    bar.querySelectorAll('[data-bulk]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.bulk;
-            const n = checkboxes.filter(c => c.checked).length;
-
-            if (action === 'delete' && !confirm('Permanently delete ' + n + ' comment(s)? This cannot be undone.')) return;
-            actionInput.value = action;
-            form.submit();
-        });
-    });
-})();
-</script>
-{% endblock %}

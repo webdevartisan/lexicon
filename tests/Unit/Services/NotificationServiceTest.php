@@ -44,7 +44,7 @@ describe('NotificationService::dispatch', function () {
     test('always writes the in-app notification row, even when email is muted', function () {
         $notif = Mockery::mock(NotificationModel::class);
         $notif->shouldReceive('create')
-            ->with(7, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r'])
+            ->with(7, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r'], 'personal')
             ->once()
             ->andReturn(true);
 
@@ -226,7 +226,7 @@ describe('NotificationService::dispatchFirstEnabled', function () {
         $notif = Mockery::mock(NotificationModel::class);
         $notif->shouldReceive('create')
             ->once()
-            ->with(7, CommentAudienceResolver::TYPE_MODERATION, $commentPayload)
+            ->with(7, CommentAudienceResolver::TYPE_MODERATION, $commentPayload, 'content')
             ->andReturn(true);
 
         $users = Mockery::mock(UserModel::class);

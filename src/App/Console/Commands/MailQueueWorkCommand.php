@@ -6,6 +6,8 @@ namespace App\Console\Commands;
 
 use App\Interfaces\SchedulableCommandInterface;
 use App\Interfaces\ScheduleHintInterface;
+use App\Models\MailQueueModel;
+use App\Services\AdminNotificationDispatcher;
 use App\Services\MailQueueService;
 use Throwable;
 
@@ -22,8 +24,16 @@ use Throwable;
  */
 class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintInterface
 {
+    /** Failed sends inside the window below this many admins hear nothing about. */
+    private const FAILURE_ALERT_THRESHOLD = 5;
+
+    /** Lookback window the threshold above is measured over. */
+    private const FAILURE_WINDOW_MINUTES = 60;
+
     public function __construct(
         private MailQueueService $mailQueue,
+        private MailQueueModel $queue,
+        private AdminNotificationDispatcher $adminNotifier,
     ) {}
 
     public static function scheduleLabel(): string
@@ -131,6 +141,10 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
             $counts = $this->mailQueue->statusCounts();
             echo "Queue now: {$counts['pending']} pending, {$counts['failed']} failed\n";
 
+            if ($result['failed'] > 0) {
+                $this->checkFailureRate();
+            }
+
             return 0;
         } catch (Throwable $e) {
             echo "✗ Error processing the mail queue: {$e->getMessage()}\n";
@@ -138,5 +152,31 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
 
             return 1;
         }
+    }
+
+    /**
+     * Tell admins when failures are piling up, at most once per cooldown.
+     *
+     * Reads the actual failure count over the window rather than just this
+     * batch's number, so a slow trickle across several ticks still crosses
+     * the threshold instead of resetting every run.
+     */
+    private function checkFailureRate(): void
+    {
+        $failedRecently = $this->queue->failedCountSince(self::FAILURE_WINDOW_MINUTES);
+
+        if ($failedRecently < self::FAILURE_ALERT_THRESHOLD) {
+            return;
+        }
+
+        $this->adminNotifier->dispatch(
+            'admin.mail_queue_failures',
+            'manage_mail_queue',
+            [
+                'failed_count' => $failedRecently,
+                'window_minutes' => self::FAILURE_WINDOW_MINUTES,
+            ],
+            self::FAILURE_WINDOW_MINUTES
+        );
     }
 }

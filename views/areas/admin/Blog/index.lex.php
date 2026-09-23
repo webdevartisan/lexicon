@@ -77,9 +77,15 @@ $themeLabel = $blogTheme !== '' ? $blogTheme : '—';
 $blogSlug = (string) ($blog['blog_slug'] ?? '');
 $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
 ?>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
+                    <tr class="transition-colors <?= $featuredOnExplore
+                        ? 'bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-500/5 dark:hover:bg-amber-500/10'
+                        : 'hover:bg-slate-50/60 dark:hover:bg-zink-700/40' ?>">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $blog['id']) ?></td>
                         <td class="px-3.5 py-2.5">
+                            <?php if ($featuredOnExplore) { ?>
+                            {% cache 'lucide:star-fill:row' ttl=31536000 %}<i data-lucide="star" class="size-3.5 fill-current text-amber-500 inline-block align-[-1px] mr-1"></i>{% endcache %}
+                            <span class="sr-only">Featured on the explore page. </span>
+                            <?php } ?>
                             <?php // A blog with no slug has no public page to open, so it stays plain text.?>
                             <?php if ($publicUrl !== '') { ?>
                                 <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
@@ -100,25 +106,35 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         </td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                <form method="POST" action="/admin/blogs/<?= (int) $blog['id'] ?>/feature-explore">
-                                    {{ csrf_field() }}
-                                    <button type="submit"
-                                            data-tooltip data-tooltip-content="<?= e($featureTip) ?>" data-tooltip-placement="top"
-                                            aria-label="<?= e($featureTip) ?>"
-                                            class="p-2 rounded-md transition-colors <?= $featuredOnExplore ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
-                                        
-                                            <?php if ($featuredOnExplore) { ?>
-                                            {% cache 'lucide:star-fill' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
-                                            <?php } else { ?>
-                                            {% cache 'lucide:star' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
-                                            <?php } ?>
-                                    </button>
-                                </form>
                                 <?php
                                 $rowTitle = (string) $blog['blog_name'];
+                                $isSuspended = $blogStatus === 'suspended';
                                 $rowActions = [
                                     ['label' => 'View', 'icon' => 'eye', 'href' => $showUrl],
                                     ['label' => 'Edit', 'icon' => 'pencil', 'href' => $editUrl],
+                                    ['label' => 'Transfer ownership', 'icon' => 'key-round', 'href' => $editUrl.'#ownership'],
+                                    [
+                                        'label' => $featureTip, 'icon' => 'star',
+                                        'post' => buildLocalizedUrl('/admin/blogs/'.(int) $blog['id'].'/feature-explore'),
+                                        'confirm' => $featuredOnExplore
+                                            ? 'Take this blog off the explore page?'
+                                            : 'Feature this blog on the explore page?',
+                                        // featureExplore() refuses anything unpublished, so offering it
+                                        // there would only ever produce an error flash.
+                                        'can' => $featuredOnExplore || $blogStatus === 'published',
+                                    ],
+                                    [
+                                        'label' => 'Publish', 'icon' => 'send',
+                                        'post' => buildLocalizedUrl('/admin/blogs/'.(int) $blog['id'].'/publish'),
+                                        'confirm' => 'Publish this blog?',
+                                        'can' => !$isSuspended && $blogStatus !== 'published',
+                                    ],
+                                    [
+                                        'label' => 'Move to draft', 'icon' => 'pencil-ruler',
+                                        'post' => buildLocalizedUrl('/admin/blogs/'.(int) $blog['id'].'/unpublish'),
+                                        'confirm' => 'Move this blog back to draft? It will no longer be publicly visible.',
+                                        'can' => !$isSuspended && $blogStatus === 'published',
+                                    ],
                                     ['label' => 'Delete', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true],
                                 ];
                                 ?>
@@ -138,8 +154,4 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
     {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
 {% endblock %}

@@ -89,7 +89,11 @@
                                     <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium rounded-full text-white bg-custom-500"><?= (int) $notifications['count'] ?></span>
                                     <?php } ?>
                                 </h6>
-                                <p class="text-xs text-slate-500 dark:text-zink-300">Recent activity on your posts and collaborations.</p>
+                                <p class="text-xs text-slate-500 dark:text-zink-300">
+                                    <?= ($notifications['listPath'] ?? '') === '/admin/notifications'
+                                        ? 'Report thresholds, mail delivery, and scheduler health.'
+                                        : 'Posts to review and comments to moderate.' ?>
+                                </p>
                             </div>
                             <div data-simplebar="" class="max-h-[350px] border-t border-slate-100 dark:border-zink-500">
                                 <?php if (empty($notifications['items'])) { ?>
@@ -99,6 +103,7 @@
                                 </div>
                                 <?php } else { ?>
                                 <div class="flex flex-col">
+                                    <?php $listPath = $notifications['listPath'] ?? '/dashboard/notifications'; ?>
                                     <?php foreach ($notifications['items'] as $n) { ?>
                                         {% include "partials/_notification_item.lex.php" %}
                                     <?php } ?>
@@ -106,7 +111,7 @@
                                 <?php } ?>
                             </div>
                             <div class="flex items-center justify-end p-3 border-t border-slate-100 dark:border-zink-500">
-                                <a href="/dashboard/notifications" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all notifications</a>
+                                <a href="<?= e(lurl($notifications['listPath'] ?? '/dashboard/notifications')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all notifications</a>
                             </div>
                         </div>
                     </div>

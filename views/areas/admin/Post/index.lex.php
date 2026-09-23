@@ -92,9 +92,15 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
     ? lurl('/blog/'.rawurlencode($blogSlug).'/'.rawurlencode($postSlug))
     : '';
 ?>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
+                    <tr class="transition-colors <?= $featuredOnHome
+                        ? 'bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-500/5 dark:hover:bg-amber-500/10'
+                        : 'hover:bg-slate-50/60 dark:hover:bg-zink-700/40' ?>">
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) $post['id']) ?></td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50 max-w-xs truncate">
+                            <?php if ($featuredOnHome) { ?>
+                            {% cache 'lucide:star-fill:row' ttl=31536000 %}<i data-lucide="star" class="size-3.5 fill-current text-amber-500 inline-block align-[-1px] mr-1"></i>{% endcache %}
+                            <span class="sr-only">Featured on the front page. </span>
+                            <?php } ?>
                             <?php if ($publicUrl !== '') { ?>
                                 <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
                                    class="hover:text-custom-500 dark:hover:text-custom-500 transition-colors">
@@ -120,24 +126,59 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                <form method="POST" action="/admin/posts/<?= (int) $post['id'] ?>/feature-home">
-                                    {{ csrf_field() }}
-                                    <button type="submit"
-                                            data-tooltip data-tooltip-content="<?= e($featureTip) ?>" data-tooltip-placement="top"
-                                            aria-label="<?= e($featureTip) ?>"
-                                            class="p-2 rounded-md transition-colors <?= $featuredOnHome ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-slate-500 hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10' ?>">
-                                            <?php if ($featuredOnHome) { ?>
-                                            {% cache 'lucide:star-fill' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-current"></i>{% endcache %}
-                                            <?php } else { ?>
-                                            {% cache 'lucide:star' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
-                                            <?php } ?>
-                                    </button>
-                                </form>
                                 <?php
                                 $rowTitle = (string) $post['title'];
+                                $isModerated = $postStatus === 'moderated';
+                                $postVisibility = (string) ($post['visibility'] ?? 'public');
                                 $rowActions = [
                                     ['label' => 'View', 'icon' => 'eye', 'href' => $showUrl],
                                     ['label' => 'Edit', 'icon' => 'pencil', 'href' => $editUrl],
+                                    [
+                                        'label' => $featureTip, 'icon' => 'star',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/feature-home'),
+                                        'confirm' => $featuredOnHome
+                                            ? 'Take this post off the front page?'
+                                            : 'Feature this post on the front page?',
+                                        // featureHome() refuses anything not published and public, so
+                                        // offering it there would only ever produce an error flash.
+                                        'can' => $featuredOnHome || ($postStatus === 'published' && $postVisibility === 'public'),
+                                    ],
+                                    [
+                                        'label' => 'Publish', 'icon' => 'send',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/publish'),
+                                        'confirm' => 'Publish this post?',
+                                        'can' => !$isModerated && $postStatus !== 'published',
+                                    ],
+                                    [
+                                        'label' => 'Move to draft', 'icon' => 'pencil-ruler',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/draft'),
+                                        'confirm' => 'Move this post back to draft?',
+                                        'can' => !$isModerated && $postStatus !== 'draft',
+                                    ],
+                                    [
+                                        'label' => 'Archive', 'icon' => 'archive',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/archive'),
+                                        'confirm' => 'Archive this post?',
+                                        'can' => !$isModerated && $postStatus !== 'archived',
+                                    ],
+                                    [
+                                        'label' => 'Make public', 'icon' => 'globe',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/make-public'),
+                                        'confirm' => 'Make this post public?',
+                                        'can' => $postVisibility !== 'public',
+                                    ],
+                                    [
+                                        'label' => 'Make private', 'icon' => 'lock',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/make-private'),
+                                        'confirm' => 'Make this post private? Only its blog\'s team will be able to see it.',
+                                        'can' => $postVisibility !== 'private',
+                                    ],
+                                    [
+                                        'label' => 'Unlist', 'icon' => 'eye-off',
+                                        'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/unlist'),
+                                        'confirm' => 'Unlist this post? It will stay reachable by direct link, but drop out of listings.',
+                                        'can' => $postVisibility !== 'unlisted',
+                                    ],
                                     ['label' => 'Delete', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true],
                                 ];
                                 ?>
@@ -157,8 +198,4 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
     {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
 {% endblock %}

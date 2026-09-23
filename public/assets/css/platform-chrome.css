@@ -460,3 +460,192 @@
     padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The bell, and the panel it opens.
+
+   Same rules as the account menu next to it: no colour of its own, so it reads
+   on paper and on a dark masthead alike, and one definition serves the Lexicon
+   front and all five themes. The panel is the same dark surface as the account
+   menu, widened, because it carries sentences rather than one-word links.
+   --------------------------------------------------------------------------- */
+
+.nav-bell {
+  display: inline-flex;
+}
+
+.nav-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-bell-btn:hover,
+.nav-bell-btn[aria-expanded='true'] {
+  background: rgba(128, 128, 128, .16);
+  border-color: rgba(128, 128, 128, .28);
+  text-decoration: none;
+}
+
+/* Sits on the bell's shoulder the way the dot sits on the avatar's. */
+.nav-bell-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(35%, -20%);
+  pointer-events: none;
+}
+
+.notif-panel {
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0;
+  overflow: hidden;
+}
+
+.notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .7rem .85rem;
+  border-bottom: 1px solid rgba(128, 128, 128, .28);
+}
+
+.notif-panel-title {
+  color: var(--platform-menu-fg, #f2f2f2);
+  font-size: .85em;
+  font-weight: 700;
+}
+
+/* A text button, not a row: it sits on the header line beside the title. */
+.notif-panel-list button,
+.notif-panel-head button {
+  width: auto;
+  padding: .15rem .3rem;
+  color: var(--platform-menu-fg, #f2f2f2);
+  font-size: .75em;
+  opacity: .8;
+}
+
+.notif-panel-head button:hover {
+  opacity: 1;
+}
+
+.notif-panel-list {
+  /* Eight rows is what the endpoint sends; this keeps a tall one scrollable
+     instead of running off the bottom of a short window. */
+  max-height: min(24rem, 60vh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.notif-row a {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  width: 100%;
+  padding: .6rem .85rem;
+  border-radius: 0;
+  color: var(--platform-menu-fg, #f2f2f2);
+  text-decoration: none;
+}
+
+.notif-row + .notif-row a {
+  border-top: 1px solid rgba(128, 128, 128, .18);
+}
+
+.notif-row.is-unread a {
+  background: rgba(128, 128, 128, .12);
+}
+
+.notif-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, .2);
+}
+
+.notif-row-icon svg {
+  width: .95rem;
+  height: .95rem;
+}
+
+/* Tones carry meaning, so they are set here rather than left to each surface.
+   All four are light enough to clear 4.5:1 on the panel's dark surface. */
+.notif-row-icon[data-tone='positive'] { color: #7ddba0; }
+.notif-row-icon[data-tone='attention'] { color: #ffd47d; }
+.notif-row-icon[data-tone='critical'] { color: #ffb4ab; }
+.notif-row-icon[data-tone='neutral'] { color: #a8c7fa; }
+
+.notif-row-body {
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+
+.notif-row-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: .8em;
+  line-height: 1.35;
+}
+
+.notif-row.is-unread .notif-row-title {
+  font-weight: 700;
+}
+
+.notif-row-time {
+  display: block;
+  margin-top: .15rem;
+  font-size: .7em;
+  opacity: .65;
+}
+
+.notif-row-dot {
+  flex: none;
+  align-self: center;
+  width: .45rem;
+  height: .45rem;
+  border-radius: 50%;
+  background: var(--platform-badge-bg, #ffb4ab);
+}
+
+.notif-panel-empty {
+  margin: 0;
+  padding: 1.5rem .85rem;
+  color: var(--platform-menu-fg, #f2f2f2);
+  font-size: .8em;
+  text-align: center;
+  opacity: .7;
+}
+
+.notif-panel-foot {
+  display: block;
+  padding: .6rem .85rem;
+  border-top: 1px solid rgba(128, 128, 128, .28);
+  color: var(--platform-menu-fg, #f2f2f2);
+  font-size: .78em;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.notif-panel-foot:hover {
+  background: rgba(128, 128, 128, .22);
+  text-decoration: none;
+}

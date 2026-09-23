@@ -24,6 +24,9 @@ class ReportIntakeService
 {
     public const DETAILS_MAX = 1000;
 
+    /** Reports from reporters in good standing before admins hear about a case. */
+    private const ADMIN_ALERT_REPORT_THRESHOLD = 3;
+
     public function __construct(
         private Database $database,
         private ModerationCategoryModel $categories,
@@ -31,6 +34,7 @@ class ReportIntakeService
         private ContentReportModel $reports,
         private ModerationSettings $settings,
         private ModerationRuleEngine $rules,
+        private AdminNotificationDispatcher $adminNotifier,
         private string $deletedUserHandle,
     ) {}
 
@@ -92,8 +96,34 @@ class ReportIntakeService
         }
 
         $this->rules->evaluate($caseId);
+        $this->maybeNotifyAdmins($caseId);
 
         return ['recorded' => true, 'case_id' => $caseId, 'category' => $category];
+    }
+
+    /**
+     * Tell admins once a case has accumulated enough standing reports to be
+     * worth a look, instead of relying on someone happening to check the queue.
+     */
+    private function maybeNotifyAdmins(int $caseId): void
+    {
+        $case = $this->cases->findById($caseId);
+
+        if ($case === null || (int) ($case['counted_report_count'] ?? 0) < self::ADMIN_ALERT_REPORT_THRESHOLD) {
+            return;
+        }
+
+        $this->adminNotifier->dispatch(
+            'admin.report_threshold',
+            'handle_reports',
+            [
+                'case_id' => $caseId,
+                'report_count' => (int) $case['counted_report_count'],
+                'top_category' => $case['top_category'] ?? null,
+            ],
+            60,
+            (string) $caseId
+        );
     }
 
     /**

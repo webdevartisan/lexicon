@@ -1120,6 +1120,33 @@ class PostModel extends AppModel
     }
 
     /**
+     * Update how widely a post is visible, independent of its status.
+     *
+     * Purges the same public surfaces as a status change: private and
+     * unlisted posts are also excluded from those listings, so a flip
+     * between them is just as visible to a cached reader.
+     *
+     * @param  int  $id  Post ID
+     * @param  string  $visibility  One of self::VISIBILITIES
+     * @return bool True on success
+     */
+    public function updateVisibility(int $id, string $visibility): bool
+    {
+        $post = $this->findResource($id);
+
+        $affected = $this->database->execute(
+            'UPDATE posts SET visibility = ? WHERE id = ?',
+            [$visibility, $id]
+        );
+
+        if ($affected > 0 && $post) {
+            $this->forgetStatusSurfaces($post);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
      * Hide a post from readers because of a moderation decision.
      *
      * The old status is kept beside it, so reversing the decision restores the

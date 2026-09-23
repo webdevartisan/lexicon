@@ -373,11 +373,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     id         INT AUTO_INCREMENT PRIMARY KEY,
     user_id    INT NOT NULL,
     type       VARCHAR(64) NOT NULL,
+    scope      ENUM('personal','content','admin') NOT NULL DEFAULT 'personal' COMMENT 'Which inbox this belongs in: personal (happened to you/your content), content (a blog-management concern the dashboard contextualizes), admin (platform-ops, no per-user relevance)',
     data       JSON NOT NULL,
     read_at    TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_read (user_id, read_at),
+    INDEX idx_user_scope_read (user_id, scope, read_at),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='In-app notifications for workflow and collaboration events';
@@ -713,7 +715,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     subject VARCHAR(255) NOT NULL,
     body_html LONGTEXT NOT NULL,
     body_text LONGTEXT DEFAULT NULL,
-    status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+    status ENUM('pending','sending','sent','failed','cancelled') NOT NULL DEFAULT 'pending',
     tier ENUM('critical','standard','bulk') NOT NULL DEFAULT 'standard' COMMENT 'Set by the Mailable class, decides which worker drains the row',
     attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',
     max_attempts INT NOT NULL DEFAULT 3 COMMENT 'Give up and mark failed past this',
@@ -723,12 +725,16 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     related_id INT DEFAULT NULL,
     next_attempt_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Backoff gate; worker ignores rows dated ahead',
     sent_at TIMESTAMP NULL DEFAULT NULL,
+    cancelled_at TIMESTAMP NULL DEFAULT NULL,
+    cancelled_by INT DEFAULT NULL COMMENT 'Admin user id who cancelled this row',
+    resent_from_id INT DEFAULT NULL COMMENT 'Original row id this send repeats, when queued via Resend',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_mail_queue_claim (tier, status, next_attempt_at),
     INDEX idx_mail_queue_token (claim_token),
     INDEX idx_mail_queue_related (related_type, related_id),
-    INDEX idx_mail_queue_created (created_at)
+    INDEX idx_mail_queue_created (created_at),
+    INDEX idx_mail_queue_resent (resent_from_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Outbound email queue drained by the mail:queue-work cron worker';
 

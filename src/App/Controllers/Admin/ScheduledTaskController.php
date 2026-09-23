@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\ScheduledTaskModel;
 use App\Models\ScheduledTaskRunModel;
+use App\Services\AdminNotificationDispatcher;
 use App\Services\PseudoCron;
 use App\Services\ScheduleCalculator;
 use App\Services\ScheduleRegistry;
@@ -44,6 +45,7 @@ class ScheduledTaskController extends AppController
         private ScheduleRegistry $registry,
         private ScheduleCalculator $calculator,
         private PseudoCron $pseudoCron,
+        private AdminNotificationDispatcher $adminNotifier,
     ) {}
 
     /**
@@ -51,10 +53,22 @@ class ScheduledTaskController extends AppController
      */
     public function index(): Response
     {
+        $heartbeatStale = $this->schedule->heartbeatIsStale();
+
+        // No independent watchdog exists, so a stall is only ever noticed here, by whoever opens this page next.
+        if ($heartbeatStale) {
+            $this->adminNotifier->dispatch(
+                'admin.scheduler_stalled',
+                'manage_scheduled_tasks',
+                ['heartbeat_age_seconds' => $this->schedule->heartbeatAge()],
+                60
+            );
+        }
+
         return $this->view('areas/admin/ScheduledTask/index.lex.php', [
             'tasks' => $this->tasks->allWithStatus(),
             'heartbeatAge' => $this->schedule->heartbeatAge(),
-            'heartbeatStale' => $this->schedule->heartbeatIsStale(),
+            'heartbeatStale' => $heartbeatStale,
             'runsDetached' => $this->schedule->runsDetached(),
             'viewerTimezone' => viewer_timezone(),
             'cronLine' => $this->cronLine(),

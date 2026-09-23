@@ -9,7 +9,7 @@
  *           |suspended (accounts and blogs)|moderated (posts hidden by moderation)
  *           |open|in_review|escalated|resolved|hidden (report cases)
  *           |upheld|dismissed|unfounded (how a report ended)
- *           |sending|sent|failed (mail queue)
+ *           |sending|sent|failed|cancelled (mail queue)
  * - label: optional display text (defaults to ucfirst of status)
  */
 $status = (string) ($status ?? 'draft');
@@ -44,6 +44,7 @@ $map = [
     'sending' => 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:border-sky-800',
     'sent' => 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800',
     'failed' => 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:border-red-800',
+    'cancelled' => 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500',
 ];
 
 $classes = $map[$status] ?? $map['draft'];

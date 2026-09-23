@@ -200,3 +200,60 @@ it('records no author for content handed to the shared erased-accounts account',
     expect($case['subject_author_id'])->toBeNull()
         ->and($case['subject_author_handle'])->toBeNull();
 });
+
+// ============================================================================
+// Admin alert: filing a report can push a case over the platform-wide
+// threshold, which is a separate concern from the per-item rules engine above.
+// ============================================================================
+
+it('notifies administrators once counted reports on a case cross the alert threshold', function () {
+    $adminId = UserFactory::new($this->users)->withRoles(roleIds($this->db, ['administrator']))->create();
+
+    $this->intake->file($this->reporters[0], 'post', $this->postId, 'spam', null);
+    $this->intake->file($this->reporters[1], 'post', $this->postId, 'spam', null);
+    $result = $this->intake->file($this->reporters[2], 'post', $this->postId, 'spam', null);
+
+    $notified = $this->db->query(
+        "SELECT data FROM notifications WHERE user_id = ? AND scope = 'admin' AND type = 'admin.report_threshold'",
+        [$adminId]
+    )->fetch(\PDO::FETCH_ASSOC);
+
+    expect($notified)->not->toBeFalse();
+
+    $data = json_decode($notified['data'], true);
+    expect($data['case_id'])->toBe($result['case_id'])
+        ->and($data['report_count'])->toBe(3);
+});
+
+it('does not notify administrators before the case reaches the threshold', function () {
+    $adminId = UserFactory::new($this->users)->withRoles(roleIds($this->db, ['administrator']))->create();
+
+    $this->intake->file($this->reporters[0], 'post', $this->postId, 'spam', null);
+    $this->intake->file($this->reporters[1], 'post', $this->postId, 'spam', null);
+
+    $count = (int) $this->db->query(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND scope = 'admin'",
+        [$adminId]
+    )->fetchColumn();
+
+    expect($count)->toBe(0);
+});
+
+it('does not re-notify the same case again inside the cooldown window', function () {
+    $adminId = UserFactory::new($this->users)->withRoles(roleIds($this->db, ['administrator']))->create();
+
+    foreach ($this->reporters as $reporter) {
+        $this->intake->file($reporter, 'post', $this->postId, 'spam', null);
+    }
+
+    $newcomer = UserFactory::new($this->users)->create();
+    ModerationTestHelper::season($this->db, $newcomer);
+    $this->intake->file($newcomer, 'post', $this->postId, 'spam', null);
+
+    $count = (int) $this->db->query(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND scope = 'admin' AND type = 'admin.report_threshold'",
+        [$adminId]
+    )->fetchColumn();
+
+    expect($count)->toBe(1);
+});

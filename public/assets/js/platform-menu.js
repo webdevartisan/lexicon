@@ -10,6 +10,10 @@
  *
  * One script for every theme and for the Lexicon front, so the menu behaves
  * identically wherever a reader meets it.
+ *
+ * A list carrying data-panel-url fills itself from that URL the first time it
+ * opens. That is how the masthead bell shows notifications without every page
+ * on the site paying for the query that builds them.
  */
 (function () {
     'use strict';
@@ -24,6 +28,37 @@
             toggle: menu.querySelector('[data-platform-menu-toggle]'),
             list: menu.querySelector('[data-platform-menu-list]')
         };
+    }
+
+    /**
+     * Fill a lazy list from its own URL, once.
+     *
+     * A failure says so and offers the page the trigger already points at,
+     * rather than leaving the reader looking at a panel that never fills.
+     */
+    function load(list) {
+        var url = list.getAttribute('data-panel-url');
+        if (!url || list.hasAttribute('data-panel-loaded')) {
+            return;
+        }
+
+        list.setAttribute('data-panel-loaded', '');
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.text();
+            })
+            .then(function (html) {
+                list.innerHTML = html;
+            })
+            .catch(function () {
+                // Allowed to try again: whatever went wrong may not still be wrong.
+                list.removeAttribute('data-panel-loaded');
+                list.innerHTML = '<p class="notif-panel-empty">' + (list.getAttribute('data-panel-error') || 'Could not load these right now.') + '</p>';
+            });
     }
 
     function close(menu, returnFocus) {
@@ -56,11 +91,21 @@
             return;
         }
 
-        p.toggle.addEventListener('click', function () {
+        p.toggle.addEventListener('click', function (event) {
+            // The bell is a link so that it still reaches the inbox with no
+            // scripting; with scripting it opens the panel instead.
+            if (p.toggle.tagName === 'A') {
+                event.preventDefault();
+            }
+
             var opening = p.list.hidden;
             closeAll(menu);
             p.list.hidden = !opening;
             p.toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+
+            if (opening) {
+                load(p.list);
+            }
         });
 
         menu.addEventListener('keydown', function (event) {

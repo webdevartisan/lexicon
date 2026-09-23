@@ -36,31 +36,43 @@ class ScheduleRunCommand
             $result = $this->schedule->tick('cron');
 
             if ($result['reaped'] > 0) {
-                echo "Reaped {$result['reaped']} task(s) that overran their timeout.\n";
+                $this->line("Reaped {$result['reaped']} task(s) that overran their timeout.");
             }
 
             if ($result['started'] === 0 && $result['failed'] === 0) {
-                echo "Nothing due.\n";
+                $this->line('Nothing due.');
 
                 return 0;
             }
 
-            echo "Started {$result['started']} task(s).\n";
+            $this->line("Started {$result['started']} task(s).");
 
             if ($result['failed'] > 0) {
-                echo "Failed to start {$result['failed']} task(s).\n";
+                $this->line("Failed to start {$result['failed']} task(s).");
             }
 
             if ($result['deferred'] > 0) {
-                echo "Ran out of budget with {$result['deferred']} left, they will go on the next tick.\n";
+                $this->line("Ran out of budget with {$result['deferred']} left, they will go on the next tick.");
             }
 
             return 0;
         } catch (Throwable $e) {
-            echo "Error running the schedule: {$e->getMessage()}\n";
+            $this->line("Error running the schedule: {$e->getMessage()}");
             echo "Stack trace:\n{$e->getTraceAsString()}\n";
 
             return 1;
         }
+    }
+
+    /**
+     * Write one line of cron output.
+     *
+     * This output is usually only ever read months later in cron.log, where an
+     * unstamped line says nothing about whether cron is still alive, so every
+     * line carries the time it was written. UTC matches the rest of the app.
+     */
+    private function line(string $message): void
+    {
+        echo '['.gmdate('Y-m-d H:i:s').' UTC] '.$message."\n";
     }
 }
