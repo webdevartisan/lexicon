@@ -55,10 +55,10 @@ foreach (($cards ?? []) as $i => $post) {
       <span class="wp-author">By <?= $author ?></span>
       <?php if (!empty($tags)) { ?>
       <div class="wp-tags">
-        <?php foreach (array_slice($tags, 0, 2) as $t) {
-            $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
+        <?php foreach (array_slice($tags, 0, 2) as $cardTag) {
+            $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($cardTag['slug'] ?? '')));
             ?>
-        <a class="wp-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
+        <a class="wp-tag" href="<?= $tUrl ?>">#<?= e((string) ($cardTag['name'] ?? '')) ?></a>
         <?php } ?>
       </div>
       <?php } ?>

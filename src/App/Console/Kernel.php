@@ -20,6 +20,9 @@ use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
 use App\Console\Commands\SeedCommand;
 use App\Console\Commands\SeedModerationCommand;
+use App\Console\Commands\TrafficAggregateCommand;
+use App\Console\Commands\TrafficSeedCommand;
+use App\Console\Commands\TrafficUpdateGeoCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -86,6 +89,15 @@ class Kernel extends ConsoleKernel
 
             // Moderation cases in every state, through the real services (--reset clears them)
             'moderation:seed' => SeedModerationCommand::class,
+
+            // Rolls raw page views into the daily tables the Traffic dashboard reads
+            'traffic:aggregate' => TrafficAggregateCommand::class,
+
+            // Fetches this month's DB-IP Lite country file
+            'traffic:update-geo' => TrafficUpdateGeoCommand::class,
+
+            // Realistic page views for checking the Traffic dashboard locally (--reset clears them)
+            'traffic:seed' => TrafficSeedCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'make:controller' => MakeControllerCommand::class,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\ConsentService;
+use App\Services\Traffic\VisitorLink;
 use Framework\Security\Csrf;
 
 /**
@@ -20,6 +21,7 @@ final class ConsentController extends AppController
     public function __construct(
         private readonly ConsentService $consent,
         private readonly Csrf $csrf,
+        private readonly VisitorLink $visitorLink,
     ) {}
 
     /**
@@ -58,6 +60,10 @@ final class ConsentController extends AppController
             ]);
         }
 
+        if (!$saved->allows('analytics')) {
+            $this->visitorLink->dropCookie($this->request());
+        }
+
         return $this->json(['ok' => true, 'consent' => $saved->toPayload()], 200);
     }
 
@@ -70,6 +76,7 @@ final class ConsentController extends AppController
     {
         $this->csrf->assertValid($this->readCsrfToken());
         $this->consent->withdraw();
+        $this->visitorLink->dropCookie($this->request());
 
         return $this->json(['ok' => true], 200);
     }

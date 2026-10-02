@@ -8,6 +8,8 @@ use App\Interfaces\UploadServiceInterface;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
+use App\Models\TrafficHitModel;
+use App\Models\TrafficRollupModel;
 use App\Models\UserPreferencesModel;
 
 /**
@@ -22,6 +24,8 @@ final class BlogDeletionService
         private UserPreferencesModel $preferences,
         private UploadServiceInterface $uploader,
         private PublicCacheInvalidator $cacheInvalidator,
+        private TrafficHitModel $trafficHits,
+        private TrafficRollupModel $trafficRollups,
     ) {}
 
     /**
@@ -44,6 +48,9 @@ final class BlogDeletionService
             $deletedPosts = $this->posts->deleteByBlogId($blogId);
             $deletedCollaborators = $this->blogs->deleteCollaboratorsByBlogId($blogId);
             $this->settings->deleteByBlogId($blogId);
+            // Platform totals in traffic_site_daily carry no blog id and stay.
+            $this->trafficHits->deleteByBlogId($blogId);
+            $this->trafficRollups->deleteByBlogId($blogId);
 
             if (!$this->blogs->delete($blogId)) {
                 throw new \RuntimeException("Failed to delete blog record {$blogId}.");

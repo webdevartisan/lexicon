@@ -1460,6 +1460,18 @@ class PostModel extends AppModel
     }
 
     /**
+     * Ids of every post one person wrote in one blog, whatever its status.
+     *
+     * @return list<int>
+     */
+    public function idsByBlogAndAuthor(int $blogId, int $authorId): array
+    {
+        $sql = "SELECT id FROM {$this->getTable()} WHERE blog_id = ? AND author_id = ?";
+
+        return array_map('intval', $this->database->query($sql, [$blogId, $authorId])->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    /**
      * Count posts in a blog authored by a specific user with a given status.
      *
      * Used by the Shared landing page to show "my drafts on this blog" etc.

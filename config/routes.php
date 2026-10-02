@@ -37,6 +37,19 @@ $router->add('/csp-report', [
     'method' => 'POST',
 ]);
 
+// Page view beacon and leave ping. CSRF-exempt, TrafficController checks the origin instead.
+$router->add('/traffic/hit', [
+    'controller' => 'TrafficController',
+    'action' => 'hit',
+    'method' => 'POST',
+]);
+
+$router->add('/traffic/engage', [
+    'controller' => 'TrafficController',
+    'action' => 'engage',
+    'method' => 'POST',
+]);
+
 // Only signed-in readers post here: their interface follows a stored preference,
 // so switching language has to write it. Guests switch with a plain link.
 $router->add('/language', [
@@ -340,6 +353,12 @@ $router->group([
 
     // Subscribers (owner-only): audience list with search and removal.
     $r->add('/blog/{blogId:\d+}/subscribers', ['controller' => 'SubscriberController', 'action' => 'index', 'method' => 'GET']);
+
+    // Insights > Traffic
+    $r->add('/blog/{blogId:\d+}/analytics/traffic', ['controller' => 'TrafficController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/analytics/traffic/export', ['controller' => 'TrafficController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/analytics/traffic/settings', ['controller' => 'TrafficController', 'action' => 'updateSettings', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/analytics/traffic/posts/{postId:\d+}', ['controller' => 'TrafficController', 'action' => 'post', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/subscribers/{id:\d+}/delete', ['controller' => 'SubscriberController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
@@ -545,6 +564,7 @@ $router->group([
     // Site settings
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/settings/traffic', ['controller' => 'SettingController', 'action' => 'updateTraffic', 'method' => 'POST']);
 
     // Front page content (per-locale overrides of the public site text)
     $r->add('/front-page', ['controller' => 'FrontPageController', 'action' => 'index', 'method' => 'GET']);

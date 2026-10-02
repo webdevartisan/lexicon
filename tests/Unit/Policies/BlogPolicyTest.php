@@ -120,6 +120,39 @@ describe('BlogPolicy::create', function () {
     });
 });
 
+// The permission bundles the shipped blog roles carry, as seeded in role_permissions.
+const TRAFFIC_ROLE_BUNDLES = [
+    'owner' => ['create_posts', 'edit_blog_posts', 'edit_own_blog', 'manage_team', 'view_all_posts', 'delete_own_blog'],
+    'editor' => ['create_posts', 'edit_blog_posts', 'edit_own_blog', 'view_all_posts'],
+    'author' => ['create_posts', 'edit_own_posts', 'view_all_posts'],
+    'contributor' => ['create_posts', 'edit_own_posts', 'view_all_posts'],
+    'reviewer' => ['review_posts', 'approve_posts', 'view_all_posts'],
+];
+
+describe('BlogPolicy traffic', function () {
+
+    test('who may open the Traffic page, and who sees the whole blog', function (string $role, bool $open, bool $all) {
+        $policy = new BlogPolicy();
+        $blog = blogWith(TRAFFIC_ROLE_BUNDLES[$role]);
+
+        expect($policy->viewTraffic(makeUser(2), $blog))->toBe($open)
+            ->and($policy->viewAllTraffic(makeUser(2), $blog))->toBe($all);
+    })->with([
+        ['owner', true, true],
+        ['editor', true, true],
+        ['author', true, false],
+        ['contributor', true, false],
+        // view_all_posts lets a reviewer into the blog, but not into its numbers.
+        ['reviewer', false, false],
+    ]);
+
+    test('a system administrator gets nothing from their site role alone', function () {
+        $policy = new BlogPolicy();
+
+        expect($policy->viewTraffic(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
+    });
+});
+
 test('reassigning a post author needs edit_blog_posts', function () {
     $policy = new BlogPolicy();
 

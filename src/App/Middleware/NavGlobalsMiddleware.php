@@ -9,6 +9,7 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\UserPreferencesModel;
+use App\Presenters\NotificationPresenter;
 use App\Services\LocaleState;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -23,7 +24,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 3;
+    private const SIDEBAR_MARKUP_VERSION = 4;
 
     /**
      * @var NavigationService Navigation service instance
@@ -186,7 +187,9 @@ class NavGlobalsMiddleware
                 $listPath = $bellScope === 'admin' ? '/admin/notifications' : '/dashboard/notifications';
                 $notifications = [
                     'enabled' => true,
-                    'items' => $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true, scope: $bellScope),
+                    'items' => NotificationPresenter::forAll(
+                        $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true, scope: $bellScope)
+                    ),
                     'count' => $this->notificationModel->unreadCount((int) $user['id'], $bellScope),
                     'listPath' => $listPath,
                 ];

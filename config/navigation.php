@@ -186,7 +186,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
+            'policy' => 'viewTraffic',
             'key' => 'navigation.analyticsSection',
         ],
         [
@@ -195,11 +195,8 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,
-            'policy' => 'view',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
+            'policy' => 'viewTraffic',
             'key' => 'navigation.traffic',
-            'disabled' => true,
-            'badge' => 'Soon',
         ],
     ],
 

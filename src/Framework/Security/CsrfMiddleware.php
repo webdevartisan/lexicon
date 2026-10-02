@@ -26,8 +26,11 @@ final class CsrfMiddleware implements MiddlewareInterface
      * Paths the browser itself POSTs to without a page, a session, or any
      * chance to carry a token - e.g. CSP violation reports fired by the
      * report-uri directive. Exact path match, not a prefix.
+     *
+     * The traffic beacon is here because it fires from full-page-cached pages
+     * shared between visitors. TrafficController checks origin and payload instead.
      */
-    private const EXEMPT_PATHS = ['/csp-report'];
+    private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage'];
 
     public function __construct(
         private Csrf $csrf,

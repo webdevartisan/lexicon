@@ -109,6 +109,32 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
         </section>
         <?php } ?>
 
+        <?php if (!empty($postTraffic)) { ?>
+        <!-- Readers -->
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
+          <div class="p-4">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100"><?= e($t('traffic.pageTitle')) ?></h3>
+              <a href="<?= e($postTraffic['url']) ?>" class="text-xs text-custom-500 hover:underline"><?= e($t('traffic.topPosts.details')) ?></a>
+            </div>
+            <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.metrics.views')) ?></dt>
+                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['views'])) ?></dd>
+              </div>
+              <div>
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.metrics.visitors')) ?></dt>
+                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['visitors'])) ?></dd>
+              </div>
+              <div>
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.range.30d')) ?></dt>
+                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['recent'])) ?></dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+        <?php } ?>
+
         <!-- Featured Image -->
         <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
         {% cmp="dropzone" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" altTarget="og_image_alt" %}

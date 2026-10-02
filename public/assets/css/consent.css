@@ -1,3 +1,8 @@
+/* The banner is platform chrome that also appears on blog themes, which do not
+   load lexicon.css. Every token carries its Lexicon value as a fallback, and the
+   buttons are styled here rather than borrowed from .lx-btn, so the banner looks
+   the same on the Lexicon front and on every theme. */
+
 .consent-lock { overflow: hidden; }
 
 .consent-banner {
@@ -12,8 +17,8 @@
 .consent-banner-inner {
   max-width: 980px;
   margin: 0 auto;
-  background: var(--lx-bind);
-  color: var(--lx-on-bind);
+  background: var(--lx-bind, #16233f);
+  color: var(--lx-on-bind, #f0f1ec);
   border-radius: 0.5rem;
   padding: 12px 14px;
   display: flex;
@@ -58,9 +63,9 @@
   z-index: 1;
   width: min(720px, calc(100vw - 24px));
   margin: 8vh auto 0;
-  background: var(--lx-paper-raised);
-  border: 1px solid var(--lx-rule);
-  border-radius: var(--lx-radius-lg);
+  background: var(--lx-paper-raised, #fbfbf8);
+  border: 1px solid var(--lx-rule, #d3d7cd);
+  border-radius: var(--lx-radius-lg, 10px);
   box-shadow: 0 24px 60px rgba(13,21,38,0.35);
   overflow: hidden;
 }
@@ -68,7 +73,7 @@
 .consent-modal-header,
 .consent-modal-footer {
   padding: 14px 16px;
-  border-bottom: 1px solid var(--lx-rule);
+  border-bottom: 1px solid var(--lx-rule, #d3d7cd);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -77,14 +82,14 @@
 
 .consent-modal-footer {
   border-bottom: 0;
-  border-top: 1px solid var(--lx-rule);
+  border-top: 1px solid var(--lx-rule, #d3d7cd);
   justify-content: flex-end;
 }
 
 .consent-modal-title {
   margin: 0;
   font-size: 1.1em;
-  color: var(--lx-ink);
+  color: var(--lx-ink, #171a1c);
 }
 
 .consent-row {
@@ -93,11 +98,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid var(--lx-rule);
+  border-bottom: 1px solid var(--lx-rule, #d3d7cd);
 }
 
-.consent-row-label { font-weight: 600; color: var(--lx-ink); }
-.consent-row-hint { font-size: 0.9em; color: var(--lx-ink-2); margin-top: 2px; }
+.consent-row-label { font-weight: 600; color: var(--lx-ink, #171a1c); }
+.consent-row-hint { font-size: 0.9em; color: var(--lx-ink-2, #5c6470); margin-top: 2px; }
 
 /* ------------------------------------------------------------------------------ */
 
@@ -141,7 +146,7 @@
   width: 46px;
   height: 26px;
   border-radius: 999px;
-  background: var(--lx-rule);
+  background: var(--lx-rule, #d3d7cd);
   position: relative;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
@@ -160,13 +165,13 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.18);
 }
 
-#consentModal .consent-switch-input:checked + .consent-switch-label { background: var(--lx-ok); }
+#consentModal .consent-switch-input:checked + .consent-switch-label { background: var(--lx-ok, #1b6b45); }
 #consentModal .consent-switch-input:checked + .consent-switch-label::after { transform: translateX(20px); }
 
 #consentModal .consent-switch-input:disabled { cursor: not-allowed; }
 #consentModal .consent-switch-input:disabled + .consent-switch-label { opacity: 0.65; cursor: not-allowed; }
 
-#consentModal .consent-switch-locked .consent-switch-label { background: var(--lx-ink-3); }
+#consentModal .consent-switch-locked .consent-switch-label { background: var(--lx-ink-3, #646b76); }
 
 /* position the cookie settings FAB at bottom-left and keep it above the banner. */
 .consent-fab {
@@ -177,9 +182,9 @@
   transition:
     opacity 160ms ease,
     transform 160ms ease,
-    background 0.2s var(--lx-ease),
-    border-color 0.2s var(--lx-ease),
-    color 0.2s var(--lx-ease),
+    background 0.2s var(--lx-ease, cubic-bezier(0.22, 0.61, 0.36, 1)),
+    border-color 0.2s var(--lx-ease, cubic-bezier(0.22, 0.61, 0.36, 1)),
+    color 0.2s var(--lx-ease, cubic-bezier(0.22, 0.61, 0.36, 1)),
     visibility 0s linear 0s;
   will-change: opacity, transform;
 
@@ -204,10 +209,10 @@
   align-items: center;
   justify-content: center;
 
-  background: var(--lx-paper-raised) !important;
-  color: var(--lx-ink) !important;
+  background: var(--lx-paper-raised, #fbfbf8) !important;
+  color: var(--lx-ink, #171a1c) !important;
 
-  border: 1px solid var(--lx-rule-strong);
+  border: 1px solid var(--lx-rule-strong, #b9bfb2);
   cursor: pointer;
 
   box-shadow: 0 10px 30px rgba(22, 35, 63, 0.14);
@@ -222,15 +227,15 @@
 
 /* provide a visible keyboard focus state. */
 .consent-fab:focus-visible {
-  outline: 2px solid var(--lx-gilt);
+  outline: 2px solid var(--lx-gilt, #c9a227);
   outline-offset: 2px;
 }
 
 /* give a small hover affordance */
 .consent-fab:hover {
-  background: var(--lx-ink) !important;
-  border-color: var(--lx-ink);
-  color: var(--lx-paper) !important;
+  background: var(--lx-ink, #171a1c) !important;
+  border-color: var(--lx-ink, #171a1c);
+  color: var(--lx-paper, #f0f1ec) !important;
 }
 
 /* hide it while the banner is visible, but keep it animatable. */
@@ -275,3 +280,99 @@ html.consent-banner-visible .consent-fab {
 #consentModal .consent-switch-label {
   line-height: 1;
 }
+
+/* Same shape and colours as .lx-btn and its small, ghost, gilt, subtle and
+   primary variants in lexicon.css; two classes so a theme's button rules
+   cannot reach inside the banner. */
+.consent-banner .consent-btn,
+.consent-modal .consent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--lx-ink, #171a1c);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lx-ink, #171a1c);
+  font-family: var(--lx-sans, 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: none;
+  box-shadow: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s var(--lx-ease, ease), color 0.2s var(--lx-ease, ease),
+    border-color 0.2s var(--lx-ease, ease), transform 0.15s var(--lx-ease, ease);
+}
+
+.consent-banner .consent-btn:active,
+.consent-modal .consent-btn:active { transform: translateY(1px); }
+
+.consent-banner .consent-btn:focus-visible,
+.consent-modal .consent-btn:focus-visible {
+  outline: 2px solid var(--lx-gilt, #c9a227);
+  outline-offset: 2px;
+}
+
+.consent-banner .consent-btn-ghost {
+  border-color: var(--lx-rule-bind, rgba(240, 241, 236, 0.16));
+  color: var(--lx-on-bind, #f0f1ec);
+}
+
+.consent-banner .consent-btn-ghost:hover {
+  background: rgba(240, 241, 236, 0.1);
+  border-color: var(--lx-on-bind-2, #a8b2c6);
+  color: var(--lx-on-bind, #f0f1ec);
+}
+
+.consent-banner .consent-btn-gilt {
+  background: var(--lx-gilt, #c9a227);
+  border-color: var(--lx-gilt, #c9a227);
+  color: var(--lx-bind-deep, #0d1526);
+}
+
+.consent-banner .consent-btn-gilt:hover {
+  background: #ddb943;
+  border-color: #ddb943;
+  color: var(--lx-bind-deep, #0d1526);
+}
+
+.consent-modal .consent-btn-subtle {
+  border-color: var(--lx-rule-strong, #b9bfb2);
+  color: var(--lx-ink-2, #5c6470);
+}
+
+.consent-modal .consent-btn-subtle:hover {
+  background: var(--lx-paper-sunk, #e7e9e1);
+  border-color: var(--lx-rule-strong, #b9bfb2);
+  color: var(--lx-ink, #171a1c);
+}
+
+.consent-modal .consent-btn-primary {
+  background: var(--lx-ink, #171a1c);
+  border-color: var(--lx-ink, #171a1c);
+  color: var(--lx-paper, #f0f1ec);
+}
+
+.consent-modal .consent-btn-primary:hover {
+  background: var(--lx-spot, #1b3a6b);
+  border-color: var(--lx-spot, #1b3a6b);
+  color: #fff;
+}
+
+/* Themes set their own body type. Keep the dialog readable whatever they chose. */
+.consent-banner,
+.consent-modal {
+  font-family: var(--lx-sans, 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: start;
+}
+
+.consent-banner-text a { color: inherit; text-decoration: underline; }

@@ -1372,3 +1372,8 @@ div.flatpickr-day.dataTables_scrollBody>table.dataTable>:is(thead>tr>th, thead>t
         transform: translateZ(0)
     }
 }
+
+.flatpickr-day:is(.selected, .startRange, .endRange):is(.prevMonthDay, .nextMonthDay),
+:is([data-mode=dark] .flatpickr-day:is(.selected, .startRange, .endRange):is(.prevMonthDay, .nextMonthDay)) {
+    color: rgb(239 246 255)
+}

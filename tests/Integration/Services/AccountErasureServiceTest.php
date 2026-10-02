@@ -9,12 +9,16 @@ use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
+use App\Models\TrafficHitModel;
+use App\Models\TrafficRollupModel;
+use App\Models\TrafficSaltModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\AccountErasureService;
 use App\Services\BlogDeletionService;
 use App\Services\MediaUsageResolver;
 use App\Services\PublicCacheInvalidator;
+use App\Services\Traffic\VisitorIdentity;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
@@ -49,12 +53,16 @@ beforeEach(function () {
             new BlogSettingsModel($this->db),
             new UserPreferencesModel($this->db),
             $this->uploader,
-            $cacheInvalidator
+            $cacheInvalidator,
+            new TrafficHitModel($this->db),
+            new TrafficRollupModel($this->db)
         ),
         $this->uploader,
         new MediaUsageResolver($this->db),
         $cacheInvalidator,
         new AccountErasureRecordModel($this->db),
+        new TrafficHitModel($this->db),
+        new VisitorIdentity(new TrafficSaltModel($this->db), 'test-key'),
         'deleted-user'
     );
 

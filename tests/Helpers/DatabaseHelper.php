@@ -70,6 +70,13 @@ class DatabaseHelper
             'content_reports',
             'moderation_cases',
 
+            // Traffic
+            'traffic_hits',
+            'traffic_daily',
+            'traffic_daily_dimensions',
+            'traffic_site_daily',
+            'traffic_salts',
+
             // Blog-related
             'blog_subscribers',
             'blog_invitations',

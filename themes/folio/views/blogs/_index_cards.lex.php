@@ -30,10 +30,10 @@ foreach (($cards ?? []) as $i => $post) {
     <h3 class="article-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
     <?php if (!empty($tags)) { ?>
     <div class="article-tags">
-      <?php foreach (array_slice($tags, 0, 2) as $t) {
-          $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
+      <?php foreach (array_slice($tags, 0, 2) as $cardTag) {
+          $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($cardTag['slug'] ?? '')));
           ?>
-      <a class="article-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
+      <a class="article-tag" href="<?= $tUrl ?>">#<?= e((string) ($cardTag['name'] ?? '')) ?></a>
       <?php } ?>
     </div>
     <?php } ?>

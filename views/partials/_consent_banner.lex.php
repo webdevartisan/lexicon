@@ -6,9 +6,9 @@
     </p>
 
     <div class="consent-banner-actions">
-      <button class="lx-btn lx-btn-small lx-btn-ghost" type="button" data-consent-open><?= e($t('consent.manage')) ?></button>
-      <button class="lx-btn lx-btn-small lx-btn-gilt" type="button" data-consent-action="reject_all"><?= e($t('consent.rejectAll')) ?></button>
-      <button class="lx-btn lx-btn-small lx-btn-gilt" type="button" data-consent-action="accept_all"><?= e($t('consent.acceptAll')) ?></button>
+      <button class="consent-btn consent-btn-ghost" type="button" data-consent-open><?= e($t('consent.manage')) ?></button>
+      <button class="consent-btn consent-btn-gilt" type="button" data-consent-action="reject_all"><?= e($t('consent.rejectAll')) ?></button>
+      <button class="consent-btn consent-btn-gilt" type="button" data-consent-action="accept_all"><?= e($t('consent.acceptAll')) ?></button>
     </div>
   </div>
 </div>
@@ -19,7 +19,7 @@
   <div class="consent-modal-panel" role="dialog" aria-modal="true" aria-label="<?= e($t('consent.settingsTitle')) ?>">
     <header class="consent-modal-header">
       <h2 class="consent-modal-title"><?= e($t('consent.settingsTitle')) ?></h2>
-      <button class="lx-btn lx-btn-small lx-btn-subtle" type="button" data-consent-close><?= e($t('consent.close')) ?></button>
+      <button class="consent-btn consent-btn-subtle" type="button" data-consent-close><?= e($t('consent.close')) ?></button>
     </header>
 
     <form id="consentForm">
@@ -47,8 +47,8 @@
       <?php } ?>
 
       <footer class="consent-modal-footer">
-        <button class="lx-btn lx-btn-small lx-btn-subtle" type="button" data-consent-action="reject_all"><?= e($t('consent.rejectAll')) ?></button>
-        <button class="lx-btn lx-btn-small lx-btn-primary" type="submit"><?= e($t('consent.save')) ?></button>
+        <button class="consent-btn consent-btn-subtle" type="button" data-consent-action="reject_all"><?= e($t('consent.rejectAll')) ?></button>
+        <button class="consent-btn consent-btn-primary" type="submit"><?= e($t('consent.save')) ?></button>
       </footer>
     </form>
   </div>

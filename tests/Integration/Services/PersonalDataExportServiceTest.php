@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\TrafficSaltModel;
 use App\Models\UserModel;
 use App\Services\PersonalDataExportService;
+use App\Services\Traffic\VisitorIdentity;
 use Tests\Factories\UserFactory;
 
 test('the export holds the account data and no secrets', function () {
@@ -11,7 +13,7 @@ test('the export holds the account data and no secrets', function () {
     $userId = UserFactory::new($users)->withAttributes(['email' => 'me@example.test'])->create();
     $this->db->execute('INSERT INTO user_social_links (user_id, network, url) VALUES (?, ?, ?)', [$userId, 'github', 'https://github.com/me']);
 
-    $export = (new PersonalDataExportService($this->db))->export($userId);
+    $export = (new PersonalDataExportService($this->db, new VisitorIdentity(new TrafficSaltModel($this->db), 'test-key')))->export($userId);
     $json = json_encode($export, JSON_THROW_ON_ERROR);
 
     expect($export['account']['email'])->toBe('me@example.test')
