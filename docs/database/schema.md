@@ -1,6 +1,6 @@
 ## Database Schema Overview
 
-Lexicon uses a relational schema optimized for a multi‑blog platform with roles, permissions, collaborators, and content workflow. The canonical definition lives in `database/migrations/2026_02_02_install.sql`.
+Lexicon uses a relational schema optimized for a multi‑blog platform with roles, permissions, collaborators, and content workflow. The canonical definition lives in `database/schema.sql`.
 
 ---
 
@@ -77,7 +77,7 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
 
 - **`posts`**
   - Blog posts with workflow support.
-  - Key columns (see the migration for full list):
+  - Key columns (see `database/schema.sql` for the full list):
     - `blog_id` (FK to `blogs`)
     - `author_id` (FK to `users`)
     - `category_id` (FK to `categories`, nullable)
@@ -99,5 +99,5 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
 - **Password reset / security tables**
   - Tables such as `password_resets` or equivalent are used by `PasswordResetModel` and related services.
 
-Consult the migration file for exact column definitions, indexes, and constraints. See `docs/database/relationships.md` for how these tables relate at the model level.
+Consult `database/schema.sql` for exact column definitions, indexes, and constraints. See `docs/database/relationships.md` for how these tables relate at the model level.
 

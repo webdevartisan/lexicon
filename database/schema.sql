@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_email (email),
     UNIQUE KEY uq_users_handle (handle),
     INDEX idx_is_active (is_active),
-    INDEX idx_deleted_at (deleted_at)
+    INDEX idx_deleted_at (deleted_at),
+    CONSTRAINT fk_users_suspended_by FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Core user authentication and identity data';
 

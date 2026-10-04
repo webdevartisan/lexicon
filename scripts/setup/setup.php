@@ -8,10 +8,11 @@ declare(strict_types=1);
  * Handles first‑time installation and incremental updates:
  * - Database creation and dedicated user provisioning
  * - .env configuration and APP_KEY generation
+ * - Installing database/schema.sql and database/seeds/ on an empty database
  * - Running pending migrations
  * - Seeding initial data (admin user, site settings) when first run
  *
- * This script is safe to run multiple times; it detects existing .env and migrations.
+ * This script is safe to run multiple times; it detects existing .env, schema and migrations.
  */
 define('ROOT_PATH', dirname(dirname(__DIR__)));
 
@@ -241,6 +242,38 @@ DB_SLOW_QUERY_THRESHOLD=1.0
 ENV;
 }
 
+/**
+ * Run every statement in an SQL file.
+ *
+ * Walking the rowsets matters: without it MySQL only reports a failure in the
+ * first statement and the rest of the file can fail silently.
+ *
+ * @param  PDO  $pdo  Connection to the application database.
+ * @param  string  $path  Absolute path to the .sql file.
+ *
+ * @throws \RuntimeException If the file is unreadable or any statement fails.
+ */
+function runSqlFile(PDO $pdo, string $path): void
+{
+    $sql = file_get_contents($path);
+
+    if ($sql === false) {
+        throw new RuntimeException("Cannot read {$path}");
+    }
+
+    try {
+        $stmt = $pdo->query($sql);
+
+        while ($stmt->nextRowset()) {
+            continue;
+        }
+
+        $stmt->closeCursor();
+    } catch (PDOException $e) {
+        throw new RuntimeException('Failed to run '.basename($path).': '.$e->getMessage(), 0, $e);
+    }
+}
+
 // ============================================================================
 // MAIN EXECUTION
 // ============================================================================
@@ -447,7 +480,39 @@ try {
     }
 
     // ------------------------------------------------------------------------
-    // STEP 3: Run Database Migrations
+    // STEP 3: Install Schema (Empty Database Only)
+    // ------------------------------------------------------------------------
+
+    $migrationDir = ROOT_PATH.'/database/migrations';
+
+    if (empty($pdo->query("SHOW TABLES LIKE 'users'")->fetchAll())) {
+        echo "═══════════════════════════════════════\n";
+        echo "  INSTALLING SCHEMA\n";
+        echo "═══════════════════════════════════════\n\n";
+
+        runSqlFile($pdo, ROOT_PATH.'/database/schema.sql');
+        echo "✅ Installed: schema.sql\n";
+
+        $seeds = glob(ROOT_PATH.'/database/seeds/*.sql') ?: [];
+        sort($seeds);
+
+        foreach ($seeds as $seed) {
+            runSqlFile($pdo, $seed);
+            echo '✅ Seeded: '.basename($seed)."\n";
+        }
+
+        // schema.sql already includes every migration written so far, so they are recorded rather than run.
+        $stmt = $pdo->prepare('INSERT IGNORE INTO migrations (filename) VALUES (?)');
+
+        foreach (glob($migrationDir.'/*.sql') ?: [] as $file) {
+            $stmt->execute([basename($file)]);
+        }
+
+        echo "\n";
+    }
+
+    // ------------------------------------------------------------------------
+    // STEP 4: Run Database Migrations
     // ------------------------------------------------------------------------
 
     echo "═══════════════════════════════════════\n";
@@ -465,8 +530,6 @@ try {
     // Load list of already applied migrations.
     $stmt = $pdo->query('SELECT filename FROM migrations ORDER BY filename');
     $applied = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    $migrationDir = ROOT_PATH.'/database/migrations';
 
     if (!is_dir($migrationDir)) {
         echo "⚠️  No migrations directory found\n";
@@ -492,17 +555,15 @@ try {
                 continue;
             }
 
-            // Apply migration script.
             try {
-                $sql = file_get_contents($file);
-                $pdo->exec($sql);
+                runSqlFile($pdo, $file);
 
                 $stmt = $pdo->prepare('INSERT INTO migrations (filename) VALUES (?)');
                 $stmt->execute([$filename]);
 
                 echo "✅ Applied: {$filename}\n";
                 $newMigrationsRun++;
-            } catch (PDOException $e) {
+            } catch (RuntimeException $e) {
                 echo "❌ Failed to apply: {$filename}\n";
                 echo '   Error: '.$e->getMessage()."\n";
                 exit(1);
@@ -517,7 +578,7 @@ try {
     echo "\n";
 
     // ------------------------------------------------------------------------
-    // STEP 4: Seed Initial Data (First Run Only)
+    // STEP 5: Seed Initial Data (First Run Only)
     // ------------------------------------------------------------------------
 
     if ($firstRun) {
@@ -530,25 +591,35 @@ try {
 
         if (empty($tables)) {
             echo "⚠️  Users table not found\n";
-            echo "   Please create migration files first\n\n";
+            echo "   Check that database/schema.sql installed\n\n";
         } else {
             echo "👤 Creating admin user...\n\n";
 
-            $adminUsername = promptInput('Admin username', 'admin');
+            $adminHandle = strtolower(promptInput('Admin handle', 'admin'));
             $adminEmail = promptInput('Admin email', 'admin@example.com');
             $adminPass = promptSilent('Admin password');
 
             $hash = password_hash($adminPass, PASSWORD_BCRYPT, ['cost' => 12]);
 
             try {
-                $stmt = $pdo->prepare('INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, NOW())');
-                $stmt->execute([$adminUsername, $adminEmail, $hash]);
+                $stmt = $pdo->prepare(
+                    'INSERT INTO users (handle, email, password, age_confirmed_at) VALUES (?, ?, ?, UTC_TIMESTAMP())'
+                );
+                $stmt->execute([$adminHandle, $adminEmail, $hash]);
 
                 $adminId = (int) $pdo->lastInsertId();
 
-                // Assign admin role (assuming role_id=1 is “admin”) via user_roles.
-                $stmt = $pdo->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE role_id = role_id');
-                $stmt->execute([$adminId, 1]);
+                // Role ids differ between installs, so look the role up by slug.
+                $stmt = $pdo->prepare(
+                    "INSERT INTO user_roles (user_id, role_id)
+                     SELECT ?, id FROM roles WHERE role_slug = 'administrator'
+                     ON DUPLICATE KEY UPDATE role_id = role_id"
+                );
+                $stmt->execute([$adminId]);
+
+                if ($stmt->rowCount() === 0) {
+                    throw new PDOException("The 'administrator' role is missing from the roles table");
+                }
 
                 echo "✅ Admin user created: {$adminEmail}\n\n";
             } catch (PDOException $e) {
