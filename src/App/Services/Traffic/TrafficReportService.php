@@ -69,7 +69,7 @@ class TrafficReportService
     {
         $rows = $this->stats->breakdown($blogId, $postIds, $dimension, $range->fromDate(), $range->toDate(), 1000);
 
-        return $dimension === 'country' ? $this->groupSmallCountries($rows) : $rows;
+        return $dimension === 'country' ? self::groupSmallCountries($rows) : $rows;
     }
 
     /**
@@ -90,7 +90,7 @@ class TrafficReportService
             $limit = $dimension === 'country' ? 250 : self::LIST_LIMIT;
             $rows = $this->stats->breakdown($blogId, $postIds, $dimension, $from, $to, $limit);
             $breakdowns[$dimension] = $dimension === 'country'
-                ? array_slice($this->groupSmallCountries($rows), 0, self::LIST_LIMIT)
+                ? array_slice(self::groupSmallCountries($rows), 0, self::LIST_LIMIT)
                 : $rows;
         }
 
@@ -167,7 +167,7 @@ class TrafficReportService
      * @param  list<array{value: string, views: int, visitors: int}>  $rows
      * @return list<array{value: string, views: int, visitors: int}>
      */
-    private function groupSmallCountries(array $rows): array
+    public static function groupSmallCountries(array $rows): array
     {
         $kept = [];
         $other = ['value' => self::OTHER, 'views' => 0, 'visitors' => 0];
@@ -189,12 +189,12 @@ class TrafficReportService
         return $kept;
     }
 
-    private static function ratio(int $part, int $whole): ?float
+    public static function ratio(int $part, int $whole): ?float
     {
         return $whole > 0 ? $part / $whole : null;
     }
 
-    private static function change(float|int|null $now, float|int|null $before): ?float
+    public static function change(float|int|null $now, float|int|null $before): ?float
     {
         if ($now === null || $before === null || $before == 0) {
             return null;

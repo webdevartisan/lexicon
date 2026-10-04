@@ -85,6 +85,17 @@ class TrafficHitModel extends AppModel
     }
 
     /**
+     * Different visitors in the last few minutes, on any blog.
+     */
+    public function countRecentEverywhere(int $minutes): int
+    {
+        $sql = 'SELECT COUNT(DISTINCT visitor_hash) FROM traffic_hits
+                WHERE created_at > UTC_TIMESTAMP() - INTERVAL ? MINUTE';
+
+        return (int) $this->database->query($sql, [$minutes])->fetchColumn();
+    }
+
+    /**
      * Delete views older than the retention period, in batches so a large backlog
      * never holds one long lock on a table the beacon writes to.
      */

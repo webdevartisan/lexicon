@@ -25,6 +25,9 @@ class TrafficSettings
     /** When the last aggregation run finished, UTC. Written by traffic:aggregate. */
     public const AGGREGATED_AT = 'traffic.aggregated_at';
 
+    /** Aggregation runs every five minutes, so past this the numbers are behind. */
+    private const DELAYED_AFTER_MINUTES = 20;
+
     public function __construct(private SettingModel $settings) {}
 
     /** The kill switch: off means the beacon endpoint records nothing. */
@@ -61,6 +64,24 @@ class TrafficSettings
     public function aggregatedAt(): ?string
     {
         return $this->settings->get(self::AGGREGATED_AT);
+    }
+
+    /**
+     * Whether the dashboards are showing stale numbers: totals paused, never
+     * built, or not rebuilt for a while.
+     */
+    public function aggregationDelayed(): bool
+    {
+        $aggregatedAt = $this->aggregatedAt();
+
+        if ($aggregatedAt === null || !$this->aggregationEnabled()) {
+            return true;
+        }
+
+        $utc = new \DateTimeZone('UTC');
+
+        return new \DateTimeImmutable($aggregatedAt, $utc)
+            < new \DateTimeImmutable('-'.self::DELAYED_AFTER_MINUTES.' minutes', $utc);
     }
 
     public function markAggregated(string $utcTimestamp): void

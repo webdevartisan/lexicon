@@ -1239,7 +1239,8 @@ CREATE TABLE IF NOT EXISTS traffic_daily (
     scroll_depth_sum BIGINT UNSIGNED NOT NULL DEFAULT 0,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (blog_id, post_id, day),
-    INDEX idx_traffic_daily_day (blog_id, day)
+    INDEX idx_traffic_daily_day (blog_id, day),
+    INDEX idx_traffic_daily_platform (day, post_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Daily totals per blog and per post, rebuilt from traffic_hits';
 
@@ -1251,7 +1252,8 @@ CREATE TABLE IF NOT EXISTS traffic_daily_dimensions (
     value VARCHAR(191) NOT NULL,
     views INT UNSIGNED NOT NULL DEFAULT 0,
     visitors INT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (blog_id, post_id, dimension, day, value)
+    PRIMARY KEY (blog_id, post_id, dimension, day, value),
+    INDEX idx_traffic_dimensions_platform (post_id, dimension, day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Daily breakdowns (sources, devices, countries, pages) per blog and per post';
 
@@ -1368,7 +1370,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
 ('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
-('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors');
+('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
+('View Platform Traffic', 'view_platform_traffic', 'traffic', 'read', 'See traffic across every blog in the control panel');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

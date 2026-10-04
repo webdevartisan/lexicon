@@ -56,6 +56,7 @@ class SystemPolicy implements PolicyInterface
         'manageMailQueue' => 'manage_mail_queue',
         'manageScheduledTasks' => 'manage_scheduled_tasks',
         'manageSettings' => 'manage_site_settings',
+        'viewPlatformTraffic' => 'view_platform_traffic',
     ];
 
     /**
@@ -264,6 +265,16 @@ class SystemPolicy implements PolicyInterface
     public function manageSettings(array $user): bool
     {
         return $this->allowsArea($user, 'manageSettings');
+    }
+
+    /**
+     * See traffic across every blog: platform totals, the busiest blogs and posts.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function viewPlatformTraffic(array $user): bool
+    {
+        return $this->allowsArea($user, 'viewPlatformTraffic');
     }
 
     /**

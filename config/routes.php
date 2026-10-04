@@ -550,6 +550,10 @@ $router->group([
     $r->add('/reports/settings/safeguards', ['controller' => 'ModerationSettingsController', 'action' => 'updateSafeguards', 'method' => 'POST']);
     $r->add('/reports/settings/reasons/{slug:[a-z_]+}', ['controller' => 'ModerationSettingsController', 'action' => 'updateReason', 'method' => 'POST']);
 
+    // Insights > Traffic across every blog
+    $r->add('/traffic', ['controller' => 'TrafficController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/traffic/export', ['controller' => 'TrafficController', 'action' => 'export', 'method' => 'GET']);
+
     // Roles and permissions
     $r->add('/roles', ['controller' => 'RoleController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/roles/new', ['controller' => 'RoleController', 'action' => 'new', 'method' => 'GET']);

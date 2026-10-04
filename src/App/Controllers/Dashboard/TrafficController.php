@@ -28,9 +28,6 @@ use Framework\Exceptions\UnauthorizedException;
  */
 final class TrafficController extends AppController
 {
-    /** Aggregation runs every five minutes, so past this the numbers are behind. */
-    private const DELAYED_AFTER_MINUTES = 20;
-
     private const RIGHT_NOW_MINUTES = 30;
 
     /** The Top posts export. Not a breakdown dimension. */
@@ -243,7 +240,7 @@ final class TrafficController extends AppController
             'today' => (new \DateTimeImmutable('today', $zone))->format('Y-m-d'),
             'collectingSince' => $this->stats->firstDay((int) $blog->id()),
             'aggregatedAt' => $aggregatedAt,
-            'delayed' => $this->isDelayed($aggregatedAt),
+            'delayed' => $this->settings->aggregationDelayed(),
             'trackingEnabled' => $this->settings->enabled(),
             'aggregationEnabled' => $this->settings->aggregationEnabled(),
             'countriesAvailable' => $this->countries->available(),
@@ -252,17 +249,6 @@ final class TrafficController extends AppController
             'blogSettings' => $blogSettings,
             'blogCounting' => !empty($blogSettings['traffic_enabled']),
         ];
-    }
-
-    private function isDelayed(?string $aggregatedAt): bool
-    {
-        if ($aggregatedAt === null || !$this->settings->aggregationEnabled()) {
-            return true;
-        }
-
-        $last = new \DateTimeImmutable($aggregatedAt, new \DateTimeZone('UTC'));
-
-        return $last < new \DateTimeImmutable('-'.self::DELAYED_AFTER_MINUTES.' minutes', new \DateTimeZone('UTC'));
     }
 
     private function authorizedBlog(string $blogId): BlogResource
@@ -326,39 +312,5 @@ final class TrafficController extends AppController
         }
 
         return $rows;
-    }
-
-    /**
-     * @param  list<string>  $header
-     * @param  list<list<string|int|float>>  $rows
-     */
-    private function csv(string $filename, array $header, array $rows): Response
-    {
-        $out = fopen('php://temp', 'r+');
-        fputcsv($out, $header);
-
-        foreach ($rows as $row) {
-            fputcsv($out, array_map(static fn ($cell) => is_string($cell) ? self::csvCell($cell) : $cell, $row));
-        }
-
-        rewind($out);
-        $body = (string) stream_get_contents($out);
-        fclose($out);
-
-        $this->response->addHeader('Content-Type', 'text/csv; charset=utf-8');
-        $this->response->addHeader('Content-Disposition', 'attachment; filename="'.$filename.'"');
-        $this->response->addHeader('Cache-Control', 'private, no-store');
-        $this->response->setBody($body);
-
-        return $this->response;
-    }
-
-    /**
-     * Campaign names and referrers come from readers' URLs. A leading =, +, -
-     * or @ would run as a formula in a spreadsheet.
-     */
-    private static function csvCell(string $value): string
-    {
-        return preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }
