@@ -24,7 +24,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 4;
+    private const SIDEBAR_MARKUP_VERSION = 5;
 
     /**
      * @var NavigationService Navigation service instance
