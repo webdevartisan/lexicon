@@ -24,7 +24,7 @@ test('administrator passes every control panel ability', function (string $abili
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageSettings',
+    'viewSystem', 'manageCache', 'manageSettings', 'viewPlatformTraffic',
 ]);
 
 test('permission holder passes only the matching area', function () {
@@ -43,7 +43,7 @@ test('user without area permissions is denied everywhere', function (string $abi
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageSettings',
+    'viewSystem', 'manageCache', 'manageSettings', 'viewPlatformTraffic',
 ]);
 
 test('empty user array is denied everywhere', function () {
@@ -86,4 +86,14 @@ test('only administrators may change the moderation rules, even someone who hand
     expect($this->policy->configureModeration($this->admin))->toBeTrue()
         ->and($this->policy->configureModeration($reportHandler))->toBeFalse()
         ->and($this->policy->configureModeration($this->regular))->toBeFalse();
+});
+
+test('platform traffic needs its own permission, and opens the dashboard but nothing else', function () {
+    $analyst = ['id' => 6, 'roles' => ['analyst'], 'permissions' => ['view_platform_traffic']];
+
+    expect($this->policy->viewPlatformTraffic($analyst))->toBeTrue()
+        ->and($this->policy->accessDashboard($analyst))->toBeTrue()
+        ->and($this->policy->manageBlogs($analyst))->toBeFalse()
+        ->and($this->policy->manageSettings($analyst))->toBeFalse()
+        ->and($this->policy->viewPlatformTraffic($this->moderator))->toBeFalse();
 });

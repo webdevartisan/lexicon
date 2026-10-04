@@ -278,6 +278,68 @@ $container->setShared(App\Services\ConsentService::class, function ($c) {
     return new App\Services\ConsentService($store, $config);
 });
 
+// ============================================================================
+// TRAFFIC ANALYTICS
+// ============================================================================
+
+$trafficConfig = static fn (): array => require ROOT_PATH.'/config/traffic.php';
+
+$container->set(App\Services\Traffic\UserAgentClassifier::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\UserAgentClassifier($trafficConfig()['bot_patterns']);
+});
+
+$container->set(App\Services\Traffic\ReferrerClassifier::class, function ($c) use ($trafficConfig) {
+    $config = $trafficConfig();
+
+    return new App\Services\Traffic\ReferrerClassifier(
+        $config['sources'],
+        $config['spam_referrers'],
+        $config['email_mediums']
+    );
+});
+
+// Keyed with APP_KEY so the hashes in traffic_hits can't be matched to accounts or cookies.
+$container->set(App\Services\Traffic\VisitorIdentity::class, function ($c) {
+    return new App\Services\Traffic\VisitorIdentity(
+        $c->get(App\Models\TrafficSaltModel::class),
+        (string) ($_ENV['APP_KEY'] ?? 'change-me')
+    );
+});
+
+$container->set(App\Services\Traffic\VisitorCookie::class, function ($c) use ($trafficConfig) {
+    $cookie = $trafficConfig()['cookie'];
+
+    return new App\Services\Traffic\VisitorCookie($cookie['name'], (int) $cookie['lifetime_days']);
+});
+
+$container->set(App\Services\Traffic\VisitorLink::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\VisitorLink(
+        $c->get(App\Services\Traffic\VisitorIdentity::class),
+        $c->get(App\Services\Traffic\VisitorCookie::class),
+        $c->get(App\Services\ConsentService::class),
+        $c->get(App\Models\TrafficHitModel::class),
+        (int) $trafficConfig()['visit_minutes'],
+    );
+});
+
+$container->setShared(App\Services\Traffic\CountryLookup::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\CountryLookup(ROOT_PATH.'/'.$trafficConfig()['geo']['path']);
+});
+
+$container->set(App\Services\Traffic\TrafficRecorder::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\TrafficRecorder(
+        $c->get(App\Services\Traffic\TrafficSettings::class),
+        $c->get(App\Services\Traffic\PagePathResolver::class),
+        $c->get(App\Services\Traffic\UserAgentClassifier::class),
+        $c->get(App\Services\Traffic\ReferrerClassifier::class),
+        $c->get(App\Services\Traffic\VisitorIdentity::class),
+        $c->get(App\Services\Traffic\CountryLookup::class),
+        $c->get(App\Models\TrafficHitModel::class),
+        $c->get(App\Models\BlogModel::class),
+        $trafficConfig(),
+    );
+});
+
 /**
  * Mail service handles email sending with template support.
  *
@@ -694,6 +756,10 @@ $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
     );
 });
 
+$container->set(App\Services\Traffic\TrafficRateLimiter::class, function ($c) {
+    return new App\Services\Traffic\TrafficRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
+});
+
 /**
  * Comment rate limiter throttles reader comment submission, votes and reports.
  *
@@ -777,6 +843,8 @@ $container->setShared(App\Services\AccountErasureService::class, function ($c) {
         $c->get(App\Services\MediaUsageResolver::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
         $c->get(App\Models\AccountErasureRecordModel::class),
+        $c->get(App\Models\TrafficHitModel::class),
+        $c->get(App\Services\Traffic\VisitorIdentity::class),
         (string) $config['deleted_user_handle']
     );
 });
@@ -861,7 +929,9 @@ $container->setShared(App\Services\BlogDeletionService::class, function ($c) {
         $c->get(App\Models\BlogSettingsModel::class),
         $c->get(App\Models\UserPreferencesModel::class),
         $c->get(App\Interfaces\UploadServiceInterface::class),
-        $c->get(App\Services\PublicCacheInvalidator::class)
+        $c->get(App\Services\PublicCacheInvalidator::class),
+        $c->get(App\Models\TrafficHitModel::class),
+        $c->get(App\Models\TrafficRollupModel::class)
     );
 });
 

@@ -431,4 +431,42 @@ abstract class AppController extends BaseController implements SessionAwareInter
 
         return $this->view('errors/403', ['message' => $message]);
     }
+
+    // ============== Download Helpers ==============
+
+    /**
+     * Send rows as a CSV download that is never cached.
+     *
+     * @param  list<string>  $header
+     * @param  list<list<string|int|float>>  $rows
+     */
+    protected function csv(string $filename, array $header, array $rows): Response
+    {
+        $out = fopen('php://temp', 'r+');
+        fputcsv($out, $header);
+
+        foreach ($rows as $row) {
+            fputcsv($out, array_map(static fn ($cell) => is_string($cell) ? self::csvCell($cell) : $cell, $row));
+        }
+
+        rewind($out);
+        $body = (string) stream_get_contents($out);
+        fclose($out);
+
+        $this->response->addHeader('Content-Type', 'text/csv; charset=utf-8');
+        $this->response->addHeader('Content-Disposition', 'attachment; filename="'.$filename.'"');
+        $this->response->addHeader('Cache-Control', 'private, no-store');
+        $this->response->setBody($body);
+
+        return $this->response;
+    }
+
+    /**
+     * Text that reached us from outside (campaign names, referrers, titles) could
+     * start with =, +, - or @ and run as a formula in a spreadsheet.
+     */
+    protected static function csvCell(string $value): string
+    {
+        return preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
+    }
 }

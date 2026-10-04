@@ -7,7 +7,7 @@ return [
     'cookie_ttl_days' => 180,
 
     // Bump this when consent categories or vendors change to force re-prompting.
-    'version' => 1,
+    'version' => 2,
 
     // Designed to be extensible; new categories can be added without core logic changes.
     'categories' => [

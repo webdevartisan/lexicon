@@ -23,6 +23,19 @@ class BlogSettingsModel extends AppModel
      */
     public const SOCIAL_PLATFORMS = ['x', 'facebook', 'instagram', 'linkedin', 'youtube', 'github'];
 
+    /** Columns stored as 0 or 1 whatever the caller passes. */
+    private const BOOLEAN_COLUMNS = [
+        'indexable',
+        'comments_enabled',
+        'comments_auto_publish',
+        'replies_auto_publish',
+        'workflow_enabled',
+        'translations_enabled',
+        'traffic_enabled',
+        'traffic_exclude_members',
+        'traffic_public_notice',
+    ];
+
     /**
      * Decode the social_links JSON column into a platform => URL map.
      *
@@ -71,7 +84,8 @@ class BlogSettingsModel extends AppModel
                             newsletter_heading, newsletter_text, social_links,
                             banner_path, logo_path, favicon_path,
                             comments_enabled, comments_auto_publish, replies_auto_publish,
-                            workflow_enabled, translations_enabled
+                            workflow_enabled, translations_enabled,
+                            traffic_enabled, traffic_exclude_members, traffic_excluded_paths, traffic_public_notice
                     FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
             return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
@@ -162,6 +176,10 @@ class BlogSettingsModel extends AppModel
             'replies_auto_publish',
             'workflow_enabled',
             'translations_enabled',
+            'traffic_enabled',
+            'traffic_exclude_members',
+            'traffic_excluded_paths',
+            'traffic_public_notice',
         ];
 
         $set = [];
@@ -171,7 +189,7 @@ class BlogSettingsModel extends AppModel
             if (array_key_exists($col, $data)) {
                 $set[] = "$col = ?";
 
-                if (in_array($col, ['indexable', 'comments_enabled', 'comments_auto_publish', 'replies_auto_publish', 'workflow_enabled', 'translations_enabled'], true)) {
+                if (in_array($col, self::BOOLEAN_COLUMNS, true)) {
                     $params[] = (int) (bool) $data[$col];
                 } else {
                     $params[] = $data[$col];

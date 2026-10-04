@@ -28,7 +28,7 @@ contributors and developers working on the project.
 - **Database**
   - [`database/schema.md`](database/schema.md) - Main tables and their purpose.
   - [`database/relationships.md`](database/relationships.md) - How tables and models relate.
-  - [`database/migrations.md`](database/migrations.md) - Unified migration and versioning.
+  - [`database/migrations.md`](database/migrations.md) - Schema install and how schema changes are made.
 
 - **API and modules**
   - [`api/cache.md`](api/cache.md) - Cache layers, keys, and invalidation patterns.

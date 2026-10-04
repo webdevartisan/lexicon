@@ -6,6 +6,7 @@ namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
 use App\Exceptions\AccountSuspendedException;
+use App\Services\Traffic\VisitorLink;
 use Framework\Core\Response;
 
 /**
@@ -196,6 +197,8 @@ final class AuthController extends AppController
         if ($loggedIn) {
 
             $limiter->clear($ip, $email);
+
+            app(VisitorLink::class)->toAccount($this->request, (int) auth()->user()['id']);
 
             // The session still holds the locale this visitor was browsing as a
             // guest, and every redirect below is built from it. Adopt the

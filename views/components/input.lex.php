@@ -118,9 +118,15 @@ $old = old($elementName);
         }  ?>
         rows="<?= $rows ?>"><?= e($value) ?></textarea>
 
+    <?php if (!empty($underlabel)) { ?>
+        <div class="mt-1 text-xs text-slate-500 dark:text-zink-200">
+            <?= $underlabel ?>
+        </div>
+    <?php } ?>
+
     <?php if (!empty($errors["$elementName"])) { ?>
         <?php foreach ($errors["$elementName"] as $msg) {  ?>
-            <p class="mt-1 text-sm text-red-600 dark:text-red-400"> <?= $msg ?> </p>
+            <p class="mt-1 text-sm text-red-600 dark:text-red-400"> <?= e($msg) ?> </p>
         <?php }  ?>
     <?php } ?>
 </div>

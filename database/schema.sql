@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_email (email),
     UNIQUE KEY uq_users_handle (handle),
     INDEX idx_is_active (is_active),
-    INDEX idx_deleted_at (deleted_at)
+    INDEX idx_deleted_at (deleted_at),
+    CONSTRAINT fk_users_suspended_by FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Core user authentication and identity data';
 
@@ -304,6 +305,10 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
     workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
     translations_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, post edit pages offer per-locale translation tabs',
+    traffic_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'The owner turned visit counting on for this blog',
+    traffic_exclude_members BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Do not count the blog team viewing their own blog',
+    traffic_excluded_paths TEXT DEFAULT NULL COMMENT 'One blog-relative path prefix per line that is never counted',
+    traffic_public_notice BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Show readers a line saying how visits are counted',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
@@ -815,7 +820,9 @@ INSERT INTO scheduled_tasks (label, command, arguments, schedule_type, interval_
 ('Prune old notifications', 'notifications:prune', NULL, 'daily', NULL, '03:40:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
 ('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
 ('Apply data retention periods', 'privacy:prune', NULL, 'daily', NULL, '03:50:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
-('Process due account erasures', 'privacy:process-due-erasures', NULL, 'daily', NULL, '04:10:00', 'UTC', 300, 1, UTC_TIMESTAMP());
+('Process due account erasures', 'privacy:process-due-erasures', NULL, 'daily', NULL, '04:10:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
+('Aggregate traffic', 'traffic:aggregate', NULL, 'every_n_minutes', 5, NULL, 'UTC', 240, 1, UTC_TIMESTAMP()),
+('Update the country database', 'traffic:update-geo', NULL, 'daily', NULL, '04:30:00', 'UTC', 300, 1, UTC_TIMESTAMP());
 
 -- Separate statement because hourly rules are timed by minute_of_hour, which the list above does not carry.
 INSERT INTO scheduled_tasks (label, command, schedule_type, minute_of_hour, schedule_timezone, timeout_seconds, is_active, next_run_at) VALUES
@@ -1177,6 +1184,99 @@ CREATE TABLE IF NOT EXISTS media (
 COMMENT='Per-blog index of uploaded media files';
 
 -- ============================================================================
+-- TRAFFIC ANALYTICS (Insights > Traffic)
+-- ============================================================================
+-- Raw page views from the blog page script, their daily rollups, and the
+-- daily salts behind anonymous visitor hashes. No foreign keys: blog deletion
+-- clears these explicitly.
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS traffic_hits (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    view_id BINARY(16) NOT NULL COMMENT 'Random per page view, made in the browser. The leave ping finds its row by it',
+    blog_id INT NOT NULL,
+    post_id INT DEFAULT NULL,
+    page_type ENUM('landing','post','archive','category','tag') NOT NULL,
+    path VARCHAR(255) NOT NULL COMMENT 'Blog page path without the locale prefix or query string',
+    path_hash BINARY(8) NOT NULL,
+    visitor_hash BINARY(16) NOT NULL,
+    visitor_kind ENUM('account','cookie','daily') NOT NULL COMMENT 'account and cookie ids last across days, daily ones do not',
+    channel ENUM('direct','internal','search','social','email','referral') NOT NULL,
+    referrer_host VARCHAR(100) DEFAULT NULL,
+    referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name for a known host, e.g. Google',
+    utm_source VARCHAR(100) DEFAULT NULL,
+    utm_medium VARCHAR(100) DEFAULT NULL,
+    utm_campaign VARCHAR(100) DEFAULT NULL,
+    device ENUM('desktop','mobile','tablet','other') NOT NULL,
+    browser VARCHAR(30) NOT NULL,
+    os VARCHAR(30) NOT NULL,
+    country CHAR(2) DEFAULT NULL,
+    locale VARCHAR(5) NOT NULL,
+    engaged_seconds SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Visible, active time reported when the reader left',
+    scroll_depth TINYINT UNSIGNED DEFAULT NULL COMMENT 'Furthest point reached, percent of the page',
+    local_date DATE NOT NULL COMMENT 'The day in the blog timezone at the moment of the view',
+    created_at DATETIME NOT NULL COMMENT 'UTC',
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_traffic_hits_view (view_id),
+    INDEX idx_traffic_hits_rollup (local_date, blog_id),
+    INDEX idx_traffic_hits_visitor (visitor_hash, blog_id, path_hash, created_at),
+    INDEX idx_traffic_hits_recent (blog_id, created_at),
+    INDEX idx_traffic_hits_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Raw page views, kept for traffic.raw_retention_days';
+
+CREATE TABLE IF NOT EXISTS traffic_daily (
+    blog_id INT NOT NULL,
+    post_id INT NOT NULL DEFAULT 0 COMMENT '0 is the whole blog',
+    day DATE NOT NULL COMMENT 'Blog timezone',
+    views INT UNSIGNED NOT NULL DEFAULT 0,
+    visitors INT UNSIGNED NOT NULL DEFAULT 0,
+    identified_visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors counted by account or cookie, the base for returning',
+    returning_visitors INT UNSIGNED NOT NULL DEFAULT 0,
+    bounces INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors with one view and under 10 engaged seconds',
+    read_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views with 30 or more engaged seconds',
+    engaged_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views whose leave ping arrived',
+    engaged_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    scroll_depth_sum BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (blog_id, post_id, day),
+    INDEX idx_traffic_daily_day (blog_id, day),
+    INDEX idx_traffic_daily_platform (day, post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Daily totals per blog and per post, rebuilt from traffic_hits';
+
+CREATE TABLE IF NOT EXISTS traffic_daily_dimensions (
+    blog_id INT NOT NULL,
+    post_id INT NOT NULL DEFAULT 0 COMMENT '0 is the whole blog',
+    dimension ENUM('channel','source','utm_source','utm_medium','utm_campaign','device','browser','os','country','locale','page') NOT NULL,
+    day DATE NOT NULL COMMENT 'Blog timezone',
+    value VARCHAR(191) NOT NULL,
+    views INT UNSIGNED NOT NULL DEFAULT 0,
+    visitors INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (blog_id, post_id, dimension, day, value),
+    INDEX idx_traffic_dimensions_platform (post_id, dimension, day)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Daily breakdowns (sources, devices, countries, pages) per blog and per post';
+
+CREATE TABLE IF NOT EXISTS traffic_site_daily (
+    day DATE NOT NULL COMMENT 'UTC',
+    views INT UNSIGNED NOT NULL DEFAULT 0,
+    visitors INT UNSIGNED NOT NULL DEFAULT 0,
+    blogs INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Blogs that had at least one view',
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (day)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Platform totals with no blog attached, so they survive blog deletion';
+
+CREATE TABLE IF NOT EXISTS traffic_salts (
+    day DATE NOT NULL COMMENT 'UTC',
+    salt BINARY(32) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (day)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One random salt per UTC day for anonymous visitor hashes, deleted when the day is over';
+
+-- ============================================================================
 -- ADD FOREIGN KEY FOR USER PREFERENCES (After blogs table exists)
 -- ============================================================================
 
@@ -1271,7 +1371,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
 ('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
-('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors');
+('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
+('View Platform Traffic', 'view_platform_traffic', 'traffic', 'read', 'See traffic across every blog in the control panel');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

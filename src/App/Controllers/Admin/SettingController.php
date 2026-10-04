@@ -9,6 +9,8 @@ use App\Controllers\AppController;
 use App\Models\RoleModel;
 use App\Models\SettingModel;
 use App\Services\MaintenanceMode;
+use App\Services\Traffic\CountryLookup;
+use App\Services\Traffic\TrafficSettings;
 use Framework\Core\Response;
 
 /**
@@ -27,6 +29,8 @@ final class SettingController extends AppController
         private SettingModel $settings,
         private RoleModel $roles,
         private MaintenanceMode $maintenance,
+        private TrafficSettings $traffic,
+        private CountryLookup $countries,
     ) {}
 
     /**
@@ -39,7 +43,59 @@ final class SettingController extends AppController
             'mail_config' => $this->getMailConfig(),
             'roles' => $this->roles->findAll(),
             'maintenance_active' => MaintenanceMode::active(),
+            'traffic' => $this->traffic->storedValues(),
+            'traffic_aggregated_at' => $this->traffic->aggregatedAt(),
+            'traffic_countries' => $this->countries->available(),
         ]);
+    }
+
+    /**
+     * Save the platform-wide traffic settings.
+     */
+    public function updateTraffic(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $data = $this->validateOrFail([
+            'traffic_enabled' => 'required|in:0,1',
+            'traffic_aggregation_enabled' => 'required|in:0,1',
+            'traffic_raw_retention_days' => 'required|integer',
+            'traffic_extra_bot_patterns' => 'max:2000',
+        ])->validated();
+
+        $days = (int) $data['traffic_raw_retention_days'];
+        [, $floor, $ceiling] = TrafficSettings::KEYS['traffic.raw_retention_days'];
+
+        // min:/max: measure string length here, so the day bounds are checked by hand.
+        if ($days < $floor || $days > $ceiling) {
+            $this->flash('error', "Keep raw page views for {$floor} to {$ceiling} days.");
+
+            return $this->redirect('/admin/settings#traffic');
+        }
+
+        $before = $this->traffic->storedValues();
+
+        $this->traffic->save('traffic.enabled', (int) $data['traffic_enabled']);
+        $this->traffic->save('traffic.aggregation_enabled', (int) $data['traffic_aggregation_enabled']);
+        $this->traffic->save('traffic.raw_retention_days', $days);
+        $this->traffic->saveExtraBotPatterns(trim((string) ($data['traffic_extra_bot_patterns'] ?? '')));
+
+        $after = $this->traffic->storedValues();
+
+        if ($after !== $before) {
+            audit()->log(
+                (int) auth()->user()['id'],
+                'site.traffic_settings_updated',
+                'setting',
+                null,
+                ['before' => $before, 'after' => $after],
+                $this->request->ip()
+            );
+        }
+
+        $this->flash('success', 'Traffic settings saved.');
+
+        return $this->redirect('/admin/settings#traffic');
     }
 
     /**

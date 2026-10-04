@@ -12,10 +12,13 @@ use App\Models\BlogSubscriberModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
+use App\Models\TrafficHitModel;
+use App\Services\Traffic\TrafficSettings;
 
 /**
  * Deletes personal data that has outlived its purpose, using the periods in
- * config/privacy.php.
+ * config/privacy.php, plus raw page views past the traffic retention period
+ * (an administrator setting, see TrafficSettings).
  *
  * Usage: php cli privacy:prune
  */
@@ -29,6 +32,8 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
         private BlogInvitationModel $invitations,
         private BlogSubscriberModel $subscribers,
         private AccountErasureRecordModel $erasureRecords,
+        private TrafficHitModel $trafficHits,
+        private TrafficSettings $trafficSettings,
     ) {}
 
     public static function scheduleLabel(): string
@@ -61,6 +66,7 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
             'Answered invitations' => $this->invitations->deleteSettled((int) $days['answered_invitations']),
             'Unconfirmed subscriptions' => $this->subscribers->deleteUnconfirmedOlderThan((int) $days['unconfirmed_subscriptions']),
             'Account erasure records' => $this->erasureRecords->pruneOlderThan((int) $days['account_erasure_records']),
+            'Raw page views' => $this->trafficHits->pruneOlderThan($this->trafficSettings->rawRetentionDays()),
         ];
 
         foreach ($deleted as $label => $count) {

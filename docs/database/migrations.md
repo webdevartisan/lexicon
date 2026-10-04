@@ -1,57 +1,52 @@
 ## Migrations
 
-Lexicon’s database schema is currently defined by a unified install migration located at:
+The full database schema lives in one file:
 
-- `database/migrations/2026_02_02_install.sql`
+- `database/schema.sql`: every table, index, foreign key and the reference data (roles, permissions, reserved handles, scheduled tasks).
+- `database/seeds/*.sql`: default content loaded after the schema, such as the static pages.
 
-This file creates all core tables, supporting tables, and the `migrations` metadata table.
+The test database is built from `schema.sql`, so it has to stay complete.
 
 ---
 
 ## Initial Install
 
-On a fresh database:
-
-1. Create an empty database (e.g. `blog` or `lexicon`).
-2. Import the unified migration:
+Run the setup script:
 
 ```bash
-mysql -u your_user -p your_database < database/migrations/2026_02_02_install.sql
+php scripts/setup/setup.php
 ```
 
-3. Configure your `.env` with matching database credentials.
-4. Run any application setup commands (see `docs/getting-started.md`).
+On an empty database it installs `schema.sql`, runs every file in `database/seeds/`, and records any files already in `database/migrations/` as applied, since the schema includes them.
+
+To install by hand instead:
+
+```bash
+mysql -u your_user -p your_database < database/schema.sql
+mysql -u your_user -p your_database < database/seeds/pages.sql
+```
 
 ---
 
-## `migrations` Table
+## Schema Changes
 
-The migration file creates a simple `migrations` table:
+There is no migration runner in the app. A schema change is:
 
-- `id` – auto‑increment primary key
-- `filename` – the name of the applied migration file
-- `applied_at` – timestamp when it was applied
+1. A new SQL file in `database/migrations/` with a dated name, e.g. `2026_10_05_add_post_series.sql`.
+2. The same change made in `database/schema.sql`.
+3. Applied to existing databases, either by running the setup script again (it runs pending files in name order) or by hand, followed by:
 
-As you add incremental migrations in the future, record them here to track schema versioning and avoid re‑applying the same file.
+```sql
+INSERT INTO migrations (filename) VALUES ('2026_10_05_add_post_series.sql');
+```
+
+The `migrations` table has `id`, `filename` and `applied_at`. Only record a file after it applied cleanly.
+
+Once every environment has a migration, it can be deleted, because `schema.sql` already holds the change.
 
 ---
-
-## Future Incremental Migrations
-
-If you split the schema into incremental migrations:
-
-- Place new SQL files under `database/migrations/` with timestamped filenames.
-- Ensure each migration is **idempotent** or guarded appropriately (e.g. using `IF NOT EXISTS`).
-- After running a migration, insert a row into the `migrations` table with its filename.
-
-Application‑level tooling (console commands) can later automate:
-
-- Scanning `database/migrations/` for unapplied files
-- Applying them in order
-- Recording them in `migrations`
 
 For a conceptual overview of what the schema contains, see:
 
 - `docs/database/schema.md`
 - `docs/database/relationships.md`
-

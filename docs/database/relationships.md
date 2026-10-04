@@ -1,6 +1,6 @@
 ## Database Relationships
 
-This document summarizes how the main tables in `database/migrations/2026_02_02_install.sql` relate to each other and how they map to models under `App\Models`.
+This document summarizes how the main tables in `database/schema.sql` relate to each other and how they map to models under `App\Models`.
 
 ---
 
@@ -121,5 +121,5 @@ Representative mapping between tables and models:
 - `settings` → `SettingModel`
 - `reserved_slugs` → `ReservedSlugModel`
 
-For exact column definitions and foreign keys, refer to `docs/database/schema.md` and `database/migrations/2026_02_02_install.sql`.
+For exact column definitions and foreign keys, refer to `docs/database/schema.md` and `database/schema.sql`.
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\Traffic\VisitorIdentity;
 use Framework\Database;
 use RuntimeException;
 
@@ -15,7 +16,10 @@ use RuntimeException;
  */
 class PersonalDataExportService
 {
-    public function __construct(private Database $database) {}
+    public function __construct(
+        private Database $database,
+        private VisitorIdentity $visitorIdentity,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -122,6 +126,16 @@ class PersonalDataExportService
                 'SELECT action, resource_type, resource_id, details, ip_address, created_at
                  FROM activity_log WHERE user_id = ? ORDER BY created_at',
                 [$userId]
+            ),
+            // Only views made while signed in are linked to the account.
+            'blog_page_views' => $this->rows(
+                "SELECT b.blog_name, h.path, h.channel, h.referrer_source, h.device, h.browser, h.os, h.country,
+                        h.engaged_seconds, h.scroll_depth, h.created_at
+                 FROM traffic_hits h
+                 LEFT JOIN blogs b ON b.id = h.blog_id
+                 WHERE h.visitor_hash = ? AND h.visitor_kind = 'account'
+                 ORDER BY h.created_at",
+                [$this->visitorIdentity->forAccount($userId)]
             ),
         ];
     }

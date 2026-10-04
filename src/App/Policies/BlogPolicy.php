@@ -134,6 +134,31 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
+     * Open the Traffic dashboard. Anyone who writes for the blog.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function viewTraffic(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'create_posts')
+            || $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
+     * See the whole blog's traffic, not only one's own posts.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function viewAllTraffic(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
      * Delete the blog. Owner only (delete_own_blog is in the owner bundle and
      * granted to no collaborator role).
      *

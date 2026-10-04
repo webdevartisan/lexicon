@@ -29,10 +29,10 @@ foreach (($cards ?? []) as $i => $post) {
     </div>
     <?php if (!empty($tags)) { ?>
     <div class="idx-tags">
-      <?php foreach (array_slice($tags, 0, 2) as $t) {
-          $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($t['slug'] ?? '')));
+      <?php foreach (array_slice($tags, 0, 2) as $cardTag) {
+          $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($cardTag['slug'] ?? '')));
           ?>
-      <a class="idx-tag" href="<?= $tUrl ?>">#<?= e((string) ($t['name'] ?? '')) ?></a>
+      <a class="idx-tag" href="<?= $tUrl ?>">#<?= e((string) ($cardTag['name'] ?? '')) ?></a>
       <?php } ?>
     </div>
     <?php } ?>

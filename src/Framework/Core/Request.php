@@ -223,6 +223,15 @@ class Request
     }
 
     /**
+     * The unparsed request body, read up to $maxBytes + 1 bytes so a caller can
+     * tell an oversized body apart from one that fits.
+     */
+    public function rawBody(int $maxBytes = 65536): string
+    {
+        return (string) file_get_contents('php://input', false, null, 0, $maxBytes + 1);
+    }
+
+    /**
      * True if the request was made via AJAX (XMLHttpRequest).
      */
     public function isAjax(): bool

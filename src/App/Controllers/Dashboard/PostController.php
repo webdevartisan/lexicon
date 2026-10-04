@@ -14,6 +14,7 @@ use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
 use App\Models\TagModel;
+use App\Models\TrafficStatsModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
@@ -78,6 +79,7 @@ final class PostController extends AppController
         private PostAuthorService $postAuthors,
         private ExternalMediaGuard $mediaGuard,
         private PostContentSanitizer $contentSanitizer,
+        private TrafficStatsModel $trafficStats,
     ) {}
 
     /**
@@ -487,6 +489,7 @@ final class PostController extends AppController
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
+            'postTraffic' => $this->postTraffic($blog, (int) $post->id(), (string) ($postArray['status'] ?? '')),
             'translationsEnabled' => $translationsEnabled,
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
@@ -1191,6 +1194,7 @@ final class PostController extends AppController
             'blog' => $blog->toArray(),
             'blogRole' => $blogRole,
             'posts' => $rows['data'],
+            'postViews' => $this->postViews($blog, $rows['data']),
             'pagination' => $rows['pagination'],
             'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'q' => $q,
@@ -1255,11 +1259,51 @@ final class PostController extends AppController
             'blog' => $blog->toArray(),
             'blogRole' => $blogRole,
             'posts' => $rows['data'],
+            'postViews' => $this->postViews($blog, $rows['data']),
             'pagination' => $rows['pagination'],
             'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'counts' => $counts,
             'workflowEnabled' => $workflowEnabled,
         ]);
+    }
+
+    /**
+     * All-time views for each listed post, keyed by post id.
+     *
+     * @param  list<array<string, mixed>>  $posts
+     * @return array<int, array{views: int, visitors: int}>
+     */
+    private function postViews(\App\Resources\BlogResource $blog, array $posts): array
+    {
+        $ids = array_map('intval', array_column($posts, 'id'));
+
+        return $this->trafficStats->lifetimeForPosts((int) $blog->id(), $ids);
+    }
+
+    /**
+     * Views for the editor sidebar, or null when the viewer can't open Traffic.
+     *
+     * @return array{views: int, visitors: int, recent: int, url: string}|null
+     */
+    private function postTraffic(\App\Resources\BlogResource $blog, int $postId, string $status): ?array
+    {
+        if ($status !== 'published' || !Gate::allows('viewTraffic', $blog, auth()->user())) {
+            return null;
+        }
+
+        $blogId = (int) $blog->id();
+        $lifetime = $this->trafficStats->lifetimeForPosts($blogId, [$postId])[$postId]
+            ?? ['views' => 0, 'visitors' => 0];
+        $today = new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId)));
+        $monthAgo = $today->modify('-29 days')->format('Y-m-d');
+        $recent = $this->trafficStats->totals($blogId, [$postId], $monthAgo, $today->format('Y-m-d'));
+
+        return [
+            'views' => $lifetime['views'],
+            'visitors' => $lifetime['visitors'],
+            'recent' => $recent['views'],
+            'url' => lurl('/dashboard/blog/'.$blogId.'/analytics/traffic/posts/'.$postId),
+        ];
     }
 
     /**

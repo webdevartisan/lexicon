@@ -69,6 +69,7 @@ $selectClass = 'form-select w-full border-slate-200 dark:border-zink-500 focus:o
             'content' => ['file-text', 'Content & Display'],
             'users' => ['users', 'Users & Availability'],
             'email' => ['mail', 'Email'],
+            'traffic' => ['trending-up', 'Traffic'],
         ];
 foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
         <button type="button" role="tab" data-tab="<?= e($tabKey) ?>"
@@ -192,6 +193,52 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
         </form>
     </div>
 
+    <!-- TAB 5: TRAFFIC -->
+    <?php
+    $trafficEnabled = (string) old('traffic_enabled', $traffic['traffic.enabled'] ?? '1');
+    $trafficAggregation = (string) old('traffic_aggregation_enabled', $traffic['traffic.aggregation_enabled'] ?? '1');
+    $trafficRetention = (string) old('traffic_raw_retention_days', $traffic['traffic.raw_retention_days'] ?? '30');
+    $trafficBots = (string) old('traffic_extra_bot_patterns', $traffic['traffic.extra_bot_patterns'] ?? '');
+    $trafficCountingOptions = ['1' => 'On: record page views', '0' => 'Off: record nothing'];
+    $trafficTotalsOptions = ['1' => 'On: update every five minutes', '0' => 'Off: paused'];
+    $trafficTotalsHint = $traffic_aggregated_at !== null ? 'Last updated '.$traffic_aggregated_at.' UTC.' : 'Not run yet.';
+    ?>
+    <div class="tab-content" data-section="traffic">
+        <form method="POST" action="/admin/settings/traffic" class="card">
+            {{ csrf_field() }}
+            <div class="card-body">
+                <h3 class="<?= $sectionTitleClass ?>">Traffic Analytics</h3>
+                <p class="<?= $sectionHintClass ?>">Page view counting for every blog's Insights &gt; Traffic page.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {% cmp="select" name="traffic_enabled" label="Counting" options="{$trafficCountingOptions}" selectedKey="{$trafficEnabled}" underlabel="Applies to every blog at once." %}
+
+                    {% cmp="select" name="traffic_aggregation_enabled" label="Daily totals" options="{$trafficTotalsOptions}" selectedKey="{$trafficAggregation}" underlabel="{$trafficTotalsHint}" %}
+
+                    <div>
+                        {% cmp="input" type="number" label="Keep raw page views (days)" name="traffic_raw_retention_days" value="{$trafficRetention}" required underlabel="1 to 395. Pruned daily by the data retention task." %}
+                    </div>
+
+                    <div>
+                        <span class="inline-block mb-2 text-base font-medium">Country lookup</span>
+                        <p class="text-sm <?= $traffic_countries ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400' ?>">
+                            <?= $traffic_countries
+                                ? 'DB-IP Lite database installed.'
+                                : 'Not installed. Run php cli traffic:update-geo or wait for the daily task.' ?>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    {% cmp="input" type="textarea" label="Extra crawler patterns" name="traffic_extra_bot_patterns" value="{$trafficBots}" rows="4" placeholder="examplebot" underlabel="One per line, matched anywhere in the user agent, ignoring case. Added to the built-in list in config/traffic.php." %}
+                </div>
+            </div>
+            <div class="card-body flex justify-end border-t border-slate-100 dark:border-zink-600">
+                <?= $saveButton ?>
+            </div>
+        </form>
+    </div>
+
     <!-- TAB 4: EMAIL -->
     <div class="tab-content" data-section="email">
         <div class="card mb-5">
@@ -262,6 +309,12 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
                 });
             });
         });
+
+        // A save that redirects to /admin/settings#traffic lands back on the tab it came from.
+        const fromHash = document.querySelector('.tab-button[data-tab="' + location.hash.slice(1) + '"]');
+        if (fromHash) {
+            fromHash.click();
+        }
     });
 </script>
 {% endblock %}

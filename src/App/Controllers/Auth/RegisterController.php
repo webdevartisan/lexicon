@@ -14,6 +14,7 @@ use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\CommentService;
 use App\Services\InvitationService;
+use App\Services\Traffic\VisitorLink;
 use App\Services\UserHandleValidator;
 use Exception;
 use Framework\Core\Response;
@@ -141,6 +142,7 @@ final class RegisterController extends AppController
 
         // log the user in automatically after successful registration
         $this->auth->login($validated['email'], $this->request->post['password']);
+        app(VisitorLink::class)->toAccount($this->request, (int) $userId);
 
         // A reply captured before signup gets posted now and wins the
         // redirect: the new reader lands back on the comment they answered.
