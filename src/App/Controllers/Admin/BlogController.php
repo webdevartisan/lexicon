@@ -54,7 +54,7 @@ class BlogController extends AppController
 
         audit()->log(
             (int) auth()->user()['id'],
-            $on ? 'blog.featured_on_explore' : 'blog.unfeatured_from_explore',
+            $on ? 'blog.featured_on_discover' : 'blog.unfeatured_from_discover',
             'blog',
             (int) $blog['id'],
             ['blog_name' => $blog['blog_name'] ?? ''],

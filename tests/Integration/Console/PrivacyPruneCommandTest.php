@@ -10,6 +10,9 @@ use App\Models\BlogSubscriberModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
+use App\Models\SettingModel;
+use App\Models\TrafficHitModel;
+use App\Services\Traffic\TrafficSettings;
 
 test('old audit entries and mail copies are removed and recent ones stay', function () {
     $this->db->execute("INSERT INTO activity_log (action, resource_type, ip_address, created_at) VALUES ('old', 'user', '10.0.0.1', DATE_SUB(NOW(), INTERVAL 400 DAY))");
@@ -26,6 +29,8 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
         new BlogInvitationModel($this->db),
         new BlogSubscriberModel($this->db),
         new AccountErasureRecordModel($this->db),
+        new TrafficHitModel($this->db),
+        new TrafficSettings(new SettingModel($this->db)),
     );
 
     ob_start();

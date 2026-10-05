@@ -30,9 +30,9 @@ final class TrafficRange
     public static function fromQuery(array $query, string $timezone): self
     {
         $today = new \DateTimeImmutable('today', new \DateTimeZone($timezone));
-        $preset = is_string($query['range'] ?? null) ? $query['range'] : self::DEFAULT;
+        $preset = $query['range'] ?? self::DEFAULT;
 
-        if (isset(self::PRESETS[$preset])) {
+        if (is_string($preset) && isset(self::PRESETS[$preset])) {
             return self::preset($preset, $today);
         }
 
