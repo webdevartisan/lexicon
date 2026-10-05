@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Database\Seeders;
 
 use App\Models\TrafficRollupModel;
+use App\Services\Traffic\LexiconSource;
 use Framework\Database;
 
 /**
- * Invents a month of page views for a few blogs, for looking at the Traffic
- * dashboard locally. The rollups are rebuilt the way the scheduled job does it.
+ * Invents a month of page views for a few blogs and the platform's own pages,
+ * for looking at the Traffic pages locally. The rollups are rebuilt the way the
+ * scheduled job does it.
  */
 final class TrafficSeeder
 {
@@ -19,8 +21,8 @@ final class TrafficSeeder
         'traffic_hits',
         'traffic_daily',
         'traffic_daily_dimensions',
-        'traffic_site_daily',
         'traffic_salts',
+        'traffic_events',
     ];
 
     /** Weighted picks: value => weight. */
@@ -31,6 +33,12 @@ final class TrafficSeeder
         'email|Gmail|mail.google.com' => 3, 'referral|medium.com|medium.com' => 2,
         'referral|dev.to|dev.to' => 1, 'direct||' => 32,
     ];
+
+    /** Where on Lexicon a reader came from, when it was another part of it. */
+    private const LEXICON_ARRIVALS = ['discover' => 5, 'home' => 4, 'blog' => 3, 'profile' => 2, 'guide' => 1, 'other' => 1];
+
+    /** The last page read before signing up. */
+    private const SIGNUP_PAGES = ['blog' => 10, 'home' => 4, 'discover' => 3, 'auth' => 2, 'guide' => 1];
 
     private const DEVICES = [
         'desktop|Chrome|Windows' => 22, 'desktop|Firefox|Windows' => 5, 'desktop|Edge|Windows' => 5,
@@ -46,11 +54,31 @@ final class TrafficSeeder
 
     private const LOCALES = ['en' => 55, 'el' => 35, 'ar' => 10];
 
+    /** The platform's own pages: type, post id, path, weight. */
+    private const PLATFORM_PAGES = [
+        ['home', null, '/', 40],
+        ['discover', null, '/discover', 20],
+        ['guide', null, '/getting-started', 6],
+        ['guide', null, '/getting-started/start-your-first-blog', 4],
+        ['guide', null, '/getting-started/write-posts-people-read', 3],
+        ['guide', null, '/getting-started/blog-with-your-team', 2],
+        ['static_page', null, '/about', 5],
+        ['static_page', null, '/privacy', 2],
+        ['static_page', null, '/terms', 1],
+        ['static_page', null, '/contact', 2],
+        ['profile', null, '/profile', 6],
+        ['auth', null, '/login', 8],
+        ['auth', null, '/register', 5],
+    ];
+
     private const CAMPAIGNS = [
         ['newsletter', 'email', 'weekly-digest'],
         ['x', 'social', 'launch-thread'],
         ['facebook', 'paid', 'spring-promo'],
     ];
+
+    /** @var list<int> The blogs being seeded, which send readers to each other. */
+    private array $blogIds = [];
 
     public function __construct(
         private Database $db,
@@ -58,8 +86,8 @@ final class TrafficSeeder
     ) {}
 
     /**
-     * @param  list<int>  $blogIds  Empty for the three blogs with the most published posts
-     * @return array<int, int> Views written per blog id
+     * @param  list<int>  $blogIds  Empty for the three blogs with the most published posts and the platform's pages
+     * @return array<string, string> What was written, keyed "Blog 5", "Platform pages" or "Sign-ups"
      */
     public function run(int $days, array $blogIds): array
     {
@@ -69,13 +97,26 @@ final class TrafficSeeder
             throw new \RuntimeException('No published blog with published posts to seed. Run php cli db:seed first.');
         }
 
+        $this->blogIds = array_map(static fn (array $blog): int => (int) $blog['id'], $blogs);
         $written = [];
         $scale = [1 => 120, 2 => 45, 3 => 15];
         $rank = 1;
 
         foreach ($blogs as $blog) {
-            $written[(int) $blog['id']] = $this->seedBlog($blog, $days, $scale[$rank] ?? 10);
+            $zone = in_array($blog['timezone'], \DateTimeZone::listIdentifiers(), true) ? $blog['timezone'] : 'UTC';
+            $written['Blog '.(int) $blog['id']] = $this->seedPages(
+                (int) $blog['id'],
+                new \DateTimeZone($zone),
+                $this->pages($blog),
+                $days,
+                $scale[$rank] ?? 10
+            ).' page views';
             $rank++;
+        }
+
+        if ($blogIds === []) {
+            $written['Platform pages'] = $this->seedPages(null, new \DateTimeZone('UTC'), self::PLATFORM_PAGES, $days, 60).' page views';
+            $written['Sign-ups'] = $this->seedSignups($days).' sign-up events, one per account created';
         }
 
         $from = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('-'.($days + 1).' days');
@@ -115,13 +156,12 @@ final class TrafficSeeder
     }
 
     /**
-     * @param  array<string, mixed>  $blog
+     * A month of visits to one blog, or to the platform's own pages when $blogId is null.
+     *
+     * @param  list<array{0: string, 1: ?int, 2: string, 3: int}>  $pages  type, post id, path, weight
      */
-    private function seedBlog(array $blog, int $days, int $dailyVisitors): int
+    private function seedPages(?int $blogId, \DateTimeZone $zone, array $pages, int $days, int $dailyVisitors): int
     {
-        $pages = $this->pages($blog);
-        $knownZone = in_array($blog['timezone'], \DateTimeZone::listIdentifiers(), true);
-        $zone = new \DateTimeZone($knownZone ? $blog['timezone'] : 'UTC');
         $regulars = array_map(static fn (): string => random_bytes(16), range(1, max(5, intdiv($dailyVisitors, 3))));
         $rows = [];
         $total = 0;
@@ -134,7 +174,7 @@ final class TrafficSeeder
             $count = (int) round($dailyVisitors * $weekday * $growth * (0.85 + mt_rand(0, 30) / 100));
 
             for ($v = 0; $v < $count; $v++) {
-                foreach ($this->visit($blog, $pages, $day, $zone, $regulars) as $row) {
+                foreach ($this->visit($blogId, $pages, $day, $zone, $regulars) as $row) {
                     $rows[] = $row;
                 }
 
@@ -149,22 +189,46 @@ final class TrafficSeeder
     }
 
     /**
+     * One sign-up event for each account created in the period, so the Sign-ups
+     * page lists sources for the accounts it counts.
+     */
+    private function seedSignups(int $days): int
+    {
+        $accountDays = $this->db->query(
+            'SELECT DATE(created_at) FROM users WHERE created_at >= UTC_DATE() - INTERVAL ? DAY',
+            [$days]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($accountDays as $day) {
+            [$channel, $source] = explode('|', $this->pick(self::CHANNELS));
+            $page = $this->pick(self::SIGNUP_PAGES);
+            $cameFrom = $page === 'blog' ? LexiconSource::blog($this->blogIds[array_rand($this->blogIds)]) : $page;
+
+            $this->db->execute(
+                "INSERT INTO traffic_events (event, day, channel, referrer_source, came_from) VALUES ('signup', ?, ?, ?, ?)",
+                [$day, $channel, $source !== '' ? $source : null, $cameFrom]
+            );
+        }
+
+        return count($accountDays);
+    }
+
+    /**
      * One visitor's views on one day.
      *
-     * @param  array<string, mixed>  $blog
      * @param  list<array{0: string, 1: ?int, 2: string, 3: int}>  $pages  type, post id, path, weight
      * @param  list<string>  $regulars
      * @return list<list<mixed>>
      */
     private function visit(
-        array $blog,
+        ?int $blogId,
         array $pages,
         \DateTimeImmutable $day,
         \DateTimeZone $zone,
         array $regulars
     ): array {
         [$hash, $kind] = $this->visitor($regulars);
-        $arrival = $this->arrival();
+        $arrival = $this->arrival($blogId);
         $profile = $this->profile();
         $views = mt_rand(1, 100) <= 55 ? 1 : mt_rand(2, 5);
         $moment = $day->setTime(mt_rand(6, 23), mt_rand(0, 59), mt_rand(0, 59));
@@ -180,7 +244,7 @@ final class TrafficSeeder
             }
 
             $rows[] = [
-                random_bytes(16), (int) $blog['id'], $postId, $type, $path, substr(hash('sha256', $path, true), 0, 8),
+                random_bytes(16), $blogId, $postId, $type, $path, substr(hash('sha256', $path, true), 0, 8),
                 $hash, $kind,
                 ...($i === 0 ? $arrival : ['internal', null, null]),
                 ...$profile,
@@ -250,11 +314,34 @@ final class TrafficSeeder
     /**
      * @return array{0: string, 1: ?string, 2: ?string} Channel, referrer host and source
      */
-    private function arrival(): array
+    private function arrival(?int $blogId): array
     {
+        $fromLexicon = mt_rand(1, 100) <= 12 ? $this->lexiconSource($blogId) : null;
+
+        if ($fromLexicon !== null) {
+            return ['lexicon', null, $fromLexicon];
+        }
+
         [$channel, $source, $host] = explode('|', $this->pick(self::CHANNELS));
 
         return [$channel, $host !== '' ? $host : null, $source !== '' ? $source : null];
+    }
+
+    /**
+     * A platform page or another seeded blog. For the platform's own pages it is always
+     * a blog, since moving between them is internal.
+     */
+    private function lexiconSource(?int $blogId): ?string
+    {
+        $kind = $blogId === null ? 'blog' : $this->pick(self::LEXICON_ARRIVALS);
+
+        if ($kind !== 'blog') {
+            return $kind;
+        }
+
+        $others = array_values(array_diff($this->blogIds, [$blogId]));
+
+        return $others === [] ? null : LexiconSource::blog($others[array_rand($others)]);
     }
 
     /**

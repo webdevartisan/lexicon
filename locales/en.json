@@ -44,6 +44,7 @@
         "mediaLibrary": "Media Library",
         "analyticsSection": "Insights",
         "traffic": "Traffic",
+        "signups": "Sign-ups",
         "comments": "Comments",
         "users": "Users",
         "blogs": "Blogs",
@@ -1038,7 +1039,7 @@
     },
     "consent": {
         "region": "Cookie consent",
-        "bannerText": "We use cookies that keep you signed in and the site secure. With your permission we also remember your language and recognise you when you come back to a blog.",
+        "bannerText": "We use cookies that keep you signed in and the site secure. With your permission we also remember your language and recognise you when you come back.",
         "policyLink": "Cookie policy",
         "manage": "Manage",
         "rejectAll": "Reject all",
@@ -1050,7 +1051,7 @@
         "preferences": "Preferences",
         "preferencesHint": "Remember your language between visits.",
         "analytics": "Analytics",
-        "analyticsHint": "Recognises you when you come back to a blog, so its author can see how many readers return.",
+        "analyticsHint": "Recognises you when you come back to Lexicon or one of its blogs, so authors can see how many readers return.",
         "marketing": "Marketing",
         "marketingHint": "Not used on this site at the moment.",
         "save": "Save"
@@ -1090,7 +1091,7 @@
             "bounceRate": "Bounce rate",
             "bounceRateHint": "Visitors who looked at one page and left within 10 seconds.",
             "returning": "Returning visitors",
-            "returningHint": "Of the visitors who can be recognised from one day to the next (signed in, or accepted analytics), the share who had visited in the last 30 days.",
+            "returningHint": "Of the visitors who can be recognised from one day to the next (those who accepted analytics), the share who had visited in the last 30 days.",
             "scroll": "Scroll depth",
             "scrollHint": "How far down the page readers got, on average.",
             "topSource": "Top source",
@@ -1122,6 +1123,8 @@
             "utm_medium": "Campaign mediums",
             "utm_campaign": "Campaigns",
             "page": "Pages",
+            "lexicon": "Elsewhere on Lexicon",
+            "fromBlogs": "From blogs",
             "device": "Devices",
             "browser": "Browsers",
             "os": "Operating systems",
@@ -1144,7 +1147,22 @@
             "search": "Search",
             "social": "Social",
             "email": "Email",
-            "referral": "Other sites"
+            "referral": "Other sites",
+            "lexicon": "Elsewhere on Lexicon",
+            "withinSite": "Within Lexicon",
+            "platformPages": "Platform pages",
+            "blogs": "Blogs"
+        },
+        "lexicon": {
+            "home": "Home page",
+            "discover": "Discover",
+            "guide": "Guides",
+            "profile": "Profiles",
+            "static_page": "About, contact and legal pages",
+            "auth": "Sign-in and sign-up",
+            "other": "Other Lexicon pages",
+            "blog": "Another blog",
+            "deletedBlog": "Deleted blog"
         },
         "devices": {
             "desktop": "Desktop",
@@ -1164,9 +1182,6 @@
             "delayed": "These numbers are behind. They were last updated {time} (UTC) and normally update every five minutes.",
             "neverAggregated": "These numbers have not been worked out yet. They update every five minutes once the scheduler runs.",
             "aggregationOff": "An administrator has switched off updating traffic numbers, so they may be out of date.",
-            "blogOff": "Visits aren't being counted for this blog. The blog owner can turn counting on.",
-            "blogOffOwner": "Visits aren't being counted for this blog. Turn counting on to see your readers here.",
-            "turnOn": "Turn on",
             "trackingOff": "An administrator has switched off counting visits.",
             "collectingSince": "Counting since {date}.",
             "notCollecting": "No visits counted yet. Numbers show up here a few minutes after the first reader."
@@ -1178,8 +1193,6 @@
         "settings": {
             "button": "Counting settings",
             "title": "How visits are counted",
-            "enabled": "Count visits on this blog",
-            "enabledHint": "Shows how many people read this blog and where they come from.",
             "excludeMembers": "Leave out the blog team",
             "excludeMembersHint": "Your own views and your collaborators', while signed in.",
             "publicNotice": "Tell readers how visits are counted",

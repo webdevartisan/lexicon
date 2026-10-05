@@ -305,7 +305,6 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
     workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
     translations_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, post edit pages offer per-locale translation tabs',
-    traffic_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'The owner turned visit counting on for this blog',
     traffic_exclude_members BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Do not count the blog team viewing their own blog',
     traffic_excluded_paths TEXT DEFAULT NULL COMMENT 'One blog-relative path prefix per line that is never counted',
     traffic_public_notice BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Show readers a line saying how visits are counted',
@@ -1186,24 +1185,27 @@ COMMENT='Per-blog index of uploaded media files';
 -- ============================================================================
 -- TRAFFIC ANALYTICS (Insights > Traffic)
 -- ============================================================================
--- Raw page views from the blog page script, their daily rollups, and the
--- daily salts behind anonymous visitor hashes. No foreign keys: blog deletion
--- clears these explicitly.
+-- Raw page views from the page script, their daily totals, and the daily
+-- salts behind anonymous visitor hashes. No foreign keys: blog deletion
+-- handles these explicitly.
+--
+-- The totals are kept per scope: the whole site, the platform's own pages,
+-- one blog, one post. Every report reads one scope.
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS traffic_hits (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     view_id BINARY(16) NOT NULL COMMENT 'Random per page view, made in the browser. The leave ping finds its row by it',
-    blog_id INT NOT NULL,
+    blog_id INT DEFAULT NULL COMMENT 'Empty for the platform''s own pages, and once a blog is deleted so its views still count for the site',
     post_id INT DEFAULT NULL,
-    page_type ENUM('landing','post','archive','category','tag') NOT NULL,
-    path VARCHAR(255) NOT NULL COMMENT 'Blog page path without the locale prefix or query string',
+    page_type ENUM('landing','post','archive','category','tag','home','discover','static_page','guide','profile','auth') NOT NULL COMMENT 'The first five are blog pages, the rest the platform''s own',
+    path VARCHAR(255) NOT NULL COMMENT 'Page path without the locale prefix or query string',
     path_hash BINARY(8) NOT NULL,
     visitor_hash BINARY(16) NOT NULL,
     visitor_kind ENUM('account','cookie','daily') NOT NULL COMMENT 'account and cookie ids last across days, daily ones do not',
-    channel ENUM('direct','internal','search','social','email','referral') NOT NULL,
+    channel ENUM('direct','internal','lexicon','search','social','email','referral') NOT NULL COMMENT 'internal: from the same blog, or between platform pages. lexicon: from another part of Lexicon',
     referrer_host VARCHAR(100) DEFAULT NULL,
-    referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name for a known host, e.g. Google',
+    referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name for a known host, e.g. Google. On lexicon views, the kind of page or blog:{id} the reader came from',
     utm_source VARCHAR(100) DEFAULT NULL,
     utm_medium VARCHAR(100) DEFAULT NULL,
     utm_campaign VARCHAR(100) DEFAULT NULL,
@@ -1219,54 +1221,62 @@ CREATE TABLE IF NOT EXISTS traffic_hits (
     PRIMARY KEY (id),
     UNIQUE KEY uq_traffic_hits_view (view_id),
     INDEX idx_traffic_hits_rollup (local_date, blog_id),
-    INDEX idx_traffic_hits_visitor (visitor_hash, blog_id, path_hash, created_at),
+    INDEX idx_traffic_hits_visitor (visitor_hash, path_hash, created_at),
     INDEX idx_traffic_hits_recent (blog_id, created_at),
     INDEX idx_traffic_hits_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Raw page views, kept for traffic.raw_retention_days';
 
 CREATE TABLE IF NOT EXISTS traffic_daily (
-    blog_id INT NOT NULL,
-    post_id INT NOT NULL DEFAULT 0 COMMENT '0 is the whole blog',
-    day DATE NOT NULL COMMENT 'Blog timezone',
+    scope ENUM('site','platform','blog','post') NOT NULL COMMENT 'The whole site, the platform''s own pages, one blog or one post',
+    scope_id INT NOT NULL DEFAULT 0 COMMENT 'The blog or post id; 0 for site and platform',
+    blog_id INT DEFAULT NULL COMMENT 'The blog a blog or post row belongs to',
+    day DATE NOT NULL COMMENT 'UTC for site and platform, the blog timezone for blog and post',
     views INT UNSIGNED NOT NULL DEFAULT 0,
-    visitors INT UNSIGNED NOT NULL DEFAULT 0,
+    visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Different visitors in this scope that day',
     identified_visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors counted by account or cookie, the base for returning',
-    returning_visitors INT UNSIGNED NOT NULL DEFAULT 0,
-    bounces INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors with one view and under 10 engaged seconds',
+    returning_visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Identified visitors seen in this scope on an earlier day',
+    bounces INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors with one view in this scope and under 10 engaged seconds; none on post rows',
     read_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views with 30 or more engaged seconds',
     engaged_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views whose leave ping arrived',
     engaged_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
     scroll_depth_sum BIGINT UNSIGNED NOT NULL DEFAULT 0,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (blog_id, post_id, day),
-    INDEX idx_traffic_daily_day (blog_id, day),
-    INDEX idx_traffic_daily_platform (day, post_id)
+    PRIMARY KEY (scope, scope_id, day),
+    INDEX idx_traffic_daily_day (scope, day),
+    INDEX idx_traffic_daily_blog (scope, blog_id, day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Daily totals per blog and per post, rebuilt from traffic_hits';
+COMMENT='Daily totals per scope, rebuilt from traffic_hits';
 
 CREATE TABLE IF NOT EXISTS traffic_daily_dimensions (
-    blog_id INT NOT NULL,
-    post_id INT NOT NULL DEFAULT 0 COMMENT '0 is the whole blog',
-    dimension ENUM('channel','source','utm_source','utm_medium','utm_campaign','device','browser','os','country','locale','page') NOT NULL,
-    day DATE NOT NULL COMMENT 'Blog timezone',
+    scope ENUM('site','platform','blog','post') NOT NULL,
+    scope_id INT NOT NULL DEFAULT 0 COMMENT 'The blog or post id; 0 for site and platform',
+    blog_id INT DEFAULT NULL COMMENT 'The blog a blog or post row belongs to',
+    dimension ENUM('channel','source','utm_source','utm_medium','utm_campaign','device','browser','os','country','locale','page','blog','lexicon') NOT NULL,
+    day DATE NOT NULL COMMENT 'UTC for site and platform, the blog timezone for blog and post',
     value VARCHAR(191) NOT NULL,
     views INT UNSIGNED NOT NULL DEFAULT 0,
     visitors INT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (blog_id, post_id, dimension, day, value),
-    INDEX idx_traffic_dimensions_platform (post_id, dimension, day)
+    PRIMARY KEY (scope, scope_id, dimension, day, value),
+    INDEX idx_traffic_dimensions_day (scope, day),
+    INDEX idx_traffic_dimensions_blog (blog_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Daily breakdowns (sources, devices, countries, pages) per blog and per post';
+COMMENT='Daily breakdowns (sources, devices, countries, pages, blogs, places on Lexicon) per scope';
 
-CREATE TABLE IF NOT EXISTS traffic_site_daily (
+CREATE TABLE IF NOT EXISTS traffic_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    event ENUM('signup') NOT NULL,
     day DATE NOT NULL COMMENT 'UTC',
-    views INT UNSIGNED NOT NULL DEFAULT 0,
-    visitors INT UNSIGNED NOT NULL DEFAULT 0,
-    blogs INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Blogs that had at least one view',
-    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (day)
+    channel ENUM('direct','internal','search','social','email','referral') NOT NULL COMMENT 'How the visit began',
+    referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name or host of the site the visit began on',
+    utm_source VARCHAR(100) DEFAULT NULL,
+    utm_medium VARCHAR(100) DEFAULT NULL,
+    utm_campaign VARCHAR(100) DEFAULT NULL,
+    came_from VARCHAR(60) DEFAULT NULL COMMENT 'The last page read before signing up: a platform page type or blog:{id}',
+    PRIMARY KEY (id),
+    INDEX idx_traffic_events_day (event, day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Platform totals with no blog attached, so they survive blog deletion';
+COMMENT='Sign-ups from counted visits, with the visit''s sources and no visitor or account id';
 
 CREATE TABLE IF NOT EXISTS traffic_salts (
     day DATE NOT NULL COMMENT 'UTC',

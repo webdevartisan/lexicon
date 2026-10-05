@@ -127,8 +127,8 @@ class PersonalDataExportService
                  FROM activity_log WHERE user_id = ? ORDER BY created_at',
                 [$userId]
             ),
-            // Only views made while signed in are linked to the account.
-            'blog_page_views' => $this->rows(
+            // Only views made while signed in with analytics allowed are linked to the account.
+            'page_views' => $this->rows(
                 "SELECT b.blog_name, h.path, h.channel, h.referrer_source, h.device, h.browser, h.os, h.country,
                         h.engaged_seconds, h.scroll_depth, h.created_at
                  FROM traffic_hits h

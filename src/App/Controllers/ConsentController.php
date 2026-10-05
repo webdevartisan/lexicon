@@ -61,7 +61,7 @@ final class ConsentController extends AppController
         }
 
         if (!$saved->allows('analytics')) {
-            $this->visitorLink->dropCookie($this->request());
+            $this->visitorLink->dropCookie($this->request(), $this->viewerId());
         }
 
         return $this->json(['ok' => true, 'consent' => $saved->toPayload()], 200);
@@ -76,7 +76,7 @@ final class ConsentController extends AppController
     {
         $this->csrf->assertValid($this->readCsrfToken());
         $this->consent->withdraw();
-        $this->visitorLink->dropCookie($this->request());
+        $this->visitorLink->dropCookie($this->request(), $this->viewerId());
 
         return $this->json(['ok' => true], 200);
     }
@@ -100,5 +100,12 @@ final class ConsentController extends AppController
         $headerToken = $this->request()->header('X-CSRF-TOKEN');
 
         return (is_string($headerToken) && $headerToken !== '') ? $headerToken : null;
+    }
+
+    private function viewerId(): ?int
+    {
+        $user = auth()->user();
+
+        return $user === null ? null : (int) $user['id'];
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Counts a page view on public blog pages and reports how long it was read.
+ * Counts a page view on public pages and reports how long it was read.
  * The server resolves the page and decides whether the view counts.
  */
 (function () {

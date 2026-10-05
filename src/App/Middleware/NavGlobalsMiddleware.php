@@ -229,6 +229,8 @@ class NavGlobalsMiddleware
             // something each controller remembers to pass. Memoised in the
             // service, so the blog controller asking for it again is free.
             'viewer' => $this->viewerContext->current(),
+            // Locale-free, since pre-routing has already stripped the prefix.
+            'current_path' => parse_url($path, PHP_URL_PATH) ?: '/',
         ]);
 
         return $handler->handle($request);

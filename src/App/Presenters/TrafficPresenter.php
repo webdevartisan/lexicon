@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presenters;
 
 use App\Services\LocaleRegistry;
+use App\Services\Traffic\LexiconSource;
 use App\Services\Traffic\TrafficReportService;
 
 /**
@@ -17,11 +18,13 @@ final class TrafficPresenter
 
     /**
      * @param  callable(string, array<string, mixed>=): string  $t  The view's translator
+     * @param  string  $scope  site, platform, blog, post or author, which decides what an internal visit is
      */
     public function __construct(
         private string $locale,
         private $t,
         private LocaleRegistry $locales,
+        private string $scope,
     ) {
         $this->numbers = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
     }
@@ -116,7 +119,19 @@ final class TrafficPresenter
         ];
     }
 
-    public function label(string $dimension, string $value): string
+    public function heading(string $dimension): string
+    {
+        $t = $this->t;
+
+        return $t($this->scope === 'platform' && $dimension === 'lexicon'
+            ? 'traffic.breakdowns.fromBlogs'
+            : 'traffic.breakdowns.'.$dimension);
+    }
+
+    /**
+     * @param  string|null  $name  The blog's name, on a row for readers who came from a blog
+     */
+    public function label(string $dimension, string $value, ?string $name = null): string
     {
         $t = $this->t;
 
@@ -125,7 +140,10 @@ final class TrafficPresenter
         }
 
         return match ($dimension) {
-            'channel' => $t('traffic.channels.'.$value),
+            'channel' => $this->channel($value),
+            'lexicon' => $name ?? $this->place($value, 'traffic.lexicon.blog'),
+            // Administrators see every blog's name, so an unnamed one is gone.
+            'came_from' => $name ?? $this->place($value, 'traffic.lexicon.deletedBlog'),
             'device' => $t('traffic.devices.'.$value),
             'country' => $this->country($value),
             'locale' => $this->locales->isSupported($value) ? $this->locales->nativeName($value) : $value,
@@ -134,14 +152,19 @@ final class TrafficPresenter
     }
 
     /**
-     * The biggest outside source: a named referrer if there is one, otherwise the
+     * The biggest named source, another site or a place on Lexicon, otherwise the
      * largest channel apart from readers moving around inside the blog.
      *
-     * @param  array<string, list<array{value: string, views: int, visitors: int}>>  $breakdowns
+     * @param  array<string, list<array{value: string, views: int, visitors: int, name?: string}>>  $breakdowns
      */
     public function topSource(array $breakdowns): ?string
     {
         $source = $breakdowns['source'][0] ?? null;
+        $lexicon = $breakdowns['lexicon'][0] ?? null;
+
+        if ($lexicon !== null && $lexicon['views'] > ($source['views'] ?? 0)) {
+            return $this->label('lexicon', $lexicon['value'], $lexicon['name'] ?? null);
+        }
 
         if ($source !== null) {
             return $source['value'];
@@ -161,6 +184,33 @@ final class TrafficPresenter
         $formatter = new \IntlDateFormatter($this->locale, \IntlDateFormatter::MEDIUM, \IntlDateFormatter::NONE, 'UTC');
 
         return (string) $formatter->format(new \DateTimeImmutable($ymd, new \DateTimeZone('UTC')));
+    }
+
+    /**
+     * Internal and lexicon mean something different on each page: within the blog
+     * and elsewhere on Lexicon for a blog, between its own pages and from blogs for the platform.
+     */
+    private function channel(string $value): string
+    {
+        $t = $this->t;
+        $key = match ([$this->scope, $value]) {
+            ['site', 'internal'] => 'withinSite',
+            ['platform', 'internal'] => 'platformPages',
+            ['platform', 'lexicon'] => 'blogs',
+            default => $value,
+        };
+
+        return $t('traffic.channels.'.$key);
+    }
+
+    /**
+     * A place on Lexicon by its kind, or $blogKey for a blog without a name to show.
+     */
+    private function place(string $value, string $blogKey): string
+    {
+        $t = $this->t;
+
+        return $t(LexiconSource::blogId($value) !== null ? $blogKey : 'traffic.lexicon.'.$value);
     }
 
     private function country(string $code): string

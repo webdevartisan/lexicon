@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace App\Services\Traffic;
 
 /**
- * A public blog page that a beacon claimed to be on, as the server resolved it.
+ * A public page that a beacon claimed to be on, as the server resolved it:
+ * a blog page, or one of the platform's own pages, which has no blog.
  */
 final class TrafficPage
 {
     /**
-     * @param  string  $path  Locale-free path, e.g. /blog/my-blog/archive
-     * @param  string  $blogPath  The same path relative to the blog, e.g. /archive
-     * @param  array<string, mixed>  $settings  The blog_settings row
+     * @param  string  $path  Locale-free path, e.g. /blog/my-blog/archive or /about
+     * @param  string  $blogPath  The same path relative to the blog, e.g. /archive; the path itself for platform pages
+     * @param  array<string, mixed>  $settings  The blog_settings row; empty for platform pages
      */
     public function __construct(
-        public readonly int $blogId,
+        public readonly ?int $blogId,
         public readonly ?int $postId,
         public readonly string $pageType,
         public readonly string $path,
@@ -23,6 +24,14 @@ final class TrafficPage
         public readonly string $locale,
         public readonly array $settings,
     ) {}
+
+    /**
+     * One of the platform's own pages. Its days are UTC and no blog team or excluded paths apply.
+     */
+    public static function platform(string $pageType, string $path, string $locale): self
+    {
+        return new self(null, null, $pageType, $path, $path, $locale, ['traffic_exclude_members' => 0]);
+    }
 
     public function timezone(): string
     {
@@ -51,11 +60,6 @@ final class TrafficPage
         }
 
         return false;
-    }
-
-    public function countingEnabled(): bool
-    {
-        return (bool) ($this->settings['traffic_enabled'] ?? false);
     }
 
     public function excludesMembers(): bool

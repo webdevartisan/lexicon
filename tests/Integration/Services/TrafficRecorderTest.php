@@ -58,7 +58,6 @@ beforeEach(function () {
 
     $this->blogSettings = new BlogSettingsModel($this->db);
     $this->blogSettings->createDefaultForBlog($this->blogId, []);
-    $this->blogSettings->updateForBlog($this->blogId, ['traffic_enabled' => 1]);
 
     $this->postId = PostFactory::new($posts)
         ->withAttributes(['blog_id' => $this->blogId, 'author_id' => $this->ownerId, 'slug' => 'first-post'])
@@ -114,16 +113,25 @@ test('the anonymous hash changes with the day, and cannot be rebuilt once the sa
     expect($this->identity->daily(READER_IP, BROWSER_UA, '2026-03-01'))->not->toBe($today);
 });
 
-test('a signed-in reader is counted by account, the same on any device', function () {
+test('a signed-in reader who allowed analytics is counted by account, the same on any device', function () {
     $reader = ['id' => 4242, 'roles' => ['reader']];
 
-    $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), $reader, false, null);
-    $this->recorder->record(beacon(['User-Agent' => 'Mozilla/5.0 (iPhone) Safari/604.1'], '198.51.100.9'), pageView("/en/blog/{$this->slug}/archive"), $reader, false, null);
+    $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), $reader, false, 'laptop-cookie');
+    $this->recorder->record(beacon(['User-Agent' => 'Mozilla/5.0 (iPhone) Safari/604.1'], '198.51.100.9'), pageView("/en/blog/{$this->slug}/archive"), $reader, false, 'phone-cookie');
 
     $hashes = $this->db->query('SELECT DISTINCT visitor_hash FROM traffic_hits')->fetchAll(PDO::FETCH_COLUMN);
 
     expect($hashes)->toHaveCount(1)
         ->and($hashes[0])->toBe($this->identity->forAccount(4242));
+});
+
+test('a signed-in reader who did not allow analytics is told apart for the day only', function () {
+    $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), ['id' => 4242, 'roles' => ['reader']], false, null);
+
+    $row = $this->db->query('SELECT visitor_hash, visitor_kind FROM traffic_hits')->fetch(PDO::FETCH_ASSOC);
+
+    expect($row['visitor_kind'])->toBe('daily')
+        ->and($row['visitor_hash'])->not->toBe($this->identity->forAccount(4242));
 });
 
 test('noise is ignored before anything is stored', function (array $headers, string $expected) {
@@ -148,9 +156,40 @@ test('only live public pages count', function (string $path) {
     'draft post preview' => ['/en/blog/{slug}/unfinished'],
     'missing post' => ['/en/blog/{slug}/no-such-post'],
     'unknown blog' => ['/en/blog/nobody-here'],
-    'not a blog page' => ['/en/about'],
     'unknown category' => ['/en/blog/{slug}/category/nothing'],
+    'an account page' => ['/en/account/profile'],
+    'a link carrying a token' => ['/en/password/reset/0123456789abcdef'],
+    'a guide that does not exist' => ['/en/getting-started/no-such-guide'],
+    'a dashboard page' => ['/en/dashboard'],
 ]);
+
+test("the platform's own pages count, with no blog and a UTC day", function (string $path, string $type, string $stored) {
+    $outcome = $this->recorder->record(beacon(), pageView($path), null, false, null);
+    $row = $this->db->query('SELECT blog_id, post_id, page_type, path, local_date FROM traffic_hits')->fetch(PDO::FETCH_ASSOC);
+
+    expect($outcome)->toBe(TrafficRecorder::RECORDED)
+        ->and($row['blog_id'])->toBeNull()
+        ->and($row['post_id'])->toBeNull()
+        ->and($row['page_type'])->toBe($type)
+        ->and($row['path'])->toBe($stored)
+        ->and($row['local_date'])->toBe(gmdate('Y-m-d'));
+})->with([
+    'home page' => ['/en', 'home', '/'],
+    'home page in Greek' => ['/el/', 'home', '/'],
+    'discover, search dropped' => ['/en/discover?q=gardening', 'discover', '/discover'],
+    'about' => ['/en/about', 'static_page', '/about'],
+    'a guide' => ['/en/getting-started/start-your-first-blog', 'guide', '/getting-started/start-your-first-blog'],
+    'a profile, without its handle' => ['/en/profile/someone', 'profile', '/profile'],
+    'sign-up' => ['/ar/register', 'auth', '/register'],
+]);
+
+test("on the platform's pages only administrators are left out, not a blog's team", function () {
+    $team = $this->recorder->record(beacon(), pageView('/en/about'), ['id' => $this->ownerId, 'roles' => ['reader']], false, null);
+    $admin = $this->recorder->record(beacon(), pageView('/en/about'), ['id' => 999999, 'roles' => ['administrator']], false, null);
+
+    expect($team)->toBe(TrafficRecorder::RECORDED)
+        ->and($admin)->toBe(TrafficRecorder::MEMBER);
+});
 
 test('the blog team and administrators are left out', function () {
     $team = $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), ['id' => $this->ownerId, 'roles' => ['reader']], false, null);
@@ -180,9 +219,12 @@ test('reloading a page inside the dedupe window counts once', function () {
     $reload = $this->recorder->record(beacon(), pageView($path), null, false, null);
     $elsewhere = $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), null, false, null);
     $someoneElse = $this->recorder->record(beacon([], '198.51.100.20'), pageView($path), null, false, null);
+    $home = $this->recorder->record(beacon(), pageView('/en'), null, false, null);
+    $homeAgainInGreek = $this->recorder->record(beacon(), pageView('/el'), null, false, null);
 
-    expect([$first, $reload, $elsewhere, $someoneElse])->toBe([
+    expect([$first, $reload, $elsewhere, $someoneElse, $home, $homeAgainInGreek])->toBe([
         TrafficRecorder::RECORDED, TrafficRecorder::DUPLICATE, TrafficRecorder::RECORDED, TrafficRecorder::RECORDED,
+        TrafficRecorder::RECORDED, TrafficRecorder::DUPLICATE,
     ]);
 });
 
@@ -202,24 +244,49 @@ test('referrer spam never reaches the table', function () {
     expect($outcome)->toBe(TrafficRecorder::SPAM);
 });
 
-test('a blog counts nothing until its owner turns counting on', function () {
+test('a reader from another part of Lexicon keeps the blog or kind of page they came from, never its path', function (string $page, string $from, string $channel, ?string $source) {
+    $blogs = new BlogModel($this->db);
+    $other = BlogFactory::new($blogs)->published()->create($this->ownerId);
+    $hidden = BlogFactory::new($blogs)->draft()->create($this->ownerId);
+    $slugs = $this->db->query('SELECT id, blog_slug FROM blogs')->fetchAll(PDO::FETCH_KEY_PAIR);
+    $fill = fn (string $text): string => strtr($text, [
+        '{slug}' => $slugs[$this->blogId], '{other}' => $slugs[$other], '{hidden}' => $slugs[$hidden],
+        '{blogId}' => (string) $this->blogId, '{otherId}' => (string) $other,
+    ]);
+
+    $outcome = $this->recorder->record(beacon(), pageView($fill($page), base_url().$fill($from)), null, false, null);
+    $row = $this->db->query('SELECT channel, referrer_host, referrer_source FROM traffic_hits')->fetch(PDO::FETCH_ASSOC);
+
+    expect($outcome)->toBe(TrafficRecorder::RECORDED)
+        ->and($row['channel'])->toBe($channel)
+        ->and($row['referrer_host'])->toBeNull()
+        ->and($row['referrer_source'])->toBe($source === null ? null : $fill($source));
+})->with([
+    'within the blog' => ['/en/blog/{slug}/first-post', '/el/blog/{slug}', 'internal', null],
+    'from Discover' => ['/en/blog/{slug}', '/el/discover', 'lexicon', 'discover'],
+    'from the home page' => ['/en/blog/{slug}', '/en', 'lexicon', 'home'],
+    'from a profile' => ['/en/blog/{slug}', '/en/profile/someone', 'lexicon', 'profile'],
+    'from another blog' => ['/en/blog/{slug}', '/en/blog/{other}/a-post', 'lexicon', 'blog:{otherId}'],
+    'from a blog that is not public' => ['/en/blog/{slug}', '/en/blog/{hidden}', 'lexicon', 'other'],
+    'from the dashboard' => ['/en/blog/{slug}', '/en/dashboard', 'lexicon', 'other'],
+    'between platform pages' => ['/en/about', '/en/discover', 'internal', null],
+    'from an account page to the platform' => ['/en/discover', '/en/account/notifications', 'internal', null],
+    'from a blog to sign-up' => ['/en/register', '/en/blog/{slug}/first-post', 'lexicon', 'blog:{blogId}'],
+]);
+
+test('a new blog is counted from its first reader, with nothing for its owner to switch on', function () {
     $otherBlog = BlogFactory::new(new BlogModel($this->db))->published()->create($this->ownerId);
     $otherSlug = (string) $this->db->query('SELECT blog_slug FROM blogs WHERE id = ?', [$otherBlog])->fetchColumn();
     $this->blogSettings->createDefaultForBlog($otherBlog, []);
 
-    $fresh = $this->recorder->record(beacon(), pageView("/en/blog/{$otherSlug}"), null, false, null);
-
-    $this->blogSettings->updateForBlog($this->blogId, ['traffic_enabled' => 0]);
-    $switchedOff = $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), null, false, null);
-
-    expect([$fresh, $switchedOff])->each->toBe(TrafficRecorder::BLOG_OFF)
-        ->and((int) $this->db->query('SELECT COUNT(*) FROM traffic_hits')->fetchColumn())->toBe(0);
+    expect($this->recorder->record(beacon(), pageView("/en/blog/{$otherSlug}"), null, false, null))->toBe(TrafficRecorder::RECORDED);
 });
 
-test('the kill switch stops recording', function () {
+test('the platform switch stops recording everywhere', function () {
     (new SettingModel($this->db))->set('traffic.enabled', '0');
 
-    expect($this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), null, false, null))->toBe(TrafficRecorder::DISABLED);
+    expect($this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), null, false, null))->toBe(TrafficRecorder::DISABLED)
+        ->and($this->recorder->record(beacon(), pageView('/en/about'), null, false, null))->toBe(TrafficRecorder::DISABLED);
 });
 
 /**
@@ -278,6 +345,19 @@ test('a reader who turns analytics off mid-visit stays one visitor', function ()
 
     expect($refresh)->toBe(TrafficRecorder::DUPLICATE)
         ->and((new TrafficHitModel($this->db))->countRecent($this->blogId, 30))->toBe(1)
+        ->and($this->db->query('SELECT visitor_kind FROM traffic_hits')->fetchColumn())->toBe('daily');
+});
+
+test('a signed-in reader who turns analytics off mid-visit stays one visitor', function () {
+    $reader = ['id' => 4242, 'roles' => ['reader']];
+    $cookieId = bin2hex(random_bytes(16));
+    $path = "/en/blog/{$this->slug}/first-post";
+
+    $this->recorder->record(beacon(), pageView($path), $reader, false, $cookieId);
+    visitorLink($this->db, $this->identity, false)->dropCookie(withCookie($cookieId), 4242);
+    $refresh = $this->recorder->record(beacon(), pageView($path), $reader, false, null);
+
+    expect($refresh)->toBe(TrafficRecorder::DUPLICATE)
         ->and($this->db->query('SELECT visitor_kind FROM traffic_hits')->fetchColumn())->toBe('daily');
 });
 

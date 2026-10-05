@@ -1,6 +1,7 @@
 /**
- * Draws the views and visitors chart on the Traffic page. Colours come from
- * utility classes on the page, so the chart follows the light and dark palettes.
+ * Draws the line chart on the Traffic and Sign-ups pages, one line per key in
+ * data.labels. Colours come from utility classes on the page, so the chart
+ * follows the light and dark palettes.
  */
 (function () {
     'use strict';
@@ -31,8 +32,6 @@
         var dark = root.getAttribute('data-mode') === 'dark';
         var grid = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.08)';
         var ticks = dark ? '#92afd3' : '#64748b';
-        var views = colour('views');
-        var visitors = colour('visitors');
         var rtl = root.dir === 'rtl';
 
         if (chart) {
@@ -43,30 +42,21 @@
             type: 'line',
             data: {
                 labels: data.points.map(function (p) { return p.label; }),
-                datasets: [
-                    {
-                        label: data.labels.views,
-                        data: data.points.map(function (p) { return p.views; }),
-                        borderColor: views,
-                        backgroundColor: withAlpha(views, 0.15),
+                datasets: Object.keys(data.labels).map(function (key, index) {
+                    var line = colour(key);
+
+                    return {
+                        label: data.labels[key],
+                        data: data.points.map(function (p) { return p[key]; }),
+                        borderColor: line,
+                        backgroundColor: withAlpha(line, index === 0 ? 0.15 : 0.08),
                         fill: true,
                         tension: 0.3,
                         borderWidth: 2,
                         pointRadius: data.points.length > 45 ? 0 : 2,
                         pointHoverRadius: 4
-                    },
-                    {
-                        label: data.labels.visitors,
-                        data: data.points.map(function (p) { return p.visitors; }),
-                        borderColor: visitors,
-                        backgroundColor: withAlpha(visitors, 0.08),
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointRadius: data.points.length > 45 ? 0 : 2,
-                        pointHoverRadius: 4
-                    }
-                ]
+                    };
+                })
             },
             options: {
                 responsive: true,

@@ -14,7 +14,7 @@ use App\Services\Traffic\VisitorLink;
 use Framework\Core\Response;
 
 /**
- * Receives the page view beacon and the leave ping from public blog pages.
+ * Receives the page view beacon and the leave ping from public pages.
  *
  * CSRF-exempt because cached public pages can't carry a per-visitor token.
  * Instead it takes same-origin requests only, a small strictly parsed body,
@@ -44,12 +44,16 @@ final class TrafficController extends AppController
             return $this->status(400);
         }
 
+        $viewer = auth()->user();
+        $impersonating = $this->impersonation->isImpersonating();
+
         $this->recorder->record(
             $this->request,
             $payload,
-            auth()->user(),
-            $this->impersonation->isImpersonating(),
-            $this->visitorCookieId()
+            $viewer,
+            $impersonating,
+            // Never counted, and must not move this browser's views onto the account being acted as.
+            $impersonating ? null : $this->visitorCookieId($viewer)
         );
 
         return $this->status(204);
@@ -96,11 +100,15 @@ final class TrafficController extends AppController
     /**
      * The analytics cookie for a visitor who accepted analytics, issued on their
      * first view after accepting. Anyone else loses a cookie left from an earlier choice.
+     *
+     * @param  array<string, mixed>|null  $viewer
      */
-    private function visitorCookieId(): ?string
+    private function visitorCookieId(?array $viewer): ?string
     {
+        $userId = $viewer === null ? null : (int) $viewer['id'];
+
         if (!$this->consent->allows('analytics') || TrafficRecorder::optedOut($this->request)) {
-            $this->visitorLink->dropCookie($this->request);
+            $this->visitorLink->dropCookie($this->request, $userId);
 
             return null;
         }
@@ -111,7 +119,13 @@ final class TrafficController extends AppController
         }
 
         $cookieId = $this->visitorCookie->issue();
-        $this->visitorLink->toCookie($this->request, $cookieId);
+
+        // A signed-in reader is counted by account from here on, so this visit joins the account.
+        if ($userId !== null) {
+            $this->visitorLink->toAccount($this->request, $userId);
+        } else {
+            $this->visitorLink->toCookie($this->request, $cookieId);
+        }
 
         return $cookieId;
     }

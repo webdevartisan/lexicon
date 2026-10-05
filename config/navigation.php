@@ -222,6 +222,7 @@ return [
 
         ['label' => 'Insights', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_platform_traffic'], 'key' => 'navigation.analyticsSection'],
         ['label' => 'Traffic', 'href' => '/admin/traffic', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_platform_traffic'], 'key' => 'navigation.traffic'],
+        ['label' => 'Sign-ups', 'href' => '/admin/signups', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_platform_traffic'], 'key' => 'navigation.signups'],
 
         ['label' => 'People', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_users', 'manage_roles'], 'key' => 'navigation.peopleSection'],
         ['label' => 'Users', 'href' => '/admin/users', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_users'], 'key' => 'navigation.users'],

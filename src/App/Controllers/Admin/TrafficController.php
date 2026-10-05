@@ -5,20 +5,21 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
-use App\Models\PlatformTrafficModel;
 use App\Models\TrafficHitModel;
+use App\Models\TrafficStatsModel;
 use App\Services\Traffic\CountryLookup;
-use App\Services\Traffic\PlatformTrafficReportService;
+use App\Services\Traffic\TrafficReportService;
 use App\Services\Traffic\TrafficSettings;
 use App\ValueObjects\TrafficRange;
+use App\ValueObjects\TrafficScope;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
- * Insights > Traffic in the control panel: the whole platform at a glance,
- * the busiest blogs and posts, and where readers come from.
+ * Insights > Traffic in the control panel: the whole site at a glance, the
+ * busiest blogs and posts, where readers come from, and the platform's own pages.
  *
- * Days are UTC here. Each blog's own page uses the blog's timezone.
+ * Days are UTC here. Each blog's own row uses the blog's timezone.
  */
 class TrafficController extends AppController
 {
@@ -33,8 +34,8 @@ class TrafficController extends AppController
     private const POST_COLUMNS = ['post', 'blog', 'url', 'views', 'visitors', 'read_ratio_percent', 'avg_read_seconds'];
 
     public function __construct(
-        private PlatformTrafficReportService $reports,
-        private PlatformTrafficModel $traffic,
+        private TrafficReportService $reports,
+        private TrafficStatsModel $stats,
         private TrafficHitModel $hits,
         private TrafficSettings $settings,
         private CountryLookup $countries,
@@ -42,23 +43,15 @@ class TrafficController extends AppController
 
     public function index(): Response
     {
-        $range = TrafficRange::fromQuery($this->request->get, 'UTC');
+        return $this->page(TrafficScope::site(), self::BASE_PATH);
+    }
 
-        return $this->view('traffic.index', [
-            'range' => $range,
-            'report' => $this->reports->report($range),
-            'rightNow' => $this->hits->countRecentEverywhere(self::RIGHT_NOW_MINUTES),
-            'today' => (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d'),
-            'collectingSince' => $this->traffic->firstDay(),
-            'aggregatedAt' => $this->settings->aggregatedAt(),
-            'delayed' => $this->settings->aggregationDelayed(),
-            'trackingEnabled' => $this->settings->enabled(),
-            'aggregationEnabled' => $this->settings->aggregationEnabled(),
-            'countriesAvailable' => $this->countries->available(),
-            'basePath' => self::BASE_PATH,
-            'scope' => 'platform',
-            'post' => null,
-        ]);
+    /**
+     * The platform's own pages: home, Discover, the guides, profiles, sign-in and sign-up.
+     */
+    public function platform(): Response
+    {
+        return $this->page(TrafficScope::platform(), self::BASE_PATH.'/platform');
     }
 
     /**
@@ -68,7 +61,7 @@ class TrafficController extends AppController
     {
         $dimension = (string) ($this->request->get['dimension'] ?? '');
         $range = TrafficRange::fromQuery($this->request->get, 'UTC');
-        $filename = "platform-traffic-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv";
+        $filename = "site-traffic-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv";
 
         if ($dimension === 'blogs') {
             return $this->csv($filename, self::BLOG_COLUMNS, $this->blogRows($range));
@@ -78,13 +71,52 @@ class TrafficController extends AppController
             return $this->csv($filename, self::POST_COLUMNS, $this->postRows($range));
         }
 
-        if (!in_array($dimension, PlatformTrafficModel::DIMENSIONS, true)) {
+        return $this->breakdownCsv(TrafficScope::site(), $dimension, $range, $filename);
+    }
+
+    /**
+     * One breakdown of the platform's own pages as CSV.
+     */
+    public function exportPlatform(): Response
+    {
+        $dimension = (string) ($this->request->get['dimension'] ?? '');
+        $range = TrafficRange::fromQuery($this->request->get, 'UTC');
+        $filename = "platform-pages-traffic-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv";
+
+        return $this->breakdownCsv(TrafficScope::platform(), $dimension, $range, $filename);
+    }
+
+    private function page(TrafficScope $scope, string $basePath): Response
+    {
+        $range = TrafficRange::fromQuery($this->request->get, 'UTC');
+        $isSite = $scope->type === TrafficScope::SITE;
+
+        return $this->view('traffic.index', [
+            'range' => $range,
+            'report' => $this->reports->report($scope, $range),
+            'rightNow' => $isSite ? $this->hits->countRecentEverywhere(self::RIGHT_NOW_MINUTES) : null,
+            'today' => (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d'),
+            'collectingSince' => $this->stats->firstDay($scope),
+            'aggregatedAt' => $this->settings->aggregatedAt(),
+            'delayed' => $this->settings->aggregationDelayed(),
+            'trackingEnabled' => $this->settings->enabled(),
+            'aggregationEnabled' => $this->settings->aggregationEnabled(),
+            'countriesAvailable' => $this->countries->available(),
+            'basePath' => $basePath,
+            'scope' => $scope->type,
+            'post' => null,
+        ]);
+    }
+
+    private function breakdownCsv(TrafficScope $scope, string $dimension, TrafficRange $range, string $filename): Response
+    {
+        if (!in_array($dimension, $scope->breakdowns(), true)) {
             throw new PageNotFoundException('Unknown traffic breakdown.');
         }
 
         $rows = array_map(
-            static fn (array $row): array => [$row['value'], $row['views'], $row['visitors']],
-            $this->reports->fullBreakdown($dimension, $range)
+            static fn (array $row): array => [$row['name'] ?? $row['value'], $row['views'], $row['visitors']],
+            $this->reports->fullBreakdown($scope, $dimension, $range)
         );
 
         return $this->csv($filename, [$dimension, 'views', 'visitors'], $rows);
@@ -124,7 +156,7 @@ class TrafficController extends AppController
     {
         $rows = [];
 
-        foreach ($this->reports->allPosts($range) as $row) {
+        foreach ($this->reports->allPosts(TrafficScope::site(), $range) as $row) {
             $views = (int) $row['views'];
             $url = '';
             if ($row['title'] !== null && $row['status'] === 'published' && $row['blog_slug'] !== null) {

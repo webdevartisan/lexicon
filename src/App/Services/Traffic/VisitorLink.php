@@ -59,18 +59,19 @@ class VisitorLink
 
     /**
      * A visitor who turned analytics off. The cookie goes, and the views from this
-     * visit move to the anonymous id they are counted under from now on.
+     * visit move to the anonymous id they are counted under from now on, including
+     * the ones a signed-in reader made under their account.
      */
-    public function dropCookie(Request $request): void
+    public function dropCookie(Request $request, ?int $userId = null): void
     {
         $cookieId = $this->cookie->read($request);
         if ($cookieId !== null) {
-            $this->hits->reassignRecent(
-                [$this->identity->forCookie($cookieId)],
-                $this->identity->dailyFor($request, $this->now()),
-                'daily',
-                $this->visitMinutes
-            );
+            $from = [$this->identity->forCookie($cookieId)];
+            if ($userId !== null) {
+                $from[] = $this->identity->forAccount($userId);
+            }
+
+            $this->hits->reassignRecent($from, $this->identity->dailyFor($request, $this->now()), 'daily', $this->visitMinutes);
         }
 
         $this->cookie->forget($request);

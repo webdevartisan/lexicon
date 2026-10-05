@@ -16,14 +16,14 @@ class TrafficHitModel extends AppModel
     /**
      * Whether this visitor already viewed this page inside the dedupe window.
      */
-    public function seenRecently(string $visitorHash, int $blogId, string $pathHash, int $minutes): bool
+    public function seenRecently(string $visitorHash, string $pathHash, int $minutes): bool
     {
         $sql = 'SELECT 1 FROM traffic_hits
-                WHERE visitor_hash = ? AND blog_id = ? AND path_hash = ?
+                WHERE visitor_hash = ? AND path_hash = ?
                   AND created_at > UTC_TIMESTAMP() - INTERVAL ? MINUTE
                 LIMIT 1';
 
-        return (bool) $this->database->query($sql, [$visitorHash, $blogId, $pathHash, $minutes])->fetchColumn();
+        return (bool) $this->database->query($sql, [$visitorHash, $pathHash, $minutes])->fetchColumn();
     }
 
     /**
@@ -55,6 +55,25 @@ class TrafficHitModel extends AppModel
                 WHERE view_id = ? AND created_at > UTC_TIMESTAMP() - INTERVAL ? MINUTE';
 
         return $this->database->execute($sql, [$seconds, $scrollDepth, $viewId, $windowMinutes]) > 0;
+    }
+
+    /**
+     * A visitor's latest views, newest first, for working out where their current visit began.
+     *
+     * @param  list<string>  $visitorHashes
+     * @return list<array<string, mixed>>
+     */
+    public function latestForVisitors(array $visitorHashes, int $hours, int $limit): array
+    {
+        $placeholders = implode(', ', array_fill(0, count($visitorHashes), '?'));
+
+        $sql = "SELECT blog_id, page_type, channel, referrer_source, utm_source, utm_medium, utm_campaign, created_at
+                FROM traffic_hits
+                WHERE visitor_hash IN ({$placeholders}) AND created_at > UTC_TIMESTAMP() - INTERVAL ? HOUR
+                ORDER BY created_at DESC, id DESC
+                LIMIT ".max(1, $limit);
+
+        return $this->database->query($sql, [...$visitorHashes, $hours])->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -114,9 +133,13 @@ class TrafficHitModel extends AppModel
         return $total;
     }
 
-    public function deleteByBlogId(int $blogId): int
+    /**
+     * Unlink a deleted blog's views from it. They keep counting for the site,
+     * so rebuilding the totals never rewrites the site's history.
+     */
+    public function detachBlog(int $blogId): int
     {
-        return $this->database->execute('DELETE FROM traffic_hits WHERE blog_id = ?', [$blogId]);
+        return $this->database->execute('UPDATE traffic_hits SET blog_id = NULL, post_id = NULL WHERE blog_id = ?', [$blogId]);
     }
 
     /**

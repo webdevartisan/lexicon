@@ -16,6 +16,7 @@ use App\Services\Traffic\CountryLookup;
 use App\Services\Traffic\TrafficReportService;
 use App\Services\Traffic\TrafficSettings;
 use App\ValueObjects\TrafficRange;
+use App\ValueObjects\TrafficScope;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Exceptions\UnauthorizedException;
@@ -37,7 +38,6 @@ final class TrafficController extends AppController
 
     /** Checkbox name => blog_settings column. */
     private const SETTING_TOGGLES = [
-        'enabled' => 'traffic_enabled',
         'exclude_members' => 'traffic_exclude_members',
         'public_notice' => 'traffic_public_notice',
     ];
@@ -58,15 +58,12 @@ final class TrafficController extends AppController
         $blog = $this->authorizedBlog($blogId);
         $blogIdInt = (int) $blog->id();
         $canAll = Gate::allows('viewAllTraffic', $blog, auth()->user());
-
-        $postIds = $canAll ? null : $this->posts->idsByBlogAndAuthor($blogIdInt, (int) auth()->user()['id']);
-        $scopeKey = $canAll ? 'blog' : 'author:'.(int) auth()->user()['id'];
         $range = TrafficRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
 
         return $this->view($this->pageData($blog, $range, $canAll) + [
             'scope' => $canAll ? 'blog' : 'author',
             'post' => null,
-            'report' => $this->reports->report($blogIdInt, $postIds, $scopeKey, $range),
+            'report' => $this->reports->report($this->viewerScope($blogIdInt, $canAll), $range),
             'rightNow' => $canAll ? $this->hits->countRecent($blogIdInt, self::RIGHT_NOW_MINUTES) : null,
         ]);
     }
@@ -83,7 +80,7 @@ final class TrafficController extends AppController
         return $this->view('traffic.index', $this->pageData($blog, $range, $canAll) + [
             'scope' => 'post',
             'post' => $post,
-            'report' => $this->reports->report($blogIdInt, [(int) $post['id']], 'post:'.(int) $post['id'], $range),
+            'report' => $this->reports->report(TrafficScope::post($blogIdInt, (int) $post['id']), $range),
             'rightNow' => null,
         ]);
     }
@@ -97,18 +94,18 @@ final class TrafficController extends AppController
         $blogIdInt = (int) $blog->id();
         $canAll = Gate::allows('viewAllTraffic', $blog, auth()->user());
 
-        $dimension = $this->exportDimension($canAll);
-        $postIds = $this->exportPostIds($blogIdInt, $canAll);
+        $scope = $this->exportScope($blogIdInt, $canAll);
+        $dimension = $this->exportDimension($scope);
         $range = TrafficRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
         $filename = "traffic-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv";
 
         if ($dimension === self::POSTS_EXPORT) {
-            return $this->csv($filename, self::POSTS_COLUMNS, $this->postRows($blog, $postIds, $range));
+            return $this->csv($filename, self::POSTS_COLUMNS, $this->postRows($blog, $scope, $range));
         }
 
         $rows = array_map(
-            static fn (array $row): array => [$row['value'], $row['views'], $row['visitors']],
-            $this->reports->fullBreakdown($blogIdInt, $postIds, $dimension, $range)
+            static fn (array $row): array => [$row['name'] ?? $row['value'], $row['views'], $row['visitors']],
+            $this->reports->fullBreakdown($scope, $dimension, $range)
         );
 
         return $this->csv($filename, [$dimension, 'views', 'visitors'], $rows);
@@ -137,7 +134,7 @@ final class TrafficController extends AppController
 
         $before = $this->blogSettings->findByBlogId((int) $blog->id()) ?? [];
         $this->blogSettings->updateForBlog((int) $blog->id(), $data);
-        $this->forgetPublicPagesIfChanged($blog, $before, $data);
+        $this->forgetPublicPagesIfNoticeChanged($blog, $before, $data);
         $this->auditSettings($blog, $data, count($paths));
 
         $this->flash('success', chrome_translate('traffic.settings.saved'));
@@ -146,19 +143,15 @@ final class TrafficController extends AppController
     }
 
     /**
-     * The beacon and the notice are part of every cached public page of the blog.
+     * The notice is part of every cached public page of the blog.
      *
      * @param  array<string, mixed>  $before
      * @param  array<string, mixed>  $after
      */
-    private function forgetPublicPagesIfChanged(BlogResource $blog, array $before, array $after): void
+    private function forgetPublicPagesIfNoticeChanged(BlogResource $blog, array $before, array $after): void
     {
-        foreach (['traffic_enabled', 'traffic_public_notice'] as $column) {
-            if ((int) ($before[$column] ?? 0) !== $after[$column]) {
-                $this->blogs->forgetPublicCaches($blog->slug());
-
-                return;
-            }
+        if ((int) ($before['traffic_public_notice'] ?? 0) !== $after['traffic_public_notice']) {
+            $this->blogs->forgetPublicCaches($blog->slug());
         }
     }
 
@@ -193,7 +186,7 @@ final class TrafficController extends AppController
         return array_values(array_unique($paths));
     }
 
-    private function exportDimension(bool $canAll): string
+    private function exportDimension(TrafficScope $scope): string
     {
         $dimension = (string) ($this->request->get['dimension'] ?? '');
 
@@ -201,7 +194,7 @@ final class TrafficController extends AppController
             return $dimension;
         }
 
-        if (!in_array($dimension, TrafficStatsModel::DIMENSIONS, true) || ($dimension === 'page' && !$canAll)) {
+        if (!in_array($dimension, $scope->breakdowns(), true)) {
             throw new PageNotFoundException('Unknown traffic breakdown.');
         }
 
@@ -209,17 +202,31 @@ final class TrafficController extends AppController
     }
 
     /**
-     * @return list<int>|null
+     * One post when the export asks for it, otherwise what this viewer sees on the Traffic page.
      */
-    private function exportPostIds(int $blogId, bool $canAll): ?array
+    private function exportScope(int $blogId, bool $canAll): TrafficScope
     {
         $postId = (int) ($this->request->get['post'] ?? 0);
 
         if ($postId > 0) {
-            return [(int) $this->postInScope($blogId, $postId, $canAll)['id']];
+            return TrafficScope::post($blogId, (int) $this->postInScope($blogId, $postId, $canAll)['id']);
         }
 
-        return $canAll ? null : $this->posts->idsByBlogAndAuthor($blogId, (int) auth()->user()['id']);
+        return $this->viewerScope($blogId, $canAll);
+    }
+
+    /**
+     * The whole blog, or only the viewer's own posts added together.
+     */
+    private function viewerScope(int $blogId, bool $canAll): TrafficScope
+    {
+        if ($canAll) {
+            return TrafficScope::blog($blogId);
+        }
+
+        $userId = (int) auth()->user()['id'];
+
+        return TrafficScope::authorPosts($blogId, $userId, $this->posts->idsByBlogAndAuthor($blogId, $userId));
     }
 
     /**
@@ -238,7 +245,7 @@ final class TrafficController extends AppController
             'canAll' => $canAll,
             'range' => $range,
             'today' => (new \DateTimeImmutable('today', $zone))->format('Y-m-d'),
-            'collectingSince' => $this->stats->firstDay((int) $blog->id()),
+            'collectingSince' => $this->stats->firstDay(TrafficScope::blog((int) $blog->id())),
             'aggregatedAt' => $aggregatedAt,
             'delayed' => $this->settings->aggregationDelayed(),
             'trackingEnabled' => $this->settings->enabled(),
@@ -247,7 +254,6 @@ final class TrafficController extends AppController
             'basePath' => '/dashboard/blog/'.(int) $blog->id().'/analytics/traffic',
             'canConfigure' => Gate::allows('manageUsers', $blog, auth()->user()),
             'blogSettings' => $blogSettings,
-            'blogCounting' => !empty($blogSettings['traffic_enabled']),
         ];
     }
 
@@ -285,15 +291,14 @@ final class TrafficController extends AppController
     /**
      * Every post in scope that had views in the range, busiest first, as CSV rows.
      *
-     * @param  list<int>|null  $postIds
      * @return list<list<string|int|float>>
      */
-    private function postRows(BlogResource $blog, ?array $postIds, TrafficRange $range): array
+    private function postRows(BlogResource $blog, TrafficScope $scope, TrafficRange $range): array
     {
         $rows = [];
         $siteUrl = rtrim(base_url(), '/');
 
-        foreach ($this->reports->allPosts((int) $blog->id(), $postIds, $range) as $row) {
+        foreach ($this->reports->allPosts($scope, $range) as $row) {
             $views = (int) $row['views'];
             $engaged = (int) $row['engaged_views'];
             $url = '';

@@ -74,8 +74,8 @@ class DatabaseHelper
             'traffic_hits',
             'traffic_daily',
             'traffic_daily_dimensions',
-            'traffic_site_daily',
             'traffic_salts',
+            'traffic_events',
 
             // Blog-related
             'blog_subscribers',

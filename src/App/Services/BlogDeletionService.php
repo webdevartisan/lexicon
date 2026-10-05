@@ -48,8 +48,7 @@ final class BlogDeletionService
             $deletedPosts = $this->posts->deleteByBlogId($blogId);
             $deletedCollaborators = $this->blogs->deleteCollaboratorsByBlogId($blogId);
             $this->settings->deleteByBlogId($blogId);
-            // Platform totals in traffic_site_daily carry no blog id and stay.
-            $this->trafficHits->deleteByBlogId($blogId);
+            $this->trafficHits->detachBlog($blogId);
             $this->trafficRollups->deleteByBlogId($blogId);
 
             if (!$this->blogs->delete($blogId)) {

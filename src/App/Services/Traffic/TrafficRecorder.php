@@ -19,8 +19,6 @@ class TrafficRecorder
 
     public const DISABLED = 'disabled';
 
-    public const BLOG_OFF = 'blog_off';
-
     public const PREFETCH = 'prefetch';
 
     public const OPTED_OUT = 'opted_out';
@@ -83,11 +81,15 @@ class TrafficRecorder
             return self::SPAM;
         }
 
+        if ($referrer['channel'] === 'internal') {
+            $referrer = $this->withinLexicon($page, $payload->referrer);
+        }
+
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
         [$visitorHash, $visitorKind] = $this->visitor($request, $viewer, $cookieId, $now);
         $pathHash = substr(hash('sha256', $page->path, true), 0, 8);
 
-        if ($this->hits->seenRecently($visitorHash, $page->blogId, $pathHash, (int) $this->config['dedupe_minutes'])) {
+        if ($this->hits->seenRecently($visitorHash, $pathHash, (int) $this->config['dedupe_minutes'])) {
             return self::DUPLICATE;
         }
 
@@ -119,17 +121,12 @@ class TrafficRecorder
     }
 
     /**
-     * What the blog owner chose not to count.
+     * What the blog owner chose not to count, and the people who never count.
      *
      * @param  array<string, mixed>|null  $viewer
      */
     private function refusePage(TrafficPage $page, ?array $viewer, bool $impersonating): ?string
     {
-        // A page cached in the browser before counting was switched off still sends the beacon.
-        if (!$page->countingEnabled()) {
-            return self::BLOG_OFF;
-        }
-
         if ($page->isExcluded()) {
             return self::EXCLUDED_PATH;
         }
@@ -180,6 +177,25 @@ class TrafficRecorder
         ]);
 
         return $stored ? self::RECORDED : self::DUPLICATE;
+    }
+
+    /**
+     * Moving around one blog, or between the platform's pages, is internal. Coming
+     * from another part of Lexicon keeps the blog or the kind of page, never its path.
+     *
+     * @return array{channel: string, host: ?string, source: ?string}
+     */
+    private function withinLexicon(TrafficPage $page, string $referrer): array
+    {
+        $from = $this->pages->section($referrer);
+
+        if ($from['blogId'] === $page->blogId) {
+            return ['channel' => 'internal', 'host' => null, 'source' => null];
+        }
+
+        $source = $from['blogId'] !== null ? LexiconSource::blog($from['blogId']) : $from['pageType'];
+
+        return ['channel' => 'lexicon', 'host' => null, 'source' => $source];
     }
 
     /**
@@ -246,10 +262,15 @@ class TrafficRecorder
             return true;
         }
 
-        return $page->excludesMembers() && $this->blogs->userCanAccessBlog((int) $viewer['id'], $page->blogId);
+        return $page->blogId !== null
+            && $page->excludesMembers()
+            && $this->blogs->userCanAccessBlog((int) $viewer['id'], $page->blogId);
     }
 
     /**
+     * A signed-in reader is recognised by their account only if they allowed
+     * analytics, which is also the only time there is a cookie id.
+     *
      * @param  array<string, mixed>|null  $viewer
      * @return array{0: string, 1: string} Hash and kind
      */
@@ -259,7 +280,7 @@ class TrafficRecorder
         ?string $cookieId,
         \DateTimeImmutable $now
     ): array {
-        if ($viewer !== null) {
+        if ($viewer !== null && $cookieId !== null) {
             return [$this->identity->forAccount((int) $viewer['id']), 'account'];
         }
 

@@ -208,10 +208,10 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
             {{ csrf_field() }}
             <div class="card-body">
                 <h3 class="<?= $sectionTitleClass ?>">Traffic Analytics</h3>
-                <p class="<?= $sectionHintClass ?>">Page view counting for every blog's Insights &gt; Traffic page.</p>
+                <p class="<?= $sectionHintClass ?>">Page view counting for the whole website: its own pages and every blog, read on the Traffic pages in the control panel and each blog's dashboard.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {% cmp="select" name="traffic_enabled" label="Counting" options="{$trafficCountingOptions}" selectedKey="{$trafficEnabled}" underlabel="Applies to every blog at once." %}
+                    {% cmp="select" name="traffic_enabled" label="Counting" options="{$trafficCountingOptions}" selectedKey="{$trafficEnabled}" underlabel="Applies to the whole website at once." %}
 
                     {% cmp="select" name="traffic_aggregation_enabled" label="Daily totals" options="{$trafficTotalsOptions}" selectedKey="{$trafficAggregation}" underlabel="{$trafficTotalsHint}" %}
 

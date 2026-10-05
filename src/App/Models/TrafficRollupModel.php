@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\Traffic\PlatformPages;
+use App\ValueObjects\TrafficScope;
+
 /**
- * Builds the daily traffic tables from traffic_hits.
+ * Builds the daily traffic tables from traffic_hits, one scope at a time.
  *
- * Each blog day is deleted and re-inserted in one transaction, so a re-run gives
- * identical rows and a day that lost views also loses their breakdown rows.
+ * Each scope's days are deleted and re-inserted in one transaction, so a re-run
+ * gives identical rows and a day that lost views also loses their breakdown rows.
  */
 class TrafficRollupModel extends AppModel
 {
@@ -17,72 +20,165 @@ class TrafficRollupModel extends AppModel
     /**
      * Breakdown => the traffic_hits expression it groups by. Fixed strings, never input.
      */
-    private const DIMENSIONS = [
-        'channel' => 'channel',
-        'source' => 'referrer_source',
-        'utm_source' => 'utm_source',
-        'utm_medium' => 'utm_medium',
-        'utm_campaign' => 'utm_campaign',
-        'device' => 'device',
-        'browser' => 'browser',
-        'os' => 'os',
-        'country' => 'country',
-        'locale' => 'locale',
-        'page' => 'LEFT(path, 191)',
+    private const DIMENSION_COLUMNS = [
+        'channel' => 'h.channel',
+        'source' => 'h.referrer_source',
+        'utm_source' => 'h.utm_source',
+        'utm_medium' => 'h.utm_medium',
+        'utm_campaign' => 'h.utm_campaign',
+        'device' => 'h.device',
+        'browser' => 'h.browser',
+        'os' => 'h.os',
+        'country' => 'h.country',
+        'locale' => 'h.locale',
+        'page' => 'LEFT(h.path, 191)',
+        'blog' => 'h.blog_id',
+        'lexicon' => 'h.referrer_source',
     ];
 
     /**
-     * Rebuild every blog day from $from on, and the platform days since the same date.
+     * Which views a breakdown counts, when not every view with a value.
+     */
+    private const DIMENSION_FILTERS = [
+        // Top pages lists the blog's other pages. Posts have their own table.
+        'page' => "h.page_type <> 'post'",
+        'source' => "h.referrer_source IS NOT NULL AND h.channel <> 'lexicon'",
+        'lexicon' => "h.channel = 'lexicon'",
+    ];
+
+    /**
+     * How each scope reads traffic_hits. Fixed strings, never input.
      *
-     * @param  string  $from  Y-m-d, blog-local for blog rows and UTC for platform rows
-     * @return array{daily: int, dimensions: int, site: int} Rows written
+     * - id, blog: the row's scope_id and blog_id
+     * - day, since: the day a view falls on, and the matching "from this day on" test
+     * - covers: which views belong to the scope
+     * - returningIn: the scope an earlier visit has to be in for a visitor to count as returning
+     * - bounces: whether the scope counts bounces
+     * - stored: breakdowns kept beyond the ones the scope shows
+     * - columns: breakdowns that group by something other than DIMENSION_COLUMNS
+     *
+     * @return array<string, array{id: string, blog: string, day: string, since: string, covers: string,
+     *     returningIn: string, bounces: bool, stored: list<string>, columns: array<string, string>}>
+     */
+    private static function scopes(): array
+    {
+        $platformTypes = "'".implode("', '", PlatformPages::PAGE_TYPES)."'";
+
+        return [
+            TrafficScope::SITE => [
+                'id' => '0',
+                'blog' => 'NULL',
+                'day' => 'DATE(h.created_at)',
+                'since' => 'h.created_at >= ?',
+                'covers' => 'TRUE',
+                'returningIn' => TrafficScope::SITE,
+                'bounces' => true,
+                // Views per blog, for the number of blogs read.
+                'stored' => ['blog'],
+                // Going from Discover to a blog is moving around the site.
+                'columns' => ['channel' => "IF(h.channel = 'lexicon', 'internal', h.channel)"],
+            ],
+            TrafficScope::PLATFORM => [
+                'id' => '0',
+                'blog' => 'NULL',
+                'day' => 'DATE(h.created_at)',
+                'since' => 'h.created_at >= ?',
+                'covers' => "h.page_type IN ({$platformTypes})",
+                'returningIn' => TrafficScope::PLATFORM,
+                // Going on from the home page to a blog isn't leaving, so one view here says nothing.
+                'bounces' => false,
+                'stored' => [],
+                'columns' => [],
+            ],
+            TrafficScope::BLOG => [
+                'id' => 'h.blog_id',
+                'blog' => 'h.blog_id',
+                'day' => 'h.local_date',
+                'since' => 'h.local_date >= ?',
+                'covers' => 'h.blog_id IS NOT NULL',
+                'returningIn' => TrafficScope::BLOG,
+                'bounces' => true,
+                'stored' => [],
+                'columns' => [],
+            ],
+            TrafficScope::POST => [
+                'id' => 'h.post_id',
+                'blog' => 'h.blog_id',
+                'day' => 'h.local_date',
+                'since' => 'h.local_date >= ?',
+                'covers' => 'h.post_id IS NOT NULL',
+                // Back on the blog, so a post page and its blog agree on who returned.
+                'returningIn' => TrafficScope::BLOG,
+                // A bounce is a visit to the blog, not to one post.
+                'bounces' => false,
+                'stored' => [],
+                'columns' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Rebuild every scope's days from $from on.
+     *
+     * @param  string  $from  Y-m-d, read as UTC for the site and platform, in each blog's timezone for blogs and posts
+     * @return array{daily: int, dimensions: int} Rows written
      */
     public function rebuildFrom(string $from, int $readSeconds, int $bounceSeconds): array
     {
         return $this->transaction(function () use ($from, $readSeconds, $bounceSeconds): array {
-            $this->database->execute('DELETE FROM traffic_daily WHERE day >= ?', [$from]);
-            $this->database->execute('DELETE FROM traffic_daily_dimensions WHERE day >= ?', [$from]);
+            $written = ['daily' => 0, 'dimensions' => 0];
 
-            $daily = $this->insertDaily($from, false, $readSeconds, $bounceSeconds)
-                + $this->insertDaily($from, true, $readSeconds, $bounceSeconds);
+            foreach (array_keys(self::scopes()) as $scope) {
+                $this->database->execute('DELETE FROM traffic_daily WHERE scope = ? AND day >= ?', [$scope, $from]);
+                $this->database->execute(
+                    'DELETE FROM traffic_daily_dimensions WHERE scope = ? AND day >= ?',
+                    [$scope, $from]
+                );
 
-            $dimensions = $this->insertDimensions($from, false) + $this->insertDimensions($from, true);
+                $written['daily'] += $this->insertTotals($scope, $from, $readSeconds, $bounceSeconds);
+                $written['dimensions'] += $this->insertBreakdowns($scope, $from);
+            }
 
-            return ['daily' => $daily, 'dimensions' => $dimensions, 'site' => $this->upsertSite($from)];
+            return $written;
         });
     }
 
+    /**
+     * Remove a deleted blog's own numbers. Its views stay in the site's.
+     */
     public function deleteByBlogId(int $blogId): void
     {
-        $this->database->execute('DELETE FROM traffic_daily WHERE blog_id = ?', [$blogId]);
+        $this->database->execute("DELETE FROM traffic_daily WHERE scope IN ('blog', 'post') AND blog_id = ?", [$blogId]);
         $this->database->execute('DELETE FROM traffic_daily_dimensions WHERE blog_id = ?', [$blogId]);
     }
 
     /**
-     * One row per blog (or post) and day. Visitors are counted per day, so a
-     * person reading on Monday and Tuesday is a visitor on each day.
+     * One row per scope id and day. Visitors are counted per day, so a person
+     * reading on Monday and Tuesday is a visitor on each day.
      */
-    private function insertDaily(string $from, bool $perPost, int $readSeconds, int $bounceSeconds): int
+    private function insertTotals(string $scope, string $from, int $readSeconds, int $bounceSeconds): int
     {
-        $post = $perPost ? 'h.post_id' : '0';
-        $postGroup = $perPost ? 'h.post_id, ' : '';
-        $postFilter = $perPost ? 'AND h.post_id IS NOT NULL' : '';
-        // A bounce is a visit to the blog, not to one post, so post rows carry none.
-        $bounces = $perPost ? '0' : "SUM(v.views = 1 AND v.best_seconds < {$bounceSeconds})";
+        $s = self::scopes()[$scope];
+        $r = self::scopes()[$s['returningIn']];
+        $keys = self::groupKeys([$s['id'], $s['blog']]);
+        $returningKeys = self::groupKeys([$r['id']]);
+        $bounces = $s['bounces'] ? "SUM(v.views = 1 AND v.best_seconds < {$bounceSeconds})" : '0';
 
         $sql = "INSERT INTO traffic_daily
-                    (blog_id, post_id, day, views, visitors, identified_visitors, returning_visitors,
+                    (scope, scope_id, blog_id, day, views, visitors, identified_visitors, returning_visitors,
                      bounces, read_views, engaged_views, engaged_seconds, scroll_depth_sum)
                 WITH first_seen AS (
-                    SELECT h.visitor_hash, h.blog_id, MIN(h.local_date) AS first_day
+                    SELECT h.visitor_hash, {$r['id']} AS seen_in, MIN({$r['day']}) AS first_day
                     FROM traffic_hits h
-                    JOIN (SELECT DISTINCT visitor_hash, blog_id FROM traffic_hits
-                          WHERE local_date >= ? AND visitor_kind <> 'daily') w
-                      ON w.visitor_hash = h.visitor_hash AND w.blog_id = h.blog_id
-                    GROUP BY h.visitor_hash, h.blog_id
+                    JOIN (SELECT DISTINCT h.visitor_hash FROM traffic_hits h
+                          WHERE {$r['since']} AND {$r['covers']} AND h.visitor_kind <> 'daily') w
+                      ON w.visitor_hash = h.visitor_hash
+                    WHERE {$r['covers']}
+                    GROUP BY {$returningKeys}h.visitor_hash
                 ),
                 per_visitor AS (
-                    SELECT h.blog_id, {$post} AS post_id, h.local_date, h.visitor_hash,
+                    SELECT {$s['id']} AS scope_id, {$s['blog']} AS blog_id, {$s['day']} AS day,
+                           {$r['id']} AS seen_in, h.visitor_hash,
                            COUNT(*) AS views,
                            MAX(h.visitor_kind <> 'daily') AS identified,
                            MAX(COALESCE(h.engaged_seconds, 0)) AS best_seconds,
@@ -92,67 +188,59 @@ class TrafficRollupModel extends AppModel
                            COALESCE(SUM(CASE WHEN h.engaged_seconds IS NOT NULL THEN h.scroll_depth END), 0)
                                AS scroll_sum
                     FROM traffic_hits h
-                    WHERE h.local_date >= ? {$postFilter}
-                    GROUP BY h.blog_id, {$postGroup}h.local_date, h.visitor_hash
+                    WHERE {$s['since']} AND {$s['covers']}
+                    GROUP BY {$keys}{$s['day']}, h.visitor_hash
                 )
-                SELECT v.blog_id, v.post_id, v.local_date,
+                SELECT '{$scope}', v.scope_id, v.blog_id, v.day,
                        SUM(v.views), COUNT(*), SUM(v.identified),
-                       SUM(v.identified = 1 AND f.first_day < v.local_date),
+                       SUM(v.identified = 1 AND f.first_day < v.day),
                        {$bounces},
                        SUM(v.read_views), SUM(v.engaged_views), SUM(v.engaged_seconds), SUM(v.scroll_sum)
                 FROM per_visitor v
-                LEFT JOIN first_seen f ON f.visitor_hash = v.visitor_hash AND f.blog_id = v.blog_id
-                GROUP BY v.blog_id, v.post_id, v.local_date";
+                LEFT JOIN first_seen f ON f.visitor_hash = v.visitor_hash AND f.seen_in = v.seen_in
+                GROUP BY v.scope_id, v.blog_id, v.day";
 
         return $this->database->execute($sql, [$from, $from]);
     }
 
-    private function insertDimensions(string $from, bool $perPost): int
+    private function insertBreakdowns(string $scope, string $from): int
     {
-        $post = $perPost ? 'post_id' : '0';
-        $postGroup = $perPost ? 'post_id, ' : '';
+        $s = self::scopes()[$scope];
+        $keys = self::groupKeys([$s['id'], $s['blog']]);
         $selects = [];
         $params = [];
 
-        foreach (self::DIMENSIONS as $dimension => $column) {
-            // Top pages lists the blog's other pages. Posts have their own table.
-            if ($dimension === 'page' && $perPost) {
-                continue;
-            }
+        foreach ([...TrafficScope::breakdownsFor($scope), ...$s['stored']] as $dimension) {
+            $column = $s['columns'][$dimension] ?? self::DIMENSION_COLUMNS[$dimension];
+            $filter = self::DIMENSION_FILTERS[$dimension] ?? "{$column} IS NOT NULL";
 
-            $filter = $dimension === 'page' ? "AND page_type <> 'post'" : "AND {$column} IS NOT NULL";
-            $filter .= $perPost ? ' AND post_id IS NOT NULL' : '';
-
-            $selects[] = "SELECT blog_id, {$post}, '{$dimension}', local_date, {$column},
-                                 COUNT(*), COUNT(DISTINCT visitor_hash)
-                          FROM traffic_hits
-                          WHERE local_date >= ? {$filter}
-                          GROUP BY blog_id, {$postGroup}local_date, {$column}";
+            $selects[] = "SELECT '{$scope}', {$s['id']}, {$s['blog']}, '{$dimension}', {$s['day']}, {$column},
+                                 COUNT(*), COUNT(DISTINCT h.visitor_hash)
+                          FROM traffic_hits h
+                          WHERE {$s['since']} AND {$s['covers']} AND {$filter}
+                          GROUP BY {$keys}{$s['day']}, {$column}";
             $params[] = $from;
         }
 
-        $sql = 'INSERT INTO traffic_daily_dimensions (blog_id, post_id, dimension, day, value, views, visitors) '
+        $sql = 'INSERT INTO traffic_daily_dimensions (scope, scope_id, blog_id, dimension, day, value, views, visitors) '
             .implode(' UNION ALL ', $selects);
 
         return $this->database->execute($sql, $params);
     }
 
     /**
-     * Platform totals by UTC day. GREATEST keeps the totals of a blog whose raw
-     * views were deleted with it.
+     * The non-constant keys to group by, each followed by a comma. Constants are
+     * left out because MySQL reads a bare number in GROUP BY as a column position.
+     *
+     * @param  list<string>  $expressions
      */
-    private function upsertSite(string $from): int
+    private static function groupKeys(array $expressions): string
     {
-        $sql = 'INSERT INTO traffic_site_daily (day, views, visitors, blogs)
-                SELECT DATE(created_at), COUNT(*), COUNT(DISTINCT visitor_hash), COUNT(DISTINCT blog_id)
-                FROM traffic_hits
-                WHERE created_at >= ?
-                GROUP BY DATE(created_at)
-                ON DUPLICATE KEY UPDATE
-                    views = GREATEST(views, VALUES(views)),
-                    visitors = GREATEST(visitors, VALUES(visitors)),
-                    blogs = GREATEST(blogs, VALUES(blogs))';
+        $keys = array_filter(
+            array_unique($expressions),
+            static fn (string $expression): bool => !in_array($expression, ['0', 'NULL'], true)
+        );
 
-        return $this->database->execute($sql, [$from.' 00:00:00']);
+        return $keys === [] ? '' : implode(', ', $keys).', ';
     }
 }

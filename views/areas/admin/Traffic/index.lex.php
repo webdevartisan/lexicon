@@ -1,7 +1,9 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Traffic{% endblock %}
-{% block subtitle %}Reading across every blog: how much, where readers come from, and which blogs and posts they read.{% endblock %}
+{% block subtitle %}<?= e($scope === 'site'
+    ? 'Reading across the whole website: how much, where readers come from, and which blogs and posts they read.'
+    : 'The platform\'s own pages: the home page, Discover, the guides, profiles, sign-in and sign-up.') ?>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/flatpickr.css">
@@ -12,7 +14,8 @@
 $present = new \App\Presenters\TrafficPresenter(
     \App\Services\LocaleState::get()->chromeLocale,
     $t,
-    app(\App\Services\LocaleRegistry::class)
+    app(\App\Services\LocaleRegistry::class),
+    $scope
 );
 
 $pagePath = $basePath;
@@ -24,19 +27,28 @@ $previous = $range->previous();
 $hasViews = $metrics['views']['value'] > 0;
 $none = $t('traffic.metrics.none');
 $canConfigure = \App\Gate::allows('manageSettings', \App\Resources\SystemResource::class, auth()->user() ?? []);
+$isOverview = $scope === 'site';
+$tabs = [
+    ['/admin/traffic', 'Overview'],
+    ['/admin/traffic/platform', 'Platform pages'],
+];
 
 // Label and hint are plain English here, like the rest of the control panel.
-$cards = [
-    ['views', $t('traffic.metrics.views'), 'Pages opened by readers on any blog. Reloading the same page within 30 minutes counts once.', 'number'],
-    ['visitors', $t('traffic.metrics.visitors'), 'Different people each day, counted once however many blogs they read, then added up over the days.', 'number'],
+$cards = $isOverview ? [
+    ['views', $t('traffic.metrics.views'), 'Pages opened anywhere on the site: its own pages and every blog. Reloading the same page within 30 minutes counts once.', 'number'],
+    ['visitors', $t('traffic.metrics.visitors'), 'Different people each day, counted once however many pages and blogs they read, then added up over the days.', 'number'],
     ['active_blogs', 'Blogs read', 'Blogs that had at least one view in this period.', 'number'],
-    ['counting_blogs', 'Blogs counting', 'Blogs whose owner has turned visit counting on, read or not. Only these can show up here.', 'number'],
-    ['avg_read_seconds', $t('traffic.metrics.avgRead'), 'Average time a reader spent with a page open and in front of them, over every blog.', 'duration'],
+    ['avg_read_seconds', $t('traffic.metrics.avgRead'), 'Average time a reader spent with a page open and in front of them, over the whole site.', 'duration'],
     ['read_ratio', $t('traffic.metrics.readRatio'), 'Share of views where the reader stayed at least 30 seconds.', 'percent'],
-    ['bounce_rate', $t('traffic.metrics.bounceRate'), 'Share of visits to a blog that opened one page and left within 10 seconds.', 'percent'],
-    ['returning_share', $t('traffic.metrics.returning'), 'Of the readers we can recognise (signed in, or who allowed the analytics cookie), the share who had read that blog before.', 'percent'],
+    ['bounce_rate', $t('traffic.metrics.bounceRate'), 'Share of visitors who opened one page on the site that day and left within 10 seconds.', 'percent'],
+    ['returning_share', $t('traffic.metrics.returning'), 'Of the readers we can recognise (those who allowed analytics), the share who had visited the site on an earlier day in the last 30 days.', 'percent'],
+] : [
+    ['views', $t('traffic.metrics.views'), 'Pages of the platform itself opened by readers. Reloading the same page within 30 minutes counts once.', 'number'],
+    ['visitors', $t('traffic.metrics.visitors'), 'Different people each day on the platform\'s own pages, then added up over the days.', 'number'],
+    ['avg_read_seconds', $t('traffic.metrics.avgRead'), 'Average time a reader spent with one of these pages open and in front of them.', 'duration'],
+    ['read_ratio', $t('traffic.metrics.readRatio'), 'Share of views where the reader stayed at least 30 seconds.', 'percent'],
+    ['returning_share', $t('traffic.metrics.returning'), 'Of the readers we can recognise (those who allowed analytics), the share who had opened these pages on an earlier day in the last 30 days.', 'percent'],
 ];
-$metrics['counting_blogs'] = ['value' => $report['countingBlogs'], 'previous' => null, 'change' => null];
 
 $previousPeriod = $t('traffic.range.span', ['from' => $present->date($previous->fromDate()), 'to' => $present->date($previous->toDate())]);
 $lowerIsBetter = ['bounce_rate'];
@@ -76,7 +88,7 @@ $chartSeries = array_map(static fn (array $day): array => [
     'label' => $present->date($day['date']),
     'views' => $day['views'],
     'visitors' => $day['visitors'],
-    'blogs' => $day['blogs'],
+    'blogs' => $day['blogs'] ?? null,
 ], $report['series']);
 
 $settingsLabel = 'Traffic settings';
@@ -94,6 +106,17 @@ $downloadLabel = $t('traffic.breakdowns.export');
   </div>
   <?php } ?>
 
+  <nav class="flex flex-wrap gap-2" aria-label="Traffic views">
+    <?php foreach ($tabs as [$tabPath, $tabLabel]) {
+        $isActive = $tabPath === $basePath;
+        $classes = 'inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 '
+            .($isActive
+                ? 'bg-custom-500 border-custom-500 text-white'
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-200'); ?>
+    <a href="<?= e(lurl($tabPath).'?'.http_build_query($range->query())) ?>" class="<?= $classes ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($tabLabel) ?></a>
+    <?php } ?>
+  </nav>
+
   <div class="flex flex-wrap items-center justify-between gap-3">
     <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-zink-300">
       <span>
@@ -101,14 +124,16 @@ $downloadLabel = $t('traffic.breakdowns.export');
         ·
         <?= e($collectingSince !== null
             ? $t('traffic.status.collectingSince', ['date' => $present->date($collectingSince)])
-            : 'No visits counted on any blog yet.') ?>
+            : 'No visits counted yet.') ?>
         · Days are UTC.
       </span>
+      <?php if ($rightNow !== null) { ?>
       <span class="inline-flex items-center gap-1.5 cursor-help" tabindex="0"
-            data-tooltip data-tooltip-content="Different visitors on any blog in the last 30 minutes." data-tooltip-placement="bottom">
+            data-tooltip data-tooltip-content="Different visitors anywhere on the site in the last 30 minutes." data-tooltip-placement="bottom">
         <span class="inline-block size-2 rounded-full <?= $rightNow > 0 ? 'bg-green-500' : 'bg-slate-400' ?>" aria-hidden="true"></span>
         <?= e($t('traffic.rightNow', ['count' => $present->number($rightNow)])) ?>
       </span>
+      <?php } ?>
     </p>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -120,40 +145,16 @@ $downloadLabel = $t('traffic.breakdowns.export');
   </div>
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <?php foreach ($cards as [$key, $label, $hint, $format]) {
+    <?php foreach ($cards as [$key, $cardLabel, $cardHint, $format]) {
         $metric = $metrics[$key];
-        $display = $present->metric($format, $metric['value']);
-        $change = $present->change(
+        $cardValue = $present->metric($format, $metric['value']);
+        $cardChange = $present->change(
             $metric['change'],
             (string) $present->metric($format, $metric['previous']),
             $previousPeriod,
             in_array($key, $lowerIsBetter, true)
-        );
-        $changeIcon = $changeIcons[$change['direction']] ?? 'minus';
-        $changeClass = $changeTones[$change['tone']]; ?>
-    <div class="card mb-0">
-      <div class="card-body">
-        <div class="flex items-start justify-between gap-2">
-          <h2 class="text-sm font-medium text-slate-500 dark:text-zink-300"><?= e($label) ?></h2>
-          <button type="button" class="shrink-0 -m-1 p-1 rounded text-slate-400 hover:text-custom-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 dark:text-zink-400"
-                  data-tooltip data-tooltip-content="<?= e($hint) ?>" data-tooltip-placement="top"
-                  aria-label="<?= e($t('traffic.metrics.about', ['metric' => $label])) ?>">
-            {% cache 'lucide:help-circle:traffic-card' ttl=31536000 %}<i data-lucide="help-circle" class="size-4" aria-hidden="true"></i>{% endcache %}
-          </button>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 mt-2">
-          <p class="text-2xl font-semibold text-slate-800 dark:text-zink-50 truncate"><?= e($display ?? $none) ?></p>
-          <?php if ($key !== 'counting_blogs' && $change['direction'] !== 'none') { ?>
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded cursor-help <?= $changeClass ?>" tabindex="0"
-                data-tooltip data-tooltip-content="<?= e($change['label']) ?>" data-tooltip-placement="bottom">
-            {% cache 'lucide:traffic-change:' . $changeIcon ttl=31536000 %}<i data-lucide="<?= e($changeIcon) ?>" class="size-3.5" aria-hidden="true"></i>{% endcache %}
-            <span aria-hidden="true"><?= e($change['short']) ?></span>
-            <span class="sr-only"><?= e($change['label']) ?></span>
-          </span>
-          <?php } ?>
-        </div>
-      </div>
-    </div>
+        ); ?>
+    {% include "partials/dashboard/traffic/_metric_card.lex.php" %}
     <?php } ?>
   </div>
 
@@ -178,7 +179,7 @@ $downloadLabel = $t('traffic.breakdowns.export');
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
       </div>
       <?php } else { ?>
-      <p class="py-10 text-center text-sm text-slate-500 dark:text-zink-300">No views on any blog in this period.</p>
+      <p class="py-10 text-center text-sm text-slate-500 dark:text-zink-300">No views in this period.</p>
       <?php } ?>
 
       <details class="mt-4">
@@ -191,7 +192,9 @@ $downloadLabel = $t('traffic.breakdowns.export');
                 <th scope="col" class="px-3 py-2 font-semibold"><?= e($t('traffic.chart.date')) ?></th>
                 <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left"><?= e($t('traffic.chart.views')) ?></th>
                 <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left"><?= e($t('traffic.chart.visitors')) ?></th>
+                <?php if ($isOverview) { ?>
                 <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left">Blogs read</th>
+                <?php } ?>
               </tr>
             </thead>
             <tbody>
@@ -200,7 +203,9 @@ $downloadLabel = $t('traffic.breakdowns.export');
                 <th scope="row" class="px-3 py-1.5 font-normal ltr:text-left rtl:text-right"><?= e($point['label']) ?></th>
                 <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['views'])) ?></td>
                 <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['visitors'])) ?></td>
+                <?php if ($isOverview) { ?>
                 <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['blogs'])) ?></td>
+                <?php } ?>
               </tr>
               <?php } ?>
             </tbody>
@@ -210,6 +215,7 @@ $downloadLabel = $t('traffic.breakdowns.export');
     </div>
   </div>
 
+  <?php if ($isOverview) { ?>
   <div class="card mb-0">
     <div class="card-body">
       <div class="flex items-center justify-between gap-2 mb-3">
@@ -352,12 +358,16 @@ $downloadLabel = $t('traffic.breakdowns.export');
       <?php } ?>
     </div>
   </div>
+  <?php } ?>
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
     <?php
-    $order = ['source', 'channel', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
+    $order = ['page', 'source', 'lexicon', 'channel', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
     foreach ($order as $dimension) {
-        $rows = $breakdowns[$dimension] ?? []; ?>
+        if (!array_key_exists($dimension, $breakdowns)) {
+            continue;
+        }
+        $rows = $breakdowns[$dimension]; ?>
     {% include "partials/dashboard/traffic/_breakdown.lex.php" %}
     <?php } ?>
   </div>
@@ -365,8 +375,13 @@ $downloadLabel = $t('traffic.breakdowns.export');
   <details class="card mb-0">
     <summary class="card-body cursor-pointer text-sm font-semibold text-slate-800 dark:text-zink-50"><?= e($t('traffic.about.title')) ?></summary>
     <div class="px-5 pb-5 -mt-2 flex flex-col gap-2 text-sm leading-relaxed text-slate-600 dark:text-zink-200">
-      <p>Only blogs whose owner turned counting on are included. Crawlers, link previews and browsers that ask not to be tracked are left out, and the blog's own team is left out unless the owner chose otherwise.</p>
-      <p>Views, visitors and the daily chart use UTC days. The other numbers add up each blog's own days, which follow the blog's timezone, so they can differ slightly at the start and end of the range. Visitors in the breakdowns are counted per blog, so someone who read two blogs counts twice there.</p>
+      <?php if ($isOverview) { ?>
+      <p>Every public page counts: the platform's own pages and every blog. Crawlers, link previews, browsers that ask not to be tracked and administrators are left out, and a blog's own team is left out of that blog unless its owner chose otherwise.</p>
+      <p>The cards, the chart and the breakdowns use UTC days and count a visitor once across the whole site, however many blogs they read. Top blogs and Top posts show each blog's own numbers, in that blog's timezone, the same as its owner sees them.</p>
+      <?php } else { ?>
+      <p>The home page, Discover, the guides, the about and legal pages, contact, sign-in, sign-up and profiles, which are counted together as one page.</p>
+      <p>Days are UTC.</p>
+      <?php } ?>
     </div>
   </details>
 </div>

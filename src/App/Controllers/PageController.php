@@ -18,15 +18,6 @@ use Framework\Exceptions\PageNotFoundException;
  */
 class PageController extends AppController
 {
-    /**
-     * Guides listed on the getting started index, in display order.
-     */
-    private const GUIDE_SLUGS = [
-        'start-your-first-blog',
-        'write-posts-people-read',
-        'blog-with-your-team',
-    ];
-
     public function __construct(
         private PageModel $pages,
         private SettingModel $settings
@@ -48,7 +39,7 @@ class PageController extends AppController
     public function gettingStarted(): Response
     {
         return $this->view('public.Page.getting-started', [
-            'guides' => $this->pages->findManyPublished(self::GUIDE_SLUGS, locale()),
+            'guides' => $this->pages->findManyPublished(PageModel::GUIDE_SLUGS, locale()),
         ]);
     }
 
@@ -58,7 +49,7 @@ class PageController extends AppController
      */
     public function guide(string $slug): Response
     {
-        if (!in_array($slug, self::GUIDE_SLUGS, true)) {
+        if (!in_array($slug, PageModel::GUIDE_SLUGS, true)) {
             throw new PageNotFoundException('Guide not found.', 404);
         }
 

@@ -12,8 +12,9 @@ use App\Models\TagModel;
 use App\Services\LocaleRegistry;
 
 /**
- * Works out which blog page a beacon came from, using only the path.
- * Anything that isn't a live public page resolves to null, draft previews included.
+ * Works out which public page a beacon came from, using only the path: one of
+ * the platform's own pages or a blog page. Anything that isn't a live public
+ * page resolves to null, draft previews included.
  */
 class PagePathResolver
 {
@@ -28,11 +29,15 @@ class PagePathResolver
 
     public function resolve(string $rawPath): ?TrafficPage
     {
-        $segments = $this->segments($rawPath);
+        $split = $this->split($rawPath);
+        if ($split === null) {
+            return null;
+        }
 
-        $locale = null;
-        if ($segments !== [] && $this->locales->isSupported($segments[0])) {
-            $locale = array_shift($segments);
+        [$locale, $segments] = $split;
+        $platform = PlatformPages::match($segments);
+        if ($platform !== null) {
+            return TrafficPage::platform($platform[0], $platform[1], $locale ?? $this->locales->default());
         }
 
         $rest = array_slice($segments, 2);
@@ -57,6 +62,28 @@ class PagePathResolver
             locale: $locale ?? (string) ($settings['default_locale'] ?? $this->locales->default()),
             settings: $settings,
         );
+    }
+
+    /**
+     * Which part of Lexicon a page is in, without checking that the page exists:
+     * a published blog, or the platform with the kind of page, 'other' for the
+     * platform pages that aren't counted.
+     *
+     * @return array{blogId: ?int, pageType: string}
+     */
+    public function section(string $rawPath): array
+    {
+        $split = $this->split($rawPath);
+        if ($split === null) {
+            return ['blogId' => null, 'pageType' => 'other'];
+        }
+
+        $blog = $this->publishedBlog($split[1]);
+        if ($blog !== null) {
+            return ['blogId' => (int) $blog['id'], 'pageType' => 'blog'];
+        }
+
+        return ['blogId' => null, 'pageType' => PlatformPages::match($split[1])[0] ?? 'other'];
     }
 
     /**
@@ -110,14 +137,32 @@ class PagePathResolver
     }
 
     /**
-     * @return list<string>
+     * @return array{0: ?string, 1: list<string>}|null The locale prefix and the segments after it
      */
-    private function segments(string $rawPath): array
+    private function split(string $rawPath): ?array
+    {
+        $segments = $this->segments($rawPath);
+        if ($segments === null) {
+            return null;
+        }
+
+        $locale = null;
+        if ($segments !== [] && $this->locales->isSupported($segments[0])) {
+            $locale = array_shift($segments);
+        }
+
+        return [$locale, $segments];
+    }
+
+    /**
+     * @return list<string>|null Null when the path can't be a page at all
+     */
+    private function segments(string $rawPath): ?array
     {
         $path = parse_url($rawPath, PHP_URL_PATH);
 
         if (!is_string($path) || $path === '' || strlen($path) > 255) {
-            return [];
+            return null;
         }
 
         $parts = array_map('rawurldecode', explode('/', trim($path, '/')));

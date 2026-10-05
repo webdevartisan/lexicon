@@ -1297,6 +1297,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .h-16 {
   height: 4rem;
 }
+.h-2 {
+  height: 0.5rem;
+}
 .h-2\.5 {
   height: 0.625rem;
 }
@@ -1317,6 +1320,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .h-6 {
   height: 1.5rem;
+}
+.h-64 {
+  height: 16rem;
 }
 .h-72 {
   height: 18rem;
@@ -1590,6 +1596,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .grid-cols-\[9rem_1fr\] {
   grid-template-columns: 9rem 1fr;
+}
+.grid-cols-\[minmax\(8rem\2c 12rem\)_1fr_auto\] {
+  grid-template-columns: minmax(8rem,12rem) 1fr auto;
 }
 .flex-col {
   flex-direction: column;
@@ -2398,9 +2407,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .pb-3 {
   padding-bottom: 0.75rem;
-}
-.pb-4 {
-  padding-bottom: 1rem;
 }
 .pb-5 {
   padding-bottom: 1.25rem;
@@ -4261,6 +4267,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .xl\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+  .xl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
   .xl\:grid-cols-6 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -4349,9 +4358,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   padding-left: 2.5rem;
 }
 @media (min-width: 640px) {
-  .ltr\:sm\:left-auto:where([dir="ltr"], [dir="ltr"] *) {
-    left: auto;
-  }
   .ltr\:sm\:border-r:where([dir="ltr"], [dir="ltr"] *) {
     border-right-width: 1px;
   }

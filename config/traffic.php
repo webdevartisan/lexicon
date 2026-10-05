@@ -60,6 +60,13 @@ return [
     // Known referrer hosts, matched after www., m., l. and lm. are stripped.
     // Pattern => [display name, channel]. First match wins.
     'sources' => [
+        // Mail first: the Google search pattern would also take mail.google.com.
+        '/^mail\.google\.com$/' => ['Gmail', 'email'],
+        '/^com\.google\.android\.gm$/' => ['Gmail', 'email'],
+        '/^outlook\.(live|office|office365)\.com$/' => ['Outlook', 'email'],
+        '/^mail\.yahoo\.com$/' => ['Yahoo Mail', 'email'],
+        '/^mail\.proton\.me$/' => ['Proton Mail', 'email'],
+
         '/(^|\.)google\.[a-z.]+$/' => ['Google', 'search'],
         '/(^|\.)bing\.com$/' => ['Bing', 'search'],
         '/(^|\.)duckduckgo\.com$/' => ['DuckDuckGo', 'search'],
@@ -72,12 +79,6 @@ return [
         '/(^|\.)qwant\.com$/' => ['Qwant', 'search'],
         '/(^|\.)kagi\.com$/' => ['Kagi', 'search'],
         '/^com\.google\.android\.googlequicksearchbox$/' => ['Google', 'search'],
-
-        '/^mail\.google\.com$/' => ['Gmail', 'email'],
-        '/^com\.google\.android\.gm$/' => ['Gmail', 'email'],
-        '/^outlook\.(live|office|office365)\.com$/' => ['Outlook', 'email'],
-        '/^mail\.yahoo\.com$/' => ['Yahoo Mail', 'email'],
-        '/^mail\.proton\.me$/' => ['Proton Mail', 'email'],
 
         '/(^|\.)facebook\.com$/' => ['Facebook', 'social'],
         '/^fb\.me$/' => ['Facebook', 'social'],

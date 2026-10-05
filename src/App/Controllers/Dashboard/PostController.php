@@ -27,6 +27,7 @@ use App\Services\PostContentSanitizer;
 use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
+use App\ValueObjects\TrafficScope;
 use DateTime;
 use DateTimeZone;
 use Framework\Core\Response;
@@ -1296,7 +1297,7 @@ final class PostController extends AppController
             ?? ['views' => 0, 'visitors' => 0];
         $today = new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId)));
         $monthAgo = $today->modify('-29 days')->format('Y-m-d');
-        $recent = $this->trafficStats->totals($blogId, [$postId], $monthAgo, $today->format('Y-m-d'));
+        $recent = $this->trafficStats->totals(TrafficScope::post($blogId, $postId), $monthAgo, $today->format('Y-m-d'));
 
         return [
             'views' => $lifetime['views'],

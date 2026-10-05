@@ -91,6 +91,7 @@ if (!empty($authError)) { ?>
 ?>
         {% include "partials/_consent_bootstrap.lex.php" %}
         {% include "partials/_consent_banner.lex.php" %}
+        {% include "partials/_platform_traffic_beacon.lex.php" %}
 
         <script src="/assets/js/front.js" defer></script>
         {% yield scripts %}

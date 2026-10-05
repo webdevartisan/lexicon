@@ -4,15 +4,14 @@ $pathsValue = $pathErrors !== [] ? (string) old('excluded_paths', '') : (string)
 $pathsLabel = $t('traffic.settings.excludedPaths');
 $pathsHint = e($t('traffic.settings.excludedPathsHint'));
 $toggles = [
-    ['enabled', $blogCounting, 'traffic.settings.enabled', 'traffic.settings.enabledHint'],
     ['exclude_members', !empty($blogSettings['traffic_exclude_members'] ?? 1), 'traffic.settings.excludeMembers', 'traffic.settings.excludeMembersHint'],
     ['public_notice', !empty($blogSettings['traffic_public_notice'] ?? 0), 'traffic.settings.publicNotice', 'traffic.settings.publicNoticeHint'],
 ];
 ?>
 <form method="post" action="<?= e(lurl($basePath.'/settings')) ?>" id="trafficSettingsForm" class="flex flex-col gap-4">
   <?= csrf_field() ?>
-  <?php foreach ($toggles as $i => [$field, $checked, $labelKey, $hintKey]) { ?>
-  <div class="flex items-start gap-2<?= $i === 0 ? ' pb-4 border-b border-dashed border-slate-200 dark:border-zink-600' : '' ?>">
+  <?php foreach ($toggles as [$field, $checked, $labelKey, $hintKey]) { ?>
+  <div class="flex items-start gap-2">
     <input id="traffic_<?= e($field) ?>" name="<?= e($field) ?>" type="checkbox" value="1"
       class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"<?= $checked ? ' checked' : '' ?>>
     <div>

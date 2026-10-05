@@ -9,6 +9,7 @@ use App\Controllers\AppController;
 use App\Models\RoleModel;
 use App\Models\SettingModel;
 use App\Services\MaintenanceMode;
+use App\Services\PublicCacheInvalidator;
 use App\Services\Traffic\CountryLookup;
 use App\Services\Traffic\TrafficSettings;
 use Framework\Core\Response;
@@ -31,6 +32,7 @@ final class SettingController extends AppController
         private MaintenanceMode $maintenance,
         private TrafficSettings $traffic,
         private CountryLookup $countries,
+        private PublicCacheInvalidator $publicCache,
     ) {}
 
     /**
@@ -81,6 +83,11 @@ final class SettingController extends AppController
         $this->traffic->saveExtraBotPatterns(trim((string) ($data['traffic_extra_bot_patterns'] ?? '')));
 
         $after = $this->traffic->storedValues();
+
+        // Cached pages carry the counting script, or leave it out, as of the old setting.
+        if ($after['traffic.enabled'] !== $before['traffic.enabled']) {
+            $this->publicCache->purgeAllPages();
+        }
 
         if ($after !== $before) {
             audit()->log(

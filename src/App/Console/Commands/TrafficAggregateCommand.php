@@ -75,8 +75,8 @@ class TrafficAggregateCommand implements SchedulableCommandInterface
 
         $this->settings->markAggregated($now->format('Y-m-d H:i:s'));
 
-        echo "Rebuilt from {$from}: {$written['daily']} daily rows, {$written['dimensions']} breakdown rows, "
-            ."{$written['site']} platform rows. Deleted {$salts} old salt(s).\n";
+        echo "Rebuilt from {$from}: {$written['daily']} daily rows, {$written['dimensions']} breakdown rows. "
+            ."Deleted {$salts} old salt(s).\n";
 
         return 0;
     }

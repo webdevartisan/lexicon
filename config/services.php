@@ -322,6 +322,30 @@ $container->set(App\Services\Traffic\VisitorLink::class, function ($c) use ($tra
     );
 });
 
+$container->set(App\Services\Traffic\SignupAttribution::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\SignupAttribution(
+        $c->get(App\Services\Traffic\TrafficSettings::class),
+        $c->get(App\Services\Traffic\UserAgentClassifier::class),
+        $c->get(App\Services\Traffic\VisitorIdentity::class),
+        $c->get(App\Services\Traffic\VisitorCookie::class),
+        $c->get(App\Models\TrafficHitModel::class),
+        $c->get(App\Models\TrafficEventModel::class),
+        (int) $trafficConfig()['visit_minutes'],
+    );
+});
+
+$container->set(App\Services\Traffic\SignupReportService::class, function ($c) {
+    $privacy = require ROOT_PATH.'/config/privacy.php';
+
+    return new App\Services\Traffic\SignupReportService(
+        $c->get(App\Models\SignupFunnelModel::class),
+        $c->get(App\Models\TrafficEventModel::class),
+        $c->get(App\Models\TrafficStatsModel::class),
+        $c->get(App\Models\BlogModel::class),
+        (string) $privacy['deleted_user_handle'],
+    );
+});
+
 $container->setShared(App\Services\Traffic\CountryLookup::class, function ($c) use ($trafficConfig) {
     return new App\Services\Traffic\CountryLookup(ROOT_PATH.'/'.$trafficConfig()['geo']['path']);
 });

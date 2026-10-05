@@ -85,4 +85,13 @@ class PublicCacheInvalidator
             $this->purgePage($slug);
         }
     }
+
+    /**
+     * Every cached page, platform and blogs alike, for a change built into the
+     * layouts themselves, such as switching visit counting on or off.
+     */
+    public function purgeAllPages(): void
+    {
+        cache()->deletePattern('*:GET:*');
+    }
 }

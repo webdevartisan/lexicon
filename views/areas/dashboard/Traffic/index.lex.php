@@ -13,7 +13,8 @@
 $present = new \App\Presenters\TrafficPresenter(
     \App\Services\LocaleState::get()->chromeLocale,
     $t,
-    app(\App\Services\LocaleRegistry::class)
+    app(\App\Services\LocaleRegistry::class),
+    $scope
 );
 
 $isPost = $scope === 'post';
@@ -57,19 +58,17 @@ $noticeTones = [
 ];
 $notices = [];
 if (!$trackingEnabled) {
-    $notices[] = ['danger', $t('traffic.status.trackingOff'), false];
-} elseif (!$blogCounting) {
-    $notices[] = ['info', $t($canConfigure ? 'traffic.status.blogOffOwner' : 'traffic.status.blogOff'), $showSettings];
+    $notices[] = ['danger', $t('traffic.status.trackingOff')];
 }
 if (!$aggregationEnabled) {
-    $notices[] = ['warning', $t('traffic.status.aggregationOff'), false];
+    $notices[] = ['warning', $t('traffic.status.aggregationOff')];
 } elseif ($delayed) {
     $notices[] = ['warning', $aggregatedAt === null
         ? $t('traffic.status.neverAggregated')
-        : $t('traffic.status.delayed', ['time' => substr((string) $aggregatedAt, 0, 16)]), false];
+        : $t('traffic.status.delayed', ['time' => substr((string) $aggregatedAt, 0, 16)])];
 }
 if ($range->rejected) {
-    $notices[] = ['info', $t('traffic.range.rejected'), false];
+    $notices[] = ['info', $t('traffic.range.rejected')];
 }
 
 $chartSeries = array_map(static fn (array $day): array => [
@@ -78,18 +77,14 @@ $chartSeries = array_map(static fn (array $day): array => [
     'visitors' => $day['visitors'],
 ], $report['series']);
 
-$turnOnLabel = $t('traffic.status.turnOn');
 $settingsLabel = $t('traffic.settings.button');
 $downloadLabel = $t('traffic.breakdowns.export');
 ?>
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto flex flex-col gap-5">
 
-  <?php foreach ($notices as [$tone, $message, $withTurnOn]) { ?>
+  <?php foreach ($notices as [$tone, $message]) { ?>
   <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm border rounded-md <?= $noticeTones[$tone] ?>" role="status">
     <span><?= e($message) ?></span>
-    <?php if ($withTurnOn) { ?>
-    {% cmp="btn" variant="blue" icon="power" label="{$turnOnLabel}" dataModalTarget="trafficSettingsModal" %}
-    <?php } ?>
   </div>
   <?php } ?>
 
@@ -140,38 +135,16 @@ $downloadLabel = $t('traffic.breakdowns.export');
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <?php foreach ($cards as [$key, $labelKey, $hintKey, $format]) {
         $metric = $metrics[$key] ?? null;
-        $display = $format === 'source' ? $present->topSource($breakdowns) : $present->metric($format, $metric['value'] ?? null);
-        $change = $metric === null ? null : $present->change(
+        $cardLabel = $t($labelKey);
+        $cardHint = $t($hintKey);
+        $cardValue = $format === 'source' ? $present->topSource($breakdowns) : $present->metric($format, $metric['value'] ?? null);
+        $cardChange = $metric === null ? null : $present->change(
             $metric['change'],
             (string) $present->metric($format, $metric['previous']),
             $previousPeriod,
             in_array($key, $lowerIsBetter, true)
-        );
-        $changeIcon = $changeIcons[$change['direction'] ?? 'flat'] ?? 'minus';
-        $changeClass = $changeTones[$change['tone'] ?? 'neutral']; ?>
-    <div class="card mb-0">
-      <div class="card-body">
-        <div class="flex items-start justify-between gap-2">
-          <h2 class="text-sm font-medium text-slate-500 dark:text-zink-300"><?= e($t($labelKey)) ?></h2>
-          <button type="button" class="shrink-0 -m-1 p-1 rounded text-slate-400 hover:text-custom-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 dark:text-zink-400"
-                  data-tooltip data-tooltip-content="<?= e($t($hintKey)) ?>" data-tooltip-placement="top"
-                  aria-label="<?= e($t('traffic.metrics.about', ['metric' => $t($labelKey)])) ?>">
-            {% cache 'lucide:help-circle:traffic-card' ttl=31536000 %}<i data-lucide="help-circle" class="size-4" aria-hidden="true"></i>{% endcache %}
-          </button>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 mt-2">
-          <p class="text-2xl font-semibold text-slate-800 dark:text-zink-50 truncate" dir="auto"><?= e($display ?? $none) ?></p>
-          <?php if ($change !== null && $change['direction'] !== 'none') { ?>
-          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded cursor-help <?= $changeClass ?>" tabindex="0"
-                data-tooltip data-tooltip-content="<?= e($change['label']) ?>" data-tooltip-placement="bottom">
-            {% cache 'lucide:traffic-change:' . $changeIcon ttl=31536000 %}<i data-lucide="<?= e($changeIcon) ?>" class="size-3.5" aria-hidden="true"></i>{% endcache %}
-            <span aria-hidden="true"><?= e($change['short']) ?></span>
-            <span class="sr-only"><?= e($change['label']) ?></span>
-          </span>
-          <?php } ?>
-        </div>
-      </div>
-    </div>
+        ); ?>
+    {% include "partials/dashboard/traffic/_metric_card.lex.php" %}
     <?php } ?>
   </div>
 
@@ -285,7 +258,7 @@ $downloadLabel = $t('traffic.breakdowns.export');
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
     <?php
-    $order = ['source', 'channel', 'page', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
+    $order = ['source', 'lexicon', 'channel', 'page', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
     foreach ($order as $dimension) {
         if (!array_key_exists($dimension, $breakdowns)) {
             continue;

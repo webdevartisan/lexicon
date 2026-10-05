@@ -36,7 +36,7 @@ final class TrafficSeedCommand
 
         if (isset($arguments['reset'])) {
             $this->seeder->reset();
-            echo "Deleted every page view, rollup and salt.\n";
+            echo "Deleted every page view, rollup, salt and sign-up event.\n";
 
             return 0;
         }
@@ -50,11 +50,11 @@ final class TrafficSeedCommand
 
         $blogIds = isset($arguments['blog']) ? [(int) $arguments['blog']] : [];
 
-        foreach ($this->seeder->run($days, $blogIds) as $blogId => $views) {
-            echo "Blog {$blogId}: {$views} page views over {$days} days.\n";
+        foreach ($this->seeder->run($days, $blogIds) as $label => $written) {
+            echo "{$label}: {$written} over {$days} days.\n";
         }
 
-        echo "Rollups rebuilt. Open /dashboard/blog/{id}/analytics/traffic to see them.\n";
+        echo "Rollups rebuilt. Open /admin/traffic or /dashboard/blog/{id}/analytics/traffic to see them.\n";
 
         return 0;
     }

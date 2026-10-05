@@ -553,6 +553,10 @@ $router->group([
     // Insights > Traffic across every blog
     $r->add('/traffic', ['controller' => 'TrafficController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/traffic/export', ['controller' => 'TrafficController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/traffic/platform', ['controller' => 'TrafficController', 'action' => 'platform', 'method' => 'GET']);
+    $r->add('/traffic/platform/export', ['controller' => 'TrafficController', 'action' => 'exportPlatform', 'method' => 'GET']);
+    $r->add('/signups', ['controller' => 'SignupController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/signups/export', ['controller' => 'SignupController', 'action' => 'export', 'method' => 'GET']);
 
     // Roles and permissions
     $r->add('/roles', ['controller' => 'RoleController', 'action' => 'index', 'method' => 'GET']);
