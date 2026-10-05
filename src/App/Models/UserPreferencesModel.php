@@ -279,6 +279,9 @@ class UserPreferencesModel extends AppModel
         'notify_review_requests',
         'notify_role_changes',
         'notify_invites',
+        'notify_traffic_digest',
+        'notify_traffic_milestones',
+        'notify_traffic_spikes',
     ];
 
     /**

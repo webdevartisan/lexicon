@@ -52,7 +52,8 @@ class PersonalDataExportService
                 'SELECT default_blog_id, default_post_visibility, display_name_preference, locale, timezone,
                         notify_comment_replies, notify_comments_authored, notify_comments_blog,
                         notify_comments_moderation, notify_invites, notify_post_status,
-                        notify_review_requests, notify_role_changes, updated_at
+                        notify_review_requests, notify_role_changes, notify_traffic_digest,
+                        notify_traffic_milestones, notify_traffic_spikes, updated_at
                  FROM user_preferences WHERE user_id = ?',
                 [$userId]
             ),

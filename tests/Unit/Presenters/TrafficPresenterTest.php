@@ -44,3 +44,21 @@ test('the top source is the busiest named place, outside or on Lexicon', functio
             ['value' => 'direct', 'views' => 9, 'visitors' => 9],
         ]]))->toBe('traffic.channels.direct');
 });
+
+test('the week starts on Monday, keyed the way MySQL numbers weekdays', function () {
+    expect(trafficPresenter('blog')->weekdays())->toBe([2 => 'Mon', 3 => 'Tue', 4 => 'Wed', 5 => 'Thu', 6 => 'Fri', 7 => 'Sat', 1 => 'Sun']);
+});
+
+test('a chart point is named for its day, week or month', function () {
+    $present = trafficPresenter('blog');
+
+    expect($present->point('2026-03-09', 'day'))->toBe('Mar 9, 2026')
+        ->and($present->point('2026-03-09', 'week'))->toBe('traffic.chart.weekOf')
+        ->and($present->point('2026-03-01', 'month'))->toBe('March 2026')
+        ->and($present->hour(7))->toBe('07:00');
+});
+
+test('category, tag and author rows show their names', function () {
+    expect(trafficPresenter('blog')->label('category', '3', 'Field notes'))->toBe('Field notes')
+        ->and(trafficPresenter('blog')->label('author', '9'))->toBe('traffic.breakdowns.unknown');
+});

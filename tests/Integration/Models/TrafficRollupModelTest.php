@@ -75,6 +75,10 @@ test('the blog day adds up the way it was defined', function () {
         'engaged_views' => 4,
         'engaged_seconds' => 98,
         'scroll_depth_sum' => 210,
+        'scroll_25' => 2,
+        'scroll_50' => 2,
+        'scroll_75' => 2,
+        'scroll_100' => 1,
     ]);
 });
 
@@ -107,7 +111,9 @@ test('breakdowns and the page list come out of the same views', function () {
     $pages = $this->stats->breakdown($blog, 'page', '2026-03-10', '2026-03-10', 10);
 
     expect(array_column($channels, 'views', 'value'))->toEqualCanonicalizing(['search' => 1, 'internal' => 1, 'social' => 1, 'direct' => 1])
-        ->and($pages)->toBe([['value' => '/blog/demo', 'views' => 1, 'visitors' => 1]]);
+        ->and($pages)->toBe([
+            ['value' => '/blog/demo', 'views' => 1, 'visitors' => 1, 'read_views' => 0, 'engaged_views' => 1, 'engaged_seconds' => 5],
+        ]);
 });
 
 test('the site counts a person once across blogs and a bounce as leaving the whole site', function () {
@@ -216,4 +222,60 @@ test('a deleted blog keeps its views in the site and leaves no blog or post rows
         ->and($this->stats->breakdown(TrafficScope::site(), 'channel', '2026-03-01', '2026-03-31', 10))->toBe($siteChannels)
         ->and((int) $this->db->query("SELECT COUNT(*) FROM traffic_daily WHERE scope IN ('blog', 'post')")->fetchColumn())->toBe(0)
         ->and((int) $this->db->query('SELECT COUNT(*) FROM traffic_daily_dimensions WHERE blog_id IS NOT NULL')->fetchColumn())->toBe(0);
+});
+
+test('each visit to the blog has one entry page and one exit page', function () {
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10);
+    $blog = TrafficScope::blog($this->blogId);
+    $list = fn (string $dimension): array => array_column($this->stats->breakdown($blog, $dimension, '2026-03-10', '2026-03-10', 10), 'views', 'value');
+
+    expect($list('entry'))->toEqualCanonicalizing(['/blog/demo' => 1, '/blog/demo/post' => 2])
+        ->and($list('exit'))->toBe(['/blog/demo/post' => 3]);
+});
+
+test('where readers went next belongs to the post they left', function () {
+    $this->db->execute(
+        "INSERT INTO traffic_hits (view_id, blog_id, post_id, from_post_id, page_type, path, path_hash, visitor_hash, visitor_kind,
+                                   channel, device, browser, os, locale, local_date, local_hour, created_at)
+         VALUES (?, ?, 12, ?, 'post', '/blog/demo/other', ?, ?, 'daily', 'internal', 'desktop', 'Firefox', 'Linux', 'en',
+                 '2026-03-10', 9, '2026-03-10 12:05:00')",
+        [random_bytes(16), $this->blogId, $this->postId, substr(hash('sha256', '/blog/demo/other', true), 0, 8), md5('A', true)]
+    );
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10);
+
+    $next = $this->stats->breakdown(TrafficScope::post($this->blogId, $this->postId), 'next', '2026-03-10', '2026-03-10', 10);
+    $hourly = $this->stats->hourly(TrafficScope::blog($this->blogId), '2026-03-10', '2026-03-10');
+
+    // 2026-03-10 was a Tuesday, which MySQL's DAYOFWEEK numbers 3.
+    expect(array_column($next, 'views', 'value'))->toBe(['/blog/demo/other' => 1])
+        ->and($hourly)->toEqual([3 => [0 => 4, 9 => 1]])
+        ->and($this->stats->hourly(TrafficScope::site(), '2026-03-10', '2026-03-10'))->toEqual([3 => [12 => 5]]);
+});
+
+test('a visitor that opens page after page without ever leaving one counts nowhere', function () {
+    for ($i = 0; $i < 20; $i++) {
+        ($this->hit)('S', 'daily', $this->postId, '/blog/demo/post', null, null, '2026-03-10');
+    }
+
+    expect((new TrafficHitModel($this->db))->markSuspects('2026-03-01', 20))->toBe(20);
+
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10);
+
+    expect($this->stats->totals(TrafficScope::blog($this->blogId), '2026-03-10', '2026-03-10')['views'])->toBe(4)
+        ->and($this->stats->totals(TrafficScope::site(), '2026-03-10', '2026-03-10')['views'])->toBe(4);
+});
+
+test('a rebuild of the blogs that changed leaves the others as they were', function () {
+    ($this->hit)('Z', 'daily', null, '/blog/elsewhere', 20, 40, '2026-03-10', 'direct', 6);
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10);
+    $this->db->execute('DELETE FROM traffic_hits WHERE blog_id = 6');
+
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10, [$this->blogId]);
+    $six = $this->stats->totals(TrafficScope::blog(6), '2026-03-10', '2026-03-10')['views'];
+
+    $this->rollups->rebuildFrom('2026-03-01', 30, 10, [6]);
+
+    expect($six)->toBe(1)
+        ->and($this->stats->totals(TrafficScope::blog(6), '2026-03-10', '2026-03-10')['views'])->toBe(0)
+        ->and($this->stats->totals(TrafficScope::site(), '2026-03-10', '2026-03-10')['views'])->toBe(4);
 });

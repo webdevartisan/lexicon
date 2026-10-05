@@ -20,6 +20,13 @@ $present = new \App\Presenters\TrafficPresenter(
 
 $pagePath = $basePath;
 $pageUrl = static fn (array $query): string => lurl($pagePath).'?'.http_build_query($query);
+$filterHref = static fn (string $dimension, string $value): string => $pageUrl($range->query() + ['f' => [$dimension => $value] + $filters]);
+$filterWithout = static function (?string $dimension) use ($pageUrl, $range, $filters): string {
+    $kept = $dimension === null ? [] : array_diff_key($filters, [$dimension => true]);
+
+    return $pageUrl($range->query() + ($kept === [] ? [] : ['f' => $kept]));
+};
+$filterNames = [];
 $exportUrl = static fn (string $dimension): string => lurl($basePath.'/export').'?'.http_build_query($range->query() + ['dimension' => $dimension]);
 $metrics = $report['metrics'];
 $breakdowns = $report['breakdowns'];
@@ -42,6 +49,7 @@ $cards = $isOverview ? [
     ['read_ratio', $t('traffic.metrics.readRatio'), 'Share of views where the reader stayed at least 30 seconds.', 'percent'],
     ['bounce_rate', $t('traffic.metrics.bounceRate'), 'Share of visitors who opened one page on the site that day and left within 10 seconds.', 'percent'],
     ['returning_share', $t('traffic.metrics.returning'), 'Of the readers we can recognise (those who allowed analytics), the share who had visited the site on an earlier day in the last 30 days.', 'percent'],
+    ['avg_scroll', $t('traffic.metrics.scroll'), 'How far down the page readers got, on average.', 'scroll'],
 ] : [
     ['views', $t('traffic.metrics.views'), 'Pages of the platform itself opened by readers. Reloading the same page within 30 minutes counts once.', 'number'],
     ['visitors', $t('traffic.metrics.visitors'), 'Different people each day on the platform\'s own pages, then added up over the days.', 'number'],
@@ -83,13 +91,32 @@ if (!$aggregationEnabled) {
 if ($range->rejected) {
     $notices[] = ['info', $t('traffic.range.rejected')];
 }
+if ($filtersDropped) {
+    $notices[] = ['info', 'Narrowing only works for the last '.$rawRetentionDays.' days, so the whole range is shown without it.'];
+}
 
-$chartSeries = array_map(static fn (array $day): array => [
-    'label' => $present->date($day['date']),
-    'views' => $day['views'],
-    'visitors' => $day['visitors'],
-    'blogs' => $day['blogs'] ?? null,
-], $report['series']);
+$hourlyHint = 'Views by day of the week and hour, in UTC. Darker squares had more views.';
+$missingHint = 'Readers who arrived at an address on the platform that isn\'t a page, and the sites that sent them.';
+$rightNowHint = 'Different visitors anywhere on the site in the last 30 minutes.';
+$goalKeys = ['subscribe', 'comment', 'like', 'save', 'signup'];
+$clickCounts = ['clicks' => $t('traffic.clicks.clicks')];
+$outcomeLabels = [
+    'recorded' => ['Counted', 'Real readers\' page views, stored.'],
+    'duplicate' => ['Repeat views', 'The same page again within 30 minutes, counted once.'],
+    'bot' => ['Crawlers', 'User agents on the crawler list, built in or added in Settings.'],
+    'hosting' => ['Server networks', 'Views from hosting providers\' networks, which people don\'t read from. Network data: IP geolocation by DB-IP.'],
+    'opted_out' => ['Asked not to be counted', 'Browsers sending Global Privacy Control or Do Not Track.'],
+    'member' => ['Teams and staff', 'Administrators, people acting as someone else, and blog teams on their own blogs.'],
+    'prefetch' => ['Prefetches', 'Pages loaded ahead of time that may never be seen.'],
+    'excluded_path' => ['Left out by owners', 'Paths a blog owner chose not to count.'],
+    'unknown_page' => ['Not a public page', 'Drafts, previews and paths that match no page.'],
+    'not_found' => ['Missing pages', 'Readers who reached an address that isn\'t a page.'],
+    'spam' => ['Referrer spam', 'Views claiming to come from a known spam site.'],
+    'disabled' => ['Counting off', 'Beacons that arrived while counting was switched off.'],
+    'cross_site' => ['Other sites', 'Requests that didn\'t come from a page on this site.'],
+    'too_large' => ['Too large', 'Request bodies over the size limit.'],
+    'invalid' => ['Malformed', 'Bodies that weren\'t a valid page view.'],
+];
 
 $settingsLabel = 'Traffic settings';
 $settingsHref = '/admin/settings#traffic';
@@ -127,14 +154,12 @@ $downloadLabel = $t('traffic.breakdowns.export');
             : 'No visits counted yet.') ?>
         · Days are UTC.
       </span>
-      <?php if ($rightNow !== null) { ?>
-      <span class="inline-flex items-center gap-1.5 cursor-help" tabindex="0"
-            data-tooltip data-tooltip-content="Different visitors anywhere on the site in the last 30 minutes." data-tooltip-placement="bottom">
-        <span class="inline-block size-2 rounded-full <?= $rightNow > 0 ? 'bg-green-500' : 'bg-slate-400' ?>" aria-hidden="true"></span>
-        <?= e($t('traffic.rightNow', ['count' => $present->number($rightNow)])) ?>
-      </span>
-      <?php } ?>
     </p>
+    <?php if ($rightNow !== null) { ?>
+    <div class="text-xs text-slate-500 dark:text-zink-300">
+      {% include "partials/dashboard/traffic/_recent.lex.php" %}
+    </div>
+    <?php } ?>
 
     <div class="flex flex-wrap items-center gap-2">
       {% include "partials/dashboard/traffic/_range_picker.lex.php" %}
@@ -143,6 +168,8 @@ $downloadLabel = $t('traffic.breakdowns.export');
       <?php } ?>
     </div>
   </div>
+
+  {% include "partials/dashboard/traffic/_filters.lex.php" %}
 
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <?php foreach ($cards as [$key, $cardLabel, $cardHint, $format]) {
@@ -158,62 +185,7 @@ $downloadLabel = $t('traffic.breakdowns.export');
     <?php } ?>
   </div>
 
-  <div class="card mb-0">
-    <div class="card-body">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 class="text-15 font-semibold text-slate-800 dark:text-zink-50"><?= e($t('traffic.chart.title')) ?></h2>
-        <div class="flex items-center gap-4 text-xs text-slate-500 dark:text-zink-300" aria-hidden="true">
-          <span class="inline-flex items-center gap-1.5"><span class="inline-block w-3 h-0.5 bg-custom-500"></span><?= e($t('traffic.chart.views')) ?></span>
-          <span class="inline-flex items-center gap-1.5"><span class="inline-block w-3 h-0.5 bg-sky-400"></span><?= e($t('traffic.chart.visitors')) ?></span>
-        </div>
-      </div>
-
-      <?php if ($hasViews) { ?>
-      <div class="relative h-72" data-traffic-chart>
-        <canvas role="img" aria-label="<?= e($t('traffic.chart.title')) ?>"></canvas>
-        <span class="hidden text-custom-500" data-chart-color="views"></span>
-        <span class="hidden text-sky-400" data-chart-color="visitors"></span>
-        <script type="application/json" data-chart-series><?= json_encode([
-            'labels' => ['views' => $t('traffic.chart.views'), 'visitors' => $t('traffic.chart.visitors')],
-            'points' => $chartSeries,
-        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
-      </div>
-      <?php } else { ?>
-      <p class="py-10 text-center text-sm text-slate-500 dark:text-zink-300">No views in this period.</p>
-      <?php } ?>
-
-      <details class="mt-4">
-        <summary class="text-sm cursor-pointer text-custom-500 hover:underline"><?= e($t('traffic.chart.showTable')) ?></summary>
-        <div class="mt-3 overflow-x-auto max-h-96">
-          <table class="w-full text-sm">
-            <caption class="sr-only"><?= e($t('traffic.chart.title')) ?></caption>
-            <thead class="ltr:text-left rtl:text-right text-xs uppercase text-slate-500 dark:text-zink-300">
-              <tr class="border-b border-slate-200 dark:border-zink-500">
-                <th scope="col" class="px-3 py-2 font-semibold"><?= e($t('traffic.chart.date')) ?></th>
-                <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left"><?= e($t('traffic.chart.views')) ?></th>
-                <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left"><?= e($t('traffic.chart.visitors')) ?></th>
-                <?php if ($isOverview) { ?>
-                <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left">Blogs read</th>
-                <?php } ?>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach (array_reverse($chartSeries) as $point) { ?>
-              <tr class="border-b border-slate-100 dark:border-zink-600 last:border-b-0">
-                <th scope="row" class="px-3 py-1.5 font-normal ltr:text-left rtl:text-right"><?= e($point['label']) ?></th>
-                <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['views'])) ?></td>
-                <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['visitors'])) ?></td>
-                <?php if ($isOverview) { ?>
-                <td class="px-3 py-1.5 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($point['blogs'])) ?></td>
-                <?php } ?>
-              </tr>
-              <?php } ?>
-            </tbody>
-          </table>
-        </div>
-      </details>
-    </div>
-  </div>
+  {% include "partials/dashboard/traffic/_chart.lex.php" %}
 
   <?php if ($isOverview) { ?>
   <div class="card mb-0">
@@ -263,7 +235,9 @@ $downloadLabel = $t('traffic.breakdowns.export');
                 <span class="text-slate-400 dark:text-zink-400">Deleted blog</span>
                 <?php } else { ?>
                 <span class="inline-flex flex-wrap items-center gap-2">
-                  <a href="/admin/blogs/<?= (int) $row['blog_id'] ?>/show" class="text-slate-800 hover:text-custom-500 dark:text-zink-100" dir="auto"><?= e((string) $row['blog_name']) ?></a>
+                  <a href="<?= e(lurl('/dashboard/blog/'.(int) $row['blog_id'].'/analytics/traffic').'?'.http_build_query($range->query())) ?>"
+                     class="text-slate-800 hover:text-custom-500 dark:text-zink-100" dir="auto"
+                     title="Open this blog's Traffic page"><?= e((string) $row['blog_name']) ?></a>
                   <?php if (isset($statusBadge[$status])) { ?>
                   <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full border <?= $statusBadge[$status] ?>"><?= e(ucfirst($status)) ?></span>
                   <?php } ?>
@@ -360,17 +334,104 @@ $downloadLabel = $t('traffic.breakdowns.export');
   </div>
   <?php } ?>
 
+  <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <?php if ($isOverview) { ?>
+    {% include "partials/dashboard/traffic/_goals.lex.php" %}
+    <?php } ?>
+    {% include "partials/dashboard/traffic/_scroll.lex.php" %}
+  </div>
+
+  {% include "partials/dashboard/traffic/_hourly.lex.php" %}
+
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
     <?php
-    $order = ['page', 'source', 'lexicon', 'channel', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
+    $order = ['page', 'entry', 'exit', 'source', 'lexicon', 'channel', 'country', 'device', 'browser', 'os', 'locale', 'utm_campaign', 'utm_source', 'utm_medium'];
     foreach ($order as $dimension) {
         if (!array_key_exists($dimension, $breakdowns)) {
             continue;
         }
-        $rows = $breakdowns[$dimension]; ?>
+        $rows = $breakdowns[$dimension];
+        $breakdownCounts = null;
+        $breakdownEmpty = null;
+        $exportable = true; ?>
     {% include "partials/dashboard/traffic/_breakdown.lex.php" %}
-    <?php } ?>
+    <?php }
+
+    if ($isOverview) {
+        $breakdownHeadings = ['outbound' => 'Links to other sites', 'download' => 'Downloads'];
+        foreach (['outbound' => $report['outbound'], 'download' => $report['downloads']] as $dimension => $rows) {
+            $rows = array_map(static fn (array $row): array => ['value' => $row['value'], 'clicks' => $row['clicks']], $rows);
+            $breakdownCounts = $clickCounts;
+            $breakdownEmpty = $t('traffic.clicks.empty');
+            $exportable = false; ?>
+    {% include "partials/dashboard/traffic/_breakdown.lex.php" %}
+    <?php   }
+        $breakdownHeadings = [];
+        $breakdownCounts = null;
+        $breakdownEmpty = null;
+    }
+
+    if ($searchTerms !== null) {
+        $dimension = 'search';
+        $breakdownHeadings = ['search' => 'Searched on Discover'];
+        $rows = array_map(static fn (array $row): array => ['value' => $row['value'], 'searches' => $row['searches'], 'visitors' => $row['visitors']], $searchTerms);
+        $breakdownCounts = ['searches' => 'Searches', 'visitors' => $t('traffic.breakdowns.visitors')];
+        $breakdownEmpty = 'No search was made by at least 3 different visitors in this range.';
+        $exportable = false; ?>
+    {% include "partials/dashboard/traffic/_breakdown.lex.php" %}
+    <?php
+        $breakdownHeadings = [];
+        $breakdownCounts = null;
+        $breakdownEmpty = null;
+    } ?>
   </div>
+
+  <?php if (!$isOverview) { ?>
+  {% include "partials/dashboard/traffic/_missing.lex.php" %}
+  <?php } ?>
+
+  <?php if ($isOverview) {
+      $refused = array_sum($outcomes) - ($outcomes['recorded'] ?? 0); ?>
+  <section class="card mb-0" aria-labelledby="traffic-outcomes">
+    <div class="card-body">
+      <h2 id="traffic-outcomes" class="text-15 font-semibold text-slate-800 dark:text-zink-50">What the counter let through</h2>
+      <p class="mt-1 mb-3 text-xs text-slate-500 dark:text-zink-300">
+        Every page view beacon in this range and what happened to it. Script-like views were stored but are left out of every total:
+        <?= e($present->number($scriptViews)) ?>, from visitors who opened <?= e($present->number($scriptMinViews)) ?> or more pages in a day without once closing or hiding one.
+      </p>
+      <?php if ($outcomes === []) { ?>
+      <p class="py-4 text-sm text-slate-500 dark:text-zink-300">No beacons in this range.</p>
+      <?php } else { ?>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="ltr:text-left rtl:text-right text-xs uppercase text-slate-500 dark:text-zink-300">
+            <tr class="border-b border-slate-200 dark:border-zink-500">
+              <th scope="col" class="px-3 py-2 font-semibold">Outcome</th>
+              <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left">Beacons</th>
+              <th scope="col" class="px-3 py-2 font-semibold ltr:text-right rtl:text-left">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php $allBeacons = array_sum($outcomes);
+            foreach ($outcomes as $outcome => $count) {
+                [$outcomeLabel, $outcomeHint] = $outcomeLabels[$outcome] ?? [$outcome, '']; ?>
+            <tr class="border-b border-slate-100 dark:border-zink-600 last:border-b-0">
+              <th scope="row" class="px-3 py-2 font-normal ltr:text-left rtl:text-right">
+                <span class="text-slate-800 dark:text-zink-100"><?= e($outcomeLabel) ?></span>
+                <span class="block text-xs text-slate-500 dark:text-zink-300"><?= e($outcomeHint) ?></span>
+              </th>
+              <td class="px-3 py-2 ltr:text-right rtl:text-left tabular-nums"><?= e($present->number($count)) ?></td>
+              <td class="px-3 py-2 ltr:text-right rtl:text-left tabular-nums"><?= e((string) $present->percent($count / max(1, $allBeacons))) ?></td>
+            </tr>
+            <?php } ?>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-xs text-slate-500 dark:text-zink-300"><?= e($present->number($refused)) ?> of <?= e($present->number($allBeacons)) ?> beacons were not counted.</p>
+      <?php } ?>
+    </div>
+  </section>
+  <?php } ?>
 
   <details class="card mb-0">
     <summary class="card-body cursor-pointer text-sm font-semibold text-slate-800 dark:text-zink-50"><?= e($t('traffic.about.title')) ?></summary>

@@ -30,7 +30,7 @@ final class CsrfMiddleware implements MiddlewareInterface
      * The traffic beacon is here because it fires from full-page-cached pages
      * shared between visitors. TrafficController checks origin and payload instead.
      */
-    private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage'];
+    private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage', '/traffic/click'];
 
     public function __construct(
         private Csrf $csrf,

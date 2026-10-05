@@ -8,7 +8,9 @@ use App\Models\CategoryModel;
 use App\Models\PostModel;
 use App\Models\SettingModel;
 use App\Models\TagModel;
+use App\Models\TrafficEventModel;
 use App\Models\TrafficHitModel;
+use App\Models\TrafficNotFoundModel;
 use App\Models\TrafficSaltModel;
 use App\Models\UserModel;
 use App\Privacy\Consent;
@@ -17,6 +19,7 @@ use App\Services\ConsentService;
 use App\Services\LocaleRegistry;
 use App\Services\Traffic\BeaconPayload;
 use App\Services\Traffic\CountryLookup;
+use App\Services\Traffic\NetworkLookup;
 use App\Services\Traffic\PagePathResolver;
 use App\Services\Traffic\ReferrerClassifier;
 use App\Services\Traffic\TrafficRecorder;
@@ -40,17 +43,21 @@ beforeEach(function () {
     $posts = new PostModel($this->db);
 
     $this->identity = new VisitorIdentity(new TrafficSaltModel($this->db), 'test-key');
-    $this->recorder = new TrafficRecorder(
+    $this->makeRecorder = fn (NetworkLookup $networks): TrafficRecorder => new TrafficRecorder(
         new TrafficSettings(new SettingModel($this->db)),
         new PagePathResolver($blogs, new BlogSettingsModel($this->db), $posts, new CategoryModel($this->db), new TagModel($this->db), LocaleRegistry::instance()),
         new UserAgentClassifier($config['bot_patterns']),
         new ReferrerClassifier($config['sources'], $config['spam_referrers'], $config['email_mediums']),
         $this->identity,
         new CountryLookup(ROOT_PATH.'/storage/geo/does-not-exist.mmdb'),
+        $networks,
         new TrafficHitModel($this->db),
+        new TrafficEventModel($this->db),
+        new TrafficNotFoundModel($this->db),
         $blogs,
         $config,
     );
+    $this->recorder = ($this->makeRecorder)(new NetworkLookup(ROOT_PATH.'/storage/geo/does-not-exist.mmdb', $config['networks']['hosting']));
 
     $this->ownerId = UserFactory::new(new UserModel($this->db))->create();
     $this->blogId = BlogFactory::new($blogs)->published()->create($this->ownerId);
@@ -375,4 +382,76 @@ test('signing in joins the guest visit to the account only with analytics consen
         ->and($accepted)->toBe(2)
         ->and($kinds)->toBe(['account'])
         ->and((new TrafficHitModel($this->db))->countRecent($this->blogId, 30))->toBe(1);
+});
+
+test('a reader going from one post to another is noted as coming from the first, in the blog\'s hour', function () {
+    PostFactory::new(new PostModel($this->db))
+        ->withAttributes(['blog_id' => $this->blogId, 'author_id' => $this->ownerId, 'slug' => 'second-post'])
+        ->published()->create();
+    $this->blogSettings->updateForBlog($this->blogId, ['timezone' => 'Asia/Tokyo']);
+
+    $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}/second-post", base_url()."/en/blog/{$this->slug}/first-post"), null, false, null);
+    $row = $this->db->query('SELECT from_post_id, local_hour, created_at FROM traffic_hits')->fetch(PDO::FETCH_ASSOC);
+    $tokyoHour = (int) (new DateTimeImmutable((string) $row['created_at'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Asia/Tokyo'))->format('G');
+
+    expect((int) $row['from_post_id'])->toBe($this->postId)
+        ->and((int) $row['local_hour'])->toBe($tokyoHour);
+});
+
+test('only Discover keeps what was searched, folded to one spelling', function () {
+    $search = static fn (string $path): BeaconPayload => BeaconPayload::view(json_encode(['v' => bin2hex(random_bytes(16)), 'p' => $path, 'q' => '  Garden   NOTES ']));
+
+    $this->recorder->record(beacon(), $search('/en/discover'), null, false, null);
+    $this->recorder->record(beacon(['User-Agent' => BROWSER_UA.' other']), $search("/en/blog/{$this->slug}"), null, false, null);
+
+    expect($this->db->query('SELECT search_term FROM traffic_hits ORDER BY id')->fetchAll(PDO::FETCH_COLUMN))->toBe(['garden notes', null]);
+});
+
+test('a missing page is kept with the site that linked to it, and nothing else is stored', function () {
+    $payload = BeaconPayload::view(json_encode(['v' => bin2hex(random_bytes(16)), 'p' => "/en/blog/{$this->slug}/old-post", 'r' => 'https://www.reddit.com/r/x', 'nf' => 1]));
+
+    $outcome = $this->recorder->record(beacon(), $payload, null, false, null);
+    $row = $this->db->query('SELECT blog_id, path, referrer_host, views FROM traffic_not_found')->fetch(PDO::FETCH_ASSOC);
+
+    expect($outcome)->toBe(TrafficRecorder::NOT_FOUND)
+        ->and((int) $row['blog_id'])->toBe($this->blogId)
+        ->and($row['path'])->toBe("/blog/{$this->slug}/old-post")
+        ->and($row['referrer_host'])->toBe('reddit.com')
+        ->and((int) $this->db->query('SELECT COUNT(*) FROM traffic_hits')->fetchColumn())->toBe(0);
+});
+
+test('a path that does not resolve, without the not-found flag, is just not a page', function () {
+    expect($this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}/old-post"), null, false, null))->toBe(TrafficRecorder::UNKNOWN_PAGE)
+        ->and((int) $this->db->query('SELECT COUNT(*) FROM traffic_not_found')->fetchColumn())->toBe(0);
+});
+
+test('a view from a hosting network is not counted', function () {
+    $hosting = new class('', []) extends NetworkLookup
+    {
+        public function isHosting(string $ip): bool
+        {
+            return $ip === '198.51.100.20';
+        }
+    };
+    $recorder = ($this->makeRecorder)($hosting);
+
+    expect($recorder->record(beacon([], '198.51.100.20'), pageView("/en/blog/{$this->slug}"), null, false, null))->toBe(TrafficRecorder::HOSTING)
+        ->and($recorder->record(beacon(), pageView("/en/blog/{$this->slug}"), null, false, null))->toBe(TrafficRecorder::RECORDED);
+});
+
+test('a click keeps only the other site\'s host or the file name, on the view it happened on', function () {
+    $view = bin2hex(random_bytes(16));
+    $this->recorder->record(beacon(), BeaconPayload::view(json_encode(['v' => $view, 'p' => "/en/blog/{$this->slug}/first-post"])), null, false, null);
+    $click = static fn (string $kind, string $target): BeaconPayload => BeaconPayload::click(json_encode(['v' => $view, 'k' => $kind, 't' => $target]));
+
+    $outbound = $this->recorder->recordClick(beacon(), $click('outbound', 'https://www.example.org/private/page?token=x'));
+    $download = $this->recorder->recordClick(beacon(), $click('download', '/uploads/report%20final.pdf'));
+    $notAFile = $this->recorder->recordClick(beacon(), $click('download', '/blog/demo/a-post'));
+    $unknownView = $this->recorder->recordClick(beacon(), BeaconPayload::click(json_encode(['v' => bin2hex(random_bytes(16)), 'k' => 'outbound', 't' => 'example.org'])));
+
+    expect([$outbound, $download, $notAFile, $unknownView])->toBe([true, true, false, false])
+        ->and($this->db->query('SELECT event, post_id, value FROM traffic_events ORDER BY id')->fetchAll(PDO::FETCH_ASSOC))->toBe([
+            ['event' => 'outbound', 'post_id' => $this->postId, 'value' => 'example.org'],
+            ['event' => 'download', 'post_id' => $this->postId, 'value' => 'report final.pdf'],
+        ]);
 });

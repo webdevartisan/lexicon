@@ -8,7 +8,7 @@ use App\Interfaces\SchedulableCommandInterface;
 use MaxMind\Db\Reader;
 
 /**
- * Downloads this month's DB-IP Lite country database.
+ * Downloads this month's DB-IP Lite country and network (ASN) databases.
  *
  * Scheduled daily. It does nothing once the current month is installed, and
  * falls back to last month's file early in a month, before the new one is out.
@@ -24,7 +24,7 @@ class TrafficUpdateGeoCommand implements SchedulableCommandInterface
 
     public static function scheduleLabel(): string
     {
-        return 'Update the country database';
+        return 'Update the country and network databases';
     }
 
     /**
@@ -41,8 +41,22 @@ class TrafficUpdateGeoCommand implements SchedulableCommandInterface
      */
     public function handle(array $arguments = []): int
     {
-        $config = (require ROOT_PATH.'/config/traffic.php')['geo'];
-        $target = ROOT_PATH.'/'.$config['path'];
+        $config = require ROOT_PATH.'/config/traffic.php';
+        $failed = false;
+
+        foreach (['country database' => $config['geo'], 'network database' => $config['networks']] as $name => $file) {
+            $failed = !$this->update($name, $file) || $failed;
+        }
+
+        return $failed ? 1 : 0;
+    }
+
+    /**
+     * @param  array{path: string, download_url: string}  $file
+     */
+    private function update(string $name, array $file): bool
+    {
+        $target = ROOT_PATH.'/'.$file['path'];
 
         $now = new \DateTimeImmutable('first day of this month', new \DateTimeZone('UTC'));
         $months = [$now->format('Y-m'), $now->modify('-1 month')->format('Y-m')];
@@ -50,21 +64,21 @@ class TrafficUpdateGeoCommand implements SchedulableCommandInterface
 
         foreach ($months as $month) {
             if ($month === $installed) {
-                echo "Keeping the installed country database for {$month}.\n";
+                echo "Keeping the installed {$name} for {$month}.\n";
 
-                return 0;
+                return true;
             }
 
-            if ($this->installMonth($config['download_url'], $month, $target)) {
-                echo "Installed the DB-IP Lite country database for {$month}.\n";
+            if ($this->installMonth($file['download_url'], $month, $target)) {
+                echo "Installed the DB-IP Lite {$name} for {$month}.\n";
 
-                return 0;
+                return true;
             }
         }
 
-        echo 'Could not download the DB-IP Lite country database for '.implode(' or ', $months).".\n";
+        echo "Could not download the DB-IP Lite {$name} for ".implode(' or ', $months).".\n";
 
-        return 1;
+        return false;
     }
 
     private function installMonth(string $urlPattern, string $month, string $target): bool

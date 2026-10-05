@@ -36,7 +36,7 @@ final class TrafficSeedCommand
 
         if (isset($arguments['reset'])) {
             $this->seeder->reset();
-            echo "Deleted every page view, rollup, salt and sign-up event.\n";
+            echo "Deleted every page view, rollup, salt, sign-up, goal, click, missing page and beacon count.\n";
 
             return 0;
         }

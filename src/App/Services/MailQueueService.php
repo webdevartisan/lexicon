@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Mail\Mailable;
 use App\Mail\QueuedMail;
 use App\Models\MailQueueModel;
+use App\Services\Traffic\EmailLinkTagger;
 use Throwable;
 
 /**
@@ -26,11 +27,13 @@ class MailQueueService
 {
     /**
      * @param  array<string, mixed>  $config  The 'queue' section of config/mail.php
+     * @param  EmailLinkTagger|null  $links  Tags links to counted pages with the email's campaign; null leaves them alone
      */
     public function __construct(
         private MailQueueModel $queue,
         private MailService $mailer,
         private array $config = [],
+        private ?EmailLinkTagger $links = null,
     ) {}
 
     /**
@@ -55,6 +58,11 @@ class MailQueueService
         // HTML body and drops the message entirely.
         if (!$mailable->isHtml()) {
             $text = $html;
+        }
+
+        if ($this->links !== null) {
+            [$html, $text] = $this->links->tag($html, $text, EmailLinkTagger::campaignFor($mailable::class));
+            $html = $mailable->isHtml() ? $html : (string) $text;
         }
 
         $queued = 0;

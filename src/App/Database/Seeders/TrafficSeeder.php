@@ -10,8 +10,9 @@ use Framework\Database;
 
 /**
  * Invents a month of page views for a few blogs and the platform's own pages,
- * for looking at the Traffic pages locally. The rollups are rebuilt the way the
- * scheduled job does it.
+ * with the goals, link clicks, missing pages and beacon outcomes that go with
+ * them, for looking at the Traffic pages locally. The rollups are rebuilt the
+ * way the scheduled job does it.
  */
 final class TrafficSeeder
 {
@@ -23,6 +24,34 @@ final class TrafficSeeder
         'traffic_daily_dimensions',
         'traffic_salts',
         'traffic_events',
+        'traffic_outcomes',
+        'traffic_not_found',
+        'traffic_milestones',
+        'traffic_spike_notices',
+    ];
+
+    /** Chance per visit to a post, in percent. */
+    private const GOALS = ['like' => 4, 'save' => 2, 'comment' => 2];
+
+    /** Chance per visit to a blog, in percent. */
+    private const SUBSCRIBE_PERCENT = 1;
+
+    private const SEARCHES = [
+        'photography' => 6, 'travel' => 5, 'recipes' => 4, 'web design' => 4, 'gardening' => 3,
+        'history' => 3, 'poetry' => 2, 'running' => 2, 'climate' => 1,
+    ];
+
+    private const OUTBOUND = [
+        'github.com' => 6, 'wikipedia.org' => 5, 'youtube.com' => 4, 'developer.mozilla.org' => 3,
+        'nytimes.com' => 2, 'arxiv.org' => 1,
+    ];
+
+    private const DOWNLOADS = ['reading-list.pdf' => 4, 'field-notes.epub' => 2, 'dataset.csv' => 1];
+
+    /** Paths that used to exist, and who still links to them. */
+    private const MISSING = [
+        ['/old-post', 'google.com'], ['/2019/hello-world', 'news.ycombinator.com'], ['/feed.xml', ''],
+        ['/about-me', 'reddit.com'], ['/category/misc', ''],
     ];
 
     /** Weighted picks: value => weight. */
@@ -119,6 +148,9 @@ final class TrafficSeeder
             $written['Sign-ups'] = $this->seedSignups($days).' sign-up events, one per account created';
         }
 
+        $written['Missing pages'] = $this->seedMissing($blogs, $days).' rows';
+        $written['Beacon outcomes'] = $this->seedOutcomes($days).' days';
+
         $from = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('-'.($days + 1).' days');
         $this->rollups->rebuildFrom($from->format('Y-m-d'), 30, 10);
 
@@ -189,6 +221,60 @@ final class TrafficSeeder
     }
 
     /**
+     * A few broken links per blog, spread over the period.
+     *
+     * @param  list<array<string, mixed>>  $blogs
+     */
+    private function seedMissing(array $blogs, int $days): int
+    {
+        $rows = 0;
+
+        foreach ($blogs as $blog) {
+            foreach (self::MISSING as [$tail, $host]) {
+                $path = '/blog/'.$blog['blog_slug'].$tail;
+
+                for ($ago = 0; $ago < $days; $ago += mt_rand(2, 6)) {
+                    $this->db->execute(
+                        'INSERT INTO traffic_not_found (day, path_hash, referrer_host, blog_id, path, views)
+                         VALUES (UTC_DATE() - INTERVAL ? DAY, ?, ?, ?, ?, ?)',
+                        [$ago, substr(hash('sha256', $path, true), 0, 8), $host, (int) $blog['id'], $path, mt_rand(1, 4)]
+                    );
+                    $rows++;
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * What happened to each day's beacons: the views stored, plus believable
+     * shares turned away by each check.
+     */
+    private function seedOutcomes(int $days): int
+    {
+        $recorded = $this->db->query(
+            'SELECT DATE(created_at) AS day, COUNT(*) AS views FROM traffic_hits
+             WHERE created_at >= UTC_DATE() - INTERVAL ? DAY GROUP BY DATE(created_at)',
+            [$days]
+        )->fetchAll(\PDO::FETCH_KEY_PAIR);
+        $shares = ['bot' => 0.18, 'duplicate' => 0.09, 'opted_out' => 0.04, 'hosting' => 0.03, 'unknown_page' => 0.01, 'member' => 0.02];
+
+        foreach ($recorded as $day => $views) {
+            $this->db->execute('INSERT INTO traffic_outcomes (day, outcome, requests) VALUES (?, ?, ?)', [$day, 'recorded', (int) $views]);
+
+            foreach ($shares as $outcome => $share) {
+                $this->db->execute(
+                    'INSERT INTO traffic_outcomes (day, outcome, requests) VALUES (?, ?, ?)',
+                    [$day, $outcome, (int) round($views * $share * (0.7 + mt_rand(0, 60) / 100))]
+                );
+            }
+        }
+
+        return count($recorded);
+    }
+
+    /**
      * One sign-up event for each account created in the period, so the Sign-ups
      * page lists sources for the accounts it counts.
      */
@@ -231,8 +317,9 @@ final class TrafficSeeder
         $arrival = $this->arrival($blogId);
         $profile = $this->profile();
         $views = mt_rand(1, 100) <= 55 ? 1 : mt_rand(2, 5);
-        $moment = $day->setTime(mt_rand(6, 23), mt_rand(0, 59), mt_rand(0, 59));
+        $moment = $day->setTime($this->hour(), mt_rand(0, 59), mt_rand(0, 59));
         $rows = [];
+        $previousPost = null;
 
         for ($i = 0; $i < $views; $i++) {
             [$type, $postId, $path] = $this->pickPage($pages);
@@ -243,18 +330,77 @@ final class TrafficSeeder
                 break;
             }
 
+            $utc = $local->setTimezone(new \DateTimeZone('UTC'));
+            $search = $type === 'discover' && mt_rand(1, 100) <= 30 ? $this->pick(self::SEARCHES) : null;
+
             $rows[] = [
-                random_bytes(16), $blogId, $postId, $type, $path, substr(hash('sha256', $path, true), 0, 8),
-                $hash, $kind,
+                random_bytes(16), $blogId, $postId, $i > 0 ? $previousPost : null, $type, $path,
+                substr(hash('sha256', $path, true), 0, 8), $hash, $kind,
                 ...($i === 0 ? $arrival : ['internal', null, null]),
                 ...$profile,
+                $search,
                 $seconds, $seconds === null ? null : min(100, 20 + (int) round($seconds / 3) + mt_rand(0, 20)),
+                $seconds === null ? null : $utc->modify("+{$seconds} seconds")->format('Y-m-d H:i:s'),
                 $local->format('Y-m-d'),
-                $local->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+                (int) $local->format('G'),
+                $utc->format('Y-m-d H:i:s'),
             ];
+
+            if ($blogId !== null) {
+                $this->actOn($blogId, $postId, $local->format('Y-m-d'), $i === 0);
+            }
+
+            $previousPost = $postId;
         }
 
         return $rows;
+    }
+
+    /**
+     * What a reader did besides reading: goals, and clicks on outbound links and downloads.
+     */
+    private function actOn(int $blogId, ?int $postId, string $day, bool $firstView): void
+    {
+        if ($firstView && mt_rand(1, 100) <= self::SUBSCRIBE_PERCENT) {
+            $this->event('subscribe', $blogId, null, null, $day);
+        }
+
+        if ($postId === null) {
+            return;
+        }
+
+        foreach (self::GOALS as $goal => $percent) {
+            if (mt_rand(1, 100) <= $percent) {
+                $this->event($goal, $blogId, $postId, null, $day);
+            }
+        }
+
+        if (mt_rand(1, 100) <= 6) {
+            $this->event('outbound', $blogId, $postId, $this->pick(self::OUTBOUND), $day);
+        }
+
+        if (mt_rand(1, 100) <= 2) {
+            $this->event('download', $blogId, $postId, $this->pick(self::DOWNLOADS), $day);
+        }
+    }
+
+    private function event(string $event, int $blogId, ?int $postId, ?string $value, string $day): void
+    {
+        $this->db->execute(
+            'INSERT INTO traffic_events (event, day, blog_id, post_id, value) VALUES (?, ?, ?, ?, ?)',
+            [$event, $day, $blogId, $postId, $value]
+        );
+    }
+
+    /**
+     * Readers come in the evening more than at dawn.
+     */
+    private function hour(): int
+    {
+        return (int) $this->pick([
+            6 => 1, 7 => 3, 8 => 5, 9 => 6, 10 => 6, 11 => 6, 12 => 7, 13 => 7, 14 => 6, 15 => 6, 16 => 6,
+            17 => 7, 18 => 8, 19 => 9, 20 => 10, 21 => 10, 22 => 7, 23 => 4,
+        ]);
     }
 
     /**
@@ -400,10 +546,11 @@ final class TrafficSeeder
             return 0;
         }
 
-        $columns = 'view_id, blog_id, post_id, page_type, path, path_hash, visitor_hash, visitor_kind, channel,
-                    referrer_host, referrer_source, utm_source, utm_medium, utm_campaign, device, browser, os,
-                    country, locale, engaged_seconds, scroll_depth, local_date, created_at';
-        $placeholders = '('.implode(', ', array_fill(0, 23, '?')).')';
+        $columns = 'view_id, blog_id, post_id, from_post_id, page_type, path, path_hash, visitor_hash, visitor_kind,
+                    channel, referrer_host, referrer_source, utm_source, utm_medium, utm_campaign, device, browser,
+                    os, country, locale, search_term, engaged_seconds, scroll_depth, engaged_at, local_date,
+                    local_hour, created_at';
+        $placeholders = '('.implode(', ', array_fill(0, 27, '?')).')';
 
         return $this->db->execute(
             "INSERT INTO traffic_hits ({$columns}) VALUES ".implode(', ', array_fill(0, count($rows), $placeholders)),

@@ -8,12 +8,14 @@ if ($scope === 'post') {
     $exportQuery['post'] = (int) $post['id'];
 }
 $headingId = 'traffic-'.str_replace('_', '-', $dimension);
+// Pages that can be narrowed pass $filterHref; a row then opens the page for just those readers.
+$rowFilter = isset($filterHref) && in_array($dimension, \App\Models\TrafficSql::FILTERABLE, true) ? $filterHref : null;
 ?>
 <section class="card mb-0" aria-labelledby="<?= e($headingId) ?>">
   <div class="card-body">
     <div class="flex items-center justify-between gap-2 mb-3">
       <h2 id="<?= e($headingId) ?>" class="text-15 font-semibold text-slate-800 dark:text-zink-50"><?= e($breakdownHeadings[$dimension] ?? $present->heading($dimension)) ?></h2>
-      <?php if ($rows !== []) { ?>
+      <?php if ($rows !== [] && ($exportable ?? true)) { ?>
       <a href="<?= e(lurl($basePath.'/export').'?'.http_build_query($exportQuery)) ?>"
          class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-custom-500 dark:text-zink-300">
         {% cache 'lucide:download:traffic-export' ttl=31536000 %}<i data-lucide="download" class="size-3.5" aria-hidden="true"></i>{% endcache %}
@@ -26,7 +28,7 @@ $headingId = 'traffic-'.str_replace('_', '-', $dimension);
     <p class="py-4 text-sm text-slate-500 dark:text-zink-300">
       <?= e($dimension === 'country' && !$countriesAvailable
           ? $t('traffic.breakdowns.countriesUnavailable')
-          : $t('traffic.breakdowns.empty')) ?>
+          : ($breakdownEmpty ?? $t('traffic.breakdowns.empty'))) ?>
     </p>
     <?php } else { ?>
     <table class="w-full text-sm">
@@ -41,14 +43,22 @@ $headingId = 'traffic-'.str_replace('_', '-', $dimension);
       <tbody>
         <?php foreach ($rows as $row) {
             $width = max(2, (int) round($row[$barColumn] / $maxCount * 100));
-            $label = $present->label($dimension, $row['value'], $row['name'] ?? null); ?>
+            $label = $present->label($dimension, (string) $row['value'], $row['name'] ?? null);
+            $rowHref = $rowFilter !== null && $row['value'] !== \App\Services\Traffic\TrafficReportService::OTHER
+                ? $rowFilter($dimension, (string) $row['value'])
+                : null; ?>
         <tr class="group">
           <th scope="row" class="py-1 ltr:pr-3 rtl:pl-3 font-normal ltr:text-left rtl:text-right">
             <div class="relative px-2 py-1 overflow-hidden rounded">
               <span class="absolute inset-y-0 ltr:left-0 rtl:right-0 rounded bg-custom-500/15 transition-colors group-hover:bg-custom-500/25" style="width: <?= $width ?>%" aria-hidden="true"></span>
+              <?php if ($rowHref !== null) { ?>
+              <a href="<?= e($rowHref) ?>" class="relative block truncate text-slate-700 hover:text-custom-500 focus:outline-none focus-visible:underline dark:text-zink-100"
+                 dir="auto" title="<?= e($t('traffic.filters.only', ['item' => $label])) ?>"><?= e($label) ?></a>
+              <?php } else { ?>
               <span class="relative block truncate text-slate-700 dark:text-zink-100" dir="auto" title="<?= e($label) ?>">
                 <?= e($label) ?>
               </span>
+              <?php } ?>
             </div>
           </th>
           <?php foreach (array_keys($countColumns) as $column) {

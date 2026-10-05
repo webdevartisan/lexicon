@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Interfaces\TrafficReader;
 use App\ValueObjects\TrafficScope;
 
 /**
  * Reads for every Traffic page, from the daily tables. Each read names the
  * scope it counts; the rows of a multi-post scope are added together.
  */
-class TrafficStatsModel extends AppModel
+class TrafficStatsModel extends AppModel implements TrafficReader
 {
     protected ?string $table = 'traffic_daily';
 
@@ -28,7 +29,9 @@ class TrafficStatsModel extends AppModel
                     COALESCE(SUM(bounces), 0) AS bounces, COALESCE(SUM(read_views), 0) AS read_views,
                     COALESCE(SUM(engaged_views), 0) AS engaged_views,
                     COALESCE(SUM(engaged_seconds), 0) AS engaged_seconds,
-                    COALESCE(SUM(scroll_depth_sum), 0) AS scroll_depth_sum
+                    COALESCE(SUM(scroll_depth_sum), 0) AS scroll_depth_sum,
+                    COALESCE(SUM(scroll_25), 0) AS scroll_25, COALESCE(SUM(scroll_50), 0) AS scroll_50,
+                    COALESCE(SUM(scroll_75), 0) AS scroll_75, COALESCE(SUM(scroll_100), 0) AS scroll_100
              FROM traffic_daily
              WHERE {$where} AND day BETWEEN ? AND ?",
             [...$params, $from, $to]
@@ -63,7 +66,7 @@ class TrafficStatsModel extends AppModel
     }
 
     /**
-     * @return list<array{value: string, views: int, visitors: int}>
+     * @return list<array{value: string, views: int, visitors: int, read_views: int, engaged_views: int, engaged_seconds: int}>
      */
     public function breakdown(TrafficScope $scope, string $dimension, string $from, string $to, int $limit): array
     {
@@ -74,7 +77,8 @@ class TrafficStatsModel extends AppModel
         [$where, $params] = $this->scopeClause($scope);
 
         $rows = $this->database->query(
-            "SELECT value, SUM(views) AS views, SUM(visitors) AS visitors
+            "SELECT value, SUM(views) AS views, SUM(visitors) AS visitors, SUM(read_views) AS read_views,
+                    SUM(engaged_views) AS engaged_views, SUM(engaged_seconds) AS engaged_seconds
              FROM traffic_daily_dimensions
              WHERE {$where} AND dimension = ? AND day BETWEEN ? AND ?
              GROUP BY value
@@ -83,11 +87,249 @@ class TrafficStatsModel extends AppModel
             [...$params, $dimension, $from, $to]
         )->fetchAll(\PDO::FETCH_ASSOC);
 
+        return self::breakdownRows($rows);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array{value: string, views: int, visitors: int, read_views: int, engaged_views: int, engaged_seconds: int}>
+     */
+    public static function breakdownRows(array $rows): array
+    {
         return array_map(static fn (array $row): array => [
             'value' => (string) $row['value'],
             'views' => (int) $row['views'],
             'visitors' => (int) $row['visitors'],
+            'read_views' => (int) $row['read_views'],
+            'engaged_views' => (int) $row['engaged_views'],
+            'engaged_seconds' => (int) $row['engaged_seconds'],
         ], $rows);
+    }
+
+    /**
+     * @return array<int, array<int, int>>
+     */
+    public function hourly(TrafficScope $scope, string $from, string $to): array
+    {
+        [$where, $params] = $this->scopeClause($scope);
+
+        $rows = $this->database->query(
+            "SELECT DAYOFWEEK(day) AS weekday, CAST(value AS UNSIGNED) AS hour, SUM(views) AS views
+             FROM traffic_daily_dimensions
+             WHERE {$where} AND dimension = 'hour' AND day BETWEEN ? AND ?
+             GROUP BY weekday, hour",
+            [...$params, $from, $to]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return self::grid($rows);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows  weekday, hour, views
+     * @return array<int, array<int, int>>
+     */
+    public static function grid(array $rows): array
+    {
+        $grid = [];
+        foreach ($rows as $row) {
+            $grid[(int) $row['weekday']][(int) $row['hour']] = (int) $row['views'];
+        }
+
+        return $grid;
+    }
+
+    /**
+     * The blog's most read posts in the range that anyone can open now.
+     *
+     * @return list<array{id: int, title: string, slug: string, views: int}>
+     */
+    public function popularPosts(int $blogId, string $from, string $to, int $limit): array
+    {
+        $rows = $this->database->query(
+            "SELECT p.id, p.title, p.slug, SUM(d.views) AS views
+             FROM traffic_daily d
+             JOIN posts p ON p.id = d.scope_id AND p.blog_id = d.blog_id
+             WHERE d.scope = 'post' AND d.blog_id = ? AND d.day BETWEEN ? AND ?
+               AND p.status = 'published' AND p.visibility = 'public'
+             GROUP BY p.id, p.title, p.slug
+             ORDER BY views DESC, p.id DESC
+             LIMIT ".max(1, $limit),
+            [$blogId, $from, $to]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'title' => (string) $row['title'],
+            'slug' => (string) $row['slug'],
+            'views' => (int) $row['views'],
+        ], $rows);
+    }
+
+    /**
+     * Published blogs, grouped by their owner, for the weekly digest.
+     *
+     * @return array<int, list<array{id: int, name: string, slug: string}>> Owner id => blogs
+     */
+    public function publishedBlogsByOwner(): array
+    {
+        $rows = $this->database->query(
+            "SELECT id, owner_id, blog_name, blog_slug FROM blogs WHERE status = 'published' ORDER BY owner_id, blog_name"
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $owners = [];
+        foreach ($rows as $row) {
+            $owners[(int) $row['owner_id']][] = [
+                'id' => (int) $row['id'],
+                'name' => (string) $row['blog_name'],
+                'slug' => (string) $row['blog_slug'],
+            ];
+        }
+
+        return $owners;
+    }
+
+    /**
+     * Views on $today against the usual day over the $days before it.
+     *
+     * @return array{today: int, usual: float}
+     */
+    public function pace(TrafficScope $scope, string $today, int $days): array
+    {
+        [$where, $params] = $this->scopeClause($scope);
+
+        $row = $this->database->query(
+            "SELECT COALESCE(SUM(CASE WHEN day = ? THEN views END), 0) AS today,
+                    COALESCE(SUM(CASE WHEN day < ? THEN views END), 0) AS earlier
+             FROM traffic_daily
+             WHERE {$where} AND day BETWEEN ? - INTERVAL ? DAY AND ?",
+            [$today, $today, ...$params, $today, $days, $today]
+        )->fetch(\PDO::FETCH_ASSOC) ?: ['today' => 0, 'earlier' => 0];
+
+        return ['today' => (int) $row['today'], 'usual' => (int) $row['earlier'] / max(1, $days)];
+    }
+
+    /**
+     * Names for category, tag and author ids, for their breakdown rows.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, string> Id => name
+     */
+    public function labels(string $dimension, array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $sql = match ($dimension) {
+            'category' => 'SELECT id, name FROM categories WHERE id IN (%s)',
+            'tag' => 'SELECT id, name FROM tags WHERE id IN (%s)',
+            'author' => "SELECT id, COALESCE(NULLIF(TRIM(CONCAT_WS(' ', first_name, last_name)), ''), CONCAT('@', handle))
+                         FROM users WHERE id IN (%s)",
+            default => throw new \InvalidArgumentException("No names for the traffic breakdown '{$dimension}'."),
+        };
+
+        $ids = array_map('intval', $ids);
+        $rows = $this->database->query(
+            sprintf($sql, implode(', ', array_fill(0, count($ids), '?'))),
+            $ids
+        )->fetchAll(\PDO::FETCH_NUM);
+
+        $labels = [];
+        foreach ($rows as [$id, $name]) {
+            $labels[(int) $id] = (string) $name;
+        }
+
+        return $labels;
+    }
+
+    /**
+     * How each post did since it was published: all its views, those in its first
+     * week and first 30 days, and those in the last 30 days of $today.
+     *
+     * @param  list<int>  $postIds
+     * @return array<int, array{published: string, total: int, first_week: int, first_month: int, last_month: int}>
+     */
+    public function performance(int $blogId, array $postIds, string $today): array
+    {
+        if ($postIds === []) {
+            return [];
+        }
+
+        $ids = array_map('intval', $postIds);
+        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+
+        $rows = $this->database->query(
+            "SELECT d.scope_id AS post_id, DATE(p.published_at) AS published, SUM(d.views) AS total,
+                    COALESCE(SUM(CASE WHEN d.day < DATE(p.published_at) + INTERVAL 7 DAY THEN d.views END), 0) AS first_week,
+                    COALESCE(SUM(CASE WHEN d.day < DATE(p.published_at) + INTERVAL 30 DAY THEN d.views END), 0) AS first_month,
+                    COALESCE(SUM(CASE WHEN d.day > ? - INTERVAL 30 DAY THEN d.views END), 0) AS last_month
+             FROM traffic_daily d
+             JOIN posts p ON p.id = d.scope_id
+             WHERE d.scope = 'post' AND d.blog_id = ? AND d.scope_id IN ({$placeholders}) AND p.published_at IS NOT NULL
+             GROUP BY d.scope_id, p.published_at",
+            [$today, $blogId, ...$ids]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $performance = [];
+        foreach ($rows as $row) {
+            $performance[(int) $row['post_id']] = [
+                'published' => (string) $row['published'],
+                'total' => (int) $row['total'],
+                'first_week' => (int) $row['first_week'],
+                'first_month' => (int) $row['first_month'],
+                'last_month' => (int) $row['last_month'],
+            ];
+        }
+
+        return $performance;
+    }
+
+    /**
+     * First-week views of the blog's posts published since $since and at least a
+     * week old, for what a usual first week looks like.
+     *
+     * @return list<int>
+     */
+    public function firstWeeks(int $blogId, string $since, string $today): array
+    {
+        $rows = $this->database->query(
+            "SELECT COALESCE(SUM(CASE WHEN d.day < DATE(p.published_at) + INTERVAL 7 DAY THEN d.views END), 0)
+             FROM posts p
+             LEFT JOIN traffic_daily d ON d.scope = 'post' AND d.scope_id = p.id AND d.blog_id = p.blog_id
+             WHERE p.blog_id = ? AND p.status = 'published' AND p.published_at >= ? AND p.published_at < ? - INTERVAL 7 DAY
+             GROUP BY p.id",
+            [$blogId, $since, $today]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        return array_map('intval', $rows);
+    }
+
+    /**
+     * Posts that went out in the range, for markers on the chart.
+     *
+     * @param  list<int>|null  $postIds  Only these posts, or every post of the blog
+     * @return list<array{day: string, title: string}>
+     */
+    public function publishedBetween(int $blogId, ?array $postIds, string $from, string $to): array
+    {
+        $where = 'blog_id = ? AND status = ? AND published_at >= ? AND published_at < ? + INTERVAL 1 DAY';
+        $params = [$blogId, 'published', $from, $to];
+
+        if ($postIds !== null) {
+            if ($postIds === []) {
+                return [];
+            }
+
+            $where .= ' AND id IN ('.implode(', ', array_fill(0, count($postIds), '?')).')';
+            array_push($params, ...array_map('intval', $postIds));
+        }
+
+        $rows = $this->database->query(
+            "SELECT DATE(published_at) AS day, title FROM posts WHERE {$where} ORDER BY published_at",
+            $params
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $row): array => ['day' => (string) $row['day'], 'title' => (string) $row['title']], $rows);
     }
 
     /**

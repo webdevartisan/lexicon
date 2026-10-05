@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Models\TrafficHitModel;
+use App\Models\TrafficOutcomeModel;
 use App\Models\TrafficStatsModel;
 use App\Services\Traffic\CountryLookup;
 use App\Services\Traffic\TrafficReportService;
@@ -27,6 +28,11 @@ class TrafficController extends AppController
 
     private const RIGHT_NOW_MINUTES = 30;
 
+    private const RECENT_LIMIT = 5;
+
+    /** A Discover search shows once this many different visitors made it. */
+    private const SEARCH_MIN_VISITORS = 3;
+
     private const BASE_PATH = '/admin/traffic';
 
     private const BLOG_COLUMNS = ['blog', 'url', 'status', 'views', 'visitors', 'read_ratio_percent', 'avg_read_seconds', 'bounce_rate_percent'];
@@ -39,6 +45,7 @@ class TrafficController extends AppController
         private TrafficHitModel $hits,
         private TrafficSettings $settings,
         private CountryLookup $countries,
+        private TrafficOutcomeModel $outcomes,
     ) {}
 
     public function index(): Response
@@ -90,12 +97,26 @@ class TrafficController extends AppController
     {
         $range = TrafficRange::fromQuery($this->request->get, 'UTC');
         $isSite = $scope->type === TrafficScope::SITE;
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $withinRaw = $range->withinRaw($this->settings->rawRetentionDays(), $today);
+        $filters = TrafficReportService::filtersFrom($this->request->get['f'] ?? null, $scope);
+        $filtersDropped = $filters !== [] && !$withinRaw;
 
         return $this->view('traffic.index', [
             'range' => $range,
-            'report' => $this->reports->report($scope, $range),
+            'report' => $this->reports->report($scope, $range, $filtersDropped ? [] : $filters),
+            'filters' => $filtersDropped ? [] : $filters,
+            'filtersDropped' => $filtersDropped,
+            'rawRetentionDays' => $this->settings->rawRetentionDays(),
             'rightNow' => $isSite ? $this->hits->countRecentEverywhere(self::RIGHT_NOW_MINUTES) : null,
-            'today' => (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d'),
+            'recent' => $isSite ? $this->hits->recentBreakdown(null, self::RIGHT_NOW_MINUTES, self::RECENT_LIMIT) : null,
+            'outcomes' => $isSite ? $this->outcomes->totals($range->fromDate(), $range->toDate()) : [],
+            'scriptViews' => $isSite ? $this->hits->countSuspect($range->fromDate(), $range->toDate()) : 0,
+            'scriptMinViews' => (int) (require ROOT_PATH.'/config/traffic.php')['script_min_views'],
+            'searchTerms' => !$isSite && $withinRaw
+                ? $this->hits->searchTerms($range->fromDate(), $range->toDate(), self::SEARCH_MIN_VISITORS, 10)
+                : null,
+            'today' => $today->format('Y-m-d'),
             'collectingSince' => $this->stats->firstDay($scope),
             'aggregatedAt' => $this->settings->aggregatedAt(),
             'delayed' => $this->settings->aggregationDelayed(),

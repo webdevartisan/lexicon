@@ -970,7 +970,14 @@
             "alwaysFollow": "Blogs you follow",
             "alwaysFollowHelp": "New posts from blogs you subscribed to. Manage those per blog on your subscriptions page.",
             "subscriptionsLink": "subscriptions page",
-            "save": "Save notification settings"
+            "save": "Save notification settings",
+            "trafficSection": "Traffic",
+            "trafficDigest": "Weekly summary",
+            "trafficDigestHelp": "On Mondays, last week's views, readers, top posts and where they came from, for each blog you own.",
+            "trafficMilestones": "View milestones",
+            "trafficMilestonesHelp": "When a post of yours passes 100, 1,000, 10,000 or 100,000 views.",
+            "trafficSpikes": "Unusually busy days",
+            "trafficSpikesHelp": "When a blog you own gets far more readers than usual, at most once a day."
         },
         "security": {
             "heading": "Change password",
@@ -1076,12 +1083,19 @@
             "rejected": "That date range could not be used, so the last 30 days are shown. A custom range covers up to 366 days and ends today at the latest.",
             "comparedTo": "Compared with {from} to {to}",
             "span": "{from} to {to}",
-            "tooLong": "Pick {days} days or fewer."
+            "tooLong": "Pick {days} days or fewer.",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "month": "This month",
+            "last_month": "Last month",
+            "compareWith": "Compare with",
+            "comparePrevious": "The days before",
+            "compareYear": "The same days last year"
         },
         "metrics": {
             "views": "Views",
             "viewsHint": "Pages opened by readers. Reloading the same page within 30 minutes counts once.",
-            "visitors": "Visitors",
+            "visitors": "Daily visitors",
             "visitorsHint": "Different people each day, added up over the days. Someone who reads on Monday and on Tuesday counts on both days.",
             "visitorsPerPostHint": "Different people each day on each of your posts, added up. A reader of two of your posts counts twice.",
             "avgRead": "Average read time",
@@ -1114,7 +1128,17 @@
             "visitors": "Visitors",
             "showTable": "Show as a table",
             "date": "Date",
-            "empty": "No views in this range."
+            "empty": "No views in this range.",
+            "lastYear": "last year",
+            "before": "the days before",
+            "viewsThen": "Views, {period}",
+            "markers": "Posts and changes",
+            "published": "Published: {title}",
+            "themeChanged": "Theme changed",
+            "weekOf": "Week of {date}",
+            "perWeek": "Each point is a week, starting on Monday.",
+            "perMonth": "Each point is a month.",
+            "blogs": "Blogs read"
         },
         "breakdowns": {
             "source": "Sources",
@@ -1139,7 +1163,15 @@
             "otherCountriesHint": "Countries with fewer than 3 visitors are grouped so no single reader stands out.",
             "countriesUnavailable": "Country lookup is not set up on this server yet.",
             "countriesCredit": "IP geolocation by DB-IP",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "entry": "Entry pages",
+            "exit": "Exit pages",
+            "next": "Where readers went next",
+            "category": "Categories",
+            "tag": "Tags",
+            "author": "Authors",
+            "translations": "Languages",
+            "translationsHint": "How the post does in each language it is read in."
         },
         "channels": {
             "direct": "Direct",
@@ -1176,7 +1208,8 @@
             "exportHint": "Every post read in this range",
             "deleted": "Deleted post",
             "details": "Traffic for this post",
-            "empty": "No post has been read in this range."
+            "empty": "No post has been read in this range.",
+            "shape": "Trend"
         },
         "status": {
             "delayed": "These numbers are behind. They were last updated {time} (UTC) and normally update every five minutes.",
@@ -1202,9 +1235,118 @@
             "save": "Save",
             "cancel": "Cancel",
             "saved": "Counting settings saved.",
-            "invalidPaths": "Each line has to be a path such as /archive or /tag/drafts: a slash followed by letters, numbers, dashes or underscores."
+            "invalidPaths": "Each line has to be a path such as /archive or /tag/drafts: a slash followed by letters, numbers, dashes or underscores.",
+            "popularPosts": "Show readers the most read posts",
+            "popularPostsHint": "Lists this blog's five most read posts of the last 30 days on its pages, where the theme has a place for it.",
+            "publicStats": "Publish a stats page",
+            "publicStatsHint": "Anyone can open /stats on this blog to see its views, daily visitors, top posts and sources. Nothing about individual readers is shown."
         },
         "publicNotice": "This blog counts visits to see how its posts are read.",
-        "publicNoticeLink": "How we count"
+        "publicNoticeLink": "How we count",
+        "filters": {
+            "showing": "Showing only",
+            "remove": "Remove {item}",
+            "clear": "Show everything",
+            "note": "Worked out from individual visits, so it only reaches back as far as visits are kept.",
+            "only": "Show only {item}",
+            "dropped": "Narrowing only works for the last {days} days, so the whole range is shown without it.",
+            "noReturning": "Returning visitors can't be worked out for a narrowed view."
+        },
+        "recent": {
+            "pages": "Pages",
+            "sources": "Sources",
+            "empty": "Nobody is reading right now."
+        },
+        "hourly": {
+            "title": "When readers come",
+            "hint": "Views by day of the week and hour, in the blog's time zone. Darker squares had more views.",
+            "cell": "{day} {hour}: {views} views"
+        },
+        "scroll": {
+            "title": "How far readers get",
+            "hint": "Of the views whose reading time was reported, how many got this far down the page.",
+            "step25": "A quarter",
+            "step50": "Halfway",
+            "step75": "Three quarters",
+            "step100": "The end"
+        },
+        "goals": {
+            "title": "Goals",
+            "hint": "What readers did besides reading, and the share of daily visitors who did it.",
+            "unfiltered": " These count every reader, whatever is narrowed above.",
+            "subscribe": "Subscribed",
+            "comment": "Commented",
+            "like": "Liked a post",
+            "save": "Saved a post",
+            "signup": "Signed up after reading",
+            "rate": "{rate} of visitors"
+        },
+        "clicks": {
+            "outbound": "Links to other sites",
+            "download": "Downloads",
+            "clicks": "Clicks",
+            "empty": "No clicks yet."
+        },
+        "missing": {
+            "title": "Links to pages that don't exist",
+            "hint": "Readers who arrived at an address on this blog that isn't a page, and the sites that sent them. Fix the link where you can, or publish something at that address.",
+            "empty": "No reader arrived at a missing page in this range.",
+            "direct": "typed in or hidden",
+            "from": "From {sites}"
+        },
+        "performance": {
+            "title": "Since it was published",
+            "none": "No views counted for this post yet.",
+            "published": "Published",
+            "total": "Views since",
+            "firstWeek": "First week",
+            "lastMonth": "Last 30 days",
+            "usualFirstWeek": "A usual first week on this blog brings {views} views.",
+            "olderThanCounting": "It came out before visits were counted, so its first week wasn't seen.",
+            "labels": {
+                "new": "New",
+                "spike": "Spike",
+                "evergreen": "Evergreen"
+            },
+            "hints": {
+                "new": "Out for less than a week.",
+                "spike": "Most of its views came in its first week.",
+                "evergreen": "Still read months later: its last 30 days kept up with its first."
+            }
+        },
+        "links": {
+            "button": "Tag a link",
+            "title": "Tag a link you share",
+            "intro": "Add campaign tags to a link to your blog. Readers who use it show up under Campaigns, with the names you choose here.",
+            "url": "Link",
+            "source": "Where you share it",
+            "sourceHint": "For example newsletter or x",
+            "medium": "Kind of link",
+            "mediumHint": "For example email or social",
+            "campaign": "Campaign",
+            "campaignHint": "For example spring-launch",
+            "result": "Your tagged link",
+            "copy": "Copy",
+            "copied": "Copied.",
+            "close": "Close"
+        },
+        "popular": {
+            "title": "Most read lately"
+        },
+        "public": {
+            "title": "{blog} in numbers",
+            "intro": "How many people read this blog and what they read, published by its owner. Counted without following anyone from site to site.",
+            "backToBlog": "Back to the blog",
+            "perDay": "Views each day",
+            "note": "Visits from crawlers, link previews and browsers that ask not to be tracked are left out. Numbers update every few minutes."
+        },
+        "home": {
+            "title": "Traffic, last 7 days",
+            "views": "Views",
+            "visitors": "Daily visitors",
+            "topPost": "Most read",
+            "open": "Open Traffic",
+            "empty": "No visits counted in the last 7 days."
+        }
     }
 }

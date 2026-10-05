@@ -1,16 +1,21 @@
 /**
- * Counts a page view on public pages and reports how long it was read.
- * The server resolves the page and decides whether the view counts.
+ * Counts a page view on public pages, reports how long it was read, and notes
+ * clicks on links to other sites and on downloads. The server resolves the page
+ * and decides whether anything counts.
  */
 (function () {
     'use strict';
 
-    if (navigator.globalPrivacyControl === true || navigator.doNotTrack === '1') {
+    // Automated browsers announce themselves here, whatever user agent they send.
+    if (navigator.globalPrivacyControl === true || navigator.doNotTrack === '1' || navigator.webdriver === true) {
         return;
     }
 
     var IDLE_AFTER_MS = 30000;
     var TICK_MS = 1000;
+
+    var script = document.currentScript;
+    var notFound = script !== null && script.hasAttribute('data-not-found');
 
     var viewId = null;
     var engagedMs = 0;
@@ -43,6 +48,12 @@
             }
         });
 
+        // Discover is the only page whose search is worth knowing about.
+        var search = query.get('q');
+        if (search && /(^|\/)discover\/?$/.test(location.pathname)) {
+            out.q = search.slice(0, 100);
+        }
+
         return out;
     }
 
@@ -53,6 +64,9 @@
         lastActivity = Date.now();
 
         var body = Object.assign({ v: viewId, p: location.pathname, r: document.referrer }, campaign());
+        if (notFound) {
+            body.nf = 1;
+        }
 
         // fetch rather than sendBeacon so the analytics cookie in the answer is kept.
         fetch('/traffic/hit', {
@@ -65,7 +79,9 @@
             console.debug('Traffic beacon not sent:', error);
         });
 
-        startClock();
+        if (!notFound) {
+            startClock();
+        }
     }
 
     function depth() {
@@ -93,7 +109,7 @@
     }
 
     function sendEngagement() {
-        if (viewId === null) {
+        if (viewId === null || notFound) {
             return;
         }
 
@@ -101,10 +117,56 @@
         navigator.sendBeacon('/traffic/engage', new Blob([body], { type: 'text/plain' }));
     }
 
+    /**
+     * Another site's host, or the file name of a same-site file. Never the full address.
+     */
+    function clickTarget(link) {
+        var url;
+
+        try {
+            url = new URL(link.href, location.href);
+        } catch (error) {
+            return null;
+        }
+
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return null;
+        }
+
+        if (url.host !== location.host) {
+            return { k: 'outbound', t: url.hostname };
+        }
+
+        var file = url.pathname.split('/').pop();
+        if (link.hasAttribute('download') || (/\.[a-z0-9]{2,5}$/i.test(file) && !/\.(html?|php)$/i.test(file))) {
+            return { k: 'download', t: file };
+        }
+
+        return null;
+    }
+
+    function noteClick(event) {
+        if (viewId === null || notFound || !event.target.closest) {
+            return;
+        }
+
+        var link = event.target.closest('a[href]');
+        var target = link ? clickTarget(link) : null;
+
+        if (target !== null) {
+            target.v = viewId;
+            navigator.sendBeacon('/traffic/click', new Blob([JSON.stringify(target)], { type: 'text/plain' }));
+        }
+    }
+
     function start() {
         ['scroll', 'keydown', 'pointerdown', 'pointermove', 'touchstart'].forEach(function (type) {
             window.addEventListener(type, markActive, { passive: true });
         });
+
+        // Capture, so a link that stops the click from bubbling still counts. auxclick is the middle button.
+        document.addEventListener('click', noteClick, true);
+        document.addEventListener('auxclick', noteClick, true);
 
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'hidden') {

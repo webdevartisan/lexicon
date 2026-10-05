@@ -65,6 +65,17 @@ class PagePathResolver
     }
 
     /**
+     * The path without its locale prefix, trailing slash or query string, or null
+     * when it can't be a page at all.
+     */
+    public function normalise(string $rawPath): ?string
+    {
+        $split = $this->split($rawPath);
+
+        return $split === null ? null : '/'.implode('/', $split[1]);
+    }
+
+    /**
      * Which part of Lexicon a page is in, without checking that the page exists:
      * a published blog, or the platform with the kind of page, 'other' for the
      * platform pages that aren't counted.

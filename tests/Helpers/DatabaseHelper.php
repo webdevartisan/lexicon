@@ -76,6 +76,10 @@ class DatabaseHelper
             'traffic_daily_dimensions',
             'traffic_salts',
             'traffic_events',
+            'traffic_outcomes',
+            'traffic_not_found',
+            'traffic_milestones',
+            'traffic_spike_notices',
 
             // Blog-related
             'blog_subscribers',

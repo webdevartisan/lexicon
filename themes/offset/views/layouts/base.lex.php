@@ -104,6 +104,8 @@
     {% yield content %}
   </main>
 
+  {% include "partials/_popular_posts.lex.php" %}
+
   <footer class="site">
     <?php
       // Printers run a control strip on every sheet to check ink coverage;

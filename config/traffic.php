@@ -40,6 +40,30 @@ return [
         'download_url' => 'https://download.db-ip.com/free/dbip-country-lite-%s.mmdb.gz',
     ],
 
+    // DB-IP Lite ASN database, same licence and schedule. Views from these networks are
+    // servers, not readers. Lower-case substrings of the network's registered name.
+    // Akamai, Cloudflare, Fastly and Google stay off the list: iCloud Private Relay,
+    // WARP and Google Fi send real people out through them.
+    'networks' => [
+        'path' => 'storage/geo/dbip-asn-lite.mmdb',
+        'download_url' => 'https://download.db-ip.com/free/dbip-asn-lite-%s.mmdb.gz',
+        'hosting' => [
+            'amazon', 'digitalocean', 'ovh', 'hetzner', 'linode', 'vultr', 'choopa', 'contabo', 'alibaba',
+            'tencent', 'oracle', 'scaleway', 'leaseweb', 'm247', 'datacamp', 'hostinger', 'ionos', 'kamatera',
+            'upcloud', 'netcup', 'hostroyale', 'colocrossing', 'psychz', 'quadranet', 'servers.com', 'zenlayer',
+            'gcore',
+        ],
+    ],
+
+    // A visitor with this many views in a day and not one leave ping is a script.
+    'script_min_views' => 20,
+
+    // A click on a same-site link to one of these is a download.
+    'download_extensions' => [
+        'pdf', 'epub', 'mobi', 'zip', 'gz', 'rar', '7z', 'csv', 'xlsx', 'xls', 'docx', 'doc', 'pptx', 'odt',
+        'mp3', 'm4a', 'wav', 'flac', 'mp4', 'mov', 'webm', 'dmg', 'exe', 'apk', 'txt', 'json',
+    ],
+
     // Crawlers get served normally but never counted. Case-insensitive substrings.
     'bot_patterns' => [
         'bot', 'crawl', 'spider', 'slurp', 'mediapartners', 'apis-google', 'feedfetcher',

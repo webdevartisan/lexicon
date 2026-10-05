@@ -6,6 +6,8 @@ $pathsHint = e($t('traffic.settings.excludedPathsHint'));
 $toggles = [
     ['exclude_members', !empty($blogSettings['traffic_exclude_members'] ?? 1), 'traffic.settings.excludeMembers', 'traffic.settings.excludeMembersHint'],
     ['public_notice', !empty($blogSettings['traffic_public_notice'] ?? 0), 'traffic.settings.publicNotice', 'traffic.settings.publicNoticeHint'],
+    ['popular_posts', !empty($blogSettings['traffic_popular_posts'] ?? 0), 'traffic.settings.popularPosts', 'traffic.settings.popularPostsHint'],
+    ['public_stats', !empty($blogSettings['traffic_public_stats'] ?? 0), 'traffic.settings.publicStats', 'traffic.settings.publicStatsHint'],
 ];
 ?>
 <form method="post" action="<?= e(lurl($basePath.'/settings')) ?>" id="trafficSettingsForm" class="flex flex-col gap-4">

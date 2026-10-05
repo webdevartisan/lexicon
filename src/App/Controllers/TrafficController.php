@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\TrafficOutcomeModel;
 use App\Services\ConsentService;
 use App\Services\ImpersonationService;
 use App\Services\Traffic\BeaconPayload;
@@ -14,16 +15,21 @@ use App\Services\Traffic\VisitorLink;
 use Framework\Core\Response;
 
 /**
- * Receives the page view beacon and the leave ping from public pages.
+ * Receives the page view beacon, the leave ping and link clicks from public pages.
  *
  * CSRF-exempt because cached public pages can't carry a per-visitor token.
  * Instead it takes same-origin requests only, a small strictly parsed body,
  * a per-IP limit and a path the server resolves itself. Every accepted request
- * gets 204, counted or not.
+ * gets 204, counted or not. What happened to each page view beacon is counted
+ * per day for administrators, apart from rate-limited ones, so a flood costs no writes.
  */
 final class TrafficController extends AppController
 {
+    /** Status => outcome, for page view beacons turned away before the recorder sees them. */
+    private const REFUSED = [403 => 'cross_site', 413 => 'too_large', 400 => 'invalid'];
+
     public function __construct(
+        private TrafficOutcomeModel $outcomes,
         private TrafficRecorder $recorder,
         private TrafficRateLimiter $limiter,
         private ConsentService $consent,
@@ -36,18 +42,18 @@ final class TrafficController extends AppController
     {
         $rejected = $this->rejectUntrusted();
         if ($rejected !== null) {
-            return $rejected;
+            return $this->refused($rejected);
         }
 
         $payload = BeaconPayload::view($this->request->rawBody($this->recorder->maxBodyBytes()));
         if ($payload === null) {
-            return $this->status(400);
+            return $this->refused(400);
         }
 
         $viewer = auth()->user();
         $impersonating = $this->impersonation->isImpersonating();
 
-        $this->recorder->record(
+        $outcome = $this->recorder->record(
             $this->request,
             $payload,
             $viewer,
@@ -55,6 +61,7 @@ final class TrafficController extends AppController
             // Never counted, and must not move this browser's views onto the account being acted as.
             $impersonating ? null : $this->visitorCookieId($viewer)
         );
+        $this->outcomes->increment($outcome);
 
         return $this->status(204);
     }
@@ -63,7 +70,7 @@ final class TrafficController extends AppController
     {
         $rejected = $this->rejectUntrusted();
         if ($rejected !== null) {
-            return $rejected;
+            return $this->status($rejected);
         }
 
         $body = $this->request->rawBody($this->recorder->maxBodyBytes());
@@ -78,23 +85,54 @@ final class TrafficController extends AppController
     }
 
     /**
-     * Cross-site senders, floods and oversized bodies, before anything is parsed.
+     * An outbound link or a download clicked on a counted view.
      */
-    private function rejectUntrusted(): ?Response
+    public function click(): Response
     {
-        if (!$this->isSameOrigin()) {
-            return $this->status(403);
+        $rejected = $this->rejectUntrusted();
+        if ($rejected !== null) {
+            return $this->status($rejected);
         }
 
+        $payload = BeaconPayload::click($this->request->rawBody($this->recorder->maxBodyBytes()));
+        if ($payload === null) {
+            return $this->status(400);
+        }
+
+        $this->recorder->recordClick($this->request, $payload);
+
+        return $this->status(204);
+    }
+
+    /**
+     * Floods, cross-site senders and oversized bodies, before anything is parsed.
+     *
+     * @return int|null The status to answer with
+     */
+    private function rejectUntrusted(): ?int
+    {
         if ($this->limiter->hitAndCheck($this->request->ip() ?? 'unknown')) {
-            return $this->status(429);
+            return 429;
+        }
+
+        if (!$this->isSameOrigin()) {
+            return 403;
         }
 
         if ((int) $this->request->header('Content-Length', '0') > $this->recorder->maxBodyBytes()) {
-            return $this->status(413);
+            return 413;
         }
 
         return null;
+    }
+
+    private function refused(int $status): Response
+    {
+        if (isset(self::REFUSED[$status])) {
+            $this->outcomes->increment(self::REFUSED[$status]);
+        }
+
+        return $this->status($status);
     }
 
     /**

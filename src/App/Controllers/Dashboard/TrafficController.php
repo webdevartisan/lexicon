@@ -40,7 +40,14 @@ final class TrafficController extends AppController
     private const SETTING_TOGGLES = [
         'exclude_members' => 'traffic_exclude_members',
         'public_notice' => 'traffic_public_notice',
+        'popular_posts' => 'traffic_popular_posts',
+        'public_stats' => 'traffic_public_stats',
     ];
+
+    /** Switches whose change shows on every public page of the blog. */
+    private const PUBLIC_TOGGLES = ['traffic_public_notice', 'traffic_popular_posts'];
+
+    private const RECENT_LIMIT = 5;
 
     public function __construct(
         private BlogModel $blogs,
@@ -59,12 +66,21 @@ final class TrafficController extends AppController
         $blogIdInt = (int) $blog->id();
         $canAll = Gate::allows('viewAllTraffic', $blog, auth()->user());
         $range = TrafficRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
+        $scope = $this->viewerScope($blogIdInt, $canAll);
+        $page = $this->pageData($blog, $range, $canAll);
+        [$filters, $filtersDropped] = $this->filters($scope, $range, $page['today']);
+        $report = $this->reports->report($scope, $range, $filters);
+        $postIds = array_map(static fn (array $row): int => (int) $row['post_id'], $report['topPosts']);
 
-        return $this->view($this->pageData($blog, $range, $canAll) + [
+        return $this->view($page + [
             'scope' => $canAll ? 'blog' : 'author',
             'post' => null,
-            'report' => $this->reports->report($this->viewerScope($blogIdInt, $canAll), $range),
+            'report' => $report,
+            'filters' => $filters,
+            'filtersDropped' => $filtersDropped,
+            'performance' => $this->reports->performance($blogIdInt, $postIds, $page['today'], $page['collectingSince']),
             'rightNow' => $canAll ? $this->hits->countRecent($blogIdInt, self::RIGHT_NOW_MINUTES) : null,
+            'recent' => $canAll ? $this->hits->recentBreakdown($blogIdInt, self::RIGHT_NOW_MINUTES, self::RECENT_LIMIT) : null,
         ]);
     }
 
@@ -76,13 +92,37 @@ final class TrafficController extends AppController
         $post = $this->postInScope($blogIdInt, (int) $postId, $canAll);
 
         $range = TrafficRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
+        $scope = TrafficScope::post($blogIdInt, (int) $post['id']);
+        $page = $this->pageData($blog, $range, $canAll);
+        [$filters, $filtersDropped] = $this->filters($scope, $range, $page['today']);
 
-        return $this->view('traffic.index', $this->pageData($blog, $range, $canAll) + [
+        return $this->view('traffic.index', $page + [
             'scope' => 'post',
             'post' => $post,
-            'report' => $this->reports->report(TrafficScope::post($blogIdInt, (int) $post['id']), $range),
+            'report' => $this->reports->report($scope, $range, $filters),
+            'filters' => $filters,
+            'filtersDropped' => $filtersDropped,
+            'performance' => $this->reports->performance($blogIdInt, [(int) $post['id']], $page['today'], $page['collectingSince']),
             'rightNow' => null,
+            'recent' => null,
         ]);
+    }
+
+    /**
+     * The filters asked for, or none when the range reaches past raw retention,
+     * which is the only place a narrowed page can be read from.
+     *
+     * @return array{0: array<string, string>, 1: bool} Filters, and whether some were dropped for that reason
+     */
+    private function filters(TrafficScope $scope, TrafficRange $range, string $today): array
+    {
+        $filters = TrafficReportService::filtersFrom($this->request->get['f'] ?? null, $scope);
+
+        if ($filters === [] || $range->withinRaw($this->settings->rawRetentionDays(), new \DateTimeImmutable($today))) {
+            return [$filters, false];
+        }
+
+        return [[], true];
     }
 
     /**
@@ -134,7 +174,7 @@ final class TrafficController extends AppController
 
         $before = $this->blogSettings->findByBlogId((int) $blog->id()) ?? [];
         $this->blogSettings->updateForBlog((int) $blog->id(), $data);
-        $this->forgetPublicPagesIfNoticeChanged($blog, $before, $data);
+        $this->forgetPublicPagesIfShownChanged($blog, $before, $data);
         $this->auditSettings($blog, $data, count($paths));
 
         $this->flash('success', chrome_translate('traffic.settings.saved'));
@@ -143,15 +183,19 @@ final class TrafficController extends AppController
     }
 
     /**
-     * The notice is part of every cached public page of the blog.
+     * The notice and the popular posts are part of every cached public page of the blog.
      *
      * @param  array<string, mixed>  $before
      * @param  array<string, mixed>  $after
      */
-    private function forgetPublicPagesIfNoticeChanged(BlogResource $blog, array $before, array $after): void
+    private function forgetPublicPagesIfShownChanged(BlogResource $blog, array $before, array $after): void
     {
-        if ((int) ($before['traffic_public_notice'] ?? 0) !== $after['traffic_public_notice']) {
-            $this->blogs->forgetPublicCaches($blog->slug());
+        foreach (self::PUBLIC_TOGGLES as $column) {
+            if ((int) ($before[$column] ?? 0) !== $after[$column]) {
+                $this->blogs->forgetPublicCaches($blog->slug());
+
+                return;
+            }
         }
     }
 
@@ -254,6 +298,8 @@ final class TrafficController extends AppController
             'basePath' => '/dashboard/blog/'.(int) $blog->id().'/analytics/traffic',
             'canConfigure' => Gate::allows('manageUsers', $blog, auth()->user()),
             'blogSettings' => $blogSettings,
+            'blogUrl' => rtrim(base_url(), '/').lurl('/blog/'.rawurlencode($blog->slug())),
+            'rawRetentionDays' => $this->settings->rawRetentionDays(),
         ];
     }
 

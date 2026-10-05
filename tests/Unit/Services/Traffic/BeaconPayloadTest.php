@@ -59,3 +59,24 @@ test('a leave ping is clamped to sane values', function () {
 test('a leave ping with text numbers is refused', function () {
     expect(BeaconPayload::engagement('{"v":"'.VIEW_ID.'","s":"30","d":10}', 3600))->toBeNull();
 });
+
+test('a view can say it landed on a missing page and what was searched', function () {
+    $payload = BeaconPayload::view(json_encode(['v' => VIEW_ID, 'p' => '/en/discover', 'nf' => 1, 'q' => ' gardens ']));
+
+    expect($payload?->notFound)->toBeTrue()
+        ->and($payload?->searchTerm)->toBe('gardens');
+});
+
+test('the not-found flag is only taken as a plain 1', function () {
+    expect(BeaconPayload::view(json_encode(['v' => VIEW_ID, 'p' => '/en/discover', 'nf' => 'yes']))?->notFound)->toBeFalse();
+});
+
+test('a click needs a view, a known kind and a target', function (array $body, bool $accepted) {
+    expect(BeaconPayload::click(json_encode($body)) !== null)->toBe($accepted);
+})->with([
+    'outbound' => [['v' => VIEW_ID, 'k' => 'outbound', 't' => 'example.org'], true],
+    'download' => [['v' => VIEW_ID, 'k' => 'download', 't' => 'notes.pdf'], true],
+    'another kind' => [['v' => VIEW_ID, 'k' => 'scroll', 't' => 'x'], false],
+    'no target' => [['v' => VIEW_ID, 'k' => 'outbound'], false],
+    'no view' => [['k' => 'outbound', 't' => 'example.org'], false],
+]);

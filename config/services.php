@@ -350,6 +350,24 @@ $container->setShared(App\Services\Traffic\CountryLookup::class, function ($c) u
     return new App\Services\Traffic\CountryLookup(ROOT_PATH.'/'.$trafficConfig()['geo']['path']);
 });
 
+$container->set(App\Services\Traffic\TrafficReportService::class, function ($c) use ($trafficConfig) {
+    return new App\Services\Traffic\TrafficReportService(
+        $c->get(App\Models\TrafficStatsModel::class),
+        $c->get(App\Models\TrafficRawStatsModel::class),
+        $c->get(App\Models\TrafficEventModel::class),
+        $c->get(App\Models\TrafficNotFoundModel::class),
+        $c->get(App\Models\ActivityLogModel::class),
+        (int) $trafficConfig()['read_seconds'],
+        (int) $trafficConfig()['bounce_seconds'],
+    );
+});
+
+$container->setShared(App\Services\Traffic\NetworkLookup::class, function ($c) use ($trafficConfig) {
+    $networks = $trafficConfig()['networks'];
+
+    return new App\Services\Traffic\NetworkLookup(ROOT_PATH.'/'.$networks['path'], $networks['hosting']);
+});
+
 $container->set(App\Services\Traffic\TrafficRecorder::class, function ($c) use ($trafficConfig) {
     return new App\Services\Traffic\TrafficRecorder(
         $c->get(App\Services\Traffic\TrafficSettings::class),
@@ -358,7 +376,10 @@ $container->set(App\Services\Traffic\TrafficRecorder::class, function ($c) use (
         $c->get(App\Services\Traffic\ReferrerClassifier::class),
         $c->get(App\Services\Traffic\VisitorIdentity::class),
         $c->get(App\Services\Traffic\CountryLookup::class),
+        $c->get(App\Services\Traffic\NetworkLookup::class),
         $c->get(App\Models\TrafficHitModel::class),
+        $c->get(App\Models\TrafficEventModel::class),
+        $c->get(App\Models\TrafficNotFoundModel::class),
         $c->get(App\Models\BlogModel::class),
         $trafficConfig(),
     );
@@ -388,7 +409,8 @@ $container->setShared(App\Services\MailQueueService::class, function ($c) {
     return new App\Services\MailQueueService(
         $c->get(App\Models\MailQueueModel::class),
         $c->get(App\Services\MailService::class),
-        $config['queue'] ?? []
+        $config['queue'] ?? [],
+        new App\Services\Traffic\EmailLinkTagger((string) env('APP_URL', '')),
     );
 });
 

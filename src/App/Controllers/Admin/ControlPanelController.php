@@ -11,6 +11,7 @@ use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
+use App\Models\TrafficStatsModel;
 use App\Models\UserModel;
 use App\Presenters\ModerationCasePresenter;
 use App\Resources\SystemResource;
@@ -34,6 +35,7 @@ class ControlPanelController extends AppController
         private ActivityLogModel $activityLog,
         private CacheManagementService $cacheService,
         private ModerationCaseModel $cases,
+        private TrafficStatsModel $traffic,
     ) {}
 
     public function index(): Response
@@ -48,17 +50,15 @@ class ControlPanelController extends AppController
             'blogs' => $this->blogs->count(),
         ];
 
-        // top blogs by post volume for the insights column
-        $topBlogs = $this->blogs->getAllBlogsWithOwnerAndCounts();
-        usort($topBlogs, fn ($a, $b) => (int) $b['post_count'] <=> (int) $a['post_count']);
-        $topBlogs = array_slice($topBlogs, 0, 5);
+        $byViews = Gate::allows('viewPlatformTraffic', SystemResource::class, auth()->user() ?? []);
 
         return $this->view('controlpanel.index', [
             'stats' => $stats,
             'postCounts' => $postCounts,
             'commentCounts' => $commentCounts,
             'signups' => $this->users->signupsByDay(30),
-            'topBlogs' => $topBlogs,
+            'topBlogs' => $byViews ? $this->topBlogsByViews() : $this->topBlogsByPosts(),
+            'topBlogsByViews' => $byViews,
             'recentPosts' => $this->posts->findAllForAdmin(1, 5)['data'],
             'reports' => $this->reportsSummary(),
             'recentUsers' => $this->users->latest(5),
@@ -67,6 +67,36 @@ class ControlPanelController extends AppController
             'health' => $this->systemHealth(),
             'user' => auth()->user(),
         ]);
+    }
+
+    /**
+     * The most read blogs of the last 30 days, UTC.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function topBlogsByViews(): array
+    {
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $rows = $this->traffic->topBlogs($today->modify('-29 days')->format('Y-m-d'), $today->format('Y-m-d'), 5);
+
+        return array_values(array_filter(array_map(static fn (array $row): ?array => $row['blog_name'] === null ? null : [
+            'id' => (int) $row['blog_id'],
+            'blog_name' => (string) $row['blog_name'],
+            'views' => (int) $row['views'],
+        ], $rows)));
+    }
+
+    /**
+     * For staff who don't see traffic, the blogs with the most posts.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function topBlogsByPosts(): array
+    {
+        $blogs = $this->blogs->getAllBlogsWithOwnerAndCounts();
+        usort($blogs, static fn (array $a, array $b): int => (int) $b['post_count'] <=> (int) $a['post_count']);
+
+        return array_slice($blogs, 0, 5);
     }
 
     /**

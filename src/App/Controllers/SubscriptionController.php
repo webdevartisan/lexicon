@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Mail\SubscriptionConfirmMail;
 use App\Models\BlogModel;
 use App\Models\BlogSubscriberModel;
+use App\Services\Traffic\GoalRecorder;
 use Framework\Core\Response;
 
 /**
@@ -17,6 +18,7 @@ class SubscriptionController extends AppController
     public function __construct(
         private BlogModel $blogModel,
         private BlogSubscriberModel $subscriberModel,
+        private GoalRecorder $goals,
     ) {}
 
     public function subscribe(string $blogSlug): Response
@@ -68,6 +70,8 @@ class SubscriptionController extends AppController
             ['is_guest' => $user === null],
             $this->request->ip()
         );
+
+        $this->goals->onBlog($this->request, 'subscribe', (int) $blog['id'], $user);
 
         if ($subscription['confirmed_at'] === null) {
             mail_queue()->enqueue(

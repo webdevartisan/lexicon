@@ -90,7 +90,7 @@ test('blogs and posts are ranked by views', function () {
 
 test('site breakdowns count a visitor once, and a scope only offers its own lists', function () {
     expect($this->stats->breakdown(TrafficScope::site(), 'channel', '2026-03-10', '2026-03-10', 10))->toBe([
-        ['value' => 'direct', 'views' => 4, 'visitors' => 2],
+        ['value' => 'direct', 'views' => 4, 'visitors' => 2, 'read_views' => 2, 'engaged_views' => 4, 'engaged_seconds' => 110],
     ]);
 
     $this->stats->breakdown(TrafficScope::site(), 'page', '2026-03-10', '2026-03-10', 10);

@@ -13,6 +13,7 @@ use App\Services\CommentRateLimiter;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
 use App\Services\ReportIntakeService;
+use App\Services\Traffic\GoalRecorder;
 use App\Traits\ThrottlesReaderInteractions;
 use Framework\Core\Response;
 
@@ -36,6 +37,7 @@ class CommentController extends AppController
         private CommentRemovalService $removal,
         private BlogModel $blogModel,
         private CommentRateLimiter $throttle,
+        private GoalRecorder $goals,
     ) {}
 
     public function create(): Response
@@ -86,6 +88,8 @@ class CommentController extends AppController
         // Drop the reader on their own comment rather than at the top of a
         // thread they now have to hunt through.
         if ($result['id'] !== null) {
+            $this->goals->onPost($this->request, 'comment', $postId, $user);
+
             return $this->redirect($this->backUrlPath().'#comment-'.$result['id']);
         }
 

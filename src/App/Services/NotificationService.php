@@ -15,6 +15,8 @@ use App\Mail\PostPublishedMail;
 use App\Mail\PostSubmittedMail;
 use App\Mail\ReviewerAssignedMail;
 use App\Mail\ReviewerStaleMail;
+use App\Mail\TrafficMilestoneMail;
+use App\Mail\TrafficSpikeMail;
 use App\Mail\WorkflowDisabledMail;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
@@ -48,6 +50,9 @@ class NotificationService
         'post.reviewer_stale' => 'notify_review_requests',
         'collaborator.role_changed' => 'notify_role_changes',
         'collaborator.removed' => 'notify_role_changes',
+        // Traffic news about your own posts and blogs.
+        'traffic.milestone' => 'notify_traffic_milestones',
+        'traffic.spike' => 'notify_traffic_spikes',
         // Comment types are keyed off CommentAudienceResolver so the four
         // gates stay in lockstep with the four audiences it produces.
         CommentAudienceResolver::TYPE_REPLY => 'notify_comment_replies',
@@ -72,6 +77,7 @@ class NotificationService
         'post.submitted_unassigned' => 'content',
         CommentAudienceResolver::TYPE_MODERATION => 'content',
         CommentAudienceResolver::TYPE_BLOG => 'content',
+        'traffic.spike' => 'content',
     ];
 
     /**
@@ -247,6 +253,21 @@ class NotificationService
                 $to,
                 (string) ($data['blog_name'] ?? ''),
                 (string) ($data['declined_email'] ?? '')
+            ),
+            'traffic.milestone' => new TrafficMilestoneMail(
+                $to,
+                (string) ($data['post_title'] ?? ''),
+                (int) ($data['threshold'] ?? 0),
+                (int) ($data['blog_id'] ?? 0),
+                (int) ($data['post_id'] ?? 0)
+            ),
+            'traffic.spike' => new TrafficSpikeMail(
+                $to,
+                (string) ($data['blog_name'] ?? ''),
+                (int) ($data['blog_id'] ?? 0),
+                (int) ($data['views'] ?? 0),
+                (float) ($data['usual'] ?? 0),
+                isset($data['source']) ? (string) $data['source'] : null
             ),
             default => null,
         };

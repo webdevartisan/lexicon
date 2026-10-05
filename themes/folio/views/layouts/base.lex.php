@@ -103,6 +103,8 @@
     {% yield content %}
   </main>
 
+  {% include "partials/_popular_posts.lex.php" %}
+
   <footer class="site">
     <div class="container">
       <?php

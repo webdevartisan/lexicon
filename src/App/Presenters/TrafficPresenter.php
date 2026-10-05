@@ -144,6 +144,7 @@ final class TrafficPresenter
             'lexicon' => $name ?? $this->place($value, 'traffic.lexicon.blog'),
             // Administrators see every blog's name, so an unnamed one is gone.
             'came_from' => $name ?? $this->place($value, 'traffic.lexicon.deletedBlog'),
+            'category', 'tag', 'author' => $name ?? $t('traffic.breakdowns.unknown'),
             'device' => $t('traffic.devices.'.$value),
             'country' => $this->country($value),
             'locale' => $this->locales->isSupported($value) ? $this->locales->nativeName($value) : $value,
@@ -184,6 +185,51 @@ final class TrafficPresenter
         $formatter = new \IntlDateFormatter($this->locale, \IntlDateFormatter::MEDIUM, \IntlDateFormatter::NONE, 'UTC');
 
         return (string) $formatter->format(new \DateTimeImmutable($ymd, new \DateTimeZone('UTC')));
+    }
+
+    /**
+     * A point on the chart: its day, the week starting on it, or its month.
+     */
+    public function point(string $ymd, string $interval): string
+    {
+        $t = $this->t;
+
+        return match ($interval) {
+            'week' => $t('traffic.chart.weekOf', ['date' => $this->date($ymd)]),
+            'month' => $this->pattern($ymd, 'LLLL y'),
+            default => $this->date($ymd),
+        };
+    }
+
+    /**
+     * Weekday names in this language, Monday first, keyed by MySQL's DAYOFWEEK (1 is Sunday).
+     *
+     * @return array<int, string>
+     */
+    public function weekdays(): array
+    {
+        $names = [];
+        // 2026-01-05 was a Monday.
+        foreach ([2, 3, 4, 5, 6, 7, 1] as $offset => $dayOfWeek) {
+            $names[$dayOfWeek] = $this->pattern(date('Y-m-d', strtotime('2026-01-05 +'.$offset.' days')), 'EEE');
+        }
+
+        return $names;
+    }
+
+    /**
+     * An hour of the day as this language writes it, e.g. 14:00, or 14 with the HH pattern.
+     */
+    public function hour(int $hour, string $pattern = 'HH:mm'): string
+    {
+        return $this->pattern(sprintf('2026-01-05 %02d:00:00', $hour), $pattern);
+    }
+
+    private function pattern(string $moment, string $pattern): string
+    {
+        $formatter = new \IntlDateFormatter($this->locale, \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, 'UTC', null, $pattern);
+
+        return (string) $formatter->format(new \DateTimeImmutable($moment, new \DateTimeZone('UTC')));
     }
 
     /**

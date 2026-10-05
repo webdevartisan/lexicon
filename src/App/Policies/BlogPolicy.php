@@ -134,7 +134,8 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * Open the Traffic dashboard. Anyone who writes for the blog.
+     * Open the Traffic dashboard. Anyone who writes for the blog, and staff who
+     * see the platform's traffic, so a blog in the admin's Top blogs can be opened.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -142,7 +143,8 @@ class BlogPolicy implements PolicyInterface
     {
         assert($blog instanceof BlogResource);
 
-        return $blog->userCan((int) $user['id'], 'create_posts')
+        return self::seesPlatformTraffic($user)
+            || $blog->userCan((int) $user['id'], 'create_posts')
             || $blog->userCan((int) $user['id'], 'edit_blog_posts');
     }
 
@@ -155,7 +157,15 @@ class BlogPolicy implements PolicyInterface
     {
         assert($blog instanceof BlogResource);
 
-        return $blog->userCan((int) $user['id'], 'edit_blog_posts');
+        return self::seesPlatformTraffic($user) || $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
+     * @param  array<string, mixed>  $user
+     */
+    private static function seesPlatformTraffic(array $user): bool
+    {
+        return in_array('view_platform_traffic', $user['permissions'] ?? [], true);
     }
 
     /**

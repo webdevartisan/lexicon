@@ -22,8 +22,17 @@ class TrafficSettings
 
     public const EXTRA_BOT_PATTERNS = 'traffic.extra_bot_patterns';
 
-    /** When the last aggregation run finished, UTC. Written by traffic:aggregate. */
+    /** When the last aggregation run started, UTC. Written by traffic:aggregate. */
     public const AGGREGATED_AT = 'traffic.aggregated_at';
+
+    /** When the last run that rebuilt every blog started, UTC. */
+    public const FULLY_AGGREGATED_AT = 'traffic.fully_aggregated_at';
+
+    /** The ISO week the last weekly digest covered, e.g. 2026-W40. */
+    public const DIGEST_WEEK = 'traffic.digest_week';
+
+    /** Runs in between rebuild only the blogs whose views changed. */
+    private const FULL_REBUILD_EVERY_MINUTES = 60;
 
     /** Aggregation runs every five minutes, so past this the numbers are behind. */
     private const DELAYED_AFTER_MINUTES = 20;
@@ -84,9 +93,45 @@ class TrafficSettings
             < new \DateTimeImmutable('-'.self::DELAYED_AFTER_MINUTES.' minutes', $utc);
     }
 
-    public function markAggregated(string $utcTimestamp): void
+    /**
+     * @param  bool  $full  Whether every blog was rebuilt
+     */
+    public function markAggregated(string $utcTimestamp, bool $full = true): void
     {
         $this->settings->set(self::AGGREGATED_AT, $utcTimestamp);
+
+        if ($full) {
+            $this->settings->set(self::FULLY_AGGREGATED_AT, $utcTimestamp);
+        }
+    }
+
+    public function digestWeek(): ?string
+    {
+        return $this->settings->get(self::DIGEST_WEEK);
+    }
+
+    public function markDigestSent(string $isoWeek): void
+    {
+        $this->settings->set(self::DIGEST_WEEK, $isoWeek);
+    }
+
+    /**
+     * Whether this run has to rebuild every blog: none has yet, or the last was
+     * an hour ago. That one catches what a partial run can't see, such as a
+     * visitor flagged as a script on a blog they didn't view since.
+     */
+    public function fullRebuildDue(): bool
+    {
+        $last = $this->settings->get(self::FULLY_AGGREGATED_AT);
+
+        if ($last === null) {
+            return true;
+        }
+
+        $utc = new \DateTimeZone('UTC');
+
+        return new \DateTimeImmutable($last, $utc)
+            <= new \DateTimeImmutable('-'.self::FULL_REBUILD_EVERY_MINUTES.' minutes', $utc);
     }
 
     /**

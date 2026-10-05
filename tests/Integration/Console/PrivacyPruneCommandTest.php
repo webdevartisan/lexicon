@@ -12,6 +12,7 @@ use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
 use App\Models\SettingModel;
 use App\Models\TrafficHitModel;
+use App\Models\TrafficNotFoundModel;
 use App\Services\Traffic\TrafficSettings;
 
 test('old audit entries and mail copies are removed and recent ones stay', function () {
@@ -31,6 +32,7 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
         new AccountErasureRecordModel($this->db),
         new TrafficHitModel($this->db),
         new TrafficSettings(new SettingModel($this->db)),
+        new TrafficNotFoundModel($this->db),
     );
 
     ob_start();

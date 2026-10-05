@@ -50,6 +50,12 @@ $router->add('/traffic/engage', [
     'method' => 'POST',
 ]);
 
+$router->add('/traffic/click', [
+    'controller' => 'TrafficController',
+    'action' => 'click',
+    'method' => 'POST',
+]);
+
 // Only signed-in readers post here: their interface follows a stored preference,
 // so switching language has to write it. Guests switch with a plain link.
 $router->add('/language', [
@@ -109,6 +115,14 @@ $router->group([
     $r->add('/{id:\d+}/report', ['controller' => 'CommentController', 'action' => 'report', 'method' => 'POST']);
     $r->add('/{id:\d+}/pin', ['controller' => 'CommentController', 'action' => 'pin', 'method' => 'POST']);
 });
+
+// A blog's public stats page, when its owner publishes one. Ahead of the post route,
+// and PostModel keeps posts off this address.
+$router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/stats', [
+    'controller' => 'BlogStatsController',
+    'action' => 'show',
+    'method' => 'GET',
+]);
 
 // Blog subscriptions (guests allowed; unsubscribe is a signed token link from email)
 $router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/subscribe', [

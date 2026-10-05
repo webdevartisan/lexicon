@@ -19,10 +19,17 @@ final class BeaconPayload
         public readonly ?string $utmCampaign,
         public readonly int $seconds,
         public readonly int $scrollDepth,
+        public readonly bool $notFound = false,
+        public readonly ?string $searchTerm = null,
+        public readonly ?string $clickKind = null,
+        public readonly ?string $clickTarget = null,
     ) {}
 
+    public const CLICK_KINDS = ['outbound', 'download'];
+
     /**
-     * A page view: {v, p, r?, us?, um?, uc?}.
+     * A page view: {v, p, r?, us?, um?, uc?, nf?, q?}. nf marks a page that answered
+     * 404, q is what was searched on a page that searches.
      */
     public static function view(string $body): ?self
     {
@@ -48,6 +55,37 @@ final class BeaconPayload
             utmCampaign: self::text($data['uc'] ?? null, 100),
             seconds: 0,
             scrollDepth: 0,
+            notFound: ($data['nf'] ?? null) === 1,
+            searchTerm: self::text($data['q'] ?? null, 100),
+        );
+    }
+
+    /**
+     * A link click on a counted view: {v, k, t}, k being outbound or download and t
+     * the other site's host or the file name.
+     */
+    public static function click(string $body): ?self
+    {
+        $data = self::decode($body);
+        $viewId = self::viewId($data['v'] ?? null);
+        $kind = $data['k'] ?? null;
+        $target = self::text($data['t'] ?? null, 191);
+
+        if ($data === null || $viewId === null || !in_array($kind, self::CLICK_KINDS, true) || $target === null) {
+            return null;
+        }
+
+        return new self(
+            viewId: $viewId,
+            path: '',
+            referrer: '',
+            utmSource: null,
+            utmMedium: null,
+            utmCampaign: null,
+            seconds: 0,
+            scrollDepth: 0,
+            clickKind: $kind,
+            clickTarget: $target,
         );
     }
 

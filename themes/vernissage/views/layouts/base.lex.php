@@ -104,6 +104,8 @@
     {% yield content %}
   </main>
 
+  {% include "partials/_popular_posts.lex.php" %}
+
   <footer class="site">
     <div class="container">
       <div class="foot-ornament" aria-hidden="true">

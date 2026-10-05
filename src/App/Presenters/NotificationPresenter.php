@@ -89,6 +89,8 @@ final class NotificationPresenter
             // comment.created rows predate the split into four types
             'comment.on_blog', 'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
                 .(!empty($payload['awaiting_moderation']) ? ' (awaiting moderation)' : ''),
+            'traffic.milestone' => ($payload['post_title'] ?? 'Your post').' passed '.number_format((int) ($payload['threshold'] ?? 0)).' views',
+            'traffic.spike' => ($payload['blog_name'] ?? 'Your blog').' has far more readers than usual today',
             'admin.report_threshold' => 'Case #'.($payload['case_id'] ?? '?').' has '.($payload['report_count'] ?? 0).' reports and needs a look',
             'admin.mail_queue_failures' => ($payload['failed_count'] ?? 0).' emails failed to send in the last '.($payload['window_minutes'] ?? 60).' minutes',
             'admin.scheduler_stalled' => 'The task scheduler has not ticked in '.round(($payload['heartbeat_age_seconds'] ?? 0) / 60).' minute(s)',
@@ -112,6 +114,8 @@ final class NotificationPresenter
             'moderation.warning', 'moderation.reporter_warning' => 'alert-triangle',
             'moderation.reporting_paused' => 'flag-off',
             'comment.on_your_post', 'comment.on_blog', 'comment.created' => 'message-circle',
+            'traffic.milestone' => 'trophy',
+            'traffic.spike' => 'trending-up',
             'admin.report_threshold' => 'flag',
             'admin.mail_queue_failures' => 'mail-warning',
             'admin.scheduler_stalled' => 'clock-alert',
@@ -122,7 +126,7 @@ final class NotificationPresenter
     private static function tone(string $type): string
     {
         return match (true) {
-            in_array($type, ['post.approved', 'post.published'], true) => self::TONE_POSITIVE,
+            in_array($type, ['post.approved', 'post.published', 'traffic.milestone', 'traffic.spike'], true) => self::TONE_POSITIVE,
             in_array($type, ['post.needs_changes', 'post.workflow_disabled', 'comment.awaiting_moderation'], true) => self::TONE_ATTENTION,
             in_array($type, [
                 'collaborator.removed', 'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused',
@@ -154,6 +158,8 @@ final class NotificationPresenter
                 ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
                 : self::commentUrl($payload),
             'collaborator.role_changed' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0),
+            'traffic.milestone' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/analytics/traffic/posts/'.(int) ($payload['post_id'] ?? 0).'?range=12m',
+            'traffic.spike' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/analytics/traffic?range=today',
             'admin.report_threshold' => '/admin/reports/'.(int) ($payload['case_id'] ?? 0),
             'admin.mail_queue_failures' => '/admin/mail-queue?status=failed',
             'admin.scheduler_stalled' => '/admin/scheduled-tasks',

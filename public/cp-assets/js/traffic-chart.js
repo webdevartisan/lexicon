@@ -1,7 +1,8 @@
 /**
  * Draws the line chart on the Traffic and Sign-ups pages, one line per key in
- * data.labels. Colours come from utility classes on the page, so the chart
- * follows the light and dark palettes.
+ * data.labels, a dashed line per key in data.previous for the period it is
+ * compared with, and a marker for each point in data.markers. Colours come
+ * from utility classes on the page, so the chart follows the light and dark palettes.
  */
 (function () {
     'use strict';
@@ -16,10 +17,17 @@
     var root = document.documentElement;
     var numbers = new Intl.NumberFormat(root.lang || undefined);
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var markers = {};
     var chart = null;
 
+    (data.markers || []).forEach(function (marker) {
+        markers[marker.index] = marker.labels;
+    });
+
     function colour(name) {
-        return getComputedStyle(host.querySelector('[data-chart-color="' + name + '"]')).color;
+        var swatch = host.querySelector('[data-chart-color="' + name + '"]');
+
+        return swatch ? getComputedStyle(swatch).color : 'rgb(100, 116, 139)';
     }
 
     function withAlpha(rgb, alpha) {
@@ -27,6 +35,74 @@
 
         return 'rgba(' + parts[0] + ', ' + parts[1] + ', ' + parts[2] + ', ' + alpha + ')';
     }
+
+    function datasets() {
+        var sets = Object.keys(data.labels).map(function (key, index) {
+            var line = colour(key);
+
+            return {
+                label: data.labels[key],
+                data: data.points.map(function (p) { return p[key]; }),
+                borderColor: line,
+                backgroundColor: withAlpha(line, index === 0 ? 0.15 : 0.08),
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: data.points.length > 45 ? 0 : 2,
+                pointHoverRadius: 4
+            };
+        });
+
+        Object.keys(data.previous || {}).forEach(function (key) {
+            sets.push({
+                label: data.previous[key],
+                data: data.points.map(function (p) { return p['previous_' + key]; }),
+                borderColor: withAlpha(colour(key), 0.55),
+                borderDash: [5, 4],
+                borderWidth: 1.5,
+                fill: false,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 3
+            });
+        });
+
+        return sets;
+    }
+
+    // A thin vertical line on each point something happened, under the data lines.
+    var markerLines = {
+        id: 'trafficMarkers',
+        beforeDatasetsDraw: function (instance) {
+            var indexes = Object.keys(markers);
+            if (indexes.length === 0) {
+                return;
+            }
+
+            var ctx = instance.ctx;
+            var area = instance.chartArea;
+            var x = instance.scales.x;
+
+            ctx.save();
+            ctx.strokeStyle = withAlpha(colour('marker'), 0.8);
+            ctx.fillStyle = colour('marker');
+            ctx.setLineDash([3, 3]);
+            ctx.lineWidth = 1;
+
+            indexes.forEach(function (index) {
+                var position = x.getPixelForValue(Number(index));
+                ctx.beginPath();
+                ctx.moveTo(position, area.top);
+                ctx.lineTo(position, area.bottom);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(position, area.top + 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+    };
 
     function draw() {
         var dark = root.getAttribute('data-mode') === 'dark';
@@ -42,22 +118,9 @@
             type: 'line',
             data: {
                 labels: data.points.map(function (p) { return p.label; }),
-                datasets: Object.keys(data.labels).map(function (key, index) {
-                    var line = colour(key);
-
-                    return {
-                        label: data.labels[key],
-                        data: data.points.map(function (p) { return p[key]; }),
-                        borderColor: line,
-                        backgroundColor: withAlpha(line, index === 0 ? 0.15 : 0.08),
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 2,
-                        pointRadius: data.points.length > 45 ? 0 : 2,
-                        pointHoverRadius: 4
-                    };
-                })
+                datasets: datasets()
             },
+            plugins: [markerLines],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -70,6 +133,9 @@
                         callbacks: {
                             label: function (item) {
                                 return ' ' + item.dataset.label + ': ' + numbers.format(item.parsed.y);
+                            },
+                            footer: function (items) {
+                                return items.length && markers[items[0].dataIndex] ? markers[items[0].dataIndex] : [];
                             }
                         }
                     }

@@ -68,3 +68,39 @@ test('dates lists every day oldest first', function () {
 
     expect($range->dates())->toBe(['2026-03-30', '2026-03-31', '2026-04-01', '2026-04-02']);
 });
+
+test('calendar ranges follow the calendar', function (string $preset, string $from, string $to) {
+    $range = TrafficRange::fromQuery(['range' => $preset], 'UTC');
+    $today = new DateTimeImmutable('today', new DateTimeZone('UTC'));
+
+    expect($range->fromDate())->toBe($today->modify($from)->format('Y-m-d'))
+        ->and($range->toDate())->toBe($today->modify($to)->format('Y-m-d'))
+        ->and($range->rejected)->toBeFalse();
+})->with([
+    'today' => ['today', 'today', 'today'],
+    'yesterday' => ['yesterday', '-1 day', '-1 day'],
+    'this month' => ['month', 'first day of this month', 'today'],
+    'last month' => ['last_month', 'first day of last month', 'last day of last month'],
+]);
+
+test('the comparison can be the same days a year earlier, and links keep it', function () {
+    $range = TrafficRange::fromQuery(['range' => 'custom', 'from' => '2026-03-01', 'to' => '2026-03-10', 'compare' => 'year'], 'UTC');
+    $previous = $range->previous();
+
+    expect([$previous->fromDate(), $previous->toDate()])->toBe(['2025-03-01', '2025-03-10'])
+        ->and($range->query())->toBe(['range' => 'custom', 'from' => '2026-03-01', 'to' => '2026-03-10', 'compare' => 'year'])
+        ->and($range->key())->toBe('2026-03-01:2026-03-10:year');
+});
+
+test('an unknown comparison falls back to the days before', function () {
+    expect(TrafficRange::fromQuery(['range' => '7d', 'compare' => 'decade'], 'UTC')->compare)->toBe(TrafficRange::COMPARE_PREVIOUS);
+});
+
+test('a range is inside raw retention only when its first day still is', function () {
+    $today = new DateTimeImmutable('2026-03-31', new DateTimeZone('UTC'));
+    $range = TrafficRange::fromQuery(['range' => 'custom', 'from' => '2026-03-02', 'to' => '2026-03-31'], 'UTC');
+    $older = TrafficRange::fromQuery(['range' => 'custom', 'from' => '2026-03-01', 'to' => '2026-03-31'], 'UTC');
+
+    expect($range->withinRaw(30, $today))->toBeTrue()
+        ->and($older->withinRaw(30, $today))->toBeFalse();
+});

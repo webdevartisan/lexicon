@@ -100,10 +100,21 @@ final class TrafficScope
     {
         // The site has no "elsewhere on Lexicon": every part of it is the site.
         return match ($type) {
-            self::PLATFORM, self::BLOG => [...self::COMMON_BREAKDOWNS, 'page', 'lexicon'],
-            self::POST => [...self::COMMON_BREAKDOWNS, 'lexicon'],
-            self::SITE => self::COMMON_BREAKDOWNS,
+            self::PLATFORM => [...self::COMMON_BREAKDOWNS, 'page', 'lexicon', 'entry', 'exit', 'hour'],
+            self::BLOG => [...self::COMMON_BREAKDOWNS, 'page', 'lexicon', 'entry', 'exit', 'hour', 'category', 'tag', 'author'],
+            self::POST => [...self::COMMON_BREAKDOWNS, 'lexicon', 'next', 'hour'],
+            self::SITE => [...self::COMMON_BREAKDOWNS, 'hour'],
             default => throw new \InvalidArgumentException("Unknown traffic scope '{$type}'."),
         };
+    }
+
+    /**
+     * Breakdowns shown as a bar list. The rest have their own widgets.
+     *
+     * @return list<string>
+     */
+    public function listBreakdowns(): array
+    {
+        return array_values(array_diff($this->breakdowns(), ['hour']));
     }
 }

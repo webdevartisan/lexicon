@@ -151,6 +151,15 @@ describe('BlogPolicy traffic', function () {
 
         expect($policy->viewTraffic(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
     });
+
+    test('staff who see the platform traffic can open any blog\'s numbers, read only', function () {
+        $policy = new BlogPolicy();
+        $staff = makeUser(1, ['administrator']) + ['permissions' => ['view_platform_traffic']];
+
+        expect($policy->viewTraffic($staff, blogWith([])))->toBeTrue()
+            ->and($policy->viewAllTraffic($staff, blogWith([])))->toBeTrue()
+            ->and($policy->manageUsers($staff, blogWith([])))->toBeFalse();
+    });
 });
 
 test('reassigning a post author needs edit_blog_posts', function () {

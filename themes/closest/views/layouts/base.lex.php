@@ -104,6 +104,8 @@
     {% yield content %}
   </main>
 
+  {% include "partials/_popular_posts.lex.php" %}
+
   <?php
     // The bottom margin of a survey sheet: scale bar, sheet reference, big
     // sheet title. The grid ref is a stable hash of the slug, pure decoration.

@@ -39,6 +39,9 @@ class PostModel extends AppModel
      */
     public const VISIBILITIES = ['public', 'private', 'unlisted'];
 
+    /** Blog addresses the blog's own pages answer, so no post can be given one. */
+    private const ROUTE_SLUGS = ['archive', 'index-feed', 'stats'];
+
     /**
      * Allowed public-lifecycle status transitions.
      *
@@ -300,7 +303,7 @@ class PostModel extends AppModel
             ':except_id' => $exceptId ?? 0,
             ':slug' => $slug,
             ':pattern' => $slug.'-%',
-        ])->fetchAll(), 'slug'));
+        ])->fetchAll(), 'slug')) + array_flip(self::ROUTE_SLUGS);
 
         if (!isset($taken[$slug])) {
             return $slug;

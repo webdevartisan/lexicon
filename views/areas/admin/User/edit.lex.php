@@ -43,6 +43,9 @@ $notifyLabels = [
     'notify_comments_blog' => 'account.notifications.blog',
     'notify_role_changes' => 'account.notifications.role',
     'notify_invites' => 'account.notifications.invites',
+    'notify_traffic_digest' => 'account.notifications.trafficDigest',
+    'notify_traffic_milestones' => 'account.notifications.trafficMilestones',
+    'notify_traffic_spikes' => 'account.notifications.trafficSpikes',
 ];
 
 $checkboxClass = 'form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500';

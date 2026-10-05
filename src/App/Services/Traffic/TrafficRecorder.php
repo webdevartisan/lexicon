@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Traffic;
 
 use App\Models\BlogModel;
+use App\Models\TrafficEventModel;
 use App\Models\TrafficHitModel;
+use App\Models\TrafficNotFoundModel;
 use Framework\Core\Request;
 
 /**
@@ -24,6 +26,10 @@ class TrafficRecorder
     public const OPTED_OUT = 'opted_out';
 
     public const BOT = 'bot';
+
+    public const HOSTING = 'hosting';
+
+    public const NOT_FOUND = 'not_found';
 
     public const UNKNOWN_PAGE = 'unknown_page';
 
@@ -45,7 +51,10 @@ class TrafficRecorder
         private ReferrerClassifier $referrers,
         private VisitorIdentity $identity,
         private CountryLookup $countries,
+        private NetworkLookup $networks,
         private TrafficHitModel $hits,
+        private TrafficEventModel $events,
+        private TrafficNotFoundModel $notFound,
         private BlogModel $blogs,
         private array $config,
     ) {}
@@ -68,7 +77,7 @@ class TrafficRecorder
 
         $page = $this->pages->resolve($payload->path);
         if ($page === null) {
-            return self::UNKNOWN_PAGE;
+            return $payload->notFound ? $this->recordNotFound($request, $payload, $viewer, $impersonating) : self::UNKNOWN_PAGE;
         }
 
         $refusal = $this->refusePage($page, $viewer, $impersonating);
@@ -81,8 +90,10 @@ class TrafficRecorder
             return self::SPAM;
         }
 
+        $fromPostId = null;
         if ($referrer['channel'] === 'internal') {
             $referrer = $this->withinLexicon($page, $payload->referrer);
+            $fromPostId = $referrer['channel'] === 'internal' ? $this->fromPost($page, $payload->referrer) : null;
         }
 
         $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
@@ -93,7 +104,16 @@ class TrafficRecorder
             return self::DUPLICATE;
         }
 
-        return $this->store($request, $payload, $page, $referrer, $pathHash, $visitorHash, $visitorKind, $now);
+        return $this->store(
+            $request,
+            $payload,
+            $page,
+            $referrer + ['fromPostId' => $fromPostId],
+            $pathHash,
+            $visitorHash,
+            $visitorKind,
+            $now
+        );
     }
 
     /**
@@ -115,6 +135,10 @@ class TrafficRecorder
 
         if ($this->agents->isBot((string) $request->header('User-Agent', ''), $this->settings->extraBotPatterns())) {
             return self::BOT;
+        }
+
+        if ($this->networks->isHosting((string) $request->ip())) {
+            return self::HOSTING;
         }
 
         return null;
@@ -139,7 +163,7 @@ class TrafficRecorder
     }
 
     /**
-     * @param  array{channel: string, host: ?string, source: ?string}  $referrer
+     * @param  array{channel: string, host: ?string, source: ?string, fromPostId: ?int}  $referrer
      */
     private function store(
         Request $request,
@@ -152,11 +176,13 @@ class TrafficRecorder
         \DateTimeImmutable $now
     ): string {
         $family = $this->agents->classify((string) $request->header('User-Agent', ''));
+        $local = $now->setTimezone(new \DateTimeZone($page->timezone()));
 
         $stored = $this->hits->record([
             'view_id' => $payload->viewIdBytes(),
             'blog_id' => $page->blogId,
             'post_id' => $page->postId,
+            'from_post_id' => $referrer['fromPostId'],
             'page_type' => $page->pageType,
             'path' => $page->path,
             'path_hash' => $pathHash,
@@ -168,12 +194,14 @@ class TrafficRecorder
             'utm_source' => $payload->utmSource,
             'utm_medium' => $payload->utmMedium,
             'utm_campaign' => $payload->utmCampaign,
+            'search_term' => $page->pageType === 'discover' ? self::searchTerm($payload->searchTerm) : null,
             'device' => $family['device'],
             'browser' => $family['browser'],
             'os' => $family['os'],
             'country' => $this->countries->country((string) $request->ip()),
             'locale' => substr($page->locale, 0, 5),
-            'local_date' => $now->setTimezone(new \DateTimeZone($page->timezone()))->format('Y-m-d'),
+            'local_date' => $local->format('Y-m-d'),
+            'local_hour' => (int) $local->format('G'),
         ]);
 
         return $stored ? self::RECORDED : self::DUPLICATE;
@@ -196,6 +224,107 @@ class TrafficRecorder
         $source = $from['blogId'] !== null ? LexiconSource::blog($from['blogId']) : $from['pageType'];
 
         return ['channel' => 'lexicon', 'host' => null, 'source' => $source];
+    }
+
+    /**
+     * The post the reader was on just before, when they moved here inside the same blog.
+     */
+    private function fromPost(TrafficPage $page, string $referrer): ?int
+    {
+        if ($page->blogId === null) {
+            return null;
+        }
+
+        $from = $this->pages->resolve($referrer);
+
+        return $from !== null && $from->blogId === $page->blogId && $from->postId !== $page->postId ? $from->postId : null;
+    }
+
+    /**
+     * A reader reached a page that doesn't exist. Kept per path and referring site,
+     * so the blog owner can see broken links pointing at the blog.
+     *
+     * @param  array<string, mixed>|null  $viewer
+     */
+    private function recordNotFound(Request $request, BeaconPayload $payload, ?array $viewer, bool $impersonating): string
+    {
+        $path = $this->pages->normalise($payload->path);
+
+        if ($path === null || $impersonating || in_array('administrator', $viewer['roles'] ?? [], true)) {
+            return self::UNKNOWN_PAGE;
+        }
+
+        if ($this->referrers->classify($payload->referrer, $this->ownHost($request), $payload->utmMedium) === null) {
+            return self::SPAM;
+        }
+
+        $host = strtolower((string) parse_url($payload->referrer, PHP_URL_HOST));
+        $host = preg_replace('/^www\./', '', $host) ?? '';
+
+        $this->notFound->record($path, mb_substr($host, 0, 100), $this->pages->section($payload->path)['blogId']);
+
+        return self::NOT_FOUND;
+    }
+
+    /**
+     * A click on an outbound link or a download, on a view counted in the last few hours.
+     */
+    public function recordClick(Request $request, BeaconPayload $payload): bool
+    {
+        if (!$this->settings->enabled() || self::optedOut($request) || $payload->clickKind === null) {
+            return false;
+        }
+
+        $target = $payload->clickKind === 'outbound'
+            ? self::outboundHost((string) $payload->clickTarget)
+            : $this->downloadName((string) $payload->clickTarget);
+
+        if ($target === null) {
+            return false;
+        }
+
+        $view = $this->hits->findRecentView($payload->viewIdBytes(), (int) $this->config['engagement_window_minutes']);
+        if ($view === null) {
+            return false;
+        }
+
+        $this->events->recordClick($payload->clickKind, $view['blog_id'], $view['post_id'], $target, $view['local_date']);
+
+        return true;
+    }
+
+    private static function outboundHost(string $target): ?string
+    {
+        $host = strtolower(str_contains($target, '/') ? (string) parse_url($target, PHP_URL_HOST) : $target);
+        $host = preg_replace('/^www\./', '', trim($host)) ?? '';
+
+        return preg_match('/^[a-z0-9-]+(\.[a-z0-9-]+)+$/', $host) && strlen($host) <= 191 ? $host : null;
+    }
+
+    private function downloadName(string $target): ?string
+    {
+        $name = rawurldecode(basename((string) parse_url($target, PHP_URL_PATH)));
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+        if ($name === '' || !in_array($extension, $this->config['download_extensions'], true)) {
+            return null;
+        }
+
+        return mb_substr($name, 0, 191);
+    }
+
+    /**
+     * What was searched, folded so the same search typed differently counts once.
+     */
+    private static function searchTerm(?string $term): ?string
+    {
+        if ($term === null) {
+            return null;
+        }
+
+        $term = trim(preg_replace('/\s+/u', ' ', mb_strtolower($term)) ?? '');
+
+        return $term === '' ? null : mb_substr($term, 0, 100);
     }
 
     /**
