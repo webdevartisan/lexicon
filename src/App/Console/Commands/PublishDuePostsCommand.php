@@ -97,7 +97,7 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
                 // invisible until the TTL expires.
                 $this->publicCache->purgeBlogSurfaces();
                 $this->publicCache->purgeHome();
-                $this->publicCache->purgeExplore();
+                $this->publicCache->purgeDiscover();
 
                 // Also clear fragment caches for affected blogs so paginated lists
                 // and category grids reflect the newly published post immediately.

@@ -74,7 +74,7 @@ final class BlogDeletionService
         }
 
         $this->cacheInvalidator->purgeHome();
-        $this->cacheInvalidator->purgeExplore();
+        $this->cacheInvalidator->purgeDiscover();
 
         return $stats;
     }

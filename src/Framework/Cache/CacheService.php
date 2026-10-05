@@ -22,7 +22,7 @@ use Framework\Filesystem\Path;
  *
  * Example index file content (keys.index):
  * en:GET:/→abc123def456
- * en:GET:/blogs→789ghi012jkl
+ * en:GET:/discover→789ghi012jkl
  */
 class CacheService
 {
@@ -86,7 +86,7 @@ class CacheService
      * check expiration before returning to ensure stale content is never served.
      * Expired cache files are deleted automatically to prevent disk bloat.
      *
-     * @param  string  $key  Cache key (e.g., "en:GET:/blogs?page=2")
+     * @param  string  $key  Cache key (e.g., "en:GET:/discover?page=2")
      * @return string|null Cached content or null if not found/expired
      */
     public function get(string $key): ?string

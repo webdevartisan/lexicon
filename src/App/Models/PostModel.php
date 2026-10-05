@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\PostResource;
+use App\Services\PublicCacheInvalidator;
 
 /**
  * PostModel handles post CRUD operations and relationships.
@@ -65,8 +66,8 @@ class PostModel extends AppModel
         $id = parent::insert($data);
 
         if ($id) {
-            // Clear all blog listing cache (homepage, category pages, etc.)
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover lists recent posts and each blog's post count.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
 
             // A new post shifts every neighbour/related list in its blog.
             if (!empty($data['blog_id'])) {
@@ -109,8 +110,8 @@ class PostModel extends AppModel
                 cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$data['slug']}*");
             }
 
-            // Invalidate all blog listings (post might appear in multiple lists)
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover lists recent posts.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
 
             // Drop this post's own data fragments plus the blog-wide neighbour lists.
             $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
@@ -140,8 +141,8 @@ class PostModel extends AppModel
             // Invalidate the deleted post's URL
             cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
 
-            // Invalidate all blog listings (post removed from lists)
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover lists recent posts.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
 
             // Drop this post's own data fragments plus the blog-wide neighbour lists.
             $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
@@ -1205,7 +1206,7 @@ class PostModel extends AppModel
         $blog = $post->blog();
 
         cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-        cache()->deletePattern('*:GET:/blogs*');
+        app(PublicCacheInvalidator::class)->purgeDiscover();
 
         // Neighbour/related lists filter on status='published', so a status
         // flip shifts them for the whole blog.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\BlogResource;
+use App\Services\PublicCacheInvalidator;
 
 /**
  * BlogModel handles blog CRUD operations and collaborator management.
@@ -261,8 +262,8 @@ class BlogModel extends AppModel
                 $this->forgetPublicCaches((string) $data['slug']);
             }
 
-            // Invalidate blog listings
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover lists the blog.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
         }
 
         return $result;
@@ -1009,8 +1010,8 @@ class BlogModel extends AppModel
         if ($result && $blog) {
             $this->forgetPublicCaches($blog->slug());
 
-            // Invalidate blog listings
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover lists the blog.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
         }
 
         return $result;

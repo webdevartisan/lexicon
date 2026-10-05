@@ -28,10 +28,10 @@ class BlogController extends AppController
     ) {}
 
     /**
-     * Toggle the explore page featured flag on a blog.
+     * Toggle whether a blog is featured on Discover.
      *
      * Curation gate for a platform owned surface, so it is audit logged and
-     * the cached explore page is purged right away.
+     * the cached Discover page is purged right away.
      */
     public function featureExplore(string $id): Response
     {
@@ -45,7 +45,7 @@ class BlogController extends AppController
         $on = !((int) ($blog['is_featured'] ?? 0) === 1);
 
         if ($on && ($blog['status'] ?? '') !== 'published') {
-            $this->flash('error', 'Only published blogs can be featured on the explore page.');
+            $this->flash('error', 'Only published blogs can be featured on Discover.');
 
             return $this->redirectToList('/admin/blogs');
         }
@@ -61,10 +61,10 @@ class BlogController extends AppController
             $this->request->ip()
         );
 
-        $this->publicCache->purgeExplore();
+        $this->publicCache->purgeDiscover();
         $this->flash('success', $on
-            ? 'Blog is now featured on the explore page.'
-            : 'Blog removed from the explore page featured section.');
+            ? 'Blog is now featured on Discover.'
+            : 'Blog is no longer featured on Discover.');
 
         return $this->redirectToList('/admin/blogs');
     }
@@ -147,7 +147,7 @@ class BlogController extends AppController
             'theme' => 'bs.theme',
             'created' => 'b.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC',
-            // Explore picks lead the list, the same way featured posts do.
+            // Discover picks lead the list, the same way featured posts do.
             pinned: 'b.is_featured DESC');
 
         $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy(), $theme);

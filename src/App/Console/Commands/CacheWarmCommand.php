@@ -200,7 +200,7 @@ class CacheWarmCommand implements SchedulableCommandInterface
      * Even for routes with TTL=0 (no full-page caching), still visit them
      * to warm any fragment caches that exist in their templates.
      *
-     * @param  string  $route  Route path (e.g., '/', '/blogs')
+     * @param  string  $route  Route path (e.g., '/', '/discover')
      * @param  string  $locale  Locale code (e.g., 'en', 'el')
      * @param  int  $ttl  TTL for this route (0 = no full-page cache)
      * @return array{success: bool, cached: bool, size: int, time: float, error: string|null}

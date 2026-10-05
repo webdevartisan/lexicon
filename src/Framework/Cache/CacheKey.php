@@ -24,7 +24,7 @@ class CacheKey
 
     /**
      * @param  array<string, string[]>  $queryWhitelist  Map of path => allowed query params
-     *                                                   e.g., ['/blogs' => ['page', 'q']]
+     *                                                   e.g., ['/discover' => ['page', 'q']]
      */
     public function __construct(array $queryWhitelist = [])
     {

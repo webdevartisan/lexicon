@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\PublicCacheInvalidator;
+
 /**
  * CategoryModel
  *
@@ -121,8 +123,8 @@ class CategoryModel extends AppModel
         $result = parent::update($id, $data);
 
         if ($result) {
-            // Invalidate all blog listings (categories shown in sidebars, filters, etc.)
-            cache()->deletePattern('*:GET:/blogs*');
+            // Discover shows each post's category.
+            app(PublicCacheInvalidator::class)->purgeDiscover();
 
             $blogId = (int) ($existing['blog_id'] ?? $data['blog_id'] ?? 0);
             if ($blogId > 0) {

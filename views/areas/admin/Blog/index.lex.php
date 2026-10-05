@@ -69,7 +69,7 @@ $showUrl = '/admin/blogs/'.$blog['id'].'/show';
 $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
 $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
 $featuredOnExplore = (int) ($blog['is_featured'] ?? 0) === 1;
-$featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on explore page';
+$featureTip = $featuredOnExplore ? 'Stop featuring on Discover' : 'Feature on Discover';
 $blogTheme = (string) ($blog['theme'] ?? '');
 // The stored key is what the filter matches on, so show that rather than the
 // display name; they differ, and a mismatch here would read as a broken filter.
@@ -84,7 +84,7 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         <td class="px-3.5 py-2.5">
                             <?php if ($featuredOnExplore) { ?>
                             {% cache 'lucide:star-fill:row' ttl=31536000 %}<i data-lucide="star" class="size-3.5 fill-current text-amber-500 inline-block align-[-1px] mr-1"></i>{% endcache %}
-                            <span class="sr-only">Featured on the explore page. </span>
+                            <span class="sr-only">Featured on Discover. </span>
                             <?php } ?>
                             <?php // A blog with no slug has no public page to open, so it stays plain text.?>
                             <?php if ($publicUrl !== '') { ?>
@@ -117,8 +117,8 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                                         'label' => $featureTip, 'icon' => 'star',
                                         'post' => buildLocalizedUrl('/admin/blogs/'.(int) $blog['id'].'/feature-explore'),
                                         'confirm' => $featuredOnExplore
-                                            ? 'Take this blog off the explore page?'
-                                            : 'Feature this blog on the explore page?',
+                                            ? 'Stop featuring this blog on Discover?'
+                                            : 'Feature this blog on Discover?',
                                         // featureExplore() refuses anything unpublished, so offering it
                                         // there would only ever produce an error flash.
                                         'can' => $featuredOnExplore || $blogStatus === 'published',

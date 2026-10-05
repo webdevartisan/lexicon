@@ -156,7 +156,7 @@ class AccountErasureService
 
         $this->cacheInvalidator->purgeAuthorSurfaces((string) $user['handle']);
         $this->cacheInvalidator->purgeHome();
-        $this->cacheInvalidator->purgeExplore();
+        $this->cacheInvalidator->purgeDiscover();
     }
 
     public function deletedUserId(): int
