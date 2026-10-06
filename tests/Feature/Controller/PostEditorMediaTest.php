@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Dashboard\PostController;
+use App\Controllers\Dashboard\UploadController;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
@@ -10,6 +11,7 @@ use App\Models\UserModel;
 use Framework\Core\App;
 use Framework\Core\Request;
 use Framework\Exceptions\CsrfTokenException;
+use Framework\Exceptions\UnauthorizedException;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Security\Csrf;
 use Framework\Security\CsrfMiddleware;
@@ -59,7 +61,9 @@ beforeEach(function () {
             return '';
         }
 
-        public function addGlobals(array $vars): void {}
+        public function addGlobals(array $vars): void
+        {
+        }
 
         public function compiledViewStats(): array
         {
@@ -157,6 +161,32 @@ it('refuses an image upload request whose token has expired with a 419 the uploa
 
     expect($response->getStatusCode())->toBe(419)
         ->and(json_decode($response->getBody(), true)['success'])->toBeFalse();
+});
+
+it('refuses TinyMCE image uploads for a blog the user cannot write to', function () {
+    auth()->logout();
+
+    $email = faker()->unique()->safeEmail();
+    UserFactory::new(new UserModel($this->db))
+        ->withAttributes(['email' => $email, 'password' => password_hash('password123', PASSWORD_DEFAULT)])
+        ->create();
+    expect(auth()->login($email, 'password123'))->toBeTrue();
+
+    $request = new Request(
+        '/dashboard/posts/image-upload',
+        'POST',
+        [],
+        ['blog_id' => $this->blogId],
+        [],
+        [],
+        ['REMOTE_ADDR' => '127.0.0.1'],
+        ['x-csrf-token' => $this->token]
+    );
+
+    $controller = App::container()->get(UploadController::class);
+    setupController($controller, $request, $this->viewer);
+
+    expect(fn () => $controller->tinymceImage())->toThrow(UnauthorizedException::class);
 });
 
 it('refuses a body that adds an image from another site', function () {
