@@ -416,14 +416,46 @@ return [
                 'details' => "<strong>If this wasn't you</strong>, ignore this message. You won't get any more emails and the address is removed within a week.",
             ] + $security,
         ],
-        Mail\NewCommentMail::class => [
+        Mail\CommentReplyMail::class => [
             'template' => 'notification',
             'mapping' => [
-                'heading' => 'New comment',
-                'intro' => '{{ lead }}',
+                'heading' => 'New reply to your comment',
+                'intro' => '{{ commenter_name }} replied to your comment on {{ post_title }}:',
                 'quote' => '{{ comment_excerpt }}',
                 'callout' => '{{ moderation_note }}',
-                'button_label' => '{{ action_label }}',
+                'button_label' => 'View the reply',
+                'button_url' => '{{ comment_url }}',
+            ] + $notification,
+        ],
+        Mail\PostCommentMail::class => [
+            'template' => 'notification',
+            'mapping' => [
+                'heading' => 'New comment on your post',
+                'intro' => '{{ commenter_name }} commented on your post {{ post_title }}:',
+                'quote' => '{{ comment_excerpt }}',
+                'callout' => '{{ moderation_note }}',
+                'button_label' => 'View the comment',
+                'button_url' => '{{ comment_url }}',
+            ] + $notification,
+        ],
+        Mail\CommentModerationMail::class => [
+            'template' => 'notification',
+            'mapping' => [
+                'heading' => 'A comment needs your approval',
+                'intro' => '{{ commenter_name }} commented on {{ post_title }} and it needs your approval:',
+                'quote' => '{{ comment_excerpt }}',
+                'button_label' => 'Review the comment',
+                'button_url' => '{{ comment_url }}',
+            ] + $notification,
+        ],
+        Mail\BlogCommentMail::class => [
+            'template' => 'notification',
+            'mapping' => [
+                'heading' => 'New comment on your blog',
+                'intro' => '{{ commenter_name }} commented on {{ post_title }}:',
+                'quote' => '{{ comment_excerpt }}',
+                'callout' => '{{ moderation_note }}',
+                'button_label' => 'View the comment',
                 'button_url' => '{{ comment_url }}',
             ] + $notification,
         ],

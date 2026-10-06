@@ -102,6 +102,18 @@ it('refuses a preview without a valid CSRF token', function () {
     $controller->preview();
 })->throws(Framework\Exceptions\CsrfTokenException::class);
 
+it('lists every registered email on its own row, each comment email included', function () {
+    $controller = new EmailBindingController(new \Framework\Core\Response(), $this->manager);
+    setupController($controller, makeRequest('/admin/email-templates/emails'), $this->viewer);
+
+    $controller->index();
+    $listed = array_merge(...array_map('array_keys', array_values($this->viewer->data['groups'])));
+
+    expect($listed)->toHaveCount(count(App::container()->get(\App\Services\EmailTemplateRegistry::class)->getAll()))
+        ->and($this->viewer->data['groups']['Comments'])->toHaveKeys(['CommentReplyMail', 'PostCommentMail', 'CommentModerationMail', 'BlogCommentMail'])
+        ->and(array_column($this->viewer->data['groups']['Comments'], 'problem'))->each->toBeNull();
+});
+
 it('only edits emails the registry knows, never an arbitrary class', function () {
     $controller = new EmailBindingController(new \Framework\Core\Response(), $this->manager);
     setupController($controller, makeRequest('/admin/email-templates/emails/Mailable/edit'), $this->viewer);

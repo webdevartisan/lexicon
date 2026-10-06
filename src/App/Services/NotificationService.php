@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\BlogCommentMail;
 use App\Mail\CollaboratorRemovedMail;
 use App\Mail\CollaboratorRoleChangedMail;
+use App\Mail\CommentMail;
+use App\Mail\CommentModerationMail;
+use App\Mail\CommentReplyMail;
 use App\Mail\InsightsMilestoneMail;
 use App\Mail\InsightsSpikeMail;
 use App\Mail\InviteDeclinedMail;
 use App\Mail\Mailable;
-use App\Mail\NewCommentMail;
 use App\Mail\PostApprovedMail;
+use App\Mail\PostCommentMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
 use App\Mail\PostSubmittedMail;
@@ -81,13 +85,16 @@ class NotificationService
     ];
 
     /**
-     * Comment notification type → the reason string NewCommentMail renders from.
+     * Comment notification type → the email sent for it. Each reason is its
+     * own email, so each can be worded separately in the control panel.
+     *
+     * @var array<string, class-string<CommentMail>>
      */
-    private const COMMENT_MAIL_REASON = [
-        CommentAudienceResolver::TYPE_REPLY => NewCommentMail::REASON_REPLY,
-        CommentAudienceResolver::TYPE_AUTHORED => NewCommentMail::REASON_AUTHORED,
-        CommentAudienceResolver::TYPE_MODERATION => NewCommentMail::REASON_MODERATION,
-        CommentAudienceResolver::TYPE_BLOG => NewCommentMail::REASON_BLOG,
+    private const COMMENT_MAIL = [
+        CommentAudienceResolver::TYPE_REPLY => CommentReplyMail::class,
+        CommentAudienceResolver::TYPE_AUTHORED => PostCommentMail::class,
+        CommentAudienceResolver::TYPE_MODERATION => CommentModerationMail::class,
+        CommentAudienceResolver::TYPE_BLOG => BlogCommentMail::class,
     ];
 
     public function __construct(
@@ -237,7 +244,7 @@ class NotificationService
             CommentAudienceResolver::TYPE_REPLY,
             CommentAudienceResolver::TYPE_AUTHORED,
             CommentAudienceResolver::TYPE_MODERATION,
-            CommentAudienceResolver::TYPE_BLOG => new NewCommentMail(
+            CommentAudienceResolver::TYPE_BLOG => new (self::COMMENT_MAIL[$type])(
                 $to,
                 (string) ($data['post_title'] ?? ''),
                 (string) ($data['blog_slug'] ?? ''),
@@ -246,7 +253,6 @@ class NotificationService
                 (string) ($data['comment_excerpt'] ?? ''),
                 (bool) ($data['awaiting_moderation'] ?? false),
                 (int) ($data['comment_id'] ?? 0),
-                self::COMMENT_MAIL_REASON[$type],
                 (int) ($data['blog_id'] ?? 0)
             ),
             'blog.invite_declined' => new InviteDeclinedMail(

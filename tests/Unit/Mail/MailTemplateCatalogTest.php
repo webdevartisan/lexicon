@@ -61,20 +61,6 @@ test('every registered sample renders strictly against the built-in templates', 
     }
 });
 
-test('an email gives its template the same data in every situation it is sent in', function () {
-    $keysByClass = [];
-
-    foreach ($this->registry->getAll() as $key => $meta) {
-        $keys = array_keys($this->registry->build($key)->getTemplateData());
-        sort($keys);
-        $keysByClass[$meta['class']][$key] = $keys;
-    }
-
-    foreach ($keysByClass as $class => $samples) {
-        expect(count(array_unique(array_map('serialize', $samples))))->toBe(1, "{$class} varies its template data between samples");
-    }
-});
-
 test('no markup is left in the Mailable classes', function () {
     foreach (glob(ROOT_PATH.'/src/App/Mail/*.php') ?: [] as $file) {
         if (in_array(basename($file), ['Mailable.php', 'QueuedMail.php'], true)) {

@@ -85,7 +85,7 @@ class EmailTemplateManager
      * Every email the site sends, one entry per Mailable class, keyed by its
      * short class name (the form the control panel URLs use).
      *
-     * @return array<string, array{class: string, short: string, name: string, description: string, group: string, samples: list<string>}>
+     * @return array<string, array{class: string, short: string, name: string, description: string, group: string, sample: string}>
      */
     public function emails(): array
     {
@@ -95,26 +95,22 @@ class EmailTemplateManager
             $class = (string) $meta['class'];
             $short = TemplateDataException::shortName($class);
 
-            if (!isset($emails[$short])) {
-                $emails[$short] = [
-                    'class' => $class,
-                    'short' => $short,
-                    // Variants are registered as "Name — Variant"; the email itself is "Name".
-                    'name' => explode(' — ', (string) $meta['name'])[0],
-                    'description' => (string) $meta['description'],
-                    'group' => (string) ($meta['group'] ?? 'Other'),
-                    'samples' => [],
-                ];
-            }
-
-            $emails[$short]['samples'][] = (string) $key;
+            // The registry holds each class once (EmailTemplateRegistryTest checks it).
+            $emails[$short] ??= [
+                'class' => $class,
+                'short' => $short,
+                'name' => (string) $meta['name'],
+                'description' => (string) $meta['description'],
+                'group' => (string) ($meta['group'] ?? 'Other'),
+                'sample' => (string) $key,
+            ];
         }
 
         return $emails;
     }
 
     /**
-     * @return array{class: string, short: string, name: string, description: string, group: string, samples: list<string>}|null
+     * @return array{class: string, short: string, name: string, description: string, group: string, sample: string}|null
      */
     public function email(string $short): ?array
     {
@@ -122,7 +118,7 @@ class EmailTemplateManager
     }
 
     /**
-     * What an email gives its template, as display text, from one of its samples.
+     * What an email gives its template, as display text, from its sample.
      *
      * Built against the shipped templates, so listing an email's data works
      * even while its stored template is broken.
@@ -167,7 +163,7 @@ class EmailTemplateManager
         foreach ($this->registry->getAll() as $key => $meta) {
             $class = (string) $meta['class'];
 
-            if (isset($problems[$class]) || ($onlyClasses !== null && !in_array($class, $onlyClasses, true))) {
+            if ($onlyClasses !== null && !in_array($class, $onlyClasses, true)) {
                 continue;
             }
 

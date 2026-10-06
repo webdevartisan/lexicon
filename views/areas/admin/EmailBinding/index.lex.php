@@ -64,7 +64,7 @@ $basePath = '/admin/email-templates/emails';
                                     <a href="<?= e(lurl($basePath.'/'.$short.'/edit')) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500">
                                         <i data-lucide="pencil" class="size-4"></i> Edit<span class="sr-only"> <?= e($email['name']) ?></span>
                                     </a>
-                                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['samples'][0]))) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500" title="Preview the real email and send yourself a test">
+                                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['sample']))) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500" title="Preview the real email and send yourself a test">
                                         <i data-lucide="send" class="size-4"></i> Test<span class="sr-only"> <?= e($email['name']) ?></span>
                                     </a>
                                 </td>

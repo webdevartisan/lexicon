@@ -8,10 +8,6 @@
 $activeTab = 'emails';
 $basePath = '/admin/email-templates/emails';
 $sendsCustom = !$isStored || $binding['is_active'];
-$sampleLabels = [];
-foreach ($email['samples'] as $sampleKey) {
-    $sampleLabels[$sampleKey] = ucwords(str_replace('_', ' ', $sampleKey));
-}
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
     {% include "areas/admin/EmailTemplate/_tabs.lex.php" %}
@@ -43,17 +39,6 @@ foreach ($email['samples'] as $sampleKey) {
                                 <?php } ?>
                             </select>
                         </div>
-                        <?php if (count($email['samples']) > 1) { ?>
-                        <div>
-                            <label for="sample" class="<?= e($labelClass) ?>">Preview as</label>
-                            <select id="sample" name="sample" class="<?= e($selectClass) ?>">
-                                <?php foreach ($sampleLabels as $sampleKey => $sampleLabel) { ?>
-                                <option value="<?= e($sampleKey) ?>"><?= e($sampleLabel) ?></option>
-                                <?php } ?>
-                            </select>
-                            <p class="<?= e($hintClass) ?>">This email is sent in several situations; preview each.</p>
-                        </div>
-                        <?php } ?>
                         <div class="md:col-span-2">
                             <label for="subject" class="<?= e($labelClass) ?>">Subject line <span class="font-normal text-slate-400">(optional)</span></label>
                             <input type="text" id="subject" name="subject" data-insertable value="<?= e((string) $binding['subject']) ?>" maxlength="255"
@@ -104,7 +89,7 @@ foreach ($email['samples'] as $sampleKey) {
                         <i data-lucide="save" class="size-4"></i> Save
                     </button>
                     <a href="<?= e(lurl($basePath)) ?>" class="btn bg-white border-slate-300 text-slate-600 hover:bg-slate-50 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-100">Cancel</a>
-                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['samples'][0]))) ?>" class="ml-auto text-sm text-custom-500 hover:underline">Send a test of the saved version</a>
+                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['sample']))) ?>" class="ml-auto text-sm text-custom-500 hover:underline">Send a test of the saved version</a>
                 </div>
             </form>
 

@@ -17,6 +17,11 @@ use Exception;
  * Every Mailable in src/App/Mail must be registered here so it shows up
  * on the admin Email Templates page; unregisteredClasses() reports any
  * that were added to the codebase but never registered.
+ *
+ * Register each class exactly once. The admin page lists one email per class,
+ * and its wording is stored per class, so an email sent for several different
+ * reasons should be one class per reason (see CommentMail and its subclasses)
+ * rather than one class registered several times.
  */
 class EmailTemplateRegistry
 {
@@ -127,7 +132,7 @@ class EmailTemplateRegistry
                 'name' => 'Reporter Warning',
                 'description' => 'Warns a reader that several of their reports were unfounded, before any pause of their reporting',
                 'group' => 'Account',
-                'class' => 'App\Mail\ReporterWarningMail',
+                'class' => 'App\\Mail\\ReporterWarningMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
                     'handle' => 'johndoe',
@@ -273,7 +278,6 @@ class EmailTemplateRegistry
                 'class' => 'App\\Mail\\PostPublishedMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
-                    'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
                     'blogSlug' => 'travel-stories',
                     'postSlug' => 'ten-hidden-beaches-in-crete',
@@ -304,11 +308,11 @@ class EmailTemplateRegistry
                     'token' => str_repeat('cd', 32),
                 ],
             ],
-            'new_comment_reply' => [
-                'name' => 'New Comment — Reply',
+            'comment_reply' => [
+                'name' => 'Reply to Your Comment',
                 'description' => 'Tells you someone replied to a comment you wrote',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\CommentReplyMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -318,15 +322,14 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Same! Balos is unreal at sunrise, get there early.',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'reply',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_authored' => [
-                'name' => 'New Comment — On Your Post',
+            'post_comment' => [
+                'name' => 'Comment on Your Post',
                 'description' => 'Tells a post author a reader commented on their post',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\PostCommentMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -336,15 +339,14 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'authored',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_moderation' => [
-                'name' => 'New Comment — Awaiting Moderation',
-                'description' => 'Tells a blog owner or editor a comment is held for approval',
+            'comment_moderation' => [
+                'name' => 'Comment Awaiting Moderation',
+                'description' => 'Asks a blog owner or editor to approve a comment held for moderation',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\CommentModerationMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -354,15 +356,14 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => true,
                     'commentId' => 128,
-                    'reason' => 'moderation',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_blog' => [
-                'name' => 'New Comment — On Your Blog',
+            'blog_comment' => [
+                'name' => 'Comment on Your Blog',
                 'description' => 'Tells a blog owner a reader commented anywhere on their blog',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\BlogCommentMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -372,7 +373,6 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'blog',
                     'blogId' => 7,
                 ],
             ],
@@ -446,8 +446,9 @@ class EmailTemplateRegistry
                 continue;
             }
 
-            // Only concrete Mailable subclasses belong on the page
-            if (class_exists($class) && is_subclass_of($class, Mailable::class)) {
+            // Only concrete Mailable subclasses belong on the page; a shared
+            // base such as CommentMail is never sent itself.
+            if (class_exists($class) && is_subclass_of($class, Mailable::class) && !(new \ReflectionClass($class))->isAbstract()) {
                 $missing[] = $class;
             }
         }

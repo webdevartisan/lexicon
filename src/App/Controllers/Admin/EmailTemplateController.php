@@ -198,9 +198,8 @@ class EmailTemplateController extends AppController
         [$binding, $errors] = $this->manager->normalizeBinding($email['class'], $input);
         $notes = $errors;
 
-        $sample = in_array($input['sample'] ?? null, $email['samples'], true) ? (string) $input['sample'] : $email['samples'][0];
         $draft = $this->manager->draft([], [], [$email['class'] => ['is_active' => true] + $binding]);
-        $mailable = $this->manager->buildSample($draft, $sample, false);
+        $mailable = $this->manager->buildSample($draft, $email['sample'], false);
 
         return new RenderedEmail($mailable->getSubject(), $mailable->getBody(), (string) $mailable->getTextBody());
     }

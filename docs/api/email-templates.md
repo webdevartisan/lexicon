@@ -23,8 +23,8 @@ contains markup any more.
   placeholders. Wording is a short piece of HTML that may refer to the email's data, so admins can change
   copy without touching code, and the same `notification` template can say different things in each email.
 
-Logic stays in code: plurals, the reason-specific opening line of a comment email, whether a note
-applies at all. The Mailable passes such phrases as data (`lead`, `unassigned_note`, …).
+Logic stays in code: plurals, whether a note applies at all. The Mailable passes such phrases as data
+(`unassigned_note`, `moderation_note`, …).
 
 ## Built-in catalog and overrides
 
@@ -56,14 +56,22 @@ public function build(): void
 ```
 
 Then add a binding for the class to `resources/mail/catalog.php`, and a sample to
-`EmailTemplateRegistry` (which the control panel and the tests use). `MailTemplateCatalogTest` fails if
-either is missing, if a sample does not render strictly, or if any HTML is left in `src/App/Mail/*.php`.
+`EmailTemplateRegistry` (which the control panel and the tests use). The tests fail if either is missing, if
+a sample does not render strictly, if a sample passes a value the constructor does not take, or if any HTML
+is left in `src/App/Mail/*.php`.
+
+**One class per email.** The control panel lists one email per class and stores wording per class, so a
+message sent for several different reasons is one class per reason, sharing an abstract base for the data
+and links. The comment emails are the example: `CommentMail` builds the data, and `CommentReplyMail`,
+`PostCommentMail`, `CommentModerationMail` and `BlogCommentMail` each add only their subject and, for
+moderation, where the button goes. Each is registered once; `EmailTemplateRegistryTest` fails on a class
+registered twice. Separate classes also give each email its own `utm_campaign` (`comment-reply`, …).
 
 Rules for data:
 
 - Keys are `snake_case`. Values are strings, numbers, `null` (empty) or an `HtmlFragment`.
-- Give the template the same keys in every situation the email is sent in (pass `''` for "not
-  applicable"); the editor lists them from one sample.
+- Give the template the same keys every time (pass `''` for "not applicable"); the editor lists them
+  from the email's sample.
 - `{{ app_name }}`, `{{ app_url }}`, `{{ year }}` and `{{ subject }}` are always available.
 
 For repeated structure (one section per blog in the weekly digest), render blocks from code with
@@ -126,7 +134,7 @@ separate from site settings because what is written here reaches every inbox.
 
 - **Emails**: every email, its template, whether its wording is customized, and whether it currently builds.
   The editor shows the template's placeholders as fields, the email's data with sample values (click to insert),
-  a subject override, and a live preview of the draft as HTML or plain text, per situation the email is sent in.
+  a subject override, and a live preview of the draft as HTML or plain text.
 - **Templates**: list with search and category filter; a builder with a block palette, drag-and-drop layout
   (with keyboard up/down/remove buttons), the placeholders an email must provide, the emails using it, and a
   live preview; a read-only preview page with HTML, plain text and placeholder tabs.
@@ -153,5 +161,4 @@ email, use **Test** on the Emails list (the existing Email Delivery page).
 ## Follow-ups not built yet
 
 - Version history for blocks and templates (the audit log records who changed what, not the old content).
-- Per-situation wording for emails sent for several reasons (`NewCommentMail` passes its reason-specific lines as data).
 - Help text per placeholder, and A/B variants.

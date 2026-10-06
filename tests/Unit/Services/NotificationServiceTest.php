@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Mail\BlogCommentMail;
 use App\Mail\CollaboratorRemovedMail;
-use App\Mail\NewCommentMail;
+use App\Mail\CommentModerationMail;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Models\NotificationModel;
@@ -263,7 +264,7 @@ describe('NotificationService::dispatchFirstEnabled', function () {
             ->with(Mockery::on(function ($m) {
                 $m->build();
 
-                return $m instanceof NewCommentMail && str_contains($m->getSubject(), 'awaiting your approval');
+                return $m instanceof CommentModerationMail && str_contains($m->getSubject(), 'awaiting your approval');
             }), 'notification', 7)
             ->andReturn(1);
 
@@ -293,8 +294,8 @@ describe('NotificationService::dispatchFirstEnabled', function () {
             ->with(Mockery::on(function ($m) {
                 $m->build();
 
-                // The blog-reason subject is the plain one, not the moderation phrasing.
-                return $m instanceof NewCommentMail
+                // The blog email goes out, not the moderation one.
+                return $m instanceof BlogCommentMail
                     && str_contains($m->getSubject(), 'New comment on')
                     && !str_contains($m->getSubject(), 'approval');
             }), 'notification', 7)

@@ -117,7 +117,7 @@ class EmailBindingController extends AppController
     }
 
     /**
-     * @param  array{class: string, short: string, name: string, description: string, group: string, samples: list<string>}  $email
+     * @param  array{class: string, short: string, name: string, description: string, group: string, sample: string}  $email
      * @param  array{mailable: string, template: string, subject: ?string, mapping: array<string, string>, is_active: bool, source: string}  $binding
      * @param  list<string>  $errors
      * @param  list<string>  $warnings
@@ -126,7 +126,7 @@ class EmailBindingController extends AppController
     {
         $repository = $this->manager->repository();
         $renderer = new TemplateRendererService($repository);
-        $data = $this->manager->sampleData($email['samples'][0]);
+        $data = $this->manager->sampleData($email['sample']);
 
         // Every placeholder of every template, so switching template in the
         // form only shows and hides fields rather than reloading.
