@@ -42,8 +42,8 @@ App::setContainer($container);
 // Mailables build themselves in their constructor, so they cannot take the
 // renderer as a dependency. Point them at the one that reads the control panel
 // templates; anything that never boots the app gets the built-in templates.
-App\Mail\Mailable::resolveTemplatesUsing(
-    static fn (): App\Services\TemplateRendererService => $container->get(App\Services\TemplateRendererService::class)
+\App\Mail\Mailable::resolveTemplatesUsing(
+    static fn (): \App\Services\TemplateRendererService => $container->get(\App\Services\TemplateRendererService::class)
 );
 
 return $container;

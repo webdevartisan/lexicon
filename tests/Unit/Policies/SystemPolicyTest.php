@@ -24,14 +24,23 @@ test('administrator passes every control panel ability', function (string $abili
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('permission holder passes only the matching area', function () {
     expect($this->policy->manageTaxonomy($this->moderator))->toBeTrue()
         ->and($this->policy->manageUsers($this->moderator))->toBeFalse()
         ->and($this->policy->manageSettings($this->moderator))->toBeFalse()
-        ->and($this->policy->manageCache($this->moderator))->toBeFalse();
+        ->and($this->policy->manageCache($this->moderator))->toBeFalse()
+        ->and($this->policy->manageEmailTemplates($this->moderator))->toBeFalse();
+});
+
+test('email templates can be granted on their own, apart from site settings', function () {
+    $writer = ['id' => 5, 'roles' => ['comms'], 'permissions' => ['manage_email_templates']];
+
+    expect($this->policy->manageEmailTemplates($writer))->toBeTrue()
+        ->and($this->policy->manageSettings($writer))->toBeFalse()
+        ->and($this->policy->accessDashboard($writer))->toBeTrue();
 });
 
 test('any area permission opens the dashboard', function () {
@@ -43,7 +52,7 @@ test('user without area permissions is denied everywhere', function (string $abi
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('empty user array is denied everywhere', function () {

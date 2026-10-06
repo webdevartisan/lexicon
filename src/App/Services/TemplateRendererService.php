@@ -472,7 +472,7 @@ final class TemplateRendererService
     /**
      * Normalize what a Mailable passed, with the global placeholders underneath.
      *
-     * @param  array<string, mixed>  $data
+     * @param  array<array-key, mixed>  $data  Keys are checked here, since a list slips past the type hint
      * @return array<string, HtmlFragment>
      */
     private function values(array $data): array

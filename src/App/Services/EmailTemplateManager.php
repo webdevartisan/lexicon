@@ -209,10 +209,10 @@ class EmailTemplateManager
      */
     public function templatesUsingComponent(string $slug): array
     {
-        return array_values(array_keys(array_filter(
+        return array_keys(array_filter(
             $this->repository->templates(),
             static fn (array $template): bool => in_array($slug, $template['layout'], true)
-        )));
+        ));
     }
 
     // ------------------------------------------------------------------

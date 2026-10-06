@@ -92,7 +92,7 @@ return [
             'category' => 'callout',
             'description' => 'A red box for what to do if the reader did not ask for this.',
             'html' => '<div style="margin:16px 0;padding:12px 16px;background:#FEF2F2;border-left:4px solid #DC2626;">{{ security_notice }}</div>',
-            'preview_data' => ['security_notice' => "<strong>If this was not you</strong>, ignore this message. Nothing changes."],
+            'preview_data' => ['security_notice' => '<strong>If this was not you</strong>, ignore this message. Nothing changes.'],
         ],
         'button' => [
             'label' => 'Button',

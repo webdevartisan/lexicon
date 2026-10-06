@@ -130,8 +130,10 @@ final class EmailHtmlLinter
     {
         $before = substr($html, 0, $offset);
         $open = strrpos($before, '<');
+        $close = strrpos($before, '>');
 
-        return $open !== false && $open > (int) strrpos($before, '>');
+        // No > yet at all still counts: the first tag of a fragment is a tag.
+        return $open !== false && ($close === false || $open > $close);
     }
 
     private static function insideQuotedValue(string $html, int $offset): bool

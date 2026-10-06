@@ -476,6 +476,33 @@ $router->group([
     $r->add('/email-test/send-test', ['controller' => 'EmailTestController', 'action' => 'sendTest', 'method' => 'POST']);
     $r->add('/email-test/test-config', ['controller' => 'EmailTestController', 'action' => 'testConfig', 'method' => 'POST']);
 
+    // Email templates: blocks, templates, and each email's template and wording.
+    // Fixed segments come before the {slug} routes so they are never read as a slug.
+    $r->add('/email-templates', ['controller' => 'EmailTemplateController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/email-templates/create', ['controller' => 'EmailTemplateController', 'action' => 'create', 'method' => 'GET']);
+    $r->add('/email-templates/store', ['controller' => 'EmailTemplateController', 'action' => 'store', 'method' => 'POST']);
+    $r->add('/email-templates/preview', ['controller' => 'EmailTemplateController', 'action' => 'preview', 'method' => 'POST']);
+
+    $r->add('/email-templates/components', ['controller' => 'EmailComponentController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/email-templates/components/create', ['controller' => 'EmailComponentController', 'action' => 'create', 'method' => 'GET']);
+    $r->add('/email-templates/components/store', ['controller' => 'EmailComponentController', 'action' => 'store', 'method' => 'POST']);
+    $r->add('/email-templates/components/{slug:[a-z][a-z0-9-]*}/edit', ['controller' => 'EmailComponentController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/email-templates/components/{slug:[a-z][a-z0-9-]*}/update', ['controller' => 'EmailComponentController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/email-templates/components/{slug:[a-z][a-z0-9-]*}/reset', ['controller' => 'EmailComponentController', 'action' => 'reset', 'method' => 'POST']);
+    $r->add('/email-templates/components/{slug:[a-z][a-z0-9-]*}/delete', ['controller' => 'EmailComponentController', 'action' => 'destroy', 'method' => 'POST']);
+
+    $r->add('/email-templates/emails', ['controller' => 'EmailBindingController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/email-templates/emails/{name:[A-Za-z]+}/edit', ['controller' => 'EmailBindingController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/email-templates/emails/{name:[A-Za-z]+}/update', ['controller' => 'EmailBindingController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/email-templates/emails/{name:[A-Za-z]+}/reset', ['controller' => 'EmailBindingController', 'action' => 'reset', 'method' => 'POST']);
+
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/edit', ['controller' => 'EmailTemplateController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/update', ['controller' => 'EmailTemplateController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/reset', ['controller' => 'EmailTemplateController', 'action' => 'reset', 'method' => 'POST']);
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/delete', ['controller' => 'EmailTemplateController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/preview', ['controller' => 'EmailTemplateController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/preview/render', ['controller' => 'EmailTemplateController', 'action' => 'render', 'method' => 'GET']);
+
     // User management
     $r->add('/users', ['controller' => 'UserController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/users/new', ['controller' => 'UserController', 'action' => 'new', 'method' => 'GET']);

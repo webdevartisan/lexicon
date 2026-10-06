@@ -99,5 +99,10 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
 - **Password reset / security tables**
   - Tables such as `password_resets` or equivalent are used by `PasswordResetModel` and related services.
 
+- **Email templates** (`email_components`, `email_templates`, `email_template_components`, `mailable_template_bindings`)
+  - Only what was changed or added under Email Templates in the control panel. The defaults ship in
+    `resources/mail/catalog.php`; a row with a built-in slug (or Mailable class) overrides it, and deleting
+    the row resets it. A fresh install has empty tables. See [`docs/api/email-templates.md`](../api/email-templates.md).
+
 Consult `database/schema.sql` for exact column definitions, indexes, and constraints. See `docs/database/relationships.md` for how these tables relate at the model level.
 
