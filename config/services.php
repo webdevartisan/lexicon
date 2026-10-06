@@ -524,6 +524,60 @@ $container->setShared(App\Services\EmailTemplateRegistry::class, function ($c) {
 });
 
 /**
+ * Email templates: the shipped catalog with control panel edits laid over it.
+ *
+ * Shared so a fan-out reads the template tables once per process rather than
+ * once per recipient.
+ */
+$container->setShared(App\Mail\Templates\CatalogTemplateSource::class, function ($c) {
+    return new App\Mail\Templates\CatalogTemplateSource();
+});
+
+$container->setShared(App\Services\EmailTemplateRepository::class, function ($c) {
+    return new App\Services\EmailTemplateRepository(
+        $c->get(App\Mail\Templates\CatalogTemplateSource::class),
+        $c->get(App\Models\EmailComponentModel::class),
+        $c->get(App\Models\EmailTemplateModel::class),
+        $c->get(App\Models\MailableTemplateBindingModel::class),
+    );
+});
+
+/**
+ * Renders every Mailable. When a stored template cannot render (an edit that
+ * slipped past validation, the tables unreadable) the email goes out in the
+ * built-in design instead and admins who can fix it are told, at most once an
+ * hour, rather than the email being lost.
+ */
+$container->setShared(App\Services\TemplateRendererService::class, function ($c) {
+    $repository = $c->get(App\Services\EmailTemplateRepository::class);
+
+    return new App\Services\TemplateRendererService(
+        $repository,
+        true,
+        $repository->builtIn(),
+        static function (string $what, Throwable $error) use ($c): void {
+            $c->get(App\Services\AdminNotificationDispatcher::class)->dispatch(
+                'admin.email_template_failed',
+                'manage_email_templates',
+                ['email' => $what, 'error' => mb_substr($error->getMessage(), 0, 500)],
+                60
+            );
+        },
+    );
+});
+
+$container->setShared(App\Services\EmailTemplateManager::class, function ($c) {
+    return new App\Services\EmailTemplateManager(
+        $c->get(App\Services\EmailTemplateRepository::class),
+        $c->get(App\Models\EmailComponentModel::class),
+        $c->get(App\Models\EmailTemplateModel::class),
+        $c->get(App\Models\MailableTemplateBindingModel::class),
+        $c->get(App\Services\EmailTemplateRegistry::class),
+        $c->get(App\Services\AuditService::class),
+    );
+});
+
+/**
  * Breadcrumb service builds navigation breadcrumb trails.
  *
  * We register as singleton to accumulate breadcrumbs across multiple

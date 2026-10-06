@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Mail\Templates\HtmlFragment;
+
 /**
  * The weekly Insights summary for an owner, one section per blog, told in the
  * order of the Insights pages, each part linking to its page for that week.
@@ -39,8 +41,10 @@ class InsightsDigestMail extends Mailable
     {
         $this->to($this->toEmail)
             ->subject('Your week on Lexicon: '.$this->weekLabel)
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
+            ->fromTemplate([
+                'week_label' => $this->weekLabel,
+                'sections' => $this->sections(),
+            ]);
     }
 
     private function appUrl(): string
@@ -107,78 +111,58 @@ class InsightsDigestMail extends Mailable
         };
     }
 
-    private function buildHtmlBody(): string
+    /**
+     * One section per blog, each part a block of its own linking to its page.
+     *
+     * The order and which parts appear are decided here; how a section heading
+     * or a statistic looks belongs to the blocks, editable in the control panel.
+     */
+    private function sections(): HtmlFragment
     {
-        $sections = '';
+        $sections = [];
 
         foreach ($this->blogs as $blog) {
             $lines = self::lines($blog);
-            $blogUrl = e($this->appUrl().'/blog/'.rawurlencode($blog['slug']));
-            $sections .= '<h3 style="margin-bottom:4px;"><a href="'.$blogUrl.'" style="color:#1f2937;">'.e($blog['name']).'</a></h3>';
-            $sections .= $this->htmlPart($blog, 'overview', 'Overview', e($lines['overview']));
+
+            $parts = [
+                $this->component('section-heading', [
+                    'section_title' => $blog['name'],
+                    'section_url' => $this->appUrl().'/blog/'.rawurlencode($blog['slug']),
+                ]),
+                $this->stat($blog, 'overview', 'Overview', $lines['overview']),
+            ];
 
             if ($blog['posts'] !== []) {
-                $posts = '';
+                $items = [HtmlFragment::fromText('Most read:')];
+
                 foreach ($blog['posts'] as $post) {
-                    $posts .= '<li>'.e($post['title']).': '.number_format($post['views']).' views</li>';
+                    $items[] = $this->component('list-item', ['item' => $post['title'].': '.number_format($post['views']).' views']);
                 }
-                $sections .= $this->htmlPart($blog, 'content', 'Content', 'Most read:<ul style="margin:4px 0;">'.$posts.'</ul>');
+
+                $parts[] = $this->stat($blog, 'content', 'Content', HtmlFragment::join($items));
             }
 
             foreach (['acquisition' => 'Acquisition', 'goals' => 'Goals'] as $page => $title) {
                 if (isset($lines[$page])) {
-                    $sections .= $this->htmlPart($blog, $page, $title, e($lines[$page]));
+                    $parts[] = $this->stat($blog, $page, $title, $lines[$page]);
                 }
             }
+
+            $sections[] = HtmlFragment::join($parts);
         }
 
-        $week = e($this->weekLabel);
-
-        return <<<HTML
-        <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-            <div style="max-width:600px;margin:0 auto;padding:20px;">
-                <h2>Your week: {$week}</h2>
-                {$sections}
-                <p style="font-size:12px;color:#777;">Sent on Mondays. Switch it off in your notification settings.</p>
-            </div>
-        </body></html>
-        HTML;
+        return HtmlFragment::join($sections, "\n\n");
     }
 
     /**
      * @param  array{id: int, from: string, to: string}  $blog
-     * @param  string  $body  Already escaped
      */
-    private function htmlPart(array $blog, string $page, string $title, string $body): string
+    private function stat(array $blog, string $page, string $label, string|HtmlFragment $text): HtmlFragment
     {
-        $url = e($this->pageUrl($blog, $page));
-
-        return '<div style="margin:8px 0;"><strong>'.$title.'</strong> · <a href="'.$url.'">Open</a><br>'.$body.'</div>';
-    }
-
-    private function buildTextBody(): string
-    {
-        $text = "Your week: {$this->weekLabel}\n";
-
-        foreach ($this->blogs as $blog) {
-            $lines = self::lines($blog);
-            $text .= "\n{$blog['name']}\n\nOverview: {$lines['overview']}\n".$this->pageUrl($blog, 'overview')."\n";
-
-            if ($blog['posts'] !== []) {
-                $text .= "\nContent, most read:\n";
-                foreach ($blog['posts'] as $post) {
-                    $text .= "- {$post['title']}: ".number_format($post['views'])." views\n";
-                }
-                $text .= $this->pageUrl($blog, 'content')."\n";
-            }
-
-            foreach (['acquisition' => 'Acquisition', 'goals' => 'Goals'] as $page => $title) {
-                if (isset($lines[$page])) {
-                    $text .= "\n{$title}: {$lines[$page]}\n".$this->pageUrl($blog, $page)."\n";
-                }
-            }
-        }
-
-        return $text;
+        return $this->component('stat-line', [
+            'stat_label' => $label,
+            'stat_text' => $text,
+            'stat_url' => $this->pageUrl($blog, $page),
+        ]);
     }
 }

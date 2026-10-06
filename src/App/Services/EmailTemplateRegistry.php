@@ -481,6 +481,25 @@ class EmailTemplateRegistry
      */
     public function instantiate(string $templateKey): Mailable
     {
+        try {
+            return $this->build($templateKey);
+        } catch (Exception $e) {
+            error_log("Failed to instantiate email template '{$templateKey}': ".$e->getMessage());
+            throw new Exception('Failed to create email template: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Instantiate with sample data, letting whatever goes wrong surface as is.
+     *
+     * For the template editor, which builds every email against a draft to see
+     * which ones it would break. Those failures are the expected answer to a
+     * question, not errors, so nothing is logged.
+     *
+     * @throws Exception If the template is unknown or the email cannot be built
+     */
+    public function build(string $templateKey): Mailable
+    {
         $template = $this->get($templateKey);
 
         if (!$template) {
@@ -493,36 +512,31 @@ class EmailTemplateRegistry
             throw new Exception("Email class '{$className}' does not exist");
         }
 
-        try {
-            $data = $template['sample_data'];
+        $data = $template['sample_data'];
 
-            // use reflection to determine constructor parameters
-            $reflection = new \ReflectionClass($className);
-            $constructor = $reflection->getConstructor();
+        // use reflection to determine constructor parameters
+        $reflection = new \ReflectionClass($className);
+        $constructor = $reflection->getConstructor();
 
-            if (!$constructor) {
-                return new $className();
-            }
-
-            // map sample data to constructor parameters
-            $params = [];
-            foreach ($constructor->getParameters() as $param) {
-                $paramName = $param->getName();
-
-                if (isset($data[$paramName])) {
-                    $params[] = $data[$paramName];
-                } elseif ($param->isDefaultValueAvailable()) {
-                    $params[] = $param->getDefaultValue();
-                } else {
-                    throw new Exception("Missing required parameter '{$paramName}' for {$className}");
-                }
-            }
-
-            return $reflection->newInstanceArgs($params);
-
-        } catch (Exception $e) {
-            error_log("Failed to instantiate email template '{$templateKey}': ".$e->getMessage());
-            throw new Exception('Failed to create email template: '.$e->getMessage());
+        if (!$constructor) {
+            return new $className();
         }
+
+        // map sample data to constructor parameters
+        $params = [];
+        foreach ($constructor->getParameters() as $param) {
+            $paramName = $param->getName();
+
+            if (isset($data[$paramName])) {
+                $params[] = $data[$paramName];
+            } elseif ($param->isDefaultValueAvailable()) {
+                $params[] = $param->getDefaultValue();
+            } else {
+                throw new Exception("Missing required parameter '{$paramName}' for {$className}");
+            }
+        }
+
+        /** @var Mailable */
+        return $reflection->newInstanceArgs($params);
     }
 }

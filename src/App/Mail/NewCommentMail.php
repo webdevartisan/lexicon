@@ -10,6 +10,8 @@ namespace App\Mail;
  * The same comment reaches different people for different reasons, so the
  * reason is passed in rather than inferred: a reply to your own comment reads
  * nothing like a moderation request, even though both describe one event.
+ * Those reason-specific sentences stay here because they are logic; the rest
+ * of the wording lives in the template binding.
  */
 class NewCommentMail extends Mailable
 {
@@ -40,8 +42,18 @@ class NewCommentMail extends Mailable
     {
         $this->to($this->toEmail)
             ->subject($this->subjectLine())
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
+            ->fromTemplate([
+                'post_title' => $this->postTitle,
+                'commenter_name' => $this->commenterName,
+                'comment_excerpt' => $this->commentExcerpt,
+                'lead' => $this->leadLine(),
+                'action_label' => $this->callToAction(),
+                'comment_url' => $this->targetUrl(),
+                // Moderators already know it is held; saying so again adds nothing.
+                'moderation_note' => $this->awaitingModeration && $this->reason !== self::REASON_MODERATION
+                    ? 'This comment is awaiting moderation before it appears publicly.'
+                    : '',
+            ]);
     }
 
     /**
@@ -97,39 +109,5 @@ class NewCommentMail extends Mailable
         }
 
         return $url;
-    }
-
-    private function buildHtmlBody(): string
-    {
-        $lead = htmlspecialchars($this->leadLine());
-        $excerpt = htmlspecialchars($this->commentExcerpt);
-        $url = htmlspecialchars($this->targetUrl());
-        $cta = htmlspecialchars($this->callToAction());
-
-        // Moderators already know it is held; saying so again adds nothing.
-        $note = $this->awaitingModeration && $this->reason !== self::REASON_MODERATION
-            ? '<p style="color:#92400E;">This comment is awaiting moderation before it appears publicly.</p>'
-            : '';
-
-        return <<<HTML
-        <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-            <div style="max-width:600px;margin:0 auto;padding:20px;">
-                <h2>New comment</h2>
-                <p>{$lead}</p>
-                <blockquote style="margin:0;padding:12px 16px;background:#F8FAFC;border-left:3px solid #2563EB;">{$excerpt}</blockquote>
-                {$note}
-                <p><a href="{$url}" style="display:inline-block;padding:12px 24px;background:#2563EB;color:#fff;text-decoration:none;border-radius:5px;">{$cta}</a></p>
-            </div>
-        </body></html>
-        HTML;
-    }
-
-    private function buildTextBody(): string
-    {
-        $note = $this->awaitingModeration && $this->reason !== self::REASON_MODERATION
-            ? "Awaiting moderation.\n"
-            : '';
-
-        return "{$this->leadLine()}\n\n\"{$this->commentExcerpt}\"\n{$note}{$this->callToAction()}: {$this->targetUrl()}\n";
     }
 }

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Mail\Templates\CatalogTemplateSource;
+use App\Mail\Templates\HtmlFragment;
+use App\Services\TemplateRendererService;
+use Closure;
+
 /**
  * Base class for composing emails.
  *
@@ -11,13 +16,25 @@ namespace App\Mail;
  * Mailable classes extend this and implement build() to define their
  * specific email structure.
  *
- * This pattern (inspired by Laravel's Mailables) promotes:
- * - Reusable email templates
- * - Testable email logic
- * - Clear separation between content and delivery
+ * A Mailable supplies data, not markup: build() sets the recipient and
+ * subject, then hands its facts to fromTemplate(). How the email looks and
+ * what it says around those facts belongs to its template, which admins can
+ * edit under Email Templates in the control panel.
  */
 abstract class Mailable
 {
+    /** Hands out the renderer in use; set at bootstrap so Mailables need no constructor injection. */
+    private static ?Closure $templateResolver = null;
+
+    /** A renderer installed for the duration of withTemplateRenderer(). */
+    private static ?TemplateRendererService $scopedRenderer = null;
+
+    /** Built-in templates only, for code running without the app container (unit tests, scripts). */
+    private static ?TemplateRendererService $builtInRenderer = null;
+
+    /** @var array<string, mixed> What this email gave its template */
+    private array $templateData = [];
+
     /** Somebody is blocked waiting on it, so it goes out on its own fast worker. */
     public const TIER_CRITICAL = 'critical';
 
@@ -61,9 +78,6 @@ abstract class Mailable
 
     /** @var array<int, array{path: string, name: string|null}> */
     protected array $attachments = [];
-
-    /** @var array<string, mixed> Template data */
-    protected array $data = [];
 
     /**
      * Build the email content.
@@ -205,6 +219,95 @@ abstract class Mailable
         ];
 
         return $this;
+    }
+
+    /**
+     * Render the body from this email's template.
+     *
+     * Call it last in build(), after subject(): the subject set in code is the
+     * default the template may override, and is available to it as
+     * {{ subject }}. Each key of $data becomes a placeholder the email's
+     * wording can use. Strings are escaped; pass an HtmlFragment for anything
+     * that is already markup.
+     *
+     * @param  array<string, mixed>  $data  Placeholder name => value
+     * @return $this
+     */
+    protected function fromTemplate(array $data): static
+    {
+        $this->templateData = $data;
+        $email = self::templates()->renderEmail(static::class, $data, $this->subject);
+
+        $this->subject = $email->subject;
+
+        return $this->html($email->html)->textAlternative($email->text);
+    }
+
+    /**
+     * Render one block on its own, for content the email repeats or assembles,
+     * such as one section per blog. The result can be passed to fromTemplate().
+     *
+     * @param  array<string, mixed>  $data  Placeholder name => value
+     */
+    protected function component(string $slug, array $data): HtmlFragment
+    {
+        return self::templates()->renderComponent($slug, $data);
+    }
+
+    /**
+     * Use templates from wherever the resolver says, normally the database
+     * with the built-in templates underneath.
+     *
+     * @param  (Closure(): TemplateRendererService)|null  $resolver  null goes back to built-in templates only
+     */
+    public static function resolveTemplatesUsing(?Closure $resolver): void
+    {
+        self::$templateResolver = $resolver;
+    }
+
+    /**
+     * Build Mailables against a particular renderer, e.g. an unsaved draft
+     * while the control panel checks or previews it.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function withTemplateRenderer(TemplateRendererService $renderer, callable $callback): mixed
+    {
+        $previous = self::$scopedRenderer;
+        self::$scopedRenderer = $renderer;
+
+        try {
+            return $callback();
+        } finally {
+            self::$scopedRenderer = $previous;
+        }
+    }
+
+    private static function templates(): TemplateRendererService
+    {
+        if (self::$scopedRenderer !== null) {
+            return self::$scopedRenderer;
+        }
+
+        if (self::$templateResolver !== null) {
+            return (self::$templateResolver)();
+        }
+
+        return self::$builtInRenderer ??= new TemplateRendererService(new CatalogTemplateSource());
+    }
+
+    /**
+     * The data this email gave its template, for the control panel to list
+     * what the email's wording can refer to.
+     *
+     * @return array<string, mixed>
+     */
+    public function getTemplateData(): array
+    {
+        return $this->templateData;
     }
 
     // Getters for MailService to access protected properties

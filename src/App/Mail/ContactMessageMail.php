@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Mail\Templates\HtmlFragment;
+
 /**
  * A visitor's message from the public contact form, sent to the site admin.
  *
@@ -27,35 +29,12 @@ class ContactMessageMail extends Mailable
         $this->to($this->toEmail)
             ->replyTo($this->senderEmail, $this->senderName)
             ->subject('[Contact] '.$this->messageSubject)
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
-    }
-
-    private function buildHtmlBody(): string
-    {
-        $name = htmlspecialchars($this->senderName);
-        $email = htmlspecialchars($this->senderEmail);
-        $subject = htmlspecialchars($this->messageSubject);
-        $message = nl2br(htmlspecialchars($this->messageBody));
-
-        return <<<HTML
-        <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-            <div style="max-width:600px;margin:0 auto;padding:20px;">
-                <h2>New contact message</h2>
-                <p><strong>From:</strong> {$name} &lt;{$email}&gt;</p>
-                <p><strong>Subject:</strong> {$subject}</p>
-                <hr style="border:none;border-top:1px solid #ddd;">
-                <p>{$message}</p>
-            </div>
-        </body></html>
-        HTML;
-    }
-
-    private function buildTextBody(): string
-    {
-        return "New contact message\n"
-            ."From: {$this->senderName} <{$this->senderEmail}>\n"
-            ."Subject: {$this->messageSubject}\n\n"
-            .$this->messageBody."\n";
+            ->fromTemplate([
+                'sender_name' => $this->senderName,
+                'sender_email' => $this->senderEmail,
+                'message_subject' => $this->messageSubject,
+                // A visitor typed this, line breaks and all.
+                'message_body' => HtmlFragment::fromText($this->messageBody),
+            ]);
     }
 }

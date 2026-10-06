@@ -94,6 +94,7 @@ final class NotificationPresenter
             'admin.report_threshold' => 'Case #'.($payload['case_id'] ?? '?').' has '.($payload['report_count'] ?? 0).' reports and needs a look',
             'admin.mail_queue_failures' => ($payload['failed_count'] ?? 0).' emails failed to send in the last '.($payload['window_minutes'] ?? 60).' minutes',
             'admin.scheduler_stalled' => 'The task scheduler has not ticked in '.round(($payload['heartbeat_age_seconds'] ?? 0) / 60).' minute(s)',
+            'admin.email_template_failed' => 'The template for '.($payload['email'] ?? 'an email').' could not be used, so the built-in design was sent',
             default => $type,
         };
     }
@@ -119,6 +120,7 @@ final class NotificationPresenter
             'admin.report_threshold' => 'flag',
             'admin.mail_queue_failures' => 'mail-warning',
             'admin.scheduler_stalled' => 'clock-alert',
+            'admin.email_template_failed' => 'mail-x',
             default => 'bell',
         };
     }
@@ -130,7 +132,7 @@ final class NotificationPresenter
             in_array($type, ['post.needs_changes', 'post.workflow_disabled', 'comment.awaiting_moderation'], true) => self::TONE_ATTENTION,
             in_array($type, [
                 'collaborator.removed', 'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused',
-                'admin.report_threshold', 'admin.mail_queue_failures', 'admin.scheduler_stalled',
+                'admin.report_threshold', 'admin.mail_queue_failures', 'admin.scheduler_stalled', 'admin.email_template_failed',
             ], true) => self::TONE_CRITICAL,
             default => self::TONE_NEUTRAL,
         };
@@ -163,6 +165,7 @@ final class NotificationPresenter
             'admin.report_threshold' => '/admin/reports/'.(int) ($payload['case_id'] ?? 0),
             'admin.mail_queue_failures' => '/admin/mail-queue?status=failed',
             'admin.scheduler_stalled' => '/admin/scheduled-tasks',
+            'admin.email_template_failed' => '/admin/email-templates/emails',
             default => '',
         };
     }

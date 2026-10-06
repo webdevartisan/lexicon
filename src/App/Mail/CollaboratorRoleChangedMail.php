@@ -19,30 +19,10 @@ class CollaboratorRoleChangedMail extends Mailable
     {
         $this->to($this->toEmail)
             ->subject('Your role on '.$this->blogName.' changed to '.$this->newRole)
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
-    }
-
-    private function buildHtmlBody(): string
-    {
-        $blog = htmlspecialchars($this->blogName);
-        $role = htmlspecialchars($this->newRole);
-        $by = htmlspecialchars($this->actorHandle);
-
-        return <<<HTML
-        <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-            <div style="max-width:600px;margin:0 auto;padding:20px;">
-                <h2>Role updated</h2>
-                <p>Your role on <strong>{$blog}</strong> is now <strong>{$role}</strong>.</p>
-                <p>Changed by {$by}.</p>
-            </div>
-        </body></html>
-        HTML;
-    }
-
-    private function buildTextBody(): string
-    {
-        return "Your role on {$this->blogName} is now {$this->newRole}.\n"
-             ."Changed by {$this->actorHandle}.\n";
+            ->fromTemplate([
+                'blog_name' => $this->blogName,
+                'new_role' => $this->newRole,
+                'actor_handle' => $this->actorHandle,
+            ]);
     }
 }
