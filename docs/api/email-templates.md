@@ -24,7 +24,7 @@ contains markup any more.
   copy without touching code, and the same `notification` template can say different things in each email.
 
 Logic stays in code: plurals, whether a note applies at all. The Mailable passes such phrases as data
-(`unassigned_note`, `moderation_note`, …).
+(`moderation_note`, …).
 
 ## Built-in catalog and overrides
 
@@ -64,7 +64,8 @@ is left in `src/App/Mail/*.php`.
 message sent for several different reasons is one class per reason, sharing an abstract base for the data
 and links. The comment emails are the example: `CommentMail` builds the data, and `CommentReplyMail`,
 `PostCommentMail`, `CommentModerationMail` and `BlogCommentMail` each add only their subject and, for
-moderation, where the button goes. Each is registered once; `EmailTemplateRegistryTest` fails on a class
+moderation, where the button goes. `PostSubmittedMail` and `PostSubmittedUnassignedMail` (no reviewer
+assigned yet) are split the same way. Each is registered once; `EmailTemplateRegistryTest` fails on a class
 registered twice. Separate classes also give each email its own `utm_campaign` (`comment-reply`, …).
 
 Rules for data:

@@ -219,7 +219,18 @@ class EmailTemplateRegistry
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
                     'authorHandle' => 'johndoe',
-                    'unassigned' => false,
+                ],
+            ],
+            'post_submitted_unassigned' => [
+                'name' => 'Post Waiting for a Reviewer',
+                'description' => 'Tells every owner, editor and reviewer a submitted post has nobody assigned yet',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostSubmittedUnassignedMail',
+                'sample_data' => [
+                    'toEmail' => 'editor@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'authorHandle' => 'johndoe',
                 ],
             ],
             'reviewer_assigned' => [

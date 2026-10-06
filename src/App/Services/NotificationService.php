@@ -19,6 +19,7 @@ use App\Mail\PostCommentMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
 use App\Mail\PostSubmittedMail;
+use App\Mail\PostSubmittedUnassignedMail;
 use App\Mail\ReviewerAssignedMail;
 use App\Mail\ReviewerStaleMail;
 use App\Mail\WorkflowDisabledMail;
@@ -183,15 +184,13 @@ class NotificationService
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) $data['author_handle'],
-                false
+                (string) $data['author_handle']
             ),
-            'post.submitted_unassigned' => new PostSubmittedMail(
+            'post.submitted_unassigned' => new PostSubmittedUnassignedMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) $data['author_handle'],
-                true
+                (string) $data['author_handle']
             ),
             'post.approved' => new PostApprovedMail(
                 $to,

@@ -332,8 +332,17 @@ return [
             'template' => 'notification',
             'mapping' => [
                 'heading' => 'Review requested',
+                'intro' => '<strong>{{ author_handle }}</strong> has submitted <strong>{{ post_title }}</strong> for your review.',
+                'button_label' => 'Open review page',
+                'button_url' => '{{ review_url }}',
+            ] + $notification,
+        ],
+        Mail\PostSubmittedUnassignedMail::class => [
+            'template' => 'notification',
+            'mapping' => [
+                'heading' => 'A post needs a reviewer',
                 'intro' => '<strong>{{ author_handle }}</strong> has submitted <strong>{{ post_title }}</strong> for review.',
-                'callout' => '{{ unassigned_note }}',
+                'callout' => 'No reviewer is assigned yet. Any reviewer on this blog can claim it.',
                 'button_label' => 'Open review page',
                 'button_url' => '{{ review_url }}',
             ] + $notification,
