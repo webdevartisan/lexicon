@@ -158,6 +158,51 @@ class EmailTemplateRegistry
                 ],
             ],
 
+            // Insights news
+            'insights_milestone' => [
+                'name' => 'View Milestone',
+                'description' => 'Tells an author a post passed 100, 1,000, 10,000 or 100,000 views',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsMilestoneMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postTitle' => 'Ten Days in Crete',
+                    'threshold' => 1000,
+                    'blogId' => 1,
+                    'postId' => 1,
+                ],
+            ],
+            'insights_spike' => [
+                'name' => 'Views Spike',
+                'description' => 'Tells a blog owner the blog is far busier than usual today',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsSpikeMail',
+                'sample_data' => [
+                    'toEmail' => 'owner@example.com',
+                    'blogName' => 'Travel Stories',
+                    'blogId' => 1,
+                    'views' => 640,
+                    'usual' => 85.0,
+                    'topSource' => 'Hacker News',
+                ],
+            ],
+            'insights_digest' => [
+                'name' => 'Weekly Insights Digest',
+                'description' => 'Monday summary of each blog an owner has',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsDigestMail',
+                'sample_data' => [
+                    'toEmail' => 'owner@example.com',
+                    'weekLabel' => 'Sep 28 to Oct 4, 2026',
+                    'blogs' => [[
+                        'name' => 'Travel Stories', 'id' => 1, 'slug' => 'travel-stories', 'from' => '2026-09-28', 'to' => '2026-10-04',
+                        'views' => 1240, 'previous' => 980, 'visitors' => 860, 'source' => 'Google',
+                        'posts' => [['title' => 'Ten Days in Crete', 'views' => 410]],
+                        'goals' => ['subscribe' => 3, 'comment' => 12, 'like' => 1],
+                    ]],
+                ],
+            ],
+
             // Review workflow notifications
             'post_submitted' => [
                 'name' => 'Post Submitted for Review',

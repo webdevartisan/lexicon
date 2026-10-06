@@ -160,6 +160,62 @@
         </a>
     </div>
 
+    <?php if (!empty($analytics)) {
+        $analyticsPresent = new \App\Presenters\AnalyticsPresenter(\App\Services\LocaleState::get()->chromeLocale, $t, app(\App\Services\LocaleRegistry::class), 'blog');
+        $analyticsPrevious = $analytics['range']->previous();
+        $analyticsPeriod = $t('analytics.range.span', ['from' => $analyticsPresent->date($analyticsPrevious->fromDate()), 'to' => $analyticsPresent->date($analyticsPrevious->toDate())]);
+        $analyticsUrl = '/dashboard/blog/'.(int) $selectedBlogId.'/insights?range=7d';
+        $analyticsTones = [
+            'good' => 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400',
+            'bad' => 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
+            'neutral' => 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-200',
+        ]; ?>
+    <section class="card mb-6" aria-labelledby="home-traffic">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 id="home-traffic" class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
+                    {% cache 'lucide:trending-up:home' ttl=31536000 %}<i data-lucide="trending-up" class="size-4 text-custom-500" aria-hidden="true"></i>{% endcache %}
+                    <?= e($t('analytics.home.title')) ?>
+                </h2>
+                <a href="<?= e(lurl($analyticsUrl)) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600"><?= e($t('analytics.home.open')) ?></a>
+            </div>
+            <?php if ((int) $analytics['metrics']['views']['value'] === 0) { ?>
+            <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('analytics.home.empty')) ?></p>
+            <?php } else { ?>
+            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <?php foreach (['views' => 'analytics.home.views', 'visitors' => 'analytics.home.visitors'] as $analyticsKey => $analyticsLabel) {
+                    $analyticsMetric = $analytics['metrics'][$analyticsKey];
+                    $analyticsChange = $analyticsPresent->change($analyticsMetric['change'], $analyticsPresent->number((int) $analyticsMetric['previous']), $analyticsPeriod); ?>
+                <div>
+                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t($analyticsLabel)) ?></dt>
+                    <dd class="flex items-center gap-2 mt-1">
+                        <span class="text-2xl font-semibold text-slate-900 dark:text-zink-50"><?= e($analyticsPresent->number((int) $analyticsMetric['value'])) ?></span>
+                        <?php if ($analyticsChange['direction'] !== 'none') { ?>
+                        <span class="px-1.5 py-0.5 text-xs font-medium rounded <?= $analyticsTones[$analyticsChange['tone']] ?>" title="<?= e($analyticsChange['label']) ?>">
+                            <span aria-hidden="true"><?= e($analyticsChange['short']) ?></span>
+                            <span class="sr-only"><?= e($analyticsChange['label']) ?></span>
+                        </span>
+                        <?php } ?>
+                    </dd>
+                </div>
+                <?php } ?>
+                <div class="min-w-0">
+                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t('analytics.home.topPost')) ?></dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-zink-50 truncate" dir="auto">
+                        <?php if (($analytics['topPost']['title'] ?? null) !== null) { ?>
+                        <a href="<?= e(lurl('/dashboard/blog/'.(int) $selectedBlogId.'/insights/posts/'.(int) $analytics['topPost']['post_id']).'?range=7d') ?>" class="hover:text-custom-500"><?= e((string) $analytics['topPost']['title']) ?></a>
+                        <span class="text-slate-500 dark:text-zink-300">· <?= e($analyticsPresent->number((int) $analytics['topPost']['views'])) ?></span>
+                        <?php } else { ?>
+                        <?= e($t('analytics.metrics.none')) ?>
+                        <?php } ?>
+                    </dd>
+                </div>
+            </dl>
+            <?php } ?>
+        </div>
+    </section>
+    <?php } ?>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Needs attention: drafts + pending. This is the "you have work waiting" panel. -->
         <section class="lg:col-span-1 card">

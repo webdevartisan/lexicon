@@ -652,7 +652,7 @@
 
 /* The owner's optional line telling readers how visits are counted. Colours
    come from the theme, so it reads as part of the page it closes. */
-.lx-traffic-notice {
+.lx-insights-notice {
   margin: 0;
   padding: 0.75rem 1rem 1.5rem;
   font-size: 0.75rem;
@@ -661,7 +661,37 @@
   opacity: 0.75;
 }
 
-.lx-traffic-notice a {
+.lx-insights-notice a {
   color: inherit;
   text-decoration: underline;
+}
+
+/*
+ * Most read posts, shown at the foot of a blog's pages when its owner switches
+ * them on. Fonts and colours come from the theme around it.
+ */
+.lx-popular {
+  max-width: 42rem;
+  margin: 3rem auto 0;
+  padding: 0 1.25rem;
+}
+
+.lx-popular-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.lx-popular-list {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  line-height: 1.7;
+}
+
+.lx-popular-list a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }

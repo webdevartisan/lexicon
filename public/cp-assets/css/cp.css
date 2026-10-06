@@ -1297,6 +1297,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .h-16 {
   height: 4rem;
 }
+.h-2 {
+  height: 0.5rem;
+}
 .h-2\.5 {
   height: 0.625rem;
 }
@@ -1317,6 +1320,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .h-6 {
   height: 1.5rem;
+}
+.h-64 {
+  height: 16rem;
 }
 .h-72 {
   height: 18rem;
@@ -1404,6 +1410,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .w-6 {
   width: 1.5rem;
+}
+.w-72 {
+  width: 18rem;
 }
 .w-8 {
   width: 2rem;
@@ -1517,6 +1526,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .grow {
   flex-grow: 1;
 }
+.border-separate {
+  border-collapse: separate;
+}
 .-translate-x-2\/4 {
   --tw-translate-x: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -1588,8 +1600,14 @@ input[type=range]:focus::-webkit-slider-thumb {
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.grid-cols-\[8rem_1fr_3rem\] {
+  grid-template-columns: 8rem 1fr 3rem;
+}
 .grid-cols-\[9rem_1fr\] {
   grid-template-columns: 9rem 1fr;
+}
+.grid-cols-\[minmax\(8rem\2c 12rem\)_1fr_auto\] {
+  grid-template-columns: minmax(8rem,12rem) 1fr auto;
 }
 .flex-col {
   flex-direction: column;
@@ -1605,6 +1623,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .items-center {
   align-items: center;
+}
+.items-baseline {
+  align-items: baseline;
 }
 .items-stretch {
   align-items: stretch;
@@ -1659,6 +1680,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .gap-x-5 {
   -moz-column-gap: 1.25rem;
        column-gap: 1.25rem;
+}
+.gap-x-6 {
+  -moz-column-gap: 1.5rem;
+       column-gap: 1.5rem;
 }
 .gap-y-1 {
   row-gap: 0.25rem;
@@ -1786,6 +1811,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .rounded-b-md {
   border-bottom-right-radius: 0.375rem;
   border-bottom-left-radius: 0.375rem;
+}
+.rounded-t {
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
 }
 .rounded-t-md {
   border-top-left-radius: 0.375rem;
@@ -2043,6 +2072,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .bg-custom-500\/15 {
   background-color: rgb(var(--sc-custom-500) / 0.15);
 }
+.bg-custom-500\/80 {
+  background-color: rgb(var(--sc-custom-500) / 0.8);
+}
 .bg-emerald-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(209 250 229 / var(--tw-bg-opacity, 1));
@@ -2106,6 +2138,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .bg-red-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(254 226 226 / var(--tw-bg-opacity, 1));
+}
+.bg-red-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 202 202 / var(--tw-bg-opacity, 1));
 }
 .bg-red-50 {
   --tw-bg-opacity: 1;
@@ -2398,9 +2434,6 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .pb-3 {
   padding-bottom: 0.75rem;
-}
-.pb-4 {
-  padding-bottom: 1rem;
 }
 .pb-5 {
   padding-bottom: 1.25rem;
@@ -3035,6 +3068,9 @@ input[type=range]:focus::-webkit-slider-thumb {
      passed the bare RGB triplet straight to color/background-color, so every
      one of them computed to transparent and killed the rule it was meant to
      support. */
+.\[border-spacing\:2px\] {
+  border-spacing: 2px;
+}
 .\[direction\:rtl\] {
   direction: rtl;
 }
@@ -3160,6 +3196,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .hover\:bg-custom-50:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(var(--sc-custom-50) / var(--tw-bg-opacity, 1));
+}
+.hover\:bg-custom-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--sc-custom-500) / var(--tw-bg-opacity, 1));
 }
 .hover\:bg-custom-600:hover {
   --tw-bg-opacity: 1;
@@ -3501,6 +3541,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .focus\:ring-yellow-100:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(254 249 195 / var(--tw-ring-opacity, 1));
+}
+.focus-visible\:underline:focus-visible {
+  text-decoration-line: underline;
 }
 .focus-visible\:opacity-100:focus-visible {
   opacity: 1;
@@ -4012,6 +4055,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .sm\:grid-cols-\[12rem_1fr\] {
     grid-template-columns: 12rem 1fr;
   }
+  .sm\:grid-cols-\[max-content_1fr\] {
+    grid-template-columns: max-content 1fr;
+  }
   .sm\:flex-row {
     flex-direction: row;
   }
@@ -4261,6 +4307,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .xl\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+  .xl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
   .xl\:grid-cols-6 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -4269,12 +4318,18 @@ input[type=range]:focus::-webkit-slider-thumb {
   .\32xl\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+  .\32xl\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 .ltr\:-right-1:where([dir="ltr"], [dir="ltr"] *) {
   right: -0.25rem;
 }
 .ltr\:left-0:where([dir="ltr"], [dir="ltr"] *) {
   left: 0px;
+}
+.ltr\:left-\[var\(--at\)\]:where([dir="ltr"], [dir="ltr"] *) {
+  left: var(--at);
 }
 .ltr\:right-0:where([dir="ltr"], [dir="ltr"] *) {
   right: 0px;
@@ -4290,6 +4345,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .ltr\:mr-2:where([dir="ltr"], [dir="ltr"] *) {
   margin-right: 0.5rem;
+}
+.ltr\:-translate-x-1\/2:where([dir="ltr"], [dir="ltr"] *) {
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .ltr\:rounded-l-md:where([dir="ltr"], [dir="ltr"] *) {
   border-top-left-radius: 0.375rem;
@@ -4310,6 +4369,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .ltr\:pl-2:where([dir="ltr"], [dir="ltr"] *) {
   padding-left: 0.5rem;
+}
+.ltr\:pl-3:where([dir="ltr"], [dir="ltr"] *) {
+  padding-left: 0.75rem;
 }
 .ltr\:pl-5:where([dir="ltr"], [dir="ltr"] *) {
   padding-left: 1.25rem;
@@ -4349,9 +4411,6 @@ input[type=range]:focus::-webkit-slider-thumb {
   padding-left: 2.5rem;
 }
 @media (min-width: 640px) {
-  .ltr\:sm\:left-auto:where([dir="ltr"], [dir="ltr"] *) {
-    left: auto;
-  }
   .ltr\:sm\:border-r:where([dir="ltr"], [dir="ltr"] *) {
     border-right-width: 1px;
   }
@@ -4384,11 +4443,18 @@ input[type=range]:focus::-webkit-slider-thumb {
 .rtl\:right-0:where([dir="rtl"], [dir="rtl"] *) {
   right: 0px;
 }
+.rtl\:right-\[var\(--at\)\]:where([dir="rtl"], [dir="rtl"] *) {
+  right: var(--at);
+}
 .rtl\:ml-2:where([dir="rtl"], [dir="rtl"] *) {
   margin-left: 0.5rem;
 }
 .rtl\:mr-3:where([dir="rtl"], [dir="rtl"] *) {
   margin-right: 0.75rem;
+}
+.rtl\:translate-x-1\/2:where([dir="rtl"], [dir="rtl"] *) {
+  --tw-translate-x: 50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .rtl\:rotate-180:where([dir="rtl"], [dir="rtl"] *) {
   --tw-rotate: 180deg;
@@ -4425,6 +4491,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .rtl\:pr-2:where([dir="rtl"], [dir="rtl"] *) {
   padding-right: 0.5rem;
+}
+.rtl\:pr-3:where([dir="rtl"], [dir="rtl"] *) {
+  padding-right: 0.75rem;
 }
 .rtl\:pr-5:where([dir="rtl"], [dir="rtl"] *) {
   padding-right: 1.25rem;
@@ -4521,6 +4590,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .dark\:border-green-500:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
   border-color: rgb(34 197 94 / var(--tw-border-opacity, 1));
+}
+.dark\:border-green-500\/30:where([data-mode="dark"], [data-mode="dark"] *) {
+  border-color: rgb(34 197 94 / 0.3);
 }
 .dark\:border-green-700:where([data-mode="dark"], [data-mode="dark"] *) {
   --tw-border-opacity: 1;
@@ -4687,6 +4759,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .dark\:bg-red-500\/20:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(239 68 68 / 0.2);
+}
+.dark\:bg-red-500\/30:where([data-mode="dark"], [data-mode="dark"] *) {
+  background-color: rgb(239 68 68 / 0.3);
 }
 .dark\:bg-red-500\/5:where([data-mode="dark"], [data-mode="dark"] *) {
   background-color: rgb(239 68 68 / 0.05);

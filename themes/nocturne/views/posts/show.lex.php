@@ -104,7 +104,7 @@ $title = e($post['title'] ?? 'Untitled');
 </section>
 
 <?php if (!empty($related) && is_array($related)) { ?>
-<section class="post-related">
+<section class="post-related" data-insights-related>
   <div class="container">
     <h2 class="reveal">For the small hours</h2>
     <div class="related-grid">

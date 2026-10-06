@@ -182,21 +182,14 @@ return [
         ],
         [
             'label' => 'Insights',
-            'href' => '#',
-            'auth' => true,
-            'scope' => 'contextual',
-            'type' => 'section_header',
-            'policy' => 'viewTraffic',
-            'key' => 'navigation.analyticsSection',
-        ],
-        [
-            'label' => 'Traffic',
-            'href' => '/dashboard/blog/{blogId}/analytics/traffic',
+            'href' => '/dashboard/blog/{blogId}/insights',
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,
-            'policy' => 'viewTraffic',
-            'key' => 'navigation.traffic',
+            'policy' => 'viewAnalytics',
+            'icon' => 'trending-up',
+            'key' => 'navigation.insights',
+            'children' => App\Services\Analytics\InsightsPages::blogNavigation(),
         ],
     ],
 
@@ -210,7 +203,7 @@ return [
      * panel still renders coherent sections.
      */
     'admin' => [
-        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_site_settings', 'view_platform_traffic'], 'key' => 'navigation.home'],
+        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_site_settings', 'view_platform_analytics'], 'key' => 'navigation.home'],
         ['label' => 'Notifications', 'href' => '/admin/notifications', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel'], 'key' => 'navigation.adminNotifications'],
 
         ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
@@ -220,8 +213,11 @@ return [
         ['label' => 'Categories', 'href' => '/admin/categories', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.categories'],
         ['label' => 'Tags', 'href' => '/admin/tags', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.tags'],
 
-        ['label' => 'Insights', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_platform_traffic'], 'key' => 'navigation.analyticsSection'],
-        ['label' => 'Traffic', 'href' => '/admin/traffic', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_platform_traffic'], 'key' => 'navigation.traffic'],
+        [
+            'label' => 'Insights', 'href' => '/admin/insights', 'auth' => true, 'roles' => ['administrator'],
+            'permissions' => ['view_platform_analytics'], 'icon' => 'trending-up', 'key' => 'navigation.insights',
+            'children' => App\Services\Analytics\InsightsPages::adminNavigation(),
+        ],
 
         ['label' => 'People', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_users', 'manage_roles'], 'key' => 'navigation.peopleSection'],
         ['label' => 'Users', 'href' => '/admin/users', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_users'], 'key' => 'navigation.users'],

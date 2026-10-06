@@ -20,6 +20,15 @@ class PageModel extends AppModel
     public const FALLBACK_LOCALE = 'en';
 
     /**
+     * Guides listed on the getting started index, in display order.
+     */
+    public const GUIDE_SLUGS = [
+        'start-your-first-blog',
+        'write-posts-people-read',
+        'blog-with-your-team',
+    ];
+
+    /**
      * Locales this page has a published row for.
      *
      * A page translated into two languages is a genuine pair of alternates. One

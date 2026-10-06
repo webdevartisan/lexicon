@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Framework\Core;
 
 use ErrorException;
+use Framework\Interfaces\ServerErrorReporterInterface;
 use Framework\Interfaces\TemplateViewerInterface;
 use Throwable;
 
@@ -145,7 +146,14 @@ final class ErrorHandler
             $response = $container->get(Response::class);
 
             $renderer = new ErrorRenderer($viewer, $response, $isDev);
-            $renderer->render($exception)->send();
+            $rendered = $renderer->render($exception);
+            $rendered->send();
+
+            if ($rendered->getStatusCode() >= 500 && $container->has(ServerErrorReporterInterface::class)) {
+                $reporter = $container->get(ServerErrorReporterInterface::class);
+                assert($reporter instanceof ServerErrorReporterInterface);
+                $reporter->report(Request::createFromGlobals(), $rendered->getStatusCode());
+            }
 
             return;
         } catch (Throwable $fallbackFailure) {

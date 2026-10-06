@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
+use App\Gate;
+use App\Models\BlogModel;
 use App\Services\MediaService;
 use App\Services\UploadService;
 use Framework\Core\Response;
+use Framework\Exceptions\PageNotFoundException;
 
 class UploadController extends AppController
 {
     public function __construct(
         private UploadService $uploader,
         private MediaService $mediaService,
+        private BlogModel $blogs,
     ) {}
 
     public function tinymceImage(): Response
@@ -27,6 +31,13 @@ class UploadController extends AppController
         if ($blogId <= 0) {
             return $this->json(['error' => 'Missing blog_id'], 400);
         }
+
+        $blog = $this->blogs->getBlog($blogId);
+        if (!$blog) {
+            throw new PageNotFoundException("Blog with ID '{$blogId}' not found.");
+        }
+
+        Gate::authorize('createPost', $blog, $user);
 
         // TinyMCE sends the file field named "image" from images_upload_handler
         $file = $this->request->files['image'] ?? null;

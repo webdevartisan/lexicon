@@ -28,6 +28,22 @@ class ActivityLogModel extends AppModel
     }
 
     /**
+     * The days one action was taken on one resource, for markers on an Insights chart.
+     *
+     * @return list<string> Y-m-d, oldest first, each once
+     */
+    public function daysOf(string $action, string $resourceType, int $resourceId, string $from, string $to): array
+    {
+        return $this->database->query(
+            'SELECT DISTINCT DATE(created_at) AS day FROM activity_log
+             WHERE resource_type = ? AND resource_id = ? AND action = ?
+               AND created_at >= ? AND created_at < ? + INTERVAL 1 DAY
+             ORDER BY day',
+            [$resourceType, $resourceId, $action, $from, $to]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
      * Paginated audit trail with optional action and resource-type filters.
      *
      * @param  string  $action  Exact action filter (e.g. 'comment.deleted')

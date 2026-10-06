@@ -43,7 +43,7 @@ test('a reader sees only the reply toggle', function () {
         ->toBe(['notify_comment_replies']);
 });
 
-test('a blog owner sees author, review, moderation, and firehose toggles but not role changes', function () {
+test('a blog owner sees author, review, moderation, firehose and traffic toggles but not role changes', function () {
     $ownerId = UserFactory::new($this->userModel)->create();
     BlogFactory::new($this->blogModel)->create($ownerId);
 
@@ -55,6 +55,9 @@ test('a blog owner sees author, review, moderation, and firehose toggles but not
         'notify_post_status',
         'notify_review_requests',
         'notify_invites',
+        'notify_insights_digest',
+        'notify_insights_milestones',
+        'notify_insights_spikes',
     ]);
 });
 
@@ -67,6 +70,7 @@ test('an author collaborator sees post and comment toggles plus role changes', f
         'notify_comments_authored',
         'notify_post_status',
         'notify_role_changes',
+        'notify_insights_milestones',
     ]);
 });
 
@@ -92,5 +96,6 @@ test('an editor collaborator sees moderation but not the owner-only firehose or 
         'notify_post_status',
         'notify_review_requests',
         'notify_role_changes',
+        'notify_insights_milestones',
     ]);
 });

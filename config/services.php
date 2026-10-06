@@ -279,64 +279,115 @@ $container->setShared(App\Services\ConsentService::class, function ($c) {
 });
 
 // ============================================================================
-// TRAFFIC ANALYTICS
+// ANALYTICS (INSIGHTS)
 // ============================================================================
 
-$trafficConfig = static fn (): array => require ROOT_PATH.'/config/traffic.php';
+$analyticsConfig = static fn (): array => require ROOT_PATH.'/config/analytics.php';
 
-$container->set(App\Services\Traffic\UserAgentClassifier::class, function ($c) use ($trafficConfig) {
-    return new App\Services\Traffic\UserAgentClassifier($trafficConfig()['bot_patterns']);
+$container->set(App\Services\Analytics\UserAgentClassifier::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\UserAgentClassifier($analyticsConfig()['bot_patterns']);
 });
 
-$container->set(App\Services\Traffic\ReferrerClassifier::class, function ($c) use ($trafficConfig) {
-    $config = $trafficConfig();
+$container->set(App\Services\Analytics\ReferrerClassifier::class, function ($c) use ($analyticsConfig) {
+    $config = $analyticsConfig();
 
-    return new App\Services\Traffic\ReferrerClassifier(
+    return new App\Services\Analytics\ReferrerClassifier(
         $config['sources'],
         $config['spam_referrers'],
         $config['email_mediums']
     );
 });
 
-// Keyed with APP_KEY so the hashes in traffic_hits can't be matched to accounts or cookies.
-$container->set(App\Services\Traffic\VisitorIdentity::class, function ($c) {
-    return new App\Services\Traffic\VisitorIdentity(
-        $c->get(App\Models\TrafficSaltModel::class),
+// Keyed with APP_KEY so the hashes in analytics_events can't be matched to accounts or cookies.
+$container->set(App\Services\Analytics\VisitorIdentity::class, function ($c) {
+    return new App\Services\Analytics\VisitorIdentity(
+        $c->get(App\Models\AnalyticsSaltModel::class),
         (string) ($_ENV['APP_KEY'] ?? 'change-me')
     );
 });
 
-$container->set(App\Services\Traffic\VisitorCookie::class, function ($c) use ($trafficConfig) {
-    $cookie = $trafficConfig()['cookie'];
+$container->set(App\Services\Analytics\VisitorCookie::class, function ($c) use ($analyticsConfig) {
+    $cookie = $analyticsConfig()['cookie'];
 
-    return new App\Services\Traffic\VisitorCookie($cookie['name'], (int) $cookie['lifetime_days']);
+    return new App\Services\Analytics\VisitorCookie($cookie['name'], (int) $cookie['lifetime_days']);
 });
 
-$container->set(App\Services\Traffic\VisitorLink::class, function ($c) use ($trafficConfig) {
-    return new App\Services\Traffic\VisitorLink(
-        $c->get(App\Services\Traffic\VisitorIdentity::class),
-        $c->get(App\Services\Traffic\VisitorCookie::class),
-        $c->get(App\Services\ConsentService::class),
-        $c->get(App\Models\TrafficHitModel::class),
-        (int) $trafficConfig()['visit_minutes'],
+$container->setShared(App\Services\Analytics\EventRegistry::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\EventRegistry($analyticsConfig()['events']);
+});
+
+$container->set(Framework\Interfaces\ServerErrorReporterInterface::class, function ($c) {
+    return $c->get(App\Services\Analytics\ServerErrorRecorder::class);
+});
+
+$container->set(App\Services\Analytics\VisitFinder::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\VisitFinder(
+        $c->get(App\Services\Analytics\VisitorIdentity::class),
+        $c->get(App\Services\Analytics\VisitorCookie::class),
+        $c->get(App\Models\AnalyticsVisitModel::class),
+        (int) $analyticsConfig()['visit_minutes'],
     );
 });
 
-$container->setShared(App\Services\Traffic\CountryLookup::class, function ($c) use ($trafficConfig) {
-    return new App\Services\Traffic\CountryLookup(ROOT_PATH.'/'.$trafficConfig()['geo']['path']);
+$container->set(App\Services\Analytics\VisitorLink::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\VisitorLink(
+        $c->get(App\Services\Analytics\VisitorIdentity::class),
+        $c->get(App\Services\Analytics\VisitorCookie::class),
+        $c->get(App\Services\ConsentService::class),
+        $c->get(App\Models\AnalyticsEventModel::class),
+        $c->get(App\Models\AnalyticsVisitModel::class),
+        (int) $analyticsConfig()['visit_minutes'],
+    );
 });
 
-$container->set(App\Services\Traffic\TrafficRecorder::class, function ($c) use ($trafficConfig) {
-    return new App\Services\Traffic\TrafficRecorder(
-        $c->get(App\Services\Traffic\TrafficSettings::class),
-        $c->get(App\Services\Traffic\PagePathResolver::class),
-        $c->get(App\Services\Traffic\UserAgentClassifier::class),
-        $c->get(App\Services\Traffic\ReferrerClassifier::class),
-        $c->get(App\Services\Traffic\VisitorIdentity::class),
-        $c->get(App\Services\Traffic\CountryLookup::class),
-        $c->get(App\Models\TrafficHitModel::class),
+$container->set(App\Services\Analytics\SignupReportService::class, function ($c) {
+    $privacy = require ROOT_PATH.'/config/privacy.php';
+
+    return new App\Services\Analytics\SignupReportService(
+        $c->get(App\Models\SignupFunnelModel::class),
+        $c->get(App\Models\AnalyticsDailyEventModel::class),
+        $c->get(App\Models\AnalyticsStatsModel::class),
         $c->get(App\Models\BlogModel::class),
-        $trafficConfig(),
+        (string) $privacy['deleted_user_handle'],
+    );
+});
+
+$container->setShared(App\Services\Analytics\CountryLookup::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\CountryLookup(ROOT_PATH.'/'.$analyticsConfig()['geo']['path']);
+});
+
+$container->set(App\Services\Analytics\AnalyticsReportService::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\AnalyticsReportService(
+        $c->get(App\Models\AnalyticsStatsModel::class),
+        $c->get(App\Models\AnalyticsRawStatsModel::class),
+        $c->get(App\Models\AnalyticsDailyEventModel::class),
+        $c->get(App\Models\AnalyticsEventModel::class),
+        $c->get(App\Models\ActivityLogModel::class),
+        (int) $analyticsConfig()['read_seconds'],
+        (int) $analyticsConfig()['engaged_visit_seconds'],
+    );
+});
+
+$container->setShared(App\Services\Analytics\NetworkLookup::class, function ($c) use ($analyticsConfig) {
+    $networks = $analyticsConfig()['networks'];
+
+    return new App\Services\Analytics\NetworkLookup(ROOT_PATH.'/'.$networks['path'], $networks['hosting']);
+});
+
+$container->set(App\Services\Analytics\AnalyticsRecorder::class, function ($c) use ($analyticsConfig) {
+    return new App\Services\Analytics\AnalyticsRecorder(
+        $c->get(App\Services\Analytics\AnalyticsSettings::class),
+        $c->get(App\Services\Analytics\PagePathResolver::class),
+        $c->get(App\Services\Analytics\UserAgentClassifier::class),
+        $c->get(App\Services\Analytics\ReferrerClassifier::class),
+        $c->get(App\Services\Analytics\VisitFinder::class),
+        $c->get(App\Services\Analytics\CountryLookup::class),
+        $c->get(App\Services\Analytics\NetworkLookup::class),
+        $c->get(App\Models\AnalyticsEventModel::class),
+        $c->get(App\Models\AnalyticsVisitModel::class),
+        $c->get(App\Services\Analytics\EventRegistry::class),
+        $c->get(App\Models\BlogModel::class),
+        $analyticsConfig(),
     );
 });
 
@@ -364,7 +415,8 @@ $container->setShared(App\Services\MailQueueService::class, function ($c) {
     return new App\Services\MailQueueService(
         $c->get(App\Models\MailQueueModel::class),
         $c->get(App\Services\MailService::class),
-        $config['queue'] ?? []
+        $config['queue'] ?? [],
+        new App\Services\Analytics\EmailLinkTagger((string) env('APP_URL', '')),
     );
 });
 
@@ -756,8 +808,8 @@ $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
     );
 });
 
-$container->set(App\Services\Traffic\TrafficRateLimiter::class, function ($c) {
-    return new App\Services\Traffic\TrafficRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
+$container->set(App\Services\Analytics\AnalyticsRateLimiter::class, function ($c) {
+    return new App\Services\Analytics\AnalyticsRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
 });
 
 /**
@@ -843,8 +895,9 @@ $container->setShared(App\Services\AccountErasureService::class, function ($c) {
         $c->get(App\Services\MediaUsageResolver::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
         $c->get(App\Models\AccountErasureRecordModel::class),
-        $c->get(App\Models\TrafficHitModel::class),
-        $c->get(App\Services\Traffic\VisitorIdentity::class),
+        $c->get(App\Models\AnalyticsEventModel::class),
+        $c->get(App\Models\AnalyticsVisitModel::class),
+        $c->get(App\Services\Analytics\VisitorIdentity::class),
         (string) $config['deleted_user_handle']
     );
 });
@@ -930,8 +983,9 @@ $container->setShared(App\Services\BlogDeletionService::class, function ($c) {
         $c->get(App\Models\UserPreferencesModel::class),
         $c->get(App\Interfaces\UploadServiceInterface::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
-        $c->get(App\Models\TrafficHitModel::class),
-        $c->get(App\Models\TrafficRollupModel::class)
+        $c->get(App\Models\AnalyticsEventModel::class),
+        $c->get(App\Models\AnalyticsVisitModel::class),
+        $c->get(App\Models\AnalyticsRollupModel::class)
     );
 });
 

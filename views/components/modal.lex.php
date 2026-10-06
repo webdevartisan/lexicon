@@ -9,6 +9,7 @@
  *         fields; the caller is responsible for escaping everything in it
  * - form: id of the form the confirm button submits
  * - openOnLoad: open as soon as the page loads, e.g. to show validation errors
+ * - noConfirm: only the cancel button, for a modal with nothing to confirm
  */
 $id = $id ?? 'modal';
 $title = $title ?? 'Modal Title';
@@ -22,6 +23,7 @@ $confirmText = $confirmText ?? 'Confirm';
 $confirmIcon = $confirmIcon ?? null;
 $form = $form ?? null;
 $openOnLoad = !empty($openOnLoad);
+$noConfirm = !empty($noConfirm);
 
 // Variant-based styling
 $headerClasses = match ($variant) {
@@ -86,6 +88,7 @@ $headerTextColor = ($variant === 'default')
                 class="text-slate-500 btn bg-slate-200 border-slate-200 hover:text-slate-600 hover:bg-slate-300 hover:border-slate-300 focus:text-slate-600 focus:bg-slate-300 focus:border-slate-300 focus:ring focus:ring-slate-100 active:text-slate-600 active:bg-slate-300 active:border-slate-300 active:ring active:ring-slate-100 dark:bg-zink-600 dark:hover:bg-zink-500 dark:border-zink-600 dark:hover:border-zink-500 dark:text-zink-200 dark:ring-zink-400/50">
                 <?= e($cancelText) ?>
             </button>
+            <?php if (!$noConfirm) { ?>
             <button type="<?= $form ? 'submit' : 'button' ?>"
                     <?php if ($form) { ?>form="<?= e($form) ?>"<?php } ?>
                     class="<?= $confirmBtnClasses ?>">
@@ -94,6 +97,7 @@ $headerTextColor = ($variant === 'default')
                 <?php } ?>
                 <?= e($confirmText) ?>
             </button>
+            <?php } ?>
         </div>
 
     </div>

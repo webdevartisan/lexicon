@@ -56,7 +56,7 @@ class SystemPolicy implements PolicyInterface
         'manageMailQueue' => 'manage_mail_queue',
         'manageScheduledTasks' => 'manage_scheduled_tasks',
         'manageSettings' => 'manage_site_settings',
-        'viewPlatformTraffic' => 'view_platform_traffic',
+        'viewPlatformAnalytics' => 'view_platform_analytics',
     ];
 
     /**
@@ -268,13 +268,13 @@ class SystemPolicy implements PolicyInterface
     }
 
     /**
-     * See traffic across every blog: platform totals, the busiest blogs and posts.
+     * See Insights across every blog: platform totals, the busiest blogs and posts.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
-    public function viewPlatformTraffic(array $user): bool
+    public function viewPlatformAnalytics(array $user): bool
     {
-        return $this->allowsArea($user, 'viewPlatformTraffic');
+        return $this->allowsArea($user, 'viewPlatformAnalytics');
     }
 
     /**

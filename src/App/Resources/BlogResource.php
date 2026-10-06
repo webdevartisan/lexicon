@@ -18,6 +18,8 @@ class BlogResource
     /** @var array<int, string[]> Per-user blog permission cache */
     private array $permissionCache = [];
 
+    private ?int $publishedAuthors = null;
+
     /**
      * @param  array<string, mixed>  $data  Blog row from the database
      */
@@ -112,6 +114,14 @@ class BlogResource
     public function userCount(): int
     {
         return count($this->users());
+    }
+
+    /**
+     * Different people with at least one published post here, asked once per request.
+     */
+    public function publishedAuthorCount(): int
+    {
+        return $this->publishedAuthors ??= $this->model->countPublishedAuthors($this->id());
     }
 
     // Convert back to array for views

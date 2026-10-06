@@ -7,6 +7,7 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Helpers\TimezoneHelper;
+use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
@@ -14,7 +15,6 @@ use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
 use App\Models\TagModel;
-use App\Models\TrafficStatsModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
 use App\Resources\PostResource;
@@ -27,6 +27,7 @@ use App\Services\PostContentSanitizer;
 use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
+use App\ValueObjects\AnalyticsScope;
 use DateTime;
 use DateTimeZone;
 use Framework\Core\Response;
@@ -79,7 +80,7 @@ final class PostController extends AppController
         private PostAuthorService $postAuthors,
         private ExternalMediaGuard $mediaGuard,
         private PostContentSanitizer $contentSanitizer,
-        private TrafficStatsModel $trafficStats,
+        private AnalyticsStatsModel $analyticsStats,
     ) {}
 
     /**
@@ -489,7 +490,7 @@ final class PostController extends AppController
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
-            'postTraffic' => $this->postTraffic($blog, (int) $post->id(), (string) ($postArray['status'] ?? '')),
+            'postAnalytics' => $this->postAnalytics($blog, (int) $post->id(), (string) ($postArray['status'] ?? '')),
             'translationsEnabled' => $translationsEnabled,
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
@@ -1277,32 +1278,40 @@ final class PostController extends AppController
     {
         $ids = array_map('intval', array_column($posts, 'id'));
 
-        return $this->trafficStats->lifetimeForPosts((int) $blog->id(), $ids);
+        return $this->analyticsStats->lifetimeForPosts((int) $blog->id(), $ids);
     }
 
     /**
-     * Views for the editor sidebar, or null when the viewer can't open Traffic.
+     * How the post is doing, for the editor sidebar: its views so far, and this
+     * week's views, read rate and where readers came from. Null when the viewer
+     * can't open Insights.
      *
-     * @return array{views: int, visitors: int, recent: int, url: string}|null
+     * @return array{views: int, weekViews: int, weekReadRate: ?float, weekSources: array<string, list<array<string, mixed>>>, url: string}|null
      */
-    private function postTraffic(\App\Resources\BlogResource $blog, int $postId, string $status): ?array
+    private function postAnalytics(\App\Resources\BlogResource $blog, int $postId, string $status): ?array
     {
-        if ($status !== 'published' || !Gate::allows('viewTraffic', $blog, auth()->user())) {
+        if ($status !== 'published' || !Gate::allows('viewAnalytics', $blog, auth()->user())) {
             return null;
         }
 
         $blogId = (int) $blog->id();
-        $lifetime = $this->trafficStats->lifetimeForPosts($blogId, [$postId])[$postId]
+        $lifetime = $this->analyticsStats->lifetimeForPosts($blogId, [$postId])[$postId]
             ?? ['views' => 0, 'visitors' => 0];
         $today = new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId)));
-        $monthAgo = $today->modify('-29 days')->format('Y-m-d');
-        $recent = $this->trafficStats->totals($blogId, [$postId], $monthAgo, $today->format('Y-m-d'));
+        [$from, $to] = [$today->modify('-6 days')->format('Y-m-d'), $today->format('Y-m-d')];
+        $scope = AnalyticsScope::post($blogId, $postId);
+        $week = $this->analyticsStats->totals($scope, $from, $to);
 
         return [
             'views' => $lifetime['views'],
-            'visitors' => $lifetime['visitors'],
-            'recent' => $recent['views'],
-            'url' => lurl('/dashboard/blog/'.$blogId.'/analytics/traffic/posts/'.$postId),
+            'weekViews' => $week['views'],
+            'weekReadRate' => $week['views'] > 0 ? $week['read_views'] / $week['views'] : null,
+            'weekSources' => [
+                'source' => $this->analyticsStats->breakdown($scope, 'source', $from, $to, 1),
+                'lexicon' => $this->analyticsStats->breakdown($scope, 'lexicon', $from, $to, 1),
+                'channel' => $this->analyticsStats->breakdown($scope, 'channel', $from, $to, 3),
+            ],
+            'url' => lurl('/dashboard/blog/'.$blogId.'/insights/posts/'.$postId).'?range=7d',
         ];
     }
 

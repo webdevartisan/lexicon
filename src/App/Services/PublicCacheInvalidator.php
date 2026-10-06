@@ -23,11 +23,11 @@ class PublicCacheInvalidator
     }
 
     /**
-     * Explore page including every search/tab/pagination variant.
+     * Discover, including every search, tab and pagination variant.
      */
-    public function purgeExplore(): void
+    public function purgeDiscover(): void
     {
-        cache()->deletePattern('*:GET:/blogs*');
+        cache()->deletePattern('*:GET:/discover*');
     }
 
     /**
@@ -79,10 +79,19 @@ class PublicCacheInvalidator
     public function purgeAllPublic(): void
     {
         $this->purgeHome();
-        $this->purgeExplore();
+        $this->purgeDiscover();
 
         foreach (['about', 'contact', 'privacy', 'terms', 'cookies', 'getting-started'] as $slug) {
             $this->purgePage($slug);
         }
+    }
+
+    /**
+     * Every cached page, platform and blogs alike, for a change built into the
+     * layouts themselves, such as switching visit counting on or off.
+     */
+    public function purgeAllPages(): void
+    {
+        cache()->deletePattern('*:GET:*');
     }
 }

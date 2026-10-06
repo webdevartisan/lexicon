@@ -12,9 +12,10 @@ use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
+use App\Services\Analytics\SignupAttribution;
+use App\Services\Analytics\VisitorLink;
 use App\Services\CommentService;
 use App\Services\InvitationService;
-use App\Services\Traffic\VisitorLink;
 use App\Services\UserHandleValidator;
 use Exception;
 use Framework\Core\Response;
@@ -138,6 +139,13 @@ final class RegisterController extends AppController
             // queueing is a single insert, so this only fires if the database
             // is in trouble. Registration itself already succeeded either way.
             error_log('Failed to queue welcome email: '.$e->getMessage());
+        }
+
+        // Before signing in, which can move this visit's views onto the account.
+        try {
+            app(SignupAttribution::class)->record($this->request);
+        } catch (Exception $e) {
+            error_log('Failed to note where a sign-up came from: '.$e->getMessage());
         }
 
         // log the user in automatically after successful registration

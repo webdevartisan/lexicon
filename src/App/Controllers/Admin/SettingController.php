@@ -8,9 +8,10 @@ use App\Auth;
 use App\Controllers\AppController;
 use App\Models\RoleModel;
 use App\Models\SettingModel;
+use App\Services\Analytics\AnalyticsSettings;
+use App\Services\Analytics\CountryLookup;
 use App\Services\MaintenanceMode;
-use App\Services\Traffic\CountryLookup;
-use App\Services\Traffic\TrafficSettings;
+use App\Services\PublicCacheInvalidator;
 use Framework\Core\Response;
 
 /**
@@ -29,8 +30,9 @@ final class SettingController extends AppController
         private SettingModel $settings,
         private RoleModel $roles,
         private MaintenanceMode $maintenance,
-        private TrafficSettings $traffic,
+        private AnalyticsSettings $analytics,
         private CountryLookup $countries,
+        private PublicCacheInvalidator $publicCache,
     ) {}
 
     /**
@@ -43,49 +45,54 @@ final class SettingController extends AppController
             'mail_config' => $this->getMailConfig(),
             'roles' => $this->roles->findAll(),
             'maintenance_active' => MaintenanceMode::active(),
-            'traffic' => $this->traffic->storedValues(),
-            'traffic_aggregated_at' => $this->traffic->aggregatedAt(),
-            'traffic_countries' => $this->countries->available(),
+            'analytics' => $this->analytics->storedValues(),
+            'analytics_aggregated_at' => $this->analytics->aggregatedAt(),
+            'analytics_countries' => $this->countries->available(),
         ]);
     }
 
     /**
-     * Save the platform-wide traffic settings.
+     * Save the platform-wide analytics settings.
      */
-    public function updateTraffic(): Response
+    public function updateAnalytics(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
         $data = $this->validateOrFail([
-            'traffic_enabled' => 'required|in:0,1',
-            'traffic_aggregation_enabled' => 'required|in:0,1',
-            'traffic_raw_retention_days' => 'required|integer',
-            'traffic_extra_bot_patterns' => 'max:2000',
+            'analytics_enabled' => 'required|in:0,1',
+            'analytics_aggregation_enabled' => 'required|in:0,1',
+            'analytics_raw_retention_days' => 'required|integer',
+            'analytics_extra_bot_patterns' => 'max:2000',
         ])->validated();
 
-        $days = (int) $data['traffic_raw_retention_days'];
-        [, $floor, $ceiling] = TrafficSettings::KEYS['traffic.raw_retention_days'];
+        $days = (int) $data['analytics_raw_retention_days'];
+        [, $floor, $ceiling] = AnalyticsSettings::KEYS['analytics.raw_retention_days'];
 
         // min:/max: measure string length here, so the day bounds are checked by hand.
         if ($days < $floor || $days > $ceiling) {
             $this->flash('error', "Keep raw page views for {$floor} to {$ceiling} days.");
 
-            return $this->redirect('/admin/settings#traffic');
+            return $this->redirect('/admin/settings#analytics');
         }
 
-        $before = $this->traffic->storedValues();
+        $before = $this->analytics->storedValues();
 
-        $this->traffic->save('traffic.enabled', (int) $data['traffic_enabled']);
-        $this->traffic->save('traffic.aggregation_enabled', (int) $data['traffic_aggregation_enabled']);
-        $this->traffic->save('traffic.raw_retention_days', $days);
-        $this->traffic->saveExtraBotPatterns(trim((string) ($data['traffic_extra_bot_patterns'] ?? '')));
+        $this->analytics->save('analytics.enabled', (int) $data['analytics_enabled']);
+        $this->analytics->save('analytics.aggregation_enabled', (int) $data['analytics_aggregation_enabled']);
+        $this->analytics->save('analytics.raw_retention_days', $days);
+        $this->analytics->saveExtraBotPatterns(trim((string) ($data['analytics_extra_bot_patterns'] ?? '')));
 
-        $after = $this->traffic->storedValues();
+        $after = $this->analytics->storedValues();
+
+        // Cached pages carry the counting script, or leave it out, as of the old setting.
+        if ($after['analytics.enabled'] !== $before['analytics.enabled']) {
+            $this->publicCache->purgeAllPages();
+        }
 
         if ($after !== $before) {
             audit()->log(
                 (int) auth()->user()['id'],
-                'site.traffic_settings_updated',
+                'site.analytics_settings_updated',
                 'setting',
                 null,
                 ['before' => $before, 'after' => $after],
@@ -93,9 +100,9 @@ final class SettingController extends AppController
             );
         }
 
-        $this->flash('success', 'Traffic settings saved.');
+        $this->flash('success', 'Insights settings saved.');
 
-        return $this->redirect('/admin/settings#traffic');
+        return $this->redirect('/admin/settings#analytics');
     }
 
     /**

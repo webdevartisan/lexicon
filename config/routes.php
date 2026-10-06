@@ -37,16 +37,22 @@ $router->add('/csp-report', [
     'method' => 'POST',
 ]);
 
-// Page view beacon and leave ping. CSRF-exempt, TrafficController checks the origin instead.
+// Page view beacon, leave ping, and what readers do on a page. CSRF-exempt, AnalyticsBeaconController checks the origin instead.
 $router->add('/traffic/hit', [
-    'controller' => 'TrafficController',
+    'controller' => 'AnalyticsBeaconController',
     'action' => 'hit',
     'method' => 'POST',
 ]);
 
 $router->add('/traffic/engage', [
-    'controller' => 'TrafficController',
+    'controller' => 'AnalyticsBeaconController',
     'action' => 'engage',
+    'method' => 'POST',
+]);
+
+$router->add('/traffic/event', [
+    'controller' => 'AnalyticsBeaconController',
+    'action' => 'event',
     'method' => 'POST',
 ]);
 
@@ -109,6 +115,14 @@ $router->group([
     $r->add('/{id:\d+}/report', ['controller' => 'CommentController', 'action' => 'report', 'method' => 'POST']);
     $r->add('/{id:\d+}/pin', ['controller' => 'CommentController', 'action' => 'pin', 'method' => 'POST']);
 });
+
+// A blog's public stats page, when its owner publishes one. Ahead of the post route,
+// and PostModel keeps posts off this address.
+$router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/stats', [
+    'controller' => 'BlogStatsController',
+    'action' => 'show',
+    'method' => 'GET',
+]);
 
 // Blog subscriptions (guests allowed; unsubscribe is a signed token link from email)
 $router->add('/blog/{blogSlug:[A-Za-z0-9_-]+}/subscribe', [
@@ -354,11 +368,13 @@ $router->group([
     // Subscribers (owner-only): audience list with search and removal.
     $r->add('/blog/{blogId:\d+}/subscribers', ['controller' => 'SubscriberController', 'action' => 'index', 'method' => 'GET']);
 
-    // Insights > Traffic
-    $r->add('/blog/{blogId:\d+}/analytics/traffic', ['controller' => 'TrafficController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/analytics/traffic/export', ['controller' => 'TrafficController', 'action' => 'export', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/analytics/traffic/settings', ['controller' => 'TrafficController', 'action' => 'updateSettings', 'method' => 'POST']);
-    $r->add('/blog/{blogId:\d+}/analytics/traffic/posts/{postId:\d+}', ['controller' => 'TrafficController', 'action' => 'post', 'method' => 'GET']);
+    // A blog's Insights
+    $r->add('/blog/{blogId:\d+}/insights', ['controller' => 'InsightsController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/insights/export', ['controller' => 'InsightsController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/insights/settings', ['controller' => 'InsightsController', 'action' => 'updateSettings', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/insights/posts/{postId:\d+}', ['controller' => 'InsightsController', 'action' => 'post', 'method' => 'GET']);
+    // After the fixed paths above: the name is checked against InsightsPages, anything else is a 404.
+    $r->add('/blog/{blogId:\d+}/insights/{page:[a-z]+}', ['controller' => 'InsightsController', 'action' => 'page', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/subscribers/{id:\d+}/delete', ['controller' => 'SubscriberController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/approve', ['controller' => 'CommentController', 'action' => 'approve', 'method' => 'POST']);
     $r->add('/comment/{id:\d+}/spam', ['controller' => 'CommentController', 'action' => 'spam', 'method' => 'POST']);
@@ -550,9 +566,13 @@ $router->group([
     $r->add('/reports/settings/safeguards', ['controller' => 'ModerationSettingsController', 'action' => 'updateSafeguards', 'method' => 'POST']);
     $r->add('/reports/settings/reasons/{slug:[a-z_]+}', ['controller' => 'ModerationSettingsController', 'action' => 'updateReason', 'method' => 'POST']);
 
-    // Insights > Traffic across every blog
-    $r->add('/traffic', ['controller' => 'TrafficController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/traffic/export', ['controller' => 'TrafficController', 'action' => 'export', 'method' => 'GET']);
+    // Insights across every blog
+    $r->add('/insights', ['controller' => 'InsightsController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/insights/export', ['controller' => 'InsightsController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/insights/signups', ['controller' => 'SignupController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/insights/signups/export', ['controller' => 'SignupController', 'action' => 'export', 'method' => 'GET']);
+    // After the fixed paths above: the name is checked against InsightsPages, anything else is a 404.
+    $r->add('/insights/{page:[a-z]+}', ['controller' => 'InsightsController', 'action' => 'page', 'method' => 'GET']);
 
     // Roles and permissions
     $r->add('/roles', ['controller' => 'RoleController', 'action' => 'index', 'method' => 'GET']);
@@ -568,7 +588,7 @@ $router->group([
     // Site settings
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/settings', ['controller' => 'SettingController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/settings/traffic', ['controller' => 'SettingController', 'action' => 'updateTraffic', 'method' => 'POST']);
+    $r->add('/settings/analytics', ['controller' => 'SettingController', 'action' => 'updateAnalytics', 'method' => 'POST']);
 
     // Front page content (per-locale overrides of the public site text)
     $r->add('/front-page', ['controller' => 'FrontPageController', 'action' => 'index', 'method' => 'GET']);

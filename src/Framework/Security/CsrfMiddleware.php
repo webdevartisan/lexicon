@@ -27,10 +27,10 @@ final class CsrfMiddleware implements MiddlewareInterface
      * chance to carry a token - e.g. CSP violation reports fired by the
      * report-uri directive. Exact path match, not a prefix.
      *
-     * The traffic beacon is here because it fires from full-page-cached pages
-     * shared between visitors. TrafficController checks origin and payload instead.
+     * The Insights beacon is here because it fires from full-page-cached pages
+     * shared between visitors. AnalyticsBeaconController checks origin and payload instead.
      */
-    private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage'];
+    private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage', '/traffic/event'];
 
     public function __construct(
         private Csrf $csrf,

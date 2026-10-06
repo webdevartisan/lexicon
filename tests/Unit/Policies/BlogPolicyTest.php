@@ -135,8 +135,8 @@ describe('BlogPolicy traffic', function () {
         $policy = new BlogPolicy();
         $blog = blogWith(TRAFFIC_ROLE_BUNDLES[$role]);
 
-        expect($policy->viewTraffic(makeUser(2), $blog))->toBe($open)
-            ->and($policy->viewAllTraffic(makeUser(2), $blog))->toBe($all);
+        expect($policy->viewAnalytics(makeUser(2), $blog))->toBe($open)
+            ->and($policy->viewAllAnalytics(makeUser(2), $blog))->toBe($all);
     })->with([
         ['owner', true, true],
         ['editor', true, true],
@@ -149,7 +149,16 @@ describe('BlogPolicy traffic', function () {
     test('a system administrator gets nothing from their site role alone', function () {
         $policy = new BlogPolicy();
 
-        expect($policy->viewTraffic(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
+        expect($policy->viewAnalytics(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
+    });
+
+    test('staff who see the platform traffic can open any blog\'s numbers, read only', function () {
+        $policy = new BlogPolicy();
+        $staff = makeUser(1, ['administrator']) + ['permissions' => ['view_platform_analytics']];
+
+        expect($policy->viewAnalytics($staff, blogWith([])))->toBeTrue()
+            ->and($policy->viewAllAnalytics($staff, blogWith([])))->toBeTrue()
+            ->and($policy->manageUsers($staff, blogWith([])))->toBeFalse();
     });
 });
 

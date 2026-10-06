@@ -115,7 +115,7 @@ class CacheManagementService
      * Only affects the response/fragment cache — compiled views are
      * invalidated automatically via mtime-based hashing, not by pattern.
      *
-     * @param  string  $pattern  Glob-style pattern (e.g. 'en:GET:/blogs*').
+     * @param  string  $pattern  Glob-style pattern (e.g. 'en:GET:/discover*').
      * @param  string  $userIp  IP address of the admin performing the action.
      * @return array{deleted: int, pattern: string, duration_ms: float}
      *

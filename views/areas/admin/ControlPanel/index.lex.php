@@ -154,22 +154,27 @@ $rows = [
         <div class="card">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Top blogs by posts</h3>
-                    <a href="/admin/blogs" class="text-xs font-medium text-custom-500 hover:text-custom-600">All blogs</a>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50"><?= $topBlogsByViews ? 'Most read blogs, last 30 days' : 'Top blogs by posts' ?></h3>
+                    <a href="<?= $topBlogsByViews ? '/admin/insights/blogs' : '/admin/blogs' ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600"><?= $topBlogsByViews ? 'All blogs read' : 'All blogs' ?></a>
                 </div>
                 <?php if (empty($topBlogs)) { ?>
-                <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No blogs yet.</p>
+                <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center"><?= $topBlogsByViews ? 'No blog was read in the last 30 days.' : 'No blogs yet.' ?></p>
                 <?php } else { ?>
                 <div class="divide-y divide-slate-100 dark:divide-zink-600">
                     <?php foreach ($topBlogs as $tb) { ?>
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <a href="/admin/blogs/<?= e((string) $tb['id']) ?>/show" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
+                            <a href="<?= e($topBlogsByViews ? lurl('/dashboard/blog/'.(int) $tb['id'].'/insights') : '/admin/blogs/'.(int) $tb['id'].'/show') ?>"
+                               class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate" dir="auto">
                                 <?= e($tb['blog_name']) ?>
                             </a>
+                            <?php if (!$topBlogsByViews) { ?>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e((string) ($tb['owner_name'] ?? '')) ?></span>
+                            <?php } ?>
                         </div>
-                        <span class="shrink-0 text-xs font-semibold text-slate-600 dark:text-zink-200"><?= (int) ($tb['post_count'] ?? 0) ?> posts</span>
+                        <span class="shrink-0 text-xs font-semibold text-slate-600 dark:text-zink-200"><?= $topBlogsByViews
+                            ? e(number_format((int) $tb['views'])).' views'
+                            : (int) ($tb['post_count'] ?? 0).' posts' ?></span>
                     </div>
                     <?php } ?>
                 </div>

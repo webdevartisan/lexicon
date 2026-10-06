@@ -59,96 +59,7 @@ class NavigationService
         $isLogged = $this->auth->check();
         $user = $isLogged ? $this->auth->user() : null;
 
-        // filter items based on authentication, authorization, scope, and policies
-        $visible = array_filter($defs, function (array $it) use ($isLogged, $user, $selectedBlog, $context) {
-            // check basic authentication requirement
-            if (array_key_exists('auth', $it)) {
-                if ($it['auth'] === true && !$isLogged) {
-                    return false;
-                }
-                if ($it['auth'] === false && $isLogged) {
-                    return false;
-                }
-            }
-
-            // Role and permission gates: any listed role or any listed
-            // permission unlocks the item, so admin areas can be opened to
-            // non-admin roles by granting the matching permission slug
-            if (!empty($it['roles']) || !empty($it['permissions'])) {
-                $allowed = false;
-                foreach ($it['roles'] ?? [] as $role) {
-                    if ($this->auth->hasRole($role)) {
-                        $allowed = true;
-                        break;
-                    }
-                }
-                if (!$allowed) {
-                    foreach ($it['permissions'] ?? [] as $permission) {
-                        if ($this->auth->hasPermission($permission)) {
-                            $allowed = true;
-                            break;
-                        }
-                    }
-                }
-                if (!$allowed) {
-                    return false;
-                }
-            }
-
-            // check onboarding status (hide items until user has blogs)
-            if (array_key_exists('onboarding', $it)) {
-                $has = $this->auth->hasBlogs();
-                if ($it['onboarding'] == false && $has === 0) {
-                    return false;
-                }
-            }
-
-            // handle scoped navigation items (global vs contextual)
-            if (isset($it['scope'])) {
-                // show global items always, contextual items only when blog selected
-                if ($it['scope'] === 'contextual' && $selectedBlog === null) {
-                    return false;
-                }
-            }
-
-            // check policy-based permissions for contextual items
-            if (!empty($it['policy']) && $selectedBlog !== null && $user !== null) {
-                try {
-                    $policy = PolicyResolver::for($selectedBlog);
-                    $policyMethod = $it['policy'];
-
-                    // verify the policy method exists and user is authorized
-                    if (method_exists($policy, $policyMethod)) {
-                        if (!$policy->$policyMethod($user, $selectedBlog)) {
-                            return false;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // log policy resolution errors but don't break navigation
-                    error_log('Navigation policy check failed: '.$e->getMessage());
-
-                    return false;
-                }
-            }
-
-            // check blog-role restrictions (e.g. hide Blog Overview from pure reviewers)
-            if (!empty($it['blog_roles']) && $selectedBlog !== null && $user !== null) {
-                $effectiveRole = $selectedBlog->effectiveRoleForUser((int) $user['id']);
-                if (!in_array($effectiveRole, $it['blog_roles'], true)) {
-                    return false;
-                }
-            }
-
-            // named user-context predicate (e.g. show_if=isCollaborator → only when user has shared blogs)
-            if (!empty($it['show_if'])) {
-                $flag = (string) $it['show_if'];
-                if (empty($context[$flag])) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+        $visible = array_filter($defs, fn (array $it): bool => $this->isVisible($it, $isLogged, $user, $selectedBlog, $context));
 
         $items = [];
 
@@ -160,9 +71,8 @@ class NavigationService
             $scope = $it['scope'] ?? null;
             $key = $it['key'] ?? null;
 
-            // replace blog ID placeholder with actual blog ID if needed
-            if (!empty($it['replace_blog_id']) && $selectedBlog !== null) {
-                $href = str_replace('{blogId}', (string) $selectedBlog->id(), $href);
+            if (!empty($it['replace_blog_id'])) {
+                $href = $this->withBlogId($href, $selectedBlog);
             }
 
             $tag = str_replace(' ', '-', strtolower($label));
@@ -179,11 +89,16 @@ class NavigationService
             // because the sidebar is cached without the current path in its key.
             $children = [];
             foreach ($it['children'] ?? [] as $child) {
+                if (!$this->isVisible($child, $isLogged, $user, $selectedBlog, $context)) {
+                    continue;
+                }
+
                 $childLabel = $child['label'];
                 $children[] = [
                     'label' => $childLabel,
-                    'href' => rtrim($child['href'], '/'),
+                    'href' => rtrim($this->withBlogId($child['href'], $selectedBlog), '/'),
                     'key' => $child['key'] ?? null,
+                    'icon' => $child['icon'] ?? null,
                     'tag' => str_replace(' ', '-', strtolower($childLabel)),
                 ];
             }
@@ -200,10 +115,116 @@ class NavigationService
                 'tag' => $tag,
                 'disabled' => !empty($it['disabled']),
                 'badge' => $it['badge'] ?? null,
+                'icon' => $it['icon'] ?? null,
                 'children' => $children,
             ];
         }
 
         return $items;
+    }
+
+    /**
+     * Whether an item, or a group's child, is shown: authentication, roles and
+     * permissions, onboarding, scope, the blog policy, blog roles, and named
+     * per-user flags.
+     *
+     * @param  array<string, mixed>  $it  One item from the navigation config
+     * @param  array<string, mixed>|null  $user
+     * @param  array<string, bool>  $context
+     */
+    private function isVisible(array $it, bool $isLogged, ?array $user, ?BlogResource $selectedBlog, array $context): bool
+    {
+        // check basic authentication requirement
+        if (array_key_exists('auth', $it)) {
+            if ($it['auth'] === true && !$isLogged) {
+                return false;
+            }
+            if ($it['auth'] === false && $isLogged) {
+                return false;
+            }
+        }
+
+        // Role and permission gates: any listed role or any listed
+        // permission unlocks the item, so admin areas can be opened to
+        // non-admin roles by granting the matching permission slug
+        if (!empty($it['roles']) || !empty($it['permissions'])) {
+            $allowed = false;
+            foreach ($it['roles'] ?? [] as $role) {
+                if ($this->auth->hasRole($role)) {
+                    $allowed = true;
+                    break;
+                }
+            }
+            if (!$allowed) {
+                foreach ($it['permissions'] ?? [] as $permission) {
+                    if ($this->auth->hasPermission($permission)) {
+                        $allowed = true;
+                        break;
+                    }
+                }
+            }
+            if (!$allowed) {
+                return false;
+            }
+        }
+
+        // check onboarding status (hide items until user has blogs)
+        if (array_key_exists('onboarding', $it)) {
+            $has = $this->auth->hasBlogs();
+            if ($it['onboarding'] == false && $has === 0) {
+                return false;
+            }
+        }
+
+        // handle scoped navigation items (global vs contextual)
+        if (isset($it['scope'])) {
+            // show global items always, contextual items only when blog selected
+            if ($it['scope'] === 'contextual' && $selectedBlog === null) {
+                return false;
+            }
+        }
+
+        // check policy-based permissions for contextual items
+        if (!empty($it['policy']) && $selectedBlog !== null && $user !== null) {
+            try {
+                $policy = PolicyResolver::for($selectedBlog);
+                $policyMethod = $it['policy'];
+
+                // verify the policy method exists and user is authorized
+                if (method_exists($policy, $policyMethod)) {
+                    if (!$policy->$policyMethod($user, $selectedBlog)) {
+                        return false;
+                    }
+                }
+            } catch (\Exception $e) {
+                // log policy resolution errors but don't break navigation
+                error_log('Navigation policy check failed: '.$e->getMessage());
+
+                return false;
+            }
+        }
+
+        // check blog-role restrictions (e.g. hide Blog Overview from pure reviewers)
+        if (!empty($it['blog_roles']) && $selectedBlog !== null && $user !== null) {
+            $effectiveRole = $selectedBlog->effectiveRoleForUser((int) $user['id']);
+            if (!in_array($effectiveRole, $it['blog_roles'], true)) {
+                return false;
+            }
+        }
+
+        // named user-context predicate (e.g. show_if=isCollaborator → only when user has shared blogs)
+        if (!empty($it['show_if'])) {
+            $flag = (string) $it['show_if'];
+            if (empty($context[$flag])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function withBlogId(string $href, ?BlogResource $selectedBlog): string
+    {
+        return $selectedBlog === null ? $href : str_replace('{blogId}', (string) $selectedBlog->id(), $href);
     }
 }

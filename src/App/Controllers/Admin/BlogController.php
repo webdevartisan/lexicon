@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Gate;
+use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
+use App\Resources\SystemResource;
+use App\Services\Analytics\AnalyticsReportService;
 use App\Services\BlogDeletionService;
 use App\Services\BlogOwnershipService;
 use App\Services\PublicCacheInvalidator;
@@ -25,13 +29,14 @@ class BlogController extends AppController
         private ThemeService $themes,
         private BlogOwnershipService $ownership,
         private BlogDeletionService $blogDeletion,
+        private AnalyticsStatsModel $analyticsStats,
     ) {}
 
     /**
-     * Toggle the explore page featured flag on a blog.
+     * Toggle whether a blog is featured on Discover.
      *
      * Curation gate for a platform owned surface, so it is audit logged and
-     * the cached explore page is purged right away.
+     * the cached Discover page is purged right away.
      */
     public function featureExplore(string $id): Response
     {
@@ -45,7 +50,7 @@ class BlogController extends AppController
         $on = !((int) ($blog['is_featured'] ?? 0) === 1);
 
         if ($on && ($blog['status'] ?? '') !== 'published') {
-            $this->flash('error', 'Only published blogs can be featured on the explore page.');
+            $this->flash('error', 'Only published blogs can be featured on Discover.');
 
             return $this->redirectToList('/admin/blogs');
         }
@@ -54,17 +59,17 @@ class BlogController extends AppController
 
         audit()->log(
             (int) auth()->user()['id'],
-            $on ? 'blog.featured_on_explore' : 'blog.unfeatured_from_explore',
+            $on ? 'blog.featured_on_discover' : 'blog.unfeatured_from_discover',
             'blog',
             (int) $blog['id'],
             ['blog_name' => $blog['blog_name'] ?? ''],
             $this->request->ip()
         );
 
-        $this->publicCache->purgeExplore();
+        $this->publicCache->purgeDiscover();
         $this->flash('success', $on
-            ? 'Blog is now featured on the explore page.'
-            : 'Blog removed from the explore page featured section.');
+            ? 'Blog is now featured on Discover.'
+            : 'Blog is no longer featured on Discover.');
 
         return $this->redirectToList('/admin/blogs');
     }
@@ -147,7 +152,7 @@ class BlogController extends AppController
             'theme' => 'bs.theme',
             'created' => 'b.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'b.id DESC',
-            // Explore picks lead the list, the same way featured posts do.
+            // Discover picks lead the list, the same way featured posts do.
             pinned: 'b.is_featured DESC');
 
         $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy(), $theme);
@@ -159,6 +164,7 @@ class BlogController extends AppController
 
         return $this->view('blog.index', [
             'blogs' => $result['data'],
+            'analytics' => $this->recentViews($result['data']),
             'pagination' => $result['pagination'],
             'q' => $q,
             'status' => $status,
@@ -168,6 +174,39 @@ class BlogController extends AppController
             'statusOptions' => BlogModel::STATUSES,
             'sort' => $sort,
         ]);
+    }
+
+    /**
+     * Each listed blog's views over the last 30 days against the 30 before, for
+     * staff who see Insights. A blog growing fast is a hint for Discover picks.
+     *
+     * @param  list<array<string, mixed>>  $blogs
+     * @return array<int, array{views: int, previous: int, rising: bool}>|null Null when the viewer can't see Insights
+     */
+    private function recentViews(array $blogs): ?array
+    {
+        if (!Gate::allows('viewPlatformAnalytics', SystemResource::class, auth()->user() ?? [])) {
+            return null;
+        }
+
+        $ids = array_map(static fn (array $blog): int => (int) $blog['id'], $blogs);
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $from = $today->modify('-29 days');
+        $now = $this->analyticsStats->viewsForBlogs($ids, $from->format('Y-m-d'), $today->format('Y-m-d'));
+        $before = $this->analyticsStats->viewsForBlogs(
+            $ids,
+            $from->modify('-30 days')->format('Y-m-d'),
+            $from->modify('-1 day')->format('Y-m-d')
+        );
+
+        $analytics = [];
+        foreach ($ids as $id) {
+            $views = $now[$id] ?? 0;
+            $previous = $before[$id] ?? 0;
+            $analytics[$id] = ['views' => $views, 'previous' => $previous, 'rising' => AnalyticsReportService::isRising($views, $previous)];
+        }
+
+        return $analytics;
     }
 
     public function new(): Response

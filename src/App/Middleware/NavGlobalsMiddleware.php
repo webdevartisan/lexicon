@@ -24,7 +24,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 5;
+    private const SIDEBAR_MARKUP_VERSION = 6;
 
     /**
      * @var NavigationService Navigation service instance
@@ -207,8 +207,10 @@ class NavGlobalsMiddleware
         // Bump SIDEBAR_MARKUP_VERSION whenever the partial's markup changes:
         // entries live for a year, so without it everyone already holding one
         // keeps the old sidebar until it expires.
+        // The links hash covers what the user and blog alone don't decide, such as a
+        // blog's second author opening its Authors page.
         $chromeLocale = LocaleState::get()->chromeLocale;
-        $sidebarCacheKey = $area.':sidebar:nav-structure:v'.self::SIDEBAR_MARKUP_VERSION.':u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale;
+        $sidebarCacheKey = $area.':sidebar:nav-structure:v'.self::SIDEBAR_MARKUP_VERSION.':u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale.':n-'.self::linksHash($items);
 
         // add navigation globals to all templates
         $this->viewer->addGlobals([
@@ -229,8 +231,29 @@ class NavGlobalsMiddleware
             // something each controller remembers to pass. Memoised in the
             // service, so the blog controller asking for it again is free.
             'viewer' => $this->viewerContext->current(),
+            // Locale-free, since pre-routing has already stripped the prefix.
+            'current_path' => parse_url($path, PHP_URL_PATH) ?: '/',
         ]);
 
         return $handler->handle($request);
+    }
+
+    /**
+     * A short hash of every link the sidebar shows, ignoring which one is current,
+     * so the cached markup changes exactly when the visible links do.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private static function linksHash(array $items): string
+    {
+        $links = [];
+        foreach ($items as $item) {
+            $links[] = $item['href'];
+            foreach ($item['children'] ?? [] as $child) {
+                $links[] = $child['href'];
+            }
+        }
+
+        return substr(md5(implode('|', $links)), 0, 8);
     }
 }

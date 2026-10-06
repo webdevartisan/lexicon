@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Services\Traffic\VisitorIdentity;
+use App\Services\Analytics\VisitorIdentity;
 use Framework\Database;
 use RuntimeException;
 
@@ -50,9 +50,10 @@ class PersonalDataExportService
             'social_links' => $this->rows('SELECT network, url, created_at FROM user_social_links WHERE user_id = ?', [$userId]),
             'preferences' => $this->row(
                 'SELECT default_blog_id, default_post_visibility, display_name_preference, locale, timezone,
-                        notify_comment_replies, notify_comments_authored, notify_comments_blog,
+                        insights_page, insights_range, notify_comment_replies, notify_comments_authored, notify_comments_blog,
                         notify_comments_moderation, notify_invites, notify_post_status,
-                        notify_review_requests, notify_role_changes, updated_at
+                        notify_review_requests, notify_role_changes, notify_insights_digest,
+                        notify_insights_milestones, notify_insights_spikes, updated_at
                  FROM user_preferences WHERE user_id = ?',
                 [$userId]
             ),
@@ -127,14 +128,23 @@ class PersonalDataExportService
                  FROM activity_log WHERE user_id = ? ORDER BY created_at',
                 [$userId]
             ),
-            // Only views made while signed in are linked to the account.
-            'blog_page_views' => $this->rows(
-                "SELECT b.blog_name, h.path, h.channel, h.referrer_source, h.device, h.browser, h.os, h.country,
-                        h.engaged_seconds, h.scroll_depth, h.created_at
-                 FROM traffic_hits h
-                 LEFT JOIN blogs b ON b.id = h.blog_id
-                 WHERE h.visitor_hash = ? AND h.visitor_kind = 'account'
-                 ORDER BY h.created_at",
+            // Only what was counted while signed in with analytics allowed is linked to the account.
+            'analytics_events' => $this->rows(
+                "SELECT e.name, b.blog_name, e.path, e.channel, e.referrer_source, v.device, v.browser, v.os, v.country,
+                        e.engaged_seconds, e.scroll_depth, e.props, e.created_at
+                 FROM analytics_events e
+                 LEFT JOIN analytics_visits v ON v.id = e.visit_id
+                 LEFT JOIN blogs b ON b.id = e.blog_id
+                 WHERE e.visitor_hash = ? AND e.visitor_kind = 'account'
+                 ORDER BY e.created_at",
+                [$this->visitorIdentity->forAccount($userId)]
+            ),
+            'analytics_visits' => $this->rows(
+                "SELECT started_at, last_seen_at, page_views, entry_path, channel, referrer_source,
+                        utm_source, utm_medium, utm_campaign, device, browser, os, country
+                 FROM analytics_visits
+                 WHERE visitor_hash = ? AND visitor_kind = 'account'
+                 ORDER BY started_at",
                 [$this->visitorIdentity->forAccount($userId)]
             ),
         ];

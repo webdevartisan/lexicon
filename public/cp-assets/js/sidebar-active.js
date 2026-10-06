@@ -3,11 +3,35 @@
   // without the request path in its key, so a server-rendered "expanded"
   // flag would be wrong on every page that reused the cached copy.
   var here = window.location.pathname.replace(/\/+$/, '');
+  var STORAGE_PREFIX = 'lx-nav-group:';
+
+  // Storage can be blocked or full; then a manual toggle just isn't remembered.
+  function remembered(key) {
+    try {
+      return window.localStorage.getItem(STORAGE_PREFIX + key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function remember(key, open) {
+    try {
+      window.localStorage.setItem(STORAGE_PREFIX + key, open ? 'open' : 'closed');
+    } catch (e) {
+      // Nothing to do: the group still works, it just won't stay as it was left.
+    }
+  }
+
+  function samePath(link) {
+    return link.getAttribute('data-nav-path').replace(/\/+$/, '') === here;
+  }
 
   document.querySelectorAll('[data-nav-group]').forEach(function (group) {
     var submenu = group.querySelector('[data-nav-submenu]');
     var toggle = group.querySelector('[data-nav-toggle]');
     if (!submenu || !toggle) return;
+
+    var key = group.getAttribute('data-nav-group-key') || '';
 
     function setOpen(open) {
       submenu.classList.toggle('hidden', !open);
@@ -20,24 +44,31 @@
     var base = (group.getAttribute('data-nav-group-path') || '').replace(/\/+$/, '');
     var inside = base !== '' && (here === base || here.indexOf(base + '/') === 0);
 
-    setOpen(inside);
+    // Standing on one of the group's pages always shows it; elsewhere the
+    // reader's last choice wins.
+    setOpen(inside || remembered(key) === 'open');
 
     // On a child page the parent link is not the active row, and on the
     // icon-only rail the children are not rendered at all, so the parent
     // carries a softer marker for the section you are standing in.
-    if (inside && here !== base) {
-      var parentLink = group.querySelector('.sidebar-menu-item[data-nav-path]');
-      if (parentLink) parentLink.classList.add('active-within');
+    var parentLink = group.querySelector('.sidebar-menu-item[data-nav-path]');
+    var childMatches = Array.prototype.some.call(submenu.querySelectorAll('[data-nav-path]'), samePath);
+    if (parentLink && inside && (here !== base || childMatches)) {
+      parentLink.classList.add('active-within');
+      // A child is the active row then, even one that shares the parent's address.
+      parentLink.setAttribute('data-nav-skip-active', '');
     }
 
     toggle.addEventListener('click', function () {
-      setOpen(submenu.classList.contains('hidden'));
+      var open = submenu.classList.contains('hidden');
+      setOpen(open);
+      remember(key, open);
     });
   });
 
   // Nothing else marks the active row, so do it here for parents and children
   document.querySelectorAll('.sidebar-menu-item[data-nav-path]').forEach(function (link) {
-    if (link.getAttribute('data-nav-path').replace(/\/+$/, '') === here) {
+    if (samePath(link) && !link.hasAttribute('data-nav-skip-active')) {
       link.classList.add('active');
       link.setAttribute('aria-current', 'page');
     }

@@ -12,6 +12,9 @@ use App\Models\BlogSubscriberModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
+use App\Services\Analytics\AnalyticsReportService;
+use App\ValueObjects\AnalyticsRange;
+use App\ValueObjects\AnalyticsScope;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -28,6 +31,7 @@ class HomeController extends AppController
         private UserPreferencesModel $preference,
         private BlogSettingsModel $blogSettings,
         private BlogSubscriberModel $subscribers,
+        private AnalyticsReportService $analytics,
     ) {}
 
     /**
@@ -140,7 +144,32 @@ class HomeController extends AppController
             'blogRole' => $blogRole,
             'workflowEnabled' => $workflowEnabled,
             'hideTitle' => true,
+            'analytics' => $this->analyticsSummary($blog, $user),
         ]);
+    }
+
+    /**
+     * The last 7 days at a glance: the whole blog for its owner and editors, an
+     * author's own posts for them, nothing for anyone Insights is closed to.
+     *
+     * @param  array<string, mixed>  $user
+     * @return array{metrics: array<string, mixed>, topPost: array<string, mixed>|null, range: AnalyticsRange}|null
+     */
+    private function analyticsSummary(BlogResource $blog, array $user): ?array
+    {
+        if (!Gate::allows('viewAnalytics', $blog, $user)) {
+            return null;
+        }
+
+        $blogId = (int) $blog->id();
+        $userId = (int) $user['id'];
+        $scope = Gate::allows('viewAllAnalytics', $blog, $user)
+            ? AnalyticsScope::blog($blogId)
+            : AnalyticsScope::authorPosts($blogId, $userId, $this->post->idsByBlogAndAuthor($blogId, $userId));
+        $range = AnalyticsRange::fromQuery(['range' => '7d'], blog_timezone($blogId));
+        $report = $this->analytics->report($scope, $range);
+
+        return ['metrics' => $report['metrics'], 'topPost' => $report['topPosts'][0] ?? null, 'range' => $range];
     }
 
     public function setDefaultBlog(): Response

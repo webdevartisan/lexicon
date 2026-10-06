@@ -4145,3 +4145,98 @@ label {
 .lx-delete-list { margin-block: 0.75rem 1.5rem; padding-inline-start: 1.25rem; }
 .lx-delete-list li { margin-block: 0.4rem; }
 .lx-account-actions-split { justify-content: space-between; gap: 1rem; }
+
+/* ==========================================================================
+   Public blog stats, published by a blog's owner at /blog/{slug}/stats
+   ========================================================================== */
+
+.lx-stats-figures {
+    justify-content: flex-start;
+    margin: 0 0 2rem;
+}
+
+.lx-stats-chart {
+    margin: 0 0 2.5rem;
+}
+
+.lx-stats-caption {
+    margin-bottom: 0.75rem;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-ink-3);
+}
+
+.lx-stats-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 10rem;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-stats-bars li {
+    flex: 1;
+    height: var(--lx-bar);
+    min-height: 1px;
+    background: var(--lx-bind);
+    border-radius: 2px 2px 0 0;
+}
+
+.lx-stats-table {
+    width: 100%;
+    margin-top: 0.75rem;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.lx-stats-table th,
+.lx-stats-table td {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--lx-rule);
+    text-align: start;
+    font-weight: 400;
+}
+
+.lx-stats-table td {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+.lx-stats-lists {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 2rem;
+}
+
+.lx-stats-lists h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.15rem;
+    font-weight: 500;
+}
+
+.lx-stats-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-stats-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-stats-list li > span:last-child {
+    color: var(--lx-ink-2);
+    font-variant-numeric: tabular-nums;
+}
+
+.lx-stats-note {
+    margin-top: 2.5rem;
+    font-size: 0.85rem;
+}

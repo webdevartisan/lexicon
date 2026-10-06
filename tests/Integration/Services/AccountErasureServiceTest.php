@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 use App\Interfaces\UploadServiceInterface;
 use App\Models\AccountErasureRecordModel;
+use App\Models\AnalyticsEventModel;
+use App\Models\AnalyticsSaltModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
-use App\Models\TrafficHitModel;
-use App\Models\TrafficRollupModel;
-use App\Models\TrafficSaltModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\AccountErasureService;
+use App\Services\Analytics\VisitorIdentity;
 use App\Services\BlogDeletionService;
 use App\Services\MediaUsageResolver;
 use App\Services\PublicCacheInvalidator;
-use App\Services\Traffic\VisitorIdentity;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\AnalyticsFixture;
 
 /**
  * The upload service is a mock: storage/uploads/ is shared with development, so
@@ -54,15 +54,15 @@ beforeEach(function () {
             new UserPreferencesModel($this->db),
             $this->uploader,
             $cacheInvalidator,
-            new TrafficHitModel($this->db),
-            new TrafficRollupModel($this->db)
+            new AnalyticsEventModel($this->db),
+            AnalyticsFixture::rollups($this->db)
         ),
         $this->uploader,
         new MediaUsageResolver($this->db),
         $cacheInvalidator,
         new AccountErasureRecordModel($this->db),
-        new TrafficHitModel($this->db),
-        new VisitorIdentity(new TrafficSaltModel($this->db), 'test-key'),
+        new AnalyticsEventModel($this->db),
+        new VisitorIdentity(new AnalyticsSaltModel($this->db), 'test-key'),
         'deleted-user'
     );
 

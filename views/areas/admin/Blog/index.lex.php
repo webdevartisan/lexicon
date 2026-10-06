@@ -53,6 +53,9 @@ $featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'No
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="owner" label="Owner" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="posts" label="Posts" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="team" label="Team" %}
+                        <?php if ($analytics !== null) { ?>
+                        <th class="px-3.5 py-2.5 font-semibold" title="Views in the last 30 days, UTC">Views, 30 days</th>
+                        <?php } ?>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="theme" label="Theme" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
@@ -69,7 +72,7 @@ $showUrl = '/admin/blogs/'.$blog['id'].'/show';
 $editUrl = '/admin/blogs/'.$blog['id'].'/edit';
 $deleteUrl = '/admin/blogs/'.$blog['id'].'/delete';
 $featuredOnExplore = (int) ($blog['is_featured'] ?? 0) === 1;
-$featureTip = $featuredOnExplore ? 'Remove from explore featured' : 'Feature on explore page';
+$featureTip = $featuredOnExplore ? 'Stop featuring on Discover' : 'Feature on Discover';
 $blogTheme = (string) ($blog['theme'] ?? '');
 // The stored key is what the filter matches on, so show that rather than the
 // display name; they differ, and a mismatch here would read as a broken filter.
@@ -84,7 +87,7 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         <td class="px-3.5 py-2.5">
                             <?php if ($featuredOnExplore) { ?>
                             {% cache 'lucide:star-fill:row' ttl=31536000 %}<i data-lucide="star" class="size-3.5 fill-current text-amber-500 inline-block align-[-1px] mr-1"></i>{% endcache %}
-                            <span class="sr-only">Featured on the explore page. </span>
+                            <span class="sr-only">Featured on Discover. </span>
                             <?php } ?>
                             <?php // A blog with no slug has no public page to open, so it stays plain text.?>
                             <?php if ($publicUrl !== '') { ?>
@@ -100,6 +103,17 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($blog['owner_name'] ?? '—')) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['post_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['author_count'] ?? 0) ?></td>
+                        <?php if ($analytics !== null) {
+                            $blogAnalytics = $analytics[(int) $blog['id']]; ?>
+                        <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
+                            <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/insights')) ?>" class="tabular-nums hover:text-custom-500"
+                               title="<?= e(number_format($blogAnalytics['previous']).' in the 30 days before') ?>"><?= e(number_format($blogAnalytics['views'])) ?></a>
+                            <?php if ($blogAnalytics['rising']) { ?>
+                            <span class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
+                                  title="At least half again its views of the 30 days before. Worth a look for Discover.">Rising</span>
+                            <?php } ?>
+                        </td>
+                        <?php } ?>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e($themeLabel) ?></td>
                         <td class="px-3.5 py-2.5">
                             {% cmp="status-badge" status="{$blogStatus}" label="{$statusLabel}" %}
@@ -117,8 +131,8 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                                         'label' => $featureTip, 'icon' => 'star',
                                         'post' => buildLocalizedUrl('/admin/blogs/'.(int) $blog['id'].'/feature-explore'),
                                         'confirm' => $featuredOnExplore
-                                            ? 'Take this blog off the explore page?'
-                                            : 'Feature this blog on the explore page?',
+                                            ? 'Stop featuring this blog on Discover?'
+                                            : 'Feature this blog on Discover?',
                                         // featureExplore() refuses anything unpublished, so offering it
                                         // there would only ever produce an error flash.
                                         'can' => $featuredOnExplore || $blogStatus === 'published',

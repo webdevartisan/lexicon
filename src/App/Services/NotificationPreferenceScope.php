@@ -53,6 +53,10 @@ final class NotificationPreferenceScope
             'notify_role_changes' => $this->blogModel->userIsCollaborator($userId),
             // invite_declined is dispatched to the blog owner, so only owners get it.
             'notify_invites' => $ownsBlog,
+            // The digest and spike notices go to the owner; milestones to whoever wrote the post.
+            'notify_insights_digest' => $ownsBlog,
+            'notify_insights_spikes' => $ownsBlog,
+            'notify_insights_milestones' => $authors,
         ];
 
         return array_values(array_filter(

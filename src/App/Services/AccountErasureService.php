@@ -6,9 +6,10 @@ namespace App\Services;
 
 use App\Interfaces\UploadServiceInterface;
 use App\Models\AccountErasureRecordModel;
-use App\Models\TrafficHitModel;
+use App\Models\AnalyticsEventModel;
+use App\Models\AnalyticsVisitModel;
 use App\Models\UserModel;
-use App\Services\Traffic\VisitorIdentity;
+use App\Services\Analytics\VisitorIdentity;
 use Framework\Database;
 use InvalidArgumentException;
 use RuntimeException;
@@ -33,7 +34,8 @@ class AccountErasureService
         private MediaUsageResolver $mediaUsage,
         private PublicCacheInvalidator $cacheInvalidator,
         private AccountErasureRecordModel $erasureRecords,
-        private TrafficHitModel $trafficHits,
+        private AnalyticsEventModel $analyticsEvents,
+        private AnalyticsVisitModel $analyticsVisits,
         private VisitorIdentity $visitorIdentity,
         private string $deletedUserHandle,
     ) {}
@@ -138,7 +140,9 @@ class AccountErasureService
             );
 
             $this->forgetPerson($user);
-            $this->trafficHits->deleteByVisitorHash($this->visitorIdentity->forAccount($userId));
+            $accountHash = $this->visitorIdentity->forAccount($userId);
+            $this->analyticsEvents->deleteByVisitorHash($accountHash);
+            $this->analyticsVisits->deleteByVisitorHash($accountHash);
 
             $votedComments = $this->database->query(
                 'SELECT comment_id FROM comment_votes WHERE user_id = ?',
@@ -156,7 +160,7 @@ class AccountErasureService
 
         $this->cacheInvalidator->purgeAuthorSurfaces((string) $user['handle']);
         $this->cacheInvalidator->purgeHome();
-        $this->cacheInvalidator->purgeExplore();
+        $this->cacheInvalidator->purgeDiscover();
     }
 
     public function deletedUserId(): int
