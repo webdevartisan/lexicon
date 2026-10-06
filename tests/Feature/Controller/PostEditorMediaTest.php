@@ -61,9 +61,7 @@ beforeEach(function () {
             return '';
         }
 
-        public function addGlobals(array $vars): void
-        {
-        }
+        public function addGlobals(array $vars): void {}
 
         public function compiledViewStats(): array
         {
