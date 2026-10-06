@@ -161,3 +161,36 @@ test('data keys must be snake case and values must be text', function () {
 test('placeholders are listed in order, once each', function () {
     expect(TemplateRendererService::placeholdersIn('{{ a }} {{b}} {{ a }} {{ Bad }}'))->toBe(['a', 'b']);
 });
+
+test('an email is marked with its language, and right-to-left ones are laid out from the right', function () {
+    $renderer = rendererWith(['html' => '<blockquote style="border-{{ start }}:3px solid;padding-{{ end }}:0">{{ body }}</blockquote>']);
+
+    $english = $renderer->renderEmail('Tests\\Fake', ['body' => 'Hi'], 'Hi', 'en')->html;
+    $arabic = $renderer->renderEmail('Tests\\Fake', ['body' => 'Hi'], 'Hi', 'ar')->html;
+
+    expect($english)->toContain('<html lang="en" dir="ltr">')
+        ->and($english)->toContain('<div dir="ltr"')
+        ->and($english)->toContain('border-left:3px solid;padding-right:0')
+        ->and($arabic)->toContain('<html lang="ar" dir="rtl">')
+        ->and($arabic)->toContain('<div dir="rtl"')
+        ->and($arabic)->toContain('text-align:right;')
+        ->and($arabic)->toContain('border-right:3px solid;padding-left:0');
+});
+
+test('a language the site does not offer falls back to the default', function () {
+    $html = rendererWith([])->renderEmail('Tests\\Fake', ['body' => 'Hi'], 'Hi', 'xx')->html;
+
+    expect($html)->toContain('<html lang="en" dir="ltr">');
+});
+
+test('direction placeholders never keep an otherwise empty block, nor hide one that only uses them', function () {
+    $renderer = rendererWith(['html' => '<blockquote style="border-{{ start }}:3px solid">{{ body }}</blockquote>']);
+    $alwaysShown = new TemplateRendererService(new CatalogTemplateSource([
+        'components' => ['rule' => ['label' => 'Rule', 'html' => '<hr style="margin-{{ start }}:0">']],
+        'templates' => ['only' => ['label' => 'Only', 'layout' => ['rule']]],
+        'bindings' => ['Tests\\Fake' => ['template' => 'only', 'mapping' => []]],
+    ]));
+
+    expect($renderer->renderEmail('Tests\\Fake', ['body' => ''])->html)->not->toContain('<blockquote')
+        ->and($alwaysShown->renderEmail('Tests\\Fake', [])->html)->toContain('<hr style="margin-left:0">');
+});

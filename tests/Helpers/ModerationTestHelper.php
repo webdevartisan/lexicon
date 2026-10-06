@@ -17,6 +17,7 @@ use App\Models\UserModel;
 use App\Services\AdminNotificationDispatcher;
 use App\Services\AuditService;
 use App\Services\ImpersonationService;
+use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
 use App\Services\MailService;
 use App\Services\ModerationActionService;
@@ -24,6 +25,7 @@ use App\Services\ModerationCaseService;
 use App\Services\ModerationRuleEngine;
 use App\Services\ModerationSettings;
 use App\Services\PublicCacheInvalidator;
+use App\Services\RecipientLocale;
 use App\Services\ReporterStandingService;
 use App\Services\ReportIntakeService;
 use App\Services\UserSuspensionService;
@@ -107,6 +109,7 @@ final class ModerationTestHelper
             new NotificationModel($db),
             // The real queue model so tests can see the row; the mailer is never reached by enqueue().
             new MailQueueService(new MailQueueModel($db), Mockery::mock(MailService::class)),
+            new RecipientLocale($db, LocaleRegistry::instance()),
         ];
 
         return $partial
@@ -124,6 +127,7 @@ final class ModerationTestHelper
             new MailQueueService(new MailQueueModel($db), Mockery::mock(MailService::class)),
             self::audit($db),
             new ModerationSettings(new SettingModel($db)),
+            new RecipientLocale($db, LocaleRegistry::instance()),
         );
     }
 

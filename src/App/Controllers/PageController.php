@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Mail\ContactMessageMail;
+use App\Mail\Mailable;
 use App\Models\PageModel;
 use App\Models\SettingModel;
+use App\Services\RecipientLocale;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -109,12 +111,16 @@ class PageController extends AppController
 
         // Queued, so a provider refusing right now no longer loses the message.
         // enqueue() returns how many rows it wrote, one per recipient.
-        $sent = $adminEmail !== '' && mail_queue()->enqueue(new ContactMessageMail(
-            $adminEmail,
-            $data['name'],
-            $data['email'],
-            $data['subject'],
-            $data['message']
+        // Written for the admin who reads it, not the visitor who sent it.
+        $sent = $adminEmail !== '' && mail_queue()->enqueue(Mailable::inLocale(
+            app(RecipientLocale::class)->forAddress($adminEmail),
+            fn (): ContactMessageMail => new ContactMessageMail(
+                $adminEmail,
+                $data['name'],
+                $data['email'],
+                $data['subject'],
+                $data['message']
+            )
         )) > 0;
 
         if (!$sent) {

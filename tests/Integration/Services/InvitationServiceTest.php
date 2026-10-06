@@ -8,8 +8,10 @@ use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\InvitationService;
+use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
+use App\Services\RecipientLocale;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
 
@@ -35,6 +37,7 @@ beforeEach(function () {
         $this->userModel,
         new UserPreferencesModel($this->db),
         $notifMailQueue,
+        new RecipientLocale($this->db, LocaleRegistry::instance()),
     );
 
     $this->mailQueue = Mockery::mock(MailQueueService::class);
@@ -46,7 +49,8 @@ beforeEach(function () {
         $this->userModel,
         $notificationService,
         $this->mailQueue,
-        new UserPreferencesModel($this->db)
+        new UserPreferencesModel($this->db),
+        new RecipientLocale($this->db, LocaleRegistry::instance())
     );
 
     $this->ownerId = UserFactory::new($this->userModel)->create();

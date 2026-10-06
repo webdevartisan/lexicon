@@ -12,8 +12,10 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\InvitationService;
+use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
+use App\Services\RecipientLocale;
 use App\Services\UserHandleValidator;
 use Framework\Core\Response;
 use Tests\Factories\UserFactory;
@@ -60,9 +62,11 @@ beforeEach(function () {
             $this->userModel,
             $this->preferencesModel,
             $mailQueue,
+            new RecipientLocale($this->db, LocaleRegistry::instance()),
         ),
         $mailQueue,
-        $this->preferencesModel
+        $this->preferencesModel,
+        new RecipientLocale($this->db, LocaleRegistry::instance())
     );
 
     $this->controller = new RegisterController(

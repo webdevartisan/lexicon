@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Mail\EmailChangedMail;
+use App\Mail\Mailable;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Services\EmailChangeIssuer;
 use App\Services\MailQueueService;
 use App\Services\PasswordConfirmRateLimiter;
+use App\Services\RecipientLocale;
 use Framework\Core\Response;
 
 /**
@@ -70,7 +72,7 @@ final class AccountEmailController extends AppController
             return $this->reject(chrome_translate('account.flash.emailChangeSameAddress'));
         }
 
-        $this->emailChanges->issue($userId, $newEmail);
+        $this->emailChanges->issue($userId, $newEmail, app(RecipientLocale::class)->current());
 
         $this->flash('success', chrome_translate('account.flash.emailChangePending', ['email' => $newEmail]));
 
@@ -115,7 +117,10 @@ final class AccountEmailController extends AppController
         // OWASP asks that the address losing the account hears about it, so a
         // takeover is visible to the person it was taken from.
         $this->mailQueue->enqueue(
-            new EmailChangedMail($currentEmail, $newEmail, gmdate('c')),
+            Mailable::inLocale(
+                app(RecipientLocale::class)->forUser($userId, app(RecipientLocale::class)->current()),
+                fn (): EmailChangedMail => new EmailChangedMail($currentEmail, $newEmail, gmdate('c'))
+            ),
             'account',
             $userId
         );

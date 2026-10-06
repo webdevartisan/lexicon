@@ -37,6 +37,12 @@ use Throwable;
  * reported and the email is rendered from the built-in ones, so a bad edit in
  * the control panel degrades the design of an email but never loses it.
  *
+ * Each email is rendered in its recipient's language. The document is marked
+ * with that language and its direction, and blocks lay themselves out with
+ * {{ start }} and {{ end }} (left and right, swapped for right-to-left
+ * languages) rather than fixed sides. Email clients ignore the CSS logical
+ * properties that would flip on their own.
+ *
  * @phpstan-import-type Component from EmailTemplateSource
  * @phpstan-import-type Template from EmailTemplateSource
  * @phpstan-import-type Binding from EmailTemplateSource
@@ -47,7 +53,14 @@ final class TemplateRendererService
     public const PLACEHOLDER = '/\{\{\s*([a-z][a-z0-9_]*)\s*\}\}/';
 
     /** Placeholders every template can use without the email providing them. */
-    public const GLOBALS = ['app_name', 'app_url', 'year'];
+    public const GLOBALS = ['app_name', 'app_url', 'year', 'dir', 'start', 'end'];
+
+    /**
+     * The globals that only describe layout direction. They never count when
+     * deciding whether a block is empty, or every quote box would show in
+     * every email just because its border names a side.
+     */
+    public const DIRECTION = ['dir', 'start', 'end'];
 
     /**
      * @param  EmailTemplateSource  $source  Where templates are read from
@@ -73,14 +86,15 @@ final class TemplateRendererService
      * @param  class-string  $mailable  The Mailable being rendered
      * @param  array<string, mixed>  $data  Values the Mailable provides, keyed by placeholder name
      * @param  string  $subject  The subject the Mailable set, used unless the binding overrides it
+     * @param  string|null  $locale  The recipient's language; null is the site default
      *
      * @throws TemplateDataException When the email cannot be rendered and there is no fallback
      */
-    public function renderEmail(string $mailable, array $data, string $subject = ''): RenderedEmail
+    public function renderEmail(string $mailable, array $data, string $subject = '', ?string $locale = null): RenderedEmail
     {
         return $this->guarded(
             TemplateDataException::shortName($mailable),
-            fn (EmailTemplateSource $source): RenderedEmail => $this->composeEmail($source, $mailable, $data, $subject)
+            fn (EmailTemplateSource $source): RenderedEmail => $this->composeEmail($source, $mailable, $data, $subject, self::locale($locale))
         );
     }
 
@@ -89,16 +103,17 @@ final class TemplateRendererService
      * (one row per blog in a digest).
      *
      * @param  array<string, mixed>  $data
+     * @param  string|null  $locale  The recipient's language; null is the site default
      */
-    public function renderComponent(string $slug, array $data): HtmlFragment
+    public function renderComponent(string $slug, array $data, ?string $locale = null): HtmlFragment
     {
         return $this->guarded(
             "the '{$slug}' block",
-            function (EmailTemplateSource $source) use ($slug, $data): HtmlFragment {
+            function (EmailTemplateSource $source) use ($slug, $data, $locale): HtmlFragment {
                 $component = $source->component($slug)
                     ?? throw new TemplateDataException("The block '{$slug}' does not exist.");
 
-                return $this->renderBlock($component, $this->values($data), "The '{$slug}' block") ?? HtmlFragment::empty();
+                return $this->renderBlock($component, $this->values($data, self::locale($locale)), "The '{$slug}' block") ?? HtmlFragment::empty();
             }
         );
     }
@@ -185,7 +200,7 @@ final class TemplateRendererService
     /**
      * @param  array<string, mixed>  $data
      */
-    private function composeEmail(EmailTemplateSource $source, string $mailable, array $data, string $subject): RenderedEmail
+    private function composeEmail(EmailTemplateSource $source, string $mailable, array $data, string $subject, string $locale): RenderedEmail
     {
         $binding = $source->binding($mailable) ?? throw TemplateDataException::noBinding($mailable);
         $who = TemplateDataException::shortName($mailable);
@@ -194,7 +209,7 @@ final class TemplateRendererService
             ?? throw TemplateDataException::missingTemplate($binding['template'], $mailable);
 
         $components = $this->layoutComponents($source, $template);
-        $values = $this->values($data + ['subject' => $subject]);
+        $values = $this->values($data + ['subject' => $subject], $locale);
 
         $needed = [];
         foreach ($components as $component) {
@@ -214,14 +229,14 @@ final class TemplateRendererService
             $subject = $this->plainText($binding['subject'], $values, "The subject line for {$who}");
         }
 
-        return $this->assemble($components, $mapped + $values, $subject, " (for {$who})");
+        return $this->assemble($components, $mapped + $values, $subject, " (for {$who})", $locale);
     }
 
     /**
      * @param  list<Component>  $components
      * @param  array<string, HtmlFragment>  $values
      */
-    private function assemble(array $components, array $values, string $subject, string $context = ''): RenderedEmail
+    private function assemble(array $components, array $values, string $subject, string $context = '', ?string $locale = null): RenderedEmail
     {
         $blocks = [];
         $css = [];
@@ -235,45 +250,71 @@ final class TemplateRendererService
             }
         }
 
-        return $this->finish($css, $blocks, $subject);
+        return $this->finish($css, $blocks, $subject, $locale);
     }
 
     /**
      * @param  array<string, string>  $css  Per block, deduplicated by slug
      * @param  list<HtmlFragment>  $blocks
      */
-    private function finish(array $css, array $blocks, string $subject): RenderedEmail
+    private function finish(array $css, array $blocks, string $subject, ?string $locale = null): RenderedEmail
     {
         $body = implode("\n", array_map(static fn (HtmlFragment $b): string => $b->html, $blocks));
         $text = implode("\n\n", array_map(static fn (HtmlFragment $b): string => $b->text, $blocks));
+        $css = implode("\n", array_filter(array_map('trim', $css)));
 
-        return new RenderedEmail($subject, $this->shell($body, $subject, implode("\n", array_filter(array_map('trim', $css)))), HtmlToText::normalize($text));
+        return new RenderedEmail($subject, $this->shell($body, $subject, $css, self::locale($locale)), HtmlToText::normalize($text));
     }
 
     /**
      * The document every email sits in. Kept to what every client needs, so
      * all of the look lives in blocks the control panel can edit.
+     *
+     * The direction goes on the content wrapper as well as <html>, because
+     * webmail clients such as Gmail drop the <html> element's attributes.
      */
-    private function shell(string $body, string $subject, string $css): string
+    private function shell(string $body, string $subject, string $css, string $locale): string
     {
         $title = htmlspecialchars($subject, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
         $style = $css === '' ? '' : "<style>\n{$css}\n</style>\n";
+        ['dir' => $dir, 'start' => $start] = self::direction($locale);
 
         return <<<HTML
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="{$locale}" dir="{$dir}">
         <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{$title}</title>
         {$style}</head>
         <body style="margin:0;padding:0;background-color:#ffffff;">
-        <div style="max-width:600px;margin:0 auto;padding:20px;font-family:Arial,sans-serif;line-height:1.6;color:#333333;">
+        <div dir="{$dir}" style="max-width:600px;margin:0 auto;padding:20px;font-family:Arial,sans-serif;line-height:1.6;color:#333333;text-align:{$start};">
         {$body}
         </div>
         </body>
         </html>
         HTML;
+    }
+
+    /**
+     * A supported language code, or the site default. Only codes from the
+     * registry reach the markup, so the lang attribute needs no escaping.
+     */
+    private static function locale(?string $locale): string
+    {
+        $registry = LocaleRegistry::instance();
+
+        return $registry->normalize($locale) ?? $registry->default();
+    }
+
+    /**
+     * @return array{dir: string, start: string, end: string}
+     */
+    private static function direction(string $locale): array
+    {
+        return in_array($locale, LocaleRegistry::RTL, true)
+            ? ['dir' => 'rtl', 'start' => 'right', 'end' => 'left']
+            : ['dir' => 'ltr', 'start' => 'left', 'end' => 'right'];
     }
 
     /**
@@ -310,14 +351,15 @@ final class TemplateRendererService
      *
      * The empty rule is what lets one template serve many emails: an email
      * with no quote simply maps {{ quote }} to nothing and the quote box is
-     * left out. A block with no placeholders at all (a divider) always shows.
+     * left out. A block with no placeholders at all (a divider) always shows,
+     * and so does one whose only placeholders are layout direction.
      *
      * @param  Component  $component
      * @param  array<string, HtmlFragment>  $values
      */
     private function renderBlock(array $component, array $values, string $where): ?HtmlFragment
     {
-        $names = self::placeholdersIn($component['html']);
+        $names = array_diff(self::placeholdersIn($component['html']), self::DIRECTION);
 
         if ($names !== []) {
             $allEmpty = true;
@@ -473,11 +515,12 @@ final class TemplateRendererService
      * Normalize what a Mailable passed, with the global placeholders underneath.
      *
      * @param  array<array-key, mixed>  $data  Keys are checked here, since a list slips past the type hint
+     * @param  string|null  $locale  Sets the direction globals; null is the site default
      * @return array<string, HtmlFragment>
      */
-    private function values(array $data): array
+    private function values(array $data, ?string $locale = null): array
     {
-        $values = $this->globals();
+        $values = $this->globals(self::locale($locale));
 
         foreach ($data as $name => $value) {
             if (!is_string($name) || !preg_match('/^[a-z][a-z0-9_]*$/', $name)) {
@@ -499,13 +542,13 @@ final class TemplateRendererService
     /**
      * @return array<string, HtmlFragment>
      */
-    private function globals(): array
+    private function globals(string $locale): array
     {
         return [
             'app_name' => HtmlFragment::fromText((string) env('APP_NAME', 'Lexicon')),
             'app_url' => HtmlFragment::fromText(rtrim((string) env('APP_URL', 'http://localhost'), '/')),
             'year' => HtmlFragment::fromText(date('Y')),
-        ];
+        ] + array_map(HtmlFragment::fromText(...), self::direction($locale));
     }
 
     // ------------------------------------------------------------------

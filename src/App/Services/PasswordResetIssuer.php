@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\Mailable;
 use App\Mail\PasswordResetEmail;
 use App\Models\PasswordResetModel;
 use RuntimeException;
@@ -23,14 +24,16 @@ class PasswordResetIssuer
 
     public function __construct(
         private PasswordResetModel $passwordResets,
+        private RecipientLocale $locales,
     ) {}
 
     /**
      * @param  array<string, mixed>  $user  Must carry id and email
+     * @param  string|null  $readingNow  The current page's language, only when the account owner asked
      *
      * @throws RuntimeException When mail is switched off or the token could not be stored
      */
-    public function issue(array $user): void
+    public function issue(array $user, ?string $readingNow = null): void
     {
         // Checked first so a switched-off mailer never leaves a live token behind
         // for a link nobody received.
@@ -45,6 +48,11 @@ class PasswordResetIssuer
             throw new RuntimeException('The reset token could not be saved, so no link was sent.');
         }
 
-        mail_queue()->enqueue(new PasswordResetEmail($user, $token, self::LIFETIME_MINUTES), 'user', (int) $user['id']);
+        $mail = Mailable::inLocale(
+            $this->locales->forUser((int) $user['id'], $readingNow),
+            fn (): PasswordResetEmail => new PasswordResetEmail($user, $token, self::LIFETIME_MINUTES)
+        );
+
+        mail_queue()->enqueue($mail, 'user', (int) $user['id']);
     }
 }

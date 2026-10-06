@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Interfaces\SchedulableCommandInterface;
 use App\Mail\InsightsDigestMail;
+use App\Mail\Mailable;
 use App\Models\AnalyticsDailyEventModel;
 use App\Models\AnalyticsStatsModel;
 use App\Models\UserModel;
@@ -13,6 +14,7 @@ use App\Models\UserPreferencesModel;
 use App\Services\Analytics\AnalyticsReportService;
 use App\Services\Analytics\AnalyticsSettings;
 use App\Services\MailQueueService;
+use App\Services\RecipientLocale;
 use App\ValueObjects\AnalyticsScope;
 
 /**
@@ -36,6 +38,7 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
         private UserModel $users,
         private UserPreferencesModel $preferences,
         private MailQueueService $mail,
+        private RecipientLocale $locales,
     ) {}
 
     public static function scheduleLabel(): string
@@ -122,7 +125,12 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
             return false;
         }
 
-        $this->mail->enqueue(new InsightsDigestMail((string) $owner['email'], $label, $summaries), 'user', $ownerId);
+        $mail = Mailable::inLocale(
+            $this->locales->forUser($ownerId),
+            fn (): InsightsDigestMail => new InsightsDigestMail((string) $owner['email'], $label, $summaries)
+        );
+
+        $this->mail->enqueue($mail, 'user', $ownerId);
 
         return true;
     }

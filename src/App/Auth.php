@@ -7,6 +7,7 @@ namespace App;
 use App\Exceptions\AccountSuspendedException;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\LocaleState;
 use App\Services\UserSuspensionService;
 use Framework\Interfaces\AuthInterface;
 use Framework\Session;
@@ -74,8 +75,11 @@ class Auth implements AuthInterface
         $this->session->set('user_id', (int) $user['id']);
         $this->session->set('session_epoch', (int) ($user['session_epoch'] ?? 0));
 
+        // The language of the sign-in page is the best guess at the language
+        // to email someone in who never chose one (see RecipientLocale).
         $this->users->updateById((int) $user['id'], [
             'last_login' => (new \DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+            'last_locale' => LocaleState::get()->chromeLocale,
         ]);
 
         return true;

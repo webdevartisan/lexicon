@@ -39,11 +39,11 @@ it('authenticates with valid credentials using mocked dependencies', function ()
         ->once()
         ->with('session_epoch', 0);
 
-    // Mock last_login update
+    // Sign-in stamps the time and the language of the page, for emails later.
     $mocks['userModel']
         ->shouldReceive('updateById')
         ->once()
-        ->with(42, Mockery::type('array'));
+        ->with(42, Mockery::on(fn (array $data): bool => isset($data['last_login']) && $data['last_locale'] === 'en'));
 
     $mocks['session']
         ->shouldReceive('get')

@@ -6,6 +6,7 @@ namespace App\Controllers\Auth;
 
 use App\Auth;
 use App\Controllers\AppController;
+use App\Mail\Mailable;
 use App\Mail\WelcomeEmail;
 use App\Models\BlogInvitationModel;
 use App\Models\RoleModel;
@@ -16,6 +17,7 @@ use App\Services\Analytics\SignupAttribution;
 use App\Services\Analytics\VisitorLink;
 use App\Services\CommentService;
 use App\Services\InvitationService;
+use App\Services\RecipientLocale;
 use App\Services\UserHandleValidator;
 use Exception;
 use Framework\Core\Response;
@@ -131,10 +133,12 @@ final class RegisterController extends AppController
 
         // queued, so a transport problem does not cost the welcome email
         try {
-            mail_queue()->enqueue(new WelcomeEmail([
+            // In the language they signed up in.
+            $welcome = Mailable::inLocale(app(RecipientLocale::class)->current(), fn (): WelcomeEmail => new WelcomeEmail([
                 'email' => $validated['email'],
                 'handle' => $handle,
-            ]), 'user', $userId);
+            ]));
+            mail_queue()->enqueue($welcome, 'user', $userId);
         } catch (Exception $e) {
             // queueing is a single insert, so this only fires if the database
             // is in trouble. Registration itself already succeeded either way.

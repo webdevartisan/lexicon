@@ -13,6 +13,7 @@ use App\Models\UserPreferencesModel;
 use App\Services\CommentAudienceResolver;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
+use App\Services\RecipientLocale;
 
 /**
  * Unit tests for the NotificationService dispatcher.
@@ -31,16 +32,48 @@ function makeNotificationService(
     ?UserModel $users = null,
     ?UserPreferencesModel $prefs = null,
     ?MailQueueService $queue = null,
+    ?RecipientLocale $locales = null,
 ): NotificationService {
+    if ($locales === null) {
+        $locales = Mockery::mock(RecipientLocale::class);
+        $locales->shouldReceive('forUser')->andReturn('en')->byDefault();
+    }
+
     return new NotificationService(
         $notif ?? Mockery::mock(NotificationModel::class),
         $users ?? Mockery::mock(UserModel::class),
         $prefs ?? Mockery::mock(UserPreferencesModel::class),
         $queue ?? Mockery::mock(MailQueueService::class),
+        $locales,
     );
 }
 
 describe('NotificationService::dispatch', function () {
+
+    test('the email is written in the recipient\'s language', function () {
+        $notif = Mockery::mock(NotificationModel::class);
+        $notif->shouldReceive('create')->once()->andReturn(true);
+
+        $users = Mockery::mock(UserModel::class);
+        $users->shouldReceive('findById')->with(9)->andReturn(['id' => 9, 'email' => 'author@b.test']);
+
+        $prefs = Mockery::mock(UserPreferencesModel::class);
+        $prefs->shouldReceive('notificationPreference')->andReturn(true);
+
+        $locales = Mockery::mock(RecipientLocale::class);
+        $locales->shouldReceive('forUser')->once()->with(9)->andReturn('ar');
+
+        $queue = Mockery::mock(MailQueueService::class);
+        $queue->shouldReceive('enqueue')
+            ->once()
+            ->with(Mockery::on(fn ($m) => $m->getLocale() === 'ar' && str_contains($m->getBody(), 'dir="rtl"')), 'notification', 9)
+            ->andReturn(1);
+
+        makeNotificationService($notif, $users, $prefs, $queue, $locales)
+            ->dispatch(9, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r']);
+
+        expect(true)->toBeTrue();
+    });
 
     test('always writes the in-app notification row, even when email is muted', function () {
         $notif = Mockery::mock(NotificationModel::class);

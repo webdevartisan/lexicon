@@ -103,6 +103,7 @@ class NotificationService
         private UserModel $users,
         private UserPreferencesModel $preferences,
         private MailQueueService $mailQueue,
+        private RecipientLocale $locales,
     ) {}
 
     /**
@@ -160,7 +161,10 @@ class NotificationService
             // No MAIL_ENABLED check here any more. The queue worker leaves
             // everything alone while mail is switched off, so notifications wait
             // and go out when it is switched back on instead of being dropped.
-            $mailable = $this->buildMailable($type, (string) $user['email'], $data);
+            $mailable = Mailable::inLocale(
+                $this->locales->forUser($userId),
+                fn (): ?Mailable => $this->buildMailable($type, (string) $user['email'], $data)
+            );
             if ($mailable !== null) {
                 $this->mailQueue->enqueue($mailable, 'notification', $userId);
             }

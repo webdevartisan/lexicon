@@ -73,11 +73,55 @@ Rules for data:
 - Keys are `snake_case`. Values are strings, numbers, `null` (empty) or an `HtmlFragment`.
 - Give the template the same keys every time (pass `''` for "not applicable"); the editor lists them
   from the email's sample.
-- `{{ app_name }}`, `{{ app_url }}`, `{{ year }}` and `{{ subject }}` are always available.
+- `{{ app_name }}`, `{{ app_url }}`, `{{ year }}` and `{{ subject }}` are always available, and so are
+  `{{ dir }}`, `{{ start }}` and `{{ end }}` for block styles (see Languages).
 
 For repeated structure (one section per blog in the weekly digest), render blocks from code with
 `$this->component('stat-line', [...])`, join them with `HtmlFragment::join()`, and pass the result as one
 value. The order is code; the look of each row is still an editable block.
+
+## Languages
+
+Every email is built in its recipient's language. The code that sends it picks the language with
+`RecipientLocale` and builds the Mailable inside `Mailable::inLocale()`:
+
+```php
+$mail = Mailable::inLocale($this->locales->forUser($userId), fn () => new PostApprovedMail(...));
+```
+
+Outside `inLocale()` the site default is used. The queue stores each email already rendered, so the language
+is settled when it is queued and the worker never needs to know it.
+
+`RecipientLocale` picks, first that applies:
+
+1. the language the person chose in their preferences (`user_preferences.locale`);
+2. the page they are reading right now, but only when they are the one acting (registration, the
+   forgot-password form, changing their own email, subscribing). Callers pass it as `$readingNow`, because the
+   person who triggers an email is often not its reader: an admin's password reset goes to the account owner;
+3. what is known about the address: the page a subscription was made from (`blog_subscribers.locale`), or the
+   page the account last signed in from (`users.last_locale`, written by `Auth::login()`);
+4. the blog's language (`blog_settings.default_locale`), for mail about a blog;
+5. the site default.
+
+| Email | Language from |
+|---|---|
+| Notifications, digest, moderation and reporter warnings | `forUser($id)` |
+| Welcome, password reset from the form, email change | `forUser($id, current())` or `current()` |
+| Password reset or email change sent by an admin | `forUser($id)`, never the admin's page |
+| Post announcement | `forSubscriber($row, forBlog($id))`; `BlogSubscriberModel::forBlog()` joins what it needs |
+| Subscription confirmation | `current()`, which is also stored on the subscription |
+| Invitation | `forAddress($email, forBlog($id))`: the invitee's account language, else the blog's |
+| Contact message | `forAddress($adminEmail)`: the admin's own language, else the site default |
+
+The document is marked `<html lang=".." dir="..">`, with the direction repeated on the content wrapper because
+webmail clients such as Gmail drop the `<html>` attributes. For right-to-left languages (`LocaleRegistry::RTL`,
+which includes `ar`) blocks are laid out from the right: write `border-{{ start }}:3px solid` rather than
+`border-left`, since email clients ignore the CSS logical properties (`border-inline-start`) that would flip on
+their own. `{{ start }}` is `left` or `right`, `{{ end }}` the other side, and `{{ dir }}` is `ltr` or `rtl`.
+These three never count when deciding whether a block is empty.
+
+The wording itself is still English in every language; translating it, and editing it per language in the
+control panel, are the next steps.
 
 ## Escaping and safety
 

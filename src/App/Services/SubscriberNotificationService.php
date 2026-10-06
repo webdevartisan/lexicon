@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\Mailable;
 use App\Mail\NewPostMail;
 use App\Models\BlogModel;
 use App\Models\BlogSubscriberModel;
@@ -29,6 +30,7 @@ class SubscriberNotificationService
         private BlogModel $blogModel,
         private BlogSubscriberModel $subscriberModel,
         private MailQueueService $mailQueue,
+        private RecipientLocale $locales,
     ) {}
 
     /**
@@ -67,17 +69,18 @@ class SubscriberNotificationService
         }
 
         $queued = 0;
+        $blogLocale = $this->locales->forBlog((int) $post['blog_id']);
 
         foreach ($this->subscriberModel->forBlog((int) $post['blog_id']) as $subscriber) {
             $queued += $this->mailQueue->enqueue(
-                new NewPostMail(
+                Mailable::inLocale($this->locales->forSubscriber($subscriber, $blogLocale), fn (): NewPostMail => new NewPostMail(
                     (string) $subscriber['email'],
                     (string) ($blog['blog_name'] ?? 'A blog you follow'),
                     (string) $post['title'],
                     (string) $blog['blog_slug'],
                     (string) $post['slug'],
                     (string) $subscriber['token']
-                ),
+                )),
                 'post',
                 $postId
             );

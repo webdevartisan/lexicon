@@ -9,6 +9,7 @@ use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Services\PasswordResetIssuer;
 use App\Services\PasswordResetRateLimiter;
+use App\Services\RecipientLocale;
 use Exception;
 use Framework\Core\Response;
 
@@ -96,7 +97,8 @@ final class PasswordController extends AppController
         }
 
         try {
-            $this->resetIssuer->issue($user);
+            // They asked from this page, so it is in a language they read.
+            $this->resetIssuer->issue($user, app(RecipientLocale::class)->current());
 
             audit()->log(
                 (int) $user['id'],

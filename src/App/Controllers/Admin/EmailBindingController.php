@@ -165,7 +165,8 @@ class EmailBindingController extends AppController
             'templatePlaceholders' => $templatePlaceholders,
             'feeds' => $feeds,
             'data' => $data,
-            'globals' => TemplateRendererService::GLOBALS,
+            // Direction is for block styles; wording never needs it.
+            'globals' => array_values(array_diff(TemplateRendererService::GLOBALS, TemplateRendererService::DIRECTION)),
             'isStored' => $stored !== null,
             'builtInTemplate' => $builtIn['template'] ?? null,
             'problem' => $this->manager->problems($repository, [$email['class']])[$email['class']] ?? null,

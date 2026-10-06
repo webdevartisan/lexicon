@@ -9,6 +9,7 @@ use App\Models\BlogSubscriberModel;
 use App\Models\PostBookmarkModel;
 use App\Models\PostVoteModel;
 use App\Services\ReaderService;
+use App\Services\RecipientLocale;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -161,7 +162,7 @@ final class ReaderController extends AppController
             return $this->afterAction(false, '/subscriptions', null);
         }
 
-        $this->subscribers->subscribe((int) $blogId, $email, $this->viewerId(), confirmed: true);
+        $this->subscribers->subscribe((int) $blogId, $email, $this->viewerId(), confirmed: true, locale: app(RecipientLocale::class)->current());
         $this->flash('success', chrome_translate('reader.resubscribed', ['blog' => (string) ($blog['blog_name'] ?? '')]));
 
         return $this->redirect($this->backTo('/subscriptions'));

@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use App\Mail\Templates\CatalogTemplateSource;
 use App\Mail\Templates\HtmlFragment;
+use App\Services\LocaleRegistry;
 use App\Services\TemplateRendererService;
 use Closure;
 
@@ -20,6 +21,10 @@ use Closure;
  * subject, then hands its facts to fromTemplate(). How the email looks and
  * what it says around those facts belongs to its template, which admins can
  * edit under Email Templates in the control panel.
+ *
+ * An email is written in its recipient's language, fixed when it is built. The
+ * code that knows the recipient builds it inside inLocale(), usually with the
+ * language RecipientLocale picked; outside one, the site's default is used.
  */
 abstract class Mailable
 {
@@ -31,6 +36,12 @@ abstract class Mailable
 
     /** Built-in templates only, for code running without the app container (unit tests, scripts). */
     private static ?TemplateRendererService $builtInRenderer = null;
+
+    /** The language set for the duration of inLocale(). */
+    private static ?string $scopedLocale = null;
+
+    /** The language this email is written in, fixed when it is constructed. */
+    private string $locale;
 
     /** @var array<string, mixed> What this email gave its template */
     private array $templateData = [];
@@ -92,6 +103,7 @@ abstract class Mailable
      */
     public function __construct()
     {
+        $this->locale = self::$scopedLocale ?? LocaleRegistry::instance()->default();
         $this->build();
     }
 
@@ -236,7 +248,7 @@ abstract class Mailable
     protected function fromTemplate(array $data): static
     {
         $this->templateData = $data;
-        $email = self::templates()->renderEmail(static::class, $data, $this->subject);
+        $email = self::templates()->renderEmail(static::class, $data, $this->subject, $this->locale);
 
         $this->subject = $email->subject;
 
@@ -251,7 +263,7 @@ abstract class Mailable
      */
     protected function component(string $slug, array $data): HtmlFragment
     {
-        return self::templates()->renderComponent($slug, $data);
+        return self::templates()->renderComponent($slug, $data, $this->locale);
     }
 
     /**
@@ -286,6 +298,31 @@ abstract class Mailable
         }
     }
 
+    /**
+     * Build Mailables in a given language, normally the recipient's:
+     *
+     *     $mail = Mailable::inLocale($recipientLocale->forUser($id), fn () => new PostApprovedMail(...));
+     *
+     * A language the site does not offer falls back to the site default.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function inLocale(string $locale, callable $callback): mixed
+    {
+        $registry = LocaleRegistry::instance();
+        $previous = self::$scopedLocale;
+        self::$scopedLocale = $registry->normalize($locale) ?? $registry->default();
+
+        try {
+            return $callback();
+        } finally {
+            self::$scopedLocale = $previous;
+        }
+    }
+
     private static function templates(): TemplateRendererService
     {
         if (self::$scopedRenderer !== null) {
@@ -311,6 +348,14 @@ abstract class Mailable
     }
 
     // Getters for MailService to access protected properties
+
+    /**
+     * The language this email is written in.
+     */
+    public function getLocale(): string
+    {
+        return $this->locale;
+    }
 
     /**
      * Delivery tier, used to pick which queue worker handles it.

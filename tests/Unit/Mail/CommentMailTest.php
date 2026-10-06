@@ -6,6 +6,7 @@ use App\Mail\BlogCommentMail;
 use App\Mail\CommentMail;
 use App\Mail\CommentModerationMail;
 use App\Mail\CommentReplyMail;
+use App\Mail\Mailable;
 use App\Mail\PostCommentMail;
 
 /**
@@ -64,4 +65,16 @@ test('moderators are sent to the queue and not told the comment is held', functi
 test('without a blog to point at, moderators get the post instead', function () {
     expect(commentMail(CommentModerationMail::class, awaitingModeration: true, blogId: 0)->getBody())
         ->toContain('https://example.test/blog/travel/ten-days"');
+});
+
+test('an email is written in the language it was built in, and the site default otherwise', function () {
+    $arabic = Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class));
+    $nested = Mailable::inLocale('el', fn () => [Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class)), commentMail(PostCommentMail::class)]);
+
+    expect($arabic->getLocale())->toBe('ar')
+        ->and($arabic->getBody())->toContain('<html lang="ar" dir="rtl">')
+        ->and($nested[0]->getLocale())->toBe('ar')
+        ->and($nested[1]->getLocale())->toBe('el')
+        ->and(commentMail(PostCommentMail::class)->getLocale())->toBe('en')
+        ->and(Mailable::inLocale('xx', fn () => commentMail(PostCommentMail::class))->getLocale())->toBe('en');
 });

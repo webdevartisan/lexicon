@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\Mailable;
 use App\Mail\ModerationWarningMail;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
@@ -39,6 +40,7 @@ class ModerationActionService
         private UserModel $users,
         private NotificationModel $notifications,
         private MailQueueService $mailQueue,
+        private RecipientLocale $locales,
     ) {}
 
     /**
@@ -133,14 +135,14 @@ class ModerationActionService
             ]);
 
             $this->mailQueue->enqueue(
-                new ModerationWarningMail(
+                Mailable::inLocale($this->locales->forUser((int) $author['id']), fn (): ModerationWarningMail => new ModerationWarningMail(
                     (string) $author['email'],
                     (string) $author['handle'],
                     (string) $case['subject_type'],
                     $label,
                     $categoryLabel,
                     $message
-                ),
+                )),
                 'moderation_case',
                 (int) $case['id']
             );
