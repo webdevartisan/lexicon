@@ -26,7 +26,7 @@ class SubscriptionConfirmMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Confirm your subscription to '.$this->blogName)
+            ->subject($this->t('subjects.SubscriptionConfirmMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'email' => $this->toEmail,

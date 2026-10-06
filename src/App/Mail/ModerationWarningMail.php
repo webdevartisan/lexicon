@@ -32,13 +32,20 @@ class ModerationWarningMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('A warning about your '.$this->subjectKind)
+            ->subject($this->t('subjects.ModerationWarningMail', ['your_item' => $this->yourItem()]))
             ->fromTemplate([
                 'handle' => $this->handle,
-                'subject_kind' => $this->subjectKind,
+                // The whole phrase, since the possessive and article depend on the noun in many languages.
+                'your_item' => $this->yourItem(),
+                'subject_kind' => $this->t($this->subjectKind === 'post' ? 'phrases.kind_post' : 'phrases.kind_comment'),
                 'subject_label' => $this->subjectLabel,
                 'category' => $this->category,
                 'message' => HtmlFragment::fromText($this->message),
             ]);
+    }
+
+    private function yourItem(): string
+    {
+        return $this->t($this->subjectKind === 'post' ? 'phrases.your_post' : 'phrases.your_comment');
     }
 }

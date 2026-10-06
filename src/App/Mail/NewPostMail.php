@@ -26,7 +26,7 @@ class NewPostMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('New on '.$this->blogName.': '.$this->postTitle)
+            ->subject($this->t('subjects.NewPostMail', ['blog_name' => $this->blogName, 'post_title' => $this->postTitle]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'post_title' => $this->postTitle,

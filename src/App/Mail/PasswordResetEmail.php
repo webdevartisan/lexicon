@@ -28,13 +28,17 @@ class PasswordResetEmail extends Mailable
 
     public function build(): void
     {
-        $firstName = (string) ($this->user['first_name'] ?? '') ?: 'there';
+        // The handle is a better name than none, and a greeting without a name
+        // is worded as one rather than as "Hello there".
+        $name = (string) ($this->user['first_name'] ?? '') ?: (string) ($this->user['handle'] ?? '');
 
-        $this->to($this->user['email'], $firstName)
-            ->subject('Password Reset Request')
+        $this->to($this->user['email'], $name)
+            ->subject($this->t('subjects.PasswordResetEmail'))
             ->fromTemplate([
-                'first_name' => $firstName,
+                'greeting' => $name !== '' ? $this->t('phrases.greeting', ['name' => $name]) : $this->t('phrases.greeting_anonymous'),
+                'first_name' => $name !== '' ? $name : $this->t('phrases.there'),
                 'reset_url' => $this->resetUrl(),
+                'expires_in' => $this->t('phrases.minutes', ['count' => $this->expiresInMinutes]),
                 'expires_in_minutes' => $this->expiresInMinutes,
             ]);
     }

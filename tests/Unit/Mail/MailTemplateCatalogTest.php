@@ -7,7 +7,10 @@ use App\Mail\QueuedMail;
 use App\Mail\Templates\CatalogTemplateSource;
 use App\Mail\Templates\EmailHtmlLinter;
 use App\Mail\Templates\HtmlFragment;
+use App\Mail\Templates\MailTranslator;
+use App\Mail\Templates\TemplateDataException;
 use App\Services\EmailTemplateRegistry;
+use App\Services\LocaleRegistry;
 use App\Services\TemplateRendererService;
 
 /**
@@ -104,4 +107,66 @@ test('HtmlFragment::join keeps both renditions in order and skips empty parts', 
     $joined = HtmlFragment::join([HtmlFragment::fromText('a'), HtmlFragment::empty(), HtmlFragment::fromText('b')]);
 
     expect($joined->html)->toBe('ab')->and($joined->text)->toBe("a\nb");
+});
+
+test('every email renders strictly in every language the site offers', function () {
+    $renderer = new TemplateRendererService($this->catalog);
+
+    foreach (LocaleRegistry::instance()->supported() as $locale) {
+        foreach (array_keys($this->registry->getAll()) as $key) {
+            $mail = Mailable::withTemplateRenderer($renderer, fn () => Mailable::inLocale($locale, fn () => $this->registry->build($key)));
+
+            expect(str_contains($mail->getBody(), '<html lang="'.$locale.'"'))->toBeTrue("{$key} in {$locale}")
+                ->and($mail->getSubject())->not->toBe('');
+        }
+    }
+});
+
+test('every language translates all built-in wording, with only the placeholders the English uses', function () {
+    foreach (array_diff(LocaleRegistry::instance()->supported(), ['en']) as $locale) {
+        foreach ($this->catalog->bindings() as $class => $binding) {
+            $translated = MailTranslator::wording($locale, $class);
+
+            foreach ($binding['mapping'] as $name => $english) {
+                // Wording that is only a placeholder has nothing to translate.
+                if (trim((string) preg_replace(TemplateRendererService::PLACEHOLDER, '', $english)) === '') {
+                    continue;
+                }
+
+                $where = TemplateDataException::shortName($class).".{$name} in {$locale}";
+                expect(isset($translated[$name]))->toBeTrue("{$where} is not translated");
+
+                // A placeholder the email does not provide would fail every send, the built-in fallback included.
+                $extra = array_diff(TemplateRendererService::placeholdersIn($translated[$name]), TemplateRendererService::placeholdersIn($english));
+                expect($extra)->toBe([], "{$where} uses placeholders the English does not")
+                    ->and(EmailHtmlLinter::lintHtml($translated[$name], 'https://example.test')['errors'])->toBe([], $where);
+            }
+
+            expect(array_diff(array_keys($translated), array_keys($binding['mapping'])))->toBe([], TemplateDataException::shortName($class)." in {$locale} translates wording that does not exist");
+        }
+    }
+});
+
+test('every plural in the mail strings is valid ICU for its language', function () {
+    foreach (LocaleRegistry::instance()->supported() as $locale) {
+        $section = json_decode((string) file_get_contents(ROOT_PATH."/locales/{$locale}.json"), true)['mail'];
+
+        array_walk_recursive($section, function (string $pattern, string $key) use ($locale): void {
+            if (str_contains($pattern, ', plural,')) {
+                expect(MessageFormatter::create($locale, $pattern))->not->toBeNull("{$key} in {$locale}");
+            }
+        });
+    }
+});
+
+test('subjects come from the translations, not from English written in the class', function () {
+    foreach (glob(ROOT_PATH.'/src/App/Mail/*.php') ?: [] as $file) {
+        expect(preg_match("/->subject\\(\\s*['\"]/", (string) file_get_contents($file)))->toBe(0, basename($file).' sets a literal subject');
+
+        preg_match_all("/\\\$this->t\\('([a-z_.A-Z]+)'/", (string) file_get_contents($file), $keys);
+        // Keys built at runtime ('digest.goals.'.$goal) end in a dot; the render test covers them.
+        foreach (array_filter($keys[1], static fn (string $key): bool => !str_ends_with($key, '.')) as $key) {
+            expect(MailTranslator::has('en', $key))->toBeTrue(basename($file)." uses mail.{$key}, which en.json does not have");
+        }
+    }
 });

@@ -22,7 +22,7 @@ class ReviewerStaleMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Reviewer reset on: '.$this->postTitle)
+            ->subject($this->t('subjects.ReviewerStaleMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'former_reviewer_handle' => $this->formerReviewerHandle,

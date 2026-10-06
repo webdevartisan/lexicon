@@ -36,7 +36,7 @@ class PostSubmittedMail extends Mailable
      */
     protected function subjectLine(): string
     {
-        return 'Review requested: '.$this->postTitle;
+        return $this->t('subjects.PostSubmittedMail', ['post_title' => $this->postTitle]);
     }
 
     private function reviewUrl(): string

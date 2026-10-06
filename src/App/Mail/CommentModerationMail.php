@@ -11,7 +11,7 @@ class CommentModerationMail extends CommentMail
 {
     protected function subjectLine(): string
     {
-        return 'Comment awaiting your approval on: '.$this->postTitle;
+        return $this->t('subjects.CommentModerationMail', ['post_title' => $this->postTitle]);
     }
 
     /**

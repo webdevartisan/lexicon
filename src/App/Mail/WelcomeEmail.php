@@ -22,12 +22,15 @@ class WelcomeEmail extends Mailable
 
     public function build(): void
     {
-        $firstName = (string) ($this->user['first_name'] ?? '') ?: 'there';
+        // The handle is a better name than none, and a greeting without a name
+        // is worded as one rather than as "Hello there".
+        $name = (string) ($this->user['first_name'] ?? '') ?: (string) ($this->user['handle'] ?? '');
 
-        $this->to($this->user['email'], $firstName)
-            ->subject('Welcome to '.(env('APP_NAME', 'Our Blog Platform')))
+        $this->to($this->user['email'], $name)
+            ->subject($this->t('subjects.WelcomeEmail', ['app_name' => (string) env('APP_NAME', 'Lexicon')]))
             ->fromTemplate([
-                'first_name' => $firstName,
+                'greeting' => $name !== '' ? $this->t('phrases.greeting', ['name' => $name]) : $this->t('phrases.greeting_anonymous'),
+                'first_name' => $name !== '' ? $name : $this->t('phrases.there'),
                 'handle' => (string) $this->user['handle'],
                 // Explore, not a personal page: a brand new account has nothing on
                 // its own lists yet, so the useful first destination is the catalog.

@@ -22,10 +22,10 @@ class InsightsMilestoneMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('"'.$this->postTitle.'" passed '.number_format($this->threshold).' views')
+            ->subject($this->t('subjects.InsightsMilestoneMail', ['post_title' => $this->postTitle, 'count' => $this->threshold]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
-                'views' => number_format($this->threshold),
+                'views' => $this->number($this->threshold),
                 'insights_url' => $this->analyticsUrl(),
             ]);
     }

@@ -18,7 +18,7 @@ class PostPublishedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your post is live: '.$this->postTitle)
+            ->subject($this->t('subjects.PostPublishedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'post_url' => $this->publicUrl(),

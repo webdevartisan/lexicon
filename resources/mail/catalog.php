@@ -108,7 +108,7 @@ return [
             'label' => 'Link to copy',
             'category' => 'action',
             'description' => "The button's address written out, for clients that hide buttons.",
-            'html' => '<p style="margin:0 0 16px;font-size:12px;color:#6b7280;word-break:break-all;">Or paste this into your browser: {{ button_url }}</p>',
+            'html' => '<p style="margin:0 0 16px;font-size:12px;color:#6b7280;word-break:break-all;">{{ link_fallback_text }} {{ button_url }}</p>',
             'text' => '',
             'preview_data' => ['button_url' => 'https://example.com/'],
         ],
@@ -152,7 +152,7 @@ return [
             'label' => 'Statistic',
             'category' => 'data',
             'description' => 'A labelled figure with a link to the page behind it.',
-            'html' => '<div style="margin:8px 0;"><strong>{{ stat_label }}</strong> &middot; <a href="{{ stat_url }}">Open</a><br>{{ stat_text }}</div>',
+            'html' => '<div style="margin:8px 0;"><strong>{{ stat_label }}</strong> &middot; <a href="{{ stat_url }}">{{ open_link_text }}</a><br>{{ stat_text }}</div>',
             'text' => "{{ stat_label }}: {{ stat_text }}\n{{ stat_url }}",
             'preview_data' => ['stat_label' => 'Overview', 'stat_text' => '1,240 views from 860 daily visitors.', 'stat_url' => 'https://example.com/'],
         ],
@@ -160,7 +160,7 @@ return [
             'label' => 'List item',
             'category' => 'data',
             'description' => 'One bulleted line.',
-            'html' => '<div style="margin:2px 0 2px 12px;">&bull; {{ item }}</div>',
+            'html' => '<div style="margin:2px 0;margin-{{ start }}:12px;">&bull; {{ item }}</div>',
             'text' => '- {{ item }}',
             'preview_data' => ['item' => 'Ten Days in Crete: 410 views'],
         ],
@@ -199,7 +199,7 @@ return [
             'template' => 'welcome',
             'mapping' => [
                 'banner' => 'Welcome to {{ app_name }}!',
-                'heading' => 'Hello {{ first_name }},',
+                'heading' => '{{ greeting }}',
                 'intro' => '<p>Thank you for joining our community! Your account has been successfully created.</p>'
                     .'<p><strong>Your tag:</strong> @{{ handle }}</p>'
                     .'<p>Save posts for later, follow the blogs you love, and join the discussions. When you feel like writing, you can start a blog of your own any time.</p>',
@@ -213,10 +213,10 @@ return [
             'template' => 'security',
             'mapping' => [
                 'heading' => 'Password reset request',
-                'intro' => '<p>Hello {{ first_name }},</p><p>We received a request to reset your password. Click the button below to create a new password:</p>',
+                'intro' => '<p>{{ greeting }}</p><p>We received a request to reset your password. Click the button below to create a new password:</p>',
                 'button_label' => 'Reset password',
                 'button_url' => '{{ reset_url }}',
-                'details' => '<p>This link will expire in {{ expires_in_minutes }} minutes.</p>'
+                'details' => '<p>This link will expire in {{ expires_in }}.</p>'
                     ."<p>For security reasons, we cannot send your existing password. If you're having trouble, contact our support team.</p>",
                 'security_notice' => "<strong>Security notice:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.",
             ] + $security,
@@ -228,7 +228,7 @@ return [
                 'intro' => '<p>Someone asked to change the email address on a {{ app_name }} account to <strong>{{ new_email }}</strong>.</p><p>Confirm it to finish the change:</p>',
                 'button_label' => 'Confirm this address',
                 'button_url' => '{{ confirm_url }}',
-                'details' => 'The link stops working in {{ expires_in_minutes }} minutes, and the account keeps its current address until you follow it.',
+                'details' => 'The link stops working in {{ expires_in }}, and the account keeps its current address until you follow it.',
                 'security_notice' => '<strong>If you were not expecting this</strong>, ignore this message. Nothing changes and this address is not added to the account.',
             ] + $security,
         ],
@@ -245,8 +245,8 @@ return [
         Mail\ModerationWarningMail::class => [
             'template' => 'notification',
             'mapping' => [
-                'heading' => 'A warning about your {{ subject_kind }}',
-                'intro' => '<p>Hi @{{ handle }},</p><p>Readers reported your {{ subject_kind }} <strong>{{ subject_label }}</strong> for <strong>{{ category }}</strong>, and a moderator agreed with them.</p>',
+                'heading' => 'A warning about {{ your_item }}',
+                'intro' => '<p>Hi @{{ handle }},</p><p>Readers reported {{ your_item }} <strong>{{ subject_label }}</strong> for <strong>{{ category }}</strong>, and a moderator agreed with them.</p>',
                 'callout' => '{{ message }}',
                 'details' => 'Further reports that are upheld can lead to your account being suspended.',
             ] + $notification,

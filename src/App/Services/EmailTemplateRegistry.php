@@ -198,7 +198,8 @@ class EmailTemplateRegistry
                 'class' => 'App\\Mail\\InsightsDigestMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
-                    'weekLabel' => 'Sep 28 to Oct 4, 2026',
+                    'weekStart' => '2026-09-28',
+                    'weekEnd' => '2026-10-04',
                     'blogs' => [[
                         'name' => 'Travel Stories', 'id' => 1, 'slug' => 'travel-stories', 'from' => '2026-09-28', 'to' => '2026-10-04',
                         'views' => 1240, 'previous' => 980, 'visitors' => 860, 'source' => 'Google',

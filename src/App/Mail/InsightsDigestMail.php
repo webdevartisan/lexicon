@@ -15,15 +15,8 @@ class InsightsDigestMail extends Mailable
     /** One per owner, all sent the same morning, so throughput matters more than speed. */
     protected string $tier = self::TIER_BULK;
 
-    /** Goal => [one, many], in the order the Goals page lists them. */
-    private const GOALS = [
-        'subscribe' => ['subscription', 'subscriptions'],
-        'comment' => ['comment', 'comments'],
-        'like' => ['like', 'likes'],
-        'save' => ['save', 'saves'],
-        'share' => ['share', 'shares'],
-        'signup' => ['sign-up', 'sign-ups'],
-    ];
+    /** Goals in the order the Goals page lists them; each has a counted phrase under digest.goals. */
+    private const GOALS = ['subscribe', 'comment', 'like', 'save', 'share', 'signup'];
 
     /**
      * @param  list<array{name: string, id: int, slug: string, from: string, to: string, views: int, previous: int,
@@ -31,7 +24,8 @@ class InsightsDigestMail extends Mailable
      */
     public function __construct(
         private string $toEmail,
-        private string $weekLabel,
+        private string $weekStart,
+        private string $weekEnd,
         private array $blogs,
     ) {
         parent::__construct();
@@ -40,11 +34,29 @@ class InsightsDigestMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your week on Lexicon: '.$this->weekLabel)
+            ->subject($this->t('subjects.InsightsDigestMail', ['app_name' => (string) env('APP_NAME', 'Lexicon'), 'week' => $this->weekLabel()]))
             ->fromTemplate([
-                'week_label' => $this->weekLabel,
+                'week_label' => $this->weekLabel(),
                 'sections' => $this->sections(),
             ]);
+    }
+
+    /**
+     * "Sep 28 to Oct 4, 2026", as the reader's language writes dates. Dates
+     * that do not parse are shown as given.
+     */
+    private function weekLabel(): string
+    {
+        try {
+            $utc = new \DateTimeZone('UTC');
+
+            return $this->t('digest.week', [
+                'from' => $this->date(new \DateTimeImmutable($this->weekStart, $utc), 'MMMd'),
+                'to' => $this->date(new \DateTimeImmutable($this->weekEnd, $utc), 'yMMMd'),
+            ]);
+        } catch (\Exception) {
+            return $this->weekStart.' – '.$this->weekEnd;
+        }
     }
 
     private function appUrl(): string
@@ -67,27 +79,26 @@ class InsightsDigestMail extends Mailable
      * @param  array{views: int, previous: int, visitors: int, source: ?string, goals: array<string, int>}  $blog
      * @return array<string, string>
      */
-    private static function lines(array $blog): array
+    private function lines(array $blog): array
     {
         $lines = [
-            'overview' => number_format($blog['views']).' views from '.number_format($blog['visitors'])
-                .' daily visitors, '.self::change($blog).'.',
+            'overview' => $this->t('digest.overview', ['views' => $blog['views'], 'visitors' => $blog['visitors'], 'change' => $this->change($blog)]),
         ];
 
         if ($blog['source'] !== null) {
-            $lines['acquisition'] = "Top source: {$blog['source']}.";
+            $lines['acquisition'] = $this->t('digest.source', ['source' => $blog['source']]);
         }
 
         $goals = [];
-        foreach (self::GOALS as $goal => [$one, $many]) {
+        foreach (self::GOALS as $goal) {
             $count = $blog['goals'][$goal] ?? 0;
             if ($count > 0) {
-                $goals[] = number_format($count).' '.($count === 1 ? $one : $many);
+                $goals[] = $this->t('digest.goals.'.$goal, ['count' => $count]);
             }
         }
 
         if ($goals !== []) {
-            $lines['goals'] = ucfirst(implode(', ', $goals)).'.';
+            $lines['goals'] = $this->t('digest.goals_line', ['goals' => implode($this->t('digest.list_separator'), $goals)]);
         }
 
         return $lines;
@@ -96,18 +107,19 @@ class InsightsDigestMail extends Mailable
     /**
      * @param  array{views: int, previous: int}  $blog
      */
-    private static function change(array $blog): string
+    private function change(array $blog): string
     {
         if ($blog['previous'] === 0) {
-            return 'nothing to compare with yet';
+            return $this->t('digest.change_none');
         }
 
         $percent = (int) round(($blog['views'] - $blog['previous']) / $blog['previous'] * 100);
+        $formatted = (string) (new \NumberFormatter($this->getLocale(), \NumberFormatter::PERCENT))->format(abs($percent) / 100);
 
         return match (true) {
-            $percent > 0 => "up {$percent}% on the week before",
-            $percent < 0 => 'down '.abs($percent).'% on the week before',
-            default => 'the same as the week before',
+            $percent > 0 => $this->t('digest.change_up', ['percent' => $formatted]),
+            $percent < 0 => $this->t('digest.change_down', ['percent' => $formatted]),
+            default => $this->t('digest.change_same'),
         };
     }
 
@@ -122,29 +134,29 @@ class InsightsDigestMail extends Mailable
         $sections = [];
 
         foreach ($this->blogs as $blog) {
-            $lines = self::lines($blog);
+            $lines = $this->lines($blog);
 
             $parts = [
                 $this->component('section-heading', [
                     'section_title' => $blog['name'],
                     'section_url' => $this->appUrl().'/blog/'.rawurlencode($blog['slug']),
                 ]),
-                $this->stat($blog, 'overview', 'Overview', $lines['overview']),
+                $this->stat($blog, 'overview', $this->t('digest.labels.overview'), $lines['overview']),
             ];
 
             if ($blog['posts'] !== []) {
-                $items = [HtmlFragment::fromText('Most read:')];
+                $items = [HtmlFragment::fromText($this->t('digest.most_read'))];
 
                 foreach ($blog['posts'] as $post) {
-                    $items[] = $this->component('list-item', ['item' => $post['title'].': '.number_format($post['views']).' views']);
+                    $items[] = $this->component('list-item', ['item' => $this->t('digest.post_views', ['title' => $post['title'], 'count' => $post['views']])]);
                 }
 
-                $parts[] = $this->stat($blog, 'content', 'Content', HtmlFragment::join($items));
+                $parts[] = $this->stat($blog, 'content', $this->t('digest.labels.content'), HtmlFragment::join($items));
             }
 
-            foreach (['acquisition' => 'Acquisition', 'goals' => 'Goals'] as $page => $title) {
+            foreach (['acquisition', 'goals'] as $page) {
                 if (isset($lines[$page])) {
-                    $parts[] = $this->stat($blog, $page, $title, $lines[$page]);
+                    $parts[] = $this->stat($blog, $page, $this->t('digest.labels.'.$page), $lines[$page]);
                 }
             }
 

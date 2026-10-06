@@ -21,7 +21,7 @@ class PostNeedsChangesMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Changes requested on: '.$this->postTitle)
+            ->subject($this->t('subjects.PostNeedsChangesMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'reviewer_handle' => $this->reviewerHandle,

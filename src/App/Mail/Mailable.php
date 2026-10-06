@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use App\Mail\Templates\CatalogTemplateSource;
 use App\Mail\Templates\HtmlFragment;
+use App\Mail\Templates\MailTranslator;
 use App\Services\LocaleRegistry;
 use App\Services\TemplateRendererService;
 use Closure;
@@ -264,6 +265,42 @@ abstract class Mailable
     protected function component(string $slug, array $data): HtmlFragment
     {
         return self::templates()->renderComponent($slug, $data, $this->locale);
+    }
+
+    /**
+     * A phrase from the "mail" section of the locale files, in this email's
+     * language: $this->t('subjects.PostApprovedMail', ['post_title' => $title]).
+     *
+     * @param  array<string, string|int|float>  $params
+     */
+    protected function t(string $key, array $params = []): string
+    {
+        return MailTranslator::text($this->locale, $key, $params);
+    }
+
+    /**
+     * A collaborator role (author, editor...) as a word in this email's
+     * language. A role with no translation is shown as stored.
+     */
+    protected function roleName(string $role): string
+    {
+        return MailTranslator::has('en', 'roles.'.$role) ? $this->t('roles.'.$role) : $role;
+    }
+
+    /**
+     * A number as this email's language writes it (1,240 or 1.240).
+     */
+    protected function number(int|float $value): string
+    {
+        return MailTranslator::number($this->locale, $value);
+    }
+
+    /**
+     * A date as this email's language writes it, from an ICU skeleton such as 'yMMMd'.
+     */
+    protected function date(\DateTimeInterface $date, string $skeleton): string
+    {
+        return MailTranslator::date($this->locale, $date, $skeleton);
     }
 
     /**

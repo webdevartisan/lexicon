@@ -29,7 +29,7 @@ class ReporterWarningMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('About the reports you have been sending')
+            ->subject($this->t('subjects.ReporterWarningMail'))
             ->fromTemplate([
                 'handle' => $this->handle,
                 'unfounded' => $this->unfounded,
@@ -40,6 +40,6 @@ class ReporterWarningMail extends Mailable
 
     private function countText(): string
     {
-        return $this->unfounded === 1 ? '1 of your reports' : $this->unfounded.' of your reports';
+        return $this->t('phrases.unfounded_reports', ['count' => $this->unfounded]);
     }
 }

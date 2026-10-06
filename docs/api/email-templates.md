@@ -45,7 +45,8 @@ A binding can also be saved *switched off*: the edits are kept, the built-in ver
 public function build(): void
 {
     $this->to($this->toEmail)
-        ->subject('New on '.$this->blogName.': '.$this->postTitle)   // default subject, before fromTemplate()
+        // default subject, before fromTemplate(), from locales/*.json in the email's language
+        ->subject($this->t('subjects.NewPostMail', ['blog_name' => $this->blogName, 'post_title' => $this->postTitle]))
         ->fromTemplate([
             'blog_name' => $this->blogName,
             'post_title' => $this->postTitle,
@@ -55,7 +56,9 @@ public function build(): void
 }
 ```
 
-Then add a binding for the class to `resources/mail/catalog.php`, and a sample to
+Then add its subject to the `mail.subjects` section of every `locales/*.json`, a binding for the class to
+`resources/mail/catalog.php`, its wording's translation to `mail.wording` in each language but English, and a
+sample to
 `EmailTemplateRegistry` (which the control panel and the tests use). The tests fail if either is missing, if
 a sample does not render strictly, if a sample passes a value the constructor does not take, or if any HTML
 is left in `src/App/Mail/*.php`.
@@ -71,6 +74,11 @@ registered twice. Separate classes also give each email its own `utm_campaign` (
 Rules for data:
 
 - Keys are `snake_case`. Values are strings, numbers, `null` (empty) or an `HtmlFragment`.
+- No English in the class: words go through `$this->t('mail key', [...])`, counts through an ICU plural in the
+  locale files, numbers through `$this->number()`, dates through `$this->date($date, 'yMMMd')`, and collaborator
+  roles through `$this->roleName()`. When a value is a word that changes with grammar (a noun with its article,
+  a count with its noun), pass the whole phrase (`your_item`, `expires_in`, `greeting`) so each language can
+  word it properly.
 - Give the template the same keys every time (pass `''` for "not applicable"); the editor lists them
   from the email's sample.
 - `{{ app_name }}`, `{{ app_url }}`, `{{ year }}` and `{{ subject }}` are always available, and so are
@@ -120,8 +128,34 @@ which includes `ar`) blocks are laid out from the right: write `border-{{ start 
 their own. `{{ start }}` is `left` or `right`, `{{ end }}` the other side, and `{{ dir }}` is `ltr` or `rtl`.
 These three never count when deciding whether a block is empty.
 
-The wording itself is still English in every language; translating it, and editing it per language in the
-control panel, are the next steps.
+### Translations
+
+All the words live in the `mail` section of `locales/{code}.json`, read by `MailTranslator`:
+
+| Section | What | Written by |
+|---|---|---|
+| `subjects` | Default subject of each email, keyed by class | code, `$this->t('subjects.X', [...])` |
+| `phrases`, `roles`, `digest` | Phrases code assembles: notes, greetings, counts, digest lines and labels | code |
+| `phrases.link_fallback`, `phrases.open_link` | Fixed words inside blocks, as the globals `{{ link_fallback_text }}` and `{{ open_link_text }}` | blocks |
+| `wording` | Translation of each email's built-in wording, keyed by class and placeholder | renderer |
+
+English has no `wording`: the English is the catalog itself. (`LocaleParityTest` skips that one section for
+this reason.) A key a language is missing falls back to English.
+
+Counts use ICU plurals, because two forms are not enough everywhere (Arabic has six):
+`"{count, plural, one {# minute} other {# minutes}}"`. Anything else is plain text with `{name}` placeholders.
+
+**Which wording a reader gets.** Built-in wording is English. Wording changed in the control panel is taken to
+be written in the site's default language. A reader in that language gets the wording as it is. Anyone else
+gets, placeholder by placeholder, the shipped translation for their language, and the wording as it is only
+where there is no translation. So an English edit never reaches a Greek reader where Greek has its own text,
+and a subject override applies only in the language it was written in; other languages get the code's subject,
+translated. Editing the wording per language in the control panel is the next step.
+
+`MailTemplateCatalogTest` fails if a language misses any built-in wording, if a translation uses a placeholder
+its English does not (that would fail every send, the built-in fallback included), if a plural is not valid ICU,
+if a class sets a literal subject or uses a key `en.json` lacks, or if any email does not render strictly in
+every language.
 
 ## Escaping and safety
 

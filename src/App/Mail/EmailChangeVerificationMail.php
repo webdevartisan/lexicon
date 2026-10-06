@@ -27,10 +27,11 @@ class EmailChangeVerificationMail extends Mailable
     public function build(): void
     {
         $this->to($this->newEmail)
-            ->subject('Confirm your new '.$this->appName().' email address')
+            ->subject($this->t('subjects.EmailChangeVerificationMail', ['app_name' => $this->appName()]))
             ->fromTemplate([
                 'new_email' => $this->newEmail,
                 'confirm_url' => $this->confirmUrl(),
+                'expires_in' => $this->t('phrases.minutes', ['count' => $this->expiresInMinutes]),
                 'expires_in_minutes' => $this->expiresInMinutes,
             ]);
     }

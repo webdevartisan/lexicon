@@ -18,7 +18,7 @@ class PostApprovedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your post was approved: '.$this->postTitle)
+            ->subject($this->t('subjects.PostApprovedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'reviewer_handle' => $this->reviewerHandle,

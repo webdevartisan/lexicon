@@ -11,6 +11,6 @@ class BlogCommentMail extends CommentMail
 {
     protected function subjectLine(): string
     {
-        return 'New comment on: '.$this->postTitle;
+        return $this->t('subjects.BlogCommentMail', ['post_title' => $this->postTitle]);
     }
 }

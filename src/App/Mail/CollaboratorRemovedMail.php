@@ -17,7 +17,7 @@ class CollaboratorRemovedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('You were removed from '.$this->blogName)
+            ->subject($this->t('subjects.CollaboratorRemovedMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'actor_handle' => $this->actorHandle,

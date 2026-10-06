@@ -67,7 +67,7 @@ abstract class CommentMail extends Mailable
      */
     protected function moderationNote(): string
     {
-        return $this->awaitingModeration ? 'This comment is awaiting moderation before it appears publicly.' : '';
+        return $this->awaitingModeration ? $this->t('phrases.moderation_note') : '';
     }
 
     protected function appUrl(): string

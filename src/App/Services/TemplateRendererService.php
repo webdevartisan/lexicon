@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\Templates\CatalogTemplateSource;
 use App\Mail\Templates\EmailHtmlLinter;
 use App\Mail\Templates\EmailTemplateSource;
 use App\Mail\Templates\HtmlFragment;
 use App\Mail\Templates\HtmlToText;
+use App\Mail\Templates\MailTranslator;
 use App\Mail\Templates\RenderedEmail;
 use App\Mail\Templates\TemplateDataException;
 use Closure;
@@ -43,6 +45,14 @@ use Throwable;
  * languages) rather than fixed sides. Email clients ignore the CSS logical
  * properties that would flip on their own.
  *
+ * The built-in wording is English, and the locale files carry its
+ * translations. Wording changed in the control panel is taken to be written in
+ * the site's default language. A reader in that language (or in English, for
+ * built-in wording) gets the wording as it is; anyone else gets the shipped
+ * translation of each placeholder, and the wording as it is only where no
+ * translation exists, so an edit in one language never reaches readers of
+ * another while a translation can.
+ *
  * @phpstan-import-type Component from EmailTemplateSource
  * @phpstan-import-type Template from EmailTemplateSource
  * @phpstan-import-type Binding from EmailTemplateSource
@@ -53,7 +63,7 @@ final class TemplateRendererService
     public const PLACEHOLDER = '/\{\{\s*([a-z][a-z0-9_]*)\s*\}\}/';
 
     /** Placeholders every template can use without the email providing them. */
-    public const GLOBALS = ['app_name', 'app_url', 'year', 'dir', 'start', 'end'];
+    public const GLOBALS = ['app_name', 'app_url', 'year', 'dir', 'start', 'end', 'link_fallback_text', 'open_link_text'];
 
     /**
      * The globals that only describe layout direction. They never count when
@@ -61,6 +71,13 @@ final class TemplateRendererService
      * every email just because its border names a side.
      */
     public const DIRECTION = ['dir', 'start', 'end'];
+
+    /**
+     * Fixed words a block's design includes, in the reader's language, keyed by
+     * global => phrase in the locale files. Like the direction globals they are
+     * part of the block rather than its content, so they never keep it showing.
+     */
+    public const PHRASES = ['link_fallback_text' => 'phrases.link_fallback', 'open_link_text' => 'phrases.open_link'];
 
     /**
      * @param  EmailTemplateSource  $source  Where templates are read from
@@ -202,7 +219,7 @@ final class TemplateRendererService
      */
     private function composeEmail(EmailTemplateSource $source, string $mailable, array $data, string $subject, string $locale): RenderedEmail
     {
-        $binding = $source->binding($mailable) ?? throw TemplateDataException::noBinding($mailable);
+        $binding = self::inLanguage($source->binding($mailable) ?? throw TemplateDataException::noBinding($mailable), $mailable, $locale);
         $who = TemplateDataException::shortName($mailable);
 
         $template = $source->template($binding['template'])
@@ -230,6 +247,28 @@ final class TemplateRendererService
         }
 
         return $this->assemble($components, $mapped + $values, $subject, " (for {$who})", $locale);
+    }
+
+    /**
+     * The binding with its wording in the reader's language (see the class
+     * comment). The subject override is dropped for other languages, so the
+     * code's own subject, translated, is used instead.
+     *
+     * @param  Binding  $binding
+     * @return Binding
+     */
+    private static function inLanguage(array $binding, string $mailable, string $locale): array
+    {
+        $authoredIn = $binding['source'] === 'built-in' ? 'en' : LocaleRegistry::instance()->default();
+
+        if ($locale === $authoredIn) {
+            return $binding;
+        }
+
+        // An edited binding read in English falls back to the shipped English first.
+        $shipped = $locale === 'en' ? ((new CatalogTemplateSource())->binding($mailable)['mapping'] ?? []) : MailTranslator::wording($locale, $mailable);
+
+        return ['mapping' => $shipped + $binding['mapping'], 'subject' => null] + $binding;
     }
 
     /**
@@ -352,14 +391,14 @@ final class TemplateRendererService
      * The empty rule is what lets one template serve many emails: an email
      * with no quote simply maps {{ quote }} to nothing and the quote box is
      * left out. A block with no placeholders at all (a divider) always shows,
-     * and so does one whose only placeholders are layout direction.
+     * and so does one whose only placeholders are direction or fixed phrases.
      *
      * @param  Component  $component
      * @param  array<string, HtmlFragment>  $values
      */
     private function renderBlock(array $component, array $values, string $where): ?HtmlFragment
     {
-        $names = array_diff(self::placeholdersIn($component['html']), self::DIRECTION);
+        $names = array_diff(self::placeholdersIn($component['html']), self::DIRECTION, array_keys(self::PHRASES));
 
         if ($names !== []) {
             $allEmpty = true;
@@ -548,7 +587,8 @@ final class TemplateRendererService
             'app_name' => HtmlFragment::fromText((string) env('APP_NAME', 'Lexicon')),
             'app_url' => HtmlFragment::fromText(rtrim((string) env('APP_URL', 'http://localhost'), '/')),
             'year' => HtmlFragment::fromText(date('Y')),
-        ] + array_map(HtmlFragment::fromText(...), self::direction($locale));
+        ] + array_map(HtmlFragment::fromText(...), self::direction($locale))
+          + array_map(static fn (string $key): HtmlFragment => HtmlFragment::fromText(MailTranslator::text($locale, $key)), self::PHRASES);
     }
 
     // ------------------------------------------------------------------

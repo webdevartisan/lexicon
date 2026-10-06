@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Mail\PostPublishedMail;
 use App\Mail\Templates\CatalogTemplateSource;
+use App\Mail\Templates\DraftTemplateSource;
 use App\Mail\Templates\HtmlFragment;
 use App\Mail\Templates\TemplateDataException;
 use App\Services\TemplateRendererService;
@@ -193,4 +195,47 @@ test('direction placeholders never keep an otherwise empty block, nor hide one t
 
     expect($renderer->renderEmail('Tests\\Fake', ['body' => ''])->html)->not->toContain('<blockquote')
         ->and($alwaysShown->renderEmail('Tests\\Fake', [])->html)->toContain('<hr style="margin-left:0">');
+});
+
+test('built-in wording is sent in the reader\'s language', function () {
+    $renderer = new TemplateRendererService(new CatalogTemplateSource());
+    $data = ['post_title' => 'Ten Days in Crete', 'post_url' => 'https://example.test/p'];
+
+    expect($renderer->renderEmail(PostPublishedMail::class, $data, 'Live', 'en')->html)->toContain('is now live')
+        ->and($renderer->renderEmail(PostPublishedMail::class, $data, 'Live', 'el')->html)->toContain('δημοσιεύτηκε')
+        ->and($renderer->renderEmail(PostPublishedMail::class, $data, 'Live', 'ar')->html)->toContain('منشورة الآن');
+});
+
+test('an edit reaches readers of the default language only, others get the shipped translation where one exists', function () {
+    $catalog = new CatalogTemplateSource();
+    $edited = [
+        'template' => 'notification', 'subject' => 'Edited: {{ subject }}', 'is_active' => true, 'source' => 'customized',
+        'mapping' => ['heading' => 'Edited heading', 'details' => 'A note only the edit has'] + $catalog->binding(PostPublishedMail::class)['mapping'],
+    ] + $catalog->binding(PostPublishedMail::class);
+    $renderer = new TemplateRendererService(new DraftTemplateSource($catalog, bindings: [PostPublishedMail::class => $edited]));
+    $data = ['post_title' => 'Ten Days in Crete', 'post_url' => 'https://example.test/p'];
+
+    $english = $renderer->renderEmail(PostPublishedMail::class, $data, 'Live', 'en');
+    $greek = $renderer->renderEmail(PostPublishedMail::class, $data, 'Ζωντανά', 'el');
+
+    expect($english->html)->toContain('Edited heading')
+        ->and($english->subject)->toBe('Edited: Live')
+        // Greek has its own heading, so the English edit stays out of it...
+        ->and($greek->html)->not->toContain('Edited heading')
+        ->and($greek->html)->toContain('Δημοσιεύτηκε')
+        // ...but wording with no translation still shows rather than vanishing,
+        ->and($greek->html)->toContain('A note only the edit has')
+        // and the subject is the code's own, in Greek.
+        ->and($greek->subject)->toBe('Ζωντανά');
+});
+
+test('block phrases are in the reader\'s language and never keep an empty block', function () {
+    $renderer = new TemplateRendererService(new CatalogTemplateSource([
+        'components' => ['fallback' => ['label' => 'Fallback', 'html' => '<p>{{ link_fallback_text }} {{ url }}</p>']],
+        'templates' => ['only' => ['label' => 'Only', 'layout' => ['fallback']]],
+        'bindings' => ['Tests\\Fake' => ['template' => 'only', 'mapping' => []]],
+    ]));
+
+    expect($renderer->renderEmail('Tests\\Fake', ['url' => 'https://example.test/x'], 's', 'el')->html)->toContain('Ή επικόλλησε')
+        ->and($renderer->renderEmail('Tests\\Fake', ['url' => ''], 's', 'el')->html)->not->toContain('<p>');
 });

@@ -1563,5 +1563,240 @@
             "flat": "{views} προβολές, όσες και {period}.",
             "source": "Κύρια πηγή: {source}."
         }
+    },
+    "mail": {
+        "subjects": {
+            "BlogCommentMail": "Νέο σχόλιο στο: {post_title}",
+            "BlogInviteMail": "Σε προσκάλεσαν να συνεργαστείς στο {blog_name}",
+            "CollaboratorRemovedMail": "Αφαιρέθηκες από το {blog_name}",
+            "CollaboratorRoleChangedMail": "Ο ρόλος σου στο {blog_name} άλλαξε σε {role}",
+            "CommentModerationMail": "Σχόλιο περιμένει την έγκρισή σου στο: {post_title}",
+            "CommentReplyMail": "Νέα απάντηση στο σχόλιό σου στο: {post_title}",
+            "ContactMessageMail": "[Επικοινωνία] {message_subject}",
+            "EmailChangeVerificationMail": "Επιβεβαίωσε τη νέα σου διεύθυνση email στο {app_name}",
+            "EmailChangedMail": "Η διεύθυνση email σου στο {app_name} άλλαξε",
+            "InsightsDigestMail": "Η εβδομάδα σου στο {app_name}: {week}",
+            "InsightsMilestoneMail": "Η ανάρτηση «{post_title}» ξεπέρασε {count, plural, one {τη # προβολή} other {τις # προβολές}}",
+            "InsightsSpikeMail": "Το {blog_name} έχει σήμερα πολύ περισσότερους αναγνώστες από ό,τι συνήθως",
+            "InviteDeclinedMail": "Η πρόσκληση στο {blog_name} απορρίφθηκε",
+            "ModerationWarningMail": "Προειδοποίηση για {your_item}",
+            "NewPostMail": "Νέο στο {blog_name}: {post_title}",
+            "PasswordResetEmail": "Αίτημα επαναφοράς κωδικού",
+            "PostApprovedMail": "Η ανάρτησή σου εγκρίθηκε: {post_title}",
+            "PostCommentMail": "Νέο σχόλιο στην ανάρτησή σου: {post_title}",
+            "PostNeedsChangesMail": "Ζητήθηκαν αλλαγές στο: {post_title}",
+            "PostPublishedMail": "Η ανάρτησή σου δημοσιεύτηκε: {post_title}",
+            "PostSubmittedMail": "Ζητήθηκε αξιολόγηση: {post_title}",
+            "PostSubmittedUnassignedMail": "Περιμένει αξιολογητή: {post_title}",
+            "ReporterWarningMail": "Σχετικά με τις αναφορές που στέλνεις",
+            "ReviewerAssignedMail": "Σου ανατέθηκε αξιολόγηση: {post_title}",
+            "ReviewerStaleMail": "Αλλαγή αξιολογητή στο: {post_title}",
+            "SubscriptionConfirmMail": "Επιβεβαίωσε τη συνδρομή σου στο {blog_name}",
+            "WelcomeEmail": "Καλώς ήρθες στο {app_name}",
+            "WorkflowDisabledMail": "Η ανάρτησή σου επέστρεψε σε πρόχειρο: {post_title}"
+        },
+        "phrases": {
+            "link_fallback": "Ή επικόλλησε αυτή τη διεύθυνση στο πρόγραμμα περιήγησης:",
+            "open_link": "Άνοιγμα",
+            "moderation_note": "Το σχόλιο περιμένει έγκριση πριν εμφανιστεί δημόσια.",
+            "greeting": "Γεια σου {name},",
+            "greeting_anonymous": "Γεια σου,",
+            "there": "φίλε",
+            "minutes": "{count, plural, one {# λεπτό} other {# λεπτά}}",
+            "your_post": "την ανάρτησή σου",
+            "your_comment": "το σχόλιό σου",
+            "kind_post": "ανάρτηση",
+            "kind_comment": "σχόλιο",
+            "unfounded_reports": "{count, plural, one {μία από τις αναφορές σου ήταν αβάσιμη} other {# από τις αναφορές σου ήταν αβάσιμες}}",
+            "spike_summary": "{count, plural, one {# προβολή} other {# προβολές}} μέχρι στιγμής σήμερα, έναντι περίπου {usual} σε μια συνηθισμένη μέρα.",
+            "spike_source": "Οι περισσότερες ήρθαν από {source}."
+        },
+        "roles": {
+            "owner": "ιδιοκτήτης",
+            "editor": "επιμελητής",
+            "author": "συγγραφέας",
+            "contributor": "συντάκτης",
+            "reviewer": "αξιολογητής"
+        },
+        "digest": {
+            "week": "{from} έως {to}",
+            "overview": "{views, plural, one {# προβολή} other {# προβολές}} από {visitors, plural, one {# ημερήσιο επισκέπτη} other {# ημερήσιους επισκέπτες}}, {change}.",
+            "change_none": "χωρίς στοιχεία για σύγκριση ακόμα",
+            "change_up": "αύξηση {percent} από την προηγούμενη εβδομάδα",
+            "change_down": "μείωση {percent} από την προηγούμενη εβδομάδα",
+            "change_same": "όσες και την προηγούμενη εβδομάδα",
+            "source": "Κύρια πηγή: {source}.",
+            "goals_line": "{goals}.",
+            "list_separator": ", ",
+            "goals": {
+                "subscribe": "{count, plural, one {# συνδρομή} other {# συνδρομές}}",
+                "comment": "{count, plural, one {# σχόλιο} other {# σχόλια}}",
+                "like": "{count, plural, one {# «μου αρέσει»} other {# «μου αρέσει»}}",
+                "save": "{count, plural, one {# αποθήκευση} other {# αποθηκεύσεις}}",
+                "share": "{count, plural, one {# κοινοποίηση} other {# κοινοποιήσεις}}",
+                "signup": "{count, plural, one {# εγγραφή} other {# εγγραφές}}"
+            },
+            "most_read": "Πιο διαβασμένες:",
+            "post_views": "{title}: {count, plural, one {# προβολή} other {# προβολές}}",
+            "labels": {
+                "overview": "Επισκόπηση",
+                "content": "Περιεχόμενο",
+                "acquisition": "Προέλευση",
+                "goals": "Στόχοι"
+            }
+        },
+        "wording": {
+            "WelcomeEmail": {
+                "banner": "Καλώς ήρθες στο {{ app_name }}!",
+                "intro": "<p>Σε ευχαριστούμε που έγινες μέλος της κοινότητάς μας! Ο λογαριασμός σου δημιουργήθηκε.</p><p><strong>Το tag σου:</strong> @{{ handle }}</p><p>Αποθήκευσε αναρτήσεις για αργότερα, ακολούθησε τα ιστολόγια που αγαπάς και πάρε μέρος στις συζητήσεις. Όποτε θελήσεις να γράψεις, μπορείς να ξεκινήσεις το δικό σου ιστολόγιο.</p>",
+                "button_label": "Βρες κάτι να διαβάσεις",
+                "details": "Αν έχεις οποιαδήποτε ερώτηση, μη διστάσεις να επικοινωνήσεις με την ομάδα υποστήριξης.",
+                "footer_note": "Λαμβάνεις αυτό το email επειδή δημιούργησες λογαριασμό."
+            },
+            "PasswordResetEmail": {
+                "heading": "Αίτημα επαναφοράς κωδικού",
+                "intro": "<p>{{ greeting }}</p><p>Λάβαμε αίτημα επαναφοράς του κωδικού σου. Πάτησε το παρακάτω κουμπί για να ορίσεις νέο κωδικό:</p>",
+                "button_label": "Επαναφορά κωδικού",
+                "details": "<p>Ο σύνδεσμος λήγει σε {{ expires_in }}.</p><p>Για λόγους ασφαλείας δεν μπορούμε να σου στείλουμε τον τωρινό σου κωδικό. Αν αντιμετωπίζεις πρόβλημα, επικοινώνησε με την ομάδα υποστήριξης.</p>",
+                "security_notice": "<strong>Ειδοποίηση ασφαλείας:</strong> Αν δεν ζήτησες εσύ την επαναφορά, αγνόησε αυτό το μήνυμα. Ο κωδικός σου δεν θα αλλάξει."
+            },
+            "EmailChangeVerificationMail": {
+                "heading": "Επιβεβαίωσε τη νέα σου διεύθυνση email",
+                "intro": "<p>Κάποιος ζήτησε να αλλάξει η διεύθυνση email ενός λογαριασμού στο {{ app_name }} σε <strong>{{ new_email }}</strong>.</p><p>Επιβεβαίωσέ τη για να ολοκληρωθεί η αλλαγή:</p>",
+                "button_label": "Επιβεβαίωση διεύθυνσης",
+                "details": "Ο σύνδεσμος λήγει σε {{ expires_in }}, και ο λογαριασμός κρατά την τωρινή του διεύθυνση μέχρι να τον ακολουθήσεις.",
+                "security_notice": "<strong>Αν δεν το περίμενες</strong>, αγνόησε αυτό το μήνυμα. Δεν αλλάζει τίποτα και η διεύθυνση δεν προστίθεται στον λογαριασμό."
+            },
+            "EmailChangedMail": {
+                "heading": "Η διεύθυνση email σου άλλαξε",
+                "intro": "Η διεύθυνση email του λογαριασμού σου στο {{ app_name }} άλλαξε σε <strong>{{ new_email }}</strong> στις {{ changed_at }} (UTC).",
+                "details": "Αν έκανες εσύ την αλλαγή, δεν χρειάζεται να κάνεις τίποτα.",
+                "security_notice": "<strong>Αν δεν ήσουν εσύ</strong>, ίσως κάποιος άλλος απέκτησε πρόσβαση στον λογαριασμό σου. Άλλαξε αμέσως τον κωδικό σου και επικοινώνησε με την υποστήριξη.",
+                "footer_note": "Το λαμβάνεις στην προηγούμενη διεύθυνσή σου, επειδή αυτή ήταν στον λογαριασμό όταν έγινε η αλλαγή."
+            },
+            "ModerationWarningMail": {
+                "heading": "Προειδοποίηση για {{ your_item }}",
+                "intro": "<p>Γεια σου @{{ handle }},</p><p>Αναγνώστες ανέφεραν {{ your_item }} <strong>{{ subject_label }}</strong> για <strong>{{ category }}</strong>, και ένας επόπτης συμφώνησε μαζί τους.</p>",
+                "details": "Αν επιβεβαιωθούν κι άλλες αναφορές, ο λογαριασμός σου μπορεί να ανασταλεί."
+            },
+            "ReporterWarningMail": {
+                "heading": "Σχετικά με τις αναφορές που στέλνεις",
+                "intro": "<p>Γεια σου @{{ handle }},</p><p>Οι επόπτες έκριναν ότι {{ unfounded_reports }}.</p>",
+                "details": "Οι αναφορές βοηθούν να μένει ο ιστότοπος ασφαλής, γι' αυτό συνέχισε να τις στέλνεις όταν κάτι δεν πάει καλά. Αν κι άλλες αναφορές αποδειχθούν αβάσιμες, η δυνατότητά σου να κάνεις αναφορές μπορεί να ανασταλεί για λίγο."
+            },
+            "BlogInviteMail": {
+                "heading": "Σε προσκάλεσαν να συνεργαστείς",
+                "intro": "Σε προσκάλεσαν να γίνεις μέλος του <strong>{{ blog_name }}</strong> ως <strong>{{ role }}</strong>.",
+                "button_label": "Δες την πρόσκληση",
+                "details": "Η πρόσκληση λήγει σε 7 ημέρες. Αν δεν έχεις ακόμα λογαριασμό, θα σε καθοδηγήσουμε πρώτα στην εγγραφή."
+            },
+            "CollaboratorRoleChangedMail": {
+                "heading": "Ο ρόλος σου άλλαξε",
+                "intro": "Ο ρόλος σου στο <strong>{{ blog_name }}</strong> είναι πλέον <strong>{{ new_role }}</strong>.",
+                "details": "Η αλλαγή έγινε από {{ actor_handle }}."
+            },
+            "CollaboratorRemovedMail": {
+                "heading": "Η πρόσβαση αφαιρέθηκε",
+                "intro": "Η πρόσβασή σου στο <strong>{{ blog_name }}</strong> ανακλήθηκε από {{ actor_handle }}.",
+                "details": "Αν πιστεύεις ότι έγινε λάθος, επικοινώνησε με τον ιδιοκτήτη του ιστολογίου."
+            },
+            "InviteDeclinedMail": {
+                "heading": "Η πρόσκληση απορρίφθηκε",
+                "intro": "Η διεύθυνση <strong>{{ declined_email }}</strong> απέρριψε την πρόσκλησή σου στο <strong>{{ blog_name }}</strong>."
+            },
+            "InsightsMilestoneMail": {
+                "heading": "{{ views }} προβολές",
+                "intro": "Η ανάρτησή σου <strong>{{ post_title }}</strong> έχει πλέον διαβαστεί πάνω από {{ views }} φορές.",
+                "button_label": "Δες πώς έφτασε εκεί",
+                "footer_note": "Μπορείς να τα απενεργοποιήσεις από τις ρυθμίσεις ειδοποιήσεων."
+            },
+            "InsightsSpikeMail": {
+                "heading": "Το {{ blog_name }} έχει πολλή κίνηση σήμερα",
+                "button_label": "Δες από πού έρχονται οι αναγνώστες",
+                "footer_note": "Το λαμβάνεις το πολύ μία φορά τη μέρα για κάθε ιστολόγιο. Μπορείς να το απενεργοποιήσεις από τις ρυθμίσεις ειδοποιήσεων."
+            },
+            "InsightsDigestMail": {
+                "heading": "Η εβδομάδα σου: {{ week_label }}",
+                "footer_note": "Στέλνεται κάθε Δευτέρα. Μπορείς να το απενεργοποιήσεις από τις ρυθμίσεις ειδοποιήσεων."
+            },
+            "PostSubmittedMail": {
+                "heading": "Ζητήθηκε αξιολόγηση",
+                "intro": "<strong>{{ author_handle }}</strong> υπέβαλε την ανάρτηση <strong>{{ post_title }}</strong> για να την αξιολογήσεις.",
+                "button_label": "Άνοιγμα σελίδας αξιολόγησης"
+            },
+            "PostSubmittedUnassignedMail": {
+                "heading": "Μια ανάρτηση χρειάζεται αξιολογητή",
+                "intro": "<strong>{{ author_handle }}</strong> υπέβαλε την ανάρτηση <strong>{{ post_title }}</strong> για αξιολόγηση.",
+                "callout": "Δεν έχει οριστεί ακόμα αξιολογητής. Οποιοσδήποτε αξιολογητής του ιστολογίου μπορεί να την αναλάβει.",
+                "button_label": "Άνοιγμα σελίδας αξιολόγησης"
+            },
+            "ReviewerAssignedMail": {
+                "heading": "Σειρά σου να αξιολογήσεις",
+                "intro": "<strong>{{ actor_handle }}</strong> σού ανέθεσε την αξιολόγηση της ανάρτησης <strong>{{ post_title }}</strong>.",
+                "button_label": "Άνοιγμα σελίδας αξιολόγησης"
+            },
+            "ReviewerStaleMail": {
+                "heading": "Αλλαγή αξιολογητή",
+                "intro": "<strong>{{ former_reviewer_handle }}</strong> δεν μπορεί πλέον να αξιολογήσει την ανάρτηση <strong>{{ post_title }}</strong> (ο ρόλος άλλαξε ή ανακλήθηκε). Η ανάρτηση είναι ξανά διαθέσιμη σε όλους τους αξιολογητές.",
+                "button_label": "Άνοιγμα ανάρτησης"
+            },
+            "PostApprovedMail": {
+                "heading": "Εγκρίθηκε",
+                "intro": "<strong>{{ reviewer_handle }}</strong> ενέκρινε την ανάρτηση <strong>{{ post_title }}</strong>. Ένας επιμελητής μπορεί πλέον να τη δημοσιεύσει.",
+                "button_label": "Άνοιγμα ανάρτησης"
+            },
+            "PostNeedsChangesMail": {
+                "heading": "Ζητήθηκαν αλλαγές",
+                "intro": "<strong>{{ reviewer_handle }}</strong> αξιολόγησε την ανάρτηση <strong>{{ post_title }}</strong> και ζήτησε αλλαγές:",
+                "button_label": "Επεξεργασία ανάρτησης",
+                "details": "Υπόβαλέ την ξανά όποτε είναι έτοιμη. Θα περάσει πάλι από αξιολόγηση."
+            },
+            "PostPublishedMail": {
+                "heading": "Δημοσιεύτηκε",
+                "intro": "Η ανάρτηση <strong>{{ post_title }}</strong> δημοσιεύτηκε.",
+                "button_label": "Προβολή στον ιστότοπο"
+            },
+            "WorkflowDisabledMail": {
+                "heading": "Η ροή έγκρισης απενεργοποιήθηκε",
+                "intro": "Ο ιδιοκτήτης του <strong>{{ blog_name }}</strong> απενεργοποίησε τη ροή έγκρισης. Η ανάρτησή σου <strong>{{ post_title }}</strong> επέστρεψε σε πρόχειρο και τίποτα δεν δημοσιεύτηκε αυτόματα.",
+                "button_label": "Επεξεργασία ανάρτησης"
+            },
+            "NewPostMail": {
+                "heading": "Το {{ blog_name }} μόλις δημοσίευσε νέα ανάρτηση",
+                "intro": "<strong>{{ post_title }}</strong>",
+                "button_label": "Διάβασέ την",
+                "footer_note": "Το λαμβάνεις επειδή έχεις εγγραφεί στο {{ blog_name }}. <a href=\"{{ unsubscribe_url }}\" style=\"color:#6b7280;\">Διακοπή συνδρομής</a>"
+            },
+            "SubscriptionConfirmMail": {
+                "heading": "Επιβεβαίωσε τη συνδρομή σου",
+                "intro": "Κάποιος ζήτησε να στέλνονται οι νέες αναρτήσεις του <strong>{{ blog_name }}</strong> στο <strong>{{ email }}</strong>.",
+                "button_label": "Ναι, θέλω να εγγραφώ",
+                "details": "<strong>Αν δεν ήσουν εσύ</strong>, αγνόησε αυτό το μήνυμα. Δεν θα λάβεις άλλα email και η διεύθυνση αφαιρείται μέσα σε μία εβδομάδα."
+            },
+            "CommentReplyMail": {
+                "heading": "Νέα απάντηση στο σχόλιό σου",
+                "intro": "{{ commenter_name }} απάντησε στο σχόλιό σου στην ανάρτηση {{ post_title }}:",
+                "button_label": "Δες την απάντηση"
+            },
+            "PostCommentMail": {
+                "heading": "Νέο σχόλιο στην ανάρτησή σου",
+                "intro": "{{ commenter_name }} σχολίασε την ανάρτησή σου {{ post_title }}:",
+                "button_label": "Δες το σχόλιο"
+            },
+            "CommentModerationMail": {
+                "heading": "Ένα σχόλιο περιμένει την έγκρισή σου",
+                "intro": "{{ commenter_name }} σχολίασε την ανάρτηση {{ post_title }} και το σχόλιο χρειάζεται την έγκρισή σου:",
+                "button_label": "Έλεγξε το σχόλιο"
+            },
+            "BlogCommentMail": {
+                "heading": "Νέο σχόλιο στο ιστολόγιό σου",
+                "intro": "{{ commenter_name }} σχολίασε την ανάρτηση {{ post_title }}:",
+                "button_label": "Δες το σχόλιο"
+            },
+            "ContactMessageMail": {
+                "heading": "Νέο μήνυμα επικοινωνίας",
+                "intro": "<p><strong>Από:</strong> {{ sender_name }} &lt;{{ sender_email }}&gt;</p><p><strong>Θέμα:</strong> {{ message_subject }}</p>"
+            }
+        }
     }
 }

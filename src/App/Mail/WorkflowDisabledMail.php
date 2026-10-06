@@ -22,7 +22,7 @@ class WorkflowDisabledMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your post was reset to draft: '.$this->postTitle)
+            ->subject($this->t('subjects.WorkflowDisabledMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'blog_name' => $this->blogName,

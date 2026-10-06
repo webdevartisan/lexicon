@@ -13,6 +13,6 @@ class PostSubmittedUnassignedMail extends PostSubmittedMail
 {
     protected function subjectLine(): string
     {
-        return 'Waiting for a reviewer: '.$this->postTitle;
+        return $this->t('subjects.PostSubmittedUnassignedMail', ['post_title' => $this->postTitle]);
     }
 }

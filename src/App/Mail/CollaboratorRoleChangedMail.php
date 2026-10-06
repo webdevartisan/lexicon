@@ -18,10 +18,10 @@ class CollaboratorRoleChangedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your role on '.$this->blogName.' changed to '.$this->newRole)
+            ->subject($this->t('subjects.CollaboratorRoleChangedMail', ['blog_name' => $this->blogName, 'role' => $this->roleName($this->newRole)]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
-                'new_role' => $this->newRole,
+                'new_role' => $this->roleName($this->newRole),
                 'actor_handle' => $this->actorHandle,
             ]);
     }

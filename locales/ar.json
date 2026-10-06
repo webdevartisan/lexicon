@@ -1563,5 +1563,240 @@
       "flat": "{views} مشاهدة، كما في الفترة {period}.",
       "source": "المصدر الأول: {source}."
     }
+  },
+  "mail": {
+    "subjects": {
+      "BlogCommentMail": "تعليق جديد على: {post_title}",
+      "BlogInviteMail": "دُعيت إلى التعاون في {blog_name}",
+      "CollaboratorRemovedMail": "أُزلت من {blog_name}",
+      "CollaboratorRoleChangedMail": "تغيّر دورك في {blog_name} إلى {role}",
+      "CommentModerationMail": "تعليق ينتظر موافقتك على: {post_title}",
+      "CommentReplyMail": "ردّ جديد على تعليقك في: {post_title}",
+      "ContactMessageMail": "[تواصل] {message_subject}",
+      "EmailChangeVerificationMail": "أكّد عنوان بريدك الإلكتروني الجديد في {app_name}",
+      "EmailChangedMail": "تغيّر عنوان بريدك الإلكتروني في {app_name}",
+      "InsightsDigestMail": "أسبوعك على {app_name}: {week}",
+      "InsightsMilestoneMail": "تجاوزت «{post_title}» {count, plural, zero {# مشاهدة} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}",
+      "InsightsSpikeMail": "{blog_name} يستقطب اليوم قرّاءً أكثر بكثير من المعتاد",
+      "InviteDeclinedMail": "رُفضت الدعوة إلى {blog_name}",
+      "ModerationWarningMail": "تحذير بشأن {your_item}",
+      "NewPostMail": "جديد في {blog_name}: {post_title}",
+      "PasswordResetEmail": "طلب إعادة تعيين كلمة المرور",
+      "PostApprovedMail": "تمت الموافقة على تدوينتك: {post_title}",
+      "PostCommentMail": "تعليق جديد على تدوينتك: {post_title}",
+      "PostNeedsChangesMail": "طُلبت تعديلات على: {post_title}",
+      "PostPublishedMail": "نُشرت تدوينتك: {post_title}",
+      "PostSubmittedMail": "طلب مراجعة: {post_title}",
+      "PostSubmittedUnassignedMail": "بانتظار مراجِع: {post_title}",
+      "ReporterWarningMail": "بشأن البلاغات التي ترسلها",
+      "ReviewerAssignedMail": "كُلّفت بمراجعة: {post_title}",
+      "ReviewerStaleMail": "إعادة تعيين المراجِع في: {post_title}",
+      "SubscriptionConfirmMail": "أكّد اشتراكك في {blog_name}",
+      "WelcomeEmail": "مرحبًا بك في {app_name}",
+      "WorkflowDisabledMail": "أُعيدت تدوينتك إلى مسودة: {post_title}"
+    },
+    "phrases": {
+      "link_fallback": "أو انسخ هذا العنوان والصقه في متصفحك:",
+      "open_link": "فتح",
+      "moderation_note": "هذا التعليق بانتظار الإشراف قبل أن يظهر للعموم.",
+      "greeting": "مرحبًا {name}،",
+      "greeting_anonymous": "مرحبًا،",
+      "there": "صديقنا",
+      "minutes": "{count, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}",
+      "your_post": "تدوينتك",
+      "your_comment": "تعليقك",
+      "kind_post": "تدوينة",
+      "kind_comment": "تعليق",
+      "unfounded_reports": "{count, plural, zero {أيًّا من بلاغاتك لم يكن بلا أساس} one {بلاغًا واحدًا من بلاغاتك كان بلا أساس} two {بلاغين من بلاغاتك كانا بلا أساس} few {# من بلاغاتك كانت بلا أساس} many {# من بلاغاتك كانت بلا أساس} other {# من بلاغاتك كانت بلا أساس}}",
+      "spike_summary": "{count, plural, zero {# مشاهدة} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}} حتى الآن اليوم، مقابل نحو {usual} في يوم عادي.",
+      "spike_source": "جاء معظمها من {source}."
+    },
+    "roles": {
+      "owner": "مالك",
+      "editor": "محرر",
+      "author": "كاتب",
+      "contributor": "مساهم",
+      "reviewer": "مراجِع"
+    },
+    "digest": {
+      "week": "من {from} إلى {to}",
+      "overview": "{views, plural, zero {# مشاهدة} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}} من {visitors, plural, zero {# زائر يومي} one {زائر يومي واحد} two {زائرَين يوميَّين} few {# زوار يوميين} many {# زائرًا يوميًا} other {# زائر يومي}}، {change}.",
+      "change_none": "لا توجد بيانات للمقارنة بعد",
+      "change_up": "بزيادة {percent} عن الأسبوع السابق",
+      "change_down": "بانخفاض {percent} عن الأسبوع السابق",
+      "change_same": "مثل الأسبوع السابق",
+      "source": "أهم مصدر: {source}.",
+      "goals_line": "{goals}.",
+      "list_separator": "، ",
+      "goals": {
+        "subscribe": "{count, plural, zero {# اشتراك} one {اشتراك واحد} two {اشتراكان} few {# اشتراكات} many {# اشتراكًا} other {# اشتراك}}",
+        "comment": "{count, plural, zero {# تعليق} one {تعليق واحد} two {تعليقان} few {# تعليقات} many {# تعليقًا} other {# تعليق}}",
+        "like": "{count, plural, zero {# إعجاب} one {إعجاب واحد} two {إعجابان} few {# إعجابات} many {# إعجابًا} other {# إعجاب}}",
+        "save": "{count, plural, zero {# حفظ} one {حفظ واحد} two {حفظان} few {# عمليات حفظ} many {# عملية حفظ} other {# عملية حفظ}}",
+        "share": "{count, plural, zero {# مشاركة} one {مشاركة واحدة} two {مشاركتان} few {# مشاركات} many {# مشاركة} other {# مشاركة}}",
+        "signup": "{count, plural, zero {# تسجيل} one {تسجيل واحد} two {تسجيلان} few {# تسجيلات} many {# تسجيلًا} other {# تسجيل}}"
+      },
+      "most_read": "الأكثر قراءة:",
+      "post_views": "{title}: {count, plural, zero {# مشاهدة} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}",
+      "labels": {
+        "overview": "نظرة عامة",
+        "content": "المحتوى",
+        "acquisition": "مصادر الزيارات",
+        "goals": "الأهداف"
+      }
+    },
+    "wording": {
+      "WelcomeEmail": {
+        "banner": "مرحبًا بك في {{ app_name }}!",
+        "intro": "<p>شكرًا لانضمامك إلى مجتمعنا! تم إنشاء حسابك بنجاح.</p><p><strong>وسمك:</strong> @{{ handle }}</p><p>احفظ التدوينات لقراءتها لاحقًا، وتابع المدونات التي تحبها، وشارك في النقاشات. ومتى رغبت في الكتابة، يمكنك إنشاء مدونتك الخاصة في أي وقت.</p>",
+        "button_label": "اعثر على شيء تقرؤه",
+        "details": "إن كانت لديك أي أسئلة، فلا تتردد في التواصل مع فريق الدعم.",
+        "footer_note": "وصلتك هذه الرسالة لأنك أنشأت حسابًا."
+      },
+      "PasswordResetEmail": {
+        "heading": "طلب إعادة تعيين كلمة المرور",
+        "intro": "<p>{{ greeting }}</p><p>تلقينا طلبًا لإعادة تعيين كلمة مرورك. انقر الزر أدناه لإنشاء كلمة مرور جديدة:</p>",
+        "button_label": "إعادة تعيين كلمة المرور",
+        "details": "<p>تنتهي صلاحية هذا الرابط خلال {{ expires_in }}.</p><p>لأسباب أمنية، لا يمكننا إرسال كلمة مرورك الحالية. إن واجهت مشكلة، فتواصل مع فريق الدعم.</p>",
+        "security_notice": "<strong>تنبيه أمني:</strong> إن لم تطلب إعادة تعيين كلمة المرور، فتجاهل هذه الرسالة. لن تتغير كلمة مرورك."
+      },
+      "EmailChangeVerificationMail": {
+        "heading": "أكّد عنوان بريدك الإلكتروني الجديد",
+        "intro": "<p>طلب أحدهم تغيير عنوان البريد الإلكتروني لحساب على {{ app_name }} إلى <strong>{{ new_email }}</strong>.</p><p>أكّده لإتمام التغيير:</p>",
+        "button_label": "تأكيد هذا العنوان",
+        "details": "تنتهي صلاحية الرابط خلال {{ expires_in }}، ويبقى العنوان الحالي للحساب كما هو حتى تفتح الرابط.",
+        "security_notice": "<strong>إن لم تكن تتوقع هذا</strong>، فتجاهل هذه الرسالة. لن يتغير شيء ولن يُضاف هذا العنوان إلى الحساب."
+      },
+      "EmailChangedMail": {
+        "heading": "تغيّر عنوان بريدك الإلكتروني",
+        "intro": "تغيّر عنوان البريد الإلكتروني لحسابك على {{ app_name }} إلى <strong>{{ new_email }}</strong> في {{ changed_at }} (UTC).",
+        "details": "إن كنت أنت من أجرى هذا التغيير، فلا حاجة إلى أي إجراء.",
+        "security_notice": "<strong>إن لم تكن أنت</strong>، فربما وصل شخص آخر إلى حسابك. أعد تعيين كلمة مرورك فورًا وتواصل مع الدعم.",
+        "footer_note": "تصلك هذه الرسالة على عنوانك السابق لأنه كان عنوان الحساب عند إجراء التغيير."
+      },
+      "ModerationWarningMail": {
+        "heading": "تحذير بشأن {{ your_item }}",
+        "intro": "<p>مرحبًا @{{ handle }}،</p><p>أبلغ القرّاء عن {{ your_item }} <strong>{{ subject_label }}</strong> بسبب <strong>{{ category }}</strong>، ووافقهم أحد المشرفين.</p>",
+        "details": "قد يؤدي تأكيد المزيد من البلاغات إلى تعليق حسابك."
+      },
+      "ReporterWarningMail": {
+        "heading": "بشأن البلاغات التي ترسلها",
+        "intro": "<p>مرحبًا @{{ handle }}،</p><p>وجد المشرفون أنّ {{ unfounded_reports }}.</p>",
+        "details": "تساعد البلاغات على إبقاء الموقع آمنًا، فاستمر في إرسالها عندما يكون هناك خطأ ما. وإن تبيّن أن المزيد منها بلا أساس، فقد يُعلَّق إرسالك للبلاغات لفترة."
+      },
+      "BlogInviteMail": {
+        "heading": "دُعيت إلى التعاون",
+        "intro": "دُعيت للانضمام إلى <strong>{{ blog_name }}</strong> بصفة <strong>{{ role }}</strong>.",
+        "button_label": "عرض الدعوة",
+        "details": "تنتهي صلاحية هذه الدعوة خلال 7 أيام. إن لم يكن لديك حساب بعد، فسنرشدك أولًا خلال التسجيل."
+      },
+      "CollaboratorRoleChangedMail": {
+        "heading": "تم تحديث الدور",
+        "intro": "دورك في <strong>{{ blog_name }}</strong> الآن: <strong>{{ new_role }}</strong>.",
+        "details": "أجرى التغيير {{ actor_handle }}."
+      },
+      "CollaboratorRemovedMail": {
+        "heading": "أُزيل وصولك",
+        "intro": "ألغى {{ actor_handle }} وصولك إلى <strong>{{ blog_name }}</strong>.",
+        "details": "إن كنت تظن أن هذا خطأ، فتواصل مع مالك المدونة."
+      },
+      "InviteDeclinedMail": {
+        "heading": "رُفضت الدعوة",
+        "intro": "رفض <strong>{{ declined_email }}</strong> دعوتك إلى <strong>{{ blog_name }}</strong>."
+      },
+      "InsightsMilestoneMail": {
+        "heading": "{{ views }} مشاهدة",
+        "intro": "قُرئت تدوينتك <strong>{{ post_title }}</strong> الآن أكثر من {{ views }} مرة.",
+        "button_label": "اطّلع على كيفية وصولها إلى ذلك",
+        "footer_note": "يمكنك إيقاف هذه الرسائل من إعدادات الإشعارات."
+      },
+      "InsightsSpikeMail": {
+        "heading": "{{ blog_name }} يشهد نشاطًا كبيرًا اليوم",
+        "button_label": "اعرف من أين يأتي القرّاء",
+        "footer_note": "تصلك هذه الرسالة مرة واحدة يوميًا على الأكثر لكل مدونة. يمكنك إيقافها من إعدادات الإشعارات."
+      },
+      "InsightsDigestMail": {
+        "heading": "أسبوعك: {{ week_label }}",
+        "footer_note": "تُرسل أيام الاثنين. يمكنك إيقافها من إعدادات الإشعارات."
+      },
+      "PostSubmittedMail": {
+        "heading": "طلب مراجعة",
+        "intro": "أرسل <strong>{{ author_handle }}</strong> التدوينة <strong>{{ post_title }}</strong> لتراجعها.",
+        "button_label": "فتح صفحة المراجعة"
+      },
+      "PostSubmittedUnassignedMail": {
+        "heading": "تدوينة تحتاج إلى مراجِع",
+        "intro": "أرسل <strong>{{ author_handle }}</strong> التدوينة <strong>{{ post_title }}</strong> للمراجعة.",
+        "callout": "لم يُعيَّن مراجِع بعد. يمكن لأي مراجِع في هذه المدونة أن يتولاها.",
+        "button_label": "فتح صفحة المراجعة"
+      },
+      "ReviewerAssignedMail": {
+        "heading": "حان دورك في المراجعة",
+        "intro": "كلّفك <strong>{{ actor_handle }}</strong> بمراجعة <strong>{{ post_title }}</strong>.",
+        "button_label": "فتح صفحة المراجعة"
+      },
+      "ReviewerStaleMail": {
+        "heading": "إعادة تعيين المراجِع",
+        "intro": "لم يعد بإمكان <strong>{{ former_reviewer_handle }}</strong> مراجعة <strong>{{ post_title }}</strong> (تغيّر الدور أو أُلغي). أُعيد فتح التدوينة لجميع المراجعين.",
+        "button_label": "فتح التدوينة"
+      },
+      "PostApprovedMail": {
+        "heading": "تمت الموافقة",
+        "intro": "وافق <strong>{{ reviewer_handle }}</strong> على <strong>{{ post_title }}</strong>. يمكن لأي محرر الآن نشرها.",
+        "button_label": "فتح التدوينة"
+      },
+      "PostNeedsChangesMail": {
+        "heading": "طُلبت تعديلات",
+        "intro": "راجع <strong>{{ reviewer_handle }}</strong> التدوينة <strong>{{ post_title }}</strong> وطلب تعديلات:",
+        "button_label": "تعديل التدوينة",
+        "details": "أعد إرسالها عندما تكون جاهزًا. ستمر بالمراجعة نفسها مرة أخرى."
+      },
+      "PostPublishedMail": {
+        "heading": "نُشرت",
+        "intro": "<strong>{{ post_title }}</strong> منشورة الآن.",
+        "button_label": "عرض على الموقع"
+      },
+      "WorkflowDisabledMail": {
+        "heading": "أُوقف سير العمل التحريري",
+        "intro": "أوقف مالك <strong>{{ blog_name }}</strong> سير العمل التحريري. أُعيدت تدوينتك <strong>{{ post_title }}</strong> إلى مسودة، ولم يُنشر أي شيء تلقائيًا.",
+        "button_label": "تعديل التدوينة"
+      },
+      "NewPostMail": {
+        "heading": "نشرت {{ blog_name }} تدوينة جديدة",
+        "intro": "<strong>{{ post_title }}</strong>",
+        "button_label": "اقرأها",
+        "footer_note": "تصلك هذه الرسالة لأنك مشترك في {{ blog_name }}. <a href=\"{{ unsubscribe_url }}\" style=\"color:#6b7280;\">إلغاء الاشتراك</a>"
+      },
+      "SubscriptionConfirmMail": {
+        "heading": "أكّد اشتراكك",
+        "intro": "طلب أحدهم إرسال التدوينات الجديدة من <strong>{{ blog_name }}</strong> إلى <strong>{{ email }}</strong>.",
+        "button_label": "نعم، اشترك",
+        "details": "<strong>إن لم تكن أنت</strong>، فتجاهل هذه الرسالة. لن تصلك رسائل أخرى، وسيُحذف العنوان خلال أسبوع."
+      },
+      "CommentReplyMail": {
+        "heading": "ردّ جديد على تعليقك",
+        "intro": "ردّ {{ commenter_name }} على تعليقك في {{ post_title }}:",
+        "button_label": "عرض الرد"
+      },
+      "PostCommentMail": {
+        "heading": "تعليق جديد على تدوينتك",
+        "intro": "علّق {{ commenter_name }} على تدوينتك {{ post_title }}:",
+        "button_label": "عرض التعليق"
+      },
+      "CommentModerationMail": {
+        "heading": "تعليق يحتاج إلى موافقتك",
+        "intro": "علّق {{ commenter_name }} على {{ post_title }} ويحتاج التعليق إلى موافقتك:",
+        "button_label": "مراجعة التعليق"
+      },
+      "BlogCommentMail": {
+        "heading": "تعليق جديد على مدونتك",
+        "intro": "علّق {{ commenter_name }} على {{ post_title }}:",
+        "button_label": "عرض التعليق"
+      },
+      "ContactMessageMail": {
+        "heading": "رسالة تواصل جديدة",
+        "intro": "<p><strong>من:</strong> {{ sender_name }} &lt;{{ sender_email }}&gt;</p><p><strong>الموضوع:</strong> {{ message_subject }}</p>"
+      }
+    }
   }
 }

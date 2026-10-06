@@ -20,7 +20,7 @@ beforeEach(function () {
 });
 
 test('each part links to its own page for the week the digest covers', function () {
-    $mail = new InsightsDigestMail('owner@example.test', 'Sep 28 to Oct 4, 2026', [$this->blog]);
+    $mail = new InsightsDigestMail('owner@example.test', '2026-09-28', '2026-10-04', [$this->blog]);
     $week = 'range=custom&from=2026-09-28&to=2026-10-04';
 
     foreach (['overview', 'content', 'acquisition', 'goals'] as $page) {
@@ -35,7 +35,7 @@ test('each part links to its own page for the week the digest covers', function 
 
 test('a page with nothing to say that week is left out', function () {
     $quiet = ['source' => null, 'posts' => [], 'goals' => [], 'previous' => 0] + $this->blog;
-    $text = (string) (new InsightsDigestMail('owner@example.test', 'Sep 28 to Oct 4, 2026', [$quiet]))->getTextBody();
+    $text = (string) (new InsightsDigestMail('owner@example.test', '2026-09-28', '2026-10-04', [$quiet]))->getTextBody();
 
     expect($text)->toContain('nothing to compare with yet')
         ->and($text)->not->toContain('Content')
@@ -45,7 +45,7 @@ test('a page with nothing to say that week is left out', function () {
 
 test('names written by people are escaped in the HTML', function () {
     $blog = ['name' => '<b>Notes</b>', 'posts' => [['title' => '<script>x</script>', 'views' => 1]]] + $this->blog;
-    $body = (new InsightsDigestMail('owner@example.test', 'Sep 28 to Oct 4, 2026', [$blog]))->getBody();
+    $body = (new InsightsDigestMail('owner@example.test', '2026-09-28', '2026-10-04', [$blog]))->getBody();
 
     expect($body)->not->toContain('<script>x</script>')
         ->and($body)->not->toContain('<b>Notes</b>')

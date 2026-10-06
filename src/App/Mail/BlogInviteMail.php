@@ -25,10 +25,10 @@ class BlogInviteMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('You have been invited to collaborate on '.$this->blogName)
+            ->subject($this->t('subjects.BlogInviteMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
-                'role' => $this->role,
+                'role' => $this->roleName($this->role),
                 'invite_url' => $this->inviteUrl(),
             ]);
     }

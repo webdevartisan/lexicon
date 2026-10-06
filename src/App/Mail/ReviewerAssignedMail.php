@@ -18,7 +18,7 @@ class ReviewerAssignedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('You were assigned to review: '.$this->postTitle)
+            ->subject($this->t('subjects.ReviewerAssignedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'actor_handle' => $this->actorHandle,
