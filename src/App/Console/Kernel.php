@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Console;
 
+use App\Console\Commands\AnalyticsAggregateCommand;
+use App\Console\Commands\AnalyticsDigestCommand;
+use App\Console\Commands\AnalyticsNotifyCommand;
+use App\Console\Commands\AnalyticsSeedCommand;
+use App\Console\Commands\AnalyticsUpdateGeoCommand;
 use App\Console\Commands\CacheClearCommand;
 use App\Console\Commands\CachePruneCommand;
 use App\Console\Commands\CacheWarmCommand;
@@ -20,11 +25,6 @@ use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
 use App\Console\Commands\SeedCommand;
 use App\Console\Commands\SeedModerationCommand;
-use App\Console\Commands\TrafficAggregateCommand;
-use App\Console\Commands\TrafficDigestCommand;
-use App\Console\Commands\TrafficNotifyCommand;
-use App\Console\Commands\TrafficSeedCommand;
-use App\Console\Commands\TrafficUpdateGeoCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -92,20 +92,20 @@ class Kernel extends ConsoleKernel
             // Moderation cases in every state, through the real services (--reset clears them)
             'moderation:seed' => SeedModerationCommand::class,
 
-            // Rolls raw page views into the daily tables the Traffic dashboard reads
-            'traffic:aggregate' => TrafficAggregateCommand::class,
+            // Rolls raw page views into the daily tables the Insights pages read
+            'analytics:aggregate' => AnalyticsAggregateCommand::class,
 
             // Fetches this month's DB-IP Lite country and network files
-            'traffic:update-geo' => TrafficUpdateGeoCommand::class,
+            'analytics:update-geo' => AnalyticsUpdateGeoCommand::class,
 
             // View milestones for authors and spike notices for owners
-            'traffic:notify' => TrafficNotifyCommand::class,
+            'analytics:notify' => AnalyticsNotifyCommand::class,
 
             // Monday summary email for blog owners
-            'traffic:digest' => TrafficDigestCommand::class,
+            'analytics:digest' => AnalyticsDigestCommand::class,
 
-            // Realistic page views for checking the Traffic dashboard locally (--reset clears them)
-            'traffic:seed' => TrafficSeedCommand::class,
+            // Realistic page views for checking the Insights pages locally (--reset clears them)
+            'analytics:seed' => AnalyticsSeedCommand::class,
 
             // 'db:migrate'    => MigrateCommand::class,
             // 'make:controller' => MakeControllerCommand::class,

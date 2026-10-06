@@ -122,7 +122,7 @@ $workflowLabel = [
                             <?php if ($inReviewLock) { ?>
                             <span class="text-slate-400 dark:text-zink-500">Locked while under review</span>
                             <?php } ?>
-                            {% include "partials/dashboard/traffic/_post_views.lex.php" %}
+                            {% include "partials/dashboard/insights/_post_views.lex.php" %}
                         </p>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">

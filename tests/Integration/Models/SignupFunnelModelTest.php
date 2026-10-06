@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Models\AnalyticsDailyEventModel;
 use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Models\SignupFunnelModel;
-use App\Models\TrafficEventModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\AnalyticsFixture;
 
 /**
  * Four accounts whose right answers are known by hand.
@@ -73,10 +74,11 @@ test('accounts are counted per UTC day, without the shared account', function ()
 });
 
 test('sign-up sources are counted per value, most first', function () {
-    $events = new TrafficEventModel($this->db);
+    $events = new AnalyticsDailyEventModel($this->db);
     foreach ([['search', 'Google', 'blog:3'], ['search', 'Google', 'home'], ['social', 'Reddit', 'blog:3']] as [$channel, $source, $from]) {
-        $events->recordSignup(['channel' => $channel, 'referrer_source' => $source, 'came_from' => $from]);
+        AnalyticsFixture::event($this->db, ['name' => 'signup', 'channel' => $channel, 'referrer_source' => $source, 'props' => ['came_from' => $from]]);
     }
+    AnalyticsFixture::rollups($this->db)->rebuildFrom($this->to, 30, 10);
 
     expect($events->signupBreakdown('source', $this->to, $this->to, 10))->toBe([
         ['value' => 'Google', 'signups' => 2],

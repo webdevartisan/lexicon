@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\Mail\SubscriptionConfirmMail;
 use App\Models\BlogModel;
 use App\Models\BlogSubscriberModel;
-use App\Services\Traffic\GoalRecorder;
+use App\Services\Analytics\GoalRecorder;
 use Framework\Core\Response;
 
 /**

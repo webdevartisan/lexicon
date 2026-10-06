@@ -6,10 +6,10 @@ namespace App\Controllers;
 
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
-use App\Services\Traffic\TrafficReportService;
-use App\Services\Traffic\TrafficSettings;
-use App\ValueObjects\TrafficRange;
-use App\ValueObjects\TrafficScope;
+use App\Services\Analytics\AnalyticsReportService;
+use App\Services\Analytics\AnalyticsSettings;
+use App\ValueObjects\AnalyticsRange;
+use App\ValueObjects\AnalyticsScope;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -26,8 +26,8 @@ final class BlogStatsController extends AppController
     public function __construct(
         private BlogModel $blogs,
         private BlogSettingsModel $blogSettings,
-        private TrafficReportService $reports,
-        private TrafficSettings $settings,
+        private AnalyticsReportService $reports,
+        private AnalyticsSettings $settings,
     ) {}
 
     public function show(string $blogSlug): Response
@@ -41,18 +41,18 @@ final class BlogStatsController extends AppController
         $blogId = (int) $blog['id'];
         $blogSettings = $this->blogSettings->findByBlogId($blogId) ?? [];
 
-        if (empty($blogSettings['traffic_public_stats']) || !$this->settings->enabled()) {
+        if (empty($blogSettings['analytics_public_stats']) || !$this->settings->enabled()) {
             throw new PageNotFoundException('This blog has no public stats page.');
         }
 
         $preset = (string) ($this->request->get['range'] ?? '30d');
-        $range = TrafficRange::fromQuery(['range' => in_array($preset, self::RANGES, true) ? $preset : '30d'], blog_timezone($blogId));
+        $range = AnalyticsRange::fromQuery(['range' => in_array($preset, self::RANGES, true) ? $preset : '30d'], blog_timezone($blogId));
 
         return $this->view('public.BlogStats.show', [
             'blog' => $blog,
             'range' => $range,
             'ranges' => self::RANGES,
-            'report' => $this->reports->report(TrafficScope::blog($blogId), $range),
+            'report' => $this->reports->report(AnalyticsScope::blog($blogId), $range),
         ]);
     }
 }

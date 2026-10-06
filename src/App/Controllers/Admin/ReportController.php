@@ -6,21 +6,21 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Gate;
+use App\Models\AnalyticsStatsModel;
 use App\Models\ContentReportModel;
 use App\Models\ModerationCaseModel;
 use App\Models\ModerationCategoryModel;
-use App\Models\TrafficStatsModel;
 use App\Models\UserModel;
 use App\Presenters\ModerationCasePresenter;
 use App\Resources\SystemResource;
+use App\Services\Analytics\AnalyticsReportService;
 use App\Services\ModerationCaseService;
 use App\Services\ModerationRuleEngine;
 use App\Services\ModerationSettings;
 use App\Services\PostContentSanitizer;
-use App\Services\Traffic\TrafficReportService;
 use App\Services\UserSuspensionService;
+use App\ValueObjects\AnalyticsScope;
 use App\ValueObjects\TableSort;
-use App\ValueObjects\TrafficScope;
 use DateTimeImmutable;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -51,7 +51,7 @@ class ReportController extends AppController
         private UserSuspensionService $suspensions,
         private PostContentSanitizer $sanitizer,
         private ModerationSettings $settings,
-        private TrafficStatsModel $traffic,
+        private AnalyticsStatsModel $analytics,
     ) {}
 
     public function index(): Response
@@ -105,7 +105,7 @@ class ReportController extends AppController
             'canSuspend' => $this->canSuspend($author),
             'canViewUsers' => Gate::allows('manageUsers', SystemResource::class, auth()->user() ?? []),
             'holdNotes' => ModerationRuleEngine::HOLD_NOTES,
-            'traffic' => $this->trafficPace($case),
+            'analytics' => $this->analyticsPace($case),
             // Re-sanitized here, not trusted from storage: bodies saved before
             // the sanitizer existed would otherwise run in an administrator's session.
             'postHtml' => $case['post_content'] === null ? null : $this->sanitizer->clean((string) $case['post_content']),
@@ -238,24 +238,24 @@ class ReportController extends AppController
     /**
      * How busy the reported post, or the post under a reported comment, is today
      * against its usual day. A surge of readers alongside reports is worth knowing:
-     * the content is spreading. Only for staff who see traffic.
+     * the content is spreading. Only for staff who see Insights.
      *
      * @param  array<string, mixed>  $case
      * @return array{today: int, usual: float, spiking: bool}|null
      */
-    private function trafficPace(array $case): ?array
+    private function analyticsPace(array $case): ?array
     {
-        if ($case['blog_id'] === null || !Gate::allows('viewPlatformTraffic', SystemResource::class, auth()->user() ?? [])) {
+        if ($case['blog_id'] === null || !Gate::allows('viewPlatformAnalytics', SystemResource::class, auth()->user() ?? [])) {
             return null;
         }
 
         $blogId = (int) $case['blog_id'];
         $postId = $case['subject_type'] === 'post' ? (int) $case['subject_id'] : (int) ($case['comment_post_id'] ?? 0);
-        $scope = $postId > 0 ? TrafficScope::post($blogId, $postId) : TrafficScope::blog($blogId);
+        $scope = $postId > 0 ? AnalyticsScope::post($blogId, $postId) : AnalyticsScope::blog($blogId);
         $today = (new DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId))))->format('Y-m-d');
-        $pace = $this->traffic->pace($scope, $today, TrafficReportService::USUAL_DAYS);
+        $pace = $this->analytics->pace($scope, $today, AnalyticsReportService::USUAL_DAYS);
 
-        return $pace + ['spiking' => TrafficReportService::isSpike($pace['today'], $pace['usual'], 30)];
+        return $pace + ['spiking' => AnalyticsReportService::isSpike($pace['today'], $pace['usual'], 30)];
     }
 
     /**

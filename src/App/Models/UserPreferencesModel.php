@@ -51,6 +51,8 @@ class UserPreferencesModel extends AppModel
         'default_post_visibility',
         'timezone',
         'locale',
+        'insights_page',
+        'insights_range',
         ...self::NOTIFY_KEYS,
     ];
 
@@ -279,9 +281,9 @@ class UserPreferencesModel extends AppModel
         'notify_review_requests',
         'notify_role_changes',
         'notify_invites',
-        'notify_traffic_digest',
-        'notify_traffic_milestones',
-        'notify_traffic_spikes',
+        'notify_insights_digest',
+        'notify_insights_milestones',
+        'notify_insights_spikes',
     ];
 
     /**

@@ -44,7 +44,7 @@ function makeThrottledCommentController(): array
         Mockery::mock(CommentRemovalService::class),
         Mockery::mock(BlogModel::class),
         $throttle,
-        Mockery::mock(App\Services\Traffic\GoalRecorder::class)->shouldIgnoreMissing(),
+        Mockery::mock(App\Services\Analytics\GoalRecorder::class)->shouldIgnoreMissing(),
     );
 
     return [$controller, $throttle, $comments];

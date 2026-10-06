@@ -160,12 +160,12 @@
         </a>
     </div>
 
-    <?php if (!empty($traffic)) {
-        $trafficPresent = new \App\Presenters\TrafficPresenter(\App\Services\LocaleState::get()->chromeLocale, $t, app(\App\Services\LocaleRegistry::class), 'blog');
-        $trafficPrevious = $traffic['range']->previous();
-        $trafficPeriod = $t('traffic.range.span', ['from' => $trafficPresent->date($trafficPrevious->fromDate()), 'to' => $trafficPresent->date($trafficPrevious->toDate())]);
-        $trafficUrl = '/dashboard/blog/'.(int) $selectedBlogId.'/analytics/traffic?range=7d';
-        $trafficTones = [
+    <?php if (!empty($analytics)) {
+        $analyticsPresent = new \App\Presenters\AnalyticsPresenter(\App\Services\LocaleState::get()->chromeLocale, $t, app(\App\Services\LocaleRegistry::class), 'blog');
+        $analyticsPrevious = $analytics['range']->previous();
+        $analyticsPeriod = $t('analytics.range.span', ['from' => $analyticsPresent->date($analyticsPrevious->fromDate()), 'to' => $analyticsPresent->date($analyticsPrevious->toDate())]);
+        $analyticsUrl = '/dashboard/blog/'.(int) $selectedBlogId.'/insights?range=7d';
+        $analyticsTones = [
             'good' => 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400',
             'bad' => 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400',
             'neutral' => 'bg-slate-100 text-slate-500 dark:bg-zink-600 dark:text-zink-200',
@@ -175,38 +175,38 @@
             <div class="flex items-center justify-between mb-4">
                 <h2 id="home-traffic" class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
                     {% cache 'lucide:trending-up:home' ttl=31536000 %}<i data-lucide="trending-up" class="size-4 text-custom-500" aria-hidden="true"></i>{% endcache %}
-                    <?= e($t('traffic.home.title')) ?>
+                    <?= e($t('analytics.home.title')) ?>
                 </h2>
-                <a href="<?= e(lurl($trafficUrl)) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600"><?= e($t('traffic.home.open')) ?></a>
+                <a href="<?= e(lurl($analyticsUrl)) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600"><?= e($t('analytics.home.open')) ?></a>
             </div>
-            <?php if ((int) $traffic['metrics']['views']['value'] === 0) { ?>
-            <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('traffic.home.empty')) ?></p>
+            <?php if ((int) $analytics['metrics']['views']['value'] === 0) { ?>
+            <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('analytics.home.empty')) ?></p>
             <?php } else { ?>
             <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <?php foreach (['views' => 'traffic.home.views', 'visitors' => 'traffic.home.visitors'] as $trafficKey => $trafficLabel) {
-                    $trafficMetric = $traffic['metrics'][$trafficKey];
-                    $trafficChange = $trafficPresent->change($trafficMetric['change'], $trafficPresent->number((int) $trafficMetric['previous']), $trafficPeriod); ?>
+                <?php foreach (['views' => 'analytics.home.views', 'visitors' => 'analytics.home.visitors'] as $analyticsKey => $analyticsLabel) {
+                    $analyticsMetric = $analytics['metrics'][$analyticsKey];
+                    $analyticsChange = $analyticsPresent->change($analyticsMetric['change'], $analyticsPresent->number((int) $analyticsMetric['previous']), $analyticsPeriod); ?>
                 <div>
-                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t($trafficLabel)) ?></dt>
+                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t($analyticsLabel)) ?></dt>
                     <dd class="flex items-center gap-2 mt-1">
-                        <span class="text-2xl font-semibold text-slate-900 dark:text-zink-50"><?= e($trafficPresent->number((int) $trafficMetric['value'])) ?></span>
-                        <?php if ($trafficChange['direction'] !== 'none') { ?>
-                        <span class="px-1.5 py-0.5 text-xs font-medium rounded <?= $trafficTones[$trafficChange['tone']] ?>" title="<?= e($trafficChange['label']) ?>">
-                            <span aria-hidden="true"><?= e($trafficChange['short']) ?></span>
-                            <span class="sr-only"><?= e($trafficChange['label']) ?></span>
+                        <span class="text-2xl font-semibold text-slate-900 dark:text-zink-50"><?= e($analyticsPresent->number((int) $analyticsMetric['value'])) ?></span>
+                        <?php if ($analyticsChange['direction'] !== 'none') { ?>
+                        <span class="px-1.5 py-0.5 text-xs font-medium rounded <?= $analyticsTones[$analyticsChange['tone']] ?>" title="<?= e($analyticsChange['label']) ?>">
+                            <span aria-hidden="true"><?= e($analyticsChange['short']) ?></span>
+                            <span class="sr-only"><?= e($analyticsChange['label']) ?></span>
                         </span>
                         <?php } ?>
                     </dd>
                 </div>
                 <?php } ?>
                 <div class="min-w-0">
-                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t('traffic.home.topPost')) ?></dt>
+                    <dt class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t('analytics.home.topPost')) ?></dt>
                     <dd class="mt-1 text-sm text-slate-900 dark:text-zink-50 truncate" dir="auto">
-                        <?php if (($traffic['topPost']['title'] ?? null) !== null) { ?>
-                        <a href="<?= e(lurl('/dashboard/blog/'.(int) $selectedBlogId.'/analytics/traffic/posts/'.(int) $traffic['topPost']['post_id']).'?range=7d') ?>" class="hover:text-custom-500"><?= e((string) $traffic['topPost']['title']) ?></a>
-                        <span class="text-slate-500 dark:text-zink-300">· <?= e($trafficPresent->number((int) $traffic['topPost']['views'])) ?></span>
+                        <?php if (($analytics['topPost']['title'] ?? null) !== null) { ?>
+                        <a href="<?= e(lurl('/dashboard/blog/'.(int) $selectedBlogId.'/insights/posts/'.(int) $analytics['topPost']['post_id']).'?range=7d') ?>" class="hover:text-custom-500"><?= e((string) $analytics['topPost']['title']) ?></a>
+                        <span class="text-slate-500 dark:text-zink-300">· <?= e($analyticsPresent->number((int) $analytics['topPost']['views'])) ?></span>
                         <?php } else { ?>
-                        <?= e($t('traffic.metrics.none')) ?>
+                        <?= e($t('analytics.metrics.none')) ?>
                         <?php } ?>
                     </dd>
                 </div>

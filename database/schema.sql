@@ -232,13 +232,15 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     default_post_visibility ENUM('public','private','unlisted') NOT NULL DEFAULT 'public',
     timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone identifier (e.g., Europe/Athens)',
     locale VARCHAR(5) DEFAULT NULL COMMENT 'Preferred interface language (ISO 639-1); NULL follows page content',
+    insights_page VARCHAR(20) DEFAULT NULL COMMENT 'Last Insights page opened, where the Insights link resumes',
+    insights_range VARCHAR(12) DEFAULT NULL COMMENT 'Last preset range picked on Insights; custom dates are not kept',
     notify_post_status BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me about my own posts: approved, changes requested, published, reset to draft',
     notify_review_requests BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when a post is handed to me to review, or my review assignment changes',
     notify_role_changes BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when my collaborator role changes or I am removed',
     notify_invites BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when invited to a blog or when an invite I sent is declined',
-    notify_traffic_digest BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me a weekly summary of my blogs'' traffic',
-    notify_traffic_milestones BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when a post of mine passes a view milestone',
-    notify_traffic_spikes BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when my blog gets far more readers than usual',
+    notify_insights_digest BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me a weekly summary of my blogs'' traffic',
+    notify_insights_milestones BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when a post of mine passes a view milestone',
+    notify_insights_spikes BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when my blog gets far more readers than usual',
     notify_comment_replies BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when someone replies to a comment I wrote',
     notify_comments_authored BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when someone comments on a post I wrote',
     notify_comments_moderation BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Email me when a comment is held for my approval',
@@ -308,11 +310,11 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     is_primary BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Whether this is the users primary blog',
     workflow_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, posts require review/approve before publishing',
     translations_enabled BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'When true, post edit pages offer per-locale translation tabs',
-    traffic_exclude_members BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Do not count the blog team viewing their own blog',
-    traffic_excluded_paths TEXT DEFAULT NULL COMMENT 'One blog-relative path prefix per line that is never counted',
-    traffic_public_notice BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Show readers a line saying how visits are counted',
-    traffic_popular_posts BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Themes show the most read posts of the last 30 days',
-    traffic_public_stats BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Anyone can open the blog''s stats page',
+    analytics_exclude_members BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Do not count the blog team viewing their own blog',
+    analytics_excluded_paths TEXT DEFAULT NULL COMMENT 'One blog-relative path prefix per line that is never counted',
+    analytics_public_notice BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Show readers a line saying how visits are counted',
+    analytics_popular_posts BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Themes show the most read posts of the last 30 days',
+    analytics_public_stats BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Anyone can open the blog''s stats page',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
@@ -825,14 +827,14 @@ INSERT INTO scheduled_tasks (label, command, arguments, schedule_type, interval_
 ('Prune task history', 'schedule:prune-runs', NULL, 'daily', NULL, '04:00:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
 ('Apply data retention periods', 'privacy:prune', NULL, 'daily', NULL, '03:50:00', 'UTC', 600, 1, UTC_TIMESTAMP()),
 ('Process due account erasures', 'privacy:process-due-erasures', NULL, 'daily', NULL, '04:10:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
-('Aggregate traffic', 'traffic:aggregate', NULL, 'every_n_minutes', 5, NULL, 'UTC', 240, 1, UTC_TIMESTAMP()),
-('Update the country and network databases', 'traffic:update-geo', NULL, 'daily', NULL, '04:30:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
-('Weekly traffic digest', 'traffic:digest', NULL, 'daily', NULL, '06:00:00', 'UTC', 900, 1, UTC_TIMESTAMP());
+('Aggregate traffic', 'analytics:aggregate', NULL, 'every_n_minutes', 5, NULL, 'UTC', 240, 1, UTC_TIMESTAMP()),
+('Update the country and network databases', 'analytics:update-geo', NULL, 'daily', NULL, '04:30:00', 'UTC', 300, 1, UTC_TIMESTAMP()),
+('Weekly traffic digest', 'analytics:digest', NULL, 'daily', NULL, '06:00:00', 'UTC', 900, 1, UTC_TIMESTAMP());
 
 -- Separate statement because hourly rules are timed by minute_of_hour, which the list above does not carry.
 INSERT INTO scheduled_tasks (label, command, schedule_type, minute_of_hour, schedule_timezone, timeout_seconds, is_active, next_run_at) VALUES
 ('Lift expired user suspensions', 'users:lift-due-suspensions', 'hourly', 5, 'UTC', 120, 1, UTC_TIMESTAMP()),
-('Traffic milestones and spikes', 'traffic:notify', 'hourly', 20, 'UTC', 300, 1, UTC_TIMESTAMP());
+('Traffic milestones and spikes', 'analytics:notify', 'hourly', 20, 'UTC', 300, 1, UTC_TIMESTAMP());
 
 -- ----------------------------------------------------------------------------
 -- Post Translations Table
@@ -1190,62 +1192,97 @@ CREATE TABLE IF NOT EXISTS media (
 COMMENT='Per-blog index of uploaded media files';
 
 -- ============================================================================
--- TRAFFIC ANALYTICS (Insights > Traffic)
+-- ANALYTICS (Insights)
 -- ============================================================================
--- Raw page views from the page script, their daily totals, and the daily
--- salts behind anonymous visitor hashes. No foreign keys: blog deletion
--- handles these explicitly.
+-- Raw events from the page script and the server, the visits they belong to,
+-- their daily totals, and the daily salts behind anonymous visitor hashes.
+-- No foreign keys: blog deletion and account erasure handle these explicitly.
 --
 -- The totals are kept per scope: the whole site, the platform's own pages,
 -- one blog, one post. Every report reads one scope.
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS traffic_hits (
+CREATE TABLE IF NOT EXISTS analytics_events (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    view_id BINARY(16) NOT NULL COMMENT 'Random per page view, made in the browser. The leave ping finds its row by it',
+    event_key BINARY(16) NOT NULL COMMENT 'The same action twice has the same key: a page view''s own id, or a hash of what the action was on',
+    name VARCHAR(32) NOT NULL COMMENT 'An event from config/analytics.php, e.g. page_view, like, outbound',
+    view_id BINARY(16) DEFAULT NULL COMMENT 'The page view the event happened on; a page view''s own id',
+    visit_id BINARY(16) DEFAULT NULL COMMENT 'Empty for events outside a counted visit',
+    visitor_hash BINARY(16) DEFAULT NULL,
+    visitor_kind ENUM('account','cookie','daily') DEFAULT NULL COMMENT 'account and cookie ids last across days, daily ones do not',
     blog_id INT DEFAULT NULL COMMENT 'Empty for the platform''s own pages, and once a blog is deleted so its views still count for the site',
     post_id INT DEFAULT NULL,
     from_post_id INT DEFAULT NULL COMMENT 'The post the reader came from inside the same blog',
-    page_type ENUM('landing','post','archive','category','tag','home','discover','static_page','guide','profile','auth') NOT NULL COMMENT 'The first five are blog pages, the rest the platform''s own',
-    path VARCHAR(255) NOT NULL COMMENT 'Page path without the locale prefix or query string',
-    path_hash BINARY(8) NOT NULL,
-    visitor_hash BINARY(16) NOT NULL,
-    visitor_kind ENUM('account','cookie','daily') NOT NULL COMMENT 'account and cookie ids last across days, daily ones do not',
-    channel ENUM('direct','internal','lexicon','search','social','email','referral') NOT NULL COMMENT 'internal: from the same blog, or between platform pages. lexicon: from another part of Lexicon',
+    page_type ENUM('landing','post','archive','category','tag','home','discover','static_page','guide','profile','auth') DEFAULT NULL COMMENT 'The first five are blog pages, the rest the platform''s own',
+    path VARCHAR(255) DEFAULT NULL COMMENT 'Page path without the locale prefix or query string',
+    path_hash BINARY(8) DEFAULT NULL,
+    locale VARCHAR(5) DEFAULT NULL COMMENT 'The language of the page read, which can change within a visit',
+    channel ENUM('direct','internal','lexicon','search','social','email','referral') DEFAULT NULL COMMENT 'On a page view, how the reader got to it; on other events, how the visit began',
     referrer_host VARCHAR(100) DEFAULT NULL,
     referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name for a known host, e.g. Google. On lexicon views, the kind of page or blog:{id} the reader came from',
     utm_source VARCHAR(100) DEFAULT NULL,
     utm_medium VARCHAR(100) DEFAULT NULL,
     utm_campaign VARCHAR(100) DEFAULT NULL,
-    search_term VARCHAR(100) DEFAULT NULL COMMENT 'What was searched on Discover, pruned with the view',
-    device ENUM('desktop','mobile','tablet','other') NOT NULL,
-    browser VARCHAR(30) NOT NULL,
-    os VARCHAR(30) NOT NULL,
-    country CHAR(2) DEFAULT NULL,
-    locale VARCHAR(5) NOT NULL,
-    engaged_seconds SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Visible, active time reported when the reader left',
-    scroll_depth TINYINT UNSIGNED DEFAULT NULL COMMENT 'Furthest point reached, percent of the page',
+    engaged_seconds SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Page views: visible, active time reported when the reader left',
+    scroll_depth TINYINT UNSIGNED DEFAULT NULL COMMENT 'Page views: furthest point reached, percent of the page',
     engaged_at DATETIME DEFAULT NULL COMMENT 'UTC, when the latest leave ping arrived',
-    local_date DATE NOT NULL COMMENT 'The day in the blog timezone at the moment of the view',
-    local_hour TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Hour of the view in the blog timezone, UTC on platform pages',
+    lcp_ms SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Page views: largest contentful paint',
+    inp_ms SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Page views: interaction to next paint',
+    cls DECIMAL(6,4) DEFAULT NULL COMMENT 'Page views: cumulative layout shift',
+    ttfb_ms SMALLINT UNSIGNED DEFAULT NULL COMMENT 'Page views: time to first byte',
+    props JSON DEFAULT NULL COMMENT 'Everything else, checked against the event''s list in config/analytics.php',
+    local_date DATE NOT NULL COMMENT 'The day in the blog timezone, UTC off a blog',
+    local_hour TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Hour in the blog timezone, UTC off a blog',
     suspect BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Set by aggregation for a visitor that behaves like a script; left out of every total',
     created_at DATETIME NOT NULL COMMENT 'UTC',
     PRIMARY KEY (id, local_date),
-    UNIQUE KEY uq_traffic_hits_view (view_id, local_date),
-    INDEX idx_traffic_hits_rollup (local_date, blog_id),
-    INDEX idx_traffic_hits_visitor (visitor_hash, path_hash, created_at),
-    INDEX idx_traffic_hits_recent (blog_id, created_at),
-    INDEX idx_traffic_hits_created (created_at),
-    INDEX idx_traffic_hits_engaged (engaged_at)
+    UNIQUE KEY uq_analytics_events_key (event_key, local_date),
+    INDEX idx_analytics_events_rollup (local_date, blog_id),
+    INDEX idx_analytics_events_name (name, local_date),
+    INDEX idx_analytics_events_visitor (visitor_hash, path_hash, created_at),
+    INDEX idx_analytics_events_view (view_id),
+    INDEX idx_analytics_events_visit (visit_id),
+    INDEX idx_analytics_events_recent (blog_id, created_at),
+    INDEX idx_analytics_events_created (created_at),
+    INDEX idx_analytics_events_engaged (engaged_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Raw page views, kept for traffic.raw_retention_days'
--- traffic:aggregate adds one partition per local day ahead of time, and pruning drops whole days.
+COMMENT='Page views and every other counted action, kept for analytics.raw_retention_days'
+-- analytics:aggregate adds one partition per local day ahead of time, and pruning drops whole days.
 PARTITION BY RANGE COLUMNS(local_date) (
     PARTITION p_start VALUES LESS THAN ('2026-01-01'),
     PARTITION p_future VALUES LESS THAN (MAXVALUE)
 );
 
-CREATE TABLE IF NOT EXISTS traffic_daily (
+CREATE TABLE IF NOT EXISTS analytics_visits (
+    id BINARY(16) NOT NULL COMMENT 'Random, never derived from the visitor',
+    visitor_hash BINARY(16) NOT NULL,
+    seq INT UNSIGNED NOT NULL COMMENT 'The visitor''s visits in order; two first views at once both claim the same next number, so they share one visit',
+    visitor_kind ENUM('account','cookie','daily') NOT NULL,
+    started_at DATETIME NOT NULL COMMENT 'UTC',
+    last_seen_at DATETIME NOT NULL COMMENT 'UTC, the latest page view. Thirty idle minutes end the visit',
+    page_views SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    entry_path VARCHAR(255) NOT NULL,
+    entry_page_type VARCHAR(20) NOT NULL,
+    entry_blog_id INT DEFAULT NULL,
+    entry_post_id INT DEFAULT NULL,
+    channel ENUM('direct','internal','lexicon','search','social','email','referral') NOT NULL COMMENT 'How the visit began',
+    referrer_host VARCHAR(100) DEFAULT NULL,
+    referrer_source VARCHAR(60) DEFAULT NULL,
+    utm_source VARCHAR(100) DEFAULT NULL,
+    utm_medium VARCHAR(100) DEFAULT NULL,
+    utm_campaign VARCHAR(100) DEFAULT NULL,
+    device ENUM('desktop','mobile','tablet','other') NOT NULL,
+    browser VARCHAR(30) NOT NULL,
+    os VARCHAR(30) NOT NULL,
+    country CHAR(2) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_analytics_visits_seq (visitor_hash, seq),
+    INDEX idx_analytics_visits_started (started_at),
+    INDEX idx_analytics_visits_last_seen (last_seen_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='One row per visit: the same visitor, device and country with less than 30 minutes between page views. Not a login session. Pruned with the raw events';
+
+CREATE TABLE IF NOT EXISTS analytics_daily (
     scope ENUM('site','platform','blog','post') NOT NULL COMMENT 'The whole site, the platform''s own pages, one blog or one post',
     scope_id INT NOT NULL DEFAULT 0 COMMENT 'The blog or post id; 0 for site and platform',
     blog_id INT DEFAULT NULL COMMENT 'The blog a blog or post row belongs to',
@@ -1254,8 +1291,12 @@ CREATE TABLE IF NOT EXISTS traffic_daily (
     visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Different visitors in this scope that day',
     identified_visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors counted by account or cookie, the base for returning',
     returning_visitors INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Identified visitors seen in this scope on an earlier day',
-    bounces INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visitors with one view in this scope and under 10 engaged seconds; none on post rows',
+    visits INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Visits that reached this scope, on the day they reached it',
+    engaged_visits INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Of those, visits with 2+ page views here, 10+ engaged seconds, or a goal',
+    visit_pages INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Page views within those visits, for pages per visit',
+    visit_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'From the first page view to the last leave ping, summed, for visit length',
     read_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views with 30 or more engaged seconds',
+    read_to_end INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Read views that also reached the end of the page',
     engaged_views INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Views whose leave ping arrived',
     engaged_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
     scroll_depth_sum BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -1265,17 +1306,18 @@ CREATE TABLE IF NOT EXISTS traffic_daily (
     scroll_100 INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Engaged views that reached the end',
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (scope, scope_id, day),
-    INDEX idx_traffic_daily_day (scope, day),
-    INDEX idx_traffic_daily_blog (scope, blog_id, day)
+    INDEX idx_analytics_daily_day (scope, day),
+    INDEX idx_analytics_daily_blog (scope, blog_id, day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Daily totals per scope, rebuilt from traffic_hits';
+COMMENT='Daily totals per scope, rebuilt from the raw events';
 
-CREATE TABLE IF NOT EXISTS traffic_daily_dimensions (
+CREATE TABLE IF NOT EXISTS analytics_daily_dimensions (
     scope ENUM('site','platform','blog','post') NOT NULL,
     scope_id INT NOT NULL DEFAULT 0 COMMENT 'The blog or post id; 0 for site and platform',
     blog_id INT DEFAULT NULL COMMENT 'The blog a blog or post row belongs to',
     dimension ENUM('channel','source','utm_source','utm_medium','utm_campaign','device','browser','os','country','locale',
-                   'page','blog','lexicon','entry','exit','next','hour','category','tag','author') NOT NULL,
+                   'page','blog','lexicon','entry','exit','next','hour','category','tag','author','search_entry','related') NOT NULL
+        COMMENT 'search_entry: the first page of visits that came from a search engine. related: posts opened from a related link',
     day DATE NOT NULL COMMENT 'UTC for site and platform, the blog timezone for blog and post',
     value VARCHAR(191) NOT NULL,
     views INT UNSIGNED NOT NULL DEFAULT 0,
@@ -1284,66 +1326,45 @@ CREATE TABLE IF NOT EXISTS traffic_daily_dimensions (
     engaged_views INT UNSIGNED NOT NULL DEFAULT 0,
     engaged_seconds BIGINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (scope, scope_id, dimension, day, value),
-    INDEX idx_traffic_dimensions_day (scope, day),
-    INDEX idx_traffic_dimensions_blog (blog_id)
+    INDEX idx_analytics_dimensions_day (scope, day),
+    INDEX idx_analytics_dimensions_blog (blog_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Daily breakdowns (sources, devices, countries, pages, blogs, places on Lexicon) per scope';
 
-CREATE TABLE IF NOT EXISTS traffic_events (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    event ENUM('signup','subscribe','comment','like','save','outbound','download') NOT NULL,
-    day DATE NOT NULL COMMENT 'UTC',
-    blog_id INT DEFAULT NULL COMMENT 'The blog a goal or click happened on',
-    post_id INT DEFAULT NULL,
-    value VARCHAR(191) DEFAULT NULL COMMENT 'The host of an outbound link, or the file name of a download',
-    channel ENUM('direct','internal','search','social','email','referral') DEFAULT NULL COMMENT 'How the visit began, on sign-ups',
-    referrer_source VARCHAR(60) DEFAULT NULL COMMENT 'Friendly name or host of the site the visit began on',
-    utm_source VARCHAR(100) DEFAULT NULL,
-    utm_medium VARCHAR(100) DEFAULT NULL,
-    utm_campaign VARCHAR(100) DEFAULT NULL,
-    came_from VARCHAR(60) DEFAULT NULL COMMENT 'The last page read before signing up: a platform page type or blog:{id}',
-    PRIMARY KEY (id),
-    INDEX idx_traffic_events_day (event, day),
-    INDEX idx_traffic_events_blog (blog_id, event, day)
+CREATE TABLE IF NOT EXISTS analytics_daily_events (
+    scope ENUM('site','platform','blog','post') NOT NULL,
+    scope_id INT NOT NULL DEFAULT 0 COMMENT 'The blog or post id; 0 for site and platform',
+    blog_id INT DEFAULT NULL COMMENT 'The blog a blog or post row belongs to',
+    day DATE NOT NULL COMMENT 'The event''s local day: the blog timezone on a blog, UTC elsewhere',
+    name VARCHAR(32) NOT NULL,
+    breakdown VARCHAR(20) NOT NULL DEFAULT '' COMMENT 'Empty for the total; otherwise one of the event''s breakdowns in config/analytics.php',
+    value VARCHAR(191) NOT NULL DEFAULT '',
+    events INT UNSIGNED NOT NULL DEFAULT 0,
+    visits INT UNSIGNED DEFAULT NULL COMMENT 'Different visits with the event; empty for days before visits were kept',
+    PRIMARY KEY (scope, scope_id, name, breakdown, day, value),
+    INDEX idx_analytics_daily_events_day (scope, day),
+    INDEX idx_analytics_daily_events_blog (blog_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Sign-ups, goals and link clicks from counted visits, with no visitor or account id';
+COMMENT='Goals, clicks and sign-ups per day, kept after the raw events are pruned';
 
-CREATE TABLE IF NOT EXISTS traffic_outcomes (
+CREATE TABLE IF NOT EXISTS analytics_beacon_outcomes (
     day DATE NOT NULL COMMENT 'UTC',
     outcome VARCHAR(20) NOT NULL COMMENT 'What the recorder decided, e.g. recorded, bot, duplicate',
     requests INT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (day, outcome)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='How many page view beacons each check let through or turned away, per day';
+COMMENT='How many beacons each check let through or turned away, per day';
 
-CREATE TABLE IF NOT EXISTS traffic_not_found (
-    day DATE NOT NULL COMMENT 'UTC',
-    path_hash BINARY(8) NOT NULL,
-    referrer_host VARCHAR(100) NOT NULL DEFAULT '' COMMENT 'Empty when the reader typed the address or the referrer was hidden',
-    blog_id INT DEFAULT NULL COMMENT 'The blog the missing page would have been in; empty for platform paths',
-    path VARCHAR(255) NOT NULL,
-    views INT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (day, path_hash, referrer_host),
-    INDEX idx_traffic_not_found_blog (blog_id, day)
+CREATE TABLE IF NOT EXISTS analytics_notices_sent (
+    kind ENUM('milestone','spike') NOT NULL,
+    subject_id INT NOT NULL COMMENT 'The post for a milestone, the blog for a spike',
+    notice_key VARCHAR(10) NOT NULL COMMENT 'The view threshold, or the blog timezone day of the spike',
+    sent_at DATETIME NOT NULL COMMENT 'UTC',
+    PRIMARY KEY (kind, subject_id, notice_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Readers who reached a page that does not exist, and where they came from';
+COMMENT='Milestone and spike notices already sent, so each goes out once';
 
-CREATE TABLE IF NOT EXISTS traffic_milestones (
-    post_id INT NOT NULL,
-    threshold INT UNSIGNED NOT NULL,
-    reached_at DATETIME NOT NULL COMMENT 'UTC',
-    PRIMARY KEY (post_id, threshold)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='View milestones already announced, so each one is sent once';
-
-CREATE TABLE IF NOT EXISTS traffic_spike_notices (
-    blog_id INT NOT NULL,
-    day DATE NOT NULL COMMENT 'The blog timezone day the spike happened on',
-    PRIMARY KEY (blog_id, day)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Spike notices already sent, at most one per blog per day';
-
-CREATE TABLE IF NOT EXISTS traffic_salts (
+CREATE TABLE IF NOT EXISTS analytics_salts (
     day DATE NOT NULL COMMENT 'UTC',
     salt BINARY(32) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1447,7 +1468,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
 ('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
-('View Platform Traffic', 'view_platform_traffic', 'traffic', 'read', 'See traffic across every blog in the control panel');
+('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

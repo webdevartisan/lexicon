@@ -6,14 +6,14 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Gate;
+use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
-use App\Models\TrafficStatsModel;
 use App\Resources\SystemResource;
+use App\Services\Analytics\AnalyticsReportService;
 use App\Services\BlogDeletionService;
 use App\Services\BlogOwnershipService;
 use App\Services\PublicCacheInvalidator;
 use App\Services\ThemeService;
-use App\Services\Traffic\TrafficReportService;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -29,7 +29,7 @@ class BlogController extends AppController
         private ThemeService $themes,
         private BlogOwnershipService $ownership,
         private BlogDeletionService $blogDeletion,
-        private TrafficStatsModel $trafficStats,
+        private AnalyticsStatsModel $analyticsStats,
     ) {}
 
     /**
@@ -164,7 +164,7 @@ class BlogController extends AppController
 
         return $this->view('blog.index', [
             'blogs' => $result['data'],
-            'traffic' => $this->recentViews($result['data']),
+            'analytics' => $this->recentViews($result['data']),
             'pagination' => $result['pagination'],
             'q' => $q,
             'status' => $status,
@@ -178,35 +178,35 @@ class BlogController extends AppController
 
     /**
      * Each listed blog's views over the last 30 days against the 30 before, for
-     * staff who see traffic. A blog growing fast is a hint for Discover picks.
+     * staff who see Insights. A blog growing fast is a hint for Discover picks.
      *
      * @param  list<array<string, mixed>>  $blogs
-     * @return array<int, array{views: int, previous: int, rising: bool}>|null Null when the viewer can't see traffic
+     * @return array<int, array{views: int, previous: int, rising: bool}>|null Null when the viewer can't see Insights
      */
     private function recentViews(array $blogs): ?array
     {
-        if (!Gate::allows('viewPlatformTraffic', SystemResource::class, auth()->user() ?? [])) {
+        if (!Gate::allows('viewPlatformAnalytics', SystemResource::class, auth()->user() ?? [])) {
             return null;
         }
 
         $ids = array_map(static fn (array $blog): int => (int) $blog['id'], $blogs);
         $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
         $from = $today->modify('-29 days');
-        $now = $this->trafficStats->viewsForBlogs($ids, $from->format('Y-m-d'), $today->format('Y-m-d'));
-        $before = $this->trafficStats->viewsForBlogs(
+        $now = $this->analyticsStats->viewsForBlogs($ids, $from->format('Y-m-d'), $today->format('Y-m-d'));
+        $before = $this->analyticsStats->viewsForBlogs(
             $ids,
             $from->modify('-30 days')->format('Y-m-d'),
             $from->modify('-1 day')->format('Y-m-d')
         );
 
-        $traffic = [];
+        $analytics = [];
         foreach ($ids as $id) {
             $views = $now[$id] ?? 0;
             $previous = $before[$id] ?? 0;
-            $traffic[$id] = ['views' => $views, 'previous' => $previous, 'rising' => TrafficReportService::isRising($views, $previous)];
+            $analytics[$id] = ['views' => $views, 'previous' => $previous, 'rising' => AnalyticsReportService::isRising($views, $previous)];
         }
 
-        return $traffic;
+        return $analytics;
     }
 
     public function new(): Response

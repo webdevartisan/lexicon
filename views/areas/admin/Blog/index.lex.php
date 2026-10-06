@@ -53,7 +53,7 @@ $featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'No
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="owner" label="Owner" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="posts" label="Posts" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="team" label="Team" %}
-                        <?php if ($traffic !== null) { ?>
+                        <?php if ($analytics !== null) { ?>
                         <th class="px-3.5 py-2.5 font-semibold" title="Views in the last 30 days, UTC">Views, 30 days</th>
                         <?php } ?>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="theme" label="Theme" %}
@@ -103,12 +103,12 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e((string) ($blog['owner_name'] ?? '—')) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['post_count'] ?? 0) ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) ($blog['author_count'] ?? 0) ?></td>
-                        <?php if ($traffic !== null) {
-                            $blogTraffic = $traffic[(int) $blog['id']]; ?>
+                        <?php if ($analytics !== null) {
+                            $blogAnalytics = $analytics[(int) $blog['id']]; ?>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
-                            <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/analytics/traffic')) ?>" class="tabular-nums hover:text-custom-500"
-                               title="<?= e(number_format($blogTraffic['previous']).' in the 30 days before') ?>"><?= e(number_format($blogTraffic['views'])) ?></a>
-                            <?php if ($blogTraffic['rising']) { ?>
+                            <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/insights')) ?>" class="tabular-nums hover:text-custom-500"
+                               title="<?= e(number_format($blogAnalytics['previous']).' in the 30 days before') ?>"><?= e(number_format($blogAnalytics['views'])) ?></a>
+                            <?php if ($blogAnalytics['rising']) { ?>
                             <span class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
                                   title="At least half again its views of the 30 days before. Worth a look for Discover.">Rising</span>
                             <?php } ?>

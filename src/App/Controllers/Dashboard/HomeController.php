@@ -12,9 +12,9 @@ use App\Models\BlogSubscriberModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
 use App\Resources\BlogResource;
-use App\Services\Traffic\TrafficReportService;
-use App\ValueObjects\TrafficRange;
-use App\ValueObjects\TrafficScope;
+use App\Services\Analytics\AnalyticsReportService;
+use App\ValueObjects\AnalyticsRange;
+use App\ValueObjects\AnalyticsScope;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -31,7 +31,7 @@ class HomeController extends AppController
         private UserPreferencesModel $preference,
         private BlogSettingsModel $blogSettings,
         private BlogSubscriberModel $subscribers,
-        private TrafficReportService $traffic,
+        private AnalyticsReportService $analytics,
     ) {}
 
     /**
@@ -144,30 +144,30 @@ class HomeController extends AppController
             'blogRole' => $blogRole,
             'workflowEnabled' => $workflowEnabled,
             'hideTitle' => true,
-            'traffic' => $this->trafficSummary($blog, $user),
+            'analytics' => $this->analyticsSummary($blog, $user),
         ]);
     }
 
     /**
      * The last 7 days at a glance: the whole blog for its owner and editors, an
-     * author's own posts for them, nothing for anyone the Traffic page is closed to.
+     * author's own posts for them, nothing for anyone Insights is closed to.
      *
      * @param  array<string, mixed>  $user
-     * @return array{metrics: array<string, mixed>, topPost: array<string, mixed>|null, range: TrafficRange}|null
+     * @return array{metrics: array<string, mixed>, topPost: array<string, mixed>|null, range: AnalyticsRange}|null
      */
-    private function trafficSummary(BlogResource $blog, array $user): ?array
+    private function analyticsSummary(BlogResource $blog, array $user): ?array
     {
-        if (!Gate::allows('viewTraffic', $blog, $user)) {
+        if (!Gate::allows('viewAnalytics', $blog, $user)) {
             return null;
         }
 
         $blogId = (int) $blog->id();
         $userId = (int) $user['id'];
-        $scope = Gate::allows('viewAllTraffic', $blog, $user)
-            ? TrafficScope::blog($blogId)
-            : TrafficScope::authorPosts($blogId, $userId, $this->post->idsByBlogAndAuthor($blogId, $userId));
-        $range = TrafficRange::fromQuery(['range' => '7d'], blog_timezone($blogId));
-        $report = $this->traffic->report($scope, $range);
+        $scope = Gate::allows('viewAllAnalytics', $blog, $user)
+            ? AnalyticsScope::blog($blogId)
+            : AnalyticsScope::authorPosts($blogId, $userId, $this->post->idsByBlogAndAuthor($blogId, $userId));
+        $range = AnalyticsRange::fromQuery(['range' => '7d'], blog_timezone($blogId));
+        $report = $this->analytics->report($scope, $range);
 
         return ['metrics' => $report['metrics'], 'topPost' => $report['topPosts'][0] ?? null, 'range' => $range];
     }

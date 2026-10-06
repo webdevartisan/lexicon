@@ -73,11 +73,11 @@ $anyApplies = fn (string ...$keys): bool => (bool) array_intersect($keys, $appli
             <?php $toggle('notify_invites', $t('account.notifications.invites'), $t('account.notifications.invitesHelp')); ?>
             <?php } ?>
 
-            <?php if ($anyApplies('notify_traffic_digest', 'notify_traffic_milestones', 'notify_traffic_spikes')) { ?>
-            <h2 class="lx-account-section"><?= e($t('account.notifications.trafficSection')) ?></h2>
-            <?php $toggle('notify_traffic_digest', $t('account.notifications.trafficDigest'), $t('account.notifications.trafficDigestHelp')); ?>
-            <?php $toggle('notify_traffic_milestones', $t('account.notifications.trafficMilestones'), $t('account.notifications.trafficMilestonesHelp')); ?>
-            <?php $toggle('notify_traffic_spikes', $t('account.notifications.trafficSpikes'), $t('account.notifications.trafficSpikesHelp')); ?>
+            <?php if ($anyApplies('notify_insights_digest', 'notify_insights_milestones', 'notify_insights_spikes')) { ?>
+            <h2 class="lx-account-section"><?= e($t('account.notifications.analyticsSection')) ?></h2>
+            <?php $toggle('notify_insights_digest', $t('account.notifications.analyticsDigest'), $t('account.notifications.analyticsDigestHelp')); ?>
+            <?php $toggle('notify_insights_milestones', $t('account.notifications.analyticsMilestones'), $t('account.notifications.analyticsMilestonesHelp')); ?>
+            <?php $toggle('notify_insights_spikes', $t('account.notifications.analyticsSpikes'), $t('account.notifications.analyticsSpikesHelp')); ?>
             <?php } ?>
 
             <div class="lx-account-actions">

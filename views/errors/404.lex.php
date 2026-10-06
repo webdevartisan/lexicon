@@ -65,8 +65,8 @@
   </div>
 </section>
 
-<?php if (app(\App\Services\Traffic\TrafficSettings::class)->enabled()) { ?>
-<script src="/assets/js/traffic.js" data-not-found defer></script>
+<?php if (app(\App\Services\Analytics\AnalyticsSettings::class)->enabled()) { ?>
+<script src="/assets/js/insights.js" data-not-found defer></script>
 <?php } ?>
 
 {% endblock %}

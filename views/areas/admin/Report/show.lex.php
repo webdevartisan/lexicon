@@ -102,12 +102,12 @@ if ($decision !== '' && !empty($errors)) {
                         <?= $case['blog_name'] ? 'In '.e((string) $case['blog_name']) : '' ?>
                         <?= $kind === 'comment' && $case['post_title'] ? ' on "'.e((string) $case['post_title']).'"' : '' ?>
                     </p>
-                    <?php if ($traffic !== null) { ?>
+                    <?php if ($analytics !== null) { ?>
                     <p class="<?= $small ?> mb-3 flex flex-wrap items-center gap-2">
-                        <?php if ($traffic['spiking']) { ?>
+                        <?php if ($analytics['spiking']) { ?>
                         <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Spreading</span>
                         <?php } ?>
-                        <span><?= e(number_format($traffic['today'])) ?> views of the <?= $case['subject_type'] === 'post' ? 'post' : 'post it is on' ?> today, against about <?= e(number_format($traffic['usual'], 1)) ?> on a usual day.</span>
+                        <span><?= e(number_format($analytics['today'])) ?> views of the <?= $case['subject_type'] === 'post' ? 'post' : 'post it is on' ?> today, against about <?= e(number_format($analytics['usual'], 1)) ?> on a usual day.</span>
                     </p>
                     <?php } ?>
 

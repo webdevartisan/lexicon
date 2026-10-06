@@ -7,19 +7,19 @@ namespace App\Console\Commands;
 use App\Interfaces\SchedulableCommandInterface;
 use App\Models\AccountErasureRecordModel;
 use App\Models\ActivityLogModel;
+use App\Models\AnalyticsEventModel;
+use App\Models\AnalyticsVisitModel;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogSubscriberModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
-use App\Models\TrafficHitModel;
-use App\Models\TrafficNotFoundModel;
-use App\Services\Traffic\TrafficSettings;
+use App\Services\Analytics\AnalyticsSettings;
 
 /**
  * Deletes personal data that has outlived its purpose, using the periods in
- * config/privacy.php, plus raw page views and missing-page reports past the
- * traffic retention period (an administrator setting, see TrafficSettings).
+ * config/privacy.php, plus raw analytics events and visits past the
+ * analytics retention period (an administrator setting, see AnalyticsSettings).
  *
  * Usage: php cli privacy:prune
  */
@@ -33,9 +33,9 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
         private BlogInvitationModel $invitations,
         private BlogSubscriberModel $subscribers,
         private AccountErasureRecordModel $erasureRecords,
-        private TrafficHitModel $trafficHits,
-        private TrafficSettings $trafficSettings,
-        private TrafficNotFoundModel $missingPages,
+        private AnalyticsEventModel $analyticsEvents,
+        private AnalyticsVisitModel $analyticsVisits,
+        private AnalyticsSettings $analyticsSettings,
     ) {}
 
     public static function scheduleLabel(): string
@@ -68,8 +68,8 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
             'Answered invitations' => $this->invitations->deleteSettled((int) $days['answered_invitations']),
             'Unconfirmed subscriptions' => $this->subscribers->deleteUnconfirmedOlderThan((int) $days['unconfirmed_subscriptions']),
             'Account erasure records' => $this->erasureRecords->pruneOlderThan((int) $days['account_erasure_records']),
-            'Raw page views' => $this->trafficHits->pruneOlderThan($this->trafficSettings->rawRetentionDays()),
-            'Missing page reports' => $this->missingPages->pruneOlderThan($this->trafficSettings->rawRetentionDays()),
+            'Raw analytics events' => $this->analyticsEvents->pruneOlderThan($this->analyticsSettings->rawRetentionDays()),
+            'Analytics visits' => $this->analyticsVisits->pruneOlderThan($this->analyticsSettings->rawRetentionDays()),
         ];
 
         foreach ($deleted as $label => $count) {

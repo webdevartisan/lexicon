@@ -6,7 +6,7 @@ namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
 use App\Exceptions\AccountSuspendedException;
-use App\Services\Traffic\VisitorLink;
+use App\Services\Analytics\VisitorLink;
 use Framework\Core\Response;
 
 /**

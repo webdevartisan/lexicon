@@ -743,7 +743,7 @@ class BlogModel extends AppModel
     }
 
     /**
-     * Published blogs with the locale data the sitemap needs.
+     * Published blogs that allow indexing, with the locale data the sitemap needs.
      *
      * Separate from getDirectoryWithPagination because that one feeds the explore
      * listing and carries presentation fields this does not want, and because a
@@ -763,7 +763,7 @@ class BlogModel extends AppModel
                 LEFT JOIN posts p ON p.blog_id = b.id
                      AND p.status = 'published' AND p.visibility = 'public'
                 LEFT JOIN post_translations t ON t.post_id = p.id
-                WHERE b.status = 'published'
+                WHERE b.status = 'published' AND COALESCE(s.indexable, 1) = 1
                 GROUP BY b.id, b.blog_slug, s.default_locale, s.translations_enabled
                 ORDER BY b.id
                 LIMIT :limit";
@@ -1195,6 +1195,17 @@ class BlogModel extends AppModel
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         return (int) ($result['count'] ?? 0);
+    }
+
+    /**
+     * Different people with at least one published post on the blog.
+     */
+    public function countPublishedAuthors(int $blogId): int
+    {
+        return (int) $this->database->query(
+            "SELECT COUNT(DISTINCT author_id) FROM posts WHERE blog_id = ? AND status = 'published'",
+            [$blogId]
+        )->fetchColumn();
     }
 
     /**

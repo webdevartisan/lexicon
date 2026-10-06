@@ -305,7 +305,7 @@ foreach ($socialNetworks as $network) {
 
         {% include "partials/_consent_bootstrap.lex.php" %}
         {% include "partials/_consent_banner.lex.php" %}
-        {% include "partials/_platform_traffic_beacon.lex.php" %}
+        {% include "partials/_platform_insights_beacon.lex.php" %}
 
         <button type="button" class="fab scroll-top-btn" title="<?= e($t('a11y.backToTop')) ?>" aria-label="<?= e($t('a11y.backToTop')) ?>"></button>
 

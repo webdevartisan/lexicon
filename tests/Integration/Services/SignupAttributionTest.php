@@ -2,31 +2,30 @@
 
 declare(strict_types=1);
 
+use App\Models\AnalyticsEventModel;
+use App\Models\AnalyticsSaltModel;
+use App\Models\AnalyticsVisitModel;
 use App\Models\SettingModel;
-use App\Models\TrafficEventModel;
-use App\Models\TrafficHitModel;
-use App\Models\TrafficSaltModel;
-use App\Services\Traffic\SignupAttribution;
-use App\Services\Traffic\TrafficSettings;
-use App\Services\Traffic\UserAgentClassifier;
-use App\Services\Traffic\VisitorCookie;
-use App\Services\Traffic\VisitorIdentity;
+use App\Services\Analytics\AnalyticsSettings;
+use App\Services\Analytics\SignupAttribution;
+use App\Services\Analytics\UserAgentClassifier;
+use App\Services\Analytics\VisitFinder;
+use App\Services\Analytics\VisitorCookie;
+use App\Services\Analytics\VisitorIdentity;
 use Framework\Core\Request;
+use Tests\Helpers\AnalyticsFixture;
 
 const SIGNUP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36';
 
 beforeEach(function () {
-    $config = require ROOT_PATH.'/config/traffic.php';
+    $config = require ROOT_PATH.'/config/analytics.php';
 
-    $this->identity = new VisitorIdentity(new TrafficSaltModel($this->db), 'test-key');
+    $this->identity = new VisitorIdentity(new AnalyticsSaltModel($this->db), 'test-key');
     $this->attribution = new SignupAttribution(
-        new TrafficSettings(new SettingModel($this->db)),
+        new AnalyticsSettings(new SettingModel($this->db)),
         new UserAgentClassifier($config['bot_patterns']),
-        $this->identity,
-        new VisitorCookie('lx_vid', 395),
-        new TrafficHitModel($this->db),
-        new TrafficEventModel($this->db),
-        30,
+        new VisitFinder($this->identity, new VisitorCookie('lx_vid', 395), new AnalyticsVisitModel($this->db), 30),
+        new AnalyticsEventModel($this->db),
     );
 
     $this->request = static fn (array $headers = [], array $cookies = []): Request => new Request(
@@ -34,15 +33,22 @@ beforeEach(function () {
         array_change_key_case($headers + ['User-Agent' => SIGNUP_UA])
     );
 
-    // A view by this browser, $minutesAgo minutes back.
-    $this->view = function (string $hash, int $minutesAgo, string $pageType, ?int $blogId, string $channel, ?string $source = null, ?string $campaign = null) {
-        $this->db->execute(
-            "INSERT INTO traffic_hits (view_id, blog_id, page_type, path, path_hash, visitor_hash, visitor_kind, channel,
-                                       referrer_source, utm_campaign, device, browser, os, locale, local_date, created_at)
-             VALUES (?, ?, ?, '/x', ?, ?, 'daily', ?, ?, ?, 'desktop', 'Chrome', 'Windows', 'en', UTC_DATE(),
-                     UTC_TIMESTAMP() - INTERVAL ? MINUTE)",
-            [random_bytes(16), $blogId, $pageType, random_bytes(8), $hash, $channel, $source, $campaign, $minutesAgo]
-        );
+    // A view by this browser, $minutesAgo minutes back, in the visit named $visit.
+    $this->view = function (string $hash, int $minutesAgo, string $pageType, ?int $blogId, string $channel, ?string $source = null, ?string $campaign = null, string $visit = 'current') {
+        AnalyticsFixture::view($this->db, [
+            'blog_id' => $blogId,
+            'page_type' => $pageType,
+            'path' => '/x',
+            'visitor_hash' => $hash,
+            'visit' => bin2hex($hash).$visit,
+            'channel' => $channel,
+            'referrer_source' => $source,
+            'utm_campaign' => $campaign,
+            'browser' => 'Chrome',
+            'os' => 'Windows',
+            'locale' => 'en',
+            'created_at' => gmdate('Y-m-d H:i:s', time() - $minutesAgo * 60),
+        ]);
     };
 
     $this->daily = $this->identity->dailyFor(($this->request)(), new DateTimeImmutable('now', new DateTimeZone('UTC')));
@@ -50,7 +56,9 @@ beforeEach(function () {
 
 function signupEvents(Framework\Database $db): array
 {
-    return $db->query('SELECT channel, referrer_source, utm_campaign, came_from FROM traffic_events')->fetchAll(PDO::FETCH_ASSOC);
+    return $db->query(
+        "SELECT channel, referrer_source, utm_campaign, props->>'$.came_from' AS came_from FROM analytics_events WHERE name = 'signup'"
+    )->fetchAll(PDO::FETCH_ASSOC);
 }
 
 test('a sign-up keeps how its visit began and the last page read before signing up', function () {
@@ -65,7 +73,7 @@ test('a sign-up keeps how its visit began and the last page read before signing 
 });
 
 test('an earlier visit that day is not where this one began', function () {
-    ($this->view)($this->daily, 300, 'post', 7, 'social', 'Reddit');
+    ($this->view)($this->daily, 300, 'post', 7, 'social', 'Reddit', null, 'morning');
     ($this->view)($this->daily, 10, 'discover', null, 'direct');
 
     $this->attribution->record(($this->request)());
@@ -114,7 +122,7 @@ test('nothing is noted without a counted visit going on', function (array $heade
 
 test('nothing is noted while counting is switched off', function () {
     ($this->view)($this->daily, 1, 'home', null, 'direct');
-    (new SettingModel($this->db))->set('traffic.enabled', '0');
+    (new SettingModel($this->db))->set('analytics.enabled', '0');
 
     expect($this->attribution->record(($this->request)()))->toBeFalse();
 });

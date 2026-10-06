@@ -7,7 +7,7 @@ namespace App\Services;
 use App\Mail\Mailable;
 use App\Mail\QueuedMail;
 use App\Models\MailQueueModel;
-use App\Services\Traffic\EmailLinkTagger;
+use App\Services\Analytics\EmailLinkTagger;
 use Throwable;
 
 /**

@@ -1,6 +1,6 @@
 {% extends "front.lex.php" %}
 
-{% block title %}<?= e($t('traffic.public.title', ['blog' => (string) $blog['blog_name']])) ?> | <?= e(site_setting('site_name', 'Lexicon')) ?>{% endblock %}
+{% block title %}<?= e($t('analytics.public.title', ['blog' => (string) $blog['blog_name']])) ?> | <?= e(site_setting('site_name', 'Lexicon')) ?>{% endblock %}
 
 {% block meta %}
 <meta name="robots" content="noindex" />
@@ -8,7 +8,7 @@
 
 {% block body %}
 <?php
-$present = new \App\Presenters\TrafficPresenter(
+$present = new \App\Presenters\AnalyticsPresenter(
     \App\Services\LocaleState::get()->chromeLocale,
     $t,
     app(\App\Services\LocaleRegistry::class),
@@ -20,23 +20,23 @@ $blogUrl = lurl('/blog/'.rawurlencode((string) $blog['blog_slug']));
 $statsUrl = $blogUrl.'/stats';
 $peak = max(1, ...array_map(static fn (array $point): int => $point['views'], $report['series'] ?: [['views' => 1]]));
 $figures = [
-    ['traffic.metrics.views', $present->number($metrics['views']['value'])],
-    ['traffic.metrics.visitors', $present->number($metrics['visitors']['value'])],
-    ['traffic.metrics.avgRead', $present->metric('duration', $metrics['avg_read_seconds']['value']) ?? $t('traffic.metrics.none')],
-    ['traffic.metrics.readRatio', $present->metric('percent', $metrics['read_ratio']['value']) ?? $t('traffic.metrics.none')],
+    ['analytics.metrics.views', $present->number($metrics['views']['value'])],
+    ['analytics.metrics.visitors', $present->number($metrics['visitors']['value'])],
+    ['analytics.metrics.avgRead', $present->metric('duration', $metrics['avg_read_seconds']['value']) ?? $t('analytics.metrics.none')],
+    ['analytics.metrics.readRatio', $present->metric('percent', $metrics['read_ratio']['value']) ?? $t('analytics.metrics.none')],
 ];
 $sources = array_slice($breakdowns['source'], 0, 5);
 ?>
 <section class="lx-wrap lx-section lx-stats">
     <header class="lx-page-head">
-        <h1 dir="auto"><?= e($t('traffic.public.title', ['blog' => (string) $blog['blog_name']])) ?></h1>
-        <p><?= e($t('traffic.public.intro')) ?> <a href="<?= e($blogUrl) ?>"><?= e($t('traffic.public.backToBlog')) ?></a></p>
+        <h1 dir="auto"><?= e($t('analytics.public.title', ['blog' => (string) $blog['blog_name']])) ?></h1>
+        <p><?= e($t('analytics.public.intro')) ?> <a href="<?= e($blogUrl) ?>"><?= e($t('analytics.public.backToBlog')) ?></a></p>
     </header>
 
-    <nav class="lx-explore-tabs" aria-label="<?= e($t('traffic.range.label')) ?>">
+    <nav class="lx-explore-tabs" aria-label="<?= e($t('analytics.range.label')) ?>">
         <?php foreach ($ranges as $preset) {
             $active = $range->preset === $preset; ?>
-        <a href="<?= e($statsUrl.'?range='.$preset) ?>" class="lx-explore-tab <?= $active ? 'active' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?>><?= e($t('traffic.range.'.$preset)) ?></a>
+        <a href="<?= e($statsUrl.'?range='.$preset) ?>" class="lx-explore-tab <?= $active ? 'active' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?>><?= e($t('analytics.range.'.$preset)) ?></a>
         <?php } ?>
     </nav>
 
@@ -50,20 +50,20 @@ $sources = array_slice($breakdowns['source'], 0, 5);
     </dl>
 
     <?php if ($metrics['views']['value'] === 0) { ?>
-    <p class="lx-muted"><?= e($t('traffic.chart.empty')) ?></p>
+    <p class="lx-muted"><?= e($t('analytics.chart.empty')) ?></p>
     <?php } else { ?>
     <figure class="lx-stats-chart">
-        <figcaption class="lx-stats-caption"><?= e($t('traffic.public.perDay')) ?></figcaption>
+        <figcaption class="lx-stats-caption"><?= e($t('analytics.public.perDay')) ?></figcaption>
         <ol class="lx-stats-bars" aria-hidden="true">
             <?php foreach ($report['series'] as $point) { ?>
             <li style="--lx-bar: <?= round($point['views'] / $peak * 100, 1) ?>%" title="<?= e($present->point($point['date'], $report['interval']).': '.$present->number($point['views'])) ?>"></li>
             <?php } ?>
         </ol>
         <details>
-            <summary><?= e($t('traffic.chart.showTable')) ?></summary>
+            <summary><?= e($t('analytics.chart.showTable')) ?></summary>
             <table class="lx-stats-table">
                 <thead>
-                    <tr><th scope="col"><?= e($t('traffic.chart.date')) ?></th><th scope="col"><?= e($t('traffic.chart.views')) ?></th><th scope="col"><?= e($t('traffic.chart.visitors')) ?></th></tr>
+                    <tr><th scope="col"><?= e($t('analytics.chart.date')) ?></th><th scope="col"><?= e($t('analytics.chart.views')) ?></th><th scope="col"><?= e($t('analytics.chart.visitors')) ?></th></tr>
                 </thead>
                 <tbody>
                     <?php foreach (array_reverse($report['series']) as $point) { ?>
@@ -80,7 +80,7 @@ $sources = array_slice($breakdowns['source'], 0, 5);
 
     <div class="lx-stats-lists">
         <section aria-labelledby="lx-stats-posts">
-            <h2 id="lx-stats-posts"><?= e($t('traffic.topPosts.title')) ?></h2>
+            <h2 id="lx-stats-posts"><?= e($t('analytics.topPosts.title')) ?></h2>
             <ol class="lx-stats-list">
                 <?php foreach (array_slice($report['topPosts'], 0, 5) as $row) {
                     if ($row['title'] === null || $row['status'] !== 'published') {
@@ -95,9 +95,9 @@ $sources = array_slice($breakdowns['source'], 0, 5);
         </section>
 
         <section aria-labelledby="lx-stats-sources">
-            <h2 id="lx-stats-sources"><?= e($t('traffic.breakdowns.source')) ?></h2>
+            <h2 id="lx-stats-sources"><?= e($t('analytics.breakdowns.source')) ?></h2>
             <?php if ($sources === []) { ?>
-            <p class="lx-muted"><?= e($t('traffic.breakdowns.empty')) ?></p>
+            <p class="lx-muted"><?= e($t('analytics.breakdowns.empty')) ?></p>
             <?php } else { ?>
             <ol class="lx-stats-list">
                 <?php foreach ($sources as $row) { ?>
@@ -109,6 +109,6 @@ $sources = array_slice($breakdowns['source'], 0, 5);
     </div>
     <?php } ?>
 
-    <p class="lx-muted lx-stats-note"><?= e($t('traffic.public.note')) ?> <a href="<?= e(lurl('/privacy')) ?>"><?= e($t('traffic.publicNoticeLink')) ?></a></p>
+    <p class="lx-muted lx-stats-note"><?= e($t('analytics.public.note')) ?> <a href="<?= e(lurl('/privacy')) ?>"><?= e($t('analytics.publicNoticeLink')) ?></a></p>
 </section>
 {% endblock %}

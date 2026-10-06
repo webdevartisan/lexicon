@@ -31,10 +31,10 @@ class BlogSettingsModel extends AppModel
         'replies_auto_publish',
         'workflow_enabled',
         'translations_enabled',
-        'traffic_exclude_members',
-        'traffic_public_notice',
-        'traffic_popular_posts',
-        'traffic_public_stats',
+        'analytics_exclude_members',
+        'analytics_public_notice',
+        'analytics_popular_posts',
+        'analytics_public_stats',
     ];
 
     /**
@@ -86,8 +86,8 @@ class BlogSettingsModel extends AppModel
                             banner_path, logo_path, favicon_path,
                             comments_enabled, comments_auto_publish, replies_auto_publish,
                             workflow_enabled, translations_enabled,
-                            traffic_exclude_members, traffic_excluded_paths, traffic_public_notice,
-                            traffic_popular_posts, traffic_public_stats
+                            analytics_exclude_members, analytics_excluded_paths, analytics_public_notice,
+                            analytics_popular_posts, analytics_public_stats
                     FROM blog_settings WHERE blog_id = ? LIMIT 1';
 
             return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
@@ -178,11 +178,11 @@ class BlogSettingsModel extends AppModel
             'replies_auto_publish',
             'workflow_enabled',
             'translations_enabled',
-            'traffic_exclude_members',
-            'traffic_excluded_paths',
-            'traffic_public_notice',
-            'traffic_popular_posts',
-            'traffic_public_stats',
+            'analytics_exclude_members',
+            'analytics_excluded_paths',
+            'analytics_public_notice',
+            'analytics_popular_posts',
+            'analytics_public_stats',
         ];
 
         $set = [];

@@ -134,38 +134,51 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * Open the Traffic dashboard. Anyone who writes for the blog, and staff who
-     * see the platform's traffic, so a blog in the admin's Top blogs can be opened.
+     * Open the blog's Insights. Anyone who writes for the blog, and staff who
+     * see the platform's Insights, so a blog in the admin's Top blogs can be opened.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
-    public function viewTraffic(array $user, object $blog): bool
+    public function viewAnalytics(array $user, object $blog): bool
     {
         assert($blog instanceof BlogResource);
 
-        return self::seesPlatformTraffic($user)
+        return self::seesPlatformAnalytics($user)
             || $blog->userCan((int) $user['id'], 'create_posts')
             || $blog->userCan((int) $user['id'], 'edit_blog_posts');
     }
 
     /**
-     * See the whole blog's traffic, not only one's own posts.
+     * See the whole blog's numbers, not only one's own posts.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
-    public function viewAllTraffic(array $user, object $blog): bool
+    public function viewAllAnalytics(array $user, object $blog): bool
     {
         assert($blog instanceof BlogResource);
 
-        return self::seesPlatformTraffic($user) || $blog->userCan((int) $user['id'], 'edit_blog_posts');
+        return self::seesPlatformAnalytics($user) || $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
+     * The Authors page: whole-blog numbers, on a blog where more than one person
+     * has published, since with one author it would only repeat the other pages.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function viewAuthorInsights(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $this->viewAllAnalytics($user, $blog) && $blog->publishedAuthorCount() >= 2;
     }
 
     /**
      * @param  array<string, mixed>  $user
      */
-    private static function seesPlatformTraffic(array $user): bool
+    private static function seesPlatformAnalytics(array $user): bool
     {
-        return in_array('view_platform_traffic', $user['permissions'] ?? [], true);
+        return in_array('view_platform_analytics', $user['permissions'] ?? [], true);
     }
 
     /**

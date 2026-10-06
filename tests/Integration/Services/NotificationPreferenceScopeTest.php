@@ -55,9 +55,9 @@ test('a blog owner sees author, review, moderation, firehose and traffic toggles
         'notify_post_status',
         'notify_review_requests',
         'notify_invites',
-        'notify_traffic_digest',
-        'notify_traffic_milestones',
-        'notify_traffic_spikes',
+        'notify_insights_digest',
+        'notify_insights_milestones',
+        'notify_insights_spikes',
     ]);
 });
 
@@ -70,7 +70,7 @@ test('an author collaborator sees post and comment toggles plus role changes', f
         'notify_comments_authored',
         'notify_post_status',
         'notify_role_changes',
-        'notify_traffic_milestones',
+        'notify_insights_milestones',
     ]);
 });
 
@@ -96,6 +96,6 @@ test('an editor collaborator sees moderation but not the owner-only firehose or 
         'notify_post_status',
         'notify_review_requests',
         'notify_role_changes',
-        'notify_traffic_milestones',
+        'notify_insights_milestones',
     ]);
 });

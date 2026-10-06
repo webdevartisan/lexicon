@@ -28,7 +28,7 @@ class ActivityLogModel extends AppModel
     }
 
     /**
-     * The days one action was taken on one resource, for markers on a Traffic chart.
+     * The days one action was taken on one resource, for markers on an Insights chart.
      *
      * @return list<string> Y-m-d, oldest first, each once
      */

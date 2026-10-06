@@ -63,7 +63,7 @@ beforeEach(function () {
         $container->get(ThemeService::class),
         $container->get(BlogOwnershipService::class),
         $container->get(BlogDeletionService::class),
-        new App\Models\TrafficStatsModel($this->db),
+        new App\Models\AnalyticsStatsModel($this->db),
     );
 
     $this->postController = new PostController(

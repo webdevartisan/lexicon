@@ -467,7 +467,8 @@ class BlogController extends AppController
 
         // Merge meta: post-level SEO overrides > post content > blog defaults.
         $robots = [];
-        if (!empty($post['meta_noindex']) || $ctx['meta']['robots'] !== null) {
+        // An unlisted post is for people with the link, so search engines are told to leave it out too.
+        if (!empty($post['meta_noindex']) || ($post['visibility'] ?? '') === 'unlisted' || $ctx['meta']['robots'] !== null) {
             $robots[] = 'noindex';
         }
         if (!empty($post['meta_nofollow']) || $ctx['meta']['robots'] !== null) {

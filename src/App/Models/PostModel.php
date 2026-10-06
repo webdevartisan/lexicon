@@ -39,6 +39,19 @@ class PostModel extends AppModel
      */
     public const VISIBILITIES = ['public', 'private', 'unlisted'];
 
+    /**
+     * A post search engines are offered, over the aliases p (posts), b (blogs) and
+     * s (blog_settings): published and public, not marked noindex, on a published
+     * blog that allows indexing, with no canonical address pointing somewhere else.
+     * The sitemap and the SEO checks both read it, so they never disagree.
+     */
+    public const INDEXABLE_SQL = "p.status = 'published' AND p.visibility = 'public' AND b.status = 'published'
+        AND COALESCE(p.meta_noindex, 0) = 0 AND COALESCE(s.indexable, 1) = 1
+        AND (p.canonical_url IS NULL OR p.canonical_url = '' OR p.canonical_url LIKE CONCAT('%/blog/', b.blog_slug, '/', p.slug))";
+
+    /** Posts one sitemap lists, newest first. */
+    public const SITEMAP_LIMIT = 1000;
+
     /** Blog addresses the blog's own pages answer, so no post can be given one. */
     private const ROUTE_SLUGS = ['archive', 'index-feed', 'stats'];
 
@@ -939,12 +952,12 @@ class PostModel extends AppModel
     }
 
     /**
-     * Public post URLs for the sitemap: published, public, on published blogs.
+     * Post URLs for the sitemap: the posts search engines are offered, newest first.
      *
      * @param  int  $limit  Safety cap on sitemap size
      * @return array<int, array<string, mixed>> Rows with slug, blog_slug, updated_at
      */
-    public function findPublicForSitemap(int $limit = 1000): array
+    public function findPublicForSitemap(int $limit = self::SITEMAP_LIMIT): array
     {
         // The locale columns come along so the sitemap can list each post at the
         // URLs it actually resolves at, rather than assuming English. Translated
@@ -957,13 +970,11 @@ class PostModel extends AppModel
                 JOIN blogs b ON p.blog_id = b.id
                 LEFT JOIN blog_settings s ON s.blog_id = b.id
                 LEFT JOIN post_translations t ON t.post_id = p.id
-                WHERE p.status = 'published'
-                  AND p.visibility = 'public'
-                  AND b.status = 'published'
+                WHERE ".self::INDEXABLE_SQL.'
                 GROUP BY p.id, p.slug, p.updated_at, p.published_at, b.blog_slug,
                          s.default_locale, s.translations_enabled
                 ORDER BY p.published_at DESC
-                LIMIT :limit";
+                LIMIT :limit';
 
         return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
     }

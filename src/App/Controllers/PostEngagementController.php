@@ -8,9 +8,9 @@ use App\Exceptions\ReportRejectedException;
 use App\Models\PostBookmarkModel;
 use App\Models\PostModel;
 use App\Models\PostVoteModel;
+use App\Services\Analytics\GoalRecorder;
 use App\Services\CommentRateLimiter;
 use App\Services\ReportIntakeService;
-use App\Services\Traffic\GoalRecorder;
 use App\Traits\ThrottlesReaderInteractions;
 use Framework\Core\Response;
 
@@ -59,6 +59,8 @@ class PostEngagementController extends AppController
 
         if ($totals['mine'] === PostVoteModel::UP) {
             $this->goals->onPost($this->request, 'like', (int) $id, auth()->user());
+        } elseif ($totals['mine'] === PostVoteModel::DOWN) {
+            $this->goals->onPost($this->request, 'dislike', (int) $id, auth()->user());
         }
 
         return $this->jsonSuccess($totals);

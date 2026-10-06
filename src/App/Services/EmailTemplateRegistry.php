@@ -158,12 +158,12 @@ class EmailTemplateRegistry
                 ],
             ],
 
-            // Traffic news
-            'traffic_milestone' => [
+            // Insights news
+            'insights_milestone' => [
                 'name' => 'View Milestone',
                 'description' => 'Tells an author a post passed 100, 1,000, 10,000 or 100,000 views',
-                'group' => 'Traffic',
-                'class' => 'App\\Mail\\TrafficMilestoneMail',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsMilestoneMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
                     'postTitle' => 'Ten Days in Crete',
@@ -172,11 +172,11 @@ class EmailTemplateRegistry
                     'postId' => 1,
                 ],
             ],
-            'traffic_spike' => [
-                'name' => 'Traffic Spike',
+            'insights_spike' => [
+                'name' => 'Views Spike',
                 'description' => 'Tells a blog owner the blog is far busier than usual today',
-                'group' => 'Traffic',
-                'class' => 'App\\Mail\\TrafficSpikeMail',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsSpikeMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'blogName' => 'Travel Stories',
@@ -186,18 +186,19 @@ class EmailTemplateRegistry
                     'topSource' => 'Hacker News',
                 ],
             ],
-            'traffic_digest' => [
-                'name' => 'Weekly Traffic Digest',
+            'insights_digest' => [
+                'name' => 'Weekly Insights Digest',
                 'description' => 'Monday summary of each blog an owner has',
-                'group' => 'Traffic',
-                'class' => 'App\\Mail\\TrafficDigestMail',
+                'group' => 'Insights',
+                'class' => 'App\\Mail\\InsightsDigestMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'weekLabel' => 'Sep 28 to Oct 4, 2026',
                     'blogs' => [[
-                        'name' => 'Travel Stories', 'id' => 1, 'slug' => 'travel-stories', 'views' => 1240,
-                        'previous' => 980, 'visitors' => 860, 'source' => 'Google',
+                        'name' => 'Travel Stories', 'id' => 1, 'slug' => 'travel-stories', 'from' => '2026-09-28', 'to' => '2026-10-04',
+                        'views' => 1240, 'previous' => 980, 'visitors' => 860, 'source' => 'Google',
                         'posts' => [['title' => 'Ten Days in Crete', 'views' => 410]],
+                        'goals' => ['subscribe' => 3, 'comment' => 12, 'like' => 1],
                     ]],
                 ],
             ],

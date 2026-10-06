@@ -652,7 +652,7 @@
 
 /* The owner's optional line telling readers how visits are counted. Colours
    come from the theme, so it reads as part of the page it closes. */
-.lx-traffic-notice {
+.lx-insights-notice {
   margin: 0;
   padding: 0.75rem 1rem 1.5rem;
   font-size: 0.75rem;
@@ -661,7 +661,7 @@
   opacity: 0.75;
 }
 
-.lx-traffic-notice a {
+.lx-insights-notice a {
   color: inherit;
   text-decoration: underline;
 }

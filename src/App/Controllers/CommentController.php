@@ -9,11 +9,11 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\CommentVoteModel;
+use App\Services\Analytics\GoalRecorder;
 use App\Services\CommentRateLimiter;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
 use App\Services\ReportIntakeService;
-use App\Services\Traffic\GoalRecorder;
 use App\Traits\ThrottlesReaderInteractions;
 use Framework\Core\Response;
 

@@ -109,28 +109,34 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
         </section>
         <?php } ?>
 
-        <?php if (!empty($postTraffic)) { ?>
+        <?php if (!empty($postAnalytics)) { ?>
         <!-- Readers -->
         <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
           <div class="p-4">
             <div class="flex items-center justify-between gap-2">
-              <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100"><?= e($t('traffic.pageTitle')) ?></h3>
-              <a href="<?= e($postTraffic['url']) ?>" class="text-xs text-custom-500 hover:underline"><?= e($t('traffic.topPosts.details')) ?></a>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100"><?= e($t('analytics.pageTitle')) ?></h3>
+              <a href="<?= e($postAnalytics['url']) ?>" class="text-xs text-custom-500 hover:underline"><?= e($t('analytics.topPosts.details')) ?></a>
             </div>
-            <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+            <?php
+            $writerPresent = new \App\Presenters\AnalyticsPresenter(\App\Services\LocaleState::get()->chromeLocale, $t, app(\App\Services\LocaleRegistry::class), 'post');
+            $writerSource = $writerPresent->topSource($postAnalytics['weekSources']);
+            ?>
+            <p class="mt-2 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300"><?= e($t('analytics.writer.thisWeek')) ?></p>
+            <dl class="mt-1 grid grid-cols-3 gap-2 text-center">
               <div>
-                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.metrics.views')) ?></dt>
-                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['views'])) ?></dd>
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('analytics.metrics.views')) ?></dt>
+                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e($writerPresent->number($postAnalytics['weekViews'])) ?></dd>
               </div>
               <div>
-                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.metrics.visitors')) ?></dt>
-                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['visitors'])) ?></dd>
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('analytics.metrics.readRatio')) ?></dt>
+                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e($writerPresent->percent($postAnalytics['weekReadRate']) ?? $t('analytics.metrics.none')) ?></dd>
               </div>
-              <div>
-                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('traffic.range.30d')) ?></dt>
-                <dd class="text-base font-semibold text-slate-900 dark:text-zink-50 tabular-nums"><?= e(number_format($postTraffic['recent'])) ?></dd>
+              <div class="min-w-0">
+                <dt class="text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('analytics.metrics.topSource')) ?></dt>
+                <dd class="text-sm font-semibold text-slate-900 dark:text-zink-50 truncate" dir="auto" title="<?= e($writerSource ?? '') ?>"><?= e($writerSource ?? $t('analytics.metrics.none')) ?></dd>
               </div>
             </dl>
+            <p class="mt-2 text-[11px] text-slate-500 dark:text-zink-300"><?= e($t('analytics.writer.allTime', ['views' => $writerPresent->number($postAnalytics['views'])])) ?></p>
           </div>
         </section>
         <?php } ?>

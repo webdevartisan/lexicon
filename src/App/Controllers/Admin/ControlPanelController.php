@@ -7,11 +7,11 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\ActivityLogModel;
+use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
 use App\Models\PostModel;
-use App\Models\TrafficStatsModel;
 use App\Models\UserModel;
 use App\Presenters\ModerationCasePresenter;
 use App\Resources\SystemResource;
@@ -35,7 +35,7 @@ class ControlPanelController extends AppController
         private ActivityLogModel $activityLog,
         private CacheManagementService $cacheService,
         private ModerationCaseModel $cases,
-        private TrafficStatsModel $traffic,
+        private AnalyticsStatsModel $analytics,
     ) {}
 
     public function index(): Response
@@ -50,7 +50,7 @@ class ControlPanelController extends AppController
             'blogs' => $this->blogs->count(),
         ];
 
-        $byViews = Gate::allows('viewPlatformTraffic', SystemResource::class, auth()->user() ?? []);
+        $byViews = Gate::allows('viewPlatformAnalytics', SystemResource::class, auth()->user() ?? []);
 
         return $this->view('controlpanel.index', [
             'stats' => $stats,
@@ -77,7 +77,7 @@ class ControlPanelController extends AppController
     private function topBlogsByViews(): array
     {
         $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
-        $rows = $this->traffic->topBlogs($today->modify('-29 days')->format('Y-m-d'), $today->format('Y-m-d'), 5);
+        $rows = $this->analytics->topBlogs($today->modify('-29 days')->format('Y-m-d'), $today->format('Y-m-d'), 5);
 
         return array_values(array_filter(array_map(static fn (array $row): ?array => $row['blog_name'] === null ? null : [
             'id' => (int) $row['blog_id'],
@@ -87,7 +87,7 @@ class ControlPanelController extends AppController
     }
 
     /**
-     * For staff who don't see traffic, the blogs with the most posts.
+     * For staff who don't see Insights, the blogs with the most posts.
      *
      * @return list<array<string, mixed>>
      */

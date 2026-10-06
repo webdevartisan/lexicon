@@ -70,16 +70,15 @@ class DatabaseHelper
             'content_reports',
             'moderation_cases',
 
-            // Traffic
-            'traffic_hits',
-            'traffic_daily',
-            'traffic_daily_dimensions',
-            'traffic_salts',
-            'traffic_events',
-            'traffic_outcomes',
-            'traffic_not_found',
-            'traffic_milestones',
-            'traffic_spike_notices',
+            // Analytics
+            'analytics_events',
+            'analytics_visits',
+            'analytics_daily',
+            'analytics_daily_dimensions',
+            'analytics_daily_events',
+            'analytics_salts',
+            'analytics_beacon_outcomes',
+            'analytics_notices_sent',
 
             // Blog-related
             'blog_subscribers',

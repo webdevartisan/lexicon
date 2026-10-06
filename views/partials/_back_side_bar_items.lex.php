@@ -48,7 +48,7 @@ $icons = [
     'media-library' => 'image',
 
     // Analytics Icons
-    'traffic' => 'trending-up',
+    'insights' => 'trending-up',
     'comments' => 'message-square',
 
     // Admin Icons
@@ -66,6 +66,54 @@ $icons = [
     'settings' => 'settings',
 ];
 
+$iconFor = static fn (array $item): string => $item['icon'] ?? $icons[$item['tag']] ?? 'circle';
+
+/**
+ * A collapsible group: the parent links to the group's first page, the button
+ * shows or hides the children. sidebar-active.js decides which is open.
+ */
+$renderGroup = static function (array $it) use ($iconFor, $t): void {
+    $label = !empty($it['key']) ? $t($it['key']) : e($it['label']);
+    $submenuId = 'nav-group-'.preg_replace('/[^a-z0-9-]/', '', $it['tag']);
+    ?>
+        <li class="relative group/sm" data-nav-group data-nav-group-key="<?= e($it['key'] ?? $it['tag']) ?>" data-nav-group-path="<?= e(lurl($it['href'])) ?>">
+            <div class="sidebar-menu-row">
+                <a class="sidebar-menu-item sidebar-menu-item--group group/menu-link"
+                   href="<?= e($it['href']) ?>"
+                   data-nav-path="<?= e(lurl($it['href'])) ?>">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                        <i data-lucide="<?= e($iconFor($it)) ?>" class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
+                    </span>
+                    <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
+                        <?= $label ?>
+                    </span>
+                </a>
+                <button type="button" data-nav-toggle
+                        class="sidebar-menu-toggle group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden"
+                        aria-expanded="false" aria-controls="<?= e($submenuId) ?>"
+                        aria-label="<?= e($t('navigation.toggleGroup', ['name' => strip_tags($label)])) ?>">
+                    <i data-lucide="chevron-down" class="size-4"></i>
+                </button>
+            </div>
+            <ul id="<?= e($submenuId) ?>" class="hidden ltr:pl-6 rtl:pr-6 group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden" data-nav-submenu>
+                <?php foreach ($it['children'] as $child) { ?>
+                <li>
+                    <a class="sidebar-menu-item group/menu-link text-[13px]"
+                       href="<?= e($child['href']) ?>"
+                       data-nav-path="<?= e(lurl($child['href'])) ?>">
+                        <span class="min-w-[1.5rem] inline-block text-start text-[14px]">
+                            <i data-lucide="<?= e($iconFor($child)) ?>" class="h-3.5"></i>
+                        </span>
+                        <span class="align-middle">
+                            <?php echo !empty($child['key']) ? $t($child['key']) : e($child['label']); ?>
+                        </span>
+                    </a>
+                </li>
+                <?php } ?>
+            </ul>
+        </li>
+    <?php
+};
 /**
  * We separate navigation items by scope for better organization
  */
@@ -89,43 +137,9 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
         </li>
         <?php continue;
         } ?>
-        <?php if (!empty($it['children'])) { ?>
-        <li class="relative group/sm" data-nav-group data-nav-group-path="<?= e(lurl($it['href'])) ?>">
-            <div class="sidebar-menu-row">
-                <a class="sidebar-menu-item sidebar-menu-item--group group/menu-link"
-                   href="<?= e($it['href']) ?>"
-                   data-nav-path="<?= e(lurl($it['href'])) ?>">
-                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
-                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>" class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
-                    </span>
-                    <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
-                        <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
-                    </span>
-                </a>
-                <button type="button" data-nav-toggle
-                        class="sidebar-menu-toggle group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden"
-                        aria-expanded="false" aria-label="Toggle section">
-                    <i data-lucide="chevron-down" class="size-4"></i>
-                </button>
-            </div>
-            <ul class="hidden ltr:pl-6 rtl:pr-6 group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden" data-nav-submenu>
-                <?php foreach ($it['children'] as $child) { ?>
-                <li>
-                    <a class="sidebar-menu-item group/menu-link text-[13px]"
-                       href="<?= e($child['href']) ?>"
-                       data-nav-path="<?= e(lurl($child['href'])) ?>">
-                        <span class="min-w-[1.5rem] inline-block text-start text-[14px]">
-                            <i data-lucide="<?= $icons[$child['tag']] ?? 'circle' ?>" class="h-3.5"></i>
-                        </span>
-                        <span class="align-middle">
-                            <?php echo !empty($child['key']) ? $t($child['key']) : e($child['label']); ?>
-                        </span>
-                    </a>
-                </li>
-                <?php } ?>
-            </ul>
-        </li>
-        <?php continue;
+        <?php if (!empty($it['children'])) {
+            $renderGroup($it);
+            continue;
         } ?>
         <li class="relative group/sm">
             <a class="sidebar-menu-item group/menu-link"
@@ -134,7 +148,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                >
                 
                 <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
-                    <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>" 
+                    <i data-lucide="<?= e($iconFor($it)) ?>" 
                        class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
                 </span>
                 <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
@@ -151,6 +165,10 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
 <!-- Contextual Navigation Section - Only shown when blog is selected -->
 <?php if (!empty($contextualItems) && $has_blog_context) { ?>
     <?php foreach ($contextualItems as $it) { ?>
+        <?php if (!empty($it['children'])) {
+            $renderGroup($it);
+            continue;
+        } ?>
         <?php if (($it['type'] ?? 'link') === 'section_header') { ?>
             <!-- Section Header -->
             <li class="px-4 py-2 mt-2 text-vertical-menu-item uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
@@ -167,7 +185,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                       aria-disabled="true"
                       title="Coming soon">
                     <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
-                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>"
+                        <i data-lucide="<?= e($iconFor($it)) ?>"
                            class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden inline-flex items-center gap-2">
@@ -189,7 +207,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                    >
 
                     <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
-                        <i data-lucide="<?= $icons[$it['tag']] ?? 'circle' ?>"
+                        <i data-lucide="<?= e($iconFor($it)) ?>"
                            class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">

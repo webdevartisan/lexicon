@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
-use App\Models\TrafficEventModel;
-use App\Services\Traffic\SignupReportService;
-use App\Services\Traffic\TrafficSettings;
-use App\ValueObjects\TrafficRange;
+use App\Models\AnalyticsDailyEventModel;
+use App\Services\Analytics\AnalyticsSettings;
+use App\Services\Analytics\InsightsSavedView;
+use App\Services\Analytics\SignupReportService;
+use App\ValueObjects\AnalyticsRange;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -20,16 +21,17 @@ use Framework\Exceptions\PageNotFoundException;
  */
 class SignupController extends AppController
 {
-    protected ?string $areaAbility = 'viewPlatformTraffic';
+    protected ?string $areaAbility = 'viewPlatformAnalytics';
 
     public function __construct(
         private SignupReportService $reports,
-        private TrafficSettings $settings,
+        private AnalyticsSettings $settings,
+        private InsightsSavedView $savedView,
     ) {}
 
     public function index(): Response
     {
-        $range = TrafficRange::fromQuery($this->request->get, 'UTC');
+        $range = $this->savedView->range((int) auth()->user()['id'], 'signups', $this->request->get, 'UTC');
 
         return $this->view('signup.index', [
             'range' => $range,
@@ -37,7 +39,7 @@ class SignupController extends AppController
             'windowDays' => SignupReportService::WINDOW_DAYS,
             'today' => (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d'),
             'trackingEnabled' => $this->settings->enabled(),
-            'basePath' => '/admin/signups',
+            'basePath' => '/admin/insights/signups',
             'scope' => 'site',
             'post' => null,
         ]);
@@ -50,11 +52,11 @@ class SignupController extends AppController
     {
         $dimension = (string) ($this->request->get['dimension'] ?? '');
 
-        if (!in_array($dimension, TrafficEventModel::breakdowns(), true)) {
+        if (!in_array($dimension, AnalyticsDailyEventModel::breakdowns(), true)) {
             throw new PageNotFoundException('Unknown sign-up breakdown.');
         }
 
-        $range = TrafficRange::fromQuery($this->request->get, 'UTC');
+        $range = AnalyticsRange::fromQuery($this->request->get, 'UTC');
         $rows = array_map(
             static fn (array $row): array => [$row['name'] ?? $row['value'], $row['signups']],
             $this->reports->fullBreakdown($dimension, $range)
