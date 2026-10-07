@@ -571,6 +571,10 @@ $container->setShared(App\Services\EmailManager::class, function ($c) {
     return new App\Services\EmailManager(
         $c->get(App\Services\EmailContentRepository::class),
         $c->get(App\Services\EmailTemplateRegistry::class),
+        $c->get(App\Models\EmailContentModel::class),
+        $c->get(App\Models\EmailSettingModel::class),
+        $c->get(App\Models\EmailLayoutModel::class),
+        $c->get(App\Services\AuditService::class),
     );
 });
 

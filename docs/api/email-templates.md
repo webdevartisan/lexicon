@@ -186,20 +186,31 @@ stray first line.
 ## Control panel
 
 `/admin/email-templates`, gated by the `manage_email_templates` permission (`SystemPolicy::manageEmailTemplates`),
-separate from site settings because what is written here reaches every inbox.
+separate from site settings because what is written here reaches every inbox. Two tabs:
 
-- **List**: every email, grouped, with its layout and a badge per language: as shipped, edited, missing, or
-  red when that language cannot be built as saved.
-- **Email**: a tab per language the site offers, a sandboxed preview of the selected one as HTML or plain text,
-  **Send test** (that language as saved, with sample values, subject prefixed `[TEST]`), and the data its words
-  can use with sample values.
+- **Emails**: every email, grouped, with its layout and a badge per language: as shipped, edited, missing, out
+  of date (the English was saved after it), or red when it cannot be built as saved. A badge opens that language.
+- **Email editor** (`/admin/email-templates/{Mailable}?locale=xx`): a tab per language the site offers. Each tab
+  edits that language's subject, preheader, body, footer note and, for the digest, its repeated section; the
+  layout picker is shared by every language. An **Insert** strip lists the email's data, the repeated section's
+  data and the values every email has, with sample values on hover; click one to put it at the cursor. A
+  language not written yet starts empty with **Start from English**, which copies the English to translate in
+  place. The preview beside the form renders what is typed, in that language, as HTML or plain text, and
+  **Send test** sends it (saved or not) with sample values, subject prefixed `[TEST]`. **Reset to default**
+  drops saved English; **Delete this translation** drops another language.
+- **Layouts** (`/admin/email-templates/layouts`): every layout with what uses it. The editor has the name, the
+  colours (picker and hex), support email, company address and the HTML, with an Insert strip and a preview of
+  any email in the layout as typed. A shipped layout can be reset but not deleted; a new one can be deleted once
+  no email uses it.
+
+Every save goes through `EmailManager`, which refuses anything that would stop an email from being built: it
+lints the parts, then renders the email strictly with the change laid over what is in force (`DraftEmailSource`),
+and for a layout, every email in every language that uses it. Saves, resets and deletes are written to the
+activity log (`email.content_saved`, `email.content_reset`, `email.layout_created`, `email.layout_updated`,
+`email.layout_reset`, `email.layout_deleted`).
+
+The code fields are plain monospace textareas where Tab indents, because the control panel's CSP only runs the
+site's own scripts.
 
 **Email Delivery** (`/admin/email-test`, `manage_site_settings`) is separate and only about whether mail leaves
 the server: the transport settings from the environment and a plain connection test.
-
-## Follow-ups not built yet
-
-- Editing in the control panel: a code editor per language with live preview, "Start from English", reset to
-  default, and a layouts editor. Until then, shipped emails are changed in their files and translations can be
-  added as `email_contents` rows.
-- Outdated-translation hints when the English changes after a translation was written.

@@ -309,3 +309,31 @@ function faker(): Faker\Generator
 
     return $faker;
 }
+
+/**
+ * The emails in force for a test database: what is saved there over the shipped files.
+ */
+function emailRepositoryFor(\Framework\Database $db): \App\Services\EmailContentRepository
+{
+    return new \App\Services\EmailContentRepository(
+        new \App\Mail\Templates\ShippedEmailSource(),
+        new \App\Models\EmailLayoutModel($db),
+        new \App\Models\EmailSettingModel($db),
+        new \App\Models\EmailContentModel($db),
+    );
+}
+
+/**
+ * The control panel's email manager over $repository, saving to the same test database.
+ */
+function emailManagerFor(\App\Services\EmailContentRepository $repository, \Framework\Database $db): \App\Services\EmailManager
+{
+    return new \App\Services\EmailManager(
+        $repository,
+        new \App\Services\EmailTemplateRegistry(),
+        new \App\Models\EmailContentModel($db),
+        new \App\Models\EmailSettingModel($db),
+        new \App\Models\EmailLayoutModel($db),
+        \Framework\Core\App::container()->get(\App\Services\AuditService::class),
+    );
+}

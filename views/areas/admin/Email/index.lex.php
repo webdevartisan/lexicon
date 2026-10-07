@@ -5,22 +5,20 @@
 
 {% block body %}
 <?php
-/*
- * Never write two opening braces in a row in these views: the template
- * compiler treats them as its own variable tag, even inside PHP or script.
- */
-$fieldClass = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200';
-$badge = static function (string $locale, array $language): string {
+$activeTab = 'emails';
+$badge = static function (string $locale, array $language, string $href): string {
     [$class, $title] = match (true) {
         $language['problem'] !== null => ['bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300', 'Cannot be built as saved, so the shipped English is sent: '.$language['problem']],
+        $language['outdated'] => ['bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300', 'The English was changed after this was saved; check it still says the same'],
         $language['source'] === 'built-in' => ['bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200', 'As shipped'],
         default => ['bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', 'Written or changed in the control panel'],
     };
 
-    return '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium uppercase rounded '.$class.'" title="'.e($title).'">'.e($locale).'</span>';
+    return '<a href="'.e($href).'" class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium uppercase rounded hover:ring-1 hover:ring-custom-500 '.$class.'" title="'.e($title).'">'.e($locale).'</a>';
 };
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
+    {% include "areas/admin/Email/_shared.lex.php" %}
 
     <?php if (!empty($unregistered)) { ?>
     <!-- A Mailable exists in the codebase but is not registered, so it has no entry here -->
@@ -33,7 +31,7 @@ $badge = static function (string $locale, array $language): string {
                 <li><code class="text-xs"><?= e($class) ?></code></li>
                 <?php } ?>
             </ul>
-            <p class="mt-1">Add them to <code class="text-xs">EmailTemplateRegistry</code> with sample data to preview and test them here.</p>
+            <p class="mt-1">Add them to <code class="text-xs">EmailTemplateRegistry</code> with sample data to edit and test them here.</p>
         </div>
     </div>
     <?php } ?>
@@ -44,7 +42,7 @@ $badge = static function (string $locale, array $language): string {
             <input type="search" id="email-search" value="<?= e($search) ?>" placeholder="Search emails…" class="<?= e($fieldClass) ?>">
         </div>
         <p class="text-sm text-slate-500 dark:text-zink-300 md:ml-auto">
-            Open an email to preview it in each language and send yourself a test.
+            Open an email to change its words in each language, preview it and send yourself a test.
         </p>
     </div>
 
@@ -74,18 +72,19 @@ $badge = static function (string $locale, array $language): string {
                                 <td class="px-3.5 py-2.5 whitespace-nowrap text-slate-600 dark:text-zink-200"><?= e($email['layout']) ?></td>
                                 <td class="px-3.5 py-2.5">
                                     <div class="flex flex-wrap gap-1">
-                                        <?php foreach ($email['languages'] as $locale => $language) { ?>
-                                        <?= $badge($locale, $language) ?>
+                                        <?php foreach ($siteLocales as $locale) {
+                                            if (isset($email['languages'][$locale])) { ?>
+                                        <?= $badge($locale, $email['languages'][$locale], lurl('/admin/email-templates/'.$short.'?locale='.$locale)) ?>
+                                        <?php } else { ?>
+                                        <a href="<?= e(lurl('/admin/email-templates/'.$short.'?locale='.$locale)) ?>" class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium uppercase rounded border border-dashed border-slate-300 text-slate-400 hover:text-custom-500 dark:border-zink-500 dark:text-zink-300"
+                                              title="Not written in this language yet; readers of it get the site's default language, else English. Click to write it."><?= e($locale) ?></a>
                                         <?php } ?>
-                                        <?php foreach (array_diff($siteLocales, array_keys($email['languages'])) as $missing) { ?>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium uppercase rounded border border-dashed border-slate-300 text-slate-400 dark:border-zink-500 dark:text-zink-300"
-                                              title="Not written in this language yet; readers of it get the site's default language, else English"><?= e($missing) ?></span>
                                         <?php } ?>
                                     </div>
                                 </td>
                                 <td class="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     <a href="<?= e(lurl('/admin/email-templates/'.$short)) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500">
-                                        <i data-lucide="eye" class="size-4"></i> Preview<span class="sr-only"> <?= e($email['name']) ?></span>
+                                        <i data-lucide="pencil" class="size-4"></i> Edit<span class="sr-only"> <?= e($email['name']) ?></span>
                                     </a>
                                 </td>
                             </tr>

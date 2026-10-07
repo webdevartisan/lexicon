@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Mail\Templates\RenderedEmail;
 use App\Services\EmailManager;
 use App\Services\EmailRenderer;
 use App\Services\LocaleRegistry;
@@ -14,12 +15,16 @@ use Framework\Core\Response;
 use Throwable;
 
 /**
- * Email Templates: every email the site sends, the layout it uses and the
- * languages it is written in, with a preview of each and a test send.
+ * Email Templates: every email the site sends, and its editor.
  *
- * This is the one place to see and try an email. Emails are addressed by
- * short class name in URLs, checked against the registry, so nothing here
- * ever builds an arbitrary class.
+ * The editor has a tab per language the site offers. Each tab edits that
+ * language's subject, preheader, body and footer note; the layout is shared
+ * by every language. What is typed is previewed live and can be sent as a
+ * test before it is saved, so this is the one place to write, see and try an
+ * email. Emails are addressed by short class name in URLs, checked against
+ * the registry, so nothing here ever builds an arbitrary class.
+ *
+ * @phpstan-import-type Email from EmailManager
  */
 class EmailController extends AppController
 {
@@ -46,11 +51,8 @@ class EmailController extends AppController
             $layout = $repository->layout($repository->layoutFor($email['class']));
             $languages = [];
 
-            foreach ($repository->locales($email['class']) as $locale) {
-                $languages[$locale] = [
-                    'source' => $repository->content($email['class'], $locale)['source'] ?? 'built-in',
-                    'problem' => $problems[$email['class']][$locale] ?? null,
-                ];
+            foreach ($this->manager->languages($email) as $locale => $language) {
+                $languages[$locale] = $language + ['problem' => $problems[$email['class']][$locale] ?? null];
             }
 
             $groups[$email['group']][$short] = $email + [
@@ -67,6 +69,9 @@ class EmailController extends AppController
         ]);
     }
 
+    /**
+     * The editor, on one language's tab.
+     */
     public function show(string $name): Response
     {
         $email = $this->manager->email($name);
@@ -77,66 +82,102 @@ class EmailController extends AppController
             return $this->redirect(self::BASE);
         }
 
+        $locale = $this->locale((string) $this->request->getParam('locale', ''));
         $repository = $this->manager->repository();
-        $available = $repository->locales($email['class']);
-        $registry = LocaleRegistry::instance();
-        $locale = $this->requestedLocale($available);
-        $layoutSlug = $repository->layoutFor($email['class']);
+        $content = $repository->content($email['class'], $locale);
 
-        return $this->view('areas/admin/Email/show.lex.php', [
-            'email' => $email,
-            'locale' => $locale,
-            'languages' => array_map(static fn (string $code): array => [
-                'code' => $code,
-                'name' => $registry->nativeName($code),
-                'written' => in_array($code, $available, true),
-                'source' => $repository->content($email['class'], $code)['source'] ?? null,
-            ], $registry->supported()),
-            'layout' => $repository->layout($layoutSlug) ?? ['slug' => $layoutSlug, 'name' => $layoutSlug],
-            'sample' => $this->manager->sampleData($email),
-            'globals' => array_merge(EmailRenderer::GLOBALS, EmailRenderer::LAYOUT_SETTINGS),
-            'problem' => $this->manager->problems([$email['class']])[$email['class']][$locale] ?? null,
-            'testRecipient' => (string) (auth()->user()['email'] ?? ''),
+        return $this->editor($email, $locale, [
+            'subject' => $content['subject'] ?? '',
+            'preheader' => $content['preheader'] ?? '',
+            'body' => $content['body'] ?? '',
+            'footer_note' => $content['footer_note'] ?? '',
+            'repeat' => $content['repeat'] ?? '',
+            'layout' => $repository->layoutFor($email['class']),
         ]);
     }
 
-    /**
-     * The preview frame: the email as saved, in one language, with its sample
-     * data. Sandboxed: see SandboxesPreviewHtml.
-     */
-    public function render(string $name): Response
+    public function save(string $name): Response
     {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $email = $this->manager->email($name);
+
+        if ($email === null) {
+            $this->flash('error', 'There is no such email.');
+
+            return $this->redirect(self::BASE);
+        }
+
+        $locale = $this->locale((string) $this->request->postParam('locale', ''));
+        $input = $this->request->postParams();
+        $result = $this->manager->saveContent($email, $locale, $input, $this->actorId(), $this->request->ip());
+
+        if (!$result['ok']) {
+            return $this->editor($email, $locale, self::fields($input), $result['errors'], $result['warnings'], 422);
+        }
+
+        $this->flash('success', $email['name'].' is saved in '.LocaleRegistry::instance()->nativeName($locale).'.');
+
+        foreach ($result['warnings'] as $warning) {
+            $this->flash('warning', $warning);
+        }
+
+        return $this->redirect(self::BASE.'/'.$name.'?locale='.$locale);
+    }
+
+    /**
+     * Drop one language's saved words: English goes back to its shipped file,
+     * any other language is no longer written.
+     */
+    public function reset(string $name): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $email = $this->manager->email($name);
+        $locale = $this->locale((string) $this->request->postParam('locale', ''));
+
+        if ($email !== null) {
+            $result = $this->manager->resetContent($email, $locale, $this->actorId(), $this->request->ip());
+            $this->flash($result['ok'] ? 'success' : 'error', $result['ok']
+                ? ($locale === EmailRenderer::BASE_LOCALE ? "{$email['name']} is back to its shipped English." : 'The '.LocaleRegistry::instance()->nativeName($locale)." version of {$email['name']} was deleted.")
+                : $result['errors'][0]);
+        }
+
+        return $this->redirect(self::BASE.'/'.$name.'?locale='.$locale);
+    }
+
+    /**
+     * Live preview of what is typed in the editor. The editor posts its own
+     * form here into a sandboxed frame, so the draft is rendered exactly as it
+     * would be sent. Nothing is saved.
+     */
+    public function preview(string $name): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
         $email = $this->manager->email($name);
 
         if ($email === null) {
             return $this->sandboxedHtml('<p>There is no such email.</p>', 404);
         }
 
-        $locale = $this->requestedLocale($this->manager->repository()->locales($email['class']));
+        $locale = $this->locale((string) $this->request->postParam('locale', ''));
+        $input = $this->request->postParams();
 
         try {
-            $mail = $this->manager->buildSample($email, $locale, false);
+            [$content, $layout, $errors] = $this->manager->normalizeContent($email, $locale, $input);
+            $mail = $this->manager->buildSample($email, $locale, false, $this->manager->draft($email, $locale, $content, $layout));
+            $rendered = new RenderedEmail($mail->getSubject(), $mail->getBody(), (string) $mail->getTextBody());
         } catch (Throwable $e) {
-            return $this->sandboxedHtml(self::page('<p style="color:#b91c1c;">This email cannot be built: '.e($e->getMessage()).'</p>', 'padding:16px;'));
+            return $this->sandboxedHtml(self::page('<p style="color:#b91c1c;">This cannot be previewed: '.e($e->getMessage()).'</p>'));
         }
 
-        if ($this->request->getParam('format', 'html') === 'text') {
-            return $this->sandboxedHtml(self::page(
-                '<pre style="white-space:pre-wrap;word-break:break-word;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;margin:0;">'
-                .e('Subject: '.$mail->getSubject()."\n\n".$mail->getTextBody()).'</pre>',
-                'padding:16px;'
-            ));
-        }
-
-        $banner = '<div dir="ltr" style="text-align:left;font:13px/1.5 Arial,sans-serif;background:#f1f5f9;color:#334155;padding:8px 12px;border-bottom:1px solid #e2e8f0;"><strong>Subject:</strong> '.e($mail->getSubject()).'</div>';
-        $html = (string) preg_replace('#(<body\b[^>]*>)#i', '$1'.str_replace('$', '\\$', $banner), $mail->getBody(), 1, $count);
-
-        return $this->sandboxedHtml($count === 1 ? $html : $banner.$mail->getBody());
+        return $this->sandboxedHtml(($input['preview_format'] ?? '') === 'text' ? self::textPage($rendered) : self::withBanner($rendered, $errors));
     }
 
     /**
-     * Send the email as saved, in one language, built from its sample data,
-     * to one address. Answers in JSON so the page stays as it is.
+     * Send what is typed in the editor, built from the email's sample data,
+     * to one address. Answers in JSON so the form keeps what was typed.
      */
     public function sendTest(string $name): Response
     {
@@ -153,16 +194,15 @@ class EmailController extends AppController
             return $this->json(['ok' => false, 'message' => 'Enter a valid email address to send the test to.'], 422);
         }
 
-        $locale = (string) $this->request->postParam('locale', EmailRenderer::BASE_LOCALE);
+        $locale = $this->locale((string) $this->request->postParam('locale', ''));
+        [$content, $layout, $errors] = $this->manager->normalizeContent($email, $locale, $this->request->postParams());
 
-        try {
-            $mail = $this->manager->buildSample($email, $locale);
-        } catch (Throwable $e) {
-            return $this->json(['ok' => false, 'message' => 'This email cannot be built: '.$e->getMessage()], 422);
+        if ($errors !== []) {
+            return $this->json(['ok' => false, 'message' => 'Fix this first: '.$errors[0]], 422);
         }
 
         try {
-            $this->mailService->sendTest($mail, $recipient);
+            $this->mailService->sendTest($this->manager->buildSample($email, $locale, true, $this->manager->draft($email, $locale, $content, $layout)), $recipient);
         } catch (Throwable $e) {
             // The transport's own complaint is what an admin needs to fix delivery.
             error_log('Email test send failed: '.$e->getMessage());
@@ -174,26 +214,112 @@ class EmailController extends AppController
     }
 
     /**
-     * The language asked for in the query string when the email is written
-     * in it, else the one it would be sent in to a reader of the site default.
-     *
-     * @param  list<string>  $available
+     * @param  Email  $email
+     * @param  array{subject: string, preheader: string, body: string, footer_note: string, repeat: ?string, layout: string}  $fields
+     * @param  list<string>  $errors
+     * @param  list<string>  $warnings
      */
-    private function requestedLocale(array $available): string
+    private function editor(array $email, string $locale, array $fields, array $errors = [], array $warnings = [], int $status = 200): Response
     {
-        $wanted = (string) $this->request->getParam('locale', '');
+        $repository = $this->manager->repository();
+        $registry = LocaleRegistry::instance();
+        $languages = $this->manager->languages($email);
+        $english = $repository->content($email['class'], EmailRenderer::BASE_LOCALE);
 
-        if (in_array($wanted, $available, true)) {
-            return $wanted;
-        }
-
-        $default = LocaleRegistry::instance()->default();
-
-        return in_array($default, $available, true) ? $default : EmailRenderer::BASE_LOCALE;
+        return $this->view('areas/admin/Email/edit.lex.php', [
+            'email' => $email,
+            'locale' => $locale,
+            'localeName' => $registry->nativeName($locale),
+            'rtl' => $registry->isRtl($locale),
+            'tabs' => array_map(static fn (string $code): array => [
+                'code' => $code,
+                'name' => $registry->nativeName($code),
+                'language' => $languages[$code] ?? null,
+            ], $registry->supported()),
+            'written' => isset($languages[$locale]),
+            'stored' => $repository->storedContent($email['class'], $locale) !== null,
+            'outdated' => $languages[$locale]['outdated'] ?? false,
+            'fields' => $fields,
+            'english' => $english === null ? null : [
+                'subject' => $english['subject'], 'preheader' => $english['preheader'], 'body' => $english['body'],
+                'footer_note' => $english['footer_note'], 'repeat' => (string) $english['repeat'],
+            ],
+            'hasRepeat' => $this->manager->hasRepeat($email),
+            'layouts' => $repository->layouts(),
+            'sample' => $this->manager->sampleData($email),
+            'globals' => array_merge(EmailRenderer::GLOBALS, EmailRenderer::LAYOUT_SETTINGS),
+            'problem' => $this->manager->problems([$email['class']])[$email['class']][$locale] ?? null,
+            'testRecipient' => (string) (auth()->user()['email'] ?? ''),
+            'formErrors' => $errors,
+            'formWarnings' => $warnings,
+        ])->setStatusCode($status);
     }
 
-    private static function page(string $body, string $style): string
+    /**
+     * The editor's fields as posted, for showing a refused save again as typed.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array{subject: string, preheader: string, body: string, footer_note: string, repeat: ?string, layout: string}
+     */
+    private static function fields(array $input): array
     {
-        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;'.$style.'font-family:Arial,sans-serif;">'.$body.'</body></html>';
+        $field = static fn (string $key): string => is_string($input[$key] ?? null) ? $input[$key] : '';
+
+        return [
+            'subject' => $field('subject'),
+            'preheader' => $field('preheader'),
+            'body' => $field('body'),
+            'footer_note' => $field('footer_note'),
+            'repeat' => $field('repeat'),
+            'layout' => $field('layout'),
+        ];
+    }
+
+    /**
+     * A language the site offers, or the site default.
+     */
+    private function locale(string $wanted): string
+    {
+        $registry = LocaleRegistry::instance();
+
+        return $registry->isSupported($wanted) ? $wanted : $registry->default();
+    }
+
+    /**
+     * A strip above the preview with the subject and anything the draft gets wrong.
+     *
+     * @param  list<string>  $notes
+     */
+    private static function withBanner(RenderedEmail $email, array $notes): string
+    {
+        $banner = '<div dir="ltr" style="text-align:left;font:13px/1.5 Arial,sans-serif;background:#f1f5f9;color:#334155;padding:8px 12px;border-bottom:1px solid #e2e8f0;"><strong>Subject:</strong> <span dir="auto">'.e($email->subject).'</span></div>';
+
+        foreach ($notes as $note) {
+            $banner .= '<div dir="ltr" style="text-align:left;font:13px/1.5 Arial,sans-serif;background:#fef2f2;color:#991b1b;padding:6px 12px;border-bottom:1px solid #fecaca;">'.e($note).'</div>';
+        }
+
+        $html = (string) preg_replace('#(<body\b[^>]*>)#i', '$1'.str_replace('$', '\\$', $banner), $email->html, 1, $count);
+
+        return $count === 1 ? $html : $banner.$email->html;
+    }
+
+    private static function textPage(RenderedEmail $email): string
+    {
+        return self::page(
+            '<pre dir="auto" style="white-space:pre-wrap;word-break:break-word;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;margin:0;">'
+            .e('Subject: '.$email->subject."\n\n".$email->text).'</pre>'
+        );
+    }
+
+    private static function page(string $body): string
+    {
+        return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:16px;font-family:Arial,sans-serif;">'.$body.'</body></html>';
+    }
+
+    private function actorId(): ?int
+    {
+        $id = auth()->user()['id'] ?? null;
+
+        return $id === null ? null : (int) $id;
     }
 }

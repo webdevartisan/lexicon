@@ -474,11 +474,22 @@ $router->group([
     $r->add('/email-test', ['controller' => 'EmailTestController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/email-test/test-config', ['controller' => 'EmailTestController', 'action' => 'testConfig', 'method' => 'POST']);
 
-    // Email templates: every email the site sends, previewed in each language it has.
-    // Emails are addressed by Mailable class name, which always starts with a capital.
+    // Email templates: every email the site sends with its words per language, and the layouts they go into.
+    // Emails are addressed by Mailable class name, which always starts with a capital; layouts by
+    // lowercase slug, so the two never collide. Fixed segments come before the {slug} routes.
     $r->add('/email-templates', ['controller' => 'EmailController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/email-templates/layouts', ['controller' => 'EmailLayoutController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/email-templates/layouts/create', ['controller' => 'EmailLayoutController', 'action' => 'create', 'method' => 'GET']);
+    $r->add('/email-templates/layouts/store', ['controller' => 'EmailLayoutController', 'action' => 'store', 'method' => 'POST']);
+    $r->add('/email-templates/layouts/preview', ['controller' => 'EmailLayoutController', 'action' => 'preview', 'method' => 'POST']);
+    $r->add('/email-templates/layouts/{slug:[a-z][a-z0-9-]*}/edit', ['controller' => 'EmailLayoutController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/email-templates/layouts/{slug:[a-z][a-z0-9-]*}/update', ['controller' => 'EmailLayoutController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/email-templates/layouts/{slug:[a-z][a-z0-9-]*}/reset', ['controller' => 'EmailLayoutController', 'action' => 'reset', 'method' => 'POST']);
+    $r->add('/email-templates/layouts/{slug:[a-z][a-z0-9-]*}/delete', ['controller' => 'EmailLayoutController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/email-templates/{name:[A-Z][A-Za-z]+}', ['controller' => 'EmailController', 'action' => 'show', 'method' => 'GET']);
-    $r->add('/email-templates/{name:[A-Z][A-Za-z]+}/render', ['controller' => 'EmailController', 'action' => 'render', 'method' => 'GET']);
+    $r->add('/email-templates/{name:[A-Z][A-Za-z]+}/save', ['controller' => 'EmailController', 'action' => 'save', 'method' => 'POST']);
+    $r->add('/email-templates/{name:[A-Z][A-Za-z]+}/reset', ['controller' => 'EmailController', 'action' => 'reset', 'method' => 'POST']);
+    $r->add('/email-templates/{name:[A-Z][A-Za-z]+}/preview', ['controller' => 'EmailController', 'action' => 'preview', 'method' => 'POST']);
     $r->add('/email-templates/{name:[A-Z][A-Za-z]+}/send-test', ['controller' => 'EmailController', 'action' => 'sendTest', 'method' => 'POST']);
 
     // User management

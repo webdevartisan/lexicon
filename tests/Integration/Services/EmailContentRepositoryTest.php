@@ -14,9 +14,7 @@ use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Services\AdminNotificationDispatcher;
 use App\Services\EmailContentRepository;
-use App\Services\EmailManager;
 use App\Services\EmailRenderer;
-use App\Services\EmailTemplateRegistry;
 use App\Services\MailQueueService;
 use App\Services\MailService;
 use Framework\Core\App;
@@ -145,7 +143,7 @@ test('a saved version that cannot be built sends the shipped one and tells the a
 test('the control panel sees which saved versions cannot be built, per language', function () {
     ($this->saveContent)(NewPostMail::class, 'el', ['body' => '<tr><td>{{ headline_typo }}</td></tr>']);
 
-    $manager = new EmailManager($this->repository, new EmailTemplateRegistry());
+    $manager = emailManagerFor($this->repository, $this->db);
     $problems = $manager->problems();
 
     expect(array_keys($problems))->toBe([NewPostMail::class])
