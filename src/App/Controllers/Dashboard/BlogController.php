@@ -15,6 +15,7 @@ use App\Models\UserPreferencesModel;
 use App\Presenters\BlogActionPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
+use App\Services\LocaleRegistry;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -223,7 +224,7 @@ final class BlogController extends AppController
         $settings = $this->settings->findByBlogId((int) $id) ?? [
             'theme' => 'folio',
             'banner_path' => '',
-            'default_locale' => strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en'),
+            'default_locale' => LocaleRegistry::instance()->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null) ?? LocaleRegistry::instance()->default(),
             'meta_title' => '',
             'meta_description' => '',
             'indexable' => 1,
@@ -240,7 +241,7 @@ final class BlogController extends AppController
             'actions' => BlogActionPresenter::for($blog->status()),
             'backUrl' => '/dashboard',
             'settings' => $settings,
-            'locales' => ['en', 'fr', 'de', 'el', 'ar'],
+            'locales' => LocaleRegistry::instance()->names(),
             'current_locale' => $settings['default_locale'],
             'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
@@ -321,7 +322,8 @@ final class BlogController extends AppController
         $currentSettings = $this->settings->findByBlogId($blogId) ?? [];
 
         $settingsData = [
-            'default_locale' => $validated['locale'] ?? 'en',
+            // Only a language the site offers, so a tampered form cannot strand the blog on one.
+            'default_locale' => LocaleRegistry::instance()->normalize($validated['locale'] ?? null) ?? LocaleRegistry::instance()->default(),
             'timezone' => $validated['timezone'] ?? 'UTC',
             'theme' => $currentSettings['theme'] ?? 'folio',
             'meta_title' => $validated['meta_title'] ?? '',

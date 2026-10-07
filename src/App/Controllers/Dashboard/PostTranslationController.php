@@ -58,6 +58,8 @@ final class PostTranslationController extends AppController
             'post' => $post->toArray(),
             'blog' => $blog,
             'locale' => $locale,
+            'localeName' => $this->localeRegistry->nativeName($locale),
+            'isRtlLocale' => $this->localeRegistry->isRtl($locale),
             'translation' => $translation,
             'translations' => $this->translations->findForPost((int) $post->id()),
             'defaultLocale' => (string) ($settings['default_locale'] ?? 'en'),

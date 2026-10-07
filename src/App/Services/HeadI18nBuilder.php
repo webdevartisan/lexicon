@@ -18,17 +18,6 @@ namespace App\Services;
  */
 final class HeadI18nBuilder
 {
-    /**
-     * Region-qualified Open Graph locales. Anything absent falls back to a
-     * doubled code, which is wrong often enough to be worth extending here as
-     * locales are added.
-     */
-    private const OG_LOCALES = [
-        'en' => 'en_US',
-        'el' => 'el_GR',
-        'ar' => 'ar_AE',
-    ];
-
     public function __construct(private LocaleRegistry $registry) {}
 
     /**
@@ -73,7 +62,7 @@ final class HeadI18nBuilder
                 'alternates' => $this->alternates($localeSet, $origin, $suffix),
                 'localeSet' => $localeSet,
                 'xDefaultUrl' => $origin.'/'.$pageDefault.$suffix,
-                'ogLocale' => self::OG_LOCALES[$current] ?? ($current.'_'.strtoupper($current)),
+                'ogLocale' => $this->registry->ogLocale($current),
                 'ogLocaleAlternates' => $this->ogAlternates($localeSet, $current),
             ],
         ];
@@ -113,7 +102,7 @@ final class HeadI18nBuilder
                 continue;
             }
 
-            $out[] = self::OG_LOCALES[$lang] ?? ($lang.'_'.strtoupper($lang));
+            $out[] = $this->registry->ogLocale($lang);
         }
 
         return $out;
