@@ -151,6 +151,33 @@ class EmailTemplateManager
     }
 
     /**
+     * An email's sample as an unsaved edit of it would build, for the live
+     * preview and test sends from the editor.
+     *
+     * @param  array{class: string, sample: string}  $email  An entry of emails()
+     * @param  array<string, mixed>  $input  The editor form, as for normalizeBinding()
+     * @return array{0: Mailable, 1: list<string>} The email and what is wrong with the draft
+     */
+    public function buildDraft(array $email, array $input, bool $strict): array
+    {
+        [$binding, $errors] = $this->normalizeBinding($email['class'], $input);
+        $draft = $this->draft([], [], [$email['class'] => ['is_active' => true] + $binding]);
+
+        return [$this->buildSample($draft, $email['sample'], $strict), $errors];
+    }
+
+    /**
+     * Mailable classes in the codebase that the registry does not list, so
+     * they have no entry under Emails.
+     *
+     * @return string[]
+     */
+    public function unregisteredClasses(): array
+    {
+        return $this->registry->unregisteredClasses();
+    }
+
+    /**
      * What would stop emails from rendering against $source, one line per email.
      *
      * @param  list<string>|null  $onlyClasses  Limit the check to these Mailables

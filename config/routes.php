@@ -469,11 +469,9 @@ $router->group([
     $r->add('/cache/clear', ['controller' => 'CacheController', 'action' => 'clear', 'method' => 'POST']);
     $r->add('/cache/delete-pattern', ['controller' => 'CacheController', 'action' => 'delete-pattern', 'method' => 'POST']);
 
-    // Email testing routes
+    // Email delivery: the mail server settings and a connection test.
+    // Each email is previewed and test-sent from its editor under Email Templates.
     $r->add('/email-test', ['controller' => 'EmailTestController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/email-test/preview', ['controller' => 'EmailTestController', 'action' => 'preview', 'method' => 'GET']);
-    $r->add('/email-test/render-html', ['controller' => 'EmailTestController', 'action' => 'renderHtml', 'method' => 'GET']);
-    $r->add('/email-test/send-test', ['controller' => 'EmailTestController', 'action' => 'sendTest', 'method' => 'POST']);
     $r->add('/email-test/test-config', ['controller' => 'EmailTestController', 'action' => 'testConfig', 'method' => 'POST']);
 
     // Email templates: blocks, templates, and each email's template and wording.
@@ -495,6 +493,7 @@ $router->group([
     $r->add('/email-templates/emails/{name:[A-Za-z]+}/edit', ['controller' => 'EmailBindingController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/email-templates/emails/{name:[A-Za-z]+}/update', ['controller' => 'EmailBindingController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/email-templates/emails/{name:[A-Za-z]+}/reset', ['controller' => 'EmailBindingController', 'action' => 'reset', 'method' => 'POST']);
+    $r->add('/email-templates/emails/{name:[A-Za-z]+}/send-test', ['controller' => 'EmailBindingController', 'action' => 'sendTest', 'method' => 'POST']);
 
     $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/edit', ['controller' => 'EmailTemplateController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/email-templates/{slug:[a-z][a-z0-9-]*}/update', ['controller' => 'EmailTemplateController', 'action' => 'update', 'method' => 'POST']);

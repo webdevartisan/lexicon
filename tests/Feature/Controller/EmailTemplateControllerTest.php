@@ -61,6 +61,22 @@ function previewRequest(array $post): \Framework\Core\Response
     return $controller->preview();
 }
 
+function bindingController(?\App\Services\MailService $mail = null): EmailBindingController
+{
+    return new EmailBindingController(new \Framework\Core\Response(), App::container()->get(EmailTemplateManager::class), $mail ?? Mockery::mock(\App\Services\MailService::class));
+}
+
+/**
+ * @param  array<string, mixed>  $post
+ */
+function sendTestRequest(string $email, array $post, \App\Services\MailService $mail): \Framework\Core\Response
+{
+    $controller = bindingController($mail);
+    setupController($controller, makeRequest('/admin/email-templates/emails/'.$email.'/send-test', 'POST', $post + ['_token' => csrf()->getToken()]), test()->viewer);
+
+    return $controller->sendTest($email);
+}
+
 it('previews a draft block, sandboxed, with a script inside left inert', function () {
     $response = previewRequest([
         'preview_kind' => 'component',
@@ -103,7 +119,7 @@ it('refuses a preview without a valid CSRF token', function () {
 })->throws(Framework\Exceptions\CsrfTokenException::class);
 
 it('lists every registered email on its own row, each comment email included', function () {
-    $controller = new EmailBindingController(new \Framework\Core\Response(), $this->manager);
+    $controller = bindingController();
     setupController($controller, makeRequest('/admin/email-templates/emails'), $this->viewer);
 
     $controller->index();
@@ -115,7 +131,7 @@ it('lists every registered email on its own row, each comment email included', f
 });
 
 it('only edits emails the registry knows, never an arbitrary class', function () {
-    $controller = new EmailBindingController(new \Framework\Core\Response(), $this->manager);
+    $controller = bindingController();
     setupController($controller, makeRequest('/admin/email-templates/emails/Mailable/edit'), $this->viewer);
 
     $response = $controller->edit('Mailable');
@@ -124,7 +140,7 @@ it('only edits emails the registry knows, never an arbitrary class', function ()
 });
 
 it('re-shows a refused binding as typed, with the reason, and saves nothing', function () {
-    $controller = new EmailBindingController(new \Framework\Core\Response(), $this->manager);
+    $controller = bindingController();
     setupController($controller, makeRequest('/admin/email-templates/emails/NewPostMail/update', 'POST', [
         '_token' => csrf()->getToken(),
         'template' => 'notification',
@@ -139,3 +155,56 @@ it('re-shows a refused binding as typed, with the reason, and saves nothing', fu
         ->and(implode(' ', $this->viewer->data['formErrors']))->toContain('first_name')
         ->and($this->manager->repository()->storedBinding(\App\Mail\NewPostMail::class))->toBeNull();
 });
+
+it('sends the unsaved draft as a test, not the saved version', function () {
+    $mail = Mockery::mock(\App\Services\MailService::class);
+    $mail->shouldReceive('sendTest')->once()
+        ->withArgs(fn (\App\Mail\Mailable $m, string $to): bool => $to === 'me@example.test' && str_contains($m->getBody(), 'Draft heading only'))
+        ->andReturn(true);
+
+    $response = sendTestRequest('NewPostMail', [
+        'test_recipient' => 'me@example.test',
+        'template' => 'notification',
+        'mapping' => ['heading' => 'Draft heading only', 'intro' => '{{ post_title }}', 'quote' => '', 'callout' => '', 'button_label' => '', 'button_url' => '', 'details' => '', 'footer_note' => ''],
+    ], $mail);
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(json_decode($response->getBody(), true)['ok'])->toBeTrue()
+        ->and($this->manager->repository()->storedBinding(\App\Mail\NewPostMail::class))->toBeNull();
+});
+
+it('refuses a test to an invalid address or of a draft that cannot be built, sending nothing', function () {
+    $mail = Mockery::mock(\App\Services\MailService::class);
+    $mail->shouldNotReceive('sendTest');
+
+    $badAddress = sendTestRequest('NewPostMail', ['test_recipient' => 'not-an-address', 'template' => 'notification'], $mail);
+    $badDraft = sendTestRequest('NewPostMail', ['test_recipient' => 'me@example.test', 'template' => 'notification', 'mapping' => ['heading' => 'Hi {{ no_such_value }}']], $mail);
+    $unknown = sendTestRequest('Mailable', ['test_recipient' => 'me@example.test'], $mail);
+
+    expect($badAddress->getStatusCode())->toBe(422)
+        ->and($badDraft->getStatusCode())->toBe(422)
+        ->and(json_decode($badDraft->getBody(), true)['message'])->toContain('no_such_value')
+        ->and($unknown->getStatusCode())->toBe(404);
+});
+
+it('passes on what the mail server said when a test cannot be sent', function () {
+    $mail = Mockery::mock(\App\Services\MailService::class);
+    $mail->shouldReceive('sendTest')->andThrow(new Exception('Connection refused by smtp.example.test'));
+
+    $response = sendTestRequest('WelcomeEmail', ['test_recipient' => 'me@example.test'] + bindingInput(\App\Mail\WelcomeEmail::class), $mail);
+
+    expect($response->getStatusCode())->toBe(502)
+        ->and(json_decode($response->getBody(), true)['message'])->toContain('Connection refused');
+});
+
+/**
+ * The editor form as it would be posted for an email's built-in version.
+ *
+ * @return array<string, mixed>
+ */
+function bindingInput(string $class): array
+{
+    $binding = (new \App\Mail\Templates\CatalogTemplateSource())->binding($class);
+
+    return ['template' => $binding['template'], 'mapping' => $binding['mapping']];
+}

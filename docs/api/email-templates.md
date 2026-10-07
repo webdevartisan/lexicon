@@ -213,7 +213,9 @@ separate from site settings because what is written here reaches every inbox.
 
 - **Emails**: every email, its template, whether its wording is customized, and whether it currently builds.
   The editor shows the template's placeholders as fields, the email's data with sample values (click to insert),
-  a subject override, and a live preview of the draft as HTML or plain text.
+  a subject override, a live preview of the draft as HTML or plain text, and **Send test**, which sends the draft
+  (saved or not) with sample values to any address, subject prefixed `[TEST]`. This is the one place to see and try
+  an email.
 - **Templates**: list with search and category filter; a builder with a block palette, drag-and-drop layout
   (with keyboard up/down/remove buttons), the placeholders an email must provide, the emails using it, and a
   live preview; a read-only preview page with HTML, plain text and placeholder tabs.
@@ -221,8 +223,10 @@ separate from site settings because what is written here reaches every inbox.
   fields for them, and previews live.
 
 Built-in items can be edited and reset but not deleted. Custom blocks and templates can be deleted once nothing
-uses them. Every change is written to the audit log (`email_template.*`). To send yourself a real test of an
-email, use **Test** on the Emails list (the existing Email Delivery page).
+uses them. Every change is written to the audit log (`email_template.*`).
+
+**Email Delivery** (`/admin/email-test`, `manage_site_settings`) is separate and only about whether mail leaves the
+server: the transport settings from the environment and a plain connection test.
 
 ## Decisions
 

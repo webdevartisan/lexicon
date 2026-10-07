@@ -195,11 +195,7 @@ class EmailTemplateController extends AppController
         $email = $this->manager->email((string) ($input['email'] ?? ''))
             ?? throw new \RuntimeException('Unknown email.');
 
-        [$binding, $errors] = $this->manager->normalizeBinding($email['class'], $input);
-        $notes = $errors;
-
-        $draft = $this->manager->draft([], [], [$email['class'] => ['is_active' => true] + $binding]);
-        $mailable = $this->manager->buildSample($draft, $email['sample'], false);
+        [$mailable, $notes] = $this->manager->buildDraft($email, $input, false);
 
         return new RenderedEmail($mailable->getSubject(), $mailable->getBody(), (string) $mailable->getTextBody());
     }

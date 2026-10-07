@@ -11,13 +11,29 @@ $basePath = '/admin/email-templates/emails';
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
     {% include "areas/admin/EmailTemplate/_tabs.lex.php" %}
 
+    <?php if (!empty($unregistered)) { ?>
+    <!-- A Mailable exists in the codebase but is not registered, so it has no entry here -->
+    <div class="flex items-start gap-3 px-4 py-3 mb-5 text-sm text-amber-800 border border-amber-200 rounded-md bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+        <i data-lucide="alert-triangle" class="size-4 mt-0.5 shrink-0"></i>
+        <div>
+            <p class="font-medium">Some email classes are not listed here:</p>
+            <ul class="mt-1 list-disc list-inside">
+                <?php foreach ($unregistered as $class) { ?>
+                <li><code class="text-xs"><?= e($class) ?></code></li>
+                <?php } ?>
+            </ul>
+            <p class="mt-1">Add them to <code class="text-xs">EmailTemplateRegistry</code> with sample data to edit and test them here.</p>
+        </div>
+    </div>
+    <?php } ?>
+
     <div class="flex flex-col gap-3 mb-5 md:flex-row md:items-center">
         <div class="grow md:max-w-xs">
             <label for="email-search" class="sr-only">Search emails</label>
             <input type="search" id="email-search" value="<?= e($search) ?>" placeholder="Search emails…" class="<?= e($fieldClass) ?>">
         </div>
         <p class="text-sm text-slate-500 dark:text-zink-300 md:ml-auto">
-            Change an email's wording here. Its look comes from its template.
+            Open an email to change its wording, preview it and send yourself a test.
         </p>
     </div>
 
@@ -63,9 +79,6 @@ $basePath = '/admin/email-templates/emails';
                                 <td class="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     <a href="<?= e(lurl($basePath.'/'.$short.'/edit')) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500">
                                         <i data-lucide="pencil" class="size-4"></i> Edit<span class="sr-only"> <?= e($email['name']) ?></span>
-                                    </a>
-                                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['sample']))) ?>" class="inline-flex items-center gap-1 px-2 py-1 text-slate-500 hover:text-custom-500" title="Preview the real email and send yourself a test">
-                                        <i data-lucide="send" class="size-4"></i> Test<span class="sr-only"> <?= e($email['name']) ?></span>
                                     </a>
                                 </td>
                             </tr>

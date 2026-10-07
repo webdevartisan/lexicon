@@ -56,8 +56,24 @@ $sendsCustom = !$isStored || $binding['is_active'];
                             <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-50">Wording</h2>
                             <p class="text-xs text-slate-500 dark:text-zink-300">
                                 What goes into each placeholder of the template. HTML is allowed, so use &lt;p&gt; for paragraphs and &lt;strong&gt; for bold.
-                                Put this email's data in with the list on the right. Leave a field empty to leave its block out.
+                                Put this email's data in with the buttons below. Leave a field empty to leave its block out.
                             </p>
+                        </div>
+                        <!-- This email's data. Kept in this column: the preview beside it stays in view while scrolling and would cover anything under it. -->
+                        <div class="xl:sticky xl:top-24 z-10 -mx-1 px-1 py-2 bg-white dark:bg-zink-700 border-b border-slate-100 dark:border-zink-600">
+                            <h3 class="mb-1.5 text-xs font-semibold text-slate-700 dark:text-zink-100">This email's data <span class="font-normal text-slate-400">· click to put it where the cursor is; hover for the sample value</span></h3>
+                            <div class="flex flex-wrap gap-1.5">
+                                <?php foreach (array_merge(array_keys($data), $globals) as $key) {
+                                    if (!is_string($key)) {
+                                        continue;
+                                    }
+                                    $sample = in_array($key, $globals, true) ? 'Every email' : ($data[$key] === '' ? '(empty in this sample)' : $data[$key]); ?>
+                                <button type="button" data-insert="<?= e($key) ?>" title="<?= e(mb_strimwidth($sample, 0, 160, '…')) ?>"
+                                        class="px-2 py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-custom-50 hover:border-custom-500 dark:bg-zink-600 dark:border-zink-500 dark:hover:bg-zink-500">
+                                    <code class="text-custom-600 dark:text-custom-300"><?= e($ph($key)) ?></code>
+                                </button>
+                                <?php } ?>
+                            </div>
                         </div>
                         <?php foreach ($wording as $name => $value) { ?>
                         <div data-wording="<?= e($name) ?>">
@@ -89,7 +105,6 @@ $sendsCustom = !$isStored || $binding['is_active'];
                         <i data-lucide="save" class="size-4"></i> Save
                     </button>
                     <a href="<?= e(lurl($basePath)) ?>" class="btn bg-white border-slate-300 text-slate-600 hover:bg-slate-50 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-100">Cancel</a>
-                    <a href="<?= e(lurl('/admin/email-test/preview?template='.urlencode($email['sample']))) ?>" class="ml-auto text-sm text-custom-500 hover:underline">Send a test of the saved version</a>
                 </div>
             </form>
 
@@ -107,27 +122,8 @@ $sendsCustom = !$isStored || $binding['is_active'];
         </div>
 
         <div class="xl:col-span-5 space-y-5">
+            <?php $previewTestUrl = $basePath.'/'.$email['short'].'/send-test'; $previewHeight = 560; ?>
             {% include "areas/admin/EmailTemplate/_preview.lex.php" %}
-
-            <div class="card mb-0">
-                <div class="card-body">
-                    <h2 class="mb-1 text-sm font-semibold text-slate-900 dark:text-zink-50">This email's data</h2>
-                    <p class="mb-3 text-xs text-slate-500 dark:text-zink-300">Click one to put it where the cursor is. Values shown are samples.</p>
-                    <ul class="space-y-1.5 text-sm">
-                        <?php foreach (array_merge(array_keys($data), $globals) as $key) {
-                            if (!is_string($key)) {
-                                continue;
-                            } ?>
-                        <li>
-                            <button type="button" data-insert="<?= e($key) ?>" class="w-full px-2 py-1.5 text-left rounded hover:bg-slate-100 dark:hover:bg-zink-600">
-                                <code class="text-custom-600 dark:text-custom-300"><?= e($ph($key)) ?></code>
-                                <span class="block text-xs truncate text-slate-500 dark:text-zink-300"><?= in_array($key, $globals, true) ? 'Every email' : e($data[$key] === '' ? '(empty in this sample)' : $data[$key]) ?></span>
-                            </button>
-                        </li>
-                        <?php } ?>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
 </div>

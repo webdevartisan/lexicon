@@ -6,8 +6,10 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Services\EmailTemplateManager;
+use App\Services\MailService;
 use App\Services\TemplateRendererService;
 use Framework\Core\Response;
+use Throwable;
 
 /**
  * Emails: which template each email the site sends uses, and its wording.
@@ -16,6 +18,9 @@ use Framework\Core\Response;
  * may refer to the data that email provides, listed beside the form with
  * sample values. Emails are addressed by short class name in URLs, checked
  * against the registry, so nothing here ever names an arbitrary class.
+ *
+ * This is also where an email is tested: the editor previews the draft and
+ * can send it to any address, so there is one place to see and try each email.
  */
 class EmailBindingController extends AppController
 {
@@ -27,6 +32,7 @@ class EmailBindingController extends AppController
     public function __construct(
         protected Response $response,
         private EmailTemplateManager $manager,
+        private MailService $mailService,
     ) {}
 
     public function index(): Response
@@ -48,6 +54,7 @@ class EmailBindingController extends AppController
 
         return $this->view('areas/admin/EmailBinding/index.lex.php', [
             'groups' => $rows,
+            'unregistered' => $this->manager->unregisteredClasses(),
             'search' => trim((string) $this->request->getParam('q', '')),
         ]);
     }
@@ -117,6 +124,47 @@ class EmailBindingController extends AppController
     }
 
     /**
+     * Send the editor's draft, built from the email's sample data, to one
+     * address. Answers in JSON so the form keeps what was typed.
+     */
+    public function sendTest(string $name): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $email = $this->manager->email($name);
+        $recipient = trim((string) $this->request->postParam('test_recipient', ''));
+
+        if ($email === null) {
+            return $this->json(['ok' => false, 'message' => 'There is no such email.'], 404);
+        }
+
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['ok' => false, 'message' => 'Enter a valid email address to send the test to.'], 422);
+        }
+
+        try {
+            [$mailable, $errors] = $this->manager->buildDraft($email, $this->request->postParams(), true);
+        } catch (Throwable $e) {
+            return $this->json(['ok' => false, 'message' => 'This version cannot be built: '.$e->getMessage()], 422);
+        }
+
+        if ($errors !== []) {
+            return $this->json(['ok' => false, 'message' => 'Fix this first: '.$errors[0]], 422);
+        }
+
+        try {
+            $this->mailService->sendTest($mailable, $recipient);
+        } catch (Throwable $e) {
+            // The transport's own complaint is what an admin needs to fix delivery.
+            error_log('Email test send failed: '.$e->getMessage());
+
+            return $this->json(['ok' => false, 'message' => 'The test could not be sent: '.$e->getMessage()], 502);
+        }
+
+        return $this->json(['ok' => true, 'message' => "Test sent to {$recipient}. Its subject starts with [TEST]."]);
+    }
+
+    /**
      * @param  array{class: string, short: string, name: string, description: string, group: string, sample: string}  $email
      * @param  array{mailable: string, template: string, subject: ?string, mapping: array<string, string>, is_active: bool, source: string}  $binding
      * @param  list<string>  $errors
@@ -172,6 +220,7 @@ class EmailBindingController extends AppController
             'problem' => $this->manager->problems($repository, [$email['class']])[$email['class']] ?? null,
             'formErrors' => $errors,
             'formWarnings' => $warnings,
+            'testRecipient' => (string) (auth()->user()['email'] ?? ''),
         ])->setStatusCode($status);
     }
 
