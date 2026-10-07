@@ -65,7 +65,7 @@ class AnalyticsTechnicalModel extends AppModel
     public function serverErrors(string $from, string $to, int $limit): array
     {
         $rows = $this->database->query(
-            "SELECT path, CAST(props->>'$.status' AS UNSIGNED) AS status, COUNT(*) AS errors, MAX(created_at) AS last_seen
+            "SELECT path, CAST(JSON_UNQUOTE(JSON_EXTRACT(props, '$.status')) AS UNSIGNED) AS status, COUNT(*) AS errors, MAX(created_at) AS last_seen
              FROM analytics_events
              WHERE name = 'server_error' AND local_date BETWEEN ? AND ?
              GROUP BY path, status

@@ -2,16 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Mail\BlogCommentPendingMail;
 use App\Mail\CollaboratorRemovedMail;
-use App\Mail\NewCommentMail;
+use App\Mail\CommentModerationMail;
+use App\Mail\Mailable;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\CommentAudienceResolver;
+use App\Services\EmailRenderer;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
+use App\Services\RecipientLocale;
+use Tests\Helpers\InMemoryEmailSource;
 
 /**
  * Unit tests for the NotificationService dispatcher.
@@ -30,16 +35,51 @@ function makeNotificationService(
     ?UserModel $users = null,
     ?UserPreferencesModel $prefs = null,
     ?MailQueueService $queue = null,
+    ?RecipientLocale $locales = null,
 ): NotificationService {
+    if ($locales === null) {
+        $locales = Mockery::mock(RecipientLocale::class);
+        $locales->shouldReceive('forUser')->andReturn('en')->byDefault();
+    }
+
     return new NotificationService(
         $notif ?? Mockery::mock(NotificationModel::class),
         $users ?? Mockery::mock(UserModel::class),
         $prefs ?? Mockery::mock(UserPreferencesModel::class),
         $queue ?? Mockery::mock(MailQueueService::class),
+        $locales,
     );
 }
 
 describe('NotificationService::dispatch', function () {
+
+    test('the email is written in the recipient\'s language', function () {
+        $notif = Mockery::mock(NotificationModel::class);
+        $notif->shouldReceive('create')->once()->andReturn(true);
+
+        $users = Mockery::mock(UserModel::class);
+        $users->shouldReceive('findById')->with(9)->andReturn(['id' => 9, 'email' => 'author@b.test']);
+
+        $prefs = Mockery::mock(UserPreferencesModel::class);
+        $prefs->shouldReceive('notificationPreference')->andReturn(true);
+
+        $locales = Mockery::mock(RecipientLocale::class);
+        $locales->shouldReceive('forUser')->once()->with(9)->andReturn('ar');
+
+        $queue = Mockery::mock(MailQueueService::class);
+        $queue->shouldReceive('enqueue')
+            ->once()
+            ->with(Mockery::on(fn ($m) => $m->getLocale() === 'ar' && str_contains($m->getBody(), 'dir="rtl"')), 'notification', 9)
+            ->andReturn(1);
+
+        // The email has to have words in Arabic to go out in it.
+        $renderer = new EmailRenderer(new InMemoryEmailSource([PostApprovedMail::class => ['ar' => ['subject' => 'تمت الموافقة: {{ post_title }}']]]));
+
+        Mailable::withTemplateRenderer($renderer, fn () => makeNotificationService($notif, $users, $prefs, $queue, $locales)
+            ->dispatch(9, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r']));
+
+        expect(true)->toBeTrue();
+    });
 
     test('always writes the in-app notification row, even when email is muted', function () {
         $notif = Mockery::mock(NotificationModel::class);
@@ -263,7 +303,7 @@ describe('NotificationService::dispatchFirstEnabled', function () {
             ->with(Mockery::on(function ($m) {
                 $m->build();
 
-                return $m instanceof NewCommentMail && str_contains($m->getSubject(), 'awaiting your approval');
+                return $m instanceof CommentModerationMail && str_contains($m->getSubject(), 'awaiting your approval');
             }), 'notification', 7)
             ->andReturn(1);
 
@@ -293,10 +333,10 @@ describe('NotificationService::dispatchFirstEnabled', function () {
             ->with(Mockery::on(function ($m) {
                 $m->build();
 
-                // The blog-reason subject is the plain one, not the moderation phrasing.
-                return $m instanceof NewCommentMail
-                    && str_contains($m->getSubject(), 'New comment on')
-                    && !str_contains($m->getSubject(), 'approval');
+                // The blog email goes out, not the moderation one; the comment
+                // is held, so it is the blog email's held-comment version.
+                return $m instanceof BlogCommentPendingMail
+                    && str_starts_with($m->getSubject(), 'New comment on:');
             }), 'notification', 7)
             ->andReturn(1);
 

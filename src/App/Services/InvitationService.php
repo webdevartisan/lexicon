@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Mail\BlogInviteMail;
+use App\Mail\Mailable;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\UserModel;
@@ -27,6 +28,7 @@ class InvitationService
         private readonly NotificationService $notifications,
         private readonly MailQueueService $mailQueue,
         private readonly UserPreferencesModel $preferences,
+        private readonly RecipientLocale $locales,
     ) {}
 
     /**
@@ -78,7 +80,14 @@ class InvitationService
         $blog = $this->blogModel->getBlog($blogId);
         $blogName = $blog ? $blog->name() : 'a blog';
 
-        return $this->mailQueue->enqueue(new BlogInviteMail($email, $rawToken, $blogName, $role), 'blog', $blogId) > 0;
+        // An invitee with an account reads it in their own language; anyone
+        // else in the language of the blog they are invited to.
+        $mail = Mailable::inLocale(
+            $this->locales->forAddress($email, $this->locales->forBlog($blogId)),
+            fn (): BlogInviteMail => new BlogInviteMail($email, $rawToken, $blogName, $role)
+        );
+
+        return $this->mailQueue->enqueue($mail, 'blog', $blogId) > 0;
     }
 
     /**

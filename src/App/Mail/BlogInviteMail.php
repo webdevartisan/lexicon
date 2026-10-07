@@ -25,63 +25,18 @@ class BlogInviteMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('You have been invited to collaborate on '.$this->blogName)
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
+            ->fromTemplate([
+                'blog_name' => $this->blogName,
+                'role' => self::roleLabel($this->role),
+                'invite_url' => $this->url('/invite/'.urlencode($this->rawToken)),
+            ]);
     }
 
     /**
-     * Build the invite landing URL from the configured app URL.
-     *
-     * We use APP_URL directly (not lurl()) because email is composed outside
-     * a request context, matching the PasswordResetEmail convention.
+     * A blog role as the dashboard names it: 'editor' becomes 'Editor'.
      */
-    private function inviteUrl(): string
+    public static function roleLabel(string $role): string
     {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/invite/'.urlencode($this->rawToken);
-    }
-
-    private function buildHtmlBody(): string
-    {
-        $appName = htmlspecialchars((string) (env('APP_NAME', 'Blog Platform')));
-        $blogName = htmlspecialchars($this->blogName);
-        $role = htmlspecialchars($this->role);
-        $url = htmlspecialchars($this->inviteUrl());
-
-        return <<<HTML
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2>You've been invited to collaborate</h2>
-                <p>You've been invited to join <strong>{$blogName}</strong> as <strong>{$role}</strong>.</p>
-                <p>
-                    <a href="{$url}" style="display:inline-block;padding:12px 24px;background:#2563EB;color:#fff;text-decoration:none;border-radius:5px;">
-                        View invitation
-                    </a>
-                </p>
-                <p>This invitation expires in 7 days. If you don't have an account yet, you'll be guided through registration first.</p>
-                <p style="font-size:12px;color:#666;">&copy; 2026 {$appName}</p>
-            </div>
-        </body>
-        </html>
-        HTML;
-    }
-
-    private function buildTextBody(): string
-    {
-        $url = $this->inviteUrl();
-
-        return <<<TEXT
-        You've been invited to collaborate on {$this->blogName} as {$this->role}.
-
-        View the invitation here:
-        {$url}
-
-        This invitation expires in 7 days. If you don't have an account yet, you'll be guided through registration first.
-        TEXT;
+        return ucfirst($role);
     }
 }

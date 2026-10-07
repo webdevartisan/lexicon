@@ -24,19 +24,22 @@ class BlogSubscriberModel extends AppModel
      * token is deliberately left alone: it is live in an already-delivered
      * email and rotating it here would break that unsubscribe link. Only
      * user_id moves, which also adopts a row subscribed before the account
-     * existed. A confirmed row never goes back to unconfirmed.
+     * existed. A confirmed row never goes back to unconfirmed. The language
+     * follows the latest subscribe, the page the person most recently read.
      *
      * @param  bool  $confirmed  True only when the caller already knows the inbox belongs to the subscriber
+     * @param  string|null  $locale  Language of the page subscribed from, for the emails that follow
      * @return array{token: string, confirmed_at: string|null} The stored row, so the caller can tell whether to send a confirmation
      */
-    public function subscribe(int $blogId, string $email, ?int $userId = null, bool $confirmed = false): array
+    public function subscribe(int $blogId, string $email, ?int $userId = null, bool $confirmed = false, ?string $locale = null): array
     {
         $this->database->execute(
-            "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token, confirmed_at)
-             VALUES (?, ?, ?, ?, IF(?, NOW(), NULL))
+            "INSERT INTO {$this->getTable()} (blog_id, user_id, email, token, confirmed_at, locale)
+             VALUES (?, ?, ?, ?, IF(?, NOW(), NULL), ?)
              ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id),
-                                     confirmed_at = COALESCE(confirmed_at, VALUES(confirmed_at))",
-            [$blogId, $userId, $email, bin2hex(random_bytes(32)), (int) $confirmed]
+                                     confirmed_at = COALESCE(confirmed_at, VALUES(confirmed_at)),
+                                     locale = COALESCE(VALUES(locale), locale)",
+            [$blogId, $userId, $email, bin2hex(random_bytes(32)), (int) $confirmed, $locale]
         );
 
         return $this->database->query(
@@ -89,11 +92,21 @@ class BlogSubscriberModel extends AppModel
     /**
      * All subscribers of a blog, for the notification fan-out.
      *
-     * @return array<int, array{email: string, token: string}>
+     * Each row carries what RecipientLocale::forSubscriber() needs to pick the
+     * email's language: the subscription's own, and the account's preference
+     * and last language when the subscriber has one. Joined here so a fan-out
+     * to thousands of readers stays one query.
+     *
+     * @return array<int, array{email: string, token: string, locale: string|null, preferred_locale: string|null, last_locale: string|null}>
      */
     public function forBlog(int $blogId): array
     {
-        $sql = "SELECT email, token FROM {$this->getTable()} WHERE blog_id = ? AND confirmed_at IS NOT NULL ORDER BY id";
+        $sql = "SELECT s.email, s.token, s.locale, p.locale AS preferred_locale, u.last_locale
+                  FROM {$this->getTable()} s
+                  LEFT JOIN users u ON u.id = s.user_id
+                  LEFT JOIN user_preferences p ON p.user_id = s.user_id
+                 WHERE s.blog_id = ? AND s.confirmed_at IS NOT NULL
+                 ORDER BY s.id";
 
         return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }

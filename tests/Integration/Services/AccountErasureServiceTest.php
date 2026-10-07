@@ -6,6 +6,7 @@ use App\Interfaces\UploadServiceInterface;
 use App\Models\AccountErasureRecordModel;
 use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsSaltModel;
+use App\Models\AnalyticsVisitModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
@@ -23,6 +24,7 @@ use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * The upload service is a mock: storage/uploads/ is shared with development, so
@@ -34,11 +36,7 @@ beforeEach(function () {
     $this->posts = new PostModel($this->db);
     $this->comments = new CommentModel($this->db);
 
-    $this->db->execute(
-        "INSERT INTO users (handle, email, password, display_name_cached, is_active)
-         VALUES ('deleted-user', 'deleted-user@lexicon.invalid', '', 'Deleted user', 0)"
-    );
-    $this->deletedUserId = (int) $this->db->getConnection()->lastInsertId();
+    $this->deletedUserId = DatabaseHelper::deletedUser($this->db);
 
     $this->uploader = Mockery::mock(UploadServiceInterface::class)->shouldIgnoreMissing();
     $this->uploader->shouldReceive('blogUploadsBy')->andReturn([])->byDefault();
@@ -55,6 +53,7 @@ beforeEach(function () {
             $this->uploader,
             $cacheInvalidator,
             new AnalyticsEventModel($this->db),
+            new AnalyticsVisitModel($this->db),
             AnalyticsFixture::rollups($this->db)
         ),
         $this->uploader,
@@ -62,6 +61,7 @@ beforeEach(function () {
         $cacheInvalidator,
         new AccountErasureRecordModel($this->db),
         new AnalyticsEventModel($this->db),
+        new AnalyticsVisitModel($this->db),
         new VisitorIdentity(new AnalyticsSaltModel($this->db), 'test-key'),
         'deleted-user'
     );

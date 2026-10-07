@@ -1,0 +1,75 @@
+---
+subject: Confirm your subscription to {{ blog_name }}
+preheader: One click and new posts from {{ blog_name }} come to your inbox.
+footer_note: You received this email because this address was entered to subscribe to {{ blog_name }} on {{ app_name }}.
+---
+          <!-- Content > Heading -->
+          <tr>
+            <td class="section-padding" style="padding:32px 40px 8px;">
+              <h1 class="main-heading" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;font-weight:bold;color:#111827;">
+                Confirm your subscription
+              </h1>
+            </td>
+          </tr>
+          <!-- Content > Main text -->
+          <tr>
+            <td class="section-padding" style="padding:0px 40px 0;">
+              <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                Someone asked to send new posts from <strong>{{ blog_name }}</strong> to <strong>{{ email }}</strong>.
+              </p>
+            </td>
+          </tr>
+          <!-- Actions > Primary button -->
+          <tr>
+            <td class="section-padding" align="{{ start }}" style="padding:8px 40px 24px;">
+
+              <!--[if mso]>
+              <v:roundrect href="{{ confirm_url }}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroked="f" fillcolor="{{ primary_color }}">
+                <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
+                <center style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;">
+                  Yes, subscribe me
+                </center>
+              </v:roundrect>
+              <![endif]-->
+
+              <!--[if !mso]><!-->
+              <table class="mobile-button" role="presentation" cellpadding="0" cellspacing="0" border="0" width="240" style="width:240px;border-collapse:separate;">
+                <tr>
+                  <td align="center" bgcolor="{{ primary_color }}" style="background-color:{{ primary_color }};border-radius:6px;">
+                    <a href="{{ confirm_url }}" target="_blank" style="display:block;padding:14px 16px;border:1px solid {{ primary_color }};border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;text-align:center;text-decoration:none;color:#FFFFFF;">
+                      Yes, subscribe me
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <!--<![endif]-->
+
+            </td>
+          </tr>
+          <!-- Actions > Link written out -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 16px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B7280;">
+                If the button does not work, paste this link into your browser:<br>
+                <a href="{{ confirm_url }}" target="_blank" style="color:#4B5563;word-break:break-all;">{{ confirm_url }}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Callouts > Security notice -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FFFBEB" style="width:100%;background-color:#FFFBEB;border-collapse:collapse;border:1px solid #FDE68A;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#92400E;">
+                      <strong>If this wasn't you</strong>, ignore this message. You won't get any more emails, and the address is removed within a week.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Spacing before the footer -->
+          <tr>
+            <td style="padding:0 0 16px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>

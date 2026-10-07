@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Mail\Mailable;
 use App\Mail\ReporterWarningMail;
 use App\Models\ContentReportModel;
 use App\Models\NotificationModel;
@@ -44,6 +45,7 @@ class ReporterStandingService
         private MailQueueService $mailQueue,
         private AuditService $audit,
         private ModerationSettings $settings,
+        private RecipientLocale $locales,
     ) {}
 
     /**
@@ -68,7 +70,10 @@ class ReporterStandingService
             ]);
 
             $this->mailQueue->enqueue(
-                new ReporterWarningMail((string) $user['email'], (string) $user['handle'], $unfounded, $message),
+                Mailable::inLocale(
+                    $this->locales->forUser($userId),
+                    fn (): ReporterWarningMail => new ReporterWarningMail((string) $user['email'], (string) $user['handle'], $unfounded, $message)
+                ),
                 'moderation_reporter',
                 $userId
             );

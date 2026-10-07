@@ -1,0 +1,42 @@
+---
+subject: Your {{ app_name }} email address was changed
+preheader: Your account now uses {{ new_email }}.
+footer_note: You received this at your previous address because it was the one on the account when the change was made.
+---
+          <!-- Content > Heading -->
+          <tr>
+            <td class="section-padding" style="padding:32px 40px 8px;">
+              <h1 class="main-heading" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;font-weight:bold;color:#111827;">
+                Your email address was changed
+              </h1>
+            </td>
+          </tr>
+          <!-- Content > Main text -->
+          <tr>
+            <td class="section-padding" style="padding:0px 40px 0;">
+              <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                The email address on your {{ app_name }} account was changed to <strong>{{ new_email }}</strong> on {{ changed_at }} (UTC).
+              </p>
+              <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                If you made this change, there is nothing else to do.
+              </p>
+            </td>
+          </tr>
+          <!-- Callouts > Security notice -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FFFBEB" style="width:100%;background-color:#FFFBEB;border-collapse:collapse;border:1px solid #FDE68A;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#92400E;">
+                      <strong>If this wasn't you</strong>, someone else may have access to your account. <a href="{{ password_url }}" target="_blank" style="color:#92400E;">Reset your password</a> straight away and contact us at {{ support_email }}.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Spacing before the footer -->
+          <tr>
+            <td style="padding:0 0 16px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>

@@ -5,38 +5,23 @@ declare(strict_types=1);
 namespace App\Services;
 
 /**
- * Single source of truth for which locales the platform serves.
+ * Single source of truth for which locales the platform serves, and for each
+ * one's name, text direction and Open Graph locale.
  *
- * The supported list previously lived in five separate require calls plus a
- * hardcoded model constant. They drifted, and fr and de stayed advertised for
- * months with no strings file behind them, rendering raw keys to visitors.
+ * All of it is read from config/localization.php (or its storage override) and
+ * nothing else keeps a list of its own. The supported list previously lived in
+ * five separate require calls plus a hardcoded model constant. They drifted,
+ * and fr and de stayed advertised for months with no strings file behind them,
+ * rendering raw keys to visitors.
+ *
+ * @phpstan-type Language array{name: string, dir: string, og_locale: string}
+ * @phpstan-type Config array{default: string, languages: array<string, Language>}
  */
 final class LocaleRegistry
 {
-    /**
-     * Right-to-left languages.
-     *
-     * Direction is a property of the language, not a deployment choice, so it
-     * lives in code where the admin UI cannot produce a state like Greek RTL.
-     */
-    public const RTL = ['ar', 'he', 'fa', 'ur'];
-
-    /**
-     * Each language's name in itself, for language pickers.
-     *
-     * Deliberately not translated. A picker exists for someone who cannot read
-     * the language currently on screen, so labelling Greek as "Greek" is useless
-     * to the one person who needs that entry.
-     */
-    public const NATIVE_NAMES = [
-        'en' => 'English',
-        'el' => 'Ελληνικά',
-        'ar' => 'العربية',
-    ];
-
     private static ?self $instance = null;
 
-    /** @var array{supported: string[], default: string}|null */
+    /** @var Config|null */
     private ?array $config = null;
 
     /** @var string[]|null */
@@ -79,7 +64,7 @@ final class LocaleRegistry
         $config = $this->readConfig();
 
         $usable = array_values(array_filter(
-            $config['supported'],
+            array_keys($config['languages']),
             fn (string $code): bool => $this->hasTranslationFile($code)
         ));
 
@@ -98,7 +83,7 @@ final class LocaleRegistry
      */
     public function configured(): array
     {
-        return $this->readConfig()['supported'];
+        return array_keys($this->readConfig()['languages']);
     }
 
     /**
@@ -125,20 +110,49 @@ final class LocaleRegistry
      */
     public function isRtl(string $code): bool
     {
-        return in_array(strtolower(trim($code)), self::RTL, true);
+        return ($this->language($code)['dir'] ?? 'ltr') === 'rtl';
     }
 
     /**
      * The language's own name for itself, for use in a language picker.
+     *
+     * Deliberately not translated. A picker exists for someone who cannot read
+     * the language currently on screen, so labelling Greek as "Greek" is useless
+     * to the one person who needs that entry.
      *
      * @param  string  $code  Locale code, any case
      * @return string Native name, or the uppercased code when unknown
      */
     public function nativeName(string $code): string
     {
+        return $this->language($code)['name'] ?? strtoupper(strtolower(trim($code)));
+    }
+
+    /**
+     * Each supported language's own name, keyed by code in picker order.
+     *
+     * @return array<string, string>
+     */
+    public function names(): array
+    {
+        $names = [];
+        foreach ($this->supported() as $code) {
+            $names[$code] = $this->nativeName($code);
+        }
+
+        return $names;
+    }
+
+    /**
+     * The region-qualified Open Graph locale, e.g. el_GR. A language without
+     * one gets its code doubled (fr_FR), which is right often enough to be the
+     * fallback but worth configuring.
+     */
+    public function ogLocale(string $code): string
+    {
         $code = strtolower(trim($code));
 
-        return self::NATIVE_NAMES[$code] ?? strtoupper($code);
+        return $this->language($code)['og_locale'] ?? $code.'_'.strtoupper($code);
     }
 
     /**
@@ -177,7 +191,15 @@ final class LocaleRegistry
     }
 
     /**
-     * @return array{supported: string[], default: string}
+     * @return Language|null
+     */
+    private function language(string $code): ?array
+    {
+        return $this->readConfig()['languages'][strtolower(trim($code))] ?? null;
+    }
+
+    /**
+     * @return Config
      */
     private function readConfig(): array
     {
@@ -190,7 +212,7 @@ final class LocaleRegistry
         if (is_file($override)) {
             $decoded = json_decode((string) file_get_contents($override), true);
 
-            if (is_array($decoded) && isset($decoded['supported'], $decoded['default'])) {
+            if (is_array($decoded) && is_array($decoded['languages'] ?? null) && isset($decoded['default'])) {
                 return $this->config = $this->normalizeConfig($decoded);
             }
         }
@@ -202,18 +224,27 @@ final class LocaleRegistry
 
     /**
      * @param  array<string, mixed>  $raw
-     * @return array{supported: string[], default: string}
+     * @return Config
      */
     private function normalizeConfig(array $raw): array
     {
-        $supported = is_array($raw['supported'] ?? null) ? $raw['supported'] : ['en'];
+        $default = strtolower(trim((string) ($raw['default'] ?? 'en')));
+        $languages = [];
+
+        foreach (is_array($raw['languages'] ?? null) ? $raw['languages'] : [] as $code => $language) {
+            $code = strtolower(trim((string) $code));
+            $language = is_array($language) ? $language : [];
+
+            $languages[$code] = [
+                'name' => is_string($language['name'] ?? null) && $language['name'] !== '' ? $language['name'] : strtoupper($code),
+                'dir' => strtolower((string) ($language['dir'] ?? 'ltr')) === 'rtl' ? 'rtl' : 'ltr',
+                'og_locale' => is_string($language['og_locale'] ?? null) && $language['og_locale'] !== '' ? $language['og_locale'] : $code.'_'.strtoupper($code),
+            ];
+        }
 
         return [
-            'supported' => array_values(array_map(
-                static fn ($code): string => strtolower(trim((string) $code)),
-                $supported
-            )),
-            'default' => strtolower(trim((string) ($raw['default'] ?? 'en'))),
+            'default' => $default,
+            'languages' => $languages !== [] ? $languages : [$default => ['name' => strtoupper($default), 'dir' => 'ltr', 'og_locale' => $default.'_'.strtoupper($default)]],
         ];
     }
 }

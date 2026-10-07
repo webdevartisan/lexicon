@@ -18,7 +18,7 @@ use Framework\Core\Response;
  * site_content. Clearing a field falls back to the locale file, so admins
  * can always get the original text back by emptying the input.
  *
- * Adding a new language means: (1) add the code to `supported` in
+ * Adding a new language means: (1) add it to `languages` in
  * config/localization.php, (2) drop a locales/{code}.json file. This screen
  * then discovers it automatically.
  */

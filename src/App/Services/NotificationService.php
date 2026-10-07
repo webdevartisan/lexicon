@@ -6,15 +6,16 @@ namespace App\Services;
 
 use App\Mail\CollaboratorRemovedMail;
 use App\Mail\CollaboratorRoleChangedMail;
+use App\Mail\CommentMail;
 use App\Mail\InsightsMilestoneMail;
 use App\Mail\InsightsSpikeMail;
 use App\Mail\InviteDeclinedMail;
 use App\Mail\Mailable;
-use App\Mail\NewCommentMail;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
 use App\Mail\PostSubmittedMail;
+use App\Mail\PostSubmittedUnassignedMail;
 use App\Mail\ReviewerAssignedMail;
 use App\Mail\ReviewerStaleMail;
 use App\Mail\WorkflowDisabledMail;
@@ -80,21 +81,12 @@ class NotificationService
         'analytics.spike' => 'content',
     ];
 
-    /**
-     * Comment notification type → the reason string NewCommentMail renders from.
-     */
-    private const COMMENT_MAIL_REASON = [
-        CommentAudienceResolver::TYPE_REPLY => NewCommentMail::REASON_REPLY,
-        CommentAudienceResolver::TYPE_AUTHORED => NewCommentMail::REASON_AUTHORED,
-        CommentAudienceResolver::TYPE_MODERATION => NewCommentMail::REASON_MODERATION,
-        CommentAudienceResolver::TYPE_BLOG => NewCommentMail::REASON_BLOG,
-    ];
-
     public function __construct(
         private NotificationModel $notifications,
         private UserModel $users,
         private UserPreferencesModel $preferences,
         private MailQueueService $mailQueue,
+        private RecipientLocale $locales,
     ) {}
 
     /**
@@ -152,7 +144,10 @@ class NotificationService
             // No MAIL_ENABLED check here any more. The queue worker leaves
             // everything alone while mail is switched off, so notifications wait
             // and go out when it is switched back on instead of being dropped.
-            $mailable = $this->buildMailable($type, (string) $user['email'], $data);
+            $mailable = Mailable::inLocale(
+                $this->locales->forUser($userId),
+                fn (): ?Mailable => $this->buildMailable($type, (string) $user['email'], $data)
+            );
             if ($mailable !== null) {
                 $this->mailQueue->enqueue($mailable, 'notification', $userId);
             }
@@ -176,15 +171,13 @@ class NotificationService
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) $data['author_handle'],
-                false
+                (string) $data['author_handle']
             ),
-            'post.submitted_unassigned' => new PostSubmittedMail(
+            'post.submitted_unassigned' => new PostSubmittedUnassignedMail(
                 $to,
                 (int) ($data['post_id'] ?? 0),
                 (string) ($data['post_title'] ?? ''),
-                (string) $data['author_handle'],
-                true
+                (string) $data['author_handle']
             ),
             'post.approved' => new PostApprovedMail(
                 $to,
@@ -237,7 +230,7 @@ class NotificationService
             CommentAudienceResolver::TYPE_REPLY,
             CommentAudienceResolver::TYPE_AUTHORED,
             CommentAudienceResolver::TYPE_MODERATION,
-            CommentAudienceResolver::TYPE_BLOG => new NewCommentMail(
+            CommentAudienceResolver::TYPE_BLOG => new (CommentMail::for($type, (bool) ($data['awaiting_moderation'] ?? false)))(
                 $to,
                 (string) ($data['post_title'] ?? ''),
                 (string) ($data['blog_slug'] ?? ''),
@@ -246,7 +239,6 @@ class NotificationService
                 (string) ($data['comment_excerpt'] ?? ''),
                 (bool) ($data['awaiting_moderation'] ?? false),
                 (int) ($data['comment_id'] ?? 0),
-                self::COMMENT_MAIL_REASON[$type],
                 (int) ($data['blog_id'] ?? 0)
             ),
             'blog.invite_declined' => new InviteDeclinedMail(

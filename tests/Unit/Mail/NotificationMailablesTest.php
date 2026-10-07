@@ -9,6 +9,7 @@ use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
 use App\Mail\PostSubmittedMail;
+use App\Mail\PostSubmittedUnassignedMail;
 use App\Mail\ReviewerAssignedMail;
 use App\Mail\ReviewerStaleMail;
 use App\Mail\WorkflowDisabledMail;
@@ -25,18 +26,23 @@ beforeEach(function () {
 });
 
 test('PostSubmittedMail builds with subject and body', function () {
-    $mail = new PostSubmittedMail('rev@example.test', 42, 'My Post', 'alice', false);
+    $mail = new PostSubmittedMail('rev@example.test', 42, 'My Post', 'alice');
 
     expect($mail->getTo())->toHaveKey('rev@example.test')
-        ->and($mail->getSubject())->toContain('My Post')
+        ->and($mail->getSubject())->toBe('Review requested: My Post')
         ->and($mail->getBody())->toContain('alice')
+        ->and($mail->getBody())->toContain('for your review')
         ->and($mail->getBody())->toContain('https://example.test/dashboard/posts/42/review')
+        ->and($mail->getBody())->not->toContain('No reviewer is assigned yet')
         ->and($mail->getTextBody())->toContain('My Post');
 });
 
-test('PostSubmittedMail unassigned variant says so in body', function () {
-    $mail = new PostSubmittedMail('rev@example.test', 42, 'My Post', 'alice', true);
-    expect($mail->getBody())->toContain('No reviewer is assigned yet');
+test('PostSubmittedUnassignedMail says nobody is assigned and links to the same review page', function () {
+    $mail = new PostSubmittedUnassignedMail('rev@example.test', 42, 'My Post', 'alice');
+
+    expect($mail->getSubject())->toBe('Waiting for a reviewer: My Post')
+        ->and($mail->getBody())->toContain('No reviewer is assigned yet')
+        ->and($mail->getBody())->toContain('https://example.test/dashboard/posts/42/review');
 });
 
 test('PostApprovedMail builds with reviewer name', function () {
@@ -70,7 +76,8 @@ test('ReviewerStaleMail names the former reviewer', function () {
 
 test('CollaboratorRoleChangedMail includes new role', function () {
     $mail = new CollaboratorRoleChangedMail('user@example.test', 'My Blog', 'editor', 'admin');
-    expect($mail->getBody())->toContain('editor')
+    expect($mail->getBody())->toContain('Editor')
+        ->and($mail->getSubject())->toBe('Your role on My Blog changed to Editor')
         ->and($mail->getBody())->toContain('My Blog');
 });
 

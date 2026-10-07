@@ -39,4 +39,11 @@ $container = require ROOT_PATH.'/config/services.php';
 
 App::setContainer($container);
 
+// Mailables build themselves in their constructor, so they cannot take the
+// renderer as a dependency. Point them at the one that reads what was saved in
+// the control panel; anything that never boots the app gets the shipped emails.
+\App\Mail\Mailable::resolveTemplatesUsing(
+    static fn (): \App\Services\EmailRenderer => $container->get(\App\Services\EmailRenderer::class)
+);
+
 return $container;

@@ -117,3 +117,29 @@ BASE_PATH=${APP_URL}/public
 - Use `env()` only in configuration/bootstrap; pass values into services, do not call `env()` deep inside domain logic.
 - Keep environment names (`APP_ENV`, `APP_DEBUG`, `APP_URL`) consistent between local and production.
 
+
+---
+
+## Languages
+
+`config/localization.php` is the one list of languages the site offers. Only `LocaleRegistry` reads it; routing,
+language pickers, page metadata, emails and the tests all ask the registry, so nothing keeps a list of its own.
+
+```php
+return [
+    'default' => 'en',
+    'languages' => [
+        'en' => ['name' => 'English', 'dir' => 'ltr', 'og_locale' => 'en_US'],
+        'ar' => ['name' => 'العربية', 'dir' => 'rtl', 'og_locale' => 'ar_AE'],
+    ],
+];
+```
+
+- `name` is the language's name in itself, for pickers; `dir` is `ltr` or `rtl`; `og_locale` is the Open Graph
+  locale (missing, it becomes the code doubled, `fr_FR`). The order is the order pickers list them in.
+- A language is only offered once `locales/{code}.json` exists, so a half-added one never shows raw keys.
+  `LocaleParityTest` checks every offered language has the same keys as `en.json`.
+- `storage/localization.json`, when present, replaces the file entirely and takes the same shape.
+
+To add a language: add its entry here, copy `locales/en.json` to `locales/{code}.json` and translate it. Its tab
+then appears on every email under Email Templates, to be translated there.

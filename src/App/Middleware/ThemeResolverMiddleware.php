@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Models\BlogSettingsModel;
+use App\Services\LocaleRegistry;
 use App\Services\ThemeService;
 use Framework\Core\Request;
 use Framework\Core\Response;
@@ -25,7 +26,8 @@ final class ThemeResolverMiddleware implements MiddlewareInterface
     public function __construct(
         private ThemeService $themes,
         private TemplateViewerInterface $viewer,
-        private BlogSettingsModel $blogs
+        private BlogSettingsModel $blogs,
+        private LocaleRegistry $locales,
     ) {}
 
     public function process(Request $request, RequestHandlerInterface $handler): Response
@@ -34,11 +36,8 @@ final class ThemeResolverMiddleware implements MiddlewareInterface
         $path = trim(parse_url($request->uri, PHP_URL_PATH) ?? '/', '/');
         $segments = $path === '' ? [] : explode('/', $path);
 
-        // Known locale prefixes (keep in sync with your i18n config)
-        $supportedLocales = ['en', 'fr', 'de', 'el', 'ar'];
-
         // Strip locale if first segment matches
-        if (isset($segments[0]) && in_array(strtolower($segments[0]), $supportedLocales, true)) {
+        if (isset($segments[0]) && $this->locales->isSupported($segments[0])) {
             array_shift($segments);
         }
 

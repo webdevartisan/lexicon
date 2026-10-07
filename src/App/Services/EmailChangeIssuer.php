@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Mail\EmailChangeVerificationMail;
+use App\Mail\Mailable;
 use App\Models\PendingEmailChangeModel;
 
 /**
@@ -24,9 +25,13 @@ class EmailChangeIssuer
     public function __construct(
         private PendingEmailChangeModel $pending,
         private MailQueueService $mailQueue,
+        private RecipientLocale $locales,
     ) {}
 
-    public function issue(int $userId, string $newEmail): void
+    /**
+     * @param  string|null  $readingNow  The current page's language, only when the account owner asked
+     */
+    public function issue(int $userId, string $newEmail, ?string $readingNow = null): void
     {
         $token = bin2hex(random_bytes(32));
         $expiresAt = gmdate('Y-m-d H:i:s', time() + self::TOKEN_TTL_MINUTES * 60);
@@ -34,7 +39,10 @@ class EmailChangeIssuer
         $this->pending->replaceForUser($userId, $newEmail, hash('sha256', $token), $expiresAt);
 
         $this->mailQueue->enqueue(
-            new EmailChangeVerificationMail($newEmail, $token, self::TOKEN_TTL_MINUTES),
+            Mailable::inLocale(
+                $this->locales->forUser($userId, $readingNow),
+                fn (): EmailChangeVerificationMail => new EmailChangeVerificationMail($newEmail, $token, self::TOKEN_TTL_MINUTES)
+            ),
             'account',
             $userId
         );

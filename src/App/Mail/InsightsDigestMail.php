@@ -4,23 +4,29 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Mail\Templates\HtmlFragment;
+
 /**
  * The weekly Insights summary for an owner, one section per blog, told in the
  * order of the Insights pages, each part linking to its page for that week.
+ *
+ * The section is the email's repeated section, filled once per blog. Counts
+ * are numbers next to labels in the wording rather than counted phrases, so
+ * no language needs plural rules in the data.
  */
 class InsightsDigestMail extends Mailable
 {
     /** One per owner, all sent the same morning, so throughput matters more than speed. */
     protected string $tier = self::TIER_BULK;
 
-    /** Goal => [one, many], in the order the Goals page lists them. */
+    /** Each goal's placeholder in the section, by the goal it counts. */
     private const GOALS = [
-        'subscribe' => ['subscription', 'subscriptions'],
-        'comment' => ['comment', 'comments'],
-        'like' => ['like', 'likes'],
-        'save' => ['save', 'saves'],
-        'share' => ['share', 'shares'],
-        'signup' => ['sign-up', 'sign-ups'],
+        'subscribe' => 'subscriptions',
+        'comment' => 'comments',
+        'like' => 'likes',
+        'save' => 'saves',
+        'share' => 'shares',
+        'signup' => 'signups',
     ];
 
     /**
@@ -29,7 +35,8 @@ class InsightsDigestMail extends Mailable
      */
     public function __construct(
         private string $toEmail,
-        private string $weekLabel,
+        private string $weekStart,
+        private string $weekEnd,
         private array $blogs,
     ) {
         parent::__construct();
@@ -38,14 +45,86 @@ class InsightsDigestMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject('Your week on Lexicon: '.$this->weekLabel)
-            ->html($this->buildHtmlBody())
-            ->textAlternative($this->buildTextBody());
+            ->fromTemplate([
+                'week_start' => $this->day($this->weekStart, 'MMMd'),
+                'week_end' => $this->day($this->weekEnd, 'yMMMd'),
+                'blogs' => $this->repeat(array_map($this->section(...), $this->blogs)),
+            ]);
     }
 
-    private function appUrl(): string
+    /**
+     * One blog's values for the repeated section.
+     *
+     * @param  array{name: string, id: int, slug: string, from: string, to: string, views: int, previous: int,
+     *     visitors: int, source: ?string, posts: list<array{title: string, views: int}>, goals: array<string, int>}  $blog
+     * @return array<string, mixed>
+     */
+    private function section(array $blog): array
     {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/');
+        $values = [
+            'blog_name' => $blog['name'],
+            'blog_url' => $this->url('/blog/'.rawurlencode($blog['slug'])),
+            'views' => $this->number($blog['views']),
+            'visitors' => $this->number($blog['visitors']),
+            'change' => $this->change($blog['views'], $blog['previous']),
+            // A dash rather than words when there is nothing to name.
+            'top_source' => $blog['source'] ?? '–',
+            'most_read' => $this->mostRead($blog['posts']),
+            'overview_url' => $this->pageUrl($blog, 'overview'),
+            'content_url' => $this->pageUrl($blog, 'content'),
+            'acquisition_url' => $this->pageUrl($blog, 'acquisition'),
+            'goals_url' => $this->pageUrl($blog, 'goals'),
+        ];
+
+        foreach (self::GOALS as $goal => $placeholder) {
+            $values[$placeholder] = $this->number($blog['goals'][$goal] ?? 0);
+        }
+
+        return $values;
+    }
+
+    /**
+     * Views against the week before as a signed percentage, or a dash with nothing to compare.
+     */
+    private function change(int $views, int $previous): string
+    {
+        if ($previous === 0) {
+            return '–';
+        }
+
+        $formatter = new \NumberFormatter($this->getLocale(), \NumberFormatter::PERCENT);
+        $formatter->setTextAttribute(\NumberFormatter::POSITIVE_PREFIX, '+');
+
+        return (string) $formatter->format(round(($views - $previous) / $previous, 2));
+    }
+
+    /**
+     * The week's most read posts, one per line with its views.
+     *
+     * @param  list<array{title: string, views: int}>  $posts
+     */
+    private function mostRead(array $posts): HtmlFragment
+    {
+        if ($posts === []) {
+            return HtmlFragment::fromText('–');
+        }
+
+        return HtmlFragment::fromText(implode("\n", array_map(
+            fn (array $post): string => $post['title'].' · '.$this->number($post['views']),
+            $posts
+        )));
+    }
+
+    /**
+     * A Y-m-d day as the reader's language writes it.
+     */
+    private function day(string $date, string $skeleton): string
+    {
+        try {
+            return $this->date(new \DateTimeImmutable($date, new \DateTimeZone('UTC')), $skeleton);
+        } catch (\Exception) {
+            return $date;
+        }
     }
 
     /**
@@ -53,132 +132,7 @@ class InsightsDigestMail extends Mailable
      */
     private function pageUrl(array $blog, string $page): string
     {
-        return $this->appUrl().'/dashboard/blog/'.$blog['id'].'/insights/'.$page.'?'
-            .http_build_query(['range' => 'custom', 'from' => $blog['from'], 'to' => $blog['to']]);
-    }
-
-    /**
-     * What each page has to say about the week, page => line. Pages with nothing to say are left out.
-     *
-     * @param  array{views: int, previous: int, visitors: int, source: ?string, goals: array<string, int>}  $blog
-     * @return array<string, string>
-     */
-    private static function lines(array $blog): array
-    {
-        $lines = [
-            'overview' => number_format($blog['views']).' views from '.number_format($blog['visitors'])
-                .' daily visitors, '.self::change($blog).'.',
-        ];
-
-        if ($blog['source'] !== null) {
-            $lines['acquisition'] = "Top source: {$blog['source']}.";
-        }
-
-        $goals = [];
-        foreach (self::GOALS as $goal => [$one, $many]) {
-            $count = $blog['goals'][$goal] ?? 0;
-            if ($count > 0) {
-                $goals[] = number_format($count).' '.($count === 1 ? $one : $many);
-            }
-        }
-
-        if ($goals !== []) {
-            $lines['goals'] = ucfirst(implode(', ', $goals)).'.';
-        }
-
-        return $lines;
-    }
-
-    /**
-     * @param  array{views: int, previous: int}  $blog
-     */
-    private static function change(array $blog): string
-    {
-        if ($blog['previous'] === 0) {
-            return 'nothing to compare with yet';
-        }
-
-        $percent = (int) round(($blog['views'] - $blog['previous']) / $blog['previous'] * 100);
-
-        return match (true) {
-            $percent > 0 => "up {$percent}% on the week before",
-            $percent < 0 => 'down '.abs($percent).'% on the week before',
-            default => 'the same as the week before',
-        };
-    }
-
-    private function buildHtmlBody(): string
-    {
-        $sections = '';
-
-        foreach ($this->blogs as $blog) {
-            $lines = self::lines($blog);
-            $blogUrl = e($this->appUrl().'/blog/'.rawurlencode($blog['slug']));
-            $sections .= '<h3 style="margin-bottom:4px;"><a href="'.$blogUrl.'" style="color:#1f2937;">'.e($blog['name']).'</a></h3>';
-            $sections .= $this->htmlPart($blog, 'overview', 'Overview', e($lines['overview']));
-
-            if ($blog['posts'] !== []) {
-                $posts = '';
-                foreach ($blog['posts'] as $post) {
-                    $posts .= '<li>'.e($post['title']).': '.number_format($post['views']).' views</li>';
-                }
-                $sections .= $this->htmlPart($blog, 'content', 'Content', 'Most read:<ul style="margin:4px 0;">'.$posts.'</ul>');
-            }
-
-            foreach (['acquisition' => 'Acquisition', 'goals' => 'Goals'] as $page => $title) {
-                if (isset($lines[$page])) {
-                    $sections .= $this->htmlPart($blog, $page, $title, e($lines[$page]));
-                }
-            }
-        }
-
-        $week = e($this->weekLabel);
-
-        return <<<HTML
-        <!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-            <div style="max-width:600px;margin:0 auto;padding:20px;">
-                <h2>Your week: {$week}</h2>
-                {$sections}
-                <p style="font-size:12px;color:#777;">Sent on Mondays. Switch it off in your notification settings.</p>
-            </div>
-        </body></html>
-        HTML;
-    }
-
-    /**
-     * @param  array{id: int, from: string, to: string}  $blog
-     * @param  string  $body  Already escaped
-     */
-    private function htmlPart(array $blog, string $page, string $title, string $body): string
-    {
-        $url = e($this->pageUrl($blog, $page));
-
-        return '<div style="margin:8px 0;"><strong>'.$title.'</strong> · <a href="'.$url.'">Open</a><br>'.$body.'</div>';
-    }
-
-    private function buildTextBody(): string
-    {
-        $text = "Your week: {$this->weekLabel}\n";
-
-        foreach ($this->blogs as $blog) {
-            $lines = self::lines($blog);
-            $text .= "\n{$blog['name']}\n\nOverview: {$lines['overview']}\n".$this->pageUrl($blog, 'overview')."\n";
-
-            if ($blog['posts'] !== []) {
-                $text .= "\nContent, most read:\n";
-                foreach ($blog['posts'] as $post) {
-                    $text .= "- {$post['title']}: ".number_format($post['views'])." views\n";
-                }
-                $text .= $this->pageUrl($blog, 'content')."\n";
-            }
-
-            foreach (['acquisition' => 'Acquisition', 'goals' => 'Goals'] as $page => $title) {
-                if (isset($lines[$page])) {
-                    $text .= "\n{$title}: {$lines[$page]}\n".$this->pageUrl($blog, $page)."\n";
-                }
-            }
-        }
-
-        return $text;
+        return $this->url('/dashboard/blog/'.$blog['id'].'/insights/'.$page.'?'
+            .http_build_query(['range' => 'custom', 'from' => $blog['from'], 'to' => $blog['to']]));
     }
 }

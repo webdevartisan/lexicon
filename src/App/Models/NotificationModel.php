@@ -180,7 +180,7 @@ class NotificationModel extends AppModel
      * The join every reply listing shares.
      */
     private const REPLY_JOIN = "FROM notifications n
-                 INNER JOIN comments c ON c.id = CAST(n.data->>'$.comment_id' AS UNSIGNED)
+                 INNER JOIN comments c ON c.id = CAST(JSON_UNQUOTE(JSON_EXTRACT(n.data, '$.comment_id')) AS UNSIGNED)
                  INNER JOIN posts p ON p.id = c.post_id
                  INNER JOIN blogs b ON b.id = p.blog_id
                  WHERE n.user_id = ?
@@ -285,7 +285,7 @@ class NotificationModel extends AppModel
                    SELECT 1 FROM comments c
                    INNER JOIN posts p ON p.id = c.post_id
                    INNER JOIN blogs b ON b.id = p.blog_id
-                   WHERE c.id = CAST(n.data->>'$.comment_id' AS UNSIGNED)
+                   WHERE c.id = CAST(JSON_UNQUOTE(JSON_EXTRACT(n.data, '$.comment_id')) AS UNSIGNED)
                      AND ".self::REPLY_LIVE.'
                )',
             array_merge([$userId], array_values($types))
@@ -412,7 +412,7 @@ class NotificationModel extends AppModel
         $params = [$type, $withinMinutes];
 
         if ($dedupeKey !== null) {
-            $sql .= " AND data->>'$.dedupe_key' = ?";
+            $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.dedupe_key')) = ?";
             $params[] = $dedupeKey;
         }
 

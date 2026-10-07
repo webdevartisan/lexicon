@@ -57,7 +57,7 @@ beforeEach(function () {
 function signupEvents(Framework\Database $db): array
 {
     return $db->query(
-        "SELECT channel, referrer_source, utm_campaign, props->>'$.came_from' AS came_from FROM analytics_events WHERE name = 'signup'"
+        "SELECT channel, referrer_source, utm_campaign, JSON_UNQUOTE(JSON_EXTRACT(props, '$.came_from')) AS came_from FROM analytics_events WHERE name = 'signup'"
     )->fetchAll(PDO::FETCH_ASSOC);
 }
 

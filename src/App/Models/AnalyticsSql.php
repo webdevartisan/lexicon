@@ -67,7 +67,7 @@ final class AnalyticsSql
         'search_entry' => "h.channel = 'search'",
         'exit' => 'h.is_exit = 1',
         // Posts opened from another post's related links, which the page script marks.
-        'related' => "h.props->>'$.via' = 'related'",
+        'related' => "JSON_UNQUOTE(JSON_EXTRACT(h.props, '$.via')) = 'related'",
     ];
 
     /**

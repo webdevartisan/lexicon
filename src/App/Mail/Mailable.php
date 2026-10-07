@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Mail\Templates\HtmlFragment;
+use App\Mail\Templates\ShippedEmailSource;
+use App\Services\EmailRenderer;
+use App\Services\LocaleRegistry;
+use Closure;
+
 /**
  * Base class for composing emails.
  *
@@ -11,13 +17,43 @@ namespace App\Mail;
  * Mailable classes extend this and implement build() to define their
  * specific email structure.
  *
- * This pattern (inspired by Laravel's Mailables) promotes:
- * - Reusable email templates
- * - Testable email logic
- * - Clear separation between content and delivery
+ * A Mailable supplies data, never words or markup: build() sets the
+ * recipient and hands its facts to fromTemplate(). Everything the reader sees,
+ * the subject included, is the email's content: shipped in English as
+ * resources/mail/emails/{ClassName}.html and editable, and translatable, under
+ * Email Templates in the control panel. Each key of the data is a placeholder
+ * that content can use. Where an email needs different words for a different
+ * situation, it is a different class, so each can be worded on its own.
+ *
+ * An email is written in its recipient's language, fixed when it is built. The
+ * code that knows the recipient builds it inside inLocale(), usually with the
+ * language RecipientLocale picked; outside one, the site's default is used. If
+ * the email has no words in that language yet, the site default is used, then
+ * English.
  */
 abstract class Mailable
 {
+    /** Hands out the renderer in use; set at bootstrap so Mailables need no constructor injection. */
+    private static ?Closure $templateResolver = null;
+
+    /** A renderer installed for the duration of withTemplateRenderer(). */
+    private static ?EmailRenderer $scopedRenderer = null;
+
+    /** Shipped emails only, for code running without the app container (unit tests, scripts). */
+    private static ?EmailRenderer $builtInRenderer = null;
+
+    /** The language set for the duration of inLocale(). */
+    private static ?string $scopedLocale = null;
+
+    /** The language this email is written in, fixed when it is constructed. */
+    private string $locale;
+
+    /** @var array<string, mixed> What this email gave its template */
+    private array $templateData = [];
+
+    /** @var array<string, mixed> What one repetition of its repeated section was given, for listing */
+    private array $repeatData = [];
+
     /** Somebody is blocked waiting on it, so it goes out on its own fast worker. */
     public const TIER_CRITICAL = 'critical';
 
@@ -62,9 +98,6 @@ abstract class Mailable
     /** @var array<int, array{path: string, name: string|null}> */
     protected array $attachments = [];
 
-    /** @var array<string, mixed> Template data */
-    protected array $data = [];
-
     /**
      * Build the email content.
      *
@@ -78,6 +111,7 @@ abstract class Mailable
      */
     public function __construct()
     {
+        $this->locale = self::templates()->localeFor(static::class, self::$scopedLocale ?? LocaleRegistry::instance()->default());
         $this->build();
     }
 
@@ -207,7 +241,170 @@ abstract class Mailable
         return $this;
     }
 
+    /**
+     * Render the email from its content in this email's language: the
+     * subject, the HTML and the plain text. Call it last in build().
+     *
+     * Each key of $data becomes a placeholder the content can use. Strings are
+     * escaped; pass an HtmlFragment for anything that is already markup.
+     *
+     * @param  array<string, mixed>  $data  Placeholder => value
+     * @return $this
+     */
+    protected function fromTemplate(array $data): static
+    {
+        $this->templateData = $data;
+        $email = self::templates()->renderEmail(static::class, $data, $this->locale);
+
+        return $this->subject($email->subject)->html($email->html)->textAlternative($email->text);
+    }
+
+    /**
+     * The email's repeated section, once per row, for content the email
+     * repeats such as one section per blog. Pass the result to fromTemplate().
+     *
+     * @param  list<array<string, mixed>>  $rows  Placeholder => value, per repetition
+     */
+    protected function repeat(array $rows): HtmlFragment
+    {
+        $this->repeatData = $rows[0] ?? [];
+
+        return self::templates()->renderRepeat(static::class, $rows, $this->locale);
+    }
+
+    /**
+     * An absolute address on this site, for links in the email.
+     */
+    protected function url(string $path): string
+    {
+        return rtrim((string) env('APP_URL', 'http://localhost'), '/').$path;
+    }
+
+    /**
+     * A number as this email's language writes it (1,240 or 1.240).
+     */
+    protected function number(int|float $value): string
+    {
+        return (string) (new \NumberFormatter($this->locale, \NumberFormatter::DECIMAL))->format($value);
+    }
+
+    /**
+     * A date as this email's language writes it, from an ICU skeleton such as
+     * 'yMMMd' (day, short month and year) or 'yMMMdjm' (with the time). The
+     * skeleton says what to show; the language decides the order and the words.
+     */
+    protected function date(\DateTimeInterface $date, string $skeleton): string
+    {
+        $pattern = (new \IntlDatePatternGenerator($this->locale))->getBestPattern($skeleton);
+        $formatter = new \IntlDateFormatter($this->locale, \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, $date->getTimezone(), null, (string) $pattern);
+
+        return (string) $formatter->format($date);
+    }
+
+    /**
+     * Render emails with whatever the resolver hands out, normally what was
+     * saved in the control panel with the shipped files underneath.
+     *
+     * @param  (Closure(): EmailRenderer)|null  $resolver  null goes back to the shipped emails only
+     */
+    public static function resolveTemplatesUsing(?Closure $resolver): void
+    {
+        self::$templateResolver = $resolver;
+    }
+
+    /**
+     * Build Mailables against a particular renderer, e.g. an unsaved draft
+     * while the control panel checks or previews it.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function withTemplateRenderer(EmailRenderer $renderer, callable $callback): mixed
+    {
+        $previous = self::$scopedRenderer;
+        self::$scopedRenderer = $renderer;
+
+        try {
+            return $callback();
+        } finally {
+            self::$scopedRenderer = $previous;
+        }
+    }
+
+    /**
+     * Build Mailables in a given language, normally the recipient's:
+     *
+     *     $mail = Mailable::inLocale($recipientLocale->forUser($id), fn () => new PostApprovedMail(...));
+     *
+     * A language the site does not offer falls back to the site default, and
+     * a language the email has no words in yet falls back as localeFor() says.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function inLocale(string $locale, callable $callback): mixed
+    {
+        $registry = LocaleRegistry::instance();
+        $previous = self::$scopedLocale;
+        self::$scopedLocale = $registry->normalize($locale) ?? $registry->default();
+
+        try {
+            return $callback();
+        } finally {
+            self::$scopedLocale = $previous;
+        }
+    }
+
+    private static function templates(): EmailRenderer
+    {
+        if (self::$scopedRenderer !== null) {
+            return self::$scopedRenderer;
+        }
+
+        if (self::$templateResolver !== null) {
+            return (self::$templateResolver)();
+        }
+
+        return self::$builtInRenderer ??= new EmailRenderer(new ShippedEmailSource());
+    }
+
+    /**
+     * The data this email gave its template, for the control panel to list
+     * what the email's wording can refer to.
+     *
+     * @return array<string, mixed>
+     */
+    public function getTemplateData(): array
+    {
+        return $this->templateData;
+    }
+
+    /**
+     * What one repetition of the email's repeated section was given, for the
+     * control panel to list what that section can refer to. Empty for emails
+     * that repeat nothing.
+     *
+     * @return array<string, mixed>
+     */
+    public function getRepeatData(): array
+    {
+        return $this->repeatData;
+    }
+
     // Getters for MailService to access protected properties
+
+    /**
+     * The language this email is written in: the one asked for with
+     * inLocale() when the email has words in it, else as localeFor() says.
+     */
+    public function getLocale(): string
+    {
+        return $this->locale;
+    }
 
     /**
      * Delivery tier, used to pick which queue worker handles it.

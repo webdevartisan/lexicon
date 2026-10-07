@@ -8,8 +8,10 @@ use App\Mail\EmailChangeVerificationMail;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Services\EmailChangeIssuer;
+use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
 use App\Services\PasswordConfirmRateLimiter;
+use App\Services\RecipientLocale;
 use Framework\Helpers\RateLimiter;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
@@ -77,7 +79,7 @@ beforeEach(function () {
         $this->pending,
         $this->throttle,
         $mailQueue,
-        new EmailChangeIssuer($this->pending, $mailQueue),
+        new EmailChangeIssuer($this->pending, $mailQueue, new RecipientLocale($this->db, LocaleRegistry::instance())),
     );
 
     $this->requestChange = function (string $newEmail, string $password) {

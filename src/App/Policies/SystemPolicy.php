@@ -55,6 +55,7 @@ class SystemPolicy implements PolicyInterface
         'manageCache' => 'manage_cache',
         'manageMailQueue' => 'manage_mail_queue',
         'manageScheduledTasks' => 'manage_scheduled_tasks',
+        'manageEmailTemplates' => 'manage_email_templates',
         'manageSettings' => 'manage_site_settings',
         'viewPlatformAnalytics' => 'view_platform_analytics',
     ];
@@ -255,6 +256,19 @@ class SystemPolicy implements PolicyInterface
     public function manageScheduledTasks(array $user): bool
     {
         return $this->allowsArea($user, 'manageScheduledTasks');
+    }
+
+    /**
+     * Edit email blocks, templates and the wording of each email.
+     *
+     * Separate from site settings because what is written here reaches every
+     * inbox the site mails, so it is worth granting on its own.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageEmailTemplates(array $user): bool
+    {
+        return $this->allowsArea($user, 'manageEmailTemplates');
     }
 
     /**

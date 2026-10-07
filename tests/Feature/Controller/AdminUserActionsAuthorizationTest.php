@@ -14,6 +14,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Security\Csrf;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * The admin user actions re-check authority on the server. The row menu hides
@@ -38,10 +39,7 @@ beforeEach(function () {
     $this->users = new UserModel($this->db);
 
     // Every admin user action checks targets against this shared placeholder.
-    $this->db->execute(
-        "INSERT INTO users (handle, email, password, display_name_cached, is_active)
-         VALUES ('deleted-user', 'deleted-user@lexicon.invalid', '', 'Deleted user', 0)"
-    );
+    DatabaseHelper::deletedUser($this->db);
 
     $this->db->execute(
         "INSERT INTO roles (role_name, role_slug, description, scope, is_system, level)

@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Interfaces\SchedulableCommandInterface;
 use App\Mail\InsightsDigestMail;
+use App\Mail\Mailable;
 use App\Models\AnalyticsDailyEventModel;
 use App\Models\AnalyticsStatsModel;
 use App\Models\UserModel;
@@ -13,6 +14,7 @@ use App\Models\UserPreferencesModel;
 use App\Services\Analytics\AnalyticsReportService;
 use App\Services\Analytics\AnalyticsSettings;
 use App\Services\MailQueueService;
+use App\Services\RecipientLocale;
 use App\ValueObjects\AnalyticsScope;
 
 /**
@@ -36,6 +38,7 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
         private UserModel $users,
         private UserPreferencesModel $preferences,
         private MailQueueService $mail,
+        private RecipientLocale $locales,
     ) {}
 
     public static function scheduleLabel(): string
@@ -81,11 +84,11 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
         }
 
         $from = $today->modify('-7 days');
-        $label = $from->format('M j').' to '.$today->modify('-1 day')->format('M j, Y');
+        $to = $today->modify('-1 day');
         $sent = 0;
 
         foreach ($this->stats->publishedBlogsByOwner() as $ownerId => $blogs) {
-            if ($this->sendTo($ownerId, $blogs, $from, $label)) {
+            if ($this->sendTo($ownerId, $blogs, $from, $to)) {
                 $sent++;
             }
         }
@@ -99,7 +102,7 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
     /**
      * @param  list<array{id: int, name: string, slug: string}>  $blogs
      */
-    private function sendTo(int $ownerId, array $blogs, \DateTimeImmutable $from, string $label): bool
+    private function sendTo(int $ownerId, array $blogs, \DateTimeImmutable $from, \DateTimeImmutable $to): bool
     {
         if (!$this->preferences->notificationPreference($ownerId, 'notify_insights_digest')) {
             return false;
@@ -122,7 +125,12 @@ class AnalyticsDigestCommand implements SchedulableCommandInterface
             return false;
         }
 
-        $this->mail->enqueue(new InsightsDigestMail((string) $owner['email'], $label, $summaries), 'user', $ownerId);
+        $mail = Mailable::inLocale(
+            $this->locales->forUser($ownerId),
+            fn (): InsightsDigestMail => new InsightsDigestMail((string) $owner['email'], $from->format('Y-m-d'), $to->format('Y-m-d'), $summaries)
+        );
+
+        $this->mail->enqueue($mail, 'user', $ownerId);
 
         return true;
     }

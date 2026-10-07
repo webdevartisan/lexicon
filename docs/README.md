@@ -33,6 +33,7 @@ contributors and developers working on the project.
 - **API and modules**
   - [`api/cache.md`](api/cache.md) - Cache layers, keys, and invalidation patterns.
   - [`api/templates.md`](api/templates.md) - Custom template engine syntax and usage.
+  - [`api/email-templates.md`](api/email-templates.md) - How emails are built: layouts, each email's words per language, and the data Mailables provide.
   - [`api/security-and-csrf.md`](api/security-and-csrf.md) - CSRF strategy for AJAX, TinyMCE, Dropzone.
   - [`api/config-and-env.md`](api/config-and-env.md) - Dotenv, `env()` helper, and configuration.
   - Additional API docs can be added under `docs/api/` as modules evolve.

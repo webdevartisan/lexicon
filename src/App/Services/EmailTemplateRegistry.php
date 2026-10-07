@@ -17,6 +17,11 @@ use Exception;
  * Every Mailable in src/App/Mail must be registered here so it shows up
  * on the admin Email Templates page; unregisteredClasses() reports any
  * that were added to the codebase but never registered.
+ *
+ * Register each class exactly once. The admin page lists one email per class,
+ * and its wording is stored per class, so an email sent for several different
+ * reasons should be one class per reason (see CommentMail and its subclasses)
+ * rather than one class registered several times.
  */
 class EmailTemplateRegistry
 {
@@ -109,15 +114,27 @@ class EmailTemplateRegistry
                     'actorHandle' => 'blogowner',
                 ],
             ],
-            'moderation_warning' => [
-                'name' => 'Moderation Warning',
-                'description' => 'Tells an author a moderator upheld reports against their post or comment',
+            'moderation_warning_post' => [
+                'name' => 'Moderation Warning: Post',
+                'description' => 'Tells an author a moderator upheld reports against one of their posts',
                 'group' => 'Account',
-                'class' => 'App\\Mail\\ModerationWarningMail',
+                'class' => 'App\\Mail\\ModerationWarningPostMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
                     'handle' => 'johndoe',
-                    'subjectKind' => 'comment',
+                    'subjectLabel' => 'Ten Hidden Beaches in Crete',
+                    'category' => 'Misleading content',
+                    'message' => 'Several of the beaches listed are private resorts. Please correct the post.',
+                ],
+            ],
+            'moderation_warning_comment' => [
+                'name' => 'Moderation Warning: Comment',
+                'description' => 'Tells an author a moderator upheld reports against one of their comments',
+                'group' => 'Account',
+                'class' => 'App\\Mail\\ModerationWarningCommentMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'handle' => 'johndoe',
                     'subjectLabel' => 'Buy cheap followers at...',
                     'category' => 'Spam',
                     'message' => 'Please stop posting the same link under every post.',
@@ -127,7 +144,7 @@ class EmailTemplateRegistry
                 'name' => 'Reporter Warning',
                 'description' => 'Warns a reader that several of their reports were unfounded, before any pause of their reporting',
                 'group' => 'Account',
-                'class' => 'App\Mail\ReporterWarningMail',
+                'class' => 'App\\Mail\\ReporterWarningMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
                     'handle' => 'johndoe',
@@ -193,7 +210,8 @@ class EmailTemplateRegistry
                 'class' => 'App\\Mail\\InsightsDigestMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
-                    'weekLabel' => 'Sep 28 to Oct 4, 2026',
+                    'weekStart' => '2026-09-28',
+                    'weekEnd' => '2026-10-04',
                     'blogs' => [[
                         'name' => 'Travel Stories', 'id' => 1, 'slug' => 'travel-stories', 'from' => '2026-09-28', 'to' => '2026-10-04',
                         'views' => 1240, 'previous' => 980, 'visitors' => 860, 'source' => 'Google',
@@ -214,7 +232,18 @@ class EmailTemplateRegistry
                     'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
                     'authorHandle' => 'johndoe',
-                    'unassigned' => false,
+                ],
+            ],
+            'post_submitted_unassigned' => [
+                'name' => 'Post Waiting for a Reviewer',
+                'description' => 'Tells every owner, editor and reviewer a submitted post has nobody assigned yet',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostSubmittedUnassignedMail',
+                'sample_data' => [
+                    'toEmail' => 'editor@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'authorHandle' => 'johndoe',
                 ],
             ],
             'reviewer_assigned' => [
@@ -273,7 +302,6 @@ class EmailTemplateRegistry
                 'class' => 'App\\Mail\\PostPublishedMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
-                    'postId' => 42,
                     'postTitle' => 'Ten Hidden Beaches in Crete',
                     'blogSlug' => 'travel-stories',
                     'postSlug' => 'ten-hidden-beaches-in-crete',
@@ -282,7 +310,7 @@ class EmailTemplateRegistry
             'new_post' => [
                 'name' => 'New Post for Subscribers',
                 'description' => 'Tells blog subscribers a new post is live, with an unsubscribe link',
-                'group' => 'Review workflow',
+                'group' => 'Subscribers',
                 'class' => 'App\\Mail\\NewPostMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
@@ -296,7 +324,7 @@ class EmailTemplateRegistry
             'subscription_confirm' => [
                 'name' => 'Confirm Subscription',
                 'description' => 'Asks a new subscriber to confirm the address before any post notifications go out',
-                'group' => 'Review workflow',
+                'group' => 'Subscribers',
                 'class' => 'App\\Mail\\SubscriptionConfirmMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
@@ -304,11 +332,11 @@ class EmailTemplateRegistry
                     'token' => str_repeat('cd', 32),
                 ],
             ],
-            'new_comment_reply' => [
-                'name' => 'New Comment — Reply',
+            'comment_reply' => [
+                'name' => 'Reply to Your Comment',
                 'description' => 'Tells you someone replied to a comment you wrote',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\CommentReplyMail',
                 'sample_data' => [
                     'toEmail' => 'reader@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -318,15 +346,31 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Same! Balos is unreal at sunrise, get there early.',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'reply',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_authored' => [
-                'name' => 'New Comment — On Your Post',
+            'comment_reply_pending' => [
+                'name' => 'Reply to Your Comment (Awaiting Approval)',
+                'description' => 'Tells you someone replied to a comment you wrote, while the reply waits for approval',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\CommentReplyPendingMail',
+                'sample_data' => [
+                    'toEmail' => 'reader@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Same! Balos is unreal at sunrise, get there early.',
+                    'awaitingModeration' => true,
+                    'commentId' => 128,
+                    'blogId' => 7,
+                ],
+            ],
+            'post_comment' => [
+                'name' => 'Comment on Your Post',
                 'description' => 'Tells a post author a reader commented on their post',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\PostCommentMail',
                 'sample_data' => [
                     'toEmail' => 'author@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -336,15 +380,31 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'authored',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_moderation' => [
-                'name' => 'New Comment — Awaiting Moderation',
-                'description' => 'Tells a blog owner or editor a comment is held for approval',
+            'post_comment_pending' => [
+                'name' => 'Comment on Your Post (Awaiting Approval)',
+                'description' => 'Tells a post\'s author about a new comment that is waiting for approval',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\PostCommentPendingMail',
+                'sample_data' => [
+                    'toEmail' => 'author@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Loved the section on Balos — going there next month!',
+                    'awaitingModeration' => true,
+                    'commentId' => 128,
+                    'blogId' => 7,
+                ],
+            ],
+            'comment_moderation' => [
+                'name' => 'Comment Awaiting Moderation',
+                'description' => 'Asks a blog owner or editor to approve a comment held for moderation',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\CommentModerationMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -354,15 +414,14 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => true,
                     'commentId' => 128,
-                    'reason' => 'moderation',
                     'blogId' => 7,
                 ],
             ],
-            'new_comment_blog' => [
-                'name' => 'New Comment — On Your Blog',
+            'blog_comment' => [
+                'name' => 'Comment on Your Blog',
                 'description' => 'Tells a blog owner a reader commented anywhere on their blog',
                 'group' => 'Comments',
-                'class' => 'App\\Mail\\NewCommentMail',
+                'class' => 'App\\Mail\\BlogCommentMail',
                 'sample_data' => [
                     'toEmail' => 'owner@example.com',
                     'postTitle' => 'Ten Hidden Beaches in Crete',
@@ -372,7 +431,23 @@ class EmailTemplateRegistry
                     'commentExcerpt' => 'Loved the section on Balos — going there next month!',
                     'awaitingModeration' => false,
                     'commentId' => 128,
-                    'reason' => 'blog',
+                    'blogId' => 7,
+                ],
+            ],
+            'blog_comment_pending' => [
+                'name' => 'Comment on Your Blog (Awaiting Approval)',
+                'description' => 'Tells a blog owner about a new comment that is waiting for approval',
+                'group' => 'Comments',
+                'class' => 'App\\Mail\\BlogCommentPendingMail',
+                'sample_data' => [
+                    'toEmail' => 'owner@example.com',
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'blogSlug' => 'travel-stories',
+                    'postSlug' => 'ten-hidden-beaches-in-crete',
+                    'commenterName' => 'quietreader',
+                    'commentExcerpt' => 'Loved the section on Balos — going there next month!',
+                    'awaitingModeration' => true,
+                    'commentId' => 128,
                     'blogId' => 7,
                 ],
             ],
@@ -446,8 +521,9 @@ class EmailTemplateRegistry
                 continue;
             }
 
-            // Only concrete Mailable subclasses belong on the page
-            if (class_exists($class) && is_subclass_of($class, Mailable::class)) {
+            // Only concrete Mailable subclasses belong on the page; a shared
+            // base such as CommentMail is never sent itself.
+            if (class_exists($class) && is_subclass_of($class, Mailable::class) && !(new \ReflectionClass($class))->isAbstract()) {
                 $missing[] = $class;
             }
         }
@@ -481,6 +557,25 @@ class EmailTemplateRegistry
      */
     public function instantiate(string $templateKey): Mailable
     {
+        try {
+            return $this->build($templateKey);
+        } catch (Exception $e) {
+            error_log("Failed to instantiate email template '{$templateKey}': ".$e->getMessage());
+            throw new Exception('Failed to create email template: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Instantiate with sample data, letting whatever goes wrong surface as is.
+     *
+     * For the template editor, which builds every email against a draft to see
+     * which ones it would break. Those failures are the expected answer to a
+     * question, not errors, so nothing is logged.
+     *
+     * @throws Exception If the template is unknown or the email cannot be built
+     */
+    public function build(string $templateKey): Mailable
+    {
         $template = $this->get($templateKey);
 
         if (!$template) {
@@ -493,36 +588,31 @@ class EmailTemplateRegistry
             throw new Exception("Email class '{$className}' does not exist");
         }
 
-        try {
-            $data = $template['sample_data'];
+        $data = $template['sample_data'];
 
-            // use reflection to determine constructor parameters
-            $reflection = new \ReflectionClass($className);
-            $constructor = $reflection->getConstructor();
+        // use reflection to determine constructor parameters
+        $reflection = new \ReflectionClass($className);
+        $constructor = $reflection->getConstructor();
 
-            if (!$constructor) {
-                return new $className();
-            }
-
-            // map sample data to constructor parameters
-            $params = [];
-            foreach ($constructor->getParameters() as $param) {
-                $paramName = $param->getName();
-
-                if (isset($data[$paramName])) {
-                    $params[] = $data[$paramName];
-                } elseif ($param->isDefaultValueAvailable()) {
-                    $params[] = $param->getDefaultValue();
-                } else {
-                    throw new Exception("Missing required parameter '{$paramName}' for {$className}");
-                }
-            }
-
-            return $reflection->newInstanceArgs($params);
-
-        } catch (Exception $e) {
-            error_log("Failed to instantiate email template '{$templateKey}': ".$e->getMessage());
-            throw new Exception('Failed to create email template: '.$e->getMessage());
+        if (!$constructor) {
+            return new $className();
         }
+
+        // map sample data to constructor parameters
+        $params = [];
+        foreach ($constructor->getParameters() as $param) {
+            $paramName = $param->getName();
+
+            if (isset($data[$paramName])) {
+                $params[] = $data[$paramName];
+            } elseif ($param->isDefaultValueAvailable()) {
+                $params[] = $param->getDefaultValue();
+            } else {
+                throw new Exception("Missing required parameter '{$paramName}' for {$className}");
+            }
+        }
+
+        /** @var Mailable */
+        return $reflection->newInstanceArgs($params);
     }
 }

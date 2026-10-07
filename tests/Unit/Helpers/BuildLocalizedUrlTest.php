@@ -26,7 +26,7 @@ test('a path already carrying a supported locale is left alone', function () {
 
 test('a two-letter segment that is not a supported locale still gets localized', function (string $path) {
     expect(buildLocalizedUrl('/'.$path.'/thing'))->toBe('/en/'.$path.'/thing');
-})->with(['go', 'my', 'ui', 'qa', 'fr', 'de']);
+})->with(fn (): array => array_values(array_diff(['go', 'my', 'ui', 'qa', 'fr', 'de'], (new App\Services\LocaleRegistry(ROOT_PATH))->supported())));
 
 test('absolute urls are returned untouched', function () {
     expect(buildLocalizedUrl('https://example.com/x'))->toBe('https://example.com/x');

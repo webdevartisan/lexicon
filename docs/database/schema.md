@@ -10,6 +10,7 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
   - Authentication and identity data (username, email, password).
   - Denormalized counters: `posts_count`, `comments_received_count`.
   - Soft deletes via `deleted_at`.
+  - `last_locale`: language of the page last signed in from; emails use it when the user chose no language.
 
 - **`roles`**
   - Role definitions such as administrator and blog‑level roles.
@@ -98,6 +99,18 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
 
 - **Password reset / security tables**
   - Tables such as `password_resets` or equivalent are used by `PasswordResetModel` and related services.
+
+- **`blog_subscribers`**
+  - Email subscriptions to a blog, confirmed by a link before any post email goes out.
+  - `locale` is the language of the page the subscription was made from, used for its emails when there is no account preference.
+
+- **Emails** (`email_layouts`, `email_settings`, `email_contents`)
+  - Only what was changed or added under Email Templates in the control panel. The defaults ship as files:
+    layouts in `resources/mail/layouts/*.html` and one English version of each email in
+    `resources/mail/emails/{Mailable}.html`. A layout row with a shipped slug overrides that file, an English
+    content row overrides the shipped English, and deleting the row resets it. Other languages exist only as
+    `email_contents` rows. `email_settings` records an email's layout where it was changed. A fresh install has
+    empty tables. See [`docs/api/email-templates.md`](../api/email-templates.md).
 
 Consult `database/schema.sql` for exact column definitions, indexes, and constraints. See `docs/database/relationships.md` for how these tables relate at the model level.
 

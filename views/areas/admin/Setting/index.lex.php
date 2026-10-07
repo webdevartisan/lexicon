@@ -274,9 +274,9 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
         <div class="card">
             <div class="card-body">
                 <h3 class="<?= $sectionTitleClass ?>">Testing Email Delivery</h3>
-                <p class="<?= $sectionHintClass ?>">Template previews and delivery tests live on the Email Templates page so there is one place to test email.</p>
+                <p class="<?= $sectionHintClass ?>">Check the mail server settings and send a plain test message. Each email is previewed and test-sent from its own editor under Email Templates.</p>
                 <a href="<?= e(lurl('/admin/email-test')) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                    <i data-lucide="mail" class="size-4"></i> Open Email Templates
+                    <i data-lucide="mail" class="size-4"></i> Open Email Delivery
                 </a>
             </div>
         </div>

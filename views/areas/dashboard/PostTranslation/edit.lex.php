@@ -13,11 +13,6 @@
 <?php
 $activeLocale = $locale;
 $translationsEnabled = true;
-$localeNames = [
-    'en' => 'English', 'fr' => 'Français', 'de' => 'Deutsch', 'el' => 'Ελληνικά', 'ar' => 'العربية',
-];
-$localeName = $localeNames[$locale] ?? strtoupper($locale);
-$isRtlLocale = $locale === 'ar';
 
 $titleValue = old('title') ?? $translation['title'] ?? '';
 $contentValue = old('content') ?? $translation['content'] ?? '';

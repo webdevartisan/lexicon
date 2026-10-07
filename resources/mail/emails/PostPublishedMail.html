@@ -1,0 +1,52 @@
+---
+subject: Your post is live: {{ post_title }}
+preheader: It is published and readers can see it now.
+footer_note: You received this email because you take part in the review of this post. <a href="{{ preferences_url }}" target="_blank" style="color:#374151;text-decoration:underline;">Manage email preferences</a>
+---
+          <!-- Content > Heading -->
+          <tr>
+            <td class="section-padding" style="padding:32px 40px 8px;">
+              <h1 class="main-heading" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;font-weight:bold;color:#111827;">
+                Published
+              </h1>
+            </td>
+          </tr>
+          <!-- Content > Main text -->
+          <tr>
+            <td class="section-padding" style="padding:0px 40px 0;">
+              <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                <strong>{{ post_title }}</strong> is now live.
+              </p>
+            </td>
+          </tr>
+          <!-- Actions > Primary button -->
+          <tr>
+            <td class="section-padding" align="{{ start }}" style="padding:8px 40px 24px;">
+
+              <!--[if mso]>
+              <v:roundrect href="{{ post_url }}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroked="f" fillcolor="{{ primary_color }}">
+                <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
+                <center style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;">
+                  View on site
+                </center>
+              </v:roundrect>
+              <![endif]-->
+
+              <!--[if !mso]><!-->
+              <table class="mobile-button" role="presentation" cellpadding="0" cellspacing="0" border="0" width="240" style="width:240px;border-collapse:separate;">
+                <tr>
+                  <td align="center" bgcolor="{{ primary_color }}" style="background-color:{{ primary_color }};border-radius:6px;">
+                    <a href="{{ post_url }}" target="_blank" style="display:block;padding:14px 16px;border:1px solid {{ primary_color }};border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;text-align:center;text-decoration:none;color:#FFFFFF;">
+                      View on site
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <!--<![endif]-->
+
+            </td>
+          </tr>
+          <!-- Spacing before the footer -->
+          <tr>
+            <td style="padding:0 0 16px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>

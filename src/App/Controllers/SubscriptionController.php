@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Mail\Mailable;
 use App\Mail\SubscriptionConfirmMail;
 use App\Models\BlogModel;
 use App\Models\BlogSubscriberModel;
 use App\Services\Analytics\GoalRecorder;
+use App\Services\RecipientLocale;
 use Framework\Core\Response;
 
 /**
@@ -55,11 +57,16 @@ class SubscriptionController extends AppController
         $user = auth()->user();
         $ownAddress = $user !== null && strcasecmp((string) $user['email'], $email) === 0;
 
+        // The page they subscribed from is in a language they read, so the
+        // confirmation and the post emails after it use it too.
+        $locale = app(RecipientLocale::class)->current();
+
         $subscription = $this->subscriberModel->subscribe(
             (int) $blog['id'],
             $email,
             $user ? (int) $user['id'] : null,
-            $ownAddress
+            $ownAddress,
+            $locale
         );
 
         audit()->log(
@@ -75,7 +82,7 @@ class SubscriptionController extends AppController
 
         if ($subscription['confirmed_at'] === null) {
             mail_queue()->enqueue(
-                new SubscriptionConfirmMail($email, (string) $blog['blog_name'], $subscription['token']),
+                Mailable::inLocale($locale, fn (): SubscriptionConfirmMail => new SubscriptionConfirmMail($email, (string) $blog['blog_name'], $subscription['token'])),
                 'blog',
                 (int) $blog['id']
             );
