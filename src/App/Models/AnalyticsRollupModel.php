@@ -35,7 +35,7 @@ class AnalyticsRollupModel extends AppModel
     ];
 
     /** The blog a sign-up's reader was last on, read from came_from (blog:{id}). */
-    private const SIGNUP_BLOG = "CAST(SUBSTRING(e.props->>'$.came_from', 6) AS UNSIGNED)";
+    private const SIGNUP_BLOG = "CAST(SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(e.props, '$.came_from')), 6) AS UNSIGNED)";
 
     public function __construct(\Framework\Database $database, private EventRegistry $registry)
     {
@@ -247,7 +247,7 @@ class AnalyticsRollupModel extends AppModel
                     $breakdown,
                     $value,
                     $names,
-                    "e.props->>'$.came_from' LIKE 'blog:%' AND EXISTS (SELECT 1 FROM blogs b WHERE b.id = ".self::SIGNUP_BLOG."){$signupFilter}"
+                    "JSON_UNQUOTE(JSON_EXTRACT(e.props, '$.came_from')) LIKE 'blog:%' AND EXISTS (SELECT 1 FROM blogs b WHERE b.id = ".self::SIGNUP_BLOG."){$signupFilter}"
                 );
                 array_push($params, $from, ...$names, ...$signupParams);
             }
@@ -309,7 +309,7 @@ class AnalyticsRollupModel extends AppModel
         foreach ($byBreakdown as $breakdown => $names) {
             $value = isset(EventRegistry::COLUMN_BREAKDOWNS[$breakdown])
                 ? 'e.'.EventRegistry::COLUMN_BREAKDOWNS[$breakdown]
-                : "e.props->>'$.{$breakdown}'";
+                : "JSON_UNQUOTE(JSON_EXTRACT(e.props, '$.{$breakdown}'))";
             $rows[] = [$breakdown, $value, $names];
         }
 

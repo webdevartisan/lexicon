@@ -405,14 +405,14 @@ test('only Discover keeps what was searched, folded to one spelling', function (
     $this->recorder->record(beacon(), $search('/en/discover'), null, false, null);
     $this->recorder->record(beacon(['User-Agent' => BROWSER_UA.' other']), $search("/en/blog/{$this->slug}"), null, false, null);
 
-    expect($this->db->query("SELECT props->>'\$.q' FROM analytics_events WHERE name = 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN))->toBe(['garden notes', null]);
+    expect($this->db->query("SELECT JSON_UNQUOTE(JSON_EXTRACT(props, '\$.q')) FROM analytics_events WHERE name = 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN))->toBe(['garden notes', null]);
 });
 
 test('a missing page is kept with the site that linked to it, and nothing else is stored', function () {
     $payload = BeaconPayload::view(json_encode(['v' => bin2hex(random_bytes(16)), 'p' => "/en/blog/{$this->slug}/old-post", 'r' => 'https://www.reddit.com/r/x', 'nf' => 1]));
 
     $outcome = $this->recorder->record(beacon(), $payload, null, false, null);
-    $row = $this->db->query("SELECT blog_id, path, props->>'\$.referrer_host' AS referrer_host FROM analytics_events WHERE name = 'not_found'")->fetch(PDO::FETCH_ASSOC);
+    $row = $this->db->query("SELECT blog_id, path, JSON_UNQUOTE(JSON_EXTRACT(props, '\$.referrer_host')) AS referrer_host FROM analytics_events WHERE name = 'not_found'")->fetch(PDO::FETCH_ASSOC);
 
     expect($outcome)->toBe(AnalyticsRecorder::NOT_FOUND)
         ->and((int) $row['blog_id'])->toBe($this->blogId)
@@ -456,10 +456,14 @@ test('a click keeps only the other site\'s host or the file name, on the view it
     $unknownView = $send('outbound', ['host' => 'example.org'], bin2hex(random_bytes(16)));
 
     expect([$outbound, $download, $share, $notAFile, $unknownNetwork, $unknownView])->toBe([true, true, true, false, false, false])
-        ->and($this->db->query("SELECT name, post_id, props FROM analytics_events WHERE name <> 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_ASSOC))->toBe([
-            ['name' => 'outbound', 'post_id' => $this->postId, 'props' => '{"host": "example.org"}'],
-            ['name' => 'download', 'post_id' => $this->postId, 'props' => '{"file": "report final.pdf"}'],
-            ['name' => 'share', 'post_id' => $this->postId, 'props' => '{"network": "x"}'],
+        // Decoded, since MySQL normalises stored JSON ('{"host": …}') and MariaDB keeps it as written.
+        ->and(array_map(
+            static fn (array $row): array => ['props' => json_decode((string) $row['props'], true)] + $row,
+            $this->db->query("SELECT name, post_id, props FROM analytics_events WHERE name <> 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_ASSOC)
+        ))->toBe([
+            ['props' => ['host' => 'example.org'], 'name' => 'outbound', 'post_id' => $this->postId],
+            ['props' => ['file' => 'report final.pdf'], 'name' => 'download', 'post_id' => $this->postId],
+            ['props' => ['network' => 'x'], 'name' => 'share', 'post_id' => $this->postId],
         ]);
 });
 
@@ -482,7 +486,7 @@ test('a related link is noted only between two posts of the same blog', function
     $this->recorder->record(beacon(), $related("/en/blog/{$this->slug}/second-post", base_url()."/en/blog/{$this->slug}/first-post"), null, false, null);
     $this->recorder->record(beacon(), $related("/en/blog/{$this->slug}", base_url()."/en/blog/{$this->slug}/first-post"), null, false, null);
 
-    expect($this->db->query("SELECT props->>'\$.via' FROM analytics_events WHERE name = 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN))
+    expect($this->db->query("SELECT JSON_UNQUOTE(JSON_EXTRACT(props, '\$.via')) FROM analytics_events WHERE name = 'page_view' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN))
         ->toBe(['related', null]);
 });
 
@@ -491,8 +495,8 @@ test('a Discover search keeps how many results it found', function () {
         'v' => bin2hex(random_bytes(16)), 'p' => '/en/discover', 'q' => 'knitting', 'sr' => 0,
     ])), null, false, null);
 
-    expect($this->db->query("SELECT props FROM analytics_events WHERE name = 'page_view'")->fetchColumn())
-        ->toBe('{"q": "knitting", "search_results": 0}');
+    expect(json_decode((string) $this->db->query("SELECT props FROM analytics_events WHERE name = 'page_view'")->fetchColumn(), true))
+        ->toBe(['q' => 'knitting', 'search_results' => 0]);
 });
 
 test('page speed is kept with the view it was measured on', function () {

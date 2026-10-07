@@ -301,8 +301,8 @@ scoped AS (
     SELECT 'blog', b.id, b.id, e.local_date, e.name, e.post_id, e.channel,
            e.referrer_source, e.utm_source, e.utm_medium, e.utm_campaign, e.props
     FROM analytics_events e
-    JOIN blogs b ON b.id = CAST(SUBSTRING(e.props->>'$.came_from', 6) AS UNSIGNED)
-    WHERE e.name = 'signup' AND e.props->>'$.came_from' LIKE 'blog:%'
+    JOIN blogs b ON b.id = CAST(SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(e.props, '$.came_from')), 6) AS UNSIGNED)
+    WHERE e.name = 'signup' AND JSON_UNQUOTE(JSON_EXTRACT(e.props, '$.came_from')) LIKE 'blog:%'
 ),
 valued AS (
     SELECT s.scope, s.scope_id, s.scope_blog, s.local_date, s.name, b.breakdown,

@@ -242,9 +242,9 @@ class AnalyticsEventModel extends AppModel
         $empty = $foundNothing ? " AND JSON_EXTRACT(props, '$.search_results') = 0" : '';
 
         $rows = $this->database->query(
-            "SELECT props->>'$.q' AS value, COUNT(*) AS searches, COUNT(DISTINCT visitor_hash) AS visitors
+            "SELECT JSON_UNQUOTE(JSON_EXTRACT(props, '$.q')) AS value, COUNT(*) AS searches, COUNT(DISTINCT visitor_hash) AS visitors
              FROM analytics_events
-             WHERE name = 'page_view' AND page_type = 'discover' AND props->>'$.q' IS NOT NULL AND suspect = 0{$empty}
+             WHERE name = 'page_view' AND page_type = 'discover' AND JSON_UNQUOTE(JSON_EXTRACT(props, '$.q')) IS NOT NULL AND suspect = 0{$empty}
                AND created_at >= ? AND created_at < ? + INTERVAL 1 DAY
              GROUP BY value
              HAVING visitors >= ?
@@ -271,7 +271,7 @@ class AnalyticsEventModel extends AppModel
         [$where, $params] = $blogId === null ? ['blog_id IS NULL', []] : ['blog_id = ?', [$blogId]];
 
         $rows = $this->database->query(
-            "SELECT path, COALESCE(props->>'$.referrer_host', '') AS came_from_host, COUNT(*) AS views
+            "SELECT path, COALESCE(JSON_UNQUOTE(JSON_EXTRACT(props, '$.referrer_host')), '') AS came_from_host, COUNT(*) AS views
              FROM analytics_events
              WHERE name = 'not_found' AND {$where} AND created_at >= ? AND created_at < ? + INTERVAL 1 DAY
              GROUP BY path, came_from_host",
