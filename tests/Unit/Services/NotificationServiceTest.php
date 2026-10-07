@@ -2,18 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Mail\BlogCommentMail;
+use App\Mail\BlogCommentPendingMail;
 use App\Mail\CollaboratorRemovedMail;
 use App\Mail\CommentModerationMail;
+use App\Mail\Mailable;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\CommentAudienceResolver;
+use App\Services\EmailRenderer;
 use App\Services\MailQueueService;
 use App\Services\NotificationService;
 use App\Services\RecipientLocale;
+use Tests\Helpers\InMemoryEmailSource;
 
 /**
  * Unit tests for the NotificationService dispatcher.
@@ -69,8 +72,11 @@ describe('NotificationService::dispatch', function () {
             ->with(Mockery::on(fn ($m) => $m->getLocale() === 'ar' && str_contains($m->getBody(), 'dir="rtl"')), 'notification', 9)
             ->andReturn(1);
 
-        makeNotificationService($notif, $users, $prefs, $queue, $locales)
-            ->dispatch(9, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r']);
+        // The email has to have words in Arabic to go out in it.
+        $renderer = new EmailRenderer(new InMemoryEmailSource([PostApprovedMail::class => ['ar' => ['subject' => 'تمت الموافقة: {{ post_title }}']]]));
+
+        Mailable::withTemplateRenderer($renderer, fn () => makeNotificationService($notif, $users, $prefs, $queue, $locales)
+            ->dispatch(9, 'post.approved', ['post_id' => 1, 'post_title' => 'T', 'reviewer_handle' => 'r']));
 
         expect(true)->toBeTrue();
     });
@@ -327,10 +333,10 @@ describe('NotificationService::dispatchFirstEnabled', function () {
             ->with(Mockery::on(function ($m) {
                 $m->build();
 
-                // The blog email goes out, not the moderation one.
-                return $m instanceof BlogCommentMail
-                    && str_contains($m->getSubject(), 'New comment on')
-                    && !str_contains($m->getSubject(), 'approval');
+                // The blog email goes out, not the moderation one; the comment
+                // is held, so it is the blog email's held-comment version.
+                return $m instanceof BlogCommentPendingMail
+                    && str_starts_with($m->getSubject(), 'New comment on:');
             }), 'notification', 7)
             ->andReturn(1);
 

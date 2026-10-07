@@ -1,85 +1,69 @@
--- Email templates built from blocks, editable in the control panel.
+-- Emails as layouts plus words per language, editable in the control panel.
 -- See the matching section of schema.sql for what each table holds.
 
 -- ----------------------------------------------------------------------------
--- Email Template Tables
+-- Email Tables
 -- ----------------------------------------------------------------------------
--- Emails are built from blocks (email_components) arranged into templates
--- (email_templates), and each Mailable class is bound to one template with
--- its own wording for the template's placeholders (mailable_template_bindings).
+-- An email is its words in a layout. A layout is a whole HTML document (the
+-- wrapper, header and footer) with {{ content }} where each email goes; an
+-- email is a subject, preheader, body and footer note per language.
 --
--- The defaults ship in code (resources/mail/catalog.php). These tables only
--- hold what was changed or added in the control panel: a row whose slug (or
--- Mailable class) matches a built-in one overrides it, and deleting that row
--- is "reset to default". So a fresh install has empty tables and still sends
--- every email.
---
--- Templates refer to blocks by slug rather than id because a block may be a
--- built-in one with no row at all. The application refuses to delete a block
--- a template uses, or a template an email uses.
+-- The defaults ship as files: resources/mail/layouts/*.html and one English
+-- resources/mail/emails/{Mailable}.html per email. These tables only hold what
+-- was changed or added in the control panel. A layout row whose slug matches a
+-- shipped file overrides it, and an English content row overrides the shipped
+-- English; deleting the row is "reset to default". Other languages exist only
+-- as rows. A fresh install has empty tables and still sends every email.
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS email_components (
+CREATE TABLE IF NOT EXISTS email_layouts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    slug VARCHAR(64) NOT NULL COMMENT 'Stable name templates refer to; matches a built-in block to override it',
-    label VARCHAR(100) NOT NULL,
-    category VARCHAR(30) NOT NULL DEFAULT 'content' COMMENT 'Library grouping: layout, content, callout, action, data',
-    description VARCHAR(255) NOT NULL DEFAULT '',
-    html_template MEDIUMTEXT NOT NULL COMMENT 'Markup with {{ placeholders }}; checked for scripts and handlers on save',
-    text_template TEXT DEFAULT NULL COMMENT 'Plain-text part; NULL = worked out from the HTML, empty = left out',
-    css TEXT DEFAULT NULL COMMENT 'Gathered into the email head once per block used',
-    preview_data JSON DEFAULT NULL COMMENT 'Sample value per placeholder for previews',
+    slug VARCHAR(64) NOT NULL COMMENT 'Stable name emails refer to; matches a shipped layout file to override it',
+    name VARCHAR(100) NOT NULL,
+    html MEDIUMTEXT NOT NULL COMMENT 'Whole HTML document with {{ content }} where the email goes; checked for scripts and handlers on save',
+    primary_color VARCHAR(7) NOT NULL DEFAULT '#4F46E5' COMMENT '{{ primary_color }} in the layout and every email using it',
+    background_color VARCHAR(7) NOT NULL DEFAULT '#F3F4F6' COMMENT '{{ background_color }}',
+    support_email VARCHAR(255) NOT NULL DEFAULT '' COMMENT '{{ support_email }}; empty uses the From address',
+    company_address VARCHAR(500) NOT NULL DEFAULT '' COMMENT '{{ company_address }}',
     updated_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_email_components_slug (slug),
-    INDEX idx_email_components_category (category),
-    CONSTRAINT fk_email_components_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    UNIQUE KEY uq_email_layouts_slug (slug),
+    CONSTRAINT fk_email_layouts_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Email blocks added or customized in the control panel';
+COMMENT='Email layouts added or customized in the control panel';
 
-CREATE TABLE IF NOT EXISTS email_templates (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    slug VARCHAR(64) NOT NULL COMMENT 'Stable name bindings refer to; matches a built-in template to override it',
-    label VARCHAR(100) NOT NULL,
-    category VARCHAR(30) NOT NULL DEFAULT 'transactional' COMMENT 'transactional, alert, digest, promotional',
-    description VARCHAR(255) NOT NULL DEFAULT '',
-    updated_by INT DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_email_templates_slug (slug),
-    INDEX idx_email_templates_category (category),
-    CONSTRAINT fk_email_templates_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Email templates added or customized in the control panel';
-
-CREATE TABLE IF NOT EXISTS email_template_components (
-    template_id INT NOT NULL,
-    position SMALLINT UNSIGNED NOT NULL COMMENT 'Render order, from 0',
-    component_slug VARCHAR(64) NOT NULL,
-    PRIMARY KEY (template_id, position),
-    INDEX idx_email_template_components_slug (component_slug),
-    CONSTRAINT fk_email_template_components_template FOREIGN KEY (template_id) REFERENCES email_templates(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Blocks of each stored template, in order; a block may appear more than once';
-
-CREATE TABLE IF NOT EXISTS mailable_template_bindings (
+CREATE TABLE IF NOT EXISTS email_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mailable_class VARCHAR(191) NOT NULL COMMENT 'Fully qualified Mailable class, e.g. App\\Mail\\NewPostMail',
-    template_slug VARCHAR(64) NOT NULL,
-    subject_template VARCHAR(255) DEFAULT NULL COMMENT 'NULL keeps the subject set in code',
-    placeholder_mapping JSON NOT NULL COMMENT 'Placeholder => wording, HTML that may use the email''s data',
-    is_active TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 sends the built-in version while keeping these edits',
+    layout_slug VARCHAR(64) NOT NULL COMMENT 'Layout the email is sent in, in every language',
     updated_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_mailable_template_bindings_class (mailable_class),
-    INDEX idx_mailable_template_bindings_template (template_slug),
-    CONSTRAINT fk_mailable_template_bindings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    UNIQUE KEY uq_email_settings_class (mailable_class),
+    INDEX idx_email_settings_layout (layout_slug),
+    CONSTRAINT fk_email_settings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Which template each email uses and its wording, where changed in the control panel';
+COMMENT='Which layout an email uses, where changed from the one its file names';
+
+CREATE TABLE IF NOT EXISTS email_contents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    mailable_class VARCHAR(191) NOT NULL,
+    locale VARCHAR(5) NOT NULL COMMENT 'Language of this version, e.g. en, el, ar',
+    subject VARCHAR(255) NOT NULL,
+    preheader VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'The preview line inbox lists show after the subject',
+    body MEDIUMTEXT NOT NULL COMMENT 'HTML rows that go into the layout at {{ content }}',
+    footer_note TEXT NOT NULL COMMENT 'Why the reader got this email, shown in the layout footer',
+    repeat_html MEDIUMTEXT DEFAULT NULL COMMENT 'Section the email repeats, e.g. once per blog in the weekly digest; NULL for emails that repeat nothing',
+    updated_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_email_contents_class_locale (mailable_class, locale),
+    CONSTRAINT fk_email_contents_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Each email per language, where written or changed in the control panel';
 
 INSERT INTO permissions (permission_name, permission_slug, resource, action, description)
-SELECT 'Manage Email Templates', 'manage_email_templates', 'mail', 'manage', 'Edit email blocks, templates and the wording of every email the site sends'
+SELECT 'Manage Email Templates', 'manage_email_templates', 'mail', 'manage', 'Edit email layouts and the wording of every email the site sends, in every language'
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE permission_slug = 'manage_email_templates');
 
 -- Administrators hold every permission.

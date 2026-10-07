@@ -6,7 +6,7 @@ use App\Mail\Templates\EmailHtmlLinter;
 use App\Mail\Templates\HtmlToText;
 
 /**
- * What an admin may put in a block, and how the plain-text part reads.
+ * What an admin may put in an email or a layout, and how the plain-text part reads.
  */
 test('anything that runs, submits or re-points the page is refused', function (string $html, string $expected) {
     expect(implode(' ', EmailHtmlLinter::lintHtml($html)['errors']))->toContain($expected);
@@ -16,11 +16,22 @@ test('anything that runs, submits or re-points the page is refused', function (s
     'form' => ['<form action="https://evil"><input name="password"></form>', '<form> tags are not allowed'],
     'handler' => ['<img src="x" onerror="alert(1)">', 'Event handler attributes'],
     'js link' => ['<a href=" JavaScript:alert(1)">x</a>', 'Script links'],
-    'style tag' => ['<style>p{}</style>', 'CSS field'],
+    'style tag' => ['<style>p{}</style>', "belongs in the layout's head"],
+    'meta tag' => ['<meta http-equiv="refresh" content="0;url=https://evil">', "belongs in the layout's head"],
     'bad name' => ['<p>{{ First-Name }}</p>', 'is not valid'],
     'unquoted' => ['<a href={{ url }}>x</a>', 'not inside a quoted attribute'],
     'unclosed' => ['<p>{{ body </p>', 'unclosed'],
 ]);
+
+test('a layout may have a head with meta and style, and Outlook markup, but nothing that runs', function () {
+    $layout = '<!DOCTYPE html><html lang="{{ lang }}" xmlns:v="urn:schemas-microsoft-com:vml"><head><meta charset="UTF-8"><title>{{ subject }}</title>'
+        .'<style>@media (max-width:620px){ .x { padding:0 !important; } }</style></head>'
+        .'<body><!--[if mso]><v:roundrect href="{{ url }}" fillcolor="{{ primary_color }}"></v:roundrect><![endif]-->{{ content }}</body></html>';
+
+    expect(EmailHtmlLinter::lintHtml($layout, 'https://example.test', true)['errors'])->toBe([])
+        ->and(EmailHtmlLinter::lintHtml($layout.'<script>x</script>', 'https://example.test', true)['errors'])->not->toBe([])
+        ->and(EmailHtmlLinter::lintHtml('<style>@import url(x.css);</style>', '', true)['errors'])->not->toBe([]);
+});
 
 test('ordinary email markup passes', function () {
     $result = EmailHtmlLinter::lintHtml('<p style="color:#333"><a href="{{ url }}" title=\'{{ title }}\'>{{ label }}</a><img src="https://example.test/logo.png" alt="Logo"></p>', 'https://example.test');

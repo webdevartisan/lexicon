@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+/**
+ * Tells a post's author a reviewer approved it, so an editor can publish it.
+ */
 class PostApprovedMail extends Mailable
 {
     public function __construct(
@@ -18,18 +21,10 @@ class PostApprovedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.PostApprovedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'reviewer_handle' => $this->reviewerHandle,
-                'post_url' => $this->postUrl(),
+                'post_url' => $this->url('/dashboard/posts/'.$this->postId.'/review'),
             ]);
-    }
-
-    private function postUrl(): string
-    {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/dashboard/posts/'.$this->postId.'/review';
     }
 }

@@ -97,6 +97,20 @@ test('each subscriber gets a new post in their own language', function () {
     $subscribers->subscribe($blogId, 'reader@example.test', null, true, 'ar');         // the page they subscribed from
     $subscribers->subscribe($blogId, 'old@example.test', null, true);                  // nothing known: the blog's
 
+    // An email only goes out in a language it has words in, so translate this one.
+    foreach (['ar' => 'جديد على {{ blog_name }}', 'el' => 'Νέο στο {{ blog_name }}'] as $locale => $subject) {
+        $this->db->execute(
+            "INSERT INTO email_contents (mailable_class, locale, subject, preheader, body, footer_note) VALUES (?, ?, ?, '', '<tr><td>{{ post_title }}</td></tr>', '')",
+            [App\Mail\NewPostMail::class, $locale, $subject]
+        );
+    }
+    $renderer = new App\Services\EmailRenderer(new App\Services\EmailContentRepository(
+        new App\Mail\Templates\ShippedEmailSource(),
+        new App\Models\EmailLayoutModel($this->db),
+        new App\Models\EmailSettingModel($this->db),
+        new App\Models\EmailContentModel($this->db),
+    ));
+
     $sent = [];
     $queue = Mockery::mock(MailQueueService::class);
     $queue->shouldReceive('enqueue')->andReturnUsing(function (Mailable $mail) use (&$sent): int {
@@ -109,12 +123,12 @@ test('each subscriber gets a new post in their own language', function () {
         $this->db, new PostModel($this->db), new BlogModel($this->db), $subscribers, $queue, $this->locales
     );
 
-    expect($service->notifyPostPublished($postId))->toBe(3)
+    expect(Mailable::withTemplateRenderer($renderer, fn () => $service->notifyPostPublished($postId)))->toBe(3)
         ->and($sent['member@example.test'][0])->toBe('ar')
-        ->and($sent['member@example.test'][1])->toContain('<html lang="ar" dir="rtl">')
+        ->and($sent['member@example.test'][1])->toContain('<html lang="ar" dir="rtl"')
         ->and($sent['reader@example.test'][0])->toBe('ar')
         ->and($sent['old@example.test'][0])->toBe('el')
-        ->and($sent['old@example.test'][1])->toContain('<html lang="el" dir="ltr">');
+        ->and($sent['old@example.test'][1])->toContain('<html lang="el" dir="ltr"');
 });
 
 test('subscribing again from a page in another language moves the subscription to it', function () {

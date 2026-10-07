@@ -135,10 +135,9 @@ class ModerationActionService
             ]);
 
             $this->mailQueue->enqueue(
-                Mailable::inLocale($this->locales->forUser((int) $author['id']), fn (): ModerationWarningMail => new ModerationWarningMail(
+                Mailable::inLocale($this->locales->forUser((int) $author['id']), fn (): ModerationWarningMail => new (ModerationWarningMail::for((string) $case['subject_type']))(
                     (string) $author['email'],
                     (string) $author['handle'],
-                    (string) $case['subject_type'],
                     $label,
                     $categoryLabel,
                     $message

@@ -94,7 +94,7 @@ final class NotificationPresenter
             'admin.report_threshold' => 'Case #'.($payload['case_id'] ?? '?').' has '.($payload['report_count'] ?? 0).' reports and needs a look',
             'admin.mail_queue_failures' => ($payload['failed_count'] ?? 0).' emails failed to send in the last '.($payload['window_minutes'] ?? 60).' minutes',
             'admin.scheduler_stalled' => 'The task scheduler has not ticked in '.round(($payload['heartbeat_age_seconds'] ?? 0) / 60).' minute(s)',
-            'admin.email_template_failed' => 'The template for '.($payload['email'] ?? 'an email').' could not be used, so the built-in design was sent',
+            'admin.email_template_failed' => 'The saved version of '.($payload['email'] ?? 'an email').' could not be used, so the shipped English version was sent',
             default => $type,
         };
     }
@@ -165,7 +165,7 @@ final class NotificationPresenter
             'admin.report_threshold' => '/admin/reports/'.(int) ($payload['case_id'] ?? 0),
             'admin.mail_queue_failures' => '/admin/mail-queue?status=failed',
             'admin.scheduler_stalled' => '/admin/scheduled-tasks',
-            'admin.email_template_failed' => '/admin/email-templates/emails',
+            'admin.email_template_failed' => '/admin/email-templates',
             default => '',
         };
     }

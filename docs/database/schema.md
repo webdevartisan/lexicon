@@ -104,10 +104,13 @@ Lexicon uses a relational schema optimized for a multi‑blog platform with role
   - Email subscriptions to a blog, confirmed by a link before any post email goes out.
   - `locale` is the language of the page the subscription was made from, used for its emails when there is no account preference.
 
-- **Email templates** (`email_components`, `email_templates`, `email_template_components`, `mailable_template_bindings`)
-  - Only what was changed or added under Email Templates in the control panel. The defaults ship in
-    `resources/mail/catalog.php`; a row with a built-in slug (or Mailable class) overrides it, and deleting
-    the row resets it. A fresh install has empty tables. See [`docs/api/email-templates.md`](../api/email-templates.md).
+- **Emails** (`email_layouts`, `email_settings`, `email_contents`)
+  - Only what was changed or added under Email Templates in the control panel. The defaults ship as files:
+    layouts in `resources/mail/layouts/*.html` and one English version of each email in
+    `resources/mail/emails/{Mailable}.html`. A layout row with a shipped slug overrides that file, an English
+    content row overrides the shipped English, and deleting the row resets it. Other languages exist only as
+    `email_contents` rows. `email_settings` records an email's layout where it was changed. A fresh install has
+    empty tables. See [`docs/api/email-templates.md`](../api/email-templates.md).
 
 Consult `database/schema.sql` for exact column definitions, indexes, and constraints. See `docs/database/relationships.md` for how these tables relate at the model level.
 

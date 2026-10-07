@@ -12,11 +12,10 @@ namespace App\Mail;
  */
 class PasswordResetEmail extends Mailable
 {
-    /** Someone is locked out and holding a token that expires, so this cannot wait behind a fan-out. */
     protected string $tier = self::TIER_CRITICAL;
 
     /**
-     * @param  array<string, mixed>  $user  User row (first_name, email)
+     * @param  array<string, mixed>  $user  The account: email, handle and first_name
      */
     public function __construct(
         private array $user,
@@ -28,24 +27,13 @@ class PasswordResetEmail extends Mailable
 
     public function build(): void
     {
-        // The handle is a better name than none, and a greeting without a name
-        // is worded as one rather than as "Hello there".
-        $name = (string) ($this->user['first_name'] ?? '') ?: (string) ($this->user['handle'] ?? '');
+        $name = WelcomeEmail::nameOf($this->user);
 
-        $this->to($this->user['email'], $name)
-            ->subject($this->t('subjects.PasswordResetEmail'))
+        $this->to((string) $this->user['email'], $name)
             ->fromTemplate([
-                'greeting' => $name !== '' ? $this->t('phrases.greeting', ['name' => $name]) : $this->t('phrases.greeting_anonymous'),
-                'first_name' => $name !== '' ? $name : $this->t('phrases.there'),
-                'reset_url' => $this->resetUrl(),
-                'expires_in' => $this->t('phrases.minutes', ['count' => $this->expiresInMinutes]),
-                'expires_in_minutes' => $this->expiresInMinutes,
+                'name' => $name,
+                'reset_url' => $this->url('/password/reset/'.urlencode($this->token)),
+                'expires_minutes' => $this->expiresInMinutes,
             ]);
-    }
-
-    private function resetUrl(): string
-    {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/')
-            .'/password/reset/'.urlencode($this->token);
     }
 }

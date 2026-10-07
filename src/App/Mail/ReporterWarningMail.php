@@ -13,10 +13,6 @@ use App\Mail\Templates\HtmlFragment;
  */
 class ReporterWarningMail extends Mailable
 {
-    /**
-     * @param  int  $unfounded  How many of their reports were ruled unfounded
-     * @param  string  $message  What the moderator wrote to them
-     */
     public function __construct(
         private string $toEmail,
         private string $handle,
@@ -29,17 +25,10 @@ class ReporterWarningMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.ReporterWarningMail'))
             ->fromTemplate([
                 'handle' => $this->handle,
-                'unfounded' => $this->unfounded,
-                'unfounded_reports' => $this->countText(),
+                'unfounded' => $this->number($this->unfounded),
                 'message' => HtmlFragment::fromText($this->message),
             ]);
-    }
-
-    private function countText(): string
-    {
-        return $this->t('phrases.unfounded_reports', ['count' => $this->unfounded]);
     }
 }

@@ -22,17 +22,10 @@ class InsightsMilestoneMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.InsightsMilestoneMail', ['post_title' => $this->postTitle, 'count' => $this->threshold]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'views' => $this->number($this->threshold),
-                'insights_url' => $this->analyticsUrl(),
+                'insights_url' => $this->url('/dashboard/blog/'.$this->blogId.'/insights/posts/'.$this->postId.'?range=12m'),
             ]);
-    }
-
-    private function analyticsUrl(): string
-    {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/')
-            .'/dashboard/blog/'.$this->blogId.'/insights/posts/'.$this->postId.'?range=12m';
     }
 }

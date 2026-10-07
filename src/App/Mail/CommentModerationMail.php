@@ -9,27 +9,13 @@ namespace App\Mail;
  */
 class CommentModerationMail extends CommentMail
 {
-    protected function subjectLine(): string
-    {
-        return $this->t('subjects.CommentModerationMail', ['post_title' => $this->postTitle]);
-    }
-
     /**
-     * The moderation queue, since the comment they are asked to approve is not
-     * on the public page yet. Without a blog to point at, the post will do.
+     * The blog's comment queue, where the comment can be approved.
      */
     protected function commentUrl(): string
     {
         return $this->blogId > 0
-            ? $this->appUrl().'/dashboard/blog/'.$this->blogId.'/comments'
+            ? $this->url('/dashboard/blog/'.$this->blogId.'/comments')
             : parent::commentUrl();
-    }
-
-    /**
-     * Moderators already know it is held; saying so again adds nothing.
-     */
-    protected function moderationNote(): string
-    {
-        return '';
     }
 }

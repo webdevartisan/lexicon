@@ -76,7 +76,8 @@ test('ReviewerStaleMail names the former reviewer', function () {
 
 test('CollaboratorRoleChangedMail includes new role', function () {
     $mail = new CollaboratorRoleChangedMail('user@example.test', 'My Blog', 'editor', 'admin');
-    expect($mail->getBody())->toContain('editor')
+    expect($mail->getBody())->toContain('Editor')
+        ->and($mail->getSubject())->toBe('Your role on My Blog changed to Editor')
         ->and($mail->getBody())->toContain('My Blog');
 });
 

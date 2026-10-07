@@ -20,10 +20,10 @@ class InviteDeclinedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.InviteDeclinedMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'declined_email' => $this->declinedEmail,
+                'dashboard_url' => $this->url('/dashboard'),
             ]);
     }
 }

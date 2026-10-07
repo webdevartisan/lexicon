@@ -22,18 +22,10 @@ class ReviewerStaleMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.ReviewerStaleMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'former_reviewer_handle' => $this->formerReviewerHandle,
-                'review_url' => $this->reviewUrl(),
+                'review_url' => $this->url('/dashboard/posts/'.$this->postId.'/review'),
             ]);
-    }
-
-    private function reviewUrl(): string
-    {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/dashboard/posts/'.$this->postId.'/review';
     }
 }

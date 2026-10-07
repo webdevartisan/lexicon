@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+/**
+ * Tells a collaborator their role on a blog was changed, and by whom.
+ */
 class CollaboratorRoleChangedMail extends Mailable
 {
     public function __construct(
@@ -18,11 +21,11 @@ class CollaboratorRoleChangedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.CollaboratorRoleChangedMail', ['blog_name' => $this->blogName, 'role' => $this->roleName($this->newRole)]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
-                'new_role' => $this->roleName($this->newRole),
+                'new_role' => BlogInviteMail::roleLabel($this->newRole),
                 'actor_handle' => $this->actorHandle,
+                'dashboard_url' => $this->url('/dashboard'),
             ]);
     }
 }

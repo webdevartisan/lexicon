@@ -9,7 +9,6 @@ namespace App\Mail;
  */
 class NewPostMail extends Mailable
 {
-    /** Goes to every subscriber at once, so throughput matters far more than latency. */
     protected string $tier = self::TIER_BULK;
 
     public function __construct(
@@ -25,28 +24,16 @@ class NewPostMail extends Mailable
 
     public function build(): void
     {
+        $unsubscribe = $this->url('/subscriptions/unsubscribe/'.rawurlencode($this->unsubscribeToken));
+
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.NewPostMail', ['blog_name' => $this->blogName, 'post_title' => $this->postTitle]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'post_title' => $this->postTitle,
-                'post_url' => $this->postUrl(),
-                'unsubscribe_url' => $this->unsubscribeUrl(),
+                'post_url' => $this->url('/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug)),
+                'unsubscribe_url' => $unsubscribe,
+                // A subscriber may have no account, so their email settings are this one link.
+                'preferences_url' => $unsubscribe,
             ]);
-    }
-
-    private function appUrl(): string
-    {
-        return rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-    }
-
-    private function postUrl(): string
-    {
-        return $this->appUrl().'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
-    }
-
-    private function unsubscribeUrl(): string
-    {
-        return $this->appUrl().'/subscriptions/unsubscribe/'.rawurlencode($this->unsubscribeToken);
     }
 }

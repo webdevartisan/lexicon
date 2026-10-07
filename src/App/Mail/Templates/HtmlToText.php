@@ -7,7 +7,7 @@ namespace App\Mail\Templates;
 /**
  * Turns email markup into the plain-text part of the same email.
  *
- * Deliberately small: email blocks are simple, and the output only has to
+ * Deliberately small: email markup is simple, and the output only has to
  * read well in a text-only client. Blocks become paragraphs, line breaks stay
  * line breaks, list items get a dash and every link keeps its address, since
  * a link you cannot see is a link you cannot follow.

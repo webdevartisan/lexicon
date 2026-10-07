@@ -26,17 +26,10 @@ class SubscriptionConfirmMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.SubscriptionConfirmMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'email' => $this->toEmail,
-                'confirm_url' => $this->confirmUrl(),
+                'confirm_url' => $this->url('/subscriptions/confirm/'.rawurlencode($this->token)),
             ]);
-    }
-
-    private function confirmUrl(): string
-    {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/')
-            .'/subscriptions/confirm/'.rawurlencode($this->token);
     }
 }

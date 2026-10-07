@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+/**
+ * Tells a collaborator they were removed from a blog, and by whom.
+ */
 class CollaboratorRemovedMail extends Mailable
 {
     public function __construct(
@@ -17,7 +20,6 @@ class CollaboratorRemovedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.CollaboratorRemovedMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'actor_handle' => $this->actorHandle,

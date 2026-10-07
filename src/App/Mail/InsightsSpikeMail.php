@@ -23,26 +23,13 @@ class InsightsSpikeMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.InsightsSpikeMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
                 'views' => $this->number($this->views),
                 'usual_views' => $this->number(round($this->usual)),
-                'top_source' => (string) $this->topSource,
-                'summary' => $this->summary(),
-                'insights_url' => $this->analyticsUrl(),
+                // A dash rather than words when there is no source to name.
+                'top_source' => $this->topSource ?? '–',
+                'insights_url' => $this->url('/dashboard/blog/'.$this->blogId.'/insights?range=today'),
             ]);
-    }
-
-    private function analyticsUrl(): string
-    {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/').'/dashboard/blog/'.$this->blogId.'/insights?range=today';
-    }
-
-    private function summary(): string
-    {
-        $line = $this->t('phrases.spike_summary', ['count' => $this->views, 'usual' => $this->number(round($this->usual))]);
-
-        return $this->topSource === null ? $line : $line.' '.$this->t('phrases.spike_source', ['source' => $this->topSource]);
     }
 }

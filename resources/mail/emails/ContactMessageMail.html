@@ -1,0 +1,54 @@
+---
+subject: [Contact] {{ message_subject }}
+preheader: {{ sender_name }} wrote through the contact form.
+footer_note: You received this email because it was sent from the contact form on {{ app_name }}.
+---
+          <!-- Content > Heading -->
+          <tr>
+            <td class="section-padding" style="padding:32px 40px 8px;">
+              <h1 class="main-heading" style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:28px;line-height:36px;font-weight:bold;color:#111827;">
+                New contact message
+              </h1>
+            </td>
+          </tr>
+          <!-- Callouts > Sender -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#F3F4F6" style="width:100%;background-color:#F3F4F6;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:20px 24px 20px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                      <strong style="color:#111827;">From:</strong> {{ sender_name }} &lt;<a href="mailto:{{ sender_email }}" style="color:#374151;">{{ sender_email }}</a>&gt;<br>
+                      <strong style="color:#111827;">Subject:</strong> {{ message_subject }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Callouts > Message -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 24px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#F9FAFB" style="width:100%;background-color:#F9FAFB;border-collapse:collapse;border-{{ start }}:4px solid {{ primary_color }};">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
+                      {{ message_body }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Content > Small print -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 16px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B7280;">
+                Reply to this email to answer {{ sender_name }} directly.
+              </p>
+            </td>
+          </tr>
+          <!-- Spacing before the footer -->
+          <tr>
+            <td style="padding:0 0 16px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>

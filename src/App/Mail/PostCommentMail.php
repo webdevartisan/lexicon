@@ -7,10 +7,4 @@ namespace App\Mail;
 /**
  * Tells a post's author a reader commented on it.
  */
-class PostCommentMail extends CommentMail
-{
-    protected function subjectLine(): string
-    {
-        return $this->t('subjects.PostCommentMail', ['post_title' => $this->postTitle]);
-    }
-}
+class PostCommentMail extends CommentMail {}

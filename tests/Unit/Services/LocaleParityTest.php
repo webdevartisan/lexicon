@@ -25,12 +25,6 @@ function flattenKeys(array $data, string $prefix = ''): array
 function localeKeys(string $locale): array
 {
     $data = json_decode(file_get_contents(ROOT_PATH.'/locales/'.$locale.'.json'), true);
-
-    // Email wording is the one deliberate exception: English is the built-in
-    // catalog (resources/mail/catalog.php), so only the other languages carry
-    // mail.wording. MailTemplateCatalogTest checks they translate all of it.
-    unset($data['mail']['wording']);
-
     $keys = flattenKeys($data);
     sort($keys);
 

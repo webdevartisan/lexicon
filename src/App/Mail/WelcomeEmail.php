@@ -13,7 +13,7 @@ namespace App\Mail;
 class WelcomeEmail extends Mailable
 {
     /**
-     * @param  array<string, mixed>  $user  User row (first_name, handle, email)
+     * @param  array<string, mixed>  $user  The new account: email, handle and first_name
      */
     public function __construct(private array $user)
     {
@@ -22,19 +22,25 @@ class WelcomeEmail extends Mailable
 
     public function build(): void
     {
-        // The handle is a better name than none, and a greeting without a name
-        // is worded as one rather than as "Hello there".
-        $name = (string) ($this->user['first_name'] ?? '') ?: (string) ($this->user['handle'] ?? '');
+        $name = self::nameOf($this->user);
 
-        $this->to($this->user['email'], $name)
-            ->subject($this->t('subjects.WelcomeEmail', ['app_name' => (string) env('APP_NAME', 'Lexicon')]))
+        $this->to((string) $this->user['email'], $name)
             ->fromTemplate([
-                'greeting' => $name !== '' ? $this->t('phrases.greeting', ['name' => $name]) : $this->t('phrases.greeting_anonymous'),
-                'first_name' => $name !== '' ? $name : $this->t('phrases.there'),
+                'name' => $name,
                 'handle' => (string) $this->user['handle'],
                 // Explore, not a personal page: a brand new account has nothing on
                 // its own lists yet, so the useful first destination is the catalog.
-                'explore_url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/discover',
+                'explore_url' => $this->url('/discover'),
             ]);
+    }
+
+    /**
+     * What to call someone: their first name, else their handle, which every account has.
+     *
+     * @param  array<string, mixed>  $user
+     */
+    public static function nameOf(array $user): string
+    {
+        return (string) ($user['first_name'] ?? '') ?: (string) ($user['handle'] ?? '');
     }
 }

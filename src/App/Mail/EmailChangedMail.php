@@ -9,8 +9,7 @@ namespace App\Mail;
  *
  * OWASP's guidance on changing a registered address is to notify the old
  * address as well as the new one, so an account takeover is visible to the
- * person losing the account. The new address is not asked to confirm anything
- * here; that verified-token flow is deferred to follow-up.
+ * person losing the account.
  *
  * Queued like every other message, so a mail outage cannot fail the save.
  */
@@ -27,16 +26,15 @@ class EmailChangedMail extends Mailable
     public function build(): void
     {
         $this->to($this->oldEmail)
-            ->subject($this->t('subjects.EmailChangedMail', ['app_name' => $this->appName()]))
             ->fromTemplate([
                 'new_email' => $this->newEmail,
                 'changed_at' => $this->when(),
+                'password_url' => $this->url('/password/forgot'),
             ]);
     }
 
     /**
-     * When it happened, as the reader's language writes a date and time, in UTC.
-     * A value that is not a date is shown as given.
+     * The time of the change as the reader's language writes it, in UTC.
      */
     private function when(): string
     {
@@ -45,10 +43,5 @@ class EmailChangedMail extends Mailable
         } catch (\Exception) {
             return $this->changedAt;
         }
-    }
-
-    private function appName(): string
-    {
-        return (string) (env('APP_NAME', 'Lexicon'));
     }
 }

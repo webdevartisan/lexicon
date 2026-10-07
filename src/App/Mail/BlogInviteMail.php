@@ -25,24 +25,18 @@ class BlogInviteMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.BlogInviteMail', ['blog_name' => $this->blogName]))
             ->fromTemplate([
                 'blog_name' => $this->blogName,
-                'role' => $this->roleName($this->role),
-                'invite_url' => $this->inviteUrl(),
+                'role' => self::roleLabel($this->role),
+                'invite_url' => $this->url('/invite/'.urlencode($this->rawToken)),
             ]);
     }
 
     /**
-     * Build the invite landing URL from the configured app URL.
-     *
-     * We use APP_URL directly (not lurl()) because email is composed outside
-     * a request context, matching the PasswordResetEmail convention.
+     * A blog role as the dashboard names it: 'editor' becomes 'Editor'.
      */
-    private function inviteUrl(): string
+    public static function roleLabel(string $role): string
     {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/invite/'.urlencode($this->rawToken);
+        return ucfirst($role);
     }
 }

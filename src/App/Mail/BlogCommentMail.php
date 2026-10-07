@@ -7,10 +7,4 @@ namespace App\Mail;
 /**
  * Tells a blog owner a reader commented somewhere on their blog.
  */
-class BlogCommentMail extends CommentMail
-{
-    protected function subjectLine(): string
-    {
-        return $this->t('subjects.BlogCommentMail', ['post_title' => $this->postTitle]);
-    }
-}
+class BlogCommentMail extends CommentMail {}

@@ -9,10 +9,4 @@ namespace App\Mail;
  * submitted for review and nobody is assigned to it yet, so one of them can
  * claim it. Its own class so its wording can say so on its own.
  */
-class PostSubmittedUnassignedMail extends PostSubmittedMail
-{
-    protected function subjectLine(): string
-    {
-        return $this->t('subjects.PostSubmittedUnassignedMail', ['post_title' => $this->postTitle]);
-    }
-}
+class PostSubmittedUnassignedMail extends PostSubmittedMail {}

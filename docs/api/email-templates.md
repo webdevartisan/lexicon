@@ -1,92 +1,97 @@
 # Email Templates
 
-Every email the platform sends is built from editable templates. Admins change how emails look and
-what they say under **System → Email Templates** in the control panel; nothing in `src/App/Mail`
-contains markup any more.
+Every email the site sends is **its words in a layout**:
 
-← [`Back to docs index`](../README.md)
-
----
-
-## The three layers
-
-| Layer | Owned by | Lives in | Example |
+| Part | What it is | Shipped as | Saved edits in |
 |---|---|---|---|
-| **Data** | The Mailable (code) | `build()` → `fromTemplate([...])` | `post_title`, `post_url`, a comment someone wrote |
-| **Wording** | The email's *binding* | catalog / `mailable_template_bindings` | heading = `{{ blog_name }} just published a new post` |
-| **Design** | *Templates* made of *blocks* | catalog / `email_templates`, `email_components` | the `notification` template: header, heading, intro, quote, callout, button, details, footer |
+| **Layout** | A whole HTML document: head, outer wrapper, header, footer, and `{{ content }}` where the email goes. No words of its own, since it is not translated. | `resources/mail/layouts/{slug}.html` | `email_layouts` |
+| **Email** | Per language: a subject, a preheader, a body (the table rows that go into the layout) and a footer note. | `resources/mail/emails/{Mailable}.html`, English only | `email_contents`, one row per language |
+| **Layout choice** | Which layout an email uses, in every language. | the email file's `layout:` field | `email_settings` |
+| **Data** | The facts the email is about: names, titles, links. | the Mailable's `build()` | never stored |
 
-- A **block** (component) is a piece of HTML with `{{ placeholders }}`, e.g. the `button` block uses
-  `{{ button_label }}` and `{{ button_url }}`.
-- A **template** is blocks in order. One template serves many emails.
-- A **binding** says which template an email uses and gives the *wording* for each of the template's
-  placeholders. Wording is a short piece of HTML that may refer to the email's data, so admins can change
-  copy without touching code, and the same `notification` template can say different things in each email.
+There is no logic in a template, only `{{ placeholders }}`. Where an email needs different words for a different
+situation it is a different Mailable class (see `CommentMail::for()` and `ModerationWarningMail::for()`), so each
+situation can be worded, and translated, on its own.
 
-Logic stays in code: plurals, whether a note applies at all. The Mailable passes such phrases as data
-(`moderation_note`, …).
+## Shipped files and saved edits
 
-## Built-in catalog and overrides
+The shipped files are the defaults. The tables only hold what was changed or added in the control panel:
 
-The shipped blocks, templates and bindings live in [`resources/mail/catalog.php`](../../resources/mail/catalog.php).
-The database only holds what was changed in the control panel:
+- a layout row whose slug matches a shipped file replaces it (`customized`); a new slug is a new layout (`custom`);
+- an English content row replaces the shipped English; any other language exists **only** as a row;
+- deleting a row is "reset to default".
 
-- a row with a built-in slug (or Mailable class) **overrides** it and shows as *Customized*;
-- a row with a new slug is *Custom*;
-- deleting the row is **Reset to default**.
+A fresh install has empty tables and still sends every email. An improvement to a shipped email reaches every
+site that has not changed that email. `EmailContentRepository` reads all three tables once per process (a
+subscriber fan-out renders the same email thousands of times) and lays them over `ShippedEmailSource`.
 
-So a fresh install has empty tables and still sends every email, upgrades that improve a built-in design
-reach every install that has not customized it, and there is nothing to seed or keep in sync.
-A binding can also be saved *switched off*: the edits are kept, the built-in version is sent.
+### File format
+
+```html
+---
+subject: Reset your {{ app_name }} password
+preheader: Use this link within {{ expires_minutes }} minutes to choose a new password.
+footer_note: You received this email because someone asked to reset the password on your {{ app_name }} account.
+layout: default
+---
+          <tr>
+            <td class="section-padding" style="padding:32px 40px 8px;">
+              <h1 ...>Reset your password</h1>
+            </td>
+          </tr>
+          ...
+```
+
+One `name: value` per line between the `---` lines; everything after is the body. A layout file has `name`,
+`primary_color`, `background_color`, `support_email` and `company_address` instead. An email that repeats a
+section (the weekly digest, once per blog) has a second file, `{Mailable}.repeat.html`.
+
+Bodies are table rows in the style of the default layout, so they hold up in Outlook: buttons have a VML
+`v:roundrect` for Outlook and a table button for everyone else, and widths collapse on phones through the
+classes the layout's `<style>` defines (`section-padding`, `main-heading`, `mobile-button`).
+
+## Placeholders
+
+| Placeholder | Where | Value |
+|---|---|---|
+| The email's data, e.g. `{{ post_title }}` | subject, preheader, body, footer note, layout | what `build()` passed |
+| `app_name`, `app_url`, `year` | everywhere | |
+| `lang`, `dir`, `start`, `end` | everywhere | the language, `ltr`/`rtl`, and `left`/`right` for the reading direction |
+| `preferences_url` | everywhere | the account's email settings; an email may pass its own (`NewPostMail` passes its unsubscribe link) |
+| `primary_color`, `background_color`, `support_email`, `company_address` | everywhere | the layout's settings; an empty support email is the From address |
+| `content`, `footer_note`, `preheader`, `subject` | layout only | the email's own parts |
+| A repeated section's data, e.g. `{{ blog_name }}` | that section only | one row of what the email passed to `repeat()` |
+
+Spaces inside the braces are optional: `{{app_name}}` and `{{ app_name }}` are the same.
 
 ## Writing a Mailable
+
+A Mailable supplies data, never words or markup. `build()` sets the recipient and calls `fromTemplate()` last:
 
 ```php
 public function build(): void
 {
     $this->to($this->toEmail)
-        // default subject, before fromTemplate(), from locales/*.json in the email's language
-        ->subject($this->t('subjects.NewPostMail', ['blog_name' => $this->blogName, 'post_title' => $this->postTitle]))
         ->fromTemplate([
-            'blog_name' => $this->blogName,
             'post_title' => $this->postTitle,
-            'post_url' => $this->postUrl(),
-            'message' => HtmlFragment::fromText($this->message),      // user text with line breaks
+            'reviewer_handle' => $this->reviewerHandle,
+            'post_url' => $this->url('/dashboard/posts/'.$this->postId.'/review'),
         ]);
 }
 ```
 
-Then add its subject to the `mail.subjects` section of every `locales/*.json`, a binding for the class to
-`resources/mail/catalog.php`, its wording's translation to `mail.wording` in each language but English, and a
-sample to
-`EmailTemplateRegistry` (which the control panel and the tests use). The tests fail if either is missing, if
-a sample does not render strictly, if a sample passes a value the constructor does not take, or if any HTML
-is left in `src/App/Mail/*.php`.
+- The subject is part of the email's words, so a Mailable never calls `subject()`.
+- Strings are escaped. Pass `HtmlFragment::fromText()` for text whose line breaks should survive, such as a
+  message someone wrote.
+- Numbers and dates go through `$this->number()` and `$this->date($date, 'yMMMd')`, which write them the way
+  the email's language does (1,240 or 1.240; "Sep 28" or "28 Σεπ").
+- Counts are numbers next to labels in the words ("Views: 1,240"), never counted phrases ("1,240 views" and "1
+  view"), so no language needs plural rules in the data.
+- A section the email repeats is filled with `$this->repeat($rows)`, which returns an `HtmlFragment` to pass
+  to `fromTemplate()`; see `InsightsDigestMail`.
 
-**One class per email.** The control panel lists one email per class and stores wording per class, so a
-message sent for several different reasons is one class per reason, sharing an abstract base for the data
-and links. The comment emails are the example: `CommentMail` builds the data, and `CommentReplyMail`,
-`PostCommentMail`, `CommentModerationMail` and `BlogCommentMail` each add only their subject and, for
-moderation, where the button goes. `PostSubmittedMail` and `PostSubmittedUnassignedMail` (no reviewer
-assigned yet) are split the same way. Each is registered once; `EmailTemplateRegistryTest` fails on a class
-registered twice. Separate classes also give each email its own `utm_campaign` (`comment-reply`, …).
-
-Rules for data:
-
-- Keys are `snake_case`. Values are strings, numbers, `null` (empty) or an `HtmlFragment`.
-- No English in the class: words go through `$this->t('mail key', [...])`, counts through an ICU plural in the
-  locale files, numbers through `$this->number()`, dates through `$this->date($date, 'yMMMd')`, and collaborator
-  roles through `$this->roleName()`. When a value is a word that changes with grammar (a noun with its article,
-  a count with its noun), pass the whole phrase (`your_item`, `expires_in`, `greeting`) so each language can
-  word it properly.
-- Give the template the same keys every time (pass `''` for "not applicable"); the editor lists them
-  from the email's sample.
-- `{{ app_name }}`, `{{ app_url }}`, `{{ year }}` and `{{ subject }}` are always available, and so are
-  `{{ dir }}`, `{{ start }}` and `{{ end }}` for block styles (see Languages).
-
-For repeated structure (one section per blog in the weekly digest), render blocks from code with
-`$this->component('stat-line', [...])`, join them with `HtmlFragment::join()`, and pass the result as one
-value. The order is code; the look of each row is still an editable block.
+A new email needs its class, a file in `resources/mail/emails/`, and an entry in `EmailTemplateRegistry` with
+sample data. `EmailDefaultsTest` fails until all three exist and the file builds strictly from the sample.
 
 ## Languages
 
@@ -98,7 +103,11 @@ $mail = Mailable::inLocale($this->locales->forUser($userId), fn () => new PostAp
 ```
 
 Outside `inLocale()` the site default is used. The queue stores each email already rendered, so the language
-is settled when it is queued and the worker never needs to know it.
+is settled when it is queued.
+
+An email is only written in a language it has words in. The constructor settles it, before `build()`, so numbers
+and dates match the words (`EmailRenderer::localeFor()`): the language asked for if the email has words in it,
+else the site default if it has words in that, else English, which always ships.
 
 `RecipientLocale` picks, first that applies:
 
@@ -121,45 +130,16 @@ is settled when it is queued and the worker never needs to know it.
 | Invitation | `forAddress($email, forBlog($id))`: the invitee's account language, else the blog's |
 | Contact message | `forAddress($adminEmail)`: the admin's own language, else the site default |
 
-The document is marked `<html lang=".." dir="..">`, with the direction repeated on the content wrapper because
-webmail clients such as Gmail drop the `<html>` attributes. For right-to-left languages (`LocaleRegistry::RTL`,
-which includes `ar`) blocks are laid out from the right: write `border-{{ start }}:3px solid` rather than
-`border-left`, since email clients ignore the CSS logical properties (`border-inline-start`) that would flip on
-their own. `{{ start }}` is `left` or `right`, `{{ end }}` the other side, and `{{ dir }}` is `ltr` or `rtl`.
-These three never count when deciding whether a block is empty.
+The layout marks the document `<html lang="{{ lang }}" dir="{{ dir }}">` and repeats the direction on `<body>`,
+because webmail clients such as Gmail drop the `<html>` attributes. Write `align="{{ start }}"` and
+`border-{{ start }}:4px solid` rather than `left`, since email clients ignore the CSS logical properties that
+would flip on their own.
 
-### Translations
-
-All the words live in the `mail` section of `locales/{code}.json`, read by `MailTranslator`:
-
-| Section | What | Written by |
-|---|---|---|
-| `subjects` | Default subject of each email, keyed by class | code, `$this->t('subjects.X', [...])` |
-| `phrases`, `roles`, `digest` | Phrases code assembles: notes, greetings, counts, digest lines and labels | code |
-| `phrases.link_fallback`, `phrases.open_link` | Fixed words inside blocks, as the globals `{{ link_fallback_text }}` and `{{ open_link_text }}` | blocks |
-| `wording` | Translation of each email's built-in wording, keyed by class and placeholder | renderer |
-
-English has no `wording`: the English is the catalog itself. (`LocaleParityTest` skips that one section for
-this reason.) A key a language is missing falls back to English.
-
-Counts use ICU plurals, because two forms are not enough everywhere (Arabic has six):
-`"{count, plural, one {# minute} other {# minutes}}"`. Anything else is plain text with `{name}` placeholders.
-
-**Which wording a reader gets.** Built-in wording is English. Wording changed in the control panel is taken to
-be written in the site's default language. A reader in that language gets the wording as it is. Anyone else
-gets, placeholder by placeholder, the shipped translation for their language, and the wording as it is only
-where there is no translation. So an English edit never reaches a Greek reader where Greek has its own text,
-and a subject override applies only in the language it was written in; other languages get the code's subject,
-translated. Editing the wording per language in the control panel is the next step.
-
-`MailTemplateCatalogTest` fails if a language misses any built-in wording, if a translation uses a placeholder
-its English does not (that would fail every send, the built-in fallback included), if a plural is not valid ICU,
-if a class sets a literal subject or uses a key `en.json` lacks, or if any email does not render strictly in
-every language.
+Role names (`Editor`) and moderation categories reach an email as data, the way the dashboard shows them.
 
 ## Escaping and safety
 
-Escaping is decided by the code that made a value, never by the template:
+Escaping is decided by the code that made a value, never by the words:
 
 - Strings are always HTML-escaped. Only an `HtmlFragment` is inserted as markup, and only code can make one
   (`fromText()` escapes and keeps line breaks; `trusted()` is for markup the renderer produced).
@@ -168,80 +148,58 @@ Escaping is decided by the code that made a value, never by the template:
   anything else (e.g. `javascript:`) becomes `#`.
 - Substitution happens once: a value containing `{{ x }}` stays literal.
 
-What admins write is linted on save (`EmailHtmlLinter`): scripts, iframes, forms, `<style>`, event handler
-attributes and `javascript:` links are refused, and so are placeholders that are malformed or sit unquoted in
-a tag. Images or CSS loaded from another host save with a warning, because every load tells that host when and
-where the email was opened. Previews are served with a CSP `sandbox` header (`SandboxesPreviewHtml`).
+`EmailHtmlLinter` checks what admins write: scripts, iframes, forms, event handler attributes and `javascript:`
+links are refused, and so are placeholders that are malformed or sit unquoted in a tag. A layout is checked as a
+whole document (`lintHtml($html, $appUrl, true)`), so it may also have `<meta>` and a `<style>` block, whose CSS
+is checked too; an email's words may not. Outlook conditional comments and VML are allowed everywhere. Images or
+CSS loaded from another host are flagged, because every load tells that host when and where the email was opened.
+Previews are served with a CSP `sandbox` header (`SandboxesPreviewHtml`).
 
 ### Why `{{ name }}` and not `[name]`
 
-Square brackets collide with real email markup: Outlook conditional comments (`<!--[if mso]> … <![endif]-->`)
-and CSS attribute selectors (`a[href]`). Double braces appear in neither.
+Square brackets collide with real email markup and text: Outlook conditional comments
+(`<!--[if mso]> … <![endif]-->`), CSS attribute selectors (`a[href]`) and subjects such as `[Contact] …`.
+Double braces appear in none of them.
 
 Note for view authors: the `.lex.php` compiler treats `{{ … }}` as its own tag **anywhere in a view's source**,
 even inside PHP strings or `<script>`. The Email Templates views build placeholder text at runtime
 (`'{'.'{ '.$name.' }'.'}'`) for that reason.
 
-## Strict when editing, forgiving when sending
+## Strict when checking, forgiving when sending
 
-- **Every save is a dry run.** `EmailTemplateManager` builds a draft (`DraftTemplateSource`) and renders every
-  registered email sample against it in strict mode. If any email would no longer build, nothing is saved and
-  the admin sees which email and which placeholder. This covers edits to blocks, templates, bindings, resets
-  and deletes, including the blocks the digest renders from code.
-- **Sending degrades rather than fails.** If a stored customization still cannot render at send time (a row
-  edited by hand, the tables unreadable), `TemplateRendererService` logs it, renders the email from the
-  built-in catalog instead, and notifies admins holding `manage_email_templates`
-  (`admin.email_template_failed`, at most hourly). A password reset is never lost to a template edit.
-- Previews are lenient: a missing value is shown highlighted as `{{ name }}` instead of failing.
+The renderer is strict: a placeholder nothing fills is an error naming the email, the part and the language
+(`PasswordResetEmail body (el) uses {{ nonsense }}, but nothing provides it.`). The control panel uses that to
+show which saved versions cannot be built (`EmailManager::problems()`); its previews are lenient and show the
+gap in place instead.
 
-## Rendering details
+When sending, a saved version that fails (an edit that slipped past the checks, a missing layout, tables that
+cannot be read) is not allowed to lose the email: it goes out as shipped, in English, the error is logged, and
+admins holding `manage_email_templates` get an `admin.email_template_failed` notification, at most once an hour.
 
-- **Empty blocks are dropped.** A block whose placeholders all come out empty is left out of that email, so
-  one template serves emails with and without a quote, a button, a footer note. A block with no placeholders
-  (a divider) always shows. Map a placeholder to nothing to drop its block.
-- **Plain text** is generated per block: *automatic* (from the HTML, keeping link addresses and each value's
-  own line breaks), *custom* (a text template with the same placeholders), or *left out*.
-- Each block's CSS is added to the `<head>` once. Inline styles remain the safest choice for email clients.
-- Placeholders mean the same thing across a template: if two blocks use `{{ body }}`, both show the same value.
-- The repository reads the template tables once per process, so a subscriber fan-out does not query per
-  recipient. Writes through the manager flush it.
+## Plain text
+
+The plain-text part is read from the finished HTML (`HtmlToText`): blocks become paragraphs, links keep their
+address (`Read it (https://…)`), and comments, which include Outlook's copy of each button, are dropped. The
+layout is filled a second time without the preheader for it, since the hidden preview line would otherwise be a
+stray first line.
 
 ## Control panel
 
 `/admin/email-templates`, gated by the `manage_email_templates` permission (`SystemPolicy::manageEmailTemplates`),
 separate from site settings because what is written here reaches every inbox.
 
-- **Emails**: every email, its template, whether its wording is customized, and whether it currently builds.
-  The editor shows the template's placeholders as fields, the email's data with sample values (click to insert),
-  a subject override, a live preview of the draft as HTML or plain text, and **Send test**, which sends the draft
-  (saved or not) with sample values to any address, subject prefixed `[TEST]`. This is the one place to see and try
-  an email.
-- **Templates**: list with search and category filter; a builder with a block palette, drag-and-drop layout
-  (with keyboard up/down/remove buttons), the placeholders an email must provide, the emails using it, and a
-  live preview; a read-only preview page with HTML, plain text and placeholder tabs.
-- **Blocks**: library grouped by category; an editor that detects placeholders as you type, creates sample-value
-  fields for them, and previews live.
+- **List**: every email, grouped, with its layout and a badge per language: as shipped, edited, missing, or
+  red when that language cannot be built as saved.
+- **Email**: a tab per language the site offers, a sandboxed preview of the selected one as HTML or plain text,
+  **Send test** (that language as saved, with sample values, subject prefixed `[TEST]`), and the data its words
+  can use with sample values.
 
-Built-in items can be edited and reset but not deleted. Custom blocks and templates can be deleted once nothing
-uses them. Every change is written to the audit log (`email_template.*`).
-
-**Email Delivery** (`/admin/email-test`, `manage_site_settings`) is separate and only about whether mail leaves the
-server: the transport settings from the environment and a plain connection test.
-
-## Decisions
-
-| Question | Decision |
-|---|---|
-| Placeholder syntax | `{{ snake_case }}`, see above |
-| Strict or forgiving | Strict on save (dry run of every email), forgiving on send (fallback + admin alert) |
-| Text alternative | Auto-generated per block by default; a block can define its own or opt out |
-| Component versioning | Live: editing a block updates every template using it, and the save is checked against all of them |
-| Preview data | Per block, editable in the block editor; real emails use their own registry samples |
-| Draft / published | No separate status: saves are always validated, a binding can be saved switched off, and the live preview covers trying things out |
-| Reordering | In place on the canvas by drag and drop, or with up/down buttons |
-| Bindings | Per Mailable class, edited from the Emails tab rather than inside the template editor, since one template serves many emails |
+**Email Delivery** (`/admin/email-test`, `manage_site_settings`) is separate and only about whether mail leaves
+the server: the transport settings from the environment and a plain connection test.
 
 ## Follow-ups not built yet
 
-- Version history for blocks and templates (the audit log records who changed what, not the old content).
-- Help text per placeholder, and A/B variants.
+- Editing in the control panel: a code editor per language with live preview, "Start from English", reset to
+  default, and a layouts editor. Until then, shipped emails are changed in their files and translations can be
+  added as `email_contents` rows.
+- Outdated-translation hints when the English changes after a translation was written.

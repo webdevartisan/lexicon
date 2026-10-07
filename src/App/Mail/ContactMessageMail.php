@@ -28,12 +28,10 @@ class ContactMessageMail extends Mailable
     {
         $this->to($this->toEmail)
             ->replyTo($this->senderEmail, $this->senderName)
-            ->subject($this->t('subjects.ContactMessageMail', ['message_subject' => $this->messageSubject]))
             ->fromTemplate([
                 'sender_name' => $this->senderName,
                 'sender_email' => $this->senderEmail,
                 'message_subject' => $this->messageSubject,
-                // A visitor typed this, line breaks and all.
                 'message_body' => HtmlFragment::fromText($this->messageBody),
             ]);
     }

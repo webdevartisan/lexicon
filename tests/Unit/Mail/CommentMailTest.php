@@ -3,17 +3,22 @@
 declare(strict_types=1);
 
 use App\Mail\BlogCommentMail;
+use App\Mail\BlogCommentPendingMail;
 use App\Mail\CommentMail;
 use App\Mail\CommentModerationMail;
 use App\Mail\CommentReplyMail;
+use App\Mail\CommentReplyPendingMail;
 use App\Mail\Mailable;
 use App\Mail\PostCommentMail;
+use App\Mail\PostCommentPendingMail;
+use App\Services\EmailRenderer;
+use Tests\Helpers\InMemoryEmailSource;
 
 /**
- * One comment reaches different people for different reasons, and each reason
- * is its own email so it can be worded on its own. What stays in code is the
- * default subject, where the button goes, and whether the held-comment note
- * applies.
+ * One comment reaches different people for different reasons, and a comment
+ * held for approval is a different situation again. Each is its own email so
+ * it can be worded on its own. What stays in code is which email goes, and
+ * where its button points.
  */
 beforeEach(function () {
     $_ENV['APP_URL'] = 'https://example.test';
@@ -33,7 +38,7 @@ test('each reason has its own subject and opening line', function (string $class
 
     expect($mail->getTo())->toHaveKey('to@example.test')
         ->and($mail->getSubject())->toBe($subject)
-        ->and($mail->getBody())->toContain($lead)
+        ->and((string) $mail->getTextBody())->toContain($lead)
         ->and($mail->getBody())->toContain('Loved it');
 })->with([
     'reply' => [CommentReplyMail::class, 'New reply to your comment on: Ten Days in Crete', 'quietreader replied to your comment on Ten Days in Crete:'],
@@ -42,16 +47,25 @@ test('each reason has its own subject and opening line', function (string $class
     'blog' => [BlogCommentMail::class, 'New comment on: Ten Days in Crete', 'quietreader commented on Ten Days in Crete:'],
 ]);
 
+test('a held comment gets its own email for every reason but moderation, which is always about a held one', function () {
+    expect(CommentMail::for('comment.reply', false))->toBe(CommentReplyMail::class)
+        ->and(CommentMail::for('comment.reply', true))->toBe(CommentReplyPendingMail::class)
+        ->and(CommentMail::for('comment.on_your_post', true))->toBe(PostCommentPendingMail::class)
+        ->and(CommentMail::for('comment.on_blog', true))->toBe(BlogCommentPendingMail::class)
+        ->and(CommentMail::for('comment.awaiting_moderation', true))->toBe(CommentModerationMail::class)
+        ->and(CommentMail::for('comment.awaiting_moderation', false))->toBe(CommentModerationMail::class);
+});
+
 test('a visible comment links to its place on the post', function () {
     expect(commentMail(PostCommentMail::class)->getBody())->toContain('https://example.test/blog/travel/ten-days#comment-128');
 });
 
 test('a held comment links to the post without an anchor and says why it is not there yet', function () {
-    $body = commentMail(CommentReplyMail::class, awaitingModeration: true)->getBody();
+    $body = commentMail(CommentReplyPendingMail::class, awaitingModeration: true)->getBody();
 
     expect($body)->toContain('https://example.test/blog/travel/ten-days"')
         ->and($body)->not->toContain('#comment-128')
-        ->and($body)->toContain('awaiting moderation before it appears publicly');
+        ->and($body)->toContain("waiting for a moderator's approval");
 });
 
 test('moderators are sent to the queue and not told the comment is held', function () {
@@ -59,7 +73,7 @@ test('moderators are sent to the queue and not told the comment is held', functi
 
     expect($body)->toContain('https://example.test/dashboard/blog/7/comments')
         ->and($body)->toContain('Review the comment')
-        ->and($body)->not->toContain('awaiting moderation before it appears publicly');
+        ->and($body)->not->toContain("waiting for a moderator's approval");
 });
 
 test('without a blog to point at, moderators get the post instead', function () {
@@ -67,14 +81,26 @@ test('without a blog to point at, moderators get the post instead', function () 
         ->toContain('https://example.test/blog/travel/ten-days"');
 });
 
-test('an email is written in the language it was built in, and the site default otherwise', function () {
-    $arabic = Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class));
-    $nested = Mailable::inLocale('el', fn () => [Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class)), commentMail(PostCommentMail::class)]);
+test('an email is written in the language it was built in when it has words in it, and the site default otherwise', function () {
+    $renderer = new EmailRenderer(new InMemoryEmailSource([
+        PostCommentMail::class => [
+            'ar' => ['subject' => 'تعليق جديد على: {{ post_title }}'],
+            'el' => ['subject' => 'Νέο σχόλιο: {{ post_title }}'],
+        ],
+    ]));
+
+    [$arabic, $nested, $notWritten] = Mailable::withTemplateRenderer($renderer, fn (): array => [
+        Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class)),
+        Mailable::inLocale('el', fn () => [Mailable::inLocale('ar', fn () => commentMail(PostCommentMail::class)), commentMail(PostCommentMail::class)]),
+        Mailable::inLocale('el', fn () => commentMail(BlogCommentMail::class)),
+    ]);
 
     expect($arabic->getLocale())->toBe('ar')
-        ->and($arabic->getBody())->toContain('<html lang="ar" dir="rtl">')
+        ->and($arabic->getSubject())->toBe('تعليق جديد على: Ten Days in Crete')
+        ->and($arabic->getBody())->toContain('<html lang="ar" dir="rtl"')
         ->and($nested[0]->getLocale())->toBe('ar')
         ->and($nested[1]->getLocale())->toBe('el')
-        ->and(commentMail(PostCommentMail::class)->getLocale())->toBe('en')
+        ->and($notWritten->getLocale())->toBe('en')
+        ->and($notWritten->getBody())->toContain('<html lang="en" dir="ltr"')
         ->and(Mailable::inLocale('xx', fn () => commentMail(PostCommentMail::class))->getLocale())->toBe('en');
 });

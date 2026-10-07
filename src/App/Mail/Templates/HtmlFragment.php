@@ -50,7 +50,7 @@ final readonly class HtmlFragment
     }
 
     /**
-     * Several fragments in a row, e.g. one block per blog in a digest.
+     * Several fragments in a row, e.g. one section per blog in a digest.
      *
      * @param  list<self>  $fragments
      */

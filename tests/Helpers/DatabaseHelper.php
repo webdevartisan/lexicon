@@ -99,11 +99,10 @@ class DatabaseHelper
             'mail_queue',
             'scheduled_task_runs',
 
-            // Email templates customized in the control panel
-            'email_template_components',
-            'email_templates',
-            'email_components',
-            'mailable_template_bindings',
+            // Email layouts and wording customized in the control panel
+            'email_contents',
+            'email_settings',
+            'email_layouts',
         ];
 
         foreach ($tables as $table) {

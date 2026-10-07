@@ -6,6 +6,9 @@ namespace App\Mail;
 
 use App\Mail\Templates\HtmlFragment;
 
+/**
+ * Tells a post's author a reviewer asked for changes, with the reviewer's words.
+ */
 class PostNeedsChangesMail extends Mailable
 {
     public function __construct(
@@ -21,20 +24,11 @@ class PostNeedsChangesMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.PostNeedsChangesMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'reviewer_handle' => $this->reviewerHandle,
-                // Empty feedback leaves its box out of the email.
                 'feedback' => HtmlFragment::fromText($this->feedback),
-                'edit_url' => $this->editUrl(),
+                'edit_url' => $this->url('/dashboard/posts/'.$this->postId.'/edit'),
             ]);
-    }
-
-    private function editUrl(): string
-    {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/dashboard/posts/'.$this->postId.'/edit';
     }
 }

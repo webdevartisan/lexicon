@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+/**
+ * Tells a reviewer they were assigned to review a post, and by whom.
+ */
 class ReviewerAssignedMail extends Mailable
 {
     public function __construct(
@@ -18,18 +21,10 @@ class ReviewerAssignedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.ReviewerAssignedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
                 'actor_handle' => $this->actorHandle,
-                'review_url' => $this->reviewUrl(),
+                'review_url' => $this->url('/dashboard/posts/'.$this->postId.'/review'),
             ]);
-    }
-
-    private function reviewUrl(): string
-    {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/dashboard/posts/'.$this->postId.'/review';
     }
 }

@@ -20,21 +20,33 @@ final class EmailHtmlLinter
 {
     private const FORBIDDEN_TAGS = 'script|iframe|frame|frameset|object|embed|applet|form|input|textarea|select|button|base|meta|link|svg|math|template|portal|style';
 
+    /** Tags only the head of a whole document needs, so only a layout may use them. */
+    private const DOCUMENT_TAGS = ['meta', 'style'];
+
     /**
      * @param  string  $appUrl  Where the site lives; resources from its own host are not reported
+     * @param  bool  $document  A whole HTML document (a layout), which may also have <meta> and <style>
      * @return array{errors: list<string>, warnings: list<string>}
      */
-    public static function lintHtml(string $html, string $appUrl = ''): array
+    public static function lintHtml(string $html, string $appUrl = '', bool $document = false): array
     {
         $errors = [];
         $warnings = [];
 
         if (preg_match_all('#<\s*('.self::FORBIDDEN_TAGS.')\b#i', $html, $m)) {
             foreach (array_unique(array_map('strtolower', $m[1])) as $tag) {
-                $errors[] = $tag === 'style'
-                    ? 'Put CSS in the CSS field rather than a <style> tag.'
+                if ($document && in_array($tag, self::DOCUMENT_TAGS, true)) {
+                    continue;
+                }
+
+                $errors[] = in_array($tag, self::DOCUMENT_TAGS, true)
+                    ? "<{$tag}> belongs in the layout's head, not in an email's words."
                     : "<{$tag}> tags are not allowed in emails.";
             }
+        }
+
+        if ($document) {
+            $errors = array_merge($errors, self::lintCss(implode("\n", self::styleBlocks($html)), $appUrl)['errors']);
         }
 
         if (preg_match('#<[^>]*\son[a-z]+\s*=#i', $html)) {
@@ -87,6 +99,18 @@ final class EmailHtmlLinter
         }
 
         return ['errors' => $errors, 'warnings' => $warnings];
+    }
+
+    /**
+     * The contents of every <style> element.
+     *
+     * @return list<string>
+     */
+    private static function styleBlocks(string $html): array
+    {
+        preg_match_all('#<style\b[^>]*>(.*?)</style\s*>#is', $html, $m);
+
+        return $m[1];
     }
 
     /**

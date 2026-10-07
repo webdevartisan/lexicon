@@ -8,7 +8,7 @@
 
     <p class="mb-5 text-sm text-slate-500 dark:text-zink-300">
         To see what a particular email looks like or send yourself a test of it, open that email under
-        <a href="<?= e(lurl('/admin/email-templates/emails')) ?>" class="text-custom-500 hover:underline">Email Templates &rsaquo; Emails</a>.
+        <a href="<?= e(lurl('/admin/email-templates')) ?>" class="text-custom-500 hover:underline">Email Templates</a>.
     </p>
 
     <!-- Mail configuration -->

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+/**
+ * Tells a post's author it is live.
+ */
 class PostPublishedMail extends Mailable
 {
     public function __construct(
@@ -18,17 +21,9 @@ class PostPublishedMail extends Mailable
     public function build(): void
     {
         $this->to($this->toEmail)
-            ->subject($this->t('subjects.PostPublishedMail', ['post_title' => $this->postTitle]))
             ->fromTemplate([
                 'post_title' => $this->postTitle,
-                'post_url' => $this->publicUrl(),
+                'post_url' => $this->url('/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug)),
             ]);
-    }
-
-    private function publicUrl(): string
-    {
-        $appUrl = rtrim((string) (env('APP_URL', 'http://localhost')), '/');
-
-        return $appUrl.'/blog/'.rawurlencode($this->blogSlug).'/'.rawurlencode($this->postSlug);
     }
 }

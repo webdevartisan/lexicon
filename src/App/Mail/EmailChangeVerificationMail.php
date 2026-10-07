@@ -13,7 +13,6 @@ namespace App\Mail;
  */
 class EmailChangeVerificationMail extends Mailable
 {
-    /** The recipient is waiting on a link that expires, so it cannot queue behind a fan-out. */
     protected string $tier = self::TIER_CRITICAL;
 
     public function __construct(
@@ -27,26 +26,10 @@ class EmailChangeVerificationMail extends Mailable
     public function build(): void
     {
         $this->to($this->newEmail)
-            ->subject($this->t('subjects.EmailChangeVerificationMail', ['app_name' => $this->appName()]))
             ->fromTemplate([
                 'new_email' => $this->newEmail,
-                'confirm_url' => $this->confirmUrl(),
-                'expires_in' => $this->t('phrases.minutes', ['count' => $this->expiresInMinutes]),
-                'expires_in_minutes' => $this->expiresInMinutes,
+                'confirm_url' => $this->url('/account/email/confirm/'.urlencode($this->token)),
+                'expires_minutes' => $this->expiresInMinutes,
             ]);
-    }
-
-    private function appName(): string
-    {
-        return (string) env('APP_NAME', 'Lexicon');
-    }
-
-    /**
-     * The confirmation link, carrying the raw token that only this message holds.
-     */
-    private function confirmUrl(): string
-    {
-        return rtrim((string) env('APP_URL', 'http://localhost'), '/')
-            .'/account/email/confirm/'.urlencode($this->token);
     }
 }
