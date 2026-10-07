@@ -12,6 +12,7 @@ return [
         App\Middleware\SecurityHeadersMiddleware::class,
         App\Middleware\LocaleMiddleware::class,
         App\Middleware\TranslationGlobalsMiddleware::class,
+        App\Middleware\PreviousPathMiddleware::class,
         App\Middleware\NavGlobalsMiddleware::class,
         App\Middleware\ImpersonationGlobalsMiddleware::class,
         App\Middleware\HeadI18nGlobals::class,

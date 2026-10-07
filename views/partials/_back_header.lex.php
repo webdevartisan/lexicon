@@ -40,6 +40,7 @@
                 <!-- Blog switcher: -->
                 <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
+                        <input type="hidden" name="return_to" value="<?= e($current_path) ?>">
                         {{ csrf_field() }}
                         {% cache 'lucide:book-open:blogswitch' ttl=31536000 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                         <select name="blog" data-auto-submit aria-label="Switch active blog"

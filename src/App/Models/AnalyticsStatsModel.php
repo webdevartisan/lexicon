@@ -349,17 +349,21 @@ class AnalyticsStatsModel extends AppModel implements AnalyticsReader
             default => throw new \InvalidArgumentException("No post ranking for the {$within->type} scope."),
         };
 
+        // Grouping every daily row by title and blog name made the temp table the slow step, so join text after the LIMIT.
         return $this->database->query(
-            "SELECT d.scope_id AS post_id, d.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug,
-                    SUM(d.views) AS views, SUM(d.visitors) AS visitors, SUM(d.read_views) AS read_views,
-                    SUM(d.engaged_views) AS engaged_views, SUM(d.engaged_seconds) AS engaged_seconds
-             FROM analytics_daily d
-             LEFT JOIN posts p ON p.id = d.scope_id
-             LEFT JOIN blogs b ON b.id = d.blog_id
-             WHERE d.scope = 'post' AND {$where} AND d.day BETWEEN ? AND ?
-             GROUP BY d.scope_id, d.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug
-             ORDER BY views DESC, d.scope_id DESC
-             LIMIT ".max(1, $limit),
+            "SELECT t.post_id, t.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug,
+                    t.views, t.visitors, t.read_views, t.engaged_views, t.engaged_seconds
+             FROM (SELECT d.scope_id AS post_id, d.blog_id,
+                          SUM(d.views) AS views, SUM(d.visitors) AS visitors, SUM(d.read_views) AS read_views,
+                          SUM(d.engaged_views) AS engaged_views, SUM(d.engaged_seconds) AS engaged_seconds
+                   FROM analytics_daily d
+                   WHERE d.scope = 'post' AND {$where} AND d.day BETWEEN ? AND ?
+                   GROUP BY d.scope_id, d.blog_id
+                   ORDER BY views DESC, d.scope_id DESC
+                   LIMIT ".max(1, $limit).') t
+             LEFT JOIN posts p ON p.id = t.post_id
+             LEFT JOIN blogs b ON b.id = t.blog_id
+             ORDER BY t.views DESC, t.post_id DESC',
             [...$params, $from, $to]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }

@@ -42,11 +42,11 @@
     }
 
     var base = (group.getAttribute('data-nav-group-path') || '').replace(/\/+$/, '');
+    // - If we are on the group’s base path or a child of it, keep it open.
+    // - Otherwise, always start closed (ignore remembered state).
     var inside = base !== '' && (here === base || here.indexOf(base + '/') === 0);
 
-    // Standing on one of the group's pages always shows it; elsewhere the
-    // reader's last choice wins.
-    setOpen(inside || remembered(key) === 'open');
+    setOpen(inside);
 
     // On a child page the parent link is not the active row, and on the
     // icon-only rail the children are not rendered at all, so the parent
@@ -73,4 +73,38 @@
       link.setAttribute('aria-current', 'page');
     }
   });
+
+  // Reveal the active item after page-load initialization.
+  function scrollActiveIntoView() {
+    requestAnimationFrame(function () {
+      var active = document.querySelector('.sidebar-menu-item.active');
+      if (!active) return;
+
+      var target = active;
+
+      // Compact sidebar: use the visible parent instead of a hidden child.
+      if (!active.getClientRects().length) {
+        var group = active.closest('[data-nav-group]');
+        if (!group) return;
+
+        target = group.querySelector(
+          '.sidebar-menu-row > .sidebar-menu-item[data-nav-path]'
+        );
+      }
+
+      if (!target || !target.getClientRects().length) return;
+
+      target.scrollIntoView({
+        behavior: 'instant',
+        block: 'center',
+        inline: 'nearest'
+      });
+    });
+  }
+
+  if (document.readyState === 'complete') {
+    scrollActiveIntoView();
+  } else {
+    window.addEventListener('load', scrollActiveIntoView, { once: true });
+  }
 })();

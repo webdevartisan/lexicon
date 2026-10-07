@@ -122,3 +122,13 @@ test('only a blog that is published now is named as where readers came from', fu
     expect($this->stats->publishedBlogNames([$public, $hidden, 999999]))->toBe([$public => 'Field Notes'])
         ->and($this->stats->publishedBlogNames([]))->toBe([]);
 });
+
+test('the limit cuts the ranking, and a post that no longer exists keeps its numbers', function () {
+    $all = $this->stats->topPosts(AnalyticsScope::site(), '2026-03-10', '2026-03-10', 10);
+    $first = $this->stats->topPosts(AnalyticsScope::site(), '2026-03-10', '2026-03-10', 1);
+
+    expect($first)->toBe([$all[0]])
+        ->and((int) $all[0]['post_id'])->toBe(11)
+        ->and((int) $all[0]['views'])->toBe(2)
+        ->and($all[0]['title'])->toBeNull();
+});

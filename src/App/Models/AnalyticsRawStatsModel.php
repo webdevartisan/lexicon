@@ -141,22 +141,25 @@ class AnalyticsRawStatsModel extends AppModel implements AnalyticsReader
         [$where, $params] = $this->where($within, $from, $to);
 
         return $this->database->query(
-            "SELECT v.post_id, v.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug,
-                    SUM(v.views) AS views, SUM(v.visitors) AS visitors, SUM(v.read_views) AS read_views,
-                    SUM(v.engaged_views) AS engaged_views, SUM(v.engaged_seconds) AS engaged_seconds
-             FROM (SELECT {$s['day']} AS day, h.post_id, h.blog_id, COUNT(*) AS views,
-                          COUNT(DISTINCT h.visitor_hash) AS visitors,
-                          COALESCE(SUM(h.engaged_seconds >= {$this->readSeconds}), 0) AS read_views,
-                          SUM(h.engaged_seconds IS NOT NULL) AS engaged_views,
-                          COALESCE(SUM(h.engaged_seconds), 0) AS engaged_seconds
-                   FROM ".AnalyticsSql::VIEWS." h
-                   WHERE {$where} AND h.post_id IS NOT NULL
-                   GROUP BY day, h.post_id, h.blog_id) v
-             LEFT JOIN posts p ON p.id = v.post_id
-             LEFT JOIN blogs b ON b.id = v.blog_id
-             GROUP BY v.post_id, v.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug
-             ORDER BY views DESC, v.post_id DESC
-             LIMIT ".max(1, $limit),
+            "SELECT t.post_id, t.blog_id, p.title, p.slug, p.status, p.author_id, b.blog_name, b.blog_slug,
+                    t.views, t.visitors, t.read_views, t.engaged_views, t.engaged_seconds
+             FROM (SELECT v.post_id, v.blog_id,
+                          SUM(v.views) AS views, SUM(v.visitors) AS visitors, SUM(v.read_views) AS read_views,
+                          SUM(v.engaged_views) AS engaged_views, SUM(v.engaged_seconds) AS engaged_seconds
+                   FROM (SELECT {$s['day']} AS day, h.post_id, h.blog_id, COUNT(*) AS views,
+                                COUNT(DISTINCT h.visitor_hash) AS visitors,
+                                COALESCE(SUM(h.engaged_seconds >= {$this->readSeconds}), 0) AS read_views,
+                                SUM(h.engaged_seconds IS NOT NULL) AS engaged_views,
+                                COALESCE(SUM(h.engaged_seconds), 0) AS engaged_seconds
+                         FROM ".AnalyticsSql::VIEWS." h
+                         WHERE {$where} AND h.post_id IS NOT NULL
+                         GROUP BY day, h.post_id, h.blog_id) v
+                   GROUP BY v.post_id, v.blog_id
+                   ORDER BY views DESC, v.post_id DESC
+                   LIMIT ".max(1, $limit).') t
+             LEFT JOIN posts p ON p.id = t.post_id
+             LEFT JOIN blogs b ON b.id = t.blog_id
+             ORDER BY t.views DESC, t.post_id DESC',
             $params
         )->fetchAll(\PDO::FETCH_ASSOC);
     }

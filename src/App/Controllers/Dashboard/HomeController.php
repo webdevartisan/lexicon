@@ -198,7 +198,11 @@ class HomeController extends AppController
 
         $this->preference->setDefaultBlogId($user['id'], $selectedBlogId);
 
-        return $this->redirect('/dashboard');
+        // Substitute blog ID in return_to before redirecting
+        $back = safe_return_to((string) ($this->request->post['return_to'])) ?? '/dashboard';
+        $back = preg_replace('/\/blog\/\d+\//', '/blog/'.$selectedBlogId.'/', $back);
+
+        return $this->redirect($back);
     }
 
     /**
