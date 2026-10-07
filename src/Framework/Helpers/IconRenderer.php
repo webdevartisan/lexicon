@@ -16,28 +16,33 @@ class IconRenderer
      * Find Node.js executable path.
      *
      * We check multiple locations where Node.js might be installed,
-     * especially on Windows with Laragon.
+     * on Windows (Laragon included) and on Unix.
      *
      * @return string|null Path to node executable, or null if not found
      */
     private static function findNodePath(): ?string
     {
-        // try to use 'where' command first (most reliable on Windows)
-        $result = shell_exec('where node 2>nul');
+        // Each shell has its own lookup and its own null device; writing
+        // "2>nul" on Linux leaves a file called "nul" in the working directory.
+        $result = PHP_OS_FAMILY === 'Windows'
+            ? shell_exec('where node 2>nul')
+            : shell_exec('command -v node 2>/dev/null');
 
-        if ($result && trim($result)) {
+        if (is_string($result) && trim($result) !== '') {
             // get the first path if multiple are found
-            $paths = explode("\n", trim($result));
+            $paths = preg_split('/\R/', trim($result)) ?: [];
 
-            return trim($paths[0]);
+            return trim($paths[0] ?? '') ?: null;
         }
 
         // fall back to checking common locations manually
-        $possiblePaths = [
-            'C:\laragon\bin\nodejs\node-v18\node.exe',
-            'C:\laragon\bin\nodejs\node-v20\node.exe',
-            'C:\laragon\bin\nodejs\node.exe',
-        ];
+        $possiblePaths = PHP_OS_FAMILY === 'Windows'
+            ? [
+                'C:\laragon\bin\nodejs\node-v18\node.exe',
+                'C:\laragon\bin\nodejs\node-v20\node.exe',
+                'C:\laragon\bin\nodejs\node.exe',
+            ]
+            : ['/usr/local/bin/node', '/usr/bin/node', '/opt/homebrew/bin/node'];
 
         foreach ($possiblePaths as $path) {
             if (file_exists($path)) {
@@ -77,7 +82,13 @@ class IconRenderer
         // find Node.js executable
         $nodePath = self::findNodePath();
         if (!$nodePath) {
-            trigger_error('Node.js not found in PATH, icons will render client-side', E_USER_WARNING);
+            // Not an error worth breaking the page for: the icons still render
+            // in the browser. Logged once per process so a log is not flooded.
+            static $logged = false;
+            if (!$logged) {
+                error_log('IconRenderer: Node.js not found, icons will render client-side');
+                $logged = true;
+            }
 
             return $html;
         }

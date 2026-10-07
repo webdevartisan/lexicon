@@ -159,8 +159,13 @@ final class Dispatcher implements RequestHandlerInterface
 
     private function normalizeControllerName(string $name): string
     {
-        // Convert kebab-case to PascalCase (e.g. "user-profile" → "UserProfile")
-        $name = str_replace('-', '', ucwords(strtolower($name), '-'));
+        // Route config already names the class ("AuthController", "EmailBinding")
+        // and must keep its case, or the autoloader looks for Authcontroller.php,
+        // which only exists on a case-insensitive filesystem. Only a name taken
+        // from the URL is kebab-case and needs converting ("user-profile" → "UserProfile").
+        if (preg_match('/^[A-Z][A-Za-z0-9]*$/', $name) !== 1) {
+            $name = str_replace('-', '', ucwords(strtolower($name), '-'));
+        }
 
         $inflector = \Doctrine\Inflector\InflectorFactory::create()->build();
         if (stripos($name, 'Controller') === false) {
