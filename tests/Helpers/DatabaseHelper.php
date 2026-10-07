@@ -116,6 +116,31 @@ class DatabaseHelper
     }
 
     /**
+     * The shared deleted-user account that schema.sql seeds, created when it is missing.
+     *
+     * A freshly loaded schema has the row, but cleanDatabase() truncates users
+     * after every integration test, so whether it exists depends on which tests
+     * ran first. Inserting it unconditionally fails on its unique email.
+     *
+     * @param  Database  $db  Database connection
+     * @return int The account's id
+     */
+    public static function deletedUser(Database $db): int
+    {
+        $id = $db->query("SELECT id FROM users WHERE handle = 'deleted-user'")->fetchColumn();
+        if ($id !== false) {
+            return (int) $id;
+        }
+
+        $db->execute(
+            "INSERT INTO users (handle, email, password, display_name_cached, is_active)
+             VALUES ('deleted-user', 'deleted-user@lexicon.invalid', '', 'Deleted user', 0)"
+        );
+
+        return (int) $db->getConnection()->lastInsertId();
+    }
+
+    /**
      * Assert table has specific row count.
      *
      * @param  Database  $db  Database connection

@@ -24,6 +24,7 @@ use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * The upload service is a mock: storage/uploads/ is shared with development, so
@@ -35,11 +36,7 @@ beforeEach(function () {
     $this->posts = new PostModel($this->db);
     $this->comments = new CommentModel($this->db);
 
-    $this->db->execute(
-        "INSERT INTO users (handle, email, password, display_name_cached, is_active)
-         VALUES ('deleted-user', 'deleted-user@lexicon.invalid', '', 'Deleted user', 0)"
-    );
-    $this->deletedUserId = (int) $this->db->getConnection()->lastInsertId();
+    $this->deletedUserId = DatabaseHelper::deletedUser($this->db);
 
     $this->uploader = Mockery::mock(UploadServiceInterface::class)->shouldIgnoreMissing();
     $this->uploader->shouldReceive('blogUploadsBy')->andReturn([])->byDefault();

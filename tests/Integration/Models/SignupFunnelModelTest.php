@@ -11,6 +11,7 @@ use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * Four accounts whose right answers are known by hand.
@@ -29,7 +30,7 @@ beforeEach(function () {
     $this->writer = UserFactory::new($users)->create();
     $late = UserFactory::new($users)->create();
     $new = UserFactory::new($users)->create();
-    $shared = UserFactory::new($users)->withAttributes(['handle' => 'deleted-user'])->create();
+    $shared = DatabaseHelper::deletedUser($this->db);
 
     $age('users', $this->writer, 'created_at', '20 DAY');
     $age('users', $late, 'created_at', '20 DAY');
