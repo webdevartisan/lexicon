@@ -13,6 +13,9 @@ use Framework\Database;
  * the goals, link clicks, missing pages and beacon outcomes that go with them,
  * plus a year of older goals, clicks and sign-ups, for looking at the Insights
  * pages locally. The rollups are rebuilt from the oldest seeded day.
+ *
+ * Older days are seeded in windows, rolled up by the real rollup code and then pruned,
+ * so they exist as rollups only, like production.
  */
 final class AnalyticsSeeder
 {
@@ -20,6 +23,12 @@ final class AnalyticsSeeder
 
     /** How far back the goals, clicks and sign-ups go, past a 12-month range. */
     private const HISTORY_DAYS = 395;
+
+    private const HISTORY_WINDOW = 30;
+
+    private const SCALED_POSTS = 200;
+
+    private const PRUNE_CHUNK = 20000;
 
     private const TABLES = [
         'analytics_events',
@@ -143,45 +152,98 @@ final class AnalyticsSeeder
     /** @var list<array<string, mixed>> */
     private array $events = [];
 
+    /** @var list<int> */
+    private array $pageWeights = [];
+
     public function __construct(
         private Database $db,
         private AnalyticsRollupModel $rollups,
     ) {}
 
     /**
-     * @param  list<int>  $blogIds  Empty for the three blogs with the most published posts and the platform's pages
-     * @return array<string, string> What was written, keyed "Blog 5", "Platform pages" or "Sign-ups"
+     * Seeding at scale is switched on by asking for more than three blogs, any history,
+     * or a visitor count. It spreads traffic over the blogs in a long tail and lets
+     * 200 posts per blog receive views, instead of three hand-weighted blogs and 40 posts.
+     *
+     * @param  list<int>  $blogIds  Empty for the busiest blogs (by published posts) and the platform's pages
+     * @param  int  $blogCount  How many of the busiest blogs to seed when $blogIds is empty
+     * @param  int  $history  Extra days before the raw window, kept as rollups only
+     * @param  int|null  $visitors  Daily visitors to the busiest blog
+     * @param  (callable(string): void)|null  $progress  Called as each history window finishes
+     * @return array<string, string> What was written, keyed "Blog 5", "Blogs", "Platform pages" or "Sign-ups"
      */
-    public function run(int $days, array $blogIds): array
-    {
-        $blogs = $this->blogs($blogIds);
+    public function run(
+        int $days,
+        array $blogIds,
+        int $blogCount = 3,
+        int $history = 0,
+        ?int $visitors = null,
+        ?callable $progress = null
+    ): array {
+        $blogs = $this->blogs($blogIds, $blogCount);
 
         if ($blogs === []) {
             throw new \RuntimeException('No published blog with published posts to seed. Run php cli db:seed first.');
         }
 
+        $scaled = $blogCount > 3 || $history > 0 || $visitors !== null;
         $this->blogIds = array_map(static fn (array $blog): int => (int) $blog['id'], $blogs);
-        $written = [];
-        $scale = [1 => 120, 2 => 45, 3 => 15];
-        $rank = 1;
+        $targets = $this->targets($blogs, $scaled, $visitors ?? 120);
+        $platformVisitors = $scaled ? max(60, intdiv(array_sum(array_column($targets, 'visitors')), 4)) : 60;
+        $withPlatform = $blogIds === [];
+        $utc = new \DateTimeZone('UTC');
+        $span = $history + $days;
+        $visits = [];
+        $platform = 0;
 
-        foreach ($blogs as $blog) {
-            $written['Blog '.(int) $blog['id']] = $this->seedPages(
-                (int) $blog['id'],
-                new \DateTimeZone(self::zone($blog)),
-                $this->pages($blog),
-                $days,
-                $scale[$rank] ?? 10
-            ).' visits';
-            $rank++;
+        foreach ($this->windows($history, $days) as [$start, $end]) {
+            $began = microtime(true);
+            $windowVisits = 0;
+
+            foreach ($targets as $target) {
+                $label = $scaled ? 'Blogs' : 'Blog '.$target['id'];
+                $count = $this->seedPages($target['id'], $target['zone'], $target['pages'], $start, $end, $span, $target['visitors']);
+                $visits[$label] = ($visits[$label] ?? 0) + $count;
+                $windowVisits += $count;
+            }
+
+            if ($withPlatform) {
+                $count = $this->seedPages(null, $utc, self::PLATFORM_PAGES, $start, $end, $span, $platformVisitors);
+                $platform += $count;
+                $windowVisits += $count;
+            }
+
+            if ($end === 0) {
+                break;
+            }
+
+            $this->flush();
+            $this->rollups->rebuildFrom(self::daysAgo($start + 1), 30, 10);
+            $this->pruneRaw($end + 1);
+
+            if ($progress !== null) {
+                $progress(sprintf('%d to %d days ago: %s visits, %ds', $start, $end, number_format($windowVisits), round(microtime(true) - $began)));
+            }
+        }
+
+        $written = array_map(static fn (int $count): string => number_format($count).' visits', $visits);
+        if ($scaled) {
+            $written['Blogs'] .= ' across '.count($targets).' blogs';
         }
 
         $oldest = $days + 1;
-        if ($blogIds === []) {
-            $written['Platform pages'] = $this->seedPages(null, new \DateTimeZone('UTC'), self::PLATFORM_PAGES, $days, 60).' visits';
+        if ($withPlatform) {
+            $written['Platform pages'] = number_format($platform).' visits';
             $written['Sign-ups'] = $this->seedSignups(0, $days).' sign-up events, one per account created';
-            $written['Older history'] = $this->seedHistory($blogs, $days).' goals, clicks and sign-ups from before the raw window';
             $oldest = self::HISTORY_DAYS;
+
+            if ($history === 0) {
+                $written['Older history'] = $this->seedHistory($blogs, $days).' goals, clicks and sign-ups from before the raw window';
+            }
+        }
+
+        if ($history > 0) {
+            $oldest = $days;
         }
 
         $written['Missing pages'] = $this->seedMissing($blogs, $days).' events';
@@ -189,10 +251,70 @@ final class AnalyticsSeeder
         $this->flush();
         $written['Beacon outcomes'] = $this->seedOutcomes($days).' days';
 
-        $from = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify("-{$oldest} days");
-        $this->rollups->rebuildFrom($from->format('Y-m-d'), 30, 10);
+        $this->rollups->rebuildFrom(self::daysAgo($oldest), 30, 10);
 
         return $written;
+    }
+
+    /**
+     * Every blog's zone, pages and daily visitors, worked out once for all windows.
+     *
+     * @param  list<array<string, mixed>>  $blogs  Busiest first
+     * @return list<array{id: int, zone: \DateTimeZone, pages: list<array{0: string, 1: ?int, 2: string, 3: int}>, visitors: int}>
+     */
+    private function targets(array $blogs, bool $scaled, int $topVisitors): array
+    {
+        $targets = [];
+
+        foreach ($blogs as $index => $blog) {
+            $rank = $index + 1;
+            $targets[] = [
+                'id' => (int) $blog['id'],
+                'zone' => new \DateTimeZone(self::zone($blog)),
+                'pages' => $this->pages($blog, $scaled ? self::SCALED_POSTS : 40, $scaled ? 10 : 1),
+                'visitors' => $scaled ? max(2, (int) round($topVisitors / $rank ** 0.8)) : [1 => 120, 2 => 45, 3 => 15][$rank] ?? 10,
+            ];
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Spans of days to seed, oldest first, ending with the raw window.
+     *
+     * @return list<array{0: int, 1: int}> Days ago of the first day and of the last day
+     */
+    private function windows(int $history, int $days): array
+    {
+        $windows = [];
+
+        for ($start = $history + $days - 1; $start >= $days; $start -= self::HISTORY_WINDOW) {
+            $windows[] = [$start, max($days, $start - self::HISTORY_WINDOW + 1)];
+        }
+
+        $windows[] = [$days - 1, 0];
+
+        return $windows;
+    }
+
+    /**
+     * Drop raw rows older than the given number of days. The next rebuild starts one
+     * day inside what is kept, so the day it re-reads is still whole in every timezone.
+     */
+    private function pruneRaw(int $keepDays): void
+    {
+        $cutoff = self::daysAgo($keepDays).' 00:00:00';
+
+        foreach (['analytics_events' => 'created_at', 'analytics_visits' => 'last_seen_at'] as $table => $column) {
+            do {
+                $removed = $this->db->execute("DELETE FROM {$table} WHERE {$column} < ? LIMIT ".self::PRUNE_CHUNK, [$cutoff]);
+            } while ($removed > 0);
+        }
+    }
+
+    private static function daysAgo(int $days): string
+    {
+        return (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->modify("-{$days} days")->format('Y-m-d');
     }
 
     /**
@@ -201,15 +323,17 @@ final class AnalyticsSeeder
     public function reset(): void
     {
         foreach (self::TABLES as $table) {
-            $this->db->execute("DELETE FROM {$table}");
+            // Truncate, not delete: a million-row delete rewrites every index entry and takes minutes.
+            $this->db->execute("TRUNCATE TABLE {$table}");
         }
     }
 
     /**
      * @param  list<int>  $blogIds
+     * @param  int  $limit  How many blogs to take when $blogIds is empty
      * @return list<array<string, mixed>>
      */
-    private function blogs(array $blogIds): array
+    private function blogs(array $blogIds, int $limit): array
     {
         $where = $blogIds === [] ? '' : 'AND b.id IN ('.implode(',', array_map('intval', $blogIds)).')';
 
@@ -221,7 +345,7 @@ final class AnalyticsSeeder
              WHERE b.status = 'published' {$where}
              GROUP BY b.id, b.blog_slug, s.timezone
              ORDER BY posts DESC, b.id
-             LIMIT ".($blogIds === [] ? 3 : count($blogIds))
+             LIMIT ".($blogIds === [] ? $limit : count($blogIds))
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -234,21 +358,26 @@ final class AnalyticsSeeder
     }
 
     /**
-     * A month of visits to one blog, or to the platform's own pages when $blogId is null.
+     * Visits to one blog, or to the platform's own pages when $blogId is null, on each
+     * day from $fromAgo down to $toAgo days ago.
      *
      * @param  list<array{0: string, 1: ?int, 2: string, 3: int}>  $pages  type, post id, path, weight
+     * @param  int  $span  Days from the very first seeded day to today, which the growth curve runs over
      * @return int Visits written
      */
-    private function seedPages(?int $blogId, \DateTimeZone $zone, array $pages, int $days, int $dailyVisitors): int
+    private function seedPages(?int $blogId, \DateTimeZone $zone, array $pages, int $fromAgo, int $toAgo, int $span, int $dailyVisitors): int
     {
+        // Regulars are new every call, so earlier visit numbers can be forgotten instead of growing without end.
+        $this->visitCounts = [];
+        $this->pageWeights = array_column($pages, 3);
         $regulars = array_map(static fn (): string => random_bytes(16), range(1, max(5, intdiv($dailyVisitors, 3))));
         $total = 0;
 
-        for ($ago = $days - 1; $ago >= 0; $ago--) {
+        for ($ago = $fromAgo; $ago >= $toAgo; $ago--) {
             $day = new \DateTimeImmutable("today -{$ago} days", $zone);
-            // Weekends are quieter, and a blog grows a little over the month.
+            // Weekends are quieter, and a blog grows a little over the period.
             $weekday = (int) $day->format('N') >= 6 ? 0.7 : 1.0;
-            $growth = 0.8 + 0.4 * (1 - $ago / max(1, $days));
+            $growth = 0.8 + 0.4 * (1 - $ago / max(1, $span));
             $count = (int) round($dailyVisitors * $weekday * $growth * (0.85 + mt_rand(0, 30) / 100));
 
             for ($v = 0; $v < $count; $v++) {
@@ -688,25 +817,26 @@ final class AnalyticsSeeder
      * @param  array<string, mixed>  $blog
      * @return list<array{0: string, 1: ?int, 2: string, 3: int}>
      */
-    private function pages(array $blog): array
+    private function pages(array $blog, int $postLimit = 40, int $weightScale = 1): array
     {
         $base = '/blog/'.$blog['blog_slug'];
-        $pages = [['landing', null, $base, 30], ['archive', null, $base.'/archive', 5]];
+        $pages = [['landing', null, $base, 30 * $weightScale], ['archive', null, $base.'/archive', 5 * $weightScale]];
 
         $posts = $this->db->query(
-            "SELECT id, slug FROM posts WHERE blog_id = ? AND status = 'published' ORDER BY published_at DESC LIMIT 40",
+            "SELECT id, slug FROM posts WHERE blog_id = ? AND status = 'published' ORDER BY published_at DESC LIMIT {$postLimit}",
             [(int) $blog['id']]
         )->fetchAll(\PDO::FETCH_ASSOC);
 
-        // A few posts do most of the work, the way real blogs look.
+        // A few posts do most of the work, the way real blogs look. The scale keeps a long
+        // tail of posts from outweighing the first few once whole numbers are rounded.
         foreach ($posts as $rank => $post) {
-            $pages[] = ['post', (int) $post['id'], $base.'/'.$post['slug'], max(1, (int) round(40 / ($rank + 1)))];
+            $pages[] = ['post', (int) $post['id'], $base.'/'.$post['slug'], max(1, (int) round(40 * $weightScale / ($rank + 1)))];
         }
 
         foreach (['category' => ['categories', 2], 'tag' => ['tags', 1]] as $type => [$table, $weight]) {
             $slugs = $this->db->query("SELECT slug FROM {$table} WHERE blog_id = ? LIMIT 5", [(int) $blog['id']]);
             foreach ($slugs->fetchAll(\PDO::FETCH_COLUMN) as $slug) {
-                $pages[] = [$type, null, $base.'/'.$type.'/'.$slug, $weight];
+                $pages[] = [$type, null, $base.'/'.$type.'/'.$slug, $weight * $weightScale];
             }
         }
 
@@ -714,17 +844,12 @@ final class AnalyticsSeeder
     }
 
     /**
-     * @param  list<array{0: string, 1: ?int, 2: string, 3: int}>  $pages
+     * @param  list<array{0: string, 1: ?int, 2: string, 3: int}>  $pages  The list whose weights seedPages stored
      * @return array{0: string, 1: ?int, 2: string}
      */
     private function pickPage(array $pages): array
     {
-        $weights = [];
-        foreach ($pages as $i => $page) {
-            $weights[$i] = $page[3];
-        }
-
-        $page = $pages[(int) $this->pick($weights)];
+        $page = $pages[(int) $this->pick($this->pageWeights)];
 
         return [$page[0], $page[1], $page[2]];
     }

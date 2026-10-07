@@ -22,6 +22,8 @@ class AnalyticsDailyEventModel extends AppModel
     /** Things a reader can do on a blog that its owner may want more of. */
     public const GOALS = ['subscribe', 'comment', 'like', 'save', 'share'];
 
+    private const CLICKS = ['outbound' => 'host', 'download' => 'file', 'share' => 'network'];
+
     /** Sign-up lists on the Sign-ups page. */
     private const SIGNUP_BREAKDOWNS = ['channel', 'source', 'came_from', 'utm_campaign'];
 
@@ -80,13 +82,80 @@ class AnalyticsDailyEventModel extends AppModel
             $counts[(string) $row['name']] = (int) $row['reached'];
         }
 
-        $counts['signup'] = match ($scope->type) {
-            AnalyticsScope::SITE => $this->countSignups("scope = 'site'", [], $from, $to),
-            AnalyticsScope::BLOG => $this->countSignups("scope = 'blog' AND scope_id = ?", [(int) $scope->blogId], $from, $to),
-            default => 0,
-        };
+        $counts['signup'] = $this->signups($scope, $from, $to);
 
         return $counts;
+    }
+
+    /**
+     * Everything the Goals page reads from the daily rows, in one pass instead of six scans.
+     * The window function keeps each click list to its top $limit inside SQL, so a site with
+     * thousands of outbound hosts still gets a short result.
+     *
+     * @return array{
+     *     goals: array<string, int>,
+     *     byChannel: array<string, array<string, int>>,
+     *     bySource: array<string, array<string, int>>,
+     *     outbound: list<array{value: string, clicks: int}>,
+     *     downloads: list<array{value: string, clicks: int}>,
+     *     shares: list<array{value: string, clicks: int}>
+     * }
+     */
+    public function goalsReport(AnalyticsScope $scope, string $from, string $to, int $limit): array
+    {
+        [$where, $params] = $this->scopeClause($scope);
+        $names = array_values(array_unique([...self::GOALS, ...array_keys(self::CLICKS)]));
+        $marks = implode(', ', array_fill(0, count($names), '?'));
+
+        $rows = $this->database->query(
+            "SELECT r.name, r.breakdown, r.value, r.total FROM (
+                 SELECT name, breakdown, value, SUM(events) AS total,
+                        ROW_NUMBER() OVER (PARTITION BY name, breakdown ORDER BY SUM(events) DESC, value ASC) AS ranked
+                 FROM analytics_daily_events
+                 WHERE name IN ({$marks}) AND breakdown IN ('', 'channel', 'source', 'host', 'file', 'network')
+                   AND {$where} AND day BETWEEN ? AND ?
+                 GROUP BY name, breakdown, value
+             ) r
+             WHERE r.breakdown IN ('', 'channel', 'source') OR r.ranked <= ?
+             ORDER BY r.name, r.breakdown, r.ranked",
+            [...$names, ...$params, $from, $to, max(1, $limit)]
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $goals = array_fill_keys([...self::GOALS, 'signup'], 0);
+        $byChannel = [];
+        $bySource = [];
+        $clicks = array_fill_keys(array_keys(self::CLICKS), []);
+
+        foreach ($rows as $row) {
+            $name = (string) $row['name'];
+            $breakdown = (string) $row['breakdown'];
+            $value = (string) $row['value'];
+            $total = (int) $row['total'];
+
+            if (in_array($name, self::GOALS, true)) {
+                match ($breakdown) {
+                    '' => $goals[$name] = $total,
+                    'channel' => $byChannel[$value][$name] = $total,
+                    'source' => $bySource[$value][$name] = $total,
+                    default => null,
+                };
+            }
+
+            if ((self::CLICKS[$name] ?? null) === $breakdown) {
+                $clicks[$name][] = ['value' => $value, 'clicks' => $total];
+            }
+        }
+
+        $goals['signup'] = $this->signups($scope, $from, $to);
+
+        return [
+            'goals' => $goals,
+            'byChannel' => self::busiest($byChannel, $limit),
+            'bySource' => self::busiest($bySource, $limit),
+            'outbound' => $clicks['outbound'],
+            'downloads' => $clicks['download'],
+            'shares' => $clicks['share'],
+        ];
     }
 
     /**
@@ -116,6 +185,17 @@ class AnalyticsDailyEventModel extends AppModel
             $byValue[(string) $row['value']][(string) $row['name']] = (int) $row['reached'];
         }
 
+        return self::busiest($byValue, $limit);
+    }
+
+    /**
+     * @param  array<string, array<string, int>>  $byValue  Value => goal => count
+     * @return array<string, array<string, int>> The $limit values with the most goals, busiest first
+     */
+    private static function busiest(array $byValue, int $limit): array
+    {
+        // Stable sort: equal totals end up alphabetical, not in MySQL's order.
+        ksort($byValue);
         uasort($byValue, static fn (array $a, array $b): int => array_sum($b) <=> array_sum($a));
 
         return array_slice($byValue, 0, max(1, $limit), true);
@@ -180,12 +260,7 @@ class AnalyticsDailyEventModel extends AppModel
      */
     public function clickBreakdown(string $kind, AnalyticsScope $scope, string $from, string $to, int $limit): array
     {
-        $breakdown = match ($kind) {
-            'outbound' => 'host',
-            'download' => 'file',
-            'share' => 'network',
-            default => throw new \InvalidArgumentException("Unknown click kind '{$kind}'."),
-        };
+        $breakdown = self::CLICKS[$kind] ?? throw new \InvalidArgumentException("Unknown click kind '{$kind}'.");
 
         [$where, $params] = $this->scopeClause($scope);
 
@@ -202,6 +277,18 @@ class AnalyticsDailyEventModel extends AppModel
             'value' => (string) $row['value'],
             'clicks' => (int) $row['clicks'],
         ], $rows);
+    }
+
+    /**
+     * Sign-ups the scope counts: the whole site's, or those that began on one blog.
+     */
+    private function signups(AnalyticsScope $scope, string $from, string $to): int
+    {
+        return match ($scope->type) {
+            AnalyticsScope::SITE => $this->countSignups("scope = 'site'", [], $from, $to),
+            AnalyticsScope::BLOG => $this->countSignups("scope = 'blog' AND scope_id = ?", [(int) $scope->blogId], $from, $to),
+            default => 0,
+        };
     }
 
     /**

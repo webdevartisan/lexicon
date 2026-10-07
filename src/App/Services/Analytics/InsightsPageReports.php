@@ -74,14 +74,21 @@ class InsightsPageReports
     public function page(string $page, AnalyticsScope $scope, AnalyticsRange $range, array $filters = []): array
     {
         ksort($filters);
-        $filterKey = $filters === [] ? '' : ':'.md5((string) json_encode($filters));
 
         return fragment()->rememberData(
-            "insights:{$page}:{$scope->key()}:{$range->key()}{$filterKey}",
+            "insights:{$page}:{$scope->key()}:{$range->key()}".self::filterKey($filters),
             fn (): array => $this->build($page, $scope, $range, $filters),
             self::CACHE_TTL,
             false
         );
+    }
+
+    /**
+     * @param  array<string, string>  $filters  Already sorted by key
+     */
+    private static function filterKey(array $filters): string
+    {
+        return $filters === [] ? '' : ':'.md5((string) json_encode($filters));
     }
 
     /**
@@ -97,8 +104,8 @@ class InsightsPageReports
         ];
 
         return $report + match ($page) {
-            'overview' => $this->overview($reader, $scope, $range),
-            'content' => $this->content($reader, $scope, $range),
+            'overview' => $this->overview($reader, $scope, $range, $filters),
+            'content' => $this->content($reader, $scope, $range, $filters),
             'audience' => [
                 'metrics' => $this->reports->metrics($reader, $scope, $range),
                 'hourly' => $reader->hourly($scope, $range->fromDate(), $range->toDate()),
@@ -117,35 +124,54 @@ class InsightsPageReports
     }
 
     /**
+     * @param  array<string, string>  $filters
      * @return array<string, mixed>
      */
-    private function overview(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range): array
+    private function overview(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range, array $filters): array
     {
         return [
             'metrics' => $this->reports->metrics($reader, $scope, $range),
             'series' => $this->reports->series($reader, $scope, $range),
             'interval' => AnalyticsReportService::interval($range),
             'markers' => $this->reports->markers($scope, $range),
-            'topPosts' => $this->topPosts($reader, $scope, $range, self::PREVIEW_LIMIT),
+            'topPosts' => $this->topPosts($reader, $scope, $range, $filters, self::PREVIEW_LIMIT),
             'goals' => $this->events->goalCounts($scope, $range->fromDate(), $range->toDate()),
         ];
     }
 
     /**
+     * @param  array<string, string>  $filters
      * @return list<array<string, mixed>>
      */
-    private function topPosts(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range, int $limit): array
+    private function topPosts(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range, array $filters, int $limit): array
     {
-        return $scope->ranksPosts() ? $reader->topPosts($scope, $range->fromDate(), $range->toDate(), $limit) : [];
+        return $scope->ranksPosts() ? array_slice($this->ranked($reader, $scope, $range, self::filterKey($filters)), 0, $limit) : [];
+    }
+
+    /**
+     * The posts ranked by views, as deep as any page reads. Overview, Content and Authors
+     * share it instead of each scanning the range's daily rows for their own count.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function ranked(AnalyticsReader $reader, AnalyticsScope $within, AnalyticsRange $range, string $filterKey): array
+    {
+        return fragment()->rememberData(
+            "insights:ranking:{$within->key()}:{$range->fromDate()}:{$range->toDate()}{$filterKey}",
+            fn (): array => $reader->topPosts($within, $range->fromDate(), $range->toDate(), self::AUTHOR_POSTS_LIMIT),
+            self::CACHE_TTL,
+            false
+        );
     }
 
     /**
      * Top posts, posts that stand out from the rest, and how views follow publishing.
      * The curve covers posts published in the year before the range ends, once counting began.
      *
+     * @param  array<string, string>  $filters
      * @return array<string, mixed>
      */
-    private function content(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range): array
+    private function content(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range, array $filters): array
     {
         if (!$scope->ranksPosts()) {
             return ['topPosts' => [], 'opportunities' => null, 'byAge' => null];
@@ -156,8 +182,8 @@ class InsightsPageReports
         $since = max($yearBefore, $this->stats->firstDay($scope) ?? $to);
 
         return [
-            'topPosts' => $this->topPosts($reader, $scope, $range, self::LIST_LIMIT),
-            'opportunities' => ContentOpportunities::find($reader->topPosts($scope, $range->fromDate(), $to, self::OPPORTUNITY_POSTS)),
+            'topPosts' => $this->topPosts($reader, $scope, $range, $filters, self::LIST_LIMIT),
+            'opportunities' => ContentOpportunities::find($this->topPosts($reader, $scope, $range, $filters, self::OPPORTUNITY_POSTS)),
             'byAge' => ['since' => $since] + $this->pageStats->viewsByAge($scope, $since, $to, self::AGE_DAYS),
         ];
     }
@@ -169,17 +195,16 @@ class InsightsPageReports
      */
     private function goals(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range): array
     {
-        $from = $range->fromDate();
-        $to = $range->toDate();
+        $report = $this->events->goalsReport($scope, $range->fromDate(), $range->toDate(), self::LIST_LIMIT);
 
         return [
-            'goals' => $this->events->goalCounts($scope, $from, $to),
-            'goalRates' => $this->goalRates($reader, $scope, $range),
-            'goalsByChannel' => $this->events->goalBreakdown($scope, 'channel', $from, $to, self::LIST_LIMIT),
-            'goalsBySource' => $this->events->goalBreakdown($scope, 'source', $from, $to, self::LIST_LIMIT),
-            'outbound' => $this->events->clickBreakdown('outbound', $scope, $from, $to, self::LIST_LIMIT),
-            'downloads' => $this->events->clickBreakdown('download', $scope, $from, $to, self::LIST_LIMIT),
-            'shares' => $this->events->clickBreakdown('share', $scope, $from, $to, self::LIST_LIMIT),
+            'goals' => $report['goals'],
+            'goalRates' => $this->goalRates($reader, $scope, $range, $report['goals']),
+            'goalsByChannel' => $report['byChannel'],
+            'goalsBySource' => $report['bySource'],
+            'outbound' => $report['outbound'],
+            'downloads' => $report['downloads'],
+            'shares' => $report['shares'],
         ];
     }
 
@@ -187,9 +212,10 @@ class InsightsPageReports
      * Goals per visit, counted only from the first day the scope has visits, so
      * goals from before visits were kept don't inflate the rate.
      *
+     * @param  array<string, int>  $rangeGoals  The goal counts for the whole range, reused when the rate starts on its first day
      * @return array{from: string, visits: int, rates: array<string, ?float>}|null Null when the range has no visits
      */
-    private function goalRates(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range): ?array
+    private function goalRates(AnalyticsReader $reader, AnalyticsScope $scope, AnalyticsRange $range, array $rangeGoals): ?array
     {
         $since = $this->pageStats->visitsSince($scope);
         if ($since === null || $since > $range->toDate()) {
@@ -198,8 +224,9 @@ class InsightsPageReports
 
         $from = max($range->fromDate(), $since);
         $visits = (int) $reader->totals($scope, $from, $range->toDate())['visits'];
+        $goals = $from === $range->fromDate() ? $rangeGoals : $this->events->goalCounts($scope, $from, $range->toDate());
         $rates = [];
-        foreach ($this->events->goalCounts($scope, $from, $range->toDate()) as $goal => $reached) {
+        foreach ($goals as $goal => $reached) {
             $rates[$goal] = AnalyticsReportService::ratio($reached, $visits);
         }
 
@@ -265,7 +292,7 @@ class InsightsPageReports
         $goals = $this->events->goalsByAuthor($blogId, $from, $to);
 
         $authors = [];
-        foreach ($this->stats->topPosts($within, $from, $to, self::AUTHOR_POSTS_LIMIT) as $post) {
+        foreach ($this->ranked($this->stats, $within, $range, '') as $post) {
             if ($post['author_id'] === null) {
                 continue;
             }

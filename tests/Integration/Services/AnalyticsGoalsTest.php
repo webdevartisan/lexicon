@@ -124,3 +124,34 @@ test('clicks and shares are listed by host, file or network, most clicked first'
             ['value' => 'x', 'clicks' => 1],
         ]);
 });
+
+test('the goals report reads what the separate goal and click reads would, and keeps each click list to its limit', function () {
+    $moves = [
+        ['name' => 'like', 'channel' => 'search', 'referrer_source' => 'Google'],
+        ['name' => 'like', 'channel' => 'search', 'referrer_source' => 'Google'],
+        ['name' => 'comment', 'channel' => 'social', 'referrer_source' => 'X'],
+        ['name' => 'outbound', 'props' => ['host' => 'wikipedia.org']],
+        ['name' => 'outbound', 'props' => ['host' => 'wikipedia.org']],
+        ['name' => 'outbound', 'props' => ['host' => 'github.com']],
+        ['name' => 'download', 'props' => ['file' => 'notes.pdf']],
+        ['name' => 'share', 'props' => ['network' => 'x']],
+    ];
+    foreach ($moves as $move) {
+        AnalyticsFixture::event($this->db, $move + ['blog_id' => $this->blogId, 'post_id' => $this->postId]);
+    }
+    ($this->rollUp)();
+
+    $scope = AnalyticsScope::blog($this->blogId);
+    $report = $this->events->goalsReport($scope, $this->today, $this->today, 10);
+
+    expect($report['goals'])->toBe($this->events->goalCounts($scope, $this->today, $this->today))
+        ->and($report['byChannel'])->toBe($this->events->goalBreakdown($scope, 'channel', $this->today, $this->today, 10))
+        ->and($report['bySource'])->toBe($this->events->goalBreakdown($scope, 'source', $this->today, $this->today, 10))
+        ->and($report['outbound'])->toBe($this->events->clickBreakdown('outbound', $scope, $this->today, $this->today, 10))
+        ->and($report['downloads'])->toBe($this->events->clickBreakdown('download', $scope, $this->today, $this->today, 10))
+        ->and($report['shares'])->toBe($this->events->clickBreakdown('share', $scope, $this->today, $this->today, 10))
+        ->and($report['byChannel'])->toBe(['search' => ['like' => 2], 'social' => ['comment' => 1]])
+        ->and($this->events->goalsReport($scope, $this->today, $this->today, 1)['outbound'])->toBe([
+            ['value' => 'wikipedia.org', 'clicks' => 2],
+        ]);
+});
