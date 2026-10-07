@@ -6,6 +6,7 @@ use App\Interfaces\UploadServiceInterface;
 use App\Models\AccountErasureRecordModel;
 use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsSaltModel;
+use App\Models\AnalyticsVisitModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
@@ -55,6 +56,7 @@ beforeEach(function () {
             $this->uploader,
             $cacheInvalidator,
             new AnalyticsEventModel($this->db),
+            new AnalyticsVisitModel($this->db),
             AnalyticsFixture::rollups($this->db)
         ),
         $this->uploader,
@@ -62,6 +64,7 @@ beforeEach(function () {
         $cacheInvalidator,
         new AccountErasureRecordModel($this->db),
         new AnalyticsEventModel($this->db),
+        new AnalyticsVisitModel($this->db),
         new VisitorIdentity(new AnalyticsSaltModel($this->db), 'test-key'),
         'deleted-user'
     );
