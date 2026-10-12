@@ -1427,6 +1427,20 @@ class PostModel extends AppModel
     }
 
     /**
+     * Handles of everyone who wrote a post in the blog, in any status.
+     *
+     * @return list<string>
+     */
+    public function authorHandlesInBlog(int $blogId): array
+    {
+        $sql = "SELECT DISTINCT u.handle FROM {$this->getTable()} p
+                INNER JOIN users u ON u.id = p.author_id
+                WHERE p.blog_id = ? AND u.handle IS NOT NULL AND u.handle <> ''";
+
+        return array_map('strval', $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_COLUMN));
+    }
+
+    /**
      * Count comments across all posts for a blog.
      *
      * Use this to show deletion impact before removing a blog.

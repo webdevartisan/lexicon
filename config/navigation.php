@@ -172,6 +172,16 @@ return [
             'key' => 'navigation.subscribers',
         ],
         [
+            'label' => 'Backup & restore',
+            'href' => '/dashboard/blog/{blogId}/backup',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'manageArchive',
+            'icon' => 'archive',
+            'key' => 'navigation.backup',
+        ],
+        [
             'label' => 'Appearance',
             'href' => '/dashboard/blog/{blogId}/appearance',
             'auth' => true,

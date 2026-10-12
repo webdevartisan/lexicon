@@ -365,6 +365,13 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/role', ['controller' => 'CollaboratorController', 'action' => 'changeRole', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/team/{userId:\d+}/revoke', ['controller' => 'CollaboratorController', 'action' => 'revoke', 'method' => 'POST']);
 
+    // Backup & restore (owner-only): download the blog archive, or preview and import one.
+    $r->add('/blog/{blogId:\d+}/backup', ['controller' => 'BlogArchiveController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/backup/export', ['controller' => 'BlogArchiveController', 'action' => 'export', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/backup/import/preview', ['controller' => 'BlogArchiveController', 'action' => 'preview', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/backup/import/confirm', ['controller' => 'BlogArchiveController', 'action' => 'confirm', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/backup/import/cancel', ['controller' => 'BlogArchiveController', 'action' => 'cancel', 'method' => 'POST']);
+
     // Subscribers (owner-only): audience list with search and removal.
     $r->add('/blog/{blogId:\d+}/subscribers', ['controller' => 'SubscriberController', 'action' => 'index', 'method' => 'GET']);
 

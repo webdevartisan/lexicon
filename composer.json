@@ -5,6 +5,7 @@
   "license": "GPL-2.0-or-later",
   "require": {
     "php": "^8.3",
+    "ext-zip": "*",
     "doctrine/inflector": "^2.1",
     "intervention/image": "^3.0",
     "maxmind-db/reader": "^1.12",

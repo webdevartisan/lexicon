@@ -54,51 +54,18 @@ final class UploadService implements UploadServiceInterface
      */
     public function storeImage(array $file, array $opts): ?string
     {
-        // Validate file array
         if (empty($file['tmp_name']) || ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
             throw new InvalidArgumentException('Upload error.');
         }
 
-        // Enforce size limits
-        $maxBytes = (int) ($opts['max_bytes'] ?? 2 * 1024 * 1024); // 2 MB default
-        if (!empty($file['size']) && (int) $file['size'] > $maxBytes) {
-            throw new InvalidArgumentException('File size exceeds the allowed range.');
-        }
+        $name = (string) ($file['name'] ?? '');
+        $ext = $this->assertAllowedImage($file['tmp_name'], $name, (int) ($file['size'] ?? 0), $opts);
 
-        // Validate extension
-        $allowedExt = $opts['allowed_ext'] ?? ['jpg', 'jpeg', 'png', 'webp'];
-        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowedExt, true)) {
-            throw new InvalidArgumentException('File extension not allowed.');
-        }
-
-        // Validate MIME type via file content inspection
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        $allowedMime = [
-            'image/jpeg', 'image/png', 'image/webp',
-        ];
-        if (!in_array($mime, $allowedMime, true)) {
-            throw new InvalidArgumentException('File type not allowed.');
-        }
-
-        // Ensure target directory exists
-        $targetDir = rtrim((string) $opts['dir'], '/');
-        $baseUrl = rtrim((string) $opts['base_url'], '/');
-        if ($targetDir === '' || $baseUrl === '') {
+        $target = $this->prepareTarget($opts);
+        if ($target === null) {
             return null;
         }
-        if (!is_dir($targetDir)) {
-            @mkdir($targetDir, 0775, true);
-        }
-
-        // Generate content-based hash for deduplication and cache busting
-        $hash = substr(sha1_file($file['tmp_name']) ?: bin2hex(random_bytes(8)), 0, 12);
-        $baseName = ($opts['rename'] ?? pathinfo($file['name'] ?? 'file', PATHINFO_FILENAME));
-        $safeBase = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $baseName) ?: 'file';
-        $filename = $safeBase.'-'.$hash.'.'.$ext;
+        $filename = $this->hashedFilename($file['tmp_name'], $name, $ext, $opts);
 
         // The file is processed in place rather than through move_uploaded_file(), so
         // check it is a genuine HTTP upload or a caller could point us at any server path.
@@ -108,16 +75,120 @@ final class UploadService implements UploadServiceInterface
 
         // Resize and re-encode straight to the destination. The raw upload never lands
         // on disk, and the re-encode strips any EXIF/embedded payload the source carried.
-        $dest = $targetDir.'/'.$filename;
         try {
-            $this->images->process($file['tmp_name'], $dest, $this->resolveProcessOptions($opts));
+            $this->images->process($file['tmp_name'], $target[0].'/'.$filename, $this->resolveProcessOptions($opts));
         } catch (\Throwable $e) {
             error_log('Image processing failed: '.$e->getMessage());
 
             return null;
         }
 
-        return $baseUrl.'/'.$filename;
+        return $target[1].'/'.$filename;
+    }
+
+    /**
+     * Store an image that is already on disk, such as one extracted from an archive,
+     * through the same checks and re-encode as an HTTP upload.
+     *
+     * The source has to sit inside $opts['source_root'], the folder the caller
+     * extracted into itself, so this can never be pointed at an arbitrary server path.
+     *
+     * @param  string  $path  Absolute path of the file to store
+     * @param  string  $originalName  Name the file is known by, which decides the extension
+     * @param  array<string, mixed>  $opts  Same options as storeImage(), plus the required source_root
+     * @return string Public URL of the stored file
+     *
+     * @throws InvalidArgumentException When the file is outside source_root or fails validation
+     * @throws RuntimeException When the target is not configured or the re-encode fails
+     */
+    public function storeImageFromPath(string $path, string $originalName, array $opts): string
+    {
+        $root = realpath((string) ($opts['source_root'] ?? ''));
+        $real = realpath($path);
+        if ($root === false || $real === false || !is_file($real)
+            || !str_starts_with($real, rtrim($root, '/\\').DIRECTORY_SEPARATOR)) {
+            throw new InvalidArgumentException('File is outside the allowed source folder.');
+        }
+
+        $ext = $this->assertAllowedImage($real, $originalName, (int) filesize($real), $opts);
+
+        $target = $this->prepareTarget($opts);
+        if ($target === null) {
+            throw new RuntimeException('No upload target was given.');
+        }
+        $filename = $this->hashedFilename($real, $originalName, $ext, $opts);
+
+        $this->images->process($real, $target[0].'/'.$filename, $this->resolveProcessOptions($opts));
+
+        return $target[1].'/'.$filename;
+    }
+
+    /**
+     * Size, extension and content checks shared by every way an image is stored.
+     *
+     * @param  array<string, mixed>  $opts  max_bytes and allowed_ext
+     * @return string The lower-cased extension
+     *
+     * @throws InvalidArgumentException When any check fails
+     */
+    private function assertAllowedImage(string $path, string $name, int $size, array $opts): string
+    {
+        $maxBytes = (int) ($opts['max_bytes'] ?? 2 * 1024 * 1024);
+        if ($size > $maxBytes) {
+            throw new InvalidArgumentException('File size exceeds the allowed range.');
+        }
+
+        $allowedExt = $opts['allowed_ext'] ?? ['jpg', 'jpeg', 'png', 'webp'];
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExt, true)) {
+            throw new InvalidArgumentException('File extension not allowed.');
+        }
+
+        // allowed_ext comes from the caller, so the sniffed type is the real gate.
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $path);
+        finfo_close($finfo);
+
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            throw new InvalidArgumentException('File type not allowed.');
+        }
+
+        return $ext;
+    }
+
+    /**
+     * The target folder and public base URL from the options, with the folder created.
+     *
+     * @param  array<string, mixed>  $opts  dir and base_url
+     * @return array{0: string, 1: string}|null Null when either is missing
+     */
+    private function prepareTarget(array $opts): ?array
+    {
+        $targetDir = rtrim((string) ($opts['dir'] ?? ''), '/');
+        $baseUrl = rtrim((string) ($opts['base_url'] ?? ''), '/');
+        if ($targetDir === '' || $baseUrl === '') {
+            return null;
+        }
+        if (!is_dir($targetDir)) {
+            @mkdir($targetDir, 0775, true);
+        }
+
+        return [$targetDir, $baseUrl];
+    }
+
+    /**
+     * A filename made from the source bytes, so the same image always lands under the
+     * same name and a replaced one always gets a new URL.
+     *
+     * @param  array<string, mixed>  $opts  Optional rename
+     */
+    private function hashedFilename(string $path, string $name, string $ext, array $opts): string
+    {
+        $hash = substr(sha1_file($path) ?: bin2hex(random_bytes(8)), 0, 12);
+        $baseName = (string) ($opts['rename'] ?? (pathinfo($name !== '' ? $name : 'file', PATHINFO_FILENAME)));
+        $safeBase = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $baseName) ?: 'file';
+
+        return $safeBase.'-'.$hash.'.'.$ext;
     }
 
     /**

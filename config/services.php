@@ -927,6 +927,11 @@ $container->setShared(App\Interfaces\UploadServiceInterface::class, function ($c
     return $c->get(App\Services\UploadService::class);
 });
 
+// Interfaces never autowire, so the archive importer's media store is bound here.
+$container->set(App\Interfaces\ArchiveMediaStoreInterface::class, function ($c) {
+    return $c->get(App\Services\Archive\UploadArchiveMediaStore::class);
+});
+
 $container->setShared(App\Services\ExternalMediaGuard::class, function ($c) {
     return new App\Services\ExternalMediaGuard((string) base_url());
 });

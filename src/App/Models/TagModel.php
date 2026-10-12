@@ -273,8 +273,18 @@ class TagModel extends AppModel
                 $wanted[$id] = true;
             }
         }
-        $wantedIds = array_keys($wanted);
 
+        return $this->syncIdsForPost($postId, array_keys($wanted));
+    }
+
+    /**
+     * Replace a post's tag set with the given tag ids, which must belong to the post's blog.
+     *
+     * @param  int[]  $wantedIds
+     * @return bool True if the post's tag set actually changed
+     */
+    public function syncIdsForPost(int $postId, array $wantedIds): bool
+    {
         $current = array_map(
             static fn (array $row): int => (int) $row['tag_id'],
             $this->database->query('SELECT tag_id FROM post_tags WHERE post_id = ?', [$postId])->fetchAll(\PDO::FETCH_ASSOC)
