@@ -100,9 +100,10 @@ final class MediaService
      * flows (post featured image, TinyMCE inline, branding) has a row
      * in the library. Safe to call repeatedly.
      *
+     * @param  string|null  $originalName  Name the file had before it was stored, when known
      * @return array<string, mixed>|null Indexed media row data, or null if skipped
      */
-    public function register(int $blogId, ?int $userId, string $url, string $source): ?array
+    public function register(int $blogId, ?int $userId, string $url, string $source, ?string $originalName = null): ?array
     {
         if (trim($url) === '') {
             return null;
@@ -117,7 +118,7 @@ final class MediaService
             return null;
         }
 
-        return $this->indexFile($url, $blogId, $userId, $source, null);
+        return $this->indexFile($url, $blogId, $userId, $source, $originalName);
     }
 
     /**
@@ -592,7 +593,7 @@ final class MediaService
      */
     private function urlToDiskPath(string $url): ?string
     {
-        if (!$this->isLocalUploadUrl($url)) {
+        if (!self::isLocalUploadUrl($url)) {
             return null;
         }
 
@@ -605,7 +606,7 @@ final class MediaService
      * Anything else, an external address in particular, is refused wherever a
      * library pick is accepted, since the Content-Security-Policy would block it.
      */
-    public function isLocalUploadUrl(string $url): bool
+    public static function isLocalUploadUrl(string $url): bool
     {
         return preg_match('#^/uploads/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*/)*[A-Za-z0-9_-][A-Za-z0-9._-]*$#', $url) === 1
             && !str_contains($url, '..');

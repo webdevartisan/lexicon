@@ -496,7 +496,10 @@ class AnalyticsEventModel extends AppModel
     {
         $this->database->execute("DELETE FROM analytics_events WHERE blog_id = ? AND name <> 'page_view'", [$blogId]);
 
-        return $this->database->execute('UPDATE analytics_events SET blog_id = NULL, post_id = NULL WHERE blog_id = ?', [$blogId]);
+        return $this->database->execute(
+            'UPDATE analytics_events SET blog_id = NULL, post_id = NULL, from_post_id = NULL WHERE blog_id = ?',
+            [$blogId]
+        );
     }
 
     /**

@@ -97,6 +97,20 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
+     * Download the blog's archive or import one into it. Only the owner, never a
+     * delegated role: an export is every post including drafts, and an import can
+     * overwrite them.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageArchive(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->ownerId() === (int) $user['id'];
+    }
+
+    /**
      * Invite a new collaborator. Same gate as managing the roster.
      *
      * @param  array<string, mixed>  $user  Authenticated user record

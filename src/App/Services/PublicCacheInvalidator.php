@@ -69,6 +69,15 @@ class PublicCacheInvalidator
         // page path, so the pattern above cannot reach them.
         fragment()->forgetPattern('post-comments:*');
 
+        $this->purgeProfile($handle);
+    }
+
+    /**
+     * One public profile page, all locales. Profiles list the person's posts
+     * from every blog, so they go stale when a blog they wrote in is deleted.
+     */
+    public function purgeProfile(string $handle): void
+    {
         cache()->deletePattern("*:GET:/profile/{$handle}*");
     }
 

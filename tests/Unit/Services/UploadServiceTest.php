@@ -114,3 +114,53 @@ test('accepts a genuine PNG through validation', function () {
     expect(fn () => $this->uploader->storeImage($file, $this->opts))
         ->toThrow(InvalidArgumentException::class, 'Upload error.');
 });
+
+/**
+ * The path-based entry point is for files the caller extracted itself, so it must
+ * refuse anything outside the folder it names, whatever the path looks like.
+ */
+test('storeImageFromPath refuses a file outside the source folder', function () {
+    $outside = ($this->makeFile)('pixel.png', base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    ));
+    @mkdir($this->tmpDir.'/extract', 0775, true);
+
+    expect(fn () => $this->uploader->storeImageFromPath(
+        $outside['tmp_name'],
+        'pixel.png',
+        $this->opts + ['source_root' => $this->tmpDir.'/extract']
+    ))->toThrow(InvalidArgumentException::class, 'outside the allowed source folder');
+
+    expect(fn () => $this->uploader->storeImageFromPath(
+        $this->tmpDir.'/extract/../pixel.png',
+        'pixel.png',
+        $this->opts + ['source_root' => $this->tmpDir.'/extract']
+    ))->toThrow(InvalidArgumentException::class, 'outside the allowed source folder');
+});
+
+test('storeImageFromPath runs the same content checks as an upload', function () {
+    @mkdir($this->tmpDir.'/extract', 0775, true);
+    file_put_contents($this->tmpDir.'/extract/fake.jpg', '<?php system($_GET["c"]); ?>');
+
+    expect(fn () => $this->uploader->storeImageFromPath(
+        $this->tmpDir.'/extract/fake.jpg',
+        'fake.jpg',
+        $this->opts + ['source_root' => $this->tmpDir.'/extract']
+    ))->toThrow(InvalidArgumentException::class, 'File type not allowed.');
+});
+
+test('storeImageFromPath stores a genuine image under a content-hash name', function () {
+    @mkdir($this->tmpDir.'/extract', 0775, true);
+    $png = base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    );
+    file_put_contents($this->tmpDir.'/extract/x.png', $png);
+
+    $url = $this->uploader->storeImageFromPath(
+        $this->tmpDir.'/extract/x.png',
+        'Pixel Art.png',
+        $this->opts + ['source_root' => $this->tmpDir.'/extract']
+    );
+
+    expect($url)->toBe('/uploads/test/Pixel_Art-'.substr(sha1($png), 0, 12).'.png');
+});

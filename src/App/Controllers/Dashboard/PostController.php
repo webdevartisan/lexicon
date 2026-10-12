@@ -28,6 +28,7 @@ use App\Services\SubscriberNotificationService;
 use App\Services\UploadService;
 use App\Services\WorkflowService;
 use App\ValueObjects\AnalyticsScope;
+use App\ValueObjects\PostFieldRules;
 use DateTime;
 use DateTimeZone;
 use Framework\Core\Response;
@@ -45,22 +46,7 @@ final class PostController extends AppController
      * Validation rules for the optional SEO / social sharing fields.
      * Shared by create() and update() so the two paths can't drift.
      */
-    private const SEO_RULES = [
-        'focus_keyword' => 'max:100',
-        'meta_title' => 'max:70',
-        'meta_description' => 'max:200',
-        'canonical_url' => 'url|max:255',
-        'meta_noindex' => 'boolean',
-        'meta_nofollow' => 'boolean',
-        'og_title' => 'max:70',
-        'og_description' => 'max:100',
-        'og_image' => 'url|max:255',
-        'og_image_alt' => 'max:255',
-        'twitter_card_type' => 'in:summary,summary_large_image',
-        'twitter_title' => 'max:70',
-        'twitter_description' => 'max:200',
-        'twitter_image' => 'url|max:255',
-    ];
+    private const SEO_RULES = PostFieldRules::SEO;
 
     public function __construct(
         private PostModel $model,
@@ -335,14 +321,8 @@ final class PostController extends AppController
         Gate::authorize('createPost', $blog, $user);
 
         $validator = $this->validateOrFail([
-            'title' => 'required|title|min:2|max:100',
-            'slug' => 'required|slug|min:2|max:100',
-            'content' => 'required|max:60000',
-            'excerpt' => 'max:300',
-            'timezone' => 'timezone',
             'published_at' => 'max:20',
-            'comments_enabled' => 'boolean',
-        ] + self::SEO_RULES);
+        ] + PostFieldRules::CORE + self::SEO_RULES);
 
         $data = $validator->validated();
         $data['content'] = $this->contentSanitizer->clean((string) $data['content']);

@@ -43,9 +43,12 @@ final class BlogDeletionService
     public function deleteBlog(int $blogId, int $userId): array
     {
         $wasDefaultBlog = $this->preferences->isDefaultBlog($userId, $blogId);
+        $authorHandles = $this->posts->authorHandlesInBlog($blogId);
 
         $stats = $this->blogs->transaction(function () use ($blogId): array {
-            $deletedComments = $this->posts->deleteCommentsByBlogId($blogId);
+            // Counted first because replies go by cascade with their parent and the delete's own count misses them
+            $deletedComments = $this->posts->countCommentsByBlogId($blogId);
+            $this->posts->deleteCommentsByBlogId($blogId);
             $deletedPostTags = $this->posts->deletePostTagsByBlogId($blogId);
             $deletedPosts = $this->posts->deleteByBlogId($blogId);
             $deletedCollaborators = $this->blogs->deleteCollaboratorsByBlogId($blogId);
@@ -78,6 +81,9 @@ final class BlogDeletionService
 
         $this->cacheInvalidator->purgeHome();
         $this->cacheInvalidator->purgeDiscover();
+        foreach ($authorHandles as $handle) {
+            $this->cacheInvalidator->purgeProfile($handle);
+        }
 
         return $stats;
     }

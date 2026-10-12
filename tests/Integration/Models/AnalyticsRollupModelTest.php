@@ -248,6 +248,22 @@ test('a deleted blog keeps its views in the site and leaves no blog or post rows
         ->and((int) $this->db->query('SELECT COUNT(*) FROM analytics_daily_dimensions WHERE blog_id IS NOT NULL')->fetchColumn())->toBe(0);
 });
 
+test('a deleted blog leaves no page view pointing at the post a reader came from', function () {
+    AnalyticsFixture::view($this->db, [
+        'blog_id' => $this->blogId,
+        'post_id' => 12,
+        'from_post_id' => $this->postId,
+        'path' => '/blog/demo/other',
+        'visitor' => 'A',
+        'visit' => 'A@2026-03-10',
+        'created_at' => '2026-03-10 12:05:00',
+    ]);
+
+    (new AnalyticsEventModel($this->db))->detachBlog($this->blogId);
+
+    expect((int) $this->db->query('SELECT COUNT(*) FROM analytics_events WHERE from_post_id = ?', [$this->postId])->fetchColumn())->toBe(0);
+});
+
 test('each visit to the blog has one entry page and one exit page', function () {
     $this->rollups->rebuildFrom('2026-03-01', 30, 10);
     $blog = AnalyticsScope::blog($this->blogId);
