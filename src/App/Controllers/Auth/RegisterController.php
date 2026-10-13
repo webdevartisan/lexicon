@@ -169,8 +169,8 @@ final class RegisterController extends AppController
             return $this->redirect($resume['path']);
         }
 
-        // If the user got here from a blog invitation link, auto-accept it so
-        // they land directly on the blog they were invited to.
+        // If the user got here from a blog invitation link, auto-accept it. A new
+        // account has no active blog, so the invited one becomes it and the Overview opens on it.
         $pendingToken = (string) $this->session->get('pending_invite_token', '');
         if ($pendingToken !== '') {
             $invite = $this->invitationModel->findValidByToken(hash('sha256', $pendingToken));
@@ -180,12 +180,12 @@ final class RegisterController extends AppController
                     $this->session->remove('pending_invite_token');
 
                     if ($isAjax) {
-                        return $this->jsonSuccess(['redirect' => lurl("/dashboard/blog/{$invite['blog_id']}/show")]);
+                        return $this->jsonSuccess(['redirect' => lurl('/dashboard')]);
                     }
 
                     $this->flash('success', "Welcome! You've joined the blog as {$invite['role']}.");
 
-                    return $this->redirect(lurl("/dashboard/blog/{$invite['blog_id']}/show"));
+                    return $this->redirect(lurl('/dashboard'));
                 } catch (\RuntimeException) {
                     // Fall through to the default welcome flow if the token expired.
                 }

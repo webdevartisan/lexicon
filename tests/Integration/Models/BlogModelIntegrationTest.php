@@ -269,25 +269,6 @@ it('gets all blogs by owner id', function () {
 });
 
 /**
- * Test retrieving blogs by owner with counts.
- *
- * Verifies getBlogsByOwnerWithCounts returns enriched blog data.
- */
-it('gets blogs by owner with counts', function () {
-    $ownerId = UserFactory::new($this->userModel)->create();
-
-    BlogFactory::new($this->blogModel)
-        ->count(2)
-        ->create($ownerId);
-
-    $blogs = $this->blogModel->getBlogsByOwnerWithCounts($ownerId);
-
-    expect($blogs)->toBeArray()
-        ->and($blogs)->toHaveCount(2)
-        ->and($blogs[0])->toHaveKeys(['post_count', 'author_count', 'owner_name']);
-});
-
-/**
  * Test retrieving all blogs with owner and counts.
  *
  * Verifies getAllBlogsWithOwnerAndCounts returns all blogs with metadata.

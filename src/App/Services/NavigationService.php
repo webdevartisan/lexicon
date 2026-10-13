@@ -45,7 +45,7 @@ class NavigationService
      *
      * filter navigation items based on authentication state, roles,
      * blog context (global vs contextual), policy-based permissions, and
-     * named per-user predicates passed in via $context (e.g. 'isCollaborator').
+     * named per-user predicates passed in via $context (e.g. 'isCreator').
      *
      * @param  string  $area  Navigation area (front, back, admin)
      * @param  string|null  $currentPath  Current request path for active state
@@ -120,13 +120,38 @@ class NavigationService
             ];
         }
 
-        return $items;
+        return self::withoutEmptySections($items);
+    }
+
+    /**
+     * Drop section headers with no link under them, so a role that sees nothing
+     * in a section does not get an empty heading.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private static function withoutEmptySections(array $items): array
+    {
+        $kept = [];
+        $pendingHeader = null;
+        foreach ($items as $item) {
+            if ($item['type'] === 'section_header') {
+                $pendingHeader = $item;
+                continue;
+            }
+            if ($pendingHeader !== null) {
+                $kept[] = $pendingHeader;
+                $pendingHeader = null;
+            }
+            $kept[] = $item;
+        }
+
+        return $kept;
     }
 
     /**
      * Whether an item, or a group's child, is shown: authentication, roles and
-     * permissions, onboarding, scope, the blog policy, blog roles, and named
-     * per-user flags.
+     * permissions, onboarding, scope, the blog policy, and named per-user flags.
      *
      * @param  array<string, mixed>  $it  One item from the navigation config
      * @param  array<string, mixed>|null  $user
@@ -184,35 +209,19 @@ class NavigationService
             }
         }
 
-        // check policy-based permissions for contextual items
+        // Contextual items are decided by the blog policy, the same check the page itself makes.
         if (!empty($it['policy']) && $selectedBlog !== null && $user !== null) {
-            try {
-                $policy = PolicyResolver::for($selectedBlog);
-                $policyMethod = $it['policy'];
-
-                // verify the policy method exists and user is authorized
-                if (method_exists($policy, $policyMethod)) {
-                    if (!$policy->$policyMethod($user, $selectedBlog)) {
-                        return false;
-                    }
-                }
-            } catch (\Exception $e) {
-                // log policy resolution errors but don't break navigation
-                error_log('Navigation policy check failed: '.$e->getMessage());
-
+            $policy = PolicyResolver::for($selectedBlog);
+            $policyMethod = $it['policy'];
+            if (!method_exists($policy, $policyMethod)) {
+                throw new \LogicException("Navigation item '{$it['label']}' names an unknown policy method '{$policyMethod}'.");
+            }
+            if (!$policy->$policyMethod($user, $selectedBlog)) {
                 return false;
             }
         }
 
-        // check blog-role restrictions (e.g. hide Blog Overview from pure reviewers)
-        if (!empty($it['blog_roles']) && $selectedBlog !== null && $user !== null) {
-            $effectiveRole = $selectedBlog->effectiveRoleForUser((int) $user['id']);
-            if (!in_array($effectiveRole, $it['blog_roles'], true)) {
-                return false;
-            }
-        }
-
-        // named user-context predicate (e.g. show_if=isCollaborator → only when user has shared blogs)
+        // named user-context predicate (e.g. show_if=workflowEnabled → only when the blog reviews posts)
         if (!empty($it['show_if'])) {
             $flag = (string) $it['show_if'];
             if (empty($context[$flag])) {

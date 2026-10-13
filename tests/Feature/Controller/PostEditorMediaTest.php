@@ -107,10 +107,10 @@ function flashedErrors(): array
     return App::container()->get(Session::class)->get('_flash', [])['error'] ?? [];
 }
 
-it('saves the post and returns to the list when there is no image problem', function () {
+it('saves the post and stays in the editor when there is no image problem', function () {
     $response = ($this->save)([]);
 
-    expect($response->getHeader('Location'))->not->toContain('/edit')
+    expect($response->getHeader('Location'))->toEndWith('/dashboard/post/'.$this->postId.'/edit')
         ->and($this->posts->find($this->postId)['title'])->toBe('After')
         ->and(flashedErrors())->toBeEmpty();
 });
@@ -169,6 +169,7 @@ it('refuses TinyMCE image uploads for a blog the user cannot write to', function
         ->withAttributes(['email' => $email, 'password' => password_hash('password123', PASSWORD_DEFAULT)])
         ->create();
     expect(auth()->login($email, 'password123'))->toBeTrue();
+    $token = App::container()->get(Csrf::class)->getToken();
 
     $request = new Request(
         '/dashboard/posts/image-upload',
@@ -178,7 +179,7 @@ it('refuses TinyMCE image uploads for a blog the user cannot write to', function
         [],
         [],
         ['REMOTE_ADDR' => '127.0.0.1'],
-        ['x-csrf-token' => $this->token]
+        ['x-csrf-token' => $token]
     );
 
     $controller = App::container()->get(UploadController::class);
@@ -209,7 +210,7 @@ it('keeps an outside image the post already had and saves the edit', function ()
 it('saves a post whose excerpt was left empty and clears the old one', function () {
     $response = ($this->save)(['excerpt' => '']);
 
-    expect($response->getHeader('Location'))->not->toContain('/edit')
+    expect($response->getHeader('Location'))->toEndWith('/dashboard/post/'.$this->postId.'/edit')
         ->and(flashedErrors())->toBeEmpty()
         ->and((string) $this->posts->find($this->postId)['excerpt'])->toBe('');
 });

@@ -145,8 +145,8 @@ class UserPreferencesModel extends AppModel
     /**
      * Set user's default blog ID.
      *
-     * Store the user's preferred blog for quick access in dashboard navigation.
-     * Invalidates navigation cache when blog preference changes.
+     * Store the blog the user is working in. The cached sidebar needs no
+     * invalidation: its key carries the active blog id.
      *
      * @param  int  $userId  User ID
      * @param  int  $blogId  Blog ID to set as default
@@ -160,14 +160,7 @@ class UserPreferencesModel extends AppModel
                     default_blog_id = VALUES(default_blog_id),
                     updated_at = NOW()';
 
-        $rowCount = $this->database->execute($sql, [$userId, $blogId]);
-
-        // invalidate navigation cache when blog preference changes
-        if ($rowCount > 0) {
-            cache()->deletePattern('*sidebar:nav-structure*');
-        }
-
-        return $rowCount > 0;
+        return $this->database->execute($sql, [$userId, $blogId]) > 0;
     }
 
     /**

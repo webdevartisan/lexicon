@@ -1315,15 +1315,14 @@ class PostModel extends AppModel
         string $sort = 'newest',
         ?int $categoryId = null,
         ?int $tagId = null,
-        string $workflowState = '',
-        ?int $blogOwnerId = null
+        string $workflowState = ''
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
 
         // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState, $blogOwnerId);
+        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState);
 
         // Get total count first for pagination metadata
         $totalRecords = $this->getTotalCount($whereClause, $params);
@@ -1501,34 +1500,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Count posts in a blog authored by a specific user with a given status.
-     *
-     * Used by the Shared landing page to show "my drafts on this blog" etc.
-     */
-    public function countByBlogAndAuthorAndStatus(int $blogId, int $authorId, string $status): int
-    {
-        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
-                WHERE blog_id = ? AND author_id = ? AND status = ?";
-        $stmt = $this->database->query($sql, [$blogId, $authorId, $status]);
-
-        return (int) ($stmt->fetch()['c'] ?? 0);
-    }
-
-    /**
-     * Count posts in a blog authored by a specific user with a given workflow_state.
-     *
-     * Used for the author/contributor "needs revision" badge on the Shared page.
-     */
-    public function countByBlogAndAuthorAndWorkflow(int $blogId, int $authorId, string $workflowState): int
-    {
-        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
-                WHERE blog_id = ? AND author_id = ? AND workflow_state = ?";
-        $stmt = $this->database->query($sql, [$blogId, $authorId, $workflowState]);
-
-        return (int) ($stmt->fetch()['c'] ?? 0);
-    }
-
-    /**
      * Count posts in a blog by workflow_state (any author).
      *
      * Used for editor/owner Team-page workflow-health and Shared-page editor cards.
@@ -1663,35 +1634,13 @@ class PostModel extends AppModel
         ?int $blogId = null,
         string $searchQuery = '',
         ?int $categoryId = null,
-        ?int $tagId = null,
-        ?int $blogOwnerId = null
+        ?int $tagId = null
     ): array {
         [$whereClause, $params] = $this->buildFilterClauses(
-            $authorId, $blogId, '', $searchQuery, $categoryId, $tagId, '', $blogOwnerId
+            $authorId, $blogId, '', $searchQuery, $categoryId, $tagId
         );
 
         return $this->groupedStatusCounts($whereClause, $params);
-    }
-
-    /**
-     * Per-status totals across every author in one blog, for the per-blog
-     * posts index badges.
-     *
-     * @return array<string, int> Keys: all, published, draft, pending, needs_changes, archived
-     */
-    public function countsByStatusForBlog(int $blogId, string $searchQuery = ''): array
-    {
-        $where = 'WHERE p.blog_id = :blog_id';
-        $params = [':blog_id' => $blogId];
-
-        if ($searchQuery !== '') {
-            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $term = '%'.$searchQuery.'%';
-            $params[':search_title'] = $term;
-            $params[':search_content'] = $term;
-        }
-
-        return $this->groupedStatusCounts($where, $params);
     }
 
     /**
@@ -1710,39 +1659,6 @@ class PostModel extends AppModel
                 GROUP BY p.status";
 
         return $this->shapeStatusCounts($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC));
-    }
-
-    /**
-     * Per-status totals for several blogs at once, every author included.
-     *
-     * This is the definition of a blog's post counts that the dashboard
-     * cards, the "Your blogs" list and the All Posts badges all read, so the
-     * three can never disagree. Blogs with no posts still get a zeroed entry.
-     *
-     * @param  int[]  $blogIds
-     * @return array<int, array<string, int>> blog id => same keys as countsByStatusForBlog()
-     */
-    public function countsByStatusForBlogs(array $blogIds): array
-    {
-        $blogIds = array_values(array_unique(array_map('intval', $blogIds)));
-        $byBlog = array_fill_keys($blogIds, []);
-
-        if ($blogIds === []) {
-            return [];
-        }
-
-        $placeholders = implode(',', array_fill(0, count($blogIds), '?'));
-        $sql = "SELECT p.blog_id, p.status, COUNT(*) AS cnt,
-                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
-                FROM {$this->getTable()} p
-                WHERE p.blog_id IN ({$placeholders})
-                GROUP BY p.blog_id, p.status";
-
-        foreach ($this->database->query($sql, $blogIds)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $byBlog[(int) $row['blog_id']][] = $row;
-        }
-
-        return array_map(fn (array $rows): array => $this->shapeStatusCounts($rows), $byBlog);
     }
 
     /**
@@ -1891,6 +1807,9 @@ class PostModel extends AppModel
     /**
      * Review-pipeline posts for a blog, unassigned submissions first.
      *
+     * One row per post. Older data can hold several reviewers on one post, so
+     * only the latest assignment is shown, the one assignReviewer() would leave.
+     *
      * @return array<int, array<string, mixed>> Post rows with author and reviewer info
      */
     public function findReviewQueueForBlog(int $blogId): array
@@ -1901,7 +1820,9 @@ class PostModel extends AppModel
                        pr.assigned_at
                 FROM {$this->getTable()} p
                 INNER JOIN users au ON au.id = p.author_id
-                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
+                LEFT JOIN post_reviewers pr ON pr.id = (
+                    SELECT MAX(latest.id) FROM post_reviewers latest WHERE latest.post_id = p.id
+                )
                 LEFT JOIN users ru ON ru.id = pr.reviewer_id
                 WHERE p.blog_id = ?
                   AND p.workflow_state IN ('in_review', 'needs_changes')
@@ -1980,8 +1901,7 @@ class PostModel extends AppModel
         string $searchQuery,
         ?int $categoryId = null,
         ?int $tagId = null,
-        string $workflowState = '',
-        ?int $blogOwnerId = null
+        string $workflowState = ''
     ): array {
         $whereClause = 'WHERE 1 = 1';
         $params = [];
@@ -1995,14 +1915,6 @@ class PostModel extends AppModel
         if ($blogId !== null) {
             $whereClause .= ' AND p.blog_id = :blog_id';
             $params[':blog_id'] = $blogId;
-        }
-
-        // Constrain to blogs owned by the given user. Used by the personal
-        // "All Posts" view so posts drafted on shared blogs never leak into
-        // the owned surface.
-        if ($blogOwnerId !== null) {
-            $whereClause .= ' AND p.blog_id IN (SELECT id FROM blogs WHERE owner_id = :blog_owner_id)';
-            $params[':blog_owner_id'] = $blogOwnerId;
         }
 
         // Validate status against whitelist to prevent invalid database queries

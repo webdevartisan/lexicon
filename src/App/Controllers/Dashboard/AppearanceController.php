@@ -43,15 +43,6 @@ final class AppearanceController extends AppController
         $blog = $this->getBlog($blogId);
         Gate::authorize('update', $blog, $user);
 
-        // Editors arrive through Shared; the static pattern assumes All Blogs.
-        if ($blog->effectiveRoleForUser((int) $user['id']) === 'editor') {
-            breadcrumbs()->set([
-                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-                ['label' => 'Appearance', 'url' => null, 'key' => 'breadcrumbs.appearance'],
-            ], true);
-        }
-
         $settings = $this->settings->findByBlogId((int) $blogId) ?? [];
         $themes = $this->themes->available();
 

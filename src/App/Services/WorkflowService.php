@@ -11,6 +11,7 @@ use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
 use App\Models\UserModel;
 use App\Policies\PostPolicy;
+use App\Resources\BlogResource;
 use App\Resources\PostResource;
 use RuntimeException;
 
@@ -111,10 +112,7 @@ class WorkflowService
             }
 
             // No reviewer has claimed this yet, so notify everyone who is eligible to pick it up.
-            $recipients = $this->blogs->getActiveUsersWithRoles(
-                (int) $resource->blog()->id(),
-                ['owner', 'editor', 'reviewer']
-            );
+            $recipients = $this->blogs->getActiveUsersWithPermission((int) $resource->blog()->id(), 'review_posts');
             $authorId = $resource->authorId();
             foreach ($recipients as $r) {
                 $uid = (int) $r['user_id'];
@@ -314,36 +312,44 @@ class WorkflowService
     }
 
     /**
-     * Clamp a requested post status to what the user's blog role may set.
+     * Whether a user may publish (or schedule, or archive) posts on a blog.
      *
-     * Publishing (and archiving, which is the same authority) belongs to
-     * owners and editors. Authors keep it only while the blog runs without
-     * the review pipeline, publish_own is meaningless once every post has
-     * to pass review. Contributors never publish; their ceiling is handing
-     * a draft to the pipeline.
+     * publish_blog_posts covers every post. publish_own_posts only counts
+     * while the blog runs without the review pipeline: once every post has to
+     * pass review, publishing your own would skip it.
+     */
+    public function canPublish(BlogResource $blog, int $userId): bool
+    {
+        if ($blog->userCan($userId, 'publish_blog_posts')) {
+            return true;
+        }
+
+        $settings = $this->blogSettings->findByBlogId($blog->id());
+
+        return $blog->userCan($userId, 'publish_own_posts') && empty($settings['workflow_enabled']);
+    }
+
+    /**
+     * Clamp a requested post status to what the user may set.
      *
      * Scheduling counts as publishing: it is publishing with a delay, so it
      * needs identical authority or it becomes a way to sidestep review.
+     * Without that authority the ceiling is handing a draft to the pipeline.
      *
      * @param  string  $requested  Status coming from the form
-     * @param  string|null  $role  Effective blog role of the acting user
+     * @param  bool  $canPublish  Result of canPublish() for the acting user
      * @param  int  $blogId  Blog the post belongs to
      * @param  string|null  $current  Current status when updating, null on create
-     * @return string The status the role is actually allowed to persist
+     * @return string The status the user is actually allowed to persist
      */
-    public function constrainStatusForRole(string $requested, ?string $role, int $blogId, ?string $current = null): string
+    public function constrainStatus(string $requested, bool $canPublish, int $blogId, ?string $current = null): string
     {
-        if (in_array($role, ['owner', 'editor'], true)) {
+        if ($canPublish) {
             return $requested;
         }
 
         $settings = $this->blogSettings->findByBlogId($blogId);
         $workflowOn = !empty($settings['workflow_enabled']);
-
-        $canPublish = $role === 'author' && !$workflowOn;
-        if ($canPublish) {
-            return $requested;
-        }
 
         // No change to a state the post already holds. an editor put it
         // there, saving content edits shouldn't undo that decision.

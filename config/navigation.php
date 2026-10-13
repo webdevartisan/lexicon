@@ -9,8 +9,8 @@ declare(strict_types=1);
  * Each item references a translation key in a hierarchical format to support i18n.
  *
  * Translation keys follow the pattern: "navigation.{item}".
- * Example: "navigation.dashboard" corresponds to:
- *   /locales/en.json = {"navigation": {"dashboard": "Dashboard"}}.
+ * Example: "navigation.overview" corresponds to:
+ *   /locales/en.json = {"navigation": {"overview": "Overview"}}.
  */
 
 return [
@@ -33,43 +33,27 @@ return [
      */
     'back' => [
         // === GLOBAL ITEMS ===
-        // Ordered by how central each surface is to a creator's day. The
-        // writing workspace comes first; reading surfaces follow below. A
-        // reader-only account never sees these, so Library still lands first.
+        // A reader-only account has no blogs, so it sees neither.
         [
-            'label' => 'Dashboard',
+            'label' => 'Overview',
             'href' => '/dashboard',
             'auth' => true,
             'scope' => 'global',
             'show_if' => 'isCreator',
-            'key' => 'navigation.dashboard',
+            'key' => 'navigation.overview',
         ],
         [
-            'label' => 'All Blogs',
+            'label' => 'Blogs',
             'href' => '/dashboard/blog',
             'auth' => true,
             'scope' => 'global',
             'show_if' => 'isCreator',
-            'key' => 'navigation.allBlogs',
+            'key' => 'navigation.blogs',
         ],
-        [
-            'label' => 'Shared',
-            'href' => '/dashboard/shared',
-            'auth' => true,
-            'scope' => 'global',
-            'show_if' => 'isCollaborator',
-            'key' => 'navigation.shared',
-        ],
-        /*
-        [
-            'label' => 'Create New Blog',
-            'href' => '/dashboard/blog/new',
-            'auth' => true,
-            'scope' => 'global',
-            'key' => 'navigation.createNewBlog',
-        ],*/
 
         // === CONTEXTUAL ITEMS ===
+        // Shown for the active blog by permission (a BlogPolicy method), never by
+        // role name. A section header with nothing visible under it is dropped.
 
         [
             'label' => 'Content',
@@ -77,25 +61,27 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.contentSection',
         ],
         [
-            'label' => 'New Post',
-            'href' => '/dashboard/post/new',
-            'auth' => true,
-            'scope' => 'contextual',
-            'policy' => 'createPost',
-            'key' => 'navigation.newPost',
-        ],
-        [
-            'label' => 'All Posts',
+            'label' => 'Posts',
             'href' => '/dashboard/post',
             'auth' => true,
             'scope' => 'contextual',
-            'policy' => 'view',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
-            'key' => 'navigation.allPosts',
+            'policy' => 'listPosts',
+            'icon' => 'files',
+            'key' => 'navigation.posts',
+        ],
+        [
+            'label' => 'Review queue',
+            'href' => '/dashboard/blog/{blogId}/review-queue',
+            'auth' => true,
+            'scope' => 'contextual',
+            'replace_blog_id' => true,
+            'policy' => 'reviewPosts',
+            'show_if' => 'workflowEnabled',
+            'icon' => 'clipboard-check',
+            'key' => 'navigation.reviewQueue',
         ],
         [
             'label' => 'Comments',
@@ -121,8 +107,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'replace_blog_id' => true,
-            'policy' => 'view',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
+            'policy' => 'listPosts',
             'key' => 'navigation.mediaLibrary',
         ],
         [
@@ -131,18 +116,7 @@ return [
             'auth' => true,
             'scope' => 'contextual',
             'type' => 'section_header',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
             'key' => 'navigation.blogSection',
-        ],
-        [
-            'label' => 'Blog Overview',
-            'href' => '/dashboard/blog/{blogId}/show',
-            'auth' => true,
-            'scope' => 'contextual',
-            'replace_blog_id' => true,
-            'policy' => 'view',
-            'blog_roles' => ['owner', 'editor', 'author', 'contributor'],
-            'key' => 'navigation.blogOverview',
         ],
         [
             'label' => 'Blog Settings',

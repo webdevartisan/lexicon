@@ -7,250 +7,89 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
-use App\Models\BlogSettingsModel;
-use App\Models\BlogSubscriberModel;
-use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
-use App\Resources\BlogResource;
-use App\Services\Analytics\AnalyticsReportService;
-use App\ValueObjects\AnalyticsRange;
-use App\ValueObjects\AnalyticsScope;
+use App\Services\ActiveBlog;
+use App\Services\BlogRoleLabels;
+use App\Services\OverviewService;
 use Framework\Core\Response;
-use Framework\Exceptions\PageNotFoundException;
 
 /**
- * HomeController renders the dashboard overview: a true at-a-glance summary
- * (stats, needs-attention queues, recent activity, quick actions). Not a
- * filtered post list. The post-list-with-tabs role lives on All Posts.
+ * The Overview: one page for every role on the active blog. Each section is
+ * shown by permission, so an author, a reviewer and the owner each see the
+ * part of the blog they can act on.
  */
 class HomeController extends AppController
 {
     public function __construct(
-        private PostModel $post,
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
-        private BlogSettingsModel $blogSettings,
-        private BlogSubscriberModel $subscribers,
-        private AnalyticsReportService $analytics,
+        private ActiveBlog $activeBlog,
+        private OverviewService $overview,
+        private BlogRoleLabels $roleLabels,
     ) {}
 
     /**
-     * Dashboard overview for the active blog context.
+     * Overview of the active blog.
      */
     public function index(): Response
     {
         $user = auth()->user();
-        $selectedBlogId = $this->preference->getDefaultBlogId($user['id']) ?? 0;
+        $userId = (int) $user['id'];
+        $blogId = (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
+        $blog = $blogId > 0 ? $this->blogModel->getBlog($blogId) : false;
 
-        $accessibleBlogs = $this->blogModel->getAccessibleBlogs($user['id']);
-        $isAdmin = auth()->hasRole('administrator');
-
-        if (empty($accessibleBlogs)) {
-            // No owned or shared blogs, so there is no dashboard to show. The
-            // landing page is this account's home: their own things live on the
-            // front now, one click away in the account menu. Keeping the
-            // redirect here means login and signup can go on sending everyone
-            // to /dashboard.
-            //
-            // The query string is not decorative: a guest's browser caches "/"
-            // for up to a minute (Cache-Control: public, max-age=60), and
-            // landing back on that exact URL right after registering or logging
-            // in can replay that stale, logged-out copy straight from the
-            // browser's own cache before the request ever reaches the server.
-            // A URL the guest copy was never served under can't collide with it.
-            return $this->redirect('/?welcome=1');
+        if ($blog === false || !Gate::allows('view', $blog, $user)) {
+            // No owned or shared blogs: the landing page is this account's home,
+            // and its query string keeps a guest's cached copy of "/" from being
+            // replayed right after login or signup.
+            return $this->redirect($this->blogModel->listAccessibleBlogs($userId) === [] ? '/?welcome=1' : '/dashboard/blog');
         }
 
-        // Pure collaborator (zero owned blogs, ≥1 shared): the Shared page is the natural landing.
-        $ownsAny = false;
-        foreach ($accessibleBlogs as $b) {
-            if (($b['user_role'] ?? '') === 'owner') {
-                $ownsAny = true;
-                break;
-            }
-        }
-        if (!$ownsAny && $selectedBlogId <= 0) {
-            return $this->redirect('/dashboard/shared');
-        }
-
-        $blogIds = [];
-        $blogSlugs = [];
-
-        foreach ($accessibleBlogs as $blog) {
-            $blogIds[(int) $blog['id']] = (string) $blog['blog_name'];
-            $blogSlugs[(int) $blog['id']] = (string) $blog['blog_slug'];
-        }
-
-        if ($selectedBlogId <= 0 || !isset($blogSlugs[$selectedBlogId])) {
-            return $this->view([
-                'blogIds' => $blogIds,
-                'blogSlug' => '',
-                'selectedBlogId' => $selectedBlogId,
-                'hasNoBlogs' => false,
-                'stats' => $this->emptyStats(),
-                'recent' => [],
-                'needsAttention' => [],
-                'blogsSummary' => $this->buildBlogsSummary($user['id']),
-                'isAdmin' => $isAdmin,
-                'blogRole' => 'none',
-            ]);
-        }
-
-        $blog = $this->getBlog($selectedBlogId);
-        Gate::authorize('view', $blog, $user);
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-
-        // Editorial pipeline determines whether "Pending" is a live bucket for this blog.
-        // With workflow off it's not part of the normal flow. hide the tile and drop it from Needs Attention.
-        $settings = $this->blogSettings->findByBlogId($selectedBlogId);
-        $workflowEnabled = !empty($settings['workflow_enabled']);
-
-        $postCounts = $this->post->countsByStatusForBlogs(array_keys($blogIds));
-        $blogCounts = $postCounts[$selectedBlogId];
-
-        $recent = $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'published')['data'];
-        $drafts = $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'draft')['data'];
-        $pending = $workflowEnabled
-            ? $this->post->findAllInBlogWithFilters($selectedBlogId, 1, 4, 'pending')['data']
-            : [];
-
-        $stats = [
-            'published' => $blogCounts['published'],
-            'draft' => $blogCounts['draft'],
-            'pending' => $workflowEnabled ? $blogCounts['pending'] : 0,
-            'archived' => $blogCounts['archived'],
-            'comments' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'approved'),
-            'comments_pending' => $this->post->countCommentsByBlogIdAndStatus($selectedBlogId, 'pending'),
-            'subscribers' => $this->subscribers->countForBlog($selectedBlogId),
-        ];
-        $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
-
-        // "Needs attention" = drafts (+ pending when the review pipeline is on).
-        // We surface them so the creator sees unfinished work the moment they land.
-        $needsAttention = array_slice(array_merge($drafts, $pending), 0, 4);
-
+        $isOwner = $blog->ownerId() === $userId;
         breadcrumbs()->clear();
 
         return $this->view([
-            'blogIds' => $blogIds,
-            'blogSlug' => $blogSlugs[$selectedBlogId],
-            'selectedBlogId' => $selectedBlogId,
-            'hasNoBlogs' => false,
-            'stats' => $stats,
-            'recent' => $recent,
-            'needsAttention' => $needsAttention,
-            'blogsSummary' => count($blogIds) > 1 ? $this->buildBlogsSummary($user['id'], $postCounts) : [],
-            'isAdmin' => $isAdmin,
-            'blogRole' => $blogRole,
-            'workflowEnabled' => $workflowEnabled,
+            'blog' => ['id' => $blog->id(), 'name' => $blog->name(), 'slug' => $blog->slug(), 'status' => $blog->status()],
+            'roleLabel' => $isOwner ? null : $this->roleLabels->label((string) $this->blogModel->storedRoleFor($blogId, $userId)),
             'hideTitle' => true,
-            'analytics' => $this->analyticsSummary($blog, $user),
-        ]);
+        ] + $this->overview->for($blog, $user));
     }
 
     /**
-     * The last 7 days at a glance: the whole blog for its owner and editors, an
-     * author's own posts for them, nothing for anyone Insights is closed to.
-     *
-     * @param  array<string, mixed>  $user
-     * @return array{metrics: array<string, mixed>, topPost: array<string, mixed>|null, range: AnalyticsRange}|null
+     * Make a blog the one the dashboard works in. Any blog the user may view,
+     * owned or shared; the role they hold there decides the rest.
      */
-    private function analyticsSummary(BlogResource $blog, array $user): ?array
+    public function setActiveBlog(): Response
     {
-        if (!Gate::allows('viewAnalytics', $blog, $user)) {
-            return null;
-        }
-
-        $blogId = (int) $blog->id();
-        $userId = (int) $user['id'];
-        $scope = Gate::allows('viewAllAnalytics', $blog, $user)
-            ? AnalyticsScope::blog($blogId)
-            : AnalyticsScope::authorPosts($blogId, $userId, $this->post->idsByBlogAndAuthor($blogId, $userId));
-        $range = AnalyticsRange::fromQuery(['range' => '7d'], blog_timezone($blogId));
-        $report = $this->analytics->report($scope, $range);
-
-        return ['metrics' => $report['metrics'], 'topPost' => $report['topPosts'][0] ?? null, 'range' => $range];
-    }
-
-    public function setDefaultBlog(): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
         $user = auth()->user();
+        $blogId = (int) $this->request->postParam('blog');
 
-        // The owner check below covers authorization. The default only stops a
-        // malformed post from failing on a missing field.
-        $selectedBlogId = (int) ($this->request->post['blog'] ?? 0);
-
-        // Default-blog is the OWNER workspace context.
-        $blog = $this->blogModel->getBlog($selectedBlogId);
-        if (!$blog) {
+        $blog = $this->blogModel->getBlog($blogId);
+        if ($blog === false) {
             $this->flash('error', 'That blog no longer exists.');
 
+            return $this->redirect('/dashboard/blog');
+        }
+
+        if (!$this->activeBlog->follow($user, $blog)) {
+            $this->flash('error', "You don't have access to that blog.");
+
+            return $this->redirect('/dashboard/blog');
+        }
+
+        $back = safe_return_to((string) $this->request->postParam('return_to')) ?? '/dashboard';
+        if (preg_match('#/blog/(\d+)(/|$)#', $back, $m) !== 1) {
+            return $this->redirect($back);
+        }
+
+        // Stay on the same page of the new blog only when the role there allows
+        // everything the old one did; otherwise that page would answer with a 403.
+        $from = $this->blogModel->getBlog((int) $m[1]);
+        $userId = (int) $user['id'];
+        if ($from === false || array_diff($from->permissionsForUser($userId), $blog->permissionsForUser($userId)) !== []) {
             return $this->redirect('/dashboard');
         }
 
-        if ((int) $blog->ownerId() !== (int) $user['id']) {
-            $this->flash('error', 'You can only set blogs you own as your default. Shared work lives on the Shared page.');
-
-            return $this->redirect('/dashboard');
-        }
-
-        $this->preference->setDefaultBlogId($user['id'], $selectedBlogId);
-
-        // Substitute blog ID in return_to before redirecting
-        $back = safe_return_to((string) ($this->request->post['return_to'])) ?? '/dashboard';
-        $back = preg_replace('/\/blog\/\d+\//', '/blog/'.$selectedBlogId.'/', $back);
-
-        return $this->redirect($back);
-    }
-
-    /**
-     * Per-blog summary cards (only relevant when the user has 2+ blogs).
-     *
-     * @param  array<int, array<string, int>>  $postCounts  countsByStatusForBlogs() output, fetched here when empty
-     * @return array<int, array{id:int,name:string,slug:string,published_count:int,status:string}>
-     */
-    private function buildBlogsSummary(int $userId, array $postCounts = []): array
-    {
-        $rows = $this->blogModel->getBlogsByOwnerId($userId);
-        $missing = array_diff(array_map(static fn (array $row): int => (int) $row['id'], $rows), array_keys($postCounts));
-        if ($missing !== []) {
-            $postCounts += $this->post->countsByStatusForBlogs($missing);
-        }
-
-        return array_map(static fn (array $row): array => [
-            'id' => (int) $row['id'],
-            'name' => (string) ($row['blog_name'] ?? ''),
-            'slug' => (string) ($row['blog_slug'] ?? ''),
-            'published_count' => $postCounts[(int) $row['id']]['published'],
-            'status' => (string) ($row['status'] ?? 'draft'),
-        ], $rows);
-    }
-
-    /** @return array<string,int> */
-    private function emptyStats(): array
-    {
-        return [
-            'published' => 0,
-            'draft' => 0,
-            'pending' => 0,
-            'archived' => 0,
-            'comments' => 0,
-            'comments_pending' => 0,
-            'subscribers' => 0,
-            'total' => 0,
-        ];
-    }
-
-    private function getBlog(int $id): BlogResource
-    {
-        $blog = $this->blogModel->getBlog((string) $id);
-
-        if (!$blog) {
-            throw new PageNotFoundException("Blog with ID '{$id}' not found.");
-        }
-
-        return $blog;
+        return $this->redirect(preg_replace('#/blog/\d+(/|$)#', '/blog/'.$blogId.'$1', $back, 1));
     }
 }

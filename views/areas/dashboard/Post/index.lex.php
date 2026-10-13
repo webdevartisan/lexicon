@@ -1,37 +1,33 @@
 {% extends "back.lex.php" %}
-{% block title %}{{ t('navigation.allPosts') }}{% endblock %}
+{% block title %}{{ t('navigation.posts') }}{% endblock %}
+{% block subtitle %}<?= e($t($managesAll ? 'dashboard.posts.subtitleAll' : 'dashboard.posts.subtitleOwn')) ?>{% endblock %}
 {% block body %}
 <?php
 // Review-stage pills only make sense when the active blog has editorial workflow on.
-// In "All blogs" mode we keep them because individual blogs may still use the pipeline.
 $showReviewPills = !empty($workflowEnabled);
 
 $tabs = [
-    ['key' => '', 'label' => 'All', 'count' => $counts['all']],
-    ['key' => 'published', 'label' => 'Published', 'count' => $counts['published']],
-    ['key' => 'draft', 'label' => 'Drafts', 'count' => $counts['draft']],
+    ['key' => '', 'label' => $t('dashboard.posts.tabs.all'), 'count' => $counts['all']],
+    ['key' => 'published', 'label' => $t('dashboard.posts.tabs.published'), 'count' => $counts['published']],
+    ['key' => 'draft', 'label' => $t('dashboard.posts.tabs.drafts'), 'count' => $counts['draft']],
 ];
 
 // Only worth a tab once something is actually waiting to go out.
 if (!empty($counts['scheduled'])) {
-    $tabs[] = ['key' => 'scheduled', 'label' => 'Scheduled', 'count' => $counts['scheduled']];
+    $tabs[] = ['key' => 'scheduled', 'label' => $t('dashboard.posts.tabs.scheduled'), 'count' => $counts['scheduled']];
 }
 
 if ($showReviewPills) {
-    $tabs[] = ['key' => 'pending', 'label' => 'In Review', 'count' => $counts['pending']];
-    $tabs[] = ['key' => 'needs_changes', 'label' => 'Needs Changes', 'count' => $counts['needs_changes'] ?? 0];
+    $tabs[] = ['key' => 'pending', 'label' => $t('dashboard.posts.tabs.inReview'), 'count' => $counts['pending']];
+    $tabs[] = ['key' => 'needs_changes', 'label' => $t('dashboard.posts.tabs.needsChanges'), 'count' => $counts['needs_changes'] ?? 0];
 }
 
-$tabs[] = ['key' => 'archived', 'label' => 'Archived', 'count' => $counts['archived']];
+$tabs[] = ['key' => 'archived', 'label' => $t('dashboard.posts.tabs.archived'), 'count' => $counts['archived']];
 
-// Use the stringified $blogIdView ('all' or numeric) so the choice survives pill clicks.
-$blogIdForUrl = $blogIdView ?? null;
-
-$makeQuery = static function (array $overrides = []) use ($q, $status, $blogIdForUrl, $sort, $categoryId, $tagId): string {
+$makeQuery = static function (array $overrides = []) use ($q, $status, $sort, $categoryId, $tagId): string {
     $params = [
         'q' => $overrides['q'] ?? $q,
         'status' => array_key_exists('status', $overrides) ? $overrides['status'] : $status,
-        'blog_id' => array_key_exists('blog_id', $overrides) ? $overrides['blog_id'] : $blogIdForUrl,
         'sort' => array_key_exists('sort', $overrides) ? $overrides['sort'] : $sort,
         'category' => array_key_exists('category', $overrides) ? $overrides['category'] : $categoryId,
         'tag' => array_key_exists('tag', $overrides) ? $overrides['tag'] : $tagId,
@@ -48,62 +44,59 @@ $makeQuery = static function (array $overrides = []) use ($q, $status, $blogIdFo
 };
 
 $sortOptions = [
-    'newest' => 'Newest first',
-    'oldest' => 'Oldest first',
-    'title_asc' => 'Title A → Z',
-    'title_desc' => 'Title Z → A',
+    'newest' => $t('dashboard.posts.sort.newest'),
+    'oldest' => $t('dashboard.posts.sort.oldest'),
+    'title_asc' => $t('dashboard.posts.sort.titleAsc'),
+    'title_desc' => $t('dashboard.posts.sort.titleDesc'),
 ];
 
-// Build option maps for the select component
-$blogOptions = ['all' => 'All blogs'];
-foreach (($blogs ?? []) as $b) {
-    $blogOptions[(string) $b['id']] = (string) $b['blog_name'];
-}
-
-$categoryOptions = ['' => 'All'];
+$categoryOptions = ['' => $t('dashboard.posts.filters.all')];
 foreach (($blogCategories ?? []) as $cat) {
     $categoryOptions[(string) $cat['id']] = (string) $cat['name'];
 }
 
-$tagOptions = ['' => 'All'];
+$tagOptions = ['' => $t('dashboard.posts.filters.all')];
 foreach (($blogTags ?? []) as $tg) {
     $tagOptions[(string) $tg['id']] = (string) $tg['name'];
 }
 
-$selectedBlogKey = (string) ($blogIdView ?? '');
 $selectedCategoryKey = (string) ($categoryId ?? '');
 $selectedTagKey = (string) ($tagId ?? '');
 $selectedSortKey = (string) ($sort ?? '');
+$searchLabel = $t('dashboard.posts.filters.search');
+$searchPlaceholder = $t('dashboard.posts.filters.searchPlaceholder');
+$categoryLabel = $t('dashboard.posts.filters.category');
+$tagLabel = $t('dashboard.posts.filters.tag');
+$applyLabel = $t('dashboard.posts.filters.apply');
+$sortLabel = $t('dashboard.posts.sort.label');
 ?>
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
+    <?php if ($canCreate) { ?>
     <div class="flex justify-end mb-4">
         {% set newPostLabel = t('dashboard.actions.newPost') %}
         {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="{$newPostLabel}" %}
     </div>
+    <?php } ?>
 
     <form method="GET" action="/dashboard/post" class="card mb-4">
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                <div class="md:col-span-3">
-                    {% cmp="input" type="text" label="Search" name="q" value="{$q}" placeholder="Search by title or content..." %}
+                <div class="md:col-span-5">
+                    {% cmp="input" type="text" label="{$searchLabel}" name="q" value="{$q}" placeholder="{$searchPlaceholder}" %}
                 </div>
 
                 <div class="md:col-span-3">
-                    {% cmp="select" label="Blog" name="blog_id" options="{$blogOptions}" selectedKey="{$selectedBlogKey}" %}
+                    {% cmp="select" label="{$categoryLabel}" name="category" options="{$categoryOptions}" selectedKey="{$selectedCategoryKey}" %}
                 </div>
 
                 <div class="md:col-span-2">
-                    {% cmp="select" label="Category" name="category" options="{$categoryOptions}" selectedKey="{$selectedCategoryKey}" %}
+                    {% cmp="select" label="{$tagLabel}" name="tag" options="{$tagOptions}" selectedKey="{$selectedTagKey}" %}
                 </div>
 
                 <div class="md:col-span-2">
-                    {% cmp="select" label="Tag" name="tag" options="{$tagOptions}" selectedKey="{$selectedTagKey}" %}
-                </div>
-
-                <div class="md:col-span-2">
-                    {% cmp="btn" type="submit" variant="blue" icon="filter" label="Apply" addClass="w-full" %}
+                    {% cmp="btn" type="submit" variant="blue" icon="filter" label="{$applyLabel}" addClass="w-full" %}
                 </div>
             </div>
 
@@ -113,11 +106,11 @@ $selectedSortKey = (string) ($sort ?? '');
 
     <?php if (!empty($activeTag)) { ?>
     <div class="flex items-center gap-2 mb-4 text-sm">
-        <span class="text-slate-500 dark:text-zink-300">Filtering by tag:</span>
+        <span class="text-slate-500 dark:text-zink-300"><?= e($t('dashboard.posts.filters.byTag')) ?></span>
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-custom-50 text-custom-700 border border-custom-100 dark:bg-custom-500/20 dark:text-custom-300">
             <i data-lucide="tag" class="size-3"></i>
             <?= e($activeTag['name']) ?>
-            <a href="/dashboard/post<?= e($makeQuery(['tag' => null, 'page' => null])) ?>" class="ml-0.5 hover:text-red-600" title="Clear tag filter">&times;</a>
+            <a href="/dashboard/post<?= e($makeQuery(['tag' => null, 'page' => null])) ?>" class="ml-0.5 hover:text-red-600" title="<?= e($t('dashboard.posts.filters.clearTag')) ?>">&times;</a>
         </span>
     </div>
     <?php } ?>
@@ -149,67 +142,40 @@ $selectedSortKey = (string) ($sort ?? '');
         </div>
 
         <form method="GET" action="/dashboard/post" class="flex items-center gap-2">
-            <?php foreach (['q' => $q, 'status' => $status, 'blog_id' => $blogIdView, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
+            <?php foreach (['q' => $q, 'status' => $status, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
                 <?php if ($value !== '' && $value !== null) { ?>
                     <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
                 <?php } ?>
             <?php } ?>
 
-            {% cmp="select" label="Sort" name="sort" options="{$sortOptions}" selectedKey="{$selectedSortKey}" onchange="this.form.submit()" %}
+            {% cmp="select" label="{$sortLabel}" name="sort" options="{$sortOptions}" selectedKey="{$selectedSortKey}" onchange="this.form.submit()" %}
         </form>
     </div>
 
     {% if posts|empty %}
     <?php
-    $emptyByStatus = [
-        'draft' => [
-            'icon' => 'file-text',
-            'title' => 'No drafts yet',
-            'text' => 'Start a new draft and come back to it whenever you want.',
-            'cta' => 'Start writing',
-        ],
-        'pending' => [
-            'icon' => 'clock',
-            'title' => 'Nothing waiting for review',
-            'text' => 'Posts submitted for review will show up here.',
-            'cta' => 'New post',
-        ],
-        'published' => [
-            'icon' => 'rss',
-            'title' => 'No published posts yet',
-            'text' => 'Publish a draft when you are ready to make it live.',
-            'cta' => 'New post',
-        ],
-        'scheduled' => [
-            'icon' => 'calendar-clock',
-            'title' => 'Nothing scheduled',
-            'text' => 'Give a draft a future publish date and it will queue up here.',
-            'cta' => 'New post',
-        ],
-        'archived' => [
-            'icon' => 'archive',
-            'title' => 'No archived posts',
-            'text' => 'Archived posts will appear here.',
-            'cta' => null,
-        ],
+    $emptyIcons = [
+        'draft' => 'file-text',
+        'pending' => 'clock',
+        'published' => 'rss',
+        'scheduled' => 'calendar-clock',
+        'archived' => 'archive',
     ];
 
-$emptyTitle = 'No posts yet';
-$emptyText = 'Create your first post to get started.';
+$emptyTitle = $t('dashboard.posts.empty.noneTitle');
+$emptyText = $t('dashboard.posts.empty.noneText');
 $emptyIcon = 'feather';
 $clearUrl = null;
 
 if ($q !== '') {
-    $emptyTitle = 'No matches for "'.truncate($q, 40).'"';
-    $emptyText = $status !== ''
-        ? 'Try changing the status filter or using a different search term.'
-        : 'Try a different search term.';
+    $emptyTitle = $t('dashboard.posts.empty.searchTitle', ['query' => truncate($q, 40)]);
+    $emptyText = $t($status !== '' ? 'dashboard.posts.empty.searchTextStatus' : 'dashboard.posts.empty.searchText');
     $emptyIcon = 'search-x';
     $clearUrl = '/dashboard/post';
-} elseif ($status !== '' && isset($emptyByStatus[$status])) {
-    $emptyTitle = $emptyByStatus[$status]['title'];
-    $emptyText = $emptyByStatus[$status]['text'];
-    $emptyIcon = $emptyByStatus[$status]['icon'];
+} elseif ($status !== '' && isset($emptyIcons[$status])) {
+    $emptyTitle = $t('dashboard.posts.empty.'.$status.'Title');
+    $emptyText = $t('dashboard.posts.empty.'.$status.'Text');
+    $emptyIcon = $emptyIcons[$status];
 }
 ?>
     <div class="card">
@@ -219,7 +185,7 @@ if ($q !== '') {
             <p class="text-sm text-slate-500 dark:text-zink-300 mb-5"><?= e($emptyText) ?></p>
 
             <div class="flex flex-wrap items-center justify-center gap-2">
-                <?php if ($status !== 'archived' || $q !== '') { ?>
+                <?php if ($canCreate && ($status !== 'archived' || $q !== '')) { ?>
                     {% set newPostLabel = t('dashboard.actions.newPost') %}
                     {% cmp="btn" href="/dashboard/post/new" variant="blue" icon="plus" label="{$newPostLabel}" %}
                 <?php } ?>
@@ -230,7 +196,7 @@ if ($q !== '') {
                         class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors"
                     >
                         <i data-lucide="x" class="size-4"></i>
-                        Clear filters
+                        <?= e($t('dashboard.posts.filters.clear')) ?>
                     </a>
                 <?php } ?>
             </div>
@@ -239,33 +205,41 @@ if ($q !== '') {
     {% else %}
     <?php
     $bulkActions = [
-        ['action' => 'publish', 'label' => 'Publish', 'icon' => 'send', 'hover' => 'hover:bg-green-600/30', 'confirm' => 'Publish {n}?'],
-        ['action' => 'draft', 'label' => 'Move to draft', 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => 'Move {n} to draft?'],
+        ['action' => 'publish', 'label' => $t('dashboard.posts.bulk.publish'), 'icon' => 'send', 'hover' => 'hover:bg-green-600/30', 'confirm' => $t('dashboard.posts.bulk.publishConfirm')],
+        ['action' => 'draft', 'label' => $t('dashboard.posts.bulk.draft'), 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => $t('dashboard.posts.bulk.draftConfirm')],
     ];
     if ($showReviewPills) {
-        $bulkActions[] = ['action' => 'review', 'label' => 'Send for review', 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => 'Send {n} for review?'];
+        $bulkActions[] = ['action' => 'review', 'label' => $t('dashboard.posts.bulk.review'), 'icon' => 'pencil-ruler', 'hover' => 'hover:bg-slate-600/50', 'confirm' => $t('dashboard.posts.bulk.reviewConfirm')];
     }
-    $bulkActions[] = ['action' => 'archive', 'label' => 'Archive', 'icon' => 'archive', 'hover' => 'hover:bg-orange-600/30', 'confirm' => 'Archive {n}?'];
-    $bulkActions[] = ['action' => 'delete', 'label' => 'Delete', 'icon' => 'trash-2', 'hover' => 'hover:bg-red-600/30', 'danger' => true, 'confirm' => 'Permanently delete {n}? This cannot be undone.'];
+    $bulkActions[] = ['action' => 'archive', 'label' => $t('dashboard.posts.bulk.archive'), 'icon' => 'archive', 'hover' => 'hover:bg-orange-600/30', 'confirm' => $t('dashboard.posts.bulk.archiveConfirm')];
+    $bulkActions[] = ['action' => 'delete', 'label' => $t('dashboard.posts.bulk.delete'), 'icon' => 'trash-2', 'hover' => 'hover:bg-red-600/30', 'danger' => true, 'confirm' => $t('dashboard.posts.bulk.deleteConfirm')];
     ?>
     <!-- Cards must stay outside the bulk form: each card carries its own
          action forms, and nesting forms makes the browser drop the inner
          ones. Checkboxes attach via form="bulk-form" instead. -->
+    <?php if ($managesAll) { ?>
     {% cmp="bulk-actions-bar" actionUrl="/dashboard/post/bulk" itemLabel="post" actions="{$bulkActions}" %}
+    <?php } ?>
 
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {% foreach ($posts as $post): %}
+            <?php if ($managesAll) { ?>
             <label class="relative block cursor-pointer bulk-item">
                 <input
                     type="checkbox"
                     name="post_ids[]"
                     form="bulk-form"
                     value="<?= e((string) $post['id']) ?>"
-                    aria-label="Select post: <?= e((string) ($post['title'] ?? '')) ?>"
+                    aria-label="<?= e($t('dashboard.posts.selectPost', ['title' => (string) ($post['title'] ?? '')])) ?>"
                     class="peer sr-only bulk-checkbox"
                 >
-                {% cmp="post-card" post="{$post}" blogSlug="{$activeBlogSlug}" returnToken="{$returnToken}" %}
+                {% cmp="post-card" post="{$post}" blogSlug="{$blogSlug}" returnToken="{$returnToken}" %}
             </label>
+            <?php } else { ?>
+            <div class="relative">
+                {% cmp="post-card" post="{$post}" blogSlug="{$blogSlug}" returnToken="{$returnToken}" %}
+            </div>
+            <?php } ?>
             {% endforeach %}
         </div>
 

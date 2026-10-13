@@ -47,7 +47,8 @@ final class PostTranslationController extends AppController
         $translation = $this->translations->findOne((int) $post->id(), $locale);
 
         breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
+            ['label' => 'Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.posts'],
             ['label' => 'Edit Post', 'url' => '/dashboard/post/'.$post->id().'/edit', 'key' => 'breadcrumbs.editPost'],
             ['label' => strtoupper($locale), 'url' => null],
         ], true);

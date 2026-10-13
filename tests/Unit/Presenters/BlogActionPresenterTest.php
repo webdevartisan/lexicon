@@ -43,7 +43,7 @@ test('intents map to statuses and anything else keeps the current one', function
 
 test('it returns the same shape as the post presenter so both share one action bar', function () {
     $blog = BlogActionPresenter::for('draft');
-    $post = PostActionPresenter::for('draft', 'owner', false);
+    $post = PostActionPresenter::for('draft', true, false);
 
     expect(array_keys($blog))->toBe(array_keys($post))
         ->and(array_keys($blog['primary']))->toBe(array_keys($post['primary']));

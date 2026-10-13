@@ -17,7 +17,9 @@ use App\Models\ReviewModel;
 use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
+use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Services\ActiveBlog;
 use App\Services\ExternalMediaGuard;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
@@ -37,7 +39,7 @@ use Framework\Exceptions\PageNotFoundException;
 /**
  * Dashboard post management controller.
  *
- * Handles CRUD, the listing surfaces (personal, per-blog, workspace),
+ * Handles CRUD, the Posts list for the active blog,
  * status changes, autosave, and featured images.
  */
 final class PostController extends AppController
@@ -67,52 +69,31 @@ final class PostController extends AppController
         private ExternalMediaGuard $mediaGuard,
         private PostContentSanitizer $contentSanitizer,
         private AnalyticsStatsModel $analyticsStats,
+        private ActiveBlog $activeBlog,
     ) {}
 
     /**
-     * List user's posts with filters, search, and pagination.
+     * Posts in the active blog. Owners and editors see every post in it,
+     * everyone else who writes there sees their own.
      */
     public function index(): Response
     {
         $user = auth()->user();
+        $userId = (int) $user['id'];
 
-        // Same rule as the dashboard home: no owned or shared blogs means
-        // there is no workspace to show, only the blank slate at "/".
-        if (empty($this->blogModel->getAccessibleBlogs((int) $user['id']))) {
-            return $this->redirect('/');
+        $blog = $this->activeBlogOrNull($userId);
+        if ($blog === null) {
+            return $this->redirect('/dashboard/blog');
         }
+        Gate::authorize('listPosts', $blog, $user);
 
-        $blogs = $this->blogModel->getBlogsByOwnerId($user['id']);
-        $blogSlugs = array_column($blogs, 'blog_slug', 'id');
-        $validBlogIds = array_column($blogs, 'id');
+        $blogId = $blog->id();
+        $managesAll = Gate::allows('managePosts', $blog, $user);
+        $authorScope = $managesAll ? null : $userId;
 
-        // blog_id=all (sentinel) → explicit "All blogs"; numeric → that blog; missing → user's default.
-        $blogIdRaw = isset($this->request->get['blog_id']) ? (string) $this->request->get['blog_id'] : null;
-        $isAllBlogs = ($blogIdRaw === 'all' || $blogIdRaw === '');
-
-        if ($isAllBlogs) {
-            $blogId = null;
-        } else {
-            $blogId = ($blogIdRaw !== null) ? (int) $blogIdRaw : null;
-            if ($blogId !== null && !in_array($blogId, $validBlogIds, true)) {
-                $blogId = null;
-            }
-            // No selection at all → fall back to default blog
-            if ($blogId === null && $blogIdRaw === null) {
-                $defaultBlogId = $this->preference->getDefaultBlogId($user['id']);
-                if ($defaultBlogId && in_array($defaultBlogId, $validBlogIds, true)) {
-                    $blogId = $defaultBlogId;
-                }
-            }
-        }
-
-        // String value used by the view for URL building (preserves the "all" choice across pill clicks).
-        $blogIdView = $isAllBlogs ? 'all' : ($blogId !== null ? (string) $blogId : null);
-
-        $status = trim((string) ($this->request->get['status'] ?? ''));
-        $q = trim((string) ($this->request->get['q'] ?? ''));
-        $page = max(1, (int) ($this->request->get['page'] ?? 1));
-        $perPage = 12;
+        $status = trim((string) $this->request->getParam('status', ''));
+        $q = trim((string) $this->request->getParam('q', ''));
+        $page = max(1, (int) $this->request->getParam('page', 1));
 
         // The "Needs Changes" tab is workflow-state-driven.
         $workflowFilter = '';
@@ -121,42 +102,22 @@ final class PostController extends AppController
             $status = '';
         }
 
-        $allowedSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
-        $sort = (string) ($this->request->get['sort'] ?? 'newest');
-        if (!in_array($sort, $allowedSorts, true)) {
+        $sort = (string) $this->request->getParam('sort', 'newest');
+        if (!in_array($sort, ['newest', 'oldest', 'title_asc', 'title_desc'], true)) {
             $sort = 'newest';
         }
 
-        // Category/tag filters only make sense inside one blog (they're per-blog).
-        // Validate the ids belong to the active blog, otherwise drop them.
-        $categoryId = null;
-        $tagId = null;
-        $blogCategories = [];
-        $blogTags = [];
-        if ($blogId !== null) {
-            $blogCategories = $this->categoryModel->getByBlogId($blogId);
-            $blogTags = $this->tagModel->getByBlogId($blogId);
-
-            $rawCat = (int) ($this->request->get['category'] ?? 0);
-            if ($rawCat > 0 && $this->categoryModel->findForBlog($rawCat, $blogId)) {
-                $categoryId = $rawCat;
-            }
-
-            $rawTag = (int) ($this->request->get['tag'] ?? 0);
-            if ($rawTag > 0 && $this->tagModel->findForBlog($rawTag, $blogId)) {
-                $tagId = $rawTag;
-            }
-        }
-
-        // Every post in the blogs this user owns, whoever wrote it. The same
-        // scope as the dashboard cards, so the counts match. Posts they wrote on
-        // someone else's blog belong to that blog's shared context, not here.
-        $ownedScope = (int) $user['id'];
+        // Categories and tags belong to one blog; ids from another blog are dropped.
+        $rawCat = (int) $this->request->getParam('category', 0);
+        $categoryId = $rawCat > 0 && $this->categoryModel->findForBlog($rawCat, $blogId) ? $rawCat : null;
+        $rawTag = (int) $this->request->getParam('tag', 0);
+        $activeTag = $rawTag > 0 ? $this->tagModel->findForBlog($rawTag, $blogId) : null;
+        $tagId = $activeTag ? $rawTag : null;
 
         $result = $this->model->findByAuthorWithFiltersPagination(
-            authorId: null,
+            authorId: $authorScope,
             page: $page,
-            perPage: $perPage,
+            perPage: 12,
             blogId: $blogId,
             status: $status,
             searchQuery: $q,
@@ -164,67 +125,74 @@ final class PostController extends AppController
             categoryId: $categoryId,
             tagId: $tagId,
             workflowState: $workflowFilter,
-            blogOwnerId: $ownedScope
         );
 
-        // Each card shows a few of its tags as quick filters.
+        $views = $this->postViews($blog, $result['data']);
         foreach ($result['data'] as &$p) {
             $p['tags'] = $this->model->tags((int) $p['id']);
+            $p['can'] = $this->postAbilities($p, $blog, $user);
+            $p['views'] = (int) ($views[(int) $p['id']]['views'] ?? 0);
         }
         unset($p);
 
-        // Per-status totals power the filter chip badges (respecting the active
-        // category/tag filter so the numbers match what's shown).
         $counts = $this->model->countsByStatusForAuthor(
-            authorId: null,
+            authorId: $authorScope,
             blogId: $blogId,
             searchQuery: $q,
             categoryId: $categoryId,
             tagId: $tagId,
-            blogOwnerId: $ownedScope
         );
 
-        // Preserve the user-facing status key for the view (so 'needs_changes' pill stays active).
-        $statusForView = $workflowFilter !== '' ? $workflowFilter : $status;
-
-        $activeBlogSlug = ($blogId !== null && isset($blogSlugs[$blogId])) ? $blogSlugs[$blogId] : '';
-
-        // Tag filter context only resolves a name when scoped to a blog (tags are per-blog).
-        $activeTag = ($tagId !== null && $blogId !== null) ? $this->tagModel->findForBlog($tagId, $blogId) : null;
-
-        // Workflow-aware UI: hide review-specific pills/actions when the scoped blog has it off.
-        // In "All blogs" mode we keep everything visible because blogs may differ.
-        $workflowEnabled = true;
-        if ($blogId !== null) {
-            $settings = $this->blogSettingsModel->findByBlogId($blogId);
-            $workflowEnabled = !empty($settings['workflow_enabled']);
-        }
-
-        $currentListUrl = $this->buildReturnUrl('/dashboard/post');
-        $returnToken = $this->issueReturnToken($currentListUrl, ['/dashboard/post']);
+        $settings = $this->blogSettingsModel->findByBlogId($blogId);
+        $returnToken = $this->issueReturnToken($this->buildReturnUrl('/dashboard/post'), ['/dashboard/post']);
 
         return $this->view([
             'posts' => $result['data'],
             'pagination' => $result['pagination'],
             'returnToken' => $returnToken,
-            'user' => $user,
-            'blogs' => $blogs,
-            'blog_id' => $blogId,
-            'blogIdView' => $blogIdView,
-            'isAllBlogs' => $isAllBlogs,
-            'blog_slug' => $blogSlugs,
-            'activeBlogSlug' => $activeBlogSlug,
-            'status' => $statusForView,
+            'blogSlug' => $blog->slug(),
+            'managesAll' => $managesAll,
+            'canCreate' => Gate::allows('createPost', $blog, $user),
+            'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'q' => $q,
             'sort' => $sort,
             'counts' => $counts,
-            'blogCategories' => $blogCategories,
-            'blogTags' => $blogTags,
+            'blogCategories' => $this->categoryModel->getByBlogId($blogId),
+            'blogTags' => $this->tagModel->getByBlogId($blogId),
             'categoryId' => $categoryId,
             'tagId' => $tagId,
             'activeTag' => $activeTag,
-            'workflowEnabled' => $workflowEnabled,
+            'workflowEnabled' => !empty($settings['workflow_enabled']),
         ]);
+    }
+
+    /**
+     * The active blog, or null when none is set or the user can no longer see it.
+     */
+    private function activeBlogOrNull(int $userId): ?BlogResource
+    {
+        $blogId = (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
+        $blog = $blogId > 0 ? $this->blogModel->getBlog($blogId) : false;
+
+        return $blog !== false && Gate::allows('view', $blog, auth()->user()) ? $blog : null;
+    }
+
+    /**
+     * What the card may offer for one post, decided by the same policies its actions use.
+     *
+     * @param  array<string, mixed>  $post  List row
+     * @param  array<string, mixed>  $user
+     * @return array{update: bool, publish: bool, delete: bool}
+     */
+    private function postAbilities(array $post, BlogResource $blog, array $user): array
+    {
+        $resource = new PostResource($post, $blog);
+
+        return [
+            'update' => Gate::allows('update', $resource, $user),
+            'publish' => Gate::allows('publish', $resource, $user),
+            'delete' => Gate::allows('delete', $resource, $user),
+        ];
     }
 
     /**
@@ -253,51 +221,33 @@ final class PostController extends AppController
         $user = auth()->user();
         $userId = (int) $user['id'];
 
-        // ?blog_id= lets a collaborator write into a shared blog without
-        // touching their default-blog preference. Validated via Gate so we
-        // can't be tricked into rendering the form for a blog the user lacks.
-        $requestedBlogId = (int) ($this->request->get['blog_id'] ?? 0);
+        // ?blog_id= names the blog to write in; it becomes the active blog once authorized.
+        $requestedBlogId = (int) $this->request->getParam('blog_id', 0);
         $blogId = $requestedBlogId > 0
             ? $requestedBlogId
             : (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
 
         if ($blogId <= 0) {
-            $this->flash('error', 'Pick a blog first or write from the Shared page.');
+            $this->flash('error', 'Choose a blog to write in first.');
 
-            return $this->redirect('/dashboard');
+            return $this->redirect('/dashboard/blog');
         }
 
         $blog = $this->getBlog($blogId);
         Gate::authorize('createPost', $blog, $user);
+        $this->activeBlog->follow($user, $blog);
 
         $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($blogSettings['workflow_enabled']);
 
-        $blogRole = $blog->effectiveRoleForUser($userId);
-
-        // Writing into a shared blog starts from Shared, not the personal
-        // All Posts the static pattern assumes.
-        if (in_array($blogRole, ['editor', 'author', 'contributor'], true)) {
-            $trail = [
-                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-                $blogRole === 'editor'
-                    ? ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts']
-                    : ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'],
-                ['label' => 'Create New Post', 'url' => null, 'key' => 'breadcrumbs.createNewPost'],
-            ];
-            breadcrumbs()->set($trail, true);
-        }
-
         return $this->view([
             'blog' => $blog->toArray(),
-            'blogRole' => $blogRole,
             'backUrl' => $this->backUrlPath(),
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
-            'actions' => PostActionPresenter::for('draft', $blogRole, $workflowEnabled),
+            'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
@@ -341,10 +291,9 @@ final class PostController extends AppController
             unset($data['published_at']);
         }
 
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $data['status'] = $this->workflowService->constrainStatusForRole(
+        $data['status'] = $this->workflowService->constrainStatus(
             $this->requestedStatus('draft', $data['published_at'] ?? null),
-            $blogRole,
+            $this->workflowService->canPublish($blog, (int) $user['id']),
             (int) $blog->id()
         );
 
@@ -414,6 +363,7 @@ final class PostController extends AppController
         $blog = $post->blog();
 
         Gate::authorize('update', $post, $user);
+        $this->activeBlog->follow($user, $blog);
 
         // Convert published_at to display timezone
         $displayDate = null;
@@ -423,21 +373,10 @@ final class PostController extends AppController
             $displayDate = $dt->format('d.m.y H:i');
         }
 
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
         $workflowState = $post->workflowState();
         $status = $post->status();
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
-
-        $postList = $this->postListFor($blog, $blogRole);
-        $trail = [['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard']];
-        if ($postList['url'] !== '/dashboard/post') {
-            $trail[] = ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'];
-        }
-        $trail[] = $postList;
-        $trail[] = ['label' => 'Edit Post', 'url' => null, 'key' => 'breadcrumbs.editPost'];
-
-        breadcrumbs()->set($trail, true);
 
         $postArray = $post->toArray();
         if ($displayDate) {
@@ -452,9 +391,7 @@ final class PostController extends AppController
         $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($blogSettings['workflow_enabled']);
 
-        $canRequestReview = $workflowEnabled
-            && in_array($blogRole, ['author', 'contributor', 'owner', 'editor'], true)
-            && in_array($workflowState, ['draft', 'needs_changes'], true);
+        $canRequestReview = $workflowEnabled && in_array($workflowState, ['draft', 'needs_changes'], true);
 
         // Surface the most recent review feedback so the author sees it without visiting the review page
         $latestReview = $workflowEnabled ? $this->reviewModel->findLatestByPost((int) $post->id()) : null;
@@ -472,10 +409,9 @@ final class PostController extends AppController
             'availableLocales' => $this->localeRegistry->supported(),
             'postUrl' => $postUrl,
             // Not the Referer: after a save that is this very page.
-            'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), $postList['url'], ['/dashboard/post']),
+            'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
             'workflowState' => $workflowState,
             'status' => $status,
-            'blogRole' => $blogRole,
             'workflowEnabled' => $workflowEnabled,
             'canRequestReview' => $canRequestReview,
             'latestReview' => $latestReview,
@@ -486,7 +422,7 @@ final class PostController extends AppController
             ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(
                 $status,
-                $blogRole,
+                $this->workflowService->canPublish($blog, (int) $user['id']),
                 $workflowEnabled,
                 $post->publishedAt() !== null && strtotime($post->publishedAt().' UTC') > time(),
                 $workflowState
@@ -584,13 +520,12 @@ final class PostController extends AppController
             $originalData[$seoField] = $postSnapshot[$seoField] ?? null;
         }
 
-        $blogRole = $post->blog()->effectiveRoleForUser((int) $user['id']);
-        $newData['status'] = $this->workflowService->constrainStatusForRole(
+        $newData['status'] = $this->workflowService->constrainStatus(
             $this->requestedStatus(
                 (string) $originalData['status'],
                 $newData['published_at'] ?? $originalData['published_at'] ?? null
             ),
-            $blogRole,
+            $this->workflowService->canPublish($post->blog(), (int) $user['id']),
             (int) $post->blogId(),
             $originalData['status']
         );
@@ -791,7 +726,12 @@ final class PostController extends AppController
             $postId = !empty($validated['id']) ? (int) $validated['id'] : null;
 
             $blogId = null;
-            if ($postId === null) {
+            if ($postId !== null) {
+                $post = $this->model->findResource($postId);
+                if ($post !== false && !Gate::allows('update', $post, $user)) {
+                    return $this->json(['success' => false, 'error' => 'You cannot edit this post.'], 403);
+                }
+            } else {
                 $blogId = (int) ($this->request->post['blog_id'] ?? 0)
                     ?: (int) ($this->preference->getDefaultBlogId((int) $user['id']) ?? 0);
                 $blog = $blogId > 0 ? $this->blogModel->getBlog($blogId) : null;
@@ -920,7 +860,7 @@ final class PostController extends AppController
                 $this->subscriberNotifier->notifyPostPublished((int) $id);
             }
 
-            $blogSettings = $this->blogSettingsModel->findByBlogId($post->blogId());
+            $blogSettings = $action === 'review' ? $this->blogSettingsModel->findByBlogId($post->blogId()) : null;
             if (!empty($blogSettings['workflow_enabled'])) {
                 try {
                     $this->workflowService->submitForReview((int) $id, (int) $user['id']);
@@ -1097,145 +1037,6 @@ final class PostController extends AppController
         $this->flash('success', 'Post archived successfully.');
 
         return $this->redirectBack();
-    }
-
-    /**
-     * Every post in a single blog. Owner + editor only; other roles have
-     * role-scoped surfaces (queue for reviewers, write flow for authors).
-     *
-     * @param  string  $blogId  Target blog
-     */
-    public function blogPosts(string $blogId): Response
-    {
-        $user = auth()->user();
-        $blog = $this->getBlog((int) $blogId);
-
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        if (!in_array($blogRole, ['owner', 'editor'], true)) {
-            throw new PageNotFoundException('Posts index not available for this role.');
-        }
-
-        $status = trim((string) ($this->request->get['status'] ?? ''));
-        $q = trim((string) ($this->request->get['q'] ?? ''));
-        $page = max(1, (int) ($this->request->get['page'] ?? 1));
-        $perPage = 12;
-
-        $workflowFilter = '';
-        if ($status === 'needs_changes') {
-            $workflowFilter = 'needs_changes';
-            $status = '';
-        }
-
-        $allowedSorts = ['newest', 'oldest', 'title_asc', 'title_desc'];
-        $sort = (string) ($this->request->get['sort'] ?? 'newest');
-        if (!in_array($sort, $allowedSorts, true)) {
-            $sort = 'newest';
-        }
-
-        $rows = $this->model->findAllInBlogWithFilters(
-            blogId: (int) $blog->id(),
-            page: $page,
-            perPage: $perPage,
-            status: $status,
-            searchQuery: $q,
-            sort: $sort,
-            workflowState: $workflowFilter,
-        );
-
-        foreach ($rows['data'] as &$p) {
-            $p['tags'] = $this->model->tags((int) $p['id']);
-        }
-        unset($p);
-
-        $counts = $this->model->countsByStatusForBlog((int) $blog->id(), $q);
-
-        $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
-        $workflowEnabled = !empty($settings['workflow_enabled']);
-
-        breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            $blogRole === 'owner'
-                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
-                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-            ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
-            ['label' => 'Posts', 'url' => null, 'key' => 'breadcrumbs.blogPosts'],
-        ], true);
-
-        return $this->view('post.blogPosts', [
-            'blog' => $blog->toArray(),
-            'blogRole' => $blogRole,
-            'posts' => $rows['data'],
-            'postViews' => $this->postViews($blog, $rows['data']),
-            'pagination' => $rows['pagination'],
-            'status' => $workflowFilter !== '' ? $workflowFilter : $status,
-            'q' => $q,
-            'sort' => $sort,
-            'counts' => $counts,
-            'workflowEnabled' => $workflowEnabled,
-        ]);
-    }
-
-    /**
-     * A collaborator's own writing inside one shared blog.
-     *
-     * This is the author/contributor landing: their drafts, what they've
-     * handed to review, what came back, what got published. Nothing here
-     * belongs to other people, the wider blog is not their surface.
-     *
-     * @param  string  $blogId  Target blog
-     */
-    public function workspace(string $blogId): Response
-    {
-        $user = auth()->user();
-        $userId = (int) $user['id'];
-        $blog = $this->getBlog((int) $blogId);
-
-        $blogRole = $blog->effectiveRoleForUser($userId);
-        if (!in_array($blogRole, ['author', 'contributor'], true)) {
-            throw new PageNotFoundException('Workspace not available for this role.');
-        }
-
-        $status = trim((string) ($this->request->get['status'] ?? ''));
-        $page = max(1, (int) ($this->request->get['page'] ?? 1));
-
-        $workflowFilter = '';
-        if ($status === 'needs_changes') {
-            $workflowFilter = 'needs_changes';
-            $status = '';
-        }
-
-        $rows = $this->model->findByAuthorWithFiltersPagination(
-            authorId: $userId,
-            page: $page,
-            perPage: 12,
-            blogId: (int) $blog->id(),
-            status: $status,
-            workflowState: $workflowFilter
-        );
-
-        $counts = $this->model->countsByStatusForAuthor(authorId: $userId, blogId: (int) $blog->id());
-        // Archived isn't a workspace tab; "all" only spans what the writer can see here.
-        $counts['all'] = $counts['draft'] + $counts['pending'] + $counts['published'] + $counts['scheduled'];
-
-        $settings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
-        $workflowEnabled = !empty($settings['workflow_enabled']);
-
-        breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-            ['label' => 'My Work', 'url' => null, 'key' => 'breadcrumbs.myWork'],
-        ], true);
-
-        return $this->view('post.workspace', [
-            'blog' => $blog->toArray(),
-            'blogRole' => $blogRole,
-            'posts' => $rows['data'],
-            'postViews' => $this->postViews($blog, $rows['data']),
-            'pagination' => $rows['pagination'],
-            'status' => $workflowFilter !== '' ? $workflowFilter : $status,
-            'counts' => $counts,
-            'workflowEnabled' => $workflowEnabled,
-        ]);
     }
 
     /**
@@ -1463,21 +1264,6 @@ final class PostController extends AppController
     }
 
     /**
-     * The post list this person reaches the post from: owners use All Posts,
-     * editors the blog's Posts page and writers their workspace.
-     *
-     * @return array{label: string, url: string, key: string}
-     */
-    private function postListFor(\App\Resources\BlogResource $blog, ?string $blogRole): array
-    {
-        return match ($blogRole) {
-            'editor' => ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts'],
-            'author', 'contributor' => ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'],
-            default => ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'],
-        };
-    }
-
-    /**
      * Normalize the SEO / social fields for storage.
      *
      * Checkboxes arrive only when ticked, so the two robots flags are forced
@@ -1517,7 +1303,7 @@ final class PostController extends AppController
      * The form submits an intent ("publish", "save_draft", ...) rather than a
      * status, so the buttons can stay readable while the mapping lives in one
      * place. Whatever comes back is still passed through
-     * WorkflowService::constrainStatusForRole(), which is what actually
+     * WorkflowService::constrainStatus(), which is what actually
      * enforces who may publish.
      *
      * The whitelist lives here rather than in the validation rules because a
