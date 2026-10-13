@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
-{% block title %}{{ blog.blog_name }} · Review queue{% endblock %}
-{% block subtitle %}Posts waiting on a reviewer: yours to claim or pass along.{% endblock %}
+{% block title %}{{ blog.blog_name }} · {{ t('navigation.reviewQueue') }}{% endblock %}
+{% block subtitle %}{{ t('dashboard.reviewQueue.subtitle') }}{% endblock %}
 {% block body %}
 <?php
 $workflowBadge = [
@@ -8,19 +8,15 @@ $workflowBadge = [
     'needs_changes' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
 ];
 $workflowLabel = [
-    'in_review' => 'In review',
-    'needs_changes' => 'Needs changes',
+    'in_review' => $t('dashboard.reviewQueue.states.in_review'),
+    'needs_changes' => $t('dashboard.reviewQueue.states.needs_changes'),
 ];
+$claimLabel = $t('dashboard.reviewQueue.claim');
+$releaseLabel = $t('dashboard.reviewQueue.release');
+$unassignLabel = $t('dashboard.reviewQueue.unassign');
+$openLabel = $t('dashboard.reviewQueue.open');
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-
-    <div class="flex items-center justify-between gap-3 mb-5">
-        <a href="/dashboard/shared"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            <i data-lucide="arrow-left" class="size-4"></i>
-            <span>Back to Shared</span>
-        </a>
-    </div>
 
     <section class="card">
         <div class="card-body">
@@ -28,19 +24,19 @@ $workflowLabel = [
                 <div>
                     <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 flex items-center gap-2">
                         <i data-lucide="clipboard-check" class="size-4 text-custom-500"></i>
-                        Review queue
+                        <?= e($t('navigation.reviewQueue')) ?>
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-zink-300 mt-1">
-                        Posts on <span class="font-medium"><?= e($blog['blog_name']) ?></span> awaiting reviewer action.
+                        <?= e($t('dashboard.reviewQueue.intro', ['blog' => $blog['blog_name']])) ?>
                     </p>
                 </div>
-                <span class="text-xs text-slate-500 dark:text-zink-400"><?= count($posts) ?> waiting</span>
+                <span class="text-xs text-slate-500 dark:text-zink-400"><?= e($t('dashboard.reviewQueue.waiting', ['count' => count($posts)])) ?></span>
             </header>
 
             {% if posts|empty %}
             <div class="text-center py-12">
                 <i data-lucide="check-circle" class="size-10 text-emerald-500 mx-auto mb-2"></i>
-                <p class="text-sm text-slate-500 dark:text-zink-300">Nothing waiting. The queue is empty.</p>
+                <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('dashboard.reviewQueue.empty')) ?></p>
             </div>
             {% else %}
             <ul class="divide-y divide-slate-100 dark:divide-zink-600">
@@ -62,43 +58,43 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                             <?= e($p['title']) ?>
                         </a>
                         <p class="text-xs text-slate-500 dark:text-zink-400 mt-0.5 flex flex-wrap items-center gap-2">
-                            <span>by <?= e($p['author_handle']) ?></span>
+                            <span><?= e($t('dashboard.reviewQueue.by', ['author' => $p['author_handle']])) ?></span>
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border <?= $workflowBadge[$state] ?? '' ?>">
                                 <?= e($workflowLabel[$state] ?? $state) ?>
                             </span>
                             <?php if ($unassigned) { ?>
-                                <span class="text-amber-600 dark:text-amber-400">Unassigned</span>
+                                <span class="text-amber-600 dark:text-amber-400"><?= e($t('dashboard.reviewQueue.unassigned')) ?></span>
                             <?php } elseif ($assignedToMe) { ?>
-                                <span class="text-emerald-600 dark:text-emerald-400">Assigned to you</span>
+                                <span class="text-emerald-600 dark:text-emerald-400"><?= e($t('dashboard.reviewQueue.assignedToYou')) ?></span>
                             <?php } else { ?>
-                                <span>Reviewing: <?= e($p['reviewer_handle']) ?></span>
+                                <span><?= e($t('dashboard.reviewQueue.reviewing', ['reviewer' => $p['reviewer_handle']])) ?></span>
                             <?php } ?>
                         </p>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
-                        <?php if ($unassigned && in_array($blogRole, ['reviewer', 'editor', 'owner'], true)) { ?>
+                        <?php if ($unassigned && !empty($canClaim)) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/assign-reviewer" class="m-0">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($currentUserId ?? 0) ?>">
-                            {% cmp="btn" type="submit" variant="sky" icon="user-plus" label="Claim" %}
+                            {% cmp="btn" type="submit" variant="sky" icon="user-plus" label="{$claimLabel}" %}
                         </form>
                         <?php } elseif ($assignedToMe) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/unassign-reviewer" class="m-0"
-                              data-confirm="Release this post back to the queue?">
+                              data-confirm="<?= e($t('dashboard.reviewQueue.releaseConfirm')) ?>">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($currentUserId ?? 0) ?>">
-                            {% cmp="btn" type="submit" variant="slate" icon="log-out" label="Release" %}
+                            {% cmp="btn" type="submit" variant="slate" icon="log-out" label="{$releaseLabel}" %}
                         </form>
-                        <?php } elseif (!$unassigned && (in_array($blogRole, ['editor', 'owner'], true) || !empty($isAdmin))) { ?>
+                        <?php } elseif (!$unassigned && !empty($canManageReviewers)) { ?>
                         <form method="post" action="/dashboard/posts/<?= (int) $p['id'] ?>/workflow/unassign-reviewer" class="m-0"
-                              data-confirm="Unassign <?= e($p['reviewer_handle']) ?>?">
+                              data-confirm="<?= e($t('dashboard.reviewQueue.unassignConfirm', ['reviewer' => $p['reviewer_handle']])) ?>">
                             {{ csrf_field() }}
                             <input type="hidden" name="reviewer_id" value="<?= (int) ($p['reviewer_id'] ?? 0) ?>">
-                            {% cmp="btn" type="submit" variant="slate" icon="user-minus" label="Unassign" %}
+                            {% cmp="btn" type="submit" variant="slate" icon="user-minus" label="{$unassignLabel}" %}
                         </form>
                         <?php } ?>
-                        {% cmp="btn" href="{$reviewHref}" variant="blue" icon="eye" label="Open" %}
+                        {% cmp="btn" href="{$reviewHref}" variant="blue" icon="eye" label="{$openLabel}" %}
                     </div>
                 </li>
                 {% endforeach %}

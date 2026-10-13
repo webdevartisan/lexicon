@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Gate;
 use App\Helpers\TimezoneHelper;
 use App\Models\PostModel;
 use DateTime;
@@ -50,8 +51,6 @@ final class PostAutosaveService
             }
         }
 
-        $data['author_id'] = $userId;
-
         if ($postId) {
             // Update existing post
             $post = $this->posts->findResource($postId);
@@ -60,7 +59,8 @@ final class PostAutosaveService
                 return ['success' => false, 'error' => 'Post not found'];
             }
 
-            if ($post->authorId() !== $userId) {
+            // The same rule as the editor's Save: it covers the in-review lock and a writer who lost access.
+            if (!Gate::allows('update', $post, auth()->user())) {
                 return ['success' => false, 'error' => 'Unauthorized'];
             }
 
@@ -86,6 +86,7 @@ final class PostAutosaveService
             }
 
             $data['blog_id'] = $blogId;
+            $data['author_id'] = $userId;
             if (!empty($data['slug'])) {
                 $data['slug'] = $this->posts->availableSlug($blogId, (string) $data['slug']);
             }

@@ -2,14 +2,17 @@
 $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
 $returnToken = $returnToken ?? '';
+// Pages that list posts for one role pass what that person may do with each; without it every action shows.
+$can = ($post['can'] ?? []) + ['update' => true, 'publish' => true, 'delete' => true];
+$viewCount = (int) ($post['views'] ?? 0);
 
 $status = $post['status'] ?? 'draft';
 $statusStyles = [
-    'published' => ['bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800', 'Published'],
-    'draft' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'Draft'],
-    'pending' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', 'Pending'],
-    'scheduled' => ['bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-800', 'Scheduled'],
-    'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', 'Archived'],
+    'published' => ['bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800', $t('components.postCard.status.published')],
+    'draft' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', $t('components.postCard.status.draft')],
+    'pending' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', $t('components.postCard.status.pending')],
+    'scheduled' => ['bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-800', $t('components.postCard.status.scheduled')],
+    'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', $t('components.postCard.status.archived')],
 ];
 [$badgeClass, $badgeLabel] = $statusStyles[$status] ?? $statusStyles['draft'];
 
@@ -40,9 +43,9 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                 ?>
                 <div class="mb-2">
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30"
-                          title="Currently under review">
+                          title="<?= e($t('components.postCard.underReview')) ?>">
                         {% cache 'lucide:lock:sm' ttl=31536000 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
-                        Reviewed by <?= e($post['reviewer_handle']) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
+                        <?= e($t('components.postCard.reviewedBy', ['reviewer' => $post['reviewer_handle']])) ?><?= $claimedAgo ? ' · '.e($claimedAgo) : '' ?>
                     </span>
                 </div>
                 <?php
@@ -50,9 +53,9 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                 ?>
                 <div class="mb-2">
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30"
-                          title="No reviewer has claimed this post yet">
+                          title="<?= e($t('components.postCard.unclaimed')) ?>">
                         {% cache 'lucide:user-plus:sm' ttl=31536000 %}<i data-lucide="user-plus" class="size-3"></i>{% endcache %}
-                        Awaiting reviewer
+                        <?= e($t('components.postCard.awaitingReviewer')) ?>
                     </span>
                 </div>
                 <?php
@@ -67,9 +70,13 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
         </div>
 
         <h6 class="mb-2 text-15 line-clamp-2">
+            <?php if ($can['update']) { ?>
             <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="hover:text-custom-500 transition-colors">
                 {{ post.title }}
             </a>
+            <?php } else { ?>
+            {{ post.title }}
+            <?php } ?>
         </h6>
         <p class="text-slate-500 dark:text-zink-200 line-clamp-3 text-sm flex-1">
             <?= e(post_excerpt($post, 120)) ?>
@@ -100,9 +107,15 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                 <?= e((string) $post['blog_name']) ?>
             </span>
             <?php } ?>
+            <?php if ($viewCount > 0) { ?>
+            <a href="<?= e(lurl('/dashboard/blog/'.(int) $post['blog_id'].'/insights/posts/'.(int) $post['id'])) ?>" class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors" title="<?= e($t('analytics.topPosts.details')) ?>">
+                {% cache 'lucide:bar-chart-3:traffic-post-views' ttl=31536000 %}<i data-lucide="bar-chart-3" class="size-3" aria-hidden="true"></i>{% endcache %}
+                <?= e($t($viewCount === 1 ? 'analytics.viewsOne' : 'analytics.viewsMany', ['count' => number_format($viewCount)])) ?>
+            </a>
+            <?php } ?>
             <?php if (!empty($post['tags'])) { ?>
                 <?php foreach (array_slice($post['tags'], 0, 3) as $tg) { ?>
-                <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>&blog_id=<?= (int) ($post['blog_id'] ?? 0) ?>"
+                <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>"
                    class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
                     {% cache 'lucide:tag:sm' ttl=31536000 %}<i data-lucide="tag" class="size-3"></i>{% endcache %}
                     <?= e((string) $tg['name']) ?>
@@ -112,15 +125,23 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
         </div>
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
+            <?php if ($can['update']) { ?>
             <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
                 {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                 <span>{{ editTooltip }}</span>
             </a>
+            <?php } else { ?>
+            <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-zink-300">
+                {% cache 'lucide:lock:sm' ttl=31536000 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
+                <?= e($t('components.postCard.locked')) ?>
+            </span>
+            <?php } ?>
 
             <!-- Secondary actions live in one menu so cards stay readable on small screens. -->
+            <?php if ($status === 'published' || $can['publish'] || $can['update'] || $can['delete']) { ?>
             <div class="relative dropdown">
-                <button type="button" aria-haspopup="menu" aria-label="Post actions"
+                <button type="button" aria-haspopup="menu" aria-label="<?= e($t('components.postCard.actionsMenu')) ?>"
                     class="dropdown-toggle p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
                     {% cache 'lucide:more-vertical' ttl=31536000 %}<i data-lucide="more-vertical" class="size-4"></i>{% endcache %}
                 </button>
@@ -134,7 +155,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     </a>
                     {% endif %}
 
-                    {% if (($post['status'] === 'draft') || ($post['status'] === 'archived') || ($post['status'] === 'scheduled')): %}
+                    {% if ($can['publish'] && (($post['status'] === 'draft') || ($post['status'] === 'archived') || ($post['status'] === 'scheduled'))): %}
                     <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"
@@ -145,7 +166,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     </form>
                     {% endif %}
 
-                    {% if (($post['status'] === 'archived') || ($post['status'] === 'published') || ($post['status'] === 'scheduled')): %}
+                    {% if ($can['publish'] && (($post['status'] === 'archived') || ($post['status'] === 'published') || ($post['status'] === 'scheduled'))): %}
                     <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"
@@ -156,7 +177,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     </form>
                     {% endif %}
 
-                    {% if ($post['status'] !== 'archived'): %}
+                    {% if ($can['publish'] && $post['status'] !== 'archived'): %}
                     <form method="POST" action="/dashboard/post/{{ post.id }}/archive" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"
@@ -167,20 +188,23 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     </form>
                     {% endif %}
 
+                    <?php if ($can['update']) { ?>
                     <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">
                         {{ csrf_field() }}
                         <button type="submit"
                             class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-amber-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
                             <?php if (!empty($post['is_featured'])) { ?>
                                 {% cache 'lucide:star:filled' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-amber-400 text-amber-500"></i>{% endcache %}
-                                <span>Unfeature</span>
+                                <span><?= e($t('components.postCard.unfeature')) ?></span>
                             <?php } else { ?>
                                 {% cache 'lucide:star:outline' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
-                                <span>Feature on homepage</span>
+                                <span><?= e($t('components.postCard.feature')) ?></span>
                             <?php } ?>
                         </button>
                     </form>
+                    <?php } ?>
 
+                    <?php if ($can['delete']) { ?>
                     <div class="my-1.5 border-t border-slate-100 dark:border-zink-500" aria-hidden="true"></div>
 
                     <!-- No JS confirm here: the delete action renders its own confirmation page. -->
@@ -192,8 +216,10 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                             <span>{{ deleteTooltip }}</span>
                         </button>
                     </form>
+                    <?php } ?>
                 </div>
             </div>
+            <?php } ?>
         </div>
     </div>
 </div>

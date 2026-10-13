@@ -33,7 +33,7 @@ final class MediaController extends AppController
     {
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
-        Gate::authorize('view', $blog, $user);
+        Gate::authorize('listPosts', $blog, $user);
 
         // Pull anything new on disk into the table the first time the library is opened for this blog
         $this->mediaService->backfill($blog->id(), $blog->ownerId(), (int) $user['id']);
@@ -62,7 +62,7 @@ final class MediaController extends AppController
     {
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
-        Gate::authorize('view', $blog, $user);
+        Gate::authorize('listPosts', $blog, $user);
 
         $source = (string) ($this->request->get['source'] ?? '');
         $filters = [
@@ -89,7 +89,7 @@ final class MediaController extends AppController
     {
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
-        Gate::authorize('view', $blog, $user);
+        Gate::authorize('listPosts', $blog, $user);
 
         $row = $this->mediaService->details((int) $id, $blog->id());
         if (!$row) {

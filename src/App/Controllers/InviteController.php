@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\BlogInvitationModel;
 use App\Models\UserModel;
+use App\Models\UserPreferencesModel;
 use App\Services\InvitationService;
 use Framework\Core\Response;
 
@@ -23,7 +24,8 @@ final class InviteController extends AppController
     public function __construct(
         private BlogInvitationModel $invitationModel,
         private InvitationService $invitationService,
-        private UserModel $userModel
+        private UserModel $userModel,
+        private UserPreferencesModel $preferences,
     ) {}
 
     /**
@@ -98,7 +100,10 @@ final class InviteController extends AppController
         if ($invite !== false) {
             $this->flash('success', "You've joined the blog as {$invite['role']}.");
 
-            return $this->redirect(lurl("/dashboard/blog/{$invite['blog_id']}/show"));
+            // The invited blog only becomes active when none was; otherwise it waits on Blogs, under Shared.
+            $active = $this->preferences->getDefaultBlogId((int) auth()->user()['id']);
+
+            return $this->redirect(lurl($active === (int) $invite['blog_id'] ? '/dashboard' : '/dashboard/blog'));
         }
 
         $this->flash('success', "You've joined the blog.");

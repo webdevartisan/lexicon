@@ -40,7 +40,7 @@ function makeWorkflowService(
 
     if ($blogs === null) {
         $blogs = Mockery::mock(BlogModel::class);
-        $blogs->shouldReceive('getActiveUsersWithRoles')->andReturn([])->byDefault();
+        $blogs->shouldReceive('getActiveUsersWithPermission')->andReturn([])->byDefault();
     }
 
     if ($blogSettings === null) {
@@ -93,10 +93,10 @@ describe('WorkflowService::submitForReview', function () {
         $postReviewer = Mockery::mock(PostReviewerModel::class);
         $postReviewer->shouldReceive('findByPost')->with(10)->andReturn([]);
 
-        // Blog 42 has the owner (1) and the author (5) in reviewer-capable roles
+        // Blog 42 has the owner (1) and the author (5) holding review_posts
         $blogs = Mockery::mock(BlogModel::class);
-        $blogs->shouldReceive('getActiveUsersWithRoles')
-            ->with(42, ['owner', 'editor', 'reviewer'])
+        $blogs->shouldReceive('getActiveUsersWithPermission')
+            ->with(42, 'review_posts')
             ->andReturn([['user_id' => 1], ['user_id' => 5]]);
 
         $notifications = Mockery::mock(NotificationService::class);
@@ -374,10 +374,10 @@ describe('WorkflowService::disableWorkflow', function () {
 });
 
 // ============================================================================
-// constrainStatusForRole
+// constrainStatus / canPublish
 // ============================================================================
 
-describe('WorkflowService::constrainStatusForRole', function () {
+describe('WorkflowService::constrainStatus', function () {
 
     function makeConstraintService(bool $workflowEnabled): WorkflowService
     {
@@ -388,40 +388,60 @@ describe('WorkflowService::constrainStatusForRole', function () {
         return makeWorkflowService(null, null, null, null, null, null, $blogSettings);
     }
 
-    test('owner and editor keep whatever status they requested', function () {
+    test('someone who may publish keeps whatever status they requested', function () {
         $service = makeConstraintService(workflowEnabled: true);
 
-        expect($service->constrainStatusForRole('published', 'owner', 42))->toBe('published');
-        expect($service->constrainStatusForRole('archived', 'editor', 42, 'published'))->toBe('archived');
+        expect($service->constrainStatus('published', true, 42))->toBe('published');
+        expect($service->constrainStatus('archived', true, 42, 'published'))->toBe('archived');
     });
 
-    test('author may publish while the blog has no review pipeline', function () {
-        $service = makeConstraintService(workflowEnabled: false);
-
-        expect($service->constrainStatusForRole('published', 'author', 42))->toBe('published');
-    });
-
-    test('author publishing on a workflow blog is clamped to pending', function () {
+    test('publishing without authority on a workflow blog is clamped to pending', function () {
         $service = makeConstraintService(workflowEnabled: true);
 
-        expect($service->constrainStatusForRole('published', 'author', 42))->toBe('pending');
+        expect($service->constrainStatus('published', false, 42))->toBe('pending');
     });
 
-    test('contributor publishing without workflow is clamped to draft', function () {
+    test('publishing without authority and without workflow is clamped to draft', function () {
         $service = makeConstraintService(workflowEnabled: false);
 
-        expect($service->constrainStatusForRole('published', 'contributor', 42))->toBe('draft');
+        expect($service->constrainStatus('published', false, 42))->toBe('draft');
     });
 
     test('resubmitting the current status is always allowed', function () {
         $service = makeConstraintService(workflowEnabled: true);
 
-        expect($service->constrainStatusForRole('published', 'contributor', 42, 'published'))->toBe('published');
+        expect($service->constrainStatus('published', false, 42, 'published'))->toBe('published');
     });
 
-    test('contributor cannot unpublish a published post', function () {
+    test('a post cannot be unpublished without publish authority', function () {
         $service = makeConstraintService(workflowEnabled: true);
 
-        expect($service->constrainStatusForRole('draft', 'contributor', 42, 'published'))->toBe('published');
+        expect($service->constrainStatus('draft', false, 42, 'published'))->toBe('published');
+    });
+});
+
+describe('WorkflowService::canPublish', function () {
+
+    function blogGranting(array $permissions): BlogResource
+    {
+        $blog = Mockery::mock(BlogResource::class);
+        $blog->shouldReceive('id')->andReturn(42);
+        $blog->shouldReceive('userCan')->andReturnUsing(fn (int $userId, string $slug): bool => in_array($slug, $permissions, true));
+
+        return $blog;
+    }
+
+    test('publish_blog_posts publishes with or without the pipeline', function () {
+        expect(makeConstraintService(workflowEnabled: true)->canPublish(blogGranting(['publish_blog_posts']), 7))->toBeTrue()
+            ->and(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['publish_blog_posts']), 7))->toBeTrue();
+    });
+
+    test('publish_own_posts publishes only while the pipeline is off', function () {
+        expect(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['publish_own_posts']), 7))->toBeTrue()
+            ->and(makeConstraintService(workflowEnabled: true)->canPublish(blogGranting(['publish_own_posts']), 7))->toBeFalse();
+    });
+
+    test('a role without either permission never publishes, whatever its name', function () {
+        expect(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['create_posts', 'edit_own_posts']), 7))->toBeFalse();
     });
 });

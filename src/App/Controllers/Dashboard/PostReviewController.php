@@ -13,6 +13,7 @@ use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Services\BlogRoleLabels;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -34,6 +35,7 @@ final class PostReviewController extends AppController
         private PostReviewerModel $postReviewerModel,
         private ReviewModel $reviewModel,
         private BlogSettingsModel $blogSettingsModel,
+        private BlogRoleLabels $roleLabels,
     ) {}
 
     /**
@@ -49,10 +51,10 @@ final class PostReviewController extends AppController
 
         Gate::authorize('reviewPost', $post, $user);
 
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
         $workflowState = $post->workflowState();
         $status = $post->status();
         $currentUserId = (int) $user['id'];
+        $managesPosts = $blog->userCan($currentUserId, 'edit_blog_posts');
 
         // Lazy stale-reviewer guard: evaluated on page load, not at role-change time.
         $this->workflowService->checkStaleReviewer(
@@ -64,10 +66,10 @@ final class PostReviewController extends AppController
         $reviewers = $this->postReviewerModel->findByPost((int) $id);
 
         // Auto-claim / lock: first reviewer to open an unassigned pending post claims it.
-        // Owners/editors don't auto-claim, they can supervise without locking the post.
+        // Whoever manages every post supervises instead, without locking the post.
         $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($blogSettings['workflow_enabled']);
-        $isReviewerRole = $blogRole === 'reviewer';
+        $isReviewerRole = !$managesPosts;
         $postNeedsReview = $status === 'pending' || in_array($workflowState, ['in_review', 'needs_changes'], true);
 
         if ($workflowEnabled
@@ -111,49 +113,41 @@ final class PostReviewController extends AppController
 
         $canRequestReview = false; // Auto-triggered by status=pending now; no manual button.
 
+        $canPublishPosts = $blog->userCan($currentUserId, 'publish_blog_posts');
+
         $canMarkNeedsChanges = !$reviewerLocked
-            && in_array($blogRole, ['reviewer', 'editor', 'owner'], true)
+            && $blog->userCan($currentUserId, 'reject_posts')
             && in_array($workflowState, ['in_review', 'approved'], true);
 
         $canApprove = !$reviewerLocked
-            && in_array($blogRole, ['reviewer', 'editor', 'owner'], true)
+            && $blog->userCan($currentUserId, 'approve_posts')
             && in_array($workflowState, ['in_review', 'needs_changes'], true);
 
-        $canPublish = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && in_array($workflowState, ['approved'], true);
-
-        $canUnpublish = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && $status === 'published';
-
-        $canResetToDraft = !$reviewerLocked
-            && in_array($blogRole, ['editor', 'owner'], true)
-            && in_array($workflowState, ['approved'], true);
+        $canPublish = !$reviewerLocked && $canPublishPosts && $workflowState === 'approved';
+        $canUnpublish = !$reviewerLocked && $canPublishPosts && $status === 'published';
+        $canResetToDraft = !$reviewerLocked && $canPublishPosts && $workflowState === 'approved';
 
         // Self-assign button no longer needed: auto-claim handles it on page load.
         $canSelfAssign = false;
-        $canAssignReviewer = !$reviewerLocked && in_array($blogRole, ['editor', 'owner'], true);
+        $canManageReviewers = $this->managesReviewers($blog, $currentUserId);
+        $canAssignReviewer = !$reviewerLocked && $canManageReviewers;
 
-        // Dropdown candidates for editor/owner: reviewer-capable users not yet assigned, not the author
+        // Dropdown candidates: anyone who can review, not yet assigned, not the author
         $availableReviewers = [];
         if ($canAssignReviewer) {
-            $blogUsers = $this->blogModel->getBlogUsers((int) $blog->id());
-            foreach ($blogUsers as $blogUser) {
-                if ((int) $blogUser['user_id'] !== $post->authorId()
-                    && in_array($blogUser['role'], ['reviewer', 'editor', 'owner'], true)
-                    && !in_array((int) $blogUser['user_id'], $currentReviewerIds, true)) {
-                    $availableReviewers[] = $blogUser;
+            foreach ($this->blogModel->getActiveUsersWithPermission((int) $blog->id(), 'review_posts') as $candidate) {
+                $candidateId = (int) $candidate['user_id'];
+                if ($candidateId !== $post->authorId() && !in_array($candidateId, $currentReviewerIds, true)) {
+                    $availableReviewers[] = $candidate;
                 }
             }
         }
 
         breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            $blogRole === 'owner'
-                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
-                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-            ['label' => 'Review Queue', 'url' => '/dashboard/blog/'.$blog->id().'/review-queue', 'key' => 'breadcrumbs.reviewQueue'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
+            Gate::allows('reviewPosts', $blog, auth()->user())
+                ? ['label' => 'Review Queue', 'url' => '/dashboard/blog/'.$blog->id().'/review-queue', 'key' => 'breadcrumbs.reviewQueue']
+                : ['label' => 'Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.posts'],
             ['label' => 'Review Post', 'url' => null, 'key' => 'breadcrumbs.reviewPost'],
         ], true);
 
@@ -162,8 +156,8 @@ final class PostReviewController extends AppController
             'blog' => $blog->toArray(),
             'workflowState' => $workflowState,
             'status' => $status,
-            'blogRole' => $blogRole,
-            'isAdmin' => auth()->hasRole('administrator'),
+            'roleLabel' => $this->roleLabelFor($blog, $currentUserId),
+            'canManageReviewers' => $canManageReviewers || auth()->hasRole('administrator'),
             'currentUserId' => $currentUserId,
             'canRequestReview' => $canRequestReview,
             'canMarkNeedsChanges' => $canMarkNeedsChanges,
@@ -186,8 +180,8 @@ final class PostReviewController extends AppController
      * Per-blog review queue.
      *
      * Lists every post in workflow_state in_review or needs_changes for one
-     * blog, with assignment info. Anyone with a reviewer-capable role on the
-     * blog (reviewer, editor, owner) or site admin may see this.
+     * blog, with assignment info. Gated by review_posts, so owners, editors,
+     * reviewers and any custom role holding it; administrators get no bypass.
      *
      * @param  string  $blogId  Target blog
      */
@@ -196,29 +190,19 @@ final class PostReviewController extends AppController
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
 
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $isAdmin = auth()->hasRole('administrator');
-        if (!$isAdmin && !in_array($blogRole, ['reviewer', 'editor', 'owner'], true)) {
-            throw new PageNotFoundException('Review queue not available.');
-        }
-
+        Gate::authorize('reviewPosts', $blog, $user);
         $posts = $this->model->findReviewQueueForBlog((int) $blog->id());
 
-        // Trail roots where the user came from: owners browse their blogs,
-        // collaborators arrive through Shared.
         breadcrumbs()->set([
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            $blogRole === 'owner'
-                ? ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs']
-                : ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
             ['label' => 'Review Queue', 'url' => null, 'key' => 'breadcrumbs.reviewQueue'],
         ], true);
 
         return $this->view('post.reviewQueue', [
             'blog' => $blog->toArray(),
             'posts' => $posts,
-            'blogRole' => $blogRole,
-            'isAdmin' => $isAdmin,
+            'canClaim' => $blog->userCan((int) $user['id'], 'assign_reviewers'),
+            'canManageReviewers' => $this->managesReviewers($blog, (int) $user['id']) || auth()->hasRole('administrator'),
             'currentUserId' => (int) $user['id'],
         ]);
     }
@@ -397,11 +381,16 @@ final class PostReviewController extends AppController
         }
 
         $blog = $post->blog();
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
 
         // Reviewers may only self-assign
-        if ($blogRole === 'reviewer' && $reviewerId !== (int) $user['id']) {
+        if (!$this->managesReviewers($blog, (int) $user['id']) && $reviewerId !== (int) $user['id']) {
             $this->flash('error', 'Reviewers may only assign themselves.');
+
+            return $this->redirectBack();
+        }
+
+        if (!$blog->userCan($reviewerId, 'review_posts')) {
+            $this->flash('error', 'That person cannot review posts on this blog.');
 
             return $this->redirectBack();
         }
@@ -449,12 +438,9 @@ final class PostReviewController extends AppController
             return $this->redirectBack();
         }
 
-        $blog = $post->blog();
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        $isAdmin = auth()->hasRole('administrator');
         $isSelfRelease = $reviewerId === (int) $user['id'];
 
-        $canUnassignOthers = $isAdmin || in_array($blogRole, ['owner', 'editor'], true);
+        $canUnassignOthers = auth()->hasRole('administrator') || $this->managesReviewers($post->blog(), (int) $user['id']);
         if (!$canUnassignOthers && !$isSelfRelease) {
             $this->flash('error', 'Only the assigned reviewer, an editor, or the owner can unassign.');
 
@@ -515,5 +501,26 @@ final class PostReviewController extends AppController
         }
 
         return $blog;
+    }
+
+    /**
+     * Whether a user may hand posts to other reviewers: managing every post
+     * plus the assign permission. Reviewers who only hold the assign permission
+     * may claim and release for themselves.
+     */
+    private function managesReviewers(BlogResource $blog, int $userId): bool
+    {
+        return $blog->userCan($userId, 'edit_blog_posts') && $blog->userCan($userId, 'assign_reviewers');
+    }
+
+    /**
+     * The viewer's role on the blog as shown on the review screen, custom
+     * roles under their own name.
+     */
+    private function roleLabelFor(BlogResource $blog, int $userId): ?string
+    {
+        $role = $blog->ownerId() === $userId ? 'owner' : $this->blogModel->storedRoleFor($blog->id(), $userId);
+
+        return $role === null ? null : $this->roleLabels->label($role);
     }
 }

@@ -15,6 +15,7 @@ use App\Models\UserPreferencesModel;
 use App\Presenters\BlogActionPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
+use App\Services\BlogRoleLabels;
 use App\Services\LocaleRegistry;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
@@ -36,69 +37,100 @@ final class BlogController extends AppController
         private UserPreferencesModel $preference,
         private BlogDeletionService $blogDeletion,
         private WorkflowService $workflowService,
+        private BlogRoleLabels $roleLabels,
     ) {}
 
     /**
-     * List user's blogs with stats.
+     * Every blog the user works in, owned first, then shared, with the role
+     * they hold on each. Opening one makes it the active blog.
      */
     public function index(): Response
     {
         $user = auth()->user();
+        $userId = (int) $user['id'];
+        $accessible = $this->blogModel->getAccessibleBlogs($userId);
 
-        // Same rule as the dashboard home: no owned or shared blogs means
-        // there is no workspace to show, only the blank slate at "/".
-        if (empty($this->blogModel->getAccessibleBlogs((int) $user['id']))) {
-            return $this->redirect('/');
+        // Same rule as the Overview: no owned or shared blogs means there is
+        // no workspace to show, only the blank slate at "/".
+        if ($accessible === []) {
+            return $this->redirect('/?welcome=1');
         }
 
-        $q = trim((string) ($this->request->get['q'] ?? ''));
-        $status = trim((string) ($this->request->get['status'] ?? ''));
-        $sort = (string) ($this->request->get['sort'] ?? 'updated');
+        $q = trim((string) $this->request->getParam('q', ''));
+        $status = trim((string) $this->request->getParam('status', ''));
+        $sort = (string) $this->request->getParam('sort', 'updated');
         if (!in_array($sort, ['updated', 'created', 'posts', 'name'], true)) {
             $sort = 'updated';
         }
 
-        // "All Blogs" is the owner workspace listing. Shared blogs live on
-        // /dashboard/shared and shouldn't appear here.
-        $blogs = $this->blogModel->getBlogsByOwnerWithCounts((int) $user['id']);
+        $blogs = $this->filterAndSort($accessible, $q, $status, $sort);
+        $activeBlogId = (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
 
-        // Merge settings into each blog (banner/logo/theme/locale live there)
-        $blogs = array_map(function (array $blog): array {
-            $settings = $this->settings->findByBlogId((int) $blog['id']);
-
-            return array_merge($blog, $settings ?? []);
-        }, $blogs);
-
-        // Owner's blogs are few, so filter/sort in PHP rather than re-querying.
-        if ($q !== '') {
-            $needle = mb_strtolower($q);
-            $blogs = array_filter($blogs, static function (array $b) use ($needle): bool {
-                return str_contains(mb_strtolower((string) ($b['blog_name'] ?? '')), $needle)
-                    || str_contains(mb_strtolower((string) ($b['blog_slug'] ?? '')), $needle)
-                    || str_contains(mb_strtolower((string) ($b['description'] ?? '')), $needle);
-            });
+        $groups = ['owned' => [], 'shared' => []];
+        foreach ($blogs as $blog) {
+            $groups[$blog['user_role'] === 'owner' ? 'owned' : 'shared'][] = $this->blogCard($blog, $activeBlogId);
         }
-
-        if (in_array($status, ['draft', 'published', 'archived'], true)) {
-            $blogs = array_filter($blogs, static fn (array $b): bool => ($b['status'] ?? '') === $status);
-        }
-
-        usort($blogs, static function (array $a, array $b) use ($sort): int {
-            return match ($sort) {
-                'created' => strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? '')),
-                'posts' => ((int) ($b['post_count'] ?? 0)) <=> ((int) ($a['post_count'] ?? 0)),
-                'name' => strcasecmp((string) ($a['blog_name'] ?? ''), (string) ($b['blog_name'] ?? '')),
-                default => strcmp((string) ($b['updated_at'] ?? ''), (string) ($a['updated_at'] ?? '')),
-            };
-        });
 
         return $this->view([
-            'blogs' => $blogs,
+            'groups' => $groups,
+            'hasOwned' => in_array('owner', array_column($accessible, 'user_role'), true),
+            'hasShared' => array_filter($accessible, static fn (array $b): bool => $b['user_role'] !== 'owner') !== [],
             'q' => $q,
             'status' => $status,
             'sort' => $sort,
-            'selectedBlogId' => (int) ($this->preference->getDefaultBlogId((int) $user['id']) ?? 0),
         ]);
+    }
+
+    /**
+     * The user's blogs are few, so filtering and sorting happen here rather than in SQL.
+     *
+     * @param  array<int, array<string, mixed>>  $blogs
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterAndSort(array $blogs, string $q, string $status, string $sort): array
+    {
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $blogs = array_filter($blogs, static fn (array $b): bool => str_contains(mb_strtolower((string) $b['blog_name']), $needle)
+                || str_contains(mb_strtolower((string) $b['blog_slug']), $needle)
+                || str_contains(mb_strtolower((string) ($b['description'] ?? '')), $needle));
+        }
+
+        if (in_array($status, ['draft', 'published', 'archived'], true)) {
+            $blogs = array_filter($blogs, static fn (array $b): bool => $b['status'] === $status);
+        }
+
+        usort($blogs, static fn (array $a, array $b): int => match ($sort) {
+            'created' => strcmp((string) $b['created_at'], (string) $a['created_at']),
+            'posts' => (int) $b['post_count'] <=> (int) $a['post_count'],
+            'name' => strcasecmp((string) $a['blog_name'], (string) $b['blog_name']),
+            default => strcmp((string) $b['updated_at'], (string) $a['updated_at']),
+        });
+
+        return $blogs;
+    }
+
+    /**
+     * One card on the Blogs page. The settings and team shortcuts follow the
+     * role's permissions; those pages still authorize on their own.
+     *
+     * @param  array<string, mixed>  $blog  Row from getAccessibleBlogs()
+     * @return array<string, mixed>
+     */
+    private function blogCard(array $blog, int $activeBlogId): array
+    {
+        $role = (string) $blog['user_role'];
+        $permissions = $this->blogModel->permissionsForRole($role === 'owner' ? 'blog_owner' : $role);
+        $settings = $this->settings->findByBlogId((int) $blog['id']) ?? [];
+
+        return $blog + [
+            'banner_path' => $settings['banner_path'] ?? '',
+            'is_active' => (int) $blog['id'] === $activeBlogId,
+            'is_owner' => $role === 'owner',
+            'role_label' => $this->roleLabels->label($role),
+            'can_settings' => in_array('edit_own_blog', $permissions, true),
+            'can_team' => in_array('manage_team', $permissions, true),
+        ];
     }
 
     /**
@@ -210,15 +242,6 @@ final class BlogController extends AppController
         $user = auth()->user();
         $blog = $this->getBlog($id);
         Gate::authorize('update', $blog, $user);
-
-        if ($blog->effectiveRoleForUser((int) $user['id']) === 'editor') {
-            breadcrumbs()->set([
-                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-                ['label' => 'Blog Overview', 'url' => '/dashboard/blog/'.$blog->id().'/show', 'key' => 'breadcrumbs.blogOverview'],
-                ['label' => 'Blog Settings', 'url' => null, 'key' => 'breadcrumbs.blogSettings'],
-            ], true);
-        }
 
         // Load settings with defaults
         $settings = $this->settings->findByBlogId((int) $id) ?? [
@@ -377,64 +400,6 @@ final class BlogController extends AppController
     }
 
     /**
-     * Show blog details.
-     *
-     * @param  string  $id  Blog ID
-     */
-    public function show(string $id): Response
-    {
-        $user = auth()->user();
-        $blog = $this->getBlog($id);
-
-        Gate::authorize('view', $blog, $user);
-
-        // Overview is the admin surface. Reviewers, authors and contributors
-        // have role-specific landings on /dashboard/shared and shouldn't drop
-        // into blog configuration by URL.
-        $blogRole = $blog->effectiveRoleForUser((int) $user['id']);
-        if (!in_array($blogRole, ['owner', 'editor'], true)) {
-            throw new PageNotFoundException("Blog overview not available for role: {$blogRole}.");
-        }
-
-        // Editors arrive through Shared; the static pattern assumes All Blogs.
-        if ($blogRole === 'editor') {
-            breadcrumbs()->set([
-                ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-                ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'],
-                ['label' => 'Blog Overview', 'url' => null, 'key' => 'breadcrumbs.blogOverview'],
-            ], true);
-        }
-
-        $settings = $this->settings->findByBlogId((int) $id);
-
-        // Blog overview shows all posts in the blog, not just the viewer's own.
-        $stats = [
-            'published' => $this->post->countByBlogIdAndStatus((int) $id, 'published'),
-            'draft' => $this->post->countByBlogIdAndStatus((int) $id, 'draft'),
-            'pending' => $this->post->countByBlogIdAndStatus((int) $id, 'pending'),
-            'archived' => $this->post->countByBlogIdAndStatus((int) $id, 'archived'),
-            'comments' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'approved'),
-            'comments_pending' => $this->post->countCommentsByBlogIdAndStatus((int) $id, 'pending'),
-        ];
-        $stats['total'] = $stats['published'] + $stats['draft'] + $stats['pending'];
-
-        // Recent published posts blog-wide (all authors). Only owners and
-        // editors reach this action, so dropping the author scope is safe.
-        $recent = $this->post->findAllInBlogWithFilters(
-            blogId: (int) $id, page: 1, perPage: 6, status: 'published'
-        )['data'];
-
-        return $this->view([
-            'user' => $user,
-            'blog' => $blog->toArray(),
-            'settings' => $settings,
-            'stats' => $stats,
-            'recent' => $recent,
-            'blogRole' => $blogRole,
-        ]);
-    }
-
-    /**
      * Show blog deletion confirmation.
      *
      * @param  string  $id  Blog ID
@@ -517,62 +482,6 @@ final class BlogController extends AppController
 
             return $this->redirect("/dashboard/blog/{$blogId}/settings");
         }
-    }
-
-    /**
-     * Unpublish blog.
-     *
-     * @param  string  $id  Blog ID (from route)
-     */
-    public function unpublish(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $blogId = (int) $id;
-        $blog = $this->getBlog($blogId);
-        Gate::authorize('update', $blog, $user);
-
-        $this->blogModel->unpublishBlog($blogId);
-
-        audit()->log(
-            $user['id'],
-            'blog.unpublished',
-            'blog',
-            $blogId,
-            ['status' => 'draft'],
-            $this->request->ip()
-        );
-
-        return $this->redirect("/dashboard/blogs/{$blogId}/show");
-    }
-
-    /**
-     * Publish blog.
-     *
-     * @param  string  $id  Blog ID (from route)
-     */
-    public function publish(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $blogId = (int) $id;
-        $blog = $this->getBlog($blogId);
-        Gate::authorize('update', $blog, $user);
-
-        $this->blogModel->publishBlog($blogId);
-
-        audit()->log(
-            $user['id'],
-            'blog.published',
-            'blog',
-            $blogId,
-            ['status' => 'published'],
-            $this->request->ip()
-        );
-
-        return $this->redirect("/dashboard/blogs/{$blogId}/show");
     }
 
     /**

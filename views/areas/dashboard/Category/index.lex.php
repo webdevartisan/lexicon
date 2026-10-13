@@ -69,10 +69,10 @@ $panel = function (string $type, string $title, string $icon, array $items, stri
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <div class="flex items-center justify-between gap-3 mb-5">
-        <a href="/dashboard/blog/{{ blog.id }}/show"
+        <a href="/dashboard"
             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
-            <span>Back to blog</span>
+            <span><?= e($t('dashboard.overview.back')) ?></span>
         </a>
     </div>
 

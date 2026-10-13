@@ -73,7 +73,7 @@ $outcomes = [
 <?php } ?>
 
 <div class="flex flex-wrap items-center gap-3 mb-5">
-  <?php $postsUrl = lurl('/dashboard/blog/'.(int) $blog['id'].'/posts'); $postsLabel = $t('archive.result.viewPosts'); ?>
+  <?php $postsUrl = lurl('/dashboard/post'); $postsLabel = $t('archive.result.viewPosts'); ?>
   {% cmp="btn" href="{$postsUrl}" variant="blue" icon="files" label="{$postsLabel}" %}
   <a href="<?= e(lurl($basePath)) ?>" class="text-sm text-slate-500 hover:text-custom-500 dark:text-zink-300"><?= e($t('archive.result.back')) ?></a>
 </div>

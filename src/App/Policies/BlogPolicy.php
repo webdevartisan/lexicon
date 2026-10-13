@@ -135,6 +135,41 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
+     * Work on every post in the blog, not only one's own: the whole-blog Posts
+     * list and the blog's numbers on the Overview. Owner and editor.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function managePosts(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'edit_blog_posts');
+    }
+
+    /**
+     * Open the Posts page at all: anyone who writes here or manages what others wrote.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function listPosts(array $user, object $blog): bool
+    {
+        return $this->createPost($user, $blog) || $this->managePosts($user, $blog);
+    }
+
+    /**
+     * Open the blog's review queue. Owner, editor and reviewer.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function reviewPosts(array $user, object $blog): bool
+    {
+        assert($blog instanceof BlogResource);
+
+        return $blog->userCan((int) $user['id'], 'review_posts');
+    }
+
+    /**
      * Choose who a post in this blog is credited to. The same permission that
      * lets someone edit every post in the blog, so owner and editor only.
      *
@@ -196,8 +231,9 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * Delete the blog. Owner only (delete_own_blog is in the owner bundle and
-     * granted to no collaborator role).
+     * Delete the blog. Owner only: an admin can put delete_own_blog on a custom
+     * collaborator role, and that must not let a collaborator delete someone
+     * else's blog.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -205,6 +241,8 @@ class BlogPolicy implements PolicyInterface
     {
         assert($blog instanceof BlogResource);
 
-        return $blog->userCan((int) $user['id'], 'delete_own_blog');
+        $uid = (int) $user['id'];
+
+        return $blog->ownerId() === $uid && $blog->userCan($uid, 'delete_own_blog');
     }
 }

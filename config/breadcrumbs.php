@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * configure breadcrumb behavior and define translation keys for common patterns.
  * Translation keys follow the pattern: "breadcrumbs.{item}"
- * Example: "breadcrumbs.dashboard" → /locales/en.json → {"breadcrumbs": {"dashboard": "Dashboard"}}
+ * Example: "breadcrumbs.overview" → /locales/en.json → {"breadcrumbs": {"overview": "Overview"}}
  */
 
 return [
@@ -29,7 +29,7 @@ return [
      */
     'area_names' => [
         'front' => ['label' => 'Home', 'key' => 'breadcrumbs.home'],
-        'back' => ['label' => 'Dashboard', 'key' => 'breadcrumbs.dashboard'],
+        'back' => ['label' => 'Overview', 'key' => 'breadcrumbs.overview'],
         'admin' => ['label' => 'Admin Panel', 'key' => 'breadcrumbs.adminPanel'],
     ],
 
@@ -74,52 +74,36 @@ return [
         // Account settings moved to the front under /account, which has no
         // breadcrumb, so the old dashboard settings patterns were removed here.
 
-        // Blog management patterns
-        '/dashboard/blog/{id}/edit' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
-            ['label' => 'Edit Blog', 'url' => null, 'key' => 'breadcrumbs.editBlog'],
-        ],
-        '/dashboard/blog/{id}/show' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
-            ['label' => 'Blog Overview', 'url' => null, 'key' => 'breadcrumbs.blogOverview'],
+        // Dashboard pages work on the active blog, so every trail starts at its Overview.
+        '/dashboard/blog/{id}/settings' => [
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
+            ['label' => 'Blog Settings', 'url' => null, 'key' => 'breadcrumbs.blogSettings'],
         ],
         '/dashboard/blog/{id}/team' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
             ['label' => 'Collaborators', 'url' => null, 'key' => 'breadcrumbs.collaborators'],
         ],
         '/dashboard/blog/{id}/appearance' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
             ['label' => 'Appearance', 'url' => null, 'key' => 'breadcrumbs.appearance'],
         ],
         '/dashboard/blog/{id}/categories' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
             ['label' => 'Categories / Tags', 'url' => null, 'key' => 'breadcrumbs.categoriesTags'],
         ],
         '/dashboard/blog/{id}/media' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Blogs', 'url' => '/dashboard/blog', 'key' => 'breadcrumbs.allBlogs'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
             ['label' => 'Media Library', 'url' => null, 'key' => 'breadcrumbs.mediaLibrary'],
         ],
 
-        // Post management patterns
         '/dashboard/post/{id}/edit' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
+            ['label' => 'Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.posts'],
             ['label' => 'Edit Post', 'url' => null, 'key' => 'breadcrumbs.editPost'],
         ],
-        '/dashboard/post/{id}/review' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'],
-            ['label' => 'Review Post', 'url' => null, 'key' => 'breadcrumbs.reviewPost'],
-        ],
         '/dashboard/post/new' => [
-            ['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard'],
-            ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'],
+            ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
+            ['label' => 'Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.posts'],
             ['label' => 'Create New Post', 'url' => null, 'key' => 'breadcrumbs.createNewPost'],
         ],
 

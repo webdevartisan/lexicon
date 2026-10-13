@@ -10,8 +10,9 @@ use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 
 /**
- * The dashboard cards, the "Your blogs" list and the All Posts badges and list
- * must report the same number of published posts for a blog.
+ * The Overview cards and the Posts page tabs and list must report the same
+ * number of published posts, whether they cover the whole blog (owners and
+ * editors) or one writer's own posts.
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
@@ -23,22 +24,16 @@ beforeEach(function () {
     $this->blogId = BlogFactory::new($this->blogModel)->published()->create($this->ownerId);
     $this->otherBlogId = BlogFactory::new($this->blogModel)->published()->create($this->ownerId);
 
-    $this->publishedEverywhere = function (int $blogId): array {
-        $cards = $this->postModel->countsByStatusForBlogs([$blogId])[$blogId]['published'];
-        $pill = $this->postModel->countsByStatusForAuthor(
-            authorId: null,
-            blogId: $blogId,
-            blogOwnerId: $this->ownerId
-        )['published'];
+    $this->publishedEverywhere = function (int $blogId, ?int $authorId = null): array {
+        $counts = $this->postModel->countsByStatusForAuthor(authorId: $authorId, blogId: $blogId)['published'];
         $list = $this->postModel->findByAuthorWithFiltersPagination(
-            authorId: null,
+            authorId: $authorId,
             perPage: 100,
             blogId: $blogId,
-            status: 'published',
-            blogOwnerId: $this->ownerId
+            status: 'published'
         );
 
-        return [$cards, $pill, $list['pagination']['total_records'], count($list['data'])];
+        return [$counts, $list['pagination']['total_records'], count($list['data'])];
     };
 
     $this->makePost = function (int $blogId, int $authorId, string $status): int {
@@ -49,13 +44,13 @@ beforeEach(function () {
 });
 
 it('agrees on zero when the blog has no posts', function () {
-    expect(($this->publishedEverywhere)($this->blogId))->toBe([0, 0, 0, 0]);
+    expect(($this->publishedEverywhere)($this->blogId))->toBe([0, 0, 0]);
 });
 
 it('agrees on a single published post', function () {
     ($this->makePost)($this->blogId, $this->ownerId, 'published');
 
-    expect(($this->publishedEverywhere)($this->blogId))->toBe([1, 1, 1, 1]);
+    expect(($this->publishedEverywhere)($this->blogId))->toBe([1, 1, 1]);
 });
 
 it('counts only published posts among mixed statuses', function () {
@@ -63,42 +58,29 @@ it('counts only published posts among mixed statuses', function () {
         ($this->makePost)($this->blogId, $this->ownerId, $status);
     }
 
-    expect(($this->publishedEverywhere)($this->blogId))->toBe([2, 2, 2, 2]);
+    expect(($this->publishedEverywhere)($this->blogId))->toBe([2, 2, 2]);
 });
 
-it('includes a collaborator post in the owner blog everywhere', function () {
+it('includes a collaborator post in the whole-blog scope', function () {
     ($this->makePost)($this->blogId, $this->ownerId, 'published');
     ($this->makePost)($this->blogId, $this->collaboratorId, 'published');
 
-    expect(($this->publishedEverywhere)($this->blogId))->toBe([2, 2, 2, 2]);
+    expect(($this->publishedEverywhere)($this->blogId))->toBe([2, 2, 2]);
 });
 
-it('keeps each blog count separate across several blogs', function () {
+it('keeps a writer to their own posts in the own-posts scope', function () {
+    ($this->makePost)($this->blogId, $this->ownerId, 'published');
+    ($this->makePost)($this->blogId, $this->collaboratorId, 'published');
+    ($this->makePost)($this->blogId, $this->collaboratorId, 'draft');
+
+    expect(($this->publishedEverywhere)($this->blogId, $this->collaboratorId))->toBe([1, 1, 1]);
+});
+
+it('keeps each blog count separate', function () {
     ($this->makePost)($this->blogId, $this->ownerId, 'published');
     ($this->makePost)($this->otherBlogId, $this->ownerId, 'published');
     ($this->makePost)($this->otherBlogId, $this->ownerId, 'published');
 
-    $all = $this->postModel->countsByStatusForBlogs([$this->blogId, $this->otherBlogId]);
-
-    expect($all[$this->blogId]['published'])->toBe(1)
-        ->and($all[$this->otherBlogId]['published'])->toBe(2)
-        ->and(($this->publishedEverywhere)($this->otherBlogId))->toBe([2, 2, 2, 2]);
-});
-
-it('returns a zeroed entry for a blog with no posts among several', function () {
-    ($this->makePost)($this->blogId, $this->ownerId, 'draft');
-
-    $all = $this->postModel->countsByStatusForBlogs([$this->blogId, $this->otherBlogId]);
-
-    expect($all[$this->otherBlogId]['all'])->toBe(0)
-        ->and($all[$this->blogId]['draft'])->toBe(1);
-});
-
-it('keeps posts on blogs the user does not own out of the owner scope', function () {
-    $foreignBlog = BlogFactory::new($this->blogModel)->published()->create($this->collaboratorId);
-    ($this->makePost)($foreignBlog, $this->ownerId, 'published');
-
-    $pill = $this->postModel->countsByStatusForAuthor(authorId: null, blogOwnerId: $this->ownerId)['published'];
-
-    expect($pill)->toBe(0);
+    expect(($this->publishedEverywhere)($this->blogId))->toBe([1, 1, 1])
+        ->and(($this->publishedEverywhere)($this->otherBlogId))->toBe([2, 2, 2]);
 });

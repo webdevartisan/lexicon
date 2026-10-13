@@ -24,35 +24,28 @@
     "navigation": {
         "home": "Home",
         "adminNotifications": "Notifications",
-        "dashboard": "Dashboard",
         "createBlog": "Create a Blog",
         "discover": "Discover",
         "admin": "Admin",
-        "createNewBlog": "Create New Blog",
-        "allBlogs": "All Blogs",
         "accountSettings": "Account Settings",
         "blogSection": "Manage Blog",
-        "blogOverview": "Blog Overview",
         "editBlogSettings": "Blog Settings",
         "appearanceTheme": "Appearance",
         "collaborators": "Collaborators",
         "team": "Team",
         "subscribers": "Subscribers",
         "backup": "Backup & restore",
-        "shared": "Shared",
         "likedSaved": "Liked & Saved",
         "profile": "Profile",
         "contentSection": "Content",
         "peopleSection": "People",
         "systemSection": "System",
-        "newPost": "New Post",
-        "allPosts": "All Posts",
         "categoriesTags": "Categories / Tags",
         "mediaLibrary": "Media Library",
         "insights": "Insights",
         "toggleGroup": "Show or hide {name}",
         "insightsPages": {
-            "overview": "Overview",
+            "overview": "Summary",
             "blogs": "Blogs",
             "content": "Content",
             "audience": "Audience",
@@ -85,22 +78,16 @@
         "contact": "Contact",
         "frontPage": "Front Page",
         "pages": "Pages",
-        "account": "Account"
+        "account": "Account",
+        "overview": "Overview",
+        "reviewQueue": "Review queue"
     },
     "breadcrumbs": {
         "home": "Home",
-        "dashboard": "Dashboard",
         "adminPanel": "Admin Panel",
-        "allBlogs": "All Blogs",
-        "allPosts": "All Posts",
-        "shared": "Shared",
-        "myWork": "My Work",
         "reviewQueue": "Review Queue",
-        "blogPosts": "Posts",
-        "editBlog": "Edit Blog",
         "blogSettings": "Blog Settings",
         "editPost": "Edit Post",
-        "blogOverview": "Blog Overview",
         "reviewPost": "Review Post",
         "createNewPost": "Create New Post",
         "collaborators": "Team",
@@ -120,33 +107,12 @@
         "posts": "Posts",
         "account": "Account",
         "security": "Security",
-        "emailNotifications": "Email Notifications"
+        "emailNotifications": "Email Notifications",
+        "overview": "Overview"
     },
     "dashboard": {
-        "pageTitle": "Dashboard",
         "blogSelector": {
             "label": "Blog"
-        },
-        "emptyState": {
-            "title": "Welcome to Your Dashboard!",
-            "description": "You don't have any blogs yet. Create your first blog to start publishing amazing content.",
-            "actions": {
-                "createFirstBlog": "Create Your First Blog",
-                "gettingStarted": "Getting Started Guide"
-            },
-            "quickTips": {
-                "title": "Quick Tips",
-                "tip1": "A blog is a collection of posts organized under one name",
-                "tip2": "You can create multiple blogs for different topics",
-                "tip3": "Each blog can have its own settings and customization"
-            }
-        },
-        "tabs": {
-            "draft": "Draft",
-            "pending": "In Review",
-            "needsChanges": "Needs Changes",
-            "published": "Published",
-            "archived": "Archived"
         },
         "actions": {
             "newPost": "New Post",
@@ -157,8 +123,7 @@
             "posts": "Posts",
             "needsAttention": "Needs your attention",
             "recent": "Recently published",
-            "quickActions": "Quick actions",
-            "yourBlogs": "Your blogs"
+            "quickActions": "Quick actions"
         },
         "stats": {
             "published": "Published",
@@ -171,20 +136,233 @@
         "empty": {
             "noDrafts": "Nothing waiting. You're all caught up.",
             "noRecent": "No published posts yet. Hit \"New post\" to write your first."
+        },
+        "blogStatus": {
+            "published": "Published",
+            "draft": "Draft",
+            "archived": "Archived",
+            "suspended": "Suspended"
+        },
+        "switcher": {
+            "label": "Active blog",
+            "choose": "Choose a blog"
+        },
+        "blogs": {
+            "title": "Blogs",
+            "subtitle": "The blogs you own and the ones you were invited to. Open one to work in it.",
+            "groups": {
+                "owned": "Owned",
+                "shared": "Shared"
+            },
+            "search": "Search blogs",
+            "anyStatus": "Any status",
+            "sort": {
+                "updated": "Last updated",
+                "created": "Date created",
+                "posts": "Most posts",
+                "name": "Name (A to Z)"
+            },
+            "create": "Create a blog",
+            "clearFilters": "Clear filters",
+            "empty": {
+                "filteredTitle": "No blogs match your filters",
+                "filteredText": "Try a different search or another status.",
+                "noOwned": "You don't own a blog yet. Start one whenever you like.",
+                "groupFiltered": "None of these match your filters."
+            },
+            "active": "Active",
+            "open": "Open",
+            "settings": "Blog settings",
+            "team": "Team",
+            "leave": "Leave blog",
+            "leaveConfirm": "Leave “{name}”? You will need a new invitation to rejoin.",
+            "ownedBy": "Owned by {name}",
+            "postCount": "Posts: {count}",
+            "collaboratorCount": "Collaborators: {count}"
+        },
+        "posts": {
+            "subtitleAll": "Every post in this blog, whoever wrote it.",
+            "subtitleOwn": "The posts you wrote for this blog.",
+            "tabs": {
+                "all": "All",
+                "published": "Published",
+                "drafts": "Drafts",
+                "scheduled": "Scheduled",
+                "inReview": "In review",
+                "needsChanges": "Needs changes",
+                "archived": "Archived"
+            },
+            "sort": {
+                "label": "Sort",
+                "newest": "Newest first",
+                "oldest": "Oldest first",
+                "titleAsc": "Title A → Z",
+                "titleDesc": "Title Z → A"
+            },
+            "filters": {
+                "all": "All",
+                "search": "Search",
+                "searchPlaceholder": "Search by title or content...",
+                "category": "Category",
+                "tag": "Tag",
+                "apply": "Apply",
+                "byTag": "Filtering by tag:",
+                "clearTag": "Clear tag filter",
+                "clear": "Clear filters"
+            },
+            "empty": {
+                "draftTitle": "No drafts yet",
+                "draftText": "Start a new draft and come back to it whenever you want.",
+                "pendingTitle": "Nothing waiting for review",
+                "pendingText": "Posts submitted for review will show up here.",
+                "publishedTitle": "No published posts yet",
+                "publishedText": "Publish a draft when you are ready to make it live.",
+                "scheduledTitle": "Nothing scheduled",
+                "scheduledText": "Give a draft a future publish date and it will queue up here.",
+                "archivedTitle": "No archived posts",
+                "archivedText": "Archived posts will appear here.",
+                "noneTitle": "No posts yet",
+                "noneText": "Create your first post to get started.",
+                "searchTitle": "No matches for \"{query}\"",
+                "searchTextStatus": "Try changing the status filter or using a different search term.",
+                "searchText": "Try a different search term."
+            },
+            "bulk": {
+                "publish": "Publish",
+                "publishConfirm": "Publish {n}?",
+                "draft": "Move to draft",
+                "draftConfirm": "Move {n} to draft?",
+                "review": "Send for review",
+                "reviewConfirm": "Send {n} for review?",
+                "archive": "Archive",
+                "archiveConfirm": "Archive {n}?",
+                "delete": "Delete",
+                "deleteConfirm": "Permanently delete {n}? This cannot be undone."
+            },
+            "selectPost": "Select post: {title}"
+        },
+        "overview": {
+            "title": "Overview",
+            "yourRole": "Your role: {role}",
+            "myDrafts": "Your drafts",
+            "submitted": "Submitted",
+            "needsRevision": "Needs revision",
+            "myPublished": "Your published",
+            "awaitingReview": "Awaiting review",
+            "needsRevisit": "Needs revisit",
+            "pendingCount": "{count} pending",
+            "yourTraffic": "Your posts, last 7 days",
+            "reviewTitle": "Review queue",
+            "openQueue": "Open the queue",
+            "queueEmpty": "Nothing is waiting for review.",
+            "stateInReview": "In review",
+            "stateNeedsChanges": "Needs changes",
+            "unassigned": "No reviewer yet",
+            "yourDrafts": "Your drafts",
+            "allYourPosts": "All your posts",
+            "noDrafts": "No drafts in progress.",
+            "viewAll": "View all",
+            "back": "Back to overview"
+        },
+        "reviewQueue": {
+            "subtitle": "Posts waiting on a reviewer: yours to claim or pass along.",
+            "intro": "Posts on {blog} awaiting reviewer action.",
+            "waiting": "{count} waiting",
+            "empty": "Nothing waiting. The queue is empty.",
+            "states": {
+                "in_review": "In review",
+                "needs_changes": "Needs changes"
+            },
+            "by": "by {author}",
+            "unassigned": "Unassigned",
+            "assignedToYou": "Assigned to you",
+            "reviewing": "Reviewing: {reviewer}",
+            "claim": "Claim",
+            "release": "Release",
+            "releaseConfirm": "Release this post back to the queue?",
+            "unassign": "Unassign",
+            "unassignConfirm": "Unassign {reviewer}?",
+            "open": "Open"
+        },
+        "team": {
+            "subtitle": "Invite collaborators and manage who can write, review, and publish for this blog.",
+            "workflowOff": "Editorial workflow is off for this blog, so reviewer-related controls (review queue, reviewer role, workflow health) are hidden.",
+            "workflowOffTurnOn": "Turn it on in {link} if you want submissions to go through a review pipeline before publishing.",
+            "health": {
+                "title": "Workflow health",
+                "assigned": "In review, assigned",
+                "unassigned": "In review, unassigned",
+                "needsChanges": "Needs changes",
+                "approved": "Approved, not published",
+                "inReviewNow": "In review now",
+                "byLine": "by {author} · reviewed by {reviewer}"
+            },
+            "members": {
+                "title": "Active collaborators",
+                "empty": "No collaborators yet. Invite someone using the form to start working together.",
+                "role": "Role",
+                "remove": "Remove",
+                "removeConfirm": "Remove {handle} from this blog? They will need a new invitation to rejoin."
+            },
+            "invite": {
+                "title": "Invite by email",
+                "email": "Email",
+                "role": "Role",
+                "send": "Send invite",
+                "pending": "Pending invitations",
+                "expires": "{role} · expires {when}",
+                "cancel": "Cancel",
+                "expiredTitle": "Expired (resend to retry)",
+                "expired": "{role} · expired {date}",
+                "resend": "Resend",
+                "drop": "Drop"
+            },
+            "transfer": {
+                "title": "Transfer ownership",
+                "text": "Hand this blog to one of its collaborators. They get full control, including deleting it, and you stay on as an editor.",
+                "confirm": "Transfer ownership of this blog? You cannot undo this yourself.",
+                "newOwner": "New owner",
+                "password": "Your password"
+            },
+            "roles": {
+                "title": "What each role can do",
+                "note": "Only the blog owner can invite collaborators or change roles. To give an author full editing rights, promote them to editor.",
+                "owner": "Full control: invite collaborators, change roles, manage settings and publishing, and delete the blog. Comes with creating the blog.",
+                "editor": "Runs the content: create and edit any post, move posts through the workflow, approve, and publish.",
+                "author": "Creates and edits their own posts. Publishes them directly while editorial workflow is off, otherwise submits them for review.",
+                "contributor": "Lightest write access: draft posts and submit them for review. Cannot publish or approve.",
+                "reviewer": "Quality gate: review submissions, request changes, and approve. Cannot publish or manage the team.",
+                "custom": "Custom role defined by the site administrator. What it can do follows the permissions it was given in the control panel."
+            }
         }
     },
     "components": {
         "postCard": {
-            "actions": {
-                "preview": "Preview"
-            },
             "tooltips": {
                 "edit": "Edit",
                 "publish": "Publish",
                 "draft": "Draft It",
                 "archive": "Archive",
                 "delete": "Delete"
-            }
+            },
+            "locked": "Locked while in review",
+            "status": {
+                "published": "Published",
+                "draft": "Draft",
+                "pending": "Pending",
+                "scheduled": "Scheduled",
+                "archived": "Archived"
+            },
+            "underReview": "Currently under review",
+            "reviewedBy": "Reviewed by {reviewer}",
+            "awaitingReviewer": "Awaiting reviewer",
+            "unclaimed": "No reviewer has claimed this post yet",
+            "feature": "Feature on homepage",
+            "unfeature": "Unfeature",
+            "actions": {
+                "preview": "Preview"
+            },
+            "actionsMenu": "Post actions"
         },
         "paginator": {
             "ariaLabels": {
@@ -220,19 +398,39 @@
                 "current": "Current",
                 "preview": "Preview"
             }
+        },
+        "bulk": {
+            "selectAllPage": "Select all on this page",
+            "selected": "{count} selected",
+            "selectAllMatching": "Select all {count} matching this filter",
+            "clearSelection": "Clear selection",
+            "noneEligible": "None of the selected {items} can take this action",
+            "wholeFilter": "This is every one matching the filter on screen, not just this page.",
+            "skipped": "The other {count} selected will be skipped.",
+            "items": {
+                "post": {
+                    "one": "post",
+                    "other": "posts"
+                },
+                "comment": {
+                    "one": "comment",
+                    "other": "comments"
+                },
+                "email": {
+                    "one": "email",
+                    "other": "emails"
+                }
+            }
         }
     },
     "common": {
         "navigation": "Navigation",
         "blogManagement": "Blog Management",
-        "selectBlog": "Select a blog to see more options",
-        "sharedOnlyHint": "Your work lives in blogs shared with you.",
-        "openShared": "Open Shared",
+        "selectBlog": "Choose a blog to work in.",
         "createFirstBlogHint": "Start by creating your first blog.",
         "createFirstBlog": "Create a blog",
         "startWritingHint": "Feel like writing?",
         "startWriting": "Start a blog",
-        "welcome": "Welcome",
         "signOut": "Sign Out",
         "signedInAs": "Signed in as",
         "editProfile": "Edit Profile",
@@ -1705,6 +1903,15 @@
             "expired": "This import has expired or was already used. Upload the archive again.",
             "badOption": "Choose what to do with posts whose address is taken.",
             "throttled": "Too many archive requests. Try again in {minutes} minutes."
+        }
+    },
+    "roles": {
+        "blog": {
+            "owner": "Owner",
+            "editor": "Editor",
+            "author": "Author",
+            "reviewer": "Reviewer",
+            "contributor": "Contributor"
         }
     }
 }

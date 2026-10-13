@@ -14,6 +14,7 @@ use App\Models\PostReviewerModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
 use App\Services\BlogOwnershipService;
+use App\Services\BlogRoleLabels;
 use App\Services\InvitationService;
 use App\Services\NotificationService;
 use App\Services\PasswordConfirmRateLimiter;
@@ -39,6 +40,7 @@ final class CollaboratorController extends AppController
         private readonly BlogSettingsModel $blogSettingsModel,
         private readonly BlogOwnershipService $ownership,
         private readonly PasswordConfirmRateLimiter $passwordThrottle,
+        private readonly BlogRoleLabels $roleLabels,
     ) {}
 
     /**
@@ -90,10 +92,17 @@ final class CollaboratorController extends AppController
         // With the workflow off the reviewer role has nothing to do, so don't offer it on the invite form.
         // Custom blog-scope roles created in the control panel are offered too.
         $availableRoles = $this->blogModel->availableCollaboratorRoles($workflowEnabled);
+        $members = $blog->users();
+
+        $roleLabels = [];
+        foreach (['owner', ...$availableRoles, ...array_column($members, 'role')] as $role) {
+            $roleLabels[$role] ??= $this->roleLabels->label((string) $role);
+        }
 
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
-            'members' => $blog->users(),
+            'members' => $members,
+            'roleLabels' => $roleLabels,
             'pendingInvites' => $this->invitationModel->getPendingForBlog($blogIdInt),
             'expiredInvites' => $this->invitationModel->getExpiredForBlog($blogIdInt),
             'roles' => $availableRoles,
@@ -312,7 +321,7 @@ final class CollaboratorController extends AppController
 
         $this->flash('success', 'Ownership transferred. You stay on the blog as an editor.');
 
-        return $this->redirect(lurl('/dashboard/shared'));
+        return $this->redirect(lurl('/dashboard/blog'));
     }
 
     /**
@@ -339,7 +348,7 @@ final class CollaboratorController extends AppController
         if ($this->isLastWithRole((int) $blog->id(), (int) $user['id'], 'editor')) {
             $this->flash('error', 'You are the only editor on this blog. Ask the owner to promote someone before you leave.');
 
-            return $this->redirect(lurl('/dashboard/shared'));
+            return $this->redirect(lurl('/dashboard/blog'));
         }
 
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $user['id']);
@@ -349,7 +358,7 @@ final class CollaboratorController extends AppController
 
         $this->flash('success', 'You have left the blog. You will need a new invitation to rejoin.');
 
-        return $this->redirect(lurl('/dashboard/shared'));
+        return $this->redirect(lurl('/dashboard/blog'));
     }
 
     /**

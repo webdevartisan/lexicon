@@ -30,8 +30,26 @@
         });
     }
 
-    function itemLabel() {
-        return (mountedBar && mountedBar.dataset.itemLabel) || 'item';
+    // Wording and noun forms come from the component in the page's language.
+    function text() {
+        try {
+            return JSON.parse((mountedBar && mountedBar.dataset.text) || '{}');
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function fill(template, values) {
+        return String(template || '').replace(/\{(\w+)\}/g, function (match, name) {
+            return Object.prototype.hasOwnProperty.call(values, name) ? values[name] : match;
+        });
+    }
+
+    function noun(n) {
+        var forms = text().items || {};
+        var category = new Intl.PluralRules(document.documentElement.lang || 'en').select(n);
+
+        return forms[category] || forms.other || forms.one || '';
     }
 
     /** How many rows the page's filter matches in total, across every page. */
@@ -51,7 +69,7 @@
     function pluralized(n) {
         // Grouped, because a whole-filter selection can run to five figures and
         // "4415" in a confirmation is harder to read than the count above it.
-        return n.toLocaleString() + ' ' + itemLabel() + (n === 1 ? '' : 's');
+        return n.toLocaleString() + ' ' + noun(n);
     }
 
     /**
@@ -138,7 +156,7 @@
         var counter = document.getElementById('selected-count');
 
         if (counter) {
-            counter.textContent = n > 0 ? pluralized(n) + ' selected' : '';
+            counter.textContent = n > 0 ? fill(text().selected, {count: pluralized(n)}) : '';
         }
 
         if (!mountedBar) {
@@ -159,9 +177,9 @@
         var barCount = mountedBar.querySelector('[data-bulk-selected-count]');
 
         if (barCount) {
-            barCount.textContent = wholeFilter
-                ? matchTotal().toLocaleString() + ' selected'
-                : n + ' selected';
+            barCount.textContent = fill(text().selected, {
+                count: (wholeFilter ? matchTotal() : n).toLocaleString()
+            });
         }
 
         var scopeField = document.getElementById('bulk-scope');
@@ -177,8 +195,8 @@
 
             scopeToggle.classList.toggle('hidden', !offer);
             scopeToggle.textContent = wholeFilter
-                ? 'Clear selection'
-                : 'Select all ' + matchTotal().toLocaleString() + ' matching this filter';
+                ? text().clearSelection
+                : fill(text().selectAllMatching, {count: matchTotal().toLocaleString()});
         }
 
         mountedBar.querySelectorAll('[data-bulk]').forEach(function (button) {
@@ -186,7 +204,7 @@
             var badge = button.querySelector('[data-bulk-eligible-count]');
 
             button.disabled = eligible === 0;
-            button.title = eligible === 0 ? 'None of the selected ' + itemLabel() + 's can take this action' : '';
+            button.title = eligible === 0 ? fill(text().noneEligible, {items: (text().items || {}).other || ''}) : '';
             button.setAttribute('data-bulk-eligible', String(eligible));
 
             if (badge) {
@@ -277,12 +295,12 @@
             var question = template.replace('{n}', pluralized(eligible));
 
             if (scope === 'filter') {
-                question += ' This is every one matching the filter on screen, not just this page.';
+                question += ' ' + text().wholeFilter;
             } else {
                 var skipped = selected().length - eligible;
 
                 if (skipped > 0) {
-                    question += ' The other ' + skipped + ' selected will be skipped.';
+                    question += ' ' + fill(text().skipped, {count: skipped.toLocaleString()});
                 }
             }
 

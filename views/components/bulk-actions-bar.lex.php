@@ -18,7 +18,8 @@
  *
  * Attributes:
  * - actionUrl: where the form posts (the controller's bulk endpoint)
- * - itemLabel: singular noun for the selected-count text, e.g. "post"
+ * - itemLabel: what is being selected, e.g. "post"; its plural forms come from
+ *   components.bulk.items.<itemLabel> in the locale files
  * - actions: list of bulk buttons, each with
  *     action    value written to the hidden field and matched server-side
  *     label     visible button text
@@ -49,6 +50,26 @@ $hiddenFields = $hiddenFields ?? [];
 $headerSelectAll = !empty($headerSelectAll);
 $matchTotal = (int) ($matchTotal ?? 0);
 $matchCounts = $matchCounts ?? [];
+
+// Plural categories differ per language (Arabic has six), so the script picks
+// the noun with Intl.PluralRules; only forms the locale defines are sent.
+$itemForms = [];
+foreach (['zero', 'one', 'two', 'few', 'many', 'other'] as $category) {
+    $formKey = 'components.bulk.items.'.$itemLabel.'.'.$category;
+    $form = $t($formKey);
+    if ($form !== $formKey) {
+        $itemForms[$category] = $form;
+    }
+}
+$bulkText = [
+    'items' => $itemForms ?: ['one' => $itemLabel, 'other' => $itemLabel.'s'],
+    'selected' => $t('components.bulk.selected'),
+    'selectAllMatching' => $t('components.bulk.selectAllMatching'),
+    'clearSelection' => $t('components.bulk.clearSelection'),
+    'noneEligible' => $t('components.bulk.noneEligible'),
+    'wholeFilter' => $t('components.bulk.wholeFilter'),
+    'skipped' => $t('components.bulk.skipped'),
+];
 ?>
 <form id="bulk-form" method="POST" action="<?= e($actionUrl) ?>">
     <?= csrf_field() ?>
@@ -65,14 +86,14 @@ $matchCounts = $matchCounts ?? [];
     <label class="inline-flex items-center gap-2 text-slate-600 dark:text-zink-200 cursor-pointer">
         <input type="checkbox" id="select-all"
                class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500">
-        <span>Select all on this page</span>
+        <span><?= e($t('components.bulk.selectAllPage')) ?></span>
     </label>
     <span id="selected-count" class="text-slate-500 dark:text-zink-300"></span>
 </div>
 <?php } ?>
 
 <div id="bulk-bar" data-bulk-bar class="hidden fixed bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[9999]"
-     data-item-label="<?= e($itemLabel) ?>"
+     data-text="<?= e(json_encode($bulkText, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)) ?>"
      data-match-total="<?= $matchTotal ?>"
      data-match-counts="<?= e(json_encode($matchCounts, JSON_THROW_ON_ERROR)) ?>">
     <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-2xl sm:rounded-full shadow-lg border border-slate-700">

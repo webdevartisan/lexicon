@@ -17,7 +17,7 @@
 $icons = [
     // Global Navigation Icons
     'home' => 'home',
-    'dashboard' => 'layout-dashboard',
+    'overview' => 'layout-dashboard',
     'library' => 'library',
     'liked' => 'heart',
     'saved' => 'bookmark',
@@ -27,13 +27,10 @@ $icons = [
     'account' => 'settings',
     'create-new-blog' => 'file-plus',
     'new-blog' => 'file-plus',
-    'all-blogs' => 'book-open',
-    'shared' => 'inbox',
     'my-blogs' => 'book-open',
     'account-settings' => 'settings',
 
     // Blog Management Icons
-    'blog-overview' => 'layout-grid',
     'edit-blog-settings' => 'sliders',
     'appearance-/-theme' => 'palette',
     'collaborators' => 'users',
@@ -41,8 +38,6 @@ $icons = [
     'subscribers' => 'mail',
 
     // Content Management Icons
-    'new-post' => 'pen',
-    'all-posts' => 'files',
     'my-posts' => 'files',
     'categories-/-tags' => 'folder-tree',
     'media-library' => 'image',
@@ -221,32 +216,24 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <?php } ?>
 <?php } ?>
 
-<!-- Empty state - what to say depends on why there's no blog context.
-     Only meaningful in the dashboard; admin navigation is complete on its own. -->
-<?php if (($area ?? '') === 'back' && (empty($contextualItems) || !$has_blog_context)) { ?>
-    <?php if (empty($user_blogs) && !empty($is_collaborator)) { ?>
-        <!-- Collaborator without own blogs: their work is on the Shared page -->
-        <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
-            <span class="block opacity-50 italic mb-2"><?= $t('common.sharedOnlyHint') ?></span>
-            <a href="/dashboard/shared" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
-                <i data-lucide="inbox" class="size-3.5"></i>
-                <?= $t('common.openShared') ?>
-            </a>
-        </li>
-    <?php } elseif (empty($user_blogs)) { ?>
-        <!-- Reader account: a soft path into writing, not an onboarding push -->
-        <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
-            <span class="block opacity-50 italic mb-2"><?= $t('common.startWritingHint') ?></span>
-            <a href="/dashboard/blog/new" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
-                <i data-lucide="file-plus" class="size-3.5"></i>
-                <?= $t('common.startWriting') ?>
-            </a>
-        </li>
-    <?php } else { ?>
-        <li class="px-4 py-3 mt-3 text-vertical-menu-item opacity-50 text-center text-xs italic group-data-[sidebar-size=sm]:hidden">
-            <span><?= $t('common.selectBlog') ?></span>
-        </li>
-    <?php } ?>
+<!-- Empty state: no blog is active. A reader is offered a first blog, everyone else
+     is pointed at Blogs to choose one. Only meaningful in the dashboard. -->
+<?php if (($area ?? '') === 'back' && !$has_blog_context) { ?>
+    <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
+        <?php if (empty($user_blogs)) { ?>
+        <span class="block opacity-50 italic mb-2"><?= $t('common.startWritingHint') ?></span>
+        <a href="/dashboard/blog/new" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+            <i data-lucide="file-plus" class="size-3.5"></i>
+            <?= $t('common.startWriting') ?>
+        </a>
+        <?php } else { ?>
+        <span class="block opacity-50 italic mb-2"><?= $t('common.selectBlog') ?></span>
+        <a href="/dashboard/blog" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+            <i data-lucide="book-open" class="size-3.5"></i>
+            <?= $t('navigation.blogs') ?>
+        </a>
+        <?php } ?>
+    </li>
 <?php } ?>
 
 

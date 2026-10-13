@@ -292,9 +292,7 @@ $router->group([
     'middleware' => ['auth'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'HomeController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/search', ['controller' => 'HomeController', 'action' => 'search', 'method' => 'POST']);
-    $r->add('/setDefaultBlog', ['controller' => 'HomeController', 'action' => 'setDefaultBlog', 'method' => 'POST']);
-    $r->add('/shared', ['controller' => 'SharedController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/active-blog', ['controller' => 'HomeController', 'action' => 'setActiveBlog', 'method' => 'POST']);
     // Personal account settings moved to the front under /account. The old
     // dashboard settings routes are deleted, not redirected.
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
@@ -348,15 +346,8 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Per-blog review queue (anyone with reviewer-capable role on the blog).
+    // Per-blog review queue (anyone holding review_posts on the blog).
     $r->add('/blog/{blogId:\d+}/review-queue', ['controller' => 'PostReviewController', 'action' => 'reviewQueue', 'method' => 'GET']);
-
-    // Per-blog posts index for owners and editors. Kept separate from the
-    // personal /dashboard/post surface so the two contexts never mix.
-    $r->add('/blog/{blogId:\d+}/posts', ['controller' => 'PostController', 'action' => 'blogPosts', 'method' => 'GET']);
-
-    // Author/contributor workspace: their own writing inside one shared blog.
-    $r->add('/blog/{blogId:\d+}/workspace', ['controller' => 'PostController', 'action' => 'workspace', 'method' => 'GET']);
 
     // Team / collaborator management (owner-only actions; leave is self-service).
     $r->add('/blog/{blogId:\d+}/team', ['controller' => 'CollaboratorController', 'action' => 'team', 'method' => 'GET']);
@@ -429,7 +420,6 @@ $router->group([
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
     $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
-    $r->add('/blog/{id:\d+}/show', ['controller' => 'BlogController', 'action' => 'show', 'method' => 'GET']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'POST']);

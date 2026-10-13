@@ -10,8 +10,8 @@ namespace App\Presenters;
  * The editor used to compute this inline in the template, which made the rules
  * impossible to test and easy to drift from the backend. This class is the
  * single place that answers "what can this person do to this post right now",
- * and it deliberately mirrors WorkflowService::constrainStatusForRole() — that
- * service stays the authority, this one only decides what to render.
+ * and it takes its publish authority from WorkflowService::canPublish(), the
+ * same answer WorkflowService::constrainStatus() enforces on save.
  */
 final class PostActionPresenter
 {
@@ -53,7 +53,7 @@ final class PostActionPresenter
      * Build the action set for one post in one person's hands.
      *
      * @param  string  $status  Current post status
-     * @param  string|null  $role  Viewer's effective role on the blog
+     * @param  bool  $canPublish  WorkflowService::canPublish() for the viewer
      * @param  bool  $workflowOn  Whether the blog runs the review pipeline
      * @param  bool  $hasFutureDate  Whether published_at is set to a future time
      * @param  string|null  $workflowState  Review state, e.g. 'needs_changes'
@@ -61,14 +61,11 @@ final class PostActionPresenter
      */
     public static function for(
         string $status,
-        ?string $role,
+        bool $canPublish,
         bool $workflowOn,
         bool $hasFutureDate = false,
         ?string $workflowState = null
     ): array {
-        $canPublish = in_array($role, ['owner', 'editor'], true)
-            || ($role === 'author' && !$workflowOn);
-
         return [
             'primary' => self::primary($status, $canPublish, $workflowOn, $hasFutureDate, $workflowState),
             'secondary' => self::secondary($status, $canPublish, $workflowOn),
@@ -80,7 +77,7 @@ final class PostActionPresenter
     /**
      * Translate a submitted intent into the status it is asking for.
      *
-     * This is only a request. WorkflowService::constrainStatusForRole() still
+     * This is only a request. WorkflowService::constrainStatus() still
      * has the final say, so a forged intent buys nothing.
      *
      * @param  string  $intent  Value of the clicked submit button

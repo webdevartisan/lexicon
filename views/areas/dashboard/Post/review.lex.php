@@ -105,7 +105,7 @@
                     <?php
                         $status = $status ?? ($post['status'] ?? 'draft');
                     $wf = $workflowState ?? ($post['workflow_state'] ?? 'draft');
-                    $role = $blogRole ?? 'none';
+                    $role = $roleLabel ?? 'none';
 
                     $badgeBase = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset';
 
@@ -226,9 +226,7 @@
                         <?php foreach ($reviewers as $r) {
                             $rid = (int) ($r['reviewer_id'] ?? 0);
                             $isSelf = $rid === (int) ($currentUserId ?? 0);
-                            $canUnassignThis = $isSelf
-                                || in_array($blogRole, ['owner', 'editor'], true)
-                                || !empty($isAdmin);
+                            $canUnassignThis = $isSelf || !empty($canManageReviewers);
                             $unassignLabel = $isSelf ? 'Release' : 'Unassign';
                             ?>
                         <div class="flex items-center justify-between gap-2 text-slate-600 dark:text-zink-200">
