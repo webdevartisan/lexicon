@@ -100,9 +100,9 @@ $fallbackBadge = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-zink-600 
                         $unassigned = empty($it['reviewer_id']);
                         ?>
                     <li>
-                        <a href="/dashboard/post/<?= (int) $it['id'] ?>/review" class="flex items-center gap-2 text-xs py-1 hover:text-custom-500 group">
+                        <a href="/dashboard/post/<?= (int) $it['id'] ?>/review" class="flex items-center gap-2 text-xs py-1 hover:text-custom-500 group/post">
                             <span class="inline-block size-1.5 rounded-full shrink-0 <?= $workflowDot[$state] ?? 'bg-slate-400' ?>"></span>
-                            <span class="truncate text-slate-700 dark:text-zink-200 group-hover:text-custom-500"><?= e($it['title']) ?></span>
+                            <span class="truncate text-slate-700 dark:text-zink-200 group-hover/post:text-custom-500"><?= e($it['title']) ?></span>
                             <?php if ($unassigned) { ?>
                             <span class="ml-auto shrink-0 text-[10px] uppercase tracking-wide font-medium text-amber-600 dark:text-amber-400">Unassigned</span>
                             <?php } ?>

@@ -99,18 +99,18 @@ $initials = static function (string $name): string {
                 <ul class="divide-y divide-slate-100 dark:divide-zink-600">
                     <?php foreach ($wh['recent'] as $row) { ?>
                     <li class="py-2">
-                        <a href="/dashboard/post/<?= (int) $row['id'] ?>/review" class="flex items-center gap-3 group">
+                        <a href="/dashboard/post/<?= (int) $row['id'] ?>/review" class="flex items-center gap-3 group/post">
                             <span class="inline-flex items-center justify-center size-7 rounded-md bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300 shrink-0">
                                 <i data-lucide="lock" class="size-3.5"></i>
                             </span>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate group-hover:text-custom-500"><?= e($row['title']) ?></p>
+                                <p class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate group-hover/post:text-custom-500"><?= e($row['title']) ?></p>
                                 <p class="text-xs text-slate-500 dark:text-zink-400 mt-0.5">
                                     by <?= e($row['author_handle']) ?>
                                     · reviewed by <?= e($row['reviewer_handle']) ?>
                                 </p>
                             </div>
-                            <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 group-hover:text-custom-500"></i>
+                            <i data-lucide="chevron-right" class="size-4 text-slate-400 shrink-0 group-hover/post:text-custom-500"></i>
                         </a>
                     </li>
                     <?php } ?>

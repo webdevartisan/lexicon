@@ -1,4 +1,4 @@
-<header id="page-topbar" class="ltr:md:left-vertical-menu rtl:md:right-vertical-menu group-data-[sidebar-size=md]:ltr:md:left-vertical-menu-md group-data-[sidebar-size=md]:rtl:md:right-vertical-menu-md group-data-[sidebar-size=sm]:ltr:md:left-vertical-menu-sm group-data-[sidebar-size=sm]:rtl:md:right-vertical-menu-sm fixed right-0 z-[1000] left-0 print:hidden group-data-[navbar=bordered]:m-4 group-data-[navbar=bordered]:[&.is-sticky]:mt-0 transition-all ease-linear duration-300 group-data-[navbar=hidden]:hidden group-data-[navbar=scroll]:absolute group/topbar ">
+<header id="page-topbar" class="ltr:md:left-vertical-menu rtl:md:right-vertical-menu group-data-[sidebar-size=sm]:ltr:md:left-vertical-menu-sm group-data-[sidebar-size=sm]:rtl:md:right-vertical-menu-sm fixed right-0 z-[1000] left-0 print:hidden group-data-[navbar=bordered]:m-4 group-data-[navbar=bordered]:[&.is-sticky]:mt-0 transition-all ease-linear duration-300 group-data-[navbar=hidden]:hidden group-data-[navbar=scroll]:absolute group/topbar ">
     <div class="layout-width">
         <div class="flex items-center px-4 mx-auto bg-topbar border-b-2 border-topbar group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:border-topbar-brand shadow-md h-header shadow-slate-200/50 group-data-[navbar=bordered]:rounded-md group-data-[navbar=bordered]:group-[.is-sticky]/topbar:rounded-t-none group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-700 dark:shadow-none group-data-[topbar=dark]:group-[.is-sticky]/topbar:dark:shadow-zink-500 group-data-[topbar=dark]:group-[.is-sticky]/topbar:dark:shadow-md group-data-[navbar=bordered]:shadow-none   ">
             <div class="flex items-center w-full   navbar-header  ">
@@ -38,13 +38,13 @@
                 {% endcache %}
                 <?php if (!empty($user_blogs)) { ?>
                 <!-- Blog switcher: -->
-                <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
+                <div class="relative min-w-0 ltr:ml-2 rtl:mr-2 sm:ltr:ml-3 sm:rtl:mr-3">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         <input type="hidden" name="return_to" value="<?= e($current_path) ?>">
                         {{ csrf_field() }}
-                        {% cache 'lucide:book-open:blogswitch' ttl=31536000 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
+                        {% cache 'lucide:book-open:blogswitch:v2' ttl=31536000 %}<i data-lucide="book-open" class="hidden sm:inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                         <select name="blog" data-auto-submit aria-label="Switch active blog"
-                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
+                            class="py-2 ltr:pl-2 rtl:pr-2 sm:ltr:pl-9 sm:rtl:pr-9 ltr:pr-7 rtl:pl-7 sm:ltr:pr-8 sm:rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item w-full max-w-[8.5rem] sm:max-w-[14rem] lg:max-w-none lg:min-w-[260px] truncatefocus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
                             <?php foreach ($user_blogs as $bid => $b) {
                                 $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
                                 $bstatus = is_array($b) ? (string) ($b['status'] ?? '') : '';
@@ -64,13 +64,43 @@
 
                 <div class="flex gap-3 ms-auto">
 
-                    {% cache 'topbar:sunbutton-icon' ttl=31536000 %}
-                    <div class="relative flex items-center h-header">
-                        <button type="button" aria-label="Toggle light or dark mode" class="inline-flex relative justify-center items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="light-dark-mode">
-                            <i data-lucide="sun" class="inline-block w-5 h-5 stroke-1 fill-slate-100 group-data-[topbar=dark]:fill-topbar-item-dark group-data-[topbar=brand]:fill-topbar-item-bg-hover-brand"></i>
+                    {% set themeLabel = t('layout.themeMenu.label') %}
+                    {% set themeLightLabel = t('layout.themeMenu.light') %}
+                    {% set themeAutoLabel = t('layout.themeMenu.auto') %}
+                    {% set themeDarkLabel = t('layout.themeMenu.dark') %}
+                    <div class="relative flex items-center dropdown h-header" id="theme-menu">
+                        <button type="button" aria-label="{{ themeLabel }}" class="dropdown-toggle inline-flex relative justify-center items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="light-dark-mode" data-bs-toggle="dropdown">
+                            <i data-lucide="sun" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="light"></i>
+                            <i data-lucide="monitor" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="auto"></i>
+                            <i data-lucide="moon" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="dark"></i>
                         </button>
+                        <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="light-dark-mode">
+                            <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ themeLabel }}</h6>
+                            <ul>
+                                <li>
+                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="light">
+                                        <i data-lucide="sun" class="inline-block size-4"></i>
+                                        <span class="grow">{{ themeLightLabel }}</span>
+                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="auto">
+                                        <i data-lucide="monitor" class="inline-block size-4"></i>
+                                        <span class="grow">{{ themeAutoLabel }}</span>
+                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="dark">
+                                        <i data-lucide="moon" class="inline-block size-4"></i>
+                                        <span class="grow">{{ themeDarkLabel }}</span>
+                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    {% endcache %}
                     <!-- Notifications: recent activity on the user's posts. -->
                     {% if (!empty($notifications['enabled'])): %}
                     <div class="relative flex items-center dropdown h-header">

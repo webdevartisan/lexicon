@@ -49,10 +49,10 @@ $rowFilter = isset($filterHref) && in_array($dimension, \App\Models\AnalyticsSql
             $rowHref = $rowFilter !== null && $row['value'] !== \App\Services\Analytics\AnalyticsReportService::OTHER
                 ? $rowFilter($dimension, (string) $row['value'])
                 : null; ?>
-        <tr class="group">
+        <tr class="group/row">
           <th scope="row" class="py-1 ltr:pr-3 rtl:pl-3 font-normal ltr:text-left rtl:text-right">
             <div class="relative px-2 py-1 overflow-hidden rounded">
-              <span class="absolute inset-y-0 ltr:left-0 rtl:right-0 rounded bg-custom-500/15 transition-colors group-hover:bg-custom-500/25" style="width: <?= $width ?>%" aria-hidden="true"></span>
+              <span class="absolute inset-y-0 ltr:left-0 rtl:right-0 rounded bg-custom-500/15 transition-colors group-hover/row:bg-custom-500/25" style="width: <?= $width ?>%" aria-hidden="true"></span>
               <?php if ($rowHref !== null) { ?>
               <a href="<?= e($rowHref) ?>" class="relative block truncate text-slate-700 hover:text-custom-500 focus:outline-none focus-visible:underline dark:text-zink-100"
                  dir="auto" title="<?= e($t('analytics.filters.only', ['item' => $label])) ?>"><?= e($label) ?></a>

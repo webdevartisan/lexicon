@@ -4,6 +4,12 @@
         "search": {
             "placeholder": "Search your posts..."
         },
+        "themeMenu": {
+            "label": "Appearance",
+            "light": "Light",
+            "auto": "Auto",
+            "dark": "Dark"
+        },
         "profileDropdown": {
             "signedInAs": "Signed in as",
             "links": {

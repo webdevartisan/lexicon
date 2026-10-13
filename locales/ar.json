@@ -4,6 +4,12 @@
     "search": {
       "placeholder": "ابحث في تدويناتك..."
     },
+    "themeMenu": {
+      "label": "المظهر",
+      "light": "فاتح",
+      "auto": "تلقائي",
+      "dark": "داكن"
+    },
     "profileDropdown": {
       "signedInAs": "تم تسجيل الدخول باسم",
       "links": {
