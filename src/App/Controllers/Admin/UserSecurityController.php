@@ -11,6 +11,7 @@ use App\Resources\SystemResource;
 use App\Services\AccountErasureService;
 use App\Services\ImpersonationService;
 use App\Services\PasswordResetIssuer;
+use App\Services\Sessions\SessionRevoker;
 use Framework\Core\Response;
 use RuntimeException;
 
@@ -29,8 +30,34 @@ class UserSecurityController extends ManagedUserController
         private PasswordResetIssuer $resetIssuer,
         private PasswordResetModel $passwordResets,
         private ImpersonationService $impersonation,
+        private SessionRevoker $revoker,
     ) {
         parent::__construct($users, $erasure);
+    }
+
+    /**
+     * End every session the account has. Support sessions an administrator is
+     * running as them end with impersonation, not here.
+     */
+    public function signOutEverywhere(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
+        $userId = (int) $user['id'];
+
+        if ($userId === $this->actorId()) {
+            $this->flash('error', 'Sign out your own devices from your account security page.');
+
+            return $this->redirect($this->showUrl($userId).'#security');
+        }
+
+        $ended = $this->revoker->endAll($userId, 'signed_out_by_admin');
+
+        $this->flash('success', sprintf('Signed @%s out of %d %s.', $user['handle'], $ended, $ended === 1 ? 'session' : 'sessions'));
+
+        return $this->redirect($this->showUrl($userId).'#security');
     }
 
     public function password(string $id): Response
@@ -118,6 +145,7 @@ class UserSecurityController extends ManagedUserController
         }
 
         $this->users->bumpSessionEpoch($userId);
+        $this->revoker->endAll($userId, 'password_set_by_admin');
         $this->passwordResets->deleteForEmail((string) $user['email']);
 
         // The password itself is never logged, only that it changed and by whom.

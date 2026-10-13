@@ -22,6 +22,18 @@ class UserAgentClassifier
         'Internet Explorer' => '/MSIE |Trident\//',
     ];
 
+    private const BROWSER_VERSIONS = [
+        'Edge' => '/Edg(?:e|A|iOS)?\/(\d+)/',
+        'Opera' => '/OPR\/(\d+)/',
+        'Samsung Internet' => '/SamsungBrowser\/(\d+)/',
+        'Yandex' => '/YaBrowser\/(\d+)/',
+        'Vivaldi' => '/Vivaldi\/(\d+)/',
+        'Firefox' => '/(?:Firefox|FxiOS)\/(\d+)/',
+        'Chrome' => '/(?:Chrome|CriOS)\/(\d+)/',
+        'Safari' => '/Version\/(\d+(?:\.\d+)?)/',
+        'Internet Explorer' => '/(?:MSIE |rv:)(\d+)/',
+    ];
+
     private const SYSTEMS = [
         'iOS' => '/iPhone|iPad|iPod/',
         'Android' => '/Android/',
@@ -67,6 +79,40 @@ class UserAgentClassifier
             'browser' => $this->match(self::BROWSERS, $userAgent),
             'os' => $this->match(self::SYSTEMS, $userAgent),
         ];
+    }
+
+    /**
+     * Major version of the browser classify() found, where the user agent
+     * still carries one.
+     */
+    public function browserVersion(string $userAgent, string $browser): ?string
+    {
+        $pattern = self::BROWSER_VERSIONS[$browser] ?? null;
+
+        if ($pattern === null || preg_match($pattern, $userAgent, $m) !== 1) {
+            return null;
+        }
+
+        return $m[1];
+    }
+
+    /**
+     * Version of iOS or Android. Desktop systems are left out because browsers
+     * freeze those numbers (every Windows 10 and 11 reports "Windows NT 10.0").
+     */
+    public function osVersion(string $userAgent, string $os): ?string
+    {
+        $pattern = match ($os) {
+            'iOS' => '/OS (\d+)[_.](\d+)/',
+            'Android' => '/Android (\d+)/',
+            default => null,
+        };
+
+        if ($pattern === null || preg_match($pattern, $userAgent, $m) !== 1) {
+            return null;
+        }
+
+        return isset($m[2]) ? $m[1].'.'.$m[2] : $m[1];
     }
 
     private function device(string $ua): string

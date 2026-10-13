@@ -147,6 +147,17 @@ class PersonalDataExportService
                  ORDER BY started_at",
                 [$this->visitorIdentity->forAccount($userId)]
             ),
+            // The device list, without the session keys. Support sessions are
+            // the administrator's and show up in activity_log instead.
+            'signed_in_sessions' => $this->rows(
+                "SELECT device, browser, browser_version, os, os_version, country, region, city, ip_address,
+                        FROM_UNIXTIME(signed_in_at, '%Y-%m-%dT%H:%i:%sZ') AS signed_in_at,
+                        FROM_UNIXTIME(last_activity, '%Y-%m-%dT%H:%i:%sZ') AS last_active_at
+                 FROM user_sessions
+                 WHERE user_id = ? AND impersonated_by IS NULL
+                 ORDER BY last_activity DESC",
+                [$userId]
+            ),
         ];
     }
 

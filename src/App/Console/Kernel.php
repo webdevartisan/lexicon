@@ -25,6 +25,7 @@ use App\Console\Commands\ScheduleRunCommand;
 use App\Console\Commands\ScheduleRunTaskCommand;
 use App\Console\Commands\SeedCommand;
 use App\Console\Commands\SeedModerationCommand;
+use App\Console\Commands\SessionPruneCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -57,6 +58,9 @@ class Kernel extends ConsoleKernel
 
             // Notification management
             'notifications:prune' => NotificationPruneCommand::class,
+
+            // Expired login sessions, hourly
+            'session:prune' => SessionPruneCommand::class,
 
             // Deletes personal data past the retention periods in config/privacy.php
             'privacy:prune' => PrivacyPruneCommand::class,

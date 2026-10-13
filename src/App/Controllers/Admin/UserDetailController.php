@@ -10,6 +10,7 @@ use App\Resources\SystemResource;
 use App\Services\AccountErasureService;
 use App\Services\ImpersonationService;
 use App\Services\ProfileService;
+use App\Services\Sessions\SessionList;
 use App\Services\UserDossierService;
 use Framework\Core\Response;
 use Framework\Exceptions\NotFoundException;
@@ -30,6 +31,7 @@ class UserDetailController extends ManagedUserController
         private UserDossierService $dossier,
         private ProfileService $profiles,
         private ImpersonationService $impersonation,
+        private SessionList $sessionList,
     ) {
         parent::__construct($users, $erasure);
     }
@@ -51,6 +53,7 @@ class UserDetailController extends ManagedUserController
                 : 'Only administrators can sign in as another account.',
             'publicVisibility' => $this->publicVisibility($user),
             'canHandleReports' => Gate::allows('handleReports', SystemResource::class, $actor),
+            ...$this->sessionList->forAdministrator($userId, viewer_timezone()),
         ]));
     }
 

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\PendingErasureModel;
 use App\Models\UserModel;
+use App\Services\Sessions\SessionRevoker;
 use RuntimeException;
 
 /**
@@ -26,6 +27,7 @@ class AccountErasureSchedulerService
         private PendingErasureModel $pending,
         private AccountErasureService $erasure,
         private int $gracePeriodDays,
+        private SessionRevoker $revoker,
     ) {}
 
     /**
@@ -41,6 +43,7 @@ class AccountErasureSchedulerService
 
         $this->users->update($userId, ['is_active' => 0]);
         $this->pending->schedule($userId, $erasedBy, $erasedByIp, $scheduledFor);
+        $this->revoker->endAll($userId, 'account_deletion_scheduled');
     }
 
     /**

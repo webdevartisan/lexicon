@@ -10,6 +10,7 @@
     "intervention/image": "^3.0",
     "maxmind-db/reader": "^1.12",
     "phpmailer/phpmailer": "^7.0",
+    "predis/predis": "^2.3",
     "symfony/html-sanitizer": "^7.4"
   },
   "require-dev": {

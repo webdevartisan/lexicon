@@ -7,6 +7,7 @@ namespace Tests\Helpers;
 use App\Auth;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\Sessions\SessionRecordFactory;
 use App\Services\UserSuspensionService;
 use Framework\Session;
 use Mockery;
@@ -27,7 +28,7 @@ class AuthTestHelper
 
         $suspensions = Mockery::mock(UserSuspensionService::class);
 
-        $auth = new Auth($session, $userModel, $profileModel, $suspensions);
+        $auth = new Auth($session, $userModel, $profileModel, $suspensions, Mockery::mock(SessionRecordFactory::class));
 
         return [
             'auth' => $auth,

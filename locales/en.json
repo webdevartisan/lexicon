@@ -859,7 +859,8 @@
         "strengthWeak": "Weak",
         "strengthFair": "Fair",
         "strengthGood": "Good",
-        "strengthStrong": "Strong"
+        "strengthStrong": "Strong",
+        "signedOutElsewhere": "You were signed out on this device. Sign in again to continue."
     },
     "account": {
         "nav": {
@@ -1055,7 +1056,36 @@
             "deletionCancelled": "Incorrect password. Account deletion cancelled.",
             "deletionThrottled": "Too many password attempts. Wait a few minutes and try again.",
             "deletionNotAuthorized": "You are not authorized to delete this account.",
-            "userNotFound": "User not found."
+            "userNotFound": "User not found.",
+            "otherDevicesSignedOut": "Your other devices were signed out."
+        },
+        "sessions": {
+            "heading": "Where you're signed in",
+            "intro": "Devices signed in to your account now. If you don't recognise one, sign it out and change your password.",
+            "thisDevice": "This device",
+            "activeNow": "Active now",
+            "lastActive": "Last active {date}",
+            "signedIn": "Signed in {date}",
+            "signOut": "Sign out",
+            "signOutLabel": "Sign out {device}",
+            "signOutOthers": "Sign out of all other devices",
+            "onlyDevice": "This is the only device signed in to your account.",
+            "approximate": "Locations are approximate, worked out from the IP address.",
+            "unknownDevice": "Unknown device",
+            "clientOn": "{browser} on {os}",
+            "localNetwork": "Local network",
+            "oneTitle": "Sign out this device?",
+            "oneText": "{device} will need to sign in again the next time it opens a page.",
+            "currentTitle": "Sign out here?",
+            "currentText": "This is the device you're using now. You'll be signed out straight away.",
+            "othersTitle": "Sign out of all other devices?",
+            "othersText": "Every device except this one will need to sign in again. You stay signed in here.",
+            "passwordHint": "Asked at most once every few minutes.",
+            "cancel": "Cancel",
+            "signedOutOne": "That device was signed out.",
+            "signedOutOthers": "Other devices signed out: {count}.",
+            "notFound": "That device was already signed out.",
+            "passwordRefused": "That password didn't work, so nothing was signed out."
         }
     },
     "consent": {

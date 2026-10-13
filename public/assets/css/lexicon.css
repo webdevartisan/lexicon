@@ -3845,6 +3845,62 @@ label {
 }
 .lx-account-close p { margin: 0 0 1rem; max-inline-size: 44ch; }
 
+/* Where you're signed in: one hairline row per device, icon tile, two quiet
+   meta lines, the action at the row's end. The current device sits first and
+   carries the badge rather than a different colour. */
+.lx-sessions-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+.lx-sessions-head p { margin: 0.35rem 0 0; max-inline-size: 52ch; }
+.lx-sessions-list { list-style: none; margin: 0; padding: 0; border-block-start: 1px solid var(--lx-rule-strong); }
+.lx-session {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding-block: 0.9rem;
+    border-block-end: 1px solid var(--lx-rule);
+}
+.lx-session-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink-2);
+}
+.lx-session.is-current .lx-session-icon { color: var(--lx-ink); border-color: var(--lx-rule-strong); }
+.lx-session-body { min-inline-size: 0; }
+.lx-session-client {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-weight: 600;
+}
+.lx-session-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin: 0.15rem 0 0;
+    font-size: 0.82rem;
+    color: var(--lx-ink-2);
+}
+.lx-sessions-note { margin: 0.75rem 0 0; }
+/* On a phone the button drops under the text instead of squeezing it. */
+@media (max-width: 559px) {
+    .lx-session { grid-template-columns: auto 1fr; }
+    .lx-session > .lx-btn { grid-column: 2; justify-self: start; }
+}
+
 /* Native dialog, so focus trapping, Escape and background inertness come from
    the browser instead of being reimplemented. Shares the panel treatment with
    the older .lx-modal markup. */

@@ -7,6 +7,7 @@ use App\Services\ImpersonationService;
 use Framework\Security\Csrf;
 use Framework\Session;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 
 /**
  * "Log in as": who may, who may not, and that the admin always gets their own
@@ -22,7 +23,7 @@ beforeEach(function () {
     $this->users = new UserModel($this->db);
     $this->session = new Session();
     $this->csrf = new Csrf($this->session);
-    $this->service = new ImpersonationService($this->session, $this->db, $this->users, $this->csrf);
+    $this->service = new ImpersonationService($this->session, $this->db, $this->users, $this->csrf, SessionTestHelper::records($this->db));
 
     $this->adminId = UserFactory::new($this->users)->admin()->create();
     $this->otherAdminId = UserFactory::new($this->users)->admin()->create();

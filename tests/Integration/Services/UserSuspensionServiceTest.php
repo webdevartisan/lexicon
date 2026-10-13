@@ -12,6 +12,7 @@ use Tests\Factories\BlogFactory;
 use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 
 /**
  * Suspension cascade: what it hides, what it leaves alone, and that lifting
@@ -28,6 +29,7 @@ beforeEach(function () {
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
         $this->comments,
         $this->blogs,
+        SessionTestHelper::revoker($this->db),
     );
 
     $this->adminId = UserFactory::new($this->users)->admin()->create();
@@ -226,4 +228,15 @@ it('refuses a suspension that names neither a person nor a rule', function () {
         ->toThrow(InvalidArgumentException::class);
 
     expect($this->service->current($this->personId))->toBeNull();
+});
+
+it('signs them out on every device', function () {
+    $hash = SessionTestHelper::signedInRow($this->db, $this->personId);
+    $collab = SessionTestHelper::signedInRow($this->db, $this->collabId);
+
+    $this->service->suspend($this->personId, null, 'Spam', $this->adminId);
+
+    $registry = SessionTestHelper::registry($this->db);
+    expect($registry->find($hash))->toBeNull()
+        ->and($registry->find($collab))->not->toBeNull();
 });

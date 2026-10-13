@@ -316,6 +316,45 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
                 </table>
             </div>
             <?php } ?>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-5 mb-2">
+                <p class="<?= $hint ?>">Signed in now. Locations are approximate; addresses are shortened to their network.</p>
+                <?php if ($sessions !== [] && $mayActOnTarget && !$isSelf) { ?>
+                <?php $signOutAttrs = ['data-modal-target' => 'signOutEverywhereModal']; ?>
+                {% cmp="btn" variant="slate" icon="log-out" label="Sign out everywhere" attrs="{$signOutAttrs}" %}
+                <?php } ?>
+            </div>
+            <?php if ($sessionPruneStalled) { ?>
+            <p class="mb-2 text-sm text-amber-700 dark:text-amber-400">Expired sessions are piling up: the "Prune expired sessions" task has not run for over two hours.</p>
+            <?php } ?>
+            <?php if ($sessions === []) { ?>
+            <p class="<?= $empty ?>">Not signed in anywhere.</p>
+            <?php } else { ?>
+            <div class="overflow-x-auto">
+                <table class="w-full whitespace-nowrap">
+                    <thead class="<?= $tableHead ?>"><tr><th scope="col" class="<?= $th ?>">Device</th><th scope="col" class="<?= $th ?>">Place</th><th scope="col" class="<?= $th ?>">Network</th><th scope="col" class="<?= $th ?>">Signed in</th><th scope="col" class="<?= $th ?>">Last active</th><th scope="col" class="<?= $th ?>">Note</th></tr></thead>
+                    <tbody class="<?= $tableBody ?>">
+                        <?php foreach ($sessions as $s) { ?>
+                        <tr>
+                            <td class="<?= $td ?>"><?= e(ucfirst($s['device'])) ?> · <?= e($s['client']) ?></td>
+                            <td class="<?= $td ?>"><?= e($text($s['place'])) ?></td>
+                            <td class="<?= $td ?>"><?= e($text($s['ip'])) ?></td>
+                            <td class="<?= $td ?>"><?= e($s['signed_in']) ?></td>
+                            <td class="<?= $td ?>"><?= $s['active_now'] ? 'Active now' : e($s['last_active']) ?></td>
+                            <td class="<?= $td ?>">
+                                <?php if ($s['impersonated_by'] !== null) { ?>
+                                {% cmp="status-badge" status="pending" label="Support session" %}
+                                <span class="<?= $hint ?>">by @<?= e($sessionImpersonators[$s['impersonated_by']] ?? '#'.$s['impersonated_by']) ?></span>
+                                <?php } elseif ($s['current']) { ?>
+                                <span class="<?= $hint ?>">Your session</span>
+                                <?php } else { ?>—<?php } ?>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php } ?>
         </div>
     </section>
 
@@ -357,4 +396,15 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
     </div>
     <?php } ?>
 </div>
+
+<?php if ($sessions !== [] && $mayActOnTarget && !$isSelf) { ?>
+<form method="post" action="<?= e($base) ?>/sessions/sign-out" id="signOutEverywhereForm"><?= csrf_field() ?></form>
+<?php $signOutMessage = 'Every device @'.$user['handle'].' is signed in on will need to sign in again. Support sessions stay open until they end.'; ?>
+{% cmp="modal" id="signOutEverywhereModal" title="Sign out everywhere?" icon="log-out" variant="warning" message="{$signOutMessage}" form="signOutEverywhereForm" confirmText="Sign out everywhere" %}
+<?php } ?>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
+<script src="/cp-assets/js/modal.js"></script>
 {% endblock %}

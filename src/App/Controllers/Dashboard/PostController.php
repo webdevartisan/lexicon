@@ -429,17 +429,12 @@ final class PostController extends AppController
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
 
-        // The way back differs per role: owners live in the personal All
-        // Posts, editors in the per-blog index, writers in their workspace.
+        $postList = $this->postListFor($blog, $blogRole);
         $trail = [['label' => 'Dashboard', 'url' => '/dashboard', 'key' => 'breadcrumbs.dashboard']];
-        if (in_array($blogRole, ['editor', 'author', 'contributor'], true)) {
+        if ($postList['url'] !== '/dashboard/post') {
             $trail[] = ['label' => 'Shared', 'url' => '/dashboard/shared', 'key' => 'breadcrumbs.shared'];
-            $trail[] = $blogRole === 'editor'
-                ? ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts']
-                : ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'];
-        } else {
-            $trail[] = ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'];
         }
+        $trail[] = $postList;
         $trail[] = ['label' => 'Edit Post', 'url' => null, 'key' => 'breadcrumbs.editPost'];
 
         breadcrumbs()->set($trail, true);
@@ -476,7 +471,8 @@ final class PostController extends AppController
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
             'availableLocales' => $this->localeRegistry->supported(),
             'postUrl' => $postUrl,
-            'backUrl' => $this->backUrlPath(),
+            // Not the Referer: after a save that is this very page.
+            'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), $postList['url'], ['/dashboard/post']),
             'workflowState' => $workflowState,
             'status' => $status,
             'blogRole' => $blogRole,
@@ -715,13 +711,7 @@ final class PostController extends AppController
             return $this->redirectAfterImageFailure((int) $id, $imageFailure);
         }
 
-        $return = $this->consumeReturnToken(
-            $this->request->postParam('r'),
-            '/dashboard/post',
-            ['/dashboard/post']
-        );
-
-        return $this->redirect($return);
+        return $this->redirect($this->editUrl((int) $id));
     }
 
     /**
@@ -1458,10 +1448,33 @@ final class PostController extends AppController
     {
         $this->flash('error', 'Post saved, but the featured image could not be added. '.$reason);
 
+        return $this->redirect($this->editUrl($postId));
+    }
+
+    /**
+     * The editor for a post, carrying the list token so its Back link survives the save.
+     */
+    private function editUrl(int $postId): string
+    {
         $returnToken = (string) ($this->request->postParam('r') ?? '');
         $query = $returnToken !== '' ? '?r='.rawurlencode($returnToken) : '';
 
-        return $this->redirect("/dashboard/post/{$postId}/edit{$query}");
+        return "/dashboard/post/{$postId}/edit{$query}";
+    }
+
+    /**
+     * The post list this person reaches the post from: owners use All Posts,
+     * editors the blog's Posts page and writers their workspace.
+     *
+     * @return array{label: string, url: string, key: string}
+     */
+    private function postListFor(\App\Resources\BlogResource $blog, ?string $blogRole): array
+    {
+        return match ($blogRole) {
+            'editor' => ['label' => 'Posts', 'url' => '/dashboard/blog/'.$blog->id().'/posts', 'key' => 'breadcrumbs.blogPosts'],
+            'author', 'contributor' => ['label' => 'My Work', 'url' => '/dashboard/blog/'.$blog->id().'/workspace', 'key' => 'breadcrumbs.myWork'],
+            default => ['label' => 'All Posts', 'url' => '/dashboard/post', 'key' => 'breadcrumbs.allPosts'],
+        };
     }
 
     /**

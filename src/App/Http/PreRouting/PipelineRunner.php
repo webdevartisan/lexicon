@@ -42,6 +42,7 @@ final class PipelineRunner
             [TrailingSlashNormalizer::class, 'handle'], // Consistent trailing slash policy
             [CacheControlHint::class,       'handle'], // Hint cache headers for static paths
             [LocaleAwareStaticBypass::class, 'handle'], // Fast‑path static assets with locale
+            [StartSession::class,           'handle'], // Open the session (needs the steps above to have passed)
             [LocalePrefixIntake::class,     'handle'], // Extract locale from URL prefix
         ];
     }

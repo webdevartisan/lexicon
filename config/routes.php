@@ -276,6 +276,8 @@ $router->group([
 
     $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
+    $r->add('/security/sessions/sign-out-others', ['controller' => 'AccountSessionsController', 'action' => 'signOutOthers', 'method' => 'POST']);
+    $r->add('/security/sessions/{hash:[a-f0-9]{64}}/sign-out', ['controller' => 'AccountSessionsController', 'action' => 'signOut', 'method' => 'POST']);
 
     $r->add('/export', ['controller' => 'AccountExportController', 'action' => 'download', 'method' => 'POST']);
 
@@ -512,6 +514,7 @@ $router->group([
     $r->add('/users/{id:\d+}/password', ['controller' => 'UserSecurityController', 'action' => 'password', 'method' => 'GET']);
     $r->add('/users/{id:\d+}/password/send-reset', ['controller' => 'UserSecurityController', 'action' => 'sendResetLink', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/password/set', ['controller' => 'UserSecurityController', 'action' => 'setPassword', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/sessions/sign-out', ['controller' => 'UserSecurityController', 'action' => 'signOutEverywhere', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'confirmImpersonate', 'method' => 'GET']);
     $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'impersonate', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/site-role', ['controller' => 'UserRoleController', 'action' => 'siteRole', 'method' => 'GET']);
