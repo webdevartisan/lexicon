@@ -1703,6 +1703,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .max-w-md {
   max-width: 28rem;
 }
+.max-w-none {
+  max-width: none;
+}
 .max-w-xl {
   max-width: 36rem;
 }
