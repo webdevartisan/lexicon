@@ -38,13 +38,13 @@
                 {% endcache %}
                 <?php if (!empty($user_blogs)) { ?>
                 <!-- Blog switcher: -->
-                <div class="relative hidden ltr:ml-3 rtl:mr-3 lg:block">
+                <div class="relative min-w-0 ltr:ml-2 rtl:mr-2 sm:ltr:ml-3 sm:rtl:mr-3">
                     <form action="/dashboard/setDefaultBlog" method="POST" class="flex items-center">
                         <input type="hidden" name="return_to" value="<?= e($current_path) ?>">
                         {{ csrf_field() }}
-                        {% cache 'lucide:book-open:blogswitch' ttl=31536000 %}<i data-lucide="book-open" class="inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
+                        {% cache 'lucide:book-open:blogswitch:v2' ttl=31536000 %}<i data-lucide="book-open" class="hidden sm:inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                         <select name="blog" data-auto-submit aria-label="Switch active blog"
-                            class="py-2 ltr:pl-9 rtl:pr-9 ltr:pr-8 rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item min-w-[260px] focus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
+                            class="py-2 ltr:pl-2 rtl:pr-2 sm:ltr:pl-9 sm:rtl:pr-9 ltr:pr-7 rtl:pl-7 sm:ltr:pr-8 sm:rtl:pl-8 text-sm rounded cursor-pointer appearance-none bg-topbar border border-topbar-border text-topbar-item w-full max-w-[8.5rem] sm:max-w-[14rem] lg:max-w-none lg:min-w-[260px] truncatefocus-visible:outline-0 focus:border-blue-400 group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:border-topbar-border-dark group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:border-zink-500 group-data-[topbar=dark]:dark:text-zink-100">
                             <?php foreach ($user_blogs as $bid => $b) {
                                 $bname = is_array($b) ? (string) ($b['name'] ?? 'Untitled') : (string) $b;
                                 $bstatus = is_array($b) ? (string) ($b['status'] ?? '') : '';
