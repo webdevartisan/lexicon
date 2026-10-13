@@ -135,24 +135,24 @@ $mediaSortOptions = [
         <div class="card-body">
             <div id="media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 <?php foreach (($mediaItems ?? []) as $item) { ?>
-                <figure class="group relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-700"
+                <figure class="group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-700"
                         data-media-id="<?= (int) $item['id'] ?>">
                     <?php $ver = !empty($item['updated_at']) ? '?v='.rawurlencode((string) $item['updated_at']) : ''; ?>
                     <div class="aspect-square overflow-hidden">
                         <img src="<?= e($item['url'].$ver) ?>" alt="" loading="lazy"
-                             class="w-full h-full object-cover transition-transform group-hover:scale-105">
+                             class="w-full h-full object-cover transition-transform group-hover/media:scale-105">
                     </div>
                     <?php $displayName = !empty($item['original_name']) ? $item['original_name'] : $item['filename']; ?>
                     <figcaption class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate" title="<?= e($displayName) ?>">
                         <?= e($displayName) ?>
                     </figcaption>
-                    <div class="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white flex justify-between opacity-0 group-hover/media:opacity-100 transition-opacity">
                         <span><?= e(strtoupper((string) $item['extension'])) ?></span>
                         <span><?= e($humanSize((int) $item['size_bytes'])) ?></span>
                     </div>
                     <button type="button" title="Delete"
                             data-media-delete="<?= (int) $item['id'] ?>"
-                            class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                            class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover/media:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                         {% cache 'lucide:trash-2:sm' ttl=31536000 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %}
                     </button>
                 </figure>
@@ -296,15 +296,15 @@ $mediaSortOptions = [
         var stamp = item.updated_at || item.created_at || '';
         var thumb = esc(item.url + (stamp ? (item.url.indexOf('?') === -1 ? '?' : '&') + 'v=' + encodeURIComponent(stamp) : ''));
         return ''
-            + '<figure class="group relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-700" data-media-id="' + id + '">'
+            + '<figure class="group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-700" data-media-id="' + id + '">'
             + '  <div class="aspect-square overflow-hidden">'
-            + '    <img src="' + thumb + '" alt="" loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105">'
+            + '    <img src="' + thumb + '" alt="" loading="lazy" class="w-full h-full object-cover transition-transform group-hover/media:scale-105">'
             + '  </div>'
             + '  <figcaption class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate" title="' + name + '">' + name + '</figcaption>'
-            + '  <div class="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">'
+            + '  <div class="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white flex justify-between opacity-0 group-hover/media:opacity-100 transition-opacity">'
             + '    <span>' + ext + '</span><span>' + size + '</span>'
             + '  </div>'
-            + '  <button type="button" title="Delete" data-media-delete="' + id + '" class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">'
+            + '  <button type="button" title="Delete" data-media-delete="' + id + '" class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover/media:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">'
             + '    <i data-lucide="trash-2" class="size-3.5"></i>'
             + '  </button>'
             + '</figure>';

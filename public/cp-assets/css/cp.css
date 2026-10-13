@@ -4036,19 +4036,19 @@ input[type=range]:focus::-webkit-slider-thumb {
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
 }
-.group:hover .group-hover\:scale-105 {
+.group\/media:hover .group-hover\/media\:scale-105 {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
-.group:hover .group-hover\:bg-custom-500\/25 {
+.group\/row:hover .group-hover\/row\:bg-custom-500\/25 {
   background-color: rgb(var(--sc-custom-500) / 0.25);
 }
-.group:hover .group-hover\:text-custom-500 {
+.group\/post:hover .group-hover\/post\:text-custom-500 {
   --tw-text-opacity: 1;
   color: rgb(var(--sc-custom-500) / var(--tw-text-opacity, 1));
 }
-.group:hover .group-hover\:opacity-100 {
+.group\/media:hover .group-hover\/media\:opacity-100 {
   opacity: 1;
 }
 .peer:checked ~ .peer-checked\:border-custom-500 {

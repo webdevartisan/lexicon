@@ -138,9 +138,9 @@
         var thumb = esc(versioned(item.url, item));
         return ''
             + '<button type="button" data-picker-pick="' + url + '" data-picker-id="' + id + '" data-picker-alt="' + alt + '" '
-            + 'class="group relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-600 hover:ring-2 hover:ring-custom-500 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">'
+            + 'class="group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-600 hover:ring-2 hover:ring-custom-500 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">'
             + '  <div class="aspect-square overflow-hidden">'
-            + '    <img src="' + thumb + '" alt="' + alt + '" loading="lazy" class="w-full h-full object-cover transition-transform group-hover:scale-105">'
+            + '    <img src="' + thumb + '" alt="' + alt + '" loading="lazy" class="w-full h-full object-cover transition-transform group-hover/media:scale-105">'
             + '  </div>'
             + '  <span class="block px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate text-left" title="' + name + '">' + name + '</span>'
             + '</button>';
