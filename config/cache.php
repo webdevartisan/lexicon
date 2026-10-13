@@ -160,22 +160,14 @@ return [
     'default_ttl' => 0,
 
     /**
-     * Sample values used to expand wildcard ttl_rules into concrete routes.
-     *
-     * A blog archive pattern with a wildcard slug segment can't be fetched as-is,
-     * so cache:warm substitutes these values to produce real URLs. They must
-     * reference content that actually exists, or warming just collects 404s.
+     * Optional overrides for the sample values cache:warm uses to expand wildcard
+     * ttl_rules. Leave a key empty to have it picked from the database: the
+     * busiest published blogs, and the categories and tags in use on the first.
      */
     'warmup_mocks' => [
-        // Real published blog slugs, picked by post count so warming exercises
-        // actual content instead of 404ing on placeholder data. Avoids blogs on
-        // the "closest" theme, which is missing archive/index-feed templates
-        // (a separate, pre-existing bug unrelated to cache warming).
-        'blog_slugs' => ['blog-1', 'evergreen-traffic-notes', 'le-grand-oeuvre'],
-        // Categories/tags belong to a single blog (blog_id FK), so these are
-        // only ever paired with the first blog slug above (see expandWildcardPattern).
-        'categories' => ['freebies', 'backend-architecture', 'guides'],
-        'tags' => ['redis', 'caching', 'performance'],
+        'blog_slugs' => [],
+        'categories' => [],
+        'tags' => [],
     ],
 
     /**

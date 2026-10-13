@@ -28,7 +28,7 @@ $compareChoices = [
     {% cache 'lucide:chevron-down:traffic-range' ttl=31536000 %}<i data-lucide="chevron-down" class="size-4 text-slate-400" aria-hidden="true"></i>{% endcache %}
   </summary>
 
-  <div class="absolute z-[1002] mt-2 ltr:right-0 rtl:left-0 flex flex-col sm:flex-row w-max max-w-[calc(100vw-2rem)] rounded-md border shadow-lg border-slate-200 bg-white dark:bg-zink-700 dark:border-zink-500">
+  <div class="absolute max-sm:fixed max-sm:inset-x-4 ltr:max-sm:right-4 rtl:max-sm:left-4 max-sm:top-20 max-sm:max-h-[calc(100vh-6rem)] max-sm:overflow-y-auto z-[1002] mt-2 ltr:right-0 rtl:left-0 flex flex-col sm:flex-row sm:w-max max-sm:w-auto sm:max-w-[calc(100vw-2rem)] rounded-md border shadow-lg border-slate-200 bg-white dark:bg-zink-700 dark:border-zink-500">
     <nav aria-label="<?= e($t('analytics.range.label')) ?>" class="flex flex-col gap-2 p-2 border-b sm:border-b-0 ltr:sm:border-r rtl:sm:border-l border-slate-200 dark:border-zink-500 sm:min-w-[10rem]">
       <?php foreach ($presetGroups as $presets) { ?>
       <div class="flex flex-wrap sm:flex-col gap-1">

@@ -10,6 +10,7 @@ use Framework\Cache\CacheService;
 use Framework\Cache\FragmentCache;
 use Framework\Core\Dispatcher;
 use Framework\Core\Request;
+use Framework\Database;
 
 /**
  * Cache warming command.
@@ -26,22 +27,27 @@ use Framework\Core\Request;
  */
 class CacheWarmCommand implements SchedulableCommandInterface
 {
+    private const WARMUP_SAMPLE_SIZE = 3;
+
     private CacheService $cache;
 
     private CacheKey $keyGenerator;
 
     private FragmentCache $fragmentCache;
 
+    private Database $database;
+
     /** @var array<string, mixed> */
     private array $config;
 
     private bool $verbose = false;
 
-    public function __construct(CacheService $cache, CacheKey $keyGenerator, FragmentCache $fragmentCache)
+    public function __construct(CacheService $cache, CacheKey $keyGenerator, FragmentCache $fragmentCache, Database $database)
     {
         $this->cache = $cache;
         $this->keyGenerator = $keyGenerator;
         $this->fragmentCache = $fragmentCache;
+        $this->database = $database;
 
         // load cache configuration to know which routes to warm
         $this->config = require ROOT_PATH.'/config/cache.php';
@@ -681,13 +687,7 @@ class CacheWarmCommand implements SchedulableCommandInterface
         /** @var array<string, int> $configRoutes */
         $configRoutes = $this->config['ttl_rules'] ?? [];
 
-        // load mock data for wildcard expansion
-        /** @var array<string, list<string>> $mocks */
-        $mocks = $this->config['warmup_mocks'] ?? [
-            'blog_slugs' => ['blog-1'],
-            'categories' => ['general'],
-            'tags' => ['featured'],
-        ];
+        $mocks = $this->resolveWarmupMocks();
 
         $rateExemptPatterns = $this->config['warmup_rate_exempt_patterns'] ?? [];
 
@@ -735,6 +735,88 @@ class CacheWarmCommand implements SchedulableCommandInterface
         }
 
         return $routesToWarm;
+    }
+
+    /**
+     * Build the sample slugs used to expand wildcard routes.
+     *
+     * Values set in config/cache.php win; anything left empty is read from the
+     * database so deleting or renaming a blog cannot leave the warmer on dead URLs.
+     *
+     * @return array{blog_slugs: list<string>, categories: list<string>, tags: list<string>}
+     */
+    private function resolveWarmupMocks(): array
+    {
+        /** @var array<string, list<string>> $configured */
+        $configured = $this->config['warmup_mocks'] ?? [];
+
+        $blogSlugs = $configured['blog_slugs'] ?? [];
+        $categories = $configured['categories'] ?? [];
+        $tags = $configured['tags'] ?? [];
+
+        try {
+            if ($blogSlugs === []) {
+                $blogSlugs = $this->activeBlogSlugs(self::WARMUP_SAMPLE_SIZE);
+            }
+
+            // Categories and tags are scoped to one blog, so they only pair with the first slug
+            if ($blogSlugs !== [] && ($categories === [] || $tags === [])) {
+                $categories = $categories ?: $this->activeTaxonomySlugs('categories', $blogSlugs[0]);
+                $tags = $tags ?: $this->activeTaxonomySlugs('tags', $blogSlugs[0]);
+            }
+        } catch (\Throwable $e) {
+            echo "  ✗ Could not read warmup samples from the database ({$e->getMessage()})
+";
+        }
+
+        return ['blog_slugs' => $blogSlugs, 'categories' => $categories, 'tags' => $tags];
+    }
+
+    /**
+     * Published blogs with the most published posts, so warming hits real content.
+     *
+     * @return list<string>
+     */
+    private function activeBlogSlugs(int $limit): array
+    {
+        $rows = $this->database->query(
+            "SELECT b.blog_slug FROM blogs b
+             JOIN posts p ON p.blog_id = b.id AND p.status = 'published'
+             WHERE b.status = 'published'
+             GROUP BY b.id, b.blog_slug
+             ORDER BY COUNT(p.id) DESC, b.id
+             LIMIT ?",
+            [$limit]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        return array_map('strval', $rows);
+    }
+
+    /**
+     * Categories or tags of one blog that published posts actually use.
+     *
+     * @param  string  $table  'categories' or 'tags'
+     * @return list<string>
+     */
+    private function activeTaxonomySlugs(string $table, string $blogSlug): array
+    {
+        // Table names cannot be bound, so each one gets its own fixed join
+        $join = $table === 'categories'
+            ? 'JOIN posts p ON p.category_id = t.id'
+            : 'JOIN post_tags pt ON pt.tag_id = t.id JOIN posts p ON p.id = pt.post_id';
+
+        $rows = $this->database->query(
+            "SELECT t.slug FROM {$table} t
+             JOIN blogs b ON b.id = t.blog_id
+             {$join}
+             WHERE b.blog_slug = ? AND p.status = 'published'
+             GROUP BY t.id, t.slug
+             ORDER BY COUNT(p.id) DESC, t.id
+             LIMIT ?",
+            [$blogSlug, self::WARMUP_SAMPLE_SIZE]
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
+        return array_map('strval', $rows);
     }
 
     /**
