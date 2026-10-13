@@ -39,6 +39,9 @@ it('authenticates with valid credentials using mocked dependencies', function ()
         ->once()
         ->with('session_epoch', 0);
 
+    // A disabled session (as in the CLI) records no user_sessions row.
+    $mocks['session']->shouldReceive('isEnabled')->once()->andReturn(false);
+
     // Sign-in stamps the time and the language of the page, for emails later.
     $mocks['userModel']
         ->shouldReceive('updateById')
@@ -215,15 +218,10 @@ it('checks that authenticated user returns true', function () {
 it('clears session on logout and user is no longer authenticated', function () {
     $mocks = AuthTestHelper::createMockedAuth();
 
+    // Logout ends the session server-side, not just the user_id key.
     $mocks['session']
-        ->shouldReceive('remove')
-        ->once()
-        ->with('user_id');
-
-    $mocks['session']
-        ->shouldReceive('regenerate')
-        ->once()
-        ->with(true);
+        ->shouldReceive('destroy')
+        ->once();
 
     // After logout, check() should return false
     $mocks['session']

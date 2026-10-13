@@ -85,6 +85,7 @@ final class ModerationTestHelper
             Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
             new CommentModel($db),
             new BlogModel($db),
+            SessionTestHelper::revoker($db),
         );
     }
 

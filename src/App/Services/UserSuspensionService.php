@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\BlogModel;
 use App\Models\CommentModel;
+use App\Services\Sessions\SessionRevoker;
 use Framework\Database;
 use RuntimeException;
 
@@ -32,6 +33,7 @@ class UserSuspensionService
         private PublicCacheInvalidator $cacheInvalidator,
         private CommentModel $comments,
         private BlogModel $blogs,
+        private SessionRevoker $revoker,
     ) {}
 
     /**
@@ -105,6 +107,7 @@ class UserSuspensionService
         });
 
         $this->purgeAfterVisibilityChange($userId);
+        $this->revoker->endAll($userId, 'suspended');
 
         return $result;
     }

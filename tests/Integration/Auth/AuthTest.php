@@ -11,6 +11,7 @@ use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
 use Framework\Session;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 
 /**
  * Integration tests for Auth service.
@@ -27,9 +28,10 @@ beforeEach(function () {
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
         new CommentModel($this->db),
         new BlogModel($this->db),
+        SessionTestHelper::revoker($this->db),
     );
 
-    $this->auth = new Auth($this->session, $this->userModel, $this->profileModel, $suspensions);
+    $this->auth = new Auth($this->session, $this->userModel, $this->profileModel, $suspensions, SessionTestHelper::records($this->db));
 });
 
 afterEach(function () {

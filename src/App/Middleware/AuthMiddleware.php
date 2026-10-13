@@ -37,8 +37,16 @@ final class AuthMiddleware implements MiddlewareInterface
                 throw new UnauthorizedException('Authentication required to access this resource.', 401);
             }
 
+            $session = app()->get(\Framework\Session::class);
+
             // Store intended URL for post-login redirect
-            app()->get(\Framework\Session::class)->set('intended_url', $request->fullUrl());
+            $session->set('intended_url', $request->fullUrl());
+
+            if ($session->wasSignedOutElsewhere()) {
+                $flash = $session->get('_flash', []);
+                $flash['info'][] = chrome_translate('auth.signedOutElsewhere');
+                $session->set('_flash', $flash);
+            }
 
             // And put it on the login URL as well. The session copy is the one
             // that survives a modal login, but a query parameter survives a

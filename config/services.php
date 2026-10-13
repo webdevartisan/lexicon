@@ -94,7 +94,56 @@ $container->setShared(Framework\Database::class, function ($c) {
  * all services that need session access during the request.
  */
 $container->setShared(Framework\Session::class, function ($c) {
-    return new Framework\Session();
+    $config = require ROOT_PATH.'/config/session.php';
+
+    return new Framework\Session(
+        $c->get(Framework\Session\SessionManager::class),
+        $c->get(Framework\Session\SessionRegistry::class),
+        $config
+    );
+});
+
+$container->setShared(Framework\Session\SessionManager::class, function ($c) {
+    $manager = new Framework\Session\SessionManager($c, require ROOT_PATH.'/config/session.php');
+
+    // A misspelt SESSION_DRIVER stops every request with this message rather
+    // than falling back to some other store.
+    $manager->assertSupported();
+
+    return $manager;
+});
+
+$container->setShared(App\Services\Sessions\SessionRecordFactory::class, function ($c) {
+    return new App\Services\Sessions\SessionRecordFactory(
+        $c->get(Framework\Session::class),
+        $c->get(App\Models\UserModel::class),
+        fn () => $c->get(App\Services\Analytics\UserAgentClassifier::class),
+        fn () => $c->get(App\Services\Sessions\SessionLocation::class),
+        require ROOT_PATH.'/config/session.php'
+    );
+});
+
+$container->setShared(App\Services\Sessions\RecentPasswordConfirmation::class, function ($c) {
+    $config = require ROOT_PATH.'/config/session.php';
+
+    return new App\Services\Sessions\RecentPasswordConfirmation(
+        $c->get(Framework\Session::class),
+        $c->get(App\Models\UserModel::class),
+        $c->get(App\Services\PasswordConfirmRateLimiter::class),
+        (int) $config['reauth_minutes']
+    );
+});
+
+$container->setShared(App\Services\Analytics\CityLookup::class, function ($c) {
+    $config = require ROOT_PATH.'/config/session.php';
+
+    return new App\Services\Analytics\CityLookup(ROOT_PATH.'/'.$config['geo']['city_path']);
+});
+
+$container->setShared(Framework\Session\SessionRegistry::class, function ($c) {
+    $config = require ROOT_PATH.'/config/session.php';
+
+    return new Framework\Session\SessionRegistry($c->get(Framework\Database::class), $config['table']);
 });
 
 // ============================================================================
@@ -113,7 +162,8 @@ $container->setShared(App\Auth::class, function ($c) {
         $c->get(Framework\Session::class),
         $c->get(App\Models\UserModel::class),
         $c->get(App\Models\UserProfileModel::class),
-        $c->get(App\Services\UserSuspensionService::class)
+        $c->get(App\Services\UserSuspensionService::class),
+        $c->get(App\Services\Sessions\SessionRecordFactory::class)
     );
 });
 $container->setShared(Framework\Interfaces\AuthInterface::class, function ($c) {
@@ -601,7 +651,8 @@ $container->setShared(App\Services\ImpersonationService::class, function ($c) {
         $c->get(Framework\Session::class),
         $c->get(Framework\Database::class),
         $c->get(App\Models\UserModel::class),
-        $c->get(Framework\Security\Csrf::class)
+        $c->get(Framework\Security\Csrf::class),
+        $c->get(App\Services\Sessions\SessionRecordFactory::class)
     );
 });
 
@@ -610,7 +661,8 @@ $container->setShared(App\Services\UserSuspensionService::class, function ($c) {
         $c->get(Framework\Database::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
         $c->get(App\Models\CommentModel::class),
-        $c->get(App\Models\BlogModel::class)
+        $c->get(App\Models\BlogModel::class),
+        $c->get(App\Services\Sessions\SessionRevoker::class)
     );
 });
 
@@ -984,7 +1036,8 @@ $container->setShared(App\Services\AccountErasureSchedulerService::class, functi
         $c->get(App\Models\UserModel::class),
         $c->get(App\Models\PendingErasureModel::class),
         $c->get(App\Services\AccountErasureService::class),
-        (int) $config['erasure_grace_period_days']
+        (int) $config['erasure_grace_period_days'],
+        $c->get(App\Services\Sessions\SessionRevoker::class)
     );
 });
 

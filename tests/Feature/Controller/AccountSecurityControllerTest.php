@@ -6,9 +6,12 @@ use App\Controllers\AccountSecurityController;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\PasswordConfirmRateLimiter;
+use App\Services\Sessions\RecentPasswordConfirmation;
+use App\Services\Sessions\SessionList;
 use Framework\Helpers\RateLimiter;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 use Tests\Helpers\ThrottleTestHelper;
 
 /**
@@ -42,11 +45,13 @@ beforeEach(function () {
     expect(auth()->login($email, $this->password))->toBeTrue();
 
     $this->throttle = new PasswordConfirmRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()));
-    $c = \Framework\Core\App::container();
     $this->controller = new AccountSecurityController(
         $this->users,
         new UserPreferencesModel($this->db),
         $this->throttle,
+        SessionTestHelper::revoker($this->db),
+        new SessionList(SessionTestHelper::registry($this->db), new \Framework\Session(), $this->users),
+        new RecentPasswordConfirmation(new \Framework\Session(), $this->users, $this->throttle, 10),
     );
 
     $this->viewer = new class() implements TemplateViewerInterface
@@ -104,6 +109,25 @@ test('a correct current password changes the hash and rotates the session', func
     // The success path calls session->regenerate() to close session fixation.
     $source = file_get_contents(ROOT_PATH.'/src/App/Controllers/AccountSecurityController.php');
     expect($source)->toContain('$this->session->regenerate()');
+});
+
+test('a password change signs the account out everywhere else', function () {
+    $elsewhere = SessionTestHelper::signedInRow($this->db, $this->userId);
+    $someoneElse = SessionTestHelper::signedInRow($this->db, UserFactory::new($this->users)->create());
+
+    $request = makeRequest('/account/security/password', 'POST', [
+        '_token' => csrf()->getToken(),
+        'current_password' => $this->password,
+        'new_password' => 'brandnew456',
+        'new_password_confirm' => 'brandnew456',
+    ]);
+    setupController($this->controller, $request, $this->viewer);
+
+    callController($this->controller, 'updatePassword', $request);
+
+    $registry = SessionTestHelper::registry($this->db);
+    expect($registry->find($elsewhere))->toBeNull();
+    expect($registry->find($someoneElse))->not->toBeNull();
 });
 
 test('a wrong current password changes nothing and is recorded by the throttle', function () {

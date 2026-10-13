@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\UserModel;
+use App\Services\Sessions\SessionRecordFactory;
 use Framework\Database;
 use Framework\Security\Csrf;
 use Framework\Session;
@@ -51,6 +52,7 @@ class ImpersonationService
         private Database $database,
         private UserModel $users,
         private Csrf $csrf,
+        private SessionRecordFactory $sessionRecords,
     ) {}
 
     /**
@@ -144,6 +146,9 @@ class ImpersonationService
         $this->session->set(self::KEY_EXPIRES, time() + (self::MAX_MINUTES * 60));
         $this->session->set('user_id', $targetId);
         $this->session->set('session_epoch', (int) ($target['session_epoch'] ?? 0));
+
+        // The row now answers for the target, flagged so the target's own list leaves it out.
+        $this->bindSession($targetId, $adminId);
     }
 
     /**
@@ -312,8 +317,19 @@ class ImpersonationService
         if ($adminId > 0) {
             $this->session->set('user_id', $adminId);
             $this->session->set('session_epoch', $adminEpoch);
+            $this->bindSession($adminId, null);
         } else {
-            $this->session->remove('user_id');
+            $this->session->destroy();
+        }
+    }
+
+    /**
+     * Point the session's user_sessions row at whoever it now acts as.
+     */
+    private function bindSession(int $userId, ?int $impersonatedBy): void
+    {
+        if ($this->session->isEnabled()) {
+            $this->session->bind($this->sessionRecords->forUser($userId, $impersonatedBy));
         }
     }
 }

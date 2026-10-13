@@ -246,7 +246,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
     }
 
     /**
-     * Create and store a one-time return token for a safe local URL.
+     * Create and store a short-lived return token for a safe local URL.
      *
      * @param  array<int, string>  $allowedPrefixes
      */
@@ -263,9 +263,16 @@ abstract class AppController extends BaseController implements SessionAwareInter
             $returnUrls = [];
         }
 
+        // Every list view issues one, so expired tokens are dropped here or the session keeps growing.
+        $now = time();
+        $returnUrls = array_filter(
+            $returnUrls,
+            static fn (mixed $entry): bool => is_array($entry) && ($entry['expires_at'] ?? 0) >= $now
+        );
+
         $returnUrls[$token] = [
             'url' => $url,
-            'expires_at' => time() + 1800,
+            'expires_at' => $now + 7200,
         ];
 
         $this->session->set('return_urls', $returnUrls);
@@ -274,11 +281,14 @@ abstract class AppController extends BaseController implements SessionAwareInter
     }
 
     /**
-     * Resolve a one-time return token to a safe local URL.
+     * Resolve a return token to a safe local URL.
+     *
+     * The token stays valid until it expires, so an editor that saves and
+     * reloads itself can still offer the same way back.
      *
      * @param  array<int, string>  $allowedPrefixes
      */
-    protected function consumeReturnToken(
+    protected function returnTokenUrl(
         ?string $token,
         string $fallback,
         array $allowedPrefixes = ['/dashboard']
@@ -294,8 +304,6 @@ abstract class AppController extends BaseController implements SessionAwareInter
         }
 
         $entry = $returnUrls[$token];
-        unset($returnUrls[$token]);
-        $this->session->set('return_urls', $returnUrls);
 
         if (!is_array($entry)) {
             return $fallback;

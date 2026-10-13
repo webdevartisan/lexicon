@@ -12,6 +12,7 @@ use App\Services\EmailChangeIssuer;
 use App\Services\MailQueueService;
 use App\Services\PasswordConfirmRateLimiter;
 use App\Services\RecipientLocale;
+use App\Services\Sessions\SessionRevoker;
 use Framework\Core\Response;
 
 /**
@@ -31,7 +32,8 @@ final class AccountEmailController extends AppController
         private PendingEmailChangeModel $pending,
         private PasswordConfirmRateLimiter $passwordThrottle,
         private MailQueueService $mailQueue,
-        private EmailChangeIssuer $emailChanges
+        private EmailChangeIssuer $emailChanges,
+        private SessionRevoker $revoker
     ) {}
 
     /**
@@ -125,10 +127,16 @@ final class AccountEmailController extends AppController
             $userId
         );
 
-        // The sign-in identifier just moved; regenerate as after any credential change.
+        // The sign-in identifier just moved; regenerate as after any credential change,
+        // and sign out anywhere else in case the change was not theirs.
         $this->session->regenerate();
+        $ended = $this->revoker->endOthers($userId, 'email_changed');
 
         $this->flash('success', chrome_translate('account.flash.emailChanged', ['email' => $newEmail]));
+
+        if ($ended > 0) {
+            $this->flash('info', chrome_translate('account.flash.otherDevicesSignedOut'));
+        }
 
         return $this->redirect(lurl('/account/preferences'));
     }

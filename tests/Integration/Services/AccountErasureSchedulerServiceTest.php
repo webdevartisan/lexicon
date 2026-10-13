@@ -26,6 +26,7 @@ use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
 use Tests\Helpers\DatabaseHelper;
+use Tests\Helpers\SessionTestHelper;
 
 /**
  * The upload service is a mock: storage/uploads/ is shared with development, so
@@ -79,7 +80,7 @@ afterEach(function () {
 
 function makeScheduler(Framework\Database $db, AccountErasureService $erasure, UserModel $users, PendingErasureModel $pending, int $graceDays): AccountErasureSchedulerService
 {
-    return new AccountErasureSchedulerService($users, $pending, $erasure, $graceDays);
+    return new AccountErasureSchedulerService($users, $pending, $erasure, $graceDays, SessionTestHelper::revoker($db));
 }
 
 test('scheduling deactivates the account without erasing it yet', function () {
@@ -169,4 +170,13 @@ test('processDue leaves it queued when a report landed during the grace period',
     expect($counts)->toBe(['erased' => 0, 'cancelled' => 0, 'still_blocked' => 1])
         ->and($this->users->find($this->personId))->not->toBeNull()
         ->and($this->db->query('SELECT COUNT(*) FROM pending_erasures WHERE user_id = ?', [$this->personId])->fetchColumn())->toBe(1);
+});
+
+test('scheduling deletion signs the account out everywhere', function () {
+    $hash = SessionTestHelper::signedInRow($this->db, $this->personId);
+
+    makeScheduler($this->db, $this->erasure, $this->users, $this->pending, 7)
+        ->schedule($this->personId, $this->personId, null);
+
+    expect(SessionTestHelper::registry($this->db)->find($hash))->toBeNull();
 });

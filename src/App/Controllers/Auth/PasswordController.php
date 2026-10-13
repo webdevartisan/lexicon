@@ -10,6 +10,7 @@ use App\Models\UserModel;
 use App\Services\PasswordResetIssuer;
 use App\Services\PasswordResetRateLimiter;
 use App\Services\RecipientLocale;
+use App\Services\Sessions\SessionRevoker;
 use Exception;
 use Framework\Core\Response;
 
@@ -31,7 +32,8 @@ final class PasswordController extends AppController
         private UserModel $users,
         private PasswordResetModel $passwordResets,
         private PasswordResetRateLimiter $limiter,
-        private PasswordResetIssuer $resetIssuer
+        private PasswordResetIssuer $resetIssuer,
+        private SessionRevoker $revoker
     ) {}
 
     /**
@@ -263,6 +265,10 @@ final class PasswordController extends AppController
 
         // Invalidate token
         $this->passwordResets->deleteByTokenHash($tokenHash);
+
+        // A reset usually means the old password is lost or known to someone
+        // else, so nothing signed in with it stays signed in.
+        $this->revoker->endOthers((int) $user['id'], 'password_reset');
 
         // Clear rate limits on successful reset
         $this->limiter->clear($ip, $email);

@@ -15,6 +15,7 @@ use App\Services\RecipientLocale;
 use Framework\Helpers\RateLimiter;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 use Tests\Helpers\ThrottleTestHelper;
 
 /**
@@ -80,6 +81,7 @@ beforeEach(function () {
         $this->throttle,
         $mailQueue,
         new EmailChangeIssuer($this->pending, $mailQueue, new RecipientLocale($this->db, LocaleRegistry::instance())),
+        SessionTestHelper::revoker($this->db),
     );
 
     $this->requestChange = function (string $newEmail, string $password) {

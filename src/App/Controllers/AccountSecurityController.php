@@ -6,7 +6,11 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Services\LocaleState;
 use App\Services\PasswordConfirmRateLimiter;
+use App\Services\Sessions\RecentPasswordConfirmation;
+use App\Services\Sessions\SessionList;
+use App\Services\Sessions\SessionRevoker;
 use DateTime;
 use DateTimeZone;
 use Exception;
@@ -26,7 +30,10 @@ final class AccountSecurityController extends AppController
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
-        private PasswordConfirmRateLimiter $passwordThrottle
+        private PasswordConfirmRateLimiter $passwordThrottle,
+        private SessionRevoker $revoker,
+        private SessionList $sessionList,
+        private RecentPasswordConfirmation $recentConfirmation
     ) {}
 
     /**
@@ -51,6 +58,12 @@ final class AccountSecurityController extends AppController
 
         return $this->view('public.Account.security', [
             'user' => $user,
+            'sessions' => $this->sessionList->forOwner(
+                $userId,
+                LocaleState::get()->chromeLocale,
+                $preferences['timezone'] ?? 'UTC'
+            ),
+            'needsPassword' => !$this->recentConfirmation->isFresh(),
         ]);
     }
 
@@ -108,7 +121,14 @@ final class AccountSecurityController extends AppController
         // regenerate session ID after credential change to prevent session fixation
         $this->session->regenerate();
 
+        // Whoever knew the old password may still be signed in somewhere else.
+        $ended = $this->revoker->endOthers($userId, 'password_changed');
+
         $this->flash('success', chrome_translate('account.flash.passwordUpdated'));
+
+        if ($ended > 0) {
+            $this->flash('info', chrome_translate('account.flash.otherDevicesSignedOut'));
+        }
 
         return $this->redirect(lurl('/account/security'));
     }

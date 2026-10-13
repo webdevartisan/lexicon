@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Auth;
 use App\Http\PreRouting\PipelineRunner;
 use Framework\Core\Dispatcher;
 use Framework\Core\Request;
@@ -32,9 +31,6 @@ $middleware = require ROOT_PATH.'/config/middleware.php';
 // initialize the route context for view rendering
 $routeContext = $container->get(\Framework\View\RouteContext::class);
 
-// touch Auth early so Session and security state are initialized before middleware
-$container->get(Auth::class);
-
 // build the HTTP dispatcher for routing requests through middleware and controllers
 $dispatcher = new Dispatcher(
     $router,
@@ -52,6 +48,9 @@ $preRoutingRunner->run($request);
 
 // hand off the request to the dispatcher for middleware and controller execution
 $response = $dispatcher->handle($request);
+
+// Stored before sending, so a session store failure still becomes an error page
+$container->get(\Framework\Session::class)->save();
 
 // send the final HTTP response to the client
 $response->send();

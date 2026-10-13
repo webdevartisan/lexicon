@@ -12,6 +12,7 @@ use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
 use Framework\Session;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\SessionTestHelper;
 
 /**
  * Ending an account's other sessions after an administrator resets its
@@ -30,6 +31,7 @@ beforeEach(function () {
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
         new CommentModel($this->db),
         new BlogModel($this->db),
+        SessionTestHelper::revoker($this->db),
     );
 
     $this->email = faker()->unique()->safeEmail();
@@ -38,7 +40,7 @@ beforeEach(function () {
         ->create();
     $this->adminId = UserFactory::new($this->users)->admin()->create();
 
-    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions);
+    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions, SessionTestHelper::records($this->db));
 });
 
 afterEach(function () {

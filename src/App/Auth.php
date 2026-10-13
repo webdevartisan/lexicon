@@ -8,6 +8,7 @@ use App\Exceptions\AccountSuspendedException;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\LocaleState;
+use App\Services\Sessions\SessionRecordFactory;
 use App\Services\UserSuspensionService;
 use Framework\Interfaces\AuthInterface;
 use Framework\Session;
@@ -36,7 +37,8 @@ class Auth implements AuthInterface
         private Session $session,
         private UserModel $users,
         private UserProfileModel $profiles,
-        private UserSuspensionService $suspensions
+        private UserSuspensionService $suspensions,
+        private SessionRecordFactory $sessionRecords
     ) {}
 
     /**
@@ -74,6 +76,9 @@ class Auth implements AuthInterface
 
         $this->session->set('user_id', (int) $user['id']);
         $this->session->set('session_epoch', (int) ($user['session_epoch'] ?? 0));
+        if ($this->session->isEnabled()) {
+            $this->session->bind($this->sessionRecords->forUser((int) $user['id']));
+        }
 
         // The language of the sign-in page is the best guess at the language
         // to email someone in who never chose one (see RecipientLocale).
@@ -90,16 +95,13 @@ class Auth implements AuthInterface
      */
     public function logout(): void
     {
-        $this->session->remove('user_id');
-
-        // Clear cached data
         $this->cachedUser = null;
         $this->cachedRoles = null;
         $this->cachedPermissions = null;
         $this->cachedAvatar = null;
 
-        // Optional: regenerate on logout too, to break any leaked ID.
-        $this->session->regenerate(true);
+        // Ends the session on the server too, so a copied cookie stops working.
+        $this->session->destroy();
     }
 
     /**
