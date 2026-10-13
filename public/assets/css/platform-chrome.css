@@ -509,6 +509,25 @@
   overflow: hidden;
 }
 
+/* The bell sits left of the account menu and the nav toggle, so a panel pinned
+   to its right edge runs off the left of a phone screen. Below this width the
+   bell stops being the anchor and the panel hangs from the masthead (fixed or
+   sticky in every theme), inset to the viewport. */
+@media (max-width: 30rem) {
+  .nav-bell {
+    position: static;
+  }
+
+  .nav-bell .notif-panel {
+    top: 100%;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+  }
+}
+
 .notif-panel-head {
   display: flex;
   align-items: center;

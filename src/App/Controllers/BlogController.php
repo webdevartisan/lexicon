@@ -356,14 +356,14 @@ class BlogController extends AppController
         // because a blog serves every member's posts, not just the owner's.
         $post = $this->postModel->findBySlugAndBlogId($postSlug, (int) $ctx['blog']['id']);
         if (!$post) {
-            throw new PageNotFoundException('Post not be found', 404);
+            throw new PageNotFoundException('Post not found', 404);
         }
 
         $canPreview = auth()->check()
             && $this->model->userCanAccessBlog((int) auth()->user()['id'], (int) $ctx['blog']['id']);
 
         if (!$canPreview && $post['status'] !== 'published') {
-            throw new PageNotFoundException('Post not be found', 404);
+            throw new PageNotFoundException('Post not found', 404);
         }
 
         // A post's locale set is narrower than its blog's: the blog may carry
