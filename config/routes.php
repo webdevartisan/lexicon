@@ -293,6 +293,7 @@ $router->group([
 ], function (Router $r) {
     $r->add('/', ['controller' => 'HomeController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/active-blog', ['controller' => 'HomeController', 'action' => 'setActiveBlog', 'method' => 'POST']);
+    $r->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
     // Personal account settings moved to the front under /account. The old
     // dashboard settings routes are deleted, not redirected.
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);

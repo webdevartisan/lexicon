@@ -62,11 +62,8 @@ final class InviteController extends AppController
             return $this->redirect(lurl('/register'));
         }
 
-        // Authed: show accept/decline inside the dashboard shell.
-        return $this->view('dashboard.invite.accept', [
-            'invite' => $invite,
-            'token' => $token,
-        ]);
+        // Authed: the confirmation lives in the dashboard so it gets the control panel menu.
+        return $this->redirect(lurl('/dashboard/invite/'.$token));
     }
 
     /**
@@ -86,6 +83,10 @@ final class InviteController extends AppController
 
         // Resolve the invite up-front so we know which blog to send them to.
         $invite = $this->invitationModel->findValidByToken(hash('sha256', $token));
+
+        if ($invite !== false && !$this->isAddressedToSignedInUser($invite)) {
+            return $this->wrongAccount($token);
+        }
 
         try {
             $this->invitationService->accept($token, (int) auth()->user()['id']);
@@ -122,6 +123,12 @@ final class InviteController extends AppController
 
         $userId = auth()->check() ? (int) auth()->user()['id'] : 0;
 
+        // A guest may decline from the email link; a signed-in user only for their own invite.
+        $invite = $this->invitationModel->findValidByToken(hash('sha256', $token));
+        if ($userId > 0 && $invite !== false && !$this->isAddressedToSignedInUser($invite)) {
+            return $this->wrongAccount($token);
+        }
+
         try {
             $this->invitationService->decline($token, $userId);
         } catch (\RuntimeException) {
@@ -139,5 +146,25 @@ final class InviteController extends AppController
         }
 
         return $this->view('invite.declined');
+    }
+
+    /**
+     * Whether the signed-in account is the address the invitation was sent to.
+     *
+     * @param  array{email: string}  $invite
+     */
+    private function isAddressedToSignedInUser(array $invite): bool
+    {
+        return strcasecmp((string) auth()->user()['email'], (string) $invite['email']) === 0;
+    }
+
+    /**
+     * Send a mismatched account back to the page that explains the mismatch.
+     */
+    private function wrongAccount(string $token): Response
+    {
+        $this->flash('error', 'This invitation was sent to a different account.');
+
+        return $this->redirect(lurl('/dashboard/invite/'.$token));
     }
 }
