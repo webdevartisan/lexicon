@@ -38,7 +38,7 @@ function openLibrary(editor, onSelect) {
     onSelect: onSelect,
   });
 }
-const isDark = localStorage.getItem('data-mode') === 'dark';
+const isDark = document.documentElement.getAttribute('data-mode') === 'dark';
 
 tinymce.init({
   selector: '#content',

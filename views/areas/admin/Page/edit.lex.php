@@ -72,7 +72,7 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
 <script src="/cp-assets/js/dropzone.init.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/dropzone.init.js') ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 (function () {
-    var isDark = localStorage.getItem('data-mode') === 'dark';
+    var isDark = document.documentElement.getAttribute('data-mode') === 'dark';
     tinymce.init({
         selector: '#content',
         height: 460,

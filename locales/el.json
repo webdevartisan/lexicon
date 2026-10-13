@@ -4,6 +4,12 @@
         "search": {
             "placeholder": "Αναζήτηση για ..."
         },
+        "themeMenu": {
+            "label": "Εμφάνιση",
+            "light": "Φωτεινό",
+            "auto": "Αυτόματο",
+            "dark": "Σκούρο"
+        },
         "profileDropdown": {
             "signedInAs": "Συνδεδεμένος ως",
             "links": {

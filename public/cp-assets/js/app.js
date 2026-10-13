@@ -204,80 +204,40 @@ function windowResizeHover() {
 }
 
 /**
- * Read preference from storage
- * 
- * We prefer localStorage because it survives browser restarts,
- * but keep sessionStorage for same-tab reloads.
- * 
- * @param {string} key - Storage key
- * @returns {string|null} Stored value
- */
-function readPref(key) {
-    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
-}
-
-/**
- * Set attribute and persist to storage
- * 
- * We update DOM attribute and save to both storage types
- * for maximum persistence across sessions.
- * 
- * @param {string} attr - Attribute name
- * @param {string} val - Attribute value
- */
-function setAttrItemAndTag(attr, val) {
-    document.documentElement.setAttribute(attr, val);
-    sessionStorage.setItem(attr, val);
-    localStorage.setItem(attr, val);
-}
-
-/**
- * Initialize light/dark mode toggle
- * 
- * We set up the theme switcher button to toggle between light and dark modes.
+ * Initialize the Light / Auto / Dark appearance menu
+ *
+ * layout.js owns resolving and applying the mode; here we only wire the menu
+ * and show the current choice (topbar icon plus a check mark in the list).
  */
 function lightDarkMode() {
-    const lightDarkBtn = document.getElementById("light-dark-mode");
-    if (!lightDarkBtn) return;
-    
-    /**
-     * Seed initial preferences from server-rendered HTML
-     * 
-     * We read the initial mode from HTML attributes so the first click
-     * toggles correctly without requiring a default assumption.
-     */
-    const seedFromHtml = () => {
-        const htmlMode = document.documentElement.getAttribute("data-mode") || "light";
-        if (!readPref("data-mode")) {
-            // We seed initial preferences from server-rendered HTML
-            setAttrItemAndTag("data-mode", htmlMode);
-            setAttrItemAndTag("data-sidebar", htmlMode);
-            setAttrItemAndTag("data-topbar", htmlMode);
-        }
+    const menu = document.getElementById("theme-menu");
+    if (!menu || !window.lexiconTheme) return;
+
+    const render = () => {
+        const current = window.lexiconTheme.getPreference();
+        menu.querySelectorAll("[data-theme-icon]").forEach((icon) => {
+            icon.classList.toggle("hidden", icon.dataset.themeIcon !== current);
+        });
+        menu.querySelectorAll("[data-theme-choice]").forEach((item) => {
+            const active = item.dataset.themeChoice === current;
+            item.setAttribute("aria-pressed", active ? "true" : "false");
+            item.querySelector("[data-theme-check]").classList.toggle("hidden", !active);
+        });
     };
-    
-    /**
-     * Get current mode from storage or DOM
-     * 
-     * @returns {string} Current mode ('light' or 'dark')
-     */
-    const getCurrentMode = () => {
-        return (
-            readPref("data-mode") ||
-            document.documentElement.getAttribute("data-mode") ||
-            "light"
-        );
-    };
-    
-    seedFromHtml();
-    
-    lightDarkBtn.addEventListener("click", function () {
-        const current = getCurrentMode();
-        const next = current === "light" ? "dark" : "light";
-        setAttrItemAndTag("data-mode", next);
-        setAttrItemAndTag("data-sidebar", next);
-        setAttrItemAndTag("data-topbar", next);
+
+    menu.querySelectorAll("[data-theme-choice]").forEach((item) => {
+        item.addEventListener("click", () => {
+            window.lexiconTheme.setPreference(item.dataset.themeChoice);
+        });
     });
+
+    // The attribute changes for any source: this menu, another tab, or the device theme flipping
+    new MutationObserver(render).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme-pref"],
+    });
+
+    render();
 }
 
 /**
