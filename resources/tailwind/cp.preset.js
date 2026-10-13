@@ -99,7 +99,6 @@ module.exports = {
       },
       width: {
         "vertical-menu": "260px",
-        "vertical-menu-md": "84px",
         "vertical-menu-sm": "4.375rem",
       },
       maxWidth: {

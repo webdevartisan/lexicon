@@ -81,7 +81,7 @@ $renderGroup = static function (array $it) use ($iconFor, $t): void {
                 <a class="sidebar-menu-item sidebar-menu-item--group group/menu-link"
                    href="<?= e($it['href']) ?>"
                    data-nav-path="<?= e(lurl($it['href'])) ?>">
-                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
                         <i data-lucide="<?= e($iconFor($it)) ?>" class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
@@ -89,13 +89,13 @@ $renderGroup = static function (array $it) use ($iconFor, $t): void {
                     </span>
                 </a>
                 <button type="button" data-nav-toggle
-                        class="sidebar-menu-toggle group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden"
+                        class="sidebar-menu-toggle group-data-[sidebar-size=sm]:hidden"
                         aria-expanded="false" aria-controls="<?= e($submenuId) ?>"
                         aria-label="<?= e($t('navigation.toggleGroup', ['name' => strip_tags($label)])) ?>">
                     <i data-lucide="chevron-down" class="size-4"></i>
                 </button>
             </div>
-            <ul id="<?= e($submenuId) ?>" class="hidden ltr:pl-6 rtl:pr-6 group-data-[sidebar-size=sm]:hidden group-data-[sidebar-size=md]:hidden" data-nav-submenu>
+            <ul id="<?= e($submenuId) ?>" class="hidden ltr:pl-6 rtl:pr-6 group-data-[sidebar-size=sm]:hidden" data-nav-submenu>
                 <?php foreach ($it['children'] as $child) { ?>
                 <li>
                     <a class="sidebar-menu-item group/menu-link text-[13px]"
@@ -124,13 +124,13 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
 
 <!-- Global Navigation Section -->
 <?php if (!empty($globalItems) || !empty($legacyItems)) { ?>
-    <li class="px-4 py-1 text-vertical-menu-item uppercase font-medium text-[11px] cursor-default tracking-wider group-data-[sidebar-size=sm]:hidden inline-block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:underline group-data-[sidebar-size=md]:text-center">
+    <li class="px-4 py-1 text-vertical-menu-item uppercase font-medium text-[11px] cursor-default tracking-wider group-data-[sidebar-size=sm]:hidden inline-block">
         <span><?= $t('common.navigation') ?></span>
     </li>
 
     <?php foreach (array_merge($legacyItems, $globalItems) as $it) { ?>
         <?php if (($it['type'] ?? 'link') === 'section_header') { ?>
-        <li class="px-4 py-2 mt-2 text-vertical-menu-item uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
+        <li class="px-4 py-2 mt-2 text-vertical-menu-item uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block">
             <span>
                 <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
             </span>
@@ -147,9 +147,9 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                data-nav-path="<?= e(lurl($it['href'])) ?>"
                >
                 
-                <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
                     <i data-lucide="<?= e($iconFor($it)) ?>" 
-                       class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
+                       class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
                 </span>
                 <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
                     <?php
@@ -171,7 +171,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
         } ?>
         <?php if (($it['type'] ?? 'link') === 'section_header') { ?>
             <!-- Section Header -->
-            <li class="px-4 py-2 mt-2 text-vertical-menu-item uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:text-center">
+            <li class="px-4 py-2 mt-2 text-vertical-menu-item uppercase font-semibold text-[10px] cursor-default tracking-widest opacity-60 group-data-[sidebar-size=sm]:hidden block">
                 <span>
                     <?php
                         // render server-side translation with fallback to label
@@ -184,14 +184,14 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                 <span class="sidebar-menu-item cursor-default opacity-40 select-none"
                       aria-disabled="true"
                       title="Coming soon">
-                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
                         <i data-lucide="<?= e($iconFor($it)) ?>"
-                           class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
+                           class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden inline-flex items-center gap-2">
                         <?php echo !empty($it['key']) ? $t($it['key']) : e($it['label']); ?>
                         <?php if (!empty($it['badge'])) { ?>
-                        <span class="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-zink-600 dark:text-zink-200 group-data-[sidebar-size=md]:hidden group-data-[sidebar-size=sm]:hidden">
+                        <span class="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-zink-600 dark:text-zink-200 group-data-[sidebar-size=sm]:hidden">
                             <?= e($it['badge']) ?>
                         </span>
                         <?php } ?>
@@ -206,9 +206,9 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
                    data-nav-path="<?= e(lurl($it['href'])) ?>"
                    >
 
-                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=md]:block group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
+                    <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
                         <i data-lucide="<?= e($iconFor($it)) ?>"
-                           class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5 group-data-[sidebar-size=md]:block group-data-[sidebar-size=md]:mx-auto group-data-[sidebar-size=md]:mb-2"></i>
+                           class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
                     </span>
                     <span class="group-data-[sidebar-size=sm]:ltr:pl-10 group-data-[sidebar-size=sm]:rtl:pr-10 align-middle group-data-[sidebar-size=sm]:group-hover/sm:block group-data-[sidebar-size=sm]:hidden">
                         <?php

@@ -88,19 +88,13 @@
         transform: rotate(180deg);
     }
 
-    .group[data-sidebar-size="md"] .sidebar-menu-item {
-        display: block;
-        text-align: center;
-    }
-
     .group[data-sidebar-size="sm"] .sidebar-menu-item {
         margin-block: 0;
     }
 
-    /* Both collapsed rails hide the toggle, so the row goes back to the plain
+    /* The collapsed rail hides the toggle, so the row goes back to the plain
        padding and lines up with its siblings again. */
-    .group[data-sidebar-size="sm"] .sidebar-menu-item--group,
-    .group[data-sidebar-size="md"] .sidebar-menu-item--group {
+    .group[data-sidebar-size="sm"] .sidebar-menu-item--group {
         padding-inline-end: 1.25rem;
     }
 
@@ -115,6 +109,28 @@
         z-index: 10;
         width: calc(theme('spacing.vertical-menu-sm') * 3.63);
         color: rgb(var(--sc-vertical-menu-item-hover));
+        background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
+        box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
+    }
+
+    /* SimpleBar wraps the menu when the sidebar starts expanded and unMount()
+       leaves the wrappers (and their inline overflow) in place, which clips the flyouts below until a reload. */
+    .group[data-sidebar-size="sm"] #scrollbar .simplebar-wrapper,
+    .group[data-sidebar-size="sm"] #scrollbar .simplebar-mask,
+    .group[data-sidebar-size="sm"] #scrollbar .simplebar-offset,
+    .group[data-sidebar-size="sm"] #scrollbar .simplebar-content-wrapper {
+        overflow: visible !important;
+    }
+
+    /* Children of a group open under the hovered row on the icon-only rail. */
+    .group[data-sidebar-size="sm"] .group\/sm:hover > [data-nav-submenu] {
+        position: absolute;
+        z-index: 10;
+        display: block;
+        inset-inline-start: 0.75rem;
+        width: calc(theme('spacing.vertical-menu-sm') * 3.63);
+        padding: 0.25rem 0;
+        border-radius: 0 0 0.375rem 0.375rem;
         background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
         box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
     }
@@ -266,10 +282,6 @@
             padding-right: 0
         }
 
-        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:ltr\:md\:left-vertical-menu-md:where([dir=ltr], [dir=ltr] *) {
-            left: 10.3125rem
-        }
-
         .group[data-sidebar-size=sm] .group-data-\[sidebar-size\=sm\]\:ltr\:md\:left-vertical-menu-sm:where([dir=ltr], [dir=ltr] *) {
             left: 4.375rem !important;
         }
@@ -282,19 +294,11 @@
             margin-left: 16.25rem
         }
 
-        /* RTL and md-sidebar counterparts. The page content and the footer both
+        /* RTL counterparts. The page content and the footer both
            ask for these; without them an Arabic control panel had no sidebar
            offset at all and the sidebar sat on top of the content. */
         .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:rtl\:md\:mr-vertical-menu:where([dir=rtl], [dir=rtl] *) {
             margin-right: 16.25rem
-        }
-
-        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:ltr\:ml-vertical-menu-md:where([dir=ltr], [dir=ltr] *) {
-            margin-left: 10.3125rem
-        }
-
-        .group[data-sidebar-size=md] .group-data-\[sidebar-size\=md\]\:rtl\:mr-vertical-menu-md:where([dir=rtl], [dir=rtl] *) {
-            margin-right: 10.3125rem
         }
 
         .group[data-layout=horizontal] .group-data-\[layout\=horizontal\]\:ltr\:md\:pl-0:where([dir=ltr], [dir=ltr] *) {
