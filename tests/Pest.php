@@ -257,9 +257,7 @@ function callController($controller, $method, $request, ...$args): \Framework\Co
         $session = \Framework\Core\App::container()->get(\Framework\Session::class);
 
         $session->set('_errors', $e->errors());
-        $oldInput = $request->all();
-        unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-        $session->set('_old_input', $oldInput);
+        $session->set('_old_input', sanitize_old_input($request->all()));
 
         $flash = $session->get('_flash', []);
         $flash['error'][] = 'Please correct the errors and try again.';

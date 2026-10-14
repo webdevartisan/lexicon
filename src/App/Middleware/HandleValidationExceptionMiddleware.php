@@ -36,9 +36,7 @@ final class HandleValidationExceptionMiddleware implements MiddlewareInterface
             $this->session->set('_errors', $e->errors());
 
             // Preserve old input for form repopulation (exclude sensitive fields)
-            $oldInput = $request->all();
-            unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-            $this->session->set('_old_input', $oldInput);
+            $this->session->set('_old_input', sanitize_old_input($request->all()));
 
             // Flash error message
             $flash = $this->session->get('_flash', []);

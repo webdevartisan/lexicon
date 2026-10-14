@@ -327,7 +327,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
     protected function redirectBack(): Response
     {
         // Preserve old input for form repopulation
-        $this->session->set('_old_input', $this->request->all());
+        $this->session->set('_old_input', sanitize_old_input($this->request->all()));
 
         return $this->redirect($this->backUrlPath());
     }

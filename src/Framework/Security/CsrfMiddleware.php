@@ -100,9 +100,7 @@ final class CsrfMiddleware implements MiddlewareInterface
 
         // Same treatment a validation failure gets, so the user lands back on
         // their form with what they typed still in it.
-        $oldInput = $request->all();
-        unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-        $this->session->set('_old_input', $oldInput);
+        $this->session->set('_old_input', sanitize_old_input($request->all()));
 
         $flash = $this->session->get('_flash', []);
         $flash['error'] ??= [];

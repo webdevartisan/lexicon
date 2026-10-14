@@ -575,6 +575,31 @@ function old(?string $key = null, mixed $default = null): mixed
 }
 
 /**
+ * Strip secrets from request input before it is stored as old input.
+ *
+ * Old input lands in the session store, so anything password-like or a CSRF
+ * token must never be kept there. Matching on the key name catches fields such
+ * as new_password and current_password without a list that drifts.
+ *
+ * @param  array  $input  Raw request input
+ * @return array The input without password-like and token keys
+ */
+function sanitize_old_input(array $input): array
+{
+    $clean = [];
+
+    foreach ($input as $key => $value) {
+        if (is_string($key) && preg_match('/pass|^_token$/i', $key)) {
+            continue;
+        }
+
+        $clean[$key] = is_array($value) ? sanitize_old_input($value) : $value;
+    }
+
+    return $clean;
+}
+
+/**
  * Convert snake_case to CamelCase.
  *
  * Used for converting validation rule names to method names and
