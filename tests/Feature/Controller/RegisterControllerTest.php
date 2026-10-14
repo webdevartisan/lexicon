@@ -11,6 +11,7 @@ use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
+use App\Services\AccountRegistrar;
 use App\Services\InvitationService;
 use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
@@ -70,14 +71,16 @@ beforeEach(function () {
     );
 
     $this->controller = new RegisterController(
-        $this->auth,
-        $this->userModel,
-        $this->profileModel,
-        $this->preferencesModel,
-        $this->userHandleValidator,
+        new AccountRegistrar(
+            $this->auth,
+            $this->userModel,
+            $this->profileModel,
+            $this->preferencesModel,
+            $this->userHandleValidator,
+            $this->roleModel
+        ),
         $invitationModel,
-        $invitationService,
-        $this->roleModel
+        $invitationService
     );
 
     $this->mockViewer = new class() implements \Framework\Interfaces\TemplateViewerInterface

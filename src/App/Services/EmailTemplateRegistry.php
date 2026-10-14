@@ -102,6 +102,18 @@ class EmailTemplateRegistry
                     'role' => 'author',
                 ],
             ],
+            'blog_invite_new_user' => [
+                'name' => 'Blog Invitation (new user)',
+                'description' => 'Invites someone without an account to create one and join a blog',
+                'group' => 'Collaboration',
+                'class' => 'App\\Mail\\BlogInviteNewUserMail',
+                'sample_data' => [
+                    'toEmail' => 'invitee@example.com',
+                    'rawToken' => 'SAMPLE_INVITE_TOKEN',
+                    'blogName' => 'Travel Stories',
+                    'role' => 'author',
+                ],
+            ],
             'collaborator_role_changed' => [
                 'name' => 'Collaborator Role Changed',
                 'description' => 'Notifies a collaborator their role on a blog changed',

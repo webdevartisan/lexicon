@@ -1109,20 +1109,6 @@ class BlogModel extends AppModel
     }
 
     /**
-     * Count active editors on a blog.
-     *
-     * Drives the "you're about to revoke the only editor" guard on the team page.
-     */
-    public function countActiveByRole(int $blogId, string $role): int
-    {
-        $sql = 'SELECT COUNT(*) AS c FROM blog_users
-                WHERE blog_id = ? AND role = ? AND is_active = 1';
-        $stmt = $this->database->query($sql, [$blogId, $role]);
-
-        return (int) ($stmt->fetch()['c'] ?? 0);
-    }
-
-    /**
      * Check if a user is an active collaborator on any blog they don't own.
      *
      * Decides whether the role-change notification toggle applies to the user.

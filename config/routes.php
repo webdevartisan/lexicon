@@ -157,7 +157,9 @@ $router->group([
 });
 
 // Public blog invitation landing (reached from the email link; no auth required)
+$router->add('/invite/joined', ['controller' => 'InviteController', 'action' => 'joined', 'method' => 'GET']);
 $router->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
+$router->add('/invite/{token:[a-f0-9]+}/register', ['controller' => 'InviteController', 'action' => 'register', 'method' => 'POST']);
 $router->add('/invite/{token:[a-f0-9]+}/accept', ['controller' => 'InviteController', 'action' => 'accept', 'method' => 'POST']);
 $router->add('/invite/{token:[a-f0-9]+}/decline', ['controller' => 'InviteController', 'action' => 'decline', 'method' => 'POST']);
 

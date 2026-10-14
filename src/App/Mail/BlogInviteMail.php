@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Services\BlogRoleLabels;
+
 /**
  * Email sent to a new or existing user when invited to collaborate on a blog.
  *
@@ -33,10 +35,11 @@ class BlogInviteMail extends Mailable
     }
 
     /**
-     * A blog role as the dashboard names it: 'editor' becomes 'Editor'.
+     * A blog role as the dashboard names it: 'editor' becomes 'Editor', and a
+     * custom role like 'co_owner' uses the name the administrator gave it.
      */
     public static function roleLabel(string $role): string
     {
-        return ucfirst($role);
+        return app(BlogRoleLabels::class)->label($role);
     }
 }

@@ -4296,3 +4296,332 @@ label {
     margin-top: 2.5rem;
     font-size: 0.85rem;
 }
+
+/* --- Invitation wizard -------------------------------------------------
+   A card with its own header (step count, progress, labelled steps), a body
+   that keeps its height between steps and a footer with Back on one side and
+   the next action on the other. Panels stay stacked until front.js marks the
+   card ready, so the sign-up form works without scripting. */
+
+.lx-authcol:has(.lx-invite) {
+    max-width: 40rem;
+}
+
+.lx-invite {
+    margin-top: 0.5rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: 18px;
+    background: var(--lx-paper-raised);
+    box-shadow: 0 1px 2px rgba(23, 26, 28, 0.04), 0 24px 48px -32px rgba(23, 26, 28, 0.35);
+    overflow: hidden;
+}
+
+.lx-invite-head {
+    padding: clamp(1.25rem, 4vw, 1.75rem) clamp(1.25rem, 5vw, 2.5rem) 1.5rem;
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-invite-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.lx-invite-badge {
+    flex: none;
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--lx-paper-sunk);
+    font: 600 0.7rem/1 var(--lx-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.lx-invite-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--lx-paper-sunk);
+    overflow: hidden;
+}
+
+.lx-invite-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--lx-ink);
+    transition: width 0.35s ease;
+}
+
+.lx-invite-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-invite-step-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--lx-ink-3);
+    font: 600 0.78rem/1.2 var(--lx-sans);
+    text-align: center;
+}
+
+button.lx-invite-step-btn:not(:disabled) {
+    cursor: pointer;
+}
+
+button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
+    border-color: var(--lx-ink);
+}
+
+.lx-invite-step-btn:focus-visible {
+    outline: 2px solid var(--lx-spot);
+    outline-offset: 2px;
+}
+
+.lx-invite-step-icon {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 50%;
+    background: var(--lx-paper-raised);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.lx-invite-step-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.lx-invite-step-check {
+    display: none;
+}
+
+.lx-invite-step.is-current .lx-invite-step-btn {
+    color: var(--lx-ink);
+}
+
+.lx-invite-step.is-current .lx-invite-step-icon {
+    border-color: var(--lx-ink);
+    background: var(--lx-ink);
+    color: var(--lx-paper);
+}
+
+.lx-invite-step.is-done .lx-invite-step-btn {
+    color: var(--lx-ink-2);
+}
+
+.lx-invite-step.is-done .lx-invite-step-icon {
+    border-color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    color: var(--lx-ink);
+}
+
+.lx-invite-step.is-done .lx-invite-step-glyph {
+    display: none;
+}
+
+.lx-invite-step.is-done .lx-invite-step-check {
+    display: block;
+}
+
+.lx-invite-panel:focus {
+    outline: none;
+}
+
+.lx-invite-body {
+    min-height: 17rem;
+    padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1.25rem, 5vw, 2.5rem) 2rem;
+}
+
+.lx-invite-title {
+    margin: 0 0 0.6rem;
+    font-family: var(--lx-serif);
+    font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+}
+
+.lx-invite-lede {
+    max-width: 34rem;
+    margin: 0 0 1.75rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--lx-ink-2);
+}
+
+.lx-invite-lede strong {
+    color: var(--lx-ink);
+    font-weight: 600;
+}
+
+.lx-invite-facts {
+    margin: 0;
+    border: 1px solid var(--lx-rule);
+    border-radius: 12px;
+    background: var(--lx-paper);
+}
+
+.lx-invite-facts > div {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+}
+
+.lx-invite-facts > div + div {
+    border-top: 1px solid var(--lx-rule);
+}
+
+.lx-invite-facts dt {
+    padding-top: 0.15rem;
+    font: 600 0.7rem/1.4 var(--lx-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-invite-facts dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+    color: var(--lx-ink);
+}
+
+.lx-invite-facts-note {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--lx-ink-2);
+}
+
+.lx-invite-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.1rem clamp(1.25rem, 5vw, 2.5rem);
+    border-top: 1px solid var(--lx-rule);
+    background: var(--lx-paper);
+}
+
+.lx-invite-foot form {
+    margin: 0;
+}
+
+.lx-invite-foot-end {
+    justify-content: flex-end;
+}
+
+.lx-invite-foot .lx-btn svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+[dir="rtl"] .lx-invite-foot .lx-btn svg {
+    transform: scaleX(-1);
+}
+
+.lx-invite-primary {
+    border-color: var(--lx-ink);
+    background: var(--lx-ink);
+    color: var(--lx-paper);
+}
+
+.lx-invite-primary:hover {
+    border-color: var(--lx-spot);
+    background: var(--lx-spot);
+    color: #fff;
+}
+
+.lx-invite-back {
+    border-color: var(--lx-rule-strong);
+}
+
+.lx-invite-done {
+    text-align: center;
+}
+
+.lx-invite-done-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-bottom: 1.1rem;
+    border-radius: 50%;
+    background: var(--lx-ok-bg);
+    color: var(--lx-ok);
+}
+
+.lx-invite-done-mark svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.lx-invite-done .lx-invite-title {
+    margin-bottom: 1.75rem;
+}
+
+.lx-invite-done .lx-invite-facts {
+    text-align: start;
+}
+
+.lx-invite.is-ready .lx-invite-panel:not([hidden]) {
+    animation: lx-invite-in-fwd 0.3s ease both;
+}
+
+.lx-invite.is-ready[data-dir="back"] .lx-invite-panel:not([hidden]) {
+    animation-name: lx-invite-in-back;
+}
+
+@keyframes lx-invite-in-fwd {
+    from { opacity: 0; transform: translateX(1.25rem); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes lx-invite-in-back {
+    from { opacity: 0; transform: translateX(-1.25rem); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 30rem) {
+    .lx-invite-facts > div {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+
+    .lx-invite-foot .lx-invite-primary {
+        flex: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lx-invite.is-ready .lx-invite-panel:not([hidden]) {
+        animation: none;
+    }
+
+    .lx-invite-progress span,
+    .lx-invite-step-icon {
+        transition: none;
+    }
+}

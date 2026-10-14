@@ -518,3 +518,81 @@
         startAutoplay();
     });
 })();
+
+// Invitation wizard: steps one and two share a page; the third is its own page.
+(function () {
+    'use strict';
+
+    var root = document.querySelector('[data-wizard]');
+    if (!root) return;
+
+    var panels = Array.prototype.slice.call(root.querySelectorAll('[data-wizard-panel]'));
+    var items = Array.prototype.slice.call(root.querySelectorAll('.lx-invite-step'));
+    var count = root.querySelector('[data-steps-count]');
+    var bar = root.querySelector('[data-steps-bar]');
+    var total = items.length;
+    var current = parseInt(root.getAttribute('data-start') || '1', 10);
+    var furthest = current;
+
+    function show(n, direction) {
+        current = n;
+        furthest = Math.max(furthest, n);
+        root.setAttribute('data-dir', direction);
+
+        panels.forEach(function (panel) {
+            panel.hidden = parseInt(panel.getAttribute('data-wizard-panel'), 10) !== n;
+        });
+
+        items.forEach(function (item, i) {
+            var button = item.querySelector('.lx-invite-step-btn');
+            var step = i + 1;
+            item.classList.toggle('is-done', step < n);
+            item.classList.toggle('is-current', step === n);
+            button.disabled = step > furthest;
+            if (step === n) {
+                button.setAttribute('aria-current', 'step');
+            } else {
+                button.removeAttribute('aria-current');
+            }
+        });
+
+        if (count) {
+            count.textContent = count.getAttribute('data-tpl').replace('{n}', n).replace('{total}', total);
+        }
+        if (bar) {
+            bar.style.width = Math.round(n / total * 100) + '%';
+        }
+    }
+
+    function go(n, moveFocus) {
+        show(n, n > current ? 'fwd' : 'back');
+        if (moveFocus) {
+            var panel = root.querySelector('[data-wizard-panel="' + n + '"]');
+            if (panel) panel.focus({ preventScroll: true });
+        }
+    }
+
+    root.classList.add('is-ready');
+    show(current, 'fwd');
+
+    root.addEventListener('click', function (event) {
+        if (event.target.closest('[data-wizard-next]')) go(Math.min(current + 1, total), true);
+        if (event.target.closest('[data-wizard-back]')) go(Math.max(current - 1, 1), true);
+    });
+
+    items.forEach(function (item, i) {
+        var button = item.querySelector('.lx-invite-step-btn');
+        button.addEventListener('click', function () {
+            if (i + 1 !== current) go(i + 1, true);
+        });
+        button.addEventListener('keydown', function (event) {
+            var target = null;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') target = i + 2;
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') target = i;
+            if (target === null || target < 1 || target > furthest) return;
+            event.preventDefault();
+            go(target, false);
+            items[target - 1].querySelector('.lx-invite-step-btn').focus();
+        });
+    });
+})();
