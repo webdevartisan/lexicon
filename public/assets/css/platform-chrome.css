@@ -17,7 +17,7 @@
 .platform-menu-list {
   position: absolute;
   top: calc(100% + 4px);
-  right: 0;
+  inset-inline-end: 0;
   z-index: 40;
   min-width: 170px;
   padding: .3rem;
@@ -51,7 +51,7 @@
   color: var(--platform-menu-fg, #f2f2f2);
   font: inherit;
   font-size: .85em;
-  text-align: left;
+  text-align: start;
   text-decoration: none;
   cursor: pointer;
 }
@@ -462,16 +462,87 @@
 }
 
 /* ---------------------------------------------------------------------------
-   The bell, and the panel it opens.
+   Notifications: the bell, the panel it opens, and the rows both inbox pages
+   share. One definition for the Lexicon front, all five themes, the dashboard
+   and the admin topbar.
 
-   Same rules as the account menu next to it: no colour of its own, so it reads
-   on paper and on a dark masthead alike, and one definition serves the Lexicon
-   front and all five themes. The panel is the same dark surface as the account
-   menu, widened, because it carries sentences rather than one-word links.
+   Colours come from tokens. The panel defaults to the dark platform surface
+   the account menu uses, so it reads the same on every theme; the control
+   panel's light mode repaints it light (see .is-cp below). The pages carry no
+   surface of their own and take the page's text colour, with tones tuned for
+   a light background unless a dark one says otherwise.
    --------------------------------------------------------------------------- */
 
+.notif-panel,
+.notif-page {
+  --notif-fg: currentColor;
+  --notif-muted: color-mix(in srgb, currentColor 62%, transparent);
+  --notif-line: rgba(128, 128, 128, .3);
+  --notif-quote-bg: rgba(128, 128, 128, .12);
+  --notif-chip-bg: rgba(128, 128, 128, .16);
+  --notif-tabs-bg: rgba(128, 128, 128, .14);
+  --notif-tab-on-bg: var(--notif-surface, #fff);
+  /* Concrete colours, not currentColor: currentColor on a button resolves to
+     the button's own text colour, which made the filled button white on white. */
+  --notif-primary-bg: #1c1c1c;
+  --notif-primary-fg: #fff;
+  --notif-unread: #15803d;
+  --notif-tone-positive: #1f6f43;
+  --notif-tone-attention: #8a5a00;
+  --notif-tone-critical: #b3261e;
+  --notif-tone-neutral: #2659b5;
+}
+
+.notif-panel {
+  --notif-surface: var(--platform-menu-bg, #1c1c1c);
+  --notif-fg: var(--platform-menu-fg, #f2f2f2);
+  --notif-muted: color-mix(in srgb, var(--notif-fg) 62%, transparent);
+  --notif-tab-on-bg: #2c2c2c;
+  --notif-primary-bg: #f2f2f2;
+  --notif-primary-fg: #1c1c1c;
+  --notif-unread: #3ddc84;
+  /* Light enough to clear 4.5:1 on the dark surface. */
+  --notif-tone-positive: #7ddba0;
+  --notif-tone-attention: #ffd47d;
+  --notif-tone-critical: #ffb4ab;
+  --notif-tone-neutral: #a8c7fa;
+}
+
+/* The control panel's light mode: a white popover like its other dropdowns.
+   Keyed on data-mode, which layout.js sets; the .dark class on that <html> is
+   static markup and present in both modes. */
+[data-mode='light'] .is-cp .notif-panel {
+  --notif-surface: #fff;
+  --notif-fg: #1e293b;
+  --notif-tab-on-bg: #fff;
+  --notif-primary-bg: #1e293b;
+  --notif-primary-fg: #fff;
+  --notif-unread: #15803d;
+  --notif-tone-positive: #1f6f43;
+  --notif-tone-attention: #8a5a00;
+  --notif-tone-critical: #b3261e;
+  --notif-tone-neutral: #2659b5;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+}
+
+/* Dark backgrounds the pages can sit on: the control panel's dark mode. */
+[data-mode='dark'] .notif-page {
+  --notif-surface: #1f2937;
+  --notif-primary-bg: #f1f5f9;
+  --notif-primary-fg: #1f2937;
+  --notif-unread: #3ddc84;
+  --notif-tone-positive: #7ddba0;
+  --notif-tone-attention: #ffd47d;
+  --notif-tone-critical: #ffb4ab;
+  --notif-tone-neutral: #a8c7fa;
+  --notif-tab-on-bg: #1f2937;
+}
+
+/* The bell itself has no colour of its own, so it follows any masthead. */
 .nav-bell {
   display: inline-flex;
+  align-items: center;
 }
 
 .nav-bell-btn {
@@ -498,21 +569,28 @@
 .nav-bell-badge {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   transform: translate(35%, -20%);
   pointer-events: none;
 }
 
-.notif-panel {
-  width: min(22rem, calc(100vw - 2rem));
-  padding: 0;
-  overflow: hidden;
+[dir='rtl'] .nav-bell-badge {
+  transform: translate(-35%, -20%);
 }
 
-/* The bell sits left of the account menu and the nav toggle, so a panel pinned
-   to its right edge runs off the left of a phone screen. Below this width the
-   bell stops being the anchor and the panel hangs from the masthead (fixed or
-   sticky in every theme), inset to the viewport. */
+.notif-panel {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  overflow: hidden;
+  background: var(--notif-surface);
+  color: var(--notif-fg);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* The bell sits beside the account menu and the nav toggle, so a panel pinned
+   to it runs off a phone screen. Below this width it hangs from the masthead
+   (fixed or sticky everywhere it appears), inset to the viewport. */
 @media (max-width: 30rem) {
   .nav-bell {
     position: static;
@@ -523,8 +601,6 @@
     right: 1rem;
     left: 1rem;
     width: auto;
-    max-height: calc(100vh - 5rem);
-    overflow-y: auto;
   }
 }
 
@@ -533,140 +609,567 @@
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-  padding: .7rem .85rem;
-  border-bottom: 1px solid rgba(128, 128, 128, .28);
+  padding: .85rem .5rem .5rem 1rem;
+}
+
+[dir='rtl'] .notif-panel-head {
+  padding: .85rem 1rem .5rem .5rem;
 }
 
 .notif-panel-title {
-  color: var(--platform-menu-fg, #f2f2f2);
-  font-size: .85em;
+  font-size: .95rem;
   font-weight: 700;
 }
 
-/* A text button, not a row: it sits on the header line beside the title. */
-.notif-panel-list button,
-.notif-panel-head button {
-  width: auto;
-  padding: .15rem .3rem;
-  color: var(--platform-menu-fg, #f2f2f2);
-  font-size: .75em;
-  opacity: .8;
-}
-
-.notif-panel-head button:hover {
-  opacity: 1;
-}
-
-.notif-panel-list {
-  /* Eight rows is what the endpoint sends; this keeps a tall one scrollable
-     instead of running off the bottom of a short window. */
-  max-height: min(24rem, 60vh);
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.notif-row a {
+.notif-panel-tools {
   display: flex;
-  align-items: flex-start;
-  gap: .6rem;
-  width: 100%;
-  padding: .6rem .85rem;
-  border-radius: 0;
-  color: var(--platform-menu-fg, #f2f2f2);
+  align-items: center;
+  gap: .15rem;
+}
+
+.notif-panel-tools form {
+  margin: 0;
+}
+
+/* Ghost icon buttons: the panel header's two tools and each page row's actions.
+   Restated against .platform-menu-list's row rules, which would otherwise
+   stretch them across the panel. */
+.notif-icon-btn,
+.platform-menu-list .notif-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--notif-muted);
+  cursor: pointer;
+}
+
+.notif-icon-btn:hover,
+.platform-menu-list .notif-icon-btn:hover {
+  background: var(--notif-chip-bg);
+  color: var(--notif-fg);
+}
+
+.notif-icon-btn.is-danger:hover {
+  color: var(--notif-tone-critical);
+}
+
+.notif-icon-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* A segmented control: tabs sit in a tray, the current one raised out of it. */
+.notif-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem;
+  margin: 0 1rem .35rem;
+  padding: .2rem;
+  border-radius: 8px;
+  background: var(--notif-tabs-bg);
+}
+
+.notif-tab,
+.platform-menu-list .notif-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  width: auto;
+  padding: .35rem .65rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--notif-muted);
+  font: inherit;
+  font-size: .8rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.notif-tab:hover,
+.platform-menu-list .notif-tab:hover {
+  background: none;
+  color: var(--notif-fg);
   text-decoration: none;
 }
 
-.notif-row + .notif-row a {
-  border-top: 1px solid rgba(128, 128, 128, .18);
+.notif-tab[aria-selected='true'],
+.notif-tab[aria-current='page'] {
+  background: var(--notif-tab-on-bg);
+  color: var(--notif-fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
 }
 
-.notif-row.is-unread a {
-  background: rgba(128, 128, 128, .12);
+.notif-tab:focus-visible,
+.notif-icon-btn:focus-visible,
+.notif-sentence a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
-.notif-row-icon {
+.notif-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 .3rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  font-size: .68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.notif-panel .notif-tabpanel {
+  /* Eight rows a tab is what the endpoint sends; a tall one scrolls rather
+     than running off a short window. */
+  max-height: min(26rem, 60vh);
+  overflow-y: auto;
+}
+
+.notif-list {
+  margin: 0;
+  padding: 0 1rem;
+  list-style: none;
+}
+
+.notif-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .85rem 0;
+}
+
+.notif-row + .notif-row {
+  border-top: 1px dashed var(--notif-line);
+}
+
+.notif-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
   border-radius: 50%;
-  background: rgba(128, 128, 128, .2);
+  background: var(--notif-chip-bg);
 }
 
-.notif-row-icon svg {
-  width: .95rem;
-  height: .95rem;
+.notif-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* Tones carry meaning, so they are set here rather than left to each surface.
-   All four are light enough to clear 4.5:1 on the panel's dark surface. */
-.notif-row-icon[data-tone='positive'] { color: #7ddba0; }
-.notif-row-icon[data-tone='attention'] { color: #ffd47d; }
-.notif-row-icon[data-tone='critical'] { color: #ffb4ab; }
-.notif-row-icon[data-tone='neutral'] { color: #a8c7fa; }
+/* Hue from the name, as in comment threads, so nobody's letter needs storing. */
+.notif-avatar.is-letter {
+  background: hsl(var(--avatar-hue, 210) 42% 42%);
+  color: #fff;
+  font-weight: 700;
+}
 
-.notif-row-body {
-  display: block;
-  min-width: 0;
+.notif-avatar.is-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.notif-avatar[data-tone='positive'] { color: var(--notif-tone-positive); }
+.notif-avatar[data-tone='attention'] { color: var(--notif-tone-attention); }
+.notif-avatar[data-tone='critical'] { color: var(--notif-tone-critical); }
+.notif-avatar[data-tone='neutral'] { color: var(--notif-tone-neutral); }
+
+.notif-body {
   flex: 1;
+  min-width: 0;
 }
 
-.notif-row-title {
+.notif-line {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+}
+
+.notif-sentence {
+  flex: 1;
+  margin: 0;
+  color: var(--notif-muted);
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+.notif-actor,
+.notif-target {
+  color: var(--notif-fg);
+  font-weight: 600;
+}
+
+.notif-row:not(.is-unread) .notif-actor,
+.notif-row:not(.is-unread) .notif-target {
+  font-weight: 500;
+}
+
+/* The sentence's link covers the whole row, so the row is one big target
+   while the page's action buttons stay clickable above it. */
+.notif-sentence a,
+.platform-menu-list .notif-sentence a {
+  display: inline;
+  width: auto;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  text-decoration: none;
+}
+
+.notif-sentence a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.notif-sentence a:hover .notif-target {
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.notif-panel .notif-list {
+  padding: 0;
+}
+
+.notif-panel .notif-row {
+  padding: .85rem 1rem;
+}
+
+.notif-panel .notif-row:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-dot {
+  flex: none;
+  width: .5rem;
+  height: .5rem;
+  margin-top: .4rem;
+  border-radius: 50%;
+  background: var(--notif-unread);
+}
+
+.notif-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: .2rem 0 0;
+  color: var(--notif-muted);
+  font-size: .78rem;
+}
+
+.notif-meta-start {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  min-width: 0;
+}
+
+.notif-source {
+  max-width: 14rem;
+  overflow: hidden;
+  padding: .05rem .45rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  color: var(--notif-fg);
+  font-size: .72rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-ago {
+  flex: none;
+}
+
+.notif-quote {
+  margin: .55rem 0 0;
+  padding: .6rem .75rem;
+  border-radius: 8px;
+  background: var(--notif-quote-bg);
+  color: var(--notif-fg);
+  font-size: .85rem;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.notif-quote.is-clamped {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: .8em;
-  line-height: 1.35;
 }
 
-.notif-row.is-unread .notif-row-title {
-  font-weight: 700;
+/* Answer an invitation in place. Raised above the row's stretched link. */
+.notif-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .6rem;
 }
 
-.notif-row-time {
-  display: block;
-  margin-top: .15rem;
-  font-size: .7em;
-  opacity: .65;
-}
-
-.notif-row-dot {
-  flex: none;
-  align-self: center;
-  width: .45rem;
-  height: .45rem;
-  border-radius: 50%;
-  background: var(--platform-badge-bg, #ffb4ab);
-}
-
-.notif-panel-empty {
+.notif-actions form {
   margin: 0;
-  padding: 1.5rem .85rem;
-  color: var(--platform-menu-fg, #f2f2f2);
-  font-size: .8em;
-  text-align: center;
-  opacity: .7;
 }
 
-.notif-panel-foot {
+.notif-action-btn,
+.platform-menu-list .notif-action-btn {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: .4rem .9rem;
+  border: 1px solid var(--notif-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--notif-fg);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notif-action-btn:hover,
+.platform-menu-list .notif-action-btn:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-action-btn.is-primary,
+.platform-menu-list .notif-action-btn.is-primary {
+  border-color: transparent;
+  background: var(--notif-primary-bg);
+  color: var(--notif-primary-fg);
+}
+
+.notif-action-btn.is-primary:hover,
+.platform-menu-list .notif-action-btn.is-primary:hover {
+  background: var(--notif-primary-bg);
+  opacity: .88;
+}
+
+.notif-action-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.notif-empty {
+  padding: 2rem 1rem;
+  color: var(--notif-muted);
+  font-size: .85rem;
+  text-align: center;
+}
+
+.notif-empty p {
+  max-width: 22rem;
+  margin: .75rem auto 0;
+}
+
+.notif-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--notif-chip-bg);
+}
+
+.notif-empty-icon svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.notif-panel-status {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  font-size: .85rem;
+  text-align: center;
+  opacity: .75;
+}
+
+.notif-panel-foot,
+.platform-menu-list .notif-panel-foot {
   display: block;
-  padding: .6rem .85rem;
-  border-top: 1px solid rgba(128, 128, 128, .28);
-  color: var(--platform-menu-fg, #f2f2f2);
-  font-size: .78em;
+  padding: .7rem 1rem;
+  border-top: 1px solid var(--notif-line);
+  border-radius: 0;
+  color: var(--notif-fg);
+  font-size: .82rem;
   font-weight: 600;
   text-align: center;
   text-decoration: none;
 }
 
 .notif-panel-foot:hover {
-  background: rgba(128, 128, 128, .22);
+  background: var(--notif-quote-bg);
   text-decoration: none;
+}
+
+/* The inbox pages: the same rows, with day headings, actions and a toolbar. */
+.notif-page .notif-list {
+  padding: 0;
+}
+
+.notif-page-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: 0 0 .75rem;
+}
+
+.notif-page-bar .notif-tabs {
+  margin: 0;
+}
+
+.notif-page-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.notif-page-tools form {
+  margin: 0;
+}
+
+.notif-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--notif-muted);
+  font-size: .82rem;
+  text-decoration: none;
+}
+
+.notif-toggle[aria-pressed='true'] {
+  color: var(--notif-fg);
+  font-weight: 600;
+}
+
+.notif-toggle-box {
+  width: 1.9rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  box-shadow: inset 0 0 0 1px var(--notif-line);
+  position: relative;
+}
+
+.notif-toggle-box::after {
+  content: '';
+  position: absolute;
+  top: .15rem;
+  inset-inline-start: .15rem;
+  width: .8rem;
+  height: .8rem;
+  border-radius: 50%;
+  background: var(--notif-muted);
+  transition: inset-inline-start .15s ease;
+}
+
+.notif-toggle[aria-pressed='true'] .notif-toggle-box {
+  background: var(--notif-unread);
+}
+
+.notif-toggle[aria-pressed='true'] .notif-toggle-box::after {
+  inset-inline-start: .95rem;
+  background: #fff;
+}
+
+.notif-text-btn {
+  padding: .35rem .7rem;
+  border: 1px solid var(--notif-line);
+  border-radius: 6px;
+  background: none;
+  color: var(--notif-fg);
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.notif-text-btn:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-text-btn.is-danger {
+  color: var(--notif-tone-critical);
+}
+
+.notif-day {
+  margin: 1.1rem 0 .1rem;
+  color: var(--notif-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.notif-day:first-child {
+  margin-top: .25rem;
+}
+
+.notif-day + .notif-row {
+  border-top: 0;
+}
+
+.notif-act {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  gap: .1rem;
+}
+
+.notif-act form {
+  margin: 0;
+}
+
+.notif-row.is-focused {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--notif-tone-neutral);
+}
+
+.notif-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1rem;
+  color: var(--notif-muted);
+  font-size: .82rem;
+}
+
+.notif-pager a {
+  color: var(--notif-fg);
+  font-weight: 600;
+}
+
+@media (max-width: 30rem) {
+  .notif-meta {
+    flex-wrap: wrap;
+  }
+
+  .notif-act {
+    flex-direction: column;
+  }
 }
 
 /* The owner's optional line telling readers how visits are counted. Colours

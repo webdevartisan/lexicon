@@ -9,7 +9,6 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\UserPreferencesModel;
-use App\Presenters\NotificationPresenter;
 use App\Services\LocaleState;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -159,25 +158,23 @@ class NavGlobalsMiddleware
         ]);
         $user = $this->auth->user();
 
-        // Build notifications payload for the topbar bell. Dashboard pages get
-        // the 'content' inbox (posts to review, comments to moderate); admin
-        // pages get the 'admin' ops inbox. Front pages have their own bell in
-        // the account menu (_auth_nav.lex.php), driven by PersonalNotificationController.
-        $notifications = ['enabled' => false, 'items' => [], 'count' => 0, 'listPath' => '/dashboard/notifications'];
-        $bellScope = $area === 'back' ? 'content' : ($area === 'admin' ? 'admin' : null);
+        // The topbar bell. Dashboard pages show the person's own inbox with the
+        // same count ViewerContext gives the front and every theme, so the two
+        // bells cannot disagree. Admin pages show the separate operations inbox.
+        // Rows are not rendered here: the shared panel loads them on first open.
+        $notifications = ['enabled' => false, 'count' => 0, 'listPath' => '/dashboard/notifications'];
 
-        if ($bellScope !== null && $user !== null) {
+        if (($area === 'back' || $area === 'admin') && $user !== null) {
             try {
-                $listPath = $bellScope === 'admin' ? '/admin/notifications' : '/dashboard/notifications';
                 $notifications = [
                     'enabled' => true,
-                    'items' => NotificationPresenter::forAll(
-                        $this->notificationModel->findForUser((int) $user['id'], 8, onlyUnread: true, scope: $bellScope)
-                    ),
-                    'count' => $this->notificationModel->unreadCount((int) $user['id'], $bellScope),
-                    'listPath' => $listPath,
+                    'count' => $area === 'admin'
+                        ? $this->notificationModel->unreadCount((int) $user['id'], 'admin')
+                        : (int) ($this->viewerContext->current()['unread_notifications'] ?? 0),
+                    'listPath' => $area === 'admin' ? '/admin/notifications' : '/dashboard/notifications',
                 ];
             } catch (\Throwable $e) {
+                // Logged and hidden: a broken count must not take the page down with it.
                 error_log('Notifications query failed: '.$e->getMessage());
             }
         }

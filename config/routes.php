@@ -227,22 +227,23 @@ $router->group([
     $r->add('/{blogId:\d+}/resubscribe', ['controller' => 'ReaderController', 'action' => 'resubscribe', 'method' => 'POST']);
 });
 
-// The reader's personal notification inbox. Same reasoning as /saved above:
-// most people who get a reply never open the dashboard, so this cannot live
-// there. No namespace key, resolves to App\Controllers\PersonalNotificationController.
+// A person's notification inbox: things about them and activity on their
+// blogs, in one list. Same reasoning as /saved above: most people who get a
+// reply never open the dashboard, so it cannot live only there.
+// /dashboard/notifications serves the same inbox inside the dashboard.
+// No namespace key, resolves to App\Controllers\NotificationController.
 $router->group([
     'prefix' => '/notifications',
     'middleware' => ['auth'],
 ], function (Router $r) {
-    $r->add('/', ['controller' => 'PersonalNotificationController', 'action' => 'index', 'method' => 'GET']);
-    // What the masthead bell loads the first time it is opened.
-    $r->add('/panel', ['controller' => 'PersonalNotificationController', 'action' => 'panel', 'method' => 'GET']);
-    $r->add('/{id:\d+}/open', ['controller' => 'PersonalNotificationController', 'action' => 'open', 'method' => 'GET']);
-    $r->add('/unread-count', ['controller' => 'PersonalNotificationController', 'action' => 'unreadCount', 'method' => 'GET']);
-    $r->add('/read-all', ['controller' => 'PersonalNotificationController', 'action' => 'markAllRead', 'method' => 'POST']);
-    $r->add('/{id:\d+}/read', ['controller' => 'PersonalNotificationController', 'action' => 'markRead', 'method' => 'POST']);
-    $r->add('/clear-all', ['controller' => 'PersonalNotificationController', 'action' => 'clearAll', 'method' => 'POST']);
-    $r->add('/{id:\d+}/delete', ['controller' => 'PersonalNotificationController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/', ['controller' => 'NotificationController', 'action' => 'index', 'method' => 'GET']);
+    // What the bell loads the first time it is opened.
+    $r->add('/panel', ['controller' => 'NotificationController', 'action' => 'panel', 'method' => 'GET']);
+    $r->add('/{id:\d+}/open', ['controller' => 'NotificationController', 'action' => 'open', 'method' => 'GET']);
+    $r->add('/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead', 'method' => 'POST']);
+    $r->add('/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead', 'method' => 'POST']);
+    $r->add('/clear-all', ['controller' => 'NotificationController', 'action' => 'clearAll', 'method' => 'POST']);
+    $r->add('/{id:\d+}/delete', ['controller' => 'NotificationController', 'action' => 'destroy', 'method' => 'POST']);
 });
 
 // Personal account settings, on the front for every account whatever its role.
@@ -392,8 +393,8 @@ $router->group([
 
     // Notifications
     $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index',        'method' => 'GET']);
+    $r->add('/notifications/panel', ['controller' => 'NotificationController', 'action' => 'panel',        'method' => 'GET']);
     $r->add('/notifications/{id:\d+}/open', ['controller' => 'NotificationController', 'action' => 'open',        'method' => 'GET']);
-    $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount',  'method' => 'GET']);
     $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead',  'method' => 'POST']);
     $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead',     'method' => 'POST']);
     $r->add('/notifications/clear-all', ['controller' => 'NotificationController', 'action' => 'clearAll',    'method' => 'POST']);
@@ -632,8 +633,8 @@ $router->group([
 
     // Admin operations inbox: report thresholds, mail failures, a stalled scheduler
     $r->add('/notifications', ['controller' => 'NotificationController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/notifications/panel', ['controller' => 'NotificationController', 'action' => 'panel', 'method' => 'GET']);
     $r->add('/notifications/{id:\d+}/open', ['controller' => 'NotificationController', 'action' => 'open', 'method' => 'GET']);
-    $r->add('/notifications/unread-count', ['controller' => 'NotificationController', 'action' => 'unreadCount', 'method' => 'GET']);
     $r->add('/notifications/read-all', ['controller' => 'NotificationController', 'action' => 'markAllRead', 'method' => 'POST']);
     $r->add('/notifications/{id:\d+}/read', ['controller' => 'NotificationController', 'action' => 'markRead', 'method' => 'POST']);
     $r->add('/notifications/clear-all', ['controller' => 'NotificationController', 'action' => 'clearAll', 'method' => 'POST']);

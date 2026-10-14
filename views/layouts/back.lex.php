@@ -17,6 +17,8 @@ $old = old();
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
     <link rel="stylesheet" href="/cp-assets/css/fonts.css">
     <link rel="stylesheet" href="/cp-assets/css/cp.css">
+    {# The notification bell and panel are platform chrome, shared with the front and every theme. #}
+    <link rel="stylesheet" href="/assets/css/platform-chrome.css">
     {% yield head %}
 
 </head>
@@ -141,6 +143,7 @@ $old = old();
 <script src="/cp-assets/libs/simplebar/simplebar.min.js"></script>
 <!-- <script src="/cp-assets/libs/prismjs/prism.js"></script> -->
 <script src="/cp-assets/js/dropdown.js"></script>
+<script src="/assets/js/platform-menu.js"></script>
 <script src="/cp-assets/js/row-actions.js"></script>
 <script src="/cp-assets/js/bulk-actions.js"></script>
 <script src="/cp-assets/js/blog-switcher.js"></script>

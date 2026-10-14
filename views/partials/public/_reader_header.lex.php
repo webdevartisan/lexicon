@@ -25,24 +25,18 @@ $readerGroups = [
         'title' => 'reader.subscriptionsTitle',
         'tabs' => [],
     ],
+    // Its All / About you / Your blogs tabs belong to the inbox body, which the
+    // dashboard renders too, so they live in partials/notifications/_page.
     'notifications' => [
         'title' => 'reader.notificationsTitle',
-        'tabs' => [
-            ['surface' => 'notifications', 'path' => '/notifications', 'label' => 'notifications.tabAll'],
-            ['surface' => 'notifications-unread', 'path' => '/notifications?filter=unread', 'label' => 'notifications.tabUnread'],
-        ],
+        'tabs' => [],
     ],
 ];
-
-// A page can hand a tab its own count, keyed by surface. Only the unread tab
-// uses it so far, where the number is the reason to click.
-$readerTabBadges = $readerTabBadges ?? [];
 
 $readerSurface = $surface ?? 'saved';
 $readerGroupKey = match ($readerSurface) {
     'liked' => 'saved',
     'my-comments' => 'replies',
-    'notifications-unread' => 'notifications',
     default => $readerSurface,
 };
 $readerGroup = $readerGroups[$readerGroupKey] ?? $readerGroups['saved'];
@@ -57,9 +51,7 @@ $readerGroup = $readerGroups[$readerGroupKey] ?? $readerGroups['saved'];
             ?>
         <a class="lx-reader-tab<?= $isCurrent ? ' is-current' : '' ?>"
            href="<?= e(lurl($readerTab['path'])) ?>"
-           <?= $isCurrent ? 'aria-current="page"' : '' ?>><?= e($t($readerTab['label'])) ?><?php
-            $readerTabCount = (int) ($readerTabBadges[$readerTab['surface']] ?? 0);
-            if ($readerTabCount > 0) { ?><span class="lx-reader-tab-badge"><?= $readerTabCount > 99 ? '99+' : $readerTabCount ?></span><?php } ?></a>
+           <?= $isCurrent ? 'aria-current="page"' : '' ?>><?= e($t($readerTab['label'])) ?></a>
         <?php } ?>
     </nav>
     <?php } ?>

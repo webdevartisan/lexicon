@@ -45,35 +45,10 @@ $navMenuLabel = $navUnread > 0
 // Both variants use the same id, and only one of them is ever on a page.
 $navMenuId = 'account-menu';
 
-// The bell: the reader's notifications, one click from anywhere on the
-// platform or inside any theme. It is a link first, so without JavaScript it
-// goes to the inbox; platform-menu.js turns it into a disclosure that loads
-// the panel below on first open.
-$renderBell = static function () use ($navUnreadNotifications, $tr): void {
-    $bellLabel = $navUnreadNotifications > 0
-        ? $tr('notifications.bellUnread', ['count' => $navUnreadNotifications])
-        : $tr('reader.notificationsTitle');
-    ?>
-    <div class="nav-bell platform-menu" data-platform-menu>
-        <a class="nav-bell-btn" href="<?= e(lurl('/notifications')) ?>"
-           data-platform-menu-toggle
-           aria-expanded="false" aria-controls="notification-panel"
-           aria-label="<?= e($bellLabel) ?>">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-            </svg>
-            <?php if ($navUnreadNotifications > 0) { ?>
-            <span class="nav-badge nav-bell-badge" aria-hidden="true"><?= $navUnreadNotifications > 99 ? '99+' : $navUnreadNotifications ?></span>
-            <?php } ?>
-        </a>
-
-        <div class="platform-menu-list notif-panel" id="notification-panel" data-platform-menu-list
-             data-panel-url="<?= e(lurl('/notifications/panel')) ?>"
-             data-panel-error="<?= e($tr('notifications.loadFailed')) ?>" hidden>
-            <p class="notif-panel-empty"><?= e($tr('notifications.loading')) ?></p>
-        </div>
-    </div>
-<?php };
+// The bell comes from the shared partial the dashboard and admin topbars use
+// too. Its count is ViewerContext's, the same number every surface shows.
+$bellCount = $navUnreadNotifications;
+$bellListPath = '/notifications';
 
 // A disclosure, not an ARIA menu. The contents are ordinary navigation links,
 // so role="menu" would promise arrow-key semantics that do not exist here.
@@ -164,15 +139,15 @@ if ($navVariant === 'platform') {
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>
-        <li><?php $renderBell(); ?></li>
+        <li>{% include "partials/notifications/_bell.lex.php" %}</li>
         <li><?php $renderAccountMenu(); ?></li>
     <?php }
     } else {
         if ($navIsGuest) { ?>
         <a href="<?= e($loginUrl) ?>" class="nav-pill"><?= e($tr('header.signIn')) ?></a>
-    <?php } else {
-        $renderBell();
-        $renderAccountMenu();
+    <?php } else { ?>
+        {% include "partials/notifications/_bell.lex.php" %}
+        <?php $renderAccountMenu();
     }
     }
 // Must close the tag. Includes are spliced into the layout as raw text, so
