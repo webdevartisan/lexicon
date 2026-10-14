@@ -723,7 +723,8 @@ $container->set(Framework\Cache\CacheMiddleware::class, function ($c) {
         keyGenerator: $c->get(Framework\Cache\CacheKey::class),
         auth: $c->get(App\Auth::class),
         ttlRules: $config['ttl_rules'],
-        debug: $config['debug']
+        debug: $config['debug'],
+        session: $c->get(Framework\Session::class)
     );
 });
 

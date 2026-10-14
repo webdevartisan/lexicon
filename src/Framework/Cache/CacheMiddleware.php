@@ -9,6 +9,7 @@ use Framework\Core\Response;
 use Framework\Interfaces\AuthInterface;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Session;
 
 /**
  * Full-Page HTTP Response Caching Middleware
@@ -43,6 +44,8 @@ class CacheMiddleware implements MiddlewareInterface
 
     private bool $debug;
 
+    private ?Session $session;
+
     /**
      * @param  array<string, int>  $ttlRules  Map of path pattern => TTL in seconds
      */
@@ -51,13 +54,15 @@ class CacheMiddleware implements MiddlewareInterface
         CacheKey $keyGenerator,
         AuthInterface $auth,
         array $ttlRules = [],
-        bool $debug = false
+        bool $debug = false,
+        ?Session $session = null
     ) {
         $this->cache = $cache;
         $this->keyGenerator = $keyGenerator;
         $this->auth = $auth;
         $this->ttlRules = $ttlRules;
         $this->debug = $debug;
+        $this->session = $session;
     }
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -76,8 +81,13 @@ class CacheMiddleware implements MiddlewareInterface
         $cacheKey = $this->keyGenerator->forRequest($request);
         $ttl = $this->resolveTtl($request->uri);
 
+        // Decided once, before the handler runs: rendering consumes a pending
+        // flash, so asking again at store time would find it already gone.
+        $skipCache = $this->shouldSkipCache($request);
+        $hasPendingMessages = $this->hasPendingMessages();
+
         // 1) TRY CACHE HIT
-        if ($this->shouldSkipCache($request) === false && ($cached = $this->cache->get($cacheKey)) !== null) {
+        if ($skipCache === false && ($cached = $this->cache->get($cacheKey)) !== null) {
             $response = new Response();
             $response->setBody($cached);
 
@@ -109,7 +119,7 @@ class CacheMiddleware implements MiddlewareInterface
         // visitor's render gets stored under a key that carries no auth
         // discriminator, and the next guest is served their navigation and
         // any other viewer-specific markup on the page.
-        if ($this->shouldSkipCache($request) === false && $this->isCacheable($response) && $ttl > 0) {
+        if ($skipCache === false && $this->isCacheable($response) && $ttl > 0) {
             $this->cache->set($cacheKey, $response->getBody(), $ttl);
             $this->storeHeaders($cacheKey, $response, $ttl);
 
@@ -124,6 +134,12 @@ class CacheMiddleware implements MiddlewareInterface
 
         // 4) ALWAYS set browser cache headers (even if bypassed server cache)
         // set browser cache headers for public pages even if they can't be server-cached
+        //
+        // A page that showed one visitor's flash must not be kept by a browser
+        // or shared proxy for the next.
+        if ($hasPendingMessages && !$response->hasHeader('Cache-Control')) {
+            $response->addHeader('Cache-Control', 'private, no-cache, must-revalidate');
+        }
         $this->setBrowserCacheHeaders($response, $ttl);
 
         if ($this->debug) {
@@ -184,7 +200,24 @@ class CacheMiddleware implements MiddlewareInterface
             }
         }
 
-        return false;
+        return $this->hasPendingMessages();
+    }
+
+    /**
+     * Whether this visitor has a flash or validation errors waiting to be shown.
+     *
+     * The layout consumes them while rendering, so this has to be asked before
+     * the handler runs. Storing that render would show one guest's "you have
+     * been unsubscribed" to every later guest, and serving a cached page would
+     * leave the message unread.
+     */
+    private function hasPendingMessages(): bool
+    {
+        if ($this->session === null) {
+            return false;
+        }
+
+        return !empty($this->session->get('_flash')) || !empty($this->session->get('_errors'));
     }
 
     /**
