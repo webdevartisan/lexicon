@@ -37,6 +37,13 @@ return [
     'path' => ROOT_PATH.'/storage/cache',
 
     /**
+     * Rate limiter storage path.
+     *
+     * Separate from the page cache so clearing or evicting it never lifts a lockout.
+     */
+    'limiter_path' => ROOT_PATH.'/storage/limiter',
+
+    /**
      * Debug mode adds X-Cache-* headers to responses.
      *
      * Useful during development to inspect hit/miss behavior.

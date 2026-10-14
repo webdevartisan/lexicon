@@ -864,17 +864,25 @@ $container->set(App\Models\BlogSettingsModel::class, function ($c) {
 // ============================================================================
 
 /**
- * Rate limiter provides generic rate limiting with cache backend.
+ * Rate limit store keeps limiter state out of the evictable page cache.
+ *
+ * We register as singleton so every limiter shares one directory handle.
+ */
+$container->setShared(Framework\Cache\RateLimitStore::class, function ($c) {
+    $config = require ROOT_PATH.'/config/cache.php';
+
+    return new Framework\Cache\RateLimitStore($config['limiter_path']);
+});
+
+/**
+ * Rate limiter provides generic rate limiting with a dedicated store.
  *
  * We register as factory (NOT shared) to ensure each rate-limited action
  * gets its own limiter instance with isolated state.
  */
 $container->set(Framework\Helpers\RateLimiter::class, function ($c) {
-    /** @var Framework\Cache\CacheService $cache */
-    $cache = $c->get(Framework\Cache\CacheService::class);
-
     // Default window is 15 minutes (900 seconds)
-    return new Framework\Helpers\RateLimiter($cache, 900);
+    return new Framework\Helpers\RateLimiter($c->get(Framework\Cache\RateLimitStore::class), 900);
 });
 
 /**
@@ -886,7 +894,7 @@ $container->set(Framework\Helpers\RateLimiter::class, function ($c) {
 $container->set(App\Services\LoginRateLimiter::class, function ($c) {
     return new App\Services\LoginRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
@@ -899,7 +907,7 @@ $container->set(App\Services\LoginRateLimiter::class, function ($c) {
 $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
     return new App\Services\PasswordResetRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
@@ -911,7 +919,19 @@ $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
 $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
     return new App\Services\CspReportRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
+    );
+});
+
+/**
+ * Identify rate limiter throttles the login identify step.
+ *
+ * We register as factory so it reads the dedicated limiter store, not the page cache.
+ */
+$container->set(App\Services\IdentifyRateLimiter::class, function ($c) {
+    return new App\Services\IdentifyRateLimiter(
+        $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
@@ -927,7 +947,7 @@ $container->set(App\Services\Analytics\AnalyticsRateLimiter::class, function ($c
 $container->set(App\Services\CommentRateLimiter::class, function ($c) {
     return new App\Services\CommentRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
