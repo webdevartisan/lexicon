@@ -362,7 +362,8 @@ class BlogController extends AppController
         $canPreview = auth()->check()
             && $this->model->userCanAccessBlog((int) auth()->user()['id'], (int) $ctx['blog']['id']);
 
-        if (!$canPreview && $post['status'] !== 'published') {
+        // Unlisted posts stay reachable by link; private ones are for collaborators only.
+        if (!$canPreview && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') === 'private')) {
             throw new PageNotFoundException('Post not found', 404);
         }
 

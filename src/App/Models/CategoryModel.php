@@ -204,7 +204,7 @@ class CategoryModel extends AppModel
     {
         $sql = "SELECT * FROM posts 
                 WHERE category_id = ? 
-                AND status = 'published'
+                AND status = 'published' AND visibility = 'public'
                 AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
                 ORDER BY created_at DESC";
 

@@ -505,7 +505,7 @@ class PostModel extends AppModel
         $sql = "SELECT id, slug, title, published_at
                 FROM {$this->getTable()}
                 WHERE author_id = :author_id
-                AND status = 'published'
+                AND status = 'published' AND visibility = 'public'
                 AND published_at < :ts
                 ORDER BY published_at DESC
                 LIMIT 1";
@@ -533,7 +533,7 @@ class PostModel extends AppModel
             $sql = "SELECT id, slug, title, published_at
                     FROM {$this->getTable()}
                     WHERE blog_id = :blog_id
-                    AND status = 'published'
+                    AND status = 'published' AND visibility = 'public'
                     AND published_at < :ts
                     ORDER BY published_at DESC
                     LIMIT 1";
@@ -560,7 +560,7 @@ class PostModel extends AppModel
         $sql = "SELECT id, slug, title, published_at
                 FROM {$this->getTable()}
                 WHERE author_id = :author_id
-                AND status = 'published'
+                AND status = 'published' AND visibility = 'public'
                 AND published_at > :ts
                 ORDER BY published_at ASC
                 LIMIT 1";
@@ -588,7 +588,7 @@ class PostModel extends AppModel
             $sql = "SELECT id, slug, title, published_at
                     FROM {$this->getTable()}
                     WHERE blog_id = :blog_id
-                    AND status = 'published'
+                    AND status = 'published' AND visibility = 'public'
                     AND published_at > :ts
                     ORDER BY published_at ASC
                     LIMIT 1";
@@ -616,7 +616,7 @@ class PostModel extends AppModel
         $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
                 FROM {$this->getTable()}
                 WHERE author_id = :author_id
-                AND status = 'published'
+                AND status = 'published' AND visibility = 'public'
                 AND slug <> :slug
                 ORDER BY published_at DESC
                 LIMIT :limit";
@@ -645,7 +645,7 @@ class PostModel extends AppModel
             $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
                     FROM {$this->getTable()}
                     WHERE blog_id = :blog_id
-                    AND status = 'published'
+                    AND status = 'published' AND visibility = 'public'
                     AND slug <> :slug
                     ORDER BY published_at DESC
                     LIMIT :limit";
@@ -677,14 +677,14 @@ class PostModel extends AppModel
             $offset = ($page - 1) * $perPage;
 
             // Get total count of published posts for this blog
-            $countSql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = 'published'";
+            $countSql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = 'published' AND visibility = 'public'";
             $totalPosts = (int) $this->database->query($countSql, [':blog_id' => $blogId])->fetchColumn();
 
             $totalPages = (int) ceil($totalPosts / $perPage);
 
             // Get paginated results
             $sql = "SELECT * FROM {$this->getTable()}
-                    WHERE blog_id = :blog_id AND status = 'published'
+                    WHERE blog_id = :blog_id AND status = 'published' AND visibility = 'public'
                     ORDER BY published_at DESC
                     LIMIT :limit OFFSET :offset";
 
@@ -785,7 +785,7 @@ class PostModel extends AppModel
             SELECT COUNT(*)
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-            WHERE p.status = 'published' 
+            WHERE p.status = 'published' AND p.visibility = 'public' 
             AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
             {$categoryClause}
         ";
@@ -800,7 +800,7 @@ class PostModel extends AppModel
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.status = 'published'
+            WHERE p.status = 'published' AND p.visibility = 'public'
             AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
             {$categoryClause}
             ORDER BY p.published_at DESC
@@ -844,7 +844,7 @@ class PostModel extends AppModel
         }
 
         // Count total published posts with optional category filter
-        $countSql = "SELECT COUNT(*) FROM posts p WHERE p.status = 'published' AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published') {$categoryClause}";
+        $countSql = "SELECT COUNT(*) FROM posts p WHERE p.status = 'published' AND p.visibility = 'public' AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published') {$categoryClause}";
         $countStmt = $this->database->query($countSql, $params);
         $totalPosts = (int) $countStmt->fetchColumn();
         $totalPages = (int) ceil($totalPosts / $perPage);
@@ -855,7 +855,7 @@ class PostModel extends AppModel
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.status = 'published'
+            WHERE p.status = 'published' AND p.visibility = 'public'
         ";
 
         $sql .= $categoryClause;
@@ -890,7 +890,7 @@ class PostModel extends AppModel
 
         $loadFeatured = function () use ($blogId): ?array {
             $sql = "SELECT * FROM posts
-                    WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
+                    WHERE blog_id = ? AND is_featured = 1 AND status = 'published' AND visibility = 'public'
                     ORDER BY published_at DESC, id DESC
                     LIMIT 1";
 
@@ -946,7 +946,7 @@ class PostModel extends AppModel
      */
     public function countPublished(): int
     {
-        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE status = 'published'";
+        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE status = 'published' AND visibility = 'public'";
 
         return (int) $this->database->query($sql)->fetchColumn();
     }
@@ -1034,7 +1034,7 @@ class PostModel extends AppModel
         $cacheKey = 'blog-catposts:'.$blogId.':'.($categoryId ?? 'all').':'.$limit.':'.($excludeId ?? 'none');
 
         $loadCategoryPosts = function () use ($blogId, $categoryId, $limit, $excludeId): array {
-            $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
+            $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published' AND visibility = 'public'";
             $params = [':blog_id' => $blogId];
 
             if ($categoryId !== null) {

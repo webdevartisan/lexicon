@@ -383,7 +383,7 @@ final class UploadService implements UploadServiceInterface
         $url = $this->storeImage($file, [
             'dir' => $tempDir,
             'base_url' => $tempUrl,
-            'max_bytes' => 5 * 1024 * 1024, // 5MB
+            'max_bytes' => 10 * 1024 * 1024, // 10MB
             'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
             // Temp uploads are mostly featured images; the 1920 cap is a safe upper
             // bound for branding banners too, and leaves smaller logos/favicons alone.
