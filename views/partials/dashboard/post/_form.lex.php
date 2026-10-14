@@ -39,7 +39,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
     {% if (($postStatus !== 'draft') && ($postStatus !== 'pending')): %}
       <div class="flex justify-between">
-        {% cmp="urlWithOpenButton" previewUrl="{$postUrl}" %}
+        {% cmp="url-with-open-button" previewUrl="{$postUrl}" %}
       </div>
     {% endif; %}
 

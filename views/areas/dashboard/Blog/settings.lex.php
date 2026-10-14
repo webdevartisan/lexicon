@@ -54,7 +54,7 @@
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
       <div class="p-4 md:p-5">
         <h2 class="mb-2 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.settings.address.label') }}</h2>
-        {% cmp="urlWithOpenButton" previewUrl="{$blogUrl}" %}
+        {% cmp="url-with-open-button" previewUrl="{$blogUrl}" %}
         <p class="mt-2 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.settings.address.help') }}</p>
       </div>
     </section>
@@ -259,7 +259,7 @@
     </div>
   </form>
 
-  {% cmp="deleteBlogModal" blog="{$blog}" stats="{$stats}" %}
+  {% cmp="delete-blog-modal" blog="{$blog}" stats="{$stats}" %}
 </div>
 {% endblock %}
 
