@@ -147,6 +147,25 @@ class RoleModel extends AppModel
     }
 
     /**
+     * Whether every given id is an existing permission.
+     *
+     * @param  int[]  $permissionIds  Permission ids to check
+     */
+    public function permissionIdsExist(array $permissionIds): bool
+    {
+        $permissionIds = array_values(array_unique($permissionIds));
+
+        if ($permissionIds === []) {
+            return true;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($permissionIds), '?'));
+        $stmt = $this->database->query("SELECT COUNT(*) FROM permissions WHERE id IN ({$placeholders})", $permissionIds);
+
+        return (int) $stmt->fetchColumn() === count($permissionIds);
+    }
+
+    /**
      * Replace a role's permissions with the given set.
      *
      * Runs inside a transaction so the role is never left with a partial

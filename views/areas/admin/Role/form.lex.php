@@ -36,6 +36,8 @@ $scopeOptions = [
         <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">Control panel roles unlock admin areas through their permissions. Blog roles appear in collaborator invitations.</p>
     </div>
 
+    <?php if ($canEditLevel ?? false) { ?>
     {% cmp="input" type="number" label="Level" name="level" value="{$level}" required underlabel="Hierarchy weight from 0 to 99. Higher outranks lower; 100 is reserved for Administrator." %}
+    <?php } ?>
     <?php } ?>
 </div>

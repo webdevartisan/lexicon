@@ -203,6 +203,19 @@ class SystemPolicy implements PolicyInterface
     }
 
     /**
+     * Change which permissions a role grants, or a role's level. Administrators only.
+     *
+     * manage_roles can be delegated, and a holder could otherwise add
+     * permissions to their own role or strip them from the administrator role.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function editRolePermissions(array $user): bool
+    {
+        return $this->isAdministrator($user);
+    }
+
+    /**
      * Sign in as another account. Administrators only, never delegated: this
      * is account takeover by design, so it stays with the top tier.
      *
