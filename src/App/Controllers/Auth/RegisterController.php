@@ -4,22 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Auth;
 
-use App\Auth;
 use App\Controllers\AppController;
-use App\Mail\Mailable;
-use App\Mail\WelcomeEmail;
 use App\Models\BlogInvitationModel;
-use App\Models\RoleModel;
-use App\Models\UserModel;
-use App\Models\UserPreferencesModel;
-use App\Models\UserProfileModel;
-use App\Services\Analytics\SignupAttribution;
-use App\Services\Analytics\VisitorLink;
+use App\Services\AccountRegistrar;
+use App\Services\BlogRoleLabels;
 use App\Services\CommentService;
 use App\Services\InvitationService;
-use App\Services\RecipientLocale;
-use App\Services\UserHandleValidator;
-use Exception;
 use Framework\Core\Response;
 
 /**
@@ -35,21 +25,10 @@ use Framework\Core\Response;
  */
 final class RegisterController extends AppController
 {
-    /**
-     * Inject user model and auth service.
-     *
-     * The container resolves these dependencies automatically,
-     * and AppController::__construct() still runs to handle flashes.
-     */
     public function __construct(
-        protected Auth $auth,
-        protected UserModel $users,
-        private UserProfileModel $profiles,
-        private UserPreferencesModel $user_preferences,
-        private UserHandleValidator $userHandleValidator,
+        private AccountRegistrar $registrar,
         private BlogInvitationModel $invitationModel,
         private InvitationService $invitationService,
-        private RoleModel $roles,
     ) {}
 
     /**
@@ -100,16 +79,9 @@ final class RegisterController extends AppController
         $validated = $validator->validated();
         $returnTo = safe_return_to((string) ($this->request->post['return_to'] ?? ''));
 
-        $handle = $this->deriveUserHandleFromEmail($validated['email']);
+        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request);
 
-        $userId = $this->users->insert([
-            'email' => $validated['email'],
-            'handle' => $handle,
-            'password' => password_hash($validated['password'], PASSWORD_DEFAULT),
-            'age_confirmed_at' => gmdate('Y-m-d H:i:s'),
-        ]);
-
-        if (!$userId) {
+        if ($userId === null) {
             if ($isAjax) {
                 return $this->jsonError('Registration failed. Please try again.', 500);
             }
@@ -118,43 +90,6 @@ final class RegisterController extends AppController
 
             return $this->redirectBack();
         }
-
-        // New accounts are readers; creating a blog later upgrades them
-        $readerRole = $this->roles->findBySlug('reader');
-        if ($readerRole !== null) {
-            $this->users->insertUserRoles($userId, [(int) $readerRole['id']]);
-        }
-
-        $this->profiles->upsert($userId, [
-            'is_public' => 1, // default new profiles to public
-        ]);
-
-        $this->user_preferences->findOrCreate($userId);
-
-        // queued, so a transport problem does not cost the welcome email
-        try {
-            // In the language they signed up in.
-            $welcome = Mailable::inLocale(app(RecipientLocale::class)->current(), fn (): WelcomeEmail => new WelcomeEmail([
-                'email' => $validated['email'],
-                'handle' => $handle,
-            ]));
-            mail_queue()->enqueue($welcome, 'user', $userId);
-        } catch (Exception $e) {
-            // queueing is a single insert, so this only fires if the database
-            // is in trouble. Registration itself already succeeded either way.
-            error_log('Failed to queue welcome email: '.$e->getMessage());
-        }
-
-        // Before signing in, which can move this visit's views onto the account.
-        try {
-            app(SignupAttribution::class)->record($this->request);
-        } catch (Exception $e) {
-            error_log('Failed to note where a sign-up came from: '.$e->getMessage());
-        }
-
-        // log the user in automatically after successful registration
-        $this->auth->login($validated['email'], $this->request->post['password']);
-        app(VisitorLink::class)->toAccount($this->request, (int) $userId);
 
         // A reply captured before signup gets posted now and wins the
         // redirect: the new reader lands back on the comment they answered.
@@ -183,7 +118,7 @@ final class RegisterController extends AppController
                         return $this->jsonSuccess(['redirect' => lurl('/dashboard')]);
                     }
 
-                    $this->flash('success', "Welcome! You've joined the blog as {$invite['role']}.");
+                    $this->flash('success', "Welcome! You've joined the blog as ".app(BlogRoleLabels::class)->label($invite['role']).'.');
 
                     return $this->redirect(lurl('/dashboard'));
                 } catch (\RuntimeException) {
@@ -211,34 +146,5 @@ final class RegisterController extends AppController
         $this->flash('success', 'Welcome! This is your reading hub — save posts, follow blogs, join discussions.');
 
         return $this->redirect('/dashboard');
-    }
-
-    /**
-     * Build the account handle from the email local part, reduced to letters and digits.
-     *
-     * A taken local part gets a short random suffix. One that is too short or
-     * reserved starts from "reader" instead, since suffixing support@ still reads as support.
-     *
-     * @param  string  $email  The registration email
-     * @return string An available handle
-     */
-    private function deriveUserHandleFromEmail(string $email): string
-    {
-        $localPart = strtolower(explode('@', $email, 2)[0]);
-        $base = substr(preg_replace('/[^a-z0-9]/', '', $localPart), 0, 20);
-
-        $usableBase = strlen($base) >= 3 && !$this->userHandleValidator->isReserved($base);
-
-        if ($usableBase && !$this->userHandleValidator->isTaken($base)) {
-            return $base;
-        }
-
-        $stem = $usableBase ? substr($base, 0, 15) : 'reader';
-
-        do {
-            $candidate = $stem.bin2hex(random_bytes(2));
-        } while (!$this->userHandleValidator->isAvailable($candidate));
-
-        return $candidate;
     }
 }

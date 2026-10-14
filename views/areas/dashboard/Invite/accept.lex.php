@@ -3,7 +3,7 @@
 {% block subtitle %}Join a blog as a collaborator.{% endblock %}
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <div class="max-w-xl mx-auto">
+    <div class="max-w-xl mx-auto py-12">
         <section class="card">
             <div class="card-body text-center">
                 <div class="mx-auto mb-4 inline-flex items-center justify-center size-12 rounded-full bg-custom-100 text-custom-600 dark:bg-custom-500/20 dark:text-custom-300">

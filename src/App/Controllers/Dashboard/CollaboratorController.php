@@ -191,14 +191,6 @@ final class CollaboratorController extends AppController
         ]);
         $role = $validator->validated()['role'];
 
-        // Guard against demoting the only editor — leaves the blog without an
-        // operational lead and silently strands in-flight workflow items.
-        if ($role !== 'editor' && $this->isLastWithRole((int) $blog->id(), (int) $userId, 'editor')) {
-            $this->flash('error', 'This is the only editor on the blog. Promote someone else to editor first.');
-
-            return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
-        }
-
         // addUserToBlog handles role change via ON DUPLICATE KEY UPDATE.
         $this->blogModel->addUserToBlog($blog->id(), (int) $userId, $role, (int) auth()->user()['id']);
 
@@ -238,13 +230,6 @@ final class CollaboratorController extends AppController
 
         $blog = $this->getBlog($blogId);
         Gate::authorize('manageUsers', $blog, auth()->user());
-
-        // Same guard as changeRole — never strand the blog without an editor.
-        if ($this->isLastWithRole((int) $blog->id(), (int) $userId, 'editor')) {
-            $this->flash('error', 'This is the only editor on the blog. Promote someone else first, then revoke.');
-
-            return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
-        }
 
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $userId);
 
@@ -343,14 +328,6 @@ final class CollaboratorController extends AppController
             return $this->redirect(lurl("/dashboard/blog/{$blogId}/team"));
         }
 
-        // Refuse to leave if you're the only editor — otherwise the owner is
-        // stranded without anyone to move workflow items through.
-        if ($this->isLastWithRole((int) $blog->id(), (int) $user['id'], 'editor')) {
-            $this->flash('error', 'You are the only editor on this blog. Ask the owner to promote someone before you leave.');
-
-            return $this->redirect(lurl('/dashboard/blog'));
-        }
-
         $this->blogModel->revokeUserFromBlog($blog->id(), (int) $user['id']);
 
         audit()->log((int) $user['id'], 'blog.self_removed', 'blog_user', $blog->id(),
@@ -359,26 +336,6 @@ final class CollaboratorController extends AppController
         $this->flash('success', 'You have left the blog. You will need a new invitation to rejoin.');
 
         return $this->redirect(lurl('/dashboard/blog'));
-    }
-
-    /**
-     * Would removing/demoting this user leave the blog with zero people in $role?
-     *
-     * Centralized so leave, revoke, and changeRole share the same check.
-     */
-    private function isLastWithRole(int $blogId, int $userIdLosing, string $role): bool
-    {
-        $members = $this->blogModel->getActiveUsersWithRoles($blogId, [$role]);
-        if (count($members) > 1) {
-            return false;
-        }
-        foreach ($members as $m) {
-            if ($m['user_id'] === $userIdLosing) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
