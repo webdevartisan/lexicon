@@ -120,51 +120,17 @@
                             </ul>
                         </div>
                     </div>
-                    <!-- Notifications: recent activity on the user's posts. -->
+                    <?php
+                    // The shared bell: dashboard pages show the person's own inbox,
+                    // admin pages the operations inbox. The panel loads on first open.
+                    ?>
                     {% if (!empty($notifications['enabled'])): %}
-                    <div class="relative flex items-center dropdown h-header">
-                        <button type="button" class="inline-flex justify-center relative items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md dropdown-toggle btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="notificationDropdown" data-bs-toggle="dropdown" aria-label="Notifications">
-                            {% cache 'lucide:bell-ring' ttl=31536000 %}<i data-lucide="bell-ring" class="inline-block w-5 h-5 stroke-1 fill-slate-100 group-data-[topbar=dark]:fill-topbar-item-bg-hover-dark group-data-[topbar=brand]:fill-topbar-item-bg-hover-brand"></i>{% endcache %}
-                            <?php if (!empty($notifications['count'])) { ?>
-                            <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[10px] font-semibold text-white bg-red-500 rounded-full">
-                                <?= (int) $notifications['count'] > 9 ? '9+' : (int) $notifications['count'] ?>
-                            </span>
-                            <?php } ?>
-                        </button>
-                        <div class="absolute z-50 hidden ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[20rem] lg:min-w-[26rem] dark:bg-zink-600" aria-labelledby="notificationDropdown">
-                            <div class="p-4">
-                                <h6 class="mb-2 text-16 flex items-center gap-2">
-                                    Notifications
-                                    <?php if (!empty($notifications['count'])) { ?>
-                                    <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium rounded-full text-white bg-custom-500"><?= (int) $notifications['count'] ?></span>
-                                    <?php } ?>
-                                </h6>
-                                <p class="text-xs text-slate-500 dark:text-zink-300">
-                                    <?= ($notifications['listPath'] ?? '') === '/admin/notifications'
-                                        ? 'Report thresholds, mail delivery, and scheduler health.'
-                                        : 'Posts to review and comments to moderate.' ?>
-                                </p>
-                            </div>
-                            <div data-simplebar="" class="max-h-[350px] border-t border-slate-100 dark:border-zink-500">
-                                <?php if (empty($notifications['items'])) { ?>
-                                <div class="text-center py-8 px-4">
-                                    {% cache 'lucide:bell-off' ttl=31536000 %}<i data-lucide="bell-off" class="size-8 text-slate-400 mx-auto mb-2"></i>{% endcache %}
-                                    <p class="text-sm text-slate-500 dark:text-zink-300">You're all caught up. No recent activity.</p>
-                                </div>
-                                <?php } else { ?>
-                                <div class="flex flex-col">
-                                    <?php $listPath = $notifications['listPath'] ?? '/dashboard/notifications'; ?>
-                                    <?php foreach ($notifications['items'] as $n) { ?>
-                                        {% include "partials/_notification_item.lex.php" %}
-                                    <?php } ?>
-                                </div>
-                                <?php } ?>
-                            </div>
-                            <div class="flex items-center justify-end p-3 border-t border-slate-100 dark:border-zink-500">
-                                <a href="<?= e(lurl($notifications['listPath'] ?? '/dashboard/notifications')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all notifications</a>
-                            </div>
-                        </div>
-                    </div>
+                    <?php
+                    $bellCount = (int) $notifications['count'];
+                    $bellListPath = $notifications['listPath'];
+                    $bellClass = 'is-cp h-header';
+                    ?>
+                    {% include "partials/notifications/_bell.lex.php" %}
                     {% endif; %}
 
                     <!-- Profile -->

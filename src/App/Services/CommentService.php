@@ -286,6 +286,7 @@ class CommentService
             'commenter_name' => $commenter
                 ? (string) ($commenter['display_name'] ?? $commenter['handle'])
                 : 'A guest',
+            'commenter_handle' => $commenter ? (string) $commenter['handle'] : null,
             'comment_excerpt' => truncate($content, 140),
             'awaiting_moderation' => $awaitingModeration,
         ];

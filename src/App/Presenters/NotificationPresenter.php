@@ -13,8 +13,13 @@ namespace App\Presenters;
  * browser as a hidden field. Here it is worked out once, on the server, from
  * the row's own payload.
  *
- * Tones are named rather than coloured. The front and the control panel dress
- * them differently, and a class name from one would be meaningless in the other.
+ * The wording is not built here. A row says which sentence it is (a locale key
+ * under notifications.types) and what fills it: the actor, the target, and any
+ * smaller values. The row partial translates it and sets actor and target apart,
+ * so every language gets the same emphasis. NotificationFeed fills in what the
+ * payload only names by id, such as a blog or a person's picture.
+ *
+ * Tones are named rather than coloured, so each surface can dress them.
  */
 final class NotificationPresenter
 {
@@ -26,11 +31,26 @@ final class NotificationPresenter
 
     public const TONE_NEUTRAL = 'neutral';
 
+    /** Types that read as one sentence whatever their payload holds. */
+    private const KNOWN_TYPES = [
+        'blog.invite', 'blog.invite_declined',
+        'post.submitted', 'post.submitted_unassigned', 'post.approved', 'post.needs_changes', 'post.published',
+        'post.reviewer_assigned', 'post.reviewer_stale', 'post.workflow_disabled',
+        'collaborator.role_changed', 'collaborator.removed',
+        'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation', 'comment.on_blog', 'comment.created',
+        'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused',
+        'analytics.milestone', 'analytics.spike',
+        'admin.report_threshold', 'admin.mail_queue_failures', 'admin.scheduler_stalled', 'admin.email_template_failed',
+    ];
+
     /**
      * @param  array<string, mixed>  $row  A notifications table row
      * @return array{
-     *     id: int, type: string, title: string, message: string, icon: string,
-     *     tone: string, href: string, isUnread: bool, createdAt: string|null
+     *     id: int, type: string, scope: string,
+     *     sentence: array{key: string, actor: string|null, target: string|null, params: array<string, string>},
+     *     actor: array{name: string|null, handle: string|null, id: int|null}|null,
+     *     blogId: int, blogName: string|null, role: string|null,
+     *     quote: string, inviteToken: string|null, icon: string, tone: string, href: string, isUnread: bool, createdAt: string|null
      * }
      */
     public static function for(array $row): array
@@ -41,8 +61,16 @@ final class NotificationPresenter
         return [
             'id' => (int) ($row['id'] ?? 0),
             'type' => $type,
-            'title' => self::title($type, $payload),
-            'message' => trim((string) ($payload['message'] ?? '')),
+            'scope' => (string) ($row['scope'] ?? 'personal'),
+            'sentence' => self::sentence($type, $payload),
+            'actor' => self::actor($type, $payload),
+            'blogId' => (int) ($payload['blog_id'] ?? 0),
+            'blogName' => isset($payload['blog_name']) && $payload['blog_name'] !== '' ? (string) $payload['blog_name'] : null,
+            'role' => isset($payload['new_role']) ? (string) $payload['new_role'] : (isset($payload['role']) ? (string) $payload['role'] : null),
+            // A moderator's note is the whole point of its notification; a
+            // comment's excerpt is a preview of something that lives elsewhere.
+            'quote' => trim((string) ($payload['message'] ?? $payload['comment_excerpt'] ?? '')),
+            'inviteToken' => $type === 'blog.invite' ? self::text($payload, 'token') : null,
             'icon' => self::icon($type),
             'tone' => self::tone($type),
             'href' => self::href($type, $payload),
@@ -63,40 +91,97 @@ final class NotificationPresenter
     }
 
     /**
+     * Which sentence this row is, and what fills it.
+     *
+     * The target is the name of the thing the notification is about, a post or
+     * a blog. A blog the payload only knows by id gets its name from
+     * NotificationFeed, which is why the target can be null here.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array{key: string, actor: string|null, target: string|null, params: array<string, string>}
+     */
+    private static function sentence(string $type, array $payload): array
+    {
+        if (!in_array($type, self::KNOWN_TYPES, true)) {
+            return ['key' => 'notifications.types.unknown', 'actor' => null, 'target' => $type, 'params' => []];
+        }
+
+        $post = self::text($payload, 'post_title');
+        $blog = self::text($payload, 'blog_name');
+
+        [$target, $params] = match ($type) {
+            'blog.invite', 'blog.invite_declined', 'collaborator.role_changed', 'collaborator.removed', 'analytics.spike' => [$blog, []],
+            'moderation.warning' => [self::text($payload, 'subject_label'), []],
+            'moderation.reporter_warning' => [null, []],
+            'moderation.reporting_paused' => [self::text($payload, 'until_label'), []],
+            'analytics.milestone' => [$post, ['count' => number_format((int) ($payload['threshold'] ?? 0))]],
+            'admin.report_threshold' => ['#'.(int) ($payload['case_id'] ?? 0), ['count' => (string) (int) ($payload['report_count'] ?? 0)]],
+            'admin.mail_queue_failures' => [null, [
+                'count' => (string) (int) ($payload['failed_count'] ?? 0),
+                'minutes' => (string) (int) ($payload['window_minutes'] ?? 60),
+            ]],
+            'admin.scheduler_stalled' => [null, ['minutes' => (string) (int) round(($payload['heartbeat_age_seconds'] ?? 0) / 60)]],
+            'admin.email_template_failed' => [self::text($payload, 'email'), []],
+            default => [$post, []],
+        };
+
+        // A held comment reads differently from one already on the page.
+        $key = str_replace('.', '_', $type === 'comment.created' ? 'comment.on_blog' : $type);
+        if (in_array($type, ['comment.on_blog', 'comment.created'], true) && !empty($payload['awaiting_moderation'])) {
+            $key .= '_pending';
+        }
+
+        return [
+            'key' => 'notifications.types.'.$key,
+            'actor' => self::actor($type, $payload)['name'] ?? null,
+            'target' => $target,
+            'params' => $params,
+        ];
+    }
+
+    /**
+     * Who did the thing, as far as the payload says.
+     *
+     * Null for notices the platform itself sends. A person known only by
+     * handle or id gets their name and picture from NotificationFeed.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array{name: string|null, handle: string|null, id: int|null}|null
+     */
+    private static function actor(string $type, array $payload): ?array
+    {
+        $handleKey = match ($type) {
+            'post.submitted', 'post.submitted_unassigned' => 'author_handle',
+            'post.approved', 'post.needs_changes' => 'reviewer_handle',
+            'post.reviewer_assigned', 'collaborator.role_changed', 'collaborator.removed' => 'actor_handle',
+            'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation', 'comment.on_blog', 'comment.created' => 'commenter_handle',
+            default => null,
+        };
+
+        $handle = $handleKey !== null ? self::text($payload, $handleKey) : null;
+        $id = $type === 'blog.invite' && !empty($payload['invited_by']) ? (int) $payload['invited_by'] : null;
+        $name = match ($type) {
+            'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation',
+            'comment.on_blog', 'comment.created' => self::text($payload, 'commenter_name'),
+            'blog.invite_declined' => self::text($payload, 'declined_email'),
+            default => null,
+        };
+
+        if ($handle === null && $id === null && $name === null) {
+            return null;
+        }
+
+        return ['name' => $name ?? ($handle !== null ? '@'.$handle : null), 'handle' => $handle, 'id' => $id];
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      */
-    private static function title(string $type, array $payload): string
+    private static function text(array $payload, string $key): ?string
     {
-        return match ($type) {
-            'blog.invite' => 'You were invited to a blog as '.($payload['role'] ?? ''),
-            'blog.invite_declined' => ($payload['declined_email'] ?? 'Someone').' declined an invite',
-            'post.submitted' => 'A post was submitted for your review',
-            'post.submitted_unassigned' => 'A post was submitted for review',
-            'post.approved' => 'Your post '.($payload['post_title'] ?? '').' was approved',
-            'post.needs_changes' => 'Changes requested on '.($payload['post_title'] ?? ''),
-            'post.published' => 'Your post '.($payload['post_title'] ?? '').' is live',
-            'post.reviewer_assigned' => 'You were assigned to review a post',
-            'post.reviewer_stale' => 'Reviewer reset on a post',
-            'post.workflow_disabled' => 'A post of yours was reset to draft',
-            'collaborator.role_changed' => 'Your role on '.($payload['blog_name'] ?? '').' changed',
-            'collaborator.removed' => 'You were removed from '.($payload['blog_name'] ?? ''),
-            'comment.reply' => ($payload['commenter_name'] ?? 'Someone').' replied to your comment on '.($payload['post_title'] ?? 'a post'),
-            'comment.on_your_post' => ($payload['commenter_name'] ?? 'A reader').' commented on your post '.($payload['post_title'] ?? ''),
-            'comment.awaiting_moderation' => 'A comment needs approval on '.($payload['post_title'] ?? 'a post'),
-            'moderation.warning' => 'A moderator warned you about your '.($payload['subject_type'] ?? 'content').' '.($payload['subject_label'] ?? ''),
-            'moderation.reporter_warning' => 'A moderator warned you about unfounded reports',
-            'moderation.reporting_paused' => 'Your reports are paused until '.($payload['until_label'] ?? 'further notice'),
-            // comment.created rows predate the split into four types
-            'comment.on_blog', 'comment.created' => ($payload['commenter_name'] ?? 'A reader').' commented on '.($payload['post_title'] ?? 'a post')
-                .(!empty($payload['awaiting_moderation']) ? ' (awaiting moderation)' : ''),
-            'analytics.milestone' => ($payload['post_title'] ?? 'Your post').' passed '.number_format((int) ($payload['threshold'] ?? 0)).' views',
-            'analytics.spike' => ($payload['blog_name'] ?? 'Your blog').' has far more readers than usual today',
-            'admin.report_threshold' => 'Case #'.($payload['case_id'] ?? '?').' has '.($payload['report_count'] ?? 0).' reports and needs a look',
-            'admin.mail_queue_failures' => ($payload['failed_count'] ?? 0).' emails failed to send in the last '.($payload['window_minutes'] ?? 60).' minutes',
-            'admin.scheduler_stalled' => 'The task scheduler has not ticked in '.round(($payload['heartbeat_age_seconds'] ?? 0) / 60).' minute(s)',
-            'admin.email_template_failed' => 'The saved version of '.($payload['email'] ?? 'an email').' could not be used, so the shipped English version was sent',
-            default => $type,
-        };
+        $value = trim((string) ($payload[$key] ?? ''));
+
+        return $value === '' ? null : $value;
     }
 
     private static function icon(string $type): string
@@ -159,7 +244,8 @@ final class NotificationPresenter
             'comment.reply', 'comment.on_your_post', 'comment.on_blog', 'comment.created' => !empty($payload['awaiting_moderation'])
                 ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
                 : self::commentUrl($payload),
-            'collaborator.role_changed' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0),
+            // Rows written before the payload carried blog_id have nowhere to point.
+            'collaborator.role_changed' => !empty($payload['blog_id']) ? '/dashboard/blog/'.(int) $payload['blog_id'] : '',
             'analytics.milestone' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/insights/posts/'.(int) ($payload['post_id'] ?? 0).'?range=12m',
             'analytics.spike' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/insights?range=today',
             'admin.report_threshold' => '/admin/reports/'.(int) ($payload['case_id'] ?? 0),

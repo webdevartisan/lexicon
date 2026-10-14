@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\BlogInvitationModel;
+use App\Models\NotificationModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\AccountRegistrar;
@@ -31,6 +32,7 @@ final class InviteController extends AppController
         private UserPreferencesModel $preferences,
         private InviteSummary $summary,
         private AccountRegistrar $registrar,
+        private NotificationModel $notifications,
     ) {}
 
     /**
@@ -181,6 +183,7 @@ final class InviteController extends AppController
         }
 
         $this->session->remove('pending_invite_token');
+        $this->markAnsweredNotificationRead();
 
         if ($invite !== false) {
             $this->flash('success', "You've joined the blog as ".app(BlogRoleLabels::class)->label($invite['role']).'.');
@@ -220,6 +223,7 @@ final class InviteController extends AppController
         }
 
         $this->session->remove('pending_invite_token');
+        $this->markAnsweredNotificationRead();
 
         // Authed users get a flash and head back to the dashboard; guests see
         // the public declined page.
@@ -230,6 +234,20 @@ final class InviteController extends AppController
         }
 
         return $this->view('invite.declined');
+    }
+
+    /**
+     * Answered from the notification's own Accept or Decline, so that row
+     * should stop counting as unread. Scoped to the caller's inbox like every
+     * other notification write; a forged id simply matches nothing.
+     */
+    private function markAnsweredNotificationRead(): void
+    {
+        $id = (int) $this->request->postParam('notification', 0);
+
+        if ($id > 0 && auth()->check()) {
+            $this->notifications->markRead($id, (int) auth()->user()['id'], NotificationModel::INBOX);
+        }
     }
 
     /**

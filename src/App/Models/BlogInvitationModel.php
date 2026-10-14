@@ -56,6 +56,32 @@ class BlogInvitationModel extends AppModel
     }
 
     /**
+     * Which of these token hashes still belong to an invitation that can be
+     * answered, by the same rule as findValidByToken().
+     *
+     * One query for every invitation row in a notification panel, so Accept
+     * and Decline only show where pressing them can still work.
+     *
+     * @param  array<int, string>  $tokenHashes  sha256 hashes of raw tokens
+     * @return array<int, string> The hashes that are still open
+     */
+    public function openTokenHashes(array $tokenHashes): array
+    {
+        $tokenHashes = array_values(array_unique($tokenHashes));
+        if ($tokenHashes === []) {
+            return [];
+        }
+
+        $sql = 'SELECT token FROM blog_invitations
+                WHERE token IN ('.implode(', ', array_fill(0, count($tokenHashes), '?')).')
+                  AND expires_at > UTC_TIMESTAMP()
+                  AND accepted_at IS NULL
+                  AND declined_at IS NULL';
+
+        return $this->database->query($sql, $tokenHashes)->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
      * Mark an invite as accepted.
      *
      * @param  int  $id  Invitation ID

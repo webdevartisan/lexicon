@@ -286,3 +286,116 @@ test('rows created in the same second still come back newest first', function ()
     expect($newestIds)->toBe($expected)
         ->and((int) $newestIds[0])->toBeGreaterThan((int) $newestIds[2]);
 });
+
+// ============================================================================
+// SCOPE LISTS: the unified inbox reads personal and content together and must
+// never see an admin row, while the admin inbox never sees the other two.
+// ============================================================================
+
+function seedEveryScope(NotificationModel $model, int $userId): array
+{
+    $model->create($userId, 'blog.invite', ['blog_id' => 1], 'personal');
+    $model->create($userId, 'comment.on_blog', ['blog_id' => 1], 'content');
+    $model->create($userId, 'admin.scheduler_stalled', [], 'admin');
+
+    $ids = [];
+    foreach ($model->findForUser($userId) as $row) {
+        $ids[$row['scope']] = (int) $row['id'];
+    }
+
+    return $ids;
+}
+
+test('the unified inbox lists, counts and pages personal and content rows only', function () {
+    seedEveryScope($this->model, $this->userId);
+
+    $listed = array_column($this->model->findForUser($this->userId, scope: NotificationModel::INBOX), 'scope');
+    $page = $this->model->findPageForUser($this->userId, scope: NotificationModel::INBOX);
+
+    expect($listed)->toEqualCanonicalizing(['personal', 'content'])
+        ->and($this->model->unreadCount($this->userId, NotificationModel::INBOX))->toBe(2)
+        ->and($page['total'])->toBe(2)
+        ->and(array_column($page['items'], 'scope'))->not->toContain('admin');
+});
+
+test('the admin inbox never returns personal or content rows', function () {
+    seedEveryScope($this->model, $this->userId);
+
+    expect(array_column($this->model->findForUser($this->userId, scope: ['admin']), 'scope'))->toBe(['admin'])
+        ->and($this->model->unreadCount($this->userId, 'admin'))->toBe(1);
+});
+
+test('row actions through the unified inbox refuse an admin row', function () {
+    $ids = seedEveryScope($this->model, $this->userId);
+
+    expect($this->model->findOneForUser($ids['admin'], $this->userId, NotificationModel::INBOX))->toBeNull()
+        ->and($this->model->markRead($ids['admin'], $this->userId, NotificationModel::INBOX))->toBeFalse()
+        ->and($this->model->deleteForUser($ids['admin'], $this->userId, NotificationModel::INBOX))->toBeFalse()
+        ->and($this->model->unreadCount($this->userId, 'admin'))->toBe(1);
+});
+
+test('row actions through the unified inbox refuse another user\'s row', function () {
+    $otherUser = UserFactory::new($this->userModel)->create();
+    $foreign = seedEveryScope($this->model, $otherUser);
+
+    expect($this->model->findOneForUser($foreign['personal'], $this->userId, NotificationModel::INBOX))->toBeNull()
+        ->and($this->model->markRead($foreign['personal'], $this->userId, NotificationModel::INBOX))->toBeFalse()
+        ->and($this->model->deleteForUser($foreign['content'], $this->userId, NotificationModel::INBOX))->toBeFalse()
+        ->and($this->model->unreadCount($otherUser, NotificationModel::INBOX))->toBe(2);
+});
+
+test('row actions through the unified inbox reach both of its scopes', function () {
+    $ids = seedEveryScope($this->model, $this->userId);
+
+    expect($this->model->markRead($ids['personal'], $this->userId, NotificationModel::INBOX))->toBeTrue()
+        ->and($this->model->deleteForUser($ids['content'], $this->userId, NotificationModel::INBOX))->toBeTrue();
+});
+
+test('bulk actions on one tab leave the other tab and the admin inbox alone', function () {
+    seedEveryScope($this->model, $this->userId);
+
+    expect($this->model->markAllRead($this->userId, ['personal']))->toBe(1)
+        ->and($this->model->unreadCount($this->userId, 'content'))->toBe(1)
+        ->and($this->model->deleteAllForUser($this->userId, ['content']))->toBe(1)
+        ->and($this->model->unreadCount($this->userId, 'admin'))->toBe(1)
+        ->and($this->model->findForUser($this->userId, scope: NotificationModel::INBOX))->toHaveCount(1);
+});
+
+test('countsByScope answers every tab from one grouped query, zero-filled', function () {
+    seedEveryScope($this->model, $this->userId);
+    $this->model->create($this->userId, 'post.approved', ['post_id' => 1], 'personal');
+    $this->model->markAllRead($this->userId, ['content']);
+
+    $counts = $this->model->countsByScope($this->userId, NotificationModel::INBOX);
+
+    expect($counts)->toBe([
+        'personal' => ['total' => 2, 'unread' => 2],
+        'content' => ['total' => 1, 'unread' => 0],
+    ]);
+
+    $empty = $this->model->countsByScope(UserFactory::new($this->userModel)->create(), NotificationModel::INBOX);
+    expect($empty['content'])->toBe(['total' => 0, 'unread' => 0]);
+});
+
+test('latestPerScope keeps each scope to its own limit, newest first, and skips admin', function () {
+    foreach (range(1, 3) as $i) {
+        $this->model->create($this->userId, 'post.approved', ['post_id' => $i], 'personal');
+    }
+    $this->model->create($this->userId, 'comment.on_blog', ['blog_id' => 1], 'content');
+    $this->model->create($this->userId, 'admin.scheduler_stalled', [], 'admin');
+
+    $rows = $this->model->latestPerScope($this->userId, NotificationModel::INBOX, 2);
+    $ids = array_map('intval', array_column($rows, 'id'));
+    $sorted = $ids;
+    rsort($sorted);
+
+    expect(array_count_values(array_column($rows, 'scope')))->toBe(['content' => 1, 'personal' => 2])
+        ->and($ids)->toBe($sorted);
+});
+
+test('an unknown or empty scope list is refused rather than read as every scope', function () {
+    expect(fn () => $this->model->unreadCount($this->userId, ['personal', 'nope']))
+        ->toThrow(\InvalidArgumentException::class)
+        ->and(fn () => $this->model->markAllRead($this->userId, []))
+        ->toThrow(\InvalidArgumentException::class);
+});

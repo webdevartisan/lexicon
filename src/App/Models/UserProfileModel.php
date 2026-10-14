@@ -141,6 +141,50 @@ class UserProfileModel extends AppModel
     }
 
     /**
+     * Name and avatar for each person a batch of notifications mentions.
+     *
+     * One query for a whole panel or page. The avatar follows the comment
+     * thread's rule: a private profile shows its initial, not its photo.
+     *
+     * @param  array<int, string>  $handles  Handles named in payloads
+     * @param  array<int, int>  $ids  User ids named in payloads
+     * @return array<int, array{id: int, handle: string, name: string, avatar_url: string|null}>
+     */
+    public function actorsFor(array $handles, array $ids): array
+    {
+        $handles = array_values(array_unique(array_filter($handles, static fn (string $h): bool => $h !== '')));
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+
+        if ($handles === [] && $ids === []) {
+            return [];
+        }
+
+        $where = [];
+        if ($handles !== []) {
+            $where[] = 'u.handle IN ('.implode(', ', array_fill(0, count($handles), '?')).')';
+        }
+        if ($ids !== []) {
+            $where[] = 'u.id IN ('.implode(', ', array_fill(0, count($ids), '?')).')';
+        }
+
+        $sql = "SELECT u.id, u.handle,
+                       COALESCE(u.display_name_cached, NULLIF(CONCAT_WS(' ', u.first_name, u.last_name), ' '), u.handle) AS name,
+                       up.avatar_url
+                FROM users u
+                LEFT JOIN user_profiles up ON up.user_id = u.id AND up.is_public = 1
+                WHERE ".implode(' OR ', $where);
+
+        $rows = $this->database->query($sql, array_merge($handles, $ids))->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(static fn (array $r): array => [
+            'id' => (int) $r['id'],
+            'handle' => (string) $r['handle'],
+            'name' => (string) $r['name'],
+            'avatar_url' => !empty($r['avatar_url']) ? (string) $r['avatar_url'] : null,
+        ], $rows);
+    }
+
+    /**
      * Find a public profile by handle.
      *
      * Joins user, profile, and preferences data for public display.

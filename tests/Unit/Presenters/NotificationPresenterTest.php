@@ -32,7 +32,13 @@ test('a reply points at the comment on the post it was left on', function () {
         'comment_id' => 42,
     ]));
 
-    expect($item['title'])->toBe('Ada replied to your comment on On Rivers')
+    expect($item['sentence'])->toBe([
+        'key' => 'notifications.types.comment_reply',
+        'actor' => 'Ada',
+        'target' => 'On Rivers',
+        'params' => [],
+    ])
+        ->and($item['quote'])->toBe('')
         ->and($item['href'])->toBe('/blog/field-notes/on-rivers#comment-42')
         ->and($item['icon'])->toBe('reply')
         ->and($item['tone'])->toBe(NotificationPresenter::TONE_NEUTRAL)
@@ -55,7 +61,7 @@ test('a payload with no slugs gives no link rather than half a URL', function ()
     $item = NotificationPresenter::for(notificationRow('post.published', ['post_title' => 'Old One']));
 
     expect($item['href'])->toBe('')
-        ->and($item['title'])->toContain('Old One');
+        ->and($item['sentence']['target'])->toBe('Old One');
 });
 
 test('a moderator warning carries the message itself and has nowhere to send anyone', function () {
@@ -65,7 +71,8 @@ test('a moderator warning carries the message itself and has nowhere to send any
         'message' => 'Please keep it civil.',
     ]));
 
-    expect($item['message'])->toBe('Please keep it civil.')
+    expect($item['quote'])->toBe('Please keep it civil.')
+        ->and($item['actor'])->toBeNull()
         ->and($item['href'])->toBe('')
         ->and($item['tone'])->toBe(NotificationPresenter::TONE_CRITICAL);
 });
@@ -85,7 +92,8 @@ test('a read row is not reported as unread', function () {
 test('an unknown type still renders as a row instead of blowing up', function () {
     $item = NotificationPresenter::for(notificationRow('something.new.we.added'));
 
-    expect($item['title'])->toBe('something.new.we.added')
+    expect($item['sentence']['key'])->toBe('notifications.types.unknown')
+        ->and($item['sentence']['target'])->toBe('something.new.we.added')
         ->and($item['icon'])->toBe('bell')
         ->and($item['href'])->toBe('');
 });
@@ -104,6 +112,44 @@ test('a whole list is presented in one call', function () {
     ]);
 
     expect($items)->toHaveCount(2)
-        ->and($items[0]['title'])->toContain('One')
-        ->and($items[1]['title'])->toContain('Two');
+        ->and($items[0]['sentence']['target'])->toBe('One')
+        ->and($items[1]['sentence']['target'])->toBe('Two');
+});
+
+test('a held comment on the blog reads as waiting for approval', function () {
+    $held = NotificationPresenter::for(notificationRow('comment.on_blog', ['awaiting_moderation' => true]));
+    $legacy = NotificationPresenter::for(notificationRow('comment.created', []));
+
+    expect($held['sentence']['key'])->toBe('notifications.types.comment_on_blog_pending')
+        ->and($legacy['sentence']['key'])->toBe('notifications.types.comment_on_blog');
+});
+
+test('the actor comes from whichever payload key the type uses', function () {
+    $byHandle = NotificationPresenter::for(notificationRow('collaborator.role_changed', ['actor_handle' => 'elle', 'new_role' => 'editor']));
+    $byId = NotificationPresenter::for(notificationRow('blog.invite', ['invited_by' => 4, 'role' => 'author']));
+    $system = NotificationPresenter::for(notificationRow('analytics.spike', ['blog_name' => 'Field Notes']));
+
+    expect($byHandle['actor'])->toBe(['name' => '@elle', 'handle' => 'elle', 'id' => null])
+        ->and($byHandle['role'])->toBe('editor')
+        ->and($byId['actor'])->toBe(['name' => null, 'handle' => null, 'id' => 4])
+        ->and($system['actor'])->toBeNull()
+        ->and($system['sentence']['target'])->toBe('Field Notes');
+});
+
+test('a role change from before the payload carried blog_id links nowhere rather than to blog 0', function () {
+    expect(NotificationPresenter::for(notificationRow('collaborator.role_changed', ['blog_name' => 'X']))['href'])->toBe('')
+        ->and(NotificationPresenter::for(notificationRow('collaborator.role_changed', ['blog_id' => 5]))['href'])->toBe('/dashboard/blog/5');
+});
+
+test('every known type has a sentence in every locale', function () {
+    $types = (new ReflectionClassConstant(NotificationPresenter::class, 'KNOWN_TYPES'))->getValue();
+
+    foreach (['en', 'el', 'ar'] as $locale) {
+        $strings = json_decode((string) file_get_contents(__DIR__.'/../../../locales/'.$locale.'.json'), true)['notifications']['types'];
+
+        foreach ($types as $type) {
+            $key = substr(NotificationPresenter::for(notificationRow($type))['sentence']['key'], strlen('notifications.types.'));
+            expect($strings)->toHaveKey($key);
+        }
+    }
 });

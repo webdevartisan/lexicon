@@ -61,7 +61,7 @@ final class ViewerContext
             // pages and is therefore always false out on the front.
             'is_reader' => $this->blogs->userIsReaderOnly($userId),
             'unread_replies' => $this->reader->unreadReplyCount($userId),
-            'unread_notifications' => $this->notifications->unreadCount($userId, 'personal'),
+            'unread_notifications' => $this->notifications->unreadCount($userId, NotificationModel::INBOX),
         ];
     }
 }
