@@ -312,6 +312,9 @@ $router->group([
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostController', 'action' => 'makePublic', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostController', 'action' => 'makePrivate', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostController', 'action' => 'unlist', 'method' => 'POST']);
 
     // Post translations (per-locale overlays; offered when the blog enables localized posts).
     $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}', ['controller' => 'PostTranslationController', 'action' => 'edit', 'method' => 'GET']);

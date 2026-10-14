@@ -16,6 +16,17 @@ $statusStyles = [
 ];
 [$badgeClass, $badgeLabel] = $statusStyles[$status] ?? $statusStyles['draft'];
 
+$visibility = (string) ($post['visibility'] ?? 'public');
+$visibilityChips = [
+    'unlisted' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', 'eye-off', $t('components.postCard.visibility.unlisted')],
+    'private' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'lock', $t('components.postCard.visibility.private')],
+];
+$visibilityActions = [
+    ['to' => 'make-public', 'icon' => 'globe', 'label' => $t('components.postCard.visibility.makePublic'), 'confirm' => $t('components.postCard.visibility.makePublicConfirm'), 'show' => $visibility !== 'public'],
+    ['to' => 'make-private', 'icon' => 'lock', 'label' => $t('components.postCard.visibility.makePrivate'), 'confirm' => $t('components.postCard.visibility.makePrivateConfirm'), 'show' => $visibility !== 'private'],
+    ['to' => 'unlist', 'icon' => 'eye-off', 'label' => $t('components.postCard.visibility.unlist'), 'confirm' => $t('components.postCard.visibility.unlistConfirm'), 'show' => $visibility !== 'unlisted'],
+];
+
 $dateRaw = $post['published_at'] ?? $post['updated_at'] ?? $post['created_at'] ?? '';
 $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 ?>
@@ -29,8 +40,16 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 <div class="card flex flex-col h-full gap-2 transition border border-slate-200 dark:border-zink-600 rounded-lg peer-checked:border-custom-500 peer-checked:bg-slate-100 dark:peer-checked:bg-zink-800/60">
     <div class="card-body flex flex-col flex-1">
         <div class="flex items-start justify-between gap-2 mb-3">
-            <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
-                <?= e($badgeLabel) ?>
+            <span class="inline-flex flex-wrap items-center gap-1.5">
+                <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
+                    <?= e($badgeLabel) ?>
+                </span>
+                <?php if (isset($visibilityChips[$visibility])) { [$chipClass, $chipIcon, $chipLabel] = $visibilityChips[$visibility]; ?>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $chipClass ?>">
+                    <i data-lucide="<?= e($chipIcon) ?>" class="size-3" aria-hidden="true"></i>
+                    <?= e($chipLabel) ?>
+                </span>
+                <?php } ?>
             </span>
 
         <?php
@@ -187,6 +206,17 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                         </button>
                     </form>
                     {% endif %}
+
+                    <?php if ($can['publish']) { foreach ($visibilityActions as $action) { if (!$action['show']) { continue; } ?>
+                    <form method="POST" action="/dashboard/post/<?= (int) $post['id'] ?>/<?= e($action['to']) ?>" class="m-0">
+                        <?= csrf_field() ?>
+                        <button type="submit" data-confirm="<?= e($action['confirm']) ?>"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            <i data-lucide="<?= e($action['icon']) ?>" class="size-4" aria-hidden="true"></i>
+                            <span><?= e($action['label']) ?></span>
+                        </button>
+                    </form>
+                    <?php } } ?>
 
                     <?php if ($can['update']) { ?>
                     <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">

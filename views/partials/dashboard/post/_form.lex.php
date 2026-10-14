@@ -237,6 +237,19 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             </div>
             <?php } ?>
 
+            <?php if (!empty($canSetVisibility)) {
+              $visibilityChoices = [
+                  'public' => 'Public: shown on the blog, in search and in discover',
+                  'unlisted' => 'Unlisted: only people with the link',
+                  'private' => 'Private: only the blog team',
+              ];
+              $selectedVisibility = (string) (old('visibility') ?? $post['visibility'] ?? 'public');
+              ?>
+            <div>
+              {% cmp="select" name="visibility" label="Visibility" options="{$visibilityChoices}" selectedKey="{$selectedVisibility}" %}
+            </div>
+            <?php } ?>
+
             <div class="space-y-2.5 <?= $showScheduling ? 'border-t border-slate-200 pt-4 dark:border-zink-600' : '' ?>">
               <label class="flex cursor-pointer items-center gap-2">
                 <input

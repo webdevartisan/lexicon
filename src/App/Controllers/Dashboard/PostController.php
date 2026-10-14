@@ -247,6 +247,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
+            'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
@@ -299,6 +300,10 @@ final class PostController extends AppController
 
         $data['blog_id'] = $blog->id();
         $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
+
+        if ($visibility = $this->requestedVisibility($blog, (int) $user['id'])) {
+            $data['visibility'] = $visibility;
+        }
 
         try {
             $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
@@ -419,6 +424,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            'canSetVisibility' => $this->canSetVisibility($blog, (int) $user['id']),
             ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(
                 $status,
@@ -512,7 +518,12 @@ final class PostController extends AppController
             'published_at' => $post->publishedAt(),
             'comments_enabled' => $post->comments_enabled(),
             'blog_id' => $post->blogId(),
+            'visibility' => $post->toArray()['visibility'] ?? 'public',
         ];
+
+        if ($visibility = $this->requestedVisibility($post->blog(), (int) $user['id'])) {
+            $newData['visibility'] = $visibility;
+        }
 
         // SEO/social fields join the same change-detection diff.
         $postSnapshot = $post->toArray();
@@ -1035,6 +1046,93 @@ final class PostController extends AppController
         );
 
         $this->flash('success', 'Post archived successfully.');
+
+        return $this->redirectBack();
+    }
+
+    /**
+     * Whether the user may decide how widely this blog's posts show.
+     *
+     * Same permission as the quick visibility actions, so the editor never
+     * offers more than the post list does.
+     */
+    private function canSetVisibility(BlogResource $blog, int $userId): bool
+    {
+        return $blog->userCan($userId, 'publish_blog_posts');
+    }
+
+    /**
+     * The visibility the editor form asked for, or null to leave it alone.
+     *
+     * Null covers an absent field, an unknown value and a user without the
+     * permission, so a hand-built request cannot widen a post's reach.
+     */
+    private function requestedVisibility(BlogResource $blog, int $userId): ?string
+    {
+        $requested = (string) ($this->request->postParam('visibility') ?? '');
+
+        if (!in_array($requested, PostModel::VISIBILITIES, true) || !$this->canSetVisibility($blog, $userId)) {
+            return null;
+        }
+
+        return $requested;
+    }
+
+    /**
+     * List a post publicly again: blog index, search and discover.
+     *
+     * @param  string  $id  Post ID
+     */
+    public function makePublic(string $id): Response
+    {
+        return $this->changeVisibility((int) $id, 'public', 'Post is now public.');
+    }
+
+    /**
+     * Restrict a post to the blog's team.
+     *
+     * @param  string  $id  Post ID
+     */
+    public function makePrivate(string $id): Response
+    {
+        return $this->changeVisibility((int) $id, 'private', 'Post is now private.');
+    }
+
+    /**
+     * Keep a post reachable by direct link only, out of listings.
+     *
+     * @param  string  $id  Post ID
+     */
+    public function unlist(string $id): Response
+    {
+        return $this->changeVisibility((int) $id, 'unlisted', 'Post is now unlisted.');
+    }
+
+    /**
+     * Shared body for the three visibility actions above.
+     *
+     * Uses the publish gate: whoever may take a post live may also decide how widely it shows.
+     */
+    private function changeVisibility(int $id, string $visibility, string $successMessage): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $post = $this->getPost($id);
+        Gate::authorize('publish', $post, $user);
+
+        $this->model->updateVisibility($id, $visibility);
+
+        audit()->log(
+            $user['id'],
+            'post.visibility_changed',
+            'post',
+            $id,
+            ['visibility' => $visibility],
+            $this->request->ip()
+        );
+
+        $this->flash('success', $successMessage);
 
         return $this->redirectBack();
     }

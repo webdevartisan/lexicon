@@ -738,6 +738,20 @@ input[type=range]:focus::-webkit-slider-thumb {
     .\!group[data-sidebar-size="sm"] #scrollbar .simplebar-content-wrapper {
         overflow: visible !important;
     }
+/* A mask fades the last rows instead of a coloured overlay, so it suits every sidebar theme.
+       Without it the menu just stops at the edge and nothing says it keeps going. */
+.\!group[data-sidebar-size="lg"] #scrollbar[data-more-below] .simplebar-content-wrapper {
+        -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent) !important;
+        mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent) !important;
+    }
+.group[data-sidebar-size="lg"] #scrollbar[data-more-below] .simplebar-content-wrapper {
+        -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
+        mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
+    }
+/* Stops the page behind the drawer scrolling once the menu reaches its end. */
+#scrollbar .simplebar-content-wrapper {
+        overscroll-behavior: contain;
+    }
 /* Children of a group open under the hovered row on the icon-only rail. */
 .\!group[data-sidebar-size="sm"] .group\/sm:hover > [data-nav-submenu] {
         position: absolute !important;

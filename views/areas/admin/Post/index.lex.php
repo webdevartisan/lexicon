@@ -68,6 +68,7 @@ $selectedBlogKey = $blogId > 0 ? (string) $blogId : '';
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="blog" label="Blog" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="author" label="Author" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="status" label="Status" %}
+                        <th class="px-3.5 py-2.5 font-semibold">Visibility</th>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="comments" label="Comments" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="updated" label="Updated" %}
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
@@ -83,6 +84,11 @@ $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
 $featuredOnHome = (int) ($post['featured_on_home'] ?? 0) === 1;
 $featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front page';
 $commentCount = (int) ($post['comment_count'] ?? 0);
+[$visibilityStatus, $visibilityLabel] = match ((string) ($post['visibility'] ?? 'public')) {
+    'private' => ['draft', 'Private'],
+    'unlisted' => ['pending', 'Unlisted'],
+    default => ['published', 'Public'],
+};
 
 // Both slugs are needed to reach the post on the front; a draft that never got
 // one has no public page to open.
@@ -121,6 +127,9 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                                 ?>
                             <div>{% cmp="report-pill" label="{$caseLabel}" href="{$caseHref}" %}</div>
                             <?php } ?>
+                        </td>
+                        <td class="px-3.5 py-2.5">
+                            {% cmp="status-badge" status="{$visibilityStatus}" label="{$visibilityLabel}" %}
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= $commentCount ?></td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
@@ -162,9 +171,9 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                                         'can' => !$isModerated && $postStatus !== 'archived',
                                     ],
                                     [
-                                        'label' => 'Make public', 'icon' => 'globe',
+                                        'label' => 'List publicly', 'icon' => 'globe',
                                         'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/make-public'),
-                                        'confirm' => 'Make this post public?',
+                                        'confirm' => 'List this post publicly? It will show on the blog, in search and in discover.',
                                         'can' => $postVisibility !== 'public',
                                     ],
                                     [
@@ -174,9 +183,9 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                                         'can' => $postVisibility !== 'private',
                                     ],
                                     [
-                                        'label' => 'Unlist', 'icon' => 'eye-off',
+                                        'label' => 'Hide from listings', 'icon' => 'eye-off',
                                         'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/unlist'),
-                                        'confirm' => 'Unlist this post? It will stay reachable by direct link, but drop out of listings.',
+                                        'confirm' => 'Hide this post from listings? It stays reachable by direct link, but drops out of the blog, search and discover.',
                                         'can' => $postVisibility !== 'unlisted',
                                     ],
                                     ['label' => 'Delete', 'icon' => 'trash-2', 'href' => $deleteUrl, 'danger' => true],

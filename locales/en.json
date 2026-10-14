@@ -362,6 +362,16 @@
             "actions": {
                 "preview": "Preview"
             },
+            "visibility": {
+                "unlisted": "Unlisted",
+                "private": "Private",
+                "makePublic": "List publicly",
+                "makePrivate": "Make private",
+                "unlist": "Hide from listings",
+                "makePublicConfirm": "List this post publicly? It will show on the blog, in search and in discover.",
+                "makePrivateConfirm": "Make this post private? Only the blog's team will be able to see it.",
+                "unlistConfirm": "Hide this post from listings? It stays reachable by direct link, but drops out of the blog, search and discover."
+            },
             "actionsMenu": "Post actions"
         },
         "paginator": {
