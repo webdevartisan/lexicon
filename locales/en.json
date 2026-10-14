@@ -70,6 +70,7 @@
         "scheduledTasks": "Scheduled Tasks",
         "settings": "Settings",
         "cacheManagement": "Cache Management",
+        "rateLimits": "Rate Limits",
         "auditLog": "Audit Log",
         "moderation": "Moderation",
         "system": "System",

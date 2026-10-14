@@ -24,7 +24,7 @@ test('administrator passes every control panel ability', function (string $abili
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageRateLimits', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('permission holder passes only the matching area', function () {
@@ -52,7 +52,7 @@ test('user without area permissions is denied everywhere', function (string $abi
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageRateLimits', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('empty user array is denied everywhere', function () {
@@ -105,4 +105,13 @@ test('platform traffic needs its own permission, and opens the dashboard but not
         ->and($this->policy->manageBlogs($analyst))->toBeFalse()
         ->and($this->policy->manageSettings($analyst))->toBeFalse()
         ->and($this->policy->viewPlatformAnalytics($this->moderator))->toBeFalse();
+});
+
+test('rate limits can be granted apart from cache management', function () {
+    $support = ['id' => 6, 'roles' => ['support'], 'permissions' => ['manage_rate_limits']];
+    $cacheOnly = ['id' => 7, 'roles' => ['ops'], 'permissions' => ['manage_cache']];
+
+    expect($this->policy->manageRateLimits($support))->toBeTrue()
+        ->and($this->policy->manageCache($support))->toBeFalse()
+        ->and($this->policy->manageRateLimits($cacheOnly))->toBeFalse();
 });

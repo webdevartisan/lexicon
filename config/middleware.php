@@ -9,6 +9,8 @@ return [
         'theme' => \App\Middleware\ThemeResolverMiddleware::class,
     ],
     'global' => [
+        // First, so a blocked IP is refused before any page cache can answer for it
+        App\Middleware\BlockedIpMiddleware::class,
         App\Middleware\SecurityHeadersMiddleware::class,
         App\Middleware\LocaleMiddleware::class,
         App\Middleware\TranslationGlobalsMiddleware::class,

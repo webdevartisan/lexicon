@@ -70,6 +70,7 @@
         "scheduledTasks": "Προγραμματισμένες εργασίες",
         "settings": "Ρυθμίσεις",
         "cacheManagement": "Διαχείριση προσωρινής μνήμης",
+        "rateLimits": "Όρια αιτημάτων",
         "auditLog": "Αρχείο ενεργειών",
         "moderation": "Εποπτεία",
         "system": "Σύστημα",

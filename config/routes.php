@@ -475,6 +475,10 @@ $router->group([
     $r->add('/cache/clear', ['controller' => 'CacheController', 'action' => 'clear', 'method' => 'POST']);
     $r->add('/cache/delete-pattern', ['controller' => 'CacheController', 'action' => 'delete-pattern', 'method' => 'POST']);
 
+    $r->add('/rate-limits', ['controller' => 'RateLimitController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/rate-limits/block', ['controller' => 'RateLimitController', 'action' => 'block', 'method' => 'POST']);
+    $r->add('/rate-limits/unlock', ['controller' => 'RateLimitController', 'action' => 'unlock', 'method' => 'POST']);
+
     // Email delivery: the mail server settings and a connection test.
     // Each email is previewed and test-sent from its editor under Email Templates.
     $r->add('/email-test', ['controller' => 'EmailTestController', 'action' => 'index', 'method' => 'GET']);

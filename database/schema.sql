@@ -1572,7 +1572,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
 ('Manage Email Templates', 'manage_email_templates', 'mail', 'manage', 'Edit email layouts and the wording of every email the site sends, in every language'),
 ('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
-('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel');
+('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel'),
+('Manage Rate Limits', 'manage_rate_limits', 'rate_limits', 'manage', 'See who a rate limiter has locked out and lift the lock');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role

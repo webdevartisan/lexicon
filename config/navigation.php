@@ -187,7 +187,7 @@ return [
      * panel still renders coherent sections.
      */
     'admin' => [
-        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_email_templates', 'manage_site_settings', 'view_platform_analytics'], 'key' => 'navigation.home'],
+        ['label' => 'Home', 'href' => '/admin', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel', 'manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy', 'manage_all_users', 'manage_roles', 'view_audit_log', 'view_system_health', 'manage_cache', 'manage_rate_limits', 'manage_email_templates', 'manage_site_settings', 'view_platform_analytics'], 'key' => 'navigation.home'],
         ['label' => 'Notifications', 'href' => '/admin/notifications', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['access_control_panel'], 'key' => 'navigation.adminNotifications'],
 
         ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
@@ -207,10 +207,11 @@ return [
         ['label' => 'Users', 'href' => '/admin/users', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_users'], 'key' => 'navigation.users'],
         ['label' => 'Roles', 'href' => '/admin/roles', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_roles'], 'key' => 'navigation.roles'],
 
-        ['label' => 'System', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_audit_log', 'view_system_health', 'manage_cache', 'manage_mail_queue', 'manage_scheduled_tasks', 'manage_email_templates', 'manage_site_settings'], 'key' => 'navigation.systemSection'],
+        ['label' => 'System', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_audit_log', 'view_system_health', 'manage_cache', 'manage_rate_limits', 'manage_mail_queue', 'manage_scheduled_tasks', 'manage_email_templates', 'manage_site_settings'], 'key' => 'navigation.systemSection'],
         ['label' => 'Audit Log', 'href' => '/admin/audit-log', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_audit_log'], 'key' => 'navigation.auditLog'],
         ['label' => 'System', 'href' => '/admin/system', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['view_system_health'], 'key' => 'navigation.system'],
         ['label' => 'Cache Management', 'href' => '/admin/cache', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_cache'], 'key' => 'navigation.cacheManagement'],
+        ['label' => 'Rate Limits', 'href' => '/admin/rate-limits', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_rate_limits'], 'key' => 'navigation.rateLimits'],
         ['label' => 'Email Templates', 'href' => '/admin/email-templates', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_email_templates'], 'key' => 'navigation.emailTemplates'],
         ['label' => 'Email Delivery', 'href' => '/admin/email-test', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_site_settings'], 'key' => 'navigation.emailTest'],
         ['label' => 'Mail Queue', 'href' => '/admin/mail-queue', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_mail_queue'], 'key' => 'navigation.mailQueue'],

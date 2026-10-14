@@ -53,6 +53,7 @@ class SystemPolicy implements PolicyInterface
         'viewAuditLog' => 'view_audit_log',
         'viewSystem' => 'view_system_health',
         'manageCache' => 'manage_cache',
+        'manageRateLimits' => 'manage_rate_limits',
         'manageMailQueue' => 'manage_mail_queue',
         'manageScheduledTasks' => 'manage_scheduled_tasks',
         'manageEmailTemplates' => 'manage_email_templates',
@@ -233,6 +234,18 @@ class SystemPolicy implements PolicyInterface
     public function manageCache(array $user): bool
     {
         return $this->allowsArea($user, 'manageCache');
+    }
+
+    /**
+     * See who a rate limiter has locked out and lift it.
+     *
+     * Separate from manageCache so unlocking people is not bundled with clearing caches.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageRateLimits(array $user): bool
+    {
+        return $this->allowsArea($user, 'manageRateLimits');
     }
 
     /**

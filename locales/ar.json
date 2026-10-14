@@ -70,6 +70,7 @@
     "scheduledTasks": "المهام المجدولة",
     "settings": "الإعدادات",
     "cacheManagement": "إدارة التخزين المؤقت",
+    "rateLimits": "حدود الطلبات",
     "auditLog": "سجل التدقيق",
     "moderation": "الإشراف",
     "system": "النظام",
