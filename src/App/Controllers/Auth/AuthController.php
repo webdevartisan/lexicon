@@ -225,7 +225,7 @@ final class AuthController extends AppController
             // Redirect priority: blog-front return_to beats the stored
             // intended URL, and only when neither exists do we fall back to
             // the dashboard (readers land on their reading hub there).
-            $intendedUrl = $this->session->get('intended_url');
+            $intendedUrl = safe_return_to($this->session->get('intended_url'));
             $this->session->remove('intended_url');
 
             $target = $returnTo ?? ($intendedUrl ?: '/dashboard');

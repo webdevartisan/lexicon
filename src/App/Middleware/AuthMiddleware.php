@@ -39,8 +39,13 @@ final class AuthMiddleware implements MiddlewareInterface
 
             $session = app()->get(\Framework\Session::class);
 
-            // Store intended URL for post-login redirect
-            $session->set('intended_url', $request->fullUrl());
+            // The path only: fullUrl() takes its host from the Host header,
+            // which the client controls.
+            $returnTo = safe_return_to($request->uri);
+
+            if ($returnTo !== null) {
+                $session->set('intended_url', $returnTo);
+            }
 
             if ($session->wasSignedOutElsewhere()) {
                 $flash = $session->get('_flash', []);
@@ -53,7 +58,6 @@ final class AuthMiddleware implements MiddlewareInterface
             // session the visitor loses on the way -- a browser that drops the
             // cookie, or a login opened in a second tab -- and it is what the
             // login form itself reads to carry the destination through a POST.
-            $returnTo = safe_return_to($request->uri);
             $login = '/login'.($returnTo !== null ? '?return_to='.urlencode($returnTo) : '');
 
             // Default for browser/HTML: redirect to login
