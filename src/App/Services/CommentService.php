@@ -68,6 +68,10 @@ class CommentService
             return $this->failure('Comments are not available for this post.');
         }
 
+        if (!$this->commentsOpen($post)) {
+            return $this->failure('Comments are closed for this post.');
+        }
+
         $parentId = (int) $parentId;
         $repliedToUserId = null;
         $replyToId = null;
@@ -239,6 +243,30 @@ class CommentService
         }
 
         return ['ok' => $result['ok'], 'message' => $result['message'], 'path' => $path];
+    }
+
+    /**
+     * Whether the post's blog is live and has comments on at both the blog and post level.
+     *
+     * The public template already hides the form; this is the server-side twin so a
+     * hand-built POST cannot bypass it.
+     *
+     * @param  array<string, mixed>  $post  Post row
+     */
+    private function commentsOpen(array $post): bool
+    {
+        $blog = $this->blogModel->getBlog((int) $post['blog_id']);
+
+        if (!$blog || $blog->status() !== 'published') {
+            return false;
+        }
+
+        // A missing settings row or post flag means the column default, which is on
+        $settings = $this->blogSettings->findByBlogId((int) $post['blog_id']);
+        $blogOn = $settings === null || !empty($settings['comments_enabled']);
+        $postOn = !array_key_exists('comments_enabled', $post) || !empty($post['comments_enabled']);
+
+        return $blogOn && $postOn;
     }
 
     /**

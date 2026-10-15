@@ -281,7 +281,7 @@ class CommentController extends AppController
     }
 
     /**
-     * A comment readers may act on: published, approved, and not a tombstone.
+     * A comment readers may act on: approved, not a tombstone, on a post readers can see.
      *
      * @return array<string, mixed>|null
      */
@@ -290,6 +290,10 @@ class CommentController extends AppController
         $comment = $this->commentModel->findById($commentId);
 
         if ($comment === null || $comment['status'] !== 'approved' || !empty($comment['deleted_at'])) {
+            return null;
+        }
+
+        if (!$this->commentModel->isOnPublicPost($commentId)) {
             return null;
         }
 

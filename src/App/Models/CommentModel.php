@@ -881,6 +881,23 @@ class CommentModel extends AppModel
     }
 
     /**
+     * Whether the comment sits on a post a reader could actually see: published,
+     * public, and on a published blog.
+     *
+     * @param  int  $commentId  Comment to check
+     */
+    public function isOnPublicPost(int $commentId): bool
+    {
+        $sql = "SELECT 1 FROM {$this->getTable()} c
+                JOIN posts p ON p.id = c.post_id
+                JOIN blogs b ON b.id = p.blog_id
+                WHERE c.id = ? AND p.status = 'published' AND p.visibility = 'public' AND b.status = 'published'
+                LIMIT 1";
+
+        return (bool) $this->database->query($sql, [$commentId])->fetchColumn();
+    }
+
+    /**
      * @param  array<string, mixed>  $data  Comment data to insert
      */
     public function create(array $data): int|false
