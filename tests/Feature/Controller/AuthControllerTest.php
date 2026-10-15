@@ -202,8 +202,13 @@ it('records a failed sign-in without storing the typed email', function () {
 });
 
 it('records a successful sign-in against the user', function () {
+    // auth() reads users through the container's connection, so the user must be written on that one
+    $this->db->getConnection()->rollBack();
+    $this->db = \Framework\Core\App::container()->get(\Framework\Database::class);
+    $this->db->getConnection()->beginTransaction();
+
     $email = faker()->unique()->safeEmail();
-    $userId = UserFactory::new($this->userModel)
+    $userId = UserFactory::new(new UserModel($this->db))
         ->withAttributes([
             'email' => $email,
             'password' => password_hash('password123', PASSWORD_DEFAULT),

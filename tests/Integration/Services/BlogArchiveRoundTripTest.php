@@ -63,7 +63,7 @@ beforeEach(function () {
         public function store(string $path, string $sourceRoot, string $name, ?string $alt, BlogResource $blog, int $userId): string
         {
             $url = '/uploads/users/'.$blog->ownerId().'/blogs/'.$blog->id().'/media/'.$name;
-            @mkdir(dirname($this->root.$url), 0775, true);
+            is_dir(dirname($this->root.$url)) || mkdir(dirname($this->root.$url), 0775, true);
             copy($path, $this->root.$url);
 
             return $url;
@@ -76,7 +76,7 @@ beforeEach(function () {
 
     $this->image = function (string $url, array $rgb): void {
         $file = $this->root.$url;
-        @mkdir(dirname($file), 0775, true);
+        is_dir(dirname($file)) || mkdir(dirname($file), 0775, true);
         $im = imagecreatetruecolor(40, 30);
         imagefill($im, 0, 0, imagecolorallocate($im, ...$rgb));
         imagejpeg($im, $file);

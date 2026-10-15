@@ -31,10 +31,12 @@ const BLOG_PERMISSIONS = [
  * Build a blog whose userCan answers from the given permission set.
  *
  * @param  string[]  $permissions
+ * @param  int  $ownerId  Owner of the blog; defaults to the user the tests act as
  */
-function blogWith(array $permissions): BlogResource
+function blogWith(array $permissions, int $ownerId = 2): BlogResource
 {
     $blog = Mockery::mock(BlogResource::class);
+    $blog->shouldReceive('ownerId')->andReturn($ownerId);
     $blog->shouldReceive('userCan')->andReturnUsing(
         static fn (int $userId, string $permission): bool => in_array($permission, $permissions, true)
     );
@@ -86,6 +88,12 @@ describe('BlogPolicy per-blog actions', function () {
         ['createPost', 'create_posts'],
         ['delete', 'delete_own_blog'],
     ]);
+
+    test('a collaborator holding delete_own_blog cannot delete someone else\'s blog', function () {
+        $policy = new BlogPolicy();
+
+        expect($policy->delete(makeUser(2), blogWith(BLOG_PERMISSIONS, ownerId: 7)))->toBeFalse();
+    });
 });
 
 // ============================================================================
