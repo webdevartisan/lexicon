@@ -132,7 +132,7 @@ if [ "$NODE_INSTALLED" != false ]; then
         echo "⚠️  Warning: jsdom package not installed"
     fi
 
-    if [ ! -f "scripts/render-icons.js" ]; then
+    if [ ! -f "scripts/utilities/render-icons.js" ]; then
         echo "⚠️  Warning: render-icons.js script not found"
     fi
 fi
@@ -151,7 +151,7 @@ mkdir -p storage/uploads
 # Set world‑readable but only owner‑writable permissions for shared servers.
 chmod -R 775 storage
 # Make the icon‑rendering script executable if present.
-chmod +x scripts/render-icons.js 2>/dev/null || true
+chmod +x scripts/utilities/render-icons.js 2>/dev/null || true
 
 echo "✅ Permissions set"
 echo ""
