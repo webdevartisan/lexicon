@@ -18,6 +18,9 @@ use Throwable;
  */
 final class ErrorHandler
 {
+    // Allowlist, not "anything but production": a typo or "staging" must not leak traces
+    private const DETAIL_ENVIRONMENTS = ['development', 'local', 'testing'];
+
     /**
      * Convert PHP errors into ErrorException so they can be handled uniformly.
      *
@@ -73,20 +76,8 @@ final class ErrorHandler
      */
     protected static function handleCliException(Throwable $exception): void
     {
-        $isDev = ($_ENV['APP_ENV'] ?? 'production') !== 'production';
-
-        // always log in production, optionally in dev
-        if (!$isDev) {
-            error_log(sprintf(
-                '[%s] %s in %s:%d%s%s',
-                date('Y-m-d H:i:s'),
-                $exception::class.': '.$exception->getMessage(),
-                $exception->getFile(),
-                $exception->getLine(),
-                PHP_EOL,
-                $exception->getTraceAsString()
-            ));
-        }
+        $isDev = self::showsDetails();
+        self::log($exception);
 
         // output a clean, readable error message for the terminal
         echo "\n";
@@ -125,19 +116,8 @@ final class ErrorHandler
      */
     protected static function handleWebException(Throwable $exception): void
     {
-        $isDev = ($_ENV['APP_ENV'] ?? 'production') !== 'production';
-
-        if (!$isDev) {
-            error_log(sprintf(
-                '[%s] %s in %s:%d%s%s',
-                date('Y-m-d H:i:s'),
-                $exception::class.': '.$exception->getMessage(),
-                $exception->getFile(),
-                $exception->getLine(),
-                PHP_EOL,
-                $exception->getTraceAsString()
-            ));
-        }
+        $isDev = self::showsDetails();
+        self::log($exception);
 
         try {
             $container = App::container();
@@ -162,5 +142,29 @@ final class ErrorHandler
             header('Content-Type: text/html; charset=utf-8');
             echo '<h1>Something went wrong</h1><p>Please try again later..</p>';
         }
+    }
+
+    /**
+     * Whether error pages and CLI output may include traces and file paths.
+     */
+    public static function showsDetails(): bool
+    {
+        return in_array($_ENV['APP_ENV'] ?? 'production', self::DETAIL_ENVIRONMENTS, true);
+    }
+
+    /**
+     * Write the exception with its trace to the PHP error log, in every environment.
+     */
+    private static function log(Throwable $exception): void
+    {
+        error_log(sprintf(
+            '[%s] %s in %s:%d%s%s',
+            date('Y-m-d H:i:s'),
+            $exception::class.': '.$exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            PHP_EOL,
+            $exception->getTraceAsString()
+        ));
     }
 }
