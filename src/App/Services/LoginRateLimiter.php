@@ -55,6 +55,8 @@ final class LoginRateLimiter
      */
     public function tooManyAttempts(string $ip, string $email): bool
     {
+        $email = $this->normalizeEmail($email);
+
         // Use distinct key pattern for hard lockouts
         $lockKey = "login:hardlock:{$email}";
 
@@ -84,6 +86,8 @@ final class LoginRateLimiter
      */
     public function hit(string $ip, string $email): void
     {
+        $email = $this->normalizeEmail($email);
+
         $emailKey = "login:email:{$email}";
         $ipKey = "login:ip:{$ip}";
         $ipEmailKey = "login:ip_email:{$ip}:{$email}";
@@ -112,6 +116,8 @@ final class LoginRateLimiter
      */
     public function clear(string $ip, string $email): void
     {
+        $email = $this->normalizeEmail($email);
+
         $emailKey = "login:email:{$email}";
         $ipKey = "login:ip:{$ip}";
         $ipEmailKey = "login:ip_email:{$ip}:{$email}";
@@ -137,6 +143,8 @@ final class LoginRateLimiter
      */
     public function availableIn(string $ip, string $email): int
     {
+        $email = $this->normalizeEmail($email);
+
         $lockKey = "login:hardlock:{$email}";
 
         // Check hard lockout first (RateLimiter::lock() adds "lockout:" prefix)
@@ -166,6 +174,14 @@ final class LoginRateLimiter
         $ipEmailWait = $this->limiter->availableIn($ipEmailKey, $this->ipEmailMaxAttempts, $this->decaySeconds);
 
         return max($emailWait, $ipWait, $ipEmailWait);
+    }
+
+    /**
+     * Fold case variants into one identity, since findByEmail matches case-insensitively.
+     */
+    private function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
     }
 
     /**
