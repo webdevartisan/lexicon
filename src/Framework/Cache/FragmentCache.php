@@ -130,14 +130,9 @@ class FragmentCache
                 throw $e;
             }
 
-            if (is_string($result)) {
-                // only render icons
-                $result = \Framework\Helpers\IconRenderer::render($result);
-
-                return $result;
-            }
-
-            return '';
+            // Icons are not rendered here: lucide.init.js converts them in the browser,
+            // and a Node process per fragment would make every uncached request slow.
+            return is_string($result) ? $result : '';
         }
 
         // CACHE ENABLED: Full cache logic
