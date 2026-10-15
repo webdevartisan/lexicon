@@ -9,6 +9,7 @@ use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsVisitModel;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\ImpersonationSessionModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
@@ -21,6 +22,8 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
     $this->db->execute("INSERT INTO mail_queue (to_email, subject, body_html, body_text, status, tier, updated_at) VALUES ('a@example.test', 'Hi', 'Hi', 'Hi', 'failed', 'standard', DATE_SUB(NOW(), INTERVAL 40 DAY))");
     $this->db->execute("INSERT INTO account_erasure_records (original_user_id, handle, email, post_ids, comment_ids, created_at) VALUES (999, 'old-erased', 'old@example.test', '[]', '[]', DATE_SUB(NOW(), INTERVAL 91 DAY))");
     $this->db->execute("INSERT INTO account_erasure_records (original_user_id, handle, email, post_ids, comment_ids, created_at) VALUES (998, 'recent-erased', 'recent@example.test', '[]', '[]', NOW())");
+    $this->db->execute("INSERT INTO impersonation_sessions (admin_id, target_user_id, started_at, ip_address) VALUES (1, 2, DATE_SUB(NOW(), INTERVAL 400 DAY), '10.0.0.3')");
+    $this->db->execute("INSERT INTO impersonation_sessions (admin_id, target_user_id, started_at, ip_address) VALUES (1, 3, NOW(), '10.0.0.4')");
 
     $command = new PrivacyPruneCommand(
         new ActivityLogModel($this->db),
@@ -33,6 +36,7 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
         new AnalyticsEventModel($this->db),
         new AnalyticsVisitModel($this->db),
         new AnalyticsSettings(new SettingModel($this->db)),
+        new ImpersonationSessionModel($this->db),
     );
 
     ob_start();
@@ -45,5 +49,7 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
     expect($exit)->toBe(0)
         ->and($actions)->toBe(['recent'])
         ->and((int) $this->db->query('SELECT COUNT(*) FROM mail_queue')->fetchColumn())->toBe(0)
-        ->and($erasureHandles)->toBe(['recent-erased']);
+        ->and($erasureHandles)->toBe(['recent-erased'])
+        ->and($this->db->query('SELECT ip_address FROM impersonation_sessions ORDER BY target_user_id')->fetchAll(\PDO::FETCH_COLUMN))
+        ->toBe([null, '10.0.0.4']);
 });
