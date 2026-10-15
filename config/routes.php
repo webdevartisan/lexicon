@@ -437,21 +437,21 @@ $router->group([
 
     $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Generic CRUD routes for dashboard. Debug-only: with the explicit routes
-    // above, nothing in the app depends on these to resolve.
-    if (env('APP_DEBUG', false)) {
-        $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
-    }
+    // Generic CRUD routes for dashboard, kept for reference only. The explicit
+    // routes above cover everything the app uses.
+    // if (env('APP_DEBUG', false)) {
+    //     $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    // }
 });
 
 // Admin route group. Authentication is middleware; authorization is enforced
@@ -672,15 +672,15 @@ $router->group([
     $r->add('/scheduled-tasks/{id:\d+}/toggle', ['controller' => 'ScheduledTaskController', 'action' => 'toggle', 'method' => 'POST']);
     $r->add('/scheduled-tasks/{id:\d+}/delete', ['controller' => 'ScheduledTaskController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Generic admin routes are powerful and should not be exposed in production.
-    if (env('APP_DEBUG', false)) {
-        $r->add('/{controller}/{action}');
-        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-    }
+    // Generic admin routes, kept for reference only.
+    // if (env('APP_DEBUG', false)) {
+    //     $r->add('/{controller}/{action}');
+    //     $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+    // }
 });
 
 // Blog routes under a blog-specific slug with theme middleware
@@ -696,11 +696,8 @@ $router->group([
     $r->add('/{postSlug}', ['controller' => 'BlogController', 'action' => 'showBlogPost', 'method' => 'GET']);
 });
 
-// Final fallback catch-all route - only enabled in debug to avoid unintentionally
-// exposing new controllers/actions via automatic routing in production.
+// Generic catch-all kept for reference only: $router->add('/{controller}/{action}');
 if (env('APP_DEBUG', false)) {
-    $router->add('/{controller}/{action}');
-
     $router->add('/debug-cache', [
         'controller' => 'HomeController',
         'action' => 'debugCache',

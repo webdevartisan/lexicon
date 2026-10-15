@@ -42,8 +42,8 @@ if (env('APP_DEBUG', false)) {
     $container->enableDebug();
 }
 
-// In non-debug environments, APP_KEY must be set to a strong, non-default value.
-if (!env('APP_DEBUG', false)) {
+// Keyed on APP_ENV, not APP_DEBUG: a stray APP_DEBUG=true on a live server must not allow the placeholder key.
+if (!Framework\Core\ErrorHandler::showsDetails()) {
     $appKey = $_ENV['APP_KEY'] ?? null;
 
     if ($appKey === null || $appKey === '' || $appKey === 'change-me') {
