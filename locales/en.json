@@ -899,6 +899,7 @@
     },
     "discover": {
         "metaTitle": "Discover blogs and writing on Lexicon",
+        "metaTitlePosts": "Latest posts from writers on Lexicon",
         "heroTitle": "Great writing",
         "heroSubtitle": "Browse blogs and the latest posts from writers across Lexicon.",
         "searchPlaceholderBlogs": "Search blogs...",
