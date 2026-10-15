@@ -23,7 +23,7 @@ test('case and whitespace variants of an email share one bucket', function () {
 
     foreach ($variants as $i => $email) {
         // A different IP per attempt isolates the per-email tier
-        $limiter->hit('10.0.0.' . $i, $email);
+        $limiter->hit('10.0.0.'.$i, $email);
     }
 
     expect($limiter->tooManyAttempts('10.0.0.99', 'victim@x.com'))->toBeTrue();
@@ -34,7 +34,7 @@ test('clearing one casing clears the others', function () {
     $limiter = makeLoginLimiter();
 
     for ($i = 0; $i < 5; $i++) {
-        $limiter->hit('10.0.0.' . $i, 'Victim@x.com');
+        $limiter->hit('10.0.0.'.$i, 'Victim@x.com');
     }
     $limiter->clear('10.0.0.1', 'victim@x.com');
 
@@ -45,7 +45,7 @@ test('different emails stay in separate buckets', function () {
     $limiter = makeLoginLimiter();
 
     for ($i = 0; $i < 5; $i++) {
-        $limiter->hit('10.0.0.' . $i, 'victim@x.com');
+        $limiter->hit('10.0.0.'.$i, 'victim@x.com');
     }
 
     expect($limiter->tooManyAttempts('10.0.0.99', 'other@x.com'))->toBeFalse();

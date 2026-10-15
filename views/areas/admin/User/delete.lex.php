@@ -19,11 +19,11 @@
             <p class="text-sm text-slate-500 dark:text-zink-300 mb-2">They own blogs that other people write in. Transfer each one to a collaborator, or delete it, first:</p>
             <ul class="text-sm list-disc ltr:pl-5 rtl:pr-5 mb-2">
                 <?php foreach ($blockers['shared_blogs'] as $sharedBlog) { ?>
-                <li><a class="text-custom-500 hover:underline" href="/admin/blogs/<?= (int) $sharedBlog['id'] ?>/edit"><?= e($sharedBlog['blog_name']) ?></a></li>
+                <li><a class="text-custom-500 hover:underline" href="<?= e(lurl('/admin/blogs/'.((int) $sharedBlog['id']).'/edit')) ?>"><?= e($sharedBlog['blog_name']) ?></a></li>
                 <?php } ?>
             </ul>
             <?php } ?>
-            <a href="/admin/users" class="text-sm text-custom-500 hover:underline">Back to users</a>
+            <a href="<?= e(lurl('/admin/users')) ?>" class="text-sm text-custom-500 hover:underline">Back to users</a>
         </div>
     </div>
     <?php } else { ?>

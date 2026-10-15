@@ -49,7 +49,7 @@ $transferLabel = $t('dashboard.team.transfer.title');
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <div class="flex items-center justify-between gap-3 mb-5">
-        <a href="/dashboard"
+        <a href="<?= e(lurl('/dashboard')) ?>"
             class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
             <span><?= e($t('dashboard.overview.back')) ?></span>
@@ -61,7 +61,7 @@ $transferLabel = $t('dashboard.team.transfer.title');
         <i data-lucide="info" class="size-4 shrink-0 mt-0.5 text-slate-400"></i>
         <span>
             <?= e($t('dashboard.team.workflowOff')) ?>
-            <?= e($turnOn[0]) ?><a href="/dashboard/blog/{{ blog.id }}/settings#discussion" class="font-medium text-custom-500 hover:text-custom-600 underline"><?= e($t('navigation.editBlogSettings')) ?></a><?= e($turnOn[1] ?? '') ?>
+            <?= e($turnOn[0]) ?><a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/settings#discussion')) ?>" class="font-medium text-custom-500 hover:text-custom-600 underline"><?= e($t('navigation.editBlogSettings')) ?></a><?= e($turnOn[1] ?? '') ?>
         </span>
     </div>
     <?php } ?>
@@ -106,7 +106,7 @@ $transferLabel = $t('dashboard.team.transfer.title');
                 <ul class="divide-y divide-slate-100 dark:divide-zink-600">
                     <?php foreach ($wh['recent'] as $row) { ?>
                     <li class="py-2">
-                        <a href="/dashboard/post/<?= (int) $row['id'] ?>/review" class="flex items-center gap-3 group/post">
+                        <a href="<?= e(lurl('/dashboard/post/'.((int) $row['id']).'/review')) ?>" class="flex items-center gap-3 group/post">
                             <span class="inline-flex items-center justify-center size-7 rounded-md bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300 shrink-0">
                                 <i data-lucide="lock" class="size-3.5"></i>
                             </span>

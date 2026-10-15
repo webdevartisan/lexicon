@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/blogs';
+$basePath = lurl('/admin/blogs');
 $hasFilters = $q !== '' || $status !== '' || $featured !== '' || $theme !== '';
 $emptyTitle = $hasFilters ? 'No blogs match these filters' : 'No blogs yet';
 $emptyMessage = $hasFilters ? 'Try a different name, owner, status, theme, or featured state.' : 'Create the first blog to get the site going.';

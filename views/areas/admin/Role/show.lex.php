@@ -18,7 +18,7 @@
                     </div>
                     <p class="text-sm text-slate-500 dark:text-zink-300">{{ role.description }}</p>
                 </div>
-                <a href="/admin/roles" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                <a href="<?= e(lurl('/admin/roles')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                     Back to list
                 </a>
             </div>

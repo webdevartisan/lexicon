@@ -151,7 +151,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
                         <?php foreach ($blogs as $blogRow) {
                             $blogStatus = (string) $blogRow['status']; ?>
                         <tr>
-                            <td class="<?= $td ?>"><a class="text-custom-500 hover:underline" href="/admin/blogs/<?= (int) $blogRow['id'] ?>/show"><?= e($blogRow['blog_name']) ?></a></td>
+                            <td class="<?= $td ?>"><a class="text-custom-500 hover:underline" href="<?= e(lurl('/admin/blogs/'.((int) $blogRow['id']).'/show')) ?>"><?= e($blogRow['blog_name']) ?></a></td>
                             <td class="<?= $td ?> capitalize"><?= e($blogRow['user_role']) ?></td>
                             <td class="<?= $td ?>">{% cmp="status-badge" status="{$blogStatus}" %}</td>
                             <td class="<?= $td ?>"><?= (int) $blogRow['post_count'] ?></td>
@@ -184,7 +184,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
                         <?php foreach ($recentPosts as $postRow) {
                             $postStatus = (string) $postRow['status']; ?>
                         <tr>
-                            <td class="<?= $td ?>"><a class="text-custom-500 hover:underline" href="/admin/posts/<?= (int) $postRow['id'] ?>/show"><?= e(truncate((string) $postRow['title'], 60)) ?></a></td>
+                            <td class="<?= $td ?>"><a class="text-custom-500 hover:underline" href="<?= e(lurl('/admin/posts/'.((int) $postRow['id']).'/show')) ?>"><?= e(truncate((string) $postRow['title'], 60)) ?></a></td>
                             <td class="<?= $td ?>"><?= e($text($postRow['blog_name'])) ?></td>
                             <td class="<?= $td ?>">{% cmp="status-badge" status="{$postStatus}" %}</td>
                             <td class="<?= $td ?>"><?= e($when($postRow['created_at'])) ?></td>
@@ -215,8 +215,8 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
     <?php
     $asAuthor = $moderation['asAuthor'];
     $asReporter = $moderation['asReporter'];
-    $authorQueueHref = '/admin/reports?status=all&author='.rawurlencode((string) $user['handle']);
-    $reporterHref = '/admin/reports/reporters/'.(int) $user['id'];
+    $authorQueueHref = lurl('/admin/reports?status=all&author='.rawurlencode((string) $user['handle']));
+    $reporterHref = lurl('/admin/reports/reporters/'.(int) $user['id']);
     ?>
     <section id="reports" class="<?= $card ?>" aria-labelledby="reports-h">
         <div class="card-body">

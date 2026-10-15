@@ -34,7 +34,7 @@ $primaryClass = $primary['variant'] === 'green'
          max-lg:pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
   <div class="flex items-center gap-2">
 
-    <a href="<?= e($backUrl ?? '/dashboard/post') ?>"
+    <a href="<?= e(lurl($backUrl ?? '/dashboard/post')) ?>"
        class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:justify-center max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
        title="Back">
       <i data-lucide="arrow-left" class="size-4" aria-hidden="true"></i>

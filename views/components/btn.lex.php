@@ -66,7 +66,7 @@ $class = $variants[$variant] ?? $variants['slate'];
 <?php } else { ?>
 
   <a
-    href="<?= e($href) ?>"
+    href="<?= e(lurl($href)) ?>"
     class="<?= e(trim($class.' '.$addClass)) ?>"<?= $extraAttributes ?>>
       <?php if ($icon) { ?>
         {% cache "lucide:btn:" . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="inline-block size-5 text-inherit" aria-hidden="true"></i>{% endcache %}

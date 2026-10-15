@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/posts';
+$basePath = lurl('/admin/posts');
 $hasFilters = $q !== '' || $status !== '' || $featured !== '' || $visibility !== '' || $blogId > 0;
 $emptyTitle = $hasFilters ? 'No posts match your filters' : 'No posts yet';
 $emptyMessage = $hasFilters ? 'Try a different search, or clear the filters.' : 'Posts from every blog will appear here.';

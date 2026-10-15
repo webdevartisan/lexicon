@@ -70,7 +70,7 @@ if ($decision !== '' && !empty($errors)) {
                                     ?>
                                 <tr>
                                     <td class="py-2.5 pr-4 align-top">
-                                        <a href="/admin/reports/<?= (int) $report['case_id'] ?>" class="font-medium hover:text-custom-500">
+                                        <a href="<?= e(lurl('/admin/reports/'.((int) $report['case_id']))) ?>" class="font-medium hover:text-custom-500">
                                             <?= e(truncate((string) ($report['subject_snapshot'] ?? 'Reported '.$report['subject_type']), 70)) ?>
                                         </a>
                                         <p class="<?= $small ?>">

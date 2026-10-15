@@ -15,7 +15,7 @@ echo e($returnTo !== '' ? $t('auth.loginSubtitleReturn') : $t('auth.loginSubtitl
 {% block altAction %}
 <?php
 $returnTo = !empty($return_to) ? $return_to : '';
-$registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+$registerHref = lurl('/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : ''));
 ?>
 <a href="<?= e($registerHref) ?>"><?= e($t('auth.createAccount')) ?></a>
 {% endblock %}
@@ -72,7 +72,7 @@ $email = $email ?? '';
 {% endblock %}
 
 {% block help %}
-<a href="/password/forgot"><?= e($t('auth.cantLogIn')) ?></a>
+<a href="<?= e(lurl('/password/forgot')) ?>"><?= e($t('auth.cantLogIn')) ?></a>
 {% endblock %}
 
 {% block legal %}
@@ -81,8 +81,8 @@ $email = $email ?? '';
 // line and the two links go in as placeholders. Both the text and the anchors
 // are ours, never user input, which is what makes the raw echo safe here.
 echo $t('auth.legal', [
-    'terms' => '<a href="/terms">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="/privacy">'.e($t('footer.linkPrivacy')).'</a>',
+    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
+    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
 ]);
 ?>
 {% endblock %}

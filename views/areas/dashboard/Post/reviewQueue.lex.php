@@ -54,7 +54,7 @@ $reviewHref = "/dashboard/post/{$postId}/review";
                         <i data-lucide="<?= $state === 'needs_changes' ? 'pen-line' : 'eye' ?>" class="size-4"></i>
                     </span>
                     <div class="min-w-0 flex-1">
-                        <a href="/dashboard/post/<?= (int) $p['id'] ?>/review" class="block font-medium text-sm text-slate-900 dark:text-zink-50 hover:text-custom-500 truncate">
+                        <a href="<?= e(lurl('/dashboard/post/'.((int) $p['id']).'/review')) ?>" class="block font-medium text-sm text-slate-900 dark:text-zink-50 hover:text-custom-500 truncate">
                             <?= e($p['title']) ?>
                         </a>
                         <p class="text-xs text-slate-500 dark:text-zink-400 mt-0.5 flex flex-wrap items-center gap-2">

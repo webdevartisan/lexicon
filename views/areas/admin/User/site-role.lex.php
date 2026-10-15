@@ -6,7 +6,7 @@
 {% block body %}
 <?php
 $userId = (int) $user['id'];
-$showUrl = '/admin/users/'.$userId;
+$showUrl = lurl('/admin/users/'.$userId);
 $radioClass = 'form-radio border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500';
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-xl">

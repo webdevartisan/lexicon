@@ -21,7 +21,7 @@ if (!isset($tabs[$activeTab]) && $activeTab !== 'global') {
         <div class="flex flex-wrap items-center gap-2 locale-switcher" data-hide-on-global="1">
             <span class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300">Language:</span>
             {% foreach ($locales as $lc): %}
-            <a href="/admin/front-page?locale=<?= e($lc) ?>&tab=<?= e($activeTab === 'global' ? 'hero' : $activeTab) ?>"
+            <a href="<?= e(lurl('/admin/front-page?locale='.$lc.'&tab='.($activeTab === 'global' ? 'hero' : $activeTab))) ?>"
                class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-colors <?= $lc === $activeLocale ? 'border-custom-500 bg-custom-50 text-custom-700 dark:bg-custom-500/10 dark:text-custom-300' : 'border-slate-200 text-slate-500 hover:border-custom-300 hover:text-custom-500 dark:border-zink-500 dark:text-zink-300' ?>">
                 <?= e(strtoupper($lc)) ?>
             </a>

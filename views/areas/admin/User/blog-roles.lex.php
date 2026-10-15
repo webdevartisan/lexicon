@@ -6,7 +6,7 @@
 {% block body %}
 <?php
 $userId = (int) $user['id'];
-$showUrl = '/admin/users/'.$userId;
+$showUrl = lurl('/admin/users/'.$userId);
 $th = 'px-3.5 py-2.5 font-semibold';
 $td = 'px-3.5 py-2.5';
 $selectClass = 'form-select border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 py-1.5 text-sm';
@@ -40,12 +40,12 @@ $smallBtn = 'btn py-1.5 px-3 text-sm';
                             $selectId = 'blog-role-'.$blogId; ?>
                         <tr>
                             <th scope="row" class="<?= $td ?> font-medium text-left">
-                                <a class="text-custom-500 hover:underline" href="/admin/blogs/<?= $blogId ?>/show"><?= e($blogName) ?></a>
+                                <a class="text-custom-500 hover:underline" href="<?= e(lurl('/admin/blogs/'.($blogId).'/show')) ?>"><?= e($blogName) ?></a>
                             </th>
                             <td class="<?= $td ?>">
                                 <?php if ($isOwner) { ?>
                                 <span>Owner</span>
-                                <span class="block text-xs text-slate-400 dark:text-zink-400">Change it by transferring ownership <a class="text-custom-500 hover:underline" href="/admin/blogs/<?= $blogId ?>/edit">on the blog's page</a>. A blog always has exactly one owner.</span>
+                                <span class="block text-xs text-slate-400 dark:text-zink-400">Change it by transferring ownership <a class="text-custom-500 hover:underline" href="<?= e(lurl('/admin/blogs/'.($blogId).'/edit')) ?>">on the blog's page</a>. A blog always has exactly one owner.</span>
                                 <?php } else { ?>
                                 <form method="post" action="<?= e($showUrl) ?>/blog-roles/<?= $blogId ?>" class="flex flex-wrap items-center gap-2">
                                     {{ csrf_field() }}

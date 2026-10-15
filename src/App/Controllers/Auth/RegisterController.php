@@ -134,7 +134,7 @@ final class RegisterController extends AppController
         if ($isAjax) {
             // No flash: the modal shows its own success state and usually
             // finishes the reader's action in place instead of navigating
-            return $this->jsonSuccess(['redirect' => $returnTo ?? '/dashboard']);
+            return $this->jsonSuccess(['redirect' => $returnTo ?? lurl('/dashboard')]);
         }
 
         if ($returnTo !== null) {

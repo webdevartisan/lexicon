@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/mail-queue';
+$basePath = lurl('/admin/mail-queue');
 
 // Tiles double as status filters, so each one carries the query it applies
 $tiles = [

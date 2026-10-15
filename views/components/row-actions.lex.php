@@ -43,7 +43,7 @@ $renderItem = static function (array $item, string $class): string {
     $newTab = empty($item['newTab']) ? '' : ' target="_blank" rel="noopener"';
     $newTabNote = empty($item['newTab']) ? '' : '<span class="sr-only"> (opens in a new tab)</span>';
 
-    return '<a href="'.e((string) ($item['href'] ?? '#')).'" role="menuitem" tabindex="-1"'.$newTab.' class="'.$class.'">'.$icon.$label.$newTabNote.'</a>';
+    return '<a href="'.e(lurl((string) ($item['href'] ?? '#'))).'" role="menuitem" tabindex="-1"'.$newTab.' class="'.$class.'">'.$icon.$label.$newTabNote.'</a>';
 };
 ?>
 <?php if ($items !== []) { ?>

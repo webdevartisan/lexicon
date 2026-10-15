@@ -20,7 +20,7 @@
         </button>
 
         <a 
-            href="/dashboard" 
+            href="<?= e(lurl('/dashboard')) ?>" 
             class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition"
         >
             Cancel

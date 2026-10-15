@@ -22,7 +22,7 @@ $tones = [
 $classes = 'inline-flex items-center px-2 py-0.5 mt-0.5 text-[10px] font-medium rounded-full border whitespace-nowrap '.($tones[$tone] ?? $tones['red']);
 ?>
 <?php if ($href !== '') { ?>
-<a href="<?= e($href) ?>" class="<?= $classes ?> hover:underline"><?= e($label) ?></a>
+<a href="<?= e(lurl($href)) ?>" class="<?= $classes ?> hover:underline"><?= e($label) ?></a>
 <?php } else { ?>
 <span class="<?= $classes ?>"><?= e($label) ?></span>
 <?php } ?>

@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/categories';
+$basePath = lurl('/admin/categories');
 $hasFilters = $q !== '' || $used !== '' || $blogId > 0;
 $emptyTitle = $hasFilters ? 'No categories match these filters' : 'No categories yet';
 $emptyMessage = $hasFilters ? 'Try a different name, blog, or usage filter.' : 'Create one to start organizing posts.';

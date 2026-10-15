@@ -119,7 +119,7 @@ $muted = 'text-xs text-slate-400 dark:text-zink-400';
         <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             <?php foreach ($overLimit['reporters'] as $reporter) { ?>
             <li>
-                <a href="/admin/reports/reporters/<?= (int) $reporter['id'] ?>" class="font-medium hover:text-custom-500 hover:underline">@<?= e((string) $reporter['handle']) ?></a>
+                <a href="<?= e(lurl('/admin/reports/reporters/'.((int) $reporter['id']))) ?>" class="font-medium hover:text-custom-500 hover:underline">@<?= e((string) $reporter['handle']) ?></a>
                 <span class="text-slate-500 dark:text-zink-200"><?= (int) $reporter['unfounded'] ?> unfounded, <?= $reporter['warned_at'] === null ? 'not warned yet' : 'warned '.e(local_datetime((string) $reporter['warned_at'], 'M j')) ?></span>
             </li>
             <?php } ?>
@@ -186,7 +186,7 @@ $muted = 'text-xs text-slate-400 dark:text-zink-400';
                         </td>
                         <td class="px-3.5 py-2.5 whitespace-nowrap">
                             <?php if ($row['subject_author_id'] !== null && $canViewUsers) { ?>
-                            <a href="/admin/users/<?= (int) $row['subject_author_id'] ?>" class="hover:text-custom-500 hover:underline">@<?= e((string) ($row['subject_author_handle'] ?? 'unknown')) ?></a>
+                            <a href="<?= e(lurl('/admin/users/'.((int) $row['subject_author_id']))) ?>" class="hover:text-custom-500 hover:underline">@<?= e((string) ($row['subject_author_handle'] ?? 'unknown')) ?></a>
                             <?php } elseif ($row['subject_author_id'] !== null) { ?>
                             @<?= e((string) ($row['subject_author_handle'] ?? 'unknown')) ?>
                             <?php } else { ?>

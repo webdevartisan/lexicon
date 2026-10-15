@@ -7,7 +7,7 @@
 {% block sub %}<?= e($t('auth.forgotSubtitle')) ?>{% endblock %}
 
 {% block altAction %}
-<a href="/register"><?= e($t('auth.createAccount')) ?></a>
+<a href="<?= e(lurl('/register')) ?>"><?= e($t('auth.createAccount')) ?></a>
 {% endblock %}
 
 {% block body %}
@@ -33,5 +33,5 @@
 {% endblock %}
 
 {% block help %}
-<a href="/login"><?= e($t('auth.backToLogin')) ?></a>
+<a href="<?= e(lurl('/login')) ?>"><?= e($t('auth.backToLogin')) ?></a>
 {% endblock %}

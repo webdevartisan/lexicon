@@ -74,7 +74,7 @@ $renderGroup = static function (array $it) use ($iconFor, $t): void {
         <li class="relative group/sm" data-nav-group data-nav-group-key="<?= e($it['key'] ?? $it['tag']) ?>" data-nav-group-path="<?= e(lurl($it['href'])) ?>">
             <div class="sidebar-menu-row">
                 <a class="sidebar-menu-item sidebar-menu-item--group group/menu-link"
-                   href="<?= e($it['href']) ?>"
+                   href="<?= e(lurl($it['href'])) ?>"
                    data-nav-path="<?= e(lurl($it['href'])) ?>">
                     <span class="min-w-[1.75rem] group-data-[sidebar-size=sm]:h-[1.75rem] inline-block text-start text-[16px] group-data-[sidebar-size=sm]:flex group-data-[sidebar-size=sm]:items-center">
                         <i data-lucide="<?= e($iconFor($it)) ?>" class="h-4 group-data-[sidebar-size=sm]:h-5 group-data-[sidebar-size=sm]:w-5"></i>
@@ -94,7 +94,7 @@ $renderGroup = static function (array $it) use ($iconFor, $t): void {
                 <?php foreach ($it['children'] as $child) { ?>
                 <li>
                     <a class="sidebar-menu-item group/menu-link text-[13px]"
-                       href="<?= e($child['href']) ?>"
+                       href="<?= e(lurl($child['href'])) ?>"
                        data-nav-path="<?= e(lurl($child['href'])) ?>">
                         <span class="min-w-[1.5rem] inline-block text-start text-[14px]">
                             <i data-lucide="<?= e($iconFor($child)) ?>" class="h-3.5"></i>
@@ -138,7 +138,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
         } ?>
         <li class="relative group/sm">
             <a class="sidebar-menu-item group/menu-link"
-               href="<?= e($it['href']) ?>"
+               href="<?= e(lurl($it['href'])) ?>"
                data-nav-path="<?= e(lurl($it['href'])) ?>"
                >
                 
@@ -197,7 +197,7 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
             <!-- Regular Navigation Link -->
             <li class="relative group/sm">
                 <a class="sidebar-menu-item group/menu-link"
-                   href="<?= e($it['href']) ?>"
+                   href="<?= e(lurl($it['href'])) ?>"
                    data-nav-path="<?= e(lurl($it['href'])) ?>"
                    >
 
@@ -222,13 +222,13 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
         <?php if (empty($user_blogs)) { ?>
         <span class="block opacity-50 italic mb-2"><?= $t('common.startWritingHint') ?></span>
-        <a href="/dashboard/blog/new" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+        <a href="<?= e(lurl('/dashboard/blog/new')) ?>" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
             <i data-lucide="file-plus" class="size-3.5"></i>
             <?= $t('common.startWriting') ?>
         </a>
         <?php } else { ?>
         <span class="block opacity-50 italic mb-2"><?= $t('common.selectBlog') ?></span>
-        <a href="/dashboard/blog" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
+        <a href="<?= e(lurl('/dashboard/blog')) ?>" class="inline-flex items-center gap-1.5 font-medium text-custom-500 hover:text-custom-600 not-italic">
             <i data-lucide="book-open" class="size-3.5"></i>
             <?= $t('navigation.blogs') ?>
         </a>

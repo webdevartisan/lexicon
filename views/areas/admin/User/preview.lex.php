@@ -4,7 +4,7 @@
 {% block subtitle %}What a visitor gets at /profile/<?= e($user['handle']) ?>.{% endblock %}
 
 {% block body %}
-<?php $showUrl = '/admin/users/'.(int) $user['id']; ?>
+<?php $showUrl = lurl('/admin/users/'.(int) $user['id']); ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-xl">
     <div class="card">
         <div class="card-body">

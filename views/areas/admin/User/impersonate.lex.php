@@ -7,7 +7,7 @@
 <?php
 $userId = (int) $user['id'];
 $handle = '@'.$user['handle'];
-$showUrl = '/admin/users/'.$userId;
+$showUrl = lurl('/admin/users/'.$userId);
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-xl">
     {% include "areas/admin/_errors.lex.php" %}

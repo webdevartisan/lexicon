@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/users';
+$basePath = lurl('/admin/users');
 $hasFilters = $q !== '' || $active !== '' || $role !== '';
 $emptyTitle = $hasFilters ? 'No users match these filters' : 'No users yet';
 $emptyMessage = $hasFilters ? 'Try a different name, role, or status.' : 'Create the first account to get started.';
@@ -61,7 +61,7 @@ foreach ($roleOptions as $r) {
                 <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
                     {% foreach ($users as $user): %}
                     <?php
-                        $rowBase = '/admin/users/'.(int) $user['id'];
+                        $rowBase = lurl('/admin/users/'.(int) $user['id']);
 $isSuspended = $user['suspended_at'] !== null;
 $activeStatus = $isSuspended ? 'suspended' : (!empty($user['is_active']) ? 'active' : 'inactive');
 $activeLabel = $isSuspended ? 'Suspended' : (!empty($user['is_active']) ? 'Active' : 'Inactive');

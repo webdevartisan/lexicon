@@ -80,7 +80,7 @@ $sortLabel = $t('dashboard.posts.sort.label');
     </div>
     <?php } ?>
 
-    <form method="GET" action="/dashboard/post" class="card mb-4">
+    <form method="GET" action="<?= e(lurl('/dashboard/post')) ?>" class="card mb-4">
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                 <div class="md:col-span-5">
@@ -110,7 +110,7 @@ $sortLabel = $t('dashboard.posts.sort.label');
         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-custom-50 text-custom-700 border border-custom-100 dark:bg-custom-500/20 dark:text-custom-300">
             <i data-lucide="tag" class="size-3"></i>
             <?= e($activeTag['name']) ?>
-            <a href="/dashboard/post<?= e($makeQuery(['tag' => null, 'page' => null])) ?>" class="ml-0.5 hover:text-red-600" title="<?= e($t('dashboard.posts.filters.clearTag')) ?>">&times;</a>
+            <a href="<?= e(lurl('/dashboard/post'.($makeQuery(['tag' => null, 'page' => null])))) ?>" class="ml-0.5 hover:text-red-600" title="<?= e($t('dashboard.posts.filters.clearTag')) ?>">&times;</a>
         </span>
     </div>
     <?php } ?>
@@ -120,10 +120,10 @@ $sortLabel = $t('dashboard.posts.sort.label');
             <?php foreach ($tabs as $tab) { ?>
                 <?php
                 $active = (string) $status === (string) $tab['key'];
-                $url = '/dashboard/post'.$makeQuery([
+                $url = lurl('/dashboard/post'.$makeQuery([
                     'status' => $tab['key'],
                     'page' => null,
-                ]);
+                ]));
                 ?>
                 <a
                     href="<?= e($url) ?>"
@@ -141,7 +141,7 @@ $sortLabel = $t('dashboard.posts.sort.label');
             <?php } ?>
         </div>
 
-        <form method="GET" action="/dashboard/post" class="flex items-center gap-2">
+        <form method="GET" action="<?= e(lurl('/dashboard/post')) ?>" class="flex items-center gap-2">
             <?php foreach (['q' => $q, 'status' => $status, 'category' => $categoryId, 'tag' => $tagId] as $key => $value) { ?>
                 <?php if ($value !== '' && $value !== null) { ?>
                     <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
@@ -171,7 +171,7 @@ if ($q !== '') {
     $emptyTitle = $t('dashboard.posts.empty.searchTitle', ['query' => truncate($q, 40)]);
     $emptyText = $t($status !== '' ? 'dashboard.posts.empty.searchTextStatus' : 'dashboard.posts.empty.searchText');
     $emptyIcon = 'search-x';
-    $clearUrl = '/dashboard/post';
+    $clearUrl = lurl('/dashboard/post');
 } elseif ($status !== '' && isset($emptyIcons[$status])) {
     $emptyTitle = $t('dashboard.posts.empty.'.$status.'Title');
     $emptyText = $t('dashboard.posts.empty.'.$status.'Text');

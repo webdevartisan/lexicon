@@ -377,6 +377,8 @@ function formatWithOrdinal(DateTime $date): string
  *
  * Converts '/blogs' to '/{locale}/blogs' using current or specified locale.
  * Respects supported/default locales enforced by LocalePrefixIntake.
+ * Absolute URLs, fragments and paths that already carry a locale come back
+ * unchanged, so components can localize an href without knowing its source.
  *
  * @param  string  $path  Path to prefix (e.g., '/blogs', 'blogs')
  * @param  string|null  $locale  Locale code (defaults to current)
@@ -384,7 +386,17 @@ function formatWithOrdinal(DateTime $date): string
  */
 function lurl(string $path, ?string $locale = null): string
 {
+    if (preg_match('#^([a-z][a-z0-9+.-]*:|//|\#)#i', $path)) {
+        return $path;
+    }
+
     $path = '/'.ltrim($path, '/');
+
+    $firstSegment = strtolower(explode('/', substr($path, 1))[0]);
+    $firstSegment = explode('?', $firstSegment)[0];
+    if ($firstSegment !== '' && App\Services\LocaleRegistry::instance()->isSupported($firstSegment)) {
+        return $path;
+    }
 
     // URLs point at content, so they follow the content locale rather than the
     // viewer's interface preference. The explicit argument stays for callers
@@ -581,8 +593,8 @@ function old(?string $key = null, mixed $default = null): mixed
  * token must never be kept there. Matching on the key name catches fields such
  * as new_password and current_password without a list that drifts.
  *
- * @param  array  $input  Raw request input
- * @return array The input without password-like and token keys
+ * @param  array<array-key, mixed>  $input  Raw request input
+ * @return array<array-key, mixed> The input without password-like and token keys
  */
 function sanitize_old_input(array $input): array
 {

@@ -5,7 +5,7 @@
                 <!-- LOGO -->
                 <div class="items-center justify-center hidden px-5 text-center h-header   ">
                     
-                    <a href="/dashboard">
+                    <a href="<?= e(lurl('/dashboard')) ?>">
 
                         <span class="hidden">
                             <img src="/cp-assets/images/logo/L-light.png" alt="" class="h-6 mx-auto">
@@ -16,7 +16,7 @@
                         </span>
                     </a>
 
-                    <a href="/dashboard" class="hidden group-data-[topbar=dark]:block group-data-[topbar=brand]:block">
+                    <a href="<?= e(lurl('/dashboard')) ?>" class="hidden group-data-[topbar=dark]:block group-data-[topbar=brand]:block">
                         
                         <span class="group-data-[topbar=dark]:hidden group-data-[topbar=brand]:hidden">
                             <img src="/cp-assets/images/logo/L-dark.png" alt="" class="h-6 mx-auto">
@@ -164,7 +164,7 @@
                         </button>
                         <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="dropdownMenuButton">
                             <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ signedInAsLabel }}</h6>
-                            <a href="/account/profile" class="flex gap-3 mb-3">
+                            <a href="<?= e(lurl('/account/profile')) ?>" class="flex gap-3 mb-3">
                                 <div class="relative inline-block shrink-0">
                                     <div class="rounded bg-slate-100 dark:bg-zink-500">
                                         {% if current_user.avatar_url|notempty %}
@@ -196,20 +196,20 @@
                                 <?php if (auth()->hasRole('administrator')) { ?>
                                 <!-- Stable entry: always Control Panel. The logo already leads back to the dashboard. -->
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/admin">
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/admin')) ?>">
                                         {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ controlPanelLabel }}</span>
                                     </a>
                                 </li>
                                 <?php } ?>
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/account/profile">
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/account/profile')) ?>">
                                         {% cache 'lucide:user-2' ttl=31536000 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ editProfileLabel }}</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="/account/preferences">
+                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/account/preferences')) ?>">
                                         {% cache 'lucide:settings' ttl=31536000 %}<i data-lucide="settings" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
                                         <span>{{ accountSettingsLabel }}</span>
                                     </a>

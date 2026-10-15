@@ -36,6 +36,13 @@ use Framework\Session;
 final class LocalePrefixIntake
 {
     /**
+     * JSON endpoints the front-end scripts fetch on every page. Their body does
+     * not depend on the URL locale, so they are served unprefixed like a POST
+     * instead of costing each fetch a redirect.
+     */
+    private const UNPREFIXED_GET_PATHS = ['/csrf-token', '/report-reasons'];
+
+    /**
      * Detect locale prefix, adjust session/cookie, and normalize the internal request path.
      *
      * @param  Request  $request  Incoming HTTP request object.
@@ -163,7 +170,7 @@ final class LocalePrefixIntake
         LocaleState::set(new LocaleContext($resolved, $preference ?? $resolved));
 
         // For unsafe methods, avoid redirecting to protect non-idempotent requests.
-        if ($isUnsafe) {
+        if ($isUnsafe || in_array($path, self::UNPREFIXED_GET_PATHS, true)) {
             return;
         }
 

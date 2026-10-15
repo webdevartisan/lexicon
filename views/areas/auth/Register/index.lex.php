@@ -10,7 +10,7 @@
 <?php
 // Keep the reading context alive across the register hop.
 $returnTo = !empty($return_to) ? $return_to : (old('return_to') ?? '');
-$loginHref = '/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+$loginHref = lurl('/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : ''));
 ?>
 <a href="<?= e($loginHref) ?>"><?= e($t('auth.signIn')) ?></a>
 {% endblock %}
@@ -127,8 +127,8 @@ $meterLevels = implode('|', [
 // See the note in Login: the locale file owns the sentence, the anchors are
 // ours, and neither comes from user input.
 echo $t('auth.legal', [
-    'terms' => '<a href="/terms">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="/privacy">'.e($t('footer.linkPrivacy')).'</a>',
+    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
+    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
 ]);
 ?>
 {% endblock %}

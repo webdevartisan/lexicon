@@ -144,7 +144,7 @@ if ($decision !== '' && !empty($errors)) {
                                 <tr>
                                     <td class="px-3 py-2">
                                         <?php if ($report['reporter_id'] !== null && $report['reporter_handle'] !== null) { ?>
-                                        <a href="/admin/reports/reporters/<?= (int) $report['reporter_id'] ?>" class="hover:text-custom-500 hover:underline">@<?= e((string) $report['reporter_handle']) ?></a>
+                                        <a href="<?= e(lurl('/admin/reports/reporters/'.((int) $report['reporter_id']))) ?>" class="hover:text-custom-500 hover:underline">@<?= e((string) $report['reporter_handle']) ?></a>
                                         <?php } else { ?>
                                         <span class="<?= $small ?>">Deleted account</span>
                                         <?php } ?>
@@ -264,7 +264,7 @@ if ($decision !== '' && !empty($errors)) {
                     <?php } else { ?>
                     <dl class="<?= $dl ?>">
                         <dt class="<?= $dt ?>">Account</dt>
-                        <dd class="<?= $dd ?>"><?php if ($canViewUsers) { ?><a href="/admin/users/<?= (int) $author['id'] ?>" class="text-custom-500 hover:underline">@<?= e((string) $author['handle']) ?></a><?php } else { ?>@<?= e((string) $author['handle']) ?><?php } ?></dd>
+                        <dd class="<?= $dd ?>"><?php if ($canViewUsers) { ?><a href="<?= e(lurl('/admin/users/'.((int) $author['id']))) ?>" class="text-custom-500 hover:underline">@<?= e((string) $author['handle']) ?></a><?php } else { ?>@<?= e((string) $author['handle']) ?><?php } ?></dd>
                         <dt class="<?= $dt ?>">Joined</dt>
                         <dd class="<?= $dd ?>"><?= e(local_datetime($author['created_at'] ?? null, 'M j, Y')) ?></dd>
                         <dt class="<?= $dt ?>">Status</dt>

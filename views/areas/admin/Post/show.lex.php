@@ -22,13 +22,13 @@ $statusBadge = [
                     </span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="/admin/posts/<?= e((string) $post['id']) ?>/edit" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
+                    <a href="<?= e(lurl('/admin/posts/'.(string) $post['id'].'/edit')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
                         <i data-lucide="pencil" class="size-3.5"></i> Edit
                     </a>
-                    <a href="/admin/posts/<?= e((string) $post['id']) ?>/delete" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 dark:bg-zink-700 dark:border-red-500/40 dark:hover:bg-red-900/20 transition-colors">
+                    <a href="<?= e(lurl('/admin/posts/'.(string) $post['id'].'/delete')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 dark:bg-zink-700 dark:border-red-500/40 dark:hover:bg-red-900/20 transition-colors">
                         <i data-lucide="trash-2" class="size-3.5"></i> Delete
                     </a>
-                    <a href="/admin/posts" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                    <a href="<?= e(lurl('/admin/posts')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                         Back to list
                     </a>
                 </div>

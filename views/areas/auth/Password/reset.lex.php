@@ -78,5 +78,5 @@
 {% endblock %}
 
 {% block help %}
-<a href="/login"><?= e($t('auth.backToLogin')) ?></a>
+<a href="<?= e(lurl('/login')) ?>"><?= e($t('auth.backToLogin')) ?></a>
 {% endblock %}

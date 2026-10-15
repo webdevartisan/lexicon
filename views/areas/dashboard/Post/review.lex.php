@@ -287,7 +287,7 @@
             <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
                 <div class="p-4">
                     <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100 mb-2">Live preview</h2>
-                    <a href="/blog/<?= e($blog['blog_slug']) ?>/<?= e($post['slug']) ?>"
+                    <a href="<?= e(lurl('/blog/'.$blog['blog_slug'].'/'.$post['slug'])) ?>"
                        target="_blank"
                        class="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition-colors">
                         <i data-lucide="external-link" class="size-3.5"></i>

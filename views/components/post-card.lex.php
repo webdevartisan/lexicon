@@ -90,7 +90,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 
         <h6 class="mb-2 text-15 line-clamp-2">
             <?php if ($can['update']) { ?>
-            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="hover:text-custom-500 transition-colors">
+            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>" class="hover:text-custom-500 transition-colors">
                 {{ post.title }}
             </a>
             <?php } else { ?>
@@ -134,7 +134,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <?php } ?>
             <?php if (!empty($post['tags'])) { ?>
                 <?php foreach (array_slice($post['tags'], 0, 3) as $tg) { ?>
-                <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>"
+                <a href="<?= e(lurl('/dashboard/post?tag='.(int) $tg['id'])) ?>"
                    class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
                     {% cache 'lucide:tag:sm' ttl=31536000 %}<i data-lucide="tag" class="size-3"></i>{% endcache %}
                     <?= e((string) $tg['name']) ?>
@@ -145,7 +145,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
             <?php if ($can['update']) { ?>
-            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>"
+            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
                 {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                 <span>{{ editTooltip }}</span>
@@ -167,7 +167,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 
                 <div class="absolute z-50 hidden py-1.5 ltr:text-left rtl:text-right bg-white rounded-md shadow-md dropdown-menu min-w-[11rem] dark:bg-zink-600">
                     {% if ($post['status'] === 'published'): %}
-                    <a href="/blog/{{ blogSlug }}/{{ post.slug }}" target="_blank" rel="noopener"
+                    <a href="<?= e(lurl('/blog/'.$blogSlug.'/'.$post['slug'])) ?>" target="_blank" rel="noopener"
                         class="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
                         {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                         <span>{{ previewText }}</span>

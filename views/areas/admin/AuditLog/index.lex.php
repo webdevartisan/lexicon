@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/audit-log';
+$basePath = lurl('/admin/audit-log');
 
 // Color-code by verb so destructive actions stand out when scanning
 $actionColor = static function (string $action): string {

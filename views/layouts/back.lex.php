@@ -65,7 +65,7 @@ $old = old();
                 <div class="flex items-center gap-2 px-4 py-2.5 mt-4 text-sm rounded-md border border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200 print:hidden">
                     <i data-lucide="hard-hat" class="size-4 shrink-0"></i>
                     <span class="grow">Maintenance mode is on. Visitors currently see the maintenance page.</span>
-                    <a href="/admin/settings" class="font-medium underline hover:no-underline">Turn off</a>
+                    <a href="<?= e(lurl('/admin/settings')) ?>" class="font-medium underline hover:no-underline">Turn off</a>
                 </div>
                 <?php } ?>
 

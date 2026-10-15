@@ -116,7 +116,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <?php if (!empty($authorBlogs)) { ?>
         <ul class="lx-chip" aria-label="Publishes on">
           <?php foreach ($authorBlogs as $blogSlug => $blogName) { ?>
-            <li><a href="/blog/<?= e(rawurlencode((string) $blogSlug)); ?>"><?= e($blogName); ?></a></li>
+            <li><a href="<?= e(lurl('/blog/'.rawurlencode((string) $blogSlug))) ?>"><?= e($blogName); ?></a></li>
           <?php } ?>
         </ul>
       <?php } ?>
@@ -155,7 +155,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <div class="lx-gallery">
         <?php foreach ($posts as $post) { ?>
           <?php
-            $postUrl = '/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']);
+            $postUrl = lurl('/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']));
             $postTitle = $post['title'] ?? 'Untitled';
             $postExcerpt = post_excerpt($post, 140);
             $hasImage = !empty($post['featured_image']);
