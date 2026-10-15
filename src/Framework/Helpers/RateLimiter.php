@@ -29,24 +29,29 @@ final class RateLimiter
     public function hit(string $key, ?int $decaySeconds = null): void
     {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
-        $now = time();
 
-        $state = $this->getState($key, $now);
+        // Hold the lock across read and write so parallel hits cannot overwrite each other's increment
+        $lock = $this->acquireLock($key);
 
-        $score = $state['score'];
-        $updated = $state['updated'];
+        try {
+            $now = time();
+            $state = $this->getState($key, $now);
 
-        // Apply exponential decay
-        $age = max(0, $now - $updated);
-        if ($age > 0 && $score > 0.0) {
-            $k = \log(2) / $decay;
-            $score *= \exp(-$k * $age);
+            $score = $state['score'];
+            $updated = $state['updated'];
+
+            $age = max(0, $now - $updated);
+            if ($age > 0 && $score > 0.0) {
+                $k = \log(2) / $decay;
+                $score *= \exp(-$k * $age);
+            }
+
+            $score += 1.0;
+
+            $this->storeState($key, $score, $now, $decay);
+        } finally {
+            $this->releaseLock($lock);
         }
-
-        // Increment
-        $score += 1.0;
-
-        $this->storeState($key, $score, $now, $decay);
     }
 
     public function tooManyAttempts(string $key, int $maxAttempts, ?int $decaySeconds = null): bool
@@ -83,7 +88,7 @@ final class RateLimiter
         $updated = (int) ($state['updated'] ?? time());
         $now = time();
 
-        if ($score <= $maxAttempts) {
+        if ($score < $maxAttempts) {
             return 0;
         }
 
@@ -92,7 +97,8 @@ final class RateLimiter
         $t = (1 / $k) * \log($score / $maxAttempts);
         $elapsed = max(0, $now - $updated);
 
-        return (int) max(0, $t - $elapsed);
+        // Blocked means at least one second of wait; at exactly the limit the decay math gives 0
+        return max(1, (int) ceil($t - $elapsed));
     }
 
     public function clear(string $key): bool
@@ -120,6 +126,40 @@ final class RateLimiter
     }
 
     // --- Internal helpers ---
+
+    /**
+     * Take an exclusive lock on one of a fixed set of lock files.
+     *
+     * Striping by key hash keeps the number of lock files bounded instead of one per key.
+     *
+     * @return resource|null Lock handle, or null when the lock file cannot be opened
+     */
+    private function acquireLock(string $key)
+    {
+        $path = $this->cache->getCachePath().'/ratelimit-'.(crc32($key) % 64).'.lock';
+        $handle = @fopen($path, 'c');
+
+        if ($handle === false) {
+            return null;
+        }
+
+        flock($handle, LOCK_EX);
+
+        return $handle;
+    }
+
+    /**
+     * @param  resource|null  $handle  Handle returned by acquireLock()
+     */
+    private function releaseLock($handle): void
+    {
+        if ($handle === null) {
+            return;
+        }
+
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
 
     /**
      * @return array{score: float, updated: int} Current decay state for the key
