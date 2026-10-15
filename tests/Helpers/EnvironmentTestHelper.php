@@ -105,13 +105,4 @@ class EnvironmentTestHelper
     {
         self::setServer('SERVER_PORT', '443');
     }
-
-    /**
-     * Simulates HTTPS connection via X-Forwarded-Proto header.
-     * Used when behind reverse proxy or load balancer.
-     */
-    public static function enableHttpsViaProxy(): void
-    {
-        self::setServer('HTTP_X_FORWARDED_PROTO', 'https');
-    }
 }

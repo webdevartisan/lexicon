@@ -227,19 +227,36 @@ it('detects HTTPS via SERVER_PORT 443', function () {
     expect($result->getHeader('Strict-Transport-Security'))->not->toBeNull();
 });
 
-it('detects HTTPS via X-Forwarded-Proto header', function () {
+it('detects HTTPS via X-Forwarded-Proto from a trusted proxy', function () {
     EnvironmentTestHelper::setProduction();
-    EnvironmentTestHelper::enableHttpsViaProxy();
+    EnvironmentTestHelper::setEnv('TRUSTED_PROXIES', '10.0.0.0/8');
 
     $middleware = new SecurityHeadersMiddleware();
 
     $url = '/'.$this->faker->slug();
-    $request = new Request($url, 'GET', [], [], [], [], ['HTTP_X_FORWARDED_PROTO' => 'https'], []);
+    $server = ['REMOTE_ADDR' => '10.0.0.5', 'HTTP_X_FORWARDED_PROTO' => 'https'];
+    $request = new Request($url, 'GET', [], [], [], [], $server, []);
     $next = MiddlewareTestHelper::createHandler();
 
     $result = $middleware->process($request, $next);
 
     expect($result->getHeader('Strict-Transport-Security'))->not->toBeNull();
+});
+
+it('ignores X-Forwarded-Proto sent by a client that is not a trusted proxy', function () {
+    EnvironmentTestHelper::setProduction();
+    EnvironmentTestHelper::setEnv('TRUSTED_PROXIES', '10.0.0.0/8');
+
+    $middleware = new SecurityHeadersMiddleware();
+
+    $url = '/'.$this->faker->slug();
+    $server = ['REMOTE_ADDR' => '203.0.113.7', 'HTTP_X_FORWARDED_PROTO' => 'https'];
+    $request = new Request($url, 'GET', [], [], [], [], $server, []);
+    $next = MiddlewareTestHelper::createHandler();
+
+    $result = $middleware->process($request, $next);
+
+    expect($result->getHeader('Strict-Transport-Security'))->toBeNull();
 });
 
 it('does not add HSTS when X-Forwarded-Proto is http', function () {

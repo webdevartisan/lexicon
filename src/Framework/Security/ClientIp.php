@@ -69,6 +69,18 @@ final class ClientIp
     }
 
     /**
+     * Whether the connecting peer is listed in TRUSTED_PROXIES, so its forwarded headers can be believed.
+     *
+     * @param  array<string,mixed>  $server
+     */
+    public static function peerIsTrustedProxy(array $server): bool
+    {
+        $peer = (string) ($server['REMOTE_ADDR'] ?? '');
+
+        return $peer !== '' && self::isTrusted($peer, self::parseList((string) env('TRUSTED_PROXIES', '')));
+    }
+
+    /**
      * Parse a comma-separated list, dropping wildcards, /0 ranges and malformed entries.
      *
      * @return string[]
