@@ -143,6 +143,10 @@ return [
      * Only whitelisted parameters are included in cache keys to prevent
      * fragmentation caused by tracking parameters (e.g. utm_*).
      *
+     * Keys are fnmatch() patterns and the first match wins, so specific
+     * patterns must come before '/blog/*' (whose * also spans slashes). A path
+     * matching no pattern is keyed with no query parameters at all.
+     *
      * Format: 'route' => ['param1', 'param2']
      */
     'query_whitelist' => [
@@ -151,11 +155,11 @@ return [
 
         '/getting-started/*' => [],
 
-        '/blog/*' => ['page', 'comments'],
         '/blog/*/archive' => ['page'],
         '/blog/*/category/*' => ['page'],
         '/blog/*/tag/*' => ['page'],
-        '/blog/*/index-feed' => ['page'],
+        '/blog/*/index-feed' => ['category', 'page'],
+        '/blog/*' => ['category', 'page', 'comments'],
     ],
 
     /**

@@ -724,7 +724,8 @@ $container->set(Framework\Cache\CacheMiddleware::class, function ($c) {
         auth: $c->get(App\Auth::class),
         ttlRules: $config['ttl_rules'],
         debug: $config['debug'],
-        session: $c->get(Framework\Session::class)
+        session: $c->get(Framework\Session::class),
+        defaultTtl: (int) $config['default_ttl']
     );
 });
 

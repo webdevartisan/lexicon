@@ -46,8 +46,11 @@ class CacheMiddleware implements MiddlewareInterface
 
     private ?Session $session;
 
+    private int $defaultTtl;
+
     /**
      * @param  array<string, int>  $ttlRules  Map of path pattern => TTL in seconds
+     * @param  int  $defaultTtl  TTL for paths matching no rule; 0 leaves them uncached
      */
     public function __construct(
         CacheService $cache,
@@ -55,8 +58,10 @@ class CacheMiddleware implements MiddlewareInterface
         AuthInterface $auth,
         array $ttlRules = [],
         bool $debug = false,
-        ?Session $session = null
+        ?Session $session = null,
+        int $defaultTtl = 0
     ) {
+        $this->defaultTtl = $defaultTtl;
         $this->cache = $cache;
         $this->keyGenerator = $keyGenerator;
         $this->auth = $auth;
@@ -321,6 +326,6 @@ class CacheMiddleware implements MiddlewareInterface
             }
         }
 
-        return 600;
+        return $this->defaultTtl;
     }
 }
