@@ -11,6 +11,7 @@ use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use Framework\Security\ClientIp;
 
 /**
  * Orchestrates the full blog invitation lifecycle.
@@ -124,7 +125,7 @@ class InvitationService
             'blog_user',
             (int) $invite['blog_id'],
             ["Accepted invitation as {$invite['role']}"],
-            $_SERVER['REMOTE_ADDR'] ?? null
+            ClientIp::fromEnvironment($_SERVER)
         );
 
         // First-blog convenience: if the new collaborator has no default blog
@@ -135,7 +136,7 @@ class InvitationService
         }
 
         audit()->log($acceptingUserId, 'blog.invite_accepted', 'blog_invitation', (int) $invite['blog_id'],
-            ['role' => $invite['role']], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['role' => $invite['role']], ClientIp::fromEnvironment($_SERVER));
     }
 
     /**
@@ -166,7 +167,7 @@ class InvitationService
         }
 
         audit()->log($decliningUserId, 'blog.invite_declined', 'blog_invitation', (int) $invite['blog_id'],
-            ['email' => $invite['email']], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['email' => $invite['email']], ClientIp::fromEnvironment($_SERVER));
     }
 
     /**
@@ -181,6 +182,6 @@ class InvitationService
         $this->invitationModel->cancelPendingForEmail($blogId, $email);
 
         audit()->log($cancelledBy, 'blog.invite_cancelled', 'blog_invitation', $blogId,
-            ['email' => $email], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['email' => $email], ClientIp::fromEnvironment($_SERVER));
     }
 }

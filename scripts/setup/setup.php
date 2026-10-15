@@ -408,7 +408,7 @@ try {
             'db_password' => $appPass,
             'force_https' => $isProduction ? '1' : '0',
             'force_www' => '0',
-            'maintenance_allow' => '127.0.0.1,10.0.0.0/8,192.168.0.0/16',
+            'maintenance_allow' => '127.0.0.1',
             'mail_driver' => $mailDriver,
             'mail_host' => $mailHost,
             'mail_port' => $mailPort,

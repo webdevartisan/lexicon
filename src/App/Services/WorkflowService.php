@@ -13,6 +13,7 @@ use App\Models\UserModel;
 use App\Policies\PostPolicy;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use Framework\Security\ClientIp;
 use RuntimeException;
 
 /**
@@ -224,7 +225,7 @@ class WorkflowService
             'post',
             $postId,
             ["Changed workflow_state to {$newState}"],
-            $_SERVER['REMOTE_ADDR'] ?? null
+            ClientIp::fromEnvironment($_SERVER)
         );
     }
 

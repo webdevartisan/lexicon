@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
+use Framework\Security\ClientIp;
+
 /**
  * Lightweight HTTP request value object.
  *
@@ -214,12 +216,12 @@ class Request
     /**
      * Return the client IP address if available.
      *
-     * Note: for apps behind proxies, we would likely introduce a separate
-     * trusted-proxy IP resolver instead of reading HTTP_X_FORWARDED_FOR here.
+     * Behind a reverse proxy this is the forwarded client address, but only when
+     * the connecting peer is listed in TRUSTED_PROXIES; otherwise it is the peer.
      */
     public function ip(): ?string
     {
-        return $this->server['REMOTE_ADDR'] ?? null;
+        return ClientIp::fromEnvironment($this->server);
     }
 
     /**
