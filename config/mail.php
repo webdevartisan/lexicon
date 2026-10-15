@@ -25,7 +25,7 @@ return [
     | MAIL_ENABLED themselves and most of them forgot to.
     |
     */
-    'enabled' => filter_var($_ENV['MAIL_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN),
+    'enabled' => filter_var(env('MAIL_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------
@@ -37,7 +37,7 @@ return [
     | reliability and control over delivery settings.
     |
     */
-    'driver' => $_ENV['MAIL_DRIVER'] ?? 'smtp',
+    'driver' => (string) env('MAIL_DRIVER', 'smtp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,11 +49,11 @@ return [
     |
     */
     'smtp' => [
-        'host' => $_ENV['MAIL_HOST'] ?? 'smtp.mailtrap.io',
-        'port' => (int) ($_ENV['MAIL_PORT'] ?? 2525),
-        'username' => $_ENV['MAIL_USERNAME'] ?? '',
-        'password' => $_ENV['MAIL_PASSWORD'] ?? '',
-        'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? 'tls', // 'tls' or 'ssl'
+        'host' => (string) env('MAIL_HOST', 'smtp.mailtrap.io'),
+        'port' => (int) env('MAIL_PORT', 2525),
+        'username' => (string) env('MAIL_USERNAME', ''),
+        'password' => (string) env('MAIL_PASSWORD', ''),
+        'encryption' => (string) env('MAIL_ENCRYPTION', 'tls'), // 'tls' or 'ssl'
     ],
 
     /*
@@ -66,8 +66,8 @@ return [
     |
     */
     'from' => [
-        'address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
-        'name' => $_ENV['MAIL_FROM_NAME'] ?? 'Blog Platform',
+        'address' => (string) env('MAIL_FROM_ADDRESS', 'noreply@example.com'),
+        'name' => (string) env('MAIL_FROM_NAME', 'Blog Platform'),
     ],
 
     /*
@@ -88,11 +88,11 @@ return [
     |
     */
     'queue' => [
-        'batch_size' => (int) ($_ENV['MAIL_QUEUE_BATCH_SIZE'] ?? 10),
-        'delay_ms' => (int) ($_ENV['MAIL_QUEUE_DELAY_MS'] ?? 500),
-        'max_attempts' => (int) ($_ENV['MAIL_QUEUE_MAX_ATTEMPTS'] ?? 3),
-        'backoff_seconds' => (int) ($_ENV['MAIL_QUEUE_BACKOFF_SECONDS'] ?? 60),
-        'stuck_after_minutes' => (int) ($_ENV['MAIL_QUEUE_STUCK_AFTER_MINUTES'] ?? 15),
+        'batch_size' => (int) env('MAIL_QUEUE_BATCH_SIZE', 10),
+        'delay_ms' => (int) env('MAIL_QUEUE_DELAY_MS', 500),
+        'max_attempts' => (int) env('MAIL_QUEUE_MAX_ATTEMPTS', 3),
+        'backoff_seconds' => (int) env('MAIL_QUEUE_BACKOFF_SECONDS', 60),
+        'stuck_after_minutes' => (int) env('MAIL_QUEUE_STUCK_AFTER_MINUTES', 15),
     ],
 
     /*
@@ -105,5 +105,5 @@ return [
     | in logs or error output.
     |
     */
-    'debug' => filter_var($_ENV['MAIL_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN),
+    'debug' => filter_var(env('MAIL_DEBUG', false), FILTER_VALIDATE_BOOLEAN),
 ];

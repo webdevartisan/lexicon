@@ -135,7 +135,7 @@ final class CollaboratorController extends AppController
             $data['email'],
             $data['role'],
             (int) auth()->user()['id'],
-            (string) ($this->request->ip() ?? '')
+            $this->request->ip()
         );
 
         if ($emailed) {
@@ -166,7 +166,7 @@ final class CollaboratorController extends AppController
         Gate::authorize('manageUsers', $blog, auth()->user());
 
         $email = (string) $this->request->postParam('email', '');
-        $this->invitationService->cancel($blog->id(), $email, (int) auth()->user()['id']);
+        $this->invitationService->cancel($blog->id(), $email, (int) auth()->user()['id'], $this->request->ip());
 
         $this->flash('success', 'Invitation cancelled.');
 

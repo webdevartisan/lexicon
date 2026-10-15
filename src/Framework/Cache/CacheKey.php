@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Cache;
 
+use Framework\Core\App;
 use Framework\Core\Request;
+use Framework\Session;
 
 /**
  * Deterministic cache key generation.
@@ -44,7 +46,7 @@ class CacheKey
      */
     public function forRequest(Request $request): string
     {
-        $locale = $_SESSION['locale'] ?? 'en';
+        $locale = self::sessionLocale();
         $method = $request->method;
         $path = $this->normalizePath($request->uri);
         $query = $this->canonicalQuery($path, $request->get);
@@ -66,7 +68,7 @@ class CacheKey
      */
     public static function for(string $path, array $query = [], ?string $locale = null): string
     {
-        $locale = $locale ?? $_SESSION['locale'] ?? 'en';
+        $locale = $locale ?? self::sessionLocale();
         $path = parse_url($path, PHP_URL_PATH) ?: '/';
 
         ksort($query);
@@ -123,5 +125,13 @@ class CacheKey
         ksort($filtered);
 
         return http_build_query($filtered);
+    }
+
+    /**
+     * The locale LocaleMiddleware stored for this request, 'en' before it has run.
+     */
+    private static function sessionLocale(): string
+    {
+        return (string) App::container()->get(Session::class)->get('locale', 'en');
     }
 }

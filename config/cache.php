@@ -27,7 +27,7 @@ return [
     /**
      * Enable or disable caching globally.
      */
-    'enabled' => ($_ENV['CACHE_ENABLED'] ?? 'true') === 'true',
+    'enabled' => env('CACHE_ENABLED', true) === true,
 
     /**
      * Cache storage path (must be writable).
@@ -49,7 +49,7 @@ return [
      * Useful during development to inspect hit/miss behavior.
      * Should remain disabled in production to avoid exposing cache keys.
      */
-    'debug' => ($_ENV['APP_DEBUG'] ?? 'false') === 'true',
+    'debug' => env('APP_DEBUG', false) === true,
 
     /**
      * TTL rules by route pattern.
@@ -214,19 +214,19 @@ return [
      * Cleanup is triggered probabilistically based on:
      * probability = gc_probability / gc_divisor
      */
-    'gc_probability' => (int) ($_ENV['CACHE_GC_PROBABILITY'] ?? 1),
+    'gc_probability' => (int) env('CACHE_GC_PROBABILITY', 1),
 
     /**
      * Garbage collection divisor.
      */
-    'gc_divisor' => (int) ($_ENV['CACHE_GC_DIVISOR'] ?? 100),
+    'gc_divisor' => (int) env('CACHE_GC_DIVISOR', 100),
 
     /**
      * Maximum number of cache files before LRU eviction.
      *
      * Set to 0 for unlimited storage (not recommended).
      */
-    'max_files' => (int) ($_ENV['CACHE_MAX_FILES'] ?? 5000),
+    'max_files' => (int) env('CACHE_MAX_FILES', 5000),
 
     /**
      * Path for compiled template PHP files (separate from response cache).
@@ -236,5 +236,5 @@ return [
     /**
      * Maximum age (seconds) before compiled view files are pruned.
      */
-    'compiled_views_max_age' => (int) ($_ENV['COMPILED_VIEWS_MAX_AGE'] ?? 604800), // 7 days
+    'compiled_views_max_age' => (int) env('COMPILED_VIEWS_MAX_AGE', 604800), // 7 days
 ];

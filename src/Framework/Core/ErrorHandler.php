@@ -149,7 +149,7 @@ final class ErrorHandler
      */
     public static function showsDetails(): bool
     {
-        return in_array($_ENV['APP_ENV'] ?? 'production', self::DETAIL_ENVIRONMENTS, true);
+        return in_array(Dotenv::get('APP_ENV', 'production'), self::DETAIL_ENVIRONMENTS, true);
     }
 
     /**

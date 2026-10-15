@@ -11,7 +11,6 @@ use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
-use Framework\Security\ClientIp;
 
 /**
  * Orchestrates the full blog invitation lifecycle.
@@ -42,14 +41,14 @@ class InvitationService
      * @param  string  $email  Invitee email
      * @param  string  $role  Must be an assignable blog role
      * @param  int  $invitedBy  Owner issuing the invite
-     * @param  string  $ip  Client IP for audit
+     * @param  string|null  $ip  Client IP for audit
      * @return bool Whether the invitation email was delivered. The invite row
      *              exists either way, but the accept link only travels by
      *              email, so a false here means the invitee cannot act on it.
      *
      * @throws \InvalidArgumentException If role is not an assignable blog role
      */
-    public function invite(int $blogId, string $email, string $role, int $invitedBy, string $ip): bool
+    public function invite(int $blogId, string $email, string $role, int $invitedBy, ?string $ip): bool
     {
         // Same assignable-role source as role-change and validation, so an
         // owner can invite into any shipped or custom blog role.
@@ -100,10 +99,11 @@ class InvitationService
      *
      * @param  string  $rawToken  Raw token from the link
      * @param  int  $acceptingUserId  Authenticated user accepting
+     * @param  string|null  $ip  Client IP for audit
      *
      * @throws \RuntimeException If the token is invalid, expired, or already used
      */
-    public function accept(string $rawToken, int $acceptingUserId): void
+    public function accept(string $rawToken, int $acceptingUserId, ?string $ip): void
     {
         $invite = $this->invitationModel->findValidByToken(hash('sha256', $rawToken));
 
@@ -125,7 +125,7 @@ class InvitationService
             'blog_user',
             (int) $invite['blog_id'],
             ["Accepted invitation as {$invite['role']}"],
-            ClientIp::fromEnvironment($_SERVER)
+            $ip
         );
 
         // First-blog convenience: if the new collaborator has no default blog
@@ -136,7 +136,7 @@ class InvitationService
         }
 
         audit()->log($acceptingUserId, 'blog.invite_accepted', 'blog_invitation', (int) $invite['blog_id'],
-            ['role' => $invite['role']], ClientIp::fromEnvironment($_SERVER));
+            ['role' => $invite['role']], $ip);
     }
 
     /**
@@ -144,10 +144,11 @@ class InvitationService
      *
      * @param  string  $rawToken  Raw token from the link
      * @param  int  $decliningUserId  User declining (0 if not logged in)
+     * @param  string|null  $ip  Client IP for audit
      *
      * @throws \RuntimeException If the token is invalid, expired, or already used
      */
-    public function decline(string $rawToken, int $decliningUserId): void
+    public function decline(string $rawToken, int $decliningUserId, ?string $ip): void
     {
         $invite = $this->invitationModel->findValidByToken(hash('sha256', $rawToken));
 
@@ -167,7 +168,7 @@ class InvitationService
         }
 
         audit()->log($decliningUserId, 'blog.invite_declined', 'blog_invitation', (int) $invite['blog_id'],
-            ['email' => $invite['email']], ClientIp::fromEnvironment($_SERVER));
+            ['email' => $invite['email']], $ip);
     }
 
     /**
@@ -176,12 +177,13 @@ class InvitationService
      * @param  int  $blogId  Target blog
      * @param  string  $email  Invitee email
      * @param  int  $cancelledBy  Owner cancelling
+     * @param  string|null  $ip  Client IP for audit
      */
-    public function cancel(int $blogId, string $email, int $cancelledBy): void
+    public function cancel(int $blogId, string $email, int $cancelledBy, ?string $ip): void
     {
         $this->invitationModel->cancelPendingForEmail($blogId, $email);
 
         audit()->log($cancelledBy, 'blog.invite_cancelled', 'blog_invitation', $blogId,
-            ['email' => $email], ClientIp::fromEnvironment($_SERVER));
+            ['email' => $email], $ip);
     }
 }

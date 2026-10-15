@@ -247,7 +247,7 @@ final class BlogController extends AppController
         $settings = $this->settings->findByBlogId((int) $id) ?? [
             'theme' => 'folio',
             'banner_path' => '',
-            'default_locale' => LocaleRegistry::instance()->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null) ?? LocaleRegistry::instance()->default(),
+            'default_locale' => LocaleRegistry::instance()->normalize($this->session->get('locale')) ?? LocaleRegistry::instance()->default(),
             'meta_title' => '',
             'meta_description' => '',
             'indexable' => 1,

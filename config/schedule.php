@@ -25,7 +25,7 @@ return [
     | headroom inside a sixty second cron interval is about right.
     |
     */
-    'run_budget_seconds' => (int) ($_ENV['SCHEDULE_RUN_BUDGET'] ?? 50),
+    'run_budget_seconds' => (int) env('SCHEDULE_RUN_BUDGET', 50),
 
     /*
     |--------------------------------------------------------------------------
@@ -36,7 +36,7 @@ return [
     | outage coming back and trying to start everything at once.
     |
     */
-    'max_tasks_per_tick' => (int) ($_ENV['SCHEDULE_MAX_TASKS'] ?? 20),
+    'max_tasks_per_tick' => (int) env('SCHEDULE_MAX_TASKS', 20),
 
     /*
     |--------------------------------------------------------------------------
@@ -48,7 +48,7 @@ return [
     | child process actually starting.
     |
     */
-    'reap_grace_seconds' => (int) ($_ENV['SCHEDULE_REAP_GRACE'] ?? 30),
+    'reap_grace_seconds' => (int) env('SCHEDULE_REAP_GRACE', 30),
 
     /*
     |--------------------------------------------------------------------------
@@ -60,7 +60,7 @@ return [
     | process disappeared without reporting and deleting it would hide that.
     |
     */
-    'history_days' => (int) ($_ENV['SCHEDULE_HISTORY_DAYS'] ?? 30),
+    'history_days' => (int) env('SCHEDULE_HISTORY_DAYS', 30),
 
     /*
     |--------------------------------------------------------------------------
@@ -72,7 +72,7 @@ return [
     | so a quiet scheduler and a dead one never look the same.
     |
     */
-    'heartbeat_warn_after' => (int) ($_ENV['SCHEDULE_HEARTBEAT_WARN'] ?? 300),
+    'heartbeat_warn_after' => (int) env('SCHEDULE_HEARTBEAT_WARN', 300),
 
     /*
     |--------------------------------------------------------------------------
@@ -86,7 +86,7 @@ return [
     | command line and falls back to the php in PHP_BINDIR on the web.
     |
     */
-    'php_binary' => $_ENV['SCHEDULE_PHP_BINARY'] ?? '',
+    'php_binary' => (string) env('SCHEDULE_PHP_BINARY', ''),
 
     /*
     |--------------------------------------------------------------------------
@@ -100,5 +100,5 @@ return [
     | Real cron stays the supported path.
     |
     */
-    'pseudo_cron' => filter_var($_ENV['SCHEDULE_PSEUDO_CRON'] ?? false, FILTER_VALIDATE_BOOLEAN),
+    'pseudo_cron' => filter_var(env('SCHEDULE_PSEUDO_CRON', false), FILTER_VALIDATE_BOOLEAN),
 ];

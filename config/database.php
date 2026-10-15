@@ -6,11 +6,11 @@ declare(strict_types=1);
  * Database Configuration
  */
 return [
-    'host' => $_ENV['DB_HOST'] ?? 'localhost',
-    'port' => (int) ($_ENV['DB_PORT'] ?? 3306),
-    'name' => $_ENV['DB_NAME'] ?? 'lexicon',
-    'user' => $_ENV['DB_USER'] ?? 'root',
-    'password' => $_ENV['DB_PASSWORD'] ?? '',
+    'host' => (string) env('DB_HOST', 'localhost'),
+    'port' => (int) env('DB_PORT', 3306),
+    'name' => (string) env('DB_NAME', 'lexicon'),
+    'user' => (string) env('DB_USER', 'root'),
+    'password' => (string) env('DB_PASSWORD', ''),
     'charset' => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
 
@@ -59,7 +59,7 @@ return [
      * WARNING: 6-20% performance impact - disable in production.
      * Logs are written to storage/logs/queries.log
      */
-    'log_queries' => filter_var($_ENV['DB_LOG_QUERIES'] ?? false, FILTER_VALIDATE_BOOLEAN),
+    'log_queries' => filter_var(env('DB_LOG_QUERIES', false), FILTER_VALIDATE_BOOLEAN),
 
     /**
      * Slow Query Threshold
@@ -67,6 +67,6 @@ return [
      * Log queries slower than this threshold (in seconds).
      * Minimal performance impact (<1%).
      */
-    'log_slow_queries' => filter_var($_ENV['DB_LOG_SLOW_QUERIES'] ?? true, FILTER_VALIDATE_BOOLEAN),
-    'slow_query_threshold' => (float) ($_ENV['DB_SLOW_QUERY_THRESHOLD'] ?? 1.0),
+    'log_slow_queries' => filter_var(env('DB_LOG_SLOW_QUERIES', true), FILTER_VALIDATE_BOOLEAN),
+    'slow_query_threshold' => (float) env('DB_SLOW_QUERY_THRESHOLD', 1.0),
 ];

@@ -18,7 +18,7 @@ use Framework\Interfaces\RequestHandlerInterface;
 beforeEach(function () {
     $_SESSION['locale'] = 'en';
 
-    $this->middleware = new LocalizeAnchorHrefs(new LocaleRegistry(ROOT_PATH));
+    $this->middleware = new LocalizeAnchorHrefs(new LocaleRegistry(ROOT_PATH), new Framework\Session());
 
     $this->run = function (string $html): string {
         $response = new Response();

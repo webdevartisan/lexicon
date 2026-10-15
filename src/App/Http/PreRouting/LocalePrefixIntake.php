@@ -10,6 +10,7 @@ use App\Services\ReaderLocaleTarget;
 use App\Services\UserLocalePreference;
 use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
+use Framework\Session;
 
 /**
  * Class LocalePrefixIntake
@@ -60,7 +61,7 @@ final class LocalePrefixIntake
         $first = isset($segments[0]) ? strtolower($segments[0]) : null;
 
         // Normalize request method and classify unsafe methods.
-        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $method = $request->method;
         $isUnsafe = in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true);
 
         // 0) Unknown-looking locale (two letters) → redirect to default without the unknown segment.
@@ -81,7 +82,7 @@ final class LocalePrefixIntake
             }
 
             // Use 308 in production (permanent, method-preserving), 307 elsewhere.
-            $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
+            $isProd = (env('APP_ENV', $request->server['APP_ENV'] ?? 'production')) === 'production';
             header('Location: '.$target, true, $isProd ? 308 : 307);
             exit;
         }
@@ -90,7 +91,7 @@ final class LocalePrefixIntake
         //    Visible URL keeps the locale prefix; router sees a clean, unprefixed path.
         if ($first && in_array($first, $supported, true)) {
             // Persist locale choice in session (if active).
-            $_SESSION['locale'] = $first;
+            app(Session::class)->set('locale', $first);
 
             // Strip only the first segment for routing; keep visible URL unchanged.
             // The leading slash guarantees a non-empty path, '/' when nothing remains.
@@ -140,10 +141,10 @@ final class LocalePrefixIntake
         //    at most one preference lookup.
         $preference = self::storedPreference();
 
-        $resolved = $_SESSION['locale']
+        $resolved = app(Session::class)->get('locale')
             ?? $preference
-            ?? $_COOKIE['locale']
-            ?? self::pickFromAcceptLanguage($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '', $supported, $default)
+            ?? $request->cookie['locale']
+            ?? self::pickFromAcceptLanguage($request->header('accept-language') ?? '', $supported, $default)
             ?? $default;
 
         $resolved = strtolower($resolved);
@@ -168,7 +169,7 @@ final class LocalePrefixIntake
 
         // Redirect once to the canonical locale-prefixed URL.
         // 308 in production (permanent, method-preserving), 307 elsewhere.
-        $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
+        $isProd = (env('APP_ENV', $request->server['APP_ENV'] ?? 'production')) === 'production';
         header('Location: '.$target, true, $isProd ? 308 : 307);
         exit;
     }

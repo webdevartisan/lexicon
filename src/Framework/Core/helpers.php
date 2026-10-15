@@ -434,7 +434,7 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
         return $target;
     }
 
-    $locale = $registry->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null)
+    $locale = $registry->normalize(app(\Framework\Session::class)->get('locale'))
         ?? $registry->default();
 
     // Avoid double slashes when target is '/'

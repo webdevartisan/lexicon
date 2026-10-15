@@ -96,7 +96,7 @@ test('accept adds the user to blog_users and consumes the invite', function () {
         $hash, $this->ownerId, date('Y-m-d H:i:s', strtotime('+7 days'))
     );
 
-    $this->service->accept($raw, $inviteeId);
+    $this->service->accept($raw, $inviteeId, '127.0.0.1');
 
     $blog = $this->blogModel->getBlog($this->blogId);
     expect($blog->roleForUser($inviteeId))->toBe('contributor');
@@ -112,7 +112,7 @@ test('accept throws for an expired token', function () {
         $hash, $this->ownerId, date('Y-m-d H:i:s', strtotime('-1 day'))
     );
 
-    expect(fn () => $this->service->accept($raw, 999))->toThrow(RuntimeException::class);
+    expect(fn () => $this->service->accept($raw, 999, '127.0.0.1'))->toThrow(RuntimeException::class);
 });
 
 test('decline notifies the blog owner and consumes the invite', function () {
@@ -123,7 +123,7 @@ test('decline notifies the blog owner and consumes the invite', function () {
         $hash, $this->ownerId, date('Y-m-d H:i:s', strtotime('+7 days'))
     );
 
-    $this->service->decline($raw, 0);
+    $this->service->decline($raw, 0, '127.0.0.1');
 
     $ownerNotifications = $this->notifModel->findForUser($this->ownerId);
     expect($ownerNotifications)->toHaveCount(1)
@@ -133,7 +133,7 @@ test('decline notifies the blog owner and consumes the invite', function () {
 
 test('cancel removes a pending invite', function () {
     $this->service->invite($this->blogId, 'cancel@example.com', 'author', $this->ownerId, '127.0.0.1');
-    $this->service->cancel($this->blogId, 'cancel@example.com', $this->ownerId);
+    $this->service->cancel($this->blogId, 'cancel@example.com', $this->ownerId, '127.0.0.1');
 
     expect($this->inviteModel->getPendingForBlog($this->blogId))->toHaveCount(0);
 });

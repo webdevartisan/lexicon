@@ -58,7 +58,7 @@ $response->send();
 // Fallback tick for installs with no crontab, checked only after the visitor
 // already has their page. The env flag is read directly so that a normal
 // install, where this is off, does no container or database work at all.
-if (filter_var($_ENV['SCHEDULE_PSEUDO_CRON'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+if (filter_var(env('SCHEDULE_PSEUDO_CRON', false), FILTER_VALIDATE_BOOLEAN)) {
     // Hands the connection back on php-fpm so nothing below delays the browser.
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();

@@ -111,7 +111,7 @@ final class RegisterController extends AppController
             $invite = $this->invitationModel->findValidByToken(hash('sha256', $pendingToken));
             if ($invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0) {
                 try {
-                    $this->invitationService->accept($pendingToken, $userId);
+                    $this->invitationService->accept($pendingToken, $userId, $this->request->ip());
                     $this->session->remove('pending_invite_token');
 
                     if ($isAjax) {

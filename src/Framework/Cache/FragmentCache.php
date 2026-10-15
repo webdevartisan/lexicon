@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Cache;
 
+use Framework\Core\App;
+use Framework\Session;
+
 /**
  * Fragment cache with locale support and efficient disabling.
  *
@@ -53,7 +56,7 @@ class FragmentCache
     private function getLocale(): string
     {
         return $this->currentLocale
-            ?? $_SESSION['locale']
+            ?? App::container()->get(Session::class)->get('locale')
             ?? env('APP_LOCALE')
             ?? 'en';
     }

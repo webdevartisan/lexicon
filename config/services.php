@@ -44,7 +44,7 @@ if (env('APP_DEBUG', false)) {
 
 // Keyed on APP_ENV, not APP_DEBUG: a stray APP_DEBUG=true on a live server must not allow the placeholder key.
 if (!Framework\Core\ErrorHandler::showsDetails()) {
-    $appKey = $_ENV['APP_KEY'] ?? null;
+    $appKey = env('APP_KEY');
 
     if ($appKey === null || $appKey === '' || $appKey === 'change-me') {
         throw new \RuntimeException(
@@ -317,7 +317,7 @@ $container->setShared(App\Services\ConsentService::class, function ($c) {
 
     // Use APP_KEY from environment for cookie signing.
     // A non-debug environment will refuse to boot if APP_KEY is missing or weak.
-    $secret = $_ENV['APP_KEY'] ?? 'change-me';
+    $secret = (string) env('APP_KEY', 'change-me');
 
     $store = new App\Privacy\ConsentCookieStore(
         cookieName: (string) ($config['cookie_name'] ?? 'app_consent'),
@@ -352,7 +352,7 @@ $container->set(App\Services\Analytics\ReferrerClassifier::class, function ($c) 
 $container->set(App\Services\Analytics\VisitorIdentity::class, function ($c) {
     return new App\Services\Analytics\VisitorIdentity(
         $c->get(App\Models\AnalyticsSaltModel::class),
-        (string) ($_ENV['APP_KEY'] ?? 'change-me')
+        (string) env('APP_KEY', 'change-me')
     );
 });
 

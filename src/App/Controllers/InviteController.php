@@ -120,7 +120,7 @@ final class InviteController extends AppController
         }
 
         try {
-            $this->invitationService->accept($token, $userId);
+            $this->invitationService->accept($token, $userId, $this->request->ip());
         } catch (\RuntimeException) {
             // The invite lapsed while they typed; the account exists, so land them on the dashboard.
             $this->flash('info', 'Your account is ready, but the invitation is no longer valid.');
@@ -175,7 +175,7 @@ final class InviteController extends AppController
         }
 
         try {
-            $this->invitationService->accept($token, (int) auth()->user()['id']);
+            $this->invitationService->accept($token, (int) auth()->user()['id'], $this->request->ip());
         } catch (\RuntimeException) {
             $this->flash('error', 'This invitation is no longer valid.');
 
@@ -217,7 +217,7 @@ final class InviteController extends AppController
         }
 
         try {
-            $this->invitationService->decline($token, $userId);
+            $this->invitationService->decline($token, $userId, $this->request->ip());
         } catch (\RuntimeException) {
             // Token already invalid — fall through to the declined confirmation.
         }
