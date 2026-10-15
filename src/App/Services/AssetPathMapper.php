@@ -13,6 +13,7 @@ final class AssetPathMapper
     /**
      * Map a URL path (no scheme/host, e.g. "/themes/foo/public/css/app.css")
      * to an absolute filesystem path, or null if it doesn't look like a known asset.
+     * Theme files resolve only inside the theme's public/ folder.
      *
      * Upload URLs keep their public /uploads/... form but resolve into
      * storage/uploads, so uploaded files are only ever
@@ -37,8 +38,11 @@ final class AssetPathMapper
         $root = strtolower($segments[0]);
 
         if ($root === 'themes') {
-            // /themes/{theme}/public/...
-            $base = $this->projectRoot.'/themes';
+            // Only a theme's public/ folder is web-facing; views/ and theme.json are source
+            if (count($segments) < 4 || $segments[1] === '' || $segments[2] !== 'public') {
+                return null;
+            }
+            $base = $this->projectRoot.'/themes/'.$segments[1].'/public';
             $file = $this->projectRoot.'/'.$relative;
         } elseif ($root === 'uploads') {
             // /uploads/... -> /storage/uploads/...

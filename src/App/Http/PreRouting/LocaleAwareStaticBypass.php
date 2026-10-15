@@ -44,7 +44,7 @@ final class LocaleAwareStaticBypass
     public static function handle(Request $request): void
     {
         // Only serve static assets on GET/HEAD; other methods should go through the app.
-        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $method = $request->method;
         if (!in_array($method, ['GET', 'HEAD'], true)) {
             return;
         }
@@ -119,6 +119,8 @@ final class LocaleAwareStaticBypass
             // Fallback for unknown types; browsers will handle generic binary.
             header('Content-Type: application/octet-stream');
         }
+        // This exits before SecurityHeadersMiddleware runs, so it can't rely on that header
+        header('X-Content-Type-Options: nosniff');
 
         // Cache-Control is not set here; CacheControlHint should have already
         // applied the desired policy for /assets/... and other static paths.
