@@ -953,6 +953,15 @@ $container->set(App\Services\CommentRateLimiter::class, function ($c) {
     );
 });
 
+/**
+ * Search rate limiter throttles public search terms per IP.
+ *
+ * We register as factory, matching the other rate limiters above.
+ */
+$container->set(App\Services\SearchRateLimiter::class, function ($c) {
+    return new App\Services\SearchRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
+});
+
 // ============================================================================
 // RESOURCES & DTOs
 // ============================================================================

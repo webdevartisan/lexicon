@@ -911,6 +911,7 @@
         "resultsFor": "results for",
         "noBlogs": "No blogs found. Try a different search.",
         "noPosts": "No posts found. Try a different search.",
+        "searchThrottled": "You are searching a little fast. Try again in a moment.",
         "featuredTitle": "Featured blogs",
         "postsLabel": "Posts",
         "writersLabel": "Writers",

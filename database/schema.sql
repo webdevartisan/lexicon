@@ -458,7 +458,8 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_author_created (author_id, created_at),
     INDEX idx_blog_published (blog_id, published_at),
     INDEX idx_blog_featured (blog_id, is_featured),
-    INDEX idx_featured_home (featured_on_home, published_at)
+    INDEX idx_featured_home (featured_on_home, published_at),
+    FULLTEXT INDEX ft_title_content (title, content)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog posts with workflow state and visibility controls';
 

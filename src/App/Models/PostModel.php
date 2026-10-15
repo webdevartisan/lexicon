@@ -753,7 +753,10 @@ class PostModel extends AppModel
     }
 
     /**
-     * Search published posts with pagination and optional category filter.
+     * Search published posts by title and body with pagination and optional category filter.
+     *
+     * Every word must match as a word prefix ("merc" finds "Mercury"). Backed by the
+     * ft_title_content FULLTEXT index, so it is word-based, not substring-based.
      *
      * @param  string  $query  Search term
      * @param  int  $page  Page number
@@ -764,15 +767,15 @@ class PostModel extends AppModel
     public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?string $categoryName = null): array
     {
         $offset = ($page - 1) * $perPage;
-        $likeQuery = '%'.$query.'%';
+        $booleanQuery = $this->toBooleanSearch($query);
+
+        if ($booleanQuery === '') {
+            return ['data' => [], 'totalPages' => 0, 'currentPage' => $page, 'perPage' => $perPage, 'totalPosts' => 0];
+        }
 
         // Build filtering clause
         $categoryClause = '';
-        $params = [
-            ':title' => $likeQuery,
-            ':content' => $likeQuery,
-            ':blog_name' => $likeQuery,
-        ];
+        $params = [':search' => $booleanQuery];
 
         if ($categoryName !== null && $categoryName !== '') {
             // Topic filter: match by category name across all blogs.
@@ -785,8 +788,8 @@ class PostModel extends AppModel
             SELECT COUNT(*)
             FROM posts p
             JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-            WHERE p.status = 'published' AND p.visibility = 'public' 
-            AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
+            WHERE p.status = 'published' AND p.visibility = 'public'
+            AND MATCH(p.title, p.content) AGAINST (:search IN BOOLEAN MODE)
             {$categoryClause}
         ";
 
@@ -801,7 +804,7 @@ class PostModel extends AppModel
             JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
             LEFT JOIN categories c ON p.category_id = c.id
             WHERE p.status = 'published' AND p.visibility = 'public'
-            AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
+            AND MATCH(p.title, p.content) AGAINST (:search IN BOOLEAN MODE)
             {$categoryClause}
             ORDER BY p.published_at DESC
             LIMIT :limit OFFSET :offset
@@ -820,6 +823,28 @@ class PostModel extends AppModel
             'perPage' => $perPage,
             'totalPosts' => $totalPosts,
         ];
+    }
+
+    /**
+     * Turn free text into a boolean-mode FULLTEXT expression of required word prefixes.
+     *
+     * Only letters and digits survive, so the operators (+ - " * ( ) @ < > ~) a visitor
+     * types cannot change the query's meaning or raise a syntax error. Terms are capped
+     * so one request cannot build an arbitrarily wide search.
+     *
+     * @param  string  $query  Raw search text
+     * @return string Expression such as "+merc* +ris*", or '' when no usable word remains
+     */
+    private function toBooleanSearch(string $query): string
+    {
+        $words = preg_split('/[^\p{L}\p{N}]+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $terms = [];
+        foreach (array_slice($words, 0, 8) as $word) {
+            $terms[] = '+'.mb_substr($word, 0, 50).'*';
+        }
+
+        return implode(' ', $terms);
     }
 
     /**

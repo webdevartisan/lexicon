@@ -93,11 +93,104 @@ it('finds posts by content', function () {
 });
 
 /**
- * Test searching posts by blog name.
- *
- * Verifies searchPublishedPosts matches blog name.
+ * Search is word-prefix based, so a partial word still finds the post.
  */
-it('finds posts by blog name', function () {
+it('matches a word prefix', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Of Mercury Rising',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $result = $this->postModel->searchPublishedPosts('merc', 1, 8);
+
+    expect($result['data'])->toHaveCount(1)
+        ->and($result['data'][0]['title'])->toBe('Of Mercury Rising');
+});
+
+/**
+ * Every word has to match, so adding a word narrows the results.
+ */
+it('requires every search word to match', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    foreach (['Mercury Rising', 'Mercury Falling'] as $title) {
+        PostFactory::new($this->postModel)
+            ->withAttributes([
+                'author_id' => $userId,
+                'blog_id' => $blogId,
+                'title' => $title,
+                'status' => 'published',
+                'published_at' => date('Y-m-d H:i:s'),
+            ])
+            ->create();
+    }
+
+    $result = $this->postModel->searchPublishedPosts('mercury ris', 1, 8);
+
+    expect($result['data'])->toHaveCount(1)
+        ->and($result['data'][0]['title'])->toBe('Mercury Rising');
+});
+
+/**
+ * Boolean operators typed by a visitor are stripped, never interpreted.
+ */
+it('treats FULLTEXT operators in the query as plain text', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Mercury Rising',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $operators = $this->postModel->searchPublishedPosts('-mercury', 1, 8);
+    $onlyOperators = $this->postModel->searchPublishedPosts('+-"*()@<>~', 1, 8);
+
+    expect($operators['data'])->toHaveCount(1)
+        ->and($onlyOperators['data'])->toBe([])
+        ->and($onlyOperators['totalPosts'])->toBe(0);
+});
+
+/**
+ * Greek text is split on spaces like any other, so prefixes work in el.
+ */
+it('searches non-latin text', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Ο Ερμής ανεβαίνει',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $result = $this->postModel->searchPublishedPosts('Ερμ', 1, 8);
+
+    expect($result['data'])->toHaveCount(1);
+});
+
+/**
+ * Blog names are not part of the post search; the Blogs tab covers them.
+ */
+it('does not match a post through its blog name', function () {
     $userId = UserFactory::new($this->userModel)->create();
 
     $blogId = BlogFactory::new($this->blogModel)
@@ -116,9 +209,7 @@ it('finds posts by blog name', function () {
 
     $result = $this->postModel->searchPublishedPosts('DevOps', 1, 8);
 
-    expect($result)->toBeArray()
-        ->and($result['data'])->toHaveCount(1)
-        ->and($result['data'][0]['blog_name'])->toBe('DevOps Daily');
+    expect($result['data'])->toHaveCount(0);
 });
 
 /**
