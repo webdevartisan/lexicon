@@ -598,6 +598,11 @@ $router->group([
     $r->add('/insights/export', ['controller' => 'InsightsController', 'action' => 'export', 'method' => 'GET']);
     $r->add('/insights/signups', ['controller' => 'SignupController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/insights/signups/export', ['controller' => 'SignupController', 'action' => 'export', 'method' => 'GET']);
+    // One blog's Insights, read only, without stepping into that blog's dashboard
+    $r->add('/insights/blogs/{blogId:\d+}', ['controller' => 'BlogInsightsController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/export', ['controller' => 'BlogInsightsController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/posts/{postId:\d+}', ['controller' => 'BlogInsightsController', 'action' => 'post', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/{page:[a-z]+}', ['controller' => 'BlogInsightsController', 'action' => 'page', 'method' => 'GET']);
     // After the fixed paths above: the name is checked against InsightsPages, anything else is a 404.
     $r->add('/insights/{page:[a-z]+}', ['controller' => 'InsightsController', 'action' => 'page', 'method' => 'GET']);
 

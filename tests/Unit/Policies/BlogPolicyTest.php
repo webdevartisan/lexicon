@@ -152,13 +152,13 @@ describe('BlogPolicy traffic', function () {
         expect($policy->viewAnalytics(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
     });
 
-    test('staff who see the platform traffic can open any blog\'s numbers, read only', function () {
+    test('staff who see the platform traffic do not get into a blog\'s dashboard Insights', function () {
         $policy = new BlogPolicy();
         $staff = makeUser(1, ['administrator']) + ['permissions' => ['view_platform_analytics']];
 
-        expect($policy->viewAnalytics($staff, blogWith([])))->toBeTrue()
-            ->and($policy->viewAllAnalytics($staff, blogWith([])))->toBeTrue()
-            ->and($policy->manageUsers($staff, blogWith([])))->toBeFalse();
+        expect($policy->viewAnalytics($staff, blogWith([])))->toBeFalse()
+            ->and($policy->viewAllAnalytics($staff, blogWith([])))->toBeFalse()
+            ->and($policy->viewAuthorInsights($staff, blogWith([])))->toBeFalse();
     });
 });
 

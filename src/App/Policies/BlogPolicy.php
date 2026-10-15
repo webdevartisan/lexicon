@@ -183,8 +183,8 @@ class BlogPolicy implements PolicyInterface
     }
 
     /**
-     * Open the blog's Insights. Anyone who writes for the blog, and staff who
-     * see the platform's Insights, so a blog in the admin's Top blogs can be opened.
+     * Open the blog's Insights in the dashboard: anyone who writes for the blog.
+     * Platform staff read a blog's numbers from the control panel instead.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -192,8 +192,7 @@ class BlogPolicy implements PolicyInterface
     {
         assert($blog instanceof BlogResource);
 
-        return self::seesPlatformAnalytics($user)
-            || $blog->userCan((int) $user['id'], 'create_posts')
+        return $blog->userCan((int) $user['id'], 'create_posts')
             || $blog->userCan((int) $user['id'], 'edit_blog_posts');
     }
 
@@ -206,7 +205,7 @@ class BlogPolicy implements PolicyInterface
     {
         assert($blog instanceof BlogResource);
 
-        return self::seesPlatformAnalytics($user) || $blog->userCan((int) $user['id'], 'edit_blog_posts');
+        return $blog->userCan((int) $user['id'], 'edit_blog_posts');
     }
 
     /**
@@ -220,14 +219,6 @@ class BlogPolicy implements PolicyInterface
         assert($blog instanceof BlogResource);
 
         return $this->viewAllAnalytics($user, $blog) && $blog->publishedAuthorCount() >= 2;
-    }
-
-    /**
-     * @param  array<string, mixed>  $user
-     */
-    private static function seesPlatformAnalytics(array $user): bool
-    {
-        return in_array('view_platform_analytics', $user['permissions'] ?? [], true);
     }
 
     /**

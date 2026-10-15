@@ -164,7 +164,7 @@ $rows = [
                     <?php foreach ($topBlogs as $tb) { ?>
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <a href="<?= e($topBlogsByViews ? lurl('/dashboard/blog/'.(int) $tb['id'].'/insights') : '/admin/blogs/'.(int) $tb['id'].'/show') ?>"
+                            <a href="<?= e($topBlogsByViews ? lurl('/admin/insights/blogs/'.(int) $tb['id']) : '/admin/blogs/'.(int) $tb['id'].'/show') ?>"
                                class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate" dir="auto">
                                 <?= e($tb['blog_name']) ?>
                             </a>

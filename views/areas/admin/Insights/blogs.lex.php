@@ -72,7 +72,7 @@ $cards = [
                 <span class="text-slate-400 dark:text-zink-400">Deleted blog</span>
                 <?php } else { ?>
                 <span class="inline-flex flex-wrap items-center gap-2">
-                  <a href="<?= e(lurl('/dashboard/blog/'.(int) $row['blog_id'].'/insights').'?'.http_build_query($range->query())) ?>"
+                  <a href="<?= e(lurl('/admin/insights/blogs/'.(int) $row['blog_id']).'?'.http_build_query($range->query())) ?>"
                      class="text-slate-800 hover:text-custom-500 dark:text-zink-100" dir="auto"
                      title="Open this blog's Insights"><?= e((string) $row['blog_name']) ?></a>
                   <?php if ($rising) { ?>
