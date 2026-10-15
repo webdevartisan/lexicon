@@ -488,6 +488,44 @@ function safe_return_to(?string $url): ?string
 }
 
 /**
+ * Reduce a Referer header to a local path (plus query) fit to redirect to.
+ *
+ * The origin is compared by scheme, host and port against APP_URL rather than
+ * with a prefix match, because `http://lexicon.test.evil.com` starts with
+ * `http://lexicon.test`. Only the path is returned, and it still goes through
+ * safe_return_to(), so a slip in the origin check cannot send anyone off-site.
+ *
+ * @param  string|null  $referer  Raw Referer header value
+ * @return string|null The local path when the Referer is same-origin, null otherwise
+ */
+function referer_path(?string $referer): ?string
+{
+    if ($referer === null || $referer === '') {
+        return null;
+    }
+
+    $refererParts = parse_url($referer);
+    $baseParts = parse_url(base_url());
+
+    if ($refererParts === false || $baseParts === false) {
+        return null;
+    }
+
+    $origin = static fn (array $p): string => strtolower((string) ($p['scheme'] ?? ''))
+        .'://'.strtolower((string) ($p['host'] ?? ''))
+        .':'.(string) ($p['port'] ?? '');
+
+    if ($origin($refererParts) !== $origin($baseParts)) {
+        return null;
+    }
+
+    $path = (string) ($refererParts['path'] ?? '/');
+    $query = (string) ($refererParts['query'] ?? '');
+
+    return safe_return_to(($path === '' ? '/' : $path).($query !== '' ? '?'.$query : ''));
+}
+
+/**
  * Get current locale code.
  *
  * @return string Locale code (e.g., 'en', 'fr', 'de')

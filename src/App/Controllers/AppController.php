@@ -366,52 +366,11 @@ abstract class AppController extends BaseController implements SessionAwareInter
 
     /**
      * The local path (plus query) the request came from, or `/` when there is
-     * no usable Referer.
-     *
-     * Two deliberate properties, because the Referer is attacker-controlled and
-     * this feeds a redirect:
-     *
-     * 1. The origin is compared by scheme+host+port, not with a prefix match.
-     *    `str_starts_with($referer, base_url())` accepted
-     *    `http://lexicon.test.evil.com/...` for a base URL of `http://lexicon.test`,
-     *    which was an open redirect on every caller.
-     * 2. Only the path and query are returned, never the full URL, so even a
-     *    mistake in the origin check cannot send anyone off-site.
+     * no usable Referer. See referer_path() for why the Referer is trusted this far.
      */
     protected function backUrlPath(): string
     {
-        $referer = (string) ($this->request->header('Referer') ?? '');
-
-        if ($referer === '') {
-            return '/';
-        }
-
-        $refererParts = parse_url($referer);
-        $baseParts = parse_url(base_url());
-
-        if ($refererParts === false || $baseParts === false) {
-            return '/';
-        }
-
-        $origin = static fn (array $p): string => strtolower((string) ($p['scheme'] ?? ''))
-            .'://'.strtolower((string) ($p['host'] ?? ''))
-            .':'.(string) ($p['port'] ?? '');
-
-        if ($origin($refererParts) !== $origin($baseParts)) {
-            return '/';
-        }
-
-        $path = (string) ($refererParts['path'] ?? '/');
-
-        // A protocol-relative or scheme-bearing path would escape the origin the
-        // check above just pinned down.
-        if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
-            return '/';
-        }
-
-        $query = (string) ($refererParts['query'] ?? '');
-
-        return $path.($query !== '' ? '?'.$query : '');
+        return referer_path($this->request->header('Referer')) ?? '/';
     }
 
     // ============== Error Response Helpers ==============

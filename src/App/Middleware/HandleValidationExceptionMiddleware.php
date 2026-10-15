@@ -46,12 +46,9 @@ final class HandleValidationExceptionMiddleware implements MiddlewareInterface
             $flash['error'][] = 'Please correct the errors and try again.';
             $this->session->set('_flash', $flash);
 
-            // Redirect back to previous page
-            $referer = $request->header('referer') ?? '/';
-
             $response = new Response();
 
-            $response->redirect($referer);
+            $response->redirect(referer_path($request->header('referer')) ?? '/');
 
             return $response;
         }
