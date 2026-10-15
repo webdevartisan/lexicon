@@ -11,6 +11,7 @@ use App\Services\LocaleState;
 use App\Services\Sessions\SessionRecordFactory;
 use App\Services\UserSuspensionService;
 use Framework\Interfaces\AuthInterface;
+use Framework\Security\Csrf;
 use Framework\Session;
 
 /**
@@ -38,7 +39,8 @@ class Auth implements AuthInterface
         private UserModel $users,
         private UserProfileModel $profiles,
         private UserSuspensionService $suspensions,
-        private SessionRecordFactory $sessionRecords
+        private SessionRecordFactory $sessionRecords,
+        private Csrf $csrf
     ) {}
 
     /**
@@ -73,6 +75,8 @@ class Auth implements AuthInterface
 
         // Regenerate session ID on login to prevent session fixation.
         $this->session->regenerate(true);
+        // A token handed out to the guest, possibly planted, must not carry over to the account.
+        $this->csrf->rotate();
 
         $this->session->set('user_id', (int) $user['id']);
         $this->session->set('session_epoch', (int) ($user['session_epoch'] ?? 0));

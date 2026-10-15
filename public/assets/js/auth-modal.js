@@ -232,6 +232,9 @@
       submitBtn.disabled = false;
       if (!res.ok) { showError(failureMessage(res)); return; }
 
+      // Signing in rotates the CSRF token, so the one used for this post is spent
+      freshToken = null;
+
       successMsg.textContent = state.mode === 'register'
         ? 'Welcome to Lexicon! Your reader account is ready.'
         : 'You’re logged in!';
@@ -330,11 +333,12 @@
       window.LexiconAuth.open({
         reason: 'reply',
         onSuccess: function () {
-          // The form's baked-in token may be stale on cached pages; the
-          // live one from the login exchange is guaranteed to match
-          var tokenField = form.querySelector('input[name="_token"]');
-          if (tokenField && freshToken) tokenField.value = freshToken;
-          form.submit();
+          // The token baked into the form belongs to the guest session
+          getToken().then(function (t) {
+            var tokenField = form.querySelector('input[name="_token"]');
+            if (tokenField) tokenField.value = t;
+            form.submit();
+          });
         }
       });
     });

@@ -10,6 +10,7 @@ use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
+use Framework\Security\Csrf;
 use Framework\Session;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\SessionTestHelper;
@@ -40,7 +41,7 @@ beforeEach(function () {
         ->create();
     $this->adminId = UserFactory::new($this->users)->admin()->create();
 
-    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions, SessionTestHelper::records($this->db));
+    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions, SessionTestHelper::records($this->db), new Csrf($this->session));
 });
 
 afterEach(function () {

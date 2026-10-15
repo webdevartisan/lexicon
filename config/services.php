@@ -163,7 +163,8 @@ $container->setShared(App\Auth::class, function ($c) {
         $c->get(App\Models\UserModel::class),
         $c->get(App\Models\UserProfileModel::class),
         $c->get(App\Services\UserSuspensionService::class),
-        $c->get(App\Services\Sessions\SessionRecordFactory::class)
+        $c->get(App\Services\Sessions\SessionRecordFactory::class),
+        $c->get(Framework\Security\Csrf::class)
     );
 });
 $container->setShared(Framework\Interfaces\AuthInterface::class, function ($c) {

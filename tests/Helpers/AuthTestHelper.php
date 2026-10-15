@@ -9,6 +9,7 @@ use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\Sessions\SessionRecordFactory;
 use App\Services\UserSuspensionService;
+use Framework\Security\Csrf;
 use Framework\Session;
 use Mockery;
 
@@ -28,7 +29,7 @@ class AuthTestHelper
 
         $suspensions = Mockery::mock(UserSuspensionService::class);
 
-        $auth = new Auth($session, $userModel, $profileModel, $suspensions, Mockery::mock(SessionRecordFactory::class));
+        $auth = new Auth($session, $userModel, $profileModel, $suspensions, Mockery::mock(SessionRecordFactory::class), new Csrf($session));
 
         return [
             'auth' => $auth,

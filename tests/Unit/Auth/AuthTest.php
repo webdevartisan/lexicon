@@ -29,6 +29,12 @@ it('authenticates with valid credentials using mocked dependencies', function ()
         ->once()
         ->with(true);
 
+    // The guest's CSRF token is dropped so the account gets a new one.
+    $mocks['session']
+        ->shouldReceive('remove')
+        ->once()
+        ->with('_csrf_token');
+
     $mocks['session']
         ->shouldReceive('set')
         ->once()
