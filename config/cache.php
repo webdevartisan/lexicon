@@ -80,7 +80,6 @@ return [
 
         '/csrf-token' => 0,
         '/csp-report' => 0,
-        '/geo' => 0,
         '/consent' => 0,
         '/consent/withdraw' => 0,
 

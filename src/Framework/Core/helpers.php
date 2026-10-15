@@ -792,14 +792,6 @@ function audit(): \App\Services\AuditService
     return app(\App\Services\AuditService::class);
 }
 
-/**
- * Get the geolocation service instance.
- */
-function geo(): App\Services\GeoLocationService
-{
-    return app(App\Services\GeoLocationService::class);
-}
-
 function rateLimiter(): \Framework\Helpers\RateLimiter
 {
     return app(\Framework\Helpers\RateLimiter::class);

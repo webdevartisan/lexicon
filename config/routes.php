@@ -18,12 +18,6 @@ $router->add('/report-reasons', [
     'method' => 'GET',
 ]);
 
-$router->add('/geo', [
-    'controller' => 'GeoController',
-    'action' => 'timezone',
-    'method' => 'GET',
-]);
-
 $router->add('/consent', [
     'controller' => 'ConsentController',
     'action' => 'store',
