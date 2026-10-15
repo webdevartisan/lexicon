@@ -198,6 +198,9 @@ final class AuthController extends AppController
 
             $limiter->clear($ip, $email);
 
+            $userId = (int) auth()->user()['id'];
+            audit()->log($userId, 'auth.login', 'user', $userId, [], $ip);
+
             app(VisitorLink::class)->toAccount($this->request, (int) auth()->user()['id']);
 
             // The session still holds the locale this visitor was browsing as a
@@ -247,6 +250,9 @@ final class AuthController extends AppController
         // ---------------------------------------------------------
         $limiter->hit($ip, $email);
         // ---------------------------------------------------------
+
+        // Wrong email and wrong password look identical here, and the typed email is deliberately not stored.
+        audit()->log(null, 'auth.login_failed', 'user', 0, [], $ip);
 
         if ($isAjax) {
             // The modal's email step already confirmed the account exists,

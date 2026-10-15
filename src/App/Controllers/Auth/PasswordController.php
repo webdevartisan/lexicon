@@ -90,7 +90,7 @@ final class PasswordController extends AppController
                 'password_reset.attempt_unknown_email',
                 'user',
                 0,
-                ['email' => $email],
+                [],
                 $ip
             );
 
