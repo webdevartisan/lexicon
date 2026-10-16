@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
 use App\Services\MailService;
+use App\Services\TestEmailRateLimiter;
 use Exception;
 use Framework\Core\Response;
 
@@ -26,6 +27,7 @@ class EmailTestController extends AppController
 
     public function __construct(
         private MailService $mailService,
+        private TestEmailRateLimiter $testLimiter,
     ) {}
 
     /**
@@ -78,10 +80,22 @@ class EmailTestController extends AppController
             return $this->redirect('/admin/email-test');
         }
 
+        $userId = (int) auth()->user()['id'];
+
+        if ($this->testLimiter->tooManyAttempts($userId)) {
+            $minutes = (int) ceil($this->testLimiter->availableIn($userId) / 60);
+            $this->flash('error', "Too many test emails. Try again in {$minutes} minutes.");
+
+            return $this->redirect('/admin/email-test');
+        }
+
+        $this->testLimiter->hit($userId);
+
         try {
             $sent = $this->mailService->test($recipient);
 
             if ($sent) {
+                audit()->log($userId, 'email.test_sent', 'email_delivery', null, ['recipient' => $recipient], $this->request->ip());
                 $this->flash('success', "Configuration test email sent to {$recipient}");
             } else {
                 $this->flash('error', 'Failed to send test email - check mail configuration');
