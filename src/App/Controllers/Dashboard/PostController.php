@@ -196,24 +196,6 @@ final class PostController extends AppController
     }
 
     /**
-     * Show single post with relationships.
-     *
-     * @param  string  $slug  Post slug
-     */
-    public function show(string $slug): Response
-    {
-        $post = $this->getPostBySlug($slug);
-
-        return $this->view('Dashboard/Posts/show.lex.php', [
-            'post' => $post,
-            'author' => $this->model->author((int) $post['user_id']),
-            'category' => $this->model->category($post['category_id'] ?? null),
-            'tags' => $this->model->tags((int) $post['id']),
-            'comments' => $this->model->comments((int) $post['id']),
-        ]);
-    }
-
-    /**
      * Show post creation form.
      */
     public function new(): Response
@@ -1218,25 +1200,6 @@ final class PostController extends AppController
         $this->flash('error', 'A moderator hid this post after readers reported it, so its status cannot be changed here.');
 
         return $this->redirectBack();
-    }
-
-    /**
-     * Get post by slug or throw 404.
-     *
-     * @param  string  $slug  Post slug
-     * @return array<string, mixed> Post data
-     *
-     * @throws PageNotFoundException
-     */
-    private function getPostBySlug(string $slug): array
-    {
-        $post = $this->model->findBySlug($slug);
-
-        if ($post === null) {
-            throw new PageNotFoundException("Post with slug: '$slug' not found.");
-        }
-
-        return $post;
     }
 
     /**
