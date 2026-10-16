@@ -165,5 +165,7 @@ test('a changed post clears its page, a new slug, Discover and its own fragments
         '*:GET:/blog/field-notes/first-frost*',
         '*:GET:/blog/field-notes/hard-frost*',
         '*:GET:/discover*',
-    ])->and($this->forgotten->getArrayCopy())->toContain(['post-tags:90', false], ['post-comments:90', false]);
+    ])->and($this->forgotten->getArrayCopy())
+        ->toContain(['post-tags:90', false], ['post-comments:90:top', false], ['post-comments:90:new', false])
+        ->not->toContain(['post-comments:90', false]);
 });

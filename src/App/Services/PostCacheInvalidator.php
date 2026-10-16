@@ -74,7 +74,7 @@ class PostCacheInvalidator
 
         if ($postId !== null) {
             $this->forgetTags($postId);
-            fragment()->forget('post-comments:'.$postId, false);
+            $this->commentCache()->forgetThread($postId);
         }
     }
 
@@ -89,5 +89,10 @@ class PostCacheInvalidator
     private function publicCache(): PublicCacheInvalidator
     {
         return app(PublicCacheInvalidator::class);
+    }
+
+    private function commentCache(): CommentCacheInvalidator
+    {
+        return app(CommentCacheInvalidator::class);
     }
 }
