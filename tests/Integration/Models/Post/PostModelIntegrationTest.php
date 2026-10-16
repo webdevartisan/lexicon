@@ -141,31 +141,6 @@ it('returns null when slug does not exist', function () {
 // ============================================================================
 
 /**
- * Test unpublishing a published post.
- *
- * Verifies unpublishPost changes status to draft.
- */
-it('unpublishes published post', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    $postId = PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'published',
-        ])
-        ->create();
-
-    $result = $this->postModel->unpublishPost($postId);
-
-    expect($result)->toBeTrue();
-
-    $post = $this->postModel->find($postId);
-    expect($post['status'])->toBe('draft');
-});
-
-/**
  * Test updating post status to arbitrary value.
  *
  * Verifies updateStatus changes post status.

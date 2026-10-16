@@ -440,6 +440,7 @@ $router->group([
     $r->add('/post/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/unpublish', ['controller' => 'PostStatusController', 'action' => 'unpublish', 'method' => 'POST']);
 
     $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
 

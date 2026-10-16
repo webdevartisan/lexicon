@@ -324,3 +324,27 @@ it('refuses to assign a reviewer who cannot review on the blog', function () {
 
     expect((int) $assigned)->toBe(0);
 });
+
+it('unpublishes a published post without granting it an approval', function () {
+    ($this->signInAs)('editor');
+    $this->db->query("UPDATE posts SET status = 'published', workflow_state = 'draft' WHERE id = ?", [$this->othersPostId]);
+
+    ($this->statusController)('/dashboard/posts/'.$this->othersPostId.'/unpublish')->unpublish((string) $this->othersPostId);
+
+    $post = $this->posts->find($this->othersPostId);
+
+    expect($post['status'])->toBe('draft')
+        ->and($post['workflow_state'])->toBe('draft');
+});
+
+it('refuses to unpublish a post that is not published', function () {
+    ($this->signInAs)('editor');
+    $this->db->query("UPDATE posts SET status = 'archived', workflow_state = 'needs_changes' WHERE id = ?", [$this->othersPostId]);
+
+    ($this->statusController)('/dashboard/posts/'.$this->othersPostId.'/unpublish')->unpublish((string) $this->othersPostId);
+
+    $post = $this->posts->find($this->othersPostId);
+
+    expect($post['status'])->toBe('archived')
+        ->and($post['workflow_state'])->toBe('needs_changes');
+});

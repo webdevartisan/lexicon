@@ -71,7 +71,11 @@ class PostStatusController extends AppController
     }
 
     /**
-     * Unpublish post (revert to approved state).
+     * Take a published post back to draft.
+     *
+     * The workflow state is left as it was: a post published through review is
+     * still approved, and one published without review must not gain an approval
+     * it never had.
      *
      * @param  string  $id  Post ID
      */
@@ -82,17 +86,22 @@ class PostStatusController extends AppController
             return $post;
         }
 
+        if ($post->status() !== 'published') {
+            $this->flash('error', 'Only a published post can be unpublished.');
+
+            return $this->redirectBack();
+        }
+
         $user = auth()->user();
 
-        $this->model->unpublishPost((int) $id);
-        $this->model->transitionWorkflow((int) $id, 'approved', $user['id']);
+        $this->model->updateStatus((int) $id, 'draft');
 
         audit()->log(
             $user['id'],
             'post.unpublished',
             'post',
             (int) $id,
-            ['status' => 'draft', 'workflow_state' => 'approved'],
+            ['status' => 'draft', 'workflow_state' => $post->workflowState()],
             $this->request->ip()
         );
 

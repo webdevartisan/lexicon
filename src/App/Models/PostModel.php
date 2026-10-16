@@ -388,20 +388,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Change post status to draft.
-     *
-     * @param  int  $id  Post ID
-     * @return bool True on success
-     */
-    public function unpublishPost(int $id): bool
-    {
-        $sql = "UPDATE posts SET status = 'draft' WHERE id = :id AND status <> 'moderated'";
-        $affected = $this->database->execute($sql, [':id' => $id]);
-
-        return $affected > 0;
-    }
-
-    /**
      * Update post status.
      *
      * @param  int  $id  Post ID
