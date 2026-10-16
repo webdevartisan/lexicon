@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Framework\Database;
+
 /**
  * Forgets the cached pieces of a blog once its data changes.
  *
  * Models call this after a write that went through, so the keys a blog is
  * cached under are named in one place instead of in every model that touches
- * blogs.
+ * blogs. Every clear waits for the surrounding transaction to commit, so a
+ * reader in between cannot rebuild a page from rows that are about to change.
  */
 class BlogCacheInvalidator
 {
@@ -23,10 +26,12 @@ class BlogCacheInvalidator
      */
     public function forgetBlog(string $slug): void
     {
-        cache()->deletePattern("*:GET:/blog/{$slug}");
-        cache()->deletePattern("*:GET:/blog/{$slug}?*");
-        cache()->deletePattern("*:GET:/blog/{$slug}/*");
-        fragment()->forget('blog-by-slug:'.$slug, false);
+        $this->afterCommit(function () use ($slug): void {
+            cache()->deletePattern("*:GET:/blog/{$slug}");
+            cache()->deletePattern("*:GET:/blog/{$slug}?*");
+            cache()->deletePattern("*:GET:/blog/{$slug}/*");
+            fragment()->forget('blog-by-slug:'.$slug, false);
+        });
     }
 
     /**
@@ -35,14 +40,16 @@ class BlogCacheInvalidator
      */
     public function blogChanged(string $slug, ?string $newSlug = null): void
     {
-        $this->forgetBlog($slug);
+        $this->afterCommit(function () use ($slug, $newSlug): void {
+            $this->forgetBlog($slug);
 
-        if ($newSlug !== null && $newSlug !== $slug) {
-            $this->forgetBlog($newSlug);
-        }
+            if ($newSlug !== null && $newSlug !== $slug) {
+                $this->forgetBlog($newSlug);
+            }
 
-        // Discover lists the blog.
-        $this->publicCache()->purgeDiscover();
+            // Discover lists the blog.
+            $this->publicCache()->purgeDiscover();
+        });
     }
 
     /**
@@ -50,8 +57,10 @@ class BlogCacheInvalidator
      */
     public function blogRemoved(string $slug): void
     {
-        $this->forgetBlog($slug);
-        $this->publicCache()->purgeDiscover();
+        $this->afterCommit(function () use ($slug): void {
+            $this->forgetBlog($slug);
+            $this->publicCache()->purgeDiscover();
+        });
     }
 
     /**
@@ -59,7 +68,7 @@ class BlogCacheInvalidator
      */
     public function blogCreated(string $slug): void
     {
-        fragment()->forget('blog-by-slug:'.$slug, false);
+        $this->afterCommit(fn () => fragment()->forget('blog-by-slug:'.$slug, false));
     }
 
     /**
@@ -67,7 +76,7 @@ class BlogCacheInvalidator
      */
     public function forgetSettings(int $blogId): void
     {
-        fragment()->forget('blog-settings:'.$blogId, false);
+        $this->afterCommit(fn () => fragment()->forget('blog-settings:'.$blogId, false));
     }
 
     /**
@@ -78,8 +87,10 @@ class BlogCacheInvalidator
      */
     public function categoryChanged(int $blogId): void
     {
-        $this->publicCache()->purgeDiscover();
-        $this->forgetPublishedCategories($blogId);
+        $this->afterCommit(function () use ($blogId): void {
+            $this->publicCache()->purgeDiscover();
+            $this->forgetPublishedCategories($blogId);
+        });
     }
 
     /**
@@ -87,8 +98,10 @@ class BlogCacheInvalidator
      */
     public function categoryRemoved(int $blogId): void
     {
-        cache()->deletePattern('*:GET:/blog*');
-        $this->forgetPublishedCategories($blogId);
+        $this->afterCommit(function () use ($blogId): void {
+            cache()->deletePattern('*:GET:/blog*');
+            $this->forgetPublishedCategories($blogId);
+        });
     }
 
     /**
@@ -97,8 +110,13 @@ class BlogCacheInvalidator
     public function forgetPublishedCategories(int $blogId): void
     {
         if ($blogId > 0) {
-            fragment()->forget('blog-pubcats:'.$blogId, false);
+            $this->afterCommit(fn () => fragment()->forget('blog-pubcats:'.$blogId, false));
         }
+    }
+
+    private function afterCommit(callable $work): void
+    {
+        app(Database::class)->afterCommit($work);
     }
 
     private function publicCache(): PublicCacheInvalidator

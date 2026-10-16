@@ -25,6 +25,9 @@ class Database
     /** @var array<string, mixed> */
     private readonly array $config;
 
+    /** @var list<callable> Work waiting for the open transaction to commit. */
+    private array $afterCommit = [];
+
     /**
      * Create a new Database instance.
      *
@@ -178,13 +181,64 @@ class Database
     public function commit(): bool
     {
         try {
-            return $this->getConnection()->commit();
+            $committed = $this->getConnection()->commit();
         } catch (PDOException $e) {
+            $this->afterCommit = [];
+
             throw new RuntimeException(
                 sprintf('Failed to commit transaction: %s', $e->getMessage()),
                 (int) $e->getCode(),
                 $e
             );
+        }
+
+        if (!$committed) {
+            $this->afterCommit = [];
+
+            return false;
+        }
+
+        $this->runAfterCommit();
+
+        return true;
+    }
+
+    /**
+     * Run work once the open transaction commits, or now if none is open.
+     *
+     * Rolled-back transactions drop their queue. Meant for side effects that
+     * must not see uncommitted rows, such as clearing a cache: cleared inside
+     * the transaction, the next reader rebuilds it from the old rows.
+     * Committing on the raw PDO from getConnection() skips the queue.
+     */
+    public function afterCommit(callable $callback): void
+    {
+        if (!$this->inTransaction()) {
+            $callback();
+
+            return;
+        }
+
+        $this->afterCommit[] = $callback;
+    }
+
+    /**
+     * Run the queued work in the order it was added.
+     *
+     * The data is saved by now, so one failure is logged and the rest still
+     * run instead of turning a saved change into an error page.
+     */
+    private function runAfterCommit(): void
+    {
+        $queue = $this->afterCommit;
+        $this->afterCommit = [];
+
+        foreach ($queue as $callback) {
+            try {
+                $callback();
+            } catch (\Throwable $e) {
+                error_log('After-commit callback failed: '.$e->getMessage());
+            }
         }
     }
 
@@ -199,6 +253,8 @@ class Database
      */
     public function rollback(): bool
     {
+        $this->afterCommit = [];
+
         try {
             return $this->getConnection()->rollBack();
         } catch (PDOException $e) {

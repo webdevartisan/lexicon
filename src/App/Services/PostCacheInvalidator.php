@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Resources\PostResource;
+use Framework\Database;
 
 /**
  * Forgets the cached pieces of a post once its data changes.
  *
  * Models call this after a write that went through, so the keys a post is
  * cached under are named in one place instead of in every model that touches
- * posts.
+ * posts. Every clear waits for the surrounding transaction to commit, so a
+ * reader in between cannot rebuild a page from rows that are about to change.
  */
 class PostCacheInvalidator
 {
@@ -20,13 +22,15 @@ class PostCacheInvalidator
      */
     public function postCreated(int $blogId): void
     {
-        // Discover lists recent posts and each blog's post count.
-        $this->publicCache()->purgeDiscover();
+        $this->afterCommit(function () use ($blogId): void {
+            // Discover lists recent posts and each blog's post count.
+            $this->publicCache()->purgeDiscover();
 
-        // A new post shifts every neighbour/related list in its blog.
-        if ($blogId > 0) {
-            $this->forgetBlogPosts($blogId);
-        }
+            // A new post shifts every neighbour/related list in its blog.
+            if ($blogId > 0) {
+                $this->forgetBlogPosts($blogId);
+            }
+        });
     }
 
     /**
@@ -37,20 +41,27 @@ class PostCacheInvalidator
      */
     public function postChanged(PostResource $post, ?string $newSlug = null): void
     {
+        // Read now: by commit time the post or its blog may be gone.
         $blog = $post->blog();
+        $blogSlug = $blog->slug();
+        $blogId = (int) $blog->id();
+        $postSlug = $post->slug();
+        $postId = (int) $post->id();
 
-        cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
+        $this->afterCommit(function () use ($blogSlug, $blogId, $postSlug, $postId, $newSlug): void {
+            cache()->deletePattern("*:GET:/blog/{$blogSlug}/{$postSlug}*");
 
-        if ($newSlug !== null && $newSlug !== $post->slug()) {
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$newSlug}*");
-        }
+            if ($newSlug !== null && $newSlug !== $postSlug) {
+                cache()->deletePattern("*:GET:/blog/{$blogSlug}/{$newSlug}*");
+            }
 
-        // Discover lists recent posts.
-        $this->publicCache()->purgeDiscover();
+            // Discover lists recent posts.
+            $this->publicCache()->purgeDiscover();
 
-        // Neighbour/related lists filter on status='published', so any change
-        // can shift them for the whole blog.
-        $this->forgetBlogPosts((int) $blog->id(), (int) $post->id());
+            // Neighbour/related lists filter on status='published', so any change
+            // can shift them for the whole blog.
+            $this->forgetBlogPosts($blogId, $postId);
+        });
     }
 
     /**
@@ -62,20 +73,22 @@ class PostCacheInvalidator
      */
     public function forgetBlogPosts(int $blogId, ?int $postId = null): void
     {
-        fragment()->forgetPattern('post-nav:'.$blogId.':*');
-        fragment()->forgetPattern('post-related:'.$blogId.':*');
+        $this->afterCommit(function () use ($blogId, $postId): void {
+            fragment()->forgetPattern('post-nav:'.$blogId.':*');
+            fragment()->forgetPattern('post-related:'.$blogId.':*');
 
-        // Landing/listing data: featured pick, paginated lists, category grids,
-        // and the category chips (their post_count tracks published posts).
-        fragment()->forget('blog-featured:'.$blogId, false);
-        fragment()->forgetPattern('blog-posts:'.$blogId.':*');
-        fragment()->forgetPattern('blog-catposts:'.$blogId.':*');
-        fragment()->forget('blog-pubcats:'.$blogId, false);
+            // Landing/listing data: featured pick, paginated lists, category grids,
+            // and the category chips (their post_count tracks published posts).
+            fragment()->forget('blog-featured:'.$blogId, false);
+            fragment()->forgetPattern('blog-posts:'.$blogId.':*');
+            fragment()->forgetPattern('blog-catposts:'.$blogId.':*');
+            fragment()->forget('blog-pubcats:'.$blogId, false);
 
-        if ($postId !== null) {
-            $this->forgetTags($postId);
-            $this->commentCache()->forgetThread($postId);
-        }
+            if ($postId !== null) {
+                $this->forgetTags($postId);
+                $this->commentCache()->forgetThread($postId);
+            }
+        });
     }
 
     /**
@@ -83,7 +96,12 @@ class PostCacheInvalidator
      */
     public function forgetTags(int $postId): void
     {
-        fragment()->forget('post-tags:'.$postId, false);
+        $this->afterCommit(fn () => fragment()->forget('post-tags:'.$postId, false));
+    }
+
+    private function afterCommit(callable $work): void
+    {
+        app(Database::class)->afterCommit($work);
     }
 
     private function publicCache(): PublicCacheInvalidator
