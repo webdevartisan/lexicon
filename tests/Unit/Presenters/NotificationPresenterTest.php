@@ -142,7 +142,7 @@ test('a role change from before the payload carried blog_id links nowhere rather
 });
 
 test('every known type has a sentence in every locale', function () {
-    $types = (new ReflectionClassConstant(NotificationPresenter::class, 'KNOWN_TYPES'))->getValue();
+    $types = array_keys((new ReflectionClassConstant(NotificationPresenter::class, 'TYPES'))->getValue());
 
     foreach (['en', 'el', 'ar'] as $locale) {
         $strings = json_decode((string) file_get_contents(__DIR__.'/../../../locales/'.$locale.'.json'), true)['notifications']['types'];
