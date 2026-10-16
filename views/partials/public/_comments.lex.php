@@ -265,7 +265,7 @@ $renderComment = static function (array $comment, int $depth) use (
                   <textarea name="content" rows="1" maxlength="2000"
                             placeholder="Reply to <?= e($authorLabel) ?>…" required></textarea>
                   <?php if ($viewerIsGuest) { ?>
-                    <p class="comment-form-note">You'll be asked to log in — your reply is kept.</p>
+                    <p class="comment-form-note">You'll be asked to log in, and your reply is kept.</p>
                   <?php } ?>
                   <div class="comment-form-actions">
                     <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>">Cancel</button>
@@ -827,7 +827,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
           <p class="comment-form-note">
             <?php if ($viewerIsGuest) { ?>
-              You'll be asked to log in — what you wrote is kept.
+              You'll be asked to log in, and what you wrote is kept.
             <?php } else { ?>
               Commenting as <?= e((string) ($viewer_name ?? '')) ?>.
             <?php } ?>

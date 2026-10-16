@@ -60,8 +60,22 @@ function flashedMessages(): array
     return \Framework\Core\App::container()->get(\Framework\Session::class)->get('_flash', []);
 }
 
+/**
+ * Make auth() answer with a signed-in reader, since only they reach CommentService::create().
+ */
+function signInCommenter(): void
+{
+    $auth = Mockery::mock(App\Auth::class);
+    $auth->shouldReceive('user')->andReturn(['id' => 9, 'handle' => 'reader']);
+    $auth->shouldReceive('check')->andReturn(true);
+
+    \Framework\Core\App::container()->set(App\Auth::class, fn () => $auth);
+}
+
 beforeEach(function () {
     $_SESSION = [];
+
+    $this->originalAuth = \Framework\Core\App::container()->get(App\Auth::class);
 
     [$this->controller, $this->throttle, $this->comments] = makeThrottledCommentController();
 
@@ -70,6 +84,8 @@ beforeEach(function () {
 
 afterEach(function () {
     $_SESSION = [];
+    $original = $this->originalAuth;
+    \Framework\Core\App::container()->set(App\Auth::class, fn () => $original);
     Mockery::close();
 });
 
@@ -78,6 +94,7 @@ afterEach(function () {
 // ============================================================================
 
 it('lets an unthrottled submission through to the comment service', function () {
+    signInCommenter();
     $this->comments->shouldReceive('create')
         ->once()
         ->andReturn(['ok' => true, 'message' => 'Comment posted.', 'id' => 42]);
@@ -93,6 +110,27 @@ it('lets an unthrottled submission through to the comment service', function () 
 
     expect($response->getStatusCode())->toBe(302)
         ->and($response->getHeader('Location'))->toContain('#comment-42');
+});
+
+it('sends a guest top-level comment to login with the text saved, not to the service', function () {
+    $this->comments->shouldReceive('create')->never();
+    $this->comments->shouldReceive('contentLengthError')->once()->andReturnNull();
+    $this->comments->shouldReceive('capturePending')
+        ->once()
+        ->with(7, 0, 'A guest comment.', Mockery::type('string'));
+
+    $request = makeRequest('/comments/create', 'POST', [
+        '_token' => csrf()->getToken(),
+        'post_id' => '7',
+        'content' => 'A guest comment.',
+    ]);
+    setupController($this->controller, $request, $this->viewer);
+
+    $response = $this->controller->create();
+
+    expect($response->getStatusCode())->toBe(302)
+        ->and($response->getHeader('Location'))->toContain('/login')
+        ->and(flashedMessages()['info'][0] ?? '')->toContain('post your comment');
 });
 
 it('refuses a submission over the limit with a flash instead of a comment', function () {
@@ -145,6 +183,7 @@ it('throttles the guest capture path too, before anything is stashed in the sess
 });
 
 it('counts a submission that the service rejects', function () {
+    signInCommenter();
     // Otherwise a flood of invalid posts costs nothing and the throttle only
     // sees the ones that happened to be well formed.
     $this->comments->shouldReceive('create')

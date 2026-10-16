@@ -58,9 +58,9 @@ class CommentController extends AppController
 
         $user = auth()->user();
 
-        // Guest replying: keep the typed reply alive through the login hop
-        // instead of throwing it away with an error.
-        if ($user === null && $parentId > 0) {
+        // Guests have to sign in to comment; keep what they typed alive through
+        // the login hop instead of throwing it away with an error.
+        if ($user === null) {
             if ($postId <= 0 || $content === '') {
                 $this->flash('error', 'Comment content is required.');
 
@@ -76,7 +76,8 @@ class CommentController extends AppController
             $returnPath = $this->refererPath();
             $this->comments->capturePending($postId, $parentId, $content, $returnPath);
 
-            $this->flash('info', 'Log in or create an account to post your reply — we saved it for you.');
+            $kind = $parentId > 0 ? 'reply' : 'comment';
+            $this->flash('info', "Log in or create an account to post your {$kind}. We saved it for you.");
 
             return $this->redirect(lurl('/login').'?return_to='.urlencode($returnPath));
         }

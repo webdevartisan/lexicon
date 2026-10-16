@@ -50,6 +50,7 @@
   var titles = {
     login: 'Log in to continue',
     reply: 'Log in to reply',
+    comment: 'Log in to comment',
     like: 'Log in to like this post',
     bookmark: 'Log in to save this post'
   };
@@ -324,14 +325,14 @@
     });
   });
 
-  // Guest reply forms: open the modal on submit and post the reply once
+  // Guest comment and reply forms: open the modal on submit and post once
   // authenticated. The typed text never leaves the page. Server-side
   // session capture remains the no-JS fallback for the same forms.
-  document.querySelectorAll('form.reply-form').forEach(function (form) {
+  document.querySelectorAll('form.reply-form, form.comment-form').forEach(function (form) {
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       window.LexiconAuth.open({
-        reason: 'reply',
+        reason: form.classList.contains('reply-form') ? 'reply' : 'comment',
         onSuccess: function () {
           // The token baked into the form belongs to the guest session
           getToken().then(function (t) {

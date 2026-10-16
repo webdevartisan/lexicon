@@ -36,7 +36,7 @@ if (!auth()->check()) {
              autocomplete="current-password" data-min-length="<?= password_length_bounds()['min'] ?>" required>
       <p class="lex-auth-hint" data-auth-hint hidden>At least <?= password_length_bounds()['min'] ?> characters.</p>
       <div data-auth-register-only hidden>
-        <label class="lex-auth-hint">
+        <label class="lex-auth-hint lex-auth-check">
           <input type="checkbox" data-auth-age value="1" data-error="Please confirm you are <?= minimum_signup_age() ?> or older.">
           I am <?= minimum_signup_age() ?> or older.
         </label>
@@ -94,6 +94,9 @@ if (!auth()->check()) {
     height: auto; margin: 0; font: inherit; line-height: normal;
     box-shadow: none;
   }
+  /* The reset above also strips the native checkbox, so draw it back. */
+  .lex-auth-card input[type="checkbox"] { appearance: auto; -webkit-appearance: checkbox; display: inline-block; width: 1.05rem; height: 1.05rem; padding: 0; flex: none; accent-color: #16181d; cursor: pointer; }
+  .lex-auth-card .lex-auth-check { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
 
   .lex-auth-card .lex-auth-close { position: absolute; top: .6rem; right: .75rem; font-size: 1.5rem; line-height: 1; color: #9aa1ab !important; cursor: pointer; padding: .25rem; width: auto; }
   .lex-auth-card .lex-auth-close:hover { color: #16181d !important; }

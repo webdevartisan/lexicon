@@ -190,11 +190,11 @@ class CommentService
     }
 
     /**
-     * Stash a guest's reply so it survives the login/registration hop.
+     * Stash a guest's comment or reply so it survives the login/registration hop.
      *
      * @param  int  $postId  Target post
-     * @param  int  $parentId  Comment being replied to
-     * @param  string  $content  The typed reply
+     * @param  int  $parentId  Comment being replied to, or 0 for a top-level comment
+     * @param  string  $content  The typed text
      * @param  string  $returnPath  Validated local path of the post page
      */
     public function capturePending(int $postId, int $parentId, string $content, string $returnPath): void
@@ -208,7 +208,7 @@ class CommentService
     }
 
     /**
-     * Post the captured reply right after authentication.
+     * Post the captured comment or reply right after authentication.
      *
      * The capture is single-use: it is cleared before posting so a failed
      * resume never replays on the next login.
