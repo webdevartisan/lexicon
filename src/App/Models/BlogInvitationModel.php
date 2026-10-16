@@ -89,7 +89,7 @@ class BlogInvitationModel extends AppModel
      */
     public function markAccepted(int $id): bool
     {
-        $sql = 'UPDATE blog_invitations SET accepted_at = UTC_TIMESTAMP() WHERE id = ? AND accepted_at IS NULL';
+        $sql = 'UPDATE blog_invitations SET accepted_at = UTC_TIMESTAMP() WHERE id = ? AND accepted_at IS NULL AND declined_at IS NULL';
 
         return $this->database->execute($sql, [$id]) > 0;
     }
@@ -102,7 +102,7 @@ class BlogInvitationModel extends AppModel
      */
     public function markDeclined(int $id): bool
     {
-        $sql = 'UPDATE blog_invitations SET declined_at = UTC_TIMESTAMP() WHERE id = ? AND declined_at IS NULL';
+        $sql = 'UPDATE blog_invitations SET declined_at = UTC_TIMESTAMP() WHERE id = ? AND accepted_at IS NULL AND declined_at IS NULL';
 
         return $this->database->execute($sql, [$id]) > 0;
     }
