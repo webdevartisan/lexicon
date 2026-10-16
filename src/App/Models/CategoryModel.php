@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Services\PublicCacheInvalidator;
+use App\Services\BlogCacheInvalidator;
 
 /**
  * CategoryModel
  *
  * Manages blog post categories. Categories organize content and appear
- * in navigation menus, sidebars, and post listings. Cache invalidation
- * ensures category changes immediately reflect across the application.
+ * in navigation menus, sidebars, and post listings.
  */
 class CategoryModel extends AppModel
 {
     protected ?string $table = 'categories';
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
+    }
 
     /**
      * All categories with their blog name, for the admin listing.
@@ -123,13 +127,7 @@ class CategoryModel extends AppModel
         $result = parent::update($id, $data);
 
         if ($result) {
-            // Discover shows each post's category.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            $blogId = (int) ($existing['blog_id'] ?? $data['blog_id'] ?? 0);
-            if ($blogId > 0) {
-                fragment()->forget('blog-pubcats:'.$blogId, false);
-            }
+            $this->blogCache()->categoryChanged((int) ($existing['blog_id'] ?? $data['blog_id'] ?? 0));
         }
 
         return $result;
@@ -150,13 +148,7 @@ class CategoryModel extends AppModel
         $result = parent::delete($id);
 
         if ($result) {
-            // Invalidate all blog cache (posts in this category need to update)
-            cache()->deletePattern('*:GET:/blog*');
-
-            $blogId = (int) ($existing['blog_id'] ?? 0);
-            if ($blogId > 0) {
-                fragment()->forget('blog-pubcats:'.$blogId, false);
-            }
+            $this->blogCache()->categoryRemoved((int) ($existing['blog_id'] ?? 0));
         }
 
         return $result;

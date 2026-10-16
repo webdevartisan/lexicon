@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\PostCacheInvalidator;
+
 /**
  * TagModel
  *
@@ -14,6 +16,11 @@ namespace App\Models;
 class TagModel extends AppModel
 {
     protected ?string $table = 'tags';
+
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
+    }
 
     /**
      * All tags with their blog name, for the admin listing.
@@ -162,8 +169,7 @@ class TagModel extends AppModel
         ]);
 
         if ($affected > 0) {
-            // The post's cached tag list (PostModel::tags) is now stale.
-            fragment()->forget('post-tags:'.$postId, false);
+            $this->postCache()->forgetTags($postId);
         }
 
         // 0 = already exists, 1 = newly inserted, both are success
@@ -188,8 +194,7 @@ class TagModel extends AppModel
         ]);
 
         if ($affected > 0) {
-            // The post's cached tag list (PostModel::tags) is now stale.
-            fragment()->forget('post-tags:'.$postId, false);
+            $this->postCache()->forgetTags($postId);
         }
 
         return $affected > 0; // Only true if actually removed

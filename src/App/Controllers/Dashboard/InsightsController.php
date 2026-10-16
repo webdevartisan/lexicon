@@ -13,6 +13,7 @@ use App\Resources\BlogResource;
 use App\Services\Analytics\BlogInsightsPage;
 use App\Services\Analytics\InsightsPages;
 use App\Services\Analytics\InsightsSavedView;
+use App\Services\BlogCacheInvalidator;
 use App\ValueObjects\AnalyticsRange;
 use App\ValueObjects\AnalyticsScope;
 use Framework\Core\Response;
@@ -165,7 +166,7 @@ final class InsightsController extends AppController
     {
         foreach (self::PUBLIC_TOGGLES as $column) {
             if ((int) ($before[$column] ?? 0) !== $after[$column]) {
-                $this->blogs->forgetPublicCaches($blog->slug());
+                $this->blogCache()->forgetBlog($blog->slug());
 
                 return;
             }
@@ -279,5 +280,10 @@ final class InsightsController extends AppController
         }
 
         return $post;
+    }
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
     }
 }

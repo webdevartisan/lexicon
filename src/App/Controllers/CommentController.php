@@ -10,6 +10,7 @@ use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\CommentVoteModel;
 use App\Services\Analytics\GoalRecorder;
+use App\Services\CommentCacheInvalidator;
 use App\Services\CommentRateLimiter;
 use App\Services\CommentRemovalService;
 use App\Services\CommentService;
@@ -178,7 +179,7 @@ class CommentController extends AppController
 
         // The totals live inside the cached thread and "Top" sorts by them, so
         // the next reader has to be handed a rebuilt tree, not a stale one.
-        $this->commentModel->forgetThreadCache((int) $comment['post_id']);
+        $this->commentCache()->forgetThread((int) $comment['post_id']);
 
         return $this->jsonSuccess($totals);
     }
@@ -378,5 +379,10 @@ class CommentController extends AppController
         }
 
         return '/';
+    }
+
+    private function commentCache(): CommentCacheInvalidator
+    {
+        return app(CommentCacheInvalidator::class);
     }
 }

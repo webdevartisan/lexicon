@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Interfaces\SchedulableCommandInterface;
 use App\Models\PostModel;
+use App\Services\PostCacheInvalidator;
 use App\Services\PublicCacheInvalidator;
 use App\Services\SubscriberNotificationService;
 use Throwable;
@@ -102,7 +103,7 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
                 // Also clear fragment caches for affected blogs so paginated lists
                 // and category grids reflect the newly published post immediately.
                 foreach ($due as $post) {
-                    $this->posts->forgetBlogPostFragments((int) $post['blog_id']);
+                    $this->postCache()->forgetBlogPosts((int) $post['blog_id']);
                 }
             }
 
@@ -121,5 +122,10 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
 
             return 1;
         }
+    }
+
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
     }
 }

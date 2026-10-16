@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\PostResource;
-use App\Services\PublicCacheInvalidator;
+use App\Services\PostCacheInvalidator;
 
 /**
  * PostModel handles post CRUD operations and relationships.
  *
- * Manages posts table writes with cache invalidation, status and workflow
+ * Manages posts table writes, status and workflow
  * transitions, and cascade deletion helpers for blog cleanup. Public reads live
  * in PublishedPostModel, dashboard lists and counts in PostListingModel.
  */
@@ -57,6 +57,11 @@ class PostModel extends AppModel
         'archived' => ['published', 'scheduled', 'draft'],
     ];
 
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
+    }
+
     /**
      * Create a new post and invalidate blog listing caches.
      *
@@ -70,13 +75,7 @@ class PostModel extends AppModel
         $id = parent::insert($data);
 
         if ($id) {
-            // Discover lists recent posts and each blog's post count.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // A new post shifts every neighbour/related list in its blog.
-            if (!empty($data['blog_id'])) {
-                $this->forgetBlogPostFragments((int) $data['blog_id']);
-            }
+            $this->postCache()->postCreated((int) ($data['blog_id'] ?? 0));
         }
 
         return $id;
@@ -104,21 +103,7 @@ class PostModel extends AppModel
         $result = parent::update($id, $data);
 
         if ($result) {
-            $blog = $post->blog();
-
-            // Invalidate the current post URL
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-
-            // If the slug changed, invalidate the new URL too
-            if (isset($data['slug']) && $data['slug'] !== $post->slug()) {
-                cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$data['slug']}*");
-            }
-
-            // Discover lists recent posts.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // Drop this post's own data fragments plus the blog-wide neighbour lists.
-            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+            $this->postCache()->postChanged($post, isset($data['slug']) ? (string) $data['slug'] : null);
         }
 
         return $result;
@@ -134,54 +119,16 @@ class PostModel extends AppModel
      */
     public function delete(int|string $id): bool
     {
-        // Fetch the post before deleting to get its URL for cache invalidation
+        // Fetched first: once the row is gone its URL can no longer be looked up.
         $post = $this->findResource($id);
 
         $result = parent::delete($id);
 
         if ($result && $post) {
-            $blog = $post->blog();
-
-            // Invalidate the deleted post's URL
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-
-            // Discover lists recent posts.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // Drop this post's own data fragments plus the blog-wide neighbour lists.
-            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+            $this->postCache()->postChanged($post);
         }
 
         return $result;
-    }
-
-    /**
-     * Drop cached data fragments tied to a blog's posts.
-     *
-     * Neighbour and related lists are blog-scoped, so any post write in the
-     * blog invalidates all of them. When a specific post id is given, its own
-     * tag and comment fragments are dropped too.
-     *
-     * @param  int  $blogId  Blog whose neighbour/related fragments to clear
-     * @param  int|null  $postId  Specific post whose tag/comment fragments to clear
-     */
-    public function forgetBlogPostFragments(int $blogId, ?int $postId = null): void
-    {
-        // Post-page neighbour and related lists.
-        fragment()->forgetPattern('post-nav:'.$blogId.':*');
-        fragment()->forgetPattern('post-related:'.$blogId.':*');
-
-        // Landing/listing data: featured pick, paginated lists, category grids,
-        // and the category chips (their post_count tracks published posts).
-        fragment()->forget('blog-featured:'.$blogId, false);
-        fragment()->forgetPattern('blog-posts:'.$blogId.':*');
-        fragment()->forgetPattern('blog-catposts:'.$blogId.':*');
-        fragment()->forget('blog-pubcats:'.$blogId, false);
-
-        if ($postId !== null) {
-            fragment()->forget('post-tags:'.$postId, false);
-            fragment()->forget('post-comments:'.$postId, false);
-        }
     }
 
     /**
@@ -343,7 +290,7 @@ class PostModel extends AppModel
                 'UPDATE posts SET is_featured = 0 WHERE id = ? AND blog_id = ?',
                 [$postId, $blogId]
             );
-            $this->forgetBlogPostFragments($blogId);
+            $this->postCache()->forgetBlogPosts($blogId);
 
             return true;
         }
@@ -359,7 +306,7 @@ class PostModel extends AppModel
                 [$postId, $blogId]
             );
             $this->database->commit();
-            $this->forgetBlogPostFragments($blogId);
+            $this->postCache()->forgetBlogPosts($blogId);
 
             return true;
         } catch (\Throwable $e) {
@@ -406,7 +353,7 @@ class PostModel extends AppModel
         ]);
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -433,7 +380,7 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -459,7 +406,7 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -483,26 +430,10 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
-    }
-
-    /**
-     * Clear what a status change makes stale: the post page, the listings, and
-     * the neighbour and related lists across its blog.
-     */
-    private function forgetStatusSurfaces(PostResource $post): void
-    {
-        $blog = $post->blog();
-
-        cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-        app(PublicCacheInvalidator::class)->purgeDiscover();
-
-        // Neighbour/related lists filter on status='published', so a status
-        // flip shifts them for the whole blog.
-        $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
     }
 
     /**

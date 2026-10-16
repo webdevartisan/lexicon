@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\BlogResource;
-use App\Services\PublicCacheInvalidator;
+use App\Services\BlogCacheInvalidator;
 
 /**
  * BlogModel handles blog CRUD operations and collaborator management.
@@ -16,6 +16,11 @@ use App\Services\PublicCacheInvalidator;
 class BlogModel extends AppModel
 {
     protected ?string $table = 'blogs';
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
+    }
 
     /**
      * Blog statuses an operator may choose.
@@ -255,34 +260,10 @@ class BlogModel extends AppModel
         $result = parent::update($id, $data);
 
         if ($result) {
-            $this->forgetPublicCaches($blog->slug());
-
-            // If slug changed, invalidate new URL too
-            if (isset($data['slug']) && $data['slug'] !== $blog->slug()) {
-                $this->forgetPublicCaches((string) $data['slug']);
-            }
-
-            // Discover lists the blog.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
+            $this->blogCache()->blogChanged($blog->slug(), isset($data['slug']) ? (string) $data['slug'] : null);
         }
 
         return $result;
-    }
-
-    /**
-     * Drop every cached public copy of one blog: its pages and the looked-up row.
-     *
-     * Anything that changes a blog without going through update() must call
-     * this, or the cached row keeps answering "published" and the blog stays up.
-     * The home page is listed on its own because "/blog/{slug}/*" does not
-     * match "/blog/{slug}".
-     */
-    public function forgetPublicCaches(string $slug): void
-    {
-        cache()->deletePattern("*:GET:/blog/{$slug}");
-        cache()->deletePattern("*:GET:/blog/{$slug}?*");
-        cache()->deletePattern("*:GET:/blog/{$slug}/*");
-        fragment()->forget('blog-by-slug:'.$slug, false);
     }
 
     /**
@@ -511,8 +492,7 @@ class BlogModel extends AppModel
             $data['owner_id'],
         ]);
 
-        // Clear any cached 404 for this slug from before the blog existed.
-        fragment()->forget('blog-by-slug:'.$data['blog_slug'], false);
+        $this->blogCache()->blogCreated((string) $data['blog_slug']);
 
         return (int) $this->database->lastInsertId();
     }
@@ -1014,10 +994,7 @@ class BlogModel extends AppModel
         $result = parent::delete($id);
 
         if ($result && $blog) {
-            $this->forgetPublicCaches($blog->slug());
-
-            // Discover lists the blog.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
+            $this->blogCache()->blogRemoved($blog->slug());
         }
 
         return $result;

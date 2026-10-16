@@ -8,6 +8,8 @@ use App\Interfaces\ArchiveMediaStoreInterface;
 use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Resources\BlogResource;
+use App\Services\BlogCacheInvalidator;
+use App\Services\PostCacheInvalidator;
 use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\PostFieldRules;
 use Framework\Database;
@@ -178,8 +180,8 @@ final class BlogArchiveImporter
 
     private function purgeCaches(BlogResource $target): void
     {
-        $this->blogs->forgetPublicCaches((string) $target->toArray()['blog_slug']);
-        $this->posts->forgetBlogPostFragments((int) $target->id());
+        $this->blogCache()->forgetBlog((string) $target->toArray()['blog_slug']);
+        $this->postCache()->forgetBlogPosts((int) $target->id());
         $this->cacheInvalidator->purgeDiscover();
     }
 
@@ -195,5 +197,15 @@ final class BlogArchiveImporter
         error_log('Blog archive import: '.get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
 
         return $generic;
+    }
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
+    }
+
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
     }
 }
