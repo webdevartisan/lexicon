@@ -255,8 +255,8 @@ class EmailRenderer
         }
 
         return $inTag
-            ? htmlspecialchars($marker)
-            : '<span style="background:#FEF3C7;color:#92400E;padding:0 2px;">'.htmlspecialchars($marker).'</span>';
+            ? e($marker)
+            : '<span style="background:#FEF3C7;color:#92400E;padding:0 2px;">'.e($marker).'</span>';
     }
 
     /**
