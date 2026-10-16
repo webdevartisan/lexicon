@@ -39,9 +39,9 @@ class RateLimitAdminService
     public function __construct(private RateLimitStore $store) {}
 
     /**
-     * Hard lockouts still in force, longest remaining first.
+     * Hard lockouts and sign-in check requirements still in force, longest remaining first.
      *
-     * @return list<array{label: string, subject: string, kind: string, locked_at: int, expires_at: int, seconds_left: int, manual: bool}>
+     * @return list<array{label: string, subject: string, kind: string, locked_at: int, expires_at: int, seconds_left: int, manual: bool, challenge: bool}>
      */
     public function blocked(): array
     {
@@ -57,6 +57,7 @@ class RateLimitAdminService
                 'expires_at' => $lock['expires_at'],
                 'seconds_left' => max(0, $lock['expires_at'] - $now),
                 'manual' => $lock['manual'],
+                'challenge' => $lock['challenge'],
             ];
         }
 

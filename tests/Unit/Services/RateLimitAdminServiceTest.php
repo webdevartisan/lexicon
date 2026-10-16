@@ -127,3 +127,18 @@ test('manual blocks are listed as manual with their real block time', function (
         ->and($rows['198.51.100.5']['locked_at'])->toBe($now)
         ->and($rows['203.0.113.7']['manual'])->toBeFalse();
 });
+
+test('an account behind the sign-in check is listed and unlocked like a lock', function () {
+    $this->store->set('login:challenge:owner@example.com', json_encode(['since' => time()]), 3600);
+
+    $rows = $this->service->blocked();
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['subject'])->toBe('owner@example.com')
+        ->and($rows[0]['challenge'])->toBeTrue()
+        ->and($rows[0]['manual'])->toBeFalse();
+
+    $this->service->unlock('owner@example.com', '127.0.0.1');
+
+    expect($this->service->blocked())->toBe([]);
+});

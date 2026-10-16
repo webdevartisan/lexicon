@@ -16,6 +16,9 @@ final class RateLimitStore extends CacheService
     /** Marks a hard lockout in every limiter's key: "{namespace}:hardlock:{subject}". */
     private const HARD_LOCK_MARKER = ':hardlock:';
 
+    /** Marks a subject that must pass the sign-in check: "{namespace}:challenge:{subject}". */
+    private const CHALLENGE_MARKER = ':challenge:';
+
     /**
      * @param  string  $path  Absolute path to the limiter directory
      */
@@ -25,16 +28,58 @@ final class RateLimitStore extends CacheService
     }
 
     /**
-     * List the hard lockouts that are still in force.
+     * Store a marker only if none is live under the key yet.
      *
-     * @return list<array{namespace: string, subject: string, locked_at: int, expires_at: int, manual: bool}>
+     * Opening with mode 'x' fails when the file exists, on Windows and POSIX
+     * alike, so of two requests racing for one key exactly one gets true.
+     * Claims are not indexed: nothing lists them, and GC prunes them by file.
+     *
+     * @param  string  $key  Key to claim
+     * @param  int  $ttl  Seconds the claim stays in force
+     * @return bool True if this call made the claim, false if it was already taken
+     *
+     * @throws \RuntimeException If the limiter directory cannot be written
+     */
+    public function claim(string $key, int $ttl): bool
+    {
+        $file = $this->getCachePath().'/'.$this->hashKey($key).'.cache';
+
+        // get() deletes an expired entry, which frees the key for this claim
+        if ($this->get($key) !== null) {
+            return false;
+        }
+
+        $handle = @fopen($file, 'x');
+        if ($handle === false) {
+            if (is_file($file)) {
+                return false;
+            }
+
+            throw new \RuntimeException('Cannot write to the rate limit store at '.$this->getCachePath());
+        }
+
+        fwrite($handle, str_pad((string) (time() + $ttl), 10, '0', STR_PAD_LEFT).serialize('1'));
+        fclose($handle);
+
+        return true;
+    }
+
+    /**
+     * List the hard lockouts and sign-in check requirements that are still in force.
+     *
+     * @return list<array{namespace: string, subject: string, locked_at: int, expires_at: int, manual: bool, challenge: bool}>
      */
     public function hardLocks(): array
     {
         $locks = [];
 
         foreach ($this->readIndex() as $key => $hash) {
-            $position = strpos($key, self::HARD_LOCK_MARKER);
+            $marker = self::HARD_LOCK_MARKER;
+            $position = strpos($key, $marker);
+            if ($position === false) {
+                $marker = self::CHALLENGE_MARKER;
+                $position = strpos($key, $marker);
+            }
             if ($position === false) {
                 continue;
             }
@@ -47,11 +92,12 @@ final class RateLimitStore extends CacheService
 
             $locks[] = [
                 'namespace' => substr($key, 0, $position),
-                'subject' => substr($key, $position + strlen(self::HARD_LOCK_MARKER)),
+                'subject' => substr($key, $position + strlen($marker)),
                 // Manual blocks backdate locked_at so the login wrappers count the wait right; blocked_at is the real time
                 'locked_at' => (int) ($state['blocked_at'] ?? $state['locked_at'] ?? 0),
                 'expires_at' => $expiresAt,
                 'manual' => !empty($state['manual']),
+                'challenge' => $marker === self::CHALLENGE_MARKER,
             ];
         }
 

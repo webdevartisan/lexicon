@@ -12,6 +12,12 @@ $router->add('/csrf-token', [
     'method' => 'GET',
 ]);
 
+$router->add('/captcha/challenge', [
+    'controller' => 'CaptchaController',
+    'action' => 'challenge',
+    'method' => 'POST',
+]);
+
 $router->add('/report-reasons', [
     'controller' => 'ReportReasonController',
     'action' => 'index',

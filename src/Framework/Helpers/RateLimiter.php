@@ -56,6 +56,17 @@ final class RateLimiter
 
     public function tooManyAttempts(string $key, int $maxAttempts, ?int $decaySeconds = null): bool
     {
+        return $this->score($key, $decaySeconds) >= $maxAttempts;
+    }
+
+    /**
+     * The decayed attempt count for a key right now.
+     *
+     * @param  string  $key  Rate limit key
+     * @param  int|null  $decaySeconds  Half-life (defaults to constructor value)
+     */
+    public function score(string $key, ?int $decaySeconds = null): float
+    {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
         $now = time();
 
@@ -71,7 +82,7 @@ final class RateLimiter
             $score *= \exp(-$k * $age);
         }
 
-        return $score >= $maxAttempts;
+        return $score;
     }
 
     public function availableIn(string $key, int $maxAttempts, ?int $decaySeconds = null): int

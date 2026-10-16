@@ -24,8 +24,9 @@ $registerHref = lurl('/register'.($returnTo !== '' ? '?return_to='.urlencode($re
 <?php
 $returnTo = !empty($return_to) ? $return_to : '';
 $email = $email ?? '';
+$captcha = $captcha ?? null;
 ?>
-<form action="/login" method="post">
+<form action="/login" method="post"<?php if ($captcha !== null) { ?> data-captcha="<?= e((string) json_encode($captcha)) ?>"<?php } ?>>
     <?= csrf_field() ?>
     <?php if ($returnTo !== '') { ?>
         <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
@@ -66,6 +67,14 @@ $email = $email ?? '';
                     aria-pressed="false"><?= e($t('auth.show')) ?></button>
         </div>
     </div>
+
+    <?php if ($captcha !== null) {
+        $authCheckNoscript = $t('auth.checkNoscript');
+        $authCheckDone = $t('auth.checkDone').' '.$t('auth.checkReenter');
+        $authCheckReset = true;
+        ?>
+        {% include "partials/_auth_check.lex.php" %}
+    <?php } ?>
 
     <button class="lx-btn lx-authsubmit" type="submit"><?= e($t('auth.loginSubmit')) ?></button>
 </form>

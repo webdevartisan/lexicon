@@ -1168,7 +1168,18 @@
         "strengthFair": "Fair",
         "strengthGood": "Good",
         "strengthStrong": "Strong",
-        "signedOutElsewhere": "You were signed out on this device. Sign in again to continue."
+        "signedOutElsewhere": "You were signed out on this device. Sign in again to continue.",
+        "emailInvalid": "Please enter a valid email address.",
+        "checkRequired": "This account had several failed sign-ins, so your browser is doing a quick check first.",
+        "checkReenter": "Enter your password again to continue.",
+        "checking": "Checking your browser…",
+        "checkDone": "Check complete.",
+        "checkFailed": "The browser check did not go through. Please try again.",
+        "checkTooMany": "Too many requests. Please try again in a minute.",
+        "checkNoscript": "Signing in to this account needs a quick browser check, which needs JavaScript. You can reset your password instead.",
+        "checkNoscriptRegister": "Creating an account needs a quick browser check, which needs JavaScript.",
+        "resetInstead": "Reset your password",
+        "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
     "account": {
         "nav": {
@@ -2017,5 +2028,40 @@
             "reviewer": "Reviewer",
             "contributor": "Contributor"
         }
+    },
+    "authModal": {
+        "close": "Close",
+        "titleLogin": "Log in to continue",
+        "titleReply": "Log in to reply",
+        "titleComment": "Log in to comment",
+        "titleLike": "Log in to like this post",
+        "titleBookmark": "Log in to save this post",
+        "intro": "Enter your email to log in or create your reader account.",
+        "email": "Email",
+        "continue": "Continue →",
+        "password": "Password",
+        "minLength": "At least {min} characters.",
+        "logIn": "Log in →",
+        "forgot": "Forgot password?",
+        "differentEmail": "Use a different email",
+        "sendReset": "Send reset link",
+        "backToLogin": "Back to login",
+        "loggedIn": "You’re logged in!",
+        "fullPage": "Use the full login page",
+        "welcomeBack": "Welcome back",
+        "enterPasswordFor": "Enter the password for {email}.",
+        "createTitle": "Create your account",
+        "createIntro": "New here? Set a password and your reader account is ready.",
+        "createSubmit": "Create account →",
+        "welcomeNew": "Welcome to Lexicon! Your reader account is ready.",
+        "resetTitle": "Reset your password",
+        "resetIntro": "We’ll email a password reset link to {email}.",
+        "resetSent": "If that email exists in our system, a reset link has been sent.",
+        "invalidEmail": "Please enter a valid email address.",
+        "passwordRequired": "Password is required.",
+        "passwordTooShort": "Your password needs at least {min} characters.",
+        "sessionExpired": "Your session expired while this was open. Please try again.",
+        "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
+        "networkError": "Could not reach the server. Check your connection and try again."
     }
 }

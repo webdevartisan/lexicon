@@ -913,7 +913,8 @@ $container->set(Framework\Helpers\RateLimiter::class, function ($c) {
 $container->set(App\Services\LoginRateLimiter::class, function ($c) {
     return new App\Services\LoginRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\RateLimitStore::class)
+        $c->get(Framework\Cache\RateLimitStore::class),
+        (require ROOT_PATH.'/config/captcha.php')['login']
     );
 });
 
@@ -950,6 +951,19 @@ $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
 $container->set(App\Services\IdentifyRateLimiter::class, function ($c) {
     return new App\Services\IdentifyRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\RateLimitStore::class)
+    );
+});
+
+/**
+ * Sign-in check (proof of work), verified locally with HMAC keys.
+ *
+ * Shared because the keys are derived once per request.
+ */
+$container->setShared(App\Services\Captcha\CaptchaInterface::class, function ($c) {
+    return App\Services\Captcha\CaptchaFactory::make(
+        require ROOT_PATH.'/config/captcha.php',
+        (string) env('APP_KEY', ''),
         $c->get(Framework\Cache\RateLimitStore::class)
     );
 });

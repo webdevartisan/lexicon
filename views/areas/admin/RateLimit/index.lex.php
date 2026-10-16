@@ -60,6 +60,8 @@ $pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibo
                         <td class="p-4 align-middle">
                             <?php if ($row['manual']) { ?>
                             <span class="<?= $pill ?> bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400">Blocked by an admin</span>
+                            <?php } elseif ($row['challenge']) { ?>
+                            <span class="<?= $pill ?> bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300" title="Sign-in still works after a quick browser check">Must pass the sign-in check</span>
                             <?php } else { ?>
                             <span class="<?= $pill ?> bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">Locked out</span>
                             <?php } ?>

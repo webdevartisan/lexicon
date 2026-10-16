@@ -6,66 +6,92 @@
 // With JS off, every trigger keeps its normal link to the full login page.
 if (!auth()->check()) {
     $authModalReturnTo = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+    $authModalMin = password_length_bounds()['min'];
+    $authModalAge = minimum_signup_age();
+    // Text the script swaps in as the steps change. Ours, never user input.
+    $authModalText = [];
+    foreach (['titleLogin', 'titleReply', 'titleComment', 'titleLike', 'titleBookmark', 'intro', 'logIn', 'welcomeBack',
+        'enterPasswordFor', 'createTitle', 'createIntro', 'createSubmit', 'welcomeNew', 'loggedIn', 'resetTitle',
+        'resetIntro', 'resetSent', 'invalidEmail', 'passwordRequired', 'passwordTooShort', 'sessionExpired',
+        'serverError', 'networkError'] as $authModalKey) {
+        $authModalText[$authModalKey] = $t('authModal.'.$authModalKey);
+    }
+    foreach (['show', 'hide', 'checking', 'checkDone', 'checkFailed'] as $authModalKey) {
+        $authModalText[$authModalKey] = $t('auth.'.$authModalKey);
+    }
     ?>
 <div class="lex-auth-overlay" id="lex-auth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lex-auth-title"
      data-return-to="<?= e($authModalReturnTo) ?>" data-nav-url="<?= e(lurl('/auth/nav')) ?>"
      data-identify-url="<?= e(lurl('/login/identify')) ?>" data-login-url="<?= e(lurl('/login')) ?>"
-     data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>">
+     data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>"
+     data-captcha-url="/captcha/challenge"
+     data-captcha-script="/assets/js/captcha.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/captcha.js') ?>"
+     data-captcha-worker="/assets/vendor/altcha/pbkdf2.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/vendor/altcha/pbkdf2.js') ?>"
+     data-text="<?= e((string) json_encode($authModalText)) ?>">
   <div class="lex-auth-card">
-    <button type="button" class="lex-auth-close" data-auth-close aria-label="Close">&times;</button>
+    <button type="button" class="lex-auth-close" data-auth-close aria-label="<?= e($t('authModal.close')) ?>">&times;</button>
 
-    <h2 class="lex-auth-title" id="lex-auth-title">Log in to continue</h2>
-    <p class="lex-auth-sub" data-auth-sub>Enter your email to log in or create your reader account.</p>
+    <h2 class="lex-auth-title" id="lex-auth-title"><?= e($t('authModal.titleLogin')) ?></h2>
+    <p class="lex-auth-sub" data-auth-sub><?= e($t('authModal.intro')) ?></p>
 
     <p class="lex-auth-error" data-auth-error role="alert" hidden></p>
 
     <form data-auth-step="email" novalidate>
       <?= csrf_field_lazy() ?>
-      <label class="lex-auth-label" for="lex-auth-email">Email</label>
+      <label class="lex-auth-label" for="lex-auth-email"><?= e($t('authModal.email')) ?></label>
       <input class="lex-auth-input" type="email" id="lex-auth-email" name="email"
              autocomplete="email" inputmode="email" required>
-      <button class="lex-auth-btn" type="submit">Continue &rarr;</button>
+      <button class="lex-auth-btn" type="submit"><?= e($t('authModal.continue')) ?></button>
     </form>
 
     <form data-auth-step="password" hidden novalidate>
       <div class="lex-auth-labelrow">
-        <label class="lex-auth-label" for="lex-auth-password">Password</label>
-        <button class="lex-auth-toggle" type="button" data-auth-toggle aria-pressed="false">Show</button>
+        <label class="lex-auth-label" for="lex-auth-password"><?= e($t('authModal.password')) ?></label>
+        <button class="lex-auth-toggle" type="button" data-auth-toggle aria-pressed="false"><?= e($t('auth.show')) ?></button>
       </div>
       <input class="lex-auth-input" type="password" id="lex-auth-password" name="password"
-             autocomplete="current-password" data-min-length="<?= password_length_bounds()['min'] ?>" required>
-      <p class="lex-auth-hint" data-auth-hint hidden>At least <?= password_length_bounds()['min'] ?> characters.</p>
+             autocomplete="current-password" data-min-length="<?= $authModalMin ?>" required>
+      <p class="lex-auth-hint" data-auth-hint hidden><?= e($t('authModal.minLength', ['min' => $authModalMin])) ?></p>
       <div data-auth-register-only hidden>
         <label class="lex-auth-hint lex-auth-check">
-          <input type="checkbox" data-auth-age value="1" data-error="Please confirm you are <?= minimum_signup_age() ?> or older.">
-          I am <?= minimum_signup_age() ?> or older.
+          <input type="checkbox" data-auth-age value="1" data-error="<?= e($t('auth.ageRequired', ['age' => $authModalAge])) ?>">
+          <?= e($t('auth.ageConfirm', ['age' => $authModalAge])) ?>
         </label>
         <p class="lex-auth-hint">
-          By creating an account you agree to the <a href="<?= e(lurl('/terms')) ?>">Terms of Service</a>
-          and confirm you have read the <a href="<?= e(lurl('/privacy')) ?>">Privacy Policy</a>.
+          <?php
+          // The sentence shape differs per language, so the locale owns it and the links go in as placeholders.
+          echo $t('auth.legalNotice', [
+              'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
+              'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
+          ]);
+          ?>
         </p>
       </div>
-      <button class="lex-auth-btn" type="submit" data-auth-submit>Log in &rarr;</button>
+      <p class="lex-auth-status" data-captcha-status role="status" aria-live="polite" hidden>
+        <span class="lex-auth-status-mark" aria-hidden="true"></span>
+        <span data-captcha-text></span>
+      </p>
+      <button class="lex-auth-btn" type="submit" data-auth-submit><?= e($t('authModal.logIn')) ?></button>
       <div class="lex-auth-links">
-        <a href="<?= e(lurl('/password/forgot')) ?>" data-auth-forgot>Forgot password?</a>
-        <button class="lex-auth-linkbtn" type="button" data-auth-back>Use a different email</button>
+        <a href="<?= e(lurl('/password/forgot')) ?>" data-auth-forgot><?= e($t('authModal.forgot')) ?></a>
+        <button class="lex-auth-linkbtn" type="button" data-auth-back><?= e($t('authModal.differentEmail')) ?></button>
       </div>
     </form>
 
     <form data-auth-step="forgot" hidden novalidate>
       <p class="lex-auth-hint" data-auth-forgot-text style="margin: 0 0 .75rem;"></p>
-      <button class="lex-auth-btn" type="submit" data-auth-forgot-send>Send reset link</button>
+      <button class="lex-auth-btn" type="submit" data-auth-forgot-send><?= e($t('authModal.sendReset')) ?></button>
       <div class="lex-auth-links">
-        <button class="lex-auth-linkbtn" type="button" data-auth-forgot-back>Back to login</button>
+        <button class="lex-auth-linkbtn" type="button" data-auth-forgot-back><?= e($t('authModal.backToLogin')) ?></button>
       </div>
     </form>
 
     <div data-auth-step="success" hidden>
-      <p class="lex-auth-success" data-auth-success-msg>You&rsquo;re logged in!</p>
+      <p class="lex-auth-success" data-auth-success-msg><?= e($t('authModal.loggedIn')) ?></p>
     </div>
 
     <p class="lex-auth-foot">
-      <a href="<?= e(lurl('/login').'?return_to='.urlencode($authModalReturnTo)) ?>">Use the full login page</a>
+      <a href="<?= e(lurl('/login').'?return_to='.urlencode($authModalReturnTo)) ?>"><?= e($t('authModal.fullPage')) ?></a>
       <span aria-hidden="true">&middot;</span>
       <span>Lexicon</span>
     </p>
@@ -98,7 +124,7 @@ if (!auth()->check()) {
   .lex-auth-card input[type="checkbox"] { appearance: auto; -webkit-appearance: checkbox; display: inline-block; width: 1.05rem; height: 1.05rem; padding: 0; flex: none; accent-color: #16181d; cursor: pointer; }
   .lex-auth-card .lex-auth-check { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
 
-  .lex-auth-card .lex-auth-close { position: absolute; top: .6rem; right: .75rem; font-size: 1.5rem; line-height: 1; color: #9aa1ab !important; cursor: pointer; padding: .25rem; width: auto; }
+  .lex-auth-card .lex-auth-close { position: absolute; top: .6rem; inset-inline-end: .75rem; font-size: 1.5rem; line-height: 1; color: #9aa1ab !important; cursor: pointer; padding: .25rem; width: auto; }
   .lex-auth-card .lex-auth-close:hover { color: #16181d !important; }
   .lex-auth-card .lex-auth-title { margin: 0 0 .35rem; font-size: 1.25rem; line-height: 1.25; color: #16181d; }
   .lex-auth-card .lex-auth-sub { margin: 0 0 1rem; font-size: .85rem; color: #5c6470; }
@@ -107,7 +133,18 @@ if (!auth()->check()) {
   .lex-auth-card .lex-auth-labelrow { display: flex; align-items: center; justify-content: space-between; }
   .lex-auth-card .lex-auth-toggle { font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; color: #5c6470 !important; cursor: pointer; padding: .25rem; width: auto; }
   .lex-auth-card .lex-auth-input { display: block; width: 100%; height: auto; padding: .7rem .75rem; margin-bottom: .75rem; border: 1px solid #cdd3db; border-radius: 6px; background: #fff; color: #16181d; font-size: 1rem; }
-  .lex-auth-card .lex-auth-input:focus { border-color: #16181d; box-shadow: none; outline: 2px solid #16181d; outline-offset: 1px; }
+  /* Focus thickens the bottom edge instead of drawing a ring, as the themes do. */
+  .lex-auth-card .lex-auth-input:focus { border-color: #16181d; box-shadow: inset 0 -2px 0 #16181d; outline: none; }
+  .lex-auth-card .lex-auth-status { display: flex; align-items: center; gap: .5rem; margin: 0 0 .75rem; font-size: .8rem; color: #5c6470; }
+  .lex-auth-card .lex-auth-status[hidden] { display: none; }
+  .lex-auth-card .lex-auth-status-mark { flex: none; width: .8rem; height: .8rem; border: 2px solid #cdd3db; border-top-color: #16181d; border-radius: 50%; animation: lex-auth-spin .8s linear infinite; }
+  .lex-auth-card .lex-auth-status[data-state="done"] { color: #1b7f4b; }
+  .lex-auth-card .lex-auth-status[data-state="done"] .lex-auth-status-mark { border-color: #1b7f4b; background: #1b7f4b; animation: none; }
+  .lex-auth-card .lex-auth-status[data-state="failed"] { color: #b3261e; }
+  .lex-auth-card .lex-auth-status[data-state="failed"] .lex-auth-status-mark { border-color: #b3261e; animation: none; }
+  .lex-auth-card .lex-auth-btn[aria-busy="true"] { cursor: progress; }
+  @keyframes lex-auth-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .lex-auth-card .lex-auth-status-mark { animation: none; border-top-color: #cdd3db; } }
   .lex-auth-card .lex-auth-hint { margin: -.35rem 0 .75rem; font-size: .75rem; color: #5c6470; }
   .lex-auth-card .lex-auth-btn { display: block; width: 100%; min-height: 44px; height: auto; border-radius: 6px; background: #16181d; color: #fff !important; font-size: .9rem; font-weight: 600; text-align: center; cursor: pointer; padding: .75rem 1rem; }
   .lex-auth-card .lex-auth-btn:hover { background: #2c313a; }

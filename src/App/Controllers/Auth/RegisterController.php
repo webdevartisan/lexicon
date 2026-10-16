@@ -8,9 +8,12 @@ use App\Controllers\AppController;
 use App\Models\BlogInvitationModel;
 use App\Services\AccountRegistrar;
 use App\Services\BlogRoleLabels;
+use App\Services\Captcha\CaptchaInterface;
+use App\Services\Captcha\CaptchaResult;
 use App\Services\CommentService;
 use App\Services\InvitationService;
 use Framework\Core\Response;
+use Framework\Helpers\RateLimiter;
 
 /**
  * Handle user registration.
@@ -25,10 +28,15 @@ use Framework\Core\Response;
  */
 final class RegisterController extends AppController
 {
+    // Accounts per IP decay with a one hour half-life, so a shared network recovers on its own.
+    private const REGISTRATION_DECAY_SECONDS = 3600;
+
     public function __construct(
         private AccountRegistrar $registrar,
         private BlogInvitationModel $invitationModel,
         private InvitationService $invitationService,
+        private CaptchaInterface $captcha,
+        private RateLimiter $rateLimiter,
     ) {}
 
     /**
@@ -43,6 +51,7 @@ final class RegisterController extends AppController
 
         return $this->view('register.index', [
             'return_to' => safe_return_to((string) ($this->request->get['return_to'] ?? '')),
+            'captcha' => $this->captcha->issue('register'),
         ]);
     }
 
@@ -52,6 +61,11 @@ final class RegisterController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $isAjax = $this->request->isAjax();
+
+        $refusal = $this->refuseUnchecked($isAjax);
+        if ($refusal !== null) {
+            return $refusal;
+        }
 
         $rules = [
             'email' => 'required|email|unique:users,email',
@@ -90,6 +104,8 @@ final class RegisterController extends AppController
 
             return $this->redirectBack();
         }
+
+        $this->rateLimiter->hit($this->registrationKey(), self::REGISTRATION_DECAY_SECONDS);
 
         // A reply captured before signup gets posted now and wins the
         // redirect: the new reader lands back on the comment they answered.
@@ -146,5 +162,57 @@ final class RegisterController extends AppController
         $this->flash('success', 'Welcome! This is your reading hub — save posts, follow blogs, join discussions.');
 
         return $this->redirect('/dashboard');
+    }
+
+    /**
+     * Refuse a sign-up from a busy IP or without a valid check answer.
+     *
+     * Runs before validation, so a script cannot probe which addresses are
+     * taken or send welcome emails to strangers without paying for each try.
+     *
+     * @return Response|null The refusal, or null to carry on
+     */
+    private function refuseUnchecked(bool $isAjax): ?Response
+    {
+        $perIp = (int) (require ROOT_PATH.'/config/captcha.php')['registrations_per_ip'];
+        if ($this->rateLimiter->tooManyAttempts($this->registrationKey(), $perIp, self::REGISTRATION_DECAY_SECONDS)) {
+            return $this->refuse($isAjax, chrome_translate('auth.tooManyRegistrations'), 429, false);
+        }
+
+        $result = $this->captcha->verify((string) ($this->request->post['altcha'] ?? ''), 'register');
+        if ($result->passed()) {
+            return null;
+        }
+
+        if ($result !== CaptchaResult::Missing) {
+            audit()->log(null, 'auth.captcha_failed', 'user', 0, ['reason' => $result->value, 'form' => 'register'], $this->request->ip());
+        }
+
+        return $this->refuse($isAjax, chrome_translate('auth.checkFailed'), 422, true);
+    }
+
+    /**
+     * Send the refusal in the shape the caller expects, keeping what was typed on the page.
+     */
+    private function refuse(bool $isAjax, string $message, int $status, bool $withChallenge): Response
+    {
+        if ($isAjax) {
+            $body = ['success' => false, 'error' => $message];
+            if ($withChallenge) {
+                $body['captcha'] = $this->captcha->issue('register');
+            }
+
+            return $this->json($body, $status);
+        }
+
+        $this->session->set('_old_input', sanitize_old_input($this->request->post));
+        $this->flash('error', $message);
+
+        return $this->redirectBack();
+    }
+
+    private function registrationKey(): string
+    {
+        return 'register:ip:'.($this->request->ip() ?? 'unknown');
     }
 }

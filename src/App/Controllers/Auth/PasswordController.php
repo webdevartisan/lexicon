@@ -7,6 +7,7 @@ namespace App\Controllers\Auth;
 use App\Controllers\AppController;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Services\LoginRateLimiter;
 use App\Services\PasswordResetIssuer;
 use App\Services\PasswordResetRateLimiter;
 use App\Services\RecipientLocale;
@@ -33,7 +34,8 @@ final class PasswordController extends AppController
         private PasswordResetModel $passwordResets,
         private PasswordResetRateLimiter $limiter,
         private PasswordResetIssuer $resetIssuer,
-        private SessionRevoker $revoker
+        private SessionRevoker $revoker,
+        private LoginRateLimiter $loginLimiter
     ) {}
 
     /**
@@ -199,16 +201,6 @@ final class PasswordController extends AppController
             return $this->redirect('/password/forgot');
         }
 
-        // Rate limit check BEFORE processing
-        if ($this->limiter->tooManyAttempts($ip, $email)) {
-            $wait = $this->limiter->availableIn($ip, $email);
-            $waitFormatted = $this->formatWaitTime($wait);
-
-            $this->flash('error', "Too many password reset attempts. Try again in {$waitFormatted}.");
-
-            return $this->redirect('/password/forgot');
-        }
-
         // Validate password fields
         $validator = $this->validateOrFail([
             'password' => 'required|password:'.password_policy_preset(),
@@ -225,7 +217,17 @@ final class PasswordController extends AppController
         $tokenHash = hash('sha256', $token);
         $resetData = $this->passwordResets->findValidByTokenHash($tokenHash);
 
+        // The limiter only guards failed tokens. Its email tier can be filled by anyone
+        // who knows the address, and a valid link must still get the owner back in.
         if (!$resetData || $resetData['email'] !== $email) {
+            if ($this->limiter->tooManyAttempts($ip, $email)) {
+                $waitFormatted = $this->formatWaitTime($this->limiter->availableIn($ip, $email));
+
+                $this->flash('error', "Too many password reset attempts. Try again in {$waitFormatted}.");
+
+                return $this->redirect('/password/forgot');
+            }
+
             // Increment rate limit on failed token validation
             $this->limiter->hit($ip, $email);
 
@@ -270,8 +272,10 @@ final class PasswordController extends AppController
         // else, so nothing signed in with it stays signed in.
         $this->revoker->endOthers((int) $user['id'], 'password_reset');
 
-        // Clear rate limits on successful reset
+        // Clear rate limits on successful reset. The owner just proved they hold the
+        // mailbox, so the login check and any failure lock on the account go too.
         $this->limiter->clear($ip, $email);
+        $this->loginLimiter->clearAccount($email);
 
         // Audit success
         audit()->log(
