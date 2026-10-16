@@ -348,6 +348,28 @@ it('stores category name with special HTML characters safely', function () {
     expect($category['name'])->toBe($xssName);
 });
 
+it('reports success when a save changes nothing, and failure only for a missing row', function () {
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
+    $row = $this->categoryModel->findById($id);
+
+    expect($this->categoryModel->update($id, ['name' => $row['name'], 'slug' => $row['slug']]))->toBeTrue()
+        ->and($this->categoryModel->update(999999999, ['name' => 'x']))->toBeFalse();
+});
+
+it('refuses a data key that is not a plain column name', function (string $key) {
+    $id = CategoryFactory::new($this->categoryModel)->forBlog($this->blogId)->create();
+
+    $this->categoryModel->update($id, [$key => 'x']);
+})->with([
+    'injected assignment' => 'name = name, slug',
+    'comment' => 'name -- ',
+    'backtick' => '`name`',
+])->throws(InvalidArgumentException::class);
+
+it('refuses an insert with a key that is not a column name', function () {
+    $this->categoryModel->insert(['blog_id' => $this->blogId, 'name) VALUES (1); --' => 'x']);
+})->throws(InvalidArgumentException::class);
+
 /**
  * Test that update handles empty data gracefully.
  */

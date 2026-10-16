@@ -130,7 +130,7 @@ abstract class Model
      * @param  array<string, mixed>  $data  Column => value pairs to insert
      * @return bool|int Last insert ID on success, false on failure
      *
-     * @throws InvalidArgumentException If data array is empty
+     * @throws InvalidArgumentException If data array is empty or a key is not a column name
      */
     public function insert(array $data): bool|int
     {
@@ -138,7 +138,7 @@ abstract class Model
             throw new InvalidArgumentException('Cannot insert an empty data set.');
         }
 
-        $columns = array_keys($data);
+        $columns = self::columnNames($data);
         $placeholders = array_fill(0, count($columns), '?');
 
         $sql = sprintf(
@@ -162,7 +162,9 @@ abstract class Model
      *
      * @param  int|string  $id  Primary key value
      * @param  array<string, mixed>  $data  Column => value pairs to update
-     * @return bool True on success
+     * @return bool True when the row exists, whether or not a value changed
+     *
+     * @throws InvalidArgumentException If a key is not a column name
      */
     public function update(int|string $id, array $data): bool
     {
@@ -175,7 +177,7 @@ abstract class Model
             return true;
         }
 
-        $columns = array_keys($data);
+        $columns = self::columnNames($data);
         $assignments = array_map(
             static fn (string $col): string => "{$col} = ?",
             $columns
@@ -189,9 +191,40 @@ abstract class Model
 
         // Append ID as the last parameter
         $params = array_merge(array_values($data), [(int) $id]);
-        $rowCount = $this->database->execute($sql, $params);
+        if ($this->database->execute($sql, $params) > 0) {
+            return true;
+        }
 
-        return $rowCount > 0;
+        // MySQL counts changed rows, not matched ones, so saving a form as it
+        // was reads 0. Only a missing row is a failure.
+        return $this->database->query(
+            'SELECT 1 FROM '.$this->getTable().' WHERE id = ?',
+            [(int) $id]
+        )->fetchColumn() !== false;
+    }
+
+    /**
+     * The keys of a data array, refused unless each is a plain column name.
+     *
+     * Column names go into the SQL text, not a placeholder, so this keeps a
+     * caller that ever passes request input as keys from injecting SQL.
+     *
+     * @param  array<string, mixed>  $data  Column => value pairs
+     * @return list<string>
+     *
+     * @throws InvalidArgumentException If a key is not a column name
+     */
+    private static function columnNames(array $data): array
+    {
+        $columns = array_map('strval', array_keys($data));
+
+        foreach ($columns as $column) {
+            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $column) !== 1) {
+                throw new InvalidArgumentException("Not a column name: {$column}");
+            }
+        }
+
+        return $columns;
     }
 
     /**
