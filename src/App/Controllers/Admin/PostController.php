@@ -21,8 +21,8 @@ use Framework\Exceptions\PageNotFoundException;
 /**
  * Admin post management controller.
  *
- * Authorization is enforced by the /admin route group middleware
- * (auth + role:administrator) in config/routes.php.
+ * Authorization is the managePosts area ability, checked for every action
+ * by AppController::beforeAction().
  */
 class PostController extends AppController
 {

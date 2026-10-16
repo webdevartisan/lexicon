@@ -81,7 +81,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
      *
      * We check if user has ANY of the provided roles (OR logic).
      *
-     * @deprecated Use Gate::authorize() with policies or 'role:name' middleware instead
+     * @deprecated Use Gate::authorize() with policies instead
      * @see Gate::authorize()
      *
      * @param  string|string[]  $roles  Role name(s) to check
