@@ -259,7 +259,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
               <?php if ($commentsOpen) { ?>
                 <form class="reply-form" id="reply-form-<?= $id ?>" action="/comments/create" method="post" hidden>
-                  <?= csrf_field() ?>
+                  <?= csrf_field_lazy() ?>
                   <input type="hidden" name="post_id" value="<?= $postId ?>">
                   <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
                   <textarea name="content" rows="1" maxlength="2000"
@@ -814,7 +814,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
   <?php if ($commentsOpen) { ?>
     <form class="comment-form" action="/comments/create" method="post" data-comment-composer>
-      <?= csrf_field() ?>
+      <?= csrf_field_lazy() ?>
       <input type="hidden" name="post_id" value="<?= $postId ?>">
 
       <div class="comment-row">
@@ -852,7 +852,7 @@ $renderComment = static function (array $comment, int $depth) use (
     </ol>
   <?php } ?>
 
-  <form class="comment-token" hidden aria-hidden="true"><?= csrf_field() ?></form>
+  <form class="comment-token" hidden aria-hidden="true"><?= csrf_field_lazy() ?></form>
 </div>
 
 <script defer src="/assets/js/report-dialog.js"></script>

@@ -232,7 +232,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       </div>
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
-        <?= csrf_field() ?>
+        <?= csrf_field_lazy() ?>
         <label for="email-sub">Your address</label>
         <div class="news-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@quiet-room.co"

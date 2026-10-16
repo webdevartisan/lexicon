@@ -14,6 +14,8 @@ use Framework\Core\Response;
  */
 class HomeController extends AppController
 {
+    private const NEW_TOKENS_PER_MINUTE = 30;
+
     public function __construct(
         private PublishedPostModel $publishedPosts,
         private BlogModel $blogModel,
@@ -75,9 +77,27 @@ class HomeController extends AppController
         ]);
     }
 
+    /**
+     * Hand out the session's CSRF token, creating it if needed.
+     *
+     * Only new tokens are throttled: each one stores a guest session, while
+     * reading an existing token costs nothing.
+     */
     public function csrfToken(): Response
     {
         $this->response->addHeader('Cache-Control', 'no-store, must-revalidate');
+
+        if (csrf()->peekToken() !== '') {
+            return $this->json(['token' => csrf_token()]);
+        }
+
+        $key = 'csrf-token:ip:'.($this->request->ip() ?? 'unknown');
+
+        if (rateLimiter()->tooManyAttempts($key, self::NEW_TOKENS_PER_MINUTE, 60)) {
+            return $this->jsonError('Too many requests. Please try again in a minute.', 429);
+        }
+
+        rateLimiter()->hit($key, 60);
 
         return $this->json(['token' => csrf_token()]);
     }

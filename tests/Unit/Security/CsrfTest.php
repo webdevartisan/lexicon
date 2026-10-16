@@ -83,6 +83,21 @@ test('getToken returns same token on subsequent calls', function () {
     expect($token1)->toBe($token2);
 });
 
+test('peekToken returns an empty string and stores nothing when no token exists', function () {
+    $this->sessionMock->shouldReceive('get')->once()->with('_csrf_token')->andReturn(null);
+    $this->sessionMock->shouldNotReceive('set');
+
+    expect($this->csrf->peekToken())->toBe('');
+});
+
+test('peekToken returns the existing token', function () {
+    $existing = bin2hex(random_bytes(32));
+    $this->sessionMock->shouldReceive('get')->once()->with('_csrf_token')->andReturn($existing);
+    $this->sessionMock->shouldNotReceive('set');
+
+    expect($this->csrf->peekToken())->toBe($existing);
+});
+
 /**
  * Tests successful token validation with matching tokens.
  *

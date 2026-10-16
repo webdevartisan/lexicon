@@ -20,7 +20,7 @@ if (!auth()->check()) {
     <p class="lex-auth-error" data-auth-error role="alert" hidden></p>
 
     <form data-auth-step="email" novalidate>
-      <?= csrf_field() ?>
+      <?= csrf_field_lazy() ?>
       <label class="lex-auth-label" for="lex-auth-email">Email</label>
       <input class="lex-auth-input" type="email" id="lex-auth-email" name="email"
              autocomplete="email" inputmode="email" required>

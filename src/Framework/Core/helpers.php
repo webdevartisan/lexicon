@@ -325,6 +325,22 @@ function csrf_field(): string
 }
 
 /**
+ * Hidden CSRF input that stays empty until the form is submitted.
+ *
+ * For forms guests see on high-traffic pages: csrf-lazy.js fetches a token
+ * on submit, so viewing the page does not store a session. Signed-in users
+ * already have one, so they get a real token and their forms work without JS.
+ *
+ * @return string HTML input field, empty for guests without a token yet
+ */
+function csrf_field_lazy(): string
+{
+    $token = auth()->check() ? csrf_token() : csrf()->peekToken();
+
+    return '<input type="hidden" name="_token" value="'.e($token).'" data-csrf-lazy>';
+}
+
+/**
  * Get the current request's CSP nonce for inline <script> tags.
  *
  * @return string Base64 nonce, matching the value sent in the

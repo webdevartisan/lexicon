@@ -195,7 +195,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <p><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One invitation per new work. No noise, and you may leave the list at any time.' ?></p>
 
         <form class="invite-form" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
-          <?= csrf_field() ?>
+          <?= csrf_field_lazy() ?>
           <label for="email-sub">Your address</label>
           <div class="invite-input">
             <input id="email-sub" name="email" type="email" placeholder="guest@private-view.gallery"

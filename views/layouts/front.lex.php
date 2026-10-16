@@ -314,6 +314,7 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/flash-toast.js" defer></script>
 		<script src="/assets/js/front.js" defer></script>
 		<script src="/assets/js/lang-switcher.js" defer></script>
+		<script src="/assets/js/csrf-lazy.js" defer></script>
 		<script src="/assets/js/scrolltop.js" defer></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}

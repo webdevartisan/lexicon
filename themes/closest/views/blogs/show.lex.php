@@ -195,7 +195,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       </div>
 
       <form class="dispatch-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
-        <?= csrf_field() ?>
+        <?= csrf_field_lazy() ?>
         <label for="email-sub">Your address</label>
         <div class="dispatch-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@basecamp.co"
