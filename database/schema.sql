@@ -1516,9 +1516,6 @@ INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) V
 INSERT INTO permissions (permission_name, permission_slug, resource, action, description) VALUES
 -- User Management Permissions
 ('Manage All Users', 'manage_all_users', 'users', 'manage', 'Full user management including creation, editing, and deletion'),
-('Create Users', 'create_users', 'users', 'create', 'Create new user accounts'),
-('Edit Users', 'edit_users', 'users', 'update', 'Edit existing user accounts'),
-('Delete Users', 'delete_users', 'users', 'delete', 'Delete user accounts'),
 ('View Users', 'view_users', 'users', 'read', 'View user information'),
 
 -- Site Settings Permissions
@@ -1528,15 +1525,10 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Create Blogs', 'create_blogs', 'blogs', 'create', 'Create new blogs'),
 ('Edit Own Blog', 'edit_own_blog', 'blogs', 'update_own', 'Edit blogs you own'),
 ('Delete Own Blog', 'delete_own_blog', 'blogs', 'delete_own', 'Delete blogs you own'),
-('View All Blogs', 'view_all_blogs', 'blogs', 'read', 'View all blogs on the platform'),
-('Assign Authors', 'assign_authors', 'blogs', 'assign', 'Assign authors to blogs'),
 ('Manage Team', 'manage_team', 'blogs', 'manage_team', 'Manage collaborators and invitations on blogs you manage'),
 
 -- Post Management (All Posts) Permissions
 ('Manage All Posts', 'manage_all_posts', 'posts', 'manage', 'Full management of all posts site-wide'),
-('Edit All Posts', 'edit_all_posts', 'posts', 'update_all', 'Edit any post regardless of author'),
-('Delete All Posts', 'delete_all_posts', 'posts', 'delete_all', 'Delete any post regardless of author'),
-('Publish All Posts', 'publish_all_posts', 'posts', 'publish_all', 'Publish any post regardless of author'),
 
 -- Post Management (Own/Blog Posts) Permissions
 ('Create Posts', 'create_posts', 'posts', 'create', 'Create new posts'),
@@ -1552,13 +1544,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Review Posts', 'review_posts', 'posts', 'review', 'Access posts for review'),
 ('Approve Posts', 'approve_posts', 'posts', 'approve', 'Approve posts for publication'),
 ('Reject Posts', 'reject_posts', 'posts', 'reject', 'Reject posts and request changes'),
-('Provide Feedback', 'provide_feedback', 'posts', 'feedback', 'Provide feedback on posts'),
 ('Assign Reviewers', 'assign_reviewers', 'posts', 'assign_reviewers', 'Assign reviewers to posts in blogs you manage'),
-
--- Submissions Permissions
-('Submit Ideas', 'submit_ideas', 'submissions', 'create', 'Submit content ideas for review'),
-('View Own Submissions', 'view_own_submissions', 'submissions', 'read_own', 'View your own submissions'),
-('Review Submissions', 'review_submissions', 'submissions', 'review', 'Review and approve/reject submissions'),
 
 -- Control Panel Area Permissions
 -- Administrators pass every Gate check by role; these let other roles be
@@ -1588,16 +1574,14 @@ SELECT 1, id FROM permissions;
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Content Manager Role
 -- ----------------------------------------------------------------------------
--- We grant content managers full post management but limited user access to
--- maintain separation of concerns between content and user administration.
+-- We grant content managers post management, blog creation and the reports
+-- queue but no user access, to keep content and user administration apart.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 2, id FROM permissions 
 WHERE permission_slug IN (
-    'view_all_blogs', 'create_blogs', 'manage_all_posts', 'edit_all_posts', 
-    'delete_all_posts', 'publish_all_posts', 'view_all_posts',
-    'review_posts', 'approve_posts', 'reject_posts', 'provide_feedback',
-    'review_submissions', 'handle_reports'
+    'create_blogs', 'manage_all_posts', 'view_all_posts', 'review_posts', 'approve_posts',
+    'reject_posts', 'handle_reports'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1609,10 +1593,9 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 3, id FROM permissions
 WHERE permission_slug IN (
-    'edit_own_blog', 'delete_own_blog', 'view_all_blogs',
-    'assign_authors', 'manage_team', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
-    'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
-    'reject_posts', 'assign_reviewers', 'provide_feedback', 'review_submissions'
+    'edit_own_blog', 'delete_own_blog', 'manage_team', 'create_posts', 'edit_blog_posts',
+    'delete_blog_posts', 'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
+    'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1625,9 +1608,8 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT (SELECT id FROM roles WHERE role_slug = 'editor'), id FROM permissions
 WHERE permission_slug IN (
-    'edit_own_blog', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
-    'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
-    'reject_posts', 'provide_feedback', 'review_submissions', 'assign_reviewers'
+    'edit_own_blog', 'create_posts', 'edit_blog_posts', 'delete_blog_posts', 'publish_blog_posts',
+    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1639,8 +1621,7 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 4, id FROM permissions 
 WHERE permission_slug IN (
-    'create_posts', 'edit_own_posts', 'delete_own_posts', 
-    'publish_own_posts', 'view_all_posts', 'view_own_submissions'
+    'create_posts', 'edit_own_posts', 'delete_own_posts', 'publish_own_posts', 'view_all_posts'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1652,21 +1633,19 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 5, id FROM permissions
 WHERE permission_slug IN (
-    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts',
-    'assign_reviewers', 'provide_feedback', 'review_submissions'
+    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Contributor Role
 -- ----------------------------------------------------------------------------
--- We grant contributors minimal permissions focused on submitting ideas for
--- consideration by authors or blog owners.
+-- We grant contributors minimal permissions: drafting their own posts for
+-- authors or blog owners to review.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 6, id FROM permissions
 WHERE permission_slug IN (
-    'submit_ideas', 'view_own_submissions', 'view_all_posts',
-    'create_posts', 'edit_own_posts'
+    'view_all_posts', 'create_posts', 'edit_own_posts'
 );
 
 -- ----------------------------------------------------------------------------
