@@ -243,6 +243,11 @@ hr {
     border: 0;
 }
 
+.lx-icon {
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+}
+
 .lx-skip {
     position: absolute;
     inset-inline-start: 1rem;

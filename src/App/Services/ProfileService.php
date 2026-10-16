@@ -79,31 +79,21 @@ class ProfileService
     }
 
     /**
-     * Enrich social links with Font Awesome icon classes.
+     * Name the lx-icon for each social link.
      *
-     * Maps network names to the theme's icon classes. Twitter uses X
-     * branding; unknown networks fall back to a generic link icon.
+     * Twitter uses X branding; unknown networks fall back to a generic link icon.
      *
      * @param  array<int, array<string, mixed>>  $socialLinks  Raw social link data
-     * @return array<int, array<string, mixed>> Social links with icon and iconStyle fields added
+     * @return array<int, array<string, mixed>> Social links with an icon field added
      */
     private function enrichSocialLinksWithIcons(array $socialLinks): array
     {
         return array_map(function ($link) {
-            // Font Awesome splits glyphs into brand and solid sets, and the
-            // theme expects that set name as a companion class on the anchor
-            [$style, $icon] = match ($link['network']) {
-                'twitter' => ['brands', 'fa-x-twitter'],
-                'facebook' => ['brands', 'fa-facebook'],
-                'instagram' => ['brands', 'fa-instagram'],
-                'linkedin' => ['brands', 'fa-linkedin'],
-                'github' => ['brands', 'fa-github'],
-                'youtube' => ['brands', 'fa-youtube'],
-                default => ['solid', 'fa-link'],
+            $link['icon'] = match ($link['network']) {
+                'twitter' => 'x-logo',
+                'facebook', 'instagram', 'linkedin', 'github', 'youtube' => $link['network'],
+                default => 'link',
             };
-
-            $link['icon'] = $icon;
-            $link['iconStyle'] = $style;
 
             return $link;
         }, $socialLinks);

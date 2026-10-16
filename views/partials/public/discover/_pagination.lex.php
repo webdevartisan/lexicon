@@ -27,7 +27,7 @@ if ($discoverTotalPages > 1) {
             {% if ($discoverCurrent > 1): %}
                 <li>
                     <a href="<?= e($discoverPageUrl($discoverCurrent - 1)) ?>" class="lx-pagination-step" rel="prev">
-                        <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+                        {% cmp="lx-icon" name="chevron-left" %}
                         <span class="lx-visually-hidden">{{ t('discover.paginationPrev') }}</span>
                     </a>
                 </li>
@@ -51,7 +51,7 @@ if ($discoverTotalPages > 1) {
                 <li>
                     <a href="<?= e($discoverPageUrl($discoverCurrent + 1)) ?>" class="lx-pagination-step" rel="next">
                         <span class="lx-visually-hidden">{{ t('discover.paginationNext') }}</span>
-                        <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+                        {% cmp="lx-icon" name="chevron-right" %}
                     </a>
                 </li>
             {% endif %}
