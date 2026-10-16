@@ -345,22 +345,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Get the category of a post.
-     *
-     * @param  int|null  $categoryId  Category ID
-     * @return array<string, mixed>|null Category record, or null if not found or no category
-     */
-    public function category(?int $categoryId): ?array
-    {
-        if (!$categoryId) {
-            return null;
-        }
-        $category = new CategoryModel($this->database);
-
-        return $category->find((string) $categoryId) ?: null;
-    }
-
-    /**
      * Get tags for a post.
      *
      * @param  int  $postId  Post ID
@@ -382,19 +366,6 @@ class PostModel extends AppModel
         // localized=false: tag rows read the same in every locale.
         // Busted from create/update/delete when a post's tags may change.
         return fragment()->rememberData($cacheKey, $loadTags, 3600, false);
-    }
-
-    /**
-     * Get comments for a post.
-     *
-     * @param  int  $postId  Post ID
-     * @return array<int, array<string, mixed>> Array of comment records
-     */
-    public function comments(int $postId): array
-    {
-        $commentModel = new CommentModel($this->database);
-
-        return $commentModel->forPost($postId);
     }
 
     /**
