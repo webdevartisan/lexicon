@@ -232,4 +232,3 @@
         </div>
     </div>
 </header>
-<?php // var_dump($user);die;?>
