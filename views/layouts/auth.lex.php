@@ -37,6 +37,7 @@ $siteName = site_setting('site_name', 'Lexicon');
     </head>
 
     <body class="lx-authpage">
+        {% include "partials/_impersonation_banner.lex.php" %}
 
         <a class="lx-skip" href="#lx-auth-main"><?= e($t('a11y.skipToContent')) ?></a>
 
