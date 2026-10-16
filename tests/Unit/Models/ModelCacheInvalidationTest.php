@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\CommentModel;
@@ -110,4 +111,13 @@ test('a comment status change forgets the thread of its post', function () {
     $this->db->shouldReceive('execute')->once()->andReturn(1);
 
     expect((new CommentModel($this->db))->updateStatus(8, 'approved'))->toBeTrue();
+});
+
+test('renaming a blog hands the blog cache both the old and the new slug', function () {
+    mockInvalidator($this, BlogCacheInvalidator::class)
+        ->shouldReceive('blogChanged')->once()->with('old-notes', 'new-notes');
+    stubFind($this->db, ['id' => 6, 'blog_slug' => 'old-notes', 'status' => 'published']);
+    $this->db->shouldReceive('execute')->once()->andReturn(1);
+
+    expect((new BlogModel($this->db))->update(6, ['blog_slug' => 'new-notes']))->toBeTrue();
 });

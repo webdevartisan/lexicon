@@ -260,7 +260,7 @@ class BlogModel extends AppModel
         $result = parent::update($id, $data);
 
         if ($result) {
-            $this->blogCache()->blogChanged($blog->slug(), isset($data['slug']) ? (string) $data['slug'] : null);
+            $this->blogCache()->blogChanged($blog->slug(), isset($data['blog_slug']) ? (string) $data['blog_slug'] : null);
         }
 
         return $result;
