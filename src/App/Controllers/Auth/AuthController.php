@@ -40,14 +40,6 @@ final class AuthController extends AppController
     }
 
     /**
-     * Optional: show an alternative login view (e.g. modal or embedded).
-     */
-    public function show(): Response
-    {
-        return $this->view('Login/show.lex.php');
-    }
-
-    /**
      * Modal step 1: report whether an account exists for the email.
      *
      * This intentionally reveals account existence. The email-first modal
