@@ -860,6 +860,12 @@ $container->set(App\Models\PostModel::class, function ($c) {
     );
 });
 
+$container->set(App\Models\PublishedPostModel::class, function ($c) {
+    return new App\Models\PublishedPostModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
 $container->set(App\Models\BlogSettingsModel::class, function ($c) {
     return new App\Models\BlogSettingsModel(
         $c->get(Framework\Database::class)

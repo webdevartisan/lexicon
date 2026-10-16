@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\BlogModel;
 use App\Models\CategoryModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\CategoryFactory;
@@ -19,6 +20,7 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->publishedPosts = new PublishedPostModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
     $this->categoryModel = new CategoryModel($this->db);
@@ -58,7 +60,7 @@ it('finds posts by title content', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('PHP', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('PHP', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -85,7 +87,7 @@ it('finds posts by content', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('Laravel', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('Laravel', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -109,7 +111,7 @@ it('matches a word prefix', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('merc', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('merc', 1, 8);
 
     expect($result['data'])->toHaveCount(1)
         ->and($result['data'][0]['title'])->toBe('Of Mercury Rising');
@@ -134,7 +136,7 @@ it('requires every search word to match', function () {
             ->create();
     }
 
-    $result = $this->postModel->searchPublishedPosts('mercury ris', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('mercury ris', 1, 8);
 
     expect($result['data'])->toHaveCount(1)
         ->and($result['data'][0]['title'])->toBe('Mercury Rising');
@@ -157,8 +159,8 @@ it('treats FULLTEXT operators in the query as plain text', function () {
         ])
         ->create();
 
-    $operators = $this->postModel->searchPublishedPosts('-mercury', 1, 8);
-    $onlyOperators = $this->postModel->searchPublishedPosts('+-"*()@<>~', 1, 8);
+    $operators = $this->publishedPosts->searchPublishedPosts('-mercury', 1, 8);
+    $onlyOperators = $this->publishedPosts->searchPublishedPosts('+-"*()@<>~', 1, 8);
 
     expect($operators['data'])->toHaveCount(1)
         ->and($onlyOperators['data'])->toBe([])
@@ -182,7 +184,7 @@ it('searches non-latin text', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('Ερμ', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('Ερμ', 1, 8);
 
     expect($result['data'])->toHaveCount(1);
 });
@@ -207,7 +209,7 @@ it('does not match a post through its blog name', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('DevOps', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('DevOps', 1, 8);
 
     expect($result['data'])->toHaveCount(0);
 });
@@ -254,7 +256,7 @@ it('filters search results by category', function () {
         ->create();
 
     // Category filter matches by name (topic filter spans all blogs)
-    $result = $this->postModel->searchPublishedPosts('Post', 1, 8, 'Technology');
+    $result = $this->publishedPosts->searchPublishedPosts('Post', 1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -282,7 +284,7 @@ it('returns paginated search results', function () {
             ->create();
     }
 
-    $result = $this->postModel->searchPublishedPosts('Testing', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('Testing', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(8)
@@ -307,7 +309,7 @@ it('returns empty results for non-matching search', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('NonExistentTerm', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('NonExistentTerm', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(0)
@@ -338,7 +340,7 @@ it('returns recent published posts with pagination', function () {
             ->create();
     }
 
-    $result = $this->postModel->getRecentPublishedWithPagination(1, 5);
+    $result = $this->publishedPosts->getRecentPublishedWithPagination(1, 5);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(5)
@@ -385,7 +387,7 @@ it('filters recent posts by category', function () {
         ->create();
 
     // Category filter matches by name (topic filter spans all blogs)
-    $result = $this->postModel->getRecentPublishedWithPagination(1, 8, 'Technology');
+    $result = $this->publishedPosts->getRecentPublishedWithPagination(1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -478,7 +480,7 @@ it('lists posts by author with specified visibility', function () {
         ])
         ->create();
 
-    $result = $this->postModel->listByAuthorVisibility($userId, ['public'], 10);
+    $result = $this->publishedPosts->listByAuthorVisibility($userId, ['public'], 10);
 
     expect($result)->toBeArray()
         ->and($result)->toHaveCount(1)
@@ -504,7 +506,7 @@ it('respects limit when listing by visibility', function () {
             ->create();
     }
 
-    $result = $this->postModel->listByAuthorVisibility($userId, ['public'], 5);
+    $result = $this->publishedPosts->listByAuthorVisibility($userId, ['public'], 5);
 
     expect($result)->toHaveCount(5);
 });

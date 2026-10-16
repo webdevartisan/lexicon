@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
@@ -17,6 +18,7 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->publishedPosts = new PublishedPostModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
 
@@ -322,7 +324,7 @@ it('returns paginated published posts', function () {
             ->create();
     }
 
-    $result = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 5);
+    $result = $this->publishedPosts->findPublishedByBlogIdWithPagination($blogId, 1, 5);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(5)

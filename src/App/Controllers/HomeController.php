@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\BlogModel;
-use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use Framework\Core\Response;
 
@@ -15,7 +15,7 @@ use Framework\Core\Response;
 class HomeController extends AppController
 {
     public function __construct(
-        private PostModel $postModel,
+        private PublishedPostModel $publishedPosts,
         private BlogModel $blogModel,
         private UserModel $userModel
     ) {}
@@ -23,7 +23,7 @@ class HomeController extends AppController
     public function index(): Response
     {
         return $this->view([
-            'showcase' => $this->postModel->findHomeShowcase(6),
+            'showcase' => $this->publishedPosts->findHomeShowcase(6),
             'stats' => $this->publicStats(),
             // Only this page opens on the dark cover, so only this page gets
             // the transparent masthead.
@@ -51,7 +51,7 @@ class HomeController extends AppController
         }
 
         $stats = [
-            'posts' => $this->postModel->countPublished(),
+            'posts' => $this->publishedPosts->countPublished(),
             'blogs' => $this->blogModel->countPublished(),
             'writers' => $this->userModel->countPublicWriters(),
         ];

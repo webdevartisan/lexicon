@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\BlogModel;
-use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Services\SearchRateLimiter;
 use Framework\Core\Response;
 
@@ -13,7 +13,7 @@ class DiscoverController extends AppController
 {
     public function __construct(
         private BlogModel $blogModel,
-        private PostModel $postModel,
+        private PublishedPostModel $publishedPosts,
         private SearchRateLimiter $searchThrottle,
     ) {}
 
@@ -81,8 +81,8 @@ class DiscoverController extends AppController
     private function postsData(string $q, int $page): array
     {
         $result = $q !== ''
-            ? $this->postModel->searchPublishedPosts($q, $page, 8)
-            : $this->postModel->getRecentPublishedWithPagination($page, 8);
+            ? $this->publishedPosts->searchPublishedPosts($q, $page, 8)
+            : $this->publishedPosts->getRecentPublishedWithPagination($page, 8);
 
         return [
             'items' => $result['data'],

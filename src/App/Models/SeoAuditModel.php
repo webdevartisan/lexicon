@@ -14,7 +14,7 @@ class SeoAuditModel extends AppModel
 
     /**
      * A blog's published posts with their search fields, and whether each is
-     * offered to search engines under PostModel::INDEXABLE_SQL.
+     * offered to search engines under PublishedPostModel::INDEXABLE_SQL.
      *
      * @return list<array<string, mixed>>
      */
@@ -23,7 +23,7 @@ class SeoAuditModel extends AppModel
         return $this->database->query(
             'SELECT p.id, p.title, p.slug, p.content, p.excerpt, p.meta_title, p.meta_description, p.focus_keyword,
                     p.canonical_url, p.meta_noindex, p.visibility, p.og_image, p.og_image_alt, p.author_id,
-                    ('.PostModel::INDEXABLE_SQL.') AS indexable
+                    ('.PublishedPostModel::INDEXABLE_SQL.') AS indexable
              FROM posts p
              JOIN blogs b ON b.id = p.blog_id
              LEFT JOIN blog_settings s ON s.blog_id = b.id
@@ -68,7 +68,7 @@ class SeoAuditModel extends AppModel
             'SELECT p.id FROM posts p
              JOIN blogs b ON b.id = p.blog_id
              LEFT JOIN blog_settings s ON s.blog_id = b.id
-             WHERE '.PostModel::INDEXABLE_SQL.'
+             WHERE '.PublishedPostModel::INDEXABLE_SQL.'
              ORDER BY p.published_at DESC
              LIMIT '.max(1, $limit)
         )->fetchAll(\PDO::FETCH_COLUMN);
@@ -84,7 +84,7 @@ class SeoAuditModel extends AppModel
     public function siteCounts(): array
     {
         $row = $this->database->query(
-            'SELECT COUNT(*) AS published, COALESCE(SUM('.PostModel::INDEXABLE_SQL.'), 0) AS indexable
+            'SELECT COUNT(*) AS published, COALESCE(SUM('.PublishedPostModel::INDEXABLE_SQL.'), 0) AS indexable
              FROM posts p
              JOIN blogs b ON b.id = p.blog_id
              LEFT JOIN blog_settings s ON s.blog_id = b.id

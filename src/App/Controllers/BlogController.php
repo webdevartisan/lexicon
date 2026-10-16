@@ -12,6 +12,7 @@ use App\Models\CommentModel;
 use App\Models\CommentVoteModel;
 use App\Models\PostBookmarkModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\PostTranslationModel;
 use App\Models\PostVoteModel;
 use App\Models\TagModel;
@@ -30,6 +31,7 @@ class BlogController extends AppController
         private BlogModel $model,
         private UserModel $userModel,
         private PostModel $postModel,
+        private PublishedPostModel $publishedPosts,
         private CategoryModel $categoryModel,
         private BlogSettingsModel $settings,
         private TagModel $tagModel,
@@ -137,8 +139,8 @@ class BlogController extends AppController
             return $redirect;
         }
 
-        $featured = $this->postModel->findFeaturedByBlogId($blogId);
-        $landingData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 7);
+        $featured = $this->publishedPosts->findFeaturedByBlogId($blogId);
+        $landingData = $this->publishedPosts->findPublishedByBlogIdWithPagination($blogId, 1, 7);
         $posts = $landingData['data'];
 
         // Put the chosen headline first without duplicating it in the grid below.
@@ -160,7 +162,7 @@ class BlogController extends AppController
             if ($category) {
                 $headline = $posts[0] ?? null;
                 $headlineId = isset($headline['id']) ? (int) $headline['id'] : null;
-                $grid = $this->postModel->findPublishedByBlogAndCategory($blogId, (int) $category['id'], 6, $headlineId);
+                $grid = $this->publishedPosts->findPublishedByBlogAndCategory($blogId, (int) $category['id'], 6, $headlineId);
                 $posts = $headline !== null ? array_merge([$headline], $grid) : $grid;
             } else {
                 $activeCategory = '';
@@ -194,11 +196,11 @@ class BlogController extends AppController
 
         // The headline uses the featured post when available, otherwise it uses the
         // newest post, matching showBlog so the “All” category behaves consistently.
-        $featured = $this->postModel->findFeaturedByBlogId($blogId);
+        $featured = $this->publishedPosts->findFeaturedByBlogId($blogId);
         if ($featured !== null) {
             $headlineId = (int) $featured['id'];
         } else {
-            $newest = $this->postModel->findPublishedByBlogAndCategory($blogId, null, 1);
+            $newest = $this->publishedPosts->findPublishedByBlogAndCategory($blogId, null, 1);
             $headlineId = isset($newest[0]['id']) ? (int) $newest[0]['id'] : null;
         }
 
@@ -212,7 +214,7 @@ class BlogController extends AppController
             $categoryId = (int) $category['id'];
         }
 
-        $cards = $this->postModel->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
+        $cards = $this->publishedPosts->findPublishedByBlogAndCategory($blogId, $categoryId, 6, $headlineId);
 
         return $this->view('Blogs/_index_cards.lex.php', [
             'cards' => $this->localizePosts($this->enrichCardPosts($cards), $ctx['settings']),
@@ -262,7 +264,7 @@ class BlogController extends AppController
         }
 
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
-        $postsData = $this->postModel->findPublishedByBlogIdWithPagination($blogId, $page, 12);
+        $postsData = $this->publishedPosts->findPublishedByBlogIdWithPagination($blogId, $page, 12);
 
         return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichPostAuthors($postsData['data']), $ctx['settings']),
@@ -435,10 +437,10 @@ class BlogController extends AppController
         }
 
         // Prev/next/related
-        $prev_post = $this->postModel->findPreviousByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
-        $next_post = $this->postModel->findNextByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
+        $prev_post = $this->publishedPosts->findPreviousByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
+        $next_post = $this->publishedPosts->findNextByBlogIdAndDate((int) $ctx['blog']['id'], $post['published_at_raw']) ?: null;
         $related = $this->localizePosts(
-            $this->postModel->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4),
+            $this->publishedPosts->findRecentByBlogIdExcludingSlug((int) $ctx['blog']['id'], $postSlug, 4),
             $ctx['settings']
         );
 

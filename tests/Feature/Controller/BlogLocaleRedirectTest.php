@@ -97,6 +97,7 @@ beforeEach(function () {
         $this->blogModel,
         $this->userModel,
         $this->postModel,
+        new \App\Models\PublishedPostModel($this->db),
         new \App\Models\CategoryModel($this->db),
         $this->settingsModel,
         new \App\Models\TagModel($this->db),

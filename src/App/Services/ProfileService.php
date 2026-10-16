@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\BlogModel;
-use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserProfileModel;
 use App\Models\UserSocialLinkModel;
 use Framework\Exceptions\NotFoundException;
@@ -22,7 +22,7 @@ class ProfileService
     public function __construct(
         private UserProfileModel $profiles,
         private UserSocialLinkModel $socialLinks,
-        private PostModel $posts,
+        private PublishedPostModel $posts,
         private BlogModel $blogs
     ) {}
 
