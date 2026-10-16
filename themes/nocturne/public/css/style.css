@@ -343,7 +343,8 @@ a {
   transition: color 0.25s var(--ease-soft);
 }
 
-.idx-row:hover .idx-num {
+.idx-row:hover .idx-num,
+.idx-row:focus-within .idx-num {
   color: var(--brass);
 }
 
@@ -357,7 +358,8 @@ a {
   transition: color 0.25s var(--ease-soft), transform 0.35s var(--ease-out);
 }
 
-.idx-row:hover .idx-title {
+.idx-row:hover .idx-title,
+.idx-row:focus-within .idx-title {
   color: var(--brass-bright);
   transform: translateX(0.4rem);
 }
@@ -366,8 +368,10 @@ a {
   color: inherit;
 }
 
-.idx-title a:focus {
+.idx-title a:focus-visible {
   outline: none;
+  text-decoration: underline 2px var(--brass);
+  text-underline-offset: 0.18em;
 }
 
 .idx-meta {

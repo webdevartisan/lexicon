@@ -407,8 +407,9 @@
 }
 
 .form-field textarea:focus {
-  outline: 2px solid var(--viridian);
-  outline-offset: -1px;
+  outline: none;
+  border-bottom-color: var(--ink);
+  box-shadow: 0 1px 0 var(--ink);
 }
 
 .btn-submit {

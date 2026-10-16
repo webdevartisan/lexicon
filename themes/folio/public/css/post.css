@@ -246,6 +246,7 @@
     outline: none;
     min-height: 120px;
   }
+  .form-field textarea:focus-visible { box-shadow: 0 1px 0 var(--ink); }
   .btn-submit {
     display: inline-flex;
     align-items: center;

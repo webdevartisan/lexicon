@@ -132,6 +132,7 @@
   .news-form label { font-family: var(--mono); font-size: var(--type-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
   .news-input { display: flex; align-items: stretch; border-bottom: 1px solid var(--ink); gap: var(--step-3); }
   .news-input input { flex: 1 1 0; min-width: 0; background: transparent; border: none; font: 400 var(--type-h2) / 1.4 var(--serif); font-style: italic; color: var(--ink); padding: var(--step-2) 0; outline: none; }
+  .news-input:has(input:focus-visible) { box-shadow: 0 1px 0 var(--ink); }
   .news-input input::placeholder { color: var(--muted); opacity: 0.55; }
   .news-input button { flex-shrink: 0; align-self: center; display: inline-flex; align-items: center; gap: 0.6em; font-size: var(--type-small); font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; padding: 0.85em 1.4em; border-radius: 999px; background: var(--ink); color: var(--bone); transition: transform 0.4s var(--ease-out); }
   .news-input button:hover { transform: translateX(3px); }

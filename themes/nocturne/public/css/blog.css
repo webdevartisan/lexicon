@@ -399,8 +399,9 @@
   transition: border-color 0.25s ease;
 }
 
-.nightletter-input:focus-within {
-  border-bottom-color: var(--brass);
+.nightletter-input:has(input:focus-visible) {
+  border-bottom-color: var(--paper);
+  box-shadow: 0 1px 0 var(--paper);
 }
 
 .nightletter-input input {
