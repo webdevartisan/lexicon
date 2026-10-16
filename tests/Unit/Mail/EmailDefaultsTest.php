@@ -129,6 +129,26 @@ test('the plain text keeps real link addresses, and leaves out the preheader and
         ->and($mail->getBody())->toContain('just published a new post');
 });
 
+test('a new-post email carries one-click unsubscribe headers that point at the emailed link', function () {
+    $mail = new App\Mail\NewPostMail('r@example.test', 'Blog', 'Title', 'my-blog', 'my-post', 'tok');
+
+    expect($mail->getHeaders())->toBe([
+        'List-Unsubscribe' => '<https://example.test/subscriptions/unsubscribe/tok>',
+        'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+    ]);
+});
+
+test('a queued row gives its stored headers back to the worker', function () {
+    $mail = new App\Mail\QueuedMail([
+        'to_email' => 'r@example.test',
+        'subject' => 'Hi',
+        'body_html' => '<p>Hi</p>',
+        'headers' => json_encode(['List-Unsubscribe' => '<https://example.test/u>']),
+    ]);
+
+    expect($mail->getHeaders())->toBe(['List-Unsubscribe' => '<https://example.test/u>']);
+});
+
 test('HtmlFragment::join keeps both renditions in order and skips empty parts', function () {
     $joined = HtmlFragment::join([HtmlFragment::fromText('a'), HtmlFragment::empty(), HtmlFragment::fromText('b')]);
 

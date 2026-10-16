@@ -729,6 +729,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     subject VARCHAR(255) NOT NULL,
     body_html LONGTEXT NOT NULL,
     body_text LONGTEXT DEFAULT NULL,
+    headers JSON DEFAULT NULL COMMENT 'Extra message headers, e.g. List-Unsubscribe',
     status ENUM('pending','sending','sent','failed','cancelled') NOT NULL DEFAULT 'pending',
     tier ENUM('critical','standard','bulk') NOT NULL DEFAULT 'standard' COMMENT 'Set by the Mailable class, decides which worker drains the row',
     attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',

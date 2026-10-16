@@ -74,6 +74,7 @@ class MailQueueService
                 'subject' => $mailable->getSubject(),
                 'body_html' => $html,
                 'body_text' => $text,
+                'headers' => $mailable->getHeaders() === [] ? null : json_encode($mailable->getHeaders()),
                 'tier' => $mailable->getTier(),
                 'related_type' => $relatedType,
                 'related_id' => $relatedId,

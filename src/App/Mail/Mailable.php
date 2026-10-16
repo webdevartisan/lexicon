@@ -98,6 +98,9 @@ abstract class Mailable
     /** @var array<int, array{path: string, name: string|null}> */
     protected array $attachments = [];
 
+    /** @var array<string, string> */
+    protected array $headers = [];
+
     /**
      * Build the email content.
      *
@@ -237,6 +240,20 @@ abstract class Mailable
             'path' => $path,
             'name' => $name,
         ];
+
+        return $this;
+    }
+
+    /**
+     * Add a header to the message, such as List-Unsubscribe.
+     *
+     * @param  string  $name  Header name
+     * @param  string  $value  Header value
+     * @return $this
+     */
+    protected function header(string $name, string $value): static
+    {
+        $this->headers[$name] = $value;
 
         return $this;
     }
@@ -472,5 +489,13 @@ abstract class Mailable
     public function getAttachments(): array
     {
         return $this->attachments;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers;
     }
 }

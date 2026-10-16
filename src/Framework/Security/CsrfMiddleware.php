@@ -32,6 +32,13 @@ final class CsrfMiddleware implements MiddlewareInterface
      */
     private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage', '/traffic/event'];
 
+    /**
+     * Exempt paths that carry their own secret. A mail provider sends the
+     * RFC 8058 one-click unsubscribe POST with no session, so the 64-character
+     * token in the path stands in for the CSRF token.
+     */
+    private const EXEMPT_PATTERNS = ['#^/subscriptions/unsubscribe/[a-f0-9]{64}$#'];
+
     public function __construct(
         private Csrf $csrf,
         private Session $session
@@ -43,7 +50,7 @@ final class CsrfMiddleware implements MiddlewareInterface
             return $next->handle($request);
         }
 
-        if (in_array($request->path(), self::EXEMPT_PATHS, true)) {
+        if ($this->isExempt($request->path())) {
             return $next->handle($request);
         }
 
@@ -52,6 +59,21 @@ final class CsrfMiddleware implements MiddlewareInterface
         }
 
         return $this->reject($request);
+    }
+
+    private function isExempt(string $path): bool
+    {
+        if (in_array($path, self::EXEMPT_PATHS, true)) {
+            return true;
+        }
+
+        foreach (self::EXEMPT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $path) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -25,14 +25,15 @@ class MailQueueModel extends AppModel
     {
         $this->database->query(
             "INSERT INTO {$this->getTable()}
-                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (to_email, to_name, subject, body_html, body_text, headers, tier, related_type, related_id, max_attempts)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $mail['to_email'],
                 $mail['to_name'] ?? null,
                 $mail['subject'],
                 $mail['body_html'],
                 $mail['body_text'] ?? null,
+                $mail['headers'] ?? null,
                 $mail['tier'] ?? 'standard',
                 $mail['related_type'] ?? null,
                 $mail['related_id'] ?? null,
@@ -471,7 +472,7 @@ class MailQueueModel extends AppModel
     public function resend(int $id): ?int
     {
         $source = $this->database->query(
-            "SELECT to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts
+            "SELECT to_email, to_name, subject, body_html, body_text, headers, tier, related_type, related_id, max_attempts
              FROM {$this->getTable()} WHERE id = ? AND status = 'sent'",
             [$id]
         )->fetch(\PDO::FETCH_ASSOC);
@@ -482,14 +483,15 @@ class MailQueueModel extends AppModel
 
         $this->database->execute(
             "INSERT INTO {$this->getTable()}
-                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, resent_from_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (to_email, to_name, subject, body_html, body_text, headers, tier, related_type, related_id, max_attempts, resent_from_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $source['to_email'],
                 $source['to_name'],
                 $source['subject'],
                 $source['body_html'],
                 $source['body_text'],
+                $source['headers'],
                 $source['tier'],
                 $source['related_type'],
                 $source['related_id'],
@@ -675,8 +677,8 @@ class MailQueueModel extends AppModel
 
         return $this->database->execute(
             "INSERT INTO {$this->getTable()}
-                (to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, resent_from_id)
-             SELECT to_email, to_name, subject, body_html, body_text, tier, related_type, related_id, max_attempts, id
+                (to_email, to_name, subject, body_html, body_text, headers, tier, related_type, related_id, max_attempts, resent_from_id)
+             SELECT to_email, to_name, subject, body_html, body_text, headers, tier, related_type, related_id, max_attempts, id
              FROM {$this->getTable()}
              {$whereSql}",
             $params

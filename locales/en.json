@@ -1087,7 +1087,13 @@
         "confirmSubmit": "Yes, subscribe me",
         "confirmIgnore": "If this wasn't you, close this page. Nothing will be sent.",
         "invalidTitle": "This link no longer works",
-        "invalidBody": "The subscription was removed or never confirmed in time. You can subscribe again from the blog."
+        "invalidBody": "The subscription was removed or never confirmed in time. You can subscribe again from the blog.",
+        "unsubscribeTitle": "Unsubscribe from new posts",
+        "unsubscribeBody": "{email} will stop getting new posts from {blog}.",
+        "unsubscribeSubmit": "Unsubscribe",
+        "unsubscribeIgnore": "Changed your mind? Close this page and nothing changes.",
+        "unsubscribedTitle": "You're unsubscribed",
+        "unsubscribedBody": "You won't get new posts from {blog} by email any more. You can subscribe again from the blog."
     },
     "auth": {
         "back": "Back",

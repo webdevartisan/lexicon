@@ -136,8 +136,14 @@ $router->add('/subscriptions/confirm/{token:[a-f0-9]{64}}', [
 ]);
 $router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
     'controller' => 'SubscriptionController',
-    'action' => 'unsubscribe',
+    'action' => 'showUnsubscribe',
     'method' => 'GET',
+]);
+// CSRF-exempt: mail providers POST here for one-click unsubscribe (RFC 8058).
+$router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
+    'controller' => 'SubscriptionController',
+    'action' => 'unsubscribe',
+    'method' => 'POST',
 ]);
 
 // Post engagement (auth required; CSRF token in the POST body)

@@ -103,6 +103,31 @@ test('CsrfTokenException reports 419', function () {
     expect((new CsrfTokenException())->getStatusCode())->toBe(419);
 });
 
+// ==================== EXEMPT PATHS ====================
+
+test('the one-click unsubscribe POST passes without a token', function () {
+    $next = MiddlewareTestHelper::createHandler('reached');
+    $request = new Request('/subscriptions/unsubscribe/'.str_repeat('a1', 32), 'POST', [], ['List-Unsubscribe' => 'One-Click']);
+
+    expect($this->middleware->process($request, $next)->getBody())->toBe('reached');
+});
+
+test('the unsubscribe exemption needs the full token and nothing after it', function (string $path) {
+    $reached = false;
+    $next = MiddlewareTestHelper::createTrackingHandler($reached);
+
+    try {
+        $this->middleware->process(new Request($path, 'POST'), $next);
+    } catch (CsrfTokenException) {
+    }
+
+    expect($reached)->toBeFalse();
+})->with([
+    'short token' => '/subscriptions/unsubscribe/abc',
+    'extra segment' => '/subscriptions/unsubscribe/'.str_repeat('a1', 32).'/more',
+    'other path' => '/subscriptions/confirm/'.str_repeat('a1', 32),
+]);
+
 // ==================== JSON CALLERS ====================
 
 test('an AJAX caller gets a 419 JSON body rather than a redirect', function () {

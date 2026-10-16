@@ -33,5 +33,11 @@ class QueuedMail extends Mailable
         if (!empty($this->row['body_text'])) {
             $this->textAlternative((string) $this->row['body_text']);
         }
+
+        $headers = json_decode((string) ($this->row['headers'] ?? ''), true);
+
+        foreach (is_array($headers) ? $headers : [] as $name => $value) {
+            $this->header((string) $name, (string) $value);
+        }
     }
 }
