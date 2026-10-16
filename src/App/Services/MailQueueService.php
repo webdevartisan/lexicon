@@ -95,11 +95,11 @@ class MailQueueService
      * refusal never costs the rest of the batch.
      *
      * @param  string  $tier  Restrict to one tier, '' for any
-     * @return array{claimed: int, sent: int, retrying: int, failed: int, skipped: bool}
+     * @return array{claimed: int, sent: int, retrying: int, failed: int, lost: int, skipped: bool}
      */
     public function processBatch(string $tier = ''): array
     {
-        $result = ['claimed' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'skipped' => false];
+        $result = ['claimed' => 0, 'sent' => 0, 'retrying' => 0, 'failed' => 0, 'lost' => 0, 'skipped' => false];
 
         // Leave the queue alone entirely when mail is switched off. Claiming
         // rows here would spend their attempts on a transport that was never
@@ -120,20 +120,26 @@ class MailQueueService
 
         foreach ($rows as $index => $row) {
             $id = (int) $row['id'];
+            $claimToken = (string) $row['claim_token'];
 
             // Space out sends, but never pay the delay after the final one.
             if ($index > 0 && $delayMs > 0) {
                 usleep($delayMs * 1000);
             }
 
+            if (!$this->queue->holdClaim($id, $claimToken)) {
+                $result['lost']++;
+
+                continue;
+            }
+
             try {
                 if ($this->mailer->sendOrFail(new QueuedMail($row))) {
-                    $this->queue->markSent($id);
-                    $result['sent']++;
+                    $result[$this->queue->markSent($id, $claimToken) ? 'sent' : 'lost']++;
                 }
             } catch (Throwable $e) {
-                $status = $this->queue->markFailed($id, $e->getMessage(), $backoff);
-                $result[$status === 'failed' ? 'failed' : 'retrying']++;
+                $status = $this->queue->markFailed($id, $claimToken, $e->getMessage(), $backoff);
+                $result[$status === 'pending' ? 'retrying' : $status]++;
             }
         }
 

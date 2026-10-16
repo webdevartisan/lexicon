@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\MailQueueModel;
 use App\Models\UserModel;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\MailQueueTestHelper;
 
 /**
  * Integration tests for MailQueueModel.
@@ -111,9 +112,9 @@ describe('markSent', function () {
 
     test('records delivery and clears the claim', function () {
         $id = queueMail($this->model);
-        $this->model->claimBatch(1);
+        $token = $this->model->claimBatch(1)[0]['claim_token'];
 
-        expect($this->model->markSent($id))->toBeTrue();
+        expect($this->model->markSent($id, $token))->toBeTrue();
 
         $row = fetchQueueRow($this->db, $id);
         expect($row['status'])->toBe('sent')
@@ -129,7 +130,7 @@ describe('markFailed', function () {
         $id = queueMail($this->model);
         $this->model->claimBatch(1);
 
-        $status = $this->model->markFailed($id, 'SMTP Error: data not accepted.', 60);
+        $status = $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'SMTP Error: data not accepted.', 60);
 
         expect($status)->toBe('pending');
 
@@ -144,10 +145,10 @@ describe('markFailed', function () {
     test('backoff grows with each attempt', function () {
         $id = queueMail($this->model);
 
-        $this->model->markFailed($id, 'first', 60);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'first', 60);
         $firstWait = strtotime(fetchQueueRow($this->db, $id)['next_attempt_at']) - queueNow($this->db);
 
-        $this->model->markFailed($id, 'second', 60);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'second', 60);
         $secondWait = strtotime(fetchQueueRow($this->db, $id)['next_attempt_at']) - queueNow($this->db);
 
         expect($secondWait)->toBeGreaterThan($firstWait);
@@ -156,17 +157,60 @@ describe('markFailed', function () {
     test('gives up once max_attempts is reached', function () {
         $id = queueMail($this->model, ['max_attempts' => 2]);
 
-        expect($this->model->markFailed($id, 'boom', 1))->toBe('pending')
-            ->and($this->model->markFailed($id, 'boom', 1))->toBe('failed');
+        expect($this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'boom', 1))->toBe('pending')
+            ->and($this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'boom', 1))->toBe('failed');
 
         expect((int) fetchQueueRow($this->db, $id)['attempts'])->toBe(2);
     });
 
     test('a failed row is never claimed again', function () {
         $id = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($id, 'boom', 0);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'boom', 0);
 
         expect($this->model->claimBatch(10))->toBeEmpty();
+    });
+});
+
+describe('claim ownership', function () {
+
+    test('a run whose claim was reclaimed cannot mark the row sent', function () {
+        $id = queueMail($this->model);
+        $stale = $this->model->claimBatch(1)[0]['claim_token'];
+
+        $this->db->execute('UPDATE mail_queue SET updated_at = DATE_SUB(NOW(), INTERVAL 30 MINUTE) WHERE id = ?', [$id]);
+        $this->model->releaseStuck(15);
+        $fresh = $this->model->claimBatch(1)[0]['claim_token'];
+
+        expect($this->model->markSent($id, $stale))->toBeFalse()
+            ->and(fetchQueueRow($this->db, $id)['status'])->toBe('sending')
+            ->and(fetchQueueRow($this->db, $id)['claim_token'])->toBe($fresh);
+    });
+
+    test('a failure reported on a lost claim changes nothing', function () {
+        $id = queueMail($this->model);
+        $this->model->claimBatch(1);
+
+        expect($this->model->markFailed($id, 'not-the-owner', 'boom', 60))->toBe('lost')
+            ->and((int) fetchQueueRow($this->db, $id)['attempts'])->toBe(0)
+            ->and(fetchQueueRow($this->db, $id)['last_error'])->toBeNull();
+    });
+
+    test('holdClaim confirms the owner and refreshes the claim', function () {
+        $id = queueMail($this->model);
+        $token = $this->model->claimBatch(1)[0]['claim_token'];
+        $this->db->execute('UPDATE mail_queue SET updated_at = DATE_SUB(NOW(), INTERVAL 30 MINUTE) WHERE id = ?', [$id]);
+
+        expect($this->model->holdClaim($id, $token))->toBeTrue()
+            ->and($this->model->releaseStuck(15))->toBe(0);
+    });
+
+    test('holdClaim refuses a released row', function () {
+        $id = queueMail($this->model);
+        $token = $this->model->claimBatch(1)[0]['claim_token'];
+        $this->db->execute('UPDATE mail_queue SET updated_at = DATE_SUB(NOW(), INTERVAL 30 MINUTE) WHERE id = ?', [$id]);
+        $this->model->releaseStuck(15);
+
+        expect($this->model->holdClaim($id, $token))->toBeFalse();
     });
 });
 
@@ -198,7 +242,7 @@ describe('retry', function () {
 
     test('puts a failed row back in line with a clean slate', function () {
         $id = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($id, 'boom', 0);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'boom', 0);
 
         expect($this->model->retry($id))->toBeTrue();
 
@@ -232,8 +276,8 @@ describe('pruneSent', function () {
         $old = queueMail($this->model);
         $recent = queueMail($this->model);
 
-        $this->model->markSent($old);
-        $this->model->markSent($recent);
+        $this->model->markSent($old, MailQueueTestHelper::claim($this->db, $old));
+        $this->model->markSent($recent, MailQueueTestHelper::claim($this->db, $recent));
 
         $this->db->execute(
             'UPDATE mail_queue SET sent_at = DATE_SUB(NOW(), INTERVAL 60 DAY) WHERE id = ?',
@@ -259,20 +303,20 @@ describe('failedCountSince', function () {
 
     test('counts rows that gave up inside the window and ignores everything else', function () {
         $gaveUp = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($gaveUp, 'boom', 0);
+        $this->model->markFailed($gaveUp, MailQueueTestHelper::claim($this->db, $gaveUp), 'boom', 0);
 
         $stillRetrying = queueMail($this->model);
-        $this->model->markFailed($stillRetrying, 'transient', 60);
+        $this->model->markFailed($stillRetrying, MailQueueTestHelper::claim($this->db, $stillRetrying), 'transient', 60);
 
         $sent = queueMail($this->model);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         expect($this->model->failedCountSince(60))->toBe(1);
     });
 
     test('ignores a failure that last updated before the window', function () {
         $id = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($id, 'boom', 0);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'boom', 0);
 
         $this->db->execute(
             'UPDATE mail_queue SET updated_at = DATE_SUB(NOW(), INTERVAL 90 MINUTE) WHERE id = ?',
@@ -301,7 +345,7 @@ describe('cancel', function () {
         $this->model->claimBatch(1);
 
         $sent = queueMail($this->model);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         expect($this->model->cancel($sending, 7))->toBeFalse()
             ->and($this->model->cancel($sent, 7))->toBeFalse();
@@ -314,7 +358,7 @@ describe('cancel', function () {
         $pendingA = queueMail($this->model);
         $pendingB = queueMail($this->model);
         $sent = queueMail($this->model);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         $cancelled = $this->model->cancelMany([$pendingA, $pendingB, $sent], 7);
 
@@ -333,7 +377,7 @@ describe('resend', function () {
 
     test('queues a fresh copy of a sent row and links it back', function () {
         $id = queueMail($this->model, ['to_email' => 'reader@example.test', 'subject' => 'Welcome']);
-        $this->model->markSent($id);
+        $this->model->markSent($id, MailQueueTestHelper::claim($this->db, $id));
 
         $newId = $this->model->resend($id);
 
@@ -358,7 +402,7 @@ describe('resend', function () {
 
     test('resendMany only resends the ids that are actually sent', function () {
         $sent = queueMail($this->model);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
         $pending = queueMail($this->model);
 
         $resent = $this->model->resendMany([$sent, $pending]);
@@ -374,7 +418,7 @@ describe('retryMany', function () {
 
     test('requeues only the ids that are actually failed', function () {
         $failed = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($failed, 'boom', 0);
+        $this->model->markFailed($failed, MailQueueTestHelper::claim($this->db, $failed), 'boom', 0);
         $pending = queueMail($this->model);
 
         $requeued = $this->model->retryMany([$failed, $pending]);
@@ -389,7 +433,7 @@ describe('retryMany', function () {
 
     test('ignores duplicate and non-positive ids in the selection', function () {
         $failed = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($failed, 'boom', 0);
+        $this->model->markFailed($failed, MailQueueTestHelper::claim($this->db, $failed), 'boom', 0);
 
         $requeued = $this->model->retryMany([$failed, $failed, 0, -1]);
 
@@ -419,7 +463,7 @@ describe('restore', function () {
     test('leaves the attempts already spent and the error that caused them', function () {
         $id = queueMail($this->model, ['max_attempts' => 3]);
         // One soft failure: still pending, one attempt gone, reason recorded.
-        $this->model->markFailed($id, 'greylisted', 60);
+        $this->model->markFailed($id, MailQueueTestHelper::claim($this->db, $id), 'greylisted', 60);
         $this->model->cancel($id, 7);
 
         $this->model->restore($id);
@@ -433,7 +477,7 @@ describe('restore', function () {
     test('will not touch a row that was never cancelled', function () {
         $pending = queueMail($this->model);
         $sent = queueMail($this->model);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         expect($this->model->restore($pending))->toBeFalse()
             ->and($this->model->restore($sent))->toBeFalse()
@@ -473,7 +517,7 @@ describe('whole filter actions', function () {
         $alsoMine = queueMail($this->model, ['to_email' => 'keep@example.test']);
         $other = queueMail($this->model, ['to_email' => 'other@example.test']);
         $sent = queueMail($this->model, ['to_email' => 'keep@example.test']);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         $affected = $this->model->cancelAllMatching(['search' => 'keep@'], 7);
 
@@ -498,7 +542,7 @@ describe('whole filter actions', function () {
         $cancelled = queueMail($this->model, ['to_email' => 'mix@example.test']);
         $this->model->cancel($cancelled, 7);
         $failed = queueMail($this->model, ['to_email' => 'mix@example.test', 'max_attempts' => 1]);
-        $this->model->markFailed($failed, 'boom', 0);
+        $this->model->markFailed($failed, MailQueueTestHelper::claim($this->db, $failed), 'boom', 0);
 
         expect($this->model->retryAllMatching(['search' => 'mix@']))->toBe(1)
             ->and(fetchQueueRow($this->db, $failed)['status'])->toBe('pending')
@@ -510,8 +554,8 @@ describe('whole filter actions', function () {
     test('resendAllMatching queues one copy per sent row, remembering the original', function () {
         $first = queueMail($this->model, ['to_email' => 'copy@example.test', 'subject' => 'One']);
         $second = queueMail($this->model, ['to_email' => 'copy@example.test', 'subject' => 'Two']);
-        $this->model->markSent($first);
-        $this->model->markSent($second);
+        $this->model->markSent($first, MailQueueTestHelper::claim($this->db, $first));
+        $this->model->markSent($second, MailQueueTestHelper::claim($this->db, $second));
         $untouched = queueMail($this->model, ['to_email' => 'copy@example.test', 'subject' => 'Still pending']);
 
         $queued = $this->model->resendAllMatching(['search' => 'copy@']);
@@ -529,7 +573,7 @@ describe('whole filter actions', function () {
 
     test('an empty filter means the whole queue, which is what retryAllFailed is', function () {
         $failed = queueMail($this->model, ['max_attempts' => 1]);
-        $this->model->markFailed($failed, 'boom', 0);
+        $this->model->markFailed($failed, MailQueueTestHelper::claim($this->db, $failed), 'boom', 0);
         $pending = queueMail($this->model);
 
         expect($this->model->retryAllFailed())->toBe(1)
@@ -541,7 +585,7 @@ describe('whole filter actions', function () {
         queueMail($this->model, ['to_email' => 'tally@example.test']);
         queueMail($this->model, ['to_email' => 'tally@example.test']);
         $sent = queueMail($this->model, ['to_email' => 'tally@example.test']);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
         queueMail($this->model, ['to_email' => 'elsewhere@example.test']);
 
         $counts = $this->model->statusCountsMatching(['search' => 'tally@']);
@@ -560,7 +604,7 @@ describe('findWithFilters', function () {
         queueMail($this->model, ['to_email' => 'ann@example.test', 'tier' => 'critical']);
         queueMail($this->model, ['to_email' => 'bob@example.test', 'tier' => 'bulk']);
         $sent = queueMail($this->model, ['to_email' => 'ann@example.test', 'tier' => 'bulk']);
-        $this->model->markSent($sent);
+        $this->model->markSent($sent, MailQueueTestHelper::claim($this->db, $sent));
 
         $byRecipient = $this->model->findWithFilters('', 'ann@');
         $byTier = $this->model->findWithFilters('', '', 1, 25, 'bulk');

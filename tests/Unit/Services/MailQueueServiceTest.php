@@ -117,11 +117,12 @@ describe('MailQueueService::enqueue', function () {
 describe('MailQueueService::processBatch', function () {
 
     test('marks a delivered row as sent', function () {
-        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'];
+        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'];
 
         $queue = Mockery::mock(MailQueueModel::class);
         $queue->shouldReceive('claimBatch')->once()->with(10, '')->andReturn([$row]);
-        $queue->shouldReceive('markSent')->once()->with(7)->andReturn(true);
+        $queue->shouldReceive('holdClaim')->once()->with(7, 'tok')->andReturn(true);
+        $queue->shouldReceive('markSent')->once()->with(7, 'tok')->andReturn(true);
 
         $mailer = Mockery::mock(MailService::class);
         $mailer->shouldReceive('enabled')->andReturn(true);
@@ -135,11 +136,12 @@ describe('MailQueueService::processBatch', function () {
     });
 
     test('counts a requeued row as retrying, not failed', function () {
-        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'];
+        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'];
 
         $queue = Mockery::mock(MailQueueModel::class);
         $queue->shouldReceive('claimBatch')->andReturn([$row]);
-        $queue->shouldReceive('markFailed')->once()->with(7, 'rate limited', 60)->andReturn('pending');
+        $queue->shouldReceive('holdClaim')->andReturn(true);
+        $queue->shouldReceive('markFailed')->once()->with(7, 'tok', 'rate limited', 60)->andReturn('pending');
 
         $mailer = Mockery::mock(MailService::class);
         $mailer->shouldReceive('enabled')->andReturn(true);
@@ -152,10 +154,11 @@ describe('MailQueueService::processBatch', function () {
     });
 
     test('counts an exhausted row as failed', function () {
-        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'];
+        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'];
 
         $queue = Mockery::mock(MailQueueModel::class);
         $queue->shouldReceive('claimBatch')->andReturn([$row]);
+        $queue->shouldReceive('holdClaim')->andReturn(true);
         $queue->shouldReceive('markFailed')->andReturn('failed');
 
         $mailer = Mockery::mock(MailService::class);
@@ -167,13 +170,14 @@ describe('MailQueueService::processBatch', function () {
 
     test('one failure does not stop the rest of the batch', function () {
         $rows = [
-            ['id' => 1, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'],
-            ['id' => 2, 'to_email' => 'c@d.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'],
-            ['id' => 3, 'to_email' => 'e@f.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x'],
+            ['id' => 1, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'],
+            ['id' => 2, 'to_email' => 'c@d.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'],
+            ['id' => 3, 'to_email' => 'e@f.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'],
         ];
 
         $queue = Mockery::mock(MailQueueModel::class);
         $queue->shouldReceive('claimBatch')->andReturn($rows);
+        $queue->shouldReceive('holdClaim')->times(3)->andReturn(true);
         $queue->shouldReceive('markSent')->twice()->andReturn(true);
         $queue->shouldReceive('markFailed')->once()->andReturn('pending');
 
@@ -193,6 +197,44 @@ describe('MailQueueService::processBatch', function () {
 
         expect($result['sent'])->toBe(2)
             ->and($result['retrying'])->toBe(1);
+    });
+
+    test('skips a row another run reclaimed instead of sending it twice', function () {
+        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'];
+
+        $queue = Mockery::mock(MailQueueModel::class);
+        $queue->shouldReceive('claimBatch')->andReturn([$row]);
+        $queue->shouldReceive('holdClaim')->once()->with(7, 'tok')->andReturn(false);
+        $queue->shouldReceive('markSent')->never();
+        $queue->shouldReceive('markFailed')->never();
+
+        $mailer = Mockery::mock(MailService::class);
+        $mailer->shouldReceive('enabled')->andReturn(true);
+        $mailer->shouldReceive('sendOrFail')->never();
+
+        $result = makeMailQueueService($queue, $mailer)->processBatch();
+
+        expect($result['lost'])->toBe(1)
+            ->and($result['sent'])->toBe(0);
+    });
+
+    test('a failure on a row this run no longer owns counts as lost', function () {
+        $row = ['id' => 7, 'to_email' => 'a@b.test', 'to_name' => null, 'subject' => 'S', 'body_html' => '<p>x</p>', 'body_text' => 'x', 'claim_token' => 'tok'];
+
+        $queue = Mockery::mock(MailQueueModel::class);
+        $queue->shouldReceive('claimBatch')->andReturn([$row]);
+        $queue->shouldReceive('holdClaim')->andReturn(true);
+        $queue->shouldReceive('markFailed')->once()->andReturn('lost');
+
+        $mailer = Mockery::mock(MailService::class);
+        $mailer->shouldReceive('enabled')->andReturn(true);
+        $mailer->shouldReceive('sendOrFail')->andThrow(new Exception('timeout'));
+
+        $result = makeMailQueueService($queue, $mailer)->processBatch();
+
+        expect($result['lost'])->toBe(1)
+            ->and($result['retrying'])->toBe(0)
+            ->and($result['failed'])->toBe(0);
     });
 
     test('leaves the queue untouched when mail is disabled', function () {

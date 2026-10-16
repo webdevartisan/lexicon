@@ -92,16 +92,52 @@ class MailQueueModel extends AppModel
     }
 
     /**
-     * Mark a claimed row as delivered.
+     * Check this worker run still owns a row, and refresh the claim.
+     *
+     * Called right before each send. releaseStuck() hands rows that sat too
+     * long back to the pool, and another run may already be sending one that
+     * waited behind slow sends in this batch; sending it here too would
+     * deliver it twice. Refreshing updated_at gives the send itself a full
+     * stuck_after_minutes before it can be reclaimed.
+     *
+     * @param  int  $id  Queue row ID
+     * @param  string  $claimToken  Token from claimBatch()
+     * @return bool False when the claim was released or taken by another run
      */
-    public function markSent(int $id): bool
+    public function holdClaim(int $id, string $claimToken): bool
+    {
+        $held = $this->database->query(
+            "SELECT 1 FROM {$this->getTable()} WHERE id = ? AND claim_token = ? AND status = 'sending'",
+            [$id, $claimToken]
+        )->fetchColumn();
+
+        if ($held === false) {
+            return false;
+        }
+
+        $this->database->execute(
+            "UPDATE {$this->getTable()} SET updated_at = NOW() WHERE id = ? AND claim_token = ?",
+            [$id, $claimToken]
+        );
+
+        return true;
+    }
+
+    /**
+     * Mark a claimed row as delivered.
+     *
+     * @param  int  $id  Queue row ID
+     * @param  string  $claimToken  Token from claimBatch()
+     * @return bool False when this run no longer owns the row
+     */
+    public function markSent(int $id, string $claimToken): bool
     {
         return $this->database->execute(
             "UPDATE {$this->getTable()}
              SET status = 'sent', attempts = attempts + 1, last_error = NULL,
                  claim_token = NULL, sent_at = NOW()
-             WHERE id = ?",
-            [$id]
+             WHERE id = ? AND claim_token = ?",
+            [$id, $claimToken]
         ) > 0;
     }
 
@@ -112,25 +148,31 @@ class MailQueueModel extends AppModel
      * being hit too fast gets progressively more room before the next try.
      *
      * @param  int  $id  Queue row ID
+     * @param  string  $claimToken  Token from claimBatch()
      * @param  string  $error  Transport's reason, stored for the admin view
      * @param  int  $backoffSeconds  Base delay multiplied by the attempt count
-     * @return string The resulting status, 'pending' (will retry) or 'failed'
+     * @return string The resulting status, 'pending' (will retry) or 'failed',
+     *                or 'lost' when this run no longer owns the row
      */
-    public function markFailed(int $id, string $error, int $backoffSeconds = 60): string
+    public function markFailed(int $id, string $claimToken, string $error, int $backoffSeconds = 60): string
     {
         // Assignment order matters: MySQL evaluates these left to right, so
         // every expression that reads `attempts` has to come before the
         // increment or it would see the already-bumped value.
-        $this->database->execute(
+        $updated = $this->database->execute(
             "UPDATE {$this->getTable()}
              SET last_error = ?,
                  claim_token = NULL,
                  status = IF(attempts + 1 >= max_attempts, 'failed', 'pending'),
                  next_attempt_at = DATE_ADD(NOW(), INTERVAL (attempts + 1) * ? SECOND),
                  attempts = attempts + 1
-             WHERE id = ?",
-            [mb_substr($error, 0, 2000), $backoffSeconds, $id]
+             WHERE id = ? AND claim_token = ?",
+            [mb_substr($error, 0, 2000), $backoffSeconds, $id, $claimToken]
         );
+
+        if ($updated === 0) {
+            return 'lost';
+        }
 
         $status = $this->database->query(
             "SELECT status FROM {$this->getTable()} WHERE id = ?",
