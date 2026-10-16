@@ -80,7 +80,7 @@ class ImpersonationService
 
         $target = $this->users->find($targetId);
 
-        if (!$target || $target['deleted_at'] !== null) {
+        if (!$target) {
             return 'That account no longer exists.';
         }
 

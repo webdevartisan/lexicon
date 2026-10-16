@@ -48,7 +48,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
     last_locale VARCHAR(5) DEFAULT NULL COMMENT 'Language of the page the person last signed in or registered from; emails use it when no language preference is set',
-    deleted_at TIMESTAMP NULL COMMENT 'Soft delete timestamp',
     suspended_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set while a suspension is in force; NULL means not suspended',
     suspended_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC end of a temporary suspension; NULL alongside suspended_at means permanent',
     reports_paused_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC; reports from this account are refused until then',
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_email (email),
     UNIQUE KEY uq_users_handle (handle),
     INDEX idx_is_active (is_active),
-    INDEX idx_deleted_at (deleted_at),
     CONSTRAINT fk_users_suspended_by FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Core user authentication and identity data';

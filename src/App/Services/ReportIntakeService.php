@@ -220,7 +220,7 @@ class ReportIntakeService
             'SELECT handle, created_at <= NOW() - INTERVAL ? DAY AS seasoned,
                     reports_paused_until, reports_paused_until > NOW() AS paused
                FROM users
-              WHERE id = ? AND deleted_at IS NULL',
+              WHERE id = ?',
             [$this->settings->minReporterAgeDays(), $reporterId]
         )->fetch(\PDO::FETCH_ASSOC);
 

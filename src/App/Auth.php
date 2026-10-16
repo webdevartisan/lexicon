@@ -137,7 +137,6 @@ class Auth implements AuthInterface
         // session signed in before the bump stops matching and is dropped.
         if (
             !$record
-            || $record['deleted_at'] !== null
             || (int) $record['is_active'] !== 1
             || (int) $this->session->get('session_epoch', 0) !== (int) ($record['session_epoch'] ?? 0)
         ) {

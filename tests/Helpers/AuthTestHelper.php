@@ -55,7 +55,6 @@ class AuthTestHelper
             'password' => password_hash('password123', PASSWORD_DEFAULT),
             'handle' => 'mockuser',
             'is_active' => 1,
-            'deleted_at' => null,
             'created_at' => date('Y-m-d H:i:s'),
         ], $overrides);
     }

@@ -117,11 +117,10 @@ it('refuses a delegate who tries to suspend, reset or delete an administrator', 
         ->and(fn () => $password->setPassword($id))->toThrow(UnauthorizedException::class)
         ->and(fn () => $delete->destroy($id))->toThrow(UnauthorizedException::class);
 
-    $admin = $this->db->query('SELECT is_active, suspended_at, deleted_at FROM users WHERE id = ?', [$this->adminId])->fetch();
+    $admin = $this->db->query('SELECT is_active, suspended_at FROM users WHERE id = ?', [$this->adminId])->fetch();
 
     expect((int) $admin['is_active'])->toBe(1)
-        ->and($admin['suspended_at'])->toBeNull()
-        ->and($admin['deleted_at'])->toBeNull();
+        ->and($admin['suspended_at'])->toBeNull();
 });
 
 it('still lets a delegate suspend an ordinary account', function () {

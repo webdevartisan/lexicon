@@ -65,7 +65,7 @@ class UserSuspensionService
         }
 
         $user = $this->database
-            ->query('SELECT id, suspended_at FROM users WHERE id = ? AND deleted_at IS NULL', [$userId])
+            ->query('SELECT id, suspended_at FROM users WHERE id = ?', [$userId])
             ->fetch();
 
         if (!$user) {

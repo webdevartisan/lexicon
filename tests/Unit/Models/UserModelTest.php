@@ -74,135 +74,17 @@ test('insertUserRoles returns true for empty array without database call', funct
 });
 
 /**
- * Verifies that softDelete constructs proper UPDATE SQL with NOW() function.
- *
- * Mocks both the idempotency SELECT check and the UPDATE execute call.
- * The SELECT returns an active record (deleted_at = null) to allow the UPDATE to proceed.
+ * Tests that findByEmail looks the user up by email with a bound parameter.
  */
-test('softDelete constructs correct SQL with timestamp', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    // Step 1: Mock the idempotency SELECT — record exists and is active
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(
-            Mockery::on(fn (string $sql): bool => str_contains($sql, 'SELECT id, deleted_at FROM users') &&
-                str_contains($sql, 'WHERE id = ?')
-            ),
-            [$userId]
-        )
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetch')
-        ->once()
-        ->with(\PDO::FETCH_ASSOC)
-        ->andReturn(['id' => $userId, 'deleted_at' => null]); // active record
-
-    // Step 2: Mock the UPDATE soft delete
-    $this->dbMock->shouldReceive('execute')
-        ->once()
-        ->with(
-            Mockery::on(fn (string $sql): bool => str_contains($sql, 'UPDATE users') &&
-                str_contains($sql, 'deleted_at = NOW()') &&
-                str_contains($sql, 'WHERE id = ?') &&
-                str_contains($sql, 'deleted_at IS NULL')
-            ),
-            [$userId]
-        )
-        ->andReturn(1);
-
-    $result = $this->userModel->softDelete($userId);
-
-    expect($result)->toBeTrue();
-});
-
-/**
- * Verifies softDelete returns false when record does not exist.
- *
- * The SELECT idempotency check finds no record, so no UPDATE is issued.
- */
-test('softDelete returns false when record does not exist', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::any(), [$userId])
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetch')
-        ->once()
-        ->with(\PDO::FETCH_ASSOC)
-        ->andReturn(false); // record not found
-
-    // No UPDATE should be issued for non-existent records
-    $this->dbMock->shouldNotHaveReceived('execute');
-
-    $result = $this->userModel->softDelete($userId);
-
-    expect($result)->toBeFalse();
-});
-
-/**
- * Verifies softDelete returns true when record is already soft-deleted (idempotency).
- *
- * Confirms idempotent behavior: deleting an already-deleted record returns true
- * without issuing a redundant UPDATE query.
- */
-test('softDelete returns true when record is already soft-deleted', function () {
-    $userId = $this->faker->numberBetween(1, 1000);
-
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::any(), [$userId])
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetch')
-        ->once()
-        ->with(\PDO::FETCH_ASSOC)
-        ->andReturn(['id' => $userId, 'deleted_at' => '2025-01-01 00:00:00']); // already deleted
-
-    // No UPDATE should be issued — idempotent early return
-    $this->dbMock->shouldNotHaveReceived('execute');
-
-    $result = $this->userModel->softDelete($userId);
-
-    expect($result)->toBeTrue();
-});
-
-/**
- * Verifies softDelete throws InvalidArgumentException for invalid IDs.
- *
- * Ensures validation fires before any database interaction.
- */
-test('softDelete throws InvalidArgumentException for non-positive ID', function (int $invalidId) {
-    expect(fn () => $this->userModel->softDelete($invalidId))
-        ->toThrow(\InvalidArgumentException::class, 'ID must be a positive integer');
-
-    $this->dbMock->shouldNotHaveReceived('query');
-    $this->dbMock->shouldNotHaveReceived('execute');
-})->with([
-    'zero' => [0],
-    'negative' => [-1],
-]);
-
-/**
- * Tests that findByEmail query excludes soft-deleted users.
- *
- * Verifies WHERE clause includes deleted_at IS NULL condition.
- */
-test('findByEmail excludes soft-deleted users in SQL query', function () {
+test('findByEmail queries by email', function () {
     $email = $this->faker->safeEmail();
 
     expect($email)->toBeValidEmail();
 
-    // ensure soft-deleted users filtered at query level, not application level
     $this->dbMock->shouldReceive('query')
         ->once()
         ->with(
-            Mockery::on(function ($sql) {
-                return str_contains($sql, 'WHERE email = ?')
-                    && str_contains($sql, 'deleted_at IS NULL');
-            }),
+            Mockery::on(fn ($sql) => str_contains($sql, 'WHERE email = ?')),
             [$email]
         )
         ->andReturn($this->stmtMock);
@@ -218,21 +100,15 @@ test('findByEmail excludes soft-deleted users in SQL query', function () {
 });
 
 /**
- * Tests that findById excludes soft-deleted users in SQL query.
- *
- * Verifies WHERE clause includes deleted_at IS NULL condition.
+ * Tests that findById looks the user up by id with a bound parameter.
  */
-test('findById excludes soft-deleted users in SQL query', function () {
+test('findById queries by id', function () {
     $userId = $this->faker->numberBetween(1, 1000);
 
-    // ensure soft-deleted users filtered at query level
     $this->dbMock->shouldReceive('query')
         ->once()
         ->with(
-            Mockery::on(function ($sql) {
-                return str_contains($sql, 'WHERE id = ?')
-                    && str_contains($sql, 'deleted_at IS NULL');
-            }),
+            Mockery::on(fn ($sql) => str_contains($sql, 'WHERE id = ?')),
             [$userId]
         )
         ->andReturn($this->stmtMock);
@@ -245,31 +121,6 @@ test('findById excludes soft-deleted users in SQL query', function () {
     $result = $this->userModel->findById($userId);
 
     expect($result)->toBeNull();
-});
-
-/**
- * Tests that findAll excludes soft-deleted users in SQL query.
- *
- * Verifies WHERE clause includes deleted_at IS NULL condition.
- */
-test('findAll excludes soft-deleted users in SQL query', function () {
-    // ensure soft-deleted users filtered at query level
-    $this->dbMock->shouldReceive('query')
-        ->once()
-        ->with(Mockery::on(function ($sql) {
-            return str_contains($sql, 'SELECT * FROM users')
-                && str_contains($sql, 'WHERE deleted_at IS NULL');
-        }))
-        ->andReturn($this->stmtMock);
-
-    $this->stmtMock->shouldReceive('fetchAll')
-        ->once()
-        ->with(\PDO::FETCH_ASSOC)
-        ->andReturn([]);
-
-    $result = $this->userModel->findAll();
-
-    expect($result)->toBeArray();
 });
 
 /**
@@ -665,8 +516,7 @@ test('countAdministrators constructs correct parameterless query', function () {
         ->withArgs(function ($sql, $params = null) {
             $sqlValid = str_contains($sql, 'SELECT COUNT(DISTINCT u.id)')
                 && str_contains($sql, "r.role_slug = 'administrator'")
-                && str_contains($sql, 'u.is_active = 1')
-                && str_contains($sql, 'u.deleted_at IS NULL');
+                && str_contains($sql, 'u.is_active = 1');
 
             // accept either no second param or empty array/null
             $paramsValid = $params === null || $params === [] || !isset($params);

@@ -264,7 +264,7 @@ it('refuses a suspended account even with the right password', function () {
     $mocks['auth']->login($email, $password);
 })->throws(AccountSuspendedException::class);
 
-it('ends the session of an account suspended or deleted after it signed in', function (array $state) {
+it('ends the session of an account suspended after it signed in', function (array $state) {
     $mocks = AuthTestHelper::createMockedAuth();
 
     $mocks['session']
@@ -288,5 +288,4 @@ it('ends the session of an account suspended or deleted after it signed in', fun
     expect($mocks['auth']->user())->toBeNull();
 })->with([
     'suspended' => [['is_active' => 0]],
-    'deleted' => [['deleted_at' => '2026-09-01 10:00:00']],
 ]);

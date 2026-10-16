@@ -61,14 +61,6 @@ class UserResource
         return (bool) ($this->data['posts_count'] ?? null);
     }
 
-    /**
-     * Check if user is soft-deleted.
-     */
-    public function isDeleted(): bool
-    {
-        return !empty($this->data['deleted_at']);
-    }
-
     public function lastLogin(): ?string
     {
         return (string) ($this->data['comments_received_count'] ?? null);
