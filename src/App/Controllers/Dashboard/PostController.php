@@ -11,6 +11,7 @@ use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
@@ -70,6 +71,7 @@ final class PostController extends AppController
         private PostContentSanitizer $contentSanitizer,
         private AnalyticsStatsModel $analyticsStats,
         private ActiveBlog $activeBlog,
+        private PostListingModel $postListing,
     ) {}
 
     /**
@@ -114,7 +116,7 @@ final class PostController extends AppController
         $activeTag = $rawTag > 0 ? $this->tagModel->findForBlog($rawTag, $blogId) : null;
         $tagId = $activeTag ? $rawTag : null;
 
-        $result = $this->model->findByAuthorWithFiltersPagination(
+        $result = $this->postListing->findByAuthorWithFiltersPagination(
             authorId: $authorScope,
             page: $page,
             perPage: 12,
@@ -135,7 +137,7 @@ final class PostController extends AppController
         }
         unset($p);
 
-        $counts = $this->model->countsByStatusForAuthor(
+        $counts = $this->postListing->countsByStatusForAuthor(
             authorId: $authorScope,
             blogId: $blogId,
             searchQuery: $q,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\CategoryModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\PublishedPostModel;
 use App\Models\UserModel;
@@ -20,6 +21,7 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->postListing = new PostListingModel($this->db);
     $this->publishedPosts = new PublishedPostModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
@@ -418,7 +420,7 @@ it('returns paginated filtered author posts', function () {
             ->create();
     }
 
-    $result = $this->postModel->findByAuthorWithFiltersPagination($userId, 1, 10);
+    $result = $this->postListing->findByAuthorWithFiltersPagination($userId, 1, 10);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(10)
@@ -441,7 +443,7 @@ it('caps perPage at 100 for security', function () {
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
         ->count(5);
 
-    $result = $this->postModel->findByAuthorWithFiltersPagination($userId, 1, 200);
+    $result = $this->postListing->findByAuthorWithFiltersPagination($userId, 1, 200);
 
     expect($result)->toBeArray()
         ->and($result['pagination']['per_page'])->toBe(100);

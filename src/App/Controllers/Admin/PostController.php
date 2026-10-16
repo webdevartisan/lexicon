@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Resources\SystemResource;
 use App\Services\ExternalMediaGuard;
@@ -37,6 +38,7 @@ class PostController extends AppController
         private ExternalMediaGuard $mediaGuard,
         private PostContentSanitizer $contentSanitizer,
         private MediaService $media,
+        private PostListingModel $postListing,
     ) {}
 
     /**
@@ -211,7 +213,7 @@ class PostController extends AppController
             // is currently showing without hunting for it through the pages.
             pinned: 'p.featured_on_home DESC');
 
-        $result = $this->model->findAllForAdmin(
+        $result = $this->postListing->findAllForAdmin(
             $page, 20, $status, $q,
             $blogId > 0 ? $blogId : null,
             $featured, $visibility, $sort->orderBy()

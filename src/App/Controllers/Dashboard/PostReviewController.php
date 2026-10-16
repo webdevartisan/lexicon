@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
@@ -36,6 +37,7 @@ final class PostReviewController extends AppController
         private ReviewModel $reviewModel,
         private BlogSettingsModel $blogSettingsModel,
         private BlogRoleLabels $roleLabels,
+        private PostListingModel $postListing,
     ) {}
 
     /**
@@ -191,7 +193,7 @@ final class PostReviewController extends AppController
         $blog = $this->getBlog((int) $blogId);
 
         Gate::authorize('reviewPosts', $blog, $user);
-        $posts = $this->model->findReviewQueueForBlog((int) $blog->id());
+        $posts = $this->postListing->findReviewQueueForBlog((int) $blog->id());
 
         breadcrumbs()->set([
             ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],

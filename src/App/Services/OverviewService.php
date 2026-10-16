@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Gate;
 use App\Models\BlogSettingsModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Resources\BlogResource;
 use App\Services\Analytics\AnalyticsReportService;
@@ -29,6 +30,7 @@ final class OverviewService
         private BlogSettingsModel $settings,
         private BlogSubscriberModel $subscribers,
         private AnalyticsReportService $analytics,
+        private PostListingModel $postListing,
     ) {}
 
     /**
@@ -67,14 +69,14 @@ final class OverviewService
      */
     private function blogPosts(int $blogId, bool $workflowEnabled): array
     {
-        $drafts = $this->posts->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'draft')['data'];
+        $drafts = $this->postListing->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'draft')['data'];
         $pending = $workflowEnabled
-            ? $this->posts->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'pending')['data']
+            ? $this->postListing->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'pending')['data']
             : [];
 
         return [
-            'counts' => $this->posts->countsByStatusForAuthor(authorId: null, blogId: $blogId),
-            'recent' => $this->posts->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'published')['data'],
+            'counts' => $this->postListing->countsByStatusForAuthor(authorId: null, blogId: $blogId),
+            'recent' => $this->postListing->findAllInBlogWithFilters($blogId, 1, self::LIST_SIZE, 'published')['data'],
             'needsAttention' => array_slice(array_merge($drafts, $pending), 0, self::LIST_SIZE),
         ];
     }
@@ -87,8 +89,8 @@ final class OverviewService
     private function myWork(int $blogId, int $userId): array
     {
         return [
-            'counts' => $this->posts->countsByStatusForAuthor(authorId: $userId, blogId: $blogId),
-            'drafts' => $this->posts->findByAuthorWithFiltersPagination(
+            'counts' => $this->postListing->countsByStatusForAuthor(authorId: $userId, blogId: $blogId),
+            'drafts' => $this->postListing->findByAuthorWithFiltersPagination(
                 authorId: $userId, perPage: self::LIST_SIZE, blogId: $blogId, status: 'draft'
             )['data'],
         ];
@@ -101,7 +103,7 @@ final class OverviewService
      */
     private function review(int $blogId): array
     {
-        $queue = $this->posts->findReviewQueueForBlog($blogId);
+        $queue = $this->postListing->findReviewQueueForBlog($blogId);
         $states = array_count_values(array_column($queue, 'workflow_state'));
 
         return [

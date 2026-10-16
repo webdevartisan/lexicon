@@ -860,6 +860,12 @@ $container->set(App\Models\PostModel::class, function ($c) {
     );
 });
 
+$container->set(App\Models\PostListingModel::class, function ($c) {
+    return new App\Models\PostListingModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
 $container->set(App\Models\PublishedPostModel::class, function ($c) {
     return new App\Models\PublishedPostModel(
         $c->get(Framework\Database::class)

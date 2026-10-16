@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\BlogModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
@@ -16,6 +17,7 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->postListing = new PostListingModel($this->db);
     $this->blogModel = new BlogModel($this->db);
     $this->userModel = new UserModel($this->db);
 
@@ -25,8 +27,8 @@ beforeEach(function () {
     $this->otherBlogId = BlogFactory::new($this->blogModel)->published()->create($this->ownerId);
 
     $this->publishedEverywhere = function (int $blogId, ?int $authorId = null): array {
-        $counts = $this->postModel->countsByStatusForAuthor(authorId: $authorId, blogId: $blogId)['published'];
-        $list = $this->postModel->findByAuthorWithFiltersPagination(
+        $counts = $this->postListing->countsByStatusForAuthor(authorId: $authorId, blogId: $blogId)['published'];
+        $list = $this->postListing->findByAuthorWithFiltersPagination(
             authorId: $authorId,
             perPage: 100,
             blogId: $blogId,
