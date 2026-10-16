@@ -1594,7 +1594,7 @@ SELECT 1, id FROM permissions;
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 2, id FROM permissions 
 WHERE permission_slug IN (
-    'view_users', 'view_all_blogs', 'manage_all_posts', 'edit_all_posts', 
+    'view_users', 'view_all_blogs', 'create_blogs', 'manage_all_posts', 'edit_all_posts', 
     'delete_all_posts', 'publish_all_posts', 'view_all_posts',
     'review_posts', 'approve_posts', 'reject_posts', 'provide_feedback',
     'review_submissions', 'handle_reports'
@@ -1609,7 +1609,7 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 3, id FROM permissions
 WHERE permission_slug IN (
-    'create_blogs', 'edit_own_blog', 'delete_own_blog', 'view_all_blogs',
+    'edit_own_blog', 'delete_own_blog', 'view_all_blogs',
     'assign_authors', 'manage_team', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
     'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
     'reject_posts', 'assign_reviewers', 'provide_feedback', 'review_submissions'
@@ -1668,6 +1668,16 @@ WHERE permission_slug IN (
     'submit_ideas', 'view_own_submissions', 'view_all_posts',
     'create_posts', 'edit_own_posts'
 );
+
+-- ----------------------------------------------------------------------------
+-- Assign Permissions to Reader Role
+-- ----------------------------------------------------------------------------
+-- Every account starts as a reader, and any reader may start a blog. Taking
+-- create_blogs away here closes blog creation to new sign-ups.
+-- ----------------------------------------------------------------------------
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE role_slug = 'reader'), id FROM permissions
+WHERE permission_slug = 'create_blogs';
 
 -- ============================================================================
 -- SEED DATA - RESERVED SLUGS

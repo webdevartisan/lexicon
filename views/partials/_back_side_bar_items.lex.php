@@ -216,9 +216,9 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
     <?php } ?>
 <?php } ?>
 
-<!-- Empty state: no blog is active. A reader is offered a first blog, everyone else
-     is pointed at Blogs to choose one. Only meaningful in the dashboard. -->
-<?php if (($area ?? '') === 'back' && !$has_blog_context) { ?>
+<!-- Empty state: no blog is active. A reader who may create one is offered a first blog,
+     anyone with blogs is pointed at Blogs to choose one. Only meaningful in the dashboard. -->
+<?php if (($area ?? '') === 'back' && !$has_blog_context && (!empty($user_blogs) || !empty($can_create_blog))) { ?>
     <li class="px-4 py-3 mt-3 text-vertical-menu-item text-center text-xs group-data-[sidebar-size=sm]:hidden">
         <?php if (empty($user_blogs)) { ?>
         <span class="block opacity-50 italic mb-2"><?= $t('common.startWritingHint') ?></span>

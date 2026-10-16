@@ -60,6 +60,8 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // get the same invitation a guest gets, pointed at the form rather
         // than at sign-up, since they are already registered.
         $homeViewerIsReader = !empty($viewer['is_reader']);
+// A reader the site does not let start a blog gets no primary button at all.
+$homeShowsCta = !$homeViewerIsReader || !empty($viewer['can_create_blog']);
 $homeCtaUrl = !auth()->check()
     ? '/register'
     : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
@@ -68,7 +70,7 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
     : site_content('banner.ctaDashboard');
 ?>
         <div class="lx-cover-actions">
-            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a>
+            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
             <a href="<?= e(lurl('/discover')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.discover') }}</a>
         </div>
 
@@ -229,7 +231,7 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
             <p><?= e(site_content('cta.body')) ?></p>
         </div>
         <div class="lx-close-actions">
-            <a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a>
+            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
         </div>
     </div>
 </section>

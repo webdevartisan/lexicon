@@ -102,29 +102,35 @@ describe('BlogPolicy per-blog actions', function () {
 
 describe('BlogPolicy::create', function () {
 
-    test('a system role that may start a blog can create one', function (string $role) {
+    test('an account whose system roles grant create_blogs can start a blog', function (string $role) {
         $policy = new BlogPolicy();
 
-        expect($policy->create(makeUser(1, [$role])))->toBeTrue();
-    })->with(['administrator', 'content_manager', 'reader']);
+        expect($policy->create(['id' => 1, 'roles' => [$role], 'permissions' => ['create_blogs']]))->toBeTrue();
+    })->with(['content_manager', 'reader']);
+
+    test('the same role without create_blogs cannot', function (string $role) {
+        $policy = new BlogPolicy();
+
+        expect($policy->create(['id' => 1, 'roles' => [$role], 'permissions' => []]))->toBeFalse();
+    })->with(['content_manager', 'reader']);
+
+    test('an administrator can always start a blog', function () {
+        $policy = new BlogPolicy();
+
+        expect($policy->create(makeUser(1, ['administrator'])))->toBeTrue();
+    });
 
     // Blog roles live in blog_users and say nothing about starting a blog of your own.
-    test('a blog role does not let the account start a blog', function (string $role) {
+    test('a blog role name alone does not let the account start a blog', function (string $role) {
         $policy = new BlogPolicy();
 
         expect($policy->create(makeUser(1, [$role])))->toBeFalse();
-    })->with(['editor', 'author', 'contributor', 'reviewer', 'viewer']);
+    })->with(['editor', 'author', 'contributor', 'reviewer', 'blog_owner']);
 
     test('user with no roles cannot create blog', function () {
         $policy = new BlogPolicy();
 
         expect($policy->create(makeUser(1, [])))->toBeFalse();
-    });
-
-    test('user with unknown role cannot create blog', function () {
-        $policy = new BlogPolicy();
-
-        expect($policy->create(makeUser(1, ['subscriber'])))->toBeFalse();
     });
 });
 

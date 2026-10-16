@@ -131,7 +131,9 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     // back to where they already are.
                     $drawerIsReader = !empty($viewer['is_reader']);
 ?>
+                    <?php if (!$drawerIsReader || !empty($viewer['can_create_blog'])) { ?>
                     <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
+                    <?php } ?>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>
                         <button type="submit" class="lx-btn lx-btn-ghost lx-btn-fit">{{ t('header.signOut') }}</button>

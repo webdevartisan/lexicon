@@ -28,9 +28,11 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
             {% cmp="select" name="sort" options="{$sortOptions}" selectedKey="{$sort}" onchange="this.form.submit()" %}
         </form>
 
+        <?php if (!empty($can_create_blog)) { ?>
         <div class="shrink-0">
             {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="{$createLabel}" %}
         </div>
+        <?php } ?>
     </div>
 
     <?php if ($groups['owned'] === [] && $groups['shared'] === []) { ?>
@@ -64,7 +66,9 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                 <?php if ($group === 'owned' && !$hasOwned) { ?>
                 {% cache 'lucide:blogs:book-open' ttl=31536000 %}<i data-lucide="book-open" class="size-10 text-slate-400 mx-auto mb-2"></i>{% endcache %}
                 <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">{{ t('dashboard.blogs.empty.noOwned') }}</p>
+                <?php if (!empty($can_create_blog)) { ?>
                 {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="{$createLabel}" %}
+                <?php } ?>
                 <?php } else { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('dashboard.blogs.empty.groupFiltered')) ?></p>
                 <?php } ?>
