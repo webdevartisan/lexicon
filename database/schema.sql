@@ -1594,7 +1594,7 @@ SELECT 1, id FROM permissions;
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 2, id FROM permissions 
 WHERE permission_slug IN (
-    'view_users', 'view_all_blogs', 'create_blogs', 'manage_all_posts', 'edit_all_posts', 
+    'view_all_blogs', 'create_blogs', 'manage_all_posts', 'edit_all_posts', 
     'delete_all_posts', 'publish_all_posts', 'view_all_posts',
     'review_posts', 'approve_posts', 'reject_posts', 'provide_feedback',
     'review_submissions', 'handle_reports'

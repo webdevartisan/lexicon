@@ -37,6 +37,14 @@ abstract class AppController extends BaseController implements SessionAwareInter
     protected ?string $areaAbility = null;
 
     /**
+     * Per-action exceptions to $areaAbility, as action => ability. An action
+     * not listed here still needs $areaAbility, so a new action fails closed.
+     *
+     * @var array<string, string>
+     */
+    protected array $actionAbilities = [];
+
+    /**
      * Inject Session service via setter (called by Dispatcher).
      */
     public function setSession(Session $session): void
@@ -50,8 +58,10 @@ abstract class AppController extends BaseController implements SessionAwareInter
      */
     public function beforeAction(string $action): void
     {
-        if ($this->areaAbility !== null) {
-            \App\Gate::authorize($this->areaAbility, \App\Resources\SystemResource::class, auth()->user() ?? []);
+        $ability = $this->actionAbilities[$action] ?? $this->areaAbility;
+
+        if ($ability !== null) {
+            \App\Gate::authorize($ability, \App\Resources\SystemResource::class, auth()->user() ?? []);
         }
     }
 

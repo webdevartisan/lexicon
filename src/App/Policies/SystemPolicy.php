@@ -45,6 +45,7 @@ class SystemPolicy implements PolicyInterface
     private const AREA_PERMISSIONS = [
         'accessDashboard' => 'access_control_panel',
         'manageUsers' => 'manage_all_users',
+        'viewUsers' => 'view_users',
         'manageBlogs' => 'manage_all_blogs',
         'managePosts' => 'manage_all_posts',
         'handleReports' => 'handle_reports',
@@ -92,6 +93,17 @@ class SystemPolicy implements PolicyInterface
     public function manageUsers(array $user): bool
     {
         return $this->allowsArea($user, 'manageUsers');
+    }
+
+    /**
+     * Look accounts up in the control panel without changing them: the user
+     * list, the account page and the profile preview. Managing implies it.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function viewUsers(array $user): bool
+    {
+        return $this->allowsArea($user, 'viewUsers') || $this->manageUsers($user);
     }
 
     /**

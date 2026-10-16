@@ -11,7 +11,7 @@ $fullName = trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? ''));
 $isSuspended = $user['suspended_at'] !== null;
 $accountStatus = $isSuspended ? 'suspended' : ((int) $user['is_active'] === 1 ? 'active' : 'inactive');
 $accountLabel = $isSuspended ? 'Suspended' : ((int) $user['is_active'] === 1 ? 'Active' : 'Deactivated');
-$mayActOnTarget = !$targetIsAdmin || $actorIsAdmin;
+$mayActOnTarget = $canManageUsers && (!$targetIsAdmin || $actorIsAdmin);
 
 $card = 'card mb-5';
 $heading = 'text-base font-semibold text-slate-900 dark:text-zink-50';
@@ -75,7 +75,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
         <a href="#content" class="text-custom-500 hover:underline">Content</a>
         <a href="#reports" class="text-custom-500 hover:underline">Reports</a>
         <a href="#moderation" class="text-custom-500 hover:underline">Moderation</a>
-        <a href="#security" class="text-custom-500 hover:underline">Security</a>
+        <?php if ($canManageUsers) { ?><a href="#security" class="text-custom-500 hover:underline">Security</a><?php } ?>
         <a href="#activity" class="text-custom-500 hover:underline">Activity</a>
     </nav>
 
@@ -122,7 +122,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h3 id="access-h" class="<?= $heading ?>">Access</h3>
                 <div class="flex flex-wrap gap-2">
-                    <?php if ($canAssignSiteRoles) { ?>
+                    <?php if ($canManageUsers && $canAssignSiteRoles) { ?>
                     {% cmp="btn" href="{$base}/site-role" variant="slate" icon="shield" label="Change site role" %}
                     <?php } ?>
                     <?php if ($mayActOnTarget) { ?>
@@ -272,6 +272,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
         </div>
     </section>
 
+    <?php if ($canManageUsers) { ?>
     <section id="security" class="<?= $card ?>" aria-labelledby="security-h">
         <div class="card-body">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -357,6 +358,7 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
             <?php } ?>
         </div>
     </section>
+    <?php } ?>
 
     <section id="activity" class="<?= $card ?>" aria-labelledby="activity-h">
         <div class="card-body">

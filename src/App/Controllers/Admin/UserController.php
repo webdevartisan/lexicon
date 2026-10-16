@@ -32,6 +32,8 @@ use Framework\Core\Response;
  */
 class UserController extends ManagedUserController
 {
+    protected array $actionAbilities = ['index' => 'viewUsers'];
+
     public const SOCIAL_NETWORKS = ['website', 'twitter', 'instagram', 'linkedin', 'github'];
 
     /** New accounts get this site role unless an administrator picks another. */
@@ -93,6 +95,7 @@ class UserController extends ManagedUserController
             'canHandleReports' => Gate::allows('handleReports', SystemResource::class, $actor),
             'canAssignSiteRoles' => Gate::allows('assignSystemRoles', SystemResource::class, $actor),
             'canImpersonate' => Gate::allows('impersonateUsers', SystemResource::class, $actor),
+            'canManageUsers' => Gate::allows('manageUsers', SystemResource::class, $actor),
         ]);
     }
 
