@@ -312,9 +312,9 @@ $router->group([
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostController', 'action' => 'makePublic', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostController', 'action' => 'makePrivate', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostController', 'action' => 'unlist', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostStatusController', 'action' => 'makePublic', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostStatusController', 'action' => 'makePrivate', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostStatusController', 'action' => 'unlist', 'method' => 'POST']);
 
     // Post translations (per-locale overlays; offered when the blog enables localized posts).
     $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}', ['controller' => 'PostTranslationController', 'action' => 'edit', 'method' => 'GET']);
@@ -435,11 +435,11 @@ $router->group([
     $r->add('/post/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/draft', ['controller' => 'PostController', 'action' => 'draft', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/archive', ['controller' => 'PostController', 'action' => 'archive', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/draft', ['controller' => 'PostStatusController', 'action' => 'draft', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/archive', ['controller' => 'PostStatusController', 'action' => 'archive', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
-    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
 
     $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
 

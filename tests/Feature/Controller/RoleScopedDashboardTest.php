@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Dashboard\PostController;
+use App\Controllers\Dashboard\PostStatusController;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
@@ -89,6 +90,14 @@ beforeEach(function () {
         return $controller;
     };
 
+    $this->statusController = function (string $path): PostStatusController {
+        $request = makeRequest($path, 'POST', ['_token' => App::container()->get(Csrf::class)->getToken()]);
+        $controller = App::container()->get(PostStatusController::class);
+        setupController($controller, $request, $this->viewer);
+
+        return $controller;
+    };
+
     $this->sidebar = function (): array {
         $blog = $this->blogs->getBlog($this->blogId);
         $nav = new NavigationService(require ROOT_PATH.'/config/navigation.php', auth());
@@ -152,7 +161,7 @@ it('refuses publishing to a contributor', function () {
     $memberId = ($this->signInAs)('contributor');
     $mine = ($this->ownPost)($memberId);
 
-    expect(fn () => ($this->postController)('/dashboard/post/'.$mine.'/publish', 'POST')->publish((string) $mine))
+    expect(fn () => ($this->statusController)('/dashboard/post/'.$mine.'/publish')->publish((string) $mine))
         ->toThrow(UnauthorizedException::class);
 });
 
