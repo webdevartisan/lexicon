@@ -10,13 +10,4 @@ $description = $blog['description'] ?? '';
     </div>
 
     {% cmp="input" type="textarea" label="Description" name="description" value="{$description}" rows="4" %}
-
-    <div>
-        <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" name="is_active" value="1"
-                   class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500"
-                {% if (!isset($blog['is_active']) || $blog['is_active']): %} checked {% endif; %}>
-            Active (visible to readers)
-        </label>
-    </div>
 </div>

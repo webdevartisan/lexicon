@@ -17,11 +17,8 @@ $statusBadge = [
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div class="flex items-center gap-2">
                     <h2 class="text-lg font-semibold text-slate-900 dark:text-zink-50"><?= e($blog['blog_name']) ?></h2>
-                    <?php if (!empty($blog['is_active'])) { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800">Active</span>
-                    <?php } else { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500">Inactive</span>
-                    <?php } ?>
+                    <?php $blogStatus = (string) ($blog['status'] ?? 'draft'); $statusLabel = ucfirst($blogStatus); ?>
+                    {% cmp="status-badge" status="{$blogStatus}" label="{$statusLabel}" %}
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="<?= e(lurl('/blog/'.((string) ($blog['blog_slug'] ?? '')))) ?>" target="_blank" rel="noopener"
