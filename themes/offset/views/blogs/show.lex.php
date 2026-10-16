@@ -182,7 +182,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <p class="colophon-fine reveal">
           <?= $blogTitle ?> is set in Archivo &amp; Schibsted Grotesk,
           printed on porcelain #EEF0F1 with one plate of cobalt,
-          and published on <?= e($_ENV['APP_NAME'] ?? 'the web') ?>.
+          and published on <?= e(env('APP_NAME', 'the web')) ?>.
         </p>
       </div>
     </div>

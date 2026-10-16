@@ -78,7 +78,7 @@
 
       <div class="foot-bottom">
         <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e($_ENV['APP_NAME'] ?? '') ?></a></span>
+        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

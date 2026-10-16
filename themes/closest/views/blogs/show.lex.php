@@ -178,7 +178,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
         <p class="legend-fine reveal">
           <?= $blogTitle ?> is set in Besley &amp; Barlow, drawn on chart paper #F3F5EE
-          with one blaze of trail orange, and published on <?= e($_ENV['APP_NAME'] ?? 'the web') ?>.
+          with one blaze of trail orange, and published on <?= e(env('APP_NAME', 'the web')) ?>.
         </p>
       </div>
     </div>

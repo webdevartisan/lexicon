@@ -179,7 +179,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <p class="curator-fine reveal">
           <?= $blogTitle ?> is set in Bodoni Moda &amp; Hanken Grotesk,
           hung on plaster #F4F1E9 behind one wall of viridian,
-          and published on <?= e($_ENV['APP_NAME'] ?? 'the web') ?>.
+          and published on <?= e(env('APP_NAME', 'the web')) ?>.
         </p>
       </div>
     </div>
