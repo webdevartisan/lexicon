@@ -108,7 +108,7 @@ test('CsrfTokenException reports 419', function () {
 
 test('the one-click unsubscribe POST passes without a token', function () {
     $next = MiddlewareTestHelper::createHandler('reached');
-    $request = new Request('/subscriptions/unsubscribe/'.str_repeat('a1', 32), 'POST', [], ['List-Unsubscribe' => 'One-Click']);
+    $request = new Request('/subscriptions/unsubscribe/'.str_repeat('a1', 32), 'POST', [], ['List-Unsubscribe' => 'One-Click'], [], [], [], []);
 
     expect($this->middleware->process($request, $next)->getBody())->toBe('reached');
 });
@@ -118,7 +118,7 @@ test('the unsubscribe exemption needs the full token and nothing after it', func
     $next = MiddlewareTestHelper::createTrackingHandler($reached);
 
     try {
-        $this->middleware->process(new Request($path, 'POST'), $next);
+        $this->middleware->process(new Request($path, 'POST', [], [], [], [], [], []), $next);
     } catch (CsrfTokenException) {
     }
 
