@@ -134,86 +134,9 @@ it('returns null when slug does not exist', function () {
     expect($post)->toBeNull();
 });
 
-/**
- * Test finding posts by author.
- *
- * Verifies findByAuthorId returns all author posts.
- */
-it('finds all posts by author', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
-        ->count(2);
-
-    $posts = $this->postModel->findByAuthorId($userId);
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(2);
-});
-
-/**
- * Test retrieving only published posts.
- *
- * Verifies published() excludes draft and archived posts.
- */
-it('returns only published posts', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'draft',
-        ])
-        ->create();
-
-    $posts = $this->postModel->published();
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(1)
-        ->and($posts[0]['status'])->toBe('published');
-});
-
 // ============================================================================
 // STATUS UPDATES
 // ============================================================================
-
-/**
- * Test publishing a draft post.
- *
- * Verifies publishPost changes status to published.
- */
-it('publishes draft post', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    $postId = PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'draft',
-        ])
-        ->create();
-
-    $result = $this->postModel->publishPost($postId);
-
-    expect($result)->toBeTrue();
-
-    $post = $this->postModel->find($postId);
-    expect($post['status'])->toBe('published');
-});
 
 /**
  * Test unpublishing a published post.
@@ -352,25 +275,6 @@ it('counts posts by blog ID', function () {
     $count = $this->postModel->countByBlogId($blogId);
 
     expect($count)->toBe(2);
-});
-
-/**
- * Test retrieving all posts for a blog.
- *
- * Verifies getAllByBlogId returns all posts regardless of status.
- */
-it('gets all posts by blog ID', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
-        ->count(2);
-
-    $posts = $this->postModel->getAllByBlogId($blogId);
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(2);
 });
 
 /**

@@ -197,32 +197,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Find posts by author ID.
-     *
-     * @param  int  $authorId  Author user ID
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function findByAuthorId(int $authorId): array
-    {
-        return $this->findBy('author_id', $authorId);
-    }
-
-    /**
-     * Get only published posts ordered by publish date.
-     *
-     * @return array<int, array<string, mixed>> Array of published post records
-     */
-    public function published(): array
-    {
-        $sql = "SELECT * FROM {$this->getTable()} 
-                WHERE status = 'published' 
-                ORDER BY published_at DESC";
-        $stmt = $this->database->query($sql);
-
-        return $stmt->fetchAll();
-    }
-
-    /**
      * Scheduled posts whose publish time has arrived.
      *
      * Compared against UTC because published_at is normalised to UTC on save;
@@ -465,31 +439,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Find previous published post for an author before a given UTC timestamp.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findPreviousByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
-    {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published' AND visibility = 'public'
-                AND published_at < :ts
-                ORDER BY published_at DESC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
-
-        return $row ?: null;
-    }
-
-    /**
      * Find previous published post for a blog before a given UTC timestamp.
      *
      * @param  int  $blogId  Blog ID
@@ -520,31 +469,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Find next published post for an author after a given UTC timestamp.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findNextByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
-    {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published' AND visibility = 'public'
-                AND published_at > :ts
-                ORDER BY published_at ASC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
-
-        return $row ?: null;
-    }
-
-    /**
      * Find next published post for a blog after a given UTC timestamp.
      *
      * @param  int  $blogId  Blog ID
@@ -572,32 +496,6 @@ class PostModel extends AppModel
 
         // Blog-scoped neighbour lookup, busted for the whole blog on any post write.
         return fragment()->rememberData($cacheKey, $loadNext, 3600, false);
-    }
-
-    /**
-     * Find recent published posts by author excluding a specific slug.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $excludeSlug  Slug to exclude from results
-     * @param  int  $limit  Maximum number of posts
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function findRecentByAuthorExcludingSlug(int $authorId, string $excludeSlug, int $limit = 4): array
-    {
-        $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published' AND visibility = 'public'
-                AND slug <> :slug
-                ORDER BY published_at DESC
-                LIMIT :limit";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':slug' => $excludeSlug,
-            ':limit' => $limit,
-        ]);
-
-        return $stmt->fetchAll() ?: [];
     }
 
     /**
@@ -676,51 +574,6 @@ class PostModel extends AppModel
 
         // Blog-scoped published listing; busted on any post write for the blog.
         return fragment()->rememberData($cacheKey, $loadPage, 3600, false);
-    }
-
-    /**
-     * Find posts by author with optional filters.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  int|null  $blogId  Optional blog ID filter
-     * @param  string  $status  Optional status filter
-     * @param  string  $searchQuery  Optional search term for title/content
-     * @return array<int, array<string, mixed>> Array of post records with blog_name
-     */
-    public function findByAuthorWithFilters(int $authorId, ?int $blogId = null, string $status = '', string $searchQuery = ''): array
-    {
-        $sql = "SELECT p.*, b.blog_name
-                FROM {$this->getTable()} p
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                WHERE p.author_id = :author_id";
-
-        $params = [':author_id' => $authorId];
-
-        // Apply blog filter if given
-        if ($blogId !== null) {
-            $sql .= ' AND p.blog_id = :blog_id';
-            $params[':blog_id'] = $blogId;
-        }
-
-        // Apply status filter if given and valid
-        if ($status !== '' && in_array($status, self::STATUSES, true)) {
-            $sql .= ' AND p.status = :status';
-            $params[':status'] = $status;
-        }
-
-        // Apply search filter if query is non-empty
-        if ($searchQuery !== '') {
-            $sql .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $searchTerm = '%'.$searchQuery.'%';
-            $params[':search_title'] = $searchTerm;
-            $params[':search_content'] = $searchTerm;
-        }
-
-        $sql .= ' ORDER BY p.published_at DESC';
-
-        $stmt = $this->database->query($sql, $params);
-
-        return $stmt->fetchAll() ?: [];
     }
 
     /**
@@ -1054,28 +907,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Get index feed with search or recent posts.
-     *
-     * Delegates to search or recent listing based on query parameter.
-     *
-     * @param  array<string, mixed>  $options  Options array with page, perPage, categoryName, query keys
-     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
-     */
-    public function getIndexFeed(array $options = []): array
-    {
-        $page = $options['page'] ?? 1;
-        $perPage = $options['perPage'] ?? 8;
-        $categoryName = $options['categoryName'] ?? null;
-        $query = $options['query'] ?? '';
-
-        if ($query !== '') {
-            return $this->searchPublishedPosts($query, $page, $perPage, $categoryName);
-        }
-
-        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryName);
-    }
-
-    /**
      * Change post status to draft.
      *
      * @param  int  $id  Post ID
@@ -1084,22 +915,6 @@ class PostModel extends AppModel
     public function unpublishPost(int $id): bool
     {
         $sql = "UPDATE posts SET status = 'draft' WHERE id = :id AND status <> 'moderated'";
-        $affected = $this->database->execute($sql, [':id' => $id]);
-
-        return $affected > 0;
-    }
-
-    /**
-     * Change post status to published.
-     *
-     * @param  int  $id  Post ID
-     * @return bool True on success
-     */
-    public function publishPost(int $id): bool
-    {
-        // A post a moderator hid comes back only through the moderation flow,
-        // never through a publish button or a bulk action.
-        $sql = "UPDATE posts SET status = 'published' WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [':id' => $id]);
 
         return $affected > 0;
@@ -1388,22 +1203,6 @@ class PostModel extends AppModel
         $result = $stmt->fetch();
 
         return (int) ($result['count'] ?? 0);
-    }
-
-    /**
-     * Get all posts for a blog.
-     *
-     * Used to find all uploaded files before deletion.
-     *
-     * @param  int  $blogId  Blog ID
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function getAllByBlogId(int $blogId): array
-    {
-        $sql = "SELECT * FROM {$this->getTable()} WHERE blog_id = :blog_id";
-        $stmt = $this->database->query($sql, [':blog_id' => $blogId]);
-
-        return $stmt->fetchAll();
     }
 
     /**
