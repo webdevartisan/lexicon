@@ -9,6 +9,7 @@ use Framework\Core\Response;
 use Framework\Exceptions\ValidationException;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Interfaces\TranslatorInterface;
 use Framework\Session;
 
 /**
@@ -22,7 +23,8 @@ use Framework\Session;
 final class HandleValidationExceptionMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private Session $session
+        private Session $session,
+        private TranslatorInterface $translator
     ) {}
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -43,7 +45,7 @@ final class HandleValidationExceptionMiddleware implements MiddlewareInterface
             if (!isset($flash['error'])) {
                 $flash['error'] = [];
             }
-            $flash['error'][] = 'Please correct the errors and try again.';
+            $flash['error'][] = $this->translator->translate('common.flash.validationFailed');
             $this->session->set('_flash', $flash);
 
             $response = new Response();

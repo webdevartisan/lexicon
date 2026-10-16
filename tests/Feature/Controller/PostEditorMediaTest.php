@@ -8,6 +8,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use App\Services\TranslationService;
 use Framework\Core\App;
 use Framework\Core\Request;
 use Framework\Exceptions\CsrfTokenException;
@@ -147,7 +148,7 @@ it('rejects a save carrying an invalid CSRF token', function () {
 
 it('refuses an image upload request whose token has expired with a 419 the uploader can read', function () {
     $session = App::container()->get(Session::class);
-    $middleware = new CsrfMiddleware(new Csrf($session), $session);
+    $middleware = new CsrfMiddleware(new Csrf($session), $session, new TranslationService('en'));
 
     $request = new Request('/dashboard/upload', 'POST', [], [], [], [], [], [
         'x-csrf-token' => 'expired-token',

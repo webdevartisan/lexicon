@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Framework\Interfaces\TranslatorInterface;
+
 /**
  * TranslationService loads locale JSON and resolves translations by exact key (flat dotted)
  * or by traversing nested arrays using a dot path (structured), with simple {name} interpolation.
  */
-class TranslationService
+class TranslationService implements TranslatorInterface
 {
     /** @var array<string,mixed> Parsed translations for the active locale. */
     private array $translations = [];

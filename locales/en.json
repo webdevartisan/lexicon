@@ -451,7 +451,11 @@
         "newPost": "New Post",
         "brand": "Lexicon",
         "more": "More",
-        "search": "Search"
+        "search": "Search",
+        "flash": {
+            "sessionExpired": "Your session expired before that was submitted. Nothing was changed - please try again.",
+            "validationFailed": "Please correct the errors and try again."
+        }
     },
     "meta": {
         "title": "Lexicon. Your words deserve a good home.",

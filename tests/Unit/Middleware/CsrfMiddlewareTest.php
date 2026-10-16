@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Services\TranslationService;
 use Framework\Core\Request;
 use Framework\Exceptions\CsrfTokenException;
 use Framework\Security\Csrf;
@@ -19,7 +20,7 @@ use Tests\Helpers\MiddlewareTestHelper;
 beforeEach(function () {
     $this->session = app(Session::class);
     $this->csrf = new Csrf($this->session);
-    $this->middleware = new CsrfMiddleware($this->csrf, $this->session);
+    $this->middleware = new CsrfMiddleware($this->csrf, $this->session, new TranslationService('en'));
 
     $this->token = $this->csrf->getToken();
 

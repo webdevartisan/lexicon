@@ -283,6 +283,10 @@ $container->set(App\Services\TranslationService::class, function ($c) {
     );
 });
 
+$container->set(Framework\Interfaces\TranslatorInterface::class, function ($c) {
+    return $c->get(App\Services\TranslationService::class);
+});
+
 /**
  * Locale registry is the single source of truth for supported locales.
  * Shared because it caches the parsed config for the request.

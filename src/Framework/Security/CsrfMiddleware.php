@@ -9,6 +9,7 @@ use Framework\Core\Response;
 use Framework\Exceptions\CsrfTokenException;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Interfaces\TranslatorInterface;
 use Framework\Session;
 
 /**
@@ -41,7 +42,8 @@ final class CsrfMiddleware implements MiddlewareInterface
 
     public function __construct(
         private Csrf $csrf,
-        private Session $session
+        private Session $session,
+        private TranslatorInterface $translator
     ) {}
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -126,7 +128,7 @@ final class CsrfMiddleware implements MiddlewareInterface
 
         $flash = $this->session->get('_flash', []);
         $flash['error'] ??= [];
-        $flash['error'][] = 'Your session expired before that was submitted. Nothing was changed - please try again.';
+        $flash['error'][] = $this->translator->translate('common.flash.sessionExpired');
         $this->session->set('_flash', $flash);
 
         $response = new Response();

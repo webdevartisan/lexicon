@@ -6,6 +6,7 @@ use App\Controllers\Dashboard\BlogArchiveController;
 use App\Models\BlogModel;
 use App\Models\UserModel;
 use App\Services\BlogArchiveRateLimiter;
+use App\Services\TranslationService;
 use Framework\Core\App;
 use Framework\Core\Request;
 use Framework\Exceptions\CsrfTokenException;
@@ -114,7 +115,7 @@ it('lets the owner open the page', function () {
 
 it('rejects an archive POST without a CSRF token before it reaches the controller', function (string $action) {
     $session = App::container()->get(Session::class);
-    $middleware = new CsrfMiddleware(new Csrf($session), $session);
+    $middleware = new CsrfMiddleware(new Csrf($session), $session, new TranslationService('en'));
     $reached = false;
 
     $request = new Request('/dashboard/blog/'.$this->blogId.'/backup/'.$action, 'POST', [], ['include_drafts' => '1'], [], [], [], []);
