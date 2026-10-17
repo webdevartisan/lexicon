@@ -16,6 +16,9 @@ use DateTimeZone;
  * Text comes back as a translation key with ".lead" and ".text" parts.
  * GET action URLs are public paths (prefix base_url()), POST ones are
  * dashboard paths (pass through lurl()).
+ *
+ * @phpstan-type Action array{labelKey: string, url: string, method: string}
+ * @phpstan-type Line array{tone: string, key: string, params: array<string, string>, action: array{labelKey: string, url: string, method: string}|null}
  */
 final class VisibilityPresenter
 {
@@ -26,7 +29,7 @@ final class VisibilityPresenter
      * have their own notices.
      *
      * @param  array<string, mixed>  $post  Post row with raw UTC published_at
-     * @return array{tone: string, key: string, params: array<string, string>, action: array{labelKey: string, url: string, method: string}|null}|null
+     * @return Line|null
      */
     public static function forPost(array $post, BlogResource $blog, int $viewerId): ?array
     {
@@ -43,7 +46,7 @@ final class VisibilityPresenter
     }
 
     /**
-     * @return array{tone: string, key: string, params: array<string, string>, action: array{labelKey: string, url: string, method: string}|null}
+     * @return Line
      */
     public static function forBlog(BlogResource $blog, int $viewerId): array
     {
@@ -54,6 +57,9 @@ final class VisibilityPresenter
         };
     }
 
+    /**
+     * @return Line
+     */
     private static function draftLine(BlogResource $blog, int $viewerId): array
     {
         if (!$blog->canPublish($viewerId)) {
@@ -65,6 +71,10 @@ final class VisibilityPresenter
         return self::line('draft', $launchesBlog ? 'draftFirst' : 'draft');
     }
 
+    /**
+     * @param  array<string, mixed>  $post
+     * @return Line
+     */
     private static function publishedLine(array $post, string $visibility, BlogResource $blog, int $viewerId): array
     {
         if ($visibility === 'private') {
@@ -84,6 +94,9 @@ final class VisibilityPresenter
         return self::line('live', $visibility === 'unlisted' ? 'unlisted' : 'live', [], $open);
     }
 
+    /**
+     * @return Action|null
+     */
     private static function goLive(BlogResource $blog, int $viewerId): ?array
     {
         // Same rule as BlogPolicy::update, checked here so members never see a button that would 403
@@ -94,11 +107,17 @@ final class VisibilityPresenter
         return ['labelKey' => self::PREFIX.'actions.goLive', 'url' => '/dashboard/blog/'.$blog->id().'/go-live', 'method' => 'POST'];
     }
 
+    /**
+     * @return Action
+     */
     private static function open(string $label, string $path): array
     {
         return ['labelKey' => self::PREFIX.'actions.'.$label, 'url' => $path, 'method' => 'GET'];
     }
 
+    /**
+     * @param  array<string, mixed>  $post
+     */
     private static function localDate(array $post): string
     {
         $timezone = (string) ($post['timezone'] ?? '') ?: 'UTC';
@@ -107,6 +126,11 @@ final class VisibilityPresenter
         return $utc->setTimezone(new DateTimeZone($timezone))->format('j M Y, H:i');
     }
 
+    /**
+     * @param  array<string, string>  $params
+     * @param  Action|null  $action
+     * @return Line
+     */
     private static function line(string $tone, string $key, array $params = [], ?array $action = null): array
     {
         return ['tone' => $tone, 'key' => self::PREFIX.$key, 'params' => $params, 'action' => $action];

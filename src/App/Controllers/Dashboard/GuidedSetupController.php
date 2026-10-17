@@ -67,7 +67,7 @@ final class GuidedSetupController extends AppController
     /**
      * Check access, run the change, and answer with the progress after it.
      *
-     * @param  callable(int, int, array<string, mixed>): (Response|null)  $change
+     * @param  callable(int, int, array<string, mixed>): mixed  $change  Returns a Response to refuse, anything else to proceed
      */
     private function apply(int $blogId, callable $change): Response
     {
