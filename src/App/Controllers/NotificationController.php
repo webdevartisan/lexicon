@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\NotificationModel;
-use App\Services\LocaleState;
 use App\Services\NotificationFeed;
-use App\Services\TranslationService;
 use App\Services\ViewerContext;
 use Framework\Core\Response;
 
@@ -43,8 +41,6 @@ class NotificationController extends AppController
     private const PANEL_LIMIT = 8;
 
     private const PER_PAGE = 20;
-
-    private ?TranslationService $translator = null;
 
     public function __construct(
         private readonly NotificationModel $notifications,
@@ -298,16 +294,6 @@ class NotificationController extends AppController
             $this->userId(),
             implode('+', $this->scopes)
         ));
-    }
-
-    /**
-     * @param  array<string, string|int>  $params
-     */
-    private function t(string $key, array $params = []): string
-    {
-        $this->translator ??= new TranslationService(LocaleState::get()->chromeLocale);
-
-        return $this->translator->translate($key, $params);
     }
 
     /**

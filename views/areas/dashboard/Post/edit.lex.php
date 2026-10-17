@@ -26,6 +26,8 @@
     <input type="hidden" name="r" value="<?= e(old('r', $returnToken ?? '')) ?>" >
     {% include "partials/dashboard/post/_form.lex.php" %}
   </form>
+  <?php $goLiveReturn = '/dashboard/post/'.(int) $post['id'].'/edit'; ?>
+  {% cmp="go-live-form" line="{$visibility}" id="go-live-form" returnTo="{$goLiveReturn}" %}
 </div>
 
 {% cmp="modal" 

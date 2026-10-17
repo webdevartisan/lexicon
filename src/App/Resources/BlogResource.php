@@ -22,6 +22,8 @@ class BlogResource
 
     private ?bool $reviewsPosts = null;
 
+    private ?bool $hasPublishedPost = null;
+
     /**
      * @param  array<string, mixed>  $data  Blog row from the database
      */
@@ -174,6 +176,15 @@ class BlogResource
     public function reviewsPosts(): bool
     {
         return $this->reviewsPosts ??= $this->model->reviewsPosts($this->id());
+    }
+
+    /**
+     * Whether any post on this blog is published. Until one is, publishing a
+     * post also takes a draft blog live (BlogLaunchService).
+     */
+    public function hasPublishedPost(): bool
+    {
+        return $this->hasPublishedPost ??= $this->model->hasPublishedPost($this->id());
     }
 
     /**

@@ -145,12 +145,18 @@ final class RegisterController extends AppController
             $this->session->remove('pending_invite_token');
         }
 
-        // Readers who signed up mid-read go straight back to where they were;
-        // everyone else lands on their new reading hub.
+        // Follow what they clicked: "Create a Blog" carries on into Start your
+        // blog, a reader goes back to the post, and anyone else gets asked.
         if ($isAjax) {
             // No flash: the modal shows its own success state and usually
             // finishes the reader's action in place instead of navigating
-            return $this->jsonSuccess(['redirect' => $returnTo ?? lurl('/dashboard')]);
+            return $this->jsonSuccess(['redirect' => $returnTo ?? lurl('/welcome')]);
+        }
+
+        if ($returnTo !== null && preg_match('#^(/[a-z]{2})?/dashboard/blog/new$#', $returnTo) === 1) {
+            $this->flash('success', chrome_translate('setup.signup.welcomeWriter'));
+
+            return $this->redirect($returnTo);
         }
 
         if ($returnTo !== null) {
@@ -159,9 +165,7 @@ final class RegisterController extends AppController
             return $this->redirect($returnTo);
         }
 
-        $this->flash('success', 'Welcome! This is your reading hub — save posts, follow blogs, join discussions.');
-
-        return $this->redirect('/dashboard');
+        return $this->redirect(lurl('/welcome'));
     }
 
     /**

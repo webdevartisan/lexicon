@@ -10,8 +10,9 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
-    "postinstall": "npm run copy:tinymce",
+    "postinstall": "npm run copy:tinymce && npm run copy:alpine",
     "copy:tinymce": "shx cp -r node_modules/tinymce public/vendor/tinymce",
+    "copy:alpine": "shx mkdir -p public/vendor/alpine && shx cp node_modules/@alpinejs/csp/dist/cdn.min.js public/vendor/alpine/alpine.min.js && shx cp node_modules/@alpinejs/focus/dist/cdn.min.js public/vendor/alpine/focus.min.js",
     "dev:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css --watch --verbose",
     "build:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css"
   },
@@ -19,7 +20,9 @@
   "dependencies": {
     "tinymce": "^8.2.1",
     "lucide": "^0.344.0",
-    "jsdom": "^23.0.0"
+    "jsdom": "^23.0.0",
+    "@alpinejs/focus": "~3.14.9",
+    "@alpinejs/csp": "~3.14.9"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",

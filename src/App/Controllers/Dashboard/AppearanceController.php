@@ -8,7 +8,9 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
+use App\Models\GuidedSetupMarkModel;
 use App\Resources\BlogResource;
+use App\Services\BlogThemeService;
 use App\Services\MediaService;
 use App\Services\ThemeService;
 use App\Services\UploadService;
@@ -30,6 +32,8 @@ final class AppearanceController extends AppController
         private ThemeService $themes,
         private UploadService $uploader,
         private MediaService $mediaService,
+        private GuidedSetupMarkModel $setupMarks,
+        private BlogThemeService $blogThemes,
     ) {}
 
     /**
@@ -94,24 +98,8 @@ final class AppearanceController extends AppController
             return $this->redirect('/dashboard/blog/'.$blogId.'/appearance');
         }
 
-        if ($currentSettings === null) {
-            $this->settings->createDefaultForBlog((int) $blogId, ['theme' => $key]);
-        } else {
-            $this->settings->updateForBlog((int) $blogId, ['theme' => $key]);
-        }
-
-        // The theme decides every public page of the blog, so purge them all.
-        cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
-
-        audit()->log(
-            (int) $user['id'],
-            'blog.theme_changed',
-            'blog',
-            (int) $blogId,
-            ['from' => $currentSettings['theme'] ?? null, 'to' => $key],
-            $this->request->ip()
-        );
-
+        $this->blogThemes->activate((int) $blogId, $key, (int) $user['id'], $this->request->ip());
+        $this->setupMarks->mark((int) $user['id'], (int) $blogId, 'look_chosen');
         $this->flash('success', $themeName.' is now the active theme.');
 
         return $this->redirect('/dashboard/blog/'.$blogId.'/appearance');
@@ -218,6 +206,7 @@ final class AppearanceController extends AppController
             );
         }
 
+        $this->setupMarks->mark($userId, $id, 'look_chosen');
         $this->flash('success', 'Appearance updated.');
 
         return $this->redirect('/dashboard/blog/'.$blogId.'/appearance#branding');

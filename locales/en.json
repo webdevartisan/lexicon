@@ -2067,5 +2067,166 @@
         "sessionExpired": "Your session expired while this was open. Please try again.",
         "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
         "networkError": "Could not reach the server. Check your connection and try again."
+    },
+    "setup": {
+        "visibility": {
+            "live": {
+                "lead": "Live.",
+                "text": "Anyone can read this post."
+            },
+            "offlinePost": {
+                "lead": "Your blog is offline,",
+                "text": "so only you and your team can see this post."
+            },
+            "draftFirst": {
+                "lead": "Draft.",
+                "text": "Only you can see it until you publish. Publishing also puts your blog online."
+            },
+            "draft": {
+                "lead": "Draft.",
+                "text": "Only you can see it until you publish."
+            },
+            "draftReview": {
+                "lead": "Draft.",
+                "text": "When you submit it, an editor reviews it before it goes live."
+            },
+            "pending": {
+                "lead": "In review.",
+                "text": "Readers can see it once an editor publishes it."
+            },
+            "scheduled": {
+                "lead": "Scheduled.",
+                "text": "Readers can see it from {date}."
+            },
+            "private": {
+                "lead": "Private.",
+                "text": "Only you and your team can see this post."
+            },
+            "unlisted": {
+                "lead": "Unlisted.",
+                "text": "Anyone with the link can read it. It isn't listed on your blog."
+            },
+            "blogOnline": {
+                "lead": "Your blog is online.",
+                "text": "Anyone can read your published posts."
+            },
+            "blogOffline": {
+                "lead": "Your blog is offline.",
+                "text": "Only you and your team can see it."
+            },
+            "archived": {
+                "lead": "Archived.",
+                "text": "Readers can't see this blog."
+            },
+            "actions": {
+                "openPost": "Open it",
+                "goLive": "Put your blog online",
+                "openBlog": "Open blog"
+            },
+            "wentLive": "Your blog is online. Anyone can read your published posts."
+        },
+        "card": {
+            "title": "Your next steps",
+            "progress": "{done} of {total} done",
+            "hide": "Hide for now",
+            "collapsed": "Next steps ({done} of {total})",
+            "next": "Next",
+            "doneLabel": "Done: ",
+            "copied": "Copied",
+            "copyFallback": "Your blog's address",
+            "finishedTitle": "You're all set.",
+            "finishedIntro": "A few things you might not have found yet:",
+            "insights": "Insights",
+            "backup": "Backup and restore",
+            "translations": "Translations",
+            "done": "Done",
+            "review": {
+                "write": "Write your post and press Submit for review.",
+                "editor": "An editor reads it and either publishes it or sends it back with notes.",
+                "notify": "You'll get a notification either way."
+            }
+        },
+        "steps": {
+            "start": {
+                "title": "Start your blog",
+                "description": ""
+            },
+            "first_post": {
+                "title": "Publish your first post",
+                "description": "Your first post puts your blog online.",
+                "action": "Write a post",
+                "done": "Your blog went live with it."
+            },
+            "look": {
+                "title": "Make it look like yours",
+                "description": "Pick a look, add a logo and a short description.",
+                "action": "Choose a look"
+            },
+            "share": {
+                "title": "Tell people about it",
+                "description": "Copy your blog's link and share it.",
+                "action": "Copy link"
+            },
+            "followers": {
+                "title": "Let readers follow you",
+                "description": "Readers can subscribe and get new posts by email.",
+                "action": "See how"
+            },
+            "team": {
+                "title": "Write with someone",
+                "description": "Invite a friend to write or edit with you.",
+                "action": "Invite"
+            },
+            "member_first_post": {
+                "title": "Write your first post here",
+                "description": "The owner's readers will see it once it's published.",
+                "action": "Write a post"
+            },
+            "member_review": {
+                "title": "See how review works",
+                "description": "You write, an editor reviews, then it goes live.",
+                "action": "How review works"
+            },
+            "member_profile": {
+                "title": "Set up your profile",
+                "description": "Add your name and a photo so readers know who wrote the post.",
+                "action": "Edit profile"
+            }
+        },
+        "start": {
+            "title": "Start your blog",
+            "stepOf": "Step {n} of 3",
+            "continue": "Continue",
+            "skip": "Skip",
+            "name": {
+                "question": "What will you call your blog?",
+                "hint": "You can change the name any time."
+            },
+            "address": {
+                "label": "Your blog's address:",
+                "change": "Change",
+                "field": "Address",
+                "fixed": "The address can't be changed after this step."
+            },
+            "about": {
+                "question": "What's it about?",
+                "hint": "Readers see this under your blog's name."
+            },
+            "look": {
+                "question": "Pick a look.",
+                "hint": "You can change this later.",
+                "unknown": "That look isn't available. Pick one of these."
+            }
+        },
+        "signup": {
+            "welcomeWriter": "Welcome to Lexicon! Let's start your blog."
+        },
+        "welcome": {
+            "title": "What would you like to do?",
+            "startTitle": "Start a blog",
+            "startText": "Write and publish your own posts.",
+            "readTitle": "Read and follow blogs",
+            "readText": "Save posts, follow writers, join discussions."
+        }
     }
 }

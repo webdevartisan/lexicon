@@ -10,6 +10,7 @@ use App\Models\BlogModel;
 use App\Models\UserPreferencesModel;
 use App\Services\ActiveBlog;
 use App\Services\BlogRoleLabels;
+use App\Services\GuidedSetupService;
 use App\Services\OverviewService;
 use Framework\Core\Response;
 
@@ -26,6 +27,7 @@ class HomeController extends AppController
         private ActiveBlog $activeBlog,
         private OverviewService $overview,
         private BlogRoleLabels $roleLabels,
+        private GuidedSetupService $setup,
     ) {}
 
     /**
@@ -52,6 +54,8 @@ class HomeController extends AppController
             'blog' => ['id' => $blog->id(), 'name' => $blog->name(), 'slug' => $blog->slug(), 'status' => $blog->status()],
             'roleLabel' => $isOwner ? null : $this->roleLabels->label((string) $this->blogModel->storedRoleFor($blogId, $userId)),
             'hideTitle' => true,
+            'setup' => $this->setup->forUser($userId, $blog->id()),
+            'blogUrl' => base_url().'/blog/'.$blog->slug(),
         ] + $this->overview->for($blog, $user));
     }
 

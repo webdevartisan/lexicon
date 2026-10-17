@@ -18,6 +18,7 @@ use App\Models\ReviewModel;
 use App\Models\TagModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\PostActionPresenter;
+use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
 use App\Services\ActiveBlog;
@@ -169,6 +170,7 @@ final class PostController extends AppController
             'tagId' => $tagId,
             'activeTag' => $activeTag,
             'workflowEnabled' => !empty($settings['workflow_enabled']),
+            'blogVisibility' => $blog->status() === 'published' ? null : VisibilityPresenter::forBlog($blog, $userId),
         ]);
     }
 
@@ -240,6 +242,7 @@ final class PostController extends AppController
             'workflowEnabled' => $workflowEnabled,
             'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
+            'visibility' => VisibilityPresenter::forPost(['status' => 'draft'], $blog, $userId),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
@@ -387,6 +390,7 @@ final class PostController extends AppController
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
 
         $postArray = $post->toArray();
+        $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id']);
         if ($displayDate) {
             $postArray['published_at'] = $displayDate;
         }
@@ -427,6 +431,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            'visibility' => $visibility,
             'canSetVisibility' => $this->canSetVisibility($blog, (int) $user['id']),
             ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(

@@ -1,78 +1,68 @@
 {% extends "back.lex.php" %}
 
-{% block title %}{{ t('blog.create.pageTitle') }}{% endblock %}
-{% block subtitle %}{{ t('blog.create.pageSubtitle') }}{% endblock %}
+{% block title %}{{ t('setup.start.title') }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/cp-assets/css/blog-start.css?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/css/blog-start.css') ?>">
+{% endblock %}
 
 {% block body %}
-{% set nameLabel = t('blog.form.fields.name.label') %}
-{% set namePlaceholder = t('blog.form.fields.name.placeholder') %}
-{% set slugLabel = t('blog.form.fields.slug.label') %}
-{% set slugUnderlabel = t('blog.form.fields.slug.underlabel') %}
-{% set descLabel = t('blog.form.fields.description.label') %}
-{% set descPlaceholder = t('blog.form.fields.description.placeholder') %}
-{% set createBtnLabel = t('blog.form.actions.create') %}
-{% set backBtnLabel = t('blog.form.actions.back') %}
+<?php
+$step = 1;
+$fieldErrors = errors();
+$addressBase = base_url().'/blog/';
+$inputClass = 'form-input w-full border-slate-200 focus:border-custom-500 focus:outline-none dark:border-zink-500 dark:bg-zink-700 dark:text-zink-100 dark:focus:border-custom-800';
+?>
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
+  <div class="mx-auto max-w-xl">
+    {% include "partials/dashboard/_start_steps.lex.php" %}
 
-<div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
-  <div class="max-w-2xl mx-auto">
+    <?php if (!empty($error)) { ?>
+    <p class="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-100" role="alert"><?= e($error) ?></p>
+    <?php } ?>
 
-    {% if error|notempty %}
-    <div class="mb-4">
-      <div class="flex items-start gap-3 p-3 text-sm rounded-md bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-100 dark:border-red-700">
-        <div class="mt-0.5"><i class="fas fa-exclamation-circle text-sm"></i></div>
-        <p class="font-semibold">{{ error }}</p>
-      </div>
-    </div>
-    {% endif %}
-
-    {% if errors|notempty %}
-    <div class="mb-4">
-      <div class="flex items-start gap-3 p-3 text-sm rounded-md bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-100 dark:border-red-700">
-        <div class="mt-0.5"><i class="fas fa-exclamation-circle text-sm"></i></div>
+    <form id="blog-create-form" method="post" action="<?= e(lurl('/dashboard/blog/create')) ?>" class="card start-step" data-start-step>
+      <?= csrf_field() ?>
+      <div class="card-body space-y-5 p-5 md:p-6">
         <div>
-          <p class="font-semibold">{{ t('blog.form.errors.title') }}</p>
-          <ul class="mt-2 space-y-1 list-disc list-inside">
-            {% foreach ($errors as $field => $msgs): %}
-              {% foreach ($msgs as $msg): %}
-                <li>{{ msg }}</li>
-              {% endforeach %}
-            {% endforeach %}
-          </ul>
+          <label for="name" class="block text-xl font-semibold text-slate-900 dark:text-zink-50"><?= e($t('setup.start.name.question')) ?></label>
+          <input id="name" name="name" type="text" required minlength="2" maxlength="50" autocomplete="off" autofocus
+            value="<?= e((string) old('name')) ?>" aria-describedby="name-hint"
+            class="<?= $inputClass ?> mt-3 text-lg <?= isset($fieldErrors['name']) ? '!border-red-500' : '' ?>">
+          <p id="name-hint" class="mt-2 text-sm text-slate-500 dark:text-zink-300"><?= e($t('setup.start.name.hint')) ?></p>
+          <?php foreach ($fieldErrors['name'] ?? [] as $message) { ?>
+          <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($message) ?></p>
+          <?php } ?>
+        </div>
+
+        <div class="rounded-md bg-slate-50 px-3 py-2.5 dark:bg-zink-600/50">
+          <p class="text-sm text-slate-600 dark:text-zink-200" data-address hidden>
+            <?= e($t('setup.start.address.label')) ?>
+            <span dir="ltr" class="break-all"><?= e($addressBase) ?><strong class="font-semibold text-slate-900 dark:text-zink-50" data-address-slug></strong></span>
+          </p>
+          <details class="mt-1" data-address-change<?= isset($fieldErrors['slug']) ? ' open' : '' ?>>
+            <summary class="cursor-pointer text-sm font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none"><?= e($t('setup.start.address.change')) ?></summary>
+            <div class="mt-2">
+              <label for="slug" class="sr-only"><?= e($t('setup.start.address.field')) ?></label>
+              <div class="flex" dir="ltr">
+                <span class="inline-flex items-center rounded-l-md border border-r-0 border-slate-200 bg-white px-2 text-xs text-slate-500 dark:border-zink-500 dark:bg-zink-700 dark:text-zink-300"><?= e($addressBase) ?></span>
+                <input id="slug" name="slug" type="text" maxlength="50" autocomplete="off" spellcheck="false"
+                  value="<?= e((string) old('slug')) ?>"
+                  class="<?= $inputClass ?> min-w-0 flex-1 rounded-l-none text-sm <?= isset($fieldErrors['slug']) ? '!border-red-500' : '' ?>">
+              </div>
+              <?php foreach ($fieldErrors['slug'] ?? [] as $message) { ?>
+              <p id="slug_error" class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($message) ?></p>
+              <?php } ?>
+              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300"><?= e($t('setup.start.address.fixed')) ?></p>
+            </div>
+          </details>
         </div>
       </div>
-    </div>
-    {% endif %}
-
-    <form id="blog-create-form" method="post" action="/dashboard/blog/create">
-      {{ csrf_field() }}
-
-      <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600">
-        <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-          <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.create.essentials.title') }}</h2>
-          <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">
-            {{ t('blog.create.essentials.description') }}
-          </p>
-        </div>
-
-        <div class="p-4 space-y-4 md:p-5">
-          {% cmp="input" type="text" name="name" label="{$nameLabel}" placeholder="{$namePlaceholder}" required="true" %}
-
-          <?php $baseUrl = base_url().'/blog/'; ?>
-          {% cmp="input" type="text" name="slug" label="{$slugLabel}" prefix="{$baseUrl}" underlabel="{$slugUnderlabel}" required="true" %}
-
-          {% cmp="input" type="textarea" name="description" label="{$descLabel}" rows="4" placeholder="{$descPlaceholder}" %}
-        </div>
-
-        <div class="flex items-center justify-between gap-3 p-4 border-t border-slate-200 dark:border-zink-600 md:p-5">
-          <p class="text-[11px] text-slate-500 dark:text-zink-300">
-            {{ t('blog.create.afterCreateHint') }}
-          </p>
-          <div class="flex gap-2 shrink-0">
-            {% cmp="btn" href="/dashboard/blog" variant="slate" icon="step-back" label="{$backBtnLabel}" %}
-            {% cmp="btn" type="submit" variant="blue" icon="plus" label="{$createBtnLabel}" %}
-          </div>
-        </div>
-      </section>
+      <div class="flex justify-end border-t border-slate-200 p-4 dark:border-zink-600 md:px-6">
+        <button type="submit" class="inline-flex items-center gap-1.5 rounded-md border border-custom-500 bg-custom-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:border-custom-600 hover:bg-custom-600 focus:ring focus:ring-custom-100 dark:focus:ring-custom-500/20 max-sm:w-full max-sm:justify-center">
+          <?= e($t('setup.start.continue')) ?>
+        </button>
+      </div>
     </form>
   </div>
 </div>
@@ -80,9 +70,5 @@
 
 {% block scripts %}
 <script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
-<script nonce="<?= csp_nonce() ?>">
-  document.addEventListener('DOMContentLoaded', function () {
-    SlugField.bind({ source: 'name', target: 'slug', min: 2, max: 50, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=blog' });
-  });
-</script>
+<script src="/cp-assets/js/blog-start.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/blog-start.js') ?>" data-slug-check="<?= e(lurl('/dashboard/slug-check')) ?>?type=blog"></script>
 {% endblock %}

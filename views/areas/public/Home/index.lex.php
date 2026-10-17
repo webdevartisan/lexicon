@@ -63,7 +63,7 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
 // A reader the site does not let start a blog gets no primary button at all.
 $homeShowsCta = !$homeViewerIsReader || !empty($viewer['can_create_blog']);
 $homeCtaUrl = !auth()->check()
-    ? '/register'
+    ? '/register?return_to='.rawurlencode(lurl('/dashboard/blog/new'))
     : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
 $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
     ? site_content('banner.cta')

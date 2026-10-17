@@ -12,7 +12,7 @@ $I->amAGuest();
 $I->amOnPage('/en');
 $I->seeThePageLooksRight('visitor-homepage-with-banner');
 $I->declineCookies();
-$I->seeElementInDOM('a[href$="/register"]');
+$I->seeElementInDOM('a[href*="/register?return_to="]');
 $I->seeThePageLooksRight('visitor-homepage');
 
 // A visitor finds a blog and reads a post

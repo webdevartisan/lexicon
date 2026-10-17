@@ -37,6 +37,19 @@ $I->click('.notif-action-btn.is-primary');
 $I->waitForText("You've joined the blog");
 $I->seeThePageLooksRight('51-invitation-accepted');
 
+// Their overview offers the contributor's steps, never the owner's
+$I->amOnPage('/en/dashboard');
+$I->waitForElementVisible('[data-next-steps] section');
+$I->see('Write your first post here', '[data-next-steps]');
+$I->see('See how review works', '[data-next-steps]');
+foreach (['Start your blog', 'Publish your first post', 'Make it look like yours', 'Tell people about it', 'Let readers follow you', 'Write with someone'] as $ownerStep) {
+    $I->dontSee($ownerStep, '[data-next-steps]');
+}
+$I->seeThePageLooksRight('51-contributor-next-steps');
+$I->resizeWindow(390, 844);
+$I->seeThePageLooksRight('51-contributor-next-steps-phone');
+$I->resizeWindow(1280, 900);
+
 // A post submitted straight from New post goes into review
 $I->amOnPage('/en/dashboard/post/new');
 $I->waitForElement('#content_ifr', 15);

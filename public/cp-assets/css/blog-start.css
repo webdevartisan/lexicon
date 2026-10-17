@@ -1,0 +1,39 @@
+/*
+ * Start your blog: the three steps animate into each other with cross-document
+ * View Transitions. Browsers without them, or people who asked for less
+ * motion, get a normal page change.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  .start-step {
+    view-transition-name: start-step;
+  }
+
+  ::view-transition-old(start-step) {
+    animation: start-step-out 180ms ease-in both;
+  }
+
+  ::view-transition-new(start-step) {
+    animation: start-step-in 260ms ease-out both;
+  }
+}
+
+/* The next step comes in from the reading direction's end, so it flips for RTL */
+:root {
+  --start-step-shift: 24px;
+}
+
+:root[dir="rtl"] {
+  --start-step-shift: -24px;
+}
+
+@keyframes start-step-out {
+  to { opacity: 0; transform: translateX(calc(-1 * var(--start-step-shift))); }
+}
+
+@keyframes start-step-in {
+  from { opacity: 0; transform: translateX(var(--start-step-shift)); }
+}

@@ -82,6 +82,7 @@ class DatabaseHelper
             'analytics_notices_sent',
 
             // Blog-related
+            'guided_setup_marks',
             'blog_subscribers',
             'blog_invitations',
             'blog_settings',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\LinksHelper;
+use App\Models\GuidedSetupMarkModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
@@ -34,7 +35,8 @@ final class AccountProfileController extends AppController
         private UploadService $uploader,
         private PublicCacheInvalidator $cacheInvalidator,
         private DisplayNameService $displayNames,
-        private UserHandleValidator $userHandleValidator
+        private UserHandleValidator $userHandleValidator,
+        private GuidedSetupMarkModel $setupMarks,
     ) {}
 
     /**
@@ -157,6 +159,7 @@ final class AccountProfileController extends AppController
             $this->cacheInvalidator->purgeAuthorSurfaces($currentHandle);
         }
 
+        $this->setupMarks->markMemberBlogs($userId, 'profile_saved');
         $this->flash('success', chrome_translate('account.flash.profileSaved'));
 
         return $this->redirect(lurl('/account/profile'));

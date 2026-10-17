@@ -86,3 +86,12 @@ it('refuses a typed address with invalid characters', function (string $slug) {
     expect(implode(' ', slugErrors()))->toContain('lowercase letters, numbers and single hyphens')
         ->and($this->blogs->getBlogBySlug($slug))->toBeNull();
 })->with(['-hello-', 'Hello World', 'hello--world', 'héllo', 'hello_world']);
+
+it('create redirects to start about', function () {
+    $slug = 'start-flow-'.uniqid();
+    $response = ($this->create)('Start flow', $slug);
+    $blog = $this->blogs->getBlogBySlug($slug);
+
+    expect($response->getHeader('Location'))->toContain('/dashboard/blog/'.$blog['id'].'/start/about')
+        ->and(App::container()->get(Session::class)->get('_flash', []))->not->toHaveKey('success');
+});

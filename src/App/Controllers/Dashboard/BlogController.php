@@ -13,6 +13,7 @@ use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Presenters\BlogActionPresenter;
+use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
 use App\Services\BlogRoleLabels;
@@ -136,8 +137,7 @@ final class BlogController extends AppController
     /**
      * Show blog creation form.
      *
-     * Only collects the essentials (name, slug, description); everything
-     * optional lives on the settings page shown right after creation.
+     * Step 1 of Start your blog: the name, and the address built from it.
      */
     public function new(): Response
     {
@@ -148,10 +148,8 @@ final class BlogController extends AppController
     }
 
     /**
-     * Create new blog from the essentials, then hand off to settings.
-     *
-     * New blogs always start as drafts with default settings; the settings
-     * page is where visibility, theme, and the rest get configured.
+     * Create the blog as a draft with default settings, then carry on to the
+     * next step of Start your blog.
      */
     public function create(): Response
     {
@@ -207,9 +205,7 @@ final class BlogController extends AppController
                 $this->request->ip()
             );
 
-            $this->flash('success', 'Blog created. Configure it below whenever you are ready.');
-
-            return $this->redirect('/dashboard/blog/'.$blogId.'/settings');
+            return $this->redirect('/dashboard/blog/'.$blogId.'/start/about');
 
         } catch (\PDOException $e) {
             return $this->view('blog.new', [
@@ -262,12 +258,55 @@ final class BlogController extends AppController
             'blog' => $blog->toArray(),
             'blogUrl' => base_url().'/blog/'.$blog->slug(),
             'actions' => BlogActionPresenter::for($blog->status()),
+            'visibility' => $this->settingsVisibility($blog, (int) $user['id']),
             'backUrl' => '/dashboard',
             'settings' => $settings,
             'locales' => LocaleRegistry::instance()->names(),
             'current_locale' => $settings['default_locale'],
             'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
+    }
+
+    /**
+     * The settings page already has a Publish button, so its line keeps only
+     * the "Open blog" link.
+     *
+     * @return array<string, mixed>
+     */
+    private function settingsVisibility(BlogResource $blog, int $userId): array
+    {
+        $line = VisibilityPresenter::forBlog($blog, $userId);
+        if (($line['action']['method'] ?? '') === 'POST') {
+            $line['action'] = null;
+        }
+
+        return $line;
+    }
+
+    /**
+     * Take a draft blog online without touching its other settings. The
+     * "who can see this" line offers it wherever a blog is offline.
+     *
+     * @param  string  $id  Blog ID
+     */
+    public function goLive(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $blog = $this->getBlog($id);
+        Gate::authorize('update', $blog, auth()->user());
+
+        if ($blog->status() === 'draft') {
+            $this->blogModel->update($blog->id(), [
+                'status' => 'published',
+                'published_at' => gmdate('Y-m-d H:i:s'),
+            ]);
+            $this->flash('success', $this->t('setup.visibility.wentLive'));
+        }
+
+        $back = safe_return_to($this->request->postParam('return_to')) ?? '/dashboard/blog/'.$blog->id().'/settings';
+
+        return $this->redirect($back);
     }
 
     /**

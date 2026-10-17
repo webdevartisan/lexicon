@@ -122,7 +122,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
             <div class="lx-drawer-actions">
                 {% if (!auth()->check()): %}
-                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl('/register')) ?>">{{ t('navigation.createBlog') }}</a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'))) ?>">{{ t('navigation.createBlog') }}</a>
                     <a class="lx-btn lx-btn-ghost lx-btn-fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
                 {% else %}
                     <?php

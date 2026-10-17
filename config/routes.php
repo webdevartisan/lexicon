@@ -252,6 +252,14 @@ $router->group([
     $r->add('/{id:\d+}/delete', ['controller' => 'NotificationController', 'action' => 'destroy', 'method' => 'POST']);
 });
 
+// Where a new account lands when sign-up didn't say what they came for.
+$router->group([
+    'prefix' => '/welcome',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'WelcomeController', 'action' => 'index', 'method' => 'GET']);
+});
+
 // Personal account settings, on the front for every account whatever its role.
 // Cut on ownership: anything belonging to the person lives here; anything
 // belonging to a blog stays in the dashboard. No namespace key, so these
@@ -302,6 +310,10 @@ $router->group([
 ], function (Router $r) {
     $r->add('/', ['controller' => 'HomeController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/active-blog', ['controller' => 'HomeController', 'action' => 'setActiveBlog', 'method' => 'POST']);
+    $r->add('/setup/{blogId:\d+}/hide', ['controller' => 'GuidedSetupController', 'action' => 'hide', 'method' => 'POST']);
+    $r->add('/setup/{blogId:\d+}/show', ['controller' => 'GuidedSetupController', 'action' => 'show', 'method' => 'POST']);
+    $r->add('/setup/{blogId:\d+}/dismiss', ['controller' => 'GuidedSetupController', 'action' => 'dismiss', 'method' => 'POST']);
+    $r->add('/setup/{blogId:\d+}/copied', ['controller' => 'GuidedSetupController', 'action' => 'copied', 'method' => 'POST']);
     $r->add('/invite/{token:[a-f0-9]+}', ['controller' => 'InviteController', 'action' => 'show', 'method' => 'GET']);
     // Personal account settings moved to the front under /account. The old
     // dashboard settings routes are deleted, not redirected.
@@ -309,6 +321,11 @@ $router->group([
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.
     $r->add('/blog/{id:\d+}/settings', ['controller' => 'BlogController', 'action' => 'settings', 'method' => 'GET']);
+    // Start your blog, steps 2 and 3; step 1 is /blog/new
+    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
 
     // Appearance hub: theme browser plus branding and front-page texts.
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
@@ -435,6 +452,7 @@ $router->group([
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
     $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/blog/{id:\d+}/go-live', ['controller' => 'BlogController', 'action' => 'goLive', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'POST']);

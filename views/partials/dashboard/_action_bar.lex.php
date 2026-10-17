@@ -6,7 +6,9 @@
  * Buttons submit through name="intent", so it works with JavaScript off. A
  * presenter decides which buttons appear and the controller still checks the intent.
  *
- * Expects: $actions (presenter output), $backUrl, optional $showAutosave
+ * Expects: $actions (presenter output), $backUrl, optional $showAutosave, optional
+ * $visibility (VisibilityPresenter output, shown under the buttons; its go-live
+ * button submits a go-live-form the page renders outside its own form)
  */
 $pillTones = [
     'slate' => 'bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200',
@@ -97,5 +99,10 @@ $primaryClass = $primary['variant'] === 'green'
     </button>
 
   </div>
+  <?php if (!empty($visibility)) { ?>
+  <div class="mt-2 border-t border-slate-100 pt-2 dark:border-zink-600">
+    {% cmp="visibility-line" line="{$visibility}" formId="go-live-form" %}
+  </div>
+  <?php } ?>
 </div>
 <script src="/cp-assets/js/action-bar.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/action-bar.js') ?>"></script>
