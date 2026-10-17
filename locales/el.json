@@ -272,7 +272,8 @@
             "empty": "Τίποτα σε αναμονή. Η ουρά είναι άδεια.",
             "states": {
                 "in_review": "Σε έλεγχο",
-                "needs_changes": "Χρειάζονται αλλαγές"
+                "needs_changes": "Χρειάζονται αλλαγές",
+                "approved": "Έτοιμο για δημοσίευση"
             },
             "by": "από {author}",
             "unassigned": "Χωρίς ελεγκτή",
@@ -1021,6 +1022,9 @@
             "post_approved": "{actor} ενέκρινε το {target}",
             "post_needs_changes": "{actor} ζήτησε αλλαγές στο {target}",
             "post_published": "Το άρθρο σας {target} δημοσιεύτηκε",
+            "post_review_started": "{actor} ξεκίνησε τον έλεγχο του {target}",
+            "post_ready_to_publish": "{actor} ενέκρινε το {target}, που είναι έτοιμο για δημοσίευση",
+            "post_withdrawn": "{actor} απέσυρε το {target} από τον έλεγχο",
             "post_reviewer_assigned": "{actor} σας ζήτησε να ελέγξετε το {target}",
             "post_reviewer_stale": "Ο ελεγκτής του {target} δεν μπορεί πλέον να το ελέγξει, οπότε είναι ξανά ανοιχτό σε όλους τους ελεγκτές",
             "post_workflow_disabled": "Ο έλεγχος απενεργοποιήθηκε, οπότε το {target} επέστρεψε στα πρόχειρα",

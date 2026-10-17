@@ -220,21 +220,21 @@ describe('WorkflowService::concludeReview', function () {
         return $post;
     }
 
-    test('records an approval when a post is published straight out of review', function (string $state, string $newStatus) {
+    test('records an approval when a post is published straight out of review', function (string $state, string $newStatus, string $told) {
         $review = Mockery::mock(ReviewModel::class);
         $review->shouldReceive('create')->with(10, 5, 'approved', '')->once()->andReturn(true);
 
         $notifications = Mockery::mock(NotificationService::class);
-        $notifications->shouldReceive('dispatch')->with(3, 'post.approved', Mockery::any())->once();
+        $notifications->shouldReceive('dispatch')->with(3, $told, Mockery::any())->once();
 
         $service = makeWorkflowService(null, null, $review, null, $notifications);
         $service->concludeReview(postBefore('pending', $state), $newStatus, 5);
 
         expect(true)->toBeTrue();
     })->with([
-        'in review, published' => ['in_review', 'published'],
-        'in review, scheduled' => ['in_review', 'scheduled'],
-        'awaiting changes, published' => ['needs_changes', 'published'],
+        'in review, published' => ['in_review', 'published', 'post.published'],
+        'in review, scheduled' => ['in_review', 'scheduled', 'post.approved'],
+        'awaiting changes, published' => ['needs_changes', 'published', 'post.published'],
     ]);
 
     test('records nothing when the post already has its approval or was never in review', function (string $status, string $state, string $newStatus) {
@@ -267,12 +267,25 @@ describe('WorkflowService::startReview', function () {
         return $post;
     }
 
-    test('claims a submission nobody holds yet', function () {
+    test('claims a submission nobody holds yet and tells its writer', function () {
         $reviewers = Mockery::mock(PostReviewerModel::class);
         $reviewers->shouldReceive('clearByPost')->never();
         $reviewers->shouldReceive('claim')->with(10, 7)->once()->andReturn(true);
 
-        expect(makeWorkflowService(null, $reviewers)->startReview(submission(), 7))->toBeTrue();
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->with(3, 'post.review_started', Mockery::any())->once();
+
+        expect(makeWorkflowService(null, $reviewers, null, null, $notifications)->startReview(submission(), 7))->toBeTrue();
+    });
+
+    test('tells nobody when someone else got there first', function () {
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('claim')->andReturn(false);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->never();
+
+        expect(makeWorkflowService(null, $reviewers, null, null, $notifications)->startReview(submission(), 7))->toBeFalse();
     });
 
     test('a take-over clears the current reviewer first', function () {
@@ -280,7 +293,10 @@ describe('WorkflowService::startReview', function () {
         $reviewers->shouldReceive('clearByPost')->with(10)->once()->ordered();
         $reviewers->shouldReceive('claim')->with(10, 7)->once()->ordered()->andReturn(true);
 
-        expect(makeWorkflowService(null, $reviewers)->startReview(submission(), 7, takeOver: true))->toBeTrue();
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->once();
+
+        expect(makeWorkflowService(null, $reviewers, null, null, $notifications)->startReview(submission(), 7, takeOver: true))->toBeTrue();
     });
 
     test('there is nothing to start once the post has left review', function (string $status, string $state) {
@@ -354,6 +370,30 @@ describe('WorkflowService::publish', function () {
 // ============================================================================
 
 describe('WorkflowService::approve', function () {
+
+    test('tells everyone who can publish, except the approver and the writer', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('transitionWorkflow')->andReturn(true);
+        $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(3));
+
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->andReturn(true);
+
+        $blogs = Mockery::mock(BlogModel::class);
+        $blogs->shouldReceive('getActiveUsersWithPermission')->with(42, 'publish_blog_posts')
+            ->andReturn([['user_id' => 1], ['user_id' => 3], ['user_id' => 5], ['user_id' => 8]]);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->with(3, 'post.approved', Mockery::any())->once();
+        $notifications->shouldReceive('dispatch')->with(1, 'post.ready_to_publish', Mockery::any())->once();
+        $notifications->shouldReceive('dispatch')->with(8, 'post.ready_to_publish', Mockery::any())->once();
+        $notifications->shouldReceive('dispatch')->with(5, Mockery::any(), Mockery::any())->never();
+        $notifications->shouldReceive('dispatch')->with(3, 'post.ready_to_publish', Mockery::any())->never();
+
+        makeWorkflowService($postModel, null, $review, null, $notifications, $blogs)->approve(10, 5);
+
+        expect(true)->toBeTrue();
+    });
 
     test('transitions post to approved, records review, notifies author', function () {
         $postModel = Mockery::mock(PostModel::class);
@@ -429,15 +469,39 @@ describe('WorkflowService::requestChanges', function () {
 
 describe('WorkflowService::resetToDraft', function () {
 
-    test('takes the post out of review', function () {
+    test('does nothing when the post was not pending', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('leaveReview')->with(10, 5)->once()->andReturn(false);
 
-        $service = makeWorkflowService($postModel);
-        $service->resetToDraft(10, 5);
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('findByPost')->andReturn([['reviewer_id' => 7]]);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->never();
+
+        makeWorkflowService($postModel, $reviewers, null, null, $notifications)->resetToDraft(10, 5);
 
         expect(true)->toBeTrue();
     });
+
+    test('tells the reviewer holding it, but not someone withdrawing it themselves', function (int $actorId, int $told) {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('leaveReview')->andReturn(true);
+        $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(3));
+
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('findByPost')->with(10)->andReturn([['reviewer_id' => 7]]);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->with(7, 'post.withdrawn', Mockery::any())->times($told);
+
+        makeWorkflowService($postModel, $reviewers, null, null, $notifications)->resetToDraft(10, $actorId);
+
+        expect(true)->toBeTrue();
+    })->with([
+        'the writer withdraws' => [3, 1],
+        'the reviewer returns it' => [7, 0],
+    ]);
 });
 
 // ============================================================================

@@ -61,6 +61,14 @@ final class NotificationPresenter
             'href' => '/dashboard/post/{post_id}/edit',
         ],
         'post.published' => ['icon' => 'megaphone', 'tone' => self::TONE_POSITIVE, 'href' => 'post'],
+        'post.review_started' => [
+            'icon' => 'user-check', 'actor' => 'reviewer_handle', 'href' => '/dashboard/post/{post_id}/edit',
+        ],
+        'post.ready_to_publish' => [
+            'icon' => 'check-check', 'tone' => self::TONE_POSITIVE, 'actor' => 'reviewer_handle',
+            'href' => '/dashboard/post/{post_id}/review',
+        ],
+        'post.withdrawn' => ['icon' => 'rotate-ccw', 'actor' => 'actor_handle', 'href' => '/dashboard/post/{post_id}/review'],
         'post.reviewer_assigned' => [
             'icon' => 'user-check', 'actor' => 'actor_handle', 'href' => '/dashboard/post/{post_id}/review',
         ],

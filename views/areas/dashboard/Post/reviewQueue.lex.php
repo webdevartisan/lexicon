@@ -6,10 +6,17 @@
 $workflowBadge = [
     'in_review' => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
     'needs_changes' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+    'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
 ];
 $workflowLabel = [
     'in_review' => $t('dashboard.reviewQueue.states.in_review'),
     'needs_changes' => $t('dashboard.reviewQueue.states.needs_changes'),
+    'approved' => $t('dashboard.reviewQueue.states.approved'),
+];
+$stateIcon = [
+    'in_review' => ['eye', 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300'],
+    'needs_changes' => ['pen-line', 'bg-amber-100 text-amber-700 dark:bg-amber-500/30 dark:text-amber-300'],
+    'approved' => ['check-check', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'],
 ];
 $claimLabel = $t('dashboard.reviewQueue.claim');
 $releaseLabel = $t('dashboard.reviewQueue.release');
@@ -49,9 +56,9 @@ $postId = (int) $p['id'];
 $reviewHref = "/dashboard/post/{$postId}/review";
 ?>
                 <li class="py-3 first:pt-0 last:pb-0 flex flex-wrap items-center gap-3">
-                    <span class="inline-flex items-center justify-center size-9 rounded-md shrink-0
-                        <?= $state === 'needs_changes' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/30 dark:text-amber-300' : 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' ?>">
-                        <i data-lucide="<?= $state === 'needs_changes' ? 'pen-line' : 'eye' ?>" class="size-4"></i>
+                    <?php [$iconName, $iconTone] = $stateIcon[$state] ?? $stateIcon['in_review']; ?>
+                    <span class="inline-flex items-center justify-center size-9 rounded-md shrink-0 <?= $iconTone ?>">
+                        <i data-lucide="<?= $iconName ?>" class="size-4"></i>
                     </span>
                     <div class="min-w-0 flex-1">
                         <a href="<?= e(lurl('/dashboard/post/'.((int) $p['id']).'/review')) ?>" class="block font-medium text-sm text-slate-900 dark:text-zink-50 hover:text-custom-500 truncate">

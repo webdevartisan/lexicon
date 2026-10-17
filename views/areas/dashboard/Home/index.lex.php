@@ -194,9 +194,11 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
                 <?php if ($review['items'] === []) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-6 text-center">{{ t('dashboard.overview.queueEmpty') }}</p>
                 <?php } else {
-                    $postList($review['items'], '/dashboard/post/%d/review', static fn (array $row): string => $t(
-                        $row['workflow_state'] === 'needs_changes' ? 'dashboard.overview.stateNeedsChanges' : 'dashboard.overview.stateInReview'
-                    ).' · '.(empty($row['reviewer_handle']) ? $t('dashboard.overview.unassigned') : '@'.$row['reviewer_handle']));
+                    $postList($review['items'], '/dashboard/post/%d/review', static fn (array $row): string => $t(match ($row['workflow_state']) {
+                        'needs_changes' => 'dashboard.overview.stateNeedsChanges',
+                        'approved' => 'dashboard.reviewQueue.states.approved',
+                        default => 'dashboard.overview.stateInReview',
+                    }).' · '.(empty($row['reviewer_handle']) ? $t('dashboard.overview.unassigned') : '@'.$row['reviewer_handle']));
                 } ?>
             </div>
         </section>

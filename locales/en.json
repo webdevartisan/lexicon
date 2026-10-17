@@ -272,7 +272,8 @@
             "empty": "Nothing waiting. The queue is empty.",
             "states": {
                 "in_review": "In review",
-                "needs_changes": "Needs changes"
+                "needs_changes": "Needs changes",
+                "approved": "Ready to publish"
             },
             "by": "by {author}",
             "unassigned": "Unassigned",
@@ -1021,6 +1022,9 @@
             "post_approved": "{actor} approved {target}",
             "post_needs_changes": "{actor} asked for changes on {target}",
             "post_published": "Your post {target} is live",
+            "post_review_started": "{actor} started reviewing {target}",
+            "post_ready_to_publish": "{actor} approved {target}, which is ready to publish",
+            "post_withdrawn": "{actor} withdrew {target} from review",
             "post_reviewer_assigned": "{actor} asked you to review {target}",
             "post_reviewer_stale": "The reviewer of {target} can no longer review it, so it is open to every reviewer again",
             "post_workflow_disabled": "Review was switched off, so {target} went back to draft",

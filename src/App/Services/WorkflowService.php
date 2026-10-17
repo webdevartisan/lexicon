@@ -190,7 +190,7 @@ class WorkflowService
         $postId = (int) $before->id();
         $this->auditTransition($postId, 'approved', $userId);
         $this->review->create($postId, $userId, 'approved', '');
-        $this->notifyReviewDecision($before, 'post.approved', $userId, '');
+        $this->notifyReviewDecision($before, $newStatus === 'published' ? 'post.published' : 'post.approved', $userId, '');
     }
 
     /**
@@ -211,7 +211,16 @@ class WorkflowService
             $this->postReviewer->clearByPost($post->id());
         }
 
-        return $this->postReviewer->claim($post->id(), $reviewerId);
+        if (!$this->postReviewer->claim($post->id(), $reviewerId)) {
+            return false;
+        }
+
+        $this->notifyQuietly(fn () => $this->notifications->dispatch($post->authorId(), 'post.review_started', [
+            ...$this->postPayload($post),
+            'reviewer_handle' => $this->userHandle($reviewerId),
+        ]));
+
+        return true;
     }
 
     /**
@@ -259,6 +268,36 @@ class WorkflowService
 
         if ($post) {
             $this->notifyReviewDecision($post, 'post.approved', $reviewerId, $feedback);
+            $this->notifyPublishers($post, $reviewerId);
+        }
+    }
+
+    /**
+     * Tell everyone who can publish on the blog that an approved post is waiting for them.
+     */
+    private function notifyPublishers(PostResource $post, int $reviewerId): void
+    {
+        $this->notifyQuietly(function () use ($post, $reviewerId): void {
+            $payload = [...$this->postPayload($post), 'reviewer_handle' => $this->userHandle($reviewerId)];
+
+            foreach ($this->blogs->getActiveUsersWithPermission($post->blog()->id(), 'publish_blog_posts') as $row) {
+                $uid = (int) $row['user_id'];
+                if ($uid !== $reviewerId && $uid !== $post->authorId()) {
+                    $this->notifications->dispatch($uid, 'post.ready_to_publish', $payload);
+                }
+            }
+        });
+    }
+
+    /**
+     * Run a notification fan-out without letting a failure undo the decision that triggered it.
+     */
+    private function notifyQuietly(callable $send): void
+    {
+        try {
+            $send();
+        } catch (\Throwable $e) {
+            error_log('Workflow notification failed: '.$e->getMessage());
         }
     }
 
@@ -316,9 +355,27 @@ class WorkflowService
      */
     public function resetToDraft(int $postId, int $actorId): void
     {
-        if ($this->post->leaveReview($postId, $actorId)) {
-            $this->auditTransition($postId, 'draft', $actorId);
+        $holders = $this->postReviewer->findByPost($postId);
+
+        if (!$this->post->leaveReview($postId, $actorId)) {
+            return;
         }
+
+        $this->auditTransition($postId, 'draft', $actorId);
+
+        $this->notifyQuietly(function () use ($postId, $actorId, $holders): void {
+            $post = $this->post->findResource($postId);
+            if ($post === false) {
+                return;
+            }
+
+            $payload = [...$this->postPayload($post), 'actor_handle' => $this->userHandle($actorId)];
+            foreach ($holders as $holder) {
+                if ((int) $holder['reviewer_id'] !== $actorId) {
+                    $this->notifications->dispatch((int) $holder['reviewer_id'], 'post.withdrawn', $payload);
+                }
+            }
+        });
     }
 
     /**

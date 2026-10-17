@@ -407,7 +407,7 @@ class PostListingModel extends AppModel
     }
 
     /**
-     * Review-pipeline posts for a blog, unassigned submissions first.
+     * Review-pipeline posts for a blog: ready to publish first, then unassigned submissions.
      *
      * One row per post. Older data can hold several reviewers on one post, so
      * only the latest assignment is shown, the one assignReviewer() would leave.
@@ -427,8 +427,9 @@ class PostListingModel extends AppModel
                 )
                 LEFT JOIN users ru ON ru.id = pr.reviewer_id
                 WHERE p.blog_id = ?
-                  AND p.workflow_state IN ('in_review', 'needs_changes')
-                ORDER BY (pr.reviewer_id IS NULL) DESC, p.updated_at DESC";
+                  AND p.status = 'pending'
+                  AND p.workflow_state IN ('in_review', 'needs_changes', 'approved')
+                ORDER BY (p.workflow_state = 'approved') DESC, (pr.reviewer_id IS NULL) DESC, p.updated_at DESC";
 
         return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }

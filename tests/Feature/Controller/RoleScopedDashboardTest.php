@@ -239,7 +239,7 @@ it('refuses the media library to a reviewer and opens it to a writer', function 
 });
 
 it('counts a post with two reviewers once on the Overview', function () {
-    $this->db->query("UPDATE posts SET workflow_state = 'in_review' WHERE id = ?", [$this->othersPostId]);
+    $this->db->query("UPDATE posts SET status = 'pending', workflow_state = 'in_review' WHERE id = ?", [$this->othersPostId]);
     for ($i = 0; $i < 2; $i++) {
         $reviewerId = UserFactory::new($this->users)->create();
         $this->blogs->addUserToBlog($this->blogId, $reviewerId, 'reviewer', $this->ownerId);

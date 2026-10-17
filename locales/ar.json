@@ -272,7 +272,8 @@
       "empty": "لا شيء بالانتظار. قائمة المراجعة فارغة.",
       "states": {
         "in_review": "قيد المراجعة",
-        "needs_changes": "تحتاج إلى تعديلات"
+        "needs_changes": "تحتاج إلى تعديلات",
+        "approved": "جاهزة للنشر"
       },
       "by": "بقلم {author}",
       "unassigned": "بلا مراجع",
@@ -1033,6 +1034,9 @@
       "post_approved": "وافق {actor} على {target}",
       "post_needs_changes": "طلب {actor} تعديلات على {target}",
       "post_published": "تدوينتك {target} منشورة الآن",
+      "post_review_started": "بدأ {actor} مراجعة {target}",
+      "post_ready_to_publish": "وافق {actor} على {target}، وهي جاهزة للنشر",
+      "post_withdrawn": "سحب {actor} التدوينة {target} من المراجعة",
       "post_reviewer_assigned": "طلب منك {actor} مراجعة {target}",
       "post_reviewer_stale": "لم يعد مراجع {target} قادرًا على مراجعتها، فأصبحت متاحة لكل المراجعين من جديد",
       "post_workflow_disabled": "أُوقفت المراجعة، فعادت {target} إلى المسودات",
