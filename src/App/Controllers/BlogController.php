@@ -361,8 +361,7 @@ class BlogController extends AppController
             throw new PageNotFoundException('Post not found', 404);
         }
 
-        $canPreview = auth()->check()
-            && $this->model->userCanAccessBlog((int) auth()->user()['id'], (int) $ctx['blog']['id']);
+        $canPreview = $this->viewerCanPreview((int) $ctx['blog']['id']);
 
         // Unlisted posts stay reachable by link; private ones are for collaborators only.
         if (!$canPreview && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') === 'private')) {
@@ -629,7 +628,10 @@ class BlogController extends AppController
             throw new PageNotFoundException('Blog not found', 404);
         }
 
-        if (isset($blog['status']) && $blog['status'] !== 'published') {
+        $status = $blog['status'] ?? 'published';
+        $isPreview = $status === 'draft' && $this->viewerCanPreview((int) $blog['id']);
+
+        if ($status !== 'published' && !$isPreview) {
             throw new PageNotFoundException('Blog not found', 404);
         }
 
@@ -662,7 +664,9 @@ class BlogController extends AppController
             // redirect guard, so name the content-locale URL as the one to index.
             'canonical' => $blogUrl,
             // Only an explicit indexable=false opts the blog out; a missing settings row must not.
-            'robots' => (array_key_exists('indexable', $settings) && !$settings['indexable']) ? 'noindex, nofollow' : null,
+            'robots' => $isPreview || (array_key_exists('indexable', $settings) && !$settings['indexable'])
+                ? 'noindex, nofollow'
+                : null,
         ];
 
         // 4) Back-compat field some templates expect
@@ -689,6 +693,14 @@ class BlogController extends AppController
         $this->refreshHeadI18n();
 
         return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet');
+    }
+
+    /**
+     * Whether the signed-in viewer belongs to the blog and may see what readers can't yet.
+     */
+    private function viewerCanPreview(int $blogId): bool
+    {
+        return auth()->check() && $this->model->userCanAccessBlog((int) auth()->user()['id'], $blogId);
     }
 
     /**

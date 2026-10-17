@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\PostModel;
 use App\Resources\PostResource;
+use App\Services\BlogLaunchService;
 use App\Services\SubscriberNotificationService;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
@@ -26,6 +27,7 @@ class PostStatusController extends AppController
         private PostModel $model,
         private WorkflowService $workflowService,
         private SubscriberNotificationService $subscriberNotifier,
+        private BlogLaunchService $blogLaunch,
     ) {}
 
     /**
@@ -47,6 +49,7 @@ class PostStatusController extends AppController
 
         $this->workflowService->concludeReview($post, 'published', (int) $user['id']);
         $this->model->publishNow((int) $id);
+        $launched = $this->blogLaunch->launchWithFirstPost((int) $id, $post->status());
         $this->subscriberNotifier->notifyPostPublished((int) $id);
 
         audit()->log(
@@ -58,7 +61,7 @@ class PostStatusController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', 'Post published successfully.');
+        $this->flash('success', $launched ? BlogLaunchService::LAUNCHED_MESSAGE : 'Post published successfully.');
 
         return $this->redirectBack();
     }

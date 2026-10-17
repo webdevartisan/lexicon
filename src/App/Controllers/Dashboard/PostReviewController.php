@@ -13,6 +13,7 @@ use App\Models\PostReviewerModel;
 use App\Models\ReviewModel;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Services\BlogLaunchService;
 use App\Services\BlogRoleLabels;
 use App\Services\SubscriberNotificationService;
 use App\Services\WorkflowService;
@@ -38,6 +39,7 @@ final class PostReviewController extends AppController
         private BlogRoleLabels $roleLabels,
         private PostListingModel $postListing,
         private SubscriberNotificationService $subscriberNotifier,
+        private BlogLaunchService $blogLaunch,
     ) {}
 
     /**
@@ -371,12 +373,18 @@ final class PostReviewController extends AppController
         }
 
         $status = $this->workflowService->publish($post, (int) $user['id']);
+        $launched = false;
         if ($status === 'published') {
+            $launched = $this->blogLaunch->launchWithFirstPost((int) $id, 'pending');
             $this->subscriberNotifier->notifyPostPublished((int) $id);
         }
 
         audit()->log($user['id'], 'post.'.$status, 'post', (int) $id, ['from' => 'review'], $this->request->ip());
-        $this->flash('success', $status === 'published' ? 'Published.' : 'Scheduled. It goes live on its date.');
+        $this->flash('success', match (true) {
+            $launched => BlogLaunchService::LAUNCHED_MESSAGE,
+            $status === 'published' => 'Published.',
+            default => 'Scheduled. It goes live on its date.',
+        });
 
         return $this->redirect($this->reviewUrl((int) $id));
     }

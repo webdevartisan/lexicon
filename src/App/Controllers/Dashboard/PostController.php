@@ -21,6 +21,7 @@ use App\Presenters\PostActionPresenter;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
 use App\Services\ActiveBlog;
+use App\Services\BlogLaunchService;
 use App\Services\ExternalMediaGuard;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
@@ -74,6 +75,7 @@ final class PostController extends AppController
         private AnalyticsStatsModel $analyticsStats,
         private ActiveBlog $activeBlog,
         private PostListingModel $postListing,
+        private BlogLaunchService $blogLaunch,
     ) {}
 
     /**
@@ -319,6 +321,8 @@ final class PostController extends AppController
             $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
             $this->model->setFeatured($postId, (int) $blog->id(), !empty($this->request->post['is_featured']));
 
+            $launched = $this->blogLaunch->launchWithFirstPost((int) $postId, 'draft');
+
             // No-op unless the post was created straight into published
             $this->subscriberNotifier->notifyPostPublished($postId);
 
@@ -337,7 +341,11 @@ final class PostController extends AppController
                 return $this->redirectAfterImageFailure($postId, $imageFailure);
             }
 
-            $this->flash('success', $submitted ? self::SUBMITTED_MESSAGE : 'Post saved.');
+            $this->flash('success', match (true) {
+                $submitted => self::SUBMITTED_MESSAGE,
+                $launched => BlogLaunchService::LAUNCHED_MESSAGE,
+                default => 'Post saved.',
+            });
 
             return $this->redirect("/dashboard/post/{$postId}/edit");
         }
@@ -625,10 +633,13 @@ final class PostController extends AppController
 
         $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); // TODO: optimize security
 
+        $launched = false;
+
         // Update if changes detected
         if (!empty($data)) {
             $this->workflowService->concludeReview($post, $newStatus, (int) $user['id']);
             $this->model->update((int) $id, $data);
+            $launched = $this->blogLaunch->launchWithFirstPost((int) $id, $oldStatus);
 
             // No-op unless the post just became published and was never announced
             $this->subscriberNotifier->notifyPostPublished((int) $id);
@@ -648,6 +659,8 @@ final class PostController extends AppController
             $this->flash('success', Gate::allows('update', $this->getPost((int) $id), $user)
                 ? self::SUBMITTED_MESSAGE
                 : 'Resubmitted. It went straight back to your reviewer.');
+        } elseif ($launched) {
+            $this->flash('success', BlogLaunchService::LAUNCHED_MESSAGE);
         } elseif (!empty($data) || $tagsChanged) {
             $this->flash('success', 'Post updated successfully.');
         } else {
@@ -880,6 +893,7 @@ final class PostController extends AppController
             };
 
             if ($action === 'publish') {
+                $this->blogLaunch->launchWithFirstPost($id, $post->status());
                 $this->subscriberNotifier->notifyPostPublished((int) $id);
             }
 
