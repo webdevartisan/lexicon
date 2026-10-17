@@ -28,20 +28,46 @@ $I->dontSee('Too many accounts were created');
 $I->seeThePageLooksRight('02-signed-up');
 $I->saveSessionSnapshot('writer');
 
-// The writer creates a blog
+// The writer starts a blog in three steps: name, what it's about, a look
 $I->amOnPage('/en/dashboard');
 $I->click('Create your blog');
-$I->seeThePageLooksRight('03-new-blog');
+$I->waitForText('What will you call your blog?');
+$I->see('Step 1 of 3');
 $I->fillField('name', "Walkthrough {$stamp}");
-$I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
-$blogSlug = $I->grabValueFrom('slug');
-$I->click('form[action*="blog/create"] button[type=submit]');
-$I->waitForText('Blog created');
-$blogId = $I->grabFromCurrentUrl('~/blog/(\d+)~');
+$I->waitForText("/blog/walkthrough-{$stamp}", 5, '[data-address]');
+$I->seeThePageLooksRight('03-start-name');
+$I->click('[data-address-change] summary');
+$I->fillField('slug', "walk-{$stamp}");
+$I->waitForText("/blog/walk-{$stamp}", 5, '[data-address]');
+$I->waitForText('This address is available.');
+$blogSlug = "walk-{$stamp}";
+$I->resizeWindow(390, 844);
+$I->seeThePageLooksRight('03-start-name-phone');
+$I->resizeWindow(1280, 900);
+$I->click('Continue');
+$I->waitForText("What's it about?");
+$I->see('Step 2 of 3');
+$blogId = $I->grabFromCurrentUrl('~/blog/(\d+)/start~');
 $I->waitForJS('return !!window.Alpine');
-$I->seeThePageLooksRight('04-blog-created');
+$I->fillField('description', 'Notes from a walk through the setup.');
+$I->seeThePageLooksRight('04-start-about');
+$I->click('Continue');
+$I->waitForText('Pick a look.');
+$I->see('Step 3 of 3');
+$I->seeCheckboxIsChecked('#theme-folio');
+$I->click('[data-theme-card=offset]');
+$I->seeCheckboxIsChecked('#theme-offset');
+$I->scrollDownTo('[data-theme-card=offset]');
+$I->waitForJS("return document.querySelector('[data-theme-card=offset] img').complete");
+$I->seeThePageLooksRight('04-start-look');
+$I->resizeWindow(390, 844);
+$I->seeThePageLooksRight('04-start-look-phone');
+$I->resizeWindow(1280, 900);
+$I->click('Continue');
+$I->waitForElement('#content_ifr', 15);
+$I->seeInCurrentUrl("/post/new?blog_id={$blogId}");
 $I->amOnPage('/en/dashboard');
-$I->see('1 of 6 done', '[data-next-steps]');
+$I->see('2 of 6 done', '[data-next-steps]');
 
 // An empty post can't be published
 $I->amOnPage('/en/dashboard/post/new');
@@ -72,24 +98,24 @@ $postUrl = "/en/blog/{$blogSlug}/{$postSlug}";
 
 // The next steps card counts the first post, hides and comes back, and ticks the share step
 $I->amOnPage('/en/dashboard');
-$I->see('2 of 6 done', '[data-next-steps]');
+$I->see('3 of 6 done', '[data-next-steps]');
 $I->see('Your blog went live with it.', '[data-step=first_post]');
 $I->seeThePageLooksRight('05-next-steps');
 $I->click('Hide for now');
-$I->waitForText('Next steps (2 of 6)');
+$I->waitForText('Next steps (3 of 6)');
 $I->reloadPage();
-$I->waitForText('Next steps (2 of 6)');
+$I->waitForText('Next steps (3 of 6)');
 $I->dontSee('Hide for now');
-$I->click('Next steps (2 of 6)');
+$I->click('Next steps (3 of 6)');
 $I->waitForText('Hide for now');
 $I->click('Copy link', '[data-step=share]');
 // Headless Chrome may refuse the clipboard; the card then shows the address to copy by hand
 if ($I->executeJS("return document.getElementById('next-steps-url').offsetParent !== null")) {
     $I->click('#next-steps-url');
 }
-$I->waitForText('3 of 6 done', 10, '[data-next-steps]');
+$I->waitForText('4 of 6 done', 10, '[data-next-steps]');
 $I->reloadPage();
-$I->see('3 of 6 done', '[data-next-steps]');
+$I->see('4 of 6 done', '[data-next-steps]');
 $I->resizeWindow(390, 844);
 $I->seeThePageLooksRight('05-next-steps-phone');
 $I->resizeWindow(1280, 900);
@@ -149,6 +175,19 @@ $I->amOnPage($postUrl);
 $I->dontSeeInTitle('Page not found');
 $I->amOnPage("/en/blog/{$blogSlug}");
 $I->seeThePageLooksRight('09-blog-back-online');
+
+// The start steps read right to left in Arabic
+$I->loadSessionSnapshot('writer');
+$I->amOnPage('/ar/dashboard/blog/new');
+$I->seeElement('html[dir=rtl]');
+$I->seeElement('form[action*="blog/create"]');
+$I->seeThePageLooksRight('10-start-name-rtl');
+$I->amOnPage("/ar/dashboard/blog/{$blogId}/start/look");
+$I->seeElement('[data-theme-card]');
+$I->scrollDownTo('[data-theme-card=offset]');
+$I->waitForJS("return document.querySelector('[data-theme-card=offset] img').complete");
+$I->seeThePageLooksRight('10-start-look-rtl');
+$I->amOnPage('/en/dashboard');
 
 // Later journeys use this writer, blog and post
 $I->remember('writerEmail', $email);

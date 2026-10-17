@@ -313,6 +313,11 @@ $router->group([
     $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.
     $r->add('/blog/{id:\d+}/settings', ['controller' => 'BlogController', 'action' => 'settings', 'method' => 'GET']);
+    // Start your blog, steps 2 and 3; step 1 is /blog/new
+    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
 
     // Appearance hub: theme browser plus branding and front-page texts.
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);

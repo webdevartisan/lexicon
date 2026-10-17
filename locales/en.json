@@ -2192,6 +2192,31 @@
                 "description": "Add your name and a photo so readers know who wrote the post.",
                 "action": "Edit profile"
             }
+        },
+        "start": {
+            "title": "Start your blog",
+            "stepOf": "Step {n} of 3",
+            "continue": "Continue",
+            "skip": "Skip",
+            "name": {
+                "question": "What will you call your blog?",
+                "hint": "You can change the name any time."
+            },
+            "address": {
+                "label": "Your blog's address:",
+                "change": "Change",
+                "field": "Address",
+                "fixed": "The address can't be changed after this step."
+            },
+            "about": {
+                "question": "What's it about?",
+                "hint": "Readers see this under your blog's name."
+            },
+            "look": {
+                "question": "Pick a look.",
+                "hint": "You can change this later.",
+                "unknown": "That look isn't available. Pick one of these."
+            }
         }
     }
 }

@@ -137,8 +137,7 @@ final class BlogController extends AppController
     /**
      * Show blog creation form.
      *
-     * Only collects the essentials (name, slug, description); everything
-     * optional lives on the settings page shown right after creation.
+     * Step 1 of Start your blog: the name, and the address built from it.
      */
     public function new(): Response
     {
@@ -149,10 +148,8 @@ final class BlogController extends AppController
     }
 
     /**
-     * Create new blog from the essentials, then hand off to settings.
-     *
-     * New blogs always start as drafts with default settings; the settings
-     * page is where visibility, theme, and the rest get configured.
+     * Create the blog as a draft with default settings, then carry on to the
+     * next step of Start your blog.
      */
     public function create(): Response
     {
@@ -208,9 +205,7 @@ final class BlogController extends AppController
                 $this->request->ip()
             );
 
-            $this->flash('success', 'Blog created. Configure it below whenever you are ready.');
-
-            return $this->redirect('/dashboard/blog/'.$blogId.'/settings');
+            return $this->redirect('/dashboard/blog/'.$blogId.'/start/about');
 
         } catch (\PDOException $e) {
             return $this->view('blog.new', [
