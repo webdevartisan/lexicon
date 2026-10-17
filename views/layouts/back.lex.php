@@ -13,6 +13,8 @@ $old = old();
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     {% include "partials/_favicons.lex.php" %}
     <script src="/cp-assets/js/layout.js"></script>
+    <script defer src="/vendor/alpine/focus.min.js"></script>
+    <script defer src="/vendor/alpine/alpine.min.js"></script>
 
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
     <link rel="stylesheet" href="/cp-assets/css/fonts.css">

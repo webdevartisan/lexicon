@@ -38,6 +38,7 @@ $blogSlug = $I->grabValueFrom('slug');
 $I->click('form[action*="blog/create"] button[type=submit]');
 $I->waitForText('Blog created');
 $blogId = $I->grabFromCurrentUrl('~/blog/(\d+)~');
+$I->waitForJS('return !!window.Alpine');
 $I->seeThePageLooksRight('04-blog-created');
 
 // An empty post can't be published
