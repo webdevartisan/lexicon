@@ -23,7 +23,7 @@ $I->fillField('Password', $password);
 $I->checkOption('age_confirmed');
 $I->waitForTheSignUpCheck();
 $I->click('Create account');
-$I->waitForText('Welcome!', 15);
+$I->waitForText('What would you like to do?', 15);
 $I->saveSessionSnapshot('member');
 
 // A forgotten password gets the same answer for any address

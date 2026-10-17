@@ -165,7 +165,7 @@ final class RegisterController extends AppController
             return $this->redirect($returnTo);
         }
 
-        return $this->redirect('/welcome');
+        return $this->redirect(lurl('/welcome'));
     }
 
     /**

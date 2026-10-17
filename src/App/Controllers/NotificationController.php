@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\NotificationModel;
-use App\Services\LocaleState;
 use App\Services\NotificationFeed;
-use App\Services\TranslationService;
 use App\Services\ViewerContext;
 use Framework\Core\Response;
 
@@ -43,7 +41,6 @@ class NotificationController extends AppController
     private const PANEL_LIMIT = 8;
 
     private const PER_PAGE = 20;
-
 
     public function __construct(
         private readonly NotificationModel $notifications,
@@ -298,7 +295,6 @@ class NotificationController extends AppController
             implode('+', $this->scopes)
         ));
     }
-
 
     /**
      * Back to wherever the action was taken from, or the list.

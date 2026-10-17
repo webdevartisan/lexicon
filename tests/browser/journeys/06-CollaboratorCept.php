@@ -29,6 +29,14 @@ $I->click('.notif-action-btn.is-primary');
 $I->waitForText("You've joined the blog");
 $I->seeThePageLooksRight('72-reader-joined-as-author');
 
+// An author publishes on their own, so the card skips the review step
+$I->amOnPage('/en/dashboard');
+$I->waitForElementVisible('[data-next-steps] section');
+$I->see('Write your first post here', '[data-next-steps]');
+$I->dontSee('See how review works', '[data-next-steps]');
+$I->dontSee('Publish your first post', '[data-next-steps]');
+$I->seeThePageLooksRight('72-author-next-steps');
+
 // An author can write but not run the blog
 $I->amOnPage('/en/dashboard/post/new');
 $I->waitForElement('#content_ifr', 15);
