@@ -79,6 +79,8 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
         </div>
     </header>
 
+    {% cmp="next-steps-card" setup="{$setup}" blogId="{$blogId}" blogUrl="{$blogUrl}" %}
+
     <?php if ($kpis !== []) { ?>
     <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
         <?php foreach ($kpis as $kpi) {
@@ -271,4 +273,5 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
 {% endblock %}
 {% block scripts %}
 <script src='/cp-assets/js/tooltip.js'></script>
+<script src="/cp-assets/js/next-steps.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/next-steps.js') ?>"></script>
 {% endblock %}

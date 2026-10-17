@@ -40,6 +40,8 @@ $I->waitForText('Blog created');
 $blogId = $I->grabFromCurrentUrl('~/blog/(\d+)~');
 $I->waitForJS('return !!window.Alpine');
 $I->seeThePageLooksRight('04-blog-created');
+$I->amOnPage('/en/dashboard');
+$I->see('1 of 6 done', '[data-next-steps]');
 
 // An empty post can't be published
 $I->amOnPage('/en/dashboard/post/new');
@@ -67,6 +69,30 @@ $I->see('Anyone can read this post.', '[data-visibility-line]');
 $I->seeThePageLooksRight('05-first-post');
 $postEditUrl = $I->grabFromCurrentUrl();
 $postUrl = "/en/blog/{$blogSlug}/{$postSlug}";
+
+// The next steps card counts the first post, hides and comes back, and ticks the share step
+$I->amOnPage('/en/dashboard');
+$I->see('2 of 6 done', '[data-next-steps]');
+$I->see('Your blog went live with it.', '[data-step=first_post]');
+$I->seeThePageLooksRight('05-next-steps');
+$I->click('Hide for now');
+$I->waitForText('Next steps (2 of 6)');
+$I->reloadPage();
+$I->waitForText('Next steps (2 of 6)');
+$I->dontSee('Hide for now');
+$I->click('Next steps (2 of 6)');
+$I->waitForText('Hide for now');
+$I->click('Copy link', '[data-step=share]');
+// Headless Chrome may refuse the clipboard; the card then shows the address to copy by hand
+if ($I->executeJS("return document.getElementById('next-steps-url').offsetParent !== null")) {
+    $I->click('#next-steps-url');
+}
+$I->waitForText('3 of 6 done', 10, '[data-next-steps]');
+$I->reloadPage();
+$I->see('3 of 6 done', '[data-next-steps]');
+$I->resizeWindow(390, 844);
+$I->seeThePageLooksRight('05-next-steps-phone');
+$I->resizeWindow(1280, 900);
 
 // A guest can read it
 $I->amAGuest();

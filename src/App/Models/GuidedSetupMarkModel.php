@@ -32,6 +32,23 @@ class GuidedSetupMarkModel extends AppModel
     }
 
     /**
+     * Set a mark on every blog the person writes for as a collaborator, for
+     * account-wide actions such as saving their profile.
+     *
+     * @throws InvalidArgumentException When the mark isn't one of MARKS
+     */
+    public function markMemberBlogs(int $userId, string $mark): void
+    {
+        $this->assertKnown($mark);
+
+        $this->database->execute(
+            "INSERT IGNORE INTO {$this->getTable()} (user_id, blog_id, mark)
+             SELECT user_id, blog_id, ? FROM blog_users WHERE user_id = ? AND is_active = 1",
+            [$mark, $userId]
+        );
+    }
+
+    /**
      * Remove a mark if it is set.
      *
      * @throws InvalidArgumentException When the mark isn't one of MARKS

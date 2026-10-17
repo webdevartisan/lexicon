@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
+use App\Models\GuidedSetupMarkModel;
 use App\Resources\BlogResource;
 use App\Services\MediaService;
 use App\Services\ThemeService;
@@ -30,6 +31,7 @@ final class AppearanceController extends AppController
         private ThemeService $themes,
         private UploadService $uploader,
         private MediaService $mediaService,
+        private GuidedSetupMarkModel $setupMarks,
     ) {}
 
     /**
@@ -112,6 +114,7 @@ final class AppearanceController extends AppController
             $this->request->ip()
         );
 
+        $this->setupMarks->mark((int) $user['id'], (int) $blogId, 'look_chosen');
         $this->flash('success', $themeName.' is now the active theme.');
 
         return $this->redirect('/dashboard/blog/'.$blogId.'/appearance');
@@ -218,6 +221,7 @@ final class AppearanceController extends AppController
             );
         }
 
+        $this->setupMarks->mark($userId, $id, 'look_chosen');
         $this->flash('success', 'Appearance updated.');
 
         return $this->redirect('/dashboard/blog/'.$blogId.'/appearance#branding');

@@ -2124,6 +2124,74 @@
                 "openBlog": "Open blog"
             },
             "wentLive": "Your blog is online. Anyone can read your published posts."
+        },
+        "card": {
+            "title": "Your next steps",
+            "progress": "{done} of {total} done",
+            "hide": "Hide for now",
+            "collapsed": "Next steps ({done} of {total})",
+            "next": "Next",
+            "doneLabel": "Done: ",
+            "copied": "Copied",
+            "copyFallback": "Your blog's address",
+            "finishedTitle": "You're all set.",
+            "finishedIntro": "A few things you might not have found yet:",
+            "insights": "Insights",
+            "backup": "Backup and restore",
+            "translations": "Translations",
+            "done": "Done",
+            "review": {
+                "write": "Write your post and press Submit for review.",
+                "editor": "An editor reads it and either publishes it or sends it back with notes.",
+                "notify": "You'll get a notification either way."
+            }
+        },
+        "steps": {
+            "start": {
+                "title": "Start your blog",
+                "description": ""
+            },
+            "first_post": {
+                "title": "Publish your first post",
+                "description": "Your first post puts your blog online.",
+                "action": "Write a post",
+                "done": "Your blog went live with it."
+            },
+            "look": {
+                "title": "Make it look like yours",
+                "description": "Pick a look, add a logo and a short description.",
+                "action": "Choose a look"
+            },
+            "share": {
+                "title": "Tell people about it",
+                "description": "Copy your blog's link and share it.",
+                "action": "Copy link"
+            },
+            "followers": {
+                "title": "Let readers follow you",
+                "description": "Readers can subscribe and get new posts by email.",
+                "action": "See how"
+            },
+            "team": {
+                "title": "Write with someone",
+                "description": "Invite a friend to write or edit with you.",
+                "action": "Invite"
+            },
+            "member_first_post": {
+                "title": "Write your first post here",
+                "description": "The owner's readers will see it once it's published.",
+                "action": "Write a post"
+            },
+            "member_review": {
+                "title": "See how review works",
+                "description": "You write, an editor reviews, then it goes live.",
+                "action": "How review works"
+            },
+            "member_profile": {
+                "title": "Set up your profile",
+                "description": "Add your name and a photo so readers know who wrote the post.",
+                "action": "Edit profile"
+            }
         }
     }
 }

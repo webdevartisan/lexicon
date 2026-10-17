@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AccountProfileController;
+use App\Models\GuidedSetupMarkModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
@@ -55,6 +56,7 @@ beforeEach(function () {
         $c->get(PublicCacheInvalidator::class),
         $c->get(DisplayNameService::class),
         $c->get(UserHandleValidator::class),
+        new GuidedSetupMarkModel($this->db),
     );
 
     $this->viewer = new class() implements TemplateViewerInterface

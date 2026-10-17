@@ -8,6 +8,7 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\GuidedSetupMarkModel;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -24,6 +25,7 @@ final class SubscriberController extends AppController
     public function __construct(
         private BlogModel $blogModel,
         private BlogSubscriberModel $subscribers,
+        private GuidedSetupMarkModel $setupMarks,
     ) {}
 
     /**
@@ -33,8 +35,14 @@ final class SubscriberController extends AppController
      */
     public function index(string $blogId): Response
     {
+        $user = auth()->user();
         $blog = $this->getBlog($blogId);
-        Gate::authorize('manageUsers', $blog, auth()->user());
+        Gate::authorize('manageUsers', $blog, $user);
+
+        // Seeing how subscribing works counts for the owner's "Let readers follow you" step
+        if ($blog->ownerId() === (int) $user['id']) {
+            $this->setupMarks->mark((int) $user['id'], $blog->id(), 'subscribers_seen');
+        }
 
         $q = trim((string) ($this->request->get['q'] ?? ''));
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
