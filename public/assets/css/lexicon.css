@@ -4105,7 +4105,8 @@ label {
 .lx-avatar-img { inline-size: 100%; block-size: 100%; object-fit: cover; }
 .lx-avatar-initials { font-size: 1.5rem; font-weight: 600; color: #5b6472; }
 
-.lx-visually-hidden {
+.lx-visually-hidden,
+input.lx-visually-hidden {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
