@@ -374,7 +374,7 @@ final class BlogController extends AppController
             cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
         }
 
-        // When the owner disables the workflow mid-flight, reset any in-review/needs_changes posts to draft.
+        // When the owner disables the workflow mid-flight, return every pending post to draft.
         $workflowWasEnabled = (bool) ($currentSettings['workflow_enabled'] ?? false);
         $workflowNowEnabled = (bool) $settingsData['workflow_enabled'];
         if ($workflowWasEnabled && !$workflowNowEnabled) {

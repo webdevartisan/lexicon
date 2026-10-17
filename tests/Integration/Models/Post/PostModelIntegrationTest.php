@@ -354,6 +354,88 @@ it('throws exception for invalid workflow state', function () {
         ->toThrow(InvalidArgumentException::class);
 });
 
+it('refuses a guarded transition once the post has left the expected state', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $first = $this->postModel->transitionWorkflow($postId, 'approved', $userId, ['in_review']);
+    $second = $this->postModel->transitionWorkflow($postId, 'needs_changes', $userId, ['in_review']);
+
+    expect($first)->toBeTrue()
+        ->and($second)->toBeFalse()
+        ->and($this->postModel->find($postId)['workflow_state'])->toBe('approved');
+});
+
+it('enters review with status and review state together, once', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'draft', 'workflow_state' => 'draft'])
+        ->create();
+
+    expect($this->postModel->enterReview($postId, $userId))->toBeTrue()
+        ->and($this->postModel->enterReview($postId, $userId))->toBeFalse();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('pending')
+        ->and($post['workflow_state'])->toBe('in_review');
+});
+
+it('never puts a published post into review', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'workflow_state' => 'draft'])
+        ->create();
+
+    expect($this->postModel->enterReview($postId, $userId))->toBeFalse()
+        ->and($this->postModel->find($postId)['status'])->toBe('published');
+});
+
+it('takes a pending post out of review back to draft', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'approved'])
+        ->create();
+
+    expect($this->postModel->leaveReview($postId, $userId))->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('draft')
+        ->and($post['workflow_state'])->toBe('draft');
+});
+
+it('clears the review state whenever a post stops being pending', function (string $via) {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $via === 'updateStatus'
+        ? $this->postModel->updateStatus($postId, 'published')
+        : $this->postModel->update($postId, ['status' => 'published']);
+
+    expect($this->postModel->find($postId)['workflow_state'])->toBe('draft');
+})->with(['updateStatus', 'update']);
+
+it('keeps the review state while a post stays pending', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'needs_changes'])
+        ->create();
+
+    $this->postModel->updateStatus($postId, 'pending');
+    $this->postModel->update($postId, ['title' => 'A better title']);
+
+    expect($this->postModel->find($postId)['workflow_state'])->toBe('needs_changes');
+});
+
 // ============================================================================
 // RESOURCE METHODS
 // ============================================================================

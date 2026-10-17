@@ -100,6 +100,10 @@ class PostModel extends AppModel
             return false;
         }
 
+        if (isset($data['status']) && $data['status'] !== 'pending') {
+            $data['workflow_state'] = 'draft';
+        }
+
         $result = parent::update($id, $data);
 
         if ($result) {
@@ -337,6 +341,10 @@ class PostModel extends AppModel
     /**
      * Update post status.
      *
+     * A review state only means something while the post is pending, so any
+     * other status clears it. That keeps the review queue from listing posts
+     * that were published, scheduled or pulled back by some other route.
+     *
      * @param  int  $id  Post ID
      * @param  string  $status  New status value
      * @return bool True on success
@@ -346,9 +354,13 @@ class PostModel extends AppModel
         // Fetch before the change so we know which blog/URL to invalidate.
         $post = $this->findResource($id);
 
-        $sql = "UPDATE posts SET status = :status WHERE id = :id AND status <> 'moderated'";
+        $sql = "UPDATE posts
+                SET status = :status,
+                    workflow_state = IF(:still_pending = 1, workflow_state, 'draft')
+                WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [
             ':status' => $status,
+            ':still_pending' => $status === 'pending' ? 1 : 0,
             ':id' => $id,
         ]);
 
@@ -472,32 +484,79 @@ class PostModel extends AppModel
      *
      * Keeps this logic in the model so controllers stay thin and transitions are audited.
      *
+     * The move only happens while the post is still in one of $from, checked in
+     * the same statement, so two people deciding at once cannot both succeed.
+     *
      * @param  int  $postId  Post ID
      * @param  string  $newState  New workflow state (must be in WORKFLOW_STATES constant)
      * @param  int  $byUserId  User ID performing the transition
-     * @return bool True on success
+     * @param  string[]  $from  States the post may be in; empty allows any
+     * @return bool True when the post moved, false when it was not in $from
      *
      * @throws \InvalidArgumentException If workflow state is invalid
      */
-    public function transitionWorkflow(int $postId, string $newState, int $byUserId): bool
+    public function transitionWorkflow(int $postId, string $newState, int $byUserId, array $from = []): bool
     {
         if (!in_array($newState, self::WORKFLOW_STATES, true)) {
             throw new \InvalidArgumentException("Invalid workflow state: {$newState}");
         }
 
-        $sql = 'UPDATE posts
-                SET workflow_state = :state,
-                    last_workflow_by = :by,
+        $params = [$newState, $byUserId, $postId];
+        $guard = '';
+        if ($from !== []) {
+            $guard = ' AND workflow_state IN ('.implode(',', array_fill(0, count($from), '?')).')';
+            $params = [...$params, ...$from];
+        }
+
+        $sql = "UPDATE posts
+                SET workflow_state = ?,
+                    last_workflow_by = ?,
                     last_workflow_at = NOW()
-                WHERE id = :id';
+                WHERE id = ?{$guard}";
 
-        $affected = $this->database->execute($sql, [
-            ':state' => $newState,
-            ':by' => $byUserId,
-            ':id' => $postId,
-        ]);
+        return $this->database->execute($sql, $params) > 0;
+    }
 
-        return $affected > 0;
+    /**
+     * Put a draft, or a post sent back for changes, into review.
+     *
+     * Status and review state change together so the two can never disagree.
+     *
+     * @param  int  $postId  Post ID
+     * @param  int  $byUserId  User submitting it
+     * @return bool True when the post entered review
+     */
+    public function enterReview(int $postId, int $byUserId): bool
+    {
+        $sql = "UPDATE posts
+                SET status = 'pending',
+                    workflow_state = 'in_review',
+                    last_workflow_by = ?,
+                    last_workflow_at = NOW()
+                WHERE id = ?
+                  AND status IN ('draft', 'pending')
+                  AND workflow_state IN ('draft', 'needs_changes')";
+
+        return $this->database->execute($sql, [$byUserId, $postId]) > 0;
+    }
+
+    /**
+     * Take a post out of review and back to draft.
+     *
+     * @param  int  $postId  Post ID
+     * @param  int  $byUserId  User withdrawing or resetting it
+     * @return bool True when the post was pending and is now a draft
+     */
+    public function leaveReview(int $postId, int $byUserId): bool
+    {
+        $sql = "UPDATE posts
+                SET status = 'draft',
+                    workflow_state = 'draft',
+                    last_workflow_by = ?,
+                    last_workflow_at = NOW()
+                WHERE id = ? AND status = 'pending'";
+
+        return $this->database->execute($sql, [$byUserId, $postId]) > 0;
     }
 
     /**
@@ -643,8 +702,8 @@ class PostModel extends AppModel
     /**
      * Find posts for a blog that are currently in the review pipeline.
      *
-     * Used by WorkflowService::disableWorkflow to reset in-flight posts
-     * back to draft when the owner turns off the workflow toggle.
+     * Used by WorkflowService::disableWorkflow to return every pending post
+     * to draft when the owner turns off the workflow toggle.
      *
      * @param  int  $blogId  Blog identifier
      * @return array<int, array{id:int,author_id:int,workflow_state:string}>
@@ -654,7 +713,7 @@ class PostModel extends AppModel
         $sql = "SELECT id, author_id, workflow_state
                 FROM posts
                 WHERE blog_id = ?
-                  AND workflow_state IN ('in_review', 'needs_changes')";
+                  AND status = 'pending'";
 
         return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }

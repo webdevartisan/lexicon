@@ -26,6 +26,12 @@ use RuntimeException;
  */
 class WorkflowService
 {
+    /** Review states a post must be in for each decision to apply. */
+    private const DECISION_FROM = [
+        'approved' => ['in_review'],
+        'needs_changes' => ['in_review', 'approved'],
+    ];
+
     public function __construct(
         private PostModel $post,
         private PostReviewerModel $postReviewer,
@@ -74,18 +80,16 @@ class WorkflowService
     }
 
     /**
-     * Submit a post for review (draft|needs_changes → in_review).
+     * Submit a post for review (draft|needs_changes → in_review, status pending).
      *
      * Notifies assigned reviewers, or a general queue notification if none assigned.
      *
-     * @throws \RuntimeException If the state transition fails
+     * @throws \RuntimeException If the post is not a draft or awaiting changes
      */
     public function submitForReview(int $postId, int $userId): void
     {
-        $ok = $this->post->transitionWorkflow($postId, 'in_review', $userId);
-
-        if (!$ok) {
-            throw new \RuntimeException("Failed to transition post {$postId} to in_review.");
+        if (!$this->post->enterReview($postId, $userId)) {
+            throw new \RuntimeException("Post {$postId} is not a draft or awaiting changes, so it cannot be submitted.");
         }
 
         $this->auditTransition($postId, 'in_review', $userId);
@@ -128,18 +132,80 @@ class WorkflowService
     }
 
     /**
+     * Submit the post if this save asked for review and the blog runs the pipeline.
+     *
+     * Every save path (new post, edit, bulk) goes through here, so a post can
+     * no longer sit as pending without ever reaching the review queue.
+     *
+     * @param  int  $postId  Post just saved
+     * @param  int  $blogId  Blog the post belongs to
+     * @param  string  $savedStatus  Status the save left the post in
+     * @param  string  $priorState  Review state before the save
+     * @param  int  $userId  User who saved it
+     * @return bool True when the post entered review
+     */
+    public function submitIfRequested(int $postId, int $blogId, string $savedStatus, string $priorState, int $userId): bool
+    {
+        if ($savedStatus !== 'pending' || !in_array($priorState, ['draft', 'needs_changes'], true)) {
+            return false;
+        }
+
+        $settings = $this->blogSettings->findByBlogId($blogId);
+        if (empty($settings['workflow_enabled'])) {
+            return false;
+        }
+
+        try {
+            $this->submitForReview($postId, $userId);
+
+            return true;
+        } catch (\RuntimeException $e) {
+            error_log('Submit for review failed for post '.$postId.': '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Record the approval when someone publishes or schedules a post straight out of review.
+     *
+     * A publisher may skip the separate Approve step; the review history should
+     * still show who let the post through. Call it with the post as it was
+     * before the status change.
+     *
+     * @param  PostResource  $before  Post before the save
+     * @param  string  $newStatus  Status the post is moving to
+     * @param  int  $userId  User publishing it
+     */
+    public function concludeReview(PostResource $before, string $newStatus, int $userId): void
+    {
+        $leavesReview = $before->status() === 'pending'
+            && in_array($newStatus, ['published', 'scheduled'], true)
+            && in_array($before->workflowState(), ['in_review', 'needs_changes'], true);
+
+        if (!$leavesReview) {
+            return;
+        }
+
+        $postId = (int) $before->id();
+        $this->auditTransition($postId, 'approved', $userId);
+        $this->review->create($postId, $userId, 'approved', '');
+        $this->notifyReviewDecision($before, 'post.approved', $userId, '');
+    }
+
+    /**
      * Approve a post (in_review → approved).
      *
      * Records the review decision and notifies the post author.
      *
-     * @throws \RuntimeException If the state transition fails
+     * @throws \RuntimeException If the post is no longer in review
      */
     public function approve(int $postId, int $reviewerId, string $feedback = ''): void
     {
-        $ok = $this->post->transitionWorkflow($postId, 'approved', $reviewerId);
+        $ok = $this->post->transitionWorkflow($postId, 'approved', $reviewerId, self::DECISION_FROM['approved']);
 
         if (!$ok) {
-            throw new \RuntimeException("Failed to transition post {$postId} to approved.");
+            throw new \RuntimeException("Post {$postId} is no longer in review, so it cannot be approved.");
         }
 
         $this->auditTransition($postId, 'approved', $reviewerId);
@@ -157,14 +223,14 @@ class WorkflowService
      *
      * Records the review decision (ReviewModel ENUM: needs_revision) and notifies the author.
      *
-     * @throws \RuntimeException If the state transition fails
+     * @throws \RuntimeException If the post is no longer in review or approved
      */
     public function requestChanges(int $postId, int $reviewerId, string $feedback): void
     {
-        $ok = $this->post->transitionWorkflow($postId, 'needs_changes', $reviewerId);
+        $ok = $this->post->transitionWorkflow($postId, 'needs_changes', $reviewerId, self::DECISION_FROM['needs_changes']);
 
         if (!$ok) {
-            throw new \RuntimeException("Failed to transition post {$postId} to needs_changes.");
+            throw new \RuntimeException("Post {$postId} is no longer in review, so changes cannot be requested.");
         }
 
         $this->auditTransition($postId, 'needs_changes', $reviewerId);
@@ -202,11 +268,11 @@ class WorkflowService
     }
 
     /**
-     * Reset a post to draft state (any → draft).
+     * Take a pending post out of review and back to draft, by its author or an editor.
      */
     public function resetToDraft(int $postId, int $actorId): void
     {
-        if ($this->post->transitionWorkflow($postId, 'draft', $actorId)) {
+        if ($this->post->leaveReview($postId, $actorId)) {
             $this->auditTransition($postId, 'draft', $actorId);
         }
     }
@@ -288,16 +354,16 @@ class WorkflowService
     /**
      * Disable the workflow pipeline for a blog.
      *
-     * Finds all posts currently in_review or needs_changes and resets them
-     * to draft. Notifies each affected author. Called when the owner toggles
-     * workflow_enabled from true → false in blog settings.
+     * Returns every pending post to draft, since without the pipeline nobody
+     * would ever pick them up. Notifies each affected author. Called when the
+     * owner toggles workflow_enabled from true → false in blog settings.
      */
     public function disableWorkflow(int $blogId, int $actorId): void
     {
         $inFlight = $this->post->findInFlightByBlogId($blogId);
 
         foreach ($inFlight as $row) {
-            if ($this->post->transitionWorkflow((int) $row['id'], 'draft', $actorId)) {
+            if ($this->post->leaveReview((int) $row['id'], $actorId)) {
                 $this->auditTransition((int) $row['id'], 'draft', $actorId);
             }
 

@@ -398,8 +398,8 @@ COMMENT='In-app notifications for workflow and collaboration events';
 -- Posts Table
 -- ----------------------------------------------------------------------------
 -- `status` is the public lifecycle (draft/published/archived); `workflow_state`
--- is the editorial pipeline (draft/in_review/needs_changes/approved). Publishing
--- is a status concern and never mutates workflow_state.
+-- is the editorial pipeline (draft/in_review/needs_changes/approved). A review
+-- state only exists while status is 'pending'; any other status resets it to draft.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS posts (
     id INT AUTO_INCREMENT PRIMARY KEY,

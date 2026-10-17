@@ -57,7 +57,8 @@ final class ArchivePostWriter
         $row['meta_nofollow'] = (int) $data['meta_nofollow'];
 
         $row['status'] = $this->status($data, $keepStatus, $notes);
-        $row['workflow_state'] = $row['status'] === 'draft' ? 'draft' : 'approved';
+        // Never pending (see status()), so there is no review state to carry.
+        $row['workflow_state'] = 'draft';
         if ($row['status'] === 'published' && $row['published_at'] === null) {
             $row['published_at'] = gmdate('Y-m-d H:i:s');
         }

@@ -87,15 +87,6 @@ final class PostReviewController extends AppController
                 postAuthorId: (int) $post->authorId()
             );
 
-            if ($workflowState !== 'in_review') {
-                try {
-                    $this->workflowService->submitForReview((int) $id, $currentUserId);
-                    $workflowState = 'in_review';
-                } catch (\RuntimeException $e) {
-                    error_log('Auto submitForReview on claim failed: '.$e->getMessage());
-                }
-            }
-
             $reviewers = $this->postReviewerModel->findByPost((int) $id);
             $post = $this->getPost((int) $id); // re-fetch updated state
         }
@@ -223,7 +214,11 @@ final class PostReviewController extends AppController
 
         Gate::authorize('update', $post, $user);
 
-        $this->workflowService->submitForReview((int) $id, $user['id']);
+        try {
+            $this->workflowService->submitForReview((int) $id, (int) $user['id']);
+        } catch (\RuntimeException) {
+            return $this->movedOn();
+        }
 
         audit()->log(
             $user['id'],
@@ -281,7 +276,12 @@ final class PostReviewController extends AppController
         Gate::authorize('approve', $post, $user);
 
         $feedback = trim((string) ($this->request->postParam('feedback') ?? ''));
-        $this->workflowService->approve((int) $id, $user['id'], $feedback);
+
+        try {
+            $this->workflowService->approve((int) $id, (int) $user['id'], $feedback);
+        } catch (\RuntimeException) {
+            return $this->movedOn();
+        }
 
         audit()->log(
             $user['id'],
@@ -312,7 +312,12 @@ final class PostReviewController extends AppController
         Gate::authorize('markAsNeedsChanges', $post, $user);
 
         $feedback = trim((string) ($this->request->postParam('feedback') ?? ''));
-        $this->workflowService->requestChanges((int) $id, $user['id'], $feedback);
+
+        try {
+            $this->workflowService->requestChanges((int) $id, (int) $user['id'], $feedback);
+        } catch (\RuntimeException) {
+            return $this->movedOn();
+        }
 
         audit()->log(
             $user['id'],
@@ -524,5 +529,15 @@ final class PostReviewController extends AppController
         $role = $blog->ownerId() === $userId ? 'owner' : $this->blogModel->storedRoleFor($blog->id(), $userId);
 
         return $role === null ? null : $this->roleLabels->label($role);
+    }
+
+    /**
+     * Someone else moved the post first, or it left review while this page was open.
+     */
+    private function movedOn(): Response
+    {
+        $this->flash('error', 'This post has moved on since you opened it. Reload to see where it is now.');
+
+        return $this->redirectBack();
     }
 }

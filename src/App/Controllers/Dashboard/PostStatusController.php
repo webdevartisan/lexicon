@@ -6,10 +6,10 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Gate;
-use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Resources\PostResource;
 use App\Services\SubscriberNotificationService;
+use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -24,12 +24,15 @@ class PostStatusController extends AppController
 {
     public function __construct(
         private PostModel $model,
-        private BlogSettingsModel $blogSettingsModel,
+        private WorkflowService $workflowService,
         private SubscriberNotificationService $subscriberNotifier,
     ) {}
 
     /**
-     * Publish post (requires approved workflow state).
+     * Publish post.
+     *
+     * Publishing needs the publish gate, the same rule as the editor and the
+     * bulk action. Publishing a post that is still in review counts as approving it.
      *
      * @param  string  $id  Post ID
      */
@@ -42,17 +45,7 @@ class PostStatusController extends AppController
 
         $user = auth()->user();
 
-        // Workflow precondition only applies when the blog opted into the review pipeline.
-        // Without it there is no "approved" state to wait for a draft is publishable on demand.
-        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $post->blogId());
-        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
-
-        if ($workflowEnabled && !in_array($post->workflowState(), ['approved'], true)) {
-            $this->flash('error', 'Post must be approved before publishing.');
-
-            return $this->redirectBack();
-        }
-
+        $this->workflowService->concludeReview($post, 'published', (int) $user['id']);
         $this->model->updateStatus((int) $id, 'published');
         $this->subscriberNotifier->notifyPostPublished((int) $id);
 
@@ -73,9 +66,8 @@ class PostStatusController extends AppController
     /**
      * Take a published post back to draft.
      *
-     * The workflow state is left as it was: a post published through review is
-     * still approved, and one published without review must not gain an approval
-     * it never had.
+     * Approvals live in the review history, so going back to draft never grants
+     * or removes one.
      *
      * @param  string  $id  Post ID
      */

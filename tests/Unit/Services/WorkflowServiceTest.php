@@ -86,8 +86,7 @@ describe('WorkflowService::submitForReview', function () {
 
     test('unassigned submission notifies reviewer-capable members but never the author', function () {
         $postModel = Mockery::mock(PostModel::class);
-        $postModel->shouldReceive('transitionWorkflow')
-            ->with(10, 'in_review', 5)->once()->andReturn(true);
+        $postModel->shouldReceive('enterReview')->with(10, 5)->once()->andReturn(true);
         $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(5));
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
@@ -114,8 +113,7 @@ describe('WorkflowService::submitForReview', function () {
 
     test('assigned submission notifies the assigned reviewer only', function () {
         $postModel = Mockery::mock(PostModel::class);
-        $postModel->shouldReceive('transitionWorkflow')
-            ->with(10, 'in_review', 5)->once()->andReturn(true);
+        $postModel->shouldReceive('enterReview')->with(10, 5)->once()->andReturn(true);
         $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(5));
 
         $postReviewer = Mockery::mock(PostReviewerModel::class);
@@ -131,15 +129,127 @@ describe('WorkflowService::submitForReview', function () {
         expect(true)->toBeTrue();
     });
 
-    test('throws RuntimeException if post transition fails', function () {
+    test('throws when the post is not a draft or awaiting changes', function () {
         $postModel = Mockery::mock(PostModel::class);
-        $postModel->shouldReceive('transitionWorkflow')->andReturn(false);
+        $postModel->shouldReceive('enterReview')->andReturn(false);
 
         $service = makeWorkflowService($postModel);
 
         expect(fn () => $service->submitForReview(10, 5))
             ->toThrow(\RuntimeException::class);
     });
+});
+
+// ============================================================================
+// submitIfRequested
+// ============================================================================
+
+describe('WorkflowService::submitIfRequested', function () {
+
+    function workflowOn(bool $on): BlogSettingsModel
+    {
+        $settings = Mockery::mock(BlogSettingsModel::class);
+        $settings->shouldReceive('findByBlogId')->andReturn(['workflow_enabled' => $on ? 1 : 0]);
+
+        return $settings;
+    }
+
+    test('submits a pending save from a draft when the blog reviews posts', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('enterReview')->with(10, 5)->once()->andReturn(true);
+        $postModel->shouldReceive('findResource')->andReturn(false);
+
+        $service = makeWorkflowService($postModel, null, null, null, null, null, workflowOn(true));
+
+        expect($service->submitIfRequested(10, 42, 'pending', 'draft', 5))->toBeTrue();
+    });
+
+    test('resubmits a post that was sent back for changes', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('enterReview')->with(10, 5)->once()->andReturn(true);
+        $postModel->shouldReceive('findResource')->andReturn(false);
+
+        $service = makeWorkflowService($postModel, null, null, null, null, null, workflowOn(true));
+
+        expect($service->submitIfRequested(10, 42, 'pending', 'needs_changes', 5))->toBeTrue();
+    });
+
+    test('leaves alone a save that did not ask for review', function (string $status, string $state) {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('enterReview')->never();
+
+        $service = makeWorkflowService($postModel, null, null, null, null, null, workflowOn(true));
+
+        expect($service->submitIfRequested(10, 42, $status, $state, 5))->toBeFalse();
+    })->with([
+        'saved as draft' => ['draft', 'draft'],
+        'already in review' => ['pending', 'in_review'],
+        'already approved' => ['pending', 'approved'],
+    ]);
+
+    test('does nothing on a blog without the review pipeline', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('enterReview')->never();
+
+        $service = makeWorkflowService($postModel, null, null, null, null, null, workflowOn(false));
+
+        expect($service->submitIfRequested(10, 42, 'pending', 'draft', 5))->toBeFalse();
+    });
+
+    test('reports false when the post moved on before it could be submitted', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('enterReview')->andReturn(false);
+
+        $service = makeWorkflowService($postModel, null, null, null, null, null, workflowOn(true));
+
+        expect($service->submitIfRequested(10, 42, 'pending', 'draft', 5))->toBeFalse();
+    });
+});
+
+// ============================================================================
+// concludeReview
+// ============================================================================
+
+describe('WorkflowService::concludeReview', function () {
+
+    function postBefore(string $status, string $state): PostResource
+    {
+        $post = mockPostResource(authorId: 3, workflowState: $state);
+        $post->shouldReceive('status')->andReturn($status);
+
+        return $post;
+    }
+
+    test('records an approval when a post is published straight out of review', function (string $state, string $newStatus) {
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->with(10, 5, 'approved', '')->once()->andReturn(true);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch')->with(3, 'post.approved', Mockery::any())->once();
+
+        $service = makeWorkflowService(null, null, $review, null, $notifications);
+        $service->concludeReview(postBefore('pending', $state), $newStatus, 5);
+
+        expect(true)->toBeTrue();
+    })->with([
+        'in review, published' => ['in_review', 'published'],
+        'in review, scheduled' => ['in_review', 'scheduled'],
+        'awaiting changes, published' => ['needs_changes', 'published'],
+    ]);
+
+    test('records nothing when the post already has its approval or was never in review', function (string $status, string $state, string $newStatus) {
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->never();
+
+        $service = makeWorkflowService(null, null, $review);
+        $service->concludeReview(postBefore($status, $state), $newStatus, 5);
+
+        expect(true)->toBeTrue();
+    })->with([
+        'already approved' => ['pending', 'approved', 'published'],
+        'a plain draft' => ['draft', 'draft', 'published'],
+        'withdrawn to draft' => ['pending', 'in_review', 'draft'],
+    ]);
 });
 
 // ============================================================================
@@ -151,7 +261,7 @@ describe('WorkflowService::approve', function () {
     test('transitions post to approved, records review, notifies author', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('transitionWorkflow')
-            ->with(10, 'approved', 5)->once()->andReturn(true);
+            ->with(10, 'approved', 5, ['in_review'])->once()->andReturn(true);
         $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(3));
 
         $review = Mockery::mock(ReviewModel::class);
@@ -188,7 +298,7 @@ describe('WorkflowService::requestChanges', function () {
     test('transitions post to needs_changes, records needs_revision review, notifies author', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('transitionWorkflow')
-            ->with(10, 'needs_changes', 5)->once()->andReturn(true);
+            ->with(10, 'needs_changes', 5, ['in_review', 'approved'])->once()->andReturn(true);
         $postModel->shouldReceive('findResource')->with(10)->andReturn(mockPostResource(3));
 
         $review = Mockery::mock(ReviewModel::class);
@@ -222,10 +332,9 @@ describe('WorkflowService::requestChanges', function () {
 
 describe('WorkflowService::resetToDraft', function () {
 
-    test('calls transitionWorkflow with draft state', function () {
+    test('takes the post out of review', function () {
         $postModel = Mockery::mock(PostModel::class);
-        $postModel->shouldReceive('transitionWorkflow')
-            ->with(10, 'draft', 5)->once()->andReturn(true);
+        $postModel->shouldReceive('leaveReview')->with(10, 5)->once()->andReturn(false);
 
         $service = makeWorkflowService($postModel);
         $service->resetToDraft(10, 5);
@@ -330,14 +439,14 @@ describe('WorkflowService::checkStaleReviewer', function () {
 
 describe('WorkflowService::disableWorkflow', function () {
 
-    test('resets all in-flight posts to draft and notifies each author', function () {
+    test('returns every pending post to draft and notifies each author', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('findInFlightByBlogId')->with(42)->andReturn([
             ['id' => 10, 'author_id' => 3, 'workflow_state' => 'in_review'],
             ['id' => 11, 'author_id' => 4, 'workflow_state' => 'needs_changes'],
         ]);
-        $postModel->shouldReceive('transitionWorkflow')->with(10, 'draft', 99)->once()->andReturn(true);
-        $postModel->shouldReceive('transitionWorkflow')->with(11, 'draft', 99)->once()->andReturn(true);
+        $postModel->shouldReceive('leaveReview')->with(10, 99)->once()->andReturn(true);
+        $postModel->shouldReceive('leaveReview')->with(11, 99)->once()->andReturn(true);
         // findResource returns a minimal PostResource stub per call; blog() needed for blog_name payload
         $postModel->shouldReceive('findResource')->andReturnUsing(function () {
             $blog = Mockery::mock(\App\Resources\BlogResource::class);
@@ -361,7 +470,7 @@ describe('WorkflowService::disableWorkflow', function () {
     test('does nothing when no in-flight posts exist', function () {
         $postModel = Mockery::mock(PostModel::class);
         $postModel->shouldReceive('findInFlightByBlogId')->with(42)->andReturn([]);
-        $postModel->shouldReceive('transitionWorkflow')->never();
+        $postModel->shouldReceive('leaveReview')->never();
 
         $notifications = Mockery::mock(NotificationService::class);
         $notifications->shouldReceive('dispatch')->never();

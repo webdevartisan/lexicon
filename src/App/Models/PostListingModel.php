@@ -266,8 +266,8 @@ class PostListingModel extends AppModel
     /**
      * Fold GROUP BY status rows into the badge-count array.
      *
-     * needs_changes is a workflow_state living on posts of any status, so it
-     * is summed across the groups rather than counted as its own status.
+     * needs_changes is a workflow_state, not a status (those posts are pending),
+     * so it is summed across the groups rather than counted as its own status.
      *
      * @param  array<int, array<string, mixed>>  $rows  Rows with status, cnt and needs_changes
      * @return array<string, int>
@@ -491,8 +491,8 @@ class PostListingModel extends AppModel
             $params[':status'] = $status;
         }
 
-        // Workflow state filter is independent of post status (a 'needs_changes'
-        // workflow_state lives on a draft-status post). Validated against the
+        // Workflow state filter is separate from the status filter (a
+        // 'needs_changes' post is pending). Validated against the
         // WORKFLOW_STATES whitelist before reaching SQL.
         if ($workflowState !== '' && in_array($workflowState, PostModel::WORKFLOW_STATES, true)) {
             $whereClause .= ' AND p.workflow_state = :workflow_state';

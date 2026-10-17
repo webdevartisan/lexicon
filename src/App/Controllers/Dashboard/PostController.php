@@ -317,6 +317,8 @@ final class PostController extends AppController
             // No-op unless the post was created straight into published
             $this->subscriberNotifier->notifyPostPublished($postId);
 
+            $this->workflowService->submitIfRequested((int) $postId, (int) $blog->id(), $data['status'], 'draft', (int) $user['id']);
+
             audit()->log(
                 $user['id'],
                 'post.created',
@@ -594,6 +596,7 @@ final class PostController extends AppController
 
         // Update if changes detected
         if (!empty($data)) {
+            $this->workflowService->concludeReview($post, $newStatus, (int) $user['id']);
             $this->model->update((int) $id, $data);
 
             // No-op unless the post just became published and was never announced
@@ -615,27 +618,7 @@ final class PostController extends AppController
             $this->flash('info', 'No changes detected.');
         }
 
-        // Auto-trigger review pipeline when author moves status to pending,
-        // or re-triggers when resubmitting after needs_changes.
-        $currentWorkflowState = $post->workflowState();
-        $shouldSubmit = $newStatus === 'pending'
-            && (
-                $oldStatus !== 'pending'
-                || $currentWorkflowState === 'needs_changes'
-            )
-            && $currentWorkflowState !== 'in_review';
-
-        if ($shouldSubmit) {
-            $blogSettings = $this->blogSettingsModel->findByBlogId($blogId);
-            if (!empty($blogSettings['workflow_enabled'])) {
-                try {
-                    $this->workflowService->submitForReview((int) $id, (int) $user['id']);
-                } catch (\RuntimeException $e) {
-                    // Non-fatal: post status was saved as pending even if workflow trigger failed
-                    error_log('Auto submitForReview failed for post '.$id.': '.$e->getMessage());
-                }
-            }
-        }
+        $this->workflowService->submitIfRequested((int) $id, $blogId, $newStatus, (string) $post->workflowState(), (int) $user['id']);
 
         if ($imageFailure !== null) {
             return $this->redirectAfterImageFailure((int) $id, $imageFailure);
@@ -843,26 +826,27 @@ final class PostController extends AppController
                 continue;
             }
 
+            // Pending only means something when there is a queue to put the post in.
+            if ($action === 'review'
+                && !$this->workflowService->submitIfRequested($id, (int) $post->blogId(), 'pending', (string) $post->workflowState(), (int) $user['id'])) {
+                $skipped++;
+                continue;
+            }
+
+            if ($action === 'publish') {
+                $this->workflowService->concludeReview($post, 'published', (int) $user['id']);
+            }
+
             match ($action) {
                 'publish' => $this->model->updateStatus($id, 'published'),
                 'draft' => $this->model->updateStatus($id, 'draft'),
-                'review' => $this->model->updateStatus($id, 'pending'),
                 'archive' => $this->model->updateStatus($id, 'archived'),
                 'delete' => $this->model->delete($id),
+                'review' => null,
             };
 
             if ($action === 'publish') {
                 $this->subscriberNotifier->notifyPostPublished((int) $id);
-            }
-
-            $blogSettings = $action === 'review' ? $this->blogSettingsModel->findByBlogId($post->blogId()) : null;
-            if (!empty($blogSettings['workflow_enabled'])) {
-                try {
-                    $this->workflowService->submitForReview((int) $id, (int) $user['id']);
-                } catch (\RuntimeException $e) {
-                    // Non-fatal: post status was saved as pending even if workflow trigger failed
-                    error_log('Auto submitForReview failed for post '.$id.': '.$e->getMessage());
-                }
             }
 
             audit()->log(

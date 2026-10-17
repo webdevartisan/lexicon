@@ -98,13 +98,13 @@ final class PostSeeder extends Seeder
         if ($roll <= 60) {
             $published = $faker->dateTimeBetween('-1 year', '-1 hour');
 
-            return ['published', 'approved', $published->format('Y-m-d H:i:s'), $published->format('Y-m-d H:i:s')];
+            return ['published', 'draft', $published->format('Y-m-d H:i:s'), $published->format('Y-m-d H:i:s')];
         }
 
         if ($roll <= 68) {
             $future = $faker->dateTimeBetween('+1 hour', '+3 weeks');
 
-            return ['scheduled', 'approved', $future->format('Y-m-d H:i:s'), $faker->dateTimeBetween('-1 week')->format('Y-m-d H:i:s')];
+            return ['scheduled', 'draft', $future->format('Y-m-d H:i:s'), $faker->dateTimeBetween('-1 week')->format('Y-m-d H:i:s')];
         }
 
         if ($roll <= 75) {
@@ -117,7 +117,7 @@ final class PostSeeder extends Seeder
 
         $archived = $faker->dateTimeBetween('-2 years', '-6 months');
 
-        return ['archived', 'approved', $archived->format('Y-m-d H:i:s'), $archived->format('Y-m-d H:i:s')];
+        return ['archived', 'draft', $archived->format('Y-m-d H:i:s'), $archived->format('Y-m-d H:i:s')];
     }
 
     /**
