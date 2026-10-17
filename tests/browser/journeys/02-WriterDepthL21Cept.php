@@ -7,9 +7,6 @@ use Support\JourneyTester;
 $I = new JourneyTester($scenario);
 $I->wantTo('put the same image into the media library twice');
 
-// Known bug L21: the second copy fails with "Upload failed". Delete this line once it is fixed.
-$scenario->incomplete('L21: the same image twice fails');
-
 $I->signInAs('writer');
 $image = $I->makeImage('walk-twice');
 $I->amOnPage('/en/dashboard/blog/'.$I->recall('blogId').'/media');

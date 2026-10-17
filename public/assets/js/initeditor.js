@@ -46,6 +46,10 @@ tinymce.init({
   license_key: 'gpl',
   promotion: false,
 
+  // Otherwise inserted images are saved relative to the editor page (../../../../uploads/...) and break everywhere else
+  relative_urls: false,
+  remove_script_host: true,
+
   skin: isDark ? 'oxide-dark' : 'oxide',
   content_css: isDark ? 'dark' : 'default',
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Exceptions\AccountDeletedException;
 use App\Exceptions\AccountSuspendedException;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
@@ -49,6 +50,7 @@ class Auth implements AuthInterface
      * Returns true on success, false on failure.
      *
      * @throws AccountSuspendedException When the credentials are right but the account is suspended
+     * @throws AccountDeletedException When the credentials are right but the account was deleted
      */
     public function login(string $email, string $password): bool
     {
@@ -61,6 +63,9 @@ class Auth implements AuthInterface
         if ((int) $user['is_active'] !== 1) {
             // A temporary suspension whose time is up should not need the hourly
             // task to have run first, so the sign-in that hits it lifts it.
+            if ($this->users->isScheduledForDeletion((int) $user['id'])) {
+                throw new AccountDeletedException();
+            }
             if (!$this->suspensions->liftIfExpired((int) $user['id'])) {
                 throw new AccountSuspendedException();
             }

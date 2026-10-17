@@ -162,6 +162,41 @@ class Lexicon extends Module
     }
 
     /**
+     * Download the blog archive from the open Backup & restore page and return the zip's name
+     * in the data folder, ready to attach to the import form. The page fetches it with its own cookies.
+     */
+    public function grabBlogArchive(): string
+    {
+        $base64 = (string) $this->browser()->executeAsyncJS(
+            'const done = arguments[arguments.length - 1];'
+            .' const form = document.querySelector(\'form[action$="/backup/export"]\');'
+            ." fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' })"
+            .'   .then(response => response.blob())'
+            .'   .then(blob => { const reader = new FileReader();'
+            .'     reader.onload = () => done(String(reader.result).split(",")[1] || "");'
+            .'     reader.readAsDataURL(blob); }, error => done(""));'
+        );
+        $this->assertNotSame('', $base64, 'The archive download came back empty');
+
+        $file = 'walk-archive-'.uniqid().'.zip';
+        file_put_contents(codecept_data_dir($file), base64_decode($base64));
+
+        return $file;
+    }
+
+    /**
+     * Run one of the site's own console commands, as the scheduler would, and return what it printed.
+     */
+    public function runConsoleCommand(string $command): string
+    {
+        $php = getenv('WALK_PHP') ?: PHP_BINARY;
+        exec(escapeshellarg($php).' '.escapeshellarg(dirname(__DIR__, 4).'/cli').' '.$command.' 2>&1', $lines, $code);
+        $this->assertSame(0, $code, "'{$command}' failed: ".implode("\n", $lines));
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * Keep a value for the journeys that run after this one, like the writer's post address.
      */
     public function remember(string $key, string $value): void
