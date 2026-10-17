@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Archive;
 
 use App\Interfaces\ArchiveMediaStoreInterface;
-use App\Models\BlogModel;
 use App\Models\PostModel;
 use App\Resources\BlogResource;
 use App\Services\BlogCacheInvalidator;
@@ -35,7 +34,6 @@ final class BlogArchiveImporter
     public function __construct(
         private Database $db,
         private PostModel $posts,
-        private BlogModel $blogs,
         private ArchiveMediaStoreInterface $mediaStore,
         private PublicCacheInvalidator $cacheInvalidator,
         private ArchivePostWriter $writer,

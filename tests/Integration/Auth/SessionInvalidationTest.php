@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 use App\Auth;
 use App\Exceptions\AccountSuspendedException;
-use App\Models\BlogModel;
-use App\Models\CommentModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\PublicCacheInvalidator;
@@ -30,8 +28,6 @@ beforeEach(function () {
     $this->suspensions = new UserSuspensionService(
         $this->db,
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-        new CommentModel($this->db),
-        new BlogModel($this->db),
         SessionTestHelper::revoker($this->db),
     );
 

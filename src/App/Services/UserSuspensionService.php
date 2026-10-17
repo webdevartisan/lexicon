@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Services\Sessions\SessionRevoker;
 use Framework\Database;
@@ -31,8 +30,6 @@ class UserSuspensionService
     public function __construct(
         private Database $database,
         private PublicCacheInvalidator $cacheInvalidator,
-        private CommentModel $comments,
-        private BlogModel $blogs,
         private SessionRevoker $revoker,
     ) {}
 

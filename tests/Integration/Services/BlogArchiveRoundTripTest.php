@@ -71,7 +71,7 @@ beforeEach(function () {
     };
     $writer = new ArchivePostWriter($archivePosts, $this->tags, $this->categories, new PostContentSanitizer(), $urls);
     $this->importer = new BlogArchiveImporter(
-        $this->db, $this->posts, $blogs, $this->store, new PublicCacheInvalidator(), $writer
+        $this->db, $this->posts, $this->store, new PublicCacheInvalidator(), $writer
     );
 
     $this->image = function (string $url, array $rgb): void {

@@ -665,8 +665,6 @@ $container->setShared(App\Services\UserSuspensionService::class, function ($c) {
     return new App\Services\UserSuspensionService(
         $c->get(Framework\Database::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
-        $c->get(App\Models\CommentModel::class),
-        $c->get(App\Models\BlogModel::class),
         $c->get(App\Services\Sessions\SessionRevoker::class)
     );
 });

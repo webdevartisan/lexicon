@@ -24,8 +24,8 @@ use App\Resources\BlogResource;
 final class ViewerContext
 {
     /**
-     * @var array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int, unread_notifications: int}|null|false
-     *                                                                                                                               False means "not resolved yet"; null is a real answer meaning nobody is signed in.
+     * @var array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null|false
+     *                                                                                                                                                  False means "not resolved yet"; null is a real answer meaning nobody is signed in.
      */
     private array|null|false $current = false;
 
@@ -40,7 +40,7 @@ final class ViewerContext
      * Summary of the current user for masthead rendering.
      *
      * @return array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null
-     *                                                                                                                            Null when nobody is logged in.
+     *                                                                                                                                                   Null when nobody is logged in.
      */
     public function current(): ?array
     {

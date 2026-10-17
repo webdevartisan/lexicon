@@ -18,7 +18,7 @@ class MailQueueModel extends AppModel
     /**
      * Add a rendered email to the queue.
      *
-     * @param  array{to_email: string, to_name?: string|null, subject: string, body_html: string, body_text?: string|null, tier?: string, related_type?: string|null, related_id?: int|null, max_attempts?: int}  $mail
+     * @param  array{to_email: string, to_name?: string|null, subject: string, body_html: string, body_text?: string|null, headers?: string|null, tier?: string, related_type?: string|null, related_id?: int|null, max_attempts?: int}  $mail
      * @return int The new queue row ID
      */
     public function enqueue(array $mail): int

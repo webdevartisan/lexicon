@@ -21,16 +21,14 @@ use Tests\Helpers\SessionTestHelper;
  */
 beforeEach(function () {
     $this->users = new UserModel($this->db);
-    $this->blogs = new BlogModel($this->db);
     $this->posts = new PostModel($this->db);
     $this->publishedPosts = new PublishedPostModel($this->db);
+    $this->blogs = new BlogModel($this->db);
     $this->comments = new CommentModel($this->db);
 
     $this->service = new UserSuspensionService(
         $this->db,
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-        $this->comments,
-        $this->blogs,
         SessionTestHelper::revoker($this->db),
     );
 
