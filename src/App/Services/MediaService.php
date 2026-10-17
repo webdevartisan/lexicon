@@ -61,6 +61,13 @@ final class MediaService
             throw new \RuntimeException('Upload failed.');
         }
 
+        // The stored name comes from the file's content, so the same image lands on the row it already has
+        $diskPath = $this->urlToDiskPath($url);
+        $existing = $diskPath !== null ? $this->media->findByPathForBlog($blogId, $diskPath) : null;
+        if ($existing !== null) {
+            return $existing;
+        }
+
         return $this->indexFile($url, $blogId, $uploaderId, 'upload', $originalName);
     }
 
