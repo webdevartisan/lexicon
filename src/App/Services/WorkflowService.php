@@ -194,6 +194,50 @@ class WorkflowService
     }
 
     /**
+     * Take on a submission for review, which locks it for its writer.
+     *
+     * @param  PostResource  $post  Post being reviewed
+     * @param  int  $reviewerId  User starting the review
+     * @param  bool  $takeOver  Replace whoever holds it now (editors only, checked by the caller)
+     * @return bool True when this user now holds the post
+     */
+    public function startReview(PostResource $post, int $reviewerId, bool $takeOver = false): bool
+    {
+        if ($post->status() !== 'pending' || $post->workflowState() !== 'in_review') {
+            return false;
+        }
+
+        if ($takeOver) {
+            $this->postReviewer->clearByPost($post->id());
+        }
+
+        return $this->postReviewer->claim($post->id(), $reviewerId);
+    }
+
+    /**
+     * Publish a post, or schedule it when it carries a future date.
+     *
+     * Publishing straight out of review records the approval on the way.
+     *
+     * @param  PostResource  $post  Post as it is now
+     * @param  int  $userId  User publishing it
+     * @return string The status the post ended in: 'published' or 'scheduled'
+     */
+    public function publish(PostResource $post, int $userId): string
+    {
+        $date = $post->publishedAt();
+        $status = $date !== null && strtotime($date.' UTC') > time() ? 'scheduled' : 'published';
+
+        $this->concludeReview($post, $status, $userId);
+
+        $status === 'published'
+            ? $this->post->publishNow($post->id())
+            : $this->post->updateStatus($post->id(), 'scheduled');
+
+        return $status;
+    }
+
+    /**
      * Approve a post (in_review → approved).
      *
      * Records the review decision and notifies the post author.

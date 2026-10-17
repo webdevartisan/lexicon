@@ -438,6 +438,30 @@ it('knows whether a reviewer has taken on a submission', function () {
     expect($before)->toBeFalse()->and($after)->toBeTrue();
 });
 
+it('dates a post when publishing it now, keeping a date already in the past', function (?string $date, bool $keeps) {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'approved', 'published_at' => $date])
+        ->create();
+
+    expect($this->postModel->publishNow($postId))->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('published')
+        ->and($post['workflow_state'])->toBe('draft')
+        ->and($post['published_at'])->not->toBeNull()
+        ->and(strtotime($post['published_at'].' UTC'))->toBeLessThanOrEqual(time() + 1);
+
+    if ($keeps) {
+        expect($post['published_at'])->toBe($date);
+    }
+})->with([
+    'no date' => [null, false],
+    'a future date' => [gmdate('Y-m-d H:i:s', time() + 86400), false],
+    'a past date' => ['2026-01-02 03:04:05', true],
+]);
+
 it('keeps the review state while a post stays pending', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->create($userId);

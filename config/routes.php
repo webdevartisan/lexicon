@@ -335,6 +335,8 @@ $router->group([
     $r->add('/posts/{id:\d+}/workflow/request-review', ['controller' => 'PostReviewController', 'action' => 'requestReview', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/needs-changes', ['controller' => 'PostReviewController', 'action' => 'markNeedsChanges', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/approve', ['controller' => 'PostReviewController', 'action' => 'approve', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/start', ['controller' => 'PostReviewController', 'action' => 'startReview', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/publish', ['controller' => 'PostReviewController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/reset', ['controller' => 'PostReviewController', 'action' => 'resetWorkflowToDraft', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/assign-reviewer', ['controller' => 'PostReviewController', 'action' => 'assignReviewer', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/unassign-reviewer', ['controller' => 'PostReviewController', 'action' => 'unassignReviewer', 'method' => 'POST']);

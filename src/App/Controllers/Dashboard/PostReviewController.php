@@ -7,7 +7,6 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
-use App\Models\BlogSettingsModel;
 use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\PostReviewerModel;
@@ -15,6 +14,7 @@ use App\Models\ReviewModel;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
 use App\Services\BlogRoleLabels;
+use App\Services\SubscriberNotificationService;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -35,9 +35,9 @@ final class PostReviewController extends AppController
         private WorkflowService $workflowService,
         private PostReviewerModel $postReviewerModel,
         private ReviewModel $reviewModel,
-        private BlogSettingsModel $blogSettingsModel,
         private BlogRoleLabels $roleLabels,
         private PostListingModel $postListing,
+        private SubscriberNotificationService $subscriberNotifier,
     ) {}
 
     /**
@@ -53,10 +53,7 @@ final class PostReviewController extends AppController
 
         Gate::authorize('reviewPost', $post, $user);
 
-        $workflowState = $post->workflowState();
-        $status = $post->status();
         $currentUserId = (int) $user['id'];
-        $managesPosts = $blog->userCan($currentUserId, 'edit_blog_posts');
 
         // Lazy stale-reviewer guard: evaluated on page load, not at role-change time.
         $this->workflowService->checkStaleReviewer(
@@ -66,75 +63,7 @@ final class PostReviewController extends AppController
         );
 
         $reviewers = $this->postReviewerModel->findByPost((int) $id);
-
-        // Auto-claim / lock: first reviewer to open an unassigned pending post claims it.
-        // Whoever manages every post supervises instead, without locking the post.
-        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
-        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
-        $isReviewerRole = !$managesPosts;
-        $postNeedsReview = $status === 'pending' || in_array($workflowState, ['in_review', 'needs_changes'], true);
-
-        if ($workflowEnabled
-            && $isReviewerRole
-            && $postNeedsReview
-            && empty($reviewers)
-            && $currentUserId !== (int) $post->authorId()) {
-
-            $this->workflowService->assignReviewer(
-                postId: (int) $id,
-                reviewerId: $currentUserId,
-                assignedBy: $currentUserId,
-                postAuthorId: (int) $post->authorId()
-            );
-
-            $reviewers = $this->postReviewerModel->findByPost((int) $id);
-            $post = $this->getPost((int) $id); // re-fetch updated state
-        }
-
-        $reviews = $this->reviewModel->findByPost((int) $id);
-
-        // Lock detection: is this post claimed by someone *other* than the current user?
-        $currentReviewerIds = array_map('intval', array_column($reviewers, 'reviewer_id'));
-        $isSelfAssigned = in_array($currentUserId, $currentReviewerIds, true);
-        $lockedByOther = !empty($reviewers) && !$isSelfAssigned;
-        $lockedByReviewer = $lockedByOther ? (string) $reviewers[0]['reviewer_handle'] : null;
-        $lockedAt = $lockedByOther ? ($reviewers[0]['assigned_at'] ?? null) : null;
-
-        // Reviewers see a read-only lock screen when someone else has claimed it.
-        // Owners/editors can still take action (supervisory override).
-        $reviewerLocked = $lockedByOther && $isReviewerRole;
-
-        $canRequestReview = false; // Auto-triggered by status=pending now; no manual button.
-
-        $canPublishPosts = $blog->userCan($currentUserId, 'publish_blog_posts');
-
-        $canMarkNeedsChanges = !$reviewerLocked
-            && $blog->userCan($currentUserId, 'reject_posts')
-            && in_array($workflowState, ['in_review', 'approved'], true);
-
-        $canApprove = !$reviewerLocked
-            && $blog->userCan($currentUserId, 'approve_posts')
-            && in_array($workflowState, ['in_review', 'needs_changes'], true);
-
-        $canPublish = !$reviewerLocked && $canPublishPosts && $workflowState === 'approved';
-        $canUnpublish = !$reviewerLocked && $canPublishPosts && $status === 'published';
-        $canResetToDraft = !$reviewerLocked && $canPublishPosts && $workflowState === 'approved';
-
-        // Self-assign button no longer needed: auto-claim handles it on page load.
-        $canSelfAssign = false;
-        $canManageReviewers = $this->managesReviewers($blog, $currentUserId);
-        $canAssignReviewer = !$reviewerLocked && $canManageReviewers;
-
-        // Dropdown candidates: anyone who can review, not yet assigned, not the author
-        $availableReviewers = [];
-        if ($canAssignReviewer) {
-            foreach ($this->blogModel->getActiveUsersWithPermission((int) $blog->id(), 'review_posts') as $candidate) {
-                $candidateId = (int) $candidate['user_id'];
-                if ($candidateId !== $post->authorId() && !in_array($candidateId, $currentReviewerIds, true)) {
-                    $availableReviewers[] = $candidate;
-                }
-            }
-        }
+        $actions = $this->reviewActions($post, $currentUserId, $reviewers);
 
         breadcrumbs()->set([
             ['label' => 'Overview', 'url' => '/dashboard', 'key' => 'breadcrumbs.overview'],
@@ -147,26 +76,87 @@ final class PostReviewController extends AppController
         return $this->view('post.review', [
             'post' => $post->toArray(),
             'blog' => $blog->toArray(),
-            'workflowState' => $workflowState,
-            'status' => $status,
+            'workflowState' => $post->workflowState(),
+            'status' => $post->status(),
             'roleLabel' => $this->roleLabelFor($blog, $currentUserId),
-            'canManageReviewers' => $canManageReviewers || auth()->hasRole('administrator'),
+            'canManageReviewers' => $this->managesReviewers($blog, $currentUserId) || auth()->hasRole('administrator'),
             'currentUserId' => $currentUserId,
-            'canRequestReview' => $canRequestReview,
-            'canMarkNeedsChanges' => $canMarkNeedsChanges,
-            'canApprove' => $canApprove,
-            'canPublish' => $canPublish,
-            'canUnpublish' => $canUnpublish,
-            'canResetToDraft' => $canResetToDraft,
-            'canAssignReviewer' => $canAssignReviewer,
-            'canSelfAssign' => $canSelfAssign,
-            'reviewerLocked' => $reviewerLocked,
-            'lockedByReviewer' => $lockedByReviewer,
-            'lockedAt' => $lockedAt,
             'reviewers' => $reviewers,
-            'reviews' => $reviews,
-            'availableReviewers' => $availableReviewers,
+            'reviews' => $this->reviewModel->findByPost((int) $id),
+            'availableReviewers' => $actions['canAssignReviewer'] ? $this->reviewerCandidates($post, $reviewers) : [],
+            ...$actions,
         ]);
+    }
+
+    /**
+     * What the viewer may do on the review screen right now.
+     *
+     * Someone with only review rights starts the review before deciding, which
+     * locks the post for its writer. Whoever manages every post may decide
+     * straight away. Someone who can publish publishes in one step; Approve is
+     * for those who cannot.
+     *
+     * @param  array<int, array<string, mixed>>  $reviewers  Current assignments
+     * @return array<string, mixed>
+     */
+    private function reviewActions(PostResource $post, int $userId, array $reviewers): array
+    {
+        $blog = $post->blog();
+        $state = $post->workflowState();
+        $pending = $post->status() === 'pending';
+        $managesPosts = $blog->userCan($userId, 'edit_blog_posts');
+        $canPublish = $blog->canPublish($userId);
+
+        $holderIds = array_map('intval', array_column($reviewers, 'reviewer_id'));
+        $isReviewing = in_array($userId, $holderIds, true);
+        $lockedByOther = $reviewers !== [] && !$isReviewing;
+        $mayDecide = $pending && ($isReviewing || $managesPosts);
+
+        return [
+            'isReviewing' => $isReviewing,
+            'reviewerLocked' => $lockedByOther && !$managesPosts,
+            'lockedByReviewer' => $lockedByOther ? (string) $reviewers[0]['reviewer_handle'] : null,
+            'lockedAt' => $lockedByOther ? ($reviewers[0]['assigned_at'] ?? null) : null,
+            'canStartReview' => $pending && $state === 'in_review' && $reviewers === []
+                && $blog->userCan($userId, 'review_posts') && $post->authorId() !== $userId,
+            'canTakeOver' => $pending && $state === 'in_review' && $lockedByOther && $this->managesReviewers($blog, $userId),
+            'canMarkNeedsChanges' => $mayDecide && $blog->userCan($userId, 'reject_posts') && in_array($state, ['in_review', 'approved'], true),
+            'canApprove' => $mayDecide && !$canPublish && $blog->userCan($userId, 'approve_posts') && $state === 'in_review',
+            'publishLabel' => $mayDecide && $canPublish ? $this->publishLabel($post) : null,
+            'canUnpublish' => $blog->userCan($userId, 'publish_blog_posts') && $post->status() === 'published',
+            'canResetToDraft' => $pending && $managesPosts,
+            'canAssignReviewer' => !($lockedByOther && !$managesPosts) && $this->managesReviewers($blog, $userId),
+        ];
+    }
+
+    /**
+     * The one-click publish button's wording: it schedules when the post carries a future date.
+     */
+    private function publishLabel(PostResource $post): string
+    {
+        $date = $post->publishedAt();
+        if ($date !== null && strtotime($date.' UTC') > time()) {
+            return 'Schedule for '.local_datetime($date, 'M j, g:ia');
+        }
+
+        return $post->workflowState() === 'approved' ? 'Publish' : 'Approve and publish';
+    }
+
+    /**
+     * Anyone who can review on the blog, not already assigned, and not the writer.
+     *
+     * @param  array<int, array<string, mixed>>  $reviewers  Current assignments
+     * @return array<int, array<string, mixed>>
+     */
+    private function reviewerCandidates(PostResource $post, array $reviewers): array
+    {
+        $assigned = array_map('intval', array_column($reviewers, 'reviewer_id'));
+
+        return array_values(array_filter(
+            $this->blogModel->getActiveUsersWithPermission($post->blogId(), 'review_posts'),
+            static fn (array $c): bool => (int) $c['user_id'] !== $post->authorId()
+                && !in_array((int) $c['user_id'], $assigned, true)
+        ));
     }
 
     /**
@@ -245,10 +235,14 @@ final class PostReviewController extends AppController
 
         $validator = $this->validateOrFail([
             'decision' => 'in:needs_changes,approved',
-            'feedback' => 'max:300',
+            'feedback' => 'max:5000',
         ]);
 
         $data = $validator->validated();
+
+        if ($data['decision'] === 'needs_changes' && trim((string) ($data['feedback'] ?? '')) === '') {
+            return $this->rejectField('feedback', 'Say what needs changing, so the writer knows what to do.');
+        }
 
         if ($data['decision'] === 'approved') {
             return $this->approve($id);
@@ -292,9 +286,9 @@ final class PostReviewController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', 'Post approved.');
+        $this->flash('success', 'Approved. Someone who can publish will take it from here.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirect($this->reviewUrl((int) $id));
     }
 
     /**
@@ -328,9 +322,63 @@ final class PostReviewController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('info', 'Post marked as needing changes.');
+        $this->flash('success', 'Sent back to the writer with your notes.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirect($this->reviewUrl((int) $id));
+    }
+
+    /**
+     * Take on a submission for review, or take it over from another reviewer.
+     *
+     * @param  string  $id  Post ID
+     */
+    public function startReview(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $post = $this->getPost((int) $id);
+
+        Gate::authorize('reviewPost', $post, $user);
+
+        $takeOver = $this->request->postParam('take_over') === '1' && $this->managesReviewers($post->blog(), (int) $user['id']);
+
+        if ($post->authorId() === (int) $user['id']
+            || !$this->workflowService->startReview($post, (int) $user['id'], $takeOver)) {
+            return $this->movedOn();
+        }
+
+        audit()->log($user['id'], 'post.review_started', 'post', (int) $id, ['take_over' => $takeOver], $this->request->ip());
+        $this->flash('success', 'You are reviewing this post. Its writer can no longer change it until you decide.');
+
+        return $this->redirect($this->reviewUrl((int) $id));
+    }
+
+    /**
+     * Publish a submission, or schedule it when it carries a future date, in one step.
+     *
+     * @param  string  $id  Post ID
+     */
+    public function publish(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = auth()->user();
+        $post = $this->getPost((int) $id);
+
+        if ($post->status() !== 'pending' || !$post->blog()->canPublish((int) $user['id'])) {
+            return $this->movedOn();
+        }
+
+        $status = $this->workflowService->publish($post, (int) $user['id']);
+        if ($status === 'published') {
+            $this->subscriberNotifier->notifyPostPublished((int) $id);
+        }
+
+        audit()->log($user['id'], 'post.'.$status, 'post', (int) $id, ['from' => 'review'], $this->request->ip());
+        $this->flash('success', $status === 'published' ? 'Published.' : 'Scheduled. It goes live on its date.');
+
+        return $this->redirect($this->reviewUrl((int) $id));
     }
 
     /**
@@ -529,6 +577,11 @@ final class PostReviewController extends AppController
         $role = $blog->ownerId() === $userId ? 'owner' : $this->blogModel->storedRoleFor($blog->id(), $userId);
 
         return $role === null ? null : $this->roleLabels->label($role);
+    }
+
+    private function reviewUrl(int $postId): string
+    {
+        return "/dashboard/post/{$postId}/review";
     }
 
     /**

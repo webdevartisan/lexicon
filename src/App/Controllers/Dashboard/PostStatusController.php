@@ -46,7 +46,7 @@ class PostStatusController extends AppController
         $user = auth()->user();
 
         $this->workflowService->concludeReview($post, 'published', (int) $user['id']);
-        $this->model->updateStatus((int) $id, 'published');
+        $this->model->publishNow((int) $id);
         $this->subscriberNotifier->notifyPostPublished((int) $id);
 
         audit()->log(

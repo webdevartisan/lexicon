@@ -372,6 +372,35 @@ class PostModel extends AppModel
     }
 
     /**
+     * Publish a post now, dating it now unless it already carries a past date.
+     *
+     * A bare status flip would leave published_at empty or in the future,
+     * which sorts the post wrongly in every listing and in previous/next links.
+     *
+     * @param  int  $id  Post ID
+     * @return bool True when the post was published
+     */
+    public function publishNow(int $id): bool
+    {
+        $post = $this->findResource($id);
+
+        $affected = $this->database->execute(
+            "UPDATE posts
+             SET status = 'published',
+                 workflow_state = 'draft',
+                 published_at = IF(published_at IS NULL OR published_at > UTC_TIMESTAMP(), UTC_TIMESTAMP(), published_at)
+             WHERE id = ? AND status <> 'moderated'",
+            [$id]
+        );
+
+        if ($affected > 0 && $post) {
+            $this->postCache()->postChanged($post);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
      * Update how widely a post is visible, independent of its status.
      *
      * Purges the same public surfaces as a status change: private and

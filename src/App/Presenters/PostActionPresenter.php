@@ -127,8 +127,13 @@ final class PostActionPresenter
 
         if ($status === 'pending') {
             if ($canPublish) {
-                return $hasFutureDate
-                    ? self::button(self::INTENT_SCHEDULE, 'Schedule', 'calendar-clock', 'blue')
+                if ($hasFutureDate) {
+                    return self::button(self::INTENT_SCHEDULE, 'Schedule', 'calendar-clock', 'blue');
+                }
+
+                // Publishing a post still in review records the approval too; an approved one just goes out.
+                return $workflowState === 'approved'
+                    ? self::button(self::INTENT_PUBLISH, 'Publish', 'send', 'green')
                     : self::button(self::INTENT_PUBLISH, 'Approve & publish', 'send', 'green');
             }
 

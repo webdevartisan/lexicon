@@ -114,6 +114,20 @@ abstract class AppController extends BaseController implements SessionAwareInter
     // ============== Flash Message Helpers ==============
 
     /**
+     * Send the user back to the form with one field's problem spelled out.
+     */
+    protected function rejectField(string $field, string $message): Response
+    {
+        $oldInput = $this->request->all();
+        unset($oldInput['_token']);
+        $this->session->set('_old_input', $oldInput);
+        $this->session->set('_errors', [$field => [$message]]);
+        $this->flash('error', $message);
+
+        return $this->redirectBack();
+    }
+
+    /**
      * Store a flash message for the next request.
      *
      * We use the Session service to ensure proper session handling.

@@ -872,7 +872,7 @@ final class PostController extends AppController
             }
 
             match ($action) {
-                'publish' => $this->model->updateStatus($id, 'published'),
+                'publish' => $this->model->publishNow($id),
                 'draft' => $this->model->updateStatus($id, 'draft'),
                 'archive' => $this->model->updateStatus($id, 'archived'),
                 'delete' => $this->model->delete($id),
@@ -1085,20 +1085,6 @@ final class PostController extends AppController
             'authorId' => $authorId,
             'authorHandle' => $candidates[$authorId] ?? (string) ($this->model->author($authorId)['handle'] ?? ''),
         ];
-    }
-
-    /**
-     * Send the writer back to the form with one field's problem spelled out.
-     */
-    private function rejectField(string $field, string $message): Response
-    {
-        $oldInput = $this->request->all();
-        unset($oldInput['_token']);
-        $this->session->set('_old_input', $oldInput);
-        $this->session->set('_errors', [$field => [$message]]);
-        $this->flash('error', $message);
-
-        return $this->redirectBack();
     }
 
     /**

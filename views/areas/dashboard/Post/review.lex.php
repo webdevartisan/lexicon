@@ -169,48 +169,63 @@
                 <div class="p-4 border-b border-slate-200 dark:border-zink-600">
                     <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Workflow actions</h2>
                 </div>
-                <div class="p-4 space-y-2"><?php /* canRequestReview is no longer surfaced. Pending status auto-triggers the review pipeline. */ ?>
+                <div class="p-4 space-y-3">
 
-                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/review-decision">
+                    <?php if ($canStartReview || $canTakeOver) { ?>
+                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/start" class="m-0 space-y-1">
                         {{ csrf_field() }}
-
-                        {% cmp="input" type="textarea" rows="2" label="feedback" placeholder="Optional feedback for the author…" %}
-
-                        <?php if ($canMarkNeedsChanges) { ?>
-                            {% cmp="btn" type="submit" variant="yellow" name="decision" value="needs_changes" icon="pen-line" label="Needs changes" %}
-                        <?php } ?>
-
-                        <?php if ($canApprove) { ?>
-                            {% cmp="btn" type="submit" variant="green" name="decision" value="approved" icon="check" label="Approve" %}
+                        <?php if ($canTakeOver) { ?>
+                        <input type="hidden" name="take_over" value="1">
+                        {% cmp="btn" type="submit" variant="slate" icon="user-check" label="Take over this review" %}
+                        <?php } else { ?>
+                        {% cmp="btn" type="submit" variant="blue" icon="eye" label="Start review" %}
+                        <p class="text-xs text-slate-500 dark:text-zink-300">Its writer can keep editing until someone starts.</p>
                         <?php } ?>
                     </form>
+                    <?php } ?>
 
-                    
-                    <?php if ($canPublish) { ?>
-                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/publish">
+                    <?php if ($publishLabel !== null) { ?>
+                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/publish" class="m-0">
                         {{ csrf_field() }}
-                        <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
-                        <input type="hidden" name="blog_id" value="<?= (int) ($blog['id'] ?? 0) ?>">
-                        {% cmp="btn" type="submit" variant="slate" icon="megaphone" label="Publish now" %}
+                        {% cmp="btn" type="submit" variant="green" icon="send" label="{$publishLabel}" %}
+                    </form>
+                    <?php } ?>
+
+                    <?php if ($canMarkNeedsChanges || $canApprove) { ?>
+                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/review-decision" class="m-0 space-y-2">
+                        {{ csrf_field() }}
+
+                        {% cmp="input" type="textarea" rows="4" name="feedback" label="Notes for the writer" placeholder="What should change, and why" %}
+
+                        <div class="flex flex-wrap gap-2">
+                            <?php if ($canMarkNeedsChanges) { ?>
+                                {% cmp="btn" type="submit" variant="yellow" name="decision" value="needs_changes" icon="pen-line" label="Send back with notes" %}
+                            <?php } ?>
+
+                            <?php if ($canApprove) { ?>
+                                {% cmp="btn" type="submit" variant="green" name="decision" value="approved" icon="check" label="Approve" %}
+                            <?php } ?>
+                        </div>
                     </form>
                     <?php } ?>
 
                     <?php if (!empty($canUnpublish)) { ?>
-                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/unpublish">
+                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/unpublish" class="m-0">
                         {{ csrf_field() }}
-                        <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
-                        <input type="hidden" name="blog_id" value="<?= (int) ($blog['id'] ?? 0) ?>">
                         {% cmp="btn" type="submit" variant="slate" icon="megaphone-off" label="Unpublish" %}
                     </form>
                     <?php } ?>
 
                     <?php if ($canResetToDraft) { ?>
-                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/reset">
+                    <form method="post" action="/dashboard/posts/<?= (int) $post['id'] ?>/workflow/reset" class="m-0">
                         {{ csrf_field() }}
-                        {% cmp="btn" type="submit" variant="slate" icon="rotate-ccw" label="Reset to draft" %}
+                        {% cmp="btn" type="submit" variant="slate" icon="rotate-ccw" label="Return to draft" %}
                     </form>
                     <?php } ?>
 
+                    <?php if (!$canStartReview && !$canTakeOver && $publishLabel === null && !$canMarkNeedsChanges && !$canApprove && empty($canUnpublish) && !$canResetToDraft) { ?>
+                    <p class="text-xs text-slate-500 dark:text-zink-300">Nothing to do on this post right now.</p>
+                    <?php } ?>
                 </div>
             </section>
 

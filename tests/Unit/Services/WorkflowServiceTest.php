@@ -253,6 +253,103 @@ describe('WorkflowService::concludeReview', function () {
 });
 
 // ============================================================================
+// startReview
+// ============================================================================
+
+describe('WorkflowService::startReview', function () {
+
+    function submission(string $status = 'pending', string $state = 'in_review', ?string $date = null): PostResource
+    {
+        $post = mockPostResource(authorId: 3, workflowState: $state);
+        $post->shouldReceive('status')->andReturn($status);
+        $post->shouldReceive('publishedAt')->andReturn($date);
+
+        return $post;
+    }
+
+    test('claims a submission nobody holds yet', function () {
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('clearByPost')->never();
+        $reviewers->shouldReceive('claim')->with(10, 7)->once()->andReturn(true);
+
+        expect(makeWorkflowService(null, $reviewers)->startReview(submission(), 7))->toBeTrue();
+    });
+
+    test('a take-over clears the current reviewer first', function () {
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('clearByPost')->with(10)->once()->ordered();
+        $reviewers->shouldReceive('claim')->with(10, 7)->once()->ordered()->andReturn(true);
+
+        expect(makeWorkflowService(null, $reviewers)->startReview(submission(), 7, takeOver: true))->toBeTrue();
+    });
+
+    test('there is nothing to start once the post has left review', function (string $status, string $state) {
+        $reviewers = Mockery::mock(PostReviewerModel::class);
+        $reviewers->shouldReceive('claim')->never();
+
+        expect(makeWorkflowService(null, $reviewers)->startReview(submission($status, $state), 7))->toBeFalse();
+    })->with([
+        'sent back for changes' => ['pending', 'needs_changes'],
+        'approved' => ['pending', 'approved'],
+        'withdrawn' => ['draft', 'draft'],
+    ]);
+});
+
+// ============================================================================
+// publish
+// ============================================================================
+
+describe('WorkflowService::publish', function () {
+
+    test('publishes now and records the approval when the post has no future date', function (?string $date) {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('publishNow')->with(10)->once()->andReturn(true);
+        $postModel->shouldReceive('updateStatus')->never();
+
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->with(10, 5, 'approved', '')->once()->andReturn(true);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch');
+
+        $service = makeWorkflowService($postModel, null, $review, null, $notifications);
+
+        expect($service->publish(submission(date: $date), 5))->toBe('published');
+    })->with([
+        'no date' => [null],
+        'a past date' => ['2026-01-02 03:04:05'],
+    ]);
+
+    test('schedules a post that carries a future date', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('updateStatus')->with(10, 'scheduled')->once()->andReturn(true);
+        $postModel->shouldReceive('publishNow')->never();
+
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->once()->andReturn(true);
+
+        $notifications = Mockery::mock(NotificationService::class);
+        $notifications->shouldReceive('dispatch');
+
+        $service = makeWorkflowService($postModel, null, $review, null, $notifications);
+
+        expect($service->publish(submission(date: gmdate('Y-m-d H:i:s', time() + 86400)), 5))->toBe('scheduled');
+    });
+
+    test('an already approved post goes out without a second approval', function () {
+        $postModel = Mockery::mock(PostModel::class);
+        $postModel->shouldReceive('publishNow')->once()->andReturn(true);
+
+        $review = Mockery::mock(ReviewModel::class);
+        $review->shouldReceive('create')->never();
+
+        $service = makeWorkflowService($postModel, null, $review);
+
+        expect($service->publish(submission(state: 'approved'), 5))->toBe('published');
+    });
+});
+
+// ============================================================================
 // approve
 // ============================================================================
 
