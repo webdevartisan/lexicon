@@ -54,9 +54,16 @@ final class RateLimiter
         }
     }
 
+    /**
+     * Whether the key has used up its attempts, so the next one should be refused.
+     *
+     * @param  string  $key  Rate limit key
+     * @param  int  $maxAttempts  Attempts allowed before refusing
+     * @param  int|null  $decaySeconds  Half-life (defaults to constructor value)
+     */
     public function tooManyAttempts(string $key, int $maxAttempts, ?int $decaySeconds = null): bool
     {
-        return $this->score($key, $decaySeconds) >= $maxAttempts;
+        return $this->score($key, $decaySeconds) >= $this->threshold($maxAttempts);
     }
 
     /**
@@ -85,31 +92,41 @@ final class RateLimiter
         return $score;
     }
 
+    /**
+     * Seconds until tooManyAttempts() stops refusing the key, or 0 when it does not refuse it now.
+     *
+     * @param  string  $key  Rate limit key
+     * @param  int  $maxAttempts  Attempts allowed before refusing
+     * @param  int|null  $decaySeconds  Half-life (defaults to constructor value)
+     */
     public function availableIn(string $key, int $maxAttempts, ?int $decaySeconds = null): int
     {
         $decay = $decaySeconds ?? $this->defaultDecaySeconds;
-        $data = $this->cache->get($key);
+        $score = $this->score($key, $decay);
+        $threshold = $this->threshold($maxAttempts);
 
-        if (!$data) {
+        if ($score < $threshold) {
             return 0;
         }
 
-        $state = json_decode($data, true);
-        $score = (float) ($state['score'] ?? 0.0);
-        $updated = (int) ($state['updated'] ?? time());
-        $now = time();
-
-        if ($score < $maxAttempts) {
-            return 0;
-        }
-
-        // score * e^(-k * t) = maxAttempts  =>  t = (1/k) * ln(score / maxAttempts)
+        // score * e^(-k * t) = threshold  =>  t = (1/k) * ln(score / threshold)
         $k = \log(2) / $decay;
-        $t = (1 / $k) * \log($score / $maxAttempts);
-        $elapsed = max(0, $now - $updated);
+        $t = (1 / $k) * \log($score / $threshold);
 
-        // Blocked means at least one second of wait; at exactly the limit the decay math gives 0
-        return max(1, (int) ceil($t - $elapsed));
+        // Blocked means at least one second of wait; at exactly the threshold the decay math gives 0
+        return max(1, (int) ceil($t));
+    }
+
+    /**
+     * The score at which a limit of $maxAttempts starts refusing.
+     *
+     * N attempts a few seconds apart have already decayed to just under N, so a plain
+     * score >= N would let attempt N+1 through. Half an attempt of slack keeps the limit
+     * meaning what it says, the same slack LoginRateLimiter::requiresChallenge() uses.
+     */
+    private function threshold(int $maxAttempts): float
+    {
+        return $maxAttempts - 0.5;
     }
 
     public function clear(string $key): bool

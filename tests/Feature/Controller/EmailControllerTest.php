@@ -205,7 +205,11 @@ it('records each test send in the activity log, with the address it went to', fu
 
     emailController('/x', 'POST', newPostForm(['test_recipient' => 'me@example.test']), [], $mail)->sendTest('NewPostMail');
 
-    $row = $this->db->query("SELECT resource_type, details FROM activity_log WHERE action = 'email.test_sent'")->fetch(PDO::FETCH_ASSOC);
+    // audit() writes through the container's connection, and this test's transaction
+    // took its snapshot during setup, so only that connection can see the new row.
+    $row = \Framework\Core\App::container()->get(\Framework\Database::class)
+        ->query("SELECT resource_type, details FROM activity_log WHERE action = 'email.test_sent'")
+        ->fetch(PDO::FETCH_ASSOC);
 
     expect($row['resource_type'])->toBe('email_template')
         ->and($row['details'])->toContain('me@example.test')

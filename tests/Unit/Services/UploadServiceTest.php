@@ -140,7 +140,7 @@ test('storeImageFromPath refuses a file outside the source folder', function () 
 
 test('storeImageFromPath runs the same content checks as an upload', function () {
     @mkdir($this->tmpDir.'/extract', 0775, true);
-    file_put_contents($this->tmpDir.'/extract/fake.jpg', '<?php system($_GET["c"]); ?>');
+    file_put_contents($this->tmpDir.'/extract/fake.jpg', 'this is not an image');
 
     expect(fn () => $this->uploader->storeImageFromPath(
         $this->tmpDir.'/extract/fake.jpg',
