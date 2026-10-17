@@ -8,7 +8,7 @@
     {% if ($tab === 'posts'): %}
     <section aria-label="{{ t('discover.tabPosts') }}">
         {% if (empty($items)): %}
-            <p>{{ t('discover.noPosts') }}</p>
+            <p<?= $searchThrottled ? ' role="alert"' : '' ?>><?= e($t($searchThrottled ? 'discover.searchThrottled' : 'discover.noPosts')) ?></p>
         {% else %}
             <div class="lx-gallery">
                 {% foreach ($items as $post): %}

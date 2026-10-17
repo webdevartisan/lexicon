@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\PostCacheInvalidator;
+
 /**
  * TagModel
  *
@@ -14,6 +16,11 @@ namespace App\Models;
 class TagModel extends AppModel
 {
     protected ?string $table = 'tags';
+
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
+    }
 
     /**
      * All tags with their blog name, for the admin listing.
@@ -135,7 +142,7 @@ class TagModel extends AppModel
                 FROM posts p
                 INNER JOIN post_tags pt ON p.id = pt.post_id
                 WHERE pt.tag_id = :tag_id
-                AND p.status = 'published'
+                AND p.status = 'published' AND p.visibility = 'public'
                 AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
                 ORDER BY p.created_at DESC";
         $stmt = $this->database->query($sql, [':tag_id' => $tagId]);
@@ -162,8 +169,7 @@ class TagModel extends AppModel
         ]);
 
         if ($affected > 0) {
-            // The post's cached tag list (PostModel::tags) is now stale.
-            fragment()->forget('post-tags:'.$postId, false);
+            $this->postCache()->forgetTags($postId);
         }
 
         // 0 = already exists, 1 = newly inserted, both are success
@@ -188,8 +194,7 @@ class TagModel extends AppModel
         ]);
 
         if ($affected > 0) {
-            // The post's cached tag list (PostModel::tags) is now stale.
-            fragment()->forget('post-tags:'.$postId, false);
+            $this->postCache()->forgetTags($postId);
         }
 
         return $affected > 0; // Only true if actually removed

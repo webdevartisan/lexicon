@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Services\Sessions\SessionRevoker;
 use Framework\Database;
@@ -31,8 +30,6 @@ class UserSuspensionService
     public function __construct(
         private Database $database,
         private PublicCacheInvalidator $cacheInvalidator,
-        private CommentModel $comments,
-        private BlogModel $blogs,
         private SessionRevoker $revoker,
     ) {}
 
@@ -65,7 +62,7 @@ class UserSuspensionService
         }
 
         $user = $this->database
-            ->query('SELECT id, suspended_at FROM users WHERE id = ? AND deleted_at IS NULL', [$userId])
+            ->query('SELECT id, suspended_at FROM users WHERE id = ?', [$userId])
             ->fetch();
 
         if (!$user) {
@@ -426,13 +423,13 @@ class UserSuspensionService
 
         // The blog status is written with raw SQL so the prior status is saved in
         // the same statement, which skips BlogModel::update() and the cache
-        // clearing inside it. Without this the cached row keeps serving the blog.
+        // clearing it triggers. Without this the cached row keeps serving the blog.
         $slugs = $this->database
             ->query('SELECT blog_slug FROM blogs WHERE owner_id = ?', [$userId])
             ->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($slugs as $slug) {
-            $this->blogs->forgetPublicCaches((string) $slug);
+            $this->blogCache()->forgetBlog((string) $slug);
         }
 
         if (is_string($handle) && $handle !== '') {
@@ -440,7 +437,7 @@ class UserSuspensionService
         }
 
         foreach ($this->postIdsCommentedOn($userId) as $postId) {
-            $this->comments->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
     }
 
@@ -454,5 +451,15 @@ class UserSuspensionService
             ->fetchAll(\PDO::FETCH_COLUMN);
 
         return array_map('intval', $ids);
+    }
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
+    }
+
+    private function commentCache(): CommentCacheInvalidator
+    {
+        return app(CommentCacheInvalidator::class);
     }
 }

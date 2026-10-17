@@ -30,6 +30,9 @@ require ROOT_PATH.'/vendor/autoload.php';
 $dotenv = new Dotenv();
 $dotenv->load(ROOT_PATH.'/.env');
 
+// The database connection is pinned to UTC; PHP must match or date() writes drift by the php.ini offset
+date_default_timezone_set('UTC');
+
 // Register handlers before any application code runs
 set_error_handler([ErrorHandler::class, 'handleError']);
 set_exception_handler([ErrorHandler::class, 'handleException']);

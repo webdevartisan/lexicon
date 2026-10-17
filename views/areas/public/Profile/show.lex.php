@@ -101,10 +101,10 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <?php if (!empty($profile->location()) || !empty($profile->memberSince())) { ?>
         <ul class="lx-profile-meta">
           <?php if (!empty($profile->location())) { ?>
-            <li><span class="icon solid fa fa-location-dot" aria-hidden="true"></span><?= e($profile->location()); ?></li>
+            <li>{% cmp="lx-icon" name="map-pin" class="icon" %}<?= e($profile->location()); ?></li>
           <?php } ?>
           <?php if (!empty($profile->memberSince())) { ?>
-            <li><span class="icon solid fa fa-calendar" aria-hidden="true"></span>Member since <?= e(local_datetime($profile->memberSince(), 'F Y', site_timezone())); ?></li>
+            <li>{% cmp="lx-icon" name="calendar" class="icon" %}Member since <?= e(local_datetime($profile->memberSince(), 'F Y', site_timezone())); ?></li>
           <?php } ?>
         </ul>
       <?php } ?>
@@ -116,7 +116,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <?php if (!empty($authorBlogs)) { ?>
         <ul class="lx-chip" aria-label="Publishes on">
           <?php foreach ($authorBlogs as $blogSlug => $blogName) { ?>
-            <li><a href="/blog/<?= e(rawurlencode((string) $blogSlug)); ?>"><?= e($blogName); ?></a></li>
+            <li><a href="<?= e(lurl('/blog/'.rawurlencode((string) $blogSlug))) ?>"><?= e($blogName); ?></a></li>
           <?php } ?>
         </ul>
       <?php } ?>
@@ -131,12 +131,11 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <?php if (!empty($socialLinks)) { ?>
         <ul class="lx-social" aria-label="Social links">
           <?php foreach ($socialLinks as $socialLink) { ?>
-            <?php // FontAwesome 6 splits families: brand glyphs need fa-brands, not the solid-default fa.?>
-            <?php $iconFamily = $socialLink['iconStyle'] === 'brands' ? 'fa-brands' : 'fa-solid'; ?>
+            <?php $socialIcon = $socialLink['icon']; ?>
             <li>
               <a href="<?= e($socialLink['url']); ?>"
-                class="<?= e($iconFamily); ?> <?= e($socialLink['icon']); ?>"
                 target="_blank" rel="noopener noreferrer nofollow">
+                {% cmp="lx-icon" name="{$socialIcon}" %}
                 <span class="label"><?= e(ucfirst($socialLink['network'])); ?></span>
               </a>
             </li>
@@ -155,7 +154,7 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
       <div class="lx-gallery">
         <?php foreach ($posts as $post) { ?>
           <?php
-            $postUrl = '/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']);
+            $postUrl = lurl('/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']));
             $postTitle = $post['title'] ?? 'Untitled';
             $postExcerpt = post_excerpt($post, 140);
             $hasImage = !empty($post['featured_image']);

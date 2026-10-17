@@ -47,10 +47,10 @@ $discoverClearUrl = lurl('/discover?'.http_build_query(['tab' => $tab]));
             {% endforeach; %}
         </div>
         <button type="button" class="lx-slider-nav lx-slider-prev" data-slider-prev aria-label="{{ t('discover.sliderPrev') }}">
-            <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+            {% cmp="lx-icon" name="chevron-left" %}
         </button>
         <button type="button" class="lx-slider-nav lx-slider-next" data-slider-next aria-label="{{ t('discover.sliderNext') }}">
-            <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+            {% cmp="lx-icon" name="chevron-right" %}
         </button>
         <div class="lx-slider-dots" data-slider-dots aria-label="{{ t('discover.sliderDots') }}"></div>
     </section>
@@ -85,11 +85,11 @@ $discoverClearUrl = lurl('/discover?'.http_build_query(['tab' => $tab]));
                 <a href="<?= e($discoverClearUrl) ?>"
                    class="lx-search-field-clear"
                    aria-label="{{ t('discover.searchClear') }}">
-                    <span class="fa-solid fa-xmark" aria-hidden="true"></span>
+                    {% cmp="lx-icon" name="x" %}
                 </a>
             {% endif %}
             <button type="submit" class="lx-search-field-submit" aria-label="{{ t('discover.searchButton') }}">
-                <span class="fa-solid fa-magnifying-glass" aria-hidden="true"></span>
+                {% cmp="lx-icon" name="search" %}
             </button>
         </div>
     </form>

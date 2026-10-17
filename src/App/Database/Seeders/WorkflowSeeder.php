@@ -89,7 +89,7 @@ final class WorkflowSeeder extends Seeder
 
         $placeholders = implode(', ', array_fill(0, count($postIds), '?'));
         $this->db->execute(
-            "UPDATE posts SET workflow_state = 'in_review' WHERE id IN ({$placeholders})",
+            "UPDATE posts SET status = 'pending', workflow_state = 'in_review' WHERE id IN ({$placeholders})",
             $postIds
         );
     }

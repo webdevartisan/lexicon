@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\AppController;
+use App\Gate;
 use App\Models\PermissionModel;
 use App\Models\RoleModel;
+use App\Resources\SystemResource;
 use Framework\Core\Response;
 use Framework\Database;
 use Framework\Exceptions\PageNotFoundException;
@@ -53,28 +55,37 @@ class RoleController extends AppController
             'role' => $role,
             'permissions' => $permissions,
             'allPermissions' => $allPermissions,
+            'canEditPermissions' => $this->canEditPermissions(),
         ]);
     }
 
     public function new(): Response
     {
-        return $this->view('role.new');
+        return $this->view('role.new', [
+            'canEditLevel' => $this->canEditPermissions(),
+        ]);
     }
 
     public function create(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
-        $input = $this->validateOrFail([
+        $rules = [
             'role_name' => 'required|min:2|max:50|unique:roles,role_name',
             'description' => 'max:255',
             'scope' => 'required|in:system,blog',
-            'level' => 'required|integer',
-        ])->validated();
+        ];
+
+        // Levels decide who outranks whom, so only administrators choose them
+        if ($this->canEditPermissions()) {
+            $rules['level'] = 'required|integer';
+        }
+
+        $input = $this->validateOrFail($rules)->validated();
 
         // min/max rules check string length, so clamp the numeric range here;
         // 100 is reserved for administrator so custom roles can never outrank it
-        $level = min(99, max(0, (int) $input['level']));
+        $level = min(99, max(0, (int) ($input['level'] ?? 0)));
 
         // Role slugs use snake_case to match the shipped roles (blog_owner)
         $slug = str_replace('-', '_', slugify($input['role_name']));
@@ -119,6 +130,7 @@ class RoleController extends AppController
     {
         return $this->view('role.edit', [
             'role' => $this->getRole($id),
+            'canEditLevel' => $this->canEditPermissions(),
         ]);
     }
 
@@ -137,20 +149,28 @@ class RoleController extends AppController
 
             $data = ['description' => $input['description'] ?? ''];
         } else {
-            $input = $this->validateOrFail([
+            $rules = [
                 'role_name' => 'required|min:2|max:50|unique:roles,role_name,'.(int) $id,
                 'description' => 'max:255',
                 'scope' => 'required|in:system,blog',
-                'level' => 'required|integer',
-            ])->validated();
+            ];
+
+            if ($this->canEditPermissions()) {
+                $rules['level'] = 'required|integer';
+            }
+
+            $input = $this->validateOrFail($rules)->validated();
 
             $data = [
                 'role_name' => $input['role_name'],
                 'description' => $input['description'] ?? '',
                 'scope' => $input['scope'],
-                // min/max rules check string length, so clamp the range here
-                'level' => min(99, max(0, (int) $input['level'])),
             ];
+
+            if (isset($input['level'])) {
+                // min/max rules check string length, so clamp the range here
+                $data['level'] = min(99, max(0, (int) $input['level']));
+            }
         }
 
         $changes = changedFields($data, $role);
@@ -228,9 +248,20 @@ class RoleController extends AppController
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
+        Gate::authorize('editRolePermissions', SystemResource::class, $this->actor());
+
         $role = $this->getRole($id);
 
-        $permissionIds = array_map('intval', (array) ($this->request->post['permissions'] ?? []));
+        $permissionIds = array_values(array_filter(
+            array_map('intval', (array) ($this->request->post['permissions'] ?? [])),
+            static fn (int $permissionId): bool => $permissionId > 0
+        ));
+
+        if (!$this->model->permissionIdsExist($permissionIds)) {
+            $this->flash('error', 'One or more selected permissions do not exist.');
+
+            return $this->redirect('/admin/roles/'.(int) $id.'/show');
+        }
 
         if ($this->model->syncPermissions((int) $id, $permissionIds)) {
             audit()->log(
@@ -248,6 +279,19 @@ class RoleController extends AppController
         }
 
         return $this->redirect('/admin/roles/'.(int) $id.'/show');
+    }
+
+    private function canEditPermissions(): bool
+    {
+        return Gate::allows('editRolePermissions', SystemResource::class, $this->actor());
+    }
+
+    /**
+     * @return array<string, mixed> Authenticated user record
+     */
+    private function actor(): array
+    {
+        return auth()->user() ?? [];
     }
 
     /**

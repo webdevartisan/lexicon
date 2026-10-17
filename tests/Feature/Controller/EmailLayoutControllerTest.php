@@ -80,7 +80,7 @@ it('lists every layout with the emails that use it', function () {
     layoutController('/admin/email-templates/layouts')->index();
 
     expect(array_keys($this->viewer->data['layouts']))->toBe(['default'])
-        ->and($this->viewer->data['usage']['default'])->toHaveCount(32);
+        ->and($this->viewer->data['usage']['default'])->toHaveCount(count(emailManagerFor($this->repository, $this->db)->emails()));
 });
 
 it('saves changes to the shipped layout, and reset brings the file back', function () {

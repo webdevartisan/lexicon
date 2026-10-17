@@ -10,7 +10,10 @@ use App\Models\EmailSettingModel;
 use App\Services\EmailContentRepository;
 use App\Services\EmailTemplateRegistry;
 use App\Services\MailService;
+use App\Services\TestEmailRateLimiter;
+use Framework\Helpers\RateLimiter;
 use Framework\Interfaces\TemplateViewerInterface;
+use Tests\Helpers\ThrottleTestHelper;
 
 /**
  * Email Templates in the control panel: every email listed once with its
@@ -61,12 +64,13 @@ beforeEach(function () {
  * @param  array<string, mixed>  $query
  * @param  array<string, mixed>  $post
  */
-function emailController(string $path, string $method = 'GET', array $post = [], array $query = [], ?MailService $mail = null): EmailController
+function emailController(string $path, string $method = 'GET', array $post = [], array $query = [], ?MailService $mail = null, ?TestEmailRateLimiter $limiter = null): EmailController
 {
     $controller = new EmailController(
         new \Framework\Core\Response(),
         emailManagerFor(test()->repository, test()->db),
-        $mail ?? Mockery::mock(MailService::class)
+        $mail ?? Mockery::mock(MailService::class),
+        $limiter ?? new TestEmailRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()))
     );
     setupController($controller, makeRequest($path, $method, $post, $query), test()->viewer);
 
@@ -193,6 +197,38 @@ it('refuses a test to an invalid address or of an unknown email, and passes on w
         ->and($unknown->getStatusCode())->toBe(404)
         ->and($refused->getStatusCode())->toBe(502)
         ->and(json_decode($refused->getBody(), true)['message'])->toContain('Connection refused');
+});
+
+it('records each test send in the activity log, with the address it went to', function () {
+    $mail = Mockery::mock(MailService::class);
+    $mail->shouldReceive('sendTest')->andReturn(true);
+
+    emailController('/x', 'POST', newPostForm(['test_recipient' => 'me@example.test']), [], $mail)->sendTest('NewPostMail');
+
+    // audit() writes through the container's connection, and this test's transaction
+    // took its snapshot during setup, so only that connection can see the new row.
+    $row = \Framework\Core\App::container()->get(\Framework\Database::class)
+        ->query("SELECT resource_type, details FROM activity_log WHERE action = 'email.test_sent'")
+        ->fetch(PDO::FETCH_ASSOC);
+
+    expect($row['resource_type'])->toBe('email_template')
+        ->and($row['details'])->toContain('me@example.test')
+        ->and($row['details'])->toContain('NewPostMail');
+});
+
+it('stops test sends once the hourly budget is used up', function () {
+    $mail = Mockery::mock(MailService::class);
+    $mail->shouldReceive('sendTest')->times(10)->andReturn(true);
+    $limiter = new TestEmailRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()));
+    $post = newPostForm(['test_recipient' => 'me@example.test']);
+
+    for ($i = 0; $i < 10; $i++) {
+        emailController('/x', 'POST', $post, [], $mail, $limiter)->sendTest('NewPostMail');
+    }
+    $refused = emailController('/x', 'POST', $post, [], $mail, $limiter)->sendTest('NewPostMail');
+
+    expect($refused->getStatusCode())->toBe(429)
+        ->and(json_decode($refused->getBody(), true)['message'])->toContain('Too many test emails');
 });
 
 it('refuses a test send without a valid CSRF token', function () {

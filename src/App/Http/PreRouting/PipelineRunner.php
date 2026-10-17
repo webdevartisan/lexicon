@@ -44,6 +44,7 @@ final class PipelineRunner
             [LocaleAwareStaticBypass::class, 'handle'], // Fast‑path static assets with locale
             [StartSession::class,           'handle'], // Open the session (needs the steps above to have passed)
             [LocalePrefixIntake::class,     'handle'], // Extract locale from URL prefix
+            [ShareImpersonationBanner::class, 'handle'], // Banner global, also for router-level 404s
         ];
     }
 

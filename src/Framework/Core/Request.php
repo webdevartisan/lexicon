@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Core;
 
+use Framework\HttpUtils;
+use Framework\Security\ClientIp;
+
 /**
  * Lightweight HTTP request value object.
  *
@@ -194,32 +197,22 @@ class Request
     /**
      * Determine whether the request is over HTTPS.
      *
-     * Uses common server vars and proxy headers; proxy headers should only be
-     * trusted if your app is behind a known, configured reverse proxy.
+     * Proxy headers count only from a peer listed in TRUSTED_PROXIES.
      */
     public function isSecure(): bool
     {
-        if (!empty($this->server['HTTPS']) && $this->server['HTTPS'] !== 'off') {
-            return true;
-        }
-
-        $proto = $this->server['HTTP_X_FORWARDED_PROTO'] ?? '';
-        if ($proto !== '' && stripos($proto, 'https') !== false) {
-            return true;
-        }
-
-        return (string) ($this->server['SERVER_PORT'] ?? '') === '443';
+        return HttpUtils::isHttps($this->server);
     }
 
     /**
      * Return the client IP address if available.
      *
-     * Note: for apps behind proxies, we would likely introduce a separate
-     * trusted-proxy IP resolver instead of reading HTTP_X_FORWARDED_FOR here.
+     * Behind a reverse proxy this is the forwarded client address, but only when
+     * the connecting peer is listed in TRUSTED_PROXIES; otherwise it is the peer.
      */
     public function ip(): ?string
     {
-        return $this->server['REMOTE_ADDR'] ?? null;
+        return ClientIp::fromEnvironment($this->server);
     }
 
     /**

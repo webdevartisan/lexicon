@@ -31,6 +31,9 @@ final class ThrottleTestHelper
 
         $cache = Mockery::mock(CacheService::class);
 
+        // RateLimiter::hit takes its striped flock files from the cache path
+        $cache->shouldReceive('getCachePath')->andReturn(sys_get_temp_dir());
+
         $cache->shouldReceive('get')->andReturnUsing(
             fn (string $key): ?string => $store[$key] ?? null
         );

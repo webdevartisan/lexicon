@@ -31,10 +31,12 @@ const BLOG_PERMISSIONS = [
  * Build a blog whose userCan answers from the given permission set.
  *
  * @param  string[]  $permissions
+ * @param  int  $ownerId  Owner of the blog; defaults to the user the tests act as
  */
-function blogWith(array $permissions): BlogResource
+function blogWith(array $permissions, int $ownerId = 2): BlogResource
 {
     $blog = Mockery::mock(BlogResource::class);
+    $blog->shouldReceive('ownerId')->andReturn($ownerId);
     $blog->shouldReceive('userCan')->andReturnUsing(
         static fn (int $userId, string $permission): bool => in_array($permission, $permissions, true)
     );
@@ -86,6 +88,12 @@ describe('BlogPolicy per-blog actions', function () {
         ['createPost', 'create_posts'],
         ['delete', 'delete_own_blog'],
     ]);
+
+    test('a collaborator holding delete_own_blog cannot delete someone else\'s blog', function () {
+        $policy = new BlogPolicy();
+
+        expect($policy->delete(makeUser(2), blogWith(BLOG_PERMISSIONS, ownerId: 7)))->toBeFalse();
+    });
 });
 
 // ============================================================================
@@ -94,29 +102,35 @@ describe('BlogPolicy per-blog actions', function () {
 
 describe('BlogPolicy::create', function () {
 
-    test('a system role that may start a blog can create one', function (string $role) {
+    test('an account whose system roles grant create_blogs can start a blog', function (string $role) {
         $policy = new BlogPolicy();
 
-        expect($policy->create(makeUser(1, [$role])))->toBeTrue();
-    })->with(['administrator', 'content_manager', 'reader']);
+        expect($policy->create(['id' => 1, 'roles' => [$role], 'permissions' => ['create_blogs']]))->toBeTrue();
+    })->with(['content_manager', 'reader']);
+
+    test('the same role without create_blogs cannot', function (string $role) {
+        $policy = new BlogPolicy();
+
+        expect($policy->create(['id' => 1, 'roles' => [$role], 'permissions' => []]))->toBeFalse();
+    })->with(['content_manager', 'reader']);
+
+    test('an administrator can always start a blog', function () {
+        $policy = new BlogPolicy();
+
+        expect($policy->create(makeUser(1, ['administrator'])))->toBeTrue();
+    });
 
     // Blog roles live in blog_users and say nothing about starting a blog of your own.
-    test('a blog role does not let the account start a blog', function (string $role) {
+    test('a blog role name alone does not let the account start a blog', function (string $role) {
         $policy = new BlogPolicy();
 
         expect($policy->create(makeUser(1, [$role])))->toBeFalse();
-    })->with(['editor', 'author', 'contributor', 'reviewer', 'viewer']);
+    })->with(['editor', 'author', 'contributor', 'reviewer', 'blog_owner']);
 
     test('user with no roles cannot create blog', function () {
         $policy = new BlogPolicy();
 
         expect($policy->create(makeUser(1, [])))->toBeFalse();
-    });
-
-    test('user with unknown role cannot create blog', function () {
-        $policy = new BlogPolicy();
-
-        expect($policy->create(makeUser(1, ['subscriber'])))->toBeFalse();
     });
 });
 
@@ -152,13 +166,13 @@ describe('BlogPolicy traffic', function () {
         expect($policy->viewAnalytics(makeUser(1, ['administrator']), blogWith([])))->toBeFalse();
     });
 
-    test('staff who see the platform traffic can open any blog\'s numbers, read only', function () {
+    test('staff who see the platform traffic do not get into a blog\'s dashboard Insights', function () {
         $policy = new BlogPolicy();
         $staff = makeUser(1, ['administrator']) + ['permissions' => ['view_platform_analytics']];
 
-        expect($policy->viewAnalytics($staff, blogWith([])))->toBeTrue()
-            ->and($policy->viewAllAnalytics($staff, blogWith([])))->toBeTrue()
-            ->and($policy->manageUsers($staff, blogWith([])))->toBeFalse();
+        expect($policy->viewAnalytics($staff, blogWith([])))->toBeFalse()
+            ->and($policy->viewAllAnalytics($staff, blogWith([])))->toBeFalse()
+            ->and($policy->viewAuthorInsights($staff, blogWith([])))->toBeFalse();
     });
 });
 

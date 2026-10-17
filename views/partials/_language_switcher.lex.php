@@ -43,7 +43,7 @@ $localPath = static function (string $href): string {
     <div class="lang-switcher-menu platform-menu-list" data-lang-menu>
         <?php foreach ($alternates as $alt) { ?>
         <form method="post" action="/language" class="lang-switcher-item">
-            <?= csrf_field() ?>
+            <?= csrf_field_lazy() ?>
             <input type="hidden" name="locale" value="<?= e($alt['hreflang']) ?>">
             <input type="hidden" name="return_to" value="<?= e($localPath($alt['href'])) ?>">
             <button type="submit"

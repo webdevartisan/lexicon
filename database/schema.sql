@@ -48,7 +48,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
     last_locale VARCHAR(5) DEFAULT NULL COMMENT 'Language of the page the person last signed in or registered from; emails use it when no language preference is set',
-    deleted_at TIMESTAMP NULL COMMENT 'Soft delete timestamp',
     suspended_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Set while a suspension is in force; NULL means not suspended',
     suspended_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC end of a temporary suspension; NULL alongside suspended_at means permanent',
     reports_paused_until TIMESTAMP NULL DEFAULT NULL COMMENT 'UTC; reports from this account are refused until then',
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_email (email),
     UNIQUE KEY uq_users_handle (handle),
     INDEX idx_is_active (is_active),
-    INDEX idx_deleted_at (deleted_at),
     CONSTRAINT fk_users_suspended_by FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Core user authentication and identity data';
@@ -400,8 +398,8 @@ COMMENT='In-app notifications for workflow and collaboration events';
 -- Posts Table
 -- ----------------------------------------------------------------------------
 -- `status` is the public lifecycle (draft/published/archived); `workflow_state`
--- is the editorial pipeline (draft/in_review/needs_changes/approved). Publishing
--- is a status concern and never mutates workflow_state.
+-- is the editorial pipeline (draft/in_review/needs_changes/approved). A review
+-- state only exists while status is 'pending'; any other status resets it to draft.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -458,7 +456,8 @@ CREATE TABLE IF NOT EXISTS posts (
     INDEX idx_author_created (author_id, created_at),
     INDEX idx_blog_published (blog_id, published_at),
     INDEX idx_blog_featured (blog_id, is_featured),
-    INDEX idx_featured_home (featured_on_home, published_at)
+    INDEX idx_featured_home (featured_on_home, published_at),
+    FULLTEXT INDEX ft_title_content (title, content)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog posts with workflow state and visibility controls';
 
@@ -728,6 +727,7 @@ CREATE TABLE IF NOT EXISTS mail_queue (
     subject VARCHAR(255) NOT NULL,
     body_html LONGTEXT NOT NULL,
     body_text LONGTEXT DEFAULT NULL,
+    headers JSON DEFAULT NULL COMMENT 'Extra message headers, e.g. List-Unsubscribe',
     status ENUM('pending','sending','sent','failed','cancelled') NOT NULL DEFAULT 'pending',
     tier ENUM('critical','standard','bulk') NOT NULL DEFAULT 'standard' COMMENT 'Set by the Mailable class, decides which worker drains the row',
     attempts INT NOT NULL DEFAULT 0 COMMENT 'Delivery attempts made so far',
@@ -1514,9 +1514,6 @@ INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) V
 INSERT INTO permissions (permission_name, permission_slug, resource, action, description) VALUES
 -- User Management Permissions
 ('Manage All Users', 'manage_all_users', 'users', 'manage', 'Full user management including creation, editing, and deletion'),
-('Create Users', 'create_users', 'users', 'create', 'Create new user accounts'),
-('Edit Users', 'edit_users', 'users', 'update', 'Edit existing user accounts'),
-('Delete Users', 'delete_users', 'users', 'delete', 'Delete user accounts'),
 ('View Users', 'view_users', 'users', 'read', 'View user information'),
 
 -- Site Settings Permissions
@@ -1526,15 +1523,10 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Create Blogs', 'create_blogs', 'blogs', 'create', 'Create new blogs'),
 ('Edit Own Blog', 'edit_own_blog', 'blogs', 'update_own', 'Edit blogs you own'),
 ('Delete Own Blog', 'delete_own_blog', 'blogs', 'delete_own', 'Delete blogs you own'),
-('View All Blogs', 'view_all_blogs', 'blogs', 'read', 'View all blogs on the platform'),
-('Assign Authors', 'assign_authors', 'blogs', 'assign', 'Assign authors to blogs'),
 ('Manage Team', 'manage_team', 'blogs', 'manage_team', 'Manage collaborators and invitations on blogs you manage'),
 
 -- Post Management (All Posts) Permissions
 ('Manage All Posts', 'manage_all_posts', 'posts', 'manage', 'Full management of all posts site-wide'),
-('Edit All Posts', 'edit_all_posts', 'posts', 'update_all', 'Edit any post regardless of author'),
-('Delete All Posts', 'delete_all_posts', 'posts', 'delete_all', 'Delete any post regardless of author'),
-('Publish All Posts', 'publish_all_posts', 'posts', 'publish_all', 'Publish any post regardless of author'),
 
 -- Post Management (Own/Blog Posts) Permissions
 ('Create Posts', 'create_posts', 'posts', 'create', 'Create new posts'),
@@ -1550,13 +1542,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Review Posts', 'review_posts', 'posts', 'review', 'Access posts for review'),
 ('Approve Posts', 'approve_posts', 'posts', 'approve', 'Approve posts for publication'),
 ('Reject Posts', 'reject_posts', 'posts', 'reject', 'Reject posts and request changes'),
-('Provide Feedback', 'provide_feedback', 'posts', 'feedback', 'Provide feedback on posts'),
 ('Assign Reviewers', 'assign_reviewers', 'posts', 'assign_reviewers', 'Assign reviewers to posts in blogs you manage'),
-
--- Submissions Permissions
-('Submit Ideas', 'submit_ideas', 'submissions', 'create', 'Submit content ideas for review'),
-('View Own Submissions', 'view_own_submissions', 'submissions', 'read_own', 'View your own submissions'),
-('Review Submissions', 'review_submissions', 'submissions', 'review', 'Review and approve/reject submissions'),
 
 -- Control Panel Area Permissions
 -- Administrators pass every Gate check by role; these let other roles be
@@ -1572,7 +1558,8 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
 ('Manage Email Templates', 'manage_email_templates', 'mail', 'manage', 'Edit email layouts and the wording of every email the site sends, in every language'),
 ('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
-('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel');
+('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel'),
+('Manage Rate Limits', 'manage_rate_limits', 'rate_limits', 'manage', 'See who a rate limiter has locked out and lift the lock');
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Administrator Role
@@ -1585,16 +1572,14 @@ SELECT 1, id FROM permissions;
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Content Manager Role
 -- ----------------------------------------------------------------------------
--- We grant content managers full post management but limited user access to
--- maintain separation of concerns between content and user administration.
+-- We grant content managers post management, blog creation and the reports
+-- queue but no user access, to keep content and user administration apart.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 2, id FROM permissions 
 WHERE permission_slug IN (
-    'view_users', 'view_all_blogs', 'manage_all_posts', 'edit_all_posts', 
-    'delete_all_posts', 'publish_all_posts', 'view_all_posts',
-    'review_posts', 'approve_posts', 'reject_posts', 'provide_feedback',
-    'review_submissions', 'handle_reports'
+    'create_blogs', 'manage_all_posts', 'view_all_posts', 'review_posts', 'approve_posts',
+    'reject_posts', 'handle_reports'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1606,10 +1591,9 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 3, id FROM permissions
 WHERE permission_slug IN (
-    'create_blogs', 'edit_own_blog', 'delete_own_blog', 'view_all_blogs',
-    'assign_authors', 'manage_team', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
-    'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
-    'reject_posts', 'assign_reviewers', 'provide_feedback', 'review_submissions'
+    'edit_own_blog', 'delete_own_blog', 'manage_team', 'create_posts', 'edit_blog_posts',
+    'delete_blog_posts', 'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
+    'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1622,9 +1606,8 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT (SELECT id FROM roles WHERE role_slug = 'editor'), id FROM permissions
 WHERE permission_slug IN (
-    'edit_own_blog', 'create_posts', 'edit_blog_posts', 'delete_blog_posts',
-    'publish_blog_posts', 'view_all_posts', 'review_posts', 'approve_posts',
-    'reject_posts', 'provide_feedback', 'review_submissions', 'assign_reviewers'
+    'edit_own_blog', 'create_posts', 'edit_blog_posts', 'delete_blog_posts', 'publish_blog_posts',
+    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1636,8 +1619,7 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 4, id FROM permissions 
 WHERE permission_slug IN (
-    'create_posts', 'edit_own_posts', 'delete_own_posts', 
-    'publish_own_posts', 'view_all_posts', 'view_own_submissions'
+    'create_posts', 'edit_own_posts', 'delete_own_posts', 'publish_own_posts', 'view_all_posts'
 );
 
 -- ----------------------------------------------------------------------------
@@ -1649,22 +1631,30 @@ WHERE permission_slug IN (
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 5, id FROM permissions
 WHERE permission_slug IN (
-    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts',
-    'assign_reviewers', 'provide_feedback', 'review_submissions'
+    'view_all_posts', 'review_posts', 'approve_posts', 'reject_posts', 'assign_reviewers'
 );
 
 -- ----------------------------------------------------------------------------
 -- Assign Permissions to Contributor Role
 -- ----------------------------------------------------------------------------
--- We grant contributors minimal permissions focused on submitting ideas for
--- consideration by authors or blog owners.
+-- We grant contributors minimal permissions: drafting their own posts for
+-- authors or blog owners to review.
 -- ----------------------------------------------------------------------------
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 6, id FROM permissions
 WHERE permission_slug IN (
-    'submit_ideas', 'view_own_submissions', 'view_all_posts',
-    'create_posts', 'edit_own_posts'
+    'view_all_posts', 'create_posts', 'edit_own_posts'
 );
+
+-- ----------------------------------------------------------------------------
+-- Assign Permissions to Reader Role
+-- ----------------------------------------------------------------------------
+-- Every account starts as a reader, and any reader may start a blog. Taking
+-- create_blogs away here closes blog creation to new sign-ups.
+-- ----------------------------------------------------------------------------
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE role_slug = 'reader'), id FROM permissions
+WHERE permission_slug = 'create_blogs';
 
 -- ============================================================================
 -- SEED DATA - RESERVED SLUGS

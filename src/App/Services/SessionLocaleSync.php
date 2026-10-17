@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Framework\Session;
+
 /**
  * Adopts the account's interface language as the session locale.
  *
@@ -19,7 +21,10 @@ namespace App\Services;
  */
 final class SessionLocaleSync
 {
-    public function __construct(private UserLocalePreference $preference) {}
+    public function __construct(
+        private UserLocalePreference $preference,
+        private Session $session,
+    ) {}
 
     /**
      * Point the session locale at the user's stored language, if they have one.
@@ -42,7 +47,7 @@ final class SessionLocaleSync
             return null;
         }
 
-        $_SESSION['locale'] = $locale;
+        $this->session->set('locale', $locale);
 
         return $locale;
     }
@@ -57,6 +62,6 @@ final class SessionLocaleSync
      */
     public function forget(): void
     {
-        unset($_SESSION['locale']);
+        $this->session->remove('locale');
     }
 }

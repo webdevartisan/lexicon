@@ -41,14 +41,14 @@ class InvitationService
      * @param  string  $email  Invitee email
      * @param  string  $role  Must be an assignable blog role
      * @param  int  $invitedBy  Owner issuing the invite
-     * @param  string  $ip  Client IP for audit
+     * @param  string|null  $ip  Client IP for audit
      * @return bool Whether the invitation email was delivered. The invite row
      *              exists either way, but the accept link only travels by
      *              email, so a false here means the invitee cannot act on it.
      *
      * @throws \InvalidArgumentException If role is not an assignable blog role
      */
-    public function invite(int $blogId, string $email, string $role, int $invitedBy, string $ip): bool
+    public function invite(int $blogId, string $email, string $role, int $invitedBy, ?string $ip): bool
     {
         // Same assignable-role source as role-change and validation, so an
         // owner can invite into any shipped or custom blog role.
@@ -76,8 +76,10 @@ class InvitationService
             ]);
         }
 
-        // Email always queued (raw token in link, never stored). Queueing means
-        // an invite survives the transport being down instead of vanishing.
+        // Email always queued. The invitations table keeps only the token hash;
+        // the raw token travels in the link and in the invitee's own
+        // notification. Queueing means an invite survives the transport being
+        // down instead of vanishing.
         $blog = $this->blogModel->getBlog($blogId);
         $blogName = $blog ? $blog->name() : 'a blog';
 
@@ -95,14 +97,16 @@ class InvitationService
     /**
      * Accept an invitation using the raw token from the email link.
      *
-     * Adds the user to blog_users and consumes the invite.
+     * Adds the user to blog_users and consumes the invite. Only the account
+     * the invitation was sent to can accept it.
      *
      * @param  string  $rawToken  Raw token from the link
      * @param  int  $acceptingUserId  Authenticated user accepting
+     * @param  string|null  $ip  Client IP for audit
      *
-     * @throws \RuntimeException If the token is invalid, expired, or already used
+     * @throws \RuntimeException If the token is invalid, expired, already used, or sent to another address
      */
-    public function accept(string $rawToken, int $acceptingUserId): void
+    public function accept(string $rawToken, int $acceptingUserId, ?string $ip): void
     {
         $invite = $this->invitationModel->findValidByToken(hash('sha256', $rawToken));
 
@@ -110,22 +114,25 @@ class InvitationService
             throw new \RuntimeException('Invitation is invalid, expired, or already used.');
         }
 
-        $this->invitationModel->markAccepted((int) $invite['id']);
-        $this->blogModel->addUserToBlog(
-            (int) $invite['blog_id'],
-            $acceptingUserId,
-            $invite['role'],
-            $invite['invited_by'] === null ? null : (int) $invite['invited_by']
-        );
+        $user = $this->userModel->find($acceptingUserId);
+        if (!$user || strcasecmp((string) $user['email'], (string) $invite['email']) !== 0) {
+            throw new \RuntimeException('Invitation was sent to a different account.');
+        }
 
-        audit()->log(
-            $acceptingUserId,
-            'blog.invite_accepted',
-            'blog_user',
-            (int) $invite['blog_id'],
-            ["Accepted invitation as {$invite['role']}"],
-            $_SERVER['REMOTE_ADDR'] ?? null
-        );
+        $this->blogModel->transaction(function () use ($invite, $acceptingUserId): void {
+            // The conditional update is the claim: a second click finds the
+            // row already answered and adds nobody.
+            if (!$this->invitationModel->markAccepted((int) $invite['id'])) {
+                throw new \RuntimeException('Invitation is invalid, expired, or already used.');
+            }
+
+            $this->blogModel->addUserToBlog(
+                (int) $invite['blog_id'],
+                $acceptingUserId,
+                $invite['role'],
+                $invite['invited_by'] === null ? null : (int) $invite['invited_by']
+            );
+        });
 
         // First-blog convenience: if the new collaborator has no default blog
         // set, land them inside this one on their next dashboard visit. They
@@ -135,7 +142,7 @@ class InvitationService
         }
 
         audit()->log($acceptingUserId, 'blog.invite_accepted', 'blog_invitation', (int) $invite['blog_id'],
-            ['role' => $invite['role']], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['role' => $invite['role']], $ip);
     }
 
     /**
@@ -143,10 +150,11 @@ class InvitationService
      *
      * @param  string  $rawToken  Raw token from the link
      * @param  int  $decliningUserId  User declining (0 if not logged in)
+     * @param  string|null  $ip  Client IP for audit
      *
      * @throws \RuntimeException If the token is invalid, expired, or already used
      */
-    public function decline(string $rawToken, int $decliningUserId): void
+    public function decline(string $rawToken, int $decliningUserId, ?string $ip): void
     {
         $invite = $this->invitationModel->findValidByToken(hash('sha256', $rawToken));
 
@@ -154,7 +162,9 @@ class InvitationService
             throw new \RuntimeException('Invitation is invalid, expired, or already used.');
         }
 
-        $this->invitationModel->markDeclined((int) $invite['id']);
+        if (!$this->invitationModel->markDeclined((int) $invite['id'])) {
+            throw new \RuntimeException('Invitation is invalid, expired, or already used.');
+        }
 
         $blog = $this->blogModel->getBlog((int) $invite['blog_id']);
         if ($blog) {
@@ -166,7 +176,7 @@ class InvitationService
         }
 
         audit()->log($decliningUserId, 'blog.invite_declined', 'blog_invitation', (int) $invite['blog_id'],
-            ['email' => $invite['email']], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['email' => $invite['email']], $ip);
     }
 
     /**
@@ -175,12 +185,13 @@ class InvitationService
      * @param  int  $blogId  Target blog
      * @param  string  $email  Invitee email
      * @param  int  $cancelledBy  Owner cancelling
+     * @param  string|null  $ip  Client IP for audit
      */
-    public function cancel(int $blogId, string $email, int $cancelledBy): void
+    public function cancel(int $blogId, string $email, int $cancelledBy, ?string $ip): void
     {
         $this->invitationModel->cancelPendingForEmail($blogId, $email);
 
         audit()->log($cancelledBy, 'blog.invite_cancelled', 'blog_invitation', $blogId,
-            ['email' => $email], $_SERVER['REMOTE_ADDR'] ?? null);
+            ['email' => $email], $ip);
     }
 }

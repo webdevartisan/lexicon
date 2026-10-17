@@ -89,7 +89,7 @@ foreach ($phpLabels as $key => $label) { ?>
             <div class="flex flex-wrap gap-2 mb-4">
                 <?php foreach ($logs as $name => $info) {
                     $isActive = $name === $selectedLog; ?>
-                <a href="/admin/system?log=<?= e(urlencode($name)) ?>"
+                <a href="<?= e(lurl('/admin/system?log='.urlencode($name))) ?>"
                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors <?= $isActive
                        ? 'text-white bg-custom-500 border-custom-500'
                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:border-zink-400' ?>">

@@ -3,7 +3,7 @@ $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
 $returnToken = $returnToken ?? '';
 // Pages that list posts for one role pass what that person may do with each; without it every action shows.
-$can = ($post['can'] ?? []) + ['update' => true, 'publish' => true, 'delete' => true];
+$can = ($post['can'] ?? []) + ['update' => true, 'open' => true, 'publish' => true, 'delete' => true];
 $viewCount = (int) ($post['views'] ?? 0);
 
 $status = $post['status'] ?? 'draft';
@@ -15,6 +15,17 @@ $statusStyles = [
     'archived' => ['bg-slate-800 text-slate-100 border-slate-900 dark:bg-zink-900 dark:text-zink-100', $t('components.postCard.status.archived')],
 ];
 [$badgeClass, $badgeLabel] = $statusStyles[$status] ?? $statusStyles['draft'];
+
+$visibility = (string) ($post['visibility'] ?? 'public');
+$visibilityChips = [
+    'unlisted' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', 'eye-off', $t('components.postCard.visibility.unlisted')],
+    'private' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'lock', $t('components.postCard.visibility.private')],
+];
+$visibilityActions = [
+    ['to' => 'make-public', 'icon' => 'globe', 'label' => $t('components.postCard.visibility.makePublic'), 'confirm' => $t('components.postCard.visibility.makePublicConfirm'), 'show' => $visibility !== 'public'],
+    ['to' => 'make-private', 'icon' => 'lock', 'label' => $t('components.postCard.visibility.makePrivate'), 'confirm' => $t('components.postCard.visibility.makePrivateConfirm'), 'show' => $visibility !== 'private'],
+    ['to' => 'unlist', 'icon' => 'eye-off', 'label' => $t('components.postCard.visibility.unlist'), 'confirm' => $t('components.postCard.visibility.unlistConfirm'), 'show' => $visibility !== 'unlisted'],
+];
 
 $dateRaw = $post['published_at'] ?? $post['updated_at'] ?? $post['created_at'] ?? '';
 $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
@@ -29,8 +40,16 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 <div class="card flex flex-col h-full gap-2 transition border border-slate-200 dark:border-zink-600 rounded-lg peer-checked:border-custom-500 peer-checked:bg-slate-100 dark:peer-checked:bg-zink-800/60">
     <div class="card-body flex flex-col flex-1">
         <div class="flex items-start justify-between gap-2 mb-3">
-            <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
-                <?= e($badgeLabel) ?>
+            <span class="inline-flex flex-wrap items-center gap-1.5">
+                <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $badgeClass ?>">
+                    <?= e($badgeLabel) ?>
+                </span>
+                <?php if (isset($visibilityChips[$visibility])) { [$chipClass, $chipIcon, $chipLabel] = $visibilityChips[$visibility]; ?>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border <?= $chipClass ?>">
+                    <i data-lucide="<?= e($chipIcon) ?>" class="size-3" aria-hidden="true"></i>
+                    <?= e($chipLabel) ?>
+                </span>
+                <?php } ?>
             </span>
 
         <?php
@@ -70,8 +89,8 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
         </div>
 
         <h6 class="mb-2 text-15 line-clamp-2">
-            <?php if ($can['update']) { ?>
-            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>" class="hover:text-custom-500 transition-colors">
+            <?php if ($can['open']) { ?>
+            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>" class="hover:text-custom-500 transition-colors">
                 {{ post.title }}
             </a>
             <?php } else { ?>
@@ -115,7 +134,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <?php } ?>
             <?php if (!empty($post['tags'])) { ?>
                 <?php foreach (array_slice($post['tags'], 0, 3) as $tg) { ?>
-                <a href="/dashboard/post?tag=<?= (int) $tg['id'] ?>"
+                <a href="<?= e(lurl('/dashboard/post?tag='.(int) $tg['id'])) ?>"
                    class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
                     {% cache 'lucide:tag:sm' ttl=31536000 %}<i data-lucide="tag" class="size-3"></i>{% endcache %}
                     <?= e((string) $tg['name']) ?>
@@ -126,7 +145,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 
         <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
             <?php if ($can['update']) { ?>
-            <a href="/dashboard/post/{{ post.id }}/edit?r=<?= urlencode($returnToken) ?>"
+            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>"
                 class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
                 {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                 <span>{{ editTooltip }}</span>
@@ -148,7 +167,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 
                 <div class="absolute z-50 hidden py-1.5 ltr:text-left rtl:text-right bg-white rounded-md shadow-md dropdown-menu min-w-[11rem] dark:bg-zink-600">
                     {% if ($post['status'] === 'published'): %}
-                    <a href="/blog/{{ blogSlug }}/{{ post.slug }}" target="_blank" rel="noopener"
+                    <a href="<?= e(lurl('/blog/'.$blogSlug.'/'.$post['slug'])) ?>" target="_blank" rel="noopener"
                         class="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
                         {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                         <span>{{ previewText }}</span>
@@ -187,6 +206,17 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                         </button>
                     </form>
                     {% endif %}
+
+                    <?php if ($can['publish']) { foreach ($visibilityActions as $action) { if (!$action['show']) { continue; } ?>
+                    <form method="POST" action="/dashboard/post/<?= (int) $post['id'] ?>/<?= e($action['to']) ?>" class="m-0">
+                        <?= csrf_field() ?>
+                        <button type="submit" data-confirm="<?= e($action['confirm']) ?>"
+                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
+                            <i data-lucide="<?= e($action['icon']) ?>" class="size-4" aria-hidden="true"></i>
+                            <span><?= e($action['label']) ?></span>
+                        </button>
+                    </form>
+                    <?php } } ?>
 
                     <?php if ($can['update']) { ?>
                     <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">

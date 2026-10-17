@@ -132,20 +132,45 @@ class SubscriptionController extends AppController
         return $this->redirect(lurl('/blog/'.rawurlencode((string) $blog['blog_slug'])));
     }
 
+    /**
+     * The emailed unsubscribe link only shows a button, for the same reason as
+     * showConfirm(): a link scanner's GET must not remove anyone.
+     */
+    public function showUnsubscribe(string $token): Response
+    {
+        $subscriber = $this->subscriberModel->findByToken($token);
+        $blog = $subscriber ? $this->blogModel->find((int) $subscriber['blog_id']) : null;
+
+        if ($subscriber === null || $blog === null) {
+            return $this->view('subscription.invalid')->setStatusCode(404);
+        }
+
+        return $this->view('subscription.unsubscribe', [
+            'token' => $token,
+            'email' => (string) $subscriber['email'],
+            'blogName' => (string) $blog['blog_name'],
+        ]);
+    }
+
+    /**
+     * Remove the subscription. Takes both the button on the page and the
+     * RFC 8058 one-click POST from the mail provider, which carries no session
+     * or CSRF token (the route is CSRF-exempt; the 64-character token is the
+     * proof). Answers with a page, never a redirect, as RFC 8058 requires.
+     */
     public function unsubscribe(string $token): Response
     {
         $subscriber = $this->subscriberModel->findByToken($token);
+        $blog = $subscriber ? $this->blogModel->find((int) $subscriber['blog_id']) : null;
 
-        if (!$subscriber) {
-            $this->flash('error', 'That unsubscribe link is no longer valid.');
-
-            return $this->redirect('/');
+        if ($subscriber === null) {
+            return $this->view('subscription.invalid')->setStatusCode(404);
         }
 
         $this->subscriberModel->deleteByToken($token);
 
-        $this->flash('success', 'You have been unsubscribed.');
-
-        return $this->redirect('/');
+        return $this->view('subscription.unsubscribed', [
+            'blogName' => (string) ($blog['blog_name'] ?? ''),
+        ]);
     }
 }

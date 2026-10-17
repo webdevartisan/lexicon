@@ -98,7 +98,7 @@ final class AccountProfileController extends AppController
 
         if ($handleRejection !== null) {
             $this->session->set('_errors', ['handle' => [$handleRejection]]);
-            $this->session->set('_old_input', $this->request->all());
+            $this->session->set('_old_input', sanitize_old_input($this->request->all()));
             $this->flash('error', $handleRejection);
 
             return $this->redirect(lurl('/account/profile'));

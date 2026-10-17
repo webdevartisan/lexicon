@@ -6,7 +6,7 @@ namespace App\Controllers;
 
 use App\Models\BlogModel;
 use App\Models\PageModel;
-use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Services\LocaleRegistry;
 use Framework\Core\Response;
 
@@ -25,7 +25,7 @@ class SitemapController extends AppController
     private const STATIC_PATHS = ['/', '/discover', '/getting-started', '/about', '/contact', '/privacy', '/terms', '/cookies'];
 
     public function __construct(
-        private PostModel $postModel,
+        private PublishedPostModel $publishedPosts,
         private BlogModel $blogModel,
         private PageModel $pageModel,
         private LocaleRegistry $registry
@@ -160,7 +160,7 @@ class SitemapController extends AppController
             ));
         }
 
-        foreach ($this->postModel->findPublicForSitemap() as $post) {
+        foreach ($this->publishedPosts->findPublicForSitemap() as $post) {
             $urls = array_merge($urls, $this->entriesFor(
                 $base,
                 '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']),

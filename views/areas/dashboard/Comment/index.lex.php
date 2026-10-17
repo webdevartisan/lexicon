@@ -25,7 +25,7 @@ $buildQuery = static function (array $overrides) use ($q, $status): string {
     return $params ? '?'.http_build_query($params) : '';
 };
 
-$basePath = '/dashboard/blog/'.$blog['id'].'/comments';
+$basePath = lurl('/dashboard/blog/'.$blog['id'].'/comments');
 
 // Badge colors for status
 $statusBadge = [
@@ -173,7 +173,7 @@ $statusBadge = [
                                         {% cache 'lucide:clock:sm' ttl=31536000 %}<i data-lucide="clock" class="size-3"></i>{% endcache %}
                                         <?= e(local_datetime($c['created_at'] ?? null, 'M j, Y · g:i a')) ?>
                                     </span>
-                                    <a href="/blog/<?= e((string) ($c['blog_slug'] ?? '')) ?>/<?= e((string) ($c['post_slug'] ?? '')) ?>"
+                                    <a href="<?= e(lurl('/blog/'.((string) ($c['blog_slug'] ?? '')).'/'.((string) ($c['post_slug'] ?? '')))) ?>"
                                         target="_blank" rel="noopener"
                                         class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
                                         {% cache 'lucide:file-text:sm' ttl=31536000 %}<i data-lucide="file-text" class="size-3"></i>{% endcache %}

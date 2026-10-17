@@ -3,12 +3,11 @@
 declare(strict_types=1);
 
 use App\Auth;
-use App\Models\BlogModel;
-use App\Models\CommentModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
+use Framework\Security\Csrf;
 use Framework\Session;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\SessionTestHelper;
@@ -26,12 +25,10 @@ beforeEach(function () {
     $suspensions = new UserSuspensionService(
         $this->db,
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-        new CommentModel($this->db),
-        new BlogModel($this->db),
         SessionTestHelper::revoker($this->db),
     );
 
-    $this->auth = new Auth($this->session, $this->userModel, $this->profileModel, $suspensions, SessionTestHelper::records($this->db));
+    $this->auth = new Auth($this->session, $this->userModel, $this->profileModel, $suspensions, SessionTestHelper::records($this->db), new Csrf($this->session));
 });
 
 afterEach(function () {
@@ -62,6 +59,23 @@ it('authenticates with valid credentials', function () {
 
     expect($result)->toBeTrue()
         ->and($this->auth->check())->toBeTrue();
+});
+
+it('issues a new CSRF token on login, so a guest token stops working', function () {
+    $password = faker()->password(12);
+    $email = faker()->unique()->safeEmail();
+
+    UserFactory::new($this->userModel)
+        ->withAttributes(['email' => $email, 'password' => password_hash($password, PASSWORD_DEFAULT)])
+        ->create();
+
+    $csrf = new Csrf($this->session);
+    $guestToken = $csrf->getToken();
+
+    $this->auth->login($email, $password);
+
+    expect($csrf->isTokenValid($guestToken))->toBeFalse()
+        ->and($csrf->getToken())->not->toBe($guestToken);
 });
 
 /**

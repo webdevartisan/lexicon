@@ -68,7 +68,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-            <a href="/blog/<?= e($blog['slug']) ?>" target="_blank" rel="noopener"
+            <a href="<?= e(lurl('/blog/'.$blog['slug'])) ?>" target="_blank" rel="noopener"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                 {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
                 <span>{{ t('dashboard.actions.viewLive') }}</span>
@@ -83,7 +83,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
     <div class="grid grid-cols-2 <?= $kpiCols ?> gap-4 mb-6">
         <?php foreach ($kpis as $kpi) {
             $kpiIcon = $kpi['icon']; ?>
-        <a href="<?= e($kpi['href']) ?>" class="<?= $cardLink ?>">
+        <a href="<?= e(lurl($kpi['href'])) ?>" class="<?= $cardLink ?>">
             <div class="card-body">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-slate-500 dark:text-zink-300 uppercase tracking-wide"><?= e($t($kpi['label'])) ?></span>
@@ -165,7 +165,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
         <ul class="divide-y divide-slate-100 dark:divide-zink-600">
             <?php foreach ($rows as $row) { ?>
             <li class="py-2.5 first:pt-0 last:pb-0">
-                <a href="<?= e(sprintf($hrefPattern, (int) $row['id'])) ?>" class="flex items-center gap-3 group/post">
+                <a href="<?= e(lurl(sprintf($hrefPattern, (int) $row['id']))) ?>" class="flex items-center gap-3 group/post">
                     <span class="min-w-0 flex-1">
                         <span class="block text-sm font-medium text-slate-900 dark:text-zink-50 truncate group-hover/post:text-custom-500" dir="auto"><?= e((string) $row['title']) ?></span>
                         <span class="block text-xs text-slate-500 dark:text-zink-300 mt-0.5"><?= e($meta($row)) ?></span>
@@ -189,14 +189,16 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
                         {% cache 'lucide:clipboard-check:overview' ttl=31536000 %}<i data-lucide="clipboard-check" class="size-4 text-sky-500" aria-hidden="true"></i>{% endcache %}
                         {{ t('dashboard.overview.reviewTitle') }}
                     </h2>
-                    <a href="/dashboard/blog/<?= $blogId ?>/review-queue" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.openQueue') }}</a>
+                    <a href="<?= e(lurl('/dashboard/blog/'.($blogId).'/review-queue')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.openQueue') }}</a>
                 </div>
                 <?php if ($review['items'] === []) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-6 text-center">{{ t('dashboard.overview.queueEmpty') }}</p>
                 <?php } else {
-                    $postList($review['items'], '/dashboard/post/%d/review', static fn (array $row): string => $t(
-                        $row['workflow_state'] === 'needs_changes' ? 'dashboard.overview.stateNeedsChanges' : 'dashboard.overview.stateInReview'
-                    ).' · '.(empty($row['reviewer_handle']) ? $t('dashboard.overview.unassigned') : '@'.$row['reviewer_handle']));
+                    $postList($review['items'], '/dashboard/post/%d/review', static fn (array $row): string => $t(match ($row['workflow_state']) {
+                        'needs_changes' => 'dashboard.overview.stateNeedsChanges',
+                        'approved' => 'dashboard.reviewQueue.states.approved',
+                        default => 'dashboard.overview.stateInReview',
+                    }).' · '.(empty($row['reviewer_handle']) ? $t('dashboard.overview.unassigned') : '@'.$row['reviewer_handle']));
                 } ?>
             </div>
         </section>
@@ -210,7 +212,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
                         {% cache 'lucide:pencil:overview' ttl=31536000 %}<i data-lucide="pencil" class="size-4 text-custom-500" aria-hidden="true"></i>{% endcache %}
                         {{ t('dashboard.overview.yourDrafts') }}
                     </h2>
-                    <a href="/dashboard/post" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.allYourPosts') }}</a>
+                    <a href="<?= e(lurl('/dashboard/post')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.allYourPosts') }}</a>
                 </div>
                 <?php if ($myWork['drafts'] === []) { ?>
                 <div class="text-center py-6">
@@ -233,7 +235,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
                         {{ t('dashboard.sections.needsAttention') }}
                     </h2>
                     <?php if ($blogPosts['needsAttention'] !== []) { ?>
-                    <a href="/dashboard/post?status=draft" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.viewAll') }}</a>
+                    <a href="<?= e(lurl('/dashboard/post?status=draft')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.overview.viewAll') }}</a>
                     <?php } ?>
                 </div>
                 <?php if ($blogPosts['needsAttention'] === []) { ?>
@@ -252,7 +254,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
                         {{ t('dashboard.sections.recent') }}
                     </h2>
                     <?php if ($blogPosts['recent'] !== []) { ?>
-                    <a href="/dashboard/post?status=published" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.actions.managePosts') }}</a>
+                    <a href="<?= e(lurl('/dashboard/post?status=published')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">{{ t('dashboard.actions.managePosts') }}</a>
                     <?php } ?>
                 </div>
                 <?php if ($blogPosts['recent'] === []) { ?>

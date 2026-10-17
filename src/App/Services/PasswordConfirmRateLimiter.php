@@ -14,9 +14,8 @@ use Framework\Helpers\RateLimiter;
  * a stolen session is an unlimited oracle for confirming that password. Keyed on
  * the user id because every one of those flows already has an authenticated session.
  *
- * The underlying RateLimiter is a fixed window whose block does not extend when
- * further attempts arrive, so the ceiling is deliberately low and the window
- * short rather than assuming a rolling window.
+ * The underlying RateLimiter decays the count continuously instead of resetting it,
+ * so the ceiling is deliberately low and the half-life short.
  */
 final class PasswordConfirmRateLimiter
 {

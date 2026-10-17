@@ -11,6 +11,7 @@ use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsVisitModel;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\ImpersonationSessionModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
 use App\Models\PendingEmailChangeModel;
@@ -36,6 +37,7 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
         private AnalyticsEventModel $analyticsEvents,
         private AnalyticsVisitModel $analyticsVisits,
         private AnalyticsSettings $analyticsSettings,
+        private ImpersonationSessionModel $impersonationSessions,
     ) {}
 
     public static function scheduleLabel(): string
@@ -68,6 +70,7 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
             'Answered invitations' => $this->invitations->deleteSettled((int) $days['answered_invitations']),
             'Unconfirmed subscriptions' => $this->subscribers->deleteUnconfirmedOlderThan((int) $days['unconfirmed_subscriptions']),
             'Account erasure records' => $this->erasureRecords->pruneOlderThan((int) $days['account_erasure_records']),
+            'Impersonation session IPs' => $this->impersonationSessions->clearIpsOlderThan((int) $days['activity_log']),
             'Raw analytics events' => $this->analyticsEvents->pruneOlderThan($this->analyticsSettings->rawRetentionDays()),
             'Analytics visits' => $this->analyticsVisits->pruneOlderThan($this->analyticsSettings->rawRetentionDays()),
         ];

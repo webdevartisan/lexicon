@@ -14,7 +14,10 @@ function flattenKeys(array $data, string $prefix = ''): array
     $keys = [];
     foreach ($data as $k => $v) {
         $path = $prefix === '' ? (string) $k : $prefix.'.'.$k;
-        if (is_array($v)) {
+        // Plural sets differ by language (Arabic has six forms, English two), so a set counts as one key
+        if (is_array($v) && isPluralSet($v)) {
+            $keys[] = $path;
+        } elseif (is_array($v)) {
             $keys = array_merge($keys, flattenKeys($v, $path));
         } else {
             $keys[] = $path;
@@ -22,6 +25,17 @@ function flattenKeys(array $data, string $prefix = ''): array
     }
 
     return $keys;
+}
+
+/**
+ * A group whose keys are all CLDR plural categories, including the mandatory "other".
+ */
+function isPluralSet(array $group): bool
+{
+    $keys = array_map('strval', array_keys($group));
+
+    return in_array('other', $keys, true)
+        && array_diff($keys, ['zero', 'one', 'two', 'few', 'many', 'other']) === [];
 }
 
 function localeKeys(string $locale): array

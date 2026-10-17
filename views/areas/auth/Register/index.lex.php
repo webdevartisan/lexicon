@@ -10,7 +10,7 @@
 <?php
 // Keep the reading context alive across the register hop.
 $returnTo = !empty($return_to) ? $return_to : (old('return_to') ?? '');
-$loginHref = '/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+$loginHref = lurl('/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : ''));
 ?>
 <a href="<?= e($loginHref) ?>"><?= e($t('auth.signIn')) ?></a>
 {% endblock %}
@@ -20,7 +20,7 @@ $loginHref = '/login'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '
 $returnTo = !empty($return_to) ? $return_to : (old('return_to') ?? '');
 $fieldErrors = errors();
 ?>
-<form action="/register/submit" method="post" autocomplete="on">
+<form action="/register/submit" method="post" autocomplete="on" data-captcha="<?= e((string) json_encode($captcha)) ?>">
     <?= csrf_field() ?>
     <?php if ($returnTo !== '') { ?>
         <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
@@ -118,6 +118,13 @@ $meterLevels = implode('|', [
         '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
     ]) ?></p>
 
+    <?php
+    $authCheckNoscript = $t('auth.checkNoscriptRegister');
+    $authCheckDone = $t('auth.checkDone');
+    $authCheckReset = false;
+    ?>
+    {% include "partials/_auth_check.lex.php" %}
+
     <button type="submit" class="lx-btn lx-authsubmit"><?= e($t('auth.registerSubmit')) ?></button>
 </form>
 {% endblock %}
@@ -127,8 +134,8 @@ $meterLevels = implode('|', [
 // See the note in Login: the locale file owns the sentence, the anchors are
 // ours, and neither comes from user input.
 echo $t('auth.legal', [
-    'terms' => '<a href="/terms">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="/privacy">'.e($t('footer.linkPrivacy')).'</a>',
+    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
+    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
 ]);
 ?>
 {% endblock %}

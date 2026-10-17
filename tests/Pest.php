@@ -98,6 +98,11 @@ uses()
         // Use transaction for cleanup instead of migrations to preserve test speed
         $this->db->getConnection()->beginTransaction();
 
+        // audit() writes through the container's connection, which this transaction doesn't cover
+        $this->activityLogMark = (int) \Framework\Core\App::container()->get(\Framework\Database::class)
+            ->query('SELECT COALESCE(MAX(id), 0) FROM activity_log')
+            ->fetchColumn();
+
         // Destroy existing session to prevent state leakage between feature tests
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -109,6 +114,9 @@ uses()
         if ($this->db->getConnection()->inTransaction()) {
             $this->db->getConnection()->rollBack();
         }
+
+        \Framework\Core\App::container()->get(\Framework\Database::class)
+            ->query('DELETE FROM activity_log WHERE id > ?', [$this->activityLogMark]);
 
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -257,9 +265,7 @@ function callController($controller, $method, $request, ...$args): \Framework\Co
         $session = \Framework\Core\App::container()->get(\Framework\Session::class);
 
         $session->set('_errors', $e->errors());
-        $oldInput = $request->all();
-        unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-        $session->set('_old_input', $oldInput);
+        $session->set('_old_input', sanitize_old_input($request->all()));
 
         $flash = $session->get('_flash', []);
         $flash['error'][] = 'Please correct the errors and try again.';

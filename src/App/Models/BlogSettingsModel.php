@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\BlogCacheInvalidator;
+
 /**
  * BlogSettingsModel
  *
@@ -36,6 +38,11 @@ class BlogSettingsModel extends AppModel
         'analytics_popular_posts',
         'analytics_public_stats',
     ];
+
+    private function blogCache(): BlogCacheInvalidator
+    {
+        return app(BlogCacheInvalidator::class);
+    }
 
     /**
      * Decode the social_links JSON column into a platform => URL map.
@@ -212,7 +219,7 @@ class BlogSettingsModel extends AppModel
         $rowCount = $this->database->execute($sql, $params);
 
         if ($rowCount > 0) {
-            fragment()->forget('blog-settings:'.$blogId, false);
+            $this->blogCache()->forgetSettings($blogId);
         }
 
         return $rowCount > 0;

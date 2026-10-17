@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/tags';
+$basePath = lurl('/admin/tags');
 $hasFilters = $q !== '' || $used !== '' || $blogId > 0;
 $emptyTitle = $hasFilters ? 'No tags match these filters' : 'No tags yet';
 $emptyMessage = $hasFilters ? 'Try a different name, blog, or usage filter.' : 'Create one to start tagging posts.';

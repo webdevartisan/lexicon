@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Gate;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\UserProfileModel;
+use App\Resources\BlogResource;
 
 /**
  * Builds the logged-in reader summary the masthead menu is drawn from.
@@ -22,8 +24,8 @@ use App\Models\UserProfileModel;
 final class ViewerContext
 {
     /**
-     * @var array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int, unread_notifications: int}|null|false
-     *                                                                                                                               False means "not resolved yet"; null is a real answer meaning nobody is signed in.
+     * @var array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null|false
+     *                                                                                                                                                  False means "not resolved yet"; null is a real answer meaning nobody is signed in.
      */
     private array|null|false $current = false;
 
@@ -37,8 +39,8 @@ final class ViewerContext
     /**
      * Summary of the current user for masthead rendering.
      *
-     * @return array{name: string, avatar_url: string|null, is_reader: bool, unread_replies: int, unread_notifications: int}|null
-     *                                                                                                                            Null when nobody is logged in.
+     * @return array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null
+     *                                                                                                                                                   Null when nobody is logged in.
      */
     public function current(): ?array
     {
@@ -60,6 +62,7 @@ final class ViewerContext
             // the back area's isReader, which is only computed on dashboard
             // pages and is therefore always false out on the front.
             'is_reader' => $this->blogs->userIsReaderOnly($userId),
+            'can_create_blog' => Gate::allows('create', BlogResource::class, $user),
             'unread_replies' => $this->reader->unreadReplyCount($userId),
             'unread_notifications' => $this->notifications->unreadCount($userId, NotificationModel::INBOX),
         ];

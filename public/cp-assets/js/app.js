@@ -312,6 +312,7 @@ function applyScrollbarLogic() {
         if (scrollbarElement && typeof scrollbarElement.unMount === 'function') {
             scrollbarElement.unMount();
             scrollbarElement = null;
+            scrollbarContainer.removeAttribute("data-more-below");
         }
         
         // We reset active menu states without destroying DOM
@@ -319,11 +320,39 @@ function applyScrollbarLogic() {
     } else {
         // We initialize SimpleBar for smooth scrolling (expanded sidebar)
         if (!scrollbarElement) {
-            scrollbarElement = new SimpleBar(scrollbarContainer);
+            // autoHide off keeps the thumb visible, so touch users can see the list scrolls
+            scrollbarElement = new SimpleBar(scrollbarContainer, { autoHide: false });
+            watchSidebarOverflow(scrollbarContainer, scrollbarElement);
         }
-        
+
         initActiveMenu();
     }
+}
+
+/**
+ * Flag the sidebar while more items sit below the fold.
+ *
+ * CSS fades the bottom edge when data-more-below is set, which hints at hidden items.
+ * The flag drops once the list is scrolled to the end or fits without scrolling.
+ *
+ * @param {HTMLElement} container The #scrollbar element
+ * @param {SimpleBar} bar The SimpleBar instance wrapping it
+ */
+function watchSidebarOverflow(container, bar) {
+    const scroller = bar.getScrollElement();
+    const update = function () {
+        const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+        container.toggleAttribute("data-more-below", remaining > 4);
+    };
+
+    scroller.addEventListener("scroll", update, { passive: true });
+    // Groups expand and the mobile drawer opens after load, both change the available height
+    if (typeof ResizeObserver !== "undefined") {
+        const observer = new ResizeObserver(update);
+        observer.observe(scroller);
+        observer.observe(bar.getContentElement());
+    }
+    update();
 }
 
 /**

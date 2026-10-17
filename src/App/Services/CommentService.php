@@ -68,6 +68,10 @@ class CommentService
             return $this->failure('Comments are not available for this post.');
         }
 
+        if (!$this->commentsOpen($post)) {
+            return $this->failure('Comments are closed for this post.');
+        }
+
         $parentId = (int) $parentId;
         $repliedToUserId = null;
         $replyToId = null;
@@ -186,11 +190,11 @@ class CommentService
     }
 
     /**
-     * Stash a guest's reply so it survives the login/registration hop.
+     * Stash a guest's comment or reply so it survives the login/registration hop.
      *
      * @param  int  $postId  Target post
-     * @param  int  $parentId  Comment being replied to
-     * @param  string  $content  The typed reply
+     * @param  int  $parentId  Comment being replied to, or 0 for a top-level comment
+     * @param  string  $content  The typed text
      * @param  string  $returnPath  Validated local path of the post page
      */
     public function capturePending(int $postId, int $parentId, string $content, string $returnPath): void
@@ -204,7 +208,7 @@ class CommentService
     }
 
     /**
-     * Post the captured reply right after authentication.
+     * Post the captured comment or reply right after authentication.
      *
      * The capture is single-use: it is cleared before posting so a failed
      * resume never replays on the next login.
@@ -239,6 +243,30 @@ class CommentService
         }
 
         return ['ok' => $result['ok'], 'message' => $result['message'], 'path' => $path];
+    }
+
+    /**
+     * Whether the post's blog is live and has comments on at both the blog and post level.
+     *
+     * The public template already hides the form; this is the server-side twin so a
+     * hand-built POST cannot bypass it.
+     *
+     * @param  array<string, mixed>  $post  Post row
+     */
+    private function commentsOpen(array $post): bool
+    {
+        $blog = $this->blogModel->getBlog((int) $post['blog_id']);
+
+        if (!$blog || $blog->status() !== 'published') {
+            return false;
+        }
+
+        // A missing settings row or post flag means the column default, which is on
+        $settings = $this->blogSettings->findByBlogId((int) $post['blog_id']);
+        $blogOn = $settings === null || !empty($settings['comments_enabled']);
+        $postOn = !array_key_exists('comments_enabled', $post) || !empty($post['comments_enabled']);
+
+        return $blogOn && $postOn;
     }
 
     /**

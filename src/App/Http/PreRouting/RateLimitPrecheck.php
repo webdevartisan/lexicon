@@ -37,7 +37,7 @@ final class RateLimitPrecheck
     /**
      * Apply a coarse, IP-based rate limit using APCu if available.
      *
-     * @param  Request  $request  Incoming HTTP request object (not directly used; present for symmetry).
+     * @param  Request  $request  Incoming HTTP request, used to resolve the client IP.
      */
     public static function handle(Request $request): void
     {
@@ -54,10 +54,7 @@ final class RateLimitPrecheck
         }
 
         // Determine client IP; if missing, group under a generic bucket.
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        if ($ip === '') {
-            $ip = 'unknown';
-        }
+        $ip = $request->ip() ?? 'unknown';
 
         // IP whitelist: any address in RATE_LIMIT_WHITELIST bypasses rate limits.
         $whitelistRaw = env('RATE_LIMIT_WHITELIST', '');

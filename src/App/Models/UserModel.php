@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\UserResource;
-use App\Traits\SoftDeletes;
 use Exception;
 
 /**
@@ -19,8 +18,6 @@ use Exception;
  */
 class UserModel extends AppModel
 {
-    use SoftDeletes;
-
     protected ?string $table = 'users';
 
     /**
@@ -66,7 +63,7 @@ class UserModel extends AppModel
     public function findByEmail(string $email): ?array
     {
         $sql = 'SELECT * FROM '.$this->getTable().' 
-                WHERE email = ? AND deleted_at IS NULL 
+                WHERE email = ? 
                 LIMIT 1';
 
         $stmt = $this->database->query($sql, [$email]);
@@ -96,9 +93,7 @@ class UserModel extends AppModel
     }
 
     /**
-     * Find user by ID, excluding soft-deleted users.
-     *
-     * Override parent to add soft delete filtering.
+     * Find user by ID.
      *
      * @param  int  $id  User ID
      * @return array<string,mixed>|null User data or null if not found
@@ -106,28 +101,13 @@ class UserModel extends AppModel
     public function findById(int $id): ?array
     {
         $sql = 'SELECT * FROM '.$this->getTable().' 
-                WHERE id = ? AND deleted_at IS NULL 
+                WHERE id = ? 
                 LIMIT 1';
 
         $stmt = $this->database->query($sql, [$id]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         return $result ?: null;
-    }
-
-    /**
-     * Find all users, excluding soft-deleted.
-     *
-     * Override parent to add soft delete filtering.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function findAll(): array
-    {
-        $sql = 'SELECT * FROM '.$this->getTable().' WHERE deleted_at IS NULL';
-        $stmt = $this->database->query($sql);
-
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -276,7 +256,7 @@ class UserModel extends AppModel
         $page = max(1, $page);
         $perPage = min(max(1, $perPage), 100);
 
-        $where = 'WHERE u.deleted_at IS NULL';
+        $where = 'WHERE 1 = 1';
         $params = [];
 
         if ($excludeUserId !== null) {
@@ -521,8 +501,7 @@ class UserModel extends AppModel
                 JOIN users u ON u.id = p.author_id
                 WHERE p.status = 'published'
                 AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
-                AND u.is_active = 1
-                AND u.deleted_at IS NULL";
+                AND u.is_active = 1";
 
         return (int) $this->database->query($sql)->fetchColumn();
     }
@@ -541,8 +520,7 @@ class UserModel extends AppModel
                 JOIN user_roles ur ON u.id = ur.user_id
                 JOIN roles r ON ur.role_id = r.id
                 WHERE r.role_slug = 'administrator'
-                AND u.is_active = 1
-                AND u.deleted_at IS NULL";
+                AND u.is_active = 1";
 
         $stmt = $this->database->query($sql);
 
@@ -569,7 +547,6 @@ class UserModel extends AppModel
                 LEFT JOIN permissions p ON p.id = rp.permission_id
                 WHERE r.scope = 'system'
                   AND u.is_active = 1
-                  AND u.deleted_at IS NULL
                   AND (r.role_slug = 'administrator' OR p.permission_slug = ?)";
 
         return $this->database->query($sql, [$permission])->fetchAll(\PDO::FETCH_ASSOC);

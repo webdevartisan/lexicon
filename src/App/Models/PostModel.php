@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Resources\PostResource;
-use App\Services\PublicCacheInvalidator;
+use App\Services\PostCacheInvalidator;
 
 /**
  * PostModel handles post CRUD operations and relationships.
  *
- * Manages posts table with cache invalidation, search, filtering, pagination,
- * and workflow state transitions. Includes cascade deletion helpers for blog cleanup.
+ * Manages posts table writes, status and workflow
+ * transitions, and cascade deletion helpers for blog cleanup. Public reads live
+ * in PublishedPostModel, dashboard lists and counts in PostListingModel.
  */
 class PostModel extends AppModel
 {
@@ -39,19 +40,6 @@ class PostModel extends AppModel
      */
     public const VISIBILITIES = ['public', 'private', 'unlisted'];
 
-    /**
-     * A post search engines are offered, over the aliases p (posts), b (blogs) and
-     * s (blog_settings): published and public, not marked noindex, on a published
-     * blog that allows indexing, with no canonical address pointing somewhere else.
-     * The sitemap and the SEO checks both read it, so they never disagree.
-     */
-    public const INDEXABLE_SQL = "p.status = 'published' AND p.visibility = 'public' AND b.status = 'published'
-        AND COALESCE(p.meta_noindex, 0) = 0 AND COALESCE(s.indexable, 1) = 1
-        AND (p.canonical_url IS NULL OR p.canonical_url = '' OR p.canonical_url LIKE CONCAT('%/blog/', b.blog_slug, '/', p.slug))";
-
-    /** Posts one sitemap lists, newest first. */
-    public const SITEMAP_LIMIT = 1000;
-
     /** Blog addresses the blog's own pages answer, so no post can be given one. */
     private const ROUTE_SLUGS = ['archive', 'index-feed', 'stats'];
 
@@ -69,6 +57,11 @@ class PostModel extends AppModel
         'archived' => ['published', 'scheduled', 'draft'],
     ];
 
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
+    }
+
     /**
      * Create a new post and invalidate blog listing caches.
      *
@@ -82,13 +75,7 @@ class PostModel extends AppModel
         $id = parent::insert($data);
 
         if ($id) {
-            // Discover lists recent posts and each blog's post count.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // A new post shifts every neighbour/related list in its blog.
-            if (!empty($data['blog_id'])) {
-                $this->forgetBlogPostFragments((int) $data['blog_id']);
-            }
+            $this->postCache()->postCreated((int) ($data['blog_id'] ?? 0));
         }
 
         return $id;
@@ -113,24 +100,14 @@ class PostModel extends AppModel
             return false;
         }
 
+        if (isset($data['status']) && $data['status'] !== 'pending') {
+            $data['workflow_state'] = 'draft';
+        }
+
         $result = parent::update($id, $data);
 
         if ($result) {
-            $blog = $post->blog();
-
-            // Invalidate the current post URL
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-
-            // If the slug changed, invalidate the new URL too
-            if (isset($data['slug']) && $data['slug'] !== $post->slug()) {
-                cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$data['slug']}*");
-            }
-
-            // Discover lists recent posts.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // Drop this post's own data fragments plus the blog-wide neighbour lists.
-            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+            $this->postCache()->postChanged($post, isset($data['slug']) ? (string) $data['slug'] : null);
         }
 
         return $result;
@@ -146,80 +123,16 @@ class PostModel extends AppModel
      */
     public function delete(int|string $id): bool
     {
-        // Fetch the post before deleting to get its URL for cache invalidation
+        // Fetched first: once the row is gone its URL can no longer be looked up.
         $post = $this->findResource($id);
 
         $result = parent::delete($id);
 
         if ($result && $post) {
-            $blog = $post->blog();
-
-            // Invalidate the deleted post's URL
-            cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-
-            // Discover lists recent posts.
-            app(PublicCacheInvalidator::class)->purgeDiscover();
-
-            // Drop this post's own data fragments plus the blog-wide neighbour lists.
-            $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
+            $this->postCache()->postChanged($post);
         }
 
         return $result;
-    }
-
-    /**
-     * Drop cached data fragments tied to a blog's posts.
-     *
-     * Neighbour and related lists are blog-scoped, so any post write in the
-     * blog invalidates all of them. When a specific post id is given, its own
-     * tag and comment fragments are dropped too.
-     *
-     * @param  int  $blogId  Blog whose neighbour/related fragments to clear
-     * @param  int|null  $postId  Specific post whose tag/comment fragments to clear
-     */
-    public function forgetBlogPostFragments(int $blogId, ?int $postId = null): void
-    {
-        // Post-page neighbour and related lists.
-        fragment()->forgetPattern('post-nav:'.$blogId.':*');
-        fragment()->forgetPattern('post-related:'.$blogId.':*');
-
-        // Landing/listing data: featured pick, paginated lists, category grids,
-        // and the category chips (their post_count tracks published posts).
-        fragment()->forget('blog-featured:'.$blogId, false);
-        fragment()->forgetPattern('blog-posts:'.$blogId.':*');
-        fragment()->forgetPattern('blog-catposts:'.$blogId.':*');
-        fragment()->forget('blog-pubcats:'.$blogId, false);
-
-        if ($postId !== null) {
-            fragment()->forget('post-tags:'.$postId, false);
-            fragment()->forget('post-comments:'.$postId, false);
-        }
-    }
-
-    /**
-     * Find posts by author ID.
-     *
-     * @param  int  $authorId  Author user ID
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function findByAuthorId(int $authorId): array
-    {
-        return $this->findBy('author_id', $authorId);
-    }
-
-    /**
-     * Get only published posts ordered by publish date.
-     *
-     * @return array<int, array<string, mixed>> Array of published post records
-     */
-    public function published(): array
-    {
-        $sql = "SELECT * FROM {$this->getTable()} 
-                WHERE status = 'published' 
-                ORDER BY published_at DESC";
-        $stmt = $this->database->query($sql);
-
-        return $stmt->fetchAll();
     }
 
     /**
@@ -345,22 +258,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Get the category of a post.
-     *
-     * @param  int|null  $categoryId  Category ID
-     * @return array<string, mixed>|null Category record, or null if not found or no category
-     */
-    public function category(?int $categoryId): ?array
-    {
-        if (!$categoryId) {
-            return null;
-        }
-        $category = new CategoryModel($this->database);
-
-        return $category->find((string) $categoryId) ?: null;
-    }
-
-    /**
      * Get tags for a post.
      *
      * @param  int  $postId  Post ID
@@ -385,523 +282,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Get comments for a post.
-     *
-     * @param  int  $postId  Post ID
-     * @return array<int, array<string, mixed>> Array of comment records
-     */
-    public function comments(int $postId): array
-    {
-        $commentModel = new CommentModel($this->database);
-
-        return $commentModel->forPost($postId);
-    }
-
-    /**
-     * Count published posts by author filtered by visibility.
-     *
-     * Companion to listByAuthorVisibility() so public pages can show a
-     * truthful total instead of the denormalized users.posts_count, which
-     * includes drafts and private posts.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string[]  $visibilities  Array of visibility values to include
-     * @return int Number of matching posts
-     */
-    public function countByAuthorVisibility(int $authorId, array $visibilities): int
-    {
-        $params = [':author_id' => $authorId];
-        $placeholders = [];
-
-        foreach ($visibilities as $index => $visibility) {
-            $key = ":visibility_{$index}";
-            $placeholders[] = $key;
-            $params[$key] = $visibility;
-        }
-
-        $inClause = implode(',', $placeholders);
-
-        $sql = "SELECT COUNT(*)
-                FROM posts
-                WHERE author_id = :author_id
-                AND status = 'published'
-                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
-                AND visibility IN ($inClause)";
-
-        $stmt = $this->database->query($sql, $params);
-
-        return (int) $stmt->fetchColumn();
-    }
-
-    /**
-     * Count approved comments received on an author's public published posts.
-     *
-     * @param  int  $authorId  Author user ID
-     * @return int Number of approved comments on publicly visible posts
-     */
-    public function countPublicCommentsReceived(int $authorId): int
-    {
-        $sql = "SELECT COUNT(c.id)
-                FROM comments c
-                JOIN posts p ON p.id = c.post_id
-                WHERE p.author_id = ?
-                AND p.status = 'published'
-                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published')
-                AND p.visibility = 'public'
-                AND c.status = 'approved'
-                AND c.hidden_at IS NULL";
-
-        $stmt = $this->database->query($sql, [$authorId]);
-
-        return (int) $stmt->fetchColumn();
-    }
-
-    /**
-     * List published posts by author filtered by visibility.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string[]  $visibilities  Array of visibility values to include
-     * @param  int  $limit  Maximum number of posts
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function listByAuthorVisibility(int $authorId, array $visibilities, int $limit = 10): array
-    {
-        // Build IN list with named params (convert array to multiple params)
-        $params = [':author_id' => $authorId];
-        $placeholders = [];
-
-        foreach ($visibilities as $index => $visibility) {
-            $key = ":visibility_{$index}";
-            $placeholders[] = $key;
-            $params[$key] = $visibility;
-        }
-
-        $inClause = implode(',', $placeholders);
-        $params[':limit'] = $limit;
-
-        $sql = "SELECT id, blog_id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image, visibility, published_at
-                FROM posts
-                WHERE author_id = :author_id
-                AND status = 'published'
-                AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
-                AND visibility IN ($inClause)
-                ORDER BY published_at DESC
-                LIMIT :limit";
-
-        $stmt = $this->database->query($sql, $params);
-
-        return $stmt->fetchAll() ?: [];
-    }
-
-    /**
-     * Find previous published post for an author before a given UTC timestamp.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findPreviousByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
-    {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published'
-                AND published_at < :ts
-                ORDER BY published_at DESC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
-
-        return $row ?: null;
-    }
-
-    /**
-     * Find previous published post for a blog before a given UTC timestamp.
-     *
-     * @param  int  $blogId  Blog ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findPreviousByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
-    {
-        $cacheKey = 'post-nav:'.$blogId.':prev:'.$publishedAtUtc;
-
-        $loadPrevious = function () use ($blogId, $publishedAtUtc): ?array {
-            $sql = "SELECT id, slug, title, published_at
-                    FROM {$this->getTable()}
-                    WHERE blog_id = :blog_id
-                    AND status = 'published'
-                    AND published_at < :ts
-                    ORDER BY published_at DESC
-                    LIMIT 1";
-
-            return $this->database->query($sql, [
-                ':blog_id' => $blogId,
-                ':ts' => $publishedAtUtc,
-            ])->fetch() ?: null;
-        };
-
-        // Blog-scoped neighbour lookup, busted for the whole blog on any post write.
-        return fragment()->rememberData($cacheKey, $loadPrevious, 3600, false);
-    }
-
-    /**
-     * Find next published post for an author after a given UTC timestamp.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findNextByAuthorAndDate(int $authorId, string $publishedAtUtc): ?array
-    {
-        $sql = "SELECT id, slug, title, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published'
-                AND published_at > :ts
-                ORDER BY published_at ASC
-                LIMIT 1";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':ts' => $publishedAtUtc,
-        ]);
-        $row = $stmt->fetch();
-
-        return $row ?: null;
-    }
-
-    /**
-     * Find next published post for a blog after a given UTC timestamp.
-     *
-     * @param  int  $blogId  Blog ID
-     * @param  string  $publishedAtUtc  UTC timestamp
-     * @return array<string, mixed>|null Post record with id, slug, title, published_at, or null if not found
-     */
-    public function findNextByBlogIdAndDate(int $blogId, string $publishedAtUtc): ?array
-    {
-        $cacheKey = 'post-nav:'.$blogId.':next:'.$publishedAtUtc;
-
-        $loadNext = function () use ($blogId, $publishedAtUtc): ?array {
-            $sql = "SELECT id, slug, title, published_at
-                    FROM {$this->getTable()}
-                    WHERE blog_id = :blog_id
-                    AND status = 'published'
-                    AND published_at > :ts
-                    ORDER BY published_at ASC
-                    LIMIT 1";
-
-            return $this->database->query($sql, [
-                ':blog_id' => $blogId,
-                ':ts' => $publishedAtUtc,
-            ])->fetch() ?: null;
-        };
-
-        // Blog-scoped neighbour lookup, busted for the whole blog on any post write.
-        return fragment()->rememberData($cacheKey, $loadNext, 3600, false);
-    }
-
-    /**
-     * Find recent published posts by author excluding a specific slug.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  string  $excludeSlug  Slug to exclude from results
-     * @param  int  $limit  Maximum number of posts
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function findRecentByAuthorExcludingSlug(int $authorId, string $excludeSlug, int $limit = 4): array
-    {
-        $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
-                FROM {$this->getTable()}
-                WHERE author_id = :author_id
-                AND status = 'published'
-                AND slug <> :slug
-                ORDER BY published_at DESC
-                LIMIT :limit";
-        $stmt = $this->database->query($sql, [
-            ':author_id' => $authorId,
-            ':slug' => $excludeSlug,
-            ':limit' => $limit,
-        ]);
-
-        return $stmt->fetchAll() ?: [];
-    }
-
-    /**
-     * Find recent published posts by blog excluding a specific slug.
-     *
-     * @param  int  $blogId  Blog ID
-     * @param  string  $excludeSlug  Slug to exclude from results
-     * @param  int  $limit  Maximum number of posts
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function findRecentByBlogIdExcludingSlug(int $blogId, string $excludeSlug, int $limit = 4): array
-    {
-        $cacheKey = 'post-related:'.$blogId.':'.$excludeSlug.':'.$limit;
-
-        $loadRelated = function () use ($blogId, $excludeSlug, $limit): array {
-            $sql = "SELECT id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image AS cover_url, published_at
-                    FROM {$this->getTable()}
-                    WHERE blog_id = :blog_id
-                    AND status = 'published'
-                    AND slug <> :slug
-                    ORDER BY published_at DESC
-                    LIMIT :limit";
-
-            return $this->database->query($sql, [
-                ':blog_id' => $blogId,
-                ':slug' => $excludeSlug,
-                ':limit' => $limit,
-            ])->fetchAll() ?: [];
-        };
-
-        // "Related" list for the post page, busted for the whole blog on any post write.
-        return fragment()->rememberData($cacheKey, $loadRelated, 3600, false);
-    }
-
-    /**
-     * Get published posts by blog ID with pagination.
-     *
-     * @param  int  $blogId  Blog ID to filter by
-     * @param  int  $page  Page number (starting from 1)
-     * @param  int  $perPage  Number of posts per page
-     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
-     */
-    public function findPublishedByBlogIdWithPagination(int $blogId, int $page = 1, int $perPage = 5): array
-    {
-        $cacheKey = 'blog-posts:'.$blogId.':'.$page.':'.$perPage;
-
-        $loadPage = function () use ($blogId, $page, $perPage): array {
-            $offset = ($page - 1) * $perPage;
-
-            // Get total count of published posts for this blog
-            $countSql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE blog_id = :blog_id AND status = 'published'";
-            $totalPosts = (int) $this->database->query($countSql, [':blog_id' => $blogId])->fetchColumn();
-
-            $totalPages = (int) ceil($totalPosts / $perPage);
-
-            // Get paginated results
-            $sql = "SELECT * FROM {$this->getTable()}
-                    WHERE blog_id = :blog_id AND status = 'published'
-                    ORDER BY published_at DESC
-                    LIMIT :limit OFFSET :offset";
-
-            $posts = $this->database->query($sql, [
-                ':blog_id' => $blogId,
-                ':limit' => $perPage,
-                ':offset' => $offset,
-            ])->fetchAll();
-
-            return [
-                'data' => $posts,
-                'totalPages' => $totalPages,
-                'currentPage' => $page,
-                'perPage' => $perPage,
-                'totalPosts' => $totalPosts,
-            ];
-        };
-
-        // Blog-scoped published listing; busted on any post write for the blog.
-        return fragment()->rememberData($cacheKey, $loadPage, 3600, false);
-    }
-
-    /**
-     * Find posts by author with optional filters.
-     *
-     * @param  int  $authorId  Author user ID
-     * @param  int|null  $blogId  Optional blog ID filter
-     * @param  string  $status  Optional status filter
-     * @param  string  $searchQuery  Optional search term for title/content
-     * @return array<int, array<string, mixed>> Array of post records with blog_name
-     */
-    public function findByAuthorWithFilters(int $authorId, ?int $blogId = null, string $status = '', string $searchQuery = ''): array
-    {
-        $sql = "SELECT p.*, b.blog_name
-                FROM {$this->getTable()} p
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                WHERE p.author_id = :author_id";
-
-        $params = [':author_id' => $authorId];
-
-        // Apply blog filter if given
-        if ($blogId !== null) {
-            $sql .= ' AND p.blog_id = :blog_id';
-            $params[':blog_id'] = $blogId;
-        }
-
-        // Apply status filter if given and valid
-        if ($status !== '' && in_array($status, self::STATUSES, true)) {
-            $sql .= ' AND p.status = :status';
-            $params[':status'] = $status;
-        }
-
-        // Apply search filter if query is non-empty
-        if ($searchQuery !== '') {
-            $sql .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $searchTerm = '%'.$searchQuery.'%';
-            $params[':search_title'] = $searchTerm;
-            $params[':search_content'] = $searchTerm;
-        }
-
-        $sql .= ' ORDER BY p.published_at DESC';
-
-        $stmt = $this->database->query($sql, $params);
-
-        return $stmt->fetchAll() ?: [];
-    }
-
-    /**
-     * Search published posts with pagination and optional category filter.
-     *
-     * @param  string  $query  Search term
-     * @param  int  $page  Page number
-     * @param  int  $perPage  Posts per page
-     * @param  string|null  $categoryName  Optional category name filter
-     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
-     */
-    public function searchPublishedPosts(string $query, int $page = 1, int $perPage = 8, ?string $categoryName = null): array
-    {
-        $offset = ($page - 1) * $perPage;
-        $likeQuery = '%'.$query.'%';
-
-        // Build filtering clause
-        $categoryClause = '';
-        $params = [
-            ':title' => $likeQuery,
-            ':content' => $likeQuery,
-            ':blog_name' => $likeQuery,
-        ];
-
-        if ($categoryName !== null && $categoryName !== '') {
-            // Topic filter: match by category name across all blogs.
-            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
-            $params[':categoryName'] = $categoryName;
-        }
-
-        // Count query
-        $countSql = "
-            SELECT COUNT(*)
-            FROM posts p
-            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-            WHERE p.status = 'published' 
-            AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
-            {$categoryClause}
-        ";
-
-        $countStmt = $this->database->query($countSql, $params);
-        $totalPosts = (int) $countStmt->fetchColumn();
-        $totalPages = (int) ceil($totalPosts / $perPage);
-
-        // Data query
-        $sql = "
-            SELECT p.*, b.blog_name, b.blog_slug, c.name as category_name, c.slug as category_slug
-            FROM posts p
-            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.status = 'published'
-            AND (p.title LIKE :title OR p.content LIKE :content OR b.blog_name LIKE :blog_name)
-            {$categoryClause}
-            ORDER BY p.published_at DESC
-            LIMIT :limit OFFSET :offset
-        ";
-
-        $params[':limit'] = $perPage;
-        $params[':offset'] = $offset;
-
-        $stmt = $this->database->query($sql, $params);
-        $posts = $stmt->fetchAll();
-
-        return [
-            'data' => $posts,
-            'totalPages' => $totalPages,
-            'currentPage' => $page,
-            'perPage' => $perPage,
-            'totalPosts' => $totalPosts,
-        ];
-    }
-
-    /**
-     * Get recent published posts with pagination and optional category filter.
-     *
-     * @param  int  $page  Page number
-     * @param  int  $perPage  Posts per page
-     * @param  string|null  $categoryName  Optional category name filter
-     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
-     */
-    public function getRecentPublishedWithPagination(int $page = 1, int $perPage = 8, ?string $categoryName = null): array
-    {
-        $offset = ($page - 1) * $perPage;
-
-        $categoryClause = '';
-        $params = [];
-
-        if ($categoryName !== null && $categoryName !== '') {
-            // Topic filter: match by category name across all blogs.
-            $categoryClause = ' AND p.category_id IN (SELECT id FROM categories WHERE name = :categoryName) ';
-            $params[':categoryName'] = $categoryName;
-        }
-
-        // Count total published posts with optional category filter
-        $countSql = "SELECT COUNT(*) FROM posts p WHERE p.status = 'published' AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = p.blog_id AND pb.status = 'published') {$categoryClause}";
-        $countStmt = $this->database->query($countSql, $params);
-        $totalPosts = (int) $countStmt->fetchColumn();
-        $totalPages = (int) ceil($totalPosts / $perPage);
-
-        // Fetch posts query
-        $sql = "
-            SELECT p.*, b.blog_name, b.blog_slug, c.name AS category_name, c.slug AS category_slug
-            FROM posts p
-            JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.status = 'published'
-        ";
-
-        $sql .= $categoryClause;
-        $sql .= ' ORDER BY p.published_at DESC LIMIT :limit OFFSET :offset';
-
-        $params[':limit'] = $perPage;
-        $params[':offset'] = $offset;
-
-        $stmt = $this->database->query($sql, $params);
-        $posts = $stmt->fetchAll();
-
-        return [
-            'data' => $posts,
-            'totalPages' => $totalPages,
-            'currentPage' => $page,
-            'perPage' => $perPage,
-            'totalPosts' => $totalPosts,
-        ];
-    }
-
-    /**
-     * The blog's featured headline: a featured, published post.
-     *
-     * Newest one takes priority if multiple entries are flagged,
-     * acting as a safety net on top of the one‑per‑blog rule enforced by setFeatured().
-     *
-     * @return array<string, mixed>|null Featured post record, or null if none
-     */
-    public function findFeaturedByBlogId(int $blogId): ?array
-    {
-        $cacheKey = 'blog-featured:'.$blogId;
-
-        $loadFeatured = function () use ($blogId): ?array {
-            $sql = "SELECT * FROM posts
-                    WHERE blog_id = ? AND is_featured = 1 AND status = 'published'
-                    ORDER BY published_at DESC, id DESC
-                    LIMIT 1";
-
-            return $this->database->query($sql, [$blogId])->fetch(\PDO::FETCH_ASSOC) ?: null;
-        };
-
-        // Blog-scoped landing data; busted on any post write or a featured toggle.
-        return fragment()->rememberData($cacheKey, $loadFeatured, 3600, false);
-    }
-
-    /**
      * Toggle a post's featured flag, keeping at most one featured post per blog.
      *
      * Turning a post on clears the flag from the blog's other posts in the same
@@ -914,7 +294,7 @@ class PostModel extends AppModel
                 'UPDATE posts SET is_featured = 0 WHERE id = ? AND blog_id = ?',
                 [$postId, $blogId]
             );
-            $this->forgetBlogPostFragments($blogId);
+            $this->postCache()->forgetBlogPosts($blogId);
 
             return true;
         }
@@ -930,7 +310,7 @@ class PostModel extends AppModel
                 [$postId, $blogId]
             );
             $this->database->commit();
-            $this->forgetBlogPostFragments($blogId);
+            $this->postCache()->forgetBlogPosts($blogId);
 
             return true;
         } catch (\Throwable $e) {
@@ -939,68 +319,6 @@ class PostModel extends AppModel
 
             return false;
         }
-    }
-
-    /**
-     * Platform-wide count of published posts, for the front page stats strip.
-     */
-    public function countPublished(): int
-    {
-        $sql = "SELECT COUNT(*) FROM {$this->getTable()} WHERE status = 'published'";
-
-        return (int) $this->database->query($sql)->fetchColumn();
-    }
-
-    /**
-     * Post URLs for the sitemap: the posts search engines are offered, newest first.
-     *
-     * @param  int  $limit  Safety cap on sitemap size
-     * @return array<int, array<string, mixed>> Rows with slug, blog_slug, updated_at
-     */
-    public function findPublicForSitemap(int $limit = self::SITEMAP_LIMIT): array
-    {
-        // The locale columns come along so the sitemap can list each post at the
-        // URLs it actually resolves at, rather than assuming English. Translated
-        // locales arrive concatenated to keep this a single query.
-        $sql = "SELECT p.slug, p.updated_at, b.blog_slug,
-                       COALESCE(s.default_locale, 'en') AS default_locale,
-                       COALESCE(s.translations_enabled, 0) AS translations_enabled,
-                       GROUP_CONCAT(DISTINCT t.locale) AS translated_locales
-                FROM posts p
-                JOIN blogs b ON p.blog_id = b.id
-                LEFT JOIN blog_settings s ON s.blog_id = b.id
-                LEFT JOIN post_translations t ON t.post_id = p.id
-                WHERE ".self::INDEXABLE_SQL.'
-                GROUP BY p.id, p.slug, p.updated_at, p.published_at, b.blog_slug,
-                         s.default_locale, s.translations_enabled
-                ORDER BY p.published_at DESC
-                LIMIT :limit';
-
-        return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Admin picks for the site front page showcase, newest first.
-     *
-     * The front page is a platform owned surface, so only posts an
-     * administrator explicitly flagged appear here. Returns an empty array
-     * when nothing is picked; the view falls back to its own static cards.
-     *
-     * @param  int  $limit  Maximum number of showcase posts
-     * @return array<int, array<string, mixed>> Post rows with blog name and slug
-     */
-    public function findHomeShowcase(int $limit = 6): array
-    {
-        $sql = "SELECT p.*, b.blog_name, b.blog_slug
-                FROM posts p
-                JOIN blogs b ON p.blog_id = b.id AND b.status = 'published'
-                WHERE p.featured_on_home = 1
-                  AND p.status = 'published'
-                  AND p.visibility = 'public'
-                ORDER BY p.published_at DESC, p.id DESC
-                LIMIT :limit";
-
-        return $this->database->query($sql, [':limit' => $limit])->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
@@ -1021,96 +339,11 @@ class PostModel extends AppModel
     }
 
     /**
-     * Published posts for a blog, optionally within one category, newest first.
-     *
-     * Powers the folio landing's "index" grid and its AJAX category swap. Pass
-     * $excludeId to drop the headline post so it never shows up twice.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    public function findPublishedByBlogAndCategory(int $blogId, ?int $categoryId, int $limit = 6, ?int $excludeId = null): array
-    {
-        // null id/exclude become 'all'/'none' so the key stays readable and distinct.
-        $cacheKey = 'blog-catposts:'.$blogId.':'.($categoryId ?? 'all').':'.$limit.':'.($excludeId ?? 'none');
-
-        $loadCategoryPosts = function () use ($blogId, $categoryId, $limit, $excludeId): array {
-            $sql = "SELECT * FROM posts WHERE blog_id = :blog_id AND status = 'published'";
-            $params = [':blog_id' => $blogId];
-
-            if ($categoryId !== null) {
-                $sql .= ' AND category_id = :category_id';
-                $params[':category_id'] = $categoryId;
-            }
-
-            if ($excludeId !== null) {
-                $sql .= ' AND id <> :exclude_id';
-                $params[':exclude_id'] = $excludeId;
-            }
-
-            $sql .= ' ORDER BY published_at DESC, id DESC LIMIT :limit';
-            $params[':limit'] = $limit;
-
-            return $this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
-        };
-
-        // Blog-scoped category grid; busted on any post write for the blog.
-        return fragment()->rememberData($cacheKey, $loadCategoryPosts, 3600, false);
-    }
-
-    /**
-     * Get index feed with search or recent posts.
-     *
-     * Delegates to search or recent listing based on query parameter.
-     *
-     * @param  array<string, mixed>  $options  Options array with page, perPage, categoryName, query keys
-     * @return array{data: array<int, array<string, mixed>>, totalPages: int, currentPage: int, perPage: int, totalPosts: int}
-     */
-    public function getIndexFeed(array $options = []): array
-    {
-        $page = $options['page'] ?? 1;
-        $perPage = $options['perPage'] ?? 8;
-        $categoryName = $options['categoryName'] ?? null;
-        $query = $options['query'] ?? '';
-
-        if ($query !== '') {
-            return $this->searchPublishedPosts($query, $page, $perPage, $categoryName);
-        }
-
-        return $this->getRecentPublishedWithPagination($page, $perPage, $categoryName);
-    }
-
-    /**
-     * Change post status to draft.
-     *
-     * @param  int  $id  Post ID
-     * @return bool True on success
-     */
-    public function unpublishPost(int $id): bool
-    {
-        $sql = "UPDATE posts SET status = 'draft' WHERE id = :id AND status <> 'moderated'";
-        $affected = $this->database->execute($sql, [':id' => $id]);
-
-        return $affected > 0;
-    }
-
-    /**
-     * Change post status to published.
-     *
-     * @param  int  $id  Post ID
-     * @return bool True on success
-     */
-    public function publishPost(int $id): bool
-    {
-        // A post a moderator hid comes back only through the moderation flow,
-        // never through a publish button or a bulk action.
-        $sql = "UPDATE posts SET status = 'published' WHERE id = :id AND status <> 'moderated'";
-        $affected = $this->database->execute($sql, [':id' => $id]);
-
-        return $affected > 0;
-    }
-
-    /**
      * Update post status.
+     *
+     * A review state only means something while the post is pending, so any
+     * other status clears it. That keeps the review queue from listing posts
+     * that were published, scheduled or pulled back by some other route.
      *
      * @param  int  $id  Post ID
      * @param  string  $status  New status value
@@ -1121,14 +354,47 @@ class PostModel extends AppModel
         // Fetch before the change so we know which blog/URL to invalidate.
         $post = $this->findResource($id);
 
-        $sql = "UPDATE posts SET status = :status WHERE id = :id AND status <> 'moderated'";
+        $sql = "UPDATE posts
+                SET status = :status,
+                    workflow_state = IF(:still_pending = 1, workflow_state, 'draft')
+                WHERE id = :id AND status <> 'moderated'";
         $affected = $this->database->execute($sql, [
             ':status' => $status,
+            ':still_pending' => $status === 'pending' ? 1 : 0,
             ':id' => $id,
         ]);
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
+     * Publish a post now, dating it now unless it already carries a past date.
+     *
+     * A bare status flip would leave published_at empty or in the future,
+     * which sorts the post wrongly in every listing and in previous/next links.
+     *
+     * @param  int  $id  Post ID
+     * @return bool True when the post was published
+     */
+    public function publishNow(int $id): bool
+    {
+        $post = $this->findResource($id);
+
+        $affected = $this->database->execute(
+            "UPDATE posts
+             SET status = 'published',
+                 workflow_state = 'draft',
+                 published_at = IF(published_at IS NULL OR published_at > UTC_TIMESTAMP(), UTC_TIMESTAMP(), published_at)
+             WHERE id = ? AND status <> 'moderated'",
+            [$id]
+        );
+
+        if ($affected > 0 && $post) {
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -1155,7 +421,7 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -1181,7 +447,7 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
@@ -1205,26 +471,10 @@ class PostModel extends AppModel
         );
 
         if ($affected > 0 && $post) {
-            $this->forgetStatusSurfaces($post);
+            $this->postCache()->postChanged($post);
         }
 
         return $affected > 0;
-    }
-
-    /**
-     * Clear what a status change makes stale: the post page, the listings, and
-     * the neighbour and related lists across its blog.
-     */
-    private function forgetStatusSurfaces(PostResource $post): void
-    {
-        $blog = $post->blog();
-
-        cache()->deletePattern("*:GET:/blog/{$blog->slug()}/{$post->slug()}*");
-        app(PublicCacheInvalidator::class)->purgeDiscover();
-
-        // Neighbour/related lists filter on status='published', so a status
-        // flip shifts them for the whole blog.
-        $this->forgetBlogPostFragments((int) $blog->id(), (int) $post->id());
     }
 
     /**
@@ -1255,6 +505,14 @@ class PostModel extends AppModel
             return false;
         }
 
+        // The writer may keep editing a submission until a reviewer takes it on.
+        if (($found['status'] ?? '') === 'pending') {
+            $found['review_started'] = (bool) $this->database->query(
+                'SELECT 1 FROM post_reviewers WHERE post_id = ? LIMIT 1',
+                [(int) $found['id']]
+            )->fetchColumn();
+        }
+
         return new PostResource($found, $blogResource);
     }
 
@@ -1263,118 +521,79 @@ class PostModel extends AppModel
      *
      * Keeps this logic in the model so controllers stay thin and transitions are audited.
      *
+     * The move only happens while the post is still in one of $from, checked in
+     * the same statement, so two people deciding at once cannot both succeed.
+     *
      * @param  int  $postId  Post ID
      * @param  string  $newState  New workflow state (must be in WORKFLOW_STATES constant)
      * @param  int  $byUserId  User ID performing the transition
-     * @return bool True on success
+     * @param  string[]  $from  States the post may be in; empty allows any
+     * @return bool True when the post moved, false when it was not in $from
      *
      * @throws \InvalidArgumentException If workflow state is invalid
      */
-    public function transitionWorkflow(int $postId, string $newState, int $byUserId): bool
+    public function transitionWorkflow(int $postId, string $newState, int $byUserId, array $from = []): bool
     {
         if (!in_array($newState, self::WORKFLOW_STATES, true)) {
             throw new \InvalidArgumentException("Invalid workflow state: {$newState}");
         }
 
-        $sql = 'UPDATE posts
-                SET workflow_state = :state,
-                    last_workflow_by = :by,
+        $params = [$newState, $byUserId, $postId];
+        $guard = '';
+        if ($from !== []) {
+            $guard = ' AND workflow_state IN ('.implode(',', array_fill(0, count($from), '?')).')';
+            $params = [...$params, ...$from];
+        }
+
+        $sql = "UPDATE posts
+                SET workflow_state = ?,
+                    last_workflow_by = ?,
                     last_workflow_at = NOW()
-                WHERE id = :id';
+                WHERE id = ?{$guard}";
 
-        $affected = $this->database->execute($sql, [
-            ':state' => $newState,
-            ':by' => $byUserId,
-            ':id' => $postId,
-        ]);
-
-        return $affected > 0;
+        return $this->database->execute($sql, $params) > 0;
     }
 
     /**
-     * Find posts by author with filters and pagination.
+     * Put a draft, or a post sent back for changes, into review.
      *
-     * Separates data retrieval from count query for efficiency and clarity.
-     * Returns both paginated results and metadata for navigation.
+     * Status and review state change together so the two can never disagree.
      *
-     * @param  int|null  $authorId  Author user ID, or null for every author
-     * @param  int  $page  Current page number (1-based indexing)
-     * @param  int  $perPage  Number of records per page
-     * @param  int|null  $blogId  Optional blog ID filter
-     * @param  string  $status  Optional status filter
-     * @param  string  $searchQuery  Optional search term for title/content
-     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
+     * @param  int  $postId  Post ID
+     * @param  int  $byUserId  User submitting it
+     * @return bool True when the post entered review
      */
-    public function findByAuthorWithFiltersPagination(
-        ?int $authorId,
-        int $page = 1,
-        int $perPage = 10,
-        ?int $blogId = null,
-        string $status = '',
-        string $searchQuery = '',
-        string $sort = 'newest',
-        ?int $categoryId = null,
-        ?int $tagId = null,
-        string $workflowState = ''
-    ): array {
-        // Validate and sanitize pagination parameters to prevent abuse
-        $page = max(1, $page);
-        $perPage = min(max(1, $perPage), 100); // Cap between 1-100 to prevent memory issues
+    public function enterReview(int $postId, int $byUserId): bool
+    {
+        $sql = "UPDATE posts
+                SET status = 'pending',
+                    workflow_state = 'in_review',
+                    last_workflow_by = ?,
+                    last_workflow_at = NOW()
+                WHERE id = ?
+                  AND status IN ('draft', 'pending')
+                  AND workflow_state IN ('draft', 'needs_changes')";
 
-        // Build the WHERE clause and parameters once to follow DRY principle
-        [$whereClause, $params] = $this->buildFilterClauses($authorId, $blogId, $status, $searchQuery, $categoryId, $tagId, $workflowState);
+        return $this->database->execute($sql, [$byUserId, $postId]) > 0;
+    }
 
-        // Get total count first for pagination metadata
-        $totalRecords = $this->getTotalCount($whereClause, $params);
+    /**
+     * Take a post out of review and back to draft.
+     *
+     * @param  int  $postId  Post ID
+     * @param  int  $byUserId  User withdrawing or resetting it
+     * @return bool True when the post was pending and is now a draft
+     */
+    public function leaveReview(int $postId, int $byUserId): bool
+    {
+        $sql = "UPDATE posts
+                SET status = 'draft',
+                    workflow_state = 'draft',
+                    last_workflow_by = ?,
+                    last_workflow_at = NOW()
+                WHERE id = ? AND status = 'pending'";
 
-        // Calculate offset for LIMIT clause
-        $offset = ($page - 1) * $perPage;
-
-        // Whitelist sort options
-        $orderBy = match ($sort) {
-            'oldest' => 'p.published_at ASC',
-            'title_asc' => 'p.title ASC',
-            'title_desc' => 'p.title DESC',
-            default => 'p.published_at DESC',
-        };
-
-        // v1 enforces single reviewer per post, so a plain LEFT JOIN is safe (no row multiplication).
-        $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
-                       au.handle AS author_handle,
-                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
-                       pr.reviewer_id AS reviewer_id,
-                       pr.assigned_at AS reviewer_assigned_at,
-                       ru.handle AS reviewer_handle
-                FROM {$this->getTable()} p
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                LEFT JOIN users au ON au.id = p.author_id
-                LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
-                LEFT JOIN users ru ON ru.id = pr.reviewer_id
-                {$whereClause}
-                ORDER BY {$orderBy}
-                LIMIT :limit OFFSET :offset";
-
-        $params[':limit'] = $perPage;
-        $params[':offset'] = $offset;
-
-        $stmt = $this->database->query($sql, $params);
-        $data = $stmt->fetchAll() ?: [];
-
-        // Calculate pagination metadata for frontend navigation
-        $totalPages = (int) ceil($totalRecords / $perPage);
-
-        return [
-            'data' => $data,
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total_records' => $totalRecords,
-                'total_pages' => $totalPages,
-                'has_previous' => $page > 1,
-                'has_next' => $page < $totalPages,
-            ],
-        ];
+        return $this->database->execute($sql, [$byUserId, $postId]) > 0;
     }
 
     /**
@@ -1392,22 +611,6 @@ class PostModel extends AppModel
         $result = $stmt->fetch();
 
         return (int) ($result['count'] ?? 0);
-    }
-
-    /**
-     * Get all posts for a blog.
-     *
-     * Used to find all uploaded files before deletion.
-     *
-     * @param  int  $blogId  Blog ID
-     * @return array<int, array<string, mixed>> Array of post records
-     */
-    public function getAllByBlogId(int $blogId): array
-    {
-        $sql = "SELECT * FROM {$this->getTable()} WHERE blog_id = :blog_id";
-        $stmt = $this->database->query($sql, [':blog_id' => $blogId]);
-
-        return $stmt->fetchAll();
     }
 
     /**
@@ -1500,355 +703,6 @@ class PostModel extends AppModel
     }
 
     /**
-     * Count posts in a blog by workflow_state (any author).
-     *
-     * Used for editor/owner Team-page workflow-health and Shared-page editor cards.
-     */
-    public function countByBlogAndWorkflow(int $blogId, string $workflowState): int
-    {
-        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()}
-                WHERE blog_id = ? AND workflow_state = ?";
-        $stmt = $this->database->query($sql, [$blogId, $workflowState]);
-
-        return (int) ($stmt->fetch()['c'] ?? 0);
-    }
-
-    /**
-     * Every post in a blog with the usual dashboard filters (status, workflow,
-     * search, sort) and pagination. Author scope is deliberately absent. The
-     * caller is expected to be an owner or editor and the surface (per-blog
-     * posts index) already gates on that.
-     *
-     * @return array{data: array<int,array<string,mixed>>, pagination: array<string,mixed>}
-     */
-    public function findAllInBlogWithFilters(
-        int $blogId,
-        int $page = 1,
-        int $perPage = 12,
-        string $status = '',
-        string $searchQuery = '',
-        string $sort = 'newest',
-        string $workflowState = ''
-    ): array {
-        $page = max(1, $page);
-        $perPage = min(max(1, $perPage), 100);
-
-        $where = 'WHERE p.blog_id = :blog_id';
-        $params = [':blog_id' => $blogId];
-
-        if ($status !== '' && in_array($status, self::STATUSES, true)) {
-            $where .= ' AND p.status = :status';
-            $params[':status'] = $status;
-        }
-
-        if ($workflowState !== '' && in_array($workflowState, self::WORKFLOW_STATES, true)) {
-            $where .= ' AND p.workflow_state = :workflow_state';
-            $params[':workflow_state'] = $workflowState;
-        }
-
-        if ($searchQuery !== '') {
-            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $term = '%'.$searchQuery.'%';
-            $params[':search_title'] = $term;
-            $params[':search_content'] = $term;
-        }
-
-        $orderBy = match ($sort) {
-            'oldest' => 'p.published_at ASC',
-            'title_asc' => 'p.title ASC',
-            'title_desc' => 'p.title DESC',
-            default => 'p.published_at DESC',
-        };
-
-        $countStmt = $this->database->query(
-            "SELECT COUNT(*) FROM {$this->getTable()} p {$where}",
-            $params
-        );
-        $totalRecords = (int) $countStmt->fetchColumn();
-
-        $offset = ($page - 1) * $perPage;
-
-        $sql = "SELECT p.*, b.blog_name, c.name AS category_name,
-                       au.handle AS author_handle,
-                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
-                       pr.reviewer_id AS reviewer_id,
-                       pr.assigned_at AS reviewer_assigned_at,
-                       ru.handle AS reviewer_handle
-                FROM {$this->getTable()} p
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                LEFT JOIN users au ON au.id = p.author_id
-                LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN post_reviewers pr ON pr.post_id = p.id
-                LEFT JOIN users ru ON ru.id = pr.reviewer_id
-                {$where}
-                ORDER BY {$orderBy}
-                LIMIT :limit OFFSET :offset";
-
-        $params[':limit'] = $perPage;
-        $params[':offset'] = $offset;
-
-        $stmt = $this->database->query($sql, $params);
-        $data = $stmt->fetchAll() ?: [];
-
-        $totalPages = (int) ceil($totalRecords / $perPage);
-
-        return [
-            'data' => $data,
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total_records' => $totalRecords,
-                'total_pages' => $totalPages,
-                'has_previous' => $page > 1,
-                'has_next' => $page < $totalPages,
-            ],
-        ];
-    }
-
-    /**
-     * Site-wide post counts keyed by status, for the admin overview.
-     *
-     * @return array<string, int> status => count
-     */
-    public function countsByStatus(): array
-    {
-        $counts = [];
-        $sql = "SELECT status, COUNT(*) AS cnt FROM {$this->getTable()} GROUP BY status";
-        foreach ($this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $counts[(string) $row['status']] = (int) $row['cnt'];
-        }
-
-        return $counts;
-    }
-
-    /**
-     * Per-status totals for an author's posts, for the dashboard filter badges.
-     *
-     * Same filter semantics as findByAuthorWithFiltersPagination, but one
-     * grouped query instead of a count query per status tab.
-     *
-     * @return array<string, int> Keys: all, published, draft, pending, needs_changes, archived
-     */
-    public function countsByStatusForAuthor(
-        ?int $authorId,
-        ?int $blogId = null,
-        string $searchQuery = '',
-        ?int $categoryId = null,
-        ?int $tagId = null
-    ): array {
-        [$whereClause, $params] = $this->buildFilterClauses(
-            $authorId, $blogId, '', $searchQuery, $categoryId, $tagId
-        );
-
-        return $this->groupedStatusCounts($whereClause, $params);
-    }
-
-    /**
-     * Run one GROUP BY status query and shape it into the badge-count array.
-     *
-     * @param  string  $whereClause  Prepared WHERE clause (aliased as p)
-     * @param  array<string, mixed>  $params  Bindings for the WHERE clause
-     * @return array<string, int>
-     */
-    private function groupedStatusCounts(string $whereClause, array $params): array
-    {
-        $sql = "SELECT p.status, COUNT(*) AS cnt,
-                       SUM(CASE WHEN p.workflow_state = 'needs_changes' THEN 1 ELSE 0 END) AS needs_changes
-                FROM {$this->getTable()} p
-                {$whereClause}
-                GROUP BY p.status";
-
-        return $this->shapeStatusCounts($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC));
-    }
-
-    /**
-     * Fold GROUP BY status rows into the badge-count array.
-     *
-     * needs_changes is a workflow_state living on posts of any status, so it
-     * is summed across the groups rather than counted as its own status.
-     *
-     * @param  array<int, array<string, mixed>>  $rows  Rows with status, cnt and needs_changes
-     * @return array<string, int>
-     */
-    private function shapeStatusCounts(array $rows): array
-    {
-        $counts = [
-            'all' => 0,
-            'published' => 0,
-            'scheduled' => 0,
-            'draft' => 0,
-            'pending' => 0,
-            'needs_changes' => 0,
-            'archived' => 0,
-        ];
-
-        foreach ($rows as $row) {
-            $status = (string) $row['status'];
-            if (isset($counts[$status])) {
-                $counts[$status] = (int) $row['cnt'];
-            }
-            $counts['needs_changes'] += (int) $row['needs_changes'];
-        }
-
-        $counts['all'] = $counts['published'] + $counts['scheduled'] + $counts['draft']
-            + $counts['pending'] + $counts['archived'];
-
-        return $counts;
-    }
-
-    /**
-     * Paginated site-wide post listing for the admin control panel.
-     *
-     * Same shape as findAllInBlogWithFilters but without the blog constraint,
-     * so administrators can search and filter across every blog.
-     *
-     * @param  int  $page  Current page (1-based)
-     * @param  int  $perPage  Rows per page (capped at 100)
-     * @param  string  $status  Optional status filter
-     * @param  string  $searchQuery  Optional title/content search term
-     * @param  int|null  $blogId  Optional single-blog constraint
-     * @param  string  $featured  '' | 'home' (featured on the front page) | 'blog' (featured in its blog)
-     * @param  string  $visibility  Optional visibility filter
-     * @param  string  $orderBy  Whitelisted ORDER BY body from TableSort
-     * @return array{data: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
-     */
-    public function findAllForAdmin(
-        int $page = 1,
-        int $perPage = 20,
-        string $status = '',
-        string $searchQuery = '',
-        ?int $blogId = null,
-        string $featured = '',
-        string $visibility = '',
-        string $orderBy = 'p.updated_at DESC'
-    ): array {
-        $page = max(1, $page);
-        $perPage = min(max(1, $perPage), 100);
-
-        $where = 'WHERE 1=1';
-        $params = [];
-
-        if ($status !== '' && in_array($status, self::STATUSES, true)) {
-            $where .= ' AND p.status = :status';
-            $params[':status'] = $status;
-        }
-
-        if ($searchQuery !== '') {
-            $where .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $term = '%'.$searchQuery.'%';
-            $params[':search_title'] = $term;
-            $params[':search_content'] = $term;
-        }
-
-        if ($blogId !== null) {
-            $where .= ' AND p.blog_id = :blog_id';
-            $params[':blog_id'] = $blogId;
-        }
-
-        // Posts carry two independent featured flags: featured_on_home drives the
-        // site front page, is_featured drives the blog's own landing page.
-        if ($featured === 'home') {
-            $where .= ' AND p.featured_on_home = 1';
-        } elseif ($featured === 'blog') {
-            $where .= ' AND p.is_featured = 1';
-        } elseif ($featured === 'none') {
-            $where .= ' AND p.featured_on_home = 0 AND p.is_featured = 0';
-        }
-
-        if ($visibility !== '' && in_array($visibility, self::VISIBILITIES, true)) {
-            $where .= ' AND p.visibility = :visibility';
-            $params[':visibility'] = $visibility;
-        }
-
-        $countStmt = $this->database->query(
-            "SELECT COUNT(*) FROM {$this->getTable()} p {$where}",
-            $params
-        );
-        $totalRecords = (int) $countStmt->fetchColumn();
-
-        $offset = ($page - 1) * $perPage;
-
-        // $orderBy comes from a TableSort whitelist, never from raw input.
-        $sql = "SELECT p.id, p.title, p.slug, p.status, p.updated_at, p.blog_id,
-                       p.featured_on_home, p.is_featured, p.visibility, p.published_at,
-                       b.blog_name, b.blog_slug,
-                       au.handle AS author_handle,
-                       (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comment_count,
-                       mc.id AS open_case_id, mc.report_count AS open_case_reports
-                FROM {$this->getTable()} p
-                LEFT JOIN blogs b ON p.blog_id = b.id
-                LEFT JOIN users au ON au.id = p.author_id
-                LEFT JOIN moderation_cases mc ON mc.open_key = CONCAT('post:', p.id)
-                {$where}
-                ORDER BY {$orderBy}
-                LIMIT :limit OFFSET :offset";
-
-        $params[':limit'] = $perPage;
-        $params[':offset'] = $offset;
-
-        $stmt = $this->database->query($sql, $params);
-        $data = $stmt->fetchAll() ?: [];
-
-        $totalPages = (int) ceil($totalRecords / $perPage);
-
-        return [
-            'data' => $data,
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total_records' => $totalRecords,
-                'total_pages' => $totalPages,
-                'has_previous' => $page > 1,
-                'has_next' => $page < $totalPages,
-            ],
-        ];
-    }
-
-    /**
-     * Review-pipeline posts for a blog, unassigned submissions first.
-     *
-     * One row per post. Older data can hold several reviewers on one post, so
-     * only the latest assignment is shown, the one assignReviewer() would leave.
-     *
-     * @return array<int, array<string, mixed>> Post rows with author and reviewer info
-     */
-    public function findReviewQueueForBlog(int $blogId): array
-    {
-        $sql = "SELECT p.id, p.title, p.slug, p.workflow_state, p.updated_at, p.author_id,
-                       au.handle AS author_handle,
-                       pr.reviewer_id, ru.handle AS reviewer_handle,
-                       pr.assigned_at
-                FROM {$this->getTable()} p
-                INNER JOIN users au ON au.id = p.author_id
-                LEFT JOIN post_reviewers pr ON pr.id = (
-                    SELECT MAX(latest.id) FROM post_reviewers latest WHERE latest.post_id = p.id
-                )
-                LEFT JOIN users ru ON ru.id = pr.reviewer_id
-                WHERE p.blog_id = ?
-                  AND p.workflow_state IN ('in_review', 'needs_changes')
-                ORDER BY (pr.reviewer_id IS NULL) DESC, p.updated_at DESC";
-
-        return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Count in_review posts on a blog that have no reviewer assigned.
-     *
-     * The single number that tells an editor/owner whether someone needs to
-     * pick up an unattended submission.
-     */
-    public function countInReviewUnassigned(int $blogId): int
-    {
-        $sql = "SELECT COUNT(*) AS c FROM {$this->getTable()} p
-                WHERE p.blog_id = ?
-                  AND p.workflow_state = 'in_review'
-                  AND NOT EXISTS (SELECT 1 FROM post_reviewers pr WHERE pr.post_id = p.id)";
-        $stmt = $this->database->query($sql, [$blogId]);
-
-        return (int) ($stmt->fetch()['c'] ?? 0);
-    }
-
-    /**
      * Delete all comments for all posts in a blog.
      *
      * Cascade delete comments before deleting posts.
@@ -1883,102 +737,10 @@ class PostModel extends AppModel
     }
 
     /**
-     * Build WHERE clause and parameters for filtering.
-     *
-     * Extracted to a separate method following SRP (Single Responsibility Principle)
-     * and to enable reuse between count and data queries.
-     *
-     * @param  int  $authorId  Author ID to filter by
-     * @param  int|null  $blogId  Optional blog ID filter
-     * @param  string  $status  Optional status filter
-     * @param  string  $searchQuery  Optional search term
-     * @return array{string, array<string, mixed>} Tuple of [WHERE clause, parameters]
-     */
-    private function buildFilterClauses(
-        ?int $authorId,
-        ?int $blogId,
-        string $status,
-        string $searchQuery,
-        ?int $categoryId = null,
-        ?int $tagId = null,
-        string $workflowState = ''
-    ): array {
-        $whereClause = 'WHERE 1 = 1';
-        $params = [];
-
-        if ($authorId !== null) {
-            $whereClause .= ' AND p.author_id = :author_id';
-            $params[':author_id'] = $authorId;
-        }
-
-        // Apply blog filter if provided
-        if ($blogId !== null) {
-            $whereClause .= ' AND p.blog_id = :blog_id';
-            $params[':blog_id'] = $blogId;
-        }
-
-        // Validate status against whitelist to prevent invalid database queries
-        if ($status !== '' && in_array($status, self::STATUSES, true)) {
-            $whereClause .= ' AND p.status = :status';
-            $params[':status'] = $status;
-        }
-
-        // Workflow state filter is independent of post status (a 'needs_changes'
-        // workflow_state lives on a draft-status post). Validated against the
-        // WORKFLOW_STATES whitelist before reaching SQL.
-        if ($workflowState !== '' && in_array($workflowState, self::WORKFLOW_STATES, true)) {
-            $whereClause .= ' AND p.workflow_state = :workflow_state';
-            $params[':workflow_state'] = $workflowState;
-        }
-
-        if ($categoryId !== null) {
-            $whereClause .= ' AND p.category_id = :category_id';
-            $params[':category_id'] = $categoryId;
-        }
-
-        if ($tagId !== null) {
-            $whereClause .= ' AND EXISTS (SELECT 1 FROM post_tags pt WHERE pt.post_id = p.id AND pt.tag_id = :tag_id)';
-            $params[':tag_id'] = $tagId;
-        }
-
-        // Use LIKE for flexible search but be aware this prevents index usage on large tables
-        // TODO: Considering full-text search for better performance with large datasets
-        if ($searchQuery !== '') {
-            $whereClause .= ' AND (p.title LIKE :search_title OR p.content LIKE :search_content)';
-            $searchTerm = '%'.$searchQuery.'%';
-            $params[':search_title'] = $searchTerm;
-            $params[':search_content'] = $searchTerm;
-        }
-
-        return [$whereClause, $params];
-    }
-
-    /**
-     * Get total count of records matching filter criteria.
-     *
-     * Uses a separate COUNT query instead of SQL_CALC_FOUND_ROWS for better performance
-     * in modern MySQL versions (5.7+) per MySQL documentation.
-     *
-     * @param  string  $whereClause  WHERE clause built by buildFilterClauses
-     * @param  array<string, mixed>  $params  Parameter bindings for the WHERE clause
-     * @return int Total number of matching records
-     */
-    private function getTotalCount(string $whereClause, array $params): int
-    {
-        $countSql = "SELECT COUNT(*) 
-                    FROM {$this->getTable()} p
-                    {$whereClause}";
-
-        $stmt = $this->database->query($countSql, $params);
-
-        return (int) $stmt->fetchColumn();
-    }
-
-    /**
      * Find posts for a blog that are currently in the review pipeline.
      *
-     * Used by WorkflowService::disableWorkflow to reset in-flight posts
-     * back to draft when the owner turns off the workflow toggle.
+     * Used by WorkflowService::disableWorkflow to return every pending post
+     * to draft when the owner turns off the workflow toggle.
      *
      * @param  int  $blogId  Blog identifier
      * @return array<int, array{id:int,author_id:int,workflow_state:string}>
@@ -1988,7 +750,7 @@ class PostModel extends AppModel
         $sql = "SELECT id, author_id, workflow_state
                 FROM posts
                 WHERE blog_id = ?
-                  AND workflow_state IN ('in_review', 'needs_changes')";
+                  AND status = 'pending'";
 
         return $this->database->query($sql, [$blogId])->fetchAll(\PDO::FETCH_ASSOC);
     }

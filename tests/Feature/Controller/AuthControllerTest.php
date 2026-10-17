@@ -177,6 +177,63 @@ it('trims email whitespace', function () {
 });
 
 // ============================================================================
+// AUDIT TRAIL
+// ============================================================================
+
+it('records a failed sign-in without storing the typed email', function () {
+    $email = faker()->unique()->safeEmail();
+
+    $request = makeRequest('/login', 'POST', [
+        '_token' => csrf()->getToken(),
+        'email' => $email,
+        'password' => 'wrong-password',
+    ]);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    $controller->submit();
+
+    $rows = $this->db->query("SELECT user_id, details FROM activity_log WHERE action = 'auth.login_failed'")
+        ->fetchAll(\PDO::FETCH_ASSOC);
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['user_id'])->toBeNull()
+        ->and((string) $rows[0]['details'])->not->toContain($email);
+});
+
+it('records a successful sign-in against the user', function () {
+    // auth() reads users through the container's connection, so the user must be written on that one
+    $this->db->getConnection()->rollBack();
+    $this->db = \Framework\Core\App::container()->get(\Framework\Database::class);
+    $this->db->getConnection()->beginTransaction();
+
+    $email = faker()->unique()->safeEmail();
+    $userId = UserFactory::new(new UserModel($this->db))
+        ->withAttributes([
+            'email' => $email,
+            'password' => password_hash('password123', PASSWORD_DEFAULT),
+        ])
+        ->create();
+
+    $request = makeRequest('/login', 'POST', [
+        '_token' => csrf()->getToken(),
+        'email' => $email,
+        'password' => 'password123',
+    ]);
+    $controller = new AuthController();
+    setupController($controller, $request, $this->mockViewer);
+
+    $controller->submit();
+
+    $rows = $this->db->query("SELECT user_id, details FROM activity_log WHERE action = 'auth.login'")
+        ->fetchAll(\PDO::FETCH_ASSOC);
+
+    expect($rows)->toHaveCount(1)
+        ->and((int) $rows[0]['user_id'])->toBe((int) $userId)
+        ->and((string) $rows[0]['details'])->not->toContain($email);
+});
+
+// ============================================================================
 // PASSWORD VALIDATION
 // ============================================================================
 

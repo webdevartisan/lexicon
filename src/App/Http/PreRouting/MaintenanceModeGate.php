@@ -6,6 +6,7 @@ namespace App\Http\PreRouting;
 
 use App\Services\MaintenanceMode;
 use Framework\Core\Request;
+use Framework\Security\IpRange;
 
 /**
  * Class MaintenanceModeGate
@@ -19,7 +20,8 @@ use Framework\Core\Request;
  *   The admin Settings toggle writes that file; deploy scripts can touch/delete it
  *   directly, so the switch works even when the database is unreachable.
  * - Allowlisted IPs (stored in the flag payload, falling back to MAINTENANCE_ALLOW)
- *   bypass the gate. Supports single IPv4/IPv6 addresses and IPv4 CIDR blocks.
+ *   bypass the gate. Supports single addresses and CIDR blocks, IPv4 and IPv6.
+ *   The client IP honours TRUSTED_PROXIES (see Framework\Security\ClientIp).
  * - The control panel and auth paths stay reachable for everyone so an admin can
  *   always log in and turn maintenance off; those routes enforce their own auth.
  * - Serves a static HTML page (public/maintenance.html) if present; otherwise a
@@ -60,9 +62,8 @@ final class MaintenanceModeGate
         // files created by hand (touch storage/maintenance.json).
         $allowed = $payload['allow'] ?? MaintenanceMode::configuredAllowlist();
 
-        // Client IP as seen by PHP.
-        // could later extend this to use X-Forwarded-For behind a trusted proxy if needed.
-        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+        // Forwarded headers count only when the peer is in TRUSTED_PROXIES; otherwise this is REMOTE_ADDR.
+        $clientIp = $request->ip() ?? '';
 
         // If client IP matches an allowlisted entry or CIDR, bypass maintenance.
         if ($clientIp !== '' && self::isIpAllowed($clientIp, (array) $allowed)) {
@@ -119,36 +120,12 @@ final class MaintenanceModeGate
                 continue;
             }
 
-            if ($entry === $ip) {
+            if (IpRange::contains($ip, $entry)) {
                 return true;
-            }
-
-            if (str_contains($entry, '/')) {
-                if (self::cidrMatch($ip, $entry)) {
-                    return true;
-                }
             }
         }
 
         return false;
-    }
-
-    private static function cidrMatch(string $ip, string $cidr): bool
-    {
-        [$subnet, $mask] = explode('/', $cidr, 2);
-        $mask = (int) $mask;
-
-        $ipLong = ip2long($ip);
-        $subnetLong = ip2long($subnet);
-
-        if ($ipLong === false || $subnetLong === false) {
-            return false;
-        }
-
-        $maskLong = -1 << (32 - $mask);
-        $subnetLong &= $maskLong;
-
-        return ($ipLong & $maskLong) === $subnetLong;
     }
 
     /**

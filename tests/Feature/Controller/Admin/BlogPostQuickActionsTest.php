@@ -74,6 +74,7 @@ beforeEach(function () {
         $container->get(ExternalMediaGuard::class),
         $container->get(PostContentSanitizer::class),
         $container->get(MediaService::class),
+        new App\Models\PostListingModel($this->db),
     );
 
     $this->mockViewer = new class() implements TemplateViewerInterface

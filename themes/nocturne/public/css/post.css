@@ -427,7 +427,8 @@
 .reply-form textarea:focus,
 .comment-form textarea:focus {
   outline: none;
-  border-color: var(--brass);
+  border-bottom-color: var(--paper);
+  box-shadow: 0 1px 0 var(--paper);
 }
 
 .reply-form .btn-reply,

@@ -66,3 +66,14 @@ test('ReviewModel rejects an invalid decision', function () {
     expect(fn () => $this->reviewModel->create($this->postId, $this->reviewerId, 'bogus', ''))
         ->toThrow(\InvalidArgumentException::class);
 });
+
+test('claim takes an unheld post and refuses a second reviewer', function () {
+    $otherId = UserFactory::new($this->userModel)->create();
+
+    expect($this->reviewerModel->claim($this->postId, $this->reviewerId))->toBeTrue()
+        ->and($this->reviewerModel->claim($this->postId, $otherId))->toBeFalse();
+
+    $assignments = $this->reviewerModel->findByPost($this->postId);
+    expect($assignments)->toHaveCount(1)
+        ->and((int) $assignments[0]['reviewer_id'])->toBe($this->reviewerId);
+});

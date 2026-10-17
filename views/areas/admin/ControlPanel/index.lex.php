@@ -15,7 +15,7 @@ $statusBadge = [
 
     <!-- Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-5">
-        <a href="/admin/posts" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+        <a href="<?= e(lurl('/admin/posts')) ?>" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
             <div class="card-body flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Posts</p>
@@ -28,7 +28,7 @@ $statusBadge = [
         </a>
 
         <?php if ($reports !== null) { ?>
-        <a href="/admin/reports" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+        <a href="<?= e(lurl('/admin/reports')) ?>" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
             <div class="card-body flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Open reports</p>
@@ -57,7 +57,7 @@ $statusBadge = [
             </div>
         </div>
         <?php } ?>
-        <a href="/admin/users" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+        <a href="<?= e(lurl('/admin/users')) ?>" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
             <div class="card-body flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Users</p>
@@ -69,7 +69,7 @@ $statusBadge = [
             </div>
         </a>
 
-        <a href="/admin/blogs" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
+        <a href="<?= e(lurl('/admin/blogs')) ?>" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">
             <div class="card-body flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500 dark:text-zink-200">Blogs</p>
@@ -88,14 +88,14 @@ $statusBadge = [
         {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
         {% cmp="btn" href="/admin/blogs/new" variant="blue" icon="file-plus" label="New Blog" %}
         <?php if ($reports !== null) { ?>
-        <a href="/admin/reports" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+        <a href="<?= e(lurl('/admin/reports')) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:flag:sm' ttl=31536000 %}<i data-lucide="flag" class="size-4"></i>{% endcache %} Moderation
         </a>
         <?php } ?>
-        <a href="/admin/cache" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+        <a href="<?= e(lurl('/admin/cache')) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:database-zap' ttl=31536000 %}<i data-lucide="database-zap" class="size-4"></i>{% endcache %} Cache Tools
         </a>
-        <a href="/admin/settings" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+        <a href="<?= e(lurl('/admin/settings')) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
             {% cache 'lucide:settings' ttl=31536000 %}<i data-lucide="settings" class="size-4"></i>{% endcache %} Settings
         </a>
     </div>
@@ -164,7 +164,7 @@ $rows = [
                     <?php foreach ($topBlogs as $tb) { ?>
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <a href="<?= e($topBlogsByViews ? lurl('/dashboard/blog/'.(int) $tb['id'].'/insights') : '/admin/blogs/'.(int) $tb['id'].'/show') ?>"
+                            <a href="<?= e($topBlogsByViews ? lurl('/admin/insights/blogs/'.(int) $tb['id']) : '/admin/blogs/'.(int) $tb['id'].'/show') ?>"
                                class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate" dir="auto">
                                 <?= e($tb['blog_name']) ?>
                             </a>
@@ -189,7 +189,7 @@ $rows = [
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Reports needing a decision</h3>
-                    <a href="/admin/reports" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
+                    <a href="<?= e(lurl('/admin/reports')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
                 </div>
                 <?php if ($reports['cases'] === []) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No open reports.</p>
@@ -197,7 +197,7 @@ $rows = [
                 <div class="divide-y divide-slate-100 dark:divide-zink-600">
                     <?php foreach ($reports['cases'] as $case) { ?>
                     <div class="py-2.5">
-                        <a href="/admin/reports/<?= (int) $case['id'] ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
+                        <a href="<?= e(lurl('/admin/reports/'.((int) $case['id']))) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
                             <?= e(truncate((string) ($case['subject_snapshot'] ?? 'Reported '.$case['subject_type']), 80)) ?>
                         </a>
                         <span class="text-[11px] text-slate-400 dark:text-zink-300">
@@ -215,7 +215,7 @@ $rows = [
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Recently updated posts</h3>
-                    <a href="/admin/posts" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
+                    <a href="<?= e(lurl('/admin/posts')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
                 </div>
                 <?php if (empty($recentPosts)) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No posts yet.</p>
@@ -224,7 +224,7 @@ $rows = [
                     <?php foreach ($recentPosts as $p) { ?>
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <a href="/admin/posts/<?= e((string) $p['id']) ?>/show" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
+                            <a href="<?= e(lurl('/admin/posts/'.(string) $p['id'].'/show')) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
                                 <?= e(truncate((string) $p['title'], 60)) ?>
                             </a>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300">
@@ -246,7 +246,7 @@ $rows = [
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Newest users</h3>
-                    <a href="/admin/users" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
+                    <a href="<?= e(lurl('/admin/users')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">View all</a>
                 </div>
                 <?php if (empty($recentUsers)) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No users yet.</p>
@@ -255,7 +255,7 @@ $rows = [
                     <?php foreach ($recentUsers as $u) { ?>
                     <div class="py-2.5 flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <a href="/admin/users/<?= e((string) $u['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
+                            <a href="<?= e(lurl('/admin/users/'.(string) $u['id'].'/edit')) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500 block truncate">
                                 <?= e((string) $u['handle']) ?>
                             </a>
                             <span class="text-[11px] text-slate-400 dark:text-zink-300"><?= e((string) $u['email']) ?></span>
@@ -275,7 +275,7 @@ $rows = [
             <div class="card-body">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50">Recent activity</h3>
-                    <a href="/admin/audit-log" class="text-xs font-medium text-custom-500 hover:text-custom-600">Full audit log</a>
+                    <a href="<?= e(lurl('/admin/audit-log')) ?>" class="text-xs font-medium text-custom-500 hover:text-custom-600">Full audit log</a>
                 </div>
                 <?php if (empty($recentActivity)) { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300 py-4 text-center">No recorded activity yet.</p>
@@ -325,7 +325,7 @@ $rows = [
                         <dt class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300 mb-1">Maintenance</dt>
                         <dd>
                             <?php if ($health['maintenance']) { ?>
-                            <a href="/admin/settings" class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800">On — site offline</a>
+                            <a href="<?= e(lurl('/admin/settings')) ?>" class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800">On — site offline</a>
                             <?php } else { ?>
                             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800">Off — site live</span>
                             <?php } ?>

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\CategoryModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\CategoryFactory;
@@ -19,6 +21,8 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->postListing = new PostListingModel($this->db);
+    $this->publishedPosts = new PublishedPostModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
     $this->categoryModel = new CategoryModel($this->db);
@@ -58,7 +62,7 @@ it('finds posts by title content', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('PHP', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('PHP', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -85,7 +89,7 @@ it('finds posts by content', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('Laravel', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('Laravel', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -93,11 +97,104 @@ it('finds posts by content', function () {
 });
 
 /**
- * Test searching posts by blog name.
- *
- * Verifies searchPublishedPosts matches blog name.
+ * Search is word-prefix based, so a partial word still finds the post.
  */
-it('finds posts by blog name', function () {
+it('matches a word prefix', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Of Mercury Rising',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $result = $this->publishedPosts->searchPublishedPosts('merc', 1, 8);
+
+    expect($result['data'])->toHaveCount(1)
+        ->and($result['data'][0]['title'])->toBe('Of Mercury Rising');
+});
+
+/**
+ * Every word has to match, so adding a word narrows the results.
+ */
+it('requires every search word to match', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    foreach (['Mercury Rising', 'Mercury Falling'] as $title) {
+        PostFactory::new($this->postModel)
+            ->withAttributes([
+                'author_id' => $userId,
+                'blog_id' => $blogId,
+                'title' => $title,
+                'status' => 'published',
+                'published_at' => date('Y-m-d H:i:s'),
+            ])
+            ->create();
+    }
+
+    $result = $this->publishedPosts->searchPublishedPosts('mercury ris', 1, 8);
+
+    expect($result['data'])->toHaveCount(1)
+        ->and($result['data'][0]['title'])->toBe('Mercury Rising');
+});
+
+/**
+ * Boolean operators typed by a visitor are stripped, never interpreted.
+ */
+it('treats FULLTEXT operators in the query as plain text', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Mercury Rising',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $operators = $this->publishedPosts->searchPublishedPosts('-mercury', 1, 8);
+    $onlyOperators = $this->publishedPosts->searchPublishedPosts('+-"*()@<>~', 1, 8);
+
+    expect($operators['data'])->toHaveCount(1)
+        ->and($onlyOperators['data'])->toBe([])
+        ->and($onlyOperators['totalPosts'])->toBe(0);
+});
+
+/**
+ * Greek text is split on spaces like any other, so prefixes work in el.
+ */
+it('searches non-latin text', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
+
+    PostFactory::new($this->postModel)
+        ->withAttributes([
+            'author_id' => $userId,
+            'blog_id' => $blogId,
+            'title' => 'Ο Ερμής ανεβαίνει',
+            'status' => 'published',
+            'published_at' => date('Y-m-d H:i:s'),
+        ])
+        ->create();
+
+    $result = $this->publishedPosts->searchPublishedPosts('Ερμ', 1, 8);
+
+    expect($result['data'])->toHaveCount(1);
+});
+
+/**
+ * Blog names are not part of the post search; the Blogs tab covers them.
+ */
+it('does not match a post through its blog name', function () {
     $userId = UserFactory::new($this->userModel)->create();
 
     $blogId = BlogFactory::new($this->blogModel)
@@ -114,11 +211,9 @@ it('finds posts by blog name', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('DevOps', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('DevOps', 1, 8);
 
-    expect($result)->toBeArray()
-        ->and($result['data'])->toHaveCount(1)
-        ->and($result['data'][0]['blog_name'])->toBe('DevOps Daily');
+    expect($result['data'])->toHaveCount(0);
 });
 
 /**
@@ -163,7 +258,7 @@ it('filters search results by category', function () {
         ->create();
 
     // Category filter matches by name (topic filter spans all blogs)
-    $result = $this->postModel->searchPublishedPosts('Post', 1, 8, 'Technology');
+    $result = $this->publishedPosts->searchPublishedPosts('Post', 1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
@@ -191,7 +286,7 @@ it('returns paginated search results', function () {
             ->create();
     }
 
-    $result = $this->postModel->searchPublishedPosts('Testing', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('Testing', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(8)
@@ -216,7 +311,7 @@ it('returns empty results for non-matching search', function () {
         ])
         ->create();
 
-    $result = $this->postModel->searchPublishedPosts('NonExistentTerm', 1, 8);
+    $result = $this->publishedPosts->searchPublishedPosts('NonExistentTerm', 1, 8);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(0)
@@ -247,7 +342,7 @@ it('returns recent published posts with pagination', function () {
             ->create();
     }
 
-    $result = $this->postModel->getRecentPublishedWithPagination(1, 5);
+    $result = $this->publishedPosts->getRecentPublishedWithPagination(1, 5);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(5)
@@ -294,187 +389,11 @@ it('filters recent posts by category', function () {
         ->create();
 
     // Category filter matches by name (topic filter spans all blogs)
-    $result = $this->postModel->getRecentPublishedWithPagination(1, 8, 'Technology');
+    $result = $this->publishedPosts->getRecentPublishedWithPagination(1, 8, 'Technology');
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(1)
         ->and($result['data'][0]['title'])->toBe('Tech Post');
-});
-
-// ============================================================================
-// GET INDEX FEED
-// ============================================================================
-
-/**
- * Test index feed returns recent posts without query.
- *
- * Verifies getIndexFeed returns recent posts when no search query provided.
- */
-it('returns recent posts when no search query provided', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    for ($i = 1; $i <= 5; $i++) {
-        PostFactory::new($this->postModel)
-            ->withAttributes([
-                'author_id' => $userId,
-                'blog_id' => $blogId,
-                'status' => 'published',
-                'published_at' => date('Y-m-d H:i:s'),
-            ])
-            ->create();
-    }
-
-    $result = $this->postModel->getIndexFeed(['page' => 1, 'perPage' => 8]);
-
-    expect($result)->toBeArray()
-        ->and($result['data'])->toHaveCount(5);
-});
-
-/**
- * Test index feed performs search when query provided.
- *
- * Verifies getIndexFeed delegates to searchPublishedPosts when query present.
- */
-it('performs search when query provided in index feed', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'title' => 'PHP Tutorial',
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'title' => 'JavaScript Guide',
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    $result = $this->postModel->getIndexFeed(['query' => 'PHP', 'page' => 1, 'perPage' => 8]);
-
-    expect($result)->toBeArray()
-        ->and($result['data'])->toHaveCount(1)
-        ->and($result['data'][0]['title'])->toContain('PHP');
-});
-
-// ============================================================================
-// FIND BY AUTHOR WITH FILTERS
-// ============================================================================
-
-/**
- * Test finding author posts without filters.
- *
- * Verifies findByAuthorWithFilters returns all author posts when no filters applied.
- */
-it('returns all author posts without filters', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
-        ->count(3);
-
-    $result = $this->postModel->findByAuthorWithFilters($userId);
-
-    expect($result)->toBeArray()
-        ->and($result)->toHaveCount(3);
-});
-
-/**
- * Test filtering author posts by blog ID.
- *
- * Verifies findByAuthorWithFilters respects blog ID filter.
- */
-it('filters author posts by blog ID', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-
-    $blog1Id = BlogFactory::new($this->blogModel)->published()->create($userId);
-    $blog2Id = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blog1Id, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blog2Id, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
-        ->create();
-
-    $result = $this->postModel->findByAuthorWithFilters($userId, $blog1Id);
-
-    expect($result)->toBeArray()
-        ->and($result)->toHaveCount(1)
-        ->and($result[0]['blog_id'])->toBe($blog1Id);
-});
-
-/**
- * Test filtering author posts by status.
- *
- * Verifies findByAuthorWithFilters respects status filter.
- */
-it('filters author posts by status', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'draft'])
-        ->create();
-
-    $result = $this->postModel->findByAuthorWithFilters($userId, null, 'draft');
-
-    expect($result)->toBeArray()
-        ->and($result)->toHaveCount(1)
-        ->and($result[0]['status'])->toBe('draft');
-});
-
-/**
- * Test filtering author posts by search query.
- *
- * Verifies findByAuthorWithFilters respects search query filter.
- */
-it('filters author posts by search query', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->published()->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'title' => 'Laravel Tutorial',
-            'content' => 'Content about Laravel',
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'title' => 'Symfony Guide',
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    $result = $this->postModel->findByAuthorWithFilters($userId, null, '', 'Laravel');
-
-    expect($result)->toBeArray()
-        ->and($result)->toHaveCount(1)
-        ->and($result[0]['title'])->toContain('Laravel');
 });
 
 // ============================================================================
@@ -501,7 +420,7 @@ it('returns paginated filtered author posts', function () {
             ->create();
     }
 
-    $result = $this->postModel->findByAuthorWithFiltersPagination($userId, 1, 10);
+    $result = $this->postListing->findByAuthorWithFiltersPagination($userId, 1, 10);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(10)
@@ -524,7 +443,7 @@ it('caps perPage at 100 for security', function () {
         ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'published_at' => date('Y-m-d H:i:s')])
         ->count(5);
 
-    $result = $this->postModel->findByAuthorWithFiltersPagination($userId, 1, 200);
+    $result = $this->postListing->findByAuthorWithFiltersPagination($userId, 1, 200);
 
     expect($result)->toBeArray()
         ->and($result['pagination']['per_page'])->toBe(100);
@@ -563,7 +482,7 @@ it('lists posts by author with specified visibility', function () {
         ])
         ->create();
 
-    $result = $this->postModel->listByAuthorVisibility($userId, ['public'], 10);
+    $result = $this->publishedPosts->listByAuthorVisibility($userId, ['public'], 10);
 
     expect($result)->toBeArray()
         ->and($result)->toHaveCount(1)
@@ -589,7 +508,7 @@ it('respects limit when listing by visibility', function () {
             ->create();
     }
 
-    $result = $this->postModel->listByAuthorVisibility($userId, ['public'], 5);
+    $result = $this->publishedPosts->listByAuthorVisibility($userId, ['public'], 5);
 
     expect($result)->toHaveCount(5);
 });

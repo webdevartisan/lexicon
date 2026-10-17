@@ -427,7 +427,7 @@ class CacheService
      * @param  string  $key  Original cache key
      * @return string 12-character hash
      */
-    private function hashKey(string $key): string
+    protected function hashKey(string $key): string
     {
         return substr(hash('sha256', $key), 0, 12);
     }
@@ -529,7 +529,7 @@ class CacheService
      *
      * @return array<string, string> Map of cache keys to file hashes
      */
-    private function readIndex(): array
+    protected function readIndex(): array
     {
         if (!file_exists($this->indexFile)) {
             return [];

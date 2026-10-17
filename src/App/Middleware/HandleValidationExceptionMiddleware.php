@@ -9,6 +9,7 @@ use Framework\Core\Response;
 use Framework\Exceptions\ValidationException;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Interfaces\TranslatorInterface;
 use Framework\Session;
 
 /**
@@ -22,7 +23,8 @@ use Framework\Session;
 final class HandleValidationExceptionMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private Session $session
+        private Session $session,
+        private TranslatorInterface $translator
     ) {}
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -36,24 +38,19 @@ final class HandleValidationExceptionMiddleware implements MiddlewareInterface
             $this->session->set('_errors', $e->errors());
 
             // Preserve old input for form repopulation (exclude sensitive fields)
-            $oldInput = $request->all();
-            unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-            $this->session->set('_old_input', $oldInput);
+            $this->session->set('_old_input', sanitize_old_input($request->all()));
 
             // Flash error message
             $flash = $this->session->get('_flash', []);
             if (!isset($flash['error'])) {
                 $flash['error'] = [];
             }
-            $flash['error'][] = 'Please correct the errors and try again.';
+            $flash['error'][] = $this->translator->translate('common.flash.validationFailed');
             $this->session->set('_flash', $flash);
-
-            // Redirect back to previous page
-            $referer = $request->header('referer') ?? '/';
 
             $response = new Response();
 
-            $response->redirect($referer);
+            $response->redirect(referer_path($request->header('referer')) ?? '/');
 
             return $response;
         }

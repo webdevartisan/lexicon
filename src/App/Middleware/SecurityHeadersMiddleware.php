@@ -36,7 +36,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         $response = $next->handle($request);
 
         // apply security headers to the response
-        $this->applySecurityHeaders($response);
+        $this->applySecurityHeaders($response, $request);
 
         return $response;
     }
@@ -47,7 +47,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
      * set headers that protect against common web vulnerabilities.
      * Some headers are only set in production to avoid breaking dev tools.
      */
-    private function applySecurityHeaders(Response $response): void
+    private function applySecurityHeaders(Response $response, Request $request): void
     {
         // obfuscate server information (production only)
         if ($this->isProduction) {
@@ -77,7 +77,7 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         }
 
         // enforce HTTPS in production
-        if ($this->isProduction && $this->isHttps()) {
+        if ($this->isProduction && $request->isSecure()) {
             if (!$response->hasHeader('Strict-Transport-Security')) {
                 $response->addHeader(
                     'Strict-Transport-Security',
@@ -143,16 +143,5 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         $header = $enforced ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only';
 
         $response->addHeader($header, $csp);
-    }
-
-    /**
-     * Check if current request is HTTPS
-     */
-    private function isHttps(): bool
-    {
-        return
-            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
-            (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
-            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     }
 }

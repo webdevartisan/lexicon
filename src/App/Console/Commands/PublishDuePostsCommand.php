@@ -6,6 +6,8 @@ namespace App\Console\Commands;
 
 use App\Interfaces\SchedulableCommandInterface;
 use App\Models\PostModel;
+use App\Services\BlogLaunchService;
+use App\Services\PostCacheInvalidator;
 use App\Services\PublicCacheInvalidator;
 use App\Services\SubscriberNotificationService;
 use Throwable;
@@ -29,6 +31,7 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
         private PostModel $posts,
         private SubscriberNotificationService $subscriberNotifier,
         private PublicCacheInvalidator $publicCache,
+        private BlogLaunchService $blogLaunch,
     ) {}
 
     public static function scheduleLabel(): string
@@ -78,6 +81,10 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
                 $published++;
                 echo "  ✓ #{$postId} {$post['title']}\n";
 
+                if ($this->blogLaunch->launchWithFirstPost($postId, 'scheduled')) {
+                    echo "    its blog is live now, this was the first post\n";
+                }
+
                 // Announcements are best-effort. A queue write that fails must
                 // not stop the rest of the batch from going live, and the post
                 // is already published by this point either way.
@@ -102,7 +109,7 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
                 // Also clear fragment caches for affected blogs so paginated lists
                 // and category grids reflect the newly published post immediately.
                 foreach ($due as $post) {
-                    $this->posts->forgetBlogPostFragments((int) $post['blog_id']);
+                    $this->postCache()->forgetBlogPosts((int) $post['blog_id']);
                 }
             }
 
@@ -121,5 +128,10 @@ class PublishDuePostsCommand implements SchedulableCommandInterface
 
             return 1;
         }
+    }
+
+    private function postCache(): PostCacheInvalidator
+    {
+        return app(PostCacheInvalidator::class);
     }
 }

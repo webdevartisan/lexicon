@@ -259,13 +259,13 @@ $renderComment = static function (array $comment, int $depth) use (
 
               <?php if ($commentsOpen) { ?>
                 <form class="reply-form" id="reply-form-<?= $id ?>" action="/comments/create" method="post" hidden>
-                  <?= csrf_field() ?>
+                  <?= csrf_field_lazy() ?>
                   <input type="hidden" name="post_id" value="<?= $postId ?>">
                   <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
                   <textarea name="content" rows="1" maxlength="2000"
                             placeholder="Reply to <?= e($authorLabel) ?>…" required></textarea>
                   <?php if ($viewerIsGuest) { ?>
-                    <p class="comment-form-note">You'll be asked to log in — your reply is kept.</p>
+                    <p class="comment-form-note">You'll be asked to log in, and your reply is kept.</p>
                   <?php } ?>
                   <div class="comment-form-actions">
                     <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>">Cancel</button>
@@ -814,7 +814,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
   <?php if ($commentsOpen) { ?>
     <form class="comment-form" action="/comments/create" method="post" data-comment-composer>
-      <?= csrf_field() ?>
+      <?= csrf_field_lazy() ?>
       <input type="hidden" name="post_id" value="<?= $postId ?>">
 
       <div class="comment-row">
@@ -827,7 +827,7 @@ $renderComment = static function (array $comment, int $depth) use (
 
           <p class="comment-form-note">
             <?php if ($viewerIsGuest) { ?>
-              You'll be asked to log in — what you wrote is kept.
+              You'll be asked to log in, and what you wrote is kept.
             <?php } else { ?>
               Commenting as <?= e((string) ($viewer_name ?? '')) ?>.
             <?php } ?>
@@ -852,7 +852,7 @@ $renderComment = static function (array $comment, int $depth) use (
     </ol>
   <?php } ?>
 
-  <form class="comment-token" hidden aria-hidden="true"><?= csrf_field() ?></form>
+  <form class="comment-token" hidden aria-hidden="true"><?= csrf_field_lazy() ?></form>
 </div>
 
 <script defer src="/assets/js/report-dialog.js"></script>

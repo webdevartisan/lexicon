@@ -222,7 +222,6 @@ class UserProfileModel extends AppModel
             -- is_public flag says; the profile would otherwise outlive the ban.
             WHERE u.handle = ?
               AND u.is_active = 1
-              AND u.deleted_at IS NULL
             LIMIT 1
         ';
 
@@ -253,7 +252,7 @@ class UserProfileModel extends AppModel
             FROM users u
             INNER JOIN user_profiles up ON up.user_id = u.id
             WHERE u.id = ? AND up.is_public = 1
-              AND u.is_active = 1 AND u.deleted_at IS NULL
+              AND u.is_active = 1
             LIMIT 1
         ';
 

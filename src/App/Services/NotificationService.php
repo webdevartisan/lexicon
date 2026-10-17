@@ -14,6 +14,7 @@ use App\Mail\Mailable;
 use App\Mail\PostApprovedMail;
 use App\Mail\PostNeedsChangesMail;
 use App\Mail\PostPublishedMail;
+use App\Mail\PostReadyToPublishMail;
 use App\Mail\PostSubmittedMail;
 use App\Mail\PostSubmittedUnassignedMail;
 use App\Mail\ReviewerAssignedMail;
@@ -49,6 +50,7 @@ class NotificationService
         'post.submitted_unassigned' => 'notify_review_requests',
         'post.reviewer_assigned' => 'notify_review_requests',
         'post.reviewer_stale' => 'notify_review_requests',
+        'post.ready_to_publish' => 'notify_review_requests',
         'collaborator.role_changed' => 'notify_role_changes',
         'collaborator.removed' => 'notify_role_changes',
         // Insights news about your own posts and blogs.
@@ -76,6 +78,8 @@ class NotificationService
     public const TYPE_TO_SCOPE = [
         'post.submitted' => 'content',
         'post.submitted_unassigned' => 'content',
+        'post.ready_to_publish' => 'content',
+        'post.withdrawn' => 'content',
         CommentAudienceResolver::TYPE_MODERATION => 'content',
         CommentAudienceResolver::TYPE_BLOG => 'content',
         'analytics.spike' => 'content',
@@ -197,6 +201,12 @@ class NotificationService
                 (string) ($data['post_title'] ?? ''),
                 (string) ($data['blog_slug'] ?? ''),
                 (string) ($data['post_slug'] ?? '')
+            ),
+            'post.ready_to_publish' => new PostReadyToPublishMail(
+                $to,
+                (int) ($data['post_id'] ?? 0),
+                (string) ($data['post_title'] ?? ''),
+                (string) $data['reviewer_handle']
             ),
             'post.reviewer_assigned' => new ReviewerAssignedMail(
                 $to,

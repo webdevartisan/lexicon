@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Analytics;
 
-use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\SeoAuditModel;
 
 /**
@@ -48,8 +48,8 @@ final class SeoHealth
         $counts = $this->audit->siteCounts();
 
         return $counts + [
-            'beyondSitemap' => max(0, $counts['indexable'] - PostModel::SITEMAP_LIMIT),
-            'sitemapLimit' => PostModel::SITEMAP_LIMIT,
+            'beyondSitemap' => max(0, $counts['indexable'] - PublishedPostModel::SITEMAP_LIMIT),
+            'sitemapLimit' => PublishedPostModel::SITEMAP_LIMIT,
         ];
     }
 
@@ -59,7 +59,7 @@ final class SeoHealth
     private function build(int $blogId): array
     {
         $blog = $this->audit->blog($blogId) ?? ['blog_name' => '', 'indexable' => true, 'meta_description' => ''];
-        $inSitemap = $this->audit->sitemapPostIds(PostModel::SITEMAP_LIMIT);
+        $inSitemap = $this->audit->sitemapPostIds(PublishedPostModel::SITEMAP_LIMIT);
         $checks = array_fill_keys(self::CHECKS, []);
         $notOffered = [];
         $counted = [];

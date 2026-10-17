@@ -17,24 +17,21 @@ $statusBadge = [
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div class="flex items-center gap-2">
                     <h2 class="text-lg font-semibold text-slate-900 dark:text-zink-50"><?= e($blog['blog_name']) ?></h2>
-                    <?php if (!empty($blog['is_active'])) { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:border-green-800">Active</span>
-                    <?php } else { ?>
-                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 dark:text-zink-100 dark:border-zink-500">Inactive</span>
-                    <?php } ?>
+                    <?php $blogStatus = (string) ($blog['status'] ?? 'draft'); $statusLabel = ucfirst($blogStatus); ?>
+                    {% cmp="status-badge" status="{$blogStatus}" label="{$statusLabel}" %}
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="/blog/<?= e((string) ($blog['blog_slug'] ?? '')) ?>" target="_blank" rel="noopener"
+                    <a href="<?= e(lurl('/blog/'.((string) ($blog['blog_slug'] ?? '')))) ?>" target="_blank" rel="noopener"
                        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                         {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-3.5"></i>{% endcache %} Visit
                     </a>
-                    <a href="/admin/blogs/<?= e((string) $blog['id']) ?>/edit" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
+                    <a href="<?= e(lurl('/admin/blogs/'.(string) $blog['id'].'/edit')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
                         {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-3.5"></i>{% endcache %} Edit
                     </a>
-                    <a href="/admin/blogs/<?= e((string) $blog['id']) ?>/delete" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 dark:bg-zink-700 dark:border-red-500/40 dark:hover:bg-red-900/20 transition-colors">
+                    <a href="<?= e(lurl('/admin/blogs/'.(string) $blog['id'].'/delete')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 dark:bg-zink-700 dark:border-red-500/40 dark:hover:bg-red-900/20 transition-colors">
                         {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-3.5"></i>{% endcache %} Delete
                     </a>
-                    <a href="/admin/blogs" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                    <a href="<?= e(lurl('/admin/blogs')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                         Back to list
                     </a>
                 </div>
@@ -57,7 +54,7 @@ $memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 da
                 <?php if (!empty($owner)) { ?>
                 <li class="flex items-center justify-between gap-3 py-2">
                     <div class="min-w-0">
-                        <a href="/admin/users/<?= e((string) $owner['id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $owner['handle']) ?></a>
+                        <a href="<?= e(lurl('/admin/users/'.(string) $owner['id'].'/edit')) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $owner['handle']) ?></a>
                         <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) $owner['email']) ?></span>
                     </div>
                     <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $ownerBadge ?>">owner</span>
@@ -65,7 +62,7 @@ $memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 da
                 <?php } foreach ($blogUsers as $m) { ?>
                 <li class="flex items-center justify-between gap-3 py-2">
                     <div class="min-w-0">
-                        <a href="/admin/users/<?= e((string) $m['user_id']) ?>/edit" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $m['handle']) ?></a>
+                        <a href="<?= e(lurl('/admin/users/'.(string) $m['user_id'].'/edit')) ?>" class="text-sm font-medium text-slate-900 dark:text-zink-50 hover:text-custom-500"><?= e((string) $m['handle']) ?></a>
                         <span class="text-xs text-slate-400 dark:text-zink-400 ml-1"><?= e((string) ($m['email'] ?? '')) ?></span>
                     </div>
                     <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize <?= $memberBadge ?>"><?= e((string) ($m['role'] ?? '')) ?></span>
@@ -113,11 +110,11 @@ $memberBadge = 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-600 da
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? null, 'M j, Y')) ?></td>
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center justify-end gap-1">
-                                <a href="/admin/posts/<?= e((string) $post['id']) ?>/show" title="View"
+                                <a href="<?= e(lurl('/admin/posts/'.(string) $post['id'].'/show')) ?>" title="View"
                                    class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
                                     {% cache 'lucide:eye' ttl=31536000 %}<i data-lucide="eye" class="size-4"></i>{% endcache %}
                                 </a>
-                                <a href="/admin/posts/<?= e((string) $post['id']) ?>/edit" title="Edit"
+                                <a href="<?= e(lurl('/admin/posts/'.(string) $post['id'].'/edit')) ?>" title="Edit"
                                    class="p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-custom-50 dark:hover:bg-custom-500/10 transition-colors">
                                     {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
                                 </a>

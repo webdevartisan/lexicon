@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Services\TranslationService;
 use Framework\Core\Request;
 use Framework\Exceptions\CsrfTokenException;
 use Framework\Security\Csrf;
@@ -19,7 +20,7 @@ use Tests\Helpers\MiddlewareTestHelper;
 beforeEach(function () {
     $this->session = app(Session::class);
     $this->csrf = new Csrf($this->session);
-    $this->middleware = new CsrfMiddleware($this->csrf, $this->session);
+    $this->middleware = new CsrfMiddleware($this->csrf, $this->session, new TranslationService('en'));
 
     $this->token = $this->csrf->getToken();
 
@@ -102,6 +103,31 @@ test('rejection without a usable referer throws CsrfTokenException', function ()
 test('CsrfTokenException reports 419', function () {
     expect((new CsrfTokenException())->getStatusCode())->toBe(419);
 });
+
+// ==================== EXEMPT PATHS ====================
+
+test('the one-click unsubscribe POST passes without a token', function () {
+    $next = MiddlewareTestHelper::createHandler('reached');
+    $request = new Request('/subscriptions/unsubscribe/'.str_repeat('a1', 32), 'POST', [], ['List-Unsubscribe' => 'One-Click'], [], [], [], []);
+
+    expect($this->middleware->process($request, $next)->getBody())->toBe('reached');
+});
+
+test('the unsubscribe exemption needs the full token and nothing after it', function (string $path) {
+    $reached = false;
+    $next = MiddlewareTestHelper::createTrackingHandler($reached);
+
+    try {
+        $this->middleware->process(new Request($path, 'POST', [], [], [], [], [], []), $next);
+    } catch (CsrfTokenException) {
+    }
+
+    expect($reached)->toBeFalse();
+})->with([
+    'short token' => '/subscriptions/unsubscribe/abc',
+    'extra segment' => '/subscriptions/unsubscribe/'.str_repeat('a1', 32).'/more',
+    'other path' => '/subscriptions/confirm/'.str_repeat('a1', 32),
+]);
 
 // ==================== JSON CALLERS ====================
 

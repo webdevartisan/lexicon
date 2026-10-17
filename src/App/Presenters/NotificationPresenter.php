@@ -31,16 +31,102 @@ final class NotificationPresenter
 
     public const TONE_NEUTRAL = 'neutral';
 
-    /** Types that read as one sentence whatever their payload holds. */
-    private const KNOWN_TYPES = [
-        'blog.invite', 'blog.invite_declined',
-        'post.submitted', 'post.submitted_unassigned', 'post.approved', 'post.needs_changes', 'post.published',
-        'post.reviewer_assigned', 'post.reviewer_stale', 'post.workflow_disabled',
-        'collaborator.role_changed', 'collaborator.removed',
-        'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation', 'comment.on_blog', 'comment.created',
-        'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused',
-        'analytics.milestone', 'analytics.spike',
-        'admin.report_threshold', 'admin.mail_queue_failures', 'admin.scheduler_stalled', 'admin.email_template_failed',
+    /**
+     * Everything that differs between notification types, one row per type.
+     *
+     * A type with a row reads as one sentence whatever its payload holds; any
+     * other type is shown as unknown. Every field is optional:
+     *
+     * - icon: a name from _notification_icons.lex.php, 'bell' when absent
+     * - tone: one of the TONE_* names, neutral when absent
+     * - actor / name: the payload keys holding the actor's handle and display name
+     * - target: the payload key the sentence names, post_title when absent, null for none
+     * - href: a path whose {key} parts are filled with the payload's ids, or one of
+     *   'post', 'comment' or 'invite', which are built from slugs and tokens instead
+     */
+    private const TYPES = [
+        'blog.invite' => ['icon' => 'mail', 'target' => 'blog_name', 'href' => 'invite'],
+        'blog.invite_declined' => ['icon' => 'mail', 'name' => 'declined_email', 'target' => 'blog_name'],
+
+        'post.submitted' => ['icon' => 'send', 'actor' => 'author_handle', 'href' => '/dashboard/post/{post_id}/review'],
+        'post.submitted_unassigned' => [
+            'icon' => 'send', 'actor' => 'author_handle', 'href' => '/dashboard/post/{post_id}/review',
+        ],
+        'post.approved' => [
+            'icon' => 'check-circle', 'tone' => self::TONE_POSITIVE, 'actor' => 'reviewer_handle',
+            'href' => '/dashboard/post/{post_id}/edit',
+        ],
+        'post.needs_changes' => [
+            'icon' => 'pen-line', 'tone' => self::TONE_ATTENTION, 'actor' => 'reviewer_handle',
+            'href' => '/dashboard/post/{post_id}/edit',
+        ],
+        'post.published' => ['icon' => 'megaphone', 'tone' => self::TONE_POSITIVE, 'href' => 'post'],
+        'post.review_started' => [
+            'icon' => 'user-check', 'actor' => 'reviewer_handle', 'href' => '/dashboard/post/{post_id}/edit',
+        ],
+        'post.ready_to_publish' => [
+            'icon' => 'check-check', 'tone' => self::TONE_POSITIVE, 'actor' => 'reviewer_handle',
+            'href' => '/dashboard/post/{post_id}/review',
+        ],
+        'post.withdrawn' => ['icon' => 'rotate-ccw', 'actor' => 'actor_handle', 'href' => '/dashboard/post/{post_id}/review'],
+        'post.reviewer_assigned' => [
+            'icon' => 'user-check', 'actor' => 'actor_handle', 'href' => '/dashboard/post/{post_id}/review',
+        ],
+        'post.reviewer_stale' => ['icon' => 'rotate-ccw', 'href' => '/dashboard/post/{post_id}/review'],
+        'post.workflow_disabled' => [
+            'icon' => 'rotate-ccw', 'tone' => self::TONE_ATTENTION, 'href' => '/dashboard/post/{post_id}/edit',
+        ],
+
+        'collaborator.role_changed' => [
+            'icon' => 'users', 'actor' => 'actor_handle', 'target' => 'blog_name', 'href' => '/dashboard/blog/{blog_id}',
+        ],
+        'collaborator.removed' => [
+            'icon' => 'users', 'tone' => self::TONE_CRITICAL, 'actor' => 'actor_handle', 'target' => 'blog_name',
+        ],
+
+        'comment.reply' => [
+            'icon' => 'reply', 'actor' => 'commenter_handle', 'name' => 'commenter_name', 'href' => 'comment',
+        ],
+        'comment.on_your_post' => [
+            'icon' => 'message-circle', 'actor' => 'commenter_handle', 'name' => 'commenter_name', 'href' => 'comment',
+        ],
+        // A comment still in the queue is not public yet, so its notification
+        // goes to the queue rather than to a page that would not show it.
+        'comment.awaiting_moderation' => [
+            'icon' => 'shield-alert', 'tone' => self::TONE_ATTENTION, 'actor' => 'commenter_handle',
+            'name' => 'commenter_name', 'href' => '/dashboard/blog/{blog_id}/comments',
+        ],
+        'comment.on_blog' => [
+            'icon' => 'message-circle', 'actor' => 'commenter_handle', 'name' => 'commenter_name', 'href' => 'comment',
+        ],
+        'comment.created' => [
+            'icon' => 'message-circle', 'actor' => 'commenter_handle', 'name' => 'commenter_name', 'href' => 'comment',
+        ],
+
+        'moderation.warning' => ['icon' => 'alert-triangle', 'tone' => self::TONE_CRITICAL, 'target' => 'subject_label'],
+        'moderation.reporter_warning' => ['icon' => 'alert-triangle', 'tone' => self::TONE_CRITICAL, 'target' => null],
+        'moderation.reporting_paused' => ['icon' => 'flag-off', 'tone' => self::TONE_CRITICAL, 'target' => 'until_label'],
+
+        'analytics.milestone' => [
+            'icon' => 'trophy', 'tone' => self::TONE_POSITIVE,
+            'href' => '/dashboard/blog/{blog_id}/insights/posts/{post_id}?range=12m',
+        ],
+        'analytics.spike' => [
+            'icon' => 'trending-up', 'tone' => self::TONE_POSITIVE, 'target' => 'blog_name',
+            'href' => '/dashboard/blog/{blog_id}/insights?range=today',
+        ],
+
+        'admin.report_threshold' => ['icon' => 'flag', 'tone' => self::TONE_CRITICAL, 'href' => '/admin/reports/{case_id}'],
+        'admin.mail_queue_failures' => [
+            'icon' => 'mail-warning', 'tone' => self::TONE_CRITICAL, 'target' => null,
+            'href' => '/admin/mail-queue?status=failed',
+        ],
+        'admin.scheduler_stalled' => [
+            'icon' => 'clock-alert', 'tone' => self::TONE_CRITICAL, 'target' => null, 'href' => '/admin/scheduled-tasks',
+        ],
+        'admin.email_template_failed' => [
+            'icon' => 'mail-x', 'tone' => self::TONE_CRITICAL, 'target' => 'email', 'href' => '/admin/email-templates',
+        ],
     ];
 
     /**
@@ -102,28 +188,13 @@ final class NotificationPresenter
      */
     private static function sentence(string $type, array $payload): array
     {
-        if (!in_array($type, self::KNOWN_TYPES, true)) {
+        if (!isset(self::TYPES[$type])) {
             return ['key' => 'notifications.types.unknown', 'actor' => null, 'target' => $type, 'params' => []];
         }
 
-        $post = self::text($payload, 'post_title');
-        $blog = self::text($payload, 'blog_name');
-
-        [$target, $params] = match ($type) {
-            'blog.invite', 'blog.invite_declined', 'collaborator.role_changed', 'collaborator.removed', 'analytics.spike' => [$blog, []],
-            'moderation.warning' => [self::text($payload, 'subject_label'), []],
-            'moderation.reporter_warning' => [null, []],
-            'moderation.reporting_paused' => [self::text($payload, 'until_label'), []],
-            'analytics.milestone' => [$post, ['count' => number_format((int) ($payload['threshold'] ?? 0))]],
-            'admin.report_threshold' => ['#'.(int) ($payload['case_id'] ?? 0), ['count' => (string) (int) ($payload['report_count'] ?? 0)]],
-            'admin.mail_queue_failures' => [null, [
-                'count' => (string) (int) ($payload['failed_count'] ?? 0),
-                'minutes' => (string) (int) ($payload['window_minutes'] ?? 60),
-            ]],
-            'admin.scheduler_stalled' => [null, ['minutes' => (string) (int) round(($payload['heartbeat_age_seconds'] ?? 0) / 60)]],
-            'admin.email_template_failed' => [self::text($payload, 'email'), []],
-            default => [$post, []],
-        };
+        $target = $type === 'admin.report_threshold'
+            ? '#'.(int) ($payload['case_id'] ?? 0)
+            : self::target($type, $payload);
 
         // A held comment reads differently from one already on the page.
         $key = str_replace('.', '_', $type === 'comment.created' ? 'comment.on_blog' : $type);
@@ -135,8 +206,38 @@ final class NotificationPresenter
             'key' => 'notifications.types.'.$key,
             'actor' => self::actor($type, $payload)['name'] ?? null,
             'target' => $target,
-            'params' => $params,
+            'params' => self::params($type, $payload),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private static function target(string $type, array $payload): ?string
+    {
+        $key = array_key_exists('target', self::TYPES[$type]) ? self::TYPES[$type]['target'] : 'post_title';
+
+        return $key === null ? null : self::text($payload, $key);
+    }
+
+    /**
+     * The smaller values a sentence fills in besides actor and target.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, string>
+     */
+    private static function params(string $type, array $payload): array
+    {
+        return match ($type) {
+            'analytics.milestone' => ['count' => number_format((int) ($payload['threshold'] ?? 0))],
+            'admin.report_threshold' => ['count' => (string) (int) ($payload['report_count'] ?? 0)],
+            'admin.mail_queue_failures' => [
+                'count' => (string) (int) ($payload['failed_count'] ?? 0),
+                'minutes' => (string) (int) ($payload['window_minutes'] ?? 60),
+            ],
+            'admin.scheduler_stalled' => ['minutes' => (string) (int) round(($payload['heartbeat_age_seconds'] ?? 0) / 60)],
+            default => [],
+        };
     }
 
     /**
@@ -150,22 +251,12 @@ final class NotificationPresenter
      */
     private static function actor(string $type, array $payload): ?array
     {
-        $handleKey = match ($type) {
-            'post.submitted', 'post.submitted_unassigned' => 'author_handle',
-            'post.approved', 'post.needs_changes' => 'reviewer_handle',
-            'post.reviewer_assigned', 'collaborator.role_changed', 'collaborator.removed' => 'actor_handle',
-            'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation', 'comment.on_blog', 'comment.created' => 'commenter_handle',
-            default => null,
-        };
+        $handleKey = self::TYPES[$type]['actor'] ?? null;
+        $nameKey = self::TYPES[$type]['name'] ?? null;
 
         $handle = $handleKey !== null ? self::text($payload, $handleKey) : null;
         $id = $type === 'blog.invite' && !empty($payload['invited_by']) ? (int) $payload['invited_by'] : null;
-        $name = match ($type) {
-            'comment.reply', 'comment.on_your_post', 'comment.awaiting_moderation',
-            'comment.on_blog', 'comment.created' => self::text($payload, 'commenter_name'),
-            'blog.invite_declined' => self::text($payload, 'declined_email'),
-            default => null,
-        };
+        $name = $nameKey !== null ? self::text($payload, $nameKey) : null;
 
         if ($handle === null && $id === null && $name === null) {
             return null;
@@ -186,41 +277,12 @@ final class NotificationPresenter
 
     private static function icon(string $type): string
     {
-        return match ($type) {
-            'blog.invite', 'blog.invite_declined' => 'mail',
-            'post.submitted', 'post.submitted_unassigned' => 'send',
-            'post.approved' => 'check-circle',
-            'post.needs_changes' => 'pen-line',
-            'post.published' => 'megaphone',
-            'post.reviewer_assigned' => 'user-check',
-            'post.reviewer_stale', 'post.workflow_disabled' => 'rotate-ccw',
-            'collaborator.role_changed', 'collaborator.removed' => 'users',
-            'comment.reply' => 'reply',
-            'comment.awaiting_moderation' => 'shield-alert',
-            'moderation.warning', 'moderation.reporter_warning' => 'alert-triangle',
-            'moderation.reporting_paused' => 'flag-off',
-            'comment.on_your_post', 'comment.on_blog', 'comment.created' => 'message-circle',
-            'analytics.milestone' => 'trophy',
-            'analytics.spike' => 'trending-up',
-            'admin.report_threshold' => 'flag',
-            'admin.mail_queue_failures' => 'mail-warning',
-            'admin.scheduler_stalled' => 'clock-alert',
-            'admin.email_template_failed' => 'mail-x',
-            default => 'bell',
-        };
+        return self::TYPES[$type]['icon'] ?? 'bell';
     }
 
     private static function tone(string $type): string
     {
-        return match (true) {
-            in_array($type, ['post.approved', 'post.published', 'analytics.milestone', 'analytics.spike'], true) => self::TONE_POSITIVE,
-            in_array($type, ['post.needs_changes', 'post.workflow_disabled', 'comment.awaiting_moderation'], true) => self::TONE_ATTENTION,
-            in_array($type, [
-                'collaborator.removed', 'moderation.warning', 'moderation.reporter_warning', 'moderation.reporting_paused',
-                'admin.report_threshold', 'admin.mail_queue_failures', 'admin.scheduler_stalled', 'admin.email_template_failed',
-            ], true) => self::TONE_CRITICAL,
-            default => self::TONE_NEUTRAL,
-        };
+        return self::TYPES[$type]['tone'] ?? self::TONE_NEUTRAL;
     }
 
     /**
@@ -231,29 +293,36 @@ final class NotificationPresenter
      */
     private static function href(string $type, array $payload): string
     {
-        return match ($type) {
-            'post.submitted', 'post.submitted_unassigned', 'post.reviewer_assigned',
-            'post.reviewer_stale' => '/dashboard/post/'.(int) ($payload['post_id'] ?? 0).'/review',
-            'post.approved', 'post.needs_changes',
-            'post.workflow_disabled' => '/dashboard/post/'.(int) ($payload['post_id'] ?? 0).'/edit',
-            'post.published' => self::postUrl($payload),
-            'blog.invite' => '/invite/'.rawurlencode((string) ($payload['token'] ?? '')),
-            // A comment still in the queue is not public yet, so its notification
-            // goes to the queue rather than to a page that would not show it.
-            'comment.awaiting_moderation' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments',
-            'comment.reply', 'comment.on_your_post', 'comment.on_blog', 'comment.created' => !empty($payload['awaiting_moderation'])
-                ? '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/comments'
+        // Rows written before the payload carried blog_id have nowhere to point.
+        if ($type === 'collaborator.role_changed' && empty($payload['blog_id'])) {
+            return '';
+        }
+
+        $href = self::TYPES[$type]['href'] ?? '';
+
+        return match ($href) {
+            'post' => self::postUrl($payload),
+            'comment' => !empty($payload['awaiting_moderation'])
+                ? self::fill('/dashboard/blog/{blog_id}/comments', $payload)
                 : self::commentUrl($payload),
-            // Rows written before the payload carried blog_id have nowhere to point.
-            'collaborator.role_changed' => !empty($payload['blog_id']) ? '/dashboard/blog/'.(int) $payload['blog_id'] : '',
-            'analytics.milestone' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/insights/posts/'.(int) ($payload['post_id'] ?? 0).'?range=12m',
-            'analytics.spike' => '/dashboard/blog/'.(int) ($payload['blog_id'] ?? 0).'/insights?range=today',
-            'admin.report_threshold' => '/admin/reports/'.(int) ($payload['case_id'] ?? 0),
-            'admin.mail_queue_failures' => '/admin/mail-queue?status=failed',
-            'admin.scheduler_stalled' => '/admin/scheduled-tasks',
-            'admin.email_template_failed' => '/admin/email-templates',
-            default => '',
+            'invite' => '/invite/'.rawurlencode((string) ($payload['token'] ?? '')),
+            default => self::fill($href, $payload),
         };
+    }
+
+    /**
+     * Put the payload's ids into a path template. A missing id becomes 0, as
+     * the casts this replaced did, so an old row still renders a link.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private static function fill(string $path, array $payload): string
+    {
+        return preg_replace_callback(
+            '/\{(\w+)\}/',
+            static fn (array $m): string => (string) (int) ($payload[$m[1]] ?? 0),
+            $path
+        ) ?? $path;
     }
 
     /**

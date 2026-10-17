@@ -40,7 +40,7 @@
                         <td class="px-3.5 py-2.5">
                             <div class="flex items-center gap-2">
                                 {% foreach ($rows as $row): %}
-                                <a href="/admin/pages/<?= (int) $row['id'] ?>/edit"
+                                <a href="<?= e(lurl('/admin/pages/'.((int) $row['id']).'/edit')) ?>"
                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors <?= !empty($row['is_published']) ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100 dark:border-green-800 dark:text-green-300 dark:bg-green-900/20' : 'border-slate-200 text-slate-500 bg-slate-50 hover:bg-slate-100 dark:border-zink-500 dark:text-zink-300 dark:bg-zink-600' ?>">
                                     <?= e(strtoupper((string) $row['locale'])) ?>
                                     <?php if (empty($row['is_published'])) { ?><span>(draft)</span><?php } ?>

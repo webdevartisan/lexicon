@@ -47,7 +47,7 @@ it('inserts user and returns valid ID', function () {
 /**
  * Test finding user by ID.
  *
- * Verifies findById returns correct user data and excludes soft-deleted users.
+ * Verifies findById returns correct user data.
  */
 it('finds user by ID', function () {
     $email = faker()->unique()->safeEmail();
@@ -60,19 +60,6 @@ it('finds user by ID', function () {
     expect($user)->toBeArray()
         ->and($user['id'])->toBe($userId)
         ->and($user['email'])->toBe($email);
-});
-
-/**
- * Test that findById excludes soft-deleted users.
- *
- * Verifies soft delete filtering in findById method.
- */
-it('returns null when finding soft-deleted user by ID', function () {
-    $userId = UserFactory::new($this->userModel)->deleted()->create();
-
-    $user = $this->userModel->findById($userId);
-
-    expect($user)->toBeNull();
 });
 
 /**
@@ -103,21 +90,6 @@ it('returns false when email does not exist', function () {
 });
 
 /**
- * Test that findByEmail excludes soft-deleted users.
- */
-it('returns null when finding soft-deleted user by email', function () {
-    $email = faker()->unique()->safeEmail();
-    UserFactory::new($this->userModel)
-        ->withAttributes(['email' => $email])
-        ->deleted()
-        ->create();
-
-    $user = $this->userModel->findByEmail($email);
-
-    expect($user)->toBeNull();
-});
-
-/**
  * Test finding users by handle.
  *
  * Verifies findByHandle returns array of matching users.
@@ -133,25 +105,6 @@ it('finds users by handle', function () {
     expect($users)->toBeArray()
         ->and($users)->toHaveCount(1)
         ->and($users[0]['handle'])->toBe($handle);
-});
-
-/**
- * Test retrieving all non-deleted users.
- *
- * Verifies findAll excludes soft-deleted users.
- */
-it('finds all active users excluding soft-deleted', function () {
-    UserFactory::new($this->userModel)->count(3);
-    UserFactory::new($this->userModel)->deleted()->count(2);
-
-    $users = $this->userModel->findAll();
-
-    expect($users)->toBeArray()
-        ->and(count($users))->toBeGreaterThanOrEqual(3);
-
-    foreach ($users as $user) {
-        expect($user['deleted_at'])->toBeNull();
-    }
 });
 
 /**
@@ -224,45 +177,6 @@ it('throws exception for invalid column names in update', function () {
     expect(fn () => $this->userModel->updateById($userId, [
         'email; DROP TABLE users;--' => 'malicious',
     ]))->toThrow(\Exception::class);
-});
-
-// ============================================================================
-// SOFT DELETE & RESTORE
-// ============================================================================
-
-/**
- * Test soft deleting user.
- *
- * Verifies softDelete marks user as deleted without removing data.
- */
-it('soft deletes user and excludes from queries', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-
-    $result = $this->userModel->softDelete($userId);
-
-    expect($result)->toBeTrue();
-    expect($this->userModel->findById($userId))->toBeNull();
-
-    // Verify data persists with deleted_at timestamp for audit trail
-    $conn = $this->db->getConnection();
-    $stmt = $conn->prepare('SELECT deleted_at FROM users WHERE id = :id');
-    $stmt->execute(['id' => $userId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    expect($row['deleted_at'])->not->toBeNull();
-});
-
-/**
- * Test that soft deleting already-deleted user returns true.
- *
- * Verifies idempotent behavior for soft delete operations.
- */
-it('handles soft deleting already deleted user', function () {
-    $userId = UserFactory::new($this->userModel)->deleted()->create();
-
-    $result = $this->userModel->softDelete($userId);
-
-    expect($result)->toBeTrue();
 });
 
 // ============================================================================
@@ -474,21 +388,17 @@ it('finds administrators and permission holders, and excludes everyone else', fu
         ->and($ids)->not->toContain($readerId);
 });
 
-it('excludes an inactive or soft-deleted administrator from findAllWithPermission', function () {
+it('excludes an inactive administrator from findAllWithPermission', function () {
     $activeId = UserFactory::new($this->userModel)
         ->withRoles(roleIds($this->db, ['administrator']))->create();
     $inactiveId = UserFactory::new($this->userModel)
         ->withRoles(roleIds($this->db, ['administrator']))
         ->withAttributes(['is_active' => 0])->create();
-    $deletedId = UserFactory::new($this->userModel)
-        ->withRoles(roleIds($this->db, ['administrator']))
-        ->deleted()->create();
 
     $ids = array_column($this->userModel->findAllWithPermission('manage_mail_queue'), 'id');
 
     expect($ids)->toContain($activeId)
-        ->and($ids)->not->toContain($inactiveId)
-        ->and($ids)->not->toContain($deletedId);
+        ->and($ids)->not->toContain($inactiveId);
 });
 
 it('returns each qualifying user once even when a permission is reachable through more than one role', function () {

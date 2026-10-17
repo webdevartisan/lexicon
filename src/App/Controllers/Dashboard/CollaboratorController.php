@@ -9,7 +9,7 @@ use App\Gate;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
-use App\Models\PostModel;
+use App\Models\PostListingModel;
 use App\Models\PostReviewerModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
@@ -35,7 +35,7 @@ final class CollaboratorController extends AppController
         private InvitationService $invitationService,
         private readonly UserModel $userModel,
         private readonly NotificationService $notifications,
-        private readonly PostModel $postModel,
+        private readonly PostListingModel $postListing,
         private readonly PostReviewerModel $postReviewerModel,
         private readonly BlogSettingsModel $blogSettingsModel,
         private readonly BlogOwnershipService $ownership,
@@ -68,10 +68,10 @@ final class CollaboratorController extends AppController
 
         $workflowHealth = null;
         if ($workflowEnabled) {
-            $inReviewTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'in_review');
-            $inReviewUnassigned = $this->postModel->countInReviewUnassigned($blogIdInt);
-            $needsChangesTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
-            $approvedTotal = $this->postModel->countByBlogAndWorkflow($blogIdInt, 'approved');
+            $inReviewTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'in_review');
+            $inReviewUnassigned = $this->postListing->countInReviewUnassigned($blogIdInt);
+            $needsChangesTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
+            $approvedTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'approved');
 
             $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
                 userId: (int) $user['id'],
@@ -135,7 +135,7 @@ final class CollaboratorController extends AppController
             $data['email'],
             $data['role'],
             (int) auth()->user()['id'],
-            (string) ($this->request->ip() ?? '')
+            $this->request->ip()
         );
 
         if ($emailed) {
@@ -166,7 +166,7 @@ final class CollaboratorController extends AppController
         Gate::authorize('manageUsers', $blog, auth()->user());
 
         $email = (string) $this->request->postParam('email', '');
-        $this->invitationService->cancel($blog->id(), $email, (int) auth()->user()['id']);
+        $this->invitationService->cancel($blog->id(), $email, (int) auth()->user()['id'], $this->request->ip());
 
         $this->flash('success', 'Invitation cancelled.');
 

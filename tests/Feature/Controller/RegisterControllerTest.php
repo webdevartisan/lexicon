@@ -12,6 +12,8 @@ use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
 use App\Services\AccountRegistrar;
+use App\Services\Captcha\CaptchaInterface;
+use App\Services\Captcha\CaptchaResult;
 use App\Services\InvitationService;
 use App\Services\LocaleRegistry;
 use App\Services\MailQueueService;
@@ -19,7 +21,9 @@ use App\Services\NotificationService;
 use App\Services\RecipientLocale;
 use App\Services\UserHandleValidator;
 use Framework\Core\Response;
+use Framework\Helpers\RateLimiter;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\ThrottleTestHelper;
 
 /**
  * Feature tests for RegisterController.
@@ -53,6 +57,22 @@ beforeEach(function () {
     $mailQueue = Mockery::mock(MailQueueService::class);
     $mailQueue->shouldReceive('enqueue')->andReturn(1)->byDefault();
 
+    // The sign-in check has its own tests; here it answers whatever the test sets
+    $this->captcha = new class() implements CaptchaInterface
+    {
+        public CaptchaResult $answer = CaptchaResult::Passed;
+
+        public function issue(string $purpose, string $subject = '', int $level = 0): array
+        {
+            return ['parameters' => ['purpose' => $purpose]];
+        }
+
+        public function verify(string $payload, string $purpose, string $subject = ''): CaptchaResult
+        {
+            return $this->answer;
+        }
+    };
+
     $invitationModel = new BlogInvitationModel($this->db);
     $invitationService = new InvitationService(
         $invitationModel,
@@ -80,7 +100,9 @@ beforeEach(function () {
             $this->roleModel
         ),
         $invitationModel,
-        $invitationService
+        $invitationService,
+        $this->captcha,
+        new RateLimiter(ThrottleTestHelper::fakeCache())
     );
 
     $this->mockViewer = new class() implements \Framework\Interfaces\TemplateViewerInterface
@@ -471,4 +493,49 @@ it('sanitizes the email local part into the handle', function () {
 
     expect($user)->toBeArray()
         ->and($user['handle'])->toMatch('/^[a-z0-9]{3,20}$/');
+});
+
+// ============================================================================
+// SIGN-IN CHECK AND PER-IP LIMIT
+// ============================================================================
+
+it('refuses registration without a valid check answer and creates nothing', function () {
+    $this->captcha->answer = CaptchaResult::Missing;
+    $email = 'reader'.bin2hex(random_bytes(4)).'@example.test';
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+    ]);
+    $request->headers['x-requested-with'] = 'XMLHttpRequest';
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = callController($this->controller, 'submit', $request);
+    $body = json_decode($response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(422)
+        ->and($body)->toHaveKey('captcha')
+        ->and($this->userModel->findByEmail($email))->toBeFalsy();
+});
+
+it('stops a sixth account from the same IP within the hour', function () {
+    for ($i = 0; $i < 6; $i++) {
+        $email = 'reader'.bin2hex(random_bytes(4)).'@example.test';
+        $request = makeRequest('/register', 'POST', [
+            '_token' => csrf()->getToken(),
+            'email' => $email,
+            'password' => 'SecurePass123!',
+            'age_confirmed' => '1',
+        ]);
+        $request->headers['x-requested-with'] = 'XMLHttpRequest';
+        setupController($this->controller, $request, $this->mockViewer);
+
+        $response = callController($this->controller, 'submit', $request);
+        auth()->logout();
+    }
+
+    expect($response->getStatusCode())->toBe(429)
+        ->and($this->userModel->findByEmail($email))->toBeFalsy();
 });

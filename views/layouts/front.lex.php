@@ -62,7 +62,6 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
         <link rel="stylesheet" href="/assets/css/platform-chrome.css" />
         <link rel="stylesheet" href="/assets/css/lexicon.css" />
-        <link rel="stylesheet" href="/assets/css/fontawesome-all.min.css" />
 
         {% yield meta %}
 
@@ -132,7 +131,9 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     // back to where they already are.
                     $drawerIsReader = !empty($viewer['is_reader']);
 ?>
+                    <?php if (!$drawerIsReader || !empty($viewer['can_create_blog'])) { ?>
                     <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
+                    <?php } ?>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>
                         <button type="submit" class="lx-btn lx-btn-ghost lx-btn-fit">{{ t('header.signOut') }}</button>
@@ -313,6 +314,7 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/flash-toast.js" defer></script>
 		<script src="/assets/js/front.js" defer></script>
 		<script src="/assets/js/lang-switcher.js" defer></script>
+		<script src="/assets/js/csrf-lazy.js" defer></script>
 		<script src="/assets/js/scrolltop.js" defer></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}

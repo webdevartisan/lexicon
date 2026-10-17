@@ -20,7 +20,7 @@ if (!empty($items)) { ?>
                 <?php if ($item['url'] !== null) { ?>
                     <!-- Linked breadcrumb item -->
                     <a 
-                        href="<?= e($item['url']) ?>" 
+                        href="<?= e(lurl($item['url'])) ?>" 
                         class="text-slate-600 hover:text-custom-500 dark:text-zink-300 dark:hover:text-custom-400 transition-colors duration-200"
                         itemprop="item"
                     >

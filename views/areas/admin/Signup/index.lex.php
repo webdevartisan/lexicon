@@ -81,7 +81,7 @@ $breakdownHeadings = [
     'utm_campaign' => 'Campaigns',
 ];
 $settingsLabel = 'Insights settings';
-$settingsHref = '/admin/settings#analytics';
+$settingsHref = lurl('/admin/settings#analytics');
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto flex flex-col gap-5">
 

@@ -294,6 +294,18 @@ class EmailTemplateRegistry
                     'reviewerHandle' => 'janereviewer',
                 ],
             ],
+            'post_ready_to_publish' => [
+                'name' => 'Post Ready to Publish',
+                'description' => 'Tells everyone who can publish that a reviewer approved a post',
+                'group' => 'Review workflow',
+                'class' => 'App\\Mail\\PostReadyToPublishMail',
+                'sample_data' => [
+                    'toEmail' => 'editor@example.com',
+                    'postId' => 42,
+                    'postTitle' => 'Ten Hidden Beaches in Crete',
+                    'reviewerHandle' => 'janereviewer',
+                ],
+            ],
             'post_needs_changes' => [
                 'name' => 'Post Needs Changes',
                 'description' => 'Sends the author reviewer feedback asking for changes',

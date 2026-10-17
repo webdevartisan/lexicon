@@ -32,6 +32,25 @@ class PostReviewerModel extends AppModel
     }
 
     /**
+     * Take on a post for review, but only if nobody has yet.
+     *
+     * The check and the insert are one statement, so two reviewers pressing
+     * Start review at the same moment cannot both end up holding the post.
+     *
+     * @param  int  $postId  Post ID
+     * @param  int  $reviewerId  Reviewer taking it on
+     * @return bool True when this reviewer now holds the post
+     */
+    public function claim(int $postId, int $reviewerId): bool
+    {
+        $sql = 'INSERT INTO post_reviewers (post_id, reviewer_id, assigned_by)
+                SELECT ?, ?, ? FROM DUAL
+                WHERE NOT EXISTS (SELECT 1 FROM post_reviewers WHERE post_id = ?)';
+
+        return $this->database->execute($sql, [$postId, $reviewerId, $reviewerId, $postId]) > 0;
+    }
+
+    /**
      * Get all reviewer assignments for a post, with reviewer handles.
      *
      * @param  int  $postId  Post ID

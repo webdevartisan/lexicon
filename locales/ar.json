@@ -70,6 +70,7 @@
     "scheduledTasks": "المهام المجدولة",
     "settings": "الإعدادات",
     "cacheManagement": "إدارة التخزين المؤقت",
+    "rateLimits": "حدود الطلبات",
     "auditLog": "سجل التدقيق",
     "moderation": "الإشراف",
     "system": "النظام",
@@ -271,7 +272,8 @@
       "empty": "لا شيء بالانتظار. قائمة المراجعة فارغة.",
       "states": {
         "in_review": "قيد المراجعة",
-        "needs_changes": "تحتاج إلى تعديلات"
+        "needs_changes": "تحتاج إلى تعديلات",
+        "approved": "جاهزة للنشر"
       },
       "by": "بقلم {author}",
       "unassigned": "بلا مراجع",
@@ -361,6 +363,16 @@
       "unfeature": "إلغاء الإبراز",
       "actions": {
         "preview": "معاينة"
+      },
+      "visibility": {
+        "unlisted": "غير مُدرجة",
+        "private": "خاصة",
+        "makePublic": "إدراجها للعموم",
+        "makePrivate": "جعلها خاصة",
+        "unlist": "إخفاؤها من القوائم",
+        "makePublicConfirm": "هل تريد إدراج هذه التدوينة للعموم؟ ستظهر في المدونة وفي البحث وفي صفحة الاكتشاف.",
+        "makePrivateConfirm": "هل تريد جعل هذه التدوينة خاصة؟ لن يتمكن من رؤيتها إلا فريق المدونة.",
+        "unlistConfirm": "هل تريد إخفاء هذه التدوينة من القوائم؟ ستبقى متاحة عبر الرابط المباشر، لكنها لن تظهر في المدونة ولا في البحث ولا في صفحة الاكتشاف."
       },
       "actionsMenu": "إجراءات التدوينة"
     },
@@ -452,7 +464,11 @@
     "newPost": "تدوينة جديدة",
     "brand": "Lexicon",
     "more": "المزيد",
-    "search": "بحث"
+    "search": "بحث",
+    "flash": {
+      "sessionExpired": "انتهت جلستك قبل إرسال النموذج. لم يتغير شيء، يرجى المحاولة مرة أخرى.",
+      "validationFailed": "يرجى تصحيح الأخطاء والمحاولة مرة أخرى."
+    }
   },
   "meta": {
     "title": "Lexicon. كلماتك تستحق بيتاً جميلاً.",
@@ -900,6 +916,7 @@
   },
   "discover": {
     "metaTitle": "اكتشف المدونات والكتابات على Lexicon",
+    "metaTitlePosts": "أحدث التدوينات من كتّاب على Lexicon",
     "heroTitle": "كتابات رائعة",
     "heroSubtitle": "تصفح المدونات وأحدث التدوينات من كتّاب عبر Lexicon.",
     "searchPlaceholderBlogs": "ابحث في المدونات...",
@@ -912,6 +929,7 @@
     "resultsFor": "نتائج البحث عن",
     "noBlogs": "لم يتم العثور على مدونات. جرّب بحثاً آخر.",
     "noPosts": "لم يتم العثور على تدوينات. جرّب بحثاً آخر.",
+    "searchThrottled": "أنت تبحث بسرعة كبيرة. حاول مرة أخرى بعد قليل.",
     "featuredTitle": "مدونات مختارة",
     "postsLabel": "التدوينات",
     "writersLabel": "الكتّاب",
@@ -1016,6 +1034,9 @@
       "post_approved": "وافق {actor} على {target}",
       "post_needs_changes": "طلب {actor} تعديلات على {target}",
       "post_published": "تدوينتك {target} منشورة الآن",
+      "post_review_started": "بدأ {actor} مراجعة {target}",
+      "post_ready_to_publish": "وافق {actor} على {target}، وهي جاهزة للنشر",
+      "post_withdrawn": "سحب {actor} التدوينة {target} من المراجعة",
       "post_reviewer_assigned": "طلب منك {actor} مراجعة {target}",
       "post_reviewer_stale": "لم يعد مراجع {target} قادرًا على مراجعتها، فأصبحت متاحة لكل المراجعين من جديد",
       "post_workflow_disabled": "أُوقفت المراجعة، فعادت {target} إلى المسودات",
@@ -1086,7 +1107,13 @@
     "confirmSubmit": "نعم، اشترك",
     "confirmIgnore": "إن لم تكن أنت، أغلق هذه الصفحة. لن يُرسل أي شيء.",
     "invalidTitle": "هذا الرابط لم يعد صالحًا",
-    "invalidBody": "أُزيل الاشتراك أو لم يُؤكَّد في الوقت المحدد. يمكنك الاشتراك مجددًا من المدونة."
+    "invalidBody": "أُزيل الاشتراك أو لم يُؤكَّد في الوقت المحدد. يمكنك الاشتراك مجددًا من المدونة.",
+    "unsubscribeTitle": "إلغاء الاشتراك في المقالات الجديدة",
+    "unsubscribeBody": "لن تصل المقالات الجديدة من {blog} إلى {email} بعد الآن.",
+    "unsubscribeSubmit": "إلغاء الاشتراك",
+    "unsubscribeIgnore": "غيّرت رأيك؟ أغلق هذه الصفحة ولن يتغير شيء.",
+    "unsubscribedTitle": "تم إلغاء اشتراكك",
+    "unsubscribedBody": "لن تصلك المقالات الجديدة من {blog} بالبريد بعد الآن. يمكنك الاشتراك مجددًا من المدونة."
   },
   "auth": {
     "back": "رجوع",
@@ -1126,6 +1153,30 @@
     "inviteDeclinedBody": "لقد رفضت الدعوة. تم إبلاغ صاحب المدونة بذلك.",
     "inviteExpiredTitle": "انتهت صلاحية الدعوة",
     "inviteExpiredBody": "لم يعد رابط الدعوة صالحاً. اطلب من صاحب المدونة إرسال رابط جديد.",
+    "inviteWizardTitle": "لقد تلقيت دعوة",
+    "inviteWizardSub": "ثلاث خطوات سريعة وتنضم.",
+    "inviteStepsLabel": "خطوات الدعوة",
+    "inviteStepCount": "الخطوة {n} من {total}",
+    "inviteStepInvitation": "الدعوة",
+    "inviteStepAccount": "حسابك",
+    "inviteStepJoined": "تم الانضمام",
+    "inviteInvitedBy": "دعاك {inviter} للانضمام بصفة {role}.",
+    "inviteInvitedNoInviter": "تمت دعوتك للانضمام بصفة {role}.",
+    "inviteContinue": "متابعة",
+    "inviteFactBlog": "المدونة",
+    "inviteFactRole": "الدور",
+    "inviteFactInvitedBy": "الداعي",
+    "inviteFactSentTo": "أُرسلت إلى",
+    "inviteFactSignedInAs": "مسجّل الدخول باسم",
+    "inviteDecline": "رفض الدعوة",
+    "inviteAccountHeading": "أنشئ حسابك",
+    "inviteAccountBody": "ستسجّل الدخول باسم {email}. اختر كلمة مرور وانتهى الأمر.",
+    "inviteBack": "رجوع",
+    "inviteCreateAndJoin": "إنشاء الحساب والانضمام",
+    "inviteJoinedTitle": "أصبحت عضوًا",
+    "inviteJoinedSub": "حسابك جاهز.",
+    "inviteJoinedBody": "انضممت إلى {blog} بصفة {role}.",
+    "inviteJoinedCta": "فتح لوحة التحكم",
     "returnHome": "العودة إلى الرئيسية",
     "passwordMin": "{min} أحرف على الأقل، وليست كلمة مرور شائعة. كلما كانت أطول كانت أقوى، وعبارة المرور أفضل من كلمة قصيرة ومعقدة.",
     "strengthTooShort": "قصيرة جداً",
@@ -1133,7 +1184,18 @@
     "strengthFair": "مقبولة",
     "strengthGood": "جيدة",
     "strengthStrong": "قوية",
-    "signedOutElsewhere": "تم تسجيل خروجك على هذا الجهاز. سجّل الدخول مرة أخرى للمتابعة."
+    "signedOutElsewhere": "تم تسجيل خروجك على هذا الجهاز. سجّل الدخول مرة أخرى للمتابعة.",
+    "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+    "checkRequired": "شهد هذا الحساب عدة محاولات دخول فاشلة، لذلك يجري متصفحك فحصًا سريعًا أولًا.",
+    "checkReenter": "أدخل كلمة المرور مرة أخرى للمتابعة.",
+    "checking": "جارٍ فحص متصفحك…",
+    "checkDone": "اكتمل الفحص.",
+    "checkFailed": "لم يكتمل فحص المتصفح. يرجى المحاولة مرة أخرى.",
+    "checkTooMany": "طلبات كثيرة جدًا. يرجى المحاولة بعد دقيقة.",
+    "checkNoscript": "يتطلب تسجيل الدخول إلى هذا الحساب فحصًا سريعًا للمتصفح يحتاج إلى JavaScript. يمكنك بدلًا من ذلك إعادة تعيين كلمة المرور.",
+    "checkNoscriptRegister": "يتطلب إنشاء حساب فحصًا سريعًا للمتصفح يحتاج إلى JavaScript.",
+    "resetInstead": "إعادة تعيين كلمة المرور",
+    "tooManyRegistrations": "تم إنشاء عدد كبير جدًا من الحسابات من شبكتك مؤخرًا. يرجى المحاولة لاحقًا."
   },
   "account": {
     "nav": {
@@ -1982,5 +2044,40 @@
       "reviewer": "مراجع",
       "contributor": "مساهم"
     }
+  },
+  "authModal": {
+    "close": "إغلاق",
+    "titleLogin": "سجّل الدخول للمتابعة",
+    "titleReply": "سجّل الدخول للرد",
+    "titleComment": "سجّل الدخول للتعليق",
+    "titleLike": "سجّل الدخول للإعجاب بهذا المنشور",
+    "titleBookmark": "سجّل الدخول لحفظ هذا المنشور",
+    "intro": "أدخل بريدك الإلكتروني لتسجيل الدخول أو لإنشاء حساب قارئ.",
+    "email": "البريد الإلكتروني",
+    "continue": "متابعة ←",
+    "password": "كلمة المرور",
+    "minLength": "{min} أحرف على الأقل.",
+    "logIn": "تسجيل الدخول ←",
+    "forgot": "نسيت كلمة المرور؟",
+    "differentEmail": "استخدام بريد إلكتروني آخر",
+    "sendReset": "إرسال رابط إعادة التعيين",
+    "backToLogin": "العودة إلى تسجيل الدخول",
+    "loggedIn": "تم تسجيل دخولك!",
+    "fullPage": "استخدام صفحة تسجيل الدخول الكاملة",
+    "welcomeBack": "مرحبًا بعودتك",
+    "enterPasswordFor": "أدخل كلمة المرور الخاصة بـ {email}.",
+    "createTitle": "أنشئ حسابك",
+    "createIntro": "جديد هنا؟ اختر كلمة مرور ويصبح حساب القارئ جاهزًا.",
+    "createSubmit": "إنشاء حساب ←",
+    "welcomeNew": "مرحبًا بك في Lexicon! حساب القارئ الخاص بك جاهز.",
+    "resetTitle": "إعادة تعيين كلمة المرور",
+    "resetIntro": "سنرسل رابط إعادة تعيين كلمة المرور إلى {email}.",
+    "resetSent": "إذا كان هذا البريد الإلكتروني موجودًا لدينا، فقد أُرسل رابط إعادة التعيين.",
+    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح.",
+    "passwordRequired": "كلمة المرور مطلوبة.",
+    "passwordTooShort": "تحتاج كلمة المرور إلى {min} أحرف على الأقل.",
+    "sessionExpired": "انتهت جلستك أثناء فتح هذه النافذة. يرجى المحاولة مرة أخرى.",
+    "serverError": "حدث خطأ من جهتنا (الخطأ {status}). يرجى المحاولة مرة أخرى بعد قليل.",
+    "networkError": "تعذر الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى."
   }
 }

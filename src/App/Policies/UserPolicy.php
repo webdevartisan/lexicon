@@ -88,36 +88,6 @@ class UserPolicy implements PolicyInterface
     }
 
     /**
-     * Restore a soft-deleted user.
-     *
-     * only allow administrators to restore deleted accounts.
-     *
-     * @param  array<string, mixed>  $user  Authenticated user record
-     */
-    public function restore(array $user, object $targetUser): bool
-    {
-        assert($targetUser instanceof UserResource);
-
-        // Only administrators can restore deleted accounts
-        return $this->isAdministrator($user);
-    }
-
-    /**
-     * Permanently delete user data (hard delete).
-     *
-     * restrict this to administrators only for GDPR compliance.
-     *
-     * @param  array<string, mixed>  $user  Authenticated user record
-     */
-    public function forceDelete(array $user, object $targetUser): bool
-    {
-        assert($targetUser instanceof UserResource);
-
-        // Only administrators can permanently delete accounts
-        return $this->isAdministrator($user);
-    }
-
-    /**
      * Check if user is an administrator.
      *
      * @param  array<string, mixed>  $user  Authenticated user record

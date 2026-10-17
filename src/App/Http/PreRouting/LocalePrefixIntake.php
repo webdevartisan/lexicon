@@ -10,6 +10,7 @@ use App\Services\ReaderLocaleTarget;
 use App\Services\UserLocalePreference;
 use App\ValueObjects\LocaleContext;
 use Framework\Core\Request;
+use Framework\Session;
 
 /**
  * Class LocalePrefixIntake
@@ -34,6 +35,13 @@ use Framework\Core\Request;
  */
 final class LocalePrefixIntake
 {
+    /**
+     * JSON endpoints the front-end scripts fetch on every page. Their body does
+     * not depend on the URL locale, so they are served unprefixed like a POST
+     * instead of costing each fetch a redirect.
+     */
+    private const UNPREFIXED_GET_PATHS = ['/csrf-token', '/report-reasons'];
+
     /**
      * Detect locale prefix, adjust session/cookie, and normalize the internal request path.
      *
@@ -60,7 +68,7 @@ final class LocalePrefixIntake
         $first = isset($segments[0]) ? strtolower($segments[0]) : null;
 
         // Normalize request method and classify unsafe methods.
-        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $method = $request->method;
         $isUnsafe = in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true);
 
         // 0) Unknown-looking locale (two letters) → redirect to default without the unknown segment.
@@ -81,7 +89,7 @@ final class LocalePrefixIntake
             }
 
             // Use 308 in production (permanent, method-preserving), 307 elsewhere.
-            $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
+            $isProd = (env('APP_ENV', $request->server['APP_ENV'] ?? 'production')) === 'production';
             header('Location: '.$target, true, $isProd ? 308 : 307);
             exit;
         }
@@ -90,7 +98,7 @@ final class LocalePrefixIntake
         //    Visible URL keeps the locale prefix; router sees a clean, unprefixed path.
         if ($first && in_array($first, $supported, true)) {
             // Persist locale choice in session (if active).
-            $_SESSION['locale'] = $first;
+            app(Session::class)->set('locale', $first);
 
             // Strip only the first segment for routing; keep visible URL unchanged.
             // The leading slash guarantees a non-empty path, '/' when nothing remains.
@@ -140,10 +148,10 @@ final class LocalePrefixIntake
         //    at most one preference lookup.
         $preference = self::storedPreference();
 
-        $resolved = $_SESSION['locale']
+        $resolved = app(Session::class)->get('locale')
             ?? $preference
-            ?? $_COOKIE['locale']
-            ?? self::pickFromAcceptLanguage($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '', $supported, $default)
+            ?? $request->cookie['locale']
+            ?? self::pickFromAcceptLanguage($request->header('accept-language') ?? '', $supported, $default)
             ?? $default;
 
         $resolved = strtolower($resolved);
@@ -162,13 +170,13 @@ final class LocalePrefixIntake
         LocaleState::set(new LocaleContext($resolved, $preference ?? $resolved));
 
         // For unsafe methods, avoid redirecting to protect non-idempotent requests.
-        if ($isUnsafe) {
+        if ($isUnsafe || in_array($path, self::UNPREFIXED_GET_PATHS, true)) {
             return;
         }
 
         // Redirect once to the canonical locale-prefixed URL.
         // 308 in production (permanent, method-preserving), 307 elsewhere.
-        $isProd = (env('APP_ENV', $_SERVER['APP_ENV'] ?? 'production')) === 'production';
+        $isProd = (env('APP_ENV', $request->server['APP_ENV'] ?? 'production')) === 'production';
         header('Location: '.$target, true, $isProd ? 308 : 307);
         exit;
     }

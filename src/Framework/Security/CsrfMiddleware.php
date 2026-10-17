@@ -9,6 +9,7 @@ use Framework\Core\Response;
 use Framework\Exceptions\CsrfTokenException;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Interfaces\TranslatorInterface;
 use Framework\Session;
 
 /**
@@ -32,9 +33,17 @@ final class CsrfMiddleware implements MiddlewareInterface
      */
     private const EXEMPT_PATHS = ['/csp-report', '/traffic/hit', '/traffic/engage', '/traffic/event'];
 
+    /**
+     * Exempt paths that carry their own secret. A mail provider sends the
+     * RFC 8058 one-click unsubscribe POST with no session, so the 64-character
+     * token in the path stands in for the CSRF token.
+     */
+    private const EXEMPT_PATTERNS = ['#^/subscriptions/unsubscribe/[a-f0-9]{64}$#'];
+
     public function __construct(
         private Csrf $csrf,
-        private Session $session
+        private Session $session,
+        private TranslatorInterface $translator
     ) {}
 
     public function process(Request $request, RequestHandlerInterface $next): Response
@@ -43,7 +52,7 @@ final class CsrfMiddleware implements MiddlewareInterface
             return $next->handle($request);
         }
 
-        if (in_array($request->path(), self::EXEMPT_PATHS, true)) {
+        if ($this->isExempt($request->path())) {
             return $next->handle($request);
         }
 
@@ -52,6 +61,21 @@ final class CsrfMiddleware implements MiddlewareInterface
         }
 
         return $this->reject($request);
+    }
+
+    private function isExempt(string $path): bool
+    {
+        if (in_array($path, self::EXEMPT_PATHS, true)) {
+            return true;
+        }
+
+        foreach (self::EXEMPT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $path) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -100,13 +124,11 @@ final class CsrfMiddleware implements MiddlewareInterface
 
         // Same treatment a validation failure gets, so the user lands back on
         // their form with what they typed still in it.
-        $oldInput = $request->all();
-        unset($oldInput['password'], $oldInput['confirm_password'], $oldInput['_token']);
-        $this->session->set('_old_input', $oldInput);
+        $this->session->set('_old_input', sanitize_old_input($request->all()));
 
         $flash = $this->session->get('_flash', []);
         $flash['error'] ??= [];
-        $flash['error'][] = 'Your session expired before that was submitted. Nothing was changed - please try again.';
+        $flash['error'][] = $this->translator->translate('common.flash.sessionExpired');
         $this->session->set('_flash', $flash);
 
         $response = new Response();

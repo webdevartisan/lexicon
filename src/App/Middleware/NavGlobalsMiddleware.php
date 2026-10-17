@@ -9,6 +9,7 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\UserPreferencesModel;
+use App\Resources\BlogResource;
 use App\Services\LocaleState;
 use App\Services\NavigationService;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -23,7 +24,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 8;
+    private const SIDEBAR_MARKUP_VERSION = 9;
 
     /**
      * @var NavigationService Navigation service instance
@@ -157,6 +158,7 @@ class NavGlobalsMiddleware
             'workflowEnabled' => $selectedBlog !== null && !empty($this->blogSettings->findByBlogId($selectedBlog->id())['workflow_enabled']),
         ]);
         $user = $this->auth->user();
+        $canCreateBlog = $user !== null && Gate::allows('create', BlogResource::class, $user);
 
         // The topbar bell. Dashboard pages show the person's own inbox with the
         // same count ViewerContext gives the front and every theme, so the two
@@ -191,7 +193,7 @@ class NavGlobalsMiddleware
         // The links hash covers what the user and blog alone don't decide, such as a
         // blog's second author opening its Authors page.
         $chromeLocale = LocaleState::get()->chromeLocale;
-        $sidebarCacheKey = $area.':sidebar:nav-structure:v'.self::SIDEBAR_MARKUP_VERSION.':u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').':l-'.$chromeLocale.':n-'.self::linksHash($items);
+        $sidebarCacheKey = $area.':sidebar:nav-structure:v'.self::SIDEBAR_MARKUP_VERSION.':u-'.(int) ($user['id'] ?? 0).':b-'.$selectedBlogId.($isReader ? ':m-r' : ':m-c').($canCreateBlog ? ':cb' : '').':l-'.$chromeLocale.':n-'.self::linksHash($items);
 
         // add navigation globals to all templates
         $this->viewer->addGlobals([
@@ -205,6 +207,7 @@ class NavGlobalsMiddleware
             'user_blogs' => $userBlogs,
             'selected_blog_id' => $selectedBlogId,
             'is_reader' => $isReader, // no owned or shared blogs: reading-hub mode
+            'can_create_blog' => $canCreateBlog,
             'sidebar_cache_key' => $sidebarCacheKey,
             // The masthead menu is the same on the Lexicon front and inside
             // every blog theme, so its viewer summary is a global rather than

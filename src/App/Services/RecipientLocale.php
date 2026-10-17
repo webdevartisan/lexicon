@@ -60,7 +60,7 @@ class RecipientLocale
     public function forAddress(string $email, ?string $fallback = null): string
     {
         $id = $this->database->query(
-            'SELECT id FROM users WHERE email = ? AND deleted_at IS NULL',
+            'SELECT id FROM users WHERE email = ?',
             [$email]
         )->fetchColumn();
 

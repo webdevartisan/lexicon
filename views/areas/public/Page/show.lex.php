@@ -20,7 +20,7 @@
 
     {% if (!empty($backToGuides)): %}
     <div class="lx-form-actions">
-        <a href="/getting-started" class="lx-btn">{{ t('pages.backToGuides') }}</a>
+        <a href="<?= e(lurl('/getting-started')) ?>" class="lx-btn">{{ t('pages.backToGuides') }}</a>
     </div>
     {% endif %}
 </section>

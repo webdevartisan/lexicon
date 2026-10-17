@@ -245,7 +245,7 @@ final class ModerationSeeder
     {
         $ids = $this->column(
             "SELECT u.id FROM users u
-              WHERE u.deleted_at IS NULL AND u.is_active = 1 AND u.suspended_at IS NULL
+              WHERE u.is_active = 1 AND u.suspended_at IS NULL
                 AND u.reports_paused_until IS NULL AND u.handle <> 'deleted-user'
                 AND u.created_at <= NOW() - INTERVAL 30 DAY AND ".self::SAFE_EMAIL.'
               ORDER BY RAND() LIMIT 12'

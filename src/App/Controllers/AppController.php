@@ -37,6 +37,14 @@ abstract class AppController extends BaseController implements SessionAwareInter
     protected ?string $areaAbility = null;
 
     /**
+     * Per-action exceptions to $areaAbility, as action => ability. An action
+     * not listed here still needs $areaAbility, so a new action fails closed.
+     *
+     * @var array<string, string>
+     */
+    protected array $actionAbilities = [];
+
+    /**
      * Inject Session service via setter (called by Dispatcher).
      */
     public function setSession(Session $session): void
@@ -50,8 +58,10 @@ abstract class AppController extends BaseController implements SessionAwareInter
      */
     public function beforeAction(string $action): void
     {
-        if ($this->areaAbility !== null) {
-            \App\Gate::authorize($this->areaAbility, \App\Resources\SystemResource::class, auth()->user() ?? []);
+        $ability = $this->actionAbilities[$action] ?? $this->areaAbility;
+
+        if ($ability !== null) {
+            \App\Gate::authorize($ability, \App\Resources\SystemResource::class, auth()->user() ?? []);
         }
     }
 
@@ -81,7 +91,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
      *
      * We check if user has ANY of the provided roles (OR logic).
      *
-     * @deprecated Use Gate::authorize() with policies or 'role:name' middleware instead
+     * @deprecated Use Gate::authorize() with policies instead
      * @see Gate::authorize()
      *
      * @param  string|string[]  $roles  Role name(s) to check
@@ -102,6 +112,20 @@ abstract class AppController extends BaseController implements SessionAwareInter
     }
 
     // ============== Flash Message Helpers ==============
+
+    /**
+     * Send the user back to the form with one field's problem spelled out.
+     */
+    protected function rejectField(string $field, string $message): Response
+    {
+        $oldInput = $this->request->all();
+        unset($oldInput['_token']);
+        $this->session->set('_old_input', $oldInput);
+        $this->session->set('_errors', [$field => [$message]]);
+        $this->flash('error', $message);
+
+        return $this->redirectBack();
+    }
 
     /**
      * Store a flash message for the next request.
@@ -327,7 +351,7 @@ abstract class AppController extends BaseController implements SessionAwareInter
     protected function redirectBack(): Response
     {
         // Preserve old input for form repopulation
-        $this->session->set('_old_input', $this->request->all());
+        $this->session->set('_old_input', sanitize_old_input($this->request->all()));
 
         return $this->redirect($this->backUrlPath());
     }
@@ -366,52 +390,11 @@ abstract class AppController extends BaseController implements SessionAwareInter
 
     /**
      * The local path (plus query) the request came from, or `/` when there is
-     * no usable Referer.
-     *
-     * Two deliberate properties, because the Referer is attacker-controlled and
-     * this feeds a redirect:
-     *
-     * 1. The origin is compared by scheme+host+port, not with a prefix match.
-     *    `str_starts_with($referer, base_url())` accepted
-     *    `http://lexicon.test.evil.com/...` for a base URL of `http://lexicon.test`,
-     *    which was an open redirect on every caller.
-     * 2. Only the path and query are returned, never the full URL, so even a
-     *    mistake in the origin check cannot send anyone off-site.
+     * no usable Referer. See referer_path() for why the Referer is trusted this far.
      */
     protected function backUrlPath(): string
     {
-        $referer = (string) ($this->request->header('Referer') ?? '');
-
-        if ($referer === '') {
-            return '/';
-        }
-
-        $refererParts = parse_url($referer);
-        $baseParts = parse_url(base_url());
-
-        if ($refererParts === false || $baseParts === false) {
-            return '/';
-        }
-
-        $origin = static fn (array $p): string => strtolower((string) ($p['scheme'] ?? ''))
-            .'://'.strtolower((string) ($p['host'] ?? ''))
-            .':'.(string) ($p['port'] ?? '');
-
-        if ($origin($refererParts) !== $origin($baseParts)) {
-            return '/';
-        }
-
-        $path = (string) ($refererParts['path'] ?? '/');
-
-        // A protocol-relative or scheme-bearing path would escape the origin the
-        // check above just pinned down.
-        if ($path === '' || $path[0] !== '/' || str_starts_with($path, '//')) {
-            return '/';
-        }
-
-        $query = (string) ($refererParts['query'] ?? '');
-
-        return $path.($query !== '' ? '?'.$query : '');
+        return referer_path($this->request->header('Referer')) ?? '/';
     }
 
     // ============== Error Response Helpers ==============

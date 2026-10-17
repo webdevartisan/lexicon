@@ -35,8 +35,10 @@ final class PostPolicy implements PolicyInterface
      * Update a post's content/metadata.
      *
      * Editors (and owner) edit any post via edit_blog_posts. Authors and
-     * contributors edit their own posts via edit_own_posts, but are locked out
-     * while the post is in review.
+     * contributors edit their own posts via edit_own_posts: drafts always, a
+     * submission until a reviewer takes it on or it is approved, and a
+     * published, scheduled or archived post only if they may publish, since
+     * otherwise their changes would go live unreviewed.
      *
      * @param  array<string, mixed>  $user  Authenticated user record
      */
@@ -51,16 +53,49 @@ final class PostPolicy implements PolicyInterface
             return true;
         }
 
-        if ($blog->userCan($uid, 'edit_own_posts')) {
-            // Authors and contributors are locked out while a post is in review.
-            if ($post->workflowState() === 'in_review') {
-                return false;
-            }
-
-            return $post->authorId() === $uid;
+        if (!$blog->userCan($uid, 'edit_own_posts') || $post->authorId() !== $uid) {
+            return false;
         }
 
-        return false;
+        return match ($post->status()) {
+            'draft' => true,
+            'pending' => $this->stillWithWriter($post),
+            default => $blog->canPublish($uid),
+        };
+    }
+
+    /**
+     * Take a pending post back to draft. Its writer can always withdraw it;
+     * editors can return anyone's.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function withdraw(array $user, object $post): bool
+    {
+        assert($post instanceof PostResource);
+
+        if ($post->status() !== 'pending') {
+            return false;
+        }
+
+        $uid = (int) $user['id'];
+        $blog = $post->blog();
+
+        return $blog->userCan($uid, 'edit_blog_posts')
+            || ($blog->userCan($uid, 'edit_own_posts') && $post->authorId() === $uid);
+    }
+
+    /**
+     * A submission stays editable by its writer until someone starts reviewing
+     * it, so the reviewer always reads the text that was submitted.
+     */
+    private function stillWithWriter(PostResource $post): bool
+    {
+        return match ($post->workflowState()) {
+            'needs_changes', 'draft' => true,
+            'in_review' => !$post->reviewStarted(),
+            default => false,
+        };
     }
 
     /**

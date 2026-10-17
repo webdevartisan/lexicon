@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 use App\Auth;
 use App\Exceptions\AccountSuspendedException;
-use App\Models\BlogModel;
-use App\Models\CommentModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
+use Framework\Security\Csrf;
 use Framework\Session;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\SessionTestHelper;
@@ -29,8 +28,6 @@ beforeEach(function () {
     $this->suspensions = new UserSuspensionService(
         $this->db,
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-        new CommentModel($this->db),
-        new BlogModel($this->db),
         SessionTestHelper::revoker($this->db),
     );
 
@@ -40,7 +37,7 @@ beforeEach(function () {
         ->create();
     $this->adminId = UserFactory::new($this->users)->admin()->create();
 
-    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions, SessionTestHelper::records($this->db));
+    $this->auth = fn (): Auth => new Auth($this->session, $this->users, new UserProfileModel($this->db), $this->suspensions, SessionTestHelper::records($this->db), new Csrf($this->session));
 });
 
 afterEach(function () {

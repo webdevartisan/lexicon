@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\CommentCacheInvalidator;
+
 class CommentModel extends AppModel
 {
     protected ?string $table = 'comments';
@@ -32,6 +34,11 @@ class CommentModel extends AppModel
 
     /** hidden_reason for a comment hidden because its author is suspended. */
     public const HIDDEN_BY_SUSPENSION = 'author_suspended';
+
+    private function commentCache(): CommentCacheInvalidator
+    {
+        return app(CommentCacheInvalidator::class);
+    }
 
     /**
      * Approved comments for a post as a flat list, oldest first.
@@ -222,7 +229,7 @@ class CommentModel extends AppModel
                 [$pinnedBy, $commentId, $postId]
             );
 
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
 
             return $affected > 0;
         });
@@ -240,7 +247,7 @@ class CommentModel extends AppModel
         );
 
         if ($affected > 0) {
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
 
         return $affected > 0;
@@ -355,7 +362,7 @@ class CommentModel extends AppModel
             $this->database->execute('DELETE FROM comment_votes WHERE comment_id = ?', [$id]);
 
             if ($postId !== null) {
-                $this->forgetThreadCache($postId);
+                $this->commentCache()->forgetThread($postId);
             }
         }
 
@@ -383,7 +390,7 @@ class CommentModel extends AppModel
         $postId = $this->postIdForComment($id);
 
         if ($affected > 0 && $postId !== null) {
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
 
         return $affected > 0;
@@ -410,7 +417,7 @@ class CommentModel extends AppModel
         $postId = $this->postIdForComment($id);
 
         if ($affected > 0 && $postId !== null) {
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
 
         return $affected > 0;
@@ -666,7 +673,7 @@ class CommentModel extends AppModel
             // A moderated comment appears/disappears in the public thread.
             $postId = $this->postIdForComment($id);
             if ($postId !== null) {
-                $this->forgetThreadCache($postId);
+                $this->commentCache()->forgetThread($postId);
             }
         }
 
@@ -747,26 +754,6 @@ class CommentModel extends AppModel
     }
 
     /**
-     * Drop a post's cached comment thread after it changes.
-     *
-     * Public because a vote invalidates it too: the totals ride inside the
-     * cached rows and "Top" orders by them, so a stale thread would show both
-     * the wrong number and the wrong order.
-     *
-     * Clears the keys written by forPostThreaded() (localized=false).
-     *
-     * @param  int  $postId  Post whose thread cache to clear
-     */
-    public function forgetThreadCache(int $postId): void
-    {
-        // One entry per sort order, so dropping a single key would leave the
-        // other view of the same thread serving a stale tree.
-        foreach (self::ALLOWED_SORTS as $sort) {
-            fragment()->forget('post-comments:'.$postId.':'.$sort, false);
-        }
-    }
-
-    /**
      * @param  int[]  $ids  Comment IDs to update
      */
     public function bulkUpdateStatus(array $ids, string $status): int
@@ -783,7 +770,7 @@ class CommentModel extends AppModel
 
         if ($affected > 0) {
             foreach ($this->postIdsForComments($ids) as $postId) {
-                $this->forgetThreadCache($postId);
+                $this->commentCache()->forgetThread($postId);
             }
         }
 
@@ -799,7 +786,7 @@ class CommentModel extends AppModel
         $affected = $this->database->execute($sql, [$id]);
 
         if ($affected > 0 && $postId !== null) {
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
 
         return $affected > 0;
@@ -881,6 +868,23 @@ class CommentModel extends AppModel
     }
 
     /**
+     * Whether the comment sits on a post a reader could actually see: published,
+     * public, and on a published blog.
+     *
+     * @param  int  $commentId  Comment to check
+     */
+    public function isOnPublicPost(int $commentId): bool
+    {
+        $sql = "SELECT 1 FROM {$this->getTable()} c
+                JOIN posts p ON p.id = c.post_id
+                JOIN blogs b ON b.id = p.blog_id
+                WHERE c.id = ? AND p.status = 'published' AND p.visibility = 'public' AND b.status = 'published'
+                LIMIT 1";
+
+        return (bool) $this->database->query($sql, [$commentId])->fetchColumn();
+    }
+
+    /**
      * @param  array<string, mixed>  $data  Comment data to insert
      */
     public function create(array $data): int|false
@@ -888,7 +892,7 @@ class CommentModel extends AppModel
         $id = $this->insert($data);
 
         if ($id !== false && !empty($data['post_id'])) {
-            $this->forgetThreadCache((int) $data['post_id']);
+            $this->commentCache()->forgetThread((int) $data['post_id']);
         }
 
         return $id;
@@ -961,7 +965,7 @@ class CommentModel extends AppModel
         $affected = $this->database->execute($sql, [$postId]);
 
         if ($affected > 0) {
-            $this->forgetThreadCache($postId);
+            $this->commentCache()->forgetThread($postId);
         }
 
         return $affected > 0;

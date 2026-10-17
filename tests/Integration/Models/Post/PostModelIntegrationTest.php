@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\BlogModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
@@ -17,6 +18,7 @@ use Tests\Factories\UserFactory;
  */
 beforeEach(function () {
     $this->postModel = new PostModel($this->db);
+    $this->publishedPosts = new PublishedPostModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->blogModel = new BlogModel($this->db);
 
@@ -134,111 +136,9 @@ it('returns null when slug does not exist', function () {
     expect($post)->toBeNull();
 });
 
-/**
- * Test finding posts by author.
- *
- * Verifies findByAuthorId returns all author posts.
- */
-it('finds all posts by author', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
-        ->count(2);
-
-    $posts = $this->postModel->findByAuthorId($userId);
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(2);
-});
-
-/**
- * Test retrieving only published posts.
- *
- * Verifies published() excludes draft and archived posts.
- */
-it('returns only published posts', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'published',
-            'published_at' => date('Y-m-d H:i:s'),
-        ])
-        ->create();
-
-    PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'draft',
-        ])
-        ->create();
-
-    $posts = $this->postModel->published();
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(1)
-        ->and($posts[0]['status'])->toBe('published');
-});
-
 // ============================================================================
 // STATUS UPDATES
 // ============================================================================
-
-/**
- * Test publishing a draft post.
- *
- * Verifies publishPost changes status to published.
- */
-it('publishes draft post', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    $postId = PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'draft',
-        ])
-        ->create();
-
-    $result = $this->postModel->publishPost($postId);
-
-    expect($result)->toBeTrue();
-
-    $post = $this->postModel->find($postId);
-    expect($post['status'])->toBe('published');
-});
-
-/**
- * Test unpublishing a published post.
- *
- * Verifies unpublishPost changes status to draft.
- */
-it('unpublishes published post', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    $postId = PostFactory::new($this->postModel)
-        ->withAttributes([
-            'author_id' => $userId,
-            'blog_id' => $blogId,
-            'status' => 'published',
-        ])
-        ->create();
-
-    $result = $this->postModel->unpublishPost($postId);
-
-    expect($result)->toBeTrue();
-
-    $post = $this->postModel->find($postId);
-    expect($post['status'])->toBe('draft');
-});
 
 /**
  * Test updating post status to arbitrary value.
@@ -355,25 +255,6 @@ it('counts posts by blog ID', function () {
 });
 
 /**
- * Test retrieving all posts for a blog.
- *
- * Verifies getAllByBlogId returns all posts regardless of status.
- */
-it('gets all posts by blog ID', function () {
-    $userId = UserFactory::new($this->userModel)->create();
-    $blogId = BlogFactory::new($this->blogModel)->create($userId);
-
-    PostFactory::new($this->postModel)
-        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId])
-        ->count(2);
-
-    $posts = $this->postModel->getAllByBlogId($blogId);
-
-    expect($posts)->toBeArray()
-        ->and($posts)->toHaveCount(2);
-});
-
-/**
  * Test deleting all posts in a blog.
  *
  * Verifies deleteByBlogId performs cascade deletion and returns count.
@@ -418,7 +299,7 @@ it('returns paginated published posts', function () {
             ->create();
     }
 
-    $result = $this->postModel->findPublishedByBlogIdWithPagination($blogId, 1, 5);
+    $result = $this->publishedPosts->findPublishedByBlogIdWithPagination($blogId, 1, 5);
 
     expect($result)->toBeArray()
         ->and($result['data'])->toHaveCount(5)
@@ -471,6 +352,127 @@ it('throws exception for invalid workflow state', function () {
 
     expect(fn () => $this->postModel->transitionWorkflow($postId, 'invalid_state', $userId))
         ->toThrow(InvalidArgumentException::class);
+});
+
+it('refuses a guarded transition once the post has left the expected state', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $first = $this->postModel->transitionWorkflow($postId, 'approved', $userId, ['in_review']);
+    $second = $this->postModel->transitionWorkflow($postId, 'needs_changes', $userId, ['in_review']);
+
+    expect($first)->toBeTrue()
+        ->and($second)->toBeFalse()
+        ->and($this->postModel->find($postId)['workflow_state'])->toBe('approved');
+});
+
+it('enters review with status and review state together, once', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'draft', 'workflow_state' => 'draft'])
+        ->create();
+
+    expect($this->postModel->enterReview($postId, $userId))->toBeTrue()
+        ->and($this->postModel->enterReview($postId, $userId))->toBeFalse();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('pending')
+        ->and($post['workflow_state'])->toBe('in_review');
+});
+
+it('never puts a published post into review', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'published', 'workflow_state' => 'draft'])
+        ->create();
+
+    expect($this->postModel->enterReview($postId, $userId))->toBeFalse()
+        ->and($this->postModel->find($postId)['status'])->toBe('published');
+});
+
+it('takes a pending post out of review back to draft', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'approved'])
+        ->create();
+
+    expect($this->postModel->leaveReview($postId, $userId))->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('draft')
+        ->and($post['workflow_state'])->toBe('draft');
+});
+
+it('clears the review state whenever a post stops being pending', function (string $via) {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $via === 'updateStatus'
+        ? $this->postModel->updateStatus($postId, 'published')
+        : $this->postModel->update($postId, ['status' => 'published']);
+
+    expect($this->postModel->find($postId)['workflow_state'])->toBe('draft');
+})->with(['updateStatus', 'update']);
+
+it('knows whether a reviewer has taken on a submission', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $reviewerId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $before = $this->postModel->findResource($postId)->reviewStarted();
+    $this->db->query('INSERT INTO post_reviewers (post_id, reviewer_id, assigned_by) VALUES (?, ?, ?)', [$postId, $reviewerId, $reviewerId]);
+    $after = $this->postModel->findResource($postId)->reviewStarted();
+
+    expect($before)->toBeFalse()->and($after)->toBeTrue();
+});
+
+it('dates a post when publishing it now, keeping a date already in the past', function (?string $date, bool $keeps) {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'approved', 'published_at' => $date])
+        ->create();
+
+    expect($this->postModel->publishNow($postId))->toBeTrue();
+
+    $post = $this->postModel->find($postId);
+    expect($post['status'])->toBe('published')
+        ->and($post['workflow_state'])->toBe('draft')
+        ->and($post['published_at'])->not->toBeNull()
+        ->and(strtotime($post['published_at'].' UTC'))->toBeLessThanOrEqual(time() + 1);
+
+    if ($keeps) {
+        expect($post['published_at'])->toBe($date);
+    }
+})->with([
+    'no date' => [null, false],
+    'a future date' => [gmdate('Y-m-d H:i:s', time() + 86400), false],
+    'a past date' => ['2026-01-02 03:04:05', true],
+]);
+
+it('keeps the review state while a post stays pending', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'needs_changes'])
+        ->create();
+
+    $this->postModel->updateStatus($postId, 'pending');
+    $this->postModel->update($postId, ['title' => 'A better title']);
+
+    expect($this->postModel->find($postId)['workflow_state'])->toBe('needs_changes');
 });
 
 // ============================================================================

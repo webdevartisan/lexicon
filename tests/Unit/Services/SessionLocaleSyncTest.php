@@ -31,7 +31,8 @@ function makeSessionLocaleSync(?string $stored): SessionLocaleSync
     $prefs->shouldReceive('getLocale')->with(7)->andReturn($stored);
 
     return new SessionLocaleSync(
-        new UserLocalePreference(new LocaleRegistry(ROOT_PATH), $prefs)
+        new UserLocalePreference(new LocaleRegistry(ROOT_PATH), $prefs),
+        new Framework\Session()
     );
 }
 

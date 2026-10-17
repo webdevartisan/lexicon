@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Cache;
 
+use Framework\Core\App;
 use Framework\Core\Request;
+use Framework\Session;
 
 /**
  * Deterministic cache key generation.
@@ -23,7 +25,7 @@ class CacheKey
     private array $queryWhitelist;
 
     /**
-     * @param  array<string, string[]>  $queryWhitelist  Map of path => allowed query params
+     * @param  array<string, string[]>  $queryWhitelist  Map of fnmatch pattern => allowed query params
      *                                                   e.g., ['/discover' => ['page', 'q']]
      */
     public function __construct(array $queryWhitelist = [])
@@ -44,7 +46,7 @@ class CacheKey
      */
     public function forRequest(Request $request): string
     {
-        $locale = $_SESSION['locale'] ?? 'en';
+        $locale = self::sessionLocale();
         $method = $request->method;
         $path = $this->normalizePath($request->uri);
         $query = $this->canonicalQuery($path, $request->get);
@@ -66,7 +68,7 @@ class CacheKey
      */
     public static function for(string $path, array $query = [], ?string $locale = null): string
     {
-        $locale = $locale ?? $_SESSION['locale'] ?? 'en';
+        $locale = $locale ?? self::sessionLocale();
         $path = parse_url($path, PHP_URL_PATH) ?: '/';
 
         ksort($query);
@@ -91,18 +93,31 @@ class CacheKey
     }
 
     /**
+     * Parameters allowed in the key for a path: first matching pattern wins.
+     *
+     * @return string[]
+     */
+    private function allowedParams(string $path): array
+    {
+        foreach ($this->queryWhitelist as $pattern => $params) {
+            if (fnmatch($pattern, $path)) {
+                return $params;
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * @param  array<string, mixed>  $getParams  Raw GET parameters from the request
      */
     private function canonicalQuery(string $path, array $getParams): string
     {
-        // Get allowed params for this path.
-        $allowed = $this->queryWhitelist[$path] ?? null;
+        $allowed = $this->allowedParams($path);
 
-        // If no whitelist defined, allow all params (risky but flexible).
-        if ($allowed === null) {
-            ksort($getParams);
-
-            return http_build_query($getParams);
+        // Unlisted paths get no parameters; otherwise any ?x=random mints a new cache file.
+        if ($allowed === []) {
+            return '';
         }
 
         // Filter to only whitelisted params.
@@ -110,5 +125,13 @@ class CacheKey
         ksort($filtered);
 
         return http_build_query($filtered);
+    }
+
+    /**
+     * The locale LocaleMiddleware stored for this request, 'en' before it has run.
+     */
+    private static function sessionLocale(): string
+    {
+        return (string) App::container()->get(Session::class)->get('locale', 'en');
     }
 }

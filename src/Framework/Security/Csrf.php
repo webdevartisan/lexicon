@@ -49,6 +49,19 @@ final class Csrf
     }
 
     /**
+     * Get the current token without creating one.
+     *
+     * Returns an empty string when the session has no token yet, so guest
+     * pages can render a form without saving a session for every visitor.
+     */
+    public function peekToken(): string
+    {
+        $token = $this->session->get(self::SESSION_KEY);
+
+        return is_string($token) ? $token : '';
+    }
+
+    /**
      * Discard the current token so the next getToken() issues a new one.
      *
      * For moments the session changes whose identity it carries: a token

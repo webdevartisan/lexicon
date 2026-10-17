@@ -49,14 +49,23 @@ tinymce.init({
   skin: isDark ? 'oxide-dark' : 'oxide',
   content_css: isDark ? 'dark' : 'default',
 
-  menubar: 'file edit view insert format tools table help',
+  menubar: 'edit insert format',
+  menu: {
+    insert: { title: 'Insert', items: 'medialibrary link table hr | emoticons codesample charmap accordion' }
+  },
   plugins: 'lists link image table code fullscreen searchreplace emoticons preview ' +
            'wordcount visualblocks codesample charmap accordion quickbars',
 
-  toolbar: [
-    'undo redo | styles | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify',
-    '| emoticons codesample charmap accordion | bullist numlist outdent indent | link image medialibrary table | visualblocks preview code fullscreen'
-  ],
+  // Advanced tools sit last so they fold into the "..." drawer on narrow screens.
+  toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | ' +
+           'bullist numlist | link medialibrary table | ' +
+           'emoticons codesample charmap accordion visualblocks preview code fullscreen',
+  toolbar_mode: 'sliding',
+
+  quickbars_insert_toolbar: 'medialibrary table',
+  quickbars_selection_toolbar: 'bold italic | h2 h3 | link blockquote',
+  quickbars_image_toolbar: 'alignleft aligncenter alignright | replaceimage imagesettings',
+  object_resizing: 'img',
 
   image_class_list: [
     { title: 'None', value: '' },
@@ -65,6 +74,11 @@ tinymce.init({
   ],
 
   content_style: `
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
     img.img-wrap-right {
       float: right;
       margin: 0 0 12px 16px;
@@ -166,16 +180,46 @@ tinymce.init({
 
     // Custom toolbar button that opens the per-blog Media Library picker
     // and inserts the chosen image at the cursor.
+    function insertFromLibrary() {
+      openLibrary(editor, function (picked) {
+        // Reuse the image's stored alt text so inserted images aren't left undescribed.
+        var alt = (picked.alt || '')
+          .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        editor.insertContent('<img src="' + picked.url + '" alt="' + alt + '">');
+      });
+    }
+
     editor.ui.registry.addButton('medialibrary', {
       icon: 'gallery',
-      tooltip: 'Insert from Media Library',
+      tooltip: 'Insert image from library',
+      onAction: insertFromLibrary,
+    });
+
+    editor.ui.registry.addMenuItem('medialibrary', {
+      icon: 'gallery',
+      text: 'Image from library',
+      onAction: insertFromLibrary,
+    });
+
+    // The stock "imageoptions" button is a premium feature, so open the image dialog (size, alt, wrap) directly.
+    editor.ui.registry.addButton('imagesettings', {
+      icon: 'image-options',
+      tooltip: 'Size, alt text and wrap',
+      onAction: function () {
+        editor.execCommand('mceImage');
+      },
+    });
+
+    editor.ui.registry.addButton('replaceimage', {
+      icon: 'gallery',
+      tooltip: 'Replace from library',
       onAction: function () {
         openLibrary(editor, function (picked) {
-          // Reuse the image's stored alt text so inserted images aren't left undescribed.
-          var alt = (picked.alt || '')
-            .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          editor.insertContent('<img src="' + picked.url + '" alt="' + alt + '">');
+          editor.dom.setAttribs(editor.selection.getNode(), { src: picked.url, 'data-mce-src': picked.url });
+          editor.dom.setAttrib(editor.selection.getNode(), 'alt', picked.alt || '');
+          editor.nodeChanged();
+          editor.fire('change');
         });
       },
     });

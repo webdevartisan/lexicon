@@ -9,20 +9,21 @@ use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Session;
 
 final class LocalizeAnchorHrefs implements MiddlewareInterface
 {
     /** @var string[] */
     private array $locales;
 
-    public function __construct(LocaleRegistry $registry)
+    public function __construct(LocaleRegistry $registry, private Session $session)
     {
         $this->locales = $registry->supported();
     }
 
     private function currentLocale(): string
     {
-        $loc = strtolower($_SESSION['locale'] ?? $_COOKIE['locale'] ?? 'en');
+        $loc = strtolower((string) $this->session->get('locale', 'en'));
 
         return in_array($loc, $this->locales, true) ? $loc : ($this->locales[0] ?? 'en');
     }

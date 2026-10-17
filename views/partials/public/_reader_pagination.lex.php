@@ -28,7 +28,7 @@ if ($readerTotalPages > 1) {
         <?php if ($readerCurrent > 1) { ?>
         <li>
             <a href="<?= e($readerPageUrl($readerCurrent - 1)) ?>" class="lx-pagination-step" rel="prev">
-                <span class="fa-solid fa-chevron-left" aria-hidden="true"></span>
+                {% cmp="lx-icon" name="chevron-left" %}
                 <span class="lx-visually-hidden"><?= e($t('reader.paginationPrev') ?: 'Previous page') ?></span>
             </a>
         </li>
@@ -52,7 +52,7 @@ if ($readerTotalPages > 1) {
         <li>
             <a href="<?= e($readerPageUrl($readerCurrent + 1)) ?>" class="lx-pagination-step" rel="next">
                 <span class="lx-visually-hidden"><?= e($t('reader.paginationNext') ?: 'Next page') ?></span>
-                <span class="fa-solid fa-chevron-right" aria-hidden="true"></span>
+                {% cmp="lx-icon" name="chevron-right" %}
             </a>
         </li>
         <?php } ?>

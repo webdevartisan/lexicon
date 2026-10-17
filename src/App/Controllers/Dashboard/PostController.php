@@ -11,6 +11,7 @@ use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
+use App\Models\PostListingModel;
 use App\Models\PostModel;
 use App\Models\PostTranslationModel;
 use App\Models\ReviewModel;
@@ -20,6 +21,7 @@ use App\Presenters\PostActionPresenter;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
 use App\Services\ActiveBlog;
+use App\Services\BlogLaunchService;
 use App\Services\ExternalMediaGuard;
 use App\Services\LocaleRegistry;
 use App\Services\MediaService;
@@ -50,6 +52,8 @@ final class PostController extends AppController
      */
     private const SEO_RULES = PostFieldRules::SEO;
 
+    private const SUBMITTED_MESSAGE = 'Submitted for review. You can keep editing until a reviewer starts on it.';
+
     public function __construct(
         private PostModel $model,
         private BlogModel $blogModel,
@@ -70,6 +74,8 @@ final class PostController extends AppController
         private PostContentSanitizer $contentSanitizer,
         private AnalyticsStatsModel $analyticsStats,
         private ActiveBlog $activeBlog,
+        private PostListingModel $postListing,
+        private BlogLaunchService $blogLaunch,
     ) {}
 
     /**
@@ -114,7 +120,7 @@ final class PostController extends AppController
         $activeTag = $rawTag > 0 ? $this->tagModel->findForBlog($rawTag, $blogId) : null;
         $tagId = $activeTag ? $rawTag : null;
 
-        $result = $this->model->findByAuthorWithFiltersPagination(
+        $result = $this->postListing->findByAuthorWithFiltersPagination(
             authorId: $authorScope,
             page: $page,
             perPage: 12,
@@ -135,7 +141,7 @@ final class PostController extends AppController
         }
         unset($p);
 
-        $counts = $this->model->countsByStatusForAuthor(
+        $counts = $this->postListing->countsByStatusForAuthor(
             authorId: $authorScope,
             blogId: $blogId,
             searchQuery: $q,
@@ -182,35 +188,20 @@ final class PostController extends AppController
      *
      * @param  array<string, mixed>  $post  List row
      * @param  array<string, mixed>  $user
-     * @return array{update: bool, publish: bool, delete: bool}
+     * @return array{update: bool, open: bool, publish: bool, delete: bool}
      */
     private function postAbilities(array $post, BlogResource $blog, array $user): array
     {
         $resource = new PostResource($post, $blog);
+        $update = Gate::allows('update', $resource, $user);
 
         return [
-            'update' => Gate::allows('update', $resource, $user),
+            'update' => $update,
+            // Writers can still open their own locked posts; the edit page shows them read-only.
+            'open' => $update || $resource->authorId() === (int) $user['id'],
             'publish' => Gate::allows('publish', $resource, $user),
             'delete' => Gate::allows('delete', $resource, $user),
         ];
-    }
-
-    /**
-     * Show single post with relationships.
-     *
-     * @param  string  $slug  Post slug
-     */
-    public function show(string $slug): Response
-    {
-        $post = $this->getPostBySlug($slug);
-
-        return $this->view('Dashboard/Posts/show.lex.php', [
-            'post' => $post,
-            'author' => $this->model->author((int) $post['user_id']),
-            'category' => $this->model->category($post['category_id'] ?? null),
-            'tags' => $this->model->tags((int) $post['id']),
-            'comments' => $this->model->comments((int) $post['id']),
-        ]);
     }
 
     /**
@@ -247,6 +238,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
             'workflowEnabled' => $workflowEnabled,
+            'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
@@ -300,6 +292,10 @@ final class PostController extends AppController
         $data['blog_id'] = $blog->id();
         $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
 
+        if ($visibility = $this->requestedVisibility($blog, (int) $user['id'])) {
+            $data['visibility'] = $visibility;
+        }
+
         try {
             $data['author_id'] = $this->postAuthors->resolve($blog, $user, $this->request->postParam('author_id'), (int) $user['id']);
         } catch (\InvalidArgumentException $e) {
@@ -325,8 +321,12 @@ final class PostController extends AppController
             $this->tagModel->syncForPost($postId, (int) $blog->id(), $this->parsePostTags());
             $this->model->setFeatured($postId, (int) $blog->id(), !empty($this->request->post['is_featured']));
 
+            $launched = $this->blogLaunch->launchWithFirstPost((int) $postId, 'draft');
+
             // No-op unless the post was created straight into published
             $this->subscriberNotifier->notifyPostPublished($postId);
+
+            $submitted = $this->workflowService->submitIfRequested((int) $postId, (int) $blog->id(), $data['status'], 'draft', (int) $user['id']);
 
             audit()->log(
                 $user['id'],
@@ -341,7 +341,11 @@ final class PostController extends AppController
                 return $this->redirectAfterImageFailure($postId, $imageFailure);
             }
 
-            $this->flash('success', 'Post saved.');
+            $this->flash('success', match (true) {
+                $submitted => self::SUBMITTED_MESSAGE,
+                $launched => BlogLaunchService::LAUNCHED_MESSAGE,
+                default => 'Post saved.',
+            });
 
             return $this->redirect("/dashboard/post/{$postId}/edit");
         }
@@ -361,6 +365,10 @@ final class PostController extends AppController
         $user = auth()->user();
         $post = $this->getPost((int) $id);
         $blog = $post->blog();
+
+        if (!Gate::allows('update', $post, $user) && $post->authorId() === (int) $user['id']) {
+            return $this->lockedView($post, $user);
+        }
 
         Gate::authorize('update', $post, $user);
         $this->activeBlog->follow($user, $blog);
@@ -419,6 +427,7 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => $postTags,
             'returnToken' => $this->request->getParam('r'),
+            'canSetVisibility' => $this->canSetVisibility($blog, (int) $user['id']),
             ...$this->authorFieldData($blog, $user, $post->authorId()),
             'actions' => PostActionPresenter::for(
                 $status,
@@ -427,6 +436,28 @@ final class PostController extends AppController
                 $post->publishedAt() !== null && strtotime($post->publishedAt().' UTC') > time(),
                 $workflowState
             ),
+        ]);
+    }
+
+    /**
+     * What a writer sees on their own post while they may not edit it: under
+     * review, approved, or already live without the right to publish.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    private function lockedView(PostResource $post, array $user): Response
+    {
+        $blog = $post->blog();
+        $this->activeBlog->follow($user, $blog);
+
+        $lock = $post->status() === 'pending' ? $post->workflowState() : 'live';
+
+        return $this->view('post.locked', [
+            'post' => $post->toArray(),
+            'lock' => $lock,
+            'canWithdraw' => Gate::allows('withdraw', $post, $user),
+            'postUrl' => base_url().'/blog/'.$blog->slug().'/'.$post->slug(),
+            'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
         ]);
     }
 
@@ -512,7 +543,12 @@ final class PostController extends AppController
             'published_at' => $post->publishedAt(),
             'comments_enabled' => $post->comments_enabled(),
             'blog_id' => $post->blogId(),
+            'visibility' => $post->toArray()['visibility'] ?? 'public',
         ];
+
+        if ($visibility = $this->requestedVisibility($post->blog(), (int) $user['id'])) {
+            $newData['visibility'] = $visibility;
+        }
 
         // SEO/social fields join the same change-detection diff.
         $postSnapshot = $post->toArray();
@@ -597,9 +633,13 @@ final class PostController extends AppController
 
         $this->model->setFeatured((int) $id, $blogId, !empty($this->request->post['is_featured'])); // TODO: optimize security
 
+        $launched = false;
+
         // Update if changes detected
         if (!empty($data)) {
+            $this->workflowService->concludeReview($post, $newStatus, (int) $user['id']);
             $this->model->update((int) $id, $data);
+            $launched = $this->blogLaunch->launchWithFirstPost((int) $id, $oldStatus);
 
             // No-op unless the post just became published and was never announced
             $this->subscriberNotifier->notifyPostPublished((int) $id);
@@ -612,34 +652,19 @@ final class PostController extends AppController
                 array_intersect_key($data, array_flip(['title', 'status', 'published_at'])),
                 $this->request->ip()
             );
+        }
 
-            $this->flash('success', 'Post updated successfully.');
-        } elseif ($tagsChanged) {
+        if ($this->workflowService->submitIfRequested((int) $id, $blogId, $newStatus, (string) $post->workflowState(), (int) $user['id'])) {
+            // A resubmission goes straight back to the reviewer who asked for changes, so it may already be locked.
+            $this->flash('success', Gate::allows('update', $this->getPost((int) $id), $user)
+                ? self::SUBMITTED_MESSAGE
+                : 'Resubmitted. It went straight back to your reviewer.');
+        } elseif ($launched) {
+            $this->flash('success', BlogLaunchService::LAUNCHED_MESSAGE);
+        } elseif (!empty($data) || $tagsChanged) {
             $this->flash('success', 'Post updated successfully.');
         } else {
             $this->flash('info', 'No changes detected.');
-        }
-
-        // Auto-trigger review pipeline when author moves status to pending,
-        // or re-triggers when resubmitting after needs_changes.
-        $currentWorkflowState = $post->workflowState();
-        $shouldSubmit = $newStatus === 'pending'
-            && (
-                $oldStatus !== 'pending'
-                || $currentWorkflowState === 'needs_changes'
-            )
-            && $currentWorkflowState !== 'in_review';
-
-        if ($shouldSubmit) {
-            $blogSettings = $this->blogSettingsModel->findByBlogId($blogId);
-            if (!empty($blogSettings['workflow_enabled'])) {
-                try {
-                    $this->workflowService->submitForReview((int) $id, (int) $user['id']);
-                } catch (\RuntimeException $e) {
-                    // Non-fatal: post status was saved as pending even if workflow trigger failed
-                    error_log('Auto submitForReview failed for post '.$id.': '.$e->getMessage());
-                }
-            }
         }
 
         if ($imageFailure !== null) {
@@ -848,26 +873,28 @@ final class PostController extends AppController
                 continue;
             }
 
+            // Pending only means something when there is a queue to put the post in.
+            if ($action === 'review'
+                && !$this->workflowService->submitIfRequested($id, (int) $post->blogId(), 'pending', (string) $post->workflowState(), (int) $user['id'])) {
+                $skipped++;
+                continue;
+            }
+
+            if ($action === 'publish') {
+                $this->workflowService->concludeReview($post, 'published', (int) $user['id']);
+            }
+
             match ($action) {
-                'publish' => $this->model->updateStatus($id, 'published'),
+                'publish' => $this->model->publishNow($id),
                 'draft' => $this->model->updateStatus($id, 'draft'),
-                'review' => $this->model->updateStatus($id, 'pending'),
                 'archive' => $this->model->updateStatus($id, 'archived'),
                 'delete' => $this->model->delete($id),
+                'review' => null,
             };
 
             if ($action === 'publish') {
+                $this->blogLaunch->launchWithFirstPost($id, $post->status());
                 $this->subscriberNotifier->notifyPostPublished((int) $id);
-            }
-
-            $blogSettings = $action === 'review' ? $this->blogSettingsModel->findByBlogId($post->blogId()) : null;
-            if (!empty($blogSettings['workflow_enabled'])) {
-                try {
-                    $this->workflowService->submitForReview((int) $id, (int) $user['id']);
-                } catch (\RuntimeException $e) {
-                    // Non-fatal: post status was saved as pending even if workflow trigger failed
-                    error_log('Auto submitForReview failed for post '.$id.': '.$e->getMessage());
-                }
             }
 
             audit()->log(
@@ -895,148 +922,31 @@ final class PostController extends AppController
     }
 
     /**
-     * Publish post (requires approved workflow state).
+     * Whether the user may decide how widely this blog's posts show.
      *
-     * @param  string  $id  Post ID
+     * Same permission as the quick visibility actions, so the editor never
+     * offers more than the post list does.
      */
-    public function publish(string $id): Response
+    private function canSetVisibility(BlogResource $blog, int $userId): bool
     {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('publish', $post, $user);
-
-        if ($held = $this->refuseWhileModerated($post)) {
-            return $held;
-        }
-
-        // Workflow precondition only applies when the blog opted into the review pipeline.
-        // Without it there is no "approved" state to wait for a draft is publishable on demand.
-        $blogSettings = $this->blogSettingsModel->findByBlogId((int) $post->blogId());
-        $workflowEnabled = !empty($blogSettings['workflow_enabled']);
-
-        if ($workflowEnabled && !in_array($post->workflowState(), ['approved'], true)) {
-            $this->flash('error', 'Post must be approved before publishing.');
-
-            return $this->redirectBack();
-        }
-
-        $this->model->updateStatus((int) $id, 'published');
-        $this->subscriberNotifier->notifyPostPublished((int) $id);
-
-        audit()->log(
-            $user['id'],
-            'post.published',
-            'post',
-            (int) $id,
-            ['workflow_state' => $post->workflowState()],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Post published successfully.');
-
-        return $this->redirectBack();
+        return $blog->userCan($userId, 'publish_blog_posts');
     }
 
     /**
-     * Unpublish post (revert to approved state).
+     * The visibility the editor form asked for, or null to leave it alone.
      *
-     * @param  string  $id  Post ID
+     * Null covers an absent field, an unknown value and a user without the
+     * permission, so a hand-built request cannot widen a post's reach.
      */
-    public function unpublish(string $id): Response
+    private function requestedVisibility(BlogResource $blog, int $userId): ?string
     {
-        csrf()->assertValid($this->request->postParam('_token'));
+        $requested = (string) ($this->request->postParam('visibility') ?? '');
 
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('publish', $post, $user);
-
-        if ($held = $this->refuseWhileModerated($post)) {
-            return $held;
+        if (!in_array($requested, PostModel::VISIBILITIES, true) || !$this->canSetVisibility($blog, $userId)) {
+            return null;
         }
 
-        $this->model->unpublishPost((int) $id);
-        $this->model->transitionWorkflow((int) $id, 'approved', $user['id']);
-
-        audit()->log(
-            $user['id'],
-            'post.unpublished',
-            'post',
-            (int) $id,
-            ['status' => 'draft', 'workflow_state' => 'approved'],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Post unpublished successfully.');
-
-        return $this->redirect('/dashboard');
-    }
-
-    /**
-     * Revert post to draft status.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function draft(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('publish', $post, $user);
-
-        if ($held = $this->refuseWhileModerated($post)) {
-            return $held;
-        }
-
-        $this->model->updateStatus((int) $id, 'draft');
-
-        audit()->log(
-            $user['id'],
-            'post.reverted_to_draft',
-            'post',
-            (int) $id,
-            [],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Post reverted to draft.');
-
-        return $this->redirectBack();
-    }
-
-    /**
-     * Archive post.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function archive(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('publish', $post, $user);
-
-        if ($held = $this->refuseWhileModerated($post)) {
-            return $held;
-        }
-
-        $this->model->updateStatus((int) $id, 'archived');
-
-        audit()->log(
-            $user['id'],
-            'post.archived',
-            'post',
-            (int) $id,
-            [],
-            $this->request->ip()
-        );
-
-        $this->flash('success', 'Post archived successfully.');
-
-        return $this->redirectBack();
+        return $requested;
     }
 
     /**
@@ -1099,43 +1009,6 @@ final class PostController extends AppController
 
         if ($post === false) {
             throw new PageNotFoundException("Post with ID: '$id' not found.");
-        }
-
-        return $post;
-    }
-
-    /**
-     * Refuse a status change on a post a moderator hid, and say why.
-     *
-     * The model refuses the write on its own; this is what stops the action
-     * reporting success, notifying subscribers, and logging a publish that
-     * never happened.
-     */
-    private function refuseWhileModerated(PostResource $post): ?Response
-    {
-        if ($post->status() !== 'moderated') {
-            return null;
-        }
-
-        $this->flash('error', 'A moderator hid this post after readers reported it, so its status cannot be changed here.');
-
-        return $this->redirectBack();
-    }
-
-    /**
-     * Get post by slug or throw 404.
-     *
-     * @param  string  $slug  Post slug
-     * @return array<string, mixed> Post data
-     *
-     * @throws PageNotFoundException
-     */
-    private function getPostBySlug(string $slug): array
-    {
-        $post = $this->model->findBySlug($slug);
-
-        if ($post === null) {
-            throw new PageNotFoundException("Post with slug: '$slug' not found.");
         }
 
         return $post;
@@ -1226,20 +1099,6 @@ final class PostController extends AppController
             'authorId' => $authorId,
             'authorHandle' => $candidates[$authorId] ?? (string) ($this->model->author($authorId)['handle'] ?? ''),
         ];
-    }
-
-    /**
-     * Send the writer back to the form with one field's problem spelled out.
-     */
-    private function rejectField(string $field, string $message): Response
-    {
-        $oldInput = $this->request->all();
-        unset($oldInput['_token']);
-        $this->session->set('_old_input', $oldInput);
-        $this->session->set('_errors', [$field => [$message]]);
-        $this->flash('error', $message);
-
-        return $this->redirectBack();
     }
 
     /**

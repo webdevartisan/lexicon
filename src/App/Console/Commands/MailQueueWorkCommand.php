@@ -138,6 +138,10 @@ class MailQueueWorkCommand implements SchedulableCommandInterface, ScheduleHintI
             echo "  retrying: {$result['retrying']}\n";
             echo "  failed:   {$result['failed']}\n";
 
+            if ($result['lost'] > 0) {
+                echo "  lost:     {$result['lost']} (reclaimed by another run, left to it)\n";
+            }
+
             $counts = $this->mailQueue->statusCounts();
             echo "Queue now: {$counts['pending']} pending, {$counts['failed']} failed\n";
 

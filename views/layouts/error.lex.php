@@ -226,6 +226,7 @@
   </head>
 
   <body>
+    {% include "partials/_impersonation_banner.lex.php" %}
     {% yield body %}
   </body>
 </html>

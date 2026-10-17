@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\PreRouting;
 
 use Framework\Core\Request;
+use Framework\HttpUtils;
 
 /**
  * Class HttpsRedirector
@@ -19,9 +20,8 @@ use Framework\Core\Request;
  * - Uses 301 in production and 302 in non-production for GET/HEAD requests (based on APP_ENV).
  *
  * Proxy awareness:
- * - Considers common reverse-proxy headers (X-Forwarded-Proto, X-Forwarded-SSL).
- * - These headers must only be set or stripped by trusted proxies; they should not be trusted directly
- *   when the app is exposed to the public internet.
+ * - Uses HttpUtils::isHttps(), which believes X-Forwarded-Proto and X-Forwarded-SSL only from
+ *   a peer listed in TRUSTED_PROXIES.
  *
  * Configuration:
  * - APP_ENV=production to enable 301 for GET/HEAD; any other value defaults to 302 to avoid strong caching during development.
@@ -50,34 +50,7 @@ final class HttpsRedirector
             return;
         }
 
-        // Detect HTTPS, including common proxy headers.
-        $httpsOn = false;
-
-        // Direct HTTPS (Apache/Nginx/etc.).
-        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-            $httpsOn = true;
-        }
-
-        // Some environments expose REQUEST_SCHEME or SERVER_PORT; these can be used as hints.
-        if (!$httpsOn && (($_SERVER['REQUEST_SCHEME'] ?? '') === 'https' || ($_SERVER['SERVER_PORT'] ?? '') === '443')) {
-            $httpsOn = true;
-        }
-
-        // Proxy headers (to be trusted only when the app is behind a known, configured reverse proxy).
-        // X-Forwarded-Proto: "https" when the original client connection was HTTPS.
-        $xfProto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
-        if (!$httpsOn && stripos($xfProto, 'https') !== false) {
-            $httpsOn = true;
-        }
-
-        // X-Forwarded-SSL: "on" in some proxy setups to signal HTTPS at the edge.
-        $xfSsl = $_SERVER['HTTP_X_FORWARDED_SSL'] ?? '';
-        if (!$httpsOn && strcasecmp($xfSsl, 'on') === 0) {
-            $httpsOn = true;
-        }
-
-        if ($httpsOn) {
-            // Already HTTPS as far as this app can tell; no redirect needed.
+        if (HttpUtils::isHttps($request->server)) {
             return;
         }
 

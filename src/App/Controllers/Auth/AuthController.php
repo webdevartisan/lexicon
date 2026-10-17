@@ -7,15 +7,18 @@ namespace App\Controllers\Auth;
 use App\Controllers\AppController;
 use App\Exceptions\AccountSuspendedException;
 use App\Services\Analytics\VisitorLink;
+use App\Services\Captcha\CaptchaInterface;
+use App\Services\Captcha\CaptchaResult;
+use App\Services\LoginRateLimiter;
 use Framework\Core\Response;
 
 /**
  * Handle login and logout.
  *
  * GET  /login          → index()
- * POST /login/submit   → submit()   (HTML form or AJAX from the blog-front modal)
+ * POST /login          → submit()   (HTML form or AJAX from the blog-front modal)
  * POST /login/identify → identify() (modal step 1: does this email have an account?)
- * GET  /logout         → logout()
+ * POST /logout         → logout()
  */
 final class AuthController extends AppController
 {
@@ -37,14 +40,6 @@ final class AuthController extends AppController
         return $this->view('auth.login.index', [
             'return_to' => safe_return_to((string) ($this->request->get['return_to'] ?? '')),
         ]);
-    }
-
-    /**
-     * Optional: show an alternative login view (e.g. modal or embedded).
-     */
-    public function show(): Response
-    {
-        return $this->view('Login/show.lex.php');
     }
 
     /**
@@ -158,7 +153,7 @@ final class AuthController extends AppController
         // ---------------------------------------------------------
         // RATE LIMIT CHECK (BEFORE AUTH)
         // ---------------------------------------------------------
-        $limiter = app(\App\Services\LoginRateLimiter::class);
+        $limiter = app(LoginRateLimiter::class);
 
         $blocked = $limiter->tooManyAttempts($ip, $email);
 
@@ -180,6 +175,19 @@ final class AuthController extends AppController
             return $this->redirect('/login'.($returnTo !== null ? '?return_to='.urlencode($returnTo) : ''));
         }
 
+        // The check comes before the password, so an attempt without a valid
+        // answer never reaches it and is not charged to the account.
+        $passedCheck = false;
+        if ($limiter->requiresChallenge($ip, $email)) {
+            $result = app(CaptchaInterface::class)->verify((string) ($this->request->post['altcha'] ?? ''), 'login', $email);
+
+            if (!$result->passed()) {
+                return $this->challengeRequired($limiter, $result, $email, $returnTo, $isAjax);
+            }
+
+            $passedCheck = true;
+        }
+
         // ---------------------------------------------------------
 
         try {
@@ -197,6 +205,9 @@ final class AuthController extends AppController
         if ($loggedIn) {
 
             $limiter->clear($ip, $email);
+
+            $userId = (int) auth()->user()['id'];
+            audit()->log($userId, 'auth.login', 'user', $userId, [], $ip);
 
             app(VisitorLink::class)->toAccount($this->request, (int) auth()->user()['id']);
 
@@ -222,7 +233,7 @@ final class AuthController extends AppController
             // Redirect priority: blog-front return_to beats the stored
             // intended URL, and only when neither exists do we fall back to
             // the dashboard (readers land on their reading hub there).
-            $intendedUrl = $this->session->get('intended_url');
+            $intendedUrl = safe_return_to($this->session->get('intended_url'));
             $this->session->remove('intended_url');
 
             $target = $returnTo ?? ($intendedUrl ?: '/dashboard');
@@ -245,8 +256,11 @@ final class AuthController extends AppController
         // ---------------------------------------------------------
         // FAILED LOGIN → RECORD ATTEMPT
         // ---------------------------------------------------------
-        $limiter->hit($ip, $email);
+        $limiter->hit($ip, $email, $passedCheck);
         // ---------------------------------------------------------
+
+        // Wrong email and wrong password look identical here, and the typed email is deliberately not stored.
+        audit()->log(null, 'auth.login_failed', 'user', 0, [], $ip);
 
         if ($isAjax) {
             // The modal's email step already confirmed the account exists,
@@ -259,6 +273,49 @@ final class AuthController extends AppController
 
         // Return Response
         return $this->redirectBack();
+    }
+
+    /**
+     * Refuse a login that needs the sign-in check and hand back a fresh challenge.
+     *
+     * The modal gets 422 JSON with the challenge and retries once it is solved.
+     * The page is re-rendered with the challenge, which its script solves
+     * before the next submit. Without JavaScript the page shows a reset link.
+     *
+     * @param  string|null  $returnTo  Validated return path to keep on the form
+     */
+    private function challengeRequired(
+        LoginRateLimiter $limiter,
+        CaptchaResult $result,
+        string $email,
+        ?string $returnTo,
+        bool $isAjax
+    ): Response {
+        $ip = $this->request->ip();
+        $limiter->hitIp($ip);
+
+        // A missing answer is the normal first step for someone who just reached the
+        // check, so only answers that came back wrong are worth an audit row.
+        if ($result !== CaptchaResult::Missing) {
+            audit()->log(null, 'auth.captcha_failed', 'user', 0, ['reason' => $result->value], $ip);
+        }
+
+        $challenge = app(CaptchaInterface::class)->issue('login', $email, $limiter->challengeLevel($email));
+        $message = chrome_translate($result === CaptchaResult::Missing ? 'auth.checkRequired' : 'auth.checkFailed');
+
+        if ($isAjax) {
+            return $this->json(['success' => false, 'error' => $message, 'captcha' => $challenge], 422);
+        }
+
+        $response = $this->view('auth.login.index', [
+            'error' => $message,
+            'email' => $email,
+            'return_to' => $returnTo,
+            'captcha' => $challenge,
+        ]);
+        $response->setStatusCode(422);
+
+        return $response;
     }
 
     /**

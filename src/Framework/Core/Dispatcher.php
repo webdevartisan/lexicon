@@ -8,8 +8,6 @@ use Framework\BaseController;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Handlers\ControllerRequestHandler;
 use Framework\Handlers\MiddlewareRequestHandler;
-use Framework\Http\Middleware\RequireRoleMiddleware;
-use Framework\Interfaces\AuthInterface;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -261,10 +259,7 @@ final class Dispatcher implements RequestHandlerInterface
                 continue;
             }
 
-            [$name, $arg] = $this->splitMiddlewareKey($key);
-            $class = $this->resolveMiddlewareClass($name);
-
-            $instances[] = $this->createMiddlewareInstance($name, $class, $arg);
+            $instances[] = $this->container->get($this->resolveMiddlewareClass($key));
         }
 
         return $instances;
@@ -287,14 +282,6 @@ final class Dispatcher implements RequestHandlerInterface
     }
 
     /**
-     * @return array{string, string|null} Middleware name and optional argument
-     */
-    private function splitMiddlewareKey(string $key): array
-    {
-        return array_pad(explode(':', $key, 2), 2, null);
-    }
-
-    /**
      * @return class-string<MiddlewareInterface> Middleware class for the alias
      */
     private function resolveMiddlewareClass(string $name): string
@@ -304,26 +291,5 @@ final class Dispatcher implements RequestHandlerInterface
         }
 
         return $this->middlewareClasses[$name];
-    }
-
-    /**
-     * @param  class-string<MiddlewareInterface>  $class  Middleware class to instantiate
-     * @return MiddlewareInterface Ready-to-run middleware instance
-     */
-    private function createMiddlewareInstance(string $name, string $class, ?string $arg): object
-    {
-        // preserve special-case role middleware logic
-        if ($name === 'role' && $arg !== null) {
-            $auth = $this->container->get(AuthInterface::class);
-            $roles = array_map('trim', explode(',', $arg));
-
-            if ($class === RequireRoleMiddleware::class) {
-                return new RequireRoleMiddleware($auth, $roles);
-            }
-
-            return new $class($auth, $roles);
-        }
-
-        return $this->container->get($class);
     }
 }

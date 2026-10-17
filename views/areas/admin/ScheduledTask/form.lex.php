@@ -106,9 +106,9 @@ foreach ($timezones as $zone) {
 
 <script nonce="<?= csp_nonce() ?>">
 (function () {
-    var schemas = <?= json_encode($schemas) ?>;
-    var saved = <?= json_encode((object) $arguments) ?>;
-    var hintEndpoint = <?= json_encode(lurl($basePath.'/hint')) ?>;
+    var schemas = <?= json_encode($schemas, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var saved = <?= json_encode((object) $arguments, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var hintEndpoint = <?= json_encode(lurl($basePath.'/hint'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
     var commandField = document.getElementById('command');
     var typeField = document.getElementById('schedule_type');

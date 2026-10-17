@@ -18,7 +18,7 @@
                     </div>
                     <p class="text-sm text-slate-500 dark:text-zink-300">{{ role.description }}</p>
                 </div>
-                <a href="/admin/roles" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+                <a href="<?= e(lurl('/admin/roles')) ?>" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                     Back to list
                 </a>
             </div>
@@ -29,7 +29,9 @@
         {{ csrf_field() }}
         <div class="card-body">
             <h3 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">Permissions</h3>
-            <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">Check the permissions this role should grant.</p>
+            <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">
+                <?= $canEditPermissions ? 'Check the permissions this role should grant.' : 'Only administrators can change which permissions a role grants.' ?>
+            </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-2.5">
                 {% foreach ($allPermissions as $perm): %}
@@ -39,7 +41,8 @@
                 <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
                     <input type="checkbox" name="permissions[]" value="{{ perm['id'] }}"
                            class="form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-custom-500"
-                        <?php if ($isChecked) { ?>checked<?php } ?>>
+                        <?php if ($isChecked) { ?>checked<?php } ?>
+                        <?php if (!$canEditPermissions) { ?>disabled<?php } ?>>
                     <span>
                         <?= e($perm['permission_name'] ?? $perm['name'] ?? '') ?>
                         <span class="block text-[11px] text-slate-400 dark:text-zink-300"><?= e($perm['permission_slug'] ?? $perm['slug'] ?? '') ?></span>
@@ -48,11 +51,13 @@
                 {% endforeach; %}
             </div>
         </div>
+        <?php if ($canEditPermissions) { ?>
         <div class="card-body flex items-center justify-end gap-2 border-t border-slate-100 dark:border-zink-600">
             <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">
                 <i data-lucide="shield-check" class="size-4"></i> Update Permissions
             </button>
         </div>
+        <?php } ?>
     </form>
 </div>
 {% endblock %}

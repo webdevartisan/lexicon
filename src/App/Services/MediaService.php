@@ -191,7 +191,7 @@ final class MediaService
      * Shrink every oversized image in the library to a maximum edge, re-encoding in
      * place so URLs (and the posts/branding that use them) stay valid. Images already
      * within the cap are skipped, which keeps repeated runs idempotent and avoids
-     * degrading already-optimised files. SVGs are left alone.
+     * degrading already-optimised files.
      *
      * @return array{processed: int, skipped: int, bytes_before: int, bytes_after: int, bytes_saved: int}
      */
@@ -205,7 +205,7 @@ final class MediaService
 
         foreach ($rows as $row) {
             $maxEdge = max((int) $row['width'], (int) $row['height']);
-            if (($row['mime_type'] ?? '') === 'image/svg+xml' || $maxEdge <= $cap) {
+            if ($maxEdge <= $cap) {
                 $skipped++;
                 continue;
             }
@@ -547,12 +547,10 @@ final class MediaService
 
         $width = null;
         $height = null;
-        if ($mime !== 'image/svg+xml') {
-            $info = @getimagesize($absPath);
-            if ($info !== false) {
-                $width = (int) $info[0];
-                $height = (int) $info[1];
-            }
+        $info = @getimagesize($absPath);
+        if ($info !== false) {
+            $width = (int) $info[0];
+            $height = (int) $info[1];
         }
 
         $id = $this->media->createRecord([

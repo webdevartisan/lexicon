@@ -11,7 +11,7 @@ use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
-use App\Models\PostModel;
+use App\Models\PostListingModel;
 use App\Models\UserModel;
 use App\Presenters\ModerationCasePresenter;
 use App\Resources\SystemResource;
@@ -28,7 +28,7 @@ class ControlPanelController extends AppController
     protected ?string $areaAbility = 'accessDashboard';
 
     public function __construct(
-        private PostModel $posts,
+        private PostListingModel $postListing,
         private CommentModel $comments,
         private UserModel $users,
         private BlogModel $blogs,
@@ -41,7 +41,7 @@ class ControlPanelController extends AppController
     public function index(): Response
     {
         $commentCounts = $this->comments->countsByStatus();
-        $postCounts = $this->posts->countsByStatus();
+        $postCounts = $this->postListing->countsByStatus();
 
         $stats = [
             'posts' => array_sum($postCounts),
@@ -59,7 +59,7 @@ class ControlPanelController extends AppController
             'signups' => $this->users->signupsByDay(30),
             'topBlogs' => $byViews ? $this->topBlogsByViews() : $this->topBlogsByPosts(),
             'topBlogsByViews' => $byViews,
-            'recentPosts' => $this->posts->findAllForAdmin(1, 5)['data'],
+            'recentPosts' => $this->postListing->findAllForAdmin(1, 5)['data'],
             'reports' => $this->reportsSummary(),
             'recentUsers' => $this->users->latest(5),
             'recentActivity' => $this->activityLog->latestEntries(8),

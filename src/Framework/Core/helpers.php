@@ -325,6 +325,22 @@ function csrf_field(): string
 }
 
 /**
+ * Hidden CSRF input that stays empty until the form is submitted.
+ *
+ * For forms guests see on high-traffic pages: csrf-lazy.js fetches a token
+ * on submit, so viewing the page does not store a session. Signed-in users
+ * already have one, so they get a real token and their forms work without JS.
+ *
+ * @return string HTML input field, empty for guests without a token yet
+ */
+function csrf_field_lazy(): string
+{
+    $token = auth()->check() ? csrf_token() : csrf()->peekToken();
+
+    return '<input type="hidden" name="_token" value="'.e($token).'" data-csrf-lazy>';
+}
+
+/**
  * Get the current request's CSP nonce for inline <script> tags.
  *
  * @return string Base64 nonce, matching the value sent in the
@@ -377,6 +393,8 @@ function formatWithOrdinal(DateTime $date): string
  *
  * Converts '/blogs' to '/{locale}/blogs' using current or specified locale.
  * Respects supported/default locales enforced by LocalePrefixIntake.
+ * Absolute URLs, fragments and paths that already carry a locale come back
+ * unchanged, so components can localize an href without knowing its source.
  *
  * @param  string  $path  Path to prefix (e.g., '/blogs', 'blogs')
  * @param  string|null  $locale  Locale code (defaults to current)
@@ -384,7 +402,17 @@ function formatWithOrdinal(DateTime $date): string
  */
 function lurl(string $path, ?string $locale = null): string
 {
+    if (preg_match('#^([a-z][a-z0-9+.-]*:|//|\#)#i', $path)) {
+        return $path;
+    }
+
     $path = '/'.ltrim($path, '/');
+
+    $firstSegment = strtolower(explode('/', substr($path, 1))[0]);
+    $firstSegment = explode('?', $firstSegment)[0];
+    if ($firstSegment !== '' && App\Services\LocaleRegistry::instance()->isSupported($firstSegment)) {
+        return $path;
+    }
 
     // URLs point at content, so they follow the content locale rather than the
     // viewer's interface preference. The explicit argument stays for callers
@@ -434,7 +462,7 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
         return $target;
     }
 
-    $locale = $registry->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null)
+    $locale = $registry->normalize(app(\Framework\Session::class)->get('locale'))
         ?? $registry->default();
 
     // Avoid double slashes when target is '/'
@@ -473,6 +501,44 @@ function safe_return_to(?string $url): ?string
     }
 
     return $url;
+}
+
+/**
+ * Reduce a Referer header to a local path (plus query) fit to redirect to.
+ *
+ * The origin is compared by scheme, host and port against APP_URL rather than
+ * with a prefix match, because `http://lexicon.test.evil.com` starts with
+ * `http://lexicon.test`. Only the path is returned, and it still goes through
+ * safe_return_to(), so a slip in the origin check cannot send anyone off-site.
+ *
+ * @param  string|null  $referer  Raw Referer header value
+ * @return string|null The local path when the Referer is same-origin, null otherwise
+ */
+function referer_path(?string $referer): ?string
+{
+    if ($referer === null || $referer === '') {
+        return null;
+    }
+
+    $refererParts = parse_url($referer);
+    $baseParts = parse_url(base_url());
+
+    if ($refererParts === false || $baseParts === false) {
+        return null;
+    }
+
+    $origin = static fn (array $p): string => strtolower((string) ($p['scheme'] ?? ''))
+        .'://'.strtolower((string) ($p['host'] ?? ''))
+        .':'.(string) ($p['port'] ?? '');
+
+    if ($origin($refererParts) !== $origin($baseParts)) {
+        return null;
+    }
+
+    $path = (string) ($refererParts['path'] ?? '/');
+    $query = (string) ($refererParts['query'] ?? '');
+
+    return safe_return_to(($path === '' ? '/' : $path).($query !== '' ? '?'.$query : ''));
 }
 
 /**
@@ -572,6 +638,31 @@ function old(?string $key = null, mixed $default = null): mixed
     }
 
     return $oldInput[$key] ?? $default;
+}
+
+/**
+ * Strip secrets from request input before it is stored as old input.
+ *
+ * Old input lands in the session store, so anything password-like or a CSRF
+ * token must never be kept there. Matching on the key name catches fields such
+ * as new_password and current_password without a list that drifts.
+ *
+ * @param  array<array-key, mixed>  $input  Raw request input
+ * @return array<array-key, mixed> The input without password-like and token keys
+ */
+function sanitize_old_input(array $input): array
+{
+    $clean = [];
+
+    foreach ($input as $key => $value) {
+        if (is_string($key) && preg_match('/pass|^_token$/i', $key)) {
+            continue;
+        }
+
+        $clean[$key] = is_array($value) ? sanitize_old_input($value) : $value;
+    }
+
+    return $clean;
 }
 
 /**
@@ -765,14 +856,6 @@ function view_path(string $view): string
 function audit(): \App\Services\AuditService
 {
     return app(\App\Services\AuditService::class);
-}
-
-/**
- * Get the geolocation service instance.
- */
-function geo(): App\Services\GeoLocationService
-{
-    return app(App\Services\GeoLocationService::class);
 }
 
 function rateLimiter(): \Framework\Helpers\RateLimiter

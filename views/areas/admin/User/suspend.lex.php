@@ -56,7 +56,7 @@ $oldReason = (string) old('reason', '');
         <div class="card-body flex flex-col gap-5">
             <?php if ($case) { ?>
             <p class="<?= $muted ?>">
-                For <a href="/admin/reports/<?= (int) $case['id'] ?>" class="text-custom-500 hover:underline">report case #<?= (int) $case['id'] ?></a>.
+                For <a href="<?= e(lurl('/admin/reports/'.((int) $case['id']))) ?>" class="text-custom-500 hover:underline">report case #<?= (int) $case['id'] ?></a>.
                 Suspending closes the case as upheld.
             </p>
             <?php } ?>

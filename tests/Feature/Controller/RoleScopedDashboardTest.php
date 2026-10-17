@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\Dashboard\PostController;
+use App\Controllers\Dashboard\PostStatusController;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
@@ -89,6 +90,14 @@ beforeEach(function () {
         return $controller;
     };
 
+    $this->statusController = function (string $path): PostStatusController {
+        $request = makeRequest($path, 'POST', ['_token' => App::container()->get(Csrf::class)->getToken()]);
+        $controller = App::container()->get(PostStatusController::class);
+        setupController($controller, $request, $this->viewer);
+
+        return $controller;
+    };
+
     $this->sidebar = function (): array {
         $blog = $this->blogs->getBlog($this->blogId);
         $nav = new NavigationService(require ROOT_PATH.'/config/navigation.php', auth());
@@ -152,7 +161,7 @@ it('refuses publishing to a contributor', function () {
     $memberId = ($this->signInAs)('contributor');
     $mine = ($this->ownPost)($memberId);
 
-    expect(fn () => ($this->postController)('/dashboard/post/'.$mine.'/publish', 'POST')->publish((string) $mine))
+    expect(fn () => ($this->statusController)('/dashboard/post/'.$mine.'/publish')->publish((string) $mine))
         ->toThrow(UnauthorizedException::class);
 });
 
@@ -230,7 +239,7 @@ it('refuses the media library to a reviewer and opens it to a writer', function 
 });
 
 it('counts a post with two reviewers once on the Overview', function () {
-    $this->db->query("UPDATE posts SET workflow_state = 'in_review' WHERE id = ?", [$this->othersPostId]);
+    $this->db->query("UPDATE posts SET status = 'pending', workflow_state = 'in_review' WHERE id = ?", [$this->othersPostId]);
     for ($i = 0; $i < 2; $i++) {
         $reviewerId = UserFactory::new($this->users)->create();
         $this->blogs->addUserToBlog($this->blogId, $reviewerId, 'reviewer', $this->ownerId);
@@ -314,4 +323,28 @@ it('refuses to assign a reviewer who cannot review on the blog', function () {
     $assigned = $this->db->query('SELECT COUNT(*) FROM post_reviewers WHERE post_id = ?', [$this->othersPostId])->fetchColumn();
 
     expect((int) $assigned)->toBe(0);
+});
+
+it('unpublishes a published post without granting it an approval', function () {
+    ($this->signInAs)('editor');
+    $this->db->query("UPDATE posts SET status = 'published', workflow_state = 'draft' WHERE id = ?", [$this->othersPostId]);
+
+    ($this->statusController)('/dashboard/posts/'.$this->othersPostId.'/unpublish')->unpublish((string) $this->othersPostId);
+
+    $post = $this->posts->find($this->othersPostId);
+
+    expect($post['status'])->toBe('draft')
+        ->and($post['workflow_state'])->toBe('draft');
+});
+
+it('refuses to unpublish a post that is not published', function () {
+    ($this->signInAs)('editor');
+    $this->db->query("UPDATE posts SET status = 'archived', workflow_state = 'needs_changes' WHERE id = ?", [$this->othersPostId]);
+
+    ($this->statusController)('/dashboard/posts/'.$this->othersPostId.'/unpublish')->unpublish((string) $this->othersPostId);
+
+    $post = $this->posts->find($this->othersPostId);
+
+    expect($post['status'])->toBe('archived')
+        ->and($post['workflow_state'])->toBe('needs_changes');
 });

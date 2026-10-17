@@ -247,7 +247,7 @@ final class BlogController extends AppController
         $settings = $this->settings->findByBlogId((int) $id) ?? [
             'theme' => 'folio',
             'banner_path' => '',
-            'default_locale' => LocaleRegistry::instance()->normalize($_SESSION['locale'] ?? $_COOKIE['locale'] ?? null) ?? LocaleRegistry::instance()->default(),
+            'default_locale' => LocaleRegistry::instance()->normalize($this->session->get('locale')) ?? LocaleRegistry::instance()->default(),
             'meta_title' => '',
             'meta_description' => '',
             'indexable' => 1,
@@ -374,7 +374,7 @@ final class BlogController extends AppController
             cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
         }
 
-        // When the owner disables the workflow mid-flight, reset any in-review/needs_changes posts to draft.
+        // When the owner disables the workflow mid-flight, return every pending post to draft.
         $workflowWasEnabled = (bool) ($currentSettings['workflow_enabled'] ?? false);
         $workflowNowEnabled = (bool) $settingsData['workflow_enabled'];
         if ($workflowWasEnabled && !$workflowNowEnabled) {

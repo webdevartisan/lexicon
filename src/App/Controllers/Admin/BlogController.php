@@ -227,7 +227,6 @@ class BlogController extends AppController
                 'blog_name' => $blogName,
                 'blog_slug' => $blogSlug,
                 'description' => $description,
-                'is_active' => !empty($this->request->post['is_active']) ? 1 : 0,
                 'owner_id' => auth()->user()['id'],
             ]);
 
@@ -308,8 +307,6 @@ class BlogController extends AppController
             'blog_name' => $this->request->post['blog_name'] ?? $blog['blog_name'],
             'blog_slug' => $this->request->post['blog_slug'] ?? $blog['blog_slug'],
             'description' => $this->request->post['description'] ?? $blog['description'],
-            // Unchecked checkboxes are absent from the payload, so absence means deactivate
-            'is_active' => !empty($this->request->post['is_active']) ? 1 : 0,
         ];
 
         if ($this->blogModel->update($id, $data)) {

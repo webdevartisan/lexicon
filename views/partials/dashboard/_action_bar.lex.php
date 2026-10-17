@@ -34,7 +34,7 @@ $primaryClass = $primary['variant'] === 'green'
          max-lg:pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
   <div class="flex items-center gap-2">
 
-    <a href="<?= e($backUrl ?? '/dashboard/post') ?>"
+    <a href="<?= e(lurl($backUrl ?? '/dashboard/post')) ?>"
        class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:justify-center max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
        title="Back">
       <i data-lucide="arrow-left" class="size-4" aria-hidden="true"></i>
@@ -57,7 +57,7 @@ $primaryClass = $primary['variant'] === 'green'
     <div class="grow"></div>
 
     <?php if ($menu !== []) { ?>
-    <details data-actionbar-menu class="relative shrink-0">
+    <details data-actionbar-menu class="shrink-0 lg:relative">
       <summary
         class="flex cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 px-2.5 py-2 text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
         aria-haspopup="menu"
@@ -67,8 +67,8 @@ $primaryClass = $primary['variant'] === 'green'
       </summary>
       <div
         role="menu"
-        class="absolute z-50 w-56 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg ltr:right-0 rtl:left-0 dark:border-zink-500 dark:bg-zink-600
-               bottom-full mb-1 lg:bottom-auto lg:top-full lg:mb-0 lg:mt-1">
+        class="absolute z-50 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-zink-500 dark:bg-zink-600
+               bottom-full mb-1 max-lg:inset-x-3 lg:bottom-auto lg:top-full lg:mb-0 lg:mt-1 lg:w-56 lg:ltr:right-0 lg:rtl:left-0">
         <?php foreach ($menu as $item) { ?>
         <button type="submit" name="intent" value="<?= e($item['intent']) ?>" role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-600 transition-colors hover:bg-slate-50 dark:text-zink-200 dark:hover:bg-zink-500">

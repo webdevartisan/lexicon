@@ -130,6 +130,7 @@ if ($navVariant === 'platform') {
         <li><a href="<?= e($loginUrl) ?>" class="lx-btn lx-btn-quiet"><?= e($tr('header.signIn')) ?></a></li>
         <li><a href="<?= e(lurl('/register')) ?>" class="lx-btn lx-btn-primary"><?= e($tr('navigation.createBlog')) ?></a></li>
     <?php } else { ?>
+        <?php if (!$navIsReader || !empty($navViewer['can_create_blog'])) { ?>
         <li>
             <?php
             // A reader is already registered, so this goes to the form that
@@ -139,6 +140,7 @@ if ($navVariant === 'platform') {
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>
+        <?php } ?>
         <li>{% include "partials/notifications/_bell.lex.php" %}</li>
         <li><?php $renderAccountMenu(); ?></li>
     <?php }

@@ -92,3 +92,50 @@ test('every declared ability is actually implemented by the system policy', func
             ->not->toThrow(Exception::class, "Policy does not support action: {$ability}");
     }
 });
+
+/**
+ * @return list<array{string, string, string}> [short class name, action, ability]
+ */
+function adminActionAbilities(): array
+{
+    $out = [];
+
+    foreach (glob(ROOT_PATH.'/src/App/Controllers/Admin/*Controller.php') ?: [] as $file) {
+        $short = basename($file, '.php');
+        $class = 'App\\Controllers\\Admin\\'.$short;
+
+        if (!class_exists($class)) {
+            continue;
+        }
+
+        foreach ((new ReflectionClass($class))->getProperty('actionAbilities')->getDefaultValue() as $action => $ability) {
+            $out[] = [$short, $action, $ability];
+        }
+    }
+
+    return $out;
+}
+
+test('per-action abilities are closed to guests and implemented by the policy', function () {
+    foreach (adminActionAbilities() as [$controller, $action, $ability]) {
+        expect(Gate::allows($ability, SystemResource::class, []))
+            ->toBeFalse("Guest was allowed '{$ability}' on {$controller}::{$action}");
+    }
+});
+
+// Read-only access must stay read-only: only the pages that show an account
+// may drop to viewUsers, everything that changes one keeps manageUsers.
+test('only the user list, account page and profile preview are open to viewUsers', function () {
+    $relaxed = array_map(
+        static fn (array $row): string => $row[0].'::'.$row[1].'='.$row[2],
+        adminActionAbilities()
+    );
+    sort($relaxed);
+
+    expect($relaxed)->toBe([
+        'UserController::index=viewUsers',
+        'UserDetailController::preview=viewUsers',
+        'UserDetailController::show=viewUsers',
+    ]);
+});
+

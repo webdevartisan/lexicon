@@ -21,6 +21,21 @@ it('retrieves old input from session', function () {
         ->and(old('missing', 'default'))->toBe('default');
 });
 
+it('drops password-like keys and the token from old input', function () {
+    $clean = sanitize_old_input([
+        'name' => 'John',
+        'password' => 'a',
+        'new_password' => 'b',
+        'new_password_confirm' => 'c',
+        'current_password' => 'd',
+        'confirm_password' => 'e',
+        '_token' => 'f',
+        'nested' => ['keep' => 'x', 'Password' => 'y'],
+    ]);
+
+    expect($clean)->toBe(['name' => 'John', 'nested' => ['keep' => 'x']]);
+});
+
 it('retrieves validation errors from session', function () {
     $_SESSION['_errors'] = ['email' => 'Invalid email'];
 

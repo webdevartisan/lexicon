@@ -22,9 +22,9 @@ beforeEach(function () {
 test('administrator passes every control panel ability', function (string $ability) {
     expect($this->policy->{$ability}($this->admin))->toBeTrue();
 })->with([
-    'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
+    'accessDashboard', 'manageUsers', 'viewUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageRateLimits', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('permission holder passes only the matching area', function () {
@@ -52,7 +52,7 @@ test('user without area permissions is denied everywhere', function (string $abi
 })->with([
     'accessDashboard', 'manageUsers', 'manageBlogs', 'managePosts',
     'handleReports', 'manageTaxonomy', 'manageRoles', 'viewAuditLog',
-    'viewSystem', 'manageCache', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
+    'viewSystem', 'manageCache', 'manageRateLimits', 'manageEmailTemplates', 'manageSettings', 'viewPlatformAnalytics',
 ]);
 
 test('empty user array is denied everywhere', function () {
@@ -105,4 +105,31 @@ test('platform traffic needs its own permission, and opens the dashboard but not
         ->and($this->policy->manageBlogs($analyst))->toBeFalse()
         ->and($this->policy->manageSettings($analyst))->toBeFalse()
         ->and($this->policy->viewPlatformAnalytics($this->moderator))->toBeFalse();
+});
+
+test('rate limits can be granted apart from cache management', function () {
+    $support = ['id' => 6, 'roles' => ['support'], 'permissions' => ['manage_rate_limits']];
+    $cacheOnly = ['id' => 7, 'roles' => ['ops'], 'permissions' => ['manage_cache']];
+
+    expect($this->policy->manageRateLimits($support))->toBeTrue()
+        ->and($this->policy->manageCache($support))->toBeFalse()
+        ->and($this->policy->manageRateLimits($cacheOnly))->toBeFalse();
+});
+
+test('view_users opens the user pages read-only and nothing that changes an account', function () {
+    $viewer = ['id' => 6, 'roles' => ['support'], 'permissions' => ['view_users']];
+
+    expect($this->policy->viewUsers($viewer))->toBeTrue()
+        ->and($this->policy->accessDashboard($viewer))->toBeTrue()
+        ->and($this->policy->manageUsers($viewer))->toBeFalse()
+        ->and($this->policy->assignSystemRoles($viewer))->toBeFalse()
+        ->and($this->policy->impersonateUsers($viewer))->toBeFalse();
+});
+
+test('managing users implies viewing them', function () {
+    $delegate = ['id' => 5, 'roles' => ['user_manager'], 'permissions' => ['manage_all_users']];
+
+    expect($this->policy->viewUsers($delegate))->toBeTrue()
+        ->and($this->policy->viewUsers($this->moderator))->toBeFalse()
+        ->and($this->policy->viewUsers([]))->toBeFalse();
 });

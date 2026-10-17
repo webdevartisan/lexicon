@@ -22,15 +22,17 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between mb-5">
-        <form method="GET" action="/dashboard/blog" class="grid grid-cols-1 sm:grid-cols-3 gap-3 grow max-w-2xl">
+        <form method="GET" action="<?= e(lurl('/dashboard/blog')) ?>" class="grid grid-cols-1 sm:grid-cols-3 gap-3 grow max-w-2xl">
             {% cmp="input" type="text" icon="search" name="q" value="{$q}" placeholder="{$searchPlaceholder}" %}
             {% cmp="select" name="status" options="{$statusOptions}" selectedKey="{$status}" onchange="this.form.submit()" %}
             {% cmp="select" name="sort" options="{$sortOptions}" selectedKey="{$sort}" onchange="this.form.submit()" %}
         </form>
 
+        <?php if (!empty($can_create_blog)) { ?>
         <div class="shrink-0">
             {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="{$createLabel}" %}
         </div>
+        <?php } ?>
     </div>
 
     <?php if ($groups['owned'] === [] && $groups['shared'] === []) { ?>
@@ -39,7 +41,7 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
             {% cache 'lucide:blogs:search-x' ttl=31536000 %}<i data-lucide="search-x" class="size-12 text-slate-400 mx-auto mb-3"></i>{% endcache %}
             <h2 class="text-base font-semibold text-slate-900 dark:text-zink-50 mb-1">{{ t('dashboard.blogs.empty.filteredTitle') }}</h2>
             <p class="text-sm text-slate-500 dark:text-zink-300 mb-5">{{ t('dashboard.blogs.empty.filteredText') }}</p>
-            <a href="/dashboard/blog" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
+            <a href="<?= e(lurl('/dashboard/blog')) ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
                 {% cache 'lucide:blogs:x' ttl=31536000 %}<i data-lucide="x" class="size-4" aria-hidden="true"></i>{% endcache %}
                 {{ t('dashboard.blogs.clearFilters') }}
             </a>
@@ -64,7 +66,9 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                 <?php if ($group === 'owned' && !$hasOwned) { ?>
                 {% cache 'lucide:blogs:book-open' ttl=31536000 %}<i data-lucide="book-open" class="size-10 text-slate-400 mx-auto mb-2"></i>{% endcache %}
                 <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">{{ t('dashboard.blogs.empty.noOwned') }}</p>
+                <?php if (!empty($can_create_blog)) { ?>
                 {% cmp="btn" href="/dashboard/blog/new" variant="blue" icon="plus" label="{$createLabel}" %}
+                <?php } ?>
                 <?php } else { ?>
                 <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('dashboard.blogs.empty.groupFiltered')) ?></p>
                 <?php } ?>
@@ -77,7 +81,7 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                 $blogName = (string) $blog['blog_name'];
                 $bStatus = (string) $blog['status'];
                 $statusLabel = $t('dashboard.blogStatus.'.$bStatus);
-                $live = '/blog/'.$blog['blog_slug'];
+                $live = lurl('/blog/'.$blog['blog_slug']);
                 ?>
             <article class="card flex flex-col h-full <?= $blog['is_active'] ? 'ring-1 ring-custom-500 border-custom-500' : '' ?>">
                 <div class="relative overflow-hidden rounded-t-md aspect-[21/8] bg-slate-100 dark:bg-zink-600">
@@ -124,12 +128,12 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                         </form>
                         <div class="flex items-center gap-0.5">
                             <?php if ($blog['can_settings']) { ?>
-                            <a href="/dashboard/blog/<?= $bid ?>/settings" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.settings')) ?>" aria-label="<?= e($t('dashboard.blogs.settings').': '.$blogName) ?>">
+                            <a href="<?= e(lurl('/dashboard/blog/'.($bid).'/settings')) ?>" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.settings')) ?>" aria-label="<?= e($t('dashboard.blogs.settings').': '.$blogName) ?>">
                                 {% cache 'lucide:blogs:sliders' ttl=31536000 %}<i data-lucide="sliders" class="size-4" aria-hidden="true"></i>{% endcache %}
                             </a>
                             <?php } ?>
                             <?php if ($blog['can_team']) { ?>
-                            <a href="/dashboard/blog/<?= $bid ?>/team" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.team')) ?>" aria-label="<?= e($t('dashboard.blogs.team').': '.$blogName) ?>">
+                            <a href="<?= e(lurl('/dashboard/blog/'.($bid).'/team')) ?>" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.team')) ?>" aria-label="<?= e($t('dashboard.blogs.team').': '.$blogName) ?>">
                                 {% cache 'lucide:blogs:users' ttl=31536000 %}<i data-lucide="users" class="size-4" aria-hidden="true"></i>{% endcache %}
                             </a>
                             <?php } ?>

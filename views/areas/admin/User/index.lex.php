@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/users';
+$basePath = lurl('/admin/users');
 $hasFilters = $q !== '' || $active !== '' || $role !== '';
 $emptyTitle = $hasFilters ? 'No users match these filters' : 'No users yet';
 $emptyMessage = $hasFilters ? 'Try a different name, role, or status.' : 'Create the first account to get started.';
@@ -33,9 +33,11 @@ foreach ($roleOptions as $r) {
             <?php } ?>
             </span>
         </form>
+        <?php if ($canManageUsers) { ?>
         <div class="shrink-0">
             {% cmp="btn" href="/admin/users/new" variant="blue" icon="user-plus" label="New User" %}
         </div>
+        <?php } ?>
     </div>
 
     <div data-table-region>
@@ -61,7 +63,7 @@ foreach ($roleOptions as $r) {
                 <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
                     {% foreach ($users as $user): %}
                     <?php
-                        $rowBase = '/admin/users/'.(int) $user['id'];
+                        $rowBase = lurl('/admin/users/'.(int) $user['id']);
 $isSuspended = $user['suspended_at'] !== null;
 $activeStatus = $isSuspended ? 'suspended' : (!empty($user['is_active']) ? 'active' : 'inactive');
 $activeLabel = $isSuspended ? 'Suspended' : (!empty($user['is_active']) ? 'Active' : 'Inactive');
@@ -124,14 +126,14 @@ echo $bits === [] ? '<span class="text-slate-400 dark:text-zink-400">—</span>'
                                 $isSelfRow = (int) $user['id'] === (int) $actorId;
                                 $rowIsAdmin = in_array('administrator', explode(',', (string) $user['roles']), true);
                                 // An administrator row is only actionable by another administrator.
-                                $mayAct = !$rowIsAdmin || $actorIsAdmin;
-                                $canLogInAs = $canImpersonate && !$isSelfRow && !$rowIsAdmin && !$isSuspended && !empty($user['is_active']);
+                                $mayAct = $canManageUsers && (!$rowIsAdmin || $actorIsAdmin);
+                                $canLogInAs = $canManageUsers && $canImpersonate && !$isSelfRow && !$rowIsAdmin && !$isSuspended && !empty($user['is_active']);
                                 $rowActions = [
                                     ['label' => 'View user', 'icon' => 'eye', 'href' => $rowBase],
                                     ['label' => 'Preview profile', 'icon' => 'external-link', 'href' => $rowBase.'/preview', 'newTab' => true],
                                     ['label' => 'Edit profile', 'icon' => 'pencil', 'href' => $rowBase.'/edit', 'can' => $mayAct],
                                     ['label' => 'Reset password', 'icon' => 'key-round', 'href' => $rowBase.'/password', 'can' => $mayAct && !$isSelfRow],
-                                    ['label' => 'Change site role', 'icon' => 'shield', 'href' => $rowBase.'/site-role', 'can' => $canAssignSiteRoles],
+                                    ['label' => 'Change site role', 'icon' => 'shield', 'href' => $rowBase.'/site-role', 'can' => $canManageUsers && $canAssignSiteRoles],
                                     ['label' => 'Change blog roles', 'icon' => 'users', 'href' => $rowBase.'/blog-roles', 'can' => $mayAct],
                                     ['label' => 'Log in as', 'icon' => 'log-in', 'href' => $rowBase.'/impersonate', 'can' => $canLogInAs],
                                     ['label' => $isSuspended ? 'Lift suspension' : 'Suspend user', 'icon' => $isSuspended ? 'unlock' : 'ban', 'href' => $rowBase.'/suspend', 'danger' => true, 'can' => $mayAct && !$isSelfRow],

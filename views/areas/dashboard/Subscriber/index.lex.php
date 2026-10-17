@@ -14,7 +14,7 @@
           </p>
         </div>
 
-        <form method="get" action="/dashboard/blog/{{ blog.id }}/subscribers" class="flex items-center gap-2">
+        <form method="get" action="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/subscribers')) ?>" class="flex items-center gap-2">
           <input
             type="search"
             name="q"
@@ -87,11 +87,11 @@
           <span>Page <?= $currentPage ?> of <?= $totalPages ?></span>
           <div class="flex gap-2">
             <?php if ($currentPage > 1) { ?>
-              <a href="/dashboard/blog/{{ blog.id }}/subscribers?page=<?= $currentPage - 1 ?><?= $qs ?>"
+              <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/subscribers?page='.($currentPage - 1).$qs)) ?>"
                  class="px-3 py-1.5 border rounded border-slate-200 dark:border-zink-500 hover:bg-slate-50 dark:hover:bg-zink-600">Previous</a>
             <?php } ?>
             <?php if ($currentPage < $totalPages) { ?>
-              <a href="/dashboard/blog/{{ blog.id }}/subscribers?page=<?= $currentPage + 1 ?><?= $qs ?>"
+              <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/subscribers?page='.($currentPage + 1).$qs)) ?>"
                  class="px-3 py-1.5 border rounded border-slate-200 dark:border-zink-500 hover:bg-slate-50 dark:hover:bg-zink-600">Next</a>
             <?php } ?>
           </div>

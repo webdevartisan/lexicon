@@ -28,9 +28,9 @@ $previousPeriod = $t('analytics.range.span', ['from' => $present->date($previous
 $insightsLink = static fn (string $page): string => lurl(\App\Services\Analytics\InsightsPages::path($basePath, $page))
     .'?'.http_build_query($range->query() + ($filters === [] ? [] : ['f' => $filters]) + $extraQuery);
 
-// A post's own Insights page. The control panel opens it in the post's blog.
+// A post's own Insights page. The control panel opens it under the post's blog.
 $postInsightsHref = static fn (array $row): string => lurl($isAdmin
-    ? '/dashboard/blog/'.(int) $row['blog_id'].'/insights/posts/'.(int) $row['post_id']
+    ? '/admin/insights/blogs/'.(int) $row['blog_id'].'/posts/'.(int) $row['post_id']
     : $basePath.'/posts/'.(int) $row['post_id']).'?'.http_build_query($range->query());
 
 // Narrowing: a row adds its filter, a chip takes one away.
@@ -81,7 +81,8 @@ if ($filtersDropped) {
 }
 
 $showSettings = $canConfigure && $page === 'overview';
-$showLinks = !$isAdmin && ($isPost || $page === 'acquisition');
+$isStaffView = isset($staffPages);
+$showLinks = !$isAdmin && !$isStaffView && ($isPost || $page === 'acquisition');
 $rightNowHint = $isAdmin ? 'Different visitors anywhere on the site in the last 30 minutes.' : $t('analytics.rightNowHint');
 $settingsLabel = $t('analytics.settings.button');
 $linksLabel = $t('analytics.links.button');
@@ -93,6 +94,10 @@ $downloadLabel = $t('analytics.breakdowns.export');
   <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm border rounded-md <?= $noticeTones[$tone] ?>" role="status">
     <span><?= e($message) ?></span>
   </div>
+  <?php } ?>
+
+  <?php if ($isStaffView) { ?>
+  {% include "partials/dashboard/insights/_blog_tabs.lex.php" %}
   <?php } ?>
 
   <div class="flex flex-wrap items-center justify-between gap-3">

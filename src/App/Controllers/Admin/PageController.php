@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\PageModel;
 use App\Services\LocaleRegistry;
+use App\Services\PostContentSanitizer;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
 use Framework\Core\Response;
@@ -17,8 +18,8 @@ use Framework\Exceptions\PageNotFoundException;
  *
  * The page set is fixed because each slug needs an explicit public route;
  * admins edit content and translations but cannot invent new slugs here.
- * Page content is trusted HTML from settings-level admins, the same trust
- * boundary as the settings screen itself.
+ * Page content is printed unescaped on the public site, and manage_site_settings
+ * can be delegated, so it goes through the same sanitizer as post bodies on save.
  */
 final class PageController extends AppController
 {
@@ -29,7 +30,8 @@ final class PageController extends AppController
         private PageModel $pages,
         private PublicCacheInvalidator $publicCache,
         private UploadService $uploader,
-        private LocaleRegistry $localeRegistry
+        private LocaleRegistry $localeRegistry,
+        private PostContentSanitizer $sanitizer
     ) {}
 
     public function index(): Response
@@ -60,6 +62,7 @@ final class PageController extends AppController
         ]);
 
         $data = $validator->validated();
+        $data['content'] = $this->sanitizer->clean((string) $data['content']);
         $data['is_published'] = !empty($this->request->postParam('is_published')) ? 1 : 0;
         $data['updated_by'] = (int) auth()->user()['id'];
 

@@ -39,7 +39,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
     {% if (($postStatus !== 'draft') && ($postStatus !== 'pending')): %}
       <div class="flex justify-between">
-        {% cmp="urlWithOpenButton" previewUrl="{$postUrl}" %}
+        {% cmp="url-with-open-button" previewUrl="{$postUrl}" %}
       </div>
     {% endif; %}
 
@@ -143,7 +143,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
         <!-- Featured Image -->
         <?php $blogIdForLibrary = (string) ($post['blog_id'] ?? $blog['id'] ?? ''); ?>
-        {% cmp="dropzone" label="Featured Image" resource="{$post}" library="{$blogIdForLibrary}" altTarget="og_image_alt" %}
+        {% cmp="dropzone" label="Featured Image" maxsize="10" resource="{$post}" library="{$blogIdForLibrary}" altTarget="og_image_alt" %}
 
         <!-- Organize -->
         <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
@@ -234,6 +234,19 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                   Clear
                 </button>
               </div>
+            </div>
+            <?php } ?>
+
+            <?php if (!empty($canSetVisibility)) {
+              $visibilityChoices = [
+                  'public' => 'Public: shown on the blog, in search and in discover',
+                  'unlisted' => 'Unlisted: only people with the link',
+                  'private' => 'Private: only the blog team',
+              ];
+              $selectedVisibility = (string) (old('visibility') ?? $post['visibility'] ?? 'public');
+              ?>
+            <div>
+              {% cmp="select" name="visibility" label="Visibility" options="{$visibilityChoices}" selectedKey="{$selectedVisibility}" %}
             </div>
             <?php } ?>
 

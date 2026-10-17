@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
-use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\ContentReportModel;
 use App\Models\MailQueueModel;
@@ -83,8 +82,6 @@ final class ModerationTestHelper
         return new UserSuspensionService(
             $db,
             Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-            new CommentModel($db),
-            new BlogModel($db),
             SessionTestHelper::revoker($db),
         );
     }

@@ -20,6 +20,8 @@
   var registerOnly = modal.querySelector('[data-auth-register-only]');
   var ageInput = modal.querySelector('[data-auth-age]');
   var toggle = modal.querySelector('[data-auth-toggle]');
+  var checkStatus = modal.querySelector('[data-captcha-status]');
+  var text = JSON.parse(modal.getAttribute('data-text') || '{}');
   var pageToken = modal.querySelector('input[name="_token"]').value;
   var freshToken = null;
   var returnTo = modal.getAttribute('data-return-to') || '/';
@@ -29,8 +31,16 @@
     identify: modal.getAttribute('data-identify-url') || '/login/identify',
     login: modal.getAttribute('data-login-url') || '/login',
     register: modal.getAttribute('data-register-url') || '/register/submit',
-    forgot: modal.getAttribute('data-forgot-url') || '/password/forgot'
+    forgot: modal.getAttribute('data-forgot-url') || '/password/forgot',
+    captcha: modal.getAttribute('data-captcha-url') || '/captcha/challenge'
   };
+
+  // Locale strings come from the partial; {name} placeholders are filled here.
+  function tr(key, params) {
+    var out = text[key] || key;
+    Object.keys(params || {}).forEach(function (k) { out = out.split('{' + k + '}').join(params[k]); });
+    return out;
+  }
 
   // Public pages come from the full-page guest cache, so the token baked
   // into the HTML can belong to another session. Fetch a live one before
@@ -48,13 +58,14 @@
 
   // Reader-first titles keyed by what the visitor was trying to do
   var titles = {
-    login: 'Log in to continue',
-    reply: 'Log in to reply',
-    like: 'Log in to like this post',
-    bookmark: 'Log in to save this post'
+    login: tr('titleLogin'),
+    reply: tr('titleReply'),
+    comment: tr('titleComment'),
+    like: tr('titleLike'),
+    bookmark: tr('titleBookmark')
   };
 
-  var state = { mode: 'login', email: '', onSuccess: null, lastFocus: null };
+  var state = { mode: 'login', email: '', onSuccess: null, lastFocus: null, registerCheck: null };
 
   // Resolves for every answer the server gives, including errors, so only a
   // request that never got an answer ends up in a .catch.
@@ -82,17 +93,64 @@
 
   function failureMessage(res) {
     if (res.status === 419) {
-      return 'Your session expired while this was open. Please try again.';
+      return tr('sessionExpired');
     }
     if (res.status >= 500 || !res.json.error) {
-      return 'Something went wrong on our side (error ' + res.status + '). Please try again in a moment.';
+      return tr('serverError', { status: res.status });
     }
     return res.json.error;
   }
 
   function networkFailure(err) {
     console.error('Auth request failed:', err);
-    showError('Could not reach the server. Check your connection and try again.');
+    showError(tr('networkError'));
+  }
+
+  // The check script is only fetched once a challenge actually arrives, so the
+  // cached pages carrying this modal load nothing extra for most readers.
+  var captchaLoad = null;
+  function loadCaptcha() {
+    if (window.LexiconCaptcha) return Promise.resolve(window.LexiconCaptcha);
+    if (captchaLoad) return captchaLoad;
+    captchaLoad = new Promise(function (resolve, reject) {
+      var el = document.createElement('script');
+      el.src = modal.getAttribute('data-captcha-script');
+      el.setAttribute('data-worker', modal.getAttribute('data-captcha-worker'));
+      el.onload = function () { resolve(window.LexiconCaptcha); };
+      el.onerror = function () { captchaLoad = null; reject(new Error('Could not load the sign-in check script.')); };
+      document.head.appendChild(el);
+    });
+    return captchaLoad;
+  }
+
+  function runCheck(challenge) {
+    return loadCaptcha().then(function (captcha) {
+      return captcha.run(challenge, {
+        status: checkStatus,
+        button: submitBtn,
+        text: { checking: tr('checking'), done: tr('checkDone'), failed: tr('checkFailed') }
+      });
+    }).catch(function (err) {
+      // Tells the submit handler this was the check, not the network
+      err.captcha = true;
+      throw err;
+    });
+  }
+
+  // Sign-up always carries an answer, so it starts solving while the password is typed.
+  function startRegisterCheck() {
+    state.registerCheck = post(urls.captcha, { purpose: 'register' }).then(function (res) {
+      if (!res.ok) throw new Error(failureMessage(res));
+      return runCheck(res.json.data.challenge);
+    });
+    // Reported when the form is sent; an unhandled rejection here would only be noise.
+    state.registerCheck.catch(function () {});
+  }
+
+  function resetCheck() {
+    state.registerCheck = null;
+    checkStatus.setAttribute('hidden', '');
+    submitBtn.removeAttribute('aria-busy');
   }
 
   // The theme script bound its user-menu handler at load, when this page was
@@ -161,8 +219,9 @@
       state.mode = 'login';
       state.lastFocus = document.activeElement;
       title.textContent = titles[opts.reason] || titles.login;
-      sub.textContent = 'Enter your email to log in or create your reader account.';
+      sub.textContent = tr('intro');
       clearError();
+      resetCheck();
       showStep('email');
       modal.removeAttribute('hidden');
       document.body.style.overflow = 'hidden';
@@ -174,7 +233,7 @@
     ev.preventDefault();
     clearError();
     var email = emailInput.value.trim();
-    if (!email || email.indexOf('@') < 1) { showError('Please enter a valid email address.'); return; }
+    if (!email || email.indexOf('@') < 1) { showError(tr('invalidEmail')); return; }
 
     post(urls.identify, { email: email }).then(function (res) {
       if (!res.ok) { showError(failureMessage(res)); return; }
@@ -182,23 +241,25 @@
       var exists = !!(res.json.data && res.json.data.exists);
       state.mode = exists ? 'login' : 'register';
 
+      resetCheck();
       if (exists) {
-        title.textContent = 'Welcome back';
-        sub.textContent = 'Enter the password for ' + email + '.';
-        submitBtn.textContent = 'Log in →';
+        title.textContent = tr('welcomeBack');
+        sub.textContent = tr('enterPasswordFor', { email: email });
+        submitBtn.textContent = tr('logIn');
         passInput.setAttribute('autocomplete', 'current-password');
         hint.setAttribute('hidden', '');
         registerOnly.setAttribute('hidden', '');
         forgot.removeAttribute('hidden');
       } else {
-        title.textContent = 'Create your account';
-        sub.textContent = 'New here? Set a password and your reader account is ready.';
-        submitBtn.textContent = 'Create account →';
+        title.textContent = tr('createTitle');
+        sub.textContent = tr('createIntro');
+        submitBtn.textContent = tr('createSubmit');
         passInput.setAttribute('autocomplete', 'new-password');
         hint.removeAttribute('hidden');
         registerOnly.removeAttribute('hidden');
         ageInput.checked = false;
         forgot.setAttribute('hidden', '');
+        startRegisterCheck();
       }
 
       passInput.value = '';
@@ -211,10 +272,10 @@
     ev.preventDefault();
     clearError();
 
-    if (passInput.value === '') { showError('Password is required.'); return; }
+    if (passInput.value === '') { showError(tr('passwordRequired')); return; }
     var minLength = parseInt(passInput.getAttribute('data-min-length'), 10);
     if (state.mode === 'register' && passInput.value.length < minLength) {
-      showError('Your password needs at least ' + minLength + ' characters.');
+      showError(tr('passwordTooShort', { min: minLength }));
       return;
     }
     if (state.mode === 'register' && !ageInput.checked) {
@@ -228,13 +289,34 @@
     var body = { email: state.email, password: passInput.value, return_to: returnTo };
     if (state.mode === 'register') { body.age_confirmed = ageInput.checked ? '1' : ''; }
 
-    post(url, body).then(function (res) {
+    // The server says when a check is needed (422 with a challenge). Solve it and
+    // send again once; a second refusal is shown as it is.
+    function send(answer, retried) {
+      if (answer) body.altcha = answer;
+      return post(url, body).then(function (res) {
+        if (!res.ok && res.status === 422 && res.json.captcha && !retried) {
+          showError(res.json.error);
+          return runCheck(res.json.captcha).then(function (next) {
+            clearError();
+            return send(next, true);
+          });
+        }
+        return res;
+      });
+    }
+
+    var first = state.mode === 'register' && state.registerCheck
+      ? state.registerCheck.then(function (answer) { return send(answer, false); }, function () { return send('', false); })
+      : send('', false);
+
+    first.then(function (res) {
       submitBtn.disabled = false;
       if (!res.ok) { showError(failureMessage(res)); return; }
 
-      successMsg.textContent = state.mode === 'register'
-        ? 'Welcome to Lexicon! Your reader account is ready.'
-        : 'You’re logged in!';
+      // Signing in rotates the CSRF token, so the one used for this post is spent
+      freshToken = null;
+
+      successMsg.textContent = state.mode === 'register' ? tr('welcomeNew') : tr('loggedIn');
       showStep('success');
 
       // Give the success state a beat, then finish what the reader started
@@ -252,6 +334,7 @@
       }, 700);
     }).catch(function (err) {
       submitBtn.disabled = false;
+      if (err && err.captcha) { showError(tr('checkFailed')); return; }
       networkFailure(err);
     });
   });
@@ -261,8 +344,8 @@
   forgot.addEventListener('click', function (ev) {
     ev.preventDefault();
     clearError();
-    title.textContent = 'Reset your password';
-    forgotText.textContent = 'We’ll email a password reset link to ' + state.email + '.';
+    title.textContent = tr('resetTitle');
+    forgotText.textContent = tr('resetIntro', { email: state.email });
     forgotSend.removeAttribute('hidden');
     showStep('forgot');
   });
@@ -275,7 +358,7 @@
     post(urls.forgot, { email: state.email }).then(function (res) {
       forgotSend.disabled = false;
       if (!res.ok) { showError(failureMessage(res)); return; }
-      forgotText.textContent = (res.json.data && res.json.data.message) || 'If that email exists in our system, a reset link has been sent.';
+      forgotText.textContent = (res.json.data && res.json.data.message) || tr('resetSent');
       forgotSend.setAttribute('hidden', '');
     }).catch(function (err) {
       forgotSend.disabled = false;
@@ -285,7 +368,7 @@
 
   modal.querySelector('[data-auth-forgot-back]').addEventListener('click', function () {
     clearError();
-    title.textContent = 'Welcome back';
+    title.textContent = tr('welcomeBack');
     showStep('password');
     passInput.focus();
   });
@@ -293,14 +376,15 @@
   toggle.addEventListener('click', function () {
     var show = passInput.type === 'password';
     passInput.type = show ? 'text' : 'password';
-    toggle.textContent = show ? 'Hide' : 'Show';
+    toggle.textContent = show ? tr('hide') : tr('show');
     toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
   });
 
   modal.querySelector('[data-auth-back]').addEventListener('click', function () {
     clearError();
     title.textContent = titles.login;
-    sub.textContent = 'Enter your email to log in or create your reader account.';
+    sub.textContent = tr('intro');
+    resetCheck();
     showStep('email');
     emailInput.focus();
   });
@@ -321,20 +405,21 @@
     });
   });
 
-  // Guest reply forms: open the modal on submit and post the reply once
+  // Guest comment and reply forms: open the modal on submit and post once
   // authenticated. The typed text never leaves the page. Server-side
   // session capture remains the no-JS fallback for the same forms.
-  document.querySelectorAll('form.reply-form').forEach(function (form) {
+  document.querySelectorAll('form.reply-form, form.comment-form').forEach(function (form) {
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       window.LexiconAuth.open({
-        reason: 'reply',
+        reason: form.classList.contains('reply-form') ? 'reply' : 'comment',
         onSuccess: function () {
-          // The form's baked-in token may be stale on cached pages; the
-          // live one from the login exchange is guaranteed to match
-          var tokenField = form.querySelector('input[name="_token"]');
-          if (tokenField && freshToken) tokenField.value = freshToken;
-          form.submit();
+          // The token baked into the form belongs to the guest session
+          getToken().then(function (t) {
+            var tokenField = form.querySelector('input[name="_token"]');
+            if (tokenField) tokenField.value = t;
+            form.submit();
+          });
         }
       });
     });

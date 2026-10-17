@@ -533,8 +533,11 @@
 }
 
 .invite-input input:focus {
-  outline: 2px solid var(--viridian);
-  outline-offset: -2px;
+  outline: none;
+}
+
+.invite-input:has(input:focus-visible) {
+  box-shadow: 0 1px 0 var(--ink);
 }
 
 .invite-input button {

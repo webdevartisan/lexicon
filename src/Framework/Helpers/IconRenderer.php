@@ -22,6 +22,25 @@ class IconRenderer
      */
     private static function findNodePath(): ?string
     {
+        // The lookup spawns a shell, so remember the answer (including "not found") for the process.
+        static $resolved = false;
+        static $path = null;
+
+        if (!$resolved) {
+            $path = self::locateNode();
+            $resolved = true;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Run the actual Node.js lookup, uncached.
+     *
+     * @return string|null Path to node executable, or null if not found
+     */
+    private static function locateNode(): ?string
+    {
         // Each shell has its own lookup and its own null device; writing
         // "2>nul" on Linux leaves a file called "nul" in the working directory.
         $result = PHP_OS_FAMILY === 'Windows'

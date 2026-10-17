@@ -20,8 +20,6 @@ class UserFactory
 
     private array $roles = [];
 
-    private bool $softDeleted = false;
-
     public function __construct(UserModel $model)
     {
         $this->model = $model;
@@ -70,18 +68,8 @@ class UserFactory
     }
 
     /**
-     * Mark user as soft-deleted after creation.
-     */
-    public function deleted(): self
-    {
-        $this->softDeleted = true;
-
-        return $this;
-    }
-
-    /**
      * Create the user in database and return ID.
-     * We apply all configured states (roles, deletion) in correct order.
+     * Roles are attached after the insert.
      *
      * @return int User ID
      */
@@ -99,10 +87,6 @@ class UserFactory
 
         if (!empty($this->roles)) {
             $this->model->insertUserRoles($userId, $this->roles);
-        }
-
-        if ($this->softDeleted) {
-            $this->model->softDelete($userId);
         }
 
         return $userId;

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Framework\Cache;
 
+use Framework\Core\App;
+use Framework\Session;
+
 /**
  * Fragment cache with locale support and efficient disabling.
  *
@@ -53,7 +56,7 @@ class FragmentCache
     private function getLocale(): string
     {
         return $this->currentLocale
-            ?? $_SESSION['locale']
+            ?? App::container()->get(Session::class)->get('locale')
             ?? env('APP_LOCALE')
             ?? 'en';
     }
@@ -83,30 +86,6 @@ class FragmentCache
     }
 
     /**
-     * Post-process HTML output.
-     *
-     * We apply transformations that should happen on EVERY render,
-     * whether from cache or fresh generation:
-     * 1. Active navigation state injection (changes per page)
-     * 2. Icon rendering (if not already done)
-     *
-     * @param  string  $html  HTML to process
-     * @param  string  $key  Cache key (for determining processing needed)
-     * @return string Processed HTML
-     */
-    /*private function postProcess(string $html, string $key): string
-    {
-        dd('postProcess');
-        // inject active navigation state for navigation fragments
-        if (str_contains($key, 'navigation') || str_contains($key, 'sidebar')) {
-            $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-            $html = \Framework\Helpers\NavigationActiveInjector::inject($html, $currentPath);
-        }
-
-        return $html;
-    }*/
-
-    /**
      * Cache a fragment by key with optional callback.
      *
      * We automatically make the cache locale-aware unless disabled.
@@ -130,14 +109,9 @@ class FragmentCache
                 throw $e;
             }
 
-            if (is_string($result)) {
-                // only render icons
-                $result = \Framework\Helpers\IconRenderer::render($result);
-
-                return $result;
-            }
-
-            return '';
+            // Icons are not rendered here: lucide.init.js converts them in the browser,
+            // and a Node process per fragment would make every uncached request slow.
+            return is_string($result) ? $result : '';
         }
 
         // CACHE ENABLED: Full cache logic

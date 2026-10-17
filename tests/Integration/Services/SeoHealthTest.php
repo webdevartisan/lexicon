@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\SeoAuditModel;
 use App\Models\UserModel;
 use App\Services\Analytics\SeoHealth;
@@ -95,11 +96,11 @@ test('a blog hidden from search engines says so, and none of its posts are offer
 });
 
 test('the site counts posts offered against the sitemap limit', function () {
-    expect($this->health->forSite())->toBe(['published' => 11, 'indexable' => 8, 'beyondSitemap' => 0, 'sitemapLimit' => PostModel::SITEMAP_LIMIT]);
+    expect($this->health->forSite())->toBe(['published' => 11, 'indexable' => 8, 'beyondSitemap' => 0, 'sitemapLimit' => PublishedPostModel::SITEMAP_LIMIT]);
 });
 
 test('the sitemap lists only the posts offered to search engines, and no blog hidden from them', function () {
-    $slugs = array_column((new PostModel($this->db))->findPublicForSitemap(), 'slug');
+    $slugs = array_column((new PublishedPostModel($this->db))->findPublicForSitemap(), 'slug');
 
     expect($slugs)->toContain('here')
         ->and($slugs)->toContain('long')
@@ -109,6 +110,6 @@ test('the sitemap lists only the posts offered to search engines, and no blog hi
 
     (new BlogSettingsModel($this->db))->updateForBlog($this->blogId, ['indexable' => 0]);
 
-    expect((new PostModel($this->db))->findPublicForSitemap())->toBe([])
+    expect((new PublishedPostModel($this->db))->findPublicForSitemap())->toBe([])
         ->and((new BlogModel($this->db))->findPublicForSitemap())->toBe([]);
 });

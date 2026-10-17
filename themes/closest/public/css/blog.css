@@ -526,8 +526,9 @@
 }
 
 .dispatch-input input:focus {
-  outline: 2px solid var(--blaze);
-  outline-offset: 1px;
+  outline: none;
+  border-bottom-color: var(--chart);
+  box-shadow: 0 1px 0 var(--chart);
 }
 
 .dispatch-input button {

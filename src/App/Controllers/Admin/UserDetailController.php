@@ -25,6 +25,8 @@ use Framework\Exceptions\NotFoundException;
  */
 class UserDetailController extends ManagedUserController
 {
+    protected array $actionAbilities = ['show' => 'viewUsers', 'preview' => 'viewUsers'];
+
     public function __construct(
         UserModel $users,
         AccountErasureService $erasure,
@@ -41,6 +43,12 @@ class UserDetailController extends ManagedUserController
         $user = $this->target($id);
         $userId = (int) $user['id'];
         $actor = $this->actor();
+        $canManageUsers = Gate::allows('manageUsers', SystemResource::class, $actor);
+
+        // Where and how someone is signed in is for the people who can act on it.
+        $sessions = $canManageUsers
+            ? $this->sessionList->forAdministrator($userId, viewer_timezone())
+            : ['sessions' => [], 'sessionImpersonators' => [], 'sessionPruneStalled' => false];
 
         return $this->view('user.show', array_merge($this->dossier->build($user), [
             'user' => $user,
@@ -53,7 +61,8 @@ class UserDetailController extends ManagedUserController
                 : 'Only administrators can sign in as another account.',
             'publicVisibility' => $this->publicVisibility($user),
             'canHandleReports' => Gate::allows('handleReports', SystemResource::class, $actor),
-            ...$this->sessionList->forAdministrator($userId, viewer_timezone()),
+            'canManageUsers' => $canManageUsers,
+            ...$sessions,
         ]));
     }
 

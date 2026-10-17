@@ -53,7 +53,7 @@ $itemPlural = $itemPlural ?? null;
                 $params['query'] = $query;
             }
 
-            return $basePath.'?'.http_build_query($params);
+            return lurl($basePath).'?'.http_build_query($params);
         };
 
     /**

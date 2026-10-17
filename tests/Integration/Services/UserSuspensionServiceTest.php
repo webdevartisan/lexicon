@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\PostModel;
+use App\Models\PublishedPostModel;
 use App\Models\UserModel;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UserSuspensionService;
@@ -20,15 +21,14 @@ use Tests\Helpers\SessionTestHelper;
  */
 beforeEach(function () {
     $this->users = new UserModel($this->db);
-    $this->blogs = new BlogModel($this->db);
     $this->posts = new PostModel($this->db);
+    $this->publishedPosts = new PublishedPostModel($this->db);
+    $this->blogs = new BlogModel($this->db);
     $this->comments = new CommentModel($this->db);
 
     $this->service = new UserSuspensionService(
         $this->db,
         Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing(),
-        $this->comments,
-        $this->blogs,
         SessionTestHelper::revoker($this->db),
     );
 
@@ -105,8 +105,8 @@ it('blocks sign-in and records who suspended them and why', function () {
 it('drops a hidden blog\'s posts from the public feed and search, but not the shared blog\'s', function () {
     $this->service->suspend($this->personId, null, 'Spam', $this->adminId);
 
-    $feedTitles = array_column($this->posts->getRecentPublishedWithPagination(1, 100, null)['data'], 'title');
-    $searchTitles = array_column($this->posts->searchPublishedPosts('post', 1, 100, null)['data'], 'title');
+    $feedTitles = array_column($this->publishedPosts->getRecentPublishedWithPagination(1, 100, null)['data'], 'title');
+    $searchTitles = array_column($this->publishedPosts->searchPublishedPosts('post', 1, 100, null)['data'], 'title');
 
     expect($feedTitles)->not->toContain('Solo post')->toContain('Shared post')
         ->and($searchTitles)->not->toContain('Solo post')->toContain('Shared post');

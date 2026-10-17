@@ -15,7 +15,7 @@ echo e($returnTo !== '' ? $t('auth.loginSubtitleReturn') : $t('auth.loginSubtitl
 {% block altAction %}
 <?php
 $returnTo = !empty($return_to) ? $return_to : '';
-$registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : '');
+$registerHref = lurl('/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : ''));
 ?>
 <a href="<?= e($registerHref) ?>"><?= e($t('auth.createAccount')) ?></a>
 {% endblock %}
@@ -24,8 +24,9 @@ $registerHref = '/register'.($returnTo !== '' ? '?return_to='.urlencode($returnT
 <?php
 $returnTo = !empty($return_to) ? $return_to : '';
 $email = $email ?? '';
+$captcha = $captcha ?? null;
 ?>
-<form action="/login" method="post">
+<form action="/login" method="post"<?php if ($captcha !== null) { ?> data-captcha="<?= e((string) json_encode($captcha)) ?>"<?php } ?>>
     <?= csrf_field() ?>
     <?php if ($returnTo !== '') { ?>
         <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
@@ -67,12 +68,20 @@ $email = $email ?? '';
         </div>
     </div>
 
+    <?php if ($captcha !== null) {
+        $authCheckNoscript = $t('auth.checkNoscript');
+        $authCheckDone = $t('auth.checkDone').' '.$t('auth.checkReenter');
+        $authCheckReset = true;
+        ?>
+        {% include "partials/_auth_check.lex.php" %}
+    <?php } ?>
+
     <button class="lx-btn lx-authsubmit" type="submit"><?= e($t('auth.loginSubmit')) ?></button>
 </form>
 {% endblock %}
 
 {% block help %}
-<a href="/password/forgot"><?= e($t('auth.cantLogIn')) ?></a>
+<a href="<?= e(lurl('/password/forgot')) ?>"><?= e($t('auth.cantLogIn')) ?></a>
 {% endblock %}
 
 {% block legal %}
@@ -81,8 +90,8 @@ $email = $email ?? '';
 // line and the two links go in as placeholders. Both the text and the anchors
 // are ours, never user input, which is what makes the raw echo safe here.
 echo $t('auth.legal', [
-    'terms' => '<a href="/terms">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="/privacy">'.e($t('footer.linkPrivacy')).'</a>',
+    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
+    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
 ]);
 ?>
 {% endblock %}

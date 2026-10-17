@@ -19,6 +19,7 @@ use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PrivacyPruneCommand;
 use App\Console\Commands\ProcessDueErasuresCommand;
 use App\Console\Commands\PublishDuePostsCommand;
+use App\Console\Commands\RateLimitClearCommand;
 use App\Console\Commands\SanitizePostContentCommand;
 use App\Console\Commands\SchedulePruneRunsCommand;
 use App\Console\Commands\ScheduleRunCommand;
@@ -54,6 +55,7 @@ class Kernel extends ConsoleKernel
             'cache:clear' => CacheClearCommand::class,
             'cache:prune' => CachePruneCommand::class,
             'cache:warm' => CacheWarmCommand::class,
+            'ratelimit:clear' => RateLimitClearCommand::class,
             'key:generate' => KeyGenerateCommand::class,
 
             // Notification management

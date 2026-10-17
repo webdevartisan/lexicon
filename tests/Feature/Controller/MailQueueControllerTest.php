@@ -10,6 +10,7 @@ use App\Services\MailQueueService;
 use Framework\Core\Response;
 use Framework\Interfaces\TemplateViewerInterface;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\MailQueueTestHelper;
 
 /**
  * Feature tests for MailQueueController's state-changing actions.
@@ -120,7 +121,7 @@ it('cancels a pending email', function () {
 
 it('does not cancel an email that already sent', function () {
     $id = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
-    $this->queue->markSent($id);
+    $this->queue->markSent($id, MailQueueTestHelper::claim($this->db, $id));
 
     csrfPost($this->controller, $this->mockViewer, "/admin/mail-queue/{$id}/cancel");
     $this->controller->cancel((string) $id);
@@ -134,7 +135,7 @@ it('does not cancel an email that already sent', function () {
 
 it('resends a sent email as a fresh queued row', function () {
     $id = $this->queue->enqueue(['to_email' => 'reader@example.test', 'subject' => 'Welcome', 'body_html' => '<p>Hi</p>']);
-    $this->queue->markSent($id);
+    $this->queue->markSent($id, MailQueueTestHelper::claim($this->db, $id));
 
     csrfPost($this->controller, $this->mockViewer, "/admin/mail-queue/{$id}/resend");
     $response = $this->controller->resend((string) $id);
@@ -180,7 +181,7 @@ it('puts a cancelled email back in the queue', function () {
 
 it('does not restore an email that was never cancelled', function () {
     $id = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
-    $this->queue->markSent($id);
+    $this->queue->markSent($id, MailQueueTestHelper::claim($this->db, $id));
 
     csrfPost($this->controller, $this->mockViewer, "/admin/mail-queue/{$id}/restore");
     $this->controller->restore((string) $id);
@@ -195,7 +196,7 @@ it('does not restore an email that was never cancelled', function () {
 it('applies cancel only to the selected rows that are pending', function () {
     $pending = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
     $sentId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
-    $this->queue->markSent($sentId);
+    $this->queue->markSent($sentId, MailQueueTestHelper::claim($this->db, $sentId));
 
     csrfPost($this->controller, $this->mockViewer, '/admin/mail-queue/bulk', [
         'bulk_action' => 'cancel',
@@ -210,7 +211,7 @@ it('applies cancel only to the selected rows that are pending', function () {
 
 it('applies retry only to the selected rows that have failed', function () {
     $failedId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h', 'max_attempts' => 1]);
-    $this->queue->markFailed($failedId, 'boom', 0);
+    $this->queue->markFailed($failedId, MailQueueTestHelper::claim($this->db, $failedId), 'boom', 0);
     $pendingId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
 
     csrfPost($this->controller, $this->mockViewer, '/admin/mail-queue/bulk', [
@@ -225,7 +226,7 @@ it('applies retry only to the selected rows that have failed', function () {
 
 it('applies resend only to the selected rows that are sent', function () {
     $sentId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
-    $this->queue->markSent($sentId);
+    $this->queue->markSent($sentId, MailQueueTestHelper::claim($this->db, $sentId));
     $pendingId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
 
     csrfPost($this->controller, $this->mockViewer, '/admin/mail-queue/bulk', [
@@ -242,7 +243,7 @@ it('applies restore only to the selected rows that are cancelled', function () {
     $cancelledId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
     $this->queue->cancel($cancelledId, $this->userId);
     $sentId = $this->queue->enqueue(['to_email' => 'a@b.test', 'subject' => 's', 'body_html' => 'h']);
-    $this->queue->markSent($sentId);
+    $this->queue->markSent($sentId, MailQueueTestHelper::claim($this->db, $sentId));
 
     csrfPost($this->controller, $this->mockViewer, '/admin/mail-queue/bulk', [
         'bulk_action' => 'restore',

@@ -5,7 +5,7 @@
 
 {% block body %}
 <?php
-$basePath = '/admin/blogs';
+$basePath = lurl('/admin/blogs');
 $hasFilters = $q !== '' || $status !== '' || $featured !== '' || $theme !== '';
 $emptyTitle = $hasFilters ? 'No blogs match these filters' : 'No blogs yet';
 $emptyMessage = $hasFilters ? 'Try a different name, owner, status, theme, or featured state.' : 'Create the first blog to get the site going.';
@@ -106,7 +106,7 @@ $publicUrl = $blogSlug !== '' ? lurl('/blog/'.rawurlencode($blogSlug)) : '';
                         <?php if ($analytics !== null) {
                             $blogAnalytics = $analytics[(int) $blog['id']]; ?>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
-                            <a href="<?= e(lurl('/dashboard/blog/'.(int) $blog['id'].'/insights')) ?>" class="tabular-nums hover:text-custom-500"
+                            <a href="<?= e(lurl('/admin/insights/blogs/'.(int) $blog['id'])) ?>" class="tabular-nums hover:text-custom-500"
                                title="<?= e(number_format($blogAnalytics['previous']).' in the 30 days before') ?>"><?= e(number_format($blogAnalytics['views'])) ?></a>
                             <?php if ($blogAnalytics['rising']) { ?>
                             <span class="ml-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"

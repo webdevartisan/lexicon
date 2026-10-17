@@ -82,7 +82,7 @@ class ReportController extends AppController
             'tabs' => self::TABS,
             'sort' => $sort,
             'basePath' => self::BASE,
-            'canViewUsers' => Gate::allows('manageUsers', SystemResource::class, auth()->user() ?? []),
+            'canViewUsers' => Gate::allows('viewUsers', SystemResource::class, auth()->user() ?? []),
             'canConfigure' => Gate::allows('configureModeration', SystemResource::class, auth()->user() ?? []),
         ]);
     }
@@ -103,7 +103,7 @@ class ReportController extends AppController
             'authorWarnings' => $authorId === null ? 0 : $this->cases->warningsFor($authorId),
             'authorSuspensions' => $authorId === null ? [] : $this->suspensions->history($authorId),
             'canSuspend' => $this->canSuspend($author),
-            'canViewUsers' => Gate::allows('manageUsers', SystemResource::class, auth()->user() ?? []),
+            'canViewUsers' => Gate::allows('viewUsers', SystemResource::class, auth()->user() ?? []),
             'holdNotes' => ModerationRuleEngine::HOLD_NOTES,
             'analytics' => $this->analyticsPace($case),
             // Re-sanitized here, not trusted from storage: bodies saved before

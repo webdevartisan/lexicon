@@ -12,15 +12,15 @@ $router->add('/csrf-token', [
     'method' => 'GET',
 ]);
 
+$router->add('/captcha/challenge', [
+    'controller' => 'CaptchaController',
+    'action' => 'challenge',
+    'method' => 'POST',
+]);
+
 $router->add('/report-reasons', [
     'controller' => 'ReportReasonController',
     'action' => 'index',
-    'method' => 'GET',
-]);
-
-$router->add('/geo', [
-    'controller' => 'GeoController',
-    'action' => 'timezone',
     'method' => 'GET',
 ]);
 
@@ -142,8 +142,14 @@ $router->add('/subscriptions/confirm/{token:[a-f0-9]{64}}', [
 ]);
 $router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
     'controller' => 'SubscriptionController',
-    'action' => 'unsubscribe',
+    'action' => 'showUnsubscribe',
     'method' => 'GET',
+]);
+// CSRF-exempt: mail providers POST here for one-click unsubscribe (RFC 8058).
+$router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
+    'controller' => 'SubscriptionController',
+    'action' => 'unsubscribe',
+    'method' => 'POST',
 ]);
 
 // Post engagement (auth required; CSRF token in the POST body)
@@ -312,6 +318,9 @@ $router->group([
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostStatusController', 'action' => 'makePublic', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostStatusController', 'action' => 'makePrivate', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostStatusController', 'action' => 'unlist', 'method' => 'POST']);
 
     // Post translations (per-locale overlays; offered when the blog enables localized posts).
     $r->add('/post/{id:\d+}/translations/{locale:[a-z]{2}}', ['controller' => 'PostTranslationController', 'action' => 'edit', 'method' => 'GET']);
@@ -326,6 +335,8 @@ $router->group([
     $r->add('/posts/{id:\d+}/workflow/request-review', ['controller' => 'PostReviewController', 'action' => 'requestReview', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/needs-changes', ['controller' => 'PostReviewController', 'action' => 'markNeedsChanges', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/approve', ['controller' => 'PostReviewController', 'action' => 'approve', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/start', ['controller' => 'PostReviewController', 'action' => 'startReview', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/workflow/publish', ['controller' => 'PostReviewController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/reset', ['controller' => 'PostReviewController', 'action' => 'resetWorkflowToDraft', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/assign-reviewer', ['controller' => 'PostReviewController', 'action' => 'assignReviewer', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/workflow/unassign-reviewer', ['controller' => 'PostReviewController', 'action' => 'unassignReviewer', 'method' => 'POST']);
@@ -432,29 +443,30 @@ $router->group([
     $r->add('/post/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/draft', ['controller' => 'PostController', 'action' => 'draft', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/archive', ['controller' => 'PostController', 'action' => 'archive', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/draft', ['controller' => 'PostStatusController', 'action' => 'draft', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/archive', ['controller' => 'PostStatusController', 'action' => 'archive', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
-    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
+    $r->add('/posts/{id:\d+}/unpublish', ['controller' => 'PostStatusController', 'action' => 'unpublish', 'method' => 'POST']);
 
     $r->add('/comment/{id:\d+}/destroy', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Generic CRUD routes for dashboard. Debug-only: with the explicit routes
-    // above, nothing in the app depends on these to resolve.
-    if (env('APP_DEBUG', false)) {
-        $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
-    }
+    // Generic CRUD routes for dashboard, kept for reference only. The explicit
+    // routes above cover everything the app uses.
+    // if (env('APP_DEBUG', false)) {
+    //     $r->add('/{controller}/create', ['action' => 'create', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/users', ['action' => 'users', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/users', ['action' => 'updateUsers', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/draft', ['action' => 'draft', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/archive', ['action' => 'archive', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/publish', ['action' => 'publish', 'method' => 'POST']);
+    // }
 });
 
 // Admin route group. Authentication is middleware; authorization is enforced
@@ -471,6 +483,10 @@ $router->group([
     $r->add('/cache/prune', ['controller' => 'CacheController', 'action' => 'prune', 'method' => 'POST']);
     $r->add('/cache/clear', ['controller' => 'CacheController', 'action' => 'clear', 'method' => 'POST']);
     $r->add('/cache/delete-pattern', ['controller' => 'CacheController', 'action' => 'delete-pattern', 'method' => 'POST']);
+
+    $r->add('/rate-limits', ['controller' => 'RateLimitController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/rate-limits/block', ['controller' => 'RateLimitController', 'action' => 'block', 'method' => 'POST']);
+    $r->add('/rate-limits/unlock', ['controller' => 'RateLimitController', 'action' => 'unlock', 'method' => 'POST']);
 
     // Email delivery: the mail server settings and a connection test.
     // Each email is previewed and test-sent from its editor under Email Templates.
@@ -591,6 +607,11 @@ $router->group([
     $r->add('/insights/export', ['controller' => 'InsightsController', 'action' => 'export', 'method' => 'GET']);
     $r->add('/insights/signups', ['controller' => 'SignupController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/insights/signups/export', ['controller' => 'SignupController', 'action' => 'export', 'method' => 'GET']);
+    // One blog's Insights, read only, without stepping into that blog's dashboard
+    $r->add('/insights/blogs/{blogId:\d+}', ['controller' => 'BlogInsightsController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/export', ['controller' => 'BlogInsightsController', 'action' => 'export', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/posts/{postId:\d+}', ['controller' => 'BlogInsightsController', 'action' => 'post', 'method' => 'GET']);
+    $r->add('/insights/blogs/{blogId:\d+}/{page:[a-z]+}', ['controller' => 'BlogInsightsController', 'action' => 'page', 'method' => 'GET']);
     // After the fixed paths above: the name is checked against InsightsPages, anything else is a 404.
     $r->add('/insights/{page:[a-z]+}', ['controller' => 'InsightsController', 'action' => 'page', 'method' => 'GET']);
 
@@ -666,15 +687,15 @@ $router->group([
     $r->add('/scheduled-tasks/{id:\d+}/toggle', ['controller' => 'ScheduledTaskController', 'action' => 'toggle', 'method' => 'POST']);
     $r->add('/scheduled-tasks/{id:\d+}/delete', ['controller' => 'ScheduledTaskController', 'action' => 'destroy', 'method' => 'POST']);
 
-    // Generic admin routes are powerful and should not be exposed in production.
-    if (env('APP_DEBUG', false)) {
-        $r->add('/{controller}/{action}');
-        $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
-        $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'GET']);
-        $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
-    }
+    // Generic admin routes, kept for reference only.
+    // if (env('APP_DEBUG', false)) {
+    //     $r->add('/{controller}/{action}');
+    //     $r->add('/{controller}/{id:\d+}/show', ['action' => 'show', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/edit', ['action' => 'edit', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/update', ['action' => 'update', 'method' => 'POST']);
+    //     $r->add('/{controller}/{id:\d+}/delete', ['action' => 'delete', 'method' => 'GET']);
+    //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
+    // }
 });
 
 // Blog routes under a blog-specific slug with theme middleware
@@ -690,11 +711,8 @@ $router->group([
     $r->add('/{postSlug}', ['controller' => 'BlogController', 'action' => 'showBlogPost', 'method' => 'GET']);
 });
 
-// Final fallback catch-all route - only enabled in debug to avoid unintentionally
-// exposing new controllers/actions via automatic routing in production.
+// Generic catch-all kept for reference only: $router->add('/{controller}/{action}');
 if (env('APP_DEBUG', false)) {
-    $router->add('/{controller}/{action}');
-
     $router->add('/debug-cache', [
         'controller' => 'HomeController',
         'action' => 'debugCache',

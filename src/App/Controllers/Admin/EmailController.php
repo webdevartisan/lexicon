@@ -10,6 +10,7 @@ use App\Services\EmailManager;
 use App\Services\EmailRenderer;
 use App\Services\LocaleRegistry;
 use App\Services\MailService;
+use App\Services\TestEmailRateLimiter;
 use App\Traits\SandboxesPreviewHtml;
 use Framework\Core\Response;
 use Throwable;
@@ -39,6 +40,7 @@ class EmailController extends AppController
         protected Response $response,
         private EmailManager $manager,
         private MailService $mailService,
+        private TestEmailRateLimiter $testLimiter,
     ) {}
 
     public function index(): Response
@@ -201,6 +203,16 @@ class EmailController extends AppController
             return $this->json(['ok' => false, 'message' => 'Fix this first: '.$errors[0]], 422);
         }
 
+        $userId = (int) $this->actorId();
+
+        if ($this->testLimiter->tooManyAttempts($userId)) {
+            $minutes = (int) ceil($this->testLimiter->availableIn($userId) / 60);
+
+            return $this->json(['ok' => false, 'message' => "Too many test emails. Try again in {$minutes} minutes."], 429);
+        }
+
+        $this->testLimiter->hit($userId);
+
         try {
             $this->mailService->sendTest($this->manager->buildSample($email, $locale, true, $this->manager->draft($email, $locale, $content, $layout)), $recipient);
         } catch (Throwable $e) {
@@ -209,6 +221,12 @@ class EmailController extends AppController
 
             return $this->json(['ok' => false, 'message' => 'The test could not be sent: '.$e->getMessage()], 502);
         }
+
+        audit()->log($userId, 'email.test_sent', 'email_template', null, [
+            'email' => $email['class'],
+            'locale' => $locale,
+            'recipient' => $recipient,
+        ], $this->request->ip());
 
         return $this->json(['ok' => true, 'message' => "Test sent to {$recipient}. Its subject starts with [TEST]."]);
     }

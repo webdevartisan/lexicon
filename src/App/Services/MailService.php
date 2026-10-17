@@ -263,6 +263,10 @@ class MailService
             $mail->addReplyTo($replyTo['address'], $replyTo['name']);
         }
 
+        foreach ($mailable->getHeaders() as $name => $value) {
+            $mail->addCustomHeader($name, $value);
+        }
+
         // set email subject and body
         $mail->Subject = $mailable->getSubject();
 

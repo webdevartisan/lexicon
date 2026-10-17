@@ -59,7 +59,7 @@ $safeguardHints = [
     {% include "areas/admin/_errors.lex.php" %}
 
     <div class="mb-4">
-        <a href="/admin/reports" class="text-sm text-custom-500 hover:text-custom-600">Back to the moderation queue</a>
+        <a href="<?= e(lurl('/admin/reports')) ?>" class="text-sm text-custom-500 hover:text-custom-600">Back to the moderation queue</a>
     </div>
 
     <div class="card">

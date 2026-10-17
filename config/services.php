@@ -42,9 +42,9 @@ if (env('APP_DEBUG', false)) {
     $container->enableDebug();
 }
 
-// In non-debug environments, APP_KEY must be set to a strong, non-default value.
-if (!env('APP_DEBUG', false)) {
-    $appKey = $_ENV['APP_KEY'] ?? null;
+// Keyed on APP_ENV, not APP_DEBUG: a stray APP_DEBUG=true on a live server must not allow the placeholder key.
+if (!Framework\Core\ErrorHandler::showsDetails()) {
+    $appKey = env('APP_KEY');
 
     if ($appKey === null || $appKey === '' || $appKey === 'change-me') {
         throw new \RuntimeException(
@@ -163,7 +163,8 @@ $container->setShared(App\Auth::class, function ($c) {
         $c->get(App\Models\UserModel::class),
         $c->get(App\Models\UserProfileModel::class),
         $c->get(App\Services\UserSuspensionService::class),
-        $c->get(App\Services\Sessions\SessionRecordFactory::class)
+        $c->get(App\Services\Sessions\SessionRecordFactory::class),
+        $c->get(Framework\Security\Csrf::class)
     );
 });
 $container->setShared(Framework\Interfaces\AuthInterface::class, function ($c) {
@@ -282,6 +283,10 @@ $container->set(App\Services\TranslationService::class, function ($c) {
     );
 });
 
+$container->set(Framework\Interfaces\TranslatorInterface::class, function ($c) {
+    return $c->get(App\Services\TranslationService::class);
+});
+
 /**
  * Locale registry is the single source of truth for supported locales.
  * Shared because it caches the parsed config for the request.
@@ -317,7 +322,7 @@ $container->setShared(App\Services\ConsentService::class, function ($c) {
 
     // Use APP_KEY from environment for cookie signing.
     // A non-debug environment will refuse to boot if APP_KEY is missing or weak.
-    $secret = $_ENV['APP_KEY'] ?? 'change-me';
+    $secret = (string) env('APP_KEY', 'change-me');
 
     $store = new App\Privacy\ConsentCookieStore(
         cookieName: (string) ($config['cookie_name'] ?? 'app_consent'),
@@ -352,7 +357,7 @@ $container->set(App\Services\Analytics\ReferrerClassifier::class, function ($c) 
 $container->set(App\Services\Analytics\VisitorIdentity::class, function ($c) {
     return new App\Services\Analytics\VisitorIdentity(
         $c->get(App\Models\AnalyticsSaltModel::class),
-        (string) ($_ENV['APP_KEY'] ?? 'change-me')
+        (string) env('APP_KEY', 'change-me')
     );
 });
 
@@ -660,8 +665,6 @@ $container->setShared(App\Services\UserSuspensionService::class, function ($c) {
     return new App\Services\UserSuspensionService(
         $c->get(Framework\Database::class),
         $c->get(App\Services\PublicCacheInvalidator::class),
-        $c->get(App\Models\CommentModel::class),
-        $c->get(App\Models\BlogModel::class),
         $c->get(App\Services\Sessions\SessionRevoker::class)
     );
 });
@@ -723,7 +726,9 @@ $container->set(Framework\Cache\CacheMiddleware::class, function ($c) {
         keyGenerator: $c->get(Framework\Cache\CacheKey::class),
         auth: $c->get(App\Auth::class),
         ttlRules: $config['ttl_rules'],
-        debug: $config['debug']
+        debug: $config['debug'],
+        session: $c->get(Framework\Session::class),
+        defaultTtl: (int) $config['default_ttl']
     );
 });
 
@@ -853,6 +858,18 @@ $container->set(App\Models\PostModel::class, function ($c) {
     );
 });
 
+$container->set(App\Models\PostListingModel::class, function ($c) {
+    return new App\Models\PostListingModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
+$container->set(App\Models\PublishedPostModel::class, function ($c) {
+    return new App\Models\PublishedPostModel(
+        $c->get(Framework\Database::class)
+    );
+});
+
 $container->set(App\Models\BlogSettingsModel::class, function ($c) {
     return new App\Models\BlogSettingsModel(
         $c->get(Framework\Database::class)
@@ -864,17 +881,25 @@ $container->set(App\Models\BlogSettingsModel::class, function ($c) {
 // ============================================================================
 
 /**
- * Rate limiter provides generic rate limiting with cache backend.
+ * Rate limit store keeps limiter state out of the evictable page cache.
+ *
+ * We register as singleton so every limiter shares one directory handle.
+ */
+$container->setShared(Framework\Cache\RateLimitStore::class, function ($c) {
+    $config = require ROOT_PATH.'/config/cache.php';
+
+    return new Framework\Cache\RateLimitStore($config['limiter_path']);
+});
+
+/**
+ * Rate limiter provides generic rate limiting with a dedicated store.
  *
  * We register as factory (NOT shared) to ensure each rate-limited action
  * gets its own limiter instance with isolated state.
  */
 $container->set(Framework\Helpers\RateLimiter::class, function ($c) {
-    /** @var Framework\Cache\CacheService $cache */
-    $cache = $c->get(Framework\Cache\CacheService::class);
-
     // Default window is 15 minutes (900 seconds)
-    return new Framework\Helpers\RateLimiter($cache, 900);
+    return new Framework\Helpers\RateLimiter($c->get(Framework\Cache\RateLimitStore::class), 900);
 });
 
 /**
@@ -886,7 +911,8 @@ $container->set(Framework\Helpers\RateLimiter::class, function ($c) {
 $container->set(App\Services\LoginRateLimiter::class, function ($c) {
     return new App\Services\LoginRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class),
+        (require ROOT_PATH.'/config/captcha.php')['login']
     );
 });
 
@@ -899,7 +925,7 @@ $container->set(App\Services\LoginRateLimiter::class, function ($c) {
 $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
     return new App\Services\PasswordResetRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
@@ -911,7 +937,32 @@ $container->set(App\Services\PasswordResetRateLimiter::class, function ($c) {
 $container->set(App\Services\CspReportRateLimiter::class, function ($c) {
     return new App\Services\CspReportRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
+    );
+});
+
+/**
+ * Identify rate limiter throttles the login identify step.
+ *
+ * We register as factory so it reads the dedicated limiter store, not the page cache.
+ */
+$container->set(App\Services\IdentifyRateLimiter::class, function ($c) {
+    return new App\Services\IdentifyRateLimiter(
+        $c->get(Framework\Helpers\RateLimiter::class),
+        $c->get(Framework\Cache\RateLimitStore::class)
+    );
+});
+
+/**
+ * Sign-in check (proof of work), verified locally with HMAC keys.
+ *
+ * Shared because the keys are derived once per request.
+ */
+$container->setShared(App\Services\Captcha\CaptchaInterface::class, function ($c) {
+    return App\Services\Captcha\CaptchaFactory::make(
+        require ROOT_PATH.'/config/captcha.php',
+        (string) env('APP_KEY', ''),
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
 });
 
@@ -927,8 +978,17 @@ $container->set(App\Services\Analytics\AnalyticsRateLimiter::class, function ($c
 $container->set(App\Services\CommentRateLimiter::class, function ($c) {
     return new App\Services\CommentRateLimiter(
         $c->get(Framework\Helpers\RateLimiter::class),
-        $c->get(Framework\Cache\CacheService::class)
+        $c->get(Framework\Cache\RateLimitStore::class)
     );
+});
+
+/**
+ * Search rate limiter throttles public search terms per IP.
+ *
+ * We register as factory, matching the other rate limiters above.
+ */
+$container->set(App\Services\SearchRateLimiter::class, function ($c) {
+    return new App\Services\SearchRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
 });
 
 // ============================================================================
@@ -1040,92 +1100,6 @@ $container->setShared(App\Services\AccountErasureSchedulerService::class, functi
         $c->get(App\Services\Sessions\SessionRevoker::class)
     );
 });
-
-// ============================================================================
-// OPTIONAL SERVICES (Commented - Auto-Discovery via Constructor Injection)
-// ============================================================================
-
-/**
- * These services support auto-discovery and will be instantiated on-demand
- * when needed through constructor injection. They are commented out for
- * lazy loading but can be uncommented for explicit control.
- *
- * Benefits of keeping commented (lazy loading):
- * - Only instantiate when actually used
- * - Reduced memory footprint for requests not needing these components
- * - Faster bootstrap time
- *
- * Uncomment when:
- * - Service is used multiple times per request (benefit from sharing)
- * - Need eager initialization for performance profiling
- * - Debugging instantiation order or dependency issues
- * - Want explicit control over dependencies
- */
-
-/*
-// ============================================================================
-// ADDITIONAL SERVICES
-// ============================================================================
-
-$container->setShared(App\Services\UploadService::class, function ($c) {
-    return new App\Services\UploadService();
-});
-
-$container->setShared(App\Services\PostAutosaveService::class, function ($c) {
-    return new App\Services\PostAutosaveService(
-        $c->get(App\Models\PostModel::class),
-        $c->get(App\Services\ExternalMediaGuard::class),
-        $c->get(App\Services\PostContentSanitizer::class)
-    );
-});
-
-$container->setShared(App\Services\ProfileService::class, function ($c) {
-    return new App\Services\ProfileService(
-        $c->get(App\Models\UserProfileModel::class),
-        $c->get(App\Models\UserSocialLinkModel::class),
-        $c->get(App\Models\PostModel::class),
-        $c->get(App\Models\BlogModel::class)
-    );
-});
-
-$container->setShared(App\Services\BlogDeletionService::class, function ($c) {
-    return new App\Services\BlogDeletionService(
-        $c->get(App\Models\BlogModel::class),
-        $c->get(App\Models\PostModel::class),
-        $c->get(App\Models\BlogSettingsModel::class),
-        $c->get(App\Models\UserPreferencesModel::class),
-        $c->get(App\Interfaces\UploadServiceInterface::class),
-        $c->get(App\Services\PublicCacheInvalidator::class),
-        $c->get(App\Models\AnalyticsEventModel::class),
-        $c->get(App\Models\AnalyticsVisitModel::class),
-        $c->get(App\Models\AnalyticsRollupModel::class)
-    );
-});
-
-
-// ============================================================================
-// CONSOLE COMMANDS (Factories - Fresh Instance Per Execution)
-// ============================================================================
-
-$container->set(App\Console\Kernel::class, function ($c) {
-    return new App\Console\Kernel($c);
-});
-
-
-// ============================================================================
-// CONTROLLERS (Factories - Fresh Instance Per Request)
-// ============================================================================
-
-// Controllers should generally use auto-discovery, but can be registered
-// explicitly if they need special configuration or dependency resolution
-
-$container->set(App\Controllers\Dashboard\AccountDeletionController::class, function ($c) {
-    return new App\Controllers\Dashboard\AccountDeletionController(
-        $c->get(App\Models\UserModel::class),
-        $c->get(App\Services\UploadService::class)
-    );
-});
-*/
 
 // ============================================================================
 // RETURN CONFIGURED CONTAINER

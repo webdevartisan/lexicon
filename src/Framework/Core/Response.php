@@ -112,7 +112,7 @@ class Response
 
         // small HTML body for user agents that do not follow Location.
         $this->body = '<html><head><meta http-equiv="refresh" content="0;url='
-                     .htmlspecialchars($final, ENT_QUOTES, 'UTF-8')
+                     .e($final)
                      .'"></head><body>Redirecting...</body></html>';
 
         return $this;

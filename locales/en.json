@@ -70,6 +70,7 @@
         "scheduledTasks": "Scheduled Tasks",
         "settings": "Settings",
         "cacheManagement": "Cache Management",
+        "rateLimits": "Rate Limits",
         "auditLog": "Audit Log",
         "moderation": "Moderation",
         "system": "System",
@@ -271,7 +272,8 @@
             "empty": "Nothing waiting. The queue is empty.",
             "states": {
                 "in_review": "In review",
-                "needs_changes": "Needs changes"
+                "needs_changes": "Needs changes",
+                "approved": "Ready to publish"
             },
             "by": "by {author}",
             "unassigned": "Unassigned",
@@ -362,6 +364,16 @@
             "actions": {
                 "preview": "Preview"
             },
+            "visibility": {
+                "unlisted": "Unlisted",
+                "private": "Private",
+                "makePublic": "List publicly",
+                "makePrivate": "Make private",
+                "unlist": "Hide from listings",
+                "makePublicConfirm": "List this post publicly? It will show on the blog, in search and in discover.",
+                "makePrivateConfirm": "Make this post private? Only the blog's team will be able to see it.",
+                "unlistConfirm": "Hide this post from listings? It stays reachable by direct link, but drops out of the blog, search and discover."
+            },
             "actionsMenu": "Post actions"
         },
         "paginator": {
@@ -440,7 +452,11 @@
         "newPost": "New Post",
         "brand": "Lexicon",
         "more": "More",
-        "search": "Search"
+        "search": "Search",
+        "flash": {
+            "sessionExpired": "Your session expired before that was submitted. Nothing was changed - please try again.",
+            "validationFailed": "Please correct the errors and try again."
+        }
     },
     "meta": {
         "title": "Lexicon. Your words deserve a good home.",
@@ -888,6 +904,7 @@
     },
     "discover": {
         "metaTitle": "Discover blogs and writing on Lexicon",
+        "metaTitlePosts": "Latest posts from writers on Lexicon",
         "heroTitle": "Great writing",
         "heroSubtitle": "Browse blogs and the latest posts from writers across Lexicon.",
         "searchPlaceholderBlogs": "Search blogs...",
@@ -900,6 +917,7 @@
         "resultsFor": "results for",
         "noBlogs": "No blogs found. Try a different search.",
         "noPosts": "No posts found. Try a different search.",
+        "searchThrottled": "You are searching a little fast. Try again in a moment.",
         "featuredTitle": "Featured blogs",
         "postsLabel": "Posts",
         "writersLabel": "Writers",
@@ -1004,6 +1022,9 @@
             "post_approved": "{actor} approved {target}",
             "post_needs_changes": "{actor} asked for changes on {target}",
             "post_published": "Your post {target} is live",
+            "post_review_started": "{actor} started reviewing {target}",
+            "post_ready_to_publish": "{actor} approved {target}, which is ready to publish",
+            "post_withdrawn": "{actor} withdrew {target} from review",
             "post_reviewer_assigned": "{actor} asked you to review {target}",
             "post_reviewer_stale": "The reviewer of {target} can no longer review it, so it is open to every reviewer again",
             "post_workflow_disabled": "Review was switched off, so {target} went back to draft",
@@ -1074,7 +1095,13 @@
         "confirmSubmit": "Yes, subscribe me",
         "confirmIgnore": "If this wasn't you, close this page. Nothing will be sent.",
         "invalidTitle": "This link no longer works",
-        "invalidBody": "The subscription was removed or never confirmed in time. You can subscribe again from the blog."
+        "invalidBody": "The subscription was removed or never confirmed in time. You can subscribe again from the blog.",
+        "unsubscribeTitle": "Unsubscribe from new posts",
+        "unsubscribeBody": "{email} will stop getting new posts from {blog}.",
+        "unsubscribeSubmit": "Unsubscribe",
+        "unsubscribeIgnore": "Changed your mind? Close this page and nothing changes.",
+        "unsubscribedTitle": "You're unsubscribed",
+        "unsubscribedBody": "You won't get new posts from {blog} by email any more. You can subscribe again from the blog."
     },
     "auth": {
         "back": "Back",
@@ -1145,7 +1172,18 @@
         "strengthFair": "Fair",
         "strengthGood": "Good",
         "strengthStrong": "Strong",
-        "signedOutElsewhere": "You were signed out on this device. Sign in again to continue."
+        "signedOutElsewhere": "You were signed out on this device. Sign in again to continue.",
+        "emailInvalid": "Please enter a valid email address.",
+        "checkRequired": "This account had several failed sign-ins, so your browser is doing a quick check first.",
+        "checkReenter": "Enter your password again to continue.",
+        "checking": "Checking your browser…",
+        "checkDone": "Check complete.",
+        "checkFailed": "The browser check did not go through. Please try again.",
+        "checkTooMany": "Too many requests. Please try again in a minute.",
+        "checkNoscript": "Signing in to this account needs a quick browser check, which needs JavaScript. You can reset your password instead.",
+        "checkNoscriptRegister": "Creating an account needs a quick browser check, which needs JavaScript.",
+        "resetInstead": "Reset your password",
+        "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
     "account": {
         "nav": {
@@ -1994,5 +2032,40 @@
             "reviewer": "Reviewer",
             "contributor": "Contributor"
         }
+    },
+    "authModal": {
+        "close": "Close",
+        "titleLogin": "Log in to continue",
+        "titleReply": "Log in to reply",
+        "titleComment": "Log in to comment",
+        "titleLike": "Log in to like this post",
+        "titleBookmark": "Log in to save this post",
+        "intro": "Enter your email to log in or create your reader account.",
+        "email": "Email",
+        "continue": "Continue →",
+        "password": "Password",
+        "minLength": "At least {min} characters.",
+        "logIn": "Log in →",
+        "forgot": "Forgot password?",
+        "differentEmail": "Use a different email",
+        "sendReset": "Send reset link",
+        "backToLogin": "Back to login",
+        "loggedIn": "You’re logged in!",
+        "fullPage": "Use the full login page",
+        "welcomeBack": "Welcome back",
+        "enterPasswordFor": "Enter the password for {email}.",
+        "createTitle": "Create your account",
+        "createIntro": "New here? Set a password and your reader account is ready.",
+        "createSubmit": "Create account →",
+        "welcomeNew": "Welcome to Lexicon! Your reader account is ready.",
+        "resetTitle": "Reset your password",
+        "resetIntro": "We’ll email a password reset link to {email}.",
+        "resetSent": "If that email exists in our system, a reset link has been sent.",
+        "invalidEmail": "Please enter a valid email address.",
+        "passwordRequired": "Password is required.",
+        "passwordTooShort": "Your password needs at least {min} characters.",
+        "sessionExpired": "Your session expired while this was open. Please try again.",
+        "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
+        "networkError": "Could not reach the server. Check your connection and try again."
     }
 }

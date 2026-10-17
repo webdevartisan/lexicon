@@ -1,4 +1,4 @@
-<a href="/dashboard" class="group-data-[sidebar=dark]:hidden group-data-[sidebar=brand]:hidden group-data-[sidebar=modern]:hidden">
+<a href="<?= e(lurl('/dashboard')) ?>" class="group-data-[sidebar=dark]:hidden group-data-[sidebar=brand]:hidden group-data-[sidebar=modern]:hidden">
     <span class="hidden group-data-[sidebar-size=sm]:block">
         <img src="/assets/icon/android-chrome-192x192.png" alt="LEXICON" width="32" height="32" class="size-7 max-w-none mx-auto rounded-md">
     </span>
@@ -14,7 +14,7 @@
         </svg>
     </span>
 </a>
-<a href="/dashboard" class="hidden group-data-[sidebar=dark]:block group-data-[sidebar=brand]:block group-data-[sidebar=modern]:block">
+<a href="<?= e(lurl('/dashboard')) ?>" class="hidden group-data-[sidebar=dark]:block group-data-[sidebar=brand]:block group-data-[sidebar=modern]:block">
     <span class="hidden group-data-[sidebar-size=sm]:block">
         <img src="/assets/icon/android-chrome-192x192.png" alt="LEXICON" width="32" height="32" class="size-7 max-w-none mx-auto rounded-md">
     </span>

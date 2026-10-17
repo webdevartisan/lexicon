@@ -182,7 +182,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <p class="colophon-fine reveal">
           <?= $blogTitle ?> is set in Archivo &amp; Schibsted Grotesk,
           printed on porcelain #EEF0F1 with one plate of cobalt,
-          and published on <?= e($_ENV['APP_NAME'] ?? 'the web') ?>.
+          and published on <?= e(env('APP_NAME', 'the web')) ?>.
         </p>
       </div>
     </div>
@@ -199,7 +199,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       </div>
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
-        <?= csrf_field() ?>
+        <?= csrf_field_lazy() ?>
         <label for="email-sub">Your address</label>
         <div class="news-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@proof-room.co"
