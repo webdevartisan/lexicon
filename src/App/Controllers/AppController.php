@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Services\LocaleState;
+use App\Services\TranslationService;
 use Framework\BaseController;
 use Framework\Core\Response;
 use Framework\Exceptions\UnauthorizedException;
@@ -24,6 +26,8 @@ use Framework\Validation\DatabaseValidator;
  */
 abstract class AppController extends BaseController implements SessionAwareInterface
 {
+    private ?TranslationService $translator = null;
+
     protected Session $session;
 
     /**
@@ -125,6 +129,19 @@ abstract class AppController extends BaseController implements SessionAwareInter
         $this->flash('error', $message);
 
         return $this->redirectBack();
+    }
+
+    /**
+     * Translate a key into the chrome locale, for flash messages and other
+     * text controllers hand back.
+     *
+     * @param  array<string, string|int>  $params
+     */
+    protected function t(string $key, array $params = []): string
+    {
+        $this->translator ??= new TranslationService(LocaleState::get()->chromeLocale);
+
+        return $this->translator->translate($key, $params);
     }
 
     /**

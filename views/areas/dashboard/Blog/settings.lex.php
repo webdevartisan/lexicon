@@ -44,7 +44,7 @@
     id="blog-settings-form"
     method="post"
     action="/dashboard/blogs/{{ blog.id }}/update"
-    class="max-lg:pb-20">
+    class="<?= empty($visibility) ? 'max-lg:pb-20' : 'max-lg:pb-36' ?>">
     <input type="hidden" name="_method" value="PUT">
     <input type="hidden" name="active_section" id="active_section" value="general">
     {{ csrf_field() }}

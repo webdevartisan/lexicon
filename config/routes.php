@@ -435,6 +435,7 @@ $router->group([
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
     $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/blog/{id:\d+}/go-live', ['controller' => 'BlogController', 'action' => 'goLive', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/delete', ['controller' => 'BlogController', 'action' => 'delete', 'method' => 'POST']);

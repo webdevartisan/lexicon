@@ -2067,5 +2067,63 @@
         "sessionExpired": "Your session expired while this was open. Please try again.",
         "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
         "networkError": "Could not reach the server. Check your connection and try again."
+    },
+    "setup": {
+        "visibility": {
+            "live": {
+                "lead": "Live.",
+                "text": "Anyone can read this post."
+            },
+            "offlinePost": {
+                "lead": "Your blog is offline,",
+                "text": "so only you and your team can see this post."
+            },
+            "draftFirst": {
+                "lead": "Draft.",
+                "text": "Only you can see it until you publish. Publishing also puts your blog online."
+            },
+            "draft": {
+                "lead": "Draft.",
+                "text": "Only you can see it until you publish."
+            },
+            "draftReview": {
+                "lead": "Draft.",
+                "text": "When you submit it, an editor reviews it before it goes live."
+            },
+            "pending": {
+                "lead": "In review.",
+                "text": "Readers can see it once an editor publishes it."
+            },
+            "scheduled": {
+                "lead": "Scheduled.",
+                "text": "Readers can see it from {date}."
+            },
+            "private": {
+                "lead": "Private.",
+                "text": "Only you and your team can see this post."
+            },
+            "unlisted": {
+                "lead": "Unlisted.",
+                "text": "Anyone with the link can read it. It isn't listed on your blog."
+            },
+            "blogOnline": {
+                "lead": "Your blog is online.",
+                "text": "Anyone can read your published posts."
+            },
+            "blogOffline": {
+                "lead": "Your blog is offline.",
+                "text": "Only you and your team can see it."
+            },
+            "archived": {
+                "lead": "Archived.",
+                "text": "Readers can't see this blog."
+            },
+            "actions": {
+                "openPost": "Open it",
+                "goLive": "Put your blog online",
+                "openBlog": "Open blog"
+            },
+            "wentLive": "Your blog is online. Anyone can read your published posts."
+        }
     }
 }

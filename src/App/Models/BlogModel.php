@@ -179,6 +179,19 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Whether the blog has at least one published post.
+     *
+     * @param  int  $blogId  Blog ID
+     */
+    public function hasPublishedPost(int $blogId): bool
+    {
+        return (bool) $this->database->query(
+            "SELECT EXISTS (SELECT 1 FROM posts WHERE blog_id = ? AND status = 'published')",
+            [$blogId]
+        )->fetchColumn();
+    }
+
+    /**
      * Effective blog-level permission slugs for a user on one blog.
      *
      * Structural owners implicitly hold the full owner bundle (the blog_owner

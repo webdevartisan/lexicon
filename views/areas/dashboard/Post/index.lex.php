@@ -73,6 +73,12 @@ $sortLabel = $t('dashboard.posts.sort.label');
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
+    <?php if (!empty($blogVisibility)) { ?>
+    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-900/20">
+        {% cmp="visibility-line" line="{$blogVisibility}" returnTo="/dashboard/post" %}
+    </div>
+    <?php } ?>
+
     <?php if ($canCreate) { ?>
     <div class="flex justify-end mb-4">
         {% set newPostLabel = t('dashboard.actions.newPost') %}

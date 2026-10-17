@@ -43,7 +43,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
       </div>
     {% endif; %}
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] max-lg:pb-24">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] <?= empty($visibility) ? 'max-lg:pb-24' : 'max-lg:pb-40' ?>">
 
       <main class="min-w-0 space-y-6">
 

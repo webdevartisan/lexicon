@@ -44,6 +44,7 @@ $I->seeThePageLooksRight('04-blog-created');
 // An empty post can't be published
 $I->amOnPage('/en/dashboard/post/new');
 $I->waitForElement('#content_ifr', 15);
+$I->see('Publishing also puts your blog online.', '[data-visibility-line]');
 $I->click('Publish');
 $I->waitForText('Title is required');
 $I->seeInCurrentUrl('/post/new');
@@ -62,6 +63,7 @@ $I->switchToIFrame();
 $I->click('Publish');
 $I->waitForText('Your blog is live now');
 $I->seeCurrentUrlMatches('~/post/\d+~');
+$I->see('Anyone can read this post.', '[data-visibility-line]');
 $I->seeThePageLooksRight('05-first-post');
 $postEditUrl = $I->grabFromCurrentUrl();
 $postUrl = "/en/blog/{$blogSlug}/{$postSlug}";
@@ -79,12 +81,28 @@ $I->amOnPage("/en/dashboard/blog/{$blogId}/settings");
 $I->click('summary[title="More actions"]');
 $I->click('Unpublish');
 $I->waitForText('Blog updated');
+$I->see('Your blog is offline.', '[data-visibility-line]');
 $I->seeThePageLooksRight('07-blog-offline');
 $I->amOnPage($postEditUrl);
 $I->fillField('title', 'Hello again from the walkthrough');
 $I->click('Update');
 $I->waitForText('Post updated');
+$I->see('so only you and your team can see this post', '[data-visibility-line]');
 $I->seeThePageLooksRight('08-post-updated');
+$I->resizeWindow(390, 844);
+$I->seeThePageLooksRight('08-post-updated-phone');
+// The docked bar grows with the visibility line, so the form's last field must still clear it
+$clearance = $I->executeJS(<<<'JS'
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    const grid = document.querySelector('form[data-dropzone-form] .grid');
+    const contentBottom = grid.getBoundingClientRect().bottom - parseFloat(getComputedStyle(grid).paddingBottom);
+    return Math.round(document.querySelector('[data-actionbar]').getBoundingClientRect().top - contentBottom);
+    JS);
+$I->assertGreaterThanOrEqual(0, $clearance, "The docked bar covers the end of the form by {$clearance}px");
+$I->resizeWindow(1280, 900);
+$I->amOnPage('/en/dashboard/post');
+$I->see('Your blog is offline.', '[data-visibility-line]');
+$I->seeThePageLooksRight('08-post-list-offline');
 
 // Guests can't see it while it's offline, the writer still can
 $I->amAGuest();
@@ -94,10 +112,12 @@ $I->loadSessionSnapshot('writer');
 $I->amOnPage($postUrl);
 $I->dontSeeInTitle('Page not found');
 
-// Back online, guests can read it again
-$I->amOnPage("/en/dashboard/blog/{$blogId}/settings");
-$I->click('Publish');
-$I->waitForText('Blog updated');
+// Back online from the editor's line, guests can read it again
+$I->amOnPage($postEditUrl);
+$I->click('Put your blog online');
+$I->waitForText('Anyone can read your published posts.');
+$I->see('Anyone can read this post.', '[data-visibility-line]');
+$I->seeInCurrentUrl('/edit');
 $I->amAGuest();
 $I->amOnPage($postUrl);
 $I->dontSeeInTitle('Page not found');

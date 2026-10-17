@@ -35,7 +35,6 @@ final class BlogArchiveController extends AppController
 
     private const IMPORT_SECONDS = 600;
 
-    private ?TranslationService $translator = null;
 
     public function __construct(
         private BlogModel $blogModel,
@@ -305,15 +304,5 @@ final class BlogArchiveController extends AppController
     private function message(ArchiveException $e): string
     {
         return $e->key !== '' ? $this->t($e->key, $e->params) : $e->getMessage();
-    }
-
-    /**
-     * @param  array<string, string|int>  $params
-     */
-    private function t(string $key, array $params = []): string
-    {
-        $this->translator ??= new TranslationService(LocaleState::get()->chromeLocale);
-
-        return $this->translator->translate($key, $params);
     }
 }

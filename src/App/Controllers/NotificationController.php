@@ -44,7 +44,6 @@ class NotificationController extends AppController
 
     private const PER_PAGE = 20;
 
-    private ?TranslationService $translator = null;
 
     public function __construct(
         private readonly NotificationModel $notifications,
@@ -300,15 +299,6 @@ class NotificationController extends AppController
         ));
     }
 
-    /**
-     * @param  array<string, string|int>  $params
-     */
-    private function t(string $key, array $params = []): string
-    {
-        $this->translator ??= new TranslationService(LocaleState::get()->chromeLocale);
-
-        return $this->translator->translate($key, $params);
-    }
 
     /**
      * Back to wherever the action was taken from, or the list.
