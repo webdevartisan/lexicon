@@ -2217,6 +2217,16 @@
                 "hint": "You can change this later.",
                 "unknown": "That look isn't available. Pick one of these."
             }
+        },
+        "signup": {
+            "welcomeWriter": "Welcome to Lexicon! Let's start your blog."
+        },
+        "welcome": {
+            "title": "What would you like to do?",
+            "startTitle": "Start a blog",
+            "startText": "Write and publish your own posts.",
+            "readTitle": "Read and follow blogs",
+            "readText": "Save posts, follow writers, join discussions."
         }
     }
 }

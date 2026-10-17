@@ -22,6 +22,7 @@ use App\Services\RecipientLocale;
 use App\Services\UserHandleValidator;
 use Framework\Core\Response;
 use Framework\Helpers\RateLimiter;
+use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\ThrottleTestHelper;
 
@@ -182,7 +183,7 @@ it('registers user with email and password only', function () {
     expect($user['age_confirmed_at'])->not->toBeNull();
 
     expect($response)->toBeInstanceOf(Response::class)
-        ->and($response->getHeader('Location'))->toContain('/dashboard');
+        ->and($response->getHeader('Location'))->toContain('/welcome');
 });
 
 /**
@@ -226,7 +227,7 @@ it('ignores unsafe return_to values', function (string $unsafe) {
     $response = callController($this->controller, 'submit', $request);
 
     expect($response)->toBeInstanceOf(Response::class)
-        ->and($response->getHeader('Location'))->toContain('/dashboard');
+        ->and($response->getHeader('Location'))->toContain('/welcome');
 })->with([
     'https://evil.example.com/phish',
     '//evil.example.com',
@@ -538,4 +539,74 @@ it('stops a sixth account from the same IP within the hour', function () {
 
     expect($response->getStatusCode())->toBe(429)
         ->and($this->userModel->findByEmail($email))->toBeFalsy();
+});
+
+// ============================================================================
+// WHERE A NEW ACCOUNT LANDS
+// ============================================================================
+
+it('sign-up from create a blog lands on start your blog', function () {
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => 'writer'.bin2hex(random_bytes(4)).'@example.test',
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+        'return_to' => '/en/dashboard/blog/new',
+    ]);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = callController($this->controller, 'submit', $request);
+
+    expect($response->getHeader('Location'))->toContain('/en/dashboard/blog/new')
+        ->and(Framework\Core\App::container()->get(Framework\Session::class)->get('_flash', [])['success'] ?? [])->toContain(chrome_translate('setup.signup.welcomeWriter'));
+});
+
+it('sign-up with no return_to lands on the welcome choice', function () {
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => 'someone'.bin2hex(random_bytes(4)).'@example.test',
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+    ]);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = callController($this->controller, 'submit', $request);
+
+    expect($response->getHeader('Location'))->toContain('/welcome');
+});
+
+it('pending invite still wins', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new(new BlogModel($this->db))->create($ownerId);
+    $email = 'invited'.bin2hex(random_bytes(4)).'@example.test';
+    $rawToken = bin2hex(random_bytes(16));
+    $invitations = new BlogInvitationModel($this->db);
+    $invitations->create($blogId, $email, 'author', hash('sha256', $rawToken), $ownerId, gmdate('Y-m-d H:i:s', time() + 86400));
+    Framework\Core\App::container()->get(Framework\Session::class)->set('pending_invite_token', $rawToken);
+
+    // accept() runs its own transaction, which can't nest inside the test's, so
+    // the joining itself is stubbed; this checks the invite beats "Create a Blog".
+    $invitationService = Mockery::mock(InvitationService::class);
+    $invitationService->shouldReceive('accept')->once()->with($rawToken, Mockery::type('int'), Mockery::any());
+    $controller = new RegisterController(
+        new AccountRegistrar($this->auth, $this->userModel, $this->profileModel, $this->preferencesModel, $this->userHandleValidator, $this->roleModel),
+        $invitations,
+        $invitationService,
+        $this->captcha,
+        new RateLimiter(ThrottleTestHelper::fakeCache())
+    );
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+        'return_to' => '/en/dashboard/blog/new',
+    ]);
+    setupController($controller, $request, $this->mockViewer);
+
+    $response = callController($controller, 'submit', $request);
+
+    expect($response->getHeader('Location'))->toEndWith('/dashboard')
+        ->and($response->getHeader('Location'))->not->toContain('/blog/new');
 });

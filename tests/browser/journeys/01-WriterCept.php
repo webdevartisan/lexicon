@@ -22,16 +22,16 @@ $I->fillField('Password', $password);
 $I->checkOption('age_confirmed');
 $I->waitForTheSignUpCheck();
 $I->click('Create account');
-$I->waitForText('Welcome!', 15);
-$I->dontSeeInCurrentUrl('/register');
+
+// "Create a Blog" carries through sign-up straight into Start your blog
+$I->waitForText('What will you call your blog?', 15);
+$I->see("Let's start your blog.");
+$I->seeInCurrentUrl('/dashboard/blog/new');
 $I->dontSee('Too many accounts were created');
 $I->seeThePageLooksRight('02-signed-up');
 $I->saveSessionSnapshot('writer');
 
 // The writer starts a blog in three steps: name, what it's about, a look
-$I->amOnPage('/en/dashboard');
-$I->click('Create your blog');
-$I->waitForText('What will you call your blog?');
 $I->see('Step 1 of 3');
 $I->fillField('name', "Walkthrough {$stamp}");
 $I->waitForText("/blog/walkthrough-{$stamp}", 5, '[data-address]');

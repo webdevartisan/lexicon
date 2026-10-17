@@ -252,6 +252,14 @@ $router->group([
     $r->add('/{id:\d+}/delete', ['controller' => 'NotificationController', 'action' => 'destroy', 'method' => 'POST']);
 });
 
+// Where a new account lands when sign-up didn't say what they came for.
+$router->group([
+    'prefix' => '/welcome',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'WelcomeController', 'action' => 'index', 'method' => 'GET']);
+});
+
 // Personal account settings, on the front for every account whatever its role.
 // Cut on ownership: anything belonging to the person lives here; anything
 // belonging to a blog stays in the dashboard. No namespace key, so these
