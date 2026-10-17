@@ -476,6 +476,14 @@ class PostModel extends AppModel
             return false;
         }
 
+        // The writer may keep editing a submission until a reviewer takes it on.
+        if (($found['status'] ?? '') === 'pending') {
+            $found['review_started'] = (bool) $this->database->query(
+                'SELECT 1 FROM post_reviewers WHERE post_id = ? LIMIT 1',
+                [(int) $found['id']]
+            )->fetchColumn();
+        }
+
         return new PostResource($found, $blogResource);
     }
 

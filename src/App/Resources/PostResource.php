@@ -85,6 +85,12 @@ class PostResource
         return $this->data['workflow_state'];
     }
 
+    /** Whether a reviewer has taken on this submission. Only known for pending posts. */
+    public function reviewStarted(): bool
+    {
+        return !empty($this->data['review_started']);
+    }
+
     /** Related BlogResource, for per-blog role checks. */
     public function blog(): BlogResource
     {

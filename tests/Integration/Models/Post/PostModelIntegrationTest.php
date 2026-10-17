@@ -423,6 +423,21 @@ it('clears the review state whenever a post stops being pending', function (stri
     expect($this->postModel->find($postId)['workflow_state'])->toBe('draft');
 })->with(['updateStatus', 'update']);
 
+it('knows whether a reviewer has taken on a submission', function () {
+    $userId = UserFactory::new($this->userModel)->create();
+    $reviewerId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->create($userId);
+    $postId = PostFactory::new($this->postModel)
+        ->withAttributes(['author_id' => $userId, 'blog_id' => $blogId, 'status' => 'pending', 'workflow_state' => 'in_review'])
+        ->create();
+
+    $before = $this->postModel->findResource($postId)->reviewStarted();
+    $this->db->query('INSERT INTO post_reviewers (post_id, reviewer_id, assigned_by) VALUES (?, ?, ?)', [$postId, $reviewerId, $reviewerId]);
+    $after = $this->postModel->findResource($postId)->reviewStarted();
+
+    expect($before)->toBeFalse()->and($after)->toBeTrue();
+});
+
 it('keeps the review state while a post stays pending', function () {
     $userId = UserFactory::new($this->userModel)->create();
     $blogId = BlogFactory::new($this->blogModel)->create($userId);

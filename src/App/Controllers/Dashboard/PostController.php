@@ -51,6 +51,8 @@ final class PostController extends AppController
      */
     private const SEO_RULES = PostFieldRules::SEO;
 
+    private const SUBMITTED_MESSAGE = 'Submitted for review. You can keep editing until a reviewer starts on it.';
+
     public function __construct(
         private PostModel $model,
         private BlogModel $blogModel,
@@ -184,14 +186,17 @@ final class PostController extends AppController
      *
      * @param  array<string, mixed>  $post  List row
      * @param  array<string, mixed>  $user
-     * @return array{update: bool, publish: bool, delete: bool}
+     * @return array{update: bool, open: bool, publish: bool, delete: bool}
      */
     private function postAbilities(array $post, BlogResource $blog, array $user): array
     {
         $resource = new PostResource($post, $blog);
+        $update = Gate::allows('update', $resource, $user);
 
         return [
-            'update' => Gate::allows('update', $resource, $user),
+            'update' => $update,
+            // Writers can still open their own locked posts; the edit page shows them read-only.
+            'open' => $update || $resource->authorId() === (int) $user['id'],
             'publish' => Gate::allows('publish', $resource, $user),
             'delete' => Gate::allows('delete', $resource, $user),
         ];
@@ -317,7 +322,7 @@ final class PostController extends AppController
             // No-op unless the post was created straight into published
             $this->subscriberNotifier->notifyPostPublished($postId);
 
-            $this->workflowService->submitIfRequested((int) $postId, (int) $blog->id(), $data['status'], 'draft', (int) $user['id']);
+            $submitted = $this->workflowService->submitIfRequested((int) $postId, (int) $blog->id(), $data['status'], 'draft', (int) $user['id']);
 
             audit()->log(
                 $user['id'],
@@ -332,7 +337,7 @@ final class PostController extends AppController
                 return $this->redirectAfterImageFailure($postId, $imageFailure);
             }
 
-            $this->flash('success', 'Post saved.');
+            $this->flash('success', $submitted ? self::SUBMITTED_MESSAGE : 'Post saved.');
 
             return $this->redirect("/dashboard/post/{$postId}/edit");
         }
@@ -352,6 +357,10 @@ final class PostController extends AppController
         $user = auth()->user();
         $post = $this->getPost((int) $id);
         $blog = $post->blog();
+
+        if (!Gate::allows('update', $post, $user) && $post->authorId() === (int) $user['id']) {
+            return $this->lockedView($post, $user);
+        }
 
         Gate::authorize('update', $post, $user);
         $this->activeBlog->follow($user, $blog);
@@ -419,6 +428,28 @@ final class PostController extends AppController
                 $post->publishedAt() !== null && strtotime($post->publishedAt().' UTC') > time(),
                 $workflowState
             ),
+        ]);
+    }
+
+    /**
+     * What a writer sees on their own post while they may not edit it: under
+     * review, approved, or already live without the right to publish.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    private function lockedView(PostResource $post, array $user): Response
+    {
+        $blog = $post->blog();
+        $this->activeBlog->follow($user, $blog);
+
+        $lock = $post->status() === 'pending' ? $post->workflowState() : 'live';
+
+        return $this->view('post.locked', [
+            'post' => $post->toArray(),
+            'lock' => $lock,
+            'canWithdraw' => Gate::allows('withdraw', $post, $user),
+            'postUrl' => base_url().'/blog/'.$blog->slug().'/'.$post->slug(),
+            'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
         ]);
     }
 
@@ -610,15 +641,18 @@ final class PostController extends AppController
                 array_intersect_key($data, array_flip(['title', 'status', 'published_at'])),
                 $this->request->ip()
             );
+        }
 
-            $this->flash('success', 'Post updated successfully.');
-        } elseif ($tagsChanged) {
+        if ($this->workflowService->submitIfRequested((int) $id, $blogId, $newStatus, (string) $post->workflowState(), (int) $user['id'])) {
+            // A resubmission goes straight back to the reviewer who asked for changes, so it may already be locked.
+            $this->flash('success', Gate::allows('update', $this->getPost((int) $id), $user)
+                ? self::SUBMITTED_MESSAGE
+                : 'Resubmitted. It went straight back to your reviewer.');
+        } elseif (!empty($data) || $tagsChanged) {
             $this->flash('success', 'Post updated successfully.');
         } else {
             $this->flash('info', 'No changes detected.');
         }
-
-        $this->workflowService->submitIfRequested((int) $id, $blogId, $newStatus, (string) $post->workflowState(), (int) $user['id']);
 
         if ($imageFailure !== null) {
             return $this->redirectAfterImageFailure((int) $id, $imageFailure);

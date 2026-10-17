@@ -164,6 +164,21 @@ class BlogModel extends AppModel
     }
 
     /**
+     * Whether the blog runs the editorial review pipeline.
+     *
+     * @param  int  $blogId  Blog ID
+     */
+    public function reviewsPosts(int $blogId): bool
+    {
+        $on = $this->database->query(
+            'SELECT workflow_enabled FROM blog_settings WHERE blog_id = ?',
+            [$blogId]
+        )->fetchColumn();
+
+        return !empty($on);
+    }
+
+    /**
      * Effective blog-level permission slugs for a user on one blog.
      *
      * Structural owners implicitly hold the full owner bundle (the blog_owner

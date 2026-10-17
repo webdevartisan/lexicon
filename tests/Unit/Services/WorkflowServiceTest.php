@@ -531,26 +531,30 @@ describe('WorkflowService::constrainStatus', function () {
 
 describe('WorkflowService::canPublish', function () {
 
-    function blogGranting(array $permissions): BlogResource
+    function blogGranting(array $permissions, bool $reviews): BlogResource
     {
-        $blog = Mockery::mock(BlogResource::class);
-        $blog->shouldReceive('id')->andReturn(42);
-        $blog->shouldReceive('userCan')->andReturnUsing(fn (int $userId, string $slug): bool => in_array($slug, $permissions, true));
+        $model = Mockery::mock(BlogModel::class);
+        $model->shouldReceive('blogPermissionsFor')->andReturn($permissions);
+        $model->shouldReceive('reviewsPosts')->with(42)->andReturn($reviews);
 
-        return $blog;
+        return new BlogResource(['id' => 42, 'owner_id' => 1], $model);
     }
 
     test('publish_blog_posts publishes with or without the pipeline', function () {
-        expect(makeConstraintService(workflowEnabled: true)->canPublish(blogGranting(['publish_blog_posts']), 7))->toBeTrue()
-            ->and(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['publish_blog_posts']), 7))->toBeTrue();
+        $service = makeWorkflowService();
+
+        expect($service->canPublish(blogGranting(['publish_blog_posts'], reviews: true), 7))->toBeTrue()
+            ->and($service->canPublish(blogGranting(['publish_blog_posts'], reviews: false), 7))->toBeTrue();
     });
 
     test('publish_own_posts publishes only while the pipeline is off', function () {
-        expect(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['publish_own_posts']), 7))->toBeTrue()
-            ->and(makeConstraintService(workflowEnabled: true)->canPublish(blogGranting(['publish_own_posts']), 7))->toBeFalse();
+        $service = makeWorkflowService();
+
+        expect($service->canPublish(blogGranting(['publish_own_posts'], reviews: false), 7))->toBeTrue()
+            ->and($service->canPublish(blogGranting(['publish_own_posts'], reviews: true), 7))->toBeFalse();
     });
 
     test('a role without either permission never publishes, whatever its name', function () {
-        expect(makeConstraintService(workflowEnabled: false)->canPublish(blogGranting(['create_posts', 'edit_own_posts']), 7))->toBeFalse();
+        expect(makeWorkflowService()->canPublish(blogGranting(['create_posts', 'edit_own_posts'], reviews: false), 7))->toBeFalse();
     });
 });

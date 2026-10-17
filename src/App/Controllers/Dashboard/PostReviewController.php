@@ -334,7 +334,7 @@ final class PostReviewController extends AppController
     }
 
     /**
-     * Reset workflow to draft.
+     * Take a pending post back to draft: the writer withdrawing it, or an editor returning it.
      *
      * @param  string  $id  Post ID
      */
@@ -345,7 +345,7 @@ final class PostReviewController extends AppController
         $user = auth()->user();
         $post = $this->getPost((int) $id);
 
-        Gate::authorize('update', $post, $user);
+        Gate::authorize('withdraw', $post, $user);
 
         $this->workflowService->resetToDraft((int) $id, $user['id']);
 
@@ -358,9 +358,9 @@ final class PostReviewController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', 'Workflow reset to draft.');
+        $this->flash('success', 'Back in drafts. It left the review queue, so submit it again when it is ready.');
 
-        return $this->redirect("/dashboard/posts/{$id}/edit");
+        return $this->redirect("/dashboard/post/{$id}/edit");
     }
 
     /**

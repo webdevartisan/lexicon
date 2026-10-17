@@ -3,7 +3,7 @@ $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
 $returnToken = $returnToken ?? '';
 // Pages that list posts for one role pass what that person may do with each; without it every action shows.
-$can = ($post['can'] ?? []) + ['update' => true, 'publish' => true, 'delete' => true];
+$can = ($post['can'] ?? []) + ['update' => true, 'open' => true, 'publish' => true, 'delete' => true];
 $viewCount = (int) ($post['views'] ?? 0);
 
 $status = $post['status'] ?? 'draft';
@@ -89,7 +89,7 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
         </div>
 
         <h6 class="mb-2 text-15 line-clamp-2">
-            <?php if ($can['update']) { ?>
+            <?php if ($can['open']) { ?>
             <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>" class="hover:text-custom-500 transition-colors">
                 {{ post.title }}
             </a>

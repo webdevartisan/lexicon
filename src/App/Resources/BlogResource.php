@@ -20,6 +20,8 @@ class BlogResource
 
     private ?int $publishedAuthors = null;
 
+    private ?bool $reviewsPosts = null;
+
     /**
      * @param  array<string, mixed>  $data  Blog row from the database
      */
@@ -164,6 +166,30 @@ class BlogResource
     public function userCan(int $userId, string $permission): bool
     {
         return in_array($permission, $this->permissionsForUser($userId), true);
+    }
+
+    /**
+     * Whether posts on this blog go through editorial review.
+     */
+    public function reviewsPosts(): bool
+    {
+        return $this->reviewsPosts ??= $this->model->reviewsPosts($this->id());
+    }
+
+    /**
+     * Whether a user may publish (or schedule, or archive) posts on this blog.
+     *
+     * publish_blog_posts covers every post. publish_own_posts only counts
+     * while the blog runs without review: once every post has to pass review,
+     * publishing your own would skip it.
+     */
+    public function canPublish(int $userId): bool
+    {
+        if ($this->userCan($userId, 'publish_blog_posts')) {
+            return true;
+        }
+
+        return $this->userCan($userId, 'publish_own_posts') && !$this->reviewsPosts();
     }
 
     public function roleForUser(int $userId): ?string

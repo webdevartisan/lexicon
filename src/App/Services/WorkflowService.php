@@ -381,19 +381,11 @@ class WorkflowService
     /**
      * Whether a user may publish (or schedule, or archive) posts on a blog.
      *
-     * publish_blog_posts covers every post. publish_own_posts only counts
-     * while the blog runs without the review pipeline: once every post has to
-     * pass review, publishing your own would skip it.
+     * The rule lives on BlogResource so PostPolicy can apply it too.
      */
     public function canPublish(BlogResource $blog, int $userId): bool
     {
-        if ($blog->userCan($userId, 'publish_blog_posts')) {
-            return true;
-        }
-
-        $settings = $this->blogSettings->findByBlogId($blog->id());
-
-        return $blog->userCan($userId, 'publish_own_posts') && empty($settings['workflow_enabled']);
+        return $blog->canPublish($userId);
     }
 
     /**
