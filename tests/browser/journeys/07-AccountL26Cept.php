@@ -7,9 +7,6 @@ use Support\JourneyTester;
 $I = new JourneyTester($scenario);
 $I->wantTo('be told plainly that a deleted account no longer exists');
 
-// Known bug L26: a deleted account is told it is suspended. Delete this line once it is fixed.
-$scenario->incomplete('L26: a deleted account is told it is suspended');
-
 $I->amAGuest();
 $I->amOnPage('/en/login');
 $I->declineCookies();

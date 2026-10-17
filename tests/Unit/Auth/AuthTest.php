@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\AccountDeletedException;
 use App\Exceptions\AccountSuspendedException;
 use Tests\Helpers\AuthTestHelper;
 
@@ -256,6 +257,7 @@ it('refuses a suspended account even with the right password', function () {
             'is_active' => 0,
         ]));
 
+    $mocks['userModel']->shouldReceive('isScheduledForDeletion')->once()->andReturn(false);
     $mocks['suspensions']->shouldReceive('liftIfExpired')->once()->andReturn(false);
     $mocks['session']->shouldNotReceive('regenerate');
     $mocks['session']->shouldNotReceive('set');
@@ -263,6 +265,28 @@ it('refuses a suspended account even with the right password', function () {
 
     $mocks['auth']->login($email, $password);
 })->throws(AccountSuspendedException::class);
+
+it('tells a deleted account it was deleted, not that it is suspended', function () {
+    $mocks = AuthTestHelper::createMockedAuth();
+    $email = $this->faker->email();
+    $password = $this->faker->password(12);
+
+    $mocks['userModel']
+        ->shouldReceive('findByEmail')
+        ->once()
+        ->with($email)
+        ->andReturn(AuthTestHelper::mockUserData([
+            'email' => $email,
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'is_active' => 0,
+        ]));
+
+    $mocks['userModel']->shouldReceive('isScheduledForDeletion')->once()->andReturn(true);
+    $mocks['suspensions']->shouldNotReceive('liftIfExpired');
+    $mocks['session']->shouldNotReceive('set');
+
+    $mocks['auth']->login($email, $password);
+})->throws(AccountDeletedException::class);
 
 it('ends the session of an account suspended after it signed in', function (array $state) {
     $mocks = AuthTestHelper::createMockedAuth();

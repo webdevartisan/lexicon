@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
+use App\Exceptions\AccountDeletedException;
 use App\Exceptions\AccountSuspendedException;
 use App\Services\Analytics\VisitorLink;
 use App\Services\Captcha\CaptchaInterface;
@@ -192,7 +193,7 @@ final class AuthController extends AppController
 
         try {
             $loggedIn = auth()->login($email, $password);
-        } catch (AccountSuspendedException $e) {
+        } catch (AccountSuspendedException|AccountDeletedException $e) {
             if ($isAjax) {
                 return $this->jsonError($e->getMessage(), 403);
             }

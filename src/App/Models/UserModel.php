@@ -62,14 +62,24 @@ class UserModel extends AppModel
      */
     public function findByEmail(string $email): ?array
     {
-        $sql = 'SELECT * FROM '.$this->getTable().' 
-                WHERE email = ? 
+        $sql = 'SELECT * FROM '.$this->getTable().'
+                WHERE email = ?
                 LIMIT 1';
 
         $stmt = $this->database->query($sql, [$email]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         return $result ?: null;
+    }
+
+    /**
+     * Whether the account was deleted and is only waiting out the grace period before its data goes.
+     */
+    public function isScheduledForDeletion(int $userId): bool
+    {
+        $stmt = $this->database->query('SELECT 1 FROM pending_erasures WHERE user_id = ? LIMIT 1', [$userId]);
+
+        return $stmt->fetchColumn() !== false;
     }
 
     /**
