@@ -1,0 +1,13 @@
+support_namespace: Support
+paths:
+    tests: .
+    output: _output
+    support: _support
+    data: _support/Data
+actor_suffix: Tester
+extensions:
+    enabled:
+        # Starts ChromeDriver for the run and stops it afterwards
+        - Codeception\Extension\RunProcess:
+            0: _tools\chromedriver.exe --port=9515
+            sleep: 2

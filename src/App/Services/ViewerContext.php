@@ -25,7 +25,7 @@ final class ViewerContext
 {
     /**
      * @var array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null|false
-     *                                                                                                                                                  False means "not resolved yet"; null is a real answer meaning nobody is signed in.
+     *                                                                                                                                                      False means "not resolved yet"; null is a real answer meaning nobody is signed in.
      */
     private array|null|false $current = false;
 
