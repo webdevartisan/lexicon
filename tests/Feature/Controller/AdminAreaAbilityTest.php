@@ -138,4 +138,3 @@ test('only the user list, account page and profile preview are open to viewUsers
         'UserDetailController::show=viewUsers',
     ]);
 });
-

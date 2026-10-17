@@ -1,0 +1,24 @@
+# Runs the journeys in headless Chrome against the local site.
+# Run from the project root: vendor/bin/codecept run -c tests/browser
+actor: JourneyTester
+bootstrap: _bootstrap.php
+modules:
+    enabled:
+        # Codeception's WebDriver module with waits that survive page reloads
+        - Support\Helper\Browser:
+            url: https://lexicon.test
+            browser: chrome
+            host: 127.0.0.1
+            port: 9515
+            path: ''
+            window_size: 1280x900
+            wait: 5
+            capabilities:
+                acceptInsecureCerts: true
+                goog:chromeOptions:
+                    # Everything after --lang keeps Chrome's own updater, push and model chatter out of the output
+                    args: ["--headless=new", "--disable-gpu", "--lang=en-US", "--disable-background-networking",
+                           "--disable-component-update", "--disable-features=OptimizationHints,OnDeviceModel", "--log-level=3"]
+                    excludeSwitches: ["enable-logging"]
+        - Asserts
+        - Support\Helper\Lexicon

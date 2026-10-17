@@ -17,6 +17,9 @@
   "require-dev": {
     "captainhook/captainhook": "^5.28",
     "captainhook/hook-installer": "^1.0",
+    "codeception/codeception": "*",
+    "codeception/module-asserts": "*",
+    "codeception/module-webdriver": "*",
     "fakerphp/faker": "^1.24",
     "infection/infection": "^0.32.3",
     "laravel/pint": "^1.27",
