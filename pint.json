@@ -28,5 +28,8 @@
     ],
     "notName": [
         "*.lex.php"
+    ],
+    "notPath": [
+    "tests/browser/_support/_generated"
     ]
 }
