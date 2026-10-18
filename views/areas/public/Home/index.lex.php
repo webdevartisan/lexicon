@@ -182,18 +182,15 @@ $postTitle = (string) ($post['title'] ?? '');
         <ul class="lx-cites">
             <?php
             $guides = [
-                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
-                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
-                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
+                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1'],
+                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2'],
+                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3'],
             ];
-foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
+foreach ($guides as $guideIndex => [$guideHref, $guideKey]) {
     $guideBlurb = trim(site_content($guideKey));
     $guideTitle = trim((string) strtok($guideBlurb, '.'));
     ?>
             <li class="lx-cite" data-reveal="<?= $guideIndex ?>">
-                <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
-                    <img src="<?= e($guideImage) ?>" alt="" loading="lazy" />
-                </a>
                 <h3 class="lx-cite-title"><a href="<?= e(lurl($guideHref)) ?>"><?= e($guideTitle !== '' ? $guideTitle : $guideBlurb) ?></a></h3>
                 <p class="lx-cite-excerpt"><?= e($guideBlurb) ?></p>
                 <p class="lx-cite-more">
