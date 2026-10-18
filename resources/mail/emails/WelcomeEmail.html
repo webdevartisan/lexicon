@@ -1,13 +1,13 @@
 ---
-subject: Welcome to {{ app_name }}
-preheader: Your account is ready. Here is how to make yourself at home.
+subject: Welcome to {{ app_name }}: confirm your email
+preheader: One click to confirm your address and finish setting up your account.
 footer_note: You received this email because you created an account with {{ app_name }}.
 ---
           <!-- Content > Banner -->
           <tr>
             <td class="section-padding" bgcolor="{{ primary_color }}" style="padding:32px 40px;background-color:{{ primary_color }};">
               <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#FFFFFF;">
-                You're all set
+                One step left
               </p>
               <h1 class="main-heading" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:32px;line-height:40px;font-weight:bold;color:#FFFFFF;">
                 Welcome to {{ app_name }}
@@ -34,10 +34,10 @@ footer_note: You received this email because you created an account with {{ app_
           <tr>
             <td class="section-padding" style="padding:0px 40px 0;">
               <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
-                Thanks for joining {{ app_name }}. Your account is ready, and your tag is <strong>@{{ handle }}</strong>.
+                Thanks for joining {{ app_name }}. Your tag is <strong>@{{ handle }}</strong>. Confirm your email address to start commenting, following blogs and writing.
               </p>
               <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#374151;">
-                Follow the blogs you love, save posts for later and join the discussions. When you feel like writing, you can start a blog of your own any time.
+                Until you do, you can read everything, but we hold back comments, subscriptions and email.
               </p>
             </td>
           </tr>
@@ -46,10 +46,10 @@ footer_note: You received this email because you created an account with {{ app_
             <td class="section-padding" align="{{ start }}" style="padding:8px 40px 24px;">
 
               <!--[if mso]>
-              <v:roundrect href="{{ explore_url }}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroked="f" fillcolor="{{ primary_color }}">
+              <v:roundrect href="{{ confirm_url }}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroked="f" fillcolor="{{ primary_color }}">
                 <w:anchorlock xmlns:w="urn:schemas-microsoft-com:office:word"/>
                 <center style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;">
-                  Find something to read
+                  Confirm my email
                 </center>
               </v:roundrect>
               <![endif]-->
@@ -58,14 +58,26 @@ footer_note: You received this email because you created an account with {{ app_
               <table class="mobile-button" role="presentation" cellpadding="0" cellspacing="0" border="0" width="240" style="width:240px;border-collapse:separate;">
                 <tr>
                   <td align="center" bgcolor="{{ primary_color }}" style="background-color:{{ primary_color }};border-radius:6px;">
-                    <a href="{{ explore_url }}" target="_blank" style="display:block;padding:14px 16px;border:1px solid {{ primary_color }};border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;text-align:center;text-decoration:none;color:#FFFFFF;">
-                      Find something to read
+                    <a href="{{ confirm_url }}" target="_blank" style="display:block;padding:14px 16px;border:1px solid {{ primary_color }};border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;text-align:center;text-decoration:none;color:#FFFFFF;">
+                      Confirm my email
                     </a>
                   </td>
                 </tr>
               </table>
               <!--<![endif]-->
 
+            </td>
+          </tr>
+          <!-- Actions > Link written out -->
+          <tr>
+            <td class="section-padding" style="padding:0 40px 16px;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B7280;">
+                If the button does not work, paste this link into your browser:<br>
+                <a href="{{ confirm_url }}" target="_blank" style="color:#4B5563;word-break:break-all;">{{ confirm_url }}</a>
+              </p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#6B7280;">
+                The link works for {{ expires_hours }} hours. Not you? Ignore this message and the account stays unconfirmed.
+              </p>
             </td>
           </tr>
           <!-- Callouts > Getting started -->

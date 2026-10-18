@@ -93,7 +93,12 @@ final class RegisterController extends AppController
         $validated = $validator->validated();
         $returnTo = safe_return_to((string) ($this->request->post['return_to'] ?? ''));
 
-        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request);
+        // An invitation link was mailed to this address, so arriving through one already proved the inbox
+        $pendingToken = (string) $this->session->get('pending_invite_token', '');
+        $invite = $pendingToken !== '' ? $this->invitationModel->findValidByToken(hash('sha256', $pendingToken)) : false;
+        $inviteMatches = $invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0;
+
+        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request, $inviteMatches);
 
         if ($userId === null) {
             if ($isAjax) {
@@ -122,10 +127,8 @@ final class RegisterController extends AppController
 
         // If the user got here from a blog invitation link, auto-accept it. A new
         // account has no active blog, so the invited one becomes it and the Overview opens on it.
-        $pendingToken = (string) $this->session->get('pending_invite_token', '');
         if ($pendingToken !== '') {
-            $invite = $this->invitationModel->findValidByToken(hash('sha256', $pendingToken));
-            if ($invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0) {
+            if ($inviteMatches) {
                 try {
                     $this->invitationService->accept($pendingToken, $userId, $this->request->ip());
                     $this->session->remove('pending_invite_token');

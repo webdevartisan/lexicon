@@ -141,6 +141,10 @@ final class BlogController extends AppController
      */
     public function new(): Response
     {
+        if ($refusal = $this->refuseUnverified()) {
+            return $refusal;
+        }
+
         $user = auth()->user();
         Gate::authorize('create', BlogResource::class, $user);
 
@@ -154,6 +158,10 @@ final class BlogController extends AppController
     public function create(): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
+
+        if ($refusal = $this->refuseUnverified()) {
+            return $refusal;
+        }
 
         $user = auth()->user();
         $userId = $user['id'];

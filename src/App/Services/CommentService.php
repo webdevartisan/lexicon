@@ -54,6 +54,10 @@ class CommentService
             return $this->failure('Comment content is required.');
         }
 
+        if (email_unverified($user)) {
+            return $this->failure(chrome_translate('auth.verifyNeeded'));
+        }
+
         if ($error = $this->contentLengthError($content)) {
             return $this->failure($error);
         }
@@ -224,6 +228,17 @@ class CommentService
 
         if (!is_array($pending) || $user === null) {
             return null;
+        }
+
+        // Keep the comment for when the link is followed instead of dropping it
+        if (email_unverified($user)) {
+            $this->session->set(self::PENDING_KEY, $pending);
+
+            return [
+                'ok' => true,
+                'message' => chrome_translate('auth.verifyCommentSaved'),
+                'path' => safe_return_to((string) ($pending['return'] ?? '')) ?? '/',
+            ];
         }
 
         $parentId = (int) ($pending['parent_id'] ?? 0);

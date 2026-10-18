@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'aliases' => [
         'auth' => App\Middleware\AuthMiddleware::class,
+        'verified' => App\Middleware\VerifiedMiddleware::class,
         'theme' => \App\Middleware\ThemeResolverMiddleware::class,
     ],
     'global' => [

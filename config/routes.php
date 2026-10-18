@@ -108,7 +108,7 @@ $router->add('/comments/create', [
 // to somebody to be toggled off again.
 $router->group([
     'prefix' => '/comments',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/delete', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/{id:\d+}/vote', ['controller' => 'CommentController', 'action' => 'vote', 'method' => 'POST']);
@@ -152,10 +152,13 @@ $router->add('/subscriptions/unsubscribe/{token:[a-f0-9]{64}}', [
     'method' => 'POST',
 ]);
 
+// The link mailed at sign-up. No 'auth': the token is the proof, as with a password reset.
+$router->add('/verify-email/{token:[a-f0-9]{64}}', ['controller' => 'EmailVerificationController', 'action' => 'confirm', 'method' => 'GET']);
+
 // Post engagement (auth required; CSRF token in the POST body)
 $router->group([
     'prefix' => '/posts',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/vote', ['controller' => 'PostEngagementController', 'action' => 'vote', 'method' => 'POST']);
     $r->add('/{id:\d+}/bookmark', ['controller' => 'PostEngagementController', 'action' => 'toggleBookmark', 'method' => 'POST']);
@@ -287,6 +290,7 @@ $router->group([
     $r->add('/email', ['controller' => 'AccountEmailController', 'action' => 'requestChange', 'method' => 'POST']);
     $r->add('/email/cancel', ['controller' => 'AccountEmailController', 'action' => 'cancel', 'method' => 'POST']);
     $r->add('/email/confirm/{token:[a-f0-9]{64}}', ['controller' => 'AccountEmailController', 'action' => 'confirm', 'method' => 'GET']);
+    $r->add('/verify-email/resend', ['controller' => 'EmailVerificationController', 'action' => 'resend', 'method' => 'POST']);
 
     $r->add('/notifications', ['controller' => 'AccountNotificationsController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);

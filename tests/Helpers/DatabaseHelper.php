@@ -42,6 +42,7 @@ class DatabaseHelper
             // User-related
             'password_resets',
             'pending_email_changes',
+            'email_verifications',
             'notifications',
             'activity_log',
             'account_erasure_records',

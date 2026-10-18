@@ -72,6 +72,22 @@ abstract class AppController extends BaseController implements SessionAwareInter
     // ============== Authentication Helpers ==============
 
     /**
+     * Turn away a signed-in account whose email address is still unconfirmed.
+     *
+     * @return Response|null The redirect to send, or null when the account is confirmed
+     */
+    protected function refuseUnverified(): ?Response
+    {
+        if (!email_unverified(auth()->user())) {
+            return null;
+        }
+
+        $this->flash('error', chrome_translate('auth.verifyNeeded'));
+
+        return $this->redirect(lurl('/'));
+    }
+
+    /**
      * Require specific permission or throw 403.
      *
      * @deprecated Use Gate::authorize() instead for proper policy-based authorization

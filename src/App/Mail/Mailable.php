@@ -48,6 +48,8 @@ abstract class Mailable
     /** The language this email is written in, fixed when it is constructed. */
     private string $locale;
 
+    protected bool $toUnverified = false;
+
     /** @var array<string, mixed> What this email gave its template */
     private array $templateData = [];
 
@@ -421,6 +423,17 @@ abstract class Mailable
     public function getLocale(): string
     {
         return $this->locale;
+    }
+
+    /**
+     * Whether this email may go to an address that has not confirmed itself yet.
+     *
+     * Only the mails that carry the way out of that state do: the confirmation
+     * link and password reset. Everything else waits for a proven address.
+     */
+    public function reachesUnverified(): bool
+    {
+        return $this->toUnverified;
     }
 
     /**

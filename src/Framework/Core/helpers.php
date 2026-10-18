@@ -470,6 +470,19 @@ function buildLocalizedUrl(string $target, bool $skipMethodCheck = false): strin
 }
 
 /**
+ * Whether a user record is an account whose email address was never confirmed.
+ *
+ * A record without the column counts as confirmed, so partial arrays (a session
+ * snapshot, a fixture) are never treated as unproven by accident.
+ *
+ * @param  array<string, mixed>|null  $user  User row, or null for a guest
+ */
+function email_unverified(?array $user): bool
+{
+    return $user !== null && array_key_exists('email_verified_at', $user) && $user['email_verified_at'] === null;
+}
+
+/**
  * Validate a user-supplied return path for post-auth redirects.
  *
  * Accepts only site-local paths so login/register return_to values can never

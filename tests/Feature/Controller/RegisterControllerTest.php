@@ -165,7 +165,8 @@ it('registers user with email and password only', function () {
     $user = $this->userModel->findByEmail($email);
     expect($user)->toBeArray()
         ->and($user['email'])->toBe($email)
-        ->and($user['handle'])->toBe($local);
+        ->and($user['handle'])->toBe($local)
+        ->and($user['email_verified_at'])->toBeNull();
 
     expect(password_verify($password, $user['password']))->toBeTrue();
 

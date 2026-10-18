@@ -16,6 +16,24 @@ class MailQueueModel extends AppModel
     protected ?string $table = 'mail_queue';
 
     /**
+     * Whether the address belongs to an account that has not confirmed it.
+     *
+     * An address with no account at all (an invitation to someone new) is not
+     * unverified, so those mails still go out.
+     *
+     * @param  string  $email  Recipient address
+     */
+    public function isUnverifiedAccount(string $email): bool
+    {
+        $row = $this->database->query(
+            'SELECT 1 FROM users WHERE email = ? AND email_verified_at IS NULL LIMIT 1',
+            [$email]
+        )->fetchColumn();
+
+        return $row !== false;
+    }
+
+    /**
      * Add a rendered email to the queue.
      *
      * @param  array{to_email: string, to_name?: string|null, subject: string, body_html: string, body_text?: string|null, headers?: string|null, tier?: string, related_type?: string|null, related_id?: int|null, max_attempts?: int}  $mail

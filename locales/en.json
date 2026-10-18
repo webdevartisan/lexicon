@@ -1183,6 +1183,15 @@
         "checkNoscript": "Signing in to this account needs a quick browser check, which needs JavaScript. You can reset your password instead.",
         "checkNoscriptRegister": "Creating an account needs a quick browser check, which needs JavaScript.",
         "resetInstead": "Reset your password",
+        "verifyBanner": "Confirm your email to comment, follow blogs and write. We sent a link to {email}.",
+        "verifyResend": "Send it again",
+        "verifyResent": "We sent a new link to {email}.",
+        "verifyTooSoon": "A link was sent a moment ago. Check your inbox, or try again in a minute.",
+        "verifyDone": "Thank you, your email is confirmed.",
+        "verifyInvalid": "That link has expired or was already used. Sign in and ask for a new one.",
+        "verifyNeeded": "Confirm your email address first. We sent you a link.",
+        "verifyCommentSaved": "We saved your comment. It posts as soon as you confirm your email.",
+        "verifyAlready": "Your email is already confirmed.",
         "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
     "account": {

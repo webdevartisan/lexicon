@@ -58,6 +58,7 @@ describe('MailQueueService::enqueue', function () {
 
     test('stores the rendered content and the related source', function () {
         $queue = Mockery::mock(MailQueueModel::class);
+        $queue->shouldReceive('isUnverifiedAccount')->andReturn(false);
         $queue->shouldReceive('enqueue')
             ->once()
             ->with(Mockery::on(fn ($row) => $row['to_email'] === 'reader@example.test'
@@ -86,6 +87,7 @@ describe('MailQueueService::enqueue', function () {
         };
 
         $queue = Mockery::mock(MailQueueModel::class);
+        $queue->shouldReceive('isUnverifiedAccount')->andReturn(false);
         $queue->shouldReceive('enqueue')->twice()->andReturn(1);
 
         expect(makeMailQueueService($queue)->enqueue($mailable))->toBe(2);
@@ -103,6 +105,7 @@ describe('MailQueueService::enqueue', function () {
         };
 
         $queue = Mockery::mock(MailQueueModel::class);
+        $queue->shouldReceive('isUnverifiedAccount')->andReturn(false);
         $queue->shouldReceive('enqueue')
             ->once()
             ->with(Mockery::on(fn ($row) => $row['body_text'] === 'Just text'))
@@ -260,4 +263,14 @@ describe('MailQueueService::processBatch', function () {
 
         expect(true)->toBeTrue();
     });
+});
+
+test('enqueue skips an unconfirmed account unless the mail helps it confirm', function () {
+    $queue = Mockery::mock(MailQueueModel::class);
+    $queue->shouldReceive('isUnverifiedAccount')->with('new@example.test')->andReturn(true);
+    $queue->shouldNotReceive('enqueue');
+
+    $service = new MailQueueService($queue, Mockery::mock(MailService::class));
+
+    expect($service->enqueue(makeTestMailable('new@example.test')))->toBe(0);
 });

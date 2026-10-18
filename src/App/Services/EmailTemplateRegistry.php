@@ -41,7 +41,7 @@ class EmailTemplateRegistry
             // Account lifecycle
             'welcome' => [
                 'name' => 'Welcome Email',
-                'description' => 'Sent to new users after registration',
+                'description' => 'Sent to new users after registration, with the link that confirms their address',
                 'group' => 'Account',
                 'class' => 'App\\Mail\\WelcomeEmail',
                 'sample_data' => [
@@ -50,6 +50,8 @@ class EmailTemplateRegistry
                         'handle' => 'johndoe',
                         'email' => 'john@example.com',
                     ],
+                    'token' => 'SAMPLE_TOKEN_HERE',
+                    'expiresInHours' => 24,
                 ],
             ],
             'password_reset' => [

@@ -14,6 +14,8 @@ class PasswordResetEmail extends Mailable
 {
     protected string $tier = self::TIER_CRITICAL;
 
+    protected bool $toUnverified = true;
+
     /**
      * @param  array<string, mixed>  $user  The account: email, handle and first_name
      */
