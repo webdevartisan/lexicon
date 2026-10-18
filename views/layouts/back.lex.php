@@ -157,6 +157,7 @@ $old = old();
 {% cmp="confirm-modal" id="confirmModalWarning" tone="warning" %}
 <script src="/cp-assets/js/modal.js"></script>
 <script src="/cp-assets/js/confirm.js"></script>
+<script src="/cp-assets/js/select-menu.js"></script>
 <script src="/cp-assets/js/bulk-actions.js"></script>
 <script src="/cp-assets/js/blog-switcher.js"></script>
 <script src="/cp-assets/js/table-sort.js"></script>

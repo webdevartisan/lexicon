@@ -25,6 +25,43 @@ class JourneyTester extends \Codeception\Actor
     use _generated\JourneyTesterActions;
 
     /**
-     * Define custom actions here
+     * Pick an option the way a person does, through the select menu that replaces the native control.
      */
+    public function chooseFromMenu(string $selectSelector, string $label): void
+    {
+        $this->executeJS("document.querySelector(".json_encode($selectSelector).").parentElement.querySelector('.select-menu-button').click();");
+        $this->waitForElementVisible('.select-menu-open .select-menu-list', 3);
+        $this->click("//div[contains(@class,'select-menu-open')]//button[contains(@class,'select-menu-item')][normalize-space()=".json_encode($label)."]");
+    }
+
+    /**
+     * Press OK in the confirmation dialog, or in a native popup on pages that still use one.
+     */
+    public function acceptConfirm(?string $expectedText = null): void
+    {
+        $dialogs = [
+            [
+                "//*[@role='alertdialog'][not(contains(@class,'hidden'))]//button[@data-modal-confirm]",
+                "//*[@role='alertdialog'][not(contains(@class,'hidden'))]//p[@data-modal-message]",
+            ],
+            ['.blog-confirm-ok', '.blog-confirm-message'],
+        ];
+        foreach ($dialogs as [$button, $message]) {
+            try {
+                $this->waitForElementVisible($button, 3);
+            } catch (\Throwable) {
+                continue;
+            }
+            if ($expectedText !== null) {
+                $this->see($expectedText, $message);
+            }
+            $this->click($button);
+
+            return;
+        }
+        if ($expectedText !== null) {
+            $this->seeInPopup($expectedText);
+        }
+        $this->acceptPopup();
+    }
 }

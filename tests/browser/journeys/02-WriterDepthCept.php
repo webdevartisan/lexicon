@@ -37,7 +37,7 @@ $I->seeThePageLooksRight('21-media-library');
 $I->amOnPage($postEditUrl);
 $I->waitForElement('#content_ifr', 15);
 $I->attachFile('input.dz-hidden-input', $I->makeImage('walk-cover'));
-$I->selectOption('category_id', 'Field notes');
+$I->chooseFromMenu('#category_id', 'Field notes');
 $I->fillField('#tagInput', 'walks');
 $I->pressKey('#tagInput', WebDriverKeys::ENTER);
 // At this width the image button sits in the toolbar's overflow menu

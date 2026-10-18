@@ -57,7 +57,7 @@ $I->scrollDownTo("#{$takenBack} [data-menu-toggle]");
 $I->click("#{$takenBack} [data-menu-toggle]");
 // The menu slides in, so a click can land before it settles; press its button from the keyboard
 $I->pressKey("#{$takenBack} button.is-destructive", WebDriverKeys::ENTER);
-$I->acceptPopup();
+$I->acceptConfirm();
 $I->waitForElementNotVisible("#{$takenBack}", 15);
 $I->seeThePageLooksRight('43-comment-taken-back');
 

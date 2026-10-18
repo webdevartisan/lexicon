@@ -63,7 +63,6 @@ if (!is_assoc($options)) {
         <?php } ?>
     </select>
     
-    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zink-300"> ▼ </span>
     <?php if ($underlabel !== '') { ?>
         <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300"><?= e($underlabel) ?></p>
     <?php } ?>
@@ -73,18 +72,14 @@ if (!is_assoc($options)) {
 </div>
 
 <?php } else { ?>
-<?php $classGrouped = 'form-input border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 disabled:bg-slate-100 dark:disabled:bg-zink-600 disabled:border-slate-300 dark:disabled:border-zink-500 dark:disabled:text-zink-200 disabled:text-slate-500 dark:text-zink-100 dark:bg-zink-700 dark:focus:border-custom-800 placeholder:text-slate-400 dark:placeholder:text-zink-200'; ?>
 <div>
 <label for="<?= $elementName ?>" class="block mb-1 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300">
     <?= e($label) ?>
 </label>
 
 <select 
-    class="<?= $classGrouped ?>" 
+    class="<?= $classSelect ?>" 
     id="<?= $elementName ?>" 
-    data-choices="" 
-    data-choices-groups="" 
-    data-placeholder="<?= e($label) ?>" 
     name="<?= $elementName ?>">
 
     <?php if (!empty($emptyDefault)) { ?>

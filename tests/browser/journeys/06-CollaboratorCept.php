@@ -20,7 +20,7 @@ $I->seeThePageLooksRight('71-blog-comments');
 // The reader accepts an invitation to write
 $I->amOnPage("{$blog}/team");
 $I->fillField('input[type=email][name=email]', $I->recall('readerEmail'));
-$I->selectOption('#invite-role', 'Author');
+$I->chooseFromMenu('#invite-role', 'Author');
 $I->click('Send invite');
 $I->waitForText('Invitation sent to');
 $I->signInAs('reader');

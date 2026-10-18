@@ -663,8 +663,8 @@
                     "placeholder": "My Awesome Blog"
                 },
                 "slug": {
-                    "label": "Slug",
-                    "underlabel": "Slug cannot be changed after creation."
+                    "label": "Address",
+                    "underlabel": "The address cannot be changed after creation."
                 },
                 "description": {
                     "label": "Description",
@@ -674,10 +674,10 @@
                     "label": "Select Theme"
                 },
                 "locale": {
-                    "label": "Select Locale"
+                    "label": "Language"
                 },
                 "timezone": {
-                    "label": "Select Timezone"
+                    "label": "Time zone"
                 },
                 "metaTitle": {
                     "label": "Meta Title",
@@ -1124,6 +1124,7 @@
         "loginSubmit": "Log in",
         "registerTitle": "Create account",
         "registerSubtitle": "Save posts, follow blogs, join the conversation.",
+        "registerBlogSubtitle": "Create your account first, then set up your blog.",
         "registerSubmit": "Create account",
         "ageConfirm": "I am {age} or older.",
         "ageRequired": "Please confirm you are {age} or older.",

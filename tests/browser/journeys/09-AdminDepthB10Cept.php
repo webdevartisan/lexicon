@@ -16,7 +16,7 @@ $save = "//form[.//select[@id='registration_enabled']]//button[@type='submit']";
 $I->signInAs('admin');
 $I->amOnPage('/en/admin/settings');
 $I->click('Users & Availability');
-$I->selectOption('#registration_enabled', 'Disabled');
+$I->chooseFromMenu('#registration_enabled', 'Disabled');
 $I->click($save);
 $I->waitForText('Settings saved');
 
@@ -30,7 +30,7 @@ $I->makeScreenshot('95-register-while-closed');
 $I->signInAs('admin');
 $I->amOnPage('/en/admin/settings');
 $I->click('Users & Availability');
-$I->selectOption('#registration_enabled', 'Enabled');
+$I->chooseFromMenu('#registration_enabled', 'Enabled');
 $I->click($save);
 $I->waitForText('Settings saved');
 

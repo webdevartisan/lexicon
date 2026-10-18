@@ -675,8 +675,8 @@
           "placeholder": "مدونتي الرائعة"
         },
         "slug": {
-          "label": "Slug",
-          "underlabel": "لا يمكن تغيير الـ slug بعد الإنشاء."
+          "label": "العنوان",
+          "underlabel": "لا يمكن تغيير العنوان بعد الإنشاء."
         },
         "description": {
           "label": "الوصف",
@@ -1136,6 +1136,7 @@
     "loginSubmit": "تسجيل الدخول",
     "registerTitle": "إنشاء حساب",
     "registerSubtitle": "احفظ التدوينات، وتابع المدونات، وشارك في النقاش.",
+    "registerBlogSubtitle": "أنشئ حسابك أولاً، ثم أعدّ مدونتك.",
     "registerSubmit": "إنشاء حساب",
     "ageConfirm": "عمري {age} عاماً أو أكثر.",
     "ageRequired": "يرجى تأكيد أن عمرك {age} عاماً أو أكثر.",

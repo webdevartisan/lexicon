@@ -161,7 +161,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
               <label for="category_id" class="mb-1.5 block text-xs font-medium text-slate-500 dark:text-zink-300">Category</label>
               <?php $currentCategory = (int) (old('category_id') ?? $post['category_id'] ?? 0); ?>
               <select id="category_id" name="category_id"
-                class="block w-full rounded-md border border-slate-300/80 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:border-zink-600 dark:bg-zink-800 dark:text-zink-100">
+                class="form-select block w-full rounded-md border border-slate-300/80 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:border-zink-600 dark:bg-zink-800 dark:text-zink-100">
                 <option value="">— None —</option>
                 <?php foreach (($categories ?? []) as $cat) { ?>
                 <option value="<?= (int) $cat['id'] ?>" <?= $currentCategory === (int) $cat['id'] ? 'selected' : '' ?>>
@@ -246,14 +246,14 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
             <?php if (!empty($canSetVisibility)) {
               $visibilityChoices = [
-                  'public' => 'Public: shown on the blog, in search and in discover',
-                  'unlisted' => 'Unlisted: only people with the link',
-                  'private' => 'Private: only the blog team',
+                  'public' => 'Public',
+                  'unlisted' => 'Unlisted',
+                  'private' => 'Private',
               ];
               $selectedVisibility = (string) (old('visibility') ?? $post['visibility'] ?? 'public');
               ?>
             <div>
-              {% cmp="select" name="visibility" label="Visibility" options="{$visibilityChoices}" selectedKey="{$selectedVisibility}" %}
+              {% cmp="select" name="visibility" label="Visibility" options="{$visibilityChoices}" selectedKey="{$selectedVisibility}" underlabel="Public shows on the blog, in search and in discover. Unlisted needs the link. Private is for the blog team." %}
             </div>
             <?php } ?>
 
