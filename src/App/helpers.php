@@ -522,6 +522,68 @@ function platform_page_meta(string $title, string $description, string $canonica
 }
 
 /**
+ * JSON-LD for a blog page, built from the same meta array as the social tags.
+ *
+ * Posts are described as a BlogPosting and every other blog page as a Blog.
+ * Pages told to stay out of search engines get nothing, since structured
+ * data on them would only advertise what they asked to hide.
+ *
+ * @param  array<string, mixed>  $meta  The page meta assembled by BlogController
+ * @return string A script tag, or an empty string when there is nothing to describe
+ */
+function structured_data_tags(array $meta): string
+{
+    $url = (string) ($meta['canonical'] ?? $meta['url'] ?? '');
+    if ($url === '' || !empty($meta['robots'])) {
+        return '';
+    }
+
+    $isPost = ($meta['og_type'] ?? '') === 'article';
+    $name = (string) ($meta['og_title'] ?? '') ?: (string) ($meta['title'] ?? '');
+    $description = (string) ($meta['og_description'] ?? '') ?: (string) ($meta['description'] ?? '');
+    $image = (string) ($meta['og_image'] ?? '');
+
+    if ($isPost) {
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            // Google truncates headlines past 110 characters
+            'headline' => mb_substr($name, 0, 110),
+            'description' => $description,
+            'image' => $image,
+            'datePublished' => $meta['article_published_time'] ?? null,
+            'dateModified' => $meta['article_modified_time'] ?? ($meta['article_published_time'] ?? null),
+            'author' => ($meta['article_author'] ?? '') !== ''
+                ? ['@type' => 'Person', 'name' => (string) $meta['article_author']]
+                : null,
+            'publisher' => ($meta['site_name'] ?? '') !== ''
+                ? ['@type' => 'Organization', 'name' => (string) $meta['site_name']]
+                : null,
+            'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $url],
+        ];
+    } else {
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Blog',
+            'name' => (string) ($meta['site_name'] ?? '') ?: $name,
+            'description' => $description,
+            'image' => $image,
+            'url' => $url,
+        ];
+    }
+
+    $data = array_filter($data, static fn ($value): bool => $value !== null && $value !== '');
+
+    // The hex flags keep a "</script>" inside a title from ending the block early
+    $json = json_encode(
+        $data,
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+
+    return '<script type="application/ld+json">'.$json.'</script>';
+}
+
+/**
  * Pixel dimensions of a locally hosted social image.
  *
  * Only local files are measured: reaching out to a remote host mid-render

@@ -17,6 +17,7 @@
 
   <?php /* Shared across every theme so a new tag lands everywhere at once. */ ?>
   <?= social_meta_tags($meta ?? []) ?>
+  <?= structured_data_tags($meta ?? []) ?>
 
   <?php
     $logo = $settings['logo_path'] ?? null;
