@@ -7,6 +7,7 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Models\CommentModel;
 use App\Models\ContentReportModel;
 use App\Resources\BlogResource;
@@ -20,7 +21,8 @@ class CommentController extends AppController
         private CommentModel $model,
         private BlogModel $blogModel,
         private CommentRemovalService $removal,
-        private ContentReportModel $reports
+        private ContentReportModel $reports,
+        private BlogSettingsModel $settings
     ) {}
 
     public function index(string $blogId): Response
@@ -56,6 +58,7 @@ class CommentController extends AppController
             'counts' => $counts,
             'status' => $status,
             'q' => $q,
+            'autoPublish' => $this->settings->commentsAutoPublish((int) $blogId),
         ]);
     }
 

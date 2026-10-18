@@ -199,7 +199,7 @@ $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
                         <select id="invite-role" name="role"
                             class="form-select w-full border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500 dark:text-zink-100 dark:bg-zink-700 text-sm py-2">
                             <?php foreach ($roles as $role) { ?>
-                                <option value="<?= e($role) ?>" data-doc="<?= e($roleDocs[$role] ?? '') ?>"><?= e($roleName($role)) ?></option>
+                                <option value="<?= e($role) ?>" data-doc="<?= e($roleDocs[$role] ?? '') ?>" <?= $role === 'author' ? 'selected' : '' ?>><?= e($roleName($role)) ?></option>
                             <?php } ?>
                         </select>
                         <p id="invite-role-doc" class="text-[11px] text-slate-500 dark:text-zink-300 mt-1 leading-snug min-h-[2em]"></p>
