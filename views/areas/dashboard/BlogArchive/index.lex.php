@@ -19,6 +19,9 @@
       {% include "partials/dashboard/archive/_export.lex.php" %}
       {% include "partials/dashboard/archive/_import.lex.php" %}
     </div>
+    <div class="mt-5 xl:w-1/2 xl:pr-2.5">
+      {% include "partials/dashboard/archive/_foreign.lex.php" %}
+    </div>
   <?php } ?>
 </div>
 {% endblock %}

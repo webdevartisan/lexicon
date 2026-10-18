@@ -15,6 +15,8 @@ use App\Services\Archive\ArchivePlan;
 use App\Services\Archive\BlogArchiveExporter;
 use App\Services\Archive\BlogArchiveImporter;
 use App\Services\Archive\BlogArchiveReader;
+use App\Services\Archive\Foreign\ForeignArchiveBuilder;
+use App\Services\Archive\Foreign\ForeignSource;
 use App\Services\BlogArchiveRateLimiter;
 use Framework\Core\FileDownloadResponse;
 use Framework\Core\Response;
@@ -40,6 +42,7 @@ final class BlogArchiveController extends AppController
         private BlogArchiveImporter $importer,
         private ArchiveImportStore $store,
         private BlogArchiveRateLimiter $limiter,
+        private ForeignArchiveBuilder $foreign,
     ) {}
 
     /**
@@ -98,21 +101,29 @@ final class BlogArchiveController extends AppController
         }
         $this->limiter->hit($userId, 'import');
 
-        [$upload, $error] = $this->uploadedArchive();
+        $source = $this->foreign->source((string) $this->request->postParam('source', ''));
+        [$upload, $error] = $this->uploadedArchive($source?->extension() ?? 'zip');
         if ($upload === null) {
             $this->response->setStatusCode(422);
 
             return $this->page($blog, ['importError' => $error]);
         }
 
-        $importId = $this->store->store($upload, $userId, (int) $blog->id());
         try {
+            $converted = $source !== null ? $this->convertForeign($source, $upload) : null;
+            $importId = $this->store->store($converted ?? $upload, $userId, (int) $blog->id());
             $plan = $this->reader->read((string) $this->store->find($importId, $userId, (int) $blog->id()), $blog);
         } catch (ArchiveException $e) {
-            $this->store->discard($importId, $userId);
+            if (isset($importId)) {
+                $this->store->discard($importId, $userId);
+            }
             $this->response->setStatusCode(422);
 
             return $this->page($blog, ['importError' => $this->message($e)]);
+        } finally {
+            if (isset($converted) && is_file($converted)) {
+                unlink($converted);
+            }
         }
 
         return $this->page($blog, ['plan' => $this->planView($plan), 'importId' => $importId]);
@@ -133,6 +144,11 @@ final class BlogArchiveController extends AppController
             return $this->backWithError($blog, $this->t('archive.errors.badOption'));
         }
 
+        $selected = $this->selectedPosts();
+        if ($selected === []) {
+            return $this->backWithError($blog, $this->t('archive.errors.nonePicked'));
+        }
+
         $zip = $this->store->find($importId, $userId, (int) $blog->id());
         if ($zip === null) {
             return $this->backWithError($blog, $this->t('archive.errors.expired'));
@@ -143,6 +159,7 @@ final class BlogArchiveController extends AppController
             $result = $this->importer->import($this->reader->read($zip, $blog), $zip, $blog, $userId, [
                 'on_clash' => $onClash,
                 'keep_status' => $this->request->postParam('keep_status') === '1',
+                'only' => $selected,
                 'work_dir' => $this->store->workDir($importId, $userId),
             ]);
         } catch (ArchiveException $e) {
@@ -203,7 +220,7 @@ final class BlogArchiveController extends AppController
      *
      * @return array{0: ?string, 1: ?string} [path, error]
      */
-    private function uploadedArchive(): array
+    private function uploadedArchive(string $extension = 'zip'): array
     {
         $file = $this->request->files['archive'] ?? null;
         $error = is_array($file) ? (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) : UPLOAD_ERR_NO_FILE;
@@ -218,11 +235,55 @@ final class BlogArchiveController extends AppController
         if ($error !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
             return [null, $this->t('archive.errors.uploadFailed')];
         }
-        if (strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) !== 'zip') {
-            return [null, $this->t('archive.errors.notZip')];
+        if (strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) !== $extension) {
+            return [null, $extension === 'zip'
+                ? $this->t('archive.errors.notZip')
+                : $this->t('archive.foreign.wrongType', ['type' => '.'.$extension])];
         }
 
         return [$file['tmp_name'], null];
+    }
+
+    /**
+     * Positions of the posts the owner ticked in the preview.
+     *
+     * @return list<int>
+     */
+    private function selectedPosts(): array
+    {
+        $raw = $this->request->postParam('selected', []);
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $positions = [];
+        foreach ($raw as $value) {
+            if (is_string($value) && ctype_digit($value)) {
+                $positions[(int) $value] = (int) $value;
+            }
+        }
+
+        return array_values($positions);
+    }
+
+    /**
+     * Convert another platform's export into a temporary archive and return its path.
+     *
+     * @throws ArchiveException
+     */
+    private function convertForeign(ForeignSource $source, string $upload): string
+    {
+        $dest = $this->exportPath();
+        try {
+            $this->foreign->build($source, $upload, trim((string) $this->request->postParam('site_url', '')), $dest);
+        } catch (\Throwable $e) {
+            if (is_file($dest)) {
+                unlink($dest);
+            }
+            throw $e;
+        }
+
+        return $dest;
     }
 
     /**
@@ -238,6 +299,16 @@ final class BlogArchiveController extends AppController
         return [
             'source' => $plan->source,
             'counts' => $plan->counts(),
+            'posts' => array_map(static fn (array $p, int $i): array => [
+                'index' => $i,
+                'title' => (string) ($p['data']['title'] ?? ''),
+                'slug' => (string) ($p['data']['slug'] ?? ''),
+                'status' => (string) ($p['data']['status'] ?? ''),
+                'date' => substr((string) ($p['data']['published_at'] ?? ''), 0, 10),
+                'category' => $p['data']['category']['name'] ?? '',
+                'tags' => count($p['data']['tags'] ?? []),
+                'problem' => implode(' ', $p['errors']),
+            ], $plan->posts, array_keys($plan->posts)),
             'clashes' => array_map(static fn (array $p): array => [
                 'title' => $p['data']['title'],
                 'slug' => $p['data']['slug'],

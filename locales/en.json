@@ -1960,7 +1960,33 @@
             "cancel": "Cancel import",
             "cancelled": "The import was cancelled and the uploaded archive deleted."
         },
+        "foreign": {
+          "heading": "Import from another platform",
+          "body": "Bring your posts over from a WordPress or Ghost export file. Nothing changes until you confirm.",
+          "platform": "Where are you moving from?",
+          "file": "Export file",
+          "wordpressHelp": "In WordPress go to Tools, Export, choose Posts, and upload the .xml file.",
+          "ghostHelp": "In Ghost go to Settings, Labs, Export your content, and upload the .json file.",
+          "siteUrl": "Address of your old site",
+          "siteUrlHelp": "Ghost leaves its own address out of links and images. Enter it so they keep working.",
+          "images": "Images are not copied. They stay as links to your old site, so keep it online until you have replaced them. Everything comes in as a draft unless you choose otherwise.",
+          "wrongType": "That is not a {type} file.",
+          "notWordpress": "That file is not a WordPress export.",
+          "notGhost": "That file is not a Ghost export.",
+          "needSiteUrl": "Ghost leaves its own address out of links, so enter where your old site lived.",
+          "tooLarge": "That file is too large to read.",
+          "empty": "No posts were found in that {source} file."
+        },
         "preview": {
+          "postsHeading": "Choose posts to import",
+          "postsBody": "Untick any post you do not want to bring in.",
+          "selected": "{count} of {total} selected",
+          "selectAll": "Select all posts",
+          "fileStatus": "Status in file",
+          "date": "Date",
+          "category": "Category",
+          "cannotImport": "Cannot be imported:",
+          "tagCount": "{count} tags",
             "heading": "What this archive contains",
             "from": "From {name}, exported {date}",
             "posts": "Posts",
@@ -2012,6 +2038,7 @@
             "viewPosts": "View posts"
         },
         "errors": {
+          "nonePicked": "Choose at least one post to import.",
             "empty": "The archive is empty or missing.",
             "tooLarge": "The archive is larger than {size}.",
             "notZip": "The file is not a readable zip archive.",
