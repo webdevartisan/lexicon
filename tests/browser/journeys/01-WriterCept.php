@@ -23,9 +23,11 @@ $I->checkOption('age_confirmed');
 $I->waitForTheSignUpCheck();
 $I->click('Create account');
 
-// "Create a Blog" carries through sign-up straight into Start your blog
+// A new account has to prove its address before it can start a blog
+$I->waitForText('Confirm your email', 15);
+$I->followTheConfirmLinkMailedTo($email);
+$I->amOnPage('/en/dashboard/blog/new');
 $I->waitForText('What will you call your blog?', 15);
-$I->see("Let's start your blog.");
 $I->seeInCurrentUrl('/dashboard/blog/new');
 $I->dontSee('Too many accounts were created');
 $I->seeThePageLooksRight('02-signed-up');
