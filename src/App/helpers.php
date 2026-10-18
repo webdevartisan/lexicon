@@ -188,6 +188,20 @@ function password_length_bounds(): array
 }
 
 /**
+ * The auth locale key for the password hint that matches the active preset.
+ */
+function password_hint_key(): string
+{
+    $rules = \Framework\Validation\Validator::parsePasswordRequirements(password_policy_preset());
+
+    if ($rules['symbols'] > 0) {
+        return 'auth.passwordStrong';
+    }
+
+    return $rules['uppercase'] > 0 ? 'auth.passwordMedium' : 'auth.passwordMin';
+}
+
+/**
  * Timezone configured for the site as a whole.
  *
  * Last resort for both of the resolvers below, so it never returns something

@@ -76,7 +76,7 @@ $fieldErrors = errors();
         // rates what has been typed. Keeping them separate stops the meter
         // from reading like a rule the server does not actually enforce.
 ?>
-        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t(password_hint_key(), ['min' => password_length_bounds()['min']])) ?></p>
 
         <?php
 // Rating labels ride along as data so the script stays free of copy.

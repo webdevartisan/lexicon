@@ -1167,6 +1167,8 @@
         "inviteJoinedCta": "Open dashboard",
         "returnHome": "Return home",
         "passwordMin": "At least {min} characters, and not a common password. Longer is stronger, and a passphrase beats a short complicated one.",
+        "passwordMedium": "At least {min} characters with an upper-case letter, a lower-case letter and a number, and not a common password.",
+        "passwordStrong": "At least {min} characters with an upper-case letter, a lower-case letter, a number and a symbol, and not a common password.",
         "strengthTooShort": "Too short",
         "strengthWeak": "Weak",
         "strengthFair": "Fair",
