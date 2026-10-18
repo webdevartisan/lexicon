@@ -2243,6 +2243,12 @@
                 "question": "What will you call your blog?",
                 "hint": "You can change the name any time."
             },
+            "writer": {
+                "question": "And what's your name?",
+                "hint": "It appears on your posts. You can change it on your profile.",
+                "first": "First name",
+                "last": "Last name"
+            },
             "address": {
                 "label": "Your blog's address:",
                 "change": "Change",

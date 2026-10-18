@@ -17,6 +17,7 @@ use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
 use App\Services\BlogRoleLabels;
+use App\Services\DisplayNameService;
 use App\Services\LocaleRegistry;
 use App\Services\WorkflowService;
 use Framework\Core\Response;
@@ -39,6 +40,7 @@ final class BlogController extends AppController
         private BlogDeletionService $blogDeletion,
         private WorkflowService $workflowService,
         private BlogRoleLabels $roleLabels,
+        private DisplayNameService $displayNames,
     ) {}
 
     /**
@@ -148,7 +150,27 @@ final class BlogController extends AppController
         $user = auth()->user();
         Gate::authorize('create', BlogResource::class, $user);
 
-        return $this->view();
+        return $this->view(['needsName' => $this->needsName((int) $user['id'])]);
+    }
+
+    /**
+     * A writer who never gave a name would be bylined with their @handle.
+     */
+    private function needsName(int $userId): bool
+    {
+        $account = $this->user->findById($userId);
+
+        return trim((string) ($account['first_name'] ?? '').(string) ($account['last_name'] ?? '')) === '';
+    }
+
+    /**
+     * Store the name given on the first blog and let bylines use it.
+     */
+    private function saveWriterName(int $userId, string $first, string $last): void
+    {
+        $this->user->updateById($userId, ['first_name' => $first, 'last_name' => $last]);
+        $this->preference->upsert($userId, ['display_name_preference' => 'name']);
+        $this->displayNames->refreshCached($userId);
     }
 
     /**
@@ -173,16 +195,28 @@ final class BlogController extends AppController
             $this->request->post['slug'] = slugify((string) ($this->request->post['name'] ?? ''));
         }
 
-        $validator = $this->validateOrFail([
+        $askedForName = $this->needsName((int) $userId);
+
+        $rules = [
             'name' => 'required|title|min:2|max:50',
             'slug' => 'required|slug|min:2|max:50|unique:blogs,blog_slug',
             'description' => 'max:1000',
-        ], [
+        ];
+        if ($askedForName) {
+            $rules['first_name'] = 'required|name|min:2|max:50';
+            $rules['last_name'] = 'required|name|min:2|max:50';
+        }
+
+        $validator = $this->validateOrFail($rules, [
             'slug.required' => 'We could not build a web address from that name. Please type one using letters, numbers and hyphens.',
             'slug.slug' => 'The address can only use lowercase letters, numbers and single hyphens, with no hyphen at the start or end.',
         ]);
 
         $validated = $validator->validated();
+
+        if ($askedForName) {
+            $this->saveWriterName((int) $userId, $validated['first_name'], $validated['last_name']);
+        }
 
         $identity = [
             'blog_name' => $validated['name'],

@@ -36,6 +36,8 @@ $I->saveSessionSnapshot('writer');
 // The writer starts a blog in three steps: name, what it's about, a look
 $I->see('Step 1 of 3');
 $I->fillField('name', "Walkthrough {$stamp}");
+$I->fillField('first_name', 'Wanda');
+$I->fillField('last_name', 'Walker');
 $I->waitForText("/blog/walkthrough-{$stamp}", 5, '[data-address]');
 $I->seeThePageLooksRight('03-start-name');
 $I->click('[data-address-change] summary');
@@ -97,6 +99,9 @@ $I->see('Anyone can read this post.', '[data-visibility-line]');
 $I->seeThePageLooksRight('05-first-post');
 $postEditUrl = $I->grabFromCurrentUrl();
 $postUrl = "/en/blog/{$blogSlug}/{$postSlug}";
+$I->amOnPage($postUrl);
+$I->see('Wanda Walker');
+$I->amOnPage($postEditUrl);
 
 // The next steps card counts the first post, hides and comes back, and ticks the share step
 $I->amOnPage('/en/dashboard');
