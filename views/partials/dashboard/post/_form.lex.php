@@ -83,6 +83,13 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
           </div>
         </section>
 
+        <style>
+  .post-panel > summary { list-style: none; }
+  .post-panel > summary::-webkit-details-marker { display: none; }
+  .post-panel[open] > .post-panel-head { border-bottom-width: 1px; }
+  .post-panel[open] .post-panel-chevron { transform: rotate(180deg); }
+</style>
+
         {% include "partials/dashboard/post/_seo_card.lex.php" %}
         {% include "partials/dashboard/post/_social_card.lex.php" %}
 
