@@ -86,6 +86,24 @@ test('invite notifies an existing user in-app', function () {
         ->and($notifications[0]['type'])->toBe('blog.invite');
 });
 
+test('inviting the same user again replaces the earlier notification', function () {
+    $inviteeId = UserFactory::new($this->userModel)
+        ->withAttributes(['email' => 'member@example.com'])
+        ->create();
+    $otherBlogId = BlogFactory::new($this->blogModel)->create($this->ownerId);
+
+    $this->service->invite($otherBlogId, 'member@example.com', 'author', $this->ownerId, '127.0.0.1');
+    $this->service->invite($this->blogId, 'member@example.com', 'editor', $this->ownerId, '127.0.0.1');
+    $this->service->invite($this->blogId, 'member@example.com', 'author', $this->ownerId, '127.0.0.1');
+
+    $notifications = $this->notifModel->findForUser($inviteeId);
+    $blogIds = array_map(fn ($n) => (int) (json_decode((string) $n['data'], true)['blog_id'] ?? 0), $notifications);
+    sort($blogIds);
+
+    expect($notifications)->toHaveCount(2)
+        ->and($blogIds)->toBe([min($this->blogId, $otherBlogId), max($this->blogId, $otherBlogId)]);
+});
+
 test('accept adds the user to blog_users and consumes the invite', function () {
     $inviteeId = UserFactory::new($this->userModel)
         ->withAttributes(['email' => 'member@example.com'])

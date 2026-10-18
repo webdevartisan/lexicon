@@ -143,6 +143,21 @@ class NotificationModel extends AppModel
     }
 
     /**
+     * Delete a user's pending invite notifications for one blog.
+     *
+     * @param  int  $userId  Recipient
+     * @param  int  $blogId  Blog the invitations were for
+     * @return int Rows deleted
+     */
+    public function deleteInvitesForBlog(int $userId, int $blogId): int
+    {
+        $sql = "DELETE FROM notifications
+                WHERE user_id = ? AND type = 'blog.invite' AND JSON_EXTRACT(data, '$.blog_id') = ?";
+
+        return $this->database->execute($sql, [$userId, $blogId]);
+    }
+
+    /**
      * Delete every notification belonging to a user.
      *
      * @param  int  $userId  Recipient

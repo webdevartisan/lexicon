@@ -94,6 +94,14 @@ class NotificationService
     ) {}
 
     /**
+     * Drop a user's earlier invite notifications for a blog, so a fresh invite replaces them.
+     */
+    public function withdrawBlogInvites(int $userId, int $blogId): void
+    {
+        $this->notifications->deleteInvitesForBlog($userId, $blogId);
+    }
+
+    /**
      * Dispatch a single-type notification: write the in-app row, then optionally email.
      *
      * @param  int  $userId  Recipient user ID

@@ -68,6 +68,8 @@ class InvitationService
         // In-app notification for users who already have an account.
         $existingUser = $this->userModel->findByEmail($email);
         if ($existingUser) {
+            // The earlier invite's link no longer works once this one replaces it.
+            $this->notifications->withdrawBlogInvites((int) $existingUser['id'], $blogId);
             $this->notifications->dispatch((int) $existingUser['id'], 'blog.invite', [
                 'blog_id' => $blogId,
                 'role' => $role,
