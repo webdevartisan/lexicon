@@ -104,6 +104,17 @@ test('inviting the same user again replaces the earlier notification', function 
         ->and($blogIds)->toBe([min($this->blogId, $otherBlogId), max($this->blogId, $otherBlogId)]);
 });
 
+test('cancelling an invite removes its notification', function () {
+    $inviteeId = UserFactory::new($this->userModel)
+        ->withAttributes(['email' => 'member@example.com'])
+        ->create();
+
+    $this->service->invite($this->blogId, 'member@example.com', 'author', $this->ownerId, '127.0.0.1');
+    $this->service->cancel($this->blogId, 'member@example.com', $this->ownerId, '127.0.0.1');
+
+    expect($this->notifModel->findForUser($inviteeId))->toBeEmpty();
+});
+
 test('accept adds the user to blog_users and consumes the invite', function () {
     $inviteeId = UserFactory::new($this->userModel)
         ->withAttributes(['email' => 'member@example.com'])

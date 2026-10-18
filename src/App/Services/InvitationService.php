@@ -193,6 +193,11 @@ class InvitationService
     {
         $this->invitationModel->cancelPendingForEmail($blogId, $email);
 
+        $existingUser = $this->userModel->findByEmail($email);
+        if ($existingUser) {
+            $this->notifications->withdrawBlogInvites((int) $existingUser['id'], $blogId);
+        }
+
         audit()->log($cancelledBy, 'blog.invite_cancelled', 'blog_invitation', $blogId,
             ['email' => $email], $ip);
     }
