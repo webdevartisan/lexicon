@@ -120,16 +120,8 @@ final class SettingController extends AppController
         $rules = [
             // site identity
             'site_name' => 'required|min:2|max:100',
-            'site_description' => 'max:255',
-            'site_tagline' => 'max:100',
             'admin_email' => 'required|email',
             'timezone' => 'required',
-
-            // content
-            'posts_per_page' => 'required|integer|min:1|max:50',
-            'excerpt_length' => 'required|integer|min:50|max:500',
-            'date_format' => 'required',
-            'allow_comments' => 'boolean',
 
             // registration and availability
             'registration_enabled' => 'boolean',
