@@ -330,6 +330,25 @@ it('preserves response body and status code', function () {
         ->and($result->getStatusCode())->toBe($statusCode);
 });
 
+// ==================== ERROR PAGES ====================
+
+it('hardens a response that skipped the middleware stack', function () {
+    EnvironmentTestHelper::setDevelopment();
+    $middleware = new SecurityHeadersMiddleware();
+
+    $request = new Request('/'.$this->faker->slug(), 'GET', [], [], [], [], [], []);
+    $errorPage = new Response();
+    $errorPage->setStatusCode(404);
+
+    $middleware->harden($errorPage, $request);
+
+    expect($errorPage->getStatusCode())->toBe(404)
+        ->and($errorPage->getHeader('X-Content-Type-Options'))->toBe('nosniff')
+        ->and($errorPage->getHeader('Referrer-Policy'))->toBe('strict-origin-when-cross-origin')
+        ->and($errorPage->hasHeader('Content-Security-Policy') || $errorPage->hasHeader('Content-Security-Policy-Report-Only'))
+        ->toBeTrue();
+});
+
 // ==================== ENVIRONMENT EDGE CASES ====================
 
 it('handles missing APP_ENV gracefully', function () {

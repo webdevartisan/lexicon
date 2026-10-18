@@ -8,6 +8,7 @@ use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Interfaces\MiddlewareInterface;
 use Framework\Interfaces\RequestHandlerInterface;
+use Framework\Interfaces\ResponseHardenerInterface;
 use Framework\Security\Csp;
 
 /**
@@ -20,7 +21,7 @@ use Framework\Security\Csp;
  * NOTE: For static files served directly by the web server,
  * headers must still be set in .htaccess or nginx.conf.
  */
-class SecurityHeadersMiddleware implements MiddlewareInterface
+class SecurityHeadersMiddleware implements MiddlewareInterface, ResponseHardenerInterface
 {
     private bool $isProduction;
 
@@ -39,6 +40,17 @@ class SecurityHeadersMiddleware implements MiddlewareInterface
         $this->applySecurityHeaders($response, $request);
 
         return $response;
+    }
+
+    /**
+     * Give an error page the same headers as a normal response.
+     *
+     * Routing errors are thrown before the middleware stack runs, so without
+     * this a 404 would go out with no CSP at all.
+     */
+    public function harden(Response $response, Request $request): void
+    {
+        $this->applySecurityHeaders($response, $request);
     }
 
     /**

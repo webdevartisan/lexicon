@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Framework\Core;
 
 use ErrorException;
+use Framework\Interfaces\ResponseHardenerInterface;
 use Framework\Interfaces\ServerErrorReporterInterface;
 use Framework\Interfaces\TemplateViewerInterface;
 use Throwable;
@@ -127,6 +128,13 @@ final class ErrorHandler
 
             $renderer = new ErrorRenderer($viewer, $response, $isDev);
             $rendered = $renderer->render($exception);
+
+            if ($container->has(ResponseHardenerInterface::class)) {
+                $hardener = $container->get(ResponseHardenerInterface::class);
+                assert($hardener instanceof ResponseHardenerInterface);
+                $hardener->harden($rendered, Request::createFromGlobals());
+            }
+
             $rendered->send();
 
             if ($rendered->getStatusCode() >= 500 && $container->has(ServerErrorReporterInterface::class)) {

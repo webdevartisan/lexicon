@@ -371,6 +371,10 @@ $container->setShared(App\Services\Analytics\EventRegistry::class, function ($c)
     return new App\Services\Analytics\EventRegistry($analyticsConfig()['events']);
 });
 
+$container->set(Framework\Interfaces\ResponseHardenerInterface::class, function ($c) {
+    return $c->get(App\Middleware\SecurityHeadersMiddleware::class);
+});
+
 $container->set(Framework\Interfaces\ServerErrorReporterInterface::class, function ($c) {
     return $c->get(App\Services\Analytics\ServerErrorRecorder::class);
 });
