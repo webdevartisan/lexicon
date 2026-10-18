@@ -12,4 +12,8 @@ return [
 
     // UK NCSC list of the 100,000 passwords seen most in breaches. Compared case-insensitively.
     'common_passwords_file' => ROOT_PATH.'/resources/security/common-passwords.txt',
+
+    // Accounts that can open the control panel must sign in with an authenticator app.
+    // Without it they are sent to set one up before /admin opens.
+    'two_factor_required_for_admins' => (bool) env('TWO_FACTOR_REQUIRED_FOR_ADMINS', true),
 ];

@@ -7,10 +7,11 @@ namespace App\Controllers\Auth;
 use App\Controllers\AppController;
 use App\Exceptions\AccountDeletedException;
 use App\Exceptions\AccountSuspendedException;
-use App\Services\Analytics\VisitorLink;
 use App\Services\Captcha\CaptchaInterface;
 use App\Services\Captcha\CaptchaResult;
 use App\Services\LoginRateLimiter;
+use App\Services\SignInCompleter;
+use App\Services\TwoFactor\TwoFactorService;
 use Framework\Core\Response;
 
 /**
@@ -192,7 +193,7 @@ final class AuthController extends AppController
         // ---------------------------------------------------------
 
         try {
-            $loggedIn = auth()->login($email, $password);
+            $user = auth()->verifyCredentials($email, $password);
         } catch (AccountSuspendedException|AccountDeletedException $e) {
             if ($isAjax) {
                 return $this->jsonError($e->getMessage(), 403);
@@ -203,55 +204,16 @@ final class AuthController extends AppController
             return $this->redirectBack();
         }
 
-        if ($loggedIn) {
-
+        if ($user !== null) {
             $limiter->clear($ip, $email);
 
-            $userId = (int) auth()->user()['id'];
-            audit()->log($userId, 'auth.login', 'user', $userId, [], $ip);
-
-            app(VisitorLink::class)->toAccount($this->request, (int) auth()->user()['id']);
-
-            // The session still holds the locale this visitor was browsing as a
-            // guest, and every redirect below is built from it. Adopt the
-            // account's language now that there is an account to read it from.
-            $preferredLocale = app(\App\Services\SessionLocaleSync::class)
-                ->apply((int) auth()->user()['id']);
-
-            // A reply captured before login gets posted now and wins the
-            // redirect: the reader lands back on the comment they answered.
-            $resume = app(\App\Services\CommentService::class)->resumePending(auth()->user(), $ip);
-            if ($resume !== null) {
-                if ($isAjax) {
-                    return $this->jsonSuccess(['redirect' => $resume['path']]);
-                }
-
-                $this->flash($resume['ok'] ? 'success' : 'error', $resume['message']);
-
-                return $this->redirect($resume['path']);
+            if (app(TwoFactorService::class)->isEnabled($user)) {
+                return $this->askForSecondStep($user, $returnTo, $isAjax);
             }
 
-            // Redirect priority: blog-front return_to beats the stored
-            // intended URL, and only when neither exists do we fall back to
-            // the dashboard (readers land on their reading hub there).
-            $intendedUrl = safe_return_to($this->session->get('intended_url'));
-            $this->session->remove('intended_url');
+            auth()->startSession($user);
 
-            $target = $returnTo ?? ($intendedUrl ?: '/dashboard');
-
-            // A prefix on one of the platform's own pages only records what the
-            // last visitor was reading, which on a shared browser is somebody
-            // else. A prefix on a post is part of the link and stays put.
-            $target = app(\App\Services\ReaderLocaleTarget::class)
-                ->resolve($target, $preferredLocale);
-
-            if ($isAjax) {
-                // No flash here: the modal shows its own success state and
-                // usually finishes the action in place instead of navigating
-                return $this->jsonSuccess(['redirect' => $target]);
-            }
-
-            return $this->redirect($target);
+            return $this->finishSignIn($returnTo, $isAjax);
         }
 
         // ---------------------------------------------------------
@@ -274,6 +236,48 @@ final class AuthController extends AppController
 
         // Return Response
         return $this->redirectBack();
+    }
+
+    /**
+     * Park a correct password until the code from the authenticator app arrives.
+     *
+     * Nothing about the account is in the session yet beyond the user id and a
+     * ten minute window, and a fresh session id keeps a planted one from being reused.
+     *
+     * @param  array<string, mixed>  $user
+     */
+    private function askForSecondStep(array $user, ?string $returnTo, bool $isAjax): Response
+    {
+        $this->session->regenerate(true);
+        $this->session->set(TwoFactorChallengeController::PENDING_KEY, [
+            'user_id' => (int) $user['id'],
+            'return_to' => $returnTo,
+            'at' => time(),
+        ]);
+
+        $path = lurl('/login/two-factor');
+
+        return $isAjax ? $this->jsonSuccess(['redirect' => $path]) : $this->redirect($path);
+    }
+
+    /**
+     * Land a signed-in user: the shared tail of the password and second steps.
+     */
+    private function finishSignIn(?string $returnTo, bool $isAjax): Response
+    {
+        $done = app(SignInCompleter::class)->complete($this->request, $returnTo);
+
+        if ($isAjax) {
+            // No flash here: the modal shows its own success state and
+            // usually finishes the action in place instead of navigating
+            return $this->jsonSuccess(['redirect' => $done['path']]);
+        }
+
+        if ($done['flash'] !== null) {
+            $this->flash($done['flash']['type'], $done['flash']['message']);
+        }
+
+        return $this->redirect($done['path']);
     }
 
     /**

@@ -54,10 +54,33 @@ class Auth implements AuthInterface
      */
     public function login(string $email, string $password): bool
     {
+        $user = $this->verifyCredentials($email, $password);
+
+        if ($user === null) {
+            return false;
+        }
+
+        $this->startSession($user);
+
+        return true;
+    }
+
+    /**
+     * Check the email and password and the state of the account, without signing anyone in.
+     *
+     * Split from login() so a second step can sit between the right password and the session.
+     *
+     * @return array<string, mixed>|null The user row, or null when the credentials are wrong
+     *
+     * @throws AccountSuspendedException When the credentials are right but the account is suspended
+     * @throws AccountDeletedException When the credentials are right but the account was deleted
+     */
+    public function verifyCredentials(string $email, string $password): ?array
+    {
         $user = $this->users->findByEmail($email);
 
         if (!$user || !isset($user['password']) || !\password_verify($password, $user['password'])) {
-            return false;
+            return null;
         }
 
         if ((int) $user['is_active'] !== 1) {
@@ -78,6 +101,16 @@ class Auth implements AuthInterface
             ]);
         }
 
+        return $user;
+    }
+
+    /**
+     * Sign a user in whose credentials, and second step if they have one, are already proven.
+     *
+     * @param  array<string, mixed>  $user  A row from verifyCredentials()
+     */
+    public function startSession(array $user): void
+    {
         // Regenerate session ID on login to prevent session fixation.
         $this->session->regenerate(true);
         // A token handed out to the guest, possibly planted, must not carry over to the account.
@@ -95,8 +128,6 @@ class Auth implements AuthInterface
             'last_login' => (new \DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
             'last_locale' => LocaleState::get()->chromeLocale,
         ]);
-
-        return true;
     }
 
     /**

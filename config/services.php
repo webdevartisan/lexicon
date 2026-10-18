@@ -970,6 +970,21 @@ $container->setShared(App\Services\Captcha\CaptchaInterface::class, function ($c
     );
 });
 
+$container->setShared(App\Services\TwoFactor\SecretBox::class, function () {
+    return new App\Services\TwoFactor\SecretBox((string) env('APP_KEY', 'change-me'));
+});
+
+$container->setShared(App\Services\TwoFactor\TwoFactorPolicy::class, function ($c) {
+    $config = require ROOT_PATH.'/config/auth.php';
+
+    return new App\Services\TwoFactor\TwoFactorPolicy(
+        $c->get(App\Models\UserModel::class),
+        $c->get(App\Services\TwoFactor\TwoFactorService::class),
+        new App\Policies\SystemPolicy,
+        (bool) $config['two_factor_required_for_admins']
+    );
+});
+
 $container->set(App\Services\Analytics\AnalyticsRateLimiter::class, function ($c) {
     return new App\Services\Analytics\AnalyticsRateLimiter($c->get(Framework\Helpers\RateLimiter::class));
 });

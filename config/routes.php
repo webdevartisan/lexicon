@@ -179,6 +179,8 @@ $router->group([
     $r->add('/login', ['controller' => 'AuthController',   'action' => 'index', 'method' => 'GET']);
     $r->add('/login', ['controller' => 'AuthController',   'action' => 'submit', 'method' => 'POST']);
     $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
+    $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'show', 'method' => 'GET']);
+    $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'submit', 'method' => 'POST']);
     $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
     $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'POST']);
 
@@ -297,6 +299,11 @@ $router->group([
 
     $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
+    $r->add('/security/two-factor', ['controller' => 'AccountTwoFactorController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/security/two-factor/start', ['controller' => 'AccountTwoFactorController', 'action' => 'start', 'method' => 'POST']);
+    $r->add('/security/two-factor/confirm', ['controller' => 'AccountTwoFactorController', 'action' => 'confirm', 'method' => 'POST']);
+    $r->add('/security/two-factor/recovery-codes', ['controller' => 'AccountTwoFactorController', 'action' => 'regenerate', 'method' => 'POST']);
+    $r->add('/security/two-factor/disable', ['controller' => 'AccountTwoFactorController', 'action' => 'disable', 'method' => 'POST']);
     $r->add('/security/sessions/sign-out-others', ['controller' => 'AccountSessionsController', 'action' => 'signOutOthers', 'method' => 'POST']);
     $r->add('/security/sessions/{hash:[a-f0-9]{64}}/sign-out', ['controller' => 'AccountSessionsController', 'action' => 'signOut', 'method' => 'POST']);
 
@@ -497,7 +504,7 @@ $router->group([
 $router->group([
     'prefix' => '/admin',
     'namespace' => 'Admin',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'two-factor'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ControlPanelController', 'action' => 'index', 'method' => 'GET']);
 
@@ -547,6 +554,7 @@ $router->group([
     $r->add('/users/{id:\d+}/password/send-reset', ['controller' => 'UserSecurityController', 'action' => 'sendResetLink', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/password/set', ['controller' => 'UserSecurityController', 'action' => 'setPassword', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/sessions/sign-out', ['controller' => 'UserSecurityController', 'action' => 'signOutEverywhere', 'method' => 'POST']);
+    $r->add('/users/{id:\d+}/two-factor/reset', ['controller' => 'UserSecurityController', 'action' => 'resetTwoFactor', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'confirmImpersonate', 'method' => 'GET']);
     $r->add('/users/{id:\d+}/impersonate', ['controller' => 'UserSecurityController', 'action' => 'impersonate', 'method' => 'POST']);
     $r->add('/users/{id:\d+}/site-role', ['controller' => 'UserRoleController', 'action' => 'siteRole', 'method' => 'GET']);

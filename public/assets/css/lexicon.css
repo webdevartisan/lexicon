@@ -4608,3 +4608,31 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     .lx-welcome-choice { transition: none; }
     .lx-welcome-choice:hover { transform: none; }
 }
+.lx-recovery-codes {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.5rem;
+}
+.lx-recovery-codes li {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--lx-rule-strong);
+    background: var(--lx-paper-sunk);
+    text-align: center;
+}
+.lx-recovery-codes code,
+.lx-twofactor-secret {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.08em;
+}
+.lx-twofactor-qr {
+    inline-size: 12.5rem;
+    margin-block: 1rem;
+    background: #fff;
+    padding: 0.5rem;
+    border: 1px solid var(--lx-rule-strong);
+}
+.lx-twofactor-qr svg { display: block; inline-size: 100%; block-size: auto; }
+.lx-card .lx-stat + .lx-account-form { margin-block-start: 1.25rem; }
