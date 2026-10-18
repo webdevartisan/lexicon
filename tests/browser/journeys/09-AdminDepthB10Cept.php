@@ -11,9 +11,6 @@ if (!getenv('WALK_ADMIN_EMAIL') || !getenv('WALK_ADMIN_PASSWORD')) {
     $scenario->skip('Set WALK_ADMIN_EMAIL and WALK_ADMIN_PASSWORD to a local test admin to run this');
 }
 
-// Known bug B10: setting registration to Disabled does nothing. Delete this line once it is fixed.
-$scenario->incomplete('B10: registration Disabled does nothing');
-
 $save = "//form[.//select[@id='registration_enabled']]//button[@type='submit']";
 
 $I->signInAs('admin');

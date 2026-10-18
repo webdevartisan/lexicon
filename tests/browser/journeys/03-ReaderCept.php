@@ -32,6 +32,12 @@ $I->checkOption('[data-auth-age]');
 $I->waitForTheSignUpCheck();
 $I->click('[data-auth-submit]');
 
+// The comment is kept until the address is confirmed, then it goes through
+$I->waitForText('It posts as soon as you confirm your email', 15);
+$I->followTheConfirmLinkMailedTo($email);
+$I->amOnPage($I->recall('postUrl'));
+$I->scrollDownTo('#comments');
+
 // The comment went through and the box is empty again
 $I->waitForText($comment, 15);
 $I->see($comment, '[id^=comment-]');
