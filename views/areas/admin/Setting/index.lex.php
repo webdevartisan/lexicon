@@ -39,7 +39,7 @@ $formatOptions = [
 
 $allowComments = old('allow_comments', $settings['allow_comments'] ?? '1');
 $regEnabled = old('registration_enabled', $settings['registration_enabled'] ?? '1');
-$emailVerification = old('require_email_verification', $settings['require_email_verification'] ?? '0');
+$emailVerification = old('require_email_verification', $settings['require_email_verification'] ?? '1');
 // Maintenance state comes from the flag file, not the settings table
 $maintenance = old('maintenance_mode', !empty($maintenance_active) ? '1' : '0');
 $currentRole = old('default_user_role', $settings['default_user_role'] ?? '4');
@@ -174,7 +174,7 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
                         <select id="require_email_verification" name="require_email_verification" class="<?= $selectClass ?>">
                             <?= $onOff((string) $emailVerification, 'Required', 'Not required') ?>
                         </select>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">Future feature: require verification before login</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">When not required, new sign-ups start confirmed and get no confirmation mail</p>
                     </div>
 
                     <div>

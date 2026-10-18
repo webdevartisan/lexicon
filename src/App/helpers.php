@@ -123,6 +123,24 @@ function site_setting(string $name, ?string $default = null): ?string
 }
 
 /**
+ * Whether new accounts can be created through the sign-up form.
+ *
+ * Blog invitations stay open either way: the invited address was already chosen by a blog owner.
+ */
+function registration_open(): bool
+{
+    return app(SettingModel::class)->get('registration_enabled', '1') !== '0';
+}
+
+/**
+ * Whether a self-service sign-up must follow the mailed link before it can write.
+ */
+function email_verification_required(): bool
+{
+    return app(SettingModel::class)->get('require_email_verification', '1') !== '0';
+}
+
+/**
  * The age people confirm when they sign up, from config/privacy.php.
  */
 function minimum_signup_age(): int

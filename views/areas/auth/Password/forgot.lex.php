@@ -7,7 +7,7 @@
 {% block sub %}<?= e($t('auth.forgotSubtitle')) ?>{% endblock %}
 
 {% block altAction %}
-<a href="<?= e(lurl('/register')) ?>"><?= e($t('auth.createAccount')) ?></a>
+<?php if (registration_open()) { ?><a href="<?= e(lurl('/register')) ?>"><?= e($t('auth.createAccount')) ?></a><?php } ?>
 {% endblock %}
 
 {% block body %}

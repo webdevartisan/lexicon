@@ -1192,6 +1192,7 @@
         "verifyNeeded": "Confirm your email address first. We sent you a link.",
         "verifyCommentSaved": "We saved your comment. It posts as soon as you confirm your email.",
         "verifyAlready": "Your email is already confirmed.",
+        "registrationClosed": "New sign-ups are closed for now.",
         "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
     "account": {

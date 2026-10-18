@@ -61,7 +61,9 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // than at sign-up, since they are already registered.
         $homeViewerIsReader = !empty($viewer['is_reader']);
 // A reader the site does not let start a blog gets no primary button at all.
-$homeShowsCta = !$homeViewerIsReader || !empty($viewer['can_create_blog']);
+$homeShowsCta = auth()->check()
+    ? (!$homeViewerIsReader || !empty($viewer['can_create_blog']))
+    : registration_open();
 $homeCtaUrl = !auth()->check()
     ? '/register?return_to='.rawurlencode(lurl('/dashboard/blog/new'))
     : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');

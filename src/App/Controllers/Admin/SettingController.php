@@ -154,7 +154,13 @@ final class SettingController extends AppController
 
         // persist each setting using batch update for better performance
         if ($data !== []) {
+            $registrationBefore = $this->settings->get('registration_enabled', '1');
             $this->settings->setMany($data);
+
+            // Cached pages show or hide the sign-up buttons as of the old setting
+            if ($registrationBefore !== $this->settings->get('registration_enabled', '1')) {
+                $this->publicCache->purgeAllPages();
+            }
         }
 
         $this->flash('success', 'Settings saved successfully.');

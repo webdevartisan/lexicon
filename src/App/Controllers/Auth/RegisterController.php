@@ -49,10 +49,30 @@ final class RegisterController extends AppController
             return $this->redirect('/');
         }
 
+        if (!registration_open()) {
+            return $this->refuseClosed(false);
+        }
+
         return $this->view('register.index', [
             'return_to' => safe_return_to((string) ($this->request->get['return_to'] ?? '')),
             'captcha' => $this->captcha->issue('register'),
         ]);
+    }
+
+    /**
+     * Turn a sign-up attempt away while registration is switched off in Settings.
+     */
+    private function refuseClosed(bool $isAjax): Response
+    {
+        $message = chrome_translate('auth.registrationClosed');
+
+        if ($isAjax) {
+            return $this->jsonError($message, 403);
+        }
+
+        $this->flash('error', $message);
+
+        return $this->redirect('/login');
     }
 
     public function submit(): Response
@@ -61,6 +81,10 @@ final class RegisterController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $isAjax = $this->request->isAjax();
+
+        if (!registration_open()) {
+            return $this->refuseClosed($isAjax);
+        }
 
         $refusal = $this->refuseUnchecked($isAjax);
         if ($refusal !== null) {
@@ -98,7 +122,7 @@ final class RegisterController extends AppController
         $invite = $pendingToken !== '' ? $this->invitationModel->findValidByToken(hash('sha256', $pendingToken)) : false;
         $inviteMatches = $invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0;
 
-        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request, $inviteMatches);
+        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request, $inviteMatches || !email_verification_required());
 
         if ($userId === null) {
             if ($isAjax) {
