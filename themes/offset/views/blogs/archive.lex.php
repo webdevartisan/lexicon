@@ -40,6 +40,8 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       <?= $dek ?>
     </p>
 
+    {% include "partials/public/_blog_search.lex.php" %}
+
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
       &larr; Back to the front page
     </a>
