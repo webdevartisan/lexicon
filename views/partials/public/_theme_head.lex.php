@@ -18,6 +18,9 @@
   <?php /* Shared across every theme so a new tag lands everywhere at once. */ ?>
   <?= social_meta_tags($meta ?? []) ?>
   <?= structured_data_tags($meta ?? []) ?>
+  <?php if (!empty($blog['blog_slug'])) { ?>
+  <link rel="alternate" type="application/rss+xml" title="<?= e($blog['blog_name'] ?? '') ?>" href="<?= e(rtrim(base_url(), '/').lurl('/blog/'.rawurlencode($blog['blog_slug']).'/feed.xml')) ?>" />
+  <?php } ?>
 
   <?php
     $logo = $settings['logo_path'] ?? null;

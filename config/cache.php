@@ -132,6 +132,7 @@ return [
         '/blog/*/category/*' => 1800,
         '/blog/*/tag/*' => 1800,
         '/blog/*/index-feed' => 900,
+        '/blog/*/feed.xml' => 900,
         '/blog/*' => 1800,
 
     ],
@@ -158,6 +159,7 @@ return [
         '/blog/*/category/*' => ['page'],
         '/blog/*/tag/*' => ['page'],
         '/blog/*/index-feed' => ['category', 'page'],
+        '/blog/*/feed.xml' => [],
         '/blog/*' => ['category', 'page', 'comments'],
     ],
 
