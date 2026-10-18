@@ -3,7 +3,7 @@
 {% block title %}{{ t('pages.gettingStartedTitle') }} | <?= e(site_setting('site_name', 'Lexicon')) ?>{% endblock %}
 
 {% block meta %}
-<meta name="description" content="{{ t('pages.gettingStartedIntro') }}" />
+<?= platform_page_meta($t('pages.gettingStartedTitle'), $t('pages.gettingStartedIntro'), $head['canonicalUrl']) ?>
 {% endblock %}
 
 {% block body %}

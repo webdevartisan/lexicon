@@ -905,6 +905,8 @@
     "discover": {
         "metaTitle": "Ανακάλυψε blogs και κείμενα στο Lexicon",
         "metaTitlePosts": "Τα πιο πρόσφατα άρθρα από συγγραφείς στο Lexicon",
+        "metaDescription": "Περιηγήσου σε blogs και βρες συγγραφείς που δημοσιεύουν στο Lexicon.",
+        "metaDescriptionPosts": "Διάβασε τα πιο πρόσφατα άρθρα συγγραφέων που δημοσιεύουν στο Lexicon.",
         "heroTitle": "Σπουδαία κείμενα",
         "heroSubtitle": "Ξεφύλλισε blogs και τα πιο πρόσφατα άρθρα από συγγραφείς σε όλο το Lexicon.",
         "searchPlaceholderBlogs": "Αναζήτηση blogs...",

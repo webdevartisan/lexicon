@@ -917,6 +917,8 @@
   "discover": {
     "metaTitle": "اكتشف المدونات والكتابات على Lexicon",
     "metaTitlePosts": "أحدث التدوينات من كتّاب على Lexicon",
+    "metaDescription": "تصفّح المدونات واعثر على كتّاب ينشرون على Lexicon.",
+    "metaDescriptionPosts": "اقرأ أحدث التدوينات من كتّاب ينشرون على Lexicon.",
     "heroTitle": "كتابات رائعة",
     "heroSubtitle": "تصفح المدونات وأحدث التدوينات من كتّاب عبر Lexicon.",
     "searchPlaceholderBlogs": "ابحث في المدونات...",

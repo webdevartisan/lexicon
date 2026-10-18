@@ -3,10 +3,7 @@
 {% block title %}<?= e(site_content('meta.title')) ?>{% endblock %}
 
 {% block meta %}
-<meta name="description" content="<?= e(site_content('meta.description')) ?>" />
-<meta property="og:title" content="<?= e(site_content('meta.title')) ?>" />
-<meta property="og:description" content="<?= e(site_content('meta.description')) ?>" />
-<meta property="og:type" content="website" />
+<?= platform_page_meta(site_content('meta.title'), site_content('meta.description'), $head['canonicalUrl']) ?>
 {% endblock %}
 
 {% block body %}

@@ -478,6 +478,50 @@ function social_meta_tags(array $meta): string
 }
 
 /**
+ * Search and sharing tags for one of the platform's own public pages.
+ *
+ * Blog pages build theirs in BlogController; this covers the pages that sit
+ * on the front layout (home, discover, the content pages). The share image is
+ * the app icon, so link previews use the small "summary" card rather than the
+ * large one that would crop it.
+ *
+ * @param  string  $title  Page title for og:title
+ * @param  string  $description  Meta description, omitted when empty
+ * @param  string  $canonical  Absolute canonical URL, also used as og:url
+ * @param  string|null  $robots  Value for the robots meta tag, if the page needs one
+ * @return string Tags ready to echo inside <head>
+ */
+function platform_page_meta(string $title, string $description, string $canonical, ?string $robots = null): string
+{
+    $origin = (string) (parse_url($canonical, PHP_URL_SCHEME) ?: 'https').'://'.(string) parse_url($canonical, PHP_URL_HOST);
+    $port = parse_url($canonical, PHP_URL_PORT);
+    if ($port !== null) {
+        $origin .= ':'.$port;
+    }
+
+    $tags = [];
+    if ($description !== '') {
+        $tags[] = '<meta name="description" content="'.e($description).'" />';
+    }
+    if ($robots !== null) {
+        $tags[] = '<meta name="robots" content="'.e($robots).'" />';
+    }
+
+    $tags[] = social_meta_tags([
+        'title' => $title,
+        'description' => $description,
+        'url' => $canonical,
+        'site_name' => (string) site_setting('site_name', 'Lexicon'),
+        'og_image' => $origin.'/assets/icon/android-chrome-512x512.png',
+        'og_image_alt' => (string) site_setting('site_name', 'Lexicon'),
+        'twitter_card' => 'summary',
+    ]);
+
+    return implode("
+", $tags);
+}
+
+/**
  * Pixel dimensions of a locally hosted social image.
  *
  * Only local files are measured: reaching out to a remote host mid-render
