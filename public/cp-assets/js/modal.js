@@ -1,10 +1,16 @@
     // drawer setting offCanvas
     function drawerSetting() {
         
-        const allDrawerButtons = document.querySelectorAll('[data-drawer-target]');
-        const allDrawerCloseButtons = document.querySelectorAll('[data-drawer-close]');
-        const allModalButtons = document.querySelectorAll('[data-modal-target]');
-        const allModalCloseButtons = document.querySelectorAll('[data-modal-close]');
+        // The layout and some pages both load this file; each control is wired once
+        const unbound = selector => Array.prototype.filter.call(document.querySelectorAll(selector), el => {
+            if (el.dataset.modalBound) return false;
+            el.dataset.modalBound = '1';
+            return true;
+        });
+        const allDrawerButtons = unbound('[data-drawer-target]');
+        const allDrawerCloseButtons = unbound('[data-drawer-close]');
+        const allModalButtons = unbound('[data-modal-target]');
+        const allModalCloseButtons = unbound('[data-modal-close]');
         const bodyElement = document.body;       
         
         let openDrawerId = null;

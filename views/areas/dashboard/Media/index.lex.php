@@ -358,10 +358,10 @@ $mediaSortOptions = [
     loadMoreBtn.addEventListener('click', function () { fetchList(false); });
 
     // Delete (event delegation so it survives re-renders)
-    grid.addEventListener('click', function (e) {
+    grid.addEventListener('click', async function (e) {
         var btn = e.target.closest('[data-media-delete]');
         if (!btn) return;
-        if (!confirm('Delete this image? Posts that reference it will show a broken image.')) return;
+        if (!await cpConfirm('Delete this image? Posts that reference it will show a broken image.')) return;
 
         var id = btn.getAttribute('data-media-delete');
         var form = new FormData();
@@ -712,14 +712,14 @@ $mediaSortOptions = [
             .catch(function () { applyBtn.disabled = false; alert('Could not process the image.'); });
     });
 
-    deleteBtn.addEventListener('click', function () {
+    deleteBtn.addEventListener('click', async function () {
         if (!current) return;
         var msg = current.usages.length
             ? 'This image is used in ' + current.usages.length + ' place(s):\n\n' +
               current.usages.map(function (u) { return '• ' + u.label + ' (' + u.context + ')'; }).join('\n') +
               '\n\nDeleting it will leave broken images there. Delete anyway?'
             : 'Delete this image? This cannot be undone.';
-        if (!confirm(msg)) return;
+        if (!await cpConfirm(msg)) return;
 
         var form = new FormData();
         form.append('_token', csrfToken);
@@ -796,8 +796,8 @@ $mediaSortOptions = [
     });
 
     var optimizeBtn = document.getElementById('media-optimize');
-    if (optimizeBtn) optimizeBtn.addEventListener('click', function () {
-        if (!confirm('Shrink every image larger than 2048px and re-save it in place? Links to these images keep working. This cannot be undone.')) return;
+    if (optimizeBtn) optimizeBtn.addEventListener('click', async function () {
+        if (!await cpConfirm('Shrink every image larger than 2048px and re-save it in place? Links to these images keep working. This cannot be undone.')) return;
         var label = optimizeBtn.querySelector('span');
         var original = label ? label.textContent : '';
         if (label) label.textContent = 'Optimizing…';

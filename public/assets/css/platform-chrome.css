@@ -1217,3 +1217,56 @@
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
+
+/* ---------------------------------------------------------------------------
+   Confirmation dialog (components/confirm-modal). Painted like the notification
+   panel above: the same dark card and pastel accents, and a white card with the
+   darker accents in the control panel's light mode.
+   --------------------------------------------------------------------------- */
+
+.confirm-card {
+  --confirm-fg: var(--platform-menu-fg, #f2f2f2);
+  --confirm-muted: color-mix(in srgb, var(--confirm-fg) 62%, transparent);
+  --confirm-line: rgba(128, 128, 128, .3);
+  --confirm-hover: rgba(128, 128, 128, .14);
+  --confirm-tone: #a8c7fa;
+  background: var(--platform-menu-bg, #1c1c1c);
+  color: var(--confirm-fg);
+  border: 1px solid var(--confirm-line);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+}
+
+.confirm-card[data-tone='danger'] { --confirm-tone: #ffb4ab; }
+.confirm-card[data-tone='warning'] { --confirm-tone: #ffd47d; }
+
+[data-mode='light'] .confirm-card {
+  --confirm-fg: #1e293b;
+  --confirm-tone: #2659b5;
+  background: #fff;
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+}
+
+[data-mode='light'] .confirm-card[data-tone='danger'] { --confirm-tone: #b3261e; }
+[data-mode='light'] .confirm-card[data-tone='warning'] { --confirm-tone: #8a5a00; }
+
+.confirm-card .confirm-badge {
+  background: color-mix(in srgb, var(--confirm-tone) 16%, transparent);
+  color: var(--confirm-tone);
+}
+
+.confirm-card .confirm-message { color: var(--confirm-muted); }
+
+.confirm-card .confirm-actions { border-top: 1px solid var(--confirm-line); }
+
+.confirm-card .confirm-button {
+  color: var(--confirm-fg);
+  background: transparent;
+}
+
+.confirm-card .confirm-button + .confirm-button { border-left: 1px solid var(--confirm-line); }
+
+.confirm-card .confirm-button:hover,
+.confirm-card .confirm-button:focus-visible { background: var(--confirm-hover); outline: none; }
+
+.confirm-card .confirm-button-ok { color: var(--confirm-tone); }

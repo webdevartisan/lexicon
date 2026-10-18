@@ -826,6 +826,39 @@ input[type=range]:focus::-webkit-slider-thumb {
         background-repeat: no-repeat;
         background-size: .7em .7em
     }
+.form-file {
+        display: block;
+        width: 100%;
+        border-radius: .375rem;
+        border-width: 1px;
+        font-size: .875rem
+    }
+.form-file::-webkit-file-upload-button {
+        cursor: pointer;
+        border-style: none;
+        --tw-bg-opacity: 1;
+        background-color: rgb(241 245 249 / var(--tw-bg-opacity));
+        padding: .5rem 1rem;
+        --tw-text-opacity: 1;
+        color: rgb(100 116 139 / var(--tw-text-opacity));
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+        outline: 2px solid transparent;
+        outline-offset: 2px
+    }
+:is([data-mode=dark] .form-file)::-webkit-file-upload-button {
+        --tw-bg-opacity: 1;
+        background-color: rgb(28 46 69 / var(--tw-bg-opacity));
+        --tw-text-opacity: 1;
+        color: rgb(146 175 211 / var(--tw-text-opacity))
+    }
+.form-file.form-file-sm::-webkit-file-upload-button {
+        padding: .25rem .75rem
+    }
+.form-file.form-file-lg::-webkit-file-upload-button {
+        padding: .75rem 1.25rem
+    }
 .\!card {
         margin-bottom: 1.25rem !important;
         border-radius: .375rem !important;
@@ -1329,6 +1362,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .ml-1 {
   margin-left: 0.25rem;
 }
+.ml-auto {
+  margin-left: auto;
+}
 .mr-1 {
   margin-right: 0.25rem;
 }
@@ -1628,6 +1664,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .w-\[37\.5px\] {
   width: 37.5px;
+}
+.w-\[calc\(100vw-2rem\)\] {
+  width: calc(100vw - 2rem);
 }
 .w-auto {
   width: auto;
@@ -2554,6 +2593,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .p-6 {
   padding: 1.5rem;
+}
+.p-8 {
+  padding: 2rem;
 }
 .px-1 {
   padding-left: 0.25rem;
@@ -4617,6 +4659,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .xl\:col-span-7 {
     grid-column: span 7 / span 7;
   }
+  .xl\:w-1\/2 {
+    width: 50%;
+  }
   .xl\:grid-cols-12 {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
@@ -4637,6 +4682,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
   .xl\:grid-cols-7 {
     grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .xl\:pr-2\.5 {
+    padding-right: 0.625rem;
   }
 }
 @media (min-width: 1536px) {

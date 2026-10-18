@@ -1,0 +1,84 @@
+.blog-confirm {
+    width: min(24rem, calc(100vw - 2rem));
+    padding: 0;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 1rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.blog-confirm::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.blog-confirm-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.blog-confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background: var(--platform-badge-bg, #ffb4ab);
+    color: var(--platform-badge-fg, #690005);
+}
+
+.blog-confirm-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.blog-confirm-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.blog-confirm-message {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.blog-confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.blog-confirm-button {
+    height: 3rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.blog-confirm-button + .blog-confirm-button {
+    border-left: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.blog-confirm-button:hover,
+.blog-confirm-button:focus-visible {
+    background: rgba(128, 128, 128, 0.14);
+    outline: none;
+}
+
+.blog-confirm-ok {
+    font-weight: 600;
+}

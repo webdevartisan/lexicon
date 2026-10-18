@@ -279,12 +279,12 @@ $textDir = $rtl ? 'rtl' : 'ltr';
 
     // Start a translation from the English, keeping its markup to translate the words in.
     document.querySelectorAll('[data-start-from-english]').forEach(function (button) {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
             var filled = ['subject', 'body', 'footer_note'].some(function (name) {
                 var field = form.querySelector('[name="' + name + '"]');
                 return field && field.value.trim() !== '';
             });
-            if (!english || (filled && !window.confirm('Replace what is in the form with the English?'))) {
+            if (!english || (filled && !await cpConfirm('Replace what is in the form with the English?'))) {
                 return;
             }
             Object.keys(english).forEach(function (name) {

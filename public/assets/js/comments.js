@@ -475,9 +475,21 @@
   root.addEventListener('submit', function (ev) {
     var form = ev.target.closest('[data-confirm]');
 
-    if (form && !window.confirm(form.getAttribute('data-confirm'))) {
-      ev.preventDefault();
+    if (!form || form.dataset.confirmed === '1') {
+      return;
     }
+
+    ev.preventDefault();
+    var submitter = ev.submitter || undefined;
+
+    window.blogConfirm(form.getAttribute('data-confirm')).then(function (ok) {
+      if (!ok) {
+        return;
+      }
+
+      form.dataset.confirmed = '1';
+      form.requestSubmit(submitter);
+    });
   });
 
   // ------------------------------------------------------------ deep linking

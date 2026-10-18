@@ -274,7 +274,7 @@
         anchor = index;
     });
 
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
         var button = e.target.closest ? e.target.closest('[data-bulk]') : null;
 
         if (!button || button.disabled || !mountedBar || !mountedBar.contains(button)) {
@@ -304,7 +304,7 @@
                 }
             }
 
-            if (!window.confirm(question)) {
+            if (!await cpConfirm(question)) {
                 return;
             }
         }

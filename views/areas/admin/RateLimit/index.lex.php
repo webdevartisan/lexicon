@@ -49,7 +49,13 @@ $pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibo
                 </thead>
                 <tbody>
                 <?php foreach ($blocked as $i => $row) {
-                    $rowTarget = 'unlockRow'.$i;
+                    $rowUnlockAttrs = [
+                        'form' => 'unlockRowForm'.$i,
+                        'data-confirm' => 'Lifts every lock and counter held against '.$row['subject'].'. They can try again straight away.',
+                        'data-confirm-title' => 'Unlock this '.($row['kind'] === 'ip' ? 'IP' : 'email').'?',
+                        'data-confirm-ok' => 'Unlock',
+                        'data-confirm-tone' => 'default',
+                    ];
                     ?>
                     <tr class="border-b border-slate-100 dark:border-zink-600 last:border-0 transition-colors hover:bg-slate-50 dark:hover:bg-zink-600/50">
                         <td class="p-4 align-middle">
@@ -69,7 +75,7 @@ $pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibo
                         <td class="p-4 align-middle"><?= e(date('Y-m-d H:i', $row['locked_at'])) ?></td>
                         <td class="p-4 align-middle text-right"><?= e($timeLeft($row['seconds_left'])) ?></td>
                         <td class="p-4 align-middle text-center">
-                            {% cmp="btn" type="button" variant="slate" icon="unlock" label="Unlock" dataModalTarget="{$rowTarget}" %}
+                            {% cmp="btn" type="submit" variant="slate" icon="unlock" label="Unlock" attrs="{$rowUnlockAttrs}" %}
                         </td>
                     </tr>
                 <?php } ?>
@@ -84,16 +90,12 @@ $pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibo
 </div>
 
 <?php foreach ($blocked as $i => $row) {
-    $rowTarget = 'unlockRow'.$i;
     $rowForm = 'unlockRowForm'.$i;
-    $rowTitle = 'Unlock this '.($row['kind'] === 'ip' ? 'IP' : 'email').'?';
-    $rowMessage = 'Lifts every lock and counter held against '.$row['subject'].'. They can try again straight away.';
     ?>
 <form method="POST" action="/admin/rate-limits/unlock" id="<?= e($rowForm) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="subject" value="<?= e($row['subject']) ?>">
 </form>
-{% cmp="modal" id="{$rowTarget}" title="{$rowTitle}" icon="unlock" message="{$rowMessage}" form="{$rowForm}" confirmText="Unlock" confirmIcon="unlock" %}
 <?php } ?>
 
 <?php ob_start(); ?>
