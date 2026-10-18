@@ -1329,6 +1329,8 @@
 [data-mode='light'] .select-menu-button:hover { background: #f8fafc; }
 .select-menu-button:focus-visible,
 .select-menu-open .select-menu-button { outline: none; border-color: var(--menu-accent); }
+.select-menu-invalid { border-color: #ffb4ab; }
+[data-mode='light'] .select-menu-invalid { border-color: #b3261e; }
 .select-menu-button:disabled { opacity: .55; cursor: not-allowed; }
 
 .select-menu-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

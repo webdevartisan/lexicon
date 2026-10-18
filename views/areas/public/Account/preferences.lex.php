@@ -4,7 +4,6 @@
 
 {% block meta %}
 <meta name="robots" content="noindex" />
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 {% endblock %}
 
 {% block body %}
@@ -139,23 +138,9 @@ $emailErrors = $fieldErrors['new_email'] ?? [];
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js" nonce="<?= csp_nonce() ?>"></script>
+<script src="/cp-assets/js/select-menu.js" nonce="<?= csp_nonce() ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener('DOMContentLoaded', function () {
-    // Enhance the account selects with Choices so the dropdowns share one themed
-    // look. Search is switched on only for long lists (the timezone picker).
-    if (typeof Choices !== 'undefined') {
-      document.querySelectorAll('.lx-account-form select').forEach(function (el) {
-        new Choices(el, {
-          shouldSort: false,
-          allowHTML: false,
-          searchEnabled: el.options.length > 10,
-          itemSelectText: '',
-          placeholder: false,
-        });
-      });
-    }
-
     // showModal(), not the hidden-div pattern the older dialogs use: it traps
     // focus, closes on Escape and makes the rest of the page inert without us
     // reimplementing any of it.

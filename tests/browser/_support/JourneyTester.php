@@ -27,11 +27,14 @@ class JourneyTester extends \Codeception\Actor
     /**
      * Pick an option the way a person does, through the select menu that replaces the native control.
      */
-    public function chooseFromMenu(string $selectSelector, string $label): void
+    public function chooseFromMenu(string $selectSelector, string $label, ?string $search = null): void
     {
         $this->executeJS("document.querySelector(".json_encode($selectSelector).").parentElement.querySelector('.select-menu-button').click();");
         $this->waitForElementVisible('.select-menu-open .select-menu-list', 3);
-        $this->click("//div[contains(@class,'select-menu-open')]//button[contains(@class,'select-menu-item')][normalize-space()=".json_encode($label)."]");
+        if ($search !== null) {
+            $this->fillField('.select-menu-open .select-menu-search', $search);
+        }
+        $this->click("//div[contains(@class,'select-menu-open')]//button[contains(@class,'select-menu-item')][normalize-space()=\"".$label."\"]");
     }
 
     /**

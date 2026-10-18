@@ -4,7 +4,6 @@
 {% block subtitle %}Site identity, registration, availability, and email.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 {% endblock %}
 
 {% block body %}
@@ -236,8 +235,6 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
-<script src="/cp-assets/js/searchable-select.init.js"></script>
 <script nonce="<?= csp_nonce() ?>">
     // switch settings sections without a page reload
     document.addEventListener('DOMContentLoaded', () => {

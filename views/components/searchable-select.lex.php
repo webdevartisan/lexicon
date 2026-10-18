@@ -2,9 +2,9 @@
 /**
  * Searchable Select (Choices.js)
  *
- * Select with built-in search for long option lists. Pages using it must
- * include choices.css in the head block and choices.min.js plus
- * /cp-assets/js/searchable-select.init.js in the scripts block.
+ * Select that always shows a search box. Every select is turned into the shared
+ * menu by cp-assets/js/select-menu.js, which adds search by itself for long lists;
+ * this component forces it for short ones too.
  *
  * Attributes:
  * - name: input name

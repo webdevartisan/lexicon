@@ -93,10 +93,7 @@ $I->saveSessionSnapshot('member');
 
 // Preferences, an email change that is cancelled, and notification settings
 $I->amOnPage('/en/account/preferences');
-$I->click("//div[contains(@class, 'choices')][.//select[@id='timezone']]");
-$I->type('Athens');
-$I->wait(1);
-$I->pressKey('.choices.is-open input', WebDriverKeys::ENTER);
+$I->chooseFromMenu('#timezone', 'Europe/Athens', 'Athens');
 $I->click('Save changes', 'form[action$="/account/preferences/update"]');
 $I->waitForText('Preferences saved');
 $I->click('Change email');

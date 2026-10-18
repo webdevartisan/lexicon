@@ -1,6 +1,7 @@
 (function () {
   var CHEVRON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
   var CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  var SKIP = '[data-native], .flatpickr-calendar, .tox';
   var counter = 0;
   var openMenu = null;
 
@@ -12,7 +13,7 @@
   }
 
   function enhance(select) {
-    if (select.dataset.menuReady || select.multiple || select.size > 1 || select.hasAttribute('data-native')) return;
+    if (select.dataset.menuReady || select.multiple || select.size > 1 || select.closest(SKIP)) return;
     select.dataset.menuReady = '1';
     counter += 1;
 
@@ -77,7 +78,7 @@
     });
 
     var search = null;
-    if (items.length > 15) {
+    if (items.length > 15 || select.classList.contains('searchable-select')) {
       search = document.createElement('input');
       search.type = 'search';
       search.className = 'select-menu-search';
@@ -115,6 +116,7 @@
     function choose(index) {
       select.selectedIndex = index;
       select.dispatchEvent(new Event('change', { bubbles: true }));
+      button.classList.remove('select-menu-invalid');
       sync();
       close(true);
     }
@@ -182,6 +184,13 @@
       }
     });
     select.addEventListener('change', sync);
+    select.addEventListener('invalid', function (e) {
+      e.preventDefault();
+      button.classList.add('select-menu-invalid');
+      button.focus();
+    });
+    button.addEventListener('mouseenter', sync);
+    button.addEventListener('focus', sync);
     if (select.form) {
       select.form.addEventListener('reset', function () {
         setTimeout(sync, 0);
@@ -197,7 +206,7 @@
   }
 
   function init(root) {
-    (root || document).querySelectorAll('select.form-select').forEach(enhance);
+    (root || document).querySelectorAll('select').forEach(enhance);
   }
 
   document.addEventListener('mousedown', function (e) {
@@ -208,5 +217,15 @@
   } else {
     init(document);
   }
+  // Selects built later by page scripts (the media picker, scheduled task arguments)
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'SELECT') enhance(node);
+        else init(node);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
   window.initSelectMenus = init;
 })();
