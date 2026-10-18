@@ -98,7 +98,9 @@
 
     editor.on('keyup change input SetContent', syncExcerpt);
     editor.on('init', syncExcerpt);
-    syncExcerpt();
+    if (editor.initialized) {
+      syncExcerpt();
+    }
   };
 
   bindWhenReady();

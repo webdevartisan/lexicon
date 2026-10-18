@@ -109,6 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
             flatpickr(item, opts);
         }
     });
-    document.getElementById("timezone").value =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezoneField = document.getElementById("timezone");
+    if (timezoneField) {
+        timezoneField.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
 });
