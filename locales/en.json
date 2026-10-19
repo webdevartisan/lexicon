@@ -663,8 +663,8 @@
                     "placeholder": "My Awesome Blog"
                 },
                 "slug": {
-                    "label": "Slug",
-                    "underlabel": "Slug cannot be changed after creation."
+                    "label": "Address",
+                    "underlabel": "The address cannot be changed after creation."
                 },
                 "description": {
                     "label": "Description",
@@ -674,10 +674,10 @@
                     "label": "Select Theme"
                 },
                 "locale": {
-                    "label": "Select Locale"
+                    "label": "Language"
                 },
                 "timezone": {
-                    "label": "Select Timezone"
+                    "label": "Time zone"
                 },
                 "metaTitle": {
                     "label": "Meta Title",
@@ -905,6 +905,8 @@
     "discover": {
         "metaTitle": "Discover blogs and writing on Lexicon",
         "metaTitlePosts": "Latest posts from writers on Lexicon",
+        "metaDescription": "Browse blogs and find writers publishing on Lexicon.",
+        "metaDescriptionPosts": "Read the latest posts from writers publishing on Lexicon.",
         "heroTitle": "Great writing",
         "heroSubtitle": "Browse blogs and the latest posts from writers across Lexicon.",
         "searchPlaceholderBlogs": "Search blogs...",
@@ -1120,8 +1122,17 @@
         "loginSubtitle": "Welcome back.",
         "loginSubtitleReturn": "Log in to pick up where you left off.",
         "loginSubmit": "Log in",
+        "twoFactorTitle": "Two-step sign-in",
+        "twoFactorSubtitle": "Enter the code from your authenticator app.",
+        "twoFactorCodeLabel": "Code",
+        "twoFactorHint": "The 6 digits from your app, or one of your recovery codes.",
+        "twoFactorSubmit": "Continue",
+        "twoFactorBack": "Back to log in",
+        "twoFactorWrong": "That code did not work. Try the next one from your app, or use a recovery code.",
+        "twoFactorTooMany": "Too many wrong codes. Try again in a few minutes.",
         "registerTitle": "Create account",
         "registerSubtitle": "Save posts, follow blogs, join the conversation.",
+        "registerBlogSubtitle": "Create your account first, then set up your blog.",
         "registerSubmit": "Create account",
         "ageConfirm": "I am {age} or older.",
         "ageRequired": "Please confirm you are {age} or older.",
@@ -1167,6 +1178,8 @@
         "inviteJoinedCta": "Open dashboard",
         "returnHome": "Return home",
         "passwordMin": "At least {min} characters, and not a common password. Longer is stronger, and a passphrase beats a short complicated one.",
+        "passwordMedium": "At least {min} characters with an upper-case letter, a lower-case letter and a number, and not a common password.",
+        "passwordStrong": "At least {min} characters with an upper-case letter, a lower-case letter, a number and a symbol, and not a common password.",
         "strengthTooShort": "Too short",
         "strengthWeak": "Weak",
         "strengthFair": "Fair",
@@ -1183,6 +1196,16 @@
         "checkNoscript": "Signing in to this account needs a quick browser check, which needs JavaScript. You can reset your password instead.",
         "checkNoscriptRegister": "Creating an account needs a quick browser check, which needs JavaScript.",
         "resetInstead": "Reset your password",
+        "verifyBanner": "Confirm your email to comment, follow blogs and write. We sent a link to {email}.",
+        "verifyResend": "Send it again",
+        "verifyResent": "We sent a new link to {email}.",
+        "verifyTooSoon": "A link was sent a moment ago. Check your inbox, or try again in a minute.",
+        "verifyDone": "Thank you, your email is confirmed.",
+        "verifyInvalid": "That link has expired or was already used. Sign in and ask for a new one.",
+        "verifyNeeded": "Confirm your email address first. We sent you a link.",
+        "verifyCommentSaved": "We saved your comment. It posts as soon as you confirm your email.",
+        "verifyAlready": "Your email is already confirmed.",
+        "registrationClosed": "New sign-ups are closed for now.",
         "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
     "account": {
@@ -1316,6 +1339,39 @@
             "analyticsMilestonesHelp": "When a post of yours passes 100, 1,000, 10,000 or 100,000 views.",
             "analyticsSpikes": "Unusually busy days",
             "analyticsSpikesHelp": "When a blog you own gets far more readers than usual, at most once a day."
+        },
+        "twoFactor": {
+            "heading": "Two-step sign-in",
+            "intro": "Ask for a code from an authenticator app after your password.",
+            "status": "Two-step sign-in",
+            "statusOn": "On",
+            "statusOff": "Off",
+            "manage": "Manage",
+            "offStateHeading": "Add a second step",
+            "offStateText": "With two-step sign-in, a stolen password is not enough to get into your account. You will need an authenticator app such as Google Authenticator, 1Password or Aegis.",
+            "start": "Set up",
+            "passwordLabel": "Your password",
+            "scanHeading": "Scan the code",
+            "scanText": "Open your authenticator app and scan this code to add your account.",
+            "qrLabel": "QR code for your authenticator app",
+            "manualText": "Cannot scan it? Type this key into the app instead.",
+            "codeLabel": "Code from the app",
+            "confirm": "Turn on",
+            "wrongCode": "That code did not match. Check the time on your phone and try the next code.",
+            "enabled": "Two-step sign-in is on. Your other devices were signed out.",
+            "codesHeading": "Your recovery codes",
+            "codesIntro": "Keep these somewhere safe. Each one works once if you lose your phone. They will not be shown again.",
+            "onHeading": "Two-step sign-in is on",
+            "onText": "You will be asked for a code from your app each time you log in.",
+            "codesLeft": "Recovery codes left",
+            "renewCodes": "Get new recovery codes",
+            "codesRenewed": "New recovery codes created. The old ones no longer work.",
+            "offHeading": "Turn off",
+            "offText": "Your account goes back to a password only.",
+            "turnOff": "Turn off two-step sign-in",
+            "disabled": "Two-step sign-in is off.",
+            "requiredForRole": "Accounts that can open the control panel must keep two-step sign-in on.",
+            "requiredToContinue": "Set up two-step sign-in to open the control panel."
         },
         "security": {
             "heading": "Change password",
@@ -1946,7 +2002,33 @@
             "cancel": "Cancel import",
             "cancelled": "The import was cancelled and the uploaded archive deleted."
         },
+        "foreign": {
+          "heading": "Import from another platform",
+          "body": "Bring your posts over from a WordPress or Ghost export file. Nothing changes until you confirm.",
+          "platform": "Where are you moving from?",
+          "file": "Export file",
+          "wordpressHelp": "In WordPress go to Tools, Export, choose Posts, and upload the .xml file.",
+          "ghostHelp": "In Ghost go to Settings, Labs, Export your content, and upload the .json file.",
+          "siteUrl": "Address of your old site",
+          "siteUrlHelp": "Ghost leaves its own address out of links and images. Enter it so they keep working.",
+          "images": "Images are not copied. They stay as links to your old site, so keep it online until you have replaced them. Everything comes in as a draft unless you choose otherwise.",
+          "wrongType": "That is not a {type} file.",
+          "notWordpress": "That file is not a WordPress export.",
+          "notGhost": "That file is not a Ghost export.",
+          "needSiteUrl": "Ghost leaves its own address out of links, so enter where your old site lived.",
+          "tooLarge": "That file is too large to read.",
+          "empty": "No posts were found in that {source} file."
+        },
         "preview": {
+          "postsHeading": "Choose posts to import",
+          "postsBody": "Untick any post you do not want to bring in.",
+          "selected": "{count} of {total} selected",
+          "selectAll": "Select all posts",
+          "fileStatus": "Status in file",
+          "date": "Date",
+          "category": "Category",
+          "cannotImport": "Cannot be imported:",
+          "tagCount": "{count} tags",
             "heading": "What this archive contains",
             "from": "From {name}, exported {date}",
             "posts": "Posts",
@@ -1998,6 +2080,7 @@
             "viewPosts": "View posts"
         },
         "errors": {
+          "nonePicked": "Choose at least one post to import.",
             "empty": "The archive is empty or missing.",
             "tooLarge": "The archive is larger than {size}.",
             "notZip": "The file is not a readable zip archive.",
@@ -2201,6 +2284,12 @@
             "name": {
                 "question": "What will you call your blog?",
                 "hint": "You can change the name any time."
+            },
+            "writer": {
+                "question": "And what's your name?",
+                "hint": "It appears on your posts. You can change it on your profile.",
+                "first": "First name",
+                "last": "Last name"
             },
             "address": {
                 "label": "Your blog's address:",

@@ -1,4 +1,4 @@
-<?php  //[STAMP] f8a35a0584b45f3dca1d6857a098dc3a
+<?php  //[STAMP] 3f2bbf62c33c109c9742c5475c70140f
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -5053,6 +5053,18 @@ trait JourneyTesterActions
      */
     public function grabBlogArchive(): string {
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabBlogArchive', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Confirm a new account the way its owner would: open the link in the welcome mail.
+     * There is no mail catcher, so the link comes from the queued copy in the database.
+     * @see \Support\Helper\Lexicon::followTheConfirmLinkMailedTo()
+     */
+    public function followTheConfirmLinkMailedTo(string $email): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('followTheConfirmLinkMailedTo', func_get_args()));
     }
 
  

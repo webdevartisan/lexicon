@@ -37,6 +37,68 @@ $exportedOn = substr((string) ($plan['source']['exported_at'] ?? ''), 0, 10);
   {{ csrf_field() }}
   <input type="hidden" name="import_id" value="<?= e($importId) ?>">
 
+  <div class="card">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h6 class="text-15"><?= e($t('archive.preview.postsHeading')) ?></h6>
+          <p class="text-sm text-slate-500 dark:text-zink-300 mt-1"><?= e($t('archive.preview.postsBody')) ?></p>
+        </div>
+        <p class="text-sm font-medium text-slate-800 dark:text-zink-50" data-post-count
+           data-template="<?= e($t('archive.preview.selected', ['count' => '{count}', 'total' => '{total}'])) ?>"></p>
+      </div>
+
+      <div class="overflow-x-auto mt-4">
+        <table class="w-full">
+          <thead class="ltr:text-left rtl:text-right">
+            <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-300 border-b border-slate-200 dark:border-zink-500">
+              <th class="px-3 py-2.5 w-10">
+                <input type="checkbox" checked data-post-all aria-label="<?= e($t('archive.preview.selectAll')) ?>" class="size-4">
+              </th>
+              <th class="px-3 py-2.5 font-semibold"><?= e($t('archive.preview.posts')) ?></th>
+              <th class="px-3 py-2.5 font-semibold"><?= e($t('archive.preview.fileStatus')) ?></th>
+              <th class="px-3 py-2.5 font-semibold"><?= e($t('archive.preview.date')) ?></th>
+              <th class="px-3 py-2.5 font-semibold"><?= e($t('archive.preview.category')) ?></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($plan['posts'] as $row) { ?>
+              <tr class="border-b border-slate-100 dark:border-zink-600 last:border-b-0">
+                <td class="px-3 py-2.5 align-top">
+                  <?php if ($row['problem'] === '') { ?>
+                    <input type="checkbox" name="selected[]" value="<?= (int) $row['index'] ?>" checked data-post-pick class="size-4"
+                           aria-label="<?= e($row['title']) ?>">
+                  <?php } ?>
+                </td>
+                <td class="px-3 py-2.5 text-sm <?= $row['problem'] === '' ? 'text-slate-800 dark:text-zink-100' : 'text-slate-400 dark:text-zink-400' ?>">
+                  <?= e($row['title'] !== '' ? $row['title'] : '#'.((int) $row['index'] + 1)) ?>
+                  <?php if ($row['problem'] === '') { ?>
+                    <span class="block text-xs text-slate-500 dark:text-zink-300" dir="ltr"><?= e($row['slug']) ?></span>
+                  <?php } else { ?>
+                    <span class="block text-xs text-red-600 dark:text-red-400"><?= e($t('archive.preview.cannotImport')) ?> <?= e($row['problem']) ?></span>
+                  <?php } ?>
+                </td>
+                <td class="px-3 py-2.5 text-sm">
+                  <?php if ($row['problem'] === '') { ?>
+                    <?php $rowStatus = $row['status']; ?>
+                    {% cmp="status-badge" status="{$rowStatus}" %}
+                  <?php } ?>
+                </td>
+                <td class="px-3 py-2.5 text-sm text-slate-500 dark:text-zink-300" dir="ltr"><?= e($row['date']) ?></td>
+                <td class="px-3 py-2.5 text-sm text-slate-500 dark:text-zink-300">
+                  <?= e($row['category']) ?>
+                  <?php if ($row['tags'] > 0) { ?>
+                    <span class="block text-xs"><?= e($t('archive.preview.tagCount', ['count' => $row['tags']])) ?></span>
+                  <?php } ?>
+                </td>
+              </tr>
+            <?php } ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <?php if ($plan['clashes'] !== []) { ?>
   <div class="card">
     <div class="card-body">

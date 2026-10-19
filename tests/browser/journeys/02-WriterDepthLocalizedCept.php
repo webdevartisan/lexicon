@@ -20,7 +20,7 @@ $I->signInAs('writer');
 $I->amOnPage("/en/dashboard/post/{$postId}/translations/el");
 if (count($I->grabMultiple('#deleteTranslation')) > 0) {
     $I->click('Delete Translation');
-    $I->acceptPopup();
+    $I->acceptConfirm();
     $I->waitForText('Translation deleted');
 }
 
@@ -68,8 +68,7 @@ $I->dontSeeInTitle($greekTitle);
 $I->signInAs('writer');
 $I->amOnPage("/en/dashboard/post/{$postId}/translations/el");
 $I->click('Delete Translation');
-$I->seeInPopup('Delete this translation?');
-$I->acceptPopup();
+$I->acceptConfirm('Delete this translation?');
 $I->waitForText('Translation deleted');
 $I->amAGuest();
 $I->amOnPage($greekUrl);

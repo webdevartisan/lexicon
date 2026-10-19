@@ -112,7 +112,7 @@ final class InviteController extends AppController
             'age_confirmed.in' => $ageRequired,
         ])->validated();
 
-        $userId = $this->registrar->register((string) $invite['email'], $validated['password'], $this->request);
+        $userId = $this->registrar->register((string) $invite['email'], $validated['password'], $this->request, true);
         if ($userId === null) {
             $this->flash('error', 'We could not create your account. Please try again.');
 

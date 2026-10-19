@@ -100,7 +100,7 @@ $arrowBack = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                         <p class="lx-field-error"><?= e($message) ?></p>
                     <?php } ?>
 
-                    <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
+                    <p class="lx-field-hint" id="password_help"><?= e($t(password_hint_key(), ['min' => password_length_bounds()['min']])) ?></p>
 
                     <?php
                     $meterLevels = implode('|', [

@@ -7,7 +7,6 @@
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
 <script nonce="<?= csp_nonce() ?>">window.editorBlogId = <?= (int) ($post['blog_id'] ?? 0) ?>;</script>
 <script src="/assets/js/initeditor.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/initeditor.js') ?>" referrerpolicy="origin"></script>
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/flatpickr.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">

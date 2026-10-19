@@ -661,6 +661,30 @@ class UserModel extends AppModel
     }
 
     /**
+     * Record a two-factor step as spent, once. False when that step, or a later
+     * one, was already used, so the same code cannot sign in twice.
+     */
+    public function claimTwoFactorStep(int $userId, int $step): bool
+    {
+        $sql = 'UPDATE users SET two_factor_last_step = ?
+                WHERE id = ? AND (two_factor_last_step IS NULL OR two_factor_last_step < ?)';
+
+        return $this->database->execute($sql, [$step, $userId, $step]) > 0;
+    }
+
+    /**
+     * Swap the stored recovery list only if nobody changed it since it was read,
+     * so a code used in two requests at once is spent once.
+     */
+    public function replaceRecoveryCodes(int $userId, ?string $expected, ?string $replacement): bool
+    {
+        $sql = 'UPDATE users SET two_factor_recovery_codes = ?
+                WHERE id = ? AND two_factor_recovery_codes <=> ?';
+
+        return $this->database->execute($sql, [$replacement, $userId, $expected]) > 0;
+    }
+
+    /**
      * Check if a handle is unique among existing users.
      *
      * @param  string  $handle  Handle to check

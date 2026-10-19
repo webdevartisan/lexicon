@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ blog.blog_name }} · Comments{% endblock %}
-{% block subtitle %}Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.{% endblock %}
+{% block subtitle %}<?php if (!empty($autoPublish)) { ?>Moderate comments on this blog. New ones are published straight away, and you can hold or remove them here.<?php } else { ?>Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.<?php } ?>{% endblock %}
 
 {% block body %}
 <?php

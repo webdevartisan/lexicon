@@ -35,7 +35,7 @@
                     aria-label="<?= e($t('auth.showPassword')) ?>"
                     aria-pressed="false"><?= e($t('auth.show')) ?></button>
         </div>
-        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t(password_hint_key(), ['min' => password_length_bounds()['min']])) ?></p>
 
         <?php
         // Same advisory meter as registration: this is the other screen where

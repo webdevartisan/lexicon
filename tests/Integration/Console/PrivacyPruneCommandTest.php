@@ -9,6 +9,7 @@ use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsVisitModel;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\EmailVerificationModel;
 use App\Models\ImpersonationSessionModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
@@ -25,11 +26,16 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
     $this->db->execute("INSERT INTO impersonation_sessions (admin_id, target_user_id, started_at, ip_address) VALUES (1, 2, DATE_SUB(NOW(), INTERVAL 400 DAY), '10.0.0.3')");
     $this->db->execute("INSERT INTO impersonation_sessions (admin_id, target_user_id, started_at, ip_address) VALUES (1, 3, NOW(), '10.0.0.4')");
 
+    $this->db->execute("INSERT INTO users (handle, email, password) VALUES ('stale-signup', 'stale@example.test', 'x')");
+    $staleId = (int) $this->db->lastInsertId();
+    $this->db->execute("INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, 'old', DATE_SUB(NOW(), INTERVAL 2 DAY))", [$staleId]);
+
     $command = new PrivacyPruneCommand(
         new ActivityLogModel($this->db),
         new MailQueueModel($this->db),
         new PasswordResetModel($this->db),
         new PendingEmailChangeModel($this->db),
+        new EmailVerificationModel($this->db),
         new BlogInvitationModel($this->db),
         new BlogSubscriberModel($this->db),
         new AccountErasureRecordModel($this->db),
@@ -47,6 +53,7 @@ test('old audit entries and mail copies are removed and recent ones stay', funct
     $erasureHandles = $this->db->query('SELECT handle FROM account_erasure_records')->fetchAll(\PDO::FETCH_COLUMN);
 
     expect($exit)->toBe(0)
+        ->and((int) $this->db->query('SELECT COUNT(*) FROM email_verifications')->fetchColumn())->toBe(0)
         ->and($actions)->toBe(['recent'])
         ->and((int) $this->db->query('SELECT COUNT(*) FROM mail_queue')->fetchColumn())->toBe(0)
         ->and($erasureHandles)->toBe(['recent-erased'])

@@ -281,6 +281,17 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
                     <?php if ($mayActOnTarget && !$isSelf) { ?>
                     {% cmp="btn" href="{$base}/password" variant="slate" icon="key-round" label="Reset password" %}
                     <?php } ?>
+                    <?php if ($mayActOnTarget && !$isSelf && !empty($user['two_factor_confirmed_at'])) {
+                        $resetTwoFactorAttrs = [
+                            'form' => 'resetTwoFactorForm',
+                            'data-confirm' => '@'.$user['handle'].' will be signed out everywhere and can sign in with just a password until they set it up again.',
+                            'data-confirm-title' => 'Turn off two-step sign-in?',
+                            'data-confirm-ok' => 'Turn it off',
+                            'data-confirm-tone' => 'warning',
+                        ];
+                        ?>
+                    {% cmp="btn" type="submit" variant="slate" icon="shield-off" label="Reset two-step sign-in" attrs="{$resetTwoFactorAttrs}" %}
+                    <?php } ?>
                     <?php if ($impersonationRefusal === null) { ?>
                     {% cmp="btn" href="{$base}/impersonate" variant="slate" icon="log-in" label="Log in as" %}
                     <?php } ?>
@@ -289,6 +300,8 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
             <dl class="<?= $dl ?> mb-4">
                 <dt class="<?= $dt ?>">Pending email change</dt>
                 <dd class="<?= $dd ?>"><?= $pendingEmail ? e($pendingEmail['new_email']).((int) $pendingEmail['is_expired'] === 1 ? ' (link expired)' : ' (awaiting confirmation)') : '—' ?></dd>
+                <dt class="<?= $dt ?>">Two-step sign-in</dt>
+                <dd class="<?= $dd ?>"><?= !empty($user['two_factor_confirmed_at']) ? 'On, since '.e($when($user['two_factor_confirmed_at'])) : 'Off' ?></dd>
                 <dt class="<?= $dt ?>">Scheduled deletion</dt>
                 <dd class="<?= $dd ?>"><?= $pendingErasure ? 'Requested by them, due '.e($when($pendingErasure['scheduled_for'] ?? null)) : '—' ?></dd>
                 <?php if ($impersonationRefusal !== null) { ?>
@@ -321,8 +334,16 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
             <div class="flex flex-wrap items-center justify-between gap-2 mt-5 mb-2">
                 <p class="<?= $hint ?>">Signed in now. Locations are approximate; addresses are shortened to their network.</p>
                 <?php if ($sessions !== [] && $mayActOnTarget && !$isSelf) { ?>
-                <?php $signOutAttrs = ['data-modal-target' => 'signOutEverywhereModal']; ?>
-                {% cmp="btn" variant="slate" icon="log-out" label="Sign out everywhere" attrs="{$signOutAttrs}" %}
+                <?php
+                $signOutAttrs = [
+                    'form' => 'signOutEverywhereForm',
+                    'data-confirm' => 'Every device @'.$user['handle'].' is signed in on will need to sign in again. Support sessions stay open until they end.',
+                    'data-confirm-title' => 'Sign out everywhere?',
+                    'data-confirm-ok' => 'Sign out everywhere',
+                    'data-confirm-tone' => 'warning',
+                ];
+                ?>
+                {% cmp="btn" type="submit" variant="slate" icon="log-out" label="Sign out everywhere" attrs="{$signOutAttrs}" %}
                 <?php } ?>
             </div>
             <?php if ($sessionPruneStalled) { ?>
@@ -401,8 +422,9 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
 
 <?php if ($sessions !== [] && $mayActOnTarget && !$isSelf) { ?>
 <form method="post" action="<?= e($base) ?>/sessions/sign-out" id="signOutEverywhereForm"><?= csrf_field() ?></form>
-<?php $signOutMessage = 'Every device @'.$user['handle'].' is signed in on will need to sign in again. Support sessions stay open until they end.'; ?>
-{% cmp="modal" id="signOutEverywhereModal" title="Sign out everywhere?" icon="log-out" variant="warning" message="{$signOutMessage}" form="signOutEverywhereForm" confirmText="Sign out everywhere" %}
+<?php } ?>
+<?php if ($mayActOnTarget && !$isSelf && !empty($user['two_factor_confirmed_at'])) { ?>
+<form method="post" action="<?= e($base) ?>/two-factor/reset" id="resetTwoFactorForm"><?= csrf_field() ?></form>
 <?php } ?>
 {% endblock %}
 

@@ -8,6 +8,7 @@ use App\Models\BlogModel;
 use App\Models\NotificationModel;
 use App\Models\ReservedHandleModel;
 use App\Models\RoleModel;
+use App\Models\SettingModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Models\UserProfileModel;
@@ -20,7 +21,9 @@ use App\Services\MailQueueService;
 use App\Services\NotificationService;
 use App\Services\RecipientLocale;
 use App\Services\UserHandleValidator;
+use Framework\Core\App;
 use Framework\Core\Response;
+use Framework\Database;
 use Framework\Helpers\RateLimiter;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
@@ -165,7 +168,8 @@ it('registers user with email and password only', function () {
     $user = $this->userModel->findByEmail($email);
     expect($user)->toBeArray()
         ->and($user['email'])->toBe($email)
-        ->and($user['handle'])->toBe($local);
+        ->and($user['handle'])->toBe($local)
+        ->and($user['email_verified_at'])->toBeNull();
 
     expect(password_verify($password, $user['password']))->toBeTrue();
 
@@ -609,4 +613,52 @@ it('pending invite still wins', function () {
 
     expect($response->getHeader('Location'))->toEndWith('/dashboard')
         ->and($response->getHeader('Location'))->not->toContain('/blog/new');
+});
+
+/**
+ * Point the settings reader at the test connection so a row written inside the test transaction is visible.
+ */
+function withSetting(object $test, string $name, string $value): void
+{
+    $test->db->execute('INSERT INTO settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?', [$name, $value, $value]);
+    App::container()->set(SettingModel::class, fn () => new SettingModel($test->db));
+}
+
+afterEach(function () {
+    App::container()->set(SettingModel::class, fn ($c) => new SettingModel($c->get(Database::class)));
+});
+
+it('refuses sign-ups while registration is switched off', function () {
+    withSetting($this, 'registration_enabled', '0');
+    $email = 'closed'.bin2hex(random_bytes(4)).'@example.test';
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+    ]);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = callController($this->controller, 'submit', $request);
+
+    expect($response->getHeader('Location'))->toEndWith('/login')
+        ->and($this->userModel->findByEmail($email))->toBeFalsy();
+});
+
+it('starts sign-ups confirmed when email verification is switched off', function () {
+    withSetting($this, 'require_email_verification', '0');
+    $email = 'relaxed'.bin2hex(random_bytes(4)).'@example.test';
+
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+    ]);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    callController($this->controller, 'submit', $request);
+
+    expect($this->userModel->findByEmail($email)['email_verified_at'])->not->toBeNull();
 });

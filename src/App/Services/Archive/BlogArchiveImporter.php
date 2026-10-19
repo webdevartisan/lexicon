@@ -40,7 +40,7 @@ final class BlogArchiveImporter
     ) {}
 
     /**
-     * @param  array{on_clash: string, keep_status: bool, work_dir: string}  $options
+     * @param  array{on_clash: string, keep_status: bool, work_dir: string, only?: list<int>}  $options  `only` lists the positions of the posts to import; the rest are left out
      * @param  callable(string, int): void|null  $progress  Called with a stage name and a running count
      * @return array{created: list<array<string, mixed>>, overwritten: list<array<string, mixed>>, skipped: list<array<string, mixed>>, failed: list<array<string, mixed>>, media: array{stored: int, failed: list<array{name: string, reason: string}>}}
      *
@@ -56,7 +56,19 @@ final class BlogArchiveImporter
         $urls = $this->storeMedia($plan, $zipPath, $target, $userId, $options['work_dir'], $mediaFailures, $progress);
 
         $result = ['created' => [], 'overwritten' => [], 'skipped' => [], 'failed' => []];
+        $only = $options['only'] ?? null;
         foreach ($plan->posts as $i => $entry) {
+            if ($only !== null && !in_array($i, $only, true)) {
+                $result['skipped'][] = [
+                    'title' => (string) ($entry['data']['title'] ?? ''),
+                    'slug' => (string) ($entry['data']['slug'] ?? ''),
+                    'notes' => [],
+                    'reason' => 'You chose not to import this post.',
+                ];
+
+                continue;
+            }
+
             [$outcome, $item] = $this->importPost($plan, $entry, $urls, $target, $userId, $options);
             $result[$outcome][] = $item;
 

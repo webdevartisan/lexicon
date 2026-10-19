@@ -19,6 +19,7 @@ $old = old();
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
     <link rel="stylesheet" href="/cp-assets/css/fonts.css">
     <link rel="stylesheet" href="/cp-assets/css/cp.css">
+    <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
     {# The notification bell and panel are platform chrome, shared with the front and every theme. #}
     <link rel="stylesheet" href="/assets/css/platform-chrome.css">
     {% yield head %}
@@ -147,6 +148,16 @@ $old = old();
 <script src="/cp-assets/js/dropdown.js"></script>
 <script src="/assets/js/platform-menu.js"></script>
 <script src="/cp-assets/js/row-actions.js"></script>
+{# One shared confirmation modal per tone; cp-assets/js/confirm.js fills in the text and opens it #}
+<button type="button" hidden data-modal-target="confirmModalDefault" aria-hidden="true" tabindex="-1"></button>
+<button type="button" hidden data-modal-target="confirmModalDanger" aria-hidden="true" tabindex="-1"></button>
+<button type="button" hidden data-modal-target="confirmModalWarning" aria-hidden="true" tabindex="-1"></button>
+{% cmp="confirm-modal" id="confirmModalDefault" tone="default" %}
+{% cmp="confirm-modal" id="confirmModalDanger" tone="danger" %}
+{% cmp="confirm-modal" id="confirmModalWarning" tone="warning" %}
+<script src="/cp-assets/js/modal.js"></script>
+<script src="/cp-assets/js/confirm.js"></script>
+<script src="/cp-assets/js/select-menu.js"></script>
 <script src="/cp-assets/js/bulk-actions.js"></script>
 <script src="/cp-assets/js/blog-switcher.js"></script>
 <script src="/cp-assets/js/table-sort.js"></script>

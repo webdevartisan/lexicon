@@ -42,6 +42,11 @@ CREATE TABLE IF NOT EXISTS users (
     display_name_cached VARCHAR(150) DEFAULT NULL COMMENT 'Cached computed display name',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     age_confirmed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'When the person confirmed the minimum age at sign-up',
+    email_verified_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'When the address was proven. Only self-service sign-up inserts NULL (unproven until the link is followed); every other way an account is made counts as proven',
+    two_factor_secret VARCHAR(255) NULL DEFAULT NULL COMMENT 'Encrypted authenticator secret; set during setup, kept after confirmation',
+    two_factor_confirmed_at TIMESTAMP NULL DEFAULT NULL COMMENT 'When the first code was accepted; two-factor is on when this is set',
+    two_factor_last_step BIGINT UNSIGNED NULL DEFAULT NULL COMMENT 'Newest 30 second step already accepted, so a code works once',
+    two_factor_recovery_codes TEXT NULL DEFAULT NULL COMMENT 'JSON list of sha256 hashes of the unused recovery codes',
     posts_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalized count for performance',
     comments_received_count INT NOT NULL DEFAULT 0 COMMENT 'Denormalized count for performance',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1237,6 +1242,25 @@ CREATE TABLE IF NOT EXISTS pending_email_changes (
     CONSTRAINT fk_pending_email_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Pending email address changes awaiting confirmation from the new address';
+
+-- ----------------------------------------------------------------------------
+-- Email Verifications Table
+-- ----------------------------------------------------------------------------
+-- A new account is read-only and gets no mail until the address answers a link.
+-- One live link per user: a resend replaces it.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS email_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(64) NOT NULL COMMENT 'sha256 of the token that was emailed; the raw token is never stored',
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_email_verification_user (user_id),
+    INDEX idx_email_verification_token (token),
+    INDEX idx_email_verification_expires (expires_at),
+    CONSTRAINT fk_email_verification_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Confirmation links for new accounts';
 
 -- ----------------------------------------------------------------------------
 -- Pages Table

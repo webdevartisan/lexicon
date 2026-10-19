@@ -30,17 +30,18 @@ $platforms = [
     'discord' => ['label' => 'Discord', 'icon' => 'message-square'],
 ];
 ?>
-<section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700"
+<details class="post-panel rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700"
          data-social-card
          data-host="<?= e($host) ?>">
 
-  <div class="flex items-center gap-2 border-b border-slate-200 p-4 dark:border-zink-600">
+  <summary class="post-panel-head flex cursor-pointer items-center gap-2 border-slate-200 p-4 dark:border-zink-600">
     <i data-lucide="share-2" class="size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
     <div>
       <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Social sharing</h3>
       <p class="mt-0.5 text-xs text-slate-500 dark:text-zink-300">How this post looks when someone shares the link</p>
     </div>
-  </div>
+    <i data-lucide="chevron-down" class="post-panel-chevron ml-auto size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
+  </summary>
 
   <div class="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_340px] md:p-5">
 
@@ -242,4 +243,4 @@ $platforms = [
     </div>
 
   </div>
-</section>
+</details>

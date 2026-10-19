@@ -12,6 +12,7 @@ use App\Services\AccountErasureService;
 use App\Services\ImpersonationService;
 use App\Services\PasswordResetIssuer;
 use App\Services\Sessions\SessionRevoker;
+use App\Services\TwoFactor\TwoFactorService;
 use Framework\Core\Response;
 use RuntimeException;
 
@@ -31,8 +32,41 @@ class UserSecurityController extends ManagedUserController
         private PasswordResetModel $passwordResets,
         private ImpersonationService $impersonation,
         private SessionRevoker $revoker,
+        private TwoFactorService $twoFactor,
     ) {
         parent::__construct($users, $erasure);
+    }
+
+    /**
+     * Turn two-step sign-in off for an account that lost its authenticator and
+     * its recovery codes. Their sessions end, so whoever asks for the reset
+     * still has to get past the password again.
+     */
+    public function resetTwoFactor(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $user = $this->target($id);
+        $this->guardAdministratorTarget($user);
+        $userId = (int) $user['id'];
+
+        if ($userId === $this->actorId()) {
+            $this->flash('error', 'Manage your own two-step sign-in from your account security page.');
+
+            return $this->redirect($this->showUrl($userId).'#security');
+        }
+
+        if (!$this->twoFactor->isEnabled($user)) {
+            return $this->redirect($this->showUrl($userId).'#security');
+        }
+
+        $this->twoFactor->disable($userId);
+        $this->revoker->endAll($userId, 'two_factor_reset_by_admin');
+        audit()->log($this->actorId(), 'user.two_factor_reset', 'user', $userId, ['via' => 'admin'], $this->request->ip());
+
+        $this->flash('success', sprintf('Two-step sign-in is off for @%s and they have been signed out everywhere.', $user['handle']));
+
+        return $this->redirect($this->showUrl($userId).'#security');
     }
 
     /**

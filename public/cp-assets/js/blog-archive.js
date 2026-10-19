@@ -112,11 +112,62 @@
     }
 
     document.querySelectorAll('[data-archive-form]').forEach(initUpload);
+    function initPostPicker(form) {
+        var all = form.querySelector('[data-post-all]');
+        var picks = Array.prototype.slice.call(form.querySelectorAll('[data-post-pick]'));
+        var count = form.querySelector('[data-post-count]');
+        var submit = form.querySelector('[data-archive-submit]');
+        if (!all || !picks.length) {
+            return;
+        }
+
+        function update() {
+            var chosen = picks.filter(function (box) { return box.checked; }).length;
+            all.checked = chosen === picks.length;
+            all.indeterminate = chosen > 0 && chosen < picks.length;
+            count.textContent = count.getAttribute('data-template')
+                .replace('{count}', chosen).replace('{total}', picks.length);
+            if (submit) {
+                submit.disabled = chosen === 0;
+            }
+        }
+
+        all.addEventListener('change', function () {
+            picks.forEach(function (box) { box.checked = all.checked; });
+            update();
+        });
+        picks.forEach(function (box) { box.addEventListener('change', update); });
+        update();
+    }
+
+    document.querySelectorAll('[data-archive-confirm]').forEach(initPostPicker);
     document.querySelectorAll('[data-archive-confirm]').forEach(function (form) {
         form.addEventListener('submit', function (event) {
             if (event.submitter && event.submitter.getAttribute('form') === 'archive-cancel-form') {
                 return;
             }
+            markBusy(form);
+        });
+    });
+
+    document.querySelectorAll('[data-foreign-form]').forEach(function (form) {
+        var select = form.querySelector('[data-foreign-source]');
+        var file = form.querySelector('[data-foreign-file]');
+        var site = form.querySelector('[data-foreign-site]');
+        var types = { wordpress: '.xml', ghost: '.json' };
+
+        function sync() {
+            var kind = select.value;
+            file.setAttribute('accept', types[kind]);
+            file.value = '';
+            site.hidden = kind !== 'ghost';
+            form.querySelectorAll('[data-foreign-help]').forEach(function (help) {
+                help.hidden = help.getAttribute('data-foreign-help') !== kind;
+            });
+        }
+
+        select.addEventListener('change', sync);
+        form.addEventListener('submit', function () {
             markBusy(form);
         });
     });

@@ -83,6 +83,14 @@ class CommentController extends AppController
             return $this->redirect(lurl('/login').'?return_to='.urlencode($returnPath));
         }
 
+        // An unconfirmed address keeps what was typed and posts it once the link is followed
+        if (email_unverified($user) && $postId > 0 && $content !== '' && !$this->comments->contentLengthError($content)) {
+            $this->comments->capturePending($postId, $parentId, $content, $this->refererPath());
+            $this->flash('info', chrome_translate('auth.verifyCommentSaved'));
+
+            return $this->redirectBack();
+        }
+
         $result = $this->comments->create($postId, $parentId > 0 ? $parentId : null, $content, $user, $this->request->ip());
 
         $this->flash($result['ok'] ? 'success' : 'error', $result['message']);

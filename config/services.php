@@ -371,6 +371,10 @@ $container->setShared(App\Services\Analytics\EventRegistry::class, function ($c)
     return new App\Services\Analytics\EventRegistry($analyticsConfig()['events']);
 });
 
+$container->set(Framework\Interfaces\ResponseHardenerInterface::class, function ($c) {
+    return $c->get(App\Middleware\SecurityHeadersMiddleware::class);
+});
+
 $container->set(Framework\Interfaces\ServerErrorReporterInterface::class, function ($c) {
     return $c->get(App\Services\Analytics\ServerErrorRecorder::class);
 });
@@ -963,6 +967,21 @@ $container->setShared(App\Services\Captcha\CaptchaInterface::class, function ($c
         require ROOT_PATH.'/config/captcha.php',
         (string) env('APP_KEY', ''),
         $c->get(Framework\Cache\RateLimitStore::class)
+    );
+});
+
+$container->setShared(App\Services\TwoFactor\SecretBox::class, function () {
+    return new App\Services\TwoFactor\SecretBox((string) env('APP_KEY', 'change-me'));
+});
+
+$container->setShared(App\Services\TwoFactor\TwoFactorPolicy::class, function ($c) {
+    $config = require ROOT_PATH.'/config/auth.php';
+
+    return new App\Services\TwoFactor\TwoFactorPolicy(
+        $c->get(App\Models\UserModel::class),
+        $c->get(App\Services\TwoFactor\TwoFactorService::class),
+        new App\Policies\SystemPolicy(),
+        (bool) $config['two_factor_required_for_admins']
     );
 });
 

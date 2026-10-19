@@ -68,6 +68,11 @@ class MailQueueService
         $queued = 0;
 
         foreach ($mailable->getTo() as $address => $name) {
+            // An address that never answered its confirmation link gets only the mails that help it do so
+            if (!$mailable->reachesUnverified() && $this->queue->isUnverifiedAccount((string) $address)) {
+                continue;
+            }
+
             $this->queue->enqueue([
                 'to_email' => $address,
                 'to_name' => $name !== '' ? $name : null,

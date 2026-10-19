@@ -3,9 +3,7 @@
 {% block title %}{{ page.title }} | <?= e(site_setting('site_name', 'Lexicon')) ?>{% endblock %}
 
 {% block meta %}
-{% if page.meta_description %}
-<meta name="description" content="{{ page.meta_description }}" />
-{% endif %}
+<?= platform_page_meta($page['title'], (string) ($page['meta_description'] ?? ''), $head['canonicalUrl']) ?>
 {% endblock %}
 
 {% block body %}

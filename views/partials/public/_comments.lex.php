@@ -856,4 +856,6 @@ $renderComment = static function (array $comment, int $depth) use (
 </div>
 
 <script defer src="/assets/js/report-dialog.js"></script>
+<link rel="stylesheet" href="/assets/css/blog-confirm.css">
+<script defer src="/assets/js/blog-confirm.js"></script>
 <script defer src="/assets/js/comments.js"></script>

@@ -4,7 +4,6 @@
 {% block subtitle %}Fill in details to create your new post.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/flatpickr.css">
 {% endblock %}
@@ -98,7 +97,9 @@
 
     editor.on('keyup change input SetContent', syncExcerpt);
     editor.on('init', syncExcerpt);
-    syncExcerpt();
+    if (editor.initialized) {
+      syncExcerpt();
+    }
   };
 
   bindWhenReady();

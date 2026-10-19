@@ -109,7 +109,8 @@ beforeEach(function () {
         new \App\Models\CommentVoteModel($this->db),
         \Framework\Core\App::container()->get(\App\Services\CommentRemovalService::class),
         new \App\Services\ContentLocaleResolver(new \App\Services\LocaleRegistry(ROOT_PATH)),
-        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH))
+        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH)),
+        new \App\Services\SearchRateLimiter(new \Framework\Helpers\RateLimiter(\Tests\Helpers\ThrottleTestHelper::fakeCache()))
     );
 
     // Pre-routing has already stripped the prefix by the time a controller runs,

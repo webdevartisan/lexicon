@@ -23,9 +23,11 @@ $I->checkOption('age_confirmed');
 $I->waitForTheSignUpCheck();
 $I->click('Create account');
 
-// "Create a Blog" carries through sign-up straight into Start your blog
+// A new account has to prove its address before it can start a blog
+$I->waitForText('Confirm your email', 15);
+$I->followTheConfirmLinkMailedTo($email);
+$I->amOnPage('/en/dashboard/blog/new');
 $I->waitForText('What will you call your blog?', 15);
-$I->see("Let's start your blog.");
 $I->seeInCurrentUrl('/dashboard/blog/new');
 $I->dontSee('Too many accounts were created');
 $I->seeThePageLooksRight('02-signed-up');
@@ -34,6 +36,8 @@ $I->saveSessionSnapshot('writer');
 // The writer starts a blog in three steps: name, what it's about, a look
 $I->see('Step 1 of 3');
 $I->fillField('name', "Walkthrough {$stamp}");
+$I->fillField('first_name', 'Wanda');
+$I->fillField('last_name', 'Walker');
 $I->waitForText("/blog/walkthrough-{$stamp}", 5, '[data-address]');
 $I->seeThePageLooksRight('03-start-name');
 $I->click('[data-address-change] summary');
@@ -95,6 +99,9 @@ $I->see('Anyone can read this post.', '[data-visibility-line]');
 $I->seeThePageLooksRight('05-first-post');
 $postEditUrl = $I->grabFromCurrentUrl();
 $postUrl = "/en/blog/{$blogSlug}/{$postSlug}";
+$I->amOnPage($postUrl);
+$I->see('Wanda Walker');
+$I->amOnPage($postEditUrl);
 
 // The next steps card counts the first post, hides and comes back, and ticks the share step
 $I->amOnPage('/en/dashboard');

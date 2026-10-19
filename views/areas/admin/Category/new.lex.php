@@ -4,7 +4,6 @@
 {% block subtitle %}Add a category scoped to one blog.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 {% endblock %}
 
 {% block body %}
@@ -22,6 +21,4 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
-<script src="/cp-assets/js/searchable-select.init.js"></script>
 {% endblock %}

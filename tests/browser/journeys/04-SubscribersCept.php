@@ -41,8 +41,7 @@ $I->dontSee('No subscribers match');
 
 // Removing a subscriber asks first, then takes them off the list
 $I->click('Remove');
-$I->seeInPopup("Remove {$readerEmail} from the subscriber list?");
-$I->acceptPopup();
+$I->acceptConfirm("Remove {$readerEmail} from the subscriber list?");
 $I->waitForText('Subscriber removed');
 $I->dontSee($readerEmail, 'table');
 $I->seeThePageLooksRight('subscribers-removed');

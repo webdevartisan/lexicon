@@ -123,6 +123,24 @@ function site_setting(string $name, ?string $default = null): ?string
 }
 
 /**
+ * Whether new accounts can be created through the sign-up form.
+ *
+ * Blog invitations stay open either way: the invited address was already chosen by a blog owner.
+ */
+function registration_open(): bool
+{
+    return app(SettingModel::class)->get('registration_enabled', '1') !== '0';
+}
+
+/**
+ * Whether a self-service sign-up must follow the mailed link before it can write.
+ */
+function email_verification_required(): bool
+{
+    return app(SettingModel::class)->get('require_email_verification', '1') !== '0';
+}
+
+/**
  * The age people confirm when they sign up, from config/privacy.php.
  */
 function minimum_signup_age(): int
@@ -167,6 +185,20 @@ function password_length_bounds(): array
         'min' => \Framework\Validation\Validator::parsePasswordRequirements(password_policy_preset())['min'],
         'max' => (int) (require ROOT_PATH.'/config/auth.php')['password_max_length'],
     ];
+}
+
+/**
+ * The auth locale key for the password hint that matches the active preset.
+ */
+function password_hint_key(): string
+{
+    $rules = \Framework\Validation\Validator::parsePasswordRequirements(password_policy_preset());
+
+    if ($rules['symbols'] > 0) {
+        return 'auth.passwordStrong';
+    }
+
+    return $rules['uppercase'] > 0 ? 'auth.passwordMedium' : 'auth.passwordMin';
 }
 
 /**
@@ -443,6 +475,112 @@ function social_meta_tags(array $meta): string
     $named('twitter:creator', (string) ($meta['twitter_creator'] ?? ''));
 
     return implode("\n  ", $tags);
+}
+
+/**
+ * Search and sharing tags for one of the platform's own public pages.
+ *
+ * Blog pages build theirs in BlogController; this covers the pages that sit
+ * on the front layout (home, discover, the content pages). The share image is
+ * the app icon, so link previews use the small "summary" card rather than the
+ * large one that would crop it.
+ *
+ * @param  string  $title  Page title for og:title
+ * @param  string  $description  Meta description, omitted when empty
+ * @param  string  $canonical  Absolute canonical URL, also used as og:url
+ * @param  string|null  $robots  Value for the robots meta tag, if the page needs one
+ * @return string Tags ready to echo inside <head>
+ */
+function platform_page_meta(string $title, string $description, string $canonical, ?string $robots = null): string
+{
+    $origin = (string) (parse_url($canonical, PHP_URL_SCHEME) ?: 'https').'://'.(string) parse_url($canonical, PHP_URL_HOST);
+    $port = parse_url($canonical, PHP_URL_PORT);
+    if ($port !== null) {
+        $origin .= ':'.$port;
+    }
+
+    $tags = [];
+    if ($description !== '') {
+        $tags[] = '<meta name="description" content="'.e($description).'" />';
+    }
+    if ($robots !== null) {
+        $tags[] = '<meta name="robots" content="'.e($robots).'" />';
+    }
+
+    $tags[] = social_meta_tags([
+        'title' => $title,
+        'description' => $description,
+        'url' => $canonical,
+        'site_name' => (string) site_setting('site_name', 'Lexicon'),
+        'og_image' => $origin.'/assets/icon/android-chrome-512x512.png',
+        'og_image_alt' => (string) site_setting('site_name', 'Lexicon'),
+        'twitter_card' => 'summary',
+    ]);
+
+    return implode('
+', $tags);
+}
+
+/**
+ * JSON-LD for a blog page, built from the same meta array as the social tags.
+ *
+ * Posts are described as a BlogPosting and every other blog page as a Blog.
+ * Pages told to stay out of search engines get nothing, since structured
+ * data on them would only advertise what they asked to hide.
+ *
+ * @param  array<string, mixed>  $meta  The page meta assembled by BlogController
+ * @return string A script tag, or an empty string when there is nothing to describe
+ */
+function structured_data_tags(array $meta): string
+{
+    $url = (string) ($meta['canonical'] ?? $meta['url'] ?? '');
+    if ($url === '' || !empty($meta['robots'])) {
+        return '';
+    }
+
+    $isPost = ($meta['og_type'] ?? '') === 'article';
+    $name = (string) ($meta['og_title'] ?? '') ?: (string) ($meta['title'] ?? '');
+    $description = (string) ($meta['og_description'] ?? '') ?: (string) ($meta['description'] ?? '');
+    $image = (string) ($meta['og_image'] ?? '');
+
+    if ($isPost) {
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            // Google truncates headlines past 110 characters
+            'headline' => mb_substr($name, 0, 110),
+            'description' => $description,
+            'image' => $image,
+            'datePublished' => $meta['article_published_time'] ?? null,
+            'dateModified' => $meta['article_modified_time'] ?? ($meta['article_published_time'] ?? null),
+            'author' => ($meta['article_author'] ?? '') !== ''
+                ? ['@type' => 'Person', 'name' => (string) $meta['article_author']]
+                : null,
+            'publisher' => ($meta['site_name'] ?? '') !== ''
+                ? ['@type' => 'Organization', 'name' => (string) $meta['site_name']]
+                : null,
+            'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $url],
+        ];
+    } else {
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Blog',
+            'name' => (string) ($meta['site_name'] ?? '') ?: $name,
+            'description' => $description,
+            'image' => $image,
+            'url' => $url,
+        ];
+    }
+
+    $data = array_filter($data, static fn ($value): bool => $value !== null && $value !== '');
+
+    // The hex flags keep a "</script>" inside a title from ending the block early
+    $json = json_encode(
+        $data,
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+
+    return '<script type="application/ld+json">'.$json.'</script>';
 }
 
 /**

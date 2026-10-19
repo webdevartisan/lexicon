@@ -22,6 +22,7 @@ use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
 use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
+use App\Services\SearchRateLimiter;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -43,7 +44,8 @@ class BlogController extends AppController
         private CommentVoteModel $commentVotes,
         private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
-        private HeadI18nBuilder $headI18n
+        private HeadI18nBuilder $headI18n,
+        private SearchRateLimiter $searchThrottle
     ) {}
 
     /** @var array<int, array{name: string, handle: string, link_handle: ?string}> Per-request cache, keyed by user id. */
@@ -275,6 +277,65 @@ class BlogController extends AppController
                 'totalPosts' => $postsData['totalPosts'],
             ],
         ]);
+    }
+
+    /**
+     * Search results for one blog, shown in the theme's archive layout.
+     */
+    public function searchBlog(string $blogSlug): Response
+    {
+        $ctx = $this->loadBlogContext($blogSlug);
+        $blogId = (int) ($ctx['blog']['id'] ?? 0);
+
+        if ($blogId === 0) {
+            throw new PageNotFoundException('Blog not found.', 404);
+        }
+
+        if ($redirect = $this->blogLocaleRedirect($ctx)) {
+            return $redirect;
+        }
+
+        $term = trim(mb_substr((string) ($this->request->get['q'] ?? ''), 0, 100));
+        $throttled = $term !== '' && $this->searchThrottled();
+        $found = $throttled ? ['data' => [], 'total' => 0] : $this->publishedPosts->searchInBlog($blogId, $term);
+        $shown = count($found['data']);
+        $name = e($term);
+
+        return $this->view('Blogs/archive.lex.php', $ctx + [
+            'posts' => $this->localizePosts($this->enrichPostAuthors($found['data']), $ctx['settings']),
+            'pagination' => [
+                'totalPages' => 1,
+                'currentPage' => 1,
+                'perPage' => max(1, $shown),
+                'totalPosts' => $found['total'],
+            ],
+            'searchTerm' => $term,
+            'archiveKicker' => 'Search',
+            'archiveTitle' => $term === '' ? 'Search' : '&ldquo;'.$name.'&rdquo;',
+            'archiveDek' => match (true) {
+                $throttled => 'Too many searches just now. Try again in a minute.',
+                $term === '' => 'Type a word to search every post.',
+                $found['total'] === 0 => 'Nothing matched <em>'.$name.'</em>.',
+                default => 'Posts matching <em>'.$name.'</em>.',
+            },
+        ]);
+    }
+
+    /**
+     * Record a search from this IP; on refusal set the 429 and Retry-After.
+     */
+    private function searchThrottled(): bool
+    {
+        $ip = $this->request->ip() ?? 'unknown';
+
+        if (!$this->searchThrottle->hit($ip)) {
+            return false;
+        }
+
+        $this->response->setStatusCode(429);
+        $this->response->addHeader('Retry-After', (string) max(1, $this->searchThrottle->availableIn($ip)));
+
+        return true;
     }
 
     /**

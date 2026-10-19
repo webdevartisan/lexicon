@@ -23,7 +23,7 @@
                     {% cmp="input" type="text" label="title" value="{$title}" disabled="true" %}
 
                     <?php $slug = $post['slug'] ?? ''; ?>
-                    {% cmp="input" type="text" label="slug" value="{$slug}" prefix="/" disabled="true"
+                    {% cmp="input" type="text" label="Post link" value="{$slug}" prefix="/" disabled="true"
                     underlabel="Cannot be changed." %}
 
                     <?php $excerpt = $post['excerpt'] ?? ''; ?>

@@ -4,7 +4,6 @@
 {% block subtitle %}{{ t('blog.settings.pageSubtitle') }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
 {% endblock %}
 
@@ -264,9 +263,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src='/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js'></script>
-<script src="/cp-assets/js/timezone.init.js"></script>
-<script src="/cp-assets/js/choices.init.js"></script>
 <script src="/cp-assets/js/modal.js"></script>
 <script src="/cp-assets/js/delete-blog-modal.js"></script>
 <script nonce="<?= csp_nonce() ?>">

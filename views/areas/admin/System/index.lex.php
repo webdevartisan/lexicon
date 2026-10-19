@@ -105,8 +105,17 @@ foreach ($phpLabels as $key => $label) { ?>
                     Last 200 lines of <?= e($selectedLog) ?> · updated <?= e(date('M j, Y · g:i a', $logs[$selectedLog]['modified'])) ?>
                 </p>
                 <?php if (!empty($canClearLogs)) { ?>
-                    <?php $clearLabel = 'Clear log'; ?>
-                    {% cmp="btn" type="button" variant="red" icon="eraser" label="{$clearLabel}" size="xs" dataModalTarget="clearLogModal" %}
+                    <?php
+                    $clearLabel = 'Clear log';
+                    $clearAttrs = [
+                        'form' => 'clearLogForm',
+                        'data-confirm' => 'Everything in '.$selectedLog.' will be erased. The file stays, so anything writing to it carries on. This cannot be undone.',
+                        'data-confirm-title' => 'Clear this log?',
+                        'data-confirm-ok' => 'Clear log',
+                        'data-confirm-tone' => 'danger',
+                    ];
+                    ?>
+                    {% cmp="btn" type="submit" variant="red" icon="eraser" label="{$clearLabel}" size="xs" attrs="{$clearAttrs}" %}
                 <?php } ?>
             </div>
             <?php if ($logError !== null) { ?>
@@ -125,8 +134,6 @@ foreach ($phpLabels as $key => $label) { ?>
 </div>
 
 <?php if (!empty($canClearLogs) && $selectedLog !== '') { ?>
-    <?php $clearMessage = 'Everything in '.$selectedLog.' will be erased. The file stays, so anything writing to it carries on. This cannot be undone.'; ?>
-    {% cmp="modal" id="clearLogModal" title="Clear this log?" icon="alert-circle" variant="danger" message="{$clearMessage}" confirmText="Clear log" cancelText="Cancel" form="clearLogForm" %}
     <form method="POST" action="/admin/system/logs/clear" id="clearLogForm">
         {{ csrf_field() }}
         <input type="hidden" name="log" value="<?= e($selectedLog) ?>">

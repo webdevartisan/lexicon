@@ -11,6 +11,7 @@ use App\Models\AnalyticsEventModel;
 use App\Models\AnalyticsVisitModel;
 use App\Models\BlogInvitationModel;
 use App\Models\BlogSubscriberModel;
+use App\Models\EmailVerificationModel;
 use App\Models\ImpersonationSessionModel;
 use App\Models\MailQueueModel;
 use App\Models\PasswordResetModel;
@@ -31,6 +32,7 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
         private MailQueueModel $mailQueue,
         private PasswordResetModel $passwordResets,
         private PendingEmailChangeModel $emailChanges,
+        private EmailVerificationModel $emailVerifications,
         private BlogInvitationModel $invitations,
         private BlogSubscriberModel $subscribers,
         private AccountErasureRecordModel $erasureRecords,
@@ -66,6 +68,7 @@ class PrivacyPruneCommand implements SchedulableCommandInterface
             'Failed emails' => $this->mailQueue->pruneFailed((int) $days['mail_queue']),
             'Expired password reset links' => $this->passwordResets->deleteExpired(),
             'Expired email change links' => $this->emailChanges->deleteExpired(),
+            'Expired sign-up confirmation links' => $this->emailVerifications->deleteExpired(),
             'Expired invitations' => $this->invitations->deleteExpired(),
             'Answered invitations' => $this->invitations->deleteSettled((int) $days['answered_invitations']),
             'Unconfirmed subscriptions' => $this->subscribers->deleteUnconfirmedOlderThan((int) $days['unconfirmed_subscriptions']),

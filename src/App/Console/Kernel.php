@@ -27,6 +27,7 @@ use App\Console\Commands\ScheduleRunTaskCommand;
 use App\Console\Commands\SeedCommand;
 use App\Console\Commands\SeedModerationCommand;
 use App\Console\Commands\SessionPruneCommand;
+use App\Console\Commands\TwoFactorResetCommand;
 use Framework\Console\Kernel as ConsoleKernel;
 
 /**
@@ -57,6 +58,7 @@ class Kernel extends ConsoleKernel
             'cache:warm' => CacheWarmCommand::class,
             'ratelimit:clear' => RateLimitClearCommand::class,
             'key:generate' => KeyGenerateCommand::class,
+            'two-factor:reset' => TwoFactorResetCommand::class,
 
             // Notification management
             'notifications:prune' => NotificationPruneCommand::class,

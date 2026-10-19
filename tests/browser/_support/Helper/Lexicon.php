@@ -185,6 +185,29 @@ class Lexicon extends Module
     }
 
     /**
+     * Confirm a new account the way its owner would: open the link in the welcome mail.
+     * There is no mail catcher, so the link comes from the queued copy in the database.
+     */
+    public function followTheConfirmLinkMailedTo(string $email): void
+    {
+        preg_match_all('/^(DB_HOST|DB_NAME|DB_USER|DB_PASSWORD)=(.*)$/m', file_get_contents(dirname(__DIR__, 4).'/.env'), $found);
+        $env = array_map(fn ($value) => trim($value, " \"'"), array_combine($found[1], $found[2]));
+        $pdo = new \PDO("mysql:host={$env['DB_HOST']};dbname={$env['DB_NAME']};charset=utf8mb4", $env['DB_USER'], $env['DB_PASSWORD']);
+        $statement = $pdo->prepare('SELECT body_html FROM mail_queue WHERE to_email = ? ORDER BY id DESC LIMIT 20');
+        $statement->execute([$email]);
+
+        foreach ($statement->fetchAll(\PDO::FETCH_COLUMN) as $body) {
+            if (preg_match('#/verify-email/([a-f0-9]{64})#', $body, $link)) {
+                $this->browser()->amOnPage('/en/verify-email/'.$link[1]);
+
+                return;
+            }
+        }
+
+        $this->fail("No confirm link was queued for {$email}");
+    }
+
+    /**
      * Run one of the site's own console commands, as the scheduler would, and return what it printed.
      */
     public function runConsoleCommand(string $command): string

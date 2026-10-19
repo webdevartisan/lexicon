@@ -497,10 +497,24 @@ function windowScroll() {
  * buttons stay CSP-safe under script-src (no inline attribute handlers).
  */
 document.addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-confirm]');
-    if (!btn) return;
+    var holder = e.target.closest('[data-confirm]');
+    if (!holder || holder.dataset.confirmed === '1') return;
 
-    if (!window.confirm(btn.getAttribute('data-confirm'))) {
-        e.preventDefault();
-    }
+    // The attribute sits on a button, a link or a whole form; only a submit button counts inside a form
+    var trigger = holder.matches('form') ? e.target.closest('button, input[type="submit"]') : holder;
+    if (!trigger || (holder.matches('form') && trigger.type === 'button')) return;
+
+    e.preventDefault();
+
+    window.cpConfirm(holder.getAttribute('data-confirm'), {
+        title: holder.getAttribute('data-confirm-title') || undefined,
+        confirmLabel: holder.getAttribute('data-confirm-ok') || undefined,
+        tone: holder.getAttribute('data-confirm-tone') || undefined
+    }).then(function (ok) {
+        if (!ok) return;
+
+        holder.dataset.confirmed = '1';
+        trigger.click();
+        delete holder.dataset.confirmed;
+    });
 });

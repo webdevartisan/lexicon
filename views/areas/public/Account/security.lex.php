@@ -59,6 +59,14 @@ $passwordField = function (string $name, string $label, string $autocomplete) us
                     <strong><?= !empty($user['last_login']) ? e($user['last_login']) : e($t('account.security.never')) ?></strong>
                 </p>
             </section>
+            <section class="lx-card">
+                <h2 class="lx-card-title"><?= e($t('account.twoFactor.heading')) ?></h2>
+                <p class="lx-stat">
+                    <span><?= e($t('account.twoFactor.status')) ?></span>
+                    <strong><?= !empty($user['two_factor_confirmed_at']) ? e($t('account.twoFactor.statusOn')) : e($t('account.twoFactor.statusOff')) ?></strong>
+                </p>
+                <a class="lx-btn lx-btn-subtle lx-btn-sm" href="<?= e(lurl('/account/security/two-factor')) ?>"><?= e($t('account.twoFactor.manage')) ?></a>
+            </section>
         </aside>
 
         <section class="lx-account-main lx-sessions" aria-labelledby="sessions-heading">

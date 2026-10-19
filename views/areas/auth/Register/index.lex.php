@@ -4,7 +4,7 @@
 
 {% block heading %}<?= e($t('auth.registerTitle')) ?>{% endblock %}
 
-{% block sub %}<?= e($t('auth.registerSubtitle')) ?>{% endblock %}
+{% block sub %}<?= e($t(str_contains((string) ($return_to ?? ''), '/dashboard/blog/new') ? 'auth.registerBlogSubtitle' : 'auth.registerSubtitle')) ?>{% endblock %}
 
 {% block altAction %}
 <?php
@@ -76,7 +76,7 @@ $fieldErrors = errors();
         // rates what has been typed. Keeping them separate stops the meter
         // from reading like a rule the server does not actually enforce.
 ?>
-        <p class="lx-field-hint" id="password_help"><?= e($t('auth.passwordMin', ['min' => password_length_bounds()['min']])) ?></p>
+        <p class="lx-field-hint" id="password_help"><?= e($t(password_hint_key(), ['min' => password_length_bounds()['min']])) ?></p>
 
         <?php
 // Rating labels ride along as data so the script stays free of copy.
@@ -127,15 +127,4 @@ $meterLevels = implode('|', [
 
     <button type="submit" class="lx-btn lx-authsubmit"><?= e($t('auth.registerSubmit')) ?></button>
 </form>
-{% endblock %}
-
-{% block legal %}
-<?php
-// See the note in Login: the locale file owns the sentence, the anchors are
-// ours, and neither comes from user input.
-echo $t('auth.legal', [
-    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
-]);
-?>
 {% endblock %}

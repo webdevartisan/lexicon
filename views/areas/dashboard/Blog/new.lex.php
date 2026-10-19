@@ -57,6 +57,33 @@ $inputClass = 'form-input w-full border-slate-200 focus:border-custom-500 focus:
             </div>
           </details>
         </div>
+
+        <?php if (!empty($needsName)) { ?>
+        <fieldset>
+          <legend class="block text-xl font-semibold text-slate-900 dark:text-zink-50"><?= e($t('setup.start.writer.question')) ?></legend>
+          <div class="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <label for="first_name" class="sr-only"><?= e($t('setup.start.writer.first')) ?></label>
+              <input id="first_name" name="first_name" type="text" required minlength="2" maxlength="50" autocomplete="given-name"
+                value="<?= e((string) old('first_name')) ?>" placeholder="<?= e($t('setup.start.writer.first')) ?>"
+                class="<?= $inputClass ?> <?= isset($fieldErrors['first_name']) ? '!border-red-500' : '' ?>">
+              <?php foreach ($fieldErrors['first_name'] ?? [] as $message) { ?>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($message) ?></p>
+              <?php } ?>
+            </div>
+            <div>
+              <label for="last_name" class="sr-only"><?= e($t('setup.start.writer.last')) ?></label>
+              <input id="last_name" name="last_name" type="text" required minlength="2" maxlength="50" autocomplete="family-name"
+                value="<?= e((string) old('last_name')) ?>" placeholder="<?= e($t('setup.start.writer.last')) ?>"
+                class="<?= $inputClass ?> <?= isset($fieldErrors['last_name']) ? '!border-red-500' : '' ?>">
+              <?php foreach ($fieldErrors['last_name'] ?? [] as $message) { ?>
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($message) ?></p>
+              <?php } ?>
+            </div>
+          </div>
+          <p class="mt-2 text-sm text-slate-500 dark:text-zink-300"><?= e($t('setup.start.writer.hint')) ?></p>
+        </fieldset>
+        <?php } ?>
       </div>
       <div class="flex justify-end border-t border-slate-200 p-4 dark:border-zink-600 md:px-6">
         <button type="submit" class="inline-flex items-center gap-1.5 rounded-md border border-custom-500 bg-custom-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:border-custom-600 hover:bg-custom-600 focus:ring focus:ring-custom-100 dark:focus:ring-custom-500/20 max-sm:w-full max-sm:justify-center">

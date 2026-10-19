@@ -195,6 +195,23 @@ it('leaves existing posts alone when told to skip clashes', function () {
         ->and($this->posts->find($existing)['content'])->toBe('<p>Keep me</p>');
 });
 
+it('imports only the posts picked and reports the rest as left out', function () {
+    $post = fn (string $slug) => ['title' => ucfirst($slug), 'slug' => $slug, 'content' => '<p>Body</p>', 'status' => 'draft', 'visibility' => 'public', 'tags' => []];
+    $zip = ($this->craft)([$post('first-pick'), $post('second-pick'), $post('third-pick')]);
+
+    $result = $this->importer->import(
+        $this->reader->read($zip, $this->target),
+        $zip,
+        $this->target,
+        $this->ownerId,
+        ['on_clash' => 'skip', 'keep_status' => false, 'work_dir' => $this->root.'/work', 'only' => [1]]
+    );
+
+    expect(array_column($result['created'], 'slug'))->toBe(['second-pick'])
+        ->and(array_column($result['skipped'], 'slug'))->toBe(['first-pick', 'third-pick'])
+        ->and(archivePostBySlug($this->db, $this->targetId, 'first-pick'))->toBeNull();
+});
+
 it('imports clashing posts under a numbered slug when told to copy', function () {
     ($this->seedSource)();
     PostFactory::new($this->posts)->withAttributes([

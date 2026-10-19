@@ -1,10 +1,9 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Settings{% endblock %}
-{% block subtitle %}Site identity, content display, registration, availability, and email.{% endblock %}
+{% block subtitle %}Site identity, registration, availability, and email.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/vendors/choices.css">
 {% endblock %}
 
 {% block body %}
@@ -19,27 +18,13 @@ $saveButton = '<button type="submit" class="inline-flex items-center gap-2 px-4 
 
 // Values with old-input fallback for redisplay after validation errors
 $siteName = old('site_name', $settings['site_name'] ?? '');
-$siteTagline = old('site_tagline', $settings['site_tagline'] ?? '');
-$siteDescription = old('site_description', $settings['site_description'] ?? '');
 $adminEmail = old('admin_email', $settings['admin_email'] ?? '');
 
 $currentTz = old('timezone', $settings['timezone'] ?? 'UTC');
 $timezoneOptions = array_combine(\DateTimeZone::listIdentifiers(), \DateTimeZone::listIdentifiers());
 
-$postsPerPage = old('posts_per_page', $settings['posts_per_page'] ?? '10');
-$excerptLength = old('excerpt_length', $settings['excerpt_length'] ?? '200');
-
-$currentFormat = old('date_format', $settings['date_format'] ?? 'F j, Y');
-$formatOptions = [
-    'F j, Y' => date('F j, Y'),
-    'Y-m-d' => date('Y-m-d'),
-    'd/m/Y' => date('d/m/Y'),
-    'm/d/Y' => date('m/d/Y'),
-];
-
-$allowComments = old('allow_comments', $settings['allow_comments'] ?? '1');
 $regEnabled = old('registration_enabled', $settings['registration_enabled'] ?? '1');
-$emailVerification = old('require_email_verification', $settings['require_email_verification'] ?? '0');
+$emailVerification = old('require_email_verification', $settings['require_email_verification'] ?? '1');
 // Maintenance state comes from the flag file, not the settings table
 $maintenance = old('maintenance_mode', !empty($maintenance_active) ? '1' : '0');
 $currentRole = old('default_user_role', $settings['default_user_role'] ?? '4');
@@ -66,7 +51,6 @@ $selectClass = 'form-select w-full border-slate-200 dark:border-zink-500 focus:o
         <?php
         $tabs = [
             'identity' => ['home', 'Site Identity'],
-            'content' => ['file-text', 'Content & Display'],
             'users' => ['users', 'Users & Availability'],
             'email' => ['mail', 'Email'],
             'analytics' => ['trending-up', 'Insights'],
@@ -89,51 +73,11 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {% cmp="input" type="text" label="Site Name" name="site_name" value="{$siteName}" required %}
-                    {% cmp="input" type="text" label="Site Tagline" name="site_tagline" value="{$siteTagline}" placeholder="Your site's motto or slogan" %}
-                </div>
-
-                <div class="mt-5">
-                    {% cmp="input" type="textarea" label="Site Description" name="site_description" value="{$siteDescription}" rows="3" placeholder="A brief description for SEO and social sharing" %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                     {% cmp="input" type="email" label="Admin Email" name="admin_email" value="{$adminEmail}" required underlabel="Receives system notifications and alerts" %}
                     {% cmp="searchable-select" name="timezone" label="Timezone" options="{$timezoneOptions}" selectedKey="{$currentTz}" placeholder="Search timezones..." required %}
-                </div>
-            </div>
-            <div class="card-body flex justify-end border-t border-slate-100 dark:border-zink-600">
-                <?= $saveButton ?>
-            </div>
-        </form>
-    </div>
-
-    <!-- TAB 2: CONTENT & DISPLAY -->
-    <div class="tab-content" data-section="content">
-        <form method="POST" action="/admin/settings" class="card">
-            {{ csrf_field() }}
-            <div class="card-body">
-                <h3 class="<?= $sectionTitleClass ?>">Content Display</h3>
-                <p class="<?= $sectionHintClass ?>">Control how posts and content are displayed throughout the site.</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {% cmp="input" type="number" label="Posts Per Page" name="posts_per_page" value="{$postsPerPage}" required %}
-                    {% cmp="input" type="number" label="Excerpt Length (characters)" name="excerpt_length" value="{$excerptLength}" required %}
-
-                    <div>
-                        <label for="date_format" class="inline-block mb-2 text-base font-medium">Date Format</label>
-                        <select id="date_format" name="date_format" required class="<?= $selectClass ?>">
-                            <?php foreach ($formatOptions as $format => $example) { ?>
-                            <option value="<?= e($format) ?>" <?= $format === $currentFormat ? 'selected' : '' ?>><?= e($example) ?></option>
-                            <?php } ?>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="allow_comments" class="inline-block mb-2 text-base font-medium">Comments</label>
-                        <select id="allow_comments" name="allow_comments" class="<?= $selectClass ?>">
-                            <?= $onOff((string) $allowComments, 'Enabled', 'Disabled') ?>
-                        </select>
-                    </div>
                 </div>
             </div>
             <div class="card-body flex justify-end border-t border-slate-100 dark:border-zink-600">
@@ -174,7 +118,7 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
                         <select id="require_email_verification" name="require_email_verification" class="<?= $selectClass ?>">
                             <?= $onOff((string) $emailVerification, 'Required', 'Not required') ?>
                         </select>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">Future feature: require verification before login</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">When not required, new sign-ups start confirmed and get no confirmation mail</p>
                     </div>
 
                     <div>
@@ -291,8 +235,6 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
-<script src="/cp-assets/js/searchable-select.init.js"></script>
 <script nonce="<?= csp_nonce() ?>">
     // switch settings sections without a page reload
     document.addEventListener('DOMContentLoaded', () => {

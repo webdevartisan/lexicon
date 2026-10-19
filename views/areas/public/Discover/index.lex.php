@@ -2,6 +2,16 @@
 
 {% block title %}<?= e($t($tab === 'posts' ? 'discover.metaTitlePosts' : 'discover.metaTitle')) ?>{% endblock %}
 
+{% block meta %}
+<?php
+$discoverTitle = $t($tab === 'posts' ? 'discover.metaTitlePosts' : 'discover.metaTitle');
+$discoverDescription = $t($tab === 'posts' ? 'discover.metaDescriptionPosts' : 'discover.metaDescription');
+// Search results are different for every query and have no value in an index
+$discoverRobots = ($searchQuery ?? '') !== '' ? 'noindex, follow' : null;
+?>
+<?= platform_page_meta($discoverTitle, $discoverDescription, $head['canonicalUrl'], $discoverRobots) ?>
+{% endblock %}
+
 {% block body %}
     {% include "partials/public/discover/_header.lex.php" %}
 

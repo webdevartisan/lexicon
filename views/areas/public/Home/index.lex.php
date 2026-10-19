@@ -3,10 +3,7 @@
 {% block title %}<?= e(site_content('meta.title')) ?>{% endblock %}
 
 {% block meta %}
-<meta name="description" content="<?= e(site_content('meta.description')) ?>" />
-<meta property="og:title" content="<?= e(site_content('meta.title')) ?>" />
-<meta property="og:description" content="<?= e(site_content('meta.description')) ?>" />
-<meta property="og:type" content="website" />
+<?= platform_page_meta(site_content('meta.title'), site_content('meta.description'), $head['canonicalUrl']) ?>
 {% endblock %}
 
 {% block body %}
@@ -61,7 +58,9 @@ $statsPosts = (int) ($stats['posts'] ?? 0);
         // than at sign-up, since they are already registered.
         $homeViewerIsReader = !empty($viewer['is_reader']);
 // A reader the site does not let start a blog gets no primary button at all.
-$homeShowsCta = !$homeViewerIsReader || !empty($viewer['can_create_blog']);
+$homeShowsCta = auth()->check()
+    ? (!$homeViewerIsReader || !empty($viewer['can_create_blog']))
+    : registration_open();
 $homeCtaUrl = !auth()->check()
     ? '/register?return_to='.rawurlencode(lurl('/dashboard/blog/new'))
     : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
@@ -183,18 +182,15 @@ $postTitle = (string) ($post['title'] ?? '');
         <ul class="lx-cites">
             <?php
             $guides = [
-                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1', '/images/pic07.jpg'],
-                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2', '/images/pic08.jpg'],
-                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3', '/images/pic09.jpg'],
+                ['/getting-started/start-your-first-blog', 'sidebar.gettingStarted.items.tip1'],
+                ['/getting-started/write-posts-people-read', 'sidebar.gettingStarted.items.tip2'],
+                ['/getting-started/blog-with-your-team', 'sidebar.gettingStarted.items.tip3'],
             ];
-foreach ($guides as $guideIndex => [$guideHref, $guideKey, $guideImage]) {
+foreach ($guides as $guideIndex => [$guideHref, $guideKey]) {
     $guideBlurb = trim(site_content($guideKey));
     $guideTitle = trim((string) strtok($guideBlurb, '.'));
     ?>
             <li class="lx-cite" data-reveal="<?= $guideIndex ?>">
-                <a href="<?= e(lurl($guideHref)) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
-                    <img src="<?= e($guideImage) ?>" alt="" loading="lazy" />
-                </a>
                 <h3 class="lx-cite-title"><a href="<?= e(lurl($guideHref)) ?>"><?= e($guideTitle !== '' ? $guideTitle : $guideBlurb) ?></a></h3>
                 <p class="lx-cite-excerpt"><?= e($guideBlurb) ?></p>
                 <p class="lx-cite-more">

@@ -68,6 +68,8 @@ class InvitationService
         // In-app notification for users who already have an account.
         $existingUser = $this->userModel->findByEmail($email);
         if ($existingUser) {
+            // The earlier invite's link no longer works once this one replaces it.
+            $this->notifications->withdrawBlogInvites((int) $existingUser['id'], $blogId);
             $this->notifications->dispatch((int) $existingUser['id'], 'blog.invite', [
                 'blog_id' => $blogId,
                 'role' => $role,
@@ -190,6 +192,11 @@ class InvitationService
     public function cancel(int $blogId, string $email, int $cancelledBy, ?string $ip): void
     {
         $this->invitationModel->cancelPendingForEmail($blogId, $email);
+
+        $existingUser = $this->userModel->findByEmail($email);
+        if ($existingUser) {
+            $this->notifications->withdrawBlogInvites((int) $existingUser['id'], $blogId);
+        }
 
         audit()->log($cancelledBy, 'blog.invite_cancelled', 'blog_invitation', $blogId,
             ['email' => $email], $ip);

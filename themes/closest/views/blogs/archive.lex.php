@@ -40,6 +40,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       <?= $dek ?>
     </p>
 
+    {% include "partials/public/_blog_search.lex.php" %}
+
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="log-back">
       &larr; Back to the trailhead
     </a>

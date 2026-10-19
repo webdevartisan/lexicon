@@ -336,6 +336,36 @@ class PublishedPostModel extends AppModel
     }
 
     /**
+     * Search one blog's published, public posts by title and body, newest first.
+     *
+     * @param  int  $blogId  Blog to search
+     * @param  string  $query  Raw search text
+     * @param  int  $limit  Most posts to return
+     * @return array{data: array<int, array<string, mixed>>, total: int}
+     */
+    public function searchInBlog(int $blogId, string $query, int $limit = 30): array
+    {
+        $booleanQuery = $this->toBooleanSearch($query);
+
+        if ($booleanQuery === '') {
+            return ['data' => [], 'total' => 0];
+        }
+
+        $where = "blog_id = :blog_id AND status = 'published' AND visibility = 'public'
+            AND MATCH(title, content) AGAINST (:search IN BOOLEAN MODE)";
+        $params = [':blog_id' => $blogId, ':search' => $booleanQuery];
+
+        $total = (int) $this->database->query("SELECT COUNT(*) FROM {$this->getTable()} WHERE {$where}", $params)->fetchColumn();
+
+        $posts = $this->database->query(
+            "SELECT * FROM {$this->getTable()} WHERE {$where} ORDER BY published_at DESC LIMIT :limit",
+            $params + [':limit' => $limit]
+        )->fetchAll();
+
+        return ['data' => $posts, 'total' => $total];
+    }
+
+    /**
      * Turn free text into a boolean-mode FULLTEXT expression of required word prefixes.
      *
      * Only letters and digits survive, so the operators (+ - " * ( ) @ < > ~) a visitor

@@ -17,7 +17,7 @@ echo e($returnTo !== '' ? $t('auth.loginSubtitleReturn') : $t('auth.loginSubtitl
 $returnTo = !empty($return_to) ? $return_to : '';
 $registerHref = lurl('/register'.($returnTo !== '' ? '?return_to='.urlencode($returnTo) : ''));
 ?>
-<a href="<?= e($registerHref) ?>"><?= e($t('auth.createAccount')) ?></a>
+<?php if (registration_open()) { ?><a href="<?= e($registerHref) ?>"><?= e($t('auth.createAccount')) ?></a><?php } ?>
 {% endblock %}
 
 {% block body %}

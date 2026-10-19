@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Auth;
-use App\Mail\Mailable;
-use App\Mail\WelcomeEmail;
 use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
@@ -21,7 +19,7 @@ use Framework\Core\Request;
  *
  * Shared by the registration form and the invitation wizard so both produce the
  * same account: reader role, public profile, default preferences, a derived
- * handle and a queued welcome email.
+ * handle and a queued welcome email that carries the address confirmation link.
  */
 final class AccountRegistrar
 {
@@ -40,9 +38,10 @@ final class AccountRegistrar
      * @param  string  $email  Already validated, unique address
      * @param  string  $password  Already validated plain password
      * @param  Request  $request  The sign-up request, for attribution and visitor linking
+     * @param  bool  $verified  True when the address was already proven, e.g. by following an invitation link
      * @return int|null The new user id, or null when the insert failed
      */
-    public function register(string $email, string $password, Request $request): ?int
+    public function register(string $email, string $password, Request $request, bool $verified = false): ?int
     {
         $handle = $this->deriveHandle($email);
 
@@ -51,6 +50,8 @@ final class AccountRegistrar
             'handle' => $handle,
             'password' => password_hash($password, PASSWORD_DEFAULT),
             'age_confirmed_at' => gmdate('Y-m-d H:i:s'),
+            // The column defaults to proven; a sign-up has to earn it through the emailed link
+            'email_verified_at' => $verified ? gmdate('Y-m-d H:i:s') : null,
         ]);
 
         if (!$userId) {
@@ -69,18 +70,15 @@ final class AccountRegistrar
 
         $this->preferences->findOrCreate($userId);
 
-        // queued, so a transport problem does not cost the welcome email
-        try {
-            // In the language they signed up in.
-            $welcome = Mailable::inLocale(app(RecipientLocale::class)->current(), fn (): WelcomeEmail => new WelcomeEmail([
-                'email' => $email,
-                'handle' => $handle,
-            ]));
-            mail_queue()->enqueue($welcome, 'user', $userId);
-        } catch (Exception $e) {
-            // queueing is a single insert, so this only fires if the database
-            // is in trouble. Registration itself already succeeded either way.
-            error_log('Failed to queue welcome email: '.$e->getMessage());
+        // Queued, so a transport problem does not fail the sign-up. An invitation link
+        // already reached this inbox, so those accounts start confirmed and need no link.
+        if (!$verified) {
+            try {
+                app(EmailVerificationService::class)->send((int) $userId);
+            } catch (Exception $e) {
+                // Registration itself already succeeded; the banner offers a resend
+                error_log('Failed to queue confirmation email: '.$e->getMessage());
+            }
         }
 
         // Before signing in, which can move this visit's views onto the account.
