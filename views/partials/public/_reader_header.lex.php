@@ -42,7 +42,15 @@ $readerGroupKey = match ($readerSurface) {
 $readerGroup = $readerGroups[$readerGroupKey] ?? $readerGroups['saved'];
 ?>
 <header class="lx-reader-head">
-    <h1 class="lx-reader-title"><?= e($t($readerGroup['title'])) ?></h1>
+    <?php
+// A tab that names its own page owns the heading, so Liked does not read "Saved".
+$readerTitleKey = match ($readerSurface) {
+    'liked' => 'reader.metaLiked',
+    'my-comments' => 'reader.metaMyComments',
+    default => $readerGroup['title'],
+};
+?>
+    <h1 class="lx-reader-title"><?= e($t($readerTitleKey)) ?></h1>
 
     <?php if ($readerGroup['tabs'] !== []) { ?>
     <nav class="lx-reader-tabs" aria-label="<?= e($t($readerGroup['title'])) ?>">

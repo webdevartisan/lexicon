@@ -111,6 +111,7 @@ $router->group([
     'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/delete', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/{id:\d+}/edit', ['controller' => 'CommentController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/{id:\d+}/vote', ['controller' => 'CommentController', 'action' => 'vote', 'method' => 'POST']);
     $r->add('/{id:\d+}/report', ['controller' => 'CommentController', 'action' => 'report', 'method' => 'POST']);
     $r->add('/{id:\d+}/pin', ['controller' => 'CommentController', 'action' => 'pin', 'method' => 'POST']);

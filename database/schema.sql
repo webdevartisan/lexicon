@@ -544,6 +544,7 @@ CREATE TABLE IF NOT EXISTS comments (
     hidden_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Soft-hidden from public reads without touching the moderation status',
     hidden_reason VARCHAR(32) DEFAULT NULL COMMENT 'Why it is hidden, e.g. author_suspended',
     pinned_by INT DEFAULT NULL COMMENT 'Who pinned it; drives the "Pinned by" byline',
+    edited_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Last time the author changed the text; shows as "edited"',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,

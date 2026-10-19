@@ -166,6 +166,56 @@ class CommentService
     }
 
     /**
+     * Change the text of your own comment.
+     *
+     * Only the author may edit, only while the comment is visible and the post
+     * still takes comments. The moderation state is left alone: an approved
+     * comment stays approved, the same as Substack and Medium handle it.
+     *
+     * @param  int  $commentId  Comment to change
+     * @param  string  $content  Raw new text
+     * @param  array<string, mixed>  $user  Authenticated user row
+     * @param  string|null  $ip  Request IP for the audit trail
+     * @return array{ok: bool, message: string, id: int|null}
+     */
+    public function update(int $commentId, string $content, array $user, ?string $ip = null): array
+    {
+        $content = trim($content);
+        $comment = $this->commentModel->findById($commentId);
+        $userId = (int) $user['id'];
+
+        if ($comment === null || !empty($comment['deleted_at']) || !empty($comment['hidden_at'])) {
+            return $this->failure('That comment no longer exists.');
+        }
+
+        if (empty($comment['user_id']) || (int) $comment['user_id'] !== $userId || $comment['status'] === 'spam') {
+            return $this->failure('You can only edit your own comments.');
+        }
+
+        if ($content === '') {
+            return $this->failure('Comment content is required.');
+        }
+
+        if ($error = $this->contentLengthError($content)) {
+            return $this->failure($error);
+        }
+
+        $post = $this->postModel->find((string) $comment['post_id']);
+
+        if (!$post || $post['status'] !== 'published' || !$this->commentsOpen($post)) {
+            return $this->failure('Comments are closed for this post.');
+        }
+
+        if (!$this->commentModel->updateContent($commentId, $content)) {
+            return ['ok' => true, 'message' => 'Nothing changed.', 'id' => $commentId];
+        }
+
+        audit()->log($userId, 'comment.edited', 'comment', $commentId, ['post_id' => (int) $comment['post_id']], $ip);
+
+        return ['ok' => true, 'message' => 'Your comment was updated.', 'id' => $commentId];
+    }
+
+    /**
      * @return array{ok: bool, message: string, id: null}
      */
     private function failure(string $message): array

@@ -141,7 +141,7 @@ $authorInThread = static function (array $nodes, int $authorId) use (&$authorInT
 $renderComment = static function (array $comment, int $depth) use (
     &$renderComment, $postId, $commentsOpen, $viewerVotes, $canRemove,
     $canPin, $viewerIsGuest, $indentCap, $replyBatch, $avatar, $postAuthorId,
-    $postAuthor, $heartedIds, $authorInThread
+    $postAuthor, $heartedIds, $authorInThread, $viewerId
 ): void {
     $id = (int) $comment['id'];
     $removed = !empty($comment['deleted_at']);
@@ -154,6 +154,8 @@ $renderComment = static function (array $comment, int $depth) use (
     $authorLabel = $authorHandle !== '' ? '@'.$authorHandle : $authorName;
     $myVote = (int) ($viewerVotes[$id] ?? 0);
     $byAuthor = $postAuthorId > 0 && (int) ($comment['user_id'] ?? 0) === $postAuthorId;
+    $isMine = $viewerId > 0 && (int) ($comment['user_id'] ?? 0) === $viewerId;
+    $canEdit = $isMine && $commentsOpen && !$removed;
 
     // The author endorsing their own comment is not an endorsement, it is a
     // person agreeing with themselves, so it earns no heart.
@@ -214,6 +216,9 @@ $renderComment = static function (array $comment, int $depth) use (
               <?php if (!empty($comment['created_at'])) { ?>
                 <time><?= e(relative_time($comment['created_at'])) ?></time>
               <?php } ?>
+              <?php if (!$removed && !empty($comment['edited_at'])) { ?>
+                <span class="comment-edited" title="<?= e(local_datetime($comment['edited_at'])) ?>">edited</span>
+              <?php } ?>
             </p>
 
             <?php if ($removed) { ?>
@@ -223,6 +228,17 @@ $renderComment = static function (array $comment, int $depth) use (
                 <?php if ($showMention) { ?><a class="comment-mention<?= $answeredGone ? ' is-gone' : '' ?>" href="#comment-<?= $answeredId ?>"><?= e($mentionLabel) ?></a> <?php } ?>
                 <?= nl2br(e($comment['content'] ?? '')) ?>
               </p>
+
+              <?php if ($canEdit) { ?>
+                <form class="reply-form edit-form" id="edit-form-<?= $id ?>" action="/comments/<?= $id ?>/edit" method="post" hidden>
+                  <?= csrf_field() ?>
+                  <textarea name="content" rows="2" maxlength="2000" aria-label="Edit your comment" required><?= e($comment['content'] ?? '') ?></textarea>
+                  <div class="comment-form-actions">
+                    <button type="button" class="reply-toggle reply-cancel" data-edit-cancel="<?= $id ?>">Cancel</button>
+                    <button type="submit" class="btn-reply">Save</button>
+                  </div>
+                </form>
+              <?php } ?>
 
               <div class="comment-actions">
                 <div class="comment-votes" data-comment-id="<?= $id ?>">
@@ -312,7 +328,11 @@ $renderComment = static function (array $comment, int $depth) use (
             <div class="platform-menu-list comment-menu-list" data-menu-list hidden>
               <button type="button" data-copy-comment data-anchor="#comment-<?= $id ?>">Copy link</button>
 
-              <?php if (!$viewerIsGuest) { ?>
+              <?php if ($canEdit) { ?>
+                <button type="button" data-edit-comment="<?= $id ?>">Edit</button>
+              <?php } ?>
+
+              <?php if (!$viewerIsGuest && !$isMine) { ?>
                 <button type="button" data-report-comment data-comment-id="<?= $id ?>">Report</button>
               <?php } ?>
 
@@ -449,7 +469,8 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-thread-root .comment-meta strong {
     font-size: inherit; line-height: inherit;
   }
-  .comment-thread-root .comment-meta time {
+  .comment-thread-root .comment-meta time,
+  .comment-thread-root .comment-meta .comment-edited {
     margin: 0; font-size: var(--c-time); letter-spacing: normal;
     text-transform: none; opacity: .6;
   }

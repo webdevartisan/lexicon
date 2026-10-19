@@ -157,6 +157,26 @@ class CommentController extends AppController
     }
 
     /**
+     * Save new text for the viewer's own comment and land back on it.
+     */
+    public function update(string $id): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $commentId = (int) $id;
+        $result = $this->comments->update(
+            $commentId,
+            (string) $this->request->postParam('content'),
+            auth()->user(),
+            $this->request->ip()
+        );
+
+        $this->flash($result['ok'] ? 'success' : 'error', $result['message']);
+
+        return $this->redirect($this->backUrlPath().'#comment-'.$commentId);
+    }
+
+    /**
      * Cast, flip, or clear the viewer's vote on a comment.
      */
     public function vote(string $id): Response

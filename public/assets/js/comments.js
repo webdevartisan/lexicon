@@ -126,7 +126,7 @@
   // ---------------------------------------------------------------- replies
 
   function closeReplyForms() {
-    root.querySelectorAll('.reply-form').forEach(function (form) {
+    root.querySelectorAll('.reply-form:not(.edit-form)').forEach(function (form) {
       form.setAttribute('hidden', '');
     });
   }
@@ -145,6 +145,31 @@
       field.focus();
       field.addEventListener('input', function () { autoGrow(field); });
     }
+  }
+
+  // The edit form takes the place of the text it changes, so the comment does
+  // not show twice while it is being rewritten.
+  function setEditing(id, editing) {
+    var form = document.getElementById('edit-form-' + id);
+    if (!form) return;
+
+    var body = form.parentElement.querySelector('.comment-body');
+    var field = form.querySelector('textarea');
+
+    if (!editing) {
+      form.setAttribute('hidden', '');
+      if (body) body.removeAttribute('hidden');
+      field.value = field.defaultValue;
+      return;
+    }
+
+    closeReplyForms();
+    form.removeAttribute('hidden');
+    if (body) body.setAttribute('hidden', '');
+    autoGrow(field);
+    field.focus();
+    field.setSelectionRange(field.value.length, field.value.length);
+    field.addEventListener('input', function () { autoGrow(field); });
   }
 
   /** Expand or collapse one comment's replies and relabel its toggle. */
@@ -405,8 +430,21 @@
       return;
     }
 
+    var editCancel = ev.target.closest('[data-edit-cancel]');
+    if (editCancel) {
+      setEditing(editCancel.getAttribute('data-edit-cancel'), false);
+      return;
+    }
+
     if (ev.target.closest('[data-reply-cancel]')) {
       closeReplyForms();
+      return;
+    }
+
+    var edit = ev.target.closest('[data-edit-comment]');
+    if (edit) {
+      closeMenus(null);
+      setEditing(edit.getAttribute('data-edit-comment'), true);
       return;
     }
 

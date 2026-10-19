@@ -370,6 +370,31 @@ class CommentModel extends AppModel
     }
 
     /**
+     * Replace a comment's text as its author and stamp it as edited.
+     *
+     * @param  int  $id  Comment to change
+     * @param  string  $content  New text, already validated
+     * @return bool False when the comment is gone or the text did not change
+     */
+    public function updateContent(int $id, string $content): bool
+    {
+        $postId = $this->postIdForComment($id);
+
+        // NOW() for the same reason as softDelete: the column reads in the session timezone.
+        $sql = "UPDATE {$this->getTable()}
+                SET content = ?, edited_at = NOW()
+                WHERE id = ? AND deleted_at IS NULL AND content <> ?";
+
+        $affected = $this->database->execute($sql, [$content, $id, $content]);
+
+        if ($affected > 0 && $postId !== null) {
+            $this->commentCache()->forgetThread($postId);
+        }
+
+        return $affected > 0;
+    }
+
+    /**
      * Hide a comment from readers because of a moderation decision.
      *
      * A comment already hidden by its author's suspension is taken over, so
