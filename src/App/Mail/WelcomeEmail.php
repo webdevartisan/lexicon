@@ -36,8 +36,6 @@ class WelcomeEmail extends Mailable
                 'handle' => (string) $this->user['handle'],
                 'confirm_url' => $this->url('/verify-email/'.urlencode($this->token)),
                 'expires_hours' => $this->expiresInHours,
-                'confirm_url' => $this->url('/verify-email/'.urlencode($this->token)),
-                'expires_hours' => $this->expiresInHours,
                 // Explore, not a personal page: a brand new account has nothing on
                 // its own lists yet, so the useful first destination is the catalog.
                 'explore_url' => $this->url('/discover'),
