@@ -59,6 +59,16 @@ $icons = [
     'cache-management' => 'database-zap',
     'email-test' => 'mail-warning',
     'settings' => 'settings',
+    'notifications' => 'bell',
+    'rate-limits' => 'gauge',
+    'email-templates' => 'mail-open',
+    'email-delivery' => 'send',
+    'mail-queue' => 'inbox',
+    'scheduled-tasks' => 'calendar-clock',
+    'front-page' => 'layout-template',
+    'pages' => 'file-text',
+    'blog-settings' => 'sliders',
+    'appearance' => 'palette',
 ];
 
 $iconFor = static fn (array $item): string => $item['icon'] ?? $icons[$item['tag']] ?? 'circle';

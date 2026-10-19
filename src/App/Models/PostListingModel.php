@@ -39,7 +39,8 @@ class PostListingModel extends AppModel
         string $sort = 'newest',
         ?int $categoryId = null,
         ?int $tagId = null,
-        string $workflowState = ''
+        string $workflowState = '',
+        ?string $orderBy = null
     ): array {
         // Validate and sanitize pagination parameters to prevent abuse
         $page = max(1, $page);
@@ -54,8 +55,8 @@ class PostListingModel extends AppModel
         // Calculate offset for LIMIT clause
         $offset = ($page - 1) * $perPage;
 
-        // Whitelist sort options
-        $orderBy = match ($sort) {
+        // $orderBy, when given, is a TableSort whitelist body; the named options are the older callers' path.
+        $orderBy ??= match ($sort) {
             'oldest' => 'p.published_at ASC',
             'title_asc' => 'p.title ASC',
             'title_desc' => 'p.title DESC',

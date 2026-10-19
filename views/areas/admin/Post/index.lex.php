@@ -55,6 +55,7 @@ $selectedBlogKey = $blogId > 0 ? (string) $blogId : '';
     </div>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if posts|empty %}
         {% cmp="empty-state" icon="files" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}

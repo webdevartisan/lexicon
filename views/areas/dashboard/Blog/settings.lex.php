@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ t('blog.settings.pageTitle') }}{% endblock %}
-{% block subtitle %}{{ t('blog.settings.pageSubtitle') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('blog.settings.pageSubtitle') }}</span>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">

@@ -10,6 +10,7 @@
  * - form: id of the form the confirm button submits
  * - openOnLoad: open as soon as the page loads, e.g. to show validation errors
  * - noConfirm: only the cancel button, for a modal with nothing to confirm
+ * - bare: no header or footer bar; the body is the whole dialog, with a floating close button
  */
 $id = $id ?? 'modal';
 $title = $title ?? 'Modal Title';
@@ -24,81 +25,70 @@ $confirmIcon = $confirmIcon ?? null;
 $form = $form ?? null;
 $openOnLoad = !empty($openOnLoad);
 $noConfirm = !empty($noConfirm);
+$bare = !empty($bare);
 
-// Variant-based styling
-$headerClasses = match ($variant) {
-    'danger' => 'bg-red-500 dark:bg-red-600 border-red-200 dark:border-red-700 text-white',
-    'warning' => 'bg-yellow-500 dark:bg-yellow-600 border-yellow-200 dark:border-yellow-700 text-white',
-    'success' => 'bg-green-500 dark:bg-green-600 border-green-200 dark:border-green-700 text-white',
-    'info' => 'bg-custom-500 dark:bg-custom-600 border-custom-200 dark:border-custom-700 text-white',
-    default => 'bg-white dark:bg-zink-600 border-slate-200 dark:border-zink-500 text-slate-800 dark:text-zink-100'
-};
-
-$confirmBtnClasses = match ($variant) {
-    'danger' => 'text-white btn bg-red-500 border-red-500 hover:text-white hover:bg-red-600 hover:border-red-600 focus:text-white focus:bg-red-600 focus:border-red-600 focus:ring focus:ring-red-100 active:text-white active:bg-red-600 active:border-red-600 active:ring active:ring-red-100 dark:ring-red-400/20',
-    'warning' => 'text-white btn bg-yellow-500 border-yellow-500 hover:text-white hover:bg-yellow-600 hover:border-yellow-600 focus:text-white focus:bg-yellow-600 focus:border-yellow-600 focus:ring focus:ring-yellow-100 active:text-white active:bg-yellow-600 active:border-yellow-600 active:ring active:ring-yellow-100 dark:ring-yellow-400/20',
-    'success' => 'text-white btn bg-green-500 border-green-500 hover:text-white hover:bg-green-600 hover:border-green-600 focus:text-white focus:bg-green-600 focus:border-green-600 focus:ring focus:ring-green-100 active:text-white active:bg-green-600 active:border-green-600 active:ring active:ring-green-100 dark:ring-green-400/20',
-    default => 'text-white btn bg-custom-500 border-custom-500 hover:text-white hover:bg-custom-600 hover:border-custom-600 focus:text-white focus:bg-custom-600 focus:border-custom-600 focus:ring focus:ring-custom-100 active:text-white active:bg-custom-600 active:border-custom-600 active:ring active:ring-custom-100 dark:ring-custom-400/20'
+// danger and warning tint the card like the shared confirmation dialog; everything else is the default blue
+$tone = in_array($variant, ['danger', 'warning'], true) ? $variant : 'default';
+$badgeIcon = $icon ?? match ($tone) {
+    'default' => 'info',
+    default => 'alert-triangle',
 };
 
 $modalWidths = match ($size) {
     'sm' => 'md:w-[24rem]',
-    'md' => 'md:w-[30rem]',
+    'md' => 'md:w-[28rem]',
     'lg' => 'md:w-[40rem]',
     'xl' => 'md:w-[50rem]',
-    default => 'md:w-[30rem]'
+    default => 'md:w-[28rem]'
 };
-
-$headerTextColor = ($variant === 'default')
-    ? 'text-slate-800 dark:text-zink-100'
-    : 'text-white';
 ?>
 
 <div id="<?= e($id) ?>" modal-center role="dialog" aria-modal="true" aria-labelledby="<?= e($id) ?>-title" tabindex="-1"
     <?= $openOnLoad ? 'data-modal-open-on-load' : '' ?>
     class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show">
-    <div class="w-screen <?= $modalWidths ?> bg-white shadow rounded-md dark:bg-zink-600 flex flex-col h-full">
+    <div class="confirm-card w-[calc(100vw-2rem)] <?= $modalWidths ?> overflow-hidden rounded-2xl flex flex-col max-h-[calc(100vh-2rem)] <?= $bare ? 'relative' : '' ?>" data-tone="<?= e($tone) ?>">
 
-        <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b <?= $headerClasses ?>">
-            <h5 id="<?= e($id) ?>-title" class="text-16 <?= $headerTextColor ?> flex items-center gap-2">
-                <?php if ($icon) { ?>
-                    {% cache 'lucide:modal-header:' . $icon ttl=31536000 %}<i data-lucide="<?= e($icon) ?>" class="size-5" aria-hidden="true"></i>{% endcache %}
-                <?php } ?>
-                <?= e($title) ?>
-            </h5>
-            <button type="button" data-modal-close="<?= e($id) ?>" aria-label="Close"
-                class="transition-all duration-200 ease-linear <?= ($variant === 'default') ? 'text-slate-500 hover:text-slate-700' : 'text-white hover:text-white/80' ?>">
-                {% cache 'lucide:x:close5' ttl=31536000 %}<i data-lucide="x" class="size-5"></i>{% endcache %}
-            </button>
+        <?php if ($bare) { ?>
+        <h5 id="<?= e($id) ?>-title" class="sr-only"><?= e($title) ?></h5>
+        <button type="button" data-modal-close="<?= e($id) ?>" aria-label="Close"
+            class="absolute top-3 ltr:right-3 rtl:left-3 z-10 focus:outline-none inline-flex items-center justify-center size-8 rounded-lg confirm-message hover:bg-slate-500/15 transition-colors">
+            <i data-lucide="x" class="size-4"></i>
+        </button>
+        <div class="overflow-y-auto">
+            <?= $body ?>
+        </div>
+        <?php } else { ?>
+
+        <div class="flex flex-col items-center gap-2 px-6 pt-8 pb-4 text-center">
+            <div class="confirm-badge flex items-center justify-center rounded-full size-12">
+                {% cache 'lucide:modal-badge:' . $badgeIcon ttl=31536000 %}<i data-lucide="<?= e($badgeIcon) ?>" class="size-6" aria-hidden="true"></i>{% endcache %}
+            </div>
+            <h2 id="<?= e($id) ?>-title" class="text-base font-semibold"><?= e($title) ?></h2>
         </div>
 
-        <!-- Content -->
-        <div class="max-h-[calc(theme('height.screen')_-_180px)] p-4 overflow-y-auto">
+        <div class="px-6 pb-6 overflow-y-auto">
             <?php if ($body !== null) { ?>
                 <?= $body ?>
             <?php } else { ?>
-                <p class="text-slate-600 dark:text-zink-300"><?= e($message) ?></p>
+                <p class="confirm-message text-sm font-medium text-center"><?= e($message) ?></p>
             <?php } ?>
         </div>
 
-        <!-- Footer -->
-        <div class="flex items-center justify-end gap-2 p-4 mt-auto border-t border-slate-200 dark:border-zink-500">
+        <div class="confirm-actions grid <?= $noConfirm ? 'grid-cols-1' : 'grid-cols-2' ?> mt-auto">
             <button type="button" data-modal-close="<?= e($id) ?>"
-                class="text-slate-500 btn bg-slate-200 border-slate-200 hover:text-slate-600 hover:bg-slate-300 hover:border-slate-300 focus:text-slate-600 focus:bg-slate-300 focus:border-slate-300 focus:ring focus:ring-slate-100 active:text-slate-600 active:bg-slate-300 active:border-slate-300 active:ring active:ring-slate-100 dark:bg-zink-600 dark:hover:bg-zink-500 dark:border-zink-600 dark:hover:border-zink-500 dark:text-zink-200 dark:ring-zink-400/50">
-                <?= e($cancelText) ?>
-            </button>
+                class="confirm-button h-12 text-sm font-medium transition-colors"><?= e($cancelText) ?></button>
             <?php if (!$noConfirm) { ?>
             <button type="<?= $form ? 'submit' : 'button' ?>"
                     <?php if ($form) { ?>form="<?= e($form) ?>"<?php } ?>
-                    class="<?= $confirmBtnClasses ?>">
+                    class="confirm-button confirm-button-ok h-12 text-sm font-medium transition-colors">
                 <?php if ($confirmIcon) { ?>
-                    {% cache 'lucide:modal-confirm:' . $confirmIcon ttl=31536000 %}<i data-lucide="<?= e($confirmIcon) ?>" class="inline-block size-4 mr-1" aria-hidden="true"></i>{% endcache %}
+                    {% cache 'lucide:modal-confirm:' . $confirmIcon ttl=31536000 %}<i data-lucide="<?= e($confirmIcon) ?>" class="inline-block size-4 mr-1 align-[-2px]" aria-hidden="true"></i>{% endcache %}
                 <?php } ?>
                 <?= e($confirmText) ?>
             </button>
             <?php } ?>
         </div>
+        <?php } ?>
 
     </div>
 </div>

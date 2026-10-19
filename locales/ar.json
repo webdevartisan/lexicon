@@ -193,6 +193,12 @@
         "needsChanges": "تحتاج إلى تعديلات",
         "archived": "المؤرشفة"
       },
+      "view": {
+          "label": "العرض",
+          "cards": "بطاقات",
+          "compact": "قائمة مدمجة",
+          "col": {"author": "الكاتب", "visibility": "الظهور", "actions": "الإجراءات", "public": "عام", "title": "العنوان", "status": "الحالة", "updated": "آخر تحديث", "comments": "التعليقات"}
+      },
       "sort": {
         "label": "الترتيب",
         "newest": "الأحدث أولاً",
@@ -203,6 +209,8 @@
       "filters": {
         "all": "الكل",
         "search": "بحث",
+        "title": "عوامل التصفية",
+        "status": "الحالة",
         "searchPlaceholder": "ابحث في العنوان أو المحتوى...",
         "category": "التصنيف",
         "tag": "الوسم",

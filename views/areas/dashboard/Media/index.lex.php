@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
-{% block title %}{{ blog.blog_name }} · Media Library{% endblock %}
-{% block subtitle %}Every image for this blog in one place — upload, find, and clean up.{% endblock %}
+{% block title %}Media Library{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">Every image for this blog in one place. Upload, find and clean up.</span>{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="/assets/vendor/cropper/cropper.min.css" />
 <style>
@@ -79,13 +79,13 @@ $mediaSortOptions = [
      data-media-auto-edit="<?= (int) ($autoEditId ?? 0) ?>">
     <form class="hidden">{{ csrf_field() }}</form>
 
-    <div class="flex items-center justify-between gap-3 mb-5">
-        <a href="<?= e(lurl('/dashboard')) ?>"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
-            <span><?= e($t('dashboard.overview.back')) ?></span>
-        </a>
-        <div class="flex items-center gap-3">
+    <div class="flex items-center justify-end gap-3 mb-5">
+        <div class="flex flex-wrap items-center justify-end gap-3">
+            <button type="button" id="media-upload-toggle" aria-controls="media-upload-panel" aria-expanded="<?= empty($mediaItems) ? 'true' : 'false' ?>"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-white bg-slate-900 border-slate-900 hover:bg-slate-700 dark:bg-zink-100 dark:text-zink-800 dark:border-zink-100 transition-colors">
+                {% cache 'lucide:upload' ttl=31536000 %}<i data-lucide="upload" class="size-4"></i>{% endcache %}
+                <span>Upload</span>
+            </button>
             <button type="button" id="media-rescan"
                 title="Index any images on disk (e.g. banners) that aren't in the library yet"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
@@ -105,7 +105,7 @@ $mediaSortOptions = [
     </div>
 
     <!-- Upload area -->
-    <section class="card mb-5">
+    <section class="card mb-5 <?= empty($mediaItems) ? '' : 'hidden' ?>" id="media-upload-panel">
         <div class="card-body">
             <div id="media-uploader"
                  class="border-2 border-dashed border-slate-200 dark:border-zink-500 rounded-lg p-6 text-center cursor-pointer hover:border-custom-400 transition-colors">
@@ -188,7 +188,7 @@ $mediaSortOptions = [
                     <input type="text" id="media-name-input" maxlength="255" aria-label="Image name" placeholder="Image name">
                 </div>
                 <textarea id="media-alt-input" class="lx-alt-input" maxlength="255" rows="2"
-                          aria-label="Alt text" placeholder="Alt text — describe the image for screen readers"></textarea>
+                          aria-label="Alt text" placeholder="Alt text: describe the image for screen readers"></textarea>
                 <div style="text-align:right;margin:.35rem 0 .5rem">
                     <button type="button" class="lx-ghost" id="media-name-save">Save details</button>
                 </div>
@@ -196,7 +196,7 @@ $mediaSortOptions = [
                 <div class="lx-editor-usage" id="media-editor-usage" hidden></div>
 
                 <div class="lx-editor-controls">
-                    <div class="lx-editor-output" id="media-output">Output: —</div>
+                    <div class="lx-editor-output" id="media-output">Output</div>
 
                     <label>Crop shape</label>
                     <div class="lx-btn-row" id="media-aspect">
@@ -215,9 +215,9 @@ $mediaSortOptions = [
                     </div>
 
                     <label for="media-width">Custom width (px) <span class="lx-editor-hint" id="media-dim-hint"></span></label>
-                    <input type="number" id="media-width" min="1" placeholder="Auto — height follows the ratio">
+                    <input type="number" id="media-width" min="1" placeholder="Auto, height follows the ratio">
 
-                    <label for="media-quality">Quality — lower means smaller file: <span id="media-quality-val">82</span></label>
+                    <label for="media-quality">Quality (lower means a smaller file):<span id="media-quality-val">82</span></label>
                     <input type="range" id="media-quality" min="40" max="100" value="82">
 
                     <label for="media-format">Format</label>
@@ -427,6 +427,13 @@ $mediaSortOptions = [
     function handleFiles(list) {
         Array.prototype.forEach.call(list, function (f) { uploadOne(f); });
     }
+
+    var uploadToggle = document.getElementById('media-upload-toggle');
+    var uploadPanel = document.getElementById('media-upload-panel');
+    uploadToggle.addEventListener('click', function () {
+        var open = uploadPanel.classList.toggle('hidden') === false;
+        uploadToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
 
     dropArea.addEventListener('click', function () { fileInput.click(); });
     fileInput.addEventListener('change', function () {
@@ -815,7 +822,7 @@ $mediaSortOptions = [
                 if (label) label.textContent = original;
                 if (!p || !p.success) { alert((p && p.error) || 'Optimization failed.'); return; }
                 var d = p.data;
-                if (!d.processed) { alert('Nothing to shrink — every image is already within size.'); return; }
+                if (!d.processed) { alert('Nothing to shrink. Every image is already within size.'); return; }
                 alert('Shrank ' + d.processed + ' image(s) and saved ' + humanSize(d.bytes_saved) + '.');
                 location.reload();
             })

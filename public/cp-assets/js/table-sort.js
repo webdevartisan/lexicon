@@ -155,3 +155,15 @@
         if (region()) load(window.location.href, false);
     });
 })();
+
+// "Show N entries": reload at the chosen page size, from page one.
+document.addEventListener('change', function (e) {
+    var select = e.target.closest ? e.target.closest('[data-page-size]') : null;
+    if (!select || !document.querySelector('[data-table-region]')) return;
+
+    var params = new URLSearchParams(window.location.search);
+    params.set('per_page', select.value);
+    params.delete('page');
+
+    window.location.assign(window.location.pathname + '?' + params.toString());
+});

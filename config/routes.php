@@ -628,7 +628,6 @@ $router->group([
     $r->add('/reports/reporters/{id:\d+}/resume', ['controller' => 'ReporterController', 'action' => 'resume', 'method' => 'POST']);
 
     // Report reasons, their rules and the safeguards. Administrators only.
-    $r->add('/reports/settings', ['controller' => 'ModerationSettingsController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/reports/settings/safeguards', ['controller' => 'ModerationSettingsController', 'action' => 'updateSafeguards', 'method' => 'POST']);
     $r->add('/reports/settings/reasons/{slug:[a-z_]+}', ['controller' => 'ModerationSettingsController', 'action' => 'updateReason', 'method' => 'POST']);
 

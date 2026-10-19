@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
-{% block title %}{{ blog.blog_name }} · Comments{% endblock %}
-{% block subtitle %}<?php if (!empty($autoPublish)) { ?>Moderate comments on this blog. New ones are published straight away, and you can hold or remove them here.<?php } else { ?>Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.<?php } ?>{% endblock %}
+{% block title %}Comments{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline"><?php if (!empty($autoPublish)) { ?>Moderate comments on this blog. New ones are published straight away, and you can hold or remove them here.<?php } else { ?>Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.<?php } ?></span>{% endblock %}
 
 {% block body %}
 <?php
@@ -36,43 +36,35 @@ $statusBadge = [
 ?>
 
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-    <!-- Search form -->
-    <form method="GET" action="<?= e($basePath) ?>" class="card mb-4">
-        <div class="card-body">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <nav class="flex flex-wrap gap-2" aria-label="Comment status">
+            <?php foreach ($statusFilters as $f) {
+                $isActive = (string) $status === (string) $f['key'];
+                $href = $basePath.$buildQuery(['status' => $f['key'], 'page' => null]);
+
+                $classes = 'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 '.
+                    ($isActive
+                        ? 'text-white bg-custom-500 border-custom-500'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500');
+
+                $badgeClass = $isActive ? 'bg-white/20' : 'bg-slate-100 dark:bg-zink-600';
+                ?>
+            <a href="<?= e($href) ?>" aria-pressed="<?= $isActive ? 'true' : 'false' ?>" class="<?= $classes ?>">
+                <?= e($f['label']) ?>
+                <span class="px-1.5 rounded-full <?= $badgeClass ?>"><?= (int) $f['count'] ?></span>
+            </a>
+            <?php } ?>
+        </nav>
+
+        <form method="GET" action="<?= e($basePath) ?>" class="flex items-center gap-2 w-full sm:w-auto" role="search">
             <input type="hidden" name="status" value="<?= e($status) ?>">
-            <div class="flex flex-col md:flex-row gap-3">
-                <div class="grow">
-                    {% cmp="input" type="text" name="q" value="{$q}" placeholder="Search comment text or post title..." %}
-                </div>
-                <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors self-start">
-                    {% cache 'lucide:search' ttl=31536000 %}<i data-lucide="search" class="size-4"></i>{% endcache %} Search
-                </button>
-            </div>
-        </div>
-    </form>
-
-    <!-- Status tabs -->
-    <div class="flex flex-wrap gap-2 mb-5">
-        <?php foreach ($statusFilters as $f) {
-            $isActive = (string) $status === (string) $f['key'];
-            $href = $basePath.$buildQuery(['status' => $f['key'], 'page' => null]);
-
-            $classes = 'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 focus-visible:ring-offset-1 '.
-                ($isActive
-                    ? 'text-white bg-custom-500 border-custom-500'
-                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:border-zink-400');
-
-            $badgeClass = $isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200';
-            ?>
-        <a href="<?= e($href) ?>"
-           aria-pressed="<?= $isActive ? 'true' : 'false' ?>"
-           class="<?= $classes ?>">
-            <?= e($f['label']) ?>
-            <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold rounded-full <?= $badgeClass ?>">
-                <?= (int) $f['count'] ?>
-            </span>
-        </a>
-        <?php } ?>
+            <input type="search" name="q" value="<?= e($q) ?>" placeholder="Search comments or posts" aria-label="Search comments"
+                class="form-input w-full sm:w-64 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-custom-500 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-100">
+            {% cmp="btn" type="submit" variant="slate" icon="search" label="Search" %}
+            <?php if ($q !== '') { ?>
+            <a href="<?= e($basePath.$buildQuery(['q' => '', 'page' => null])) ?>" class="text-xs text-slate-500 hover:text-custom-500 dark:text-zink-300 whitespace-nowrap">Clear</a>
+            <?php } ?>
+        </form>
     </div>
 
     {% if comments|empty %}
@@ -94,7 +86,7 @@ $statusBadge = [
                 </h3>
                 <p class="text-sm text-slate-500 dark:text-zink-300">
                     <?php if ($status === 'pending') { ?>
-                        You're all caught up — nothing to moderate right now.
+                        You're all caught up. Nothing to moderate right now.
                     <?php } else { ?>
                         Nothing to show here yet.
                     <?php } ?>
@@ -113,130 +105,125 @@ $statusBadge = [
         ?>
         {% cmp="bulk-actions-bar" actionUrl="/dashboard/comment/bulk" itemLabel="comment" actions="{$bulkActions}" hiddenFields="{$bulkHiddenFields}" %}
 
-        <div>
-            <div class="card">
-                <div class="divide-y divide-slate-100 dark:divide-zink-600">
-                    {% foreach ($comments as $c): %}
-                        <div class="p-4 flex gap-3 hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
-                            <label class="shrink-0 pt-1">
+        <div class="queue">
+            <div class="queue-list">
+                <div>
+                    <div class="queue-head">
+                        <span><?= (int) $pagination['total_records'] ?> comment<?= (int) $pagination['total_records'] === 1 ? '' : 's' ?></span>
+                    </div>
+                    <ul role="listbox" aria-label="Comments">
+                        {% foreach ($comments as $c): %}
+                        <?php
+                        $removed = !empty($c['deleted_at']);
+                        $preview = $removed ? 'Removed' : mb_strimwidth((string) $c['content'], 0, 140, '...');
+                        ?>
+                        <li class="flex items-start border-b border-slate-100 dark:border-zink-600" data-bulk-row>
+                            <label class="shrink-0 pt-4 ps-4">
                                 <input type="checkbox" name="comment_ids[]" value="<?= e((string) $c['id']) ?>" form="bulk-form"
                                     aria-label="Select comment by <?= e((string) ($c['user_name'] ?? 'Anonymous')) ?>"
                                     class="bulk-checkbox form-checkbox rounded border-slate-300 dark:border-zink-500 text-custom-500 focus:ring-2 focus:ring-custom-500">
                             </label>
-
-                            <div class="grow min-w-0">
-                                <div class="flex flex-wrap items-center gap-2 mb-1">
-                                    <span class="text-sm font-medium text-slate-900 dark:text-zink-50">
-                                        <?= e((string) ($c['user_name'] ?? 'Anonymous')) ?>
+                            <button type="button" role="option" data-queue-item="<?= e((string) $c['id']) ?>" aria-selected="false" class="queue-item grow min-w-0">
+                                <span class="queue-avatar" aria-hidden="true"><?= e(mb_substr((string) ($c['user_name'] ?? 'A'), 0, 1)) ?></span>
+                                <span class="grow min-w-0">
+                                    <span class="flex items-center justify-between gap-2 mb-0.5">
+                                        <span class="text-sm font-medium text-slate-900 dark:text-zink-50 truncate"><?= e((string) ($c['user_name'] ?? 'Anonymous')) ?></span>
+                                        <span class="text-xs shrink-0 text-slate-400 dark:text-zink-400"><?= e(local_datetime($c['created_at'] ?? null, 'M j')) ?></span>
                                     </span>
-                                    <?php if (!empty($c['user_email'])) { ?>
-                                        <span class="text-xs text-slate-400 dark:text-zink-300"><?= e((string) $c['user_email']) ?></span>
-                                    <?php } ?>
-                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $statusBadge[$c['status']] ?? $statusBadge['pending'] ?>">
-                                        <?= e(ucfirst((string) $c['status'])) ?>
+                                    <span class="block text-sm text-slate-600 dark:text-zink-200 line-clamp-2 break-words"><?= e($preview) ?></span>
+                                    <span class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                        <span class="pill <?= $statusBadge[$c['status']] ?? $statusBadge['pending'] ?>"><?= e(ucfirst((string) $c['status'])) ?></span>
+                                        <?php if ((int) ($c['reports_count'] ?? 0) > 0) { ?>
+                                        <span class="pill bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"><?= (int) $c['reports_count'] ?> reported</span>
+                                        <?php } ?>
+                                        <span class="text-xs text-slate-400 dark:text-zink-400 truncate"><?= e(truncate((string) ($c['post_title'] ?? 'post'), 30)) ?></span>
                                     </span>
-                                </div>
+                                </span>
+                            </button>
+                        </li>
+                        {% endforeach %}
+                    </ul>
+                </div>
 
-                                <?php if (!empty($c['parent_comment_id'])) { ?>
-                                    <p class="text-[11px] text-slate-400 dark:text-zink-300 mb-1 italic">
-                                        In reply to: "<?= e(truncate((string) ($c['parent_content'] ?? ''), 80)) ?>"
-                                    </p>
-                                <?php } ?>
-
-                                <?php if ((int) ($c['reports_count'] ?? 0) > 0) { ?>
-                                    <p class="text-[11px] text-rose-600 dark:text-rose-400 mb-1 font-medium">
-                                        Reported by <?= (int) $c['reports_count'] ?> reader<?= (int) $c['reports_count'] === 1 ? '' : 's' ?>
-                                    </p>
-                                <?php } ?>
-
-                                <?php if (!empty($c['deleted_at'])) { ?>
-                                    <p class="text-sm italic text-slate-400 dark:text-zink-300 mb-2">
-                                        <?= ($c['deleted_by'] ?? 'author') === 'moderator'
-                                            ? 'Removed by a moderator. The text is gone; the row is kept so its replies still read in order.'
-                                            : 'Deleted by its author. The text is gone; the row is kept so its replies still read in order.' ?>
-                                    </p>
-                                <?php } else { ?>
-                                    <p class="text-sm text-slate-700 dark:text-zink-100 mb-2 break-words whitespace-pre-line max-h-32 overflow-y-auto">
-                                        <?= e((string) $c['content']) ?>
-                                    </p>
-                                <?php } ?>
-
-                                <?php if (mb_strlen((string) $c['content']) > 600) { ?>
-                                    <p class="text-[11px] text-amber-600 dark:text-amber-400 mb-2">
-                                        {% cache 'lucide:alert-triangle:inline-sm' ttl=31536000 %}<i data-lucide="alert-triangle" class="inline-block size-3"></i>{% endcache %}
-                                        Long comment (<?= number_format(mb_strlen((string) $c['content'])) ?> chars) — scroll to read in full.
-                                    </p>
-                                <?php } ?>
-
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-zink-300">
-                                    <span class="inline-flex items-center gap-1">
-                                        {% cache 'lucide:clock:sm' ttl=31536000 %}<i data-lucide="clock" class="size-3"></i>{% endcache %}
-                                        <?= e(local_datetime($c['created_at'] ?? null, 'M j, Y · g:i a')) ?>
-                                    </span>
-                                    <a href="<?= e(lurl('/blog/'.((string) ($c['blog_slug'] ?? '')).'/'.((string) ($c['post_slug'] ?? '')))) ?>"
-                                        target="_blank" rel="noopener"
-                                        class="inline-flex items-center gap-1 hover:text-custom-500 transition-colors">
-                                        {% cache 'lucide:file-text:sm' ttl=31536000 %}<i data-lucide="file-text" class="size-3"></i>{% endcache %}
-                                        <?= e(truncate((string) ($c['post_title'] ?? 'post'), 50)) ?>
-                                        {% cache 'lucide:external-link:sm' ttl=31536000 %}<i data-lucide="external-link" class="size-3"></i>{% endcache %}
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- Per-comment actions -->
-                            <div class="shrink-0 flex items-start gap-1">
-                                <?php if ($c['status'] !== 'approved') { ?>
-                                    <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/approve" class="m-0">
-                                        {{ csrf_field() }}
-                                        <input type="hidden" name="return_status" value="<?= e($status) ?>">
-                                        <button type="submit" title="Approve"
-                                            class="p-2 text-slate-500 hover:text-green-600 rounded-md hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500">
-                                            {% cache 'lucide:check' ttl=31536000 %}<i data-lucide="check" class="size-4"></i>{% endcache %}
-                                        </button>
-                                    </form>
-                                <?php } ?>
-
-                                <?php if ($c['status'] !== 'pending') { ?>
-                                    <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/unapprove" class="m-0">
-                                        {{ csrf_field() }}
-                                        <input type="hidden" name="return_status" value="<?= e($status) ?>">
-                                        <button type="submit" title="Move to pending"
-                                            class="p-2 text-slate-500 hover:text-amber-600 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
-                                            {% cache 'lucide:undo-2' ttl=31536000 %}<i data-lucide="undo-2" class="size-4"></i>{% endcache %}
-                                        </button>
-                                    </form>
-                                <?php } ?>
-
-                                <?php if ($c['status'] !== 'spam') { ?>
-                                    <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/spam" class="m-0">
-                                        {{ csrf_field() }}
-                                        <input type="hidden" name="return_status" value="<?= e($status) ?>">
-                                        <button type="submit" title="Mark as spam"
-                                            class="p-2 text-slate-500 hover:text-orange-600 rounded-md hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
-                                            {% cache 'lucide:shield-alert' ttl=31536000 %}<i data-lucide="shield-alert" class="size-4"></i>{% endcache %}
-                                        </button>
-                                    </form>
-                                <?php } ?>
-
-                                <span class="mx-0.5 mt-1 h-5 w-px bg-slate-200 dark:bg-zink-500" aria-hidden="true"></span>
-
-                                <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/destroy" class="m-0">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="return_status" value="<?= e($status) ?>">
-                                    <button type="submit" title="Delete"
-                                        data-confirm="Permanently delete this comment? This cannot be undone."
-                                        class="p-2 text-slate-500 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                                        {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endforeach %}
+                <div class="p-4">
+                    {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" %}
                 </div>
             </div>
 
-            <div class="mt-6">
-                {% cmp="paginator" pagination="{$pagination}" pageParam="page" query="{$q}" basePath="{$basePath}" %}
+            <div class="min-w-0 h-full overflow-hidden">
+                {% foreach ($comments as $c): %}
+                <section class="queue-detail h-full" data-queue-panel="<?= e((string) $c['id']) ?>" aria-label="Comment by <?= e((string) ($c['user_name'] ?? 'Anonymous')) ?>">
+                    <div class="queue-bar">
+                        <button type="button" data-queue-back class="queue-icon queue-back" aria-label="Back to comments"><i data-lucide="arrow-left" class="size-4"></i></button>
+                        <button type="button" data-queue-step="-1" class="queue-icon" aria-label="Previous"><i data-lucide="chevron-up" class="size-4"></i></button>
+                        <button type="button" data-queue-step="1" class="queue-icon" aria-label="Next"><i data-lucide="chevron-down" class="size-4"></i></button>
+                    </div>
+                    <div class="queue-body">
+
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="text-base font-semibold text-slate-900 dark:text-zink-50"><?= e((string) ($c['user_name'] ?? 'Anonymous')) ?></span>
+                            <span class="pill <?= $statusBadge[$c['status']] ?? $statusBadge['pending'] ?>"><?= e(ucfirst((string) $c['status'])) ?></span>
+                        </div>
+                        <?php if (!empty($c['user_email'])) { ?>
+                        <p class="text-xs text-slate-400 dark:text-zink-300"><?= e((string) $c['user_email']) ?></p>
+                        <?php } ?>
+                        <p class="mt-1 mb-3 text-xs text-slate-500 dark:text-zink-300">
+                            <?= e(local_datetime($c['created_at'] ?? null, 'M j, Y · g:i a')) ?> on
+                            <a href="<?= e(lurl('/blog/'.((string) ($c['blog_slug'] ?? '')).'/'.((string) ($c['post_slug'] ?? '')))) ?>" target="_blank" rel="noopener" class="hover:text-custom-500 hover:underline"><?= e(truncate((string) ($c['post_title'] ?? 'post'), 60)) ?></a>
+                        </p>
+
+                        <?php if (!empty($c['parent_comment_id'])) { ?>
+                        <p class="mb-2 text-xs italic text-slate-400 dark:text-zink-300">In reply to: "<?= e(truncate((string) ($c['parent_content'] ?? ''), 80)) ?>"</p>
+                        <?php } ?>
+
+                        <?php if ((int) ($c['reports_count'] ?? 0) > 0) { ?>
+                        <p class="mb-2 text-xs font-medium text-rose-600 dark:text-rose-400">Reported by <?= (int) $c['reports_count'] ?> reader<?= (int) $c['reports_count'] === 1 ? '' : 's' ?></p>
+                        <?php } ?>
+
+                        <?php if (!empty($c['deleted_at'])) { ?>
+                        <p class="p-3 mb-4 rounded-lg text-sm italic bg-slate-50 text-slate-500 dark:bg-zink-700 dark:text-zink-300">
+                            <?= ($c['deleted_by'] ?? 'author') === 'moderator'
+                                ? 'Removed by a moderator. The text is gone; the row is kept so its replies still read in order.'
+                                : 'Deleted by its author. The text is gone; the row is kept so its replies still read in order.' ?>
+                        </p>
+                        <?php } else { ?>
+                        <div class="p-3 mb-4 rounded-lg text-sm break-words whitespace-pre-line bg-slate-50 text-slate-700 dark:bg-zink-700 dark:text-zink-100"><?= e((string) $c['content']) ?></div>
+                        <?php } ?>
+
+                        <div class="flex flex-wrap gap-2">
+                            <?php if ($c['status'] !== 'approved') { ?>
+                            <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/approve" class="m-0">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="return_status" value="<?= e($status) ?>">
+                                {% cmp="btn" type="submit" variant="blue" icon="check" label="Approve" %}
+                            </form>
+                            <?php } ?>
+                            <?php if ($c['status'] !== 'pending') { ?>
+                            <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/unapprove" class="m-0">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="return_status" value="<?= e($status) ?>">
+                                {% cmp="btn" type="submit" variant="slate" icon="undo-2" label="Move to pending" %}
+                            </form>
+                            <?php } ?>
+                            <?php if ($c['status'] !== 'spam') { ?>
+                            <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/spam" class="m-0">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="return_status" value="<?= e($status) ?>">
+                                {% cmp="btn" type="submit" variant="slate" icon="shield-alert" label="Spam" %}
+                            </form>
+                            <?php } ?>
+                            <form method="POST" action="/dashboard/comment/<?= e((string) $c['id']) ?>/destroy" class="m-0">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="return_status" value="<?= e($status) ?>">
+                                <button type="submit" data-confirm="Permanently delete this comment? This cannot be undone."
+                                    class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors">
+                                    <i data-lucide="trash-2" class="size-4"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+                {% endforeach %}
             </div>
         </div>
     {% endif %}

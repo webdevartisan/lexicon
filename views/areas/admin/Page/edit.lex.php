@@ -85,6 +85,7 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
         toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link image table | visualblocks preview code fullscreen',
         branding: false,
         statusbar: true,
+        content_style: 'body { background-color: ' + (isDark ? '#171717' : '#ffffff') + '; }',
         setup: function (editor) {
             editor.on('change', function () { tinymce.triggerSave(); });
         },

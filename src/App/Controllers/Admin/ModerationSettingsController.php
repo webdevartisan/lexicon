@@ -7,35 +7,25 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\ModerationCategoryModel;
 use App\Services\ModerationConfigService;
-use App\Services\ModerationSettings;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
- * The moderation settings screen: what each report reason does once enough
- * people agree, and the safeguards in front of every automatic action.
+ * Saves the moderation settings that live in the queue's settings dialog: what
+ * each report reason does once enough people agree, and the safeguards in front
+ * of every automatic action.
  */
 class ModerationSettingsController extends AppController
 {
     // Enforced for every action by AppController::beforeAction()
     protected ?string $areaAbility = 'configureModeration';
 
-    private const PAGE = '/admin/reports/settings';
+    private const PAGE = '/admin/reports';
 
     public function __construct(
         private ModerationCategoryModel $categories,
-        private ModerationSettings $settings,
         private ModerationConfigService $config,
     ) {}
-
-    public function index(): Response
-    {
-        return $this->view('report.settings', [
-            'categories' => $this->categories->ordered(),
-            'safeguards' => $this->settings->storedValues(),
-            'bounds' => ModerationSettings::KEYS,
-        ]);
-    }
 
     public function updateReason(string $slug): Response
     {

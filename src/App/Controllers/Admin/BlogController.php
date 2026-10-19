@@ -8,12 +8,15 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
+use App\Models\BlogSettingsModel;
 use App\Resources\SystemResource;
 use App\Services\Analytics\AnalyticsReportService;
 use App\Services\BlogDeletionService;
 use App\Services\BlogOwnershipService;
+use App\Services\LocaleRegistry;
 use App\Services\PublicCacheInvalidator;
 use App\Services\ThemeService;
+use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -30,6 +33,7 @@ class BlogController extends AppController
         private BlogOwnershipService $ownership,
         private BlogDeletionService $blogDeletion,
         private AnalyticsStatsModel $analyticsStats,
+        private BlogSettingsModel $settings,
     ) {}
 
     /**
@@ -155,7 +159,8 @@ class BlogController extends AppController
             // Discover picks lead the list, the same way featured posts do.
             pinned: 'b.is_featured DESC');
 
-        $result = $this->blogModel->findAllForAdmin($page, 20, $q, $status, $featured, $sort->orderBy(), $theme);
+        $perPage = PageSize::fromRequest($this->request, 20);
+        $result = $this->blogModel->findAllForAdmin($page, $perPage, $q, $status, $featured, $sort->orderBy(), $theme);
 
         $themeChoices = ['' => 'All themes', 'none' => 'No theme set'];
         foreach ($themes as $key => $meta) {
@@ -166,6 +171,7 @@ class BlogController extends AppController
             'blogs' => $result['data'],
             'analytics' => $this->recentViews($result['data']),
             'pagination' => $result['pagination'],
+            'perPage' => $perPage,
             'q' => $q,
             'status' => $status,
             'featured' => $featured,
@@ -258,11 +264,17 @@ class BlogController extends AppController
     public function edit(string $id): Response
     {
         $blog = $this->getBlog($id);
+        $timezones = \DateTimeZone::listIdentifiers();
 
         return $this->view('blog.edit', [
             'blog' => $blog,
+            'settings' => $this->settings->findByBlogId((int) $id) ?? [],
             'owner' => $this->blogModel->getBlogOwner((int) $id),
             'members' => $this->blogModel->getBlogUsers((int) $id),
+            'themeChoices' => array_map(static fn (array $meta): string => (string) $meta['name'], $this->themes->available()),
+            'localeChoices' => LocaleRegistry::instance()->names(),
+            'timezoneChoices' => array_combine($timezones, $timezones),
+            'statusChoices' => array_combine(BlogModel::STATUSES, array_map('ucfirst', BlogModel::STATUSES)),
         ]);
     }
 
@@ -295,30 +307,100 @@ class BlogController extends AppController
     }
 
     /**
-     * Handle update submission
+     * Save the blog's identity, status and the settings an admin may change.
+     *
+     * Theme, language and timezone only take values the site actually offers, so a
+     * tampered form cannot leave a blog on something that cannot render.
      */
     public function update(string $id): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
         $blog = $this->getBlog($id);
+        $blogId = (int) $blog['id'];
+        $post = $this->request->post;
+        $section = preg_replace('/[^a-z]/', '', (string) ($post['_section'] ?? '')) ?: 'general';
+        $backTo = '/admin/blogs/'.$blogId.'/edit#'.$section;
 
-        $data = [
-            'blog_name' => $this->request->post['blog_name'] ?? $blog['blog_name'],
-            'blog_slug' => $this->request->post['blog_slug'] ?? $blog['blog_slug'],
-            'description' => $this->request->post['description'] ?? $blog['description'],
-        ];
+        $validated = $this->validateOrFail([
+            'blog_name' => 'required|min:2|max:50',
+            'blog_slug' => 'max:200',
+            'description' => 'max:1000',
+            'tagline' => 'max:200',
+            'meta_title' => 'max:200',
+            'meta_description' => 'max:500',
+        ], ['blog_name.required' => 'Blog name is required.'])->validated();
 
-        if ($this->blogModel->update($id, $data)) {
-            $this->flash('success', 'Blog updated.');
+        $slug = trim((string) ($validated['blog_slug'] ?? '')) !== ''
+            ? $this->generateSlug((string) $validated['blog_slug'])
+            : $blog['blog_slug'];
+        $taken = $slug !== $blog['blog_slug'] ? $this->blogModel->getBlogBySlug($slug) : null;
 
-            return $this->redirectToList('/admin/blogs');
+        if ($taken !== null) {
+            $this->flash('error', 'Another blog already uses that slug.');
+
+            return $this->redirect($backTo);
         }
 
-        return $this->view('blog.edit', [
-            'errors' => ['Could not update the blog. Please try again.'],
-            'blog' => $data,
-        ]);
+        $status = (string) ($post['status'] ?? $blog['status']);
+        $suspended = ($blog['status'] ?? '') === BlogModel::STATUS_SUSPENDED;
+        $identity = [
+            'blog_name' => $validated['blog_name'],
+            'blog_slug' => $slug,
+            'description' => $validated['description'] ?? '',
+        ];
+
+        if (!$suspended && in_array($status, BlogModel::STATUSES, true) && $status !== $blog['status']) {
+            $identity['status'] = $status;
+            $identity['published_at'] = $status === 'published' ? ($blog['published_at'] ?: date('Y-m-d H:i:s')) : null;
+            $identity['archived_at'] = $status === 'archived' ? ($blog['archived_at'] ?: date('Y-m-d H:i:s')) : null;
+        }
+
+        $identityChanges = changedFields($identity, $blog);
+
+        if ($identityChanges !== []) {
+            $this->blogModel->update($blogId, $identityChanges);
+        }
+
+        $current = $this->settings->findByBlogId($blogId) ?? [];
+        $theme = (string) ($post['theme'] ?? '');
+        $timezone = (string) ($post['timezone'] ?? '');
+        $submitted = [
+            'theme' => $this->themes->isValidKey($theme) ? $theme : ($current['theme'] ?? 'folio'),
+            'tagline' => $validated['tagline'] ?? '',
+            'default_locale' => LocaleRegistry::instance()->normalize($post['default_locale'] ?? null)
+                ?? ($current['default_locale'] ?? LocaleRegistry::instance()->default()),
+            'timezone' => in_array($timezone, \DateTimeZone::listIdentifiers(), true) ? $timezone : ($current['timezone'] ?? 'UTC'),
+            'meta_title' => $validated['meta_title'] ?? '',
+            'meta_description' => $validated['meta_description'] ?? '',
+            'indexable' => !empty($post['indexable']) ? 1 : 0,
+            'comments_enabled' => !empty($post['comments_enabled']) ? 1 : 0,
+            'comments_auto_publish' => !empty($post['comments_auto_publish']) ? 1 : 0,
+            'replies_auto_publish' => !empty($post['replies_auto_publish']) ? 1 : 0,
+        ];
+
+        $settingsChanges = changedFields($submitted, $current);
+
+        if ($settingsChanges !== []) {
+            $current === []
+                ? $this->settings->createDefaultForBlog($blogId, $submitted)
+                : $this->settings->updateForBlog($blogId, $settingsChanges);
+
+            cache()->deletePattern('*:GET:/blog/'.$slug.'*');
+        }
+
+        $changes = array_merge($identityChanges, $settingsChanges);
+
+        if ($changes === []) {
+            $this->flash('info', 'Nothing was changed.');
+
+            return $this->redirect($backTo);
+        }
+
+        audit()->log((int) auth()->user()['id'], 'blog.updated', 'blog', $blogId, $changes, $this->request->ip());
+        $this->flash('success', 'Blog updated.');
+
+        return $this->redirect($backTo);
     }
 
     public function show(string $id): Response

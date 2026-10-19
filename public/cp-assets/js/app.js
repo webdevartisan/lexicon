@@ -221,7 +221,7 @@ function lightDarkMode() {
         menu.querySelectorAll("[data-theme-choice]").forEach((item) => {
             const active = item.dataset.themeChoice === current;
             item.setAttribute("aria-pressed", active ? "true" : "false");
-            item.querySelector("[data-theme-check]").classList.toggle("hidden", !active);
+            item.querySelector("[data-theme-check]")?.classList.toggle("hidden", !active);
         });
     };
 

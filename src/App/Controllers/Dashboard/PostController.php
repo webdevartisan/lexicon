@@ -34,6 +34,7 @@ use App\Services\UploadService;
 use App\Services\WorkflowService;
 use App\ValueObjects\AnalyticsScope;
 use App\ValueObjects\PostFieldRules;
+use App\ValueObjects\TableSort;
 use DateTime;
 use DateTimeZone;
 use Framework\Core\Response;
@@ -109,9 +110,40 @@ final class PostController extends AppController
             $status = '';
         }
 
-        $sort = (string) $this->request->getParam('sort', 'newest');
-        if (!in_array($sort, ['newest', 'oldest', 'title_asc', 'title_desc'], true)) {
-            $sort = 'newest';
+        // The cards view keeps its named sort menu; each name is just a column plus a direction.
+        $namedSorts = [
+            'newest' => ['published', 'desc'],
+            'oldest' => ['published', 'asc'],
+            'title_asc' => ['title', 'asc'],
+            'title_desc' => ['title', 'desc'],
+        ];
+        $requestedSort = $this->request->get['sort'] ?? '';
+        if (is_string($requestedSort) && isset($namedSorts[$requestedSort])) {
+            [$this->request->get['sort'], $this->request->get['dir']] = $namedSorts[$requestedSort];
+        }
+        $tableSort = TableSort::fromRequest($this->request, [
+            'title' => 'p.title',
+            'author' => 'au.handle',
+            'status' => 'p.status',
+            'visibility' => 'p.visibility',
+            'comments' => 'comment_count',
+            'published' => 'p.published_at',
+            'updated' => 'p.updated_at',
+        ], defaultKey: 'published', defaultDirection: 'desc', tiebreaker: 'p.id DESC');
+        $sortChoice = array_search([$tableSort->key(), $tableSort->direction()], $namedSorts, true);
+        $sortChoice = $sortChoice === false ? '' : $sortChoice;
+        $sortExplicit = isset($this->request->get['sort']) && $tableSort->has((string) $this->request->get['sort']);
+
+        $requestedView = $this->request->getParam('view', '');
+        $remembered = (string) ($this->request->cookie['posts_view'] ?? 'cards');
+        $listView = ($requestedView !== '' ? $requestedView : $remembered) === 'list' ? 'list' : 'cards';
+        if ($requestedView !== '' && $listView !== $remembered) {
+            setcookie('posts_view', $listView, [
+                'expires' => time() + 31536000,
+                'path' => '/',
+                'secure' => isset($this->request->server['HTTPS']) && $this->request->server['HTTPS'] !== 'off',
+                'samesite' => 'Lax',
+            ]);
         }
 
         // Categories and tags belong to one blog; ids from another blog are dropped.
@@ -128,7 +160,7 @@ final class PostController extends AppController
             blogId: $blogId,
             status: $status,
             searchQuery: $q,
-            sort: $sort,
+            orderBy: $tableSort->orderBy(),
             categoryId: $categoryId,
             tagId: $tagId,
             workflowState: $workflowFilter,
@@ -162,7 +194,10 @@ final class PostController extends AppController
             'canCreate' => Gate::allows('createPost', $blog, $user),
             'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'q' => $q,
-            'sort' => $sort,
+            'tableSort' => $tableSort,
+            'sortChoice' => $sortChoice,
+            'sortExplicit' => $sortExplicit,
+            'listView' => $listView,
             'counts' => $counts,
             'blogCategories' => $this->categoryModel->getByBlogId($blogId),
             'blogTags' => $this->tagModel->getByBlogId($blogId),

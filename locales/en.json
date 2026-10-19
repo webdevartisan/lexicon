@@ -193,6 +193,12 @@
                 "needsChanges": "Needs changes",
                 "archived": "Archived"
             },
+            "view": {
+                "label": "View",
+                "cards": "Cards",
+                "compact": "Compact list",
+                "col": {"author": "Author", "visibility": "Visibility", "actions": "Actions", "public": "Public", "title": "Title", "status": "Status", "updated": "Updated", "comments": "Comments"}
+            },
             "sort": {
                 "label": "Sort",
                 "newest": "Newest first",
@@ -203,6 +209,8 @@
             "filters": {
                 "all": "All",
                 "search": "Search",
+                "title": "Filters",
+                "status": "Status",
                 "searchPlaceholder": "Search by title or content...",
                 "category": "Category",
                 "tag": "Tag",

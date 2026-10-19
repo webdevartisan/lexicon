@@ -78,6 +78,7 @@ tinymce.init({
   ],
 
   content_style: `
+    body { background-color: ${isDark ? '#171717' : '#ffffff'}; }
     img {
       max-width: 100%;
       height: auto;

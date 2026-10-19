@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ t('blog.themes.pageTitle') }}{% endblock %}
-{% block subtitle %}{{ t('blog.themes.pageSubtitle') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('blog.themes.pageSubtitle') }}</span>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">

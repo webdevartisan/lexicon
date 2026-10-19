@@ -41,14 +41,15 @@ foreach ($roleOptions as $r) {
     </div>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if users|empty %}
         {% cmp="empty-state" icon="users" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}
-    <div class="card">
+    <div class="card data-table">
         <div class="card-body p-0 overflow-x-auto">
             <table class="w-full whitespace-nowrap">
-                <thead class="text-left bg-slate-100 dark:bg-zink-600">
-                    <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
+                <thead class="text-left">
+                    <tr>
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="id" label="ID" %}
                         {% cmp="sortable-th" sort="{$sort}" base="{$basePath}" sortKey="handle" label="Tag" %}
                         <th class="px-3.5 py-2.5 font-semibold">Name</th>
@@ -60,7 +61,7 @@ foreach ($roleOptions as $r) {
                         <th class="px-3.5 py-2.5 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
+                <tbody class="text-sm">
                     {% foreach ($users as $user): %}
                     <?php
                         $rowBase = lurl('/admin/users/'.(int) $user['id']);
@@ -75,7 +76,7 @@ $openCasesHref = $canHandleReports ? '/admin/reports?status=active&author='.rawu
 $unfoundedLabel = $unfounded.' unfounded report'.($unfounded === 1 ? '' : 's');
 $reporterHref = $canHandleReports ? '/admin/reports/reporters/'.(int) $user['id'] : '';
 ?>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-zink-700/40 transition-colors">
+                    <tr>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">{{ user['id'] }}</td>
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
                             <a href="<?= e($rowBase) ?>" class="hover:text-custom-500 hover:underline">{{ user['handle'] }}</a>

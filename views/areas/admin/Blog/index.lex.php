@@ -40,6 +40,7 @@ $featuredChoices = ['' => 'Featured: any', 'yes' => 'Featured only', 'no' => 'No
     </div>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if blogs|empty %}
         {% cmp="empty-state" icon="book-open" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}

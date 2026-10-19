@@ -64,6 +64,7 @@ class ReportController extends AppController
             'opened' => 'mc.created_at',
         ], defaultKey: 'priority', defaultDirection: 'desc', tiebreaker: 'mc.id DESC');
 
+        $canConfigure = Gate::allows('configureModeration', SystemResource::class, auth()->user() ?? []);
         $page = max(1, (int) ($this->request->get['page'] ?? 1));
         $result = $this->cases->findForQueue($filters['query'], $page, 20, $sort->orderBy());
 
@@ -83,7 +84,9 @@ class ReportController extends AppController
             'sort' => $sort,
             'basePath' => self::BASE,
             'canViewUsers' => Gate::allows('viewUsers', SystemResource::class, auth()->user() ?? []),
-            'canConfigure' => Gate::allows('configureModeration', SystemResource::class, auth()->user() ?? []),
+            'canConfigure' => $canConfigure,
+            'safeguards' => $canConfigure ? $this->settings->storedValues() : [],
+            'bounds' => ModerationSettings::KEYS,
         ]);
     }
 

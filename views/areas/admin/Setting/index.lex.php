@@ -13,8 +13,8 @@ $errors = errors();
 $sectionTitleClass = 'text-base font-semibold text-slate-900 dark:text-zink-50 mb-1';
 $sectionHintClass = 'text-sm text-slate-500 dark:text-zink-300 mb-5';
 
-$saveButton = '<button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors">'
-    .'<i data-lucide="save" class="size-4"></i> Save Settings</button>';
+$saveButton = '<button type="submit" class="btn inline-flex items-center gap-2 font-medium rounded-lg bg-slate-900 text-white border-slate-900 hover:bg-slate-700 hover:border-slate-700 dark:bg-zink-100 dark:text-zink-800 dark:border-zink-100 dark:hover:bg-white">'
+    .'<i data-lucide="save" class="size-4"></i> Save changes</button>';
 
 // Values with old-input fallback for redisplay after validation errors
 $siteName = old('site_name', $settings['site_name'] ?? '');
@@ -44,10 +44,10 @@ $onOff = static function (string $current, string $onLabel, string $offLabel): s
 
 $selectClass = 'form-select w-full border-slate-200 dark:border-zink-500 focus:outline-none focus:border-custom-500';
 ?>
-<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-5xl">
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto max-w-6xl">
 
-    <!-- Tabs -->
-    <div class="flex flex-wrap gap-2 mb-5 border-b border-slate-200 dark:border-zink-600" role="tablist">
+    <div class="settings-layout">
+    <nav class="settings-nav" role="tablist" aria-label="Settings sections">
         <?php
         $tabs = [
             'identity' => ['home', 'Site Identity'],
@@ -57,11 +57,13 @@ $selectClass = 'form-select w-full border-slate-200 dark:border-zink-500 focus:o
         ];
 foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
         <button type="button" role="tab" data-tab="<?= e($tabKey) ?>"
-                class="tab-button inline-flex items-center gap-2 px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-zink-300 hover:text-slate-700 dark:hover:text-zink-100 transition-colors <?= $tabKey === 'identity' ? 'active' : '' ?>">
+                class="tab-button settings-nav-item <?= $tabKey === 'identity' ? 'active' : '' ?>">
             <i data-lucide="<?= e($tabIcon) ?>" class="size-4"></i> <?= e($tabLabel) ?>
         </button>
         <?php } ?>
-    </div>
+    </nav>
+
+    <div class="settings-panels">
 
     <!-- TAB 1: SITE IDENTITY -->
     <div class="tab-content active" data-section="identity">
@@ -225,12 +227,13 @@ foreach ($mailLabels as $mailKey => $mailLabel) { ?>
             </div>
         </div>
     </div>
+    </div>
+    </div>
 </div>
 
 <style>
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .tab-button.active { color: rgb(var(--tw-colors-custom-500, 59 130 246)); border-bottom-color: currentColor; }
 </style>
 {% endblock %}
 

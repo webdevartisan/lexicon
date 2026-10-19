@@ -9,6 +9,7 @@ use App\Models\MailQueueModel;
 use App\Models\ScheduledTaskModel;
 use App\Services\MailQueueService;
 use App\Traits\SandboxesPreviewHtml;
+use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 
@@ -64,11 +65,13 @@ class MailQueueController extends AppController
             'created' => 'created_at',
         ], defaultKey: 'id', defaultDirection: 'desc', tiebreaker: 'id DESC');
 
-        $result = $this->model->findWithFilters($status, $search, $page, 25, $tier, $sort->orderBy());
+        $perPage = PageSize::fromRequest($this->request, 25);
+        $result = $this->model->findWithFilters($status, $search, $page, $perPage, $tier, $sort->orderBy());
 
         return $this->view('areas/admin/MailQueue/index.lex.php', [
             'entries' => $result['data'],
             'pagination' => $result['pagination'],
+            'perPage' => $perPage,
             'sort' => $sort,
             'counts' => $this->mailQueue->statusCounts(),
             'statusFilter' => $status,

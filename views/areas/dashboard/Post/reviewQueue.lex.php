@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
-{% block title %}{{ blog.blog_name }} · {{ t('navigation.reviewQueue') }}{% endblock %}
-{% block subtitle %}{{ t('dashboard.reviewQueue.subtitle') }}{% endblock %}
+{% block title %}{{ t('navigation.reviewQueue') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('dashboard.reviewQueue.subtitle') }}</span>{% endblock %}
 {% block body %}
 <?php
 $workflowBadge = [

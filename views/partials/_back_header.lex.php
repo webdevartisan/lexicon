@@ -42,7 +42,6 @@
                     <form action="/dashboard/active-blog" method="POST" class="flex items-center">
                         <input type="hidden" name="return_to" value="<?= e($current_path) ?>">
                         {{ csrf_field() }}
-                        {% cache 'lucide:book-open:blogswitch:v2' ttl=31536000 %}<i data-lucide="book-open" class="hidden sm:inline-block size-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                         <?php
                         $switcherGroups = ['owned' => [], 'shared' => []];
                         foreach ($user_blogs as $bid => $b) {
@@ -76,50 +75,16 @@
                             </optgroup>
                             <?php } ?>
                         </select>
-                        {% cache 'lucide:chevrons-up-down' ttl=31536000 %}<i data-lucide="chevrons-up-down" class="inline-block size-4 absolute ltr:right-2.5 rtl:left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-topbar-item group-data-[topbar=dark]:text-zink-200"></i>{% endcache %}
                     </form>
                 </div>
                 <?php } ?>
 
+                <div class="hidden md:block ltr:ml-4 rtl:mr-4 min-w-0">
+                    {% include "partials/_breadcrumbs.lex.php" %}
+                </div>
+
                 <div class="flex gap-3 ms-auto">
 
-                    {% set themeLabel = t('layout.themeMenu.label') %}
-                    {% set themeLightLabel = t('layout.themeMenu.light') %}
-                    {% set themeAutoLabel = t('layout.themeMenu.auto') %}
-                    {% set themeDarkLabel = t('layout.themeMenu.dark') %}
-                    <div class="relative flex items-center dropdown h-header" id="theme-menu">
-                        <button type="button" aria-label="{{ themeLabel }}" class="dropdown-toggle inline-flex relative justify-center items-center p-0 text-topbar-item transition-all w-[37.5px] h-[37.5px] duration-200 ease-linear bg-topbar rounded-md btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200 group-data-[topbar=dark]:text-topbar-item-dark" id="light-dark-mode" data-bs-toggle="dropdown">
-                            <i data-lucide="sun" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="light"></i>
-                            <i data-lucide="monitor" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="auto"></i>
-                            <i data-lucide="moon" class="inline-block w-5 h-5 stroke-1 hidden" data-theme-icon="dark"></i>
-                        </button>
-                        <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="light-dark-mode">
-                            <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ themeLabel }}</h6>
-                            <ul>
-                                <li>
-                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="light">
-                                        <i data-lucide="sun" class="inline-block size-4"></i>
-                                        <span class="grow">{{ themeLightLabel }}</span>
-                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="auto">
-                                        <i data-lucide="monitor" class="inline-block size-4"></i>
-                                        <span class="grow">{{ themeAutoLabel }}</span>
-                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" class="flex items-center w-full gap-2 ltr:text-left rtl:text-right py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" data-theme-choice="dark">
-                                        <i data-lucide="moon" class="inline-block size-4"></i>
-                                        <span class="grow">{{ themeDarkLabel }}</span>
-                                        <i data-lucide="check" class="hidden size-4 text-custom-500" data-theme-check></i>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
                     <?php
                     // The shared bell: dashboard pages show the person's own inbox,
                     // admin pages the operations inbox. The panel loads on first open.
@@ -133,92 +98,89 @@
                     {% include "partials/notifications/_bell.lex.php" %}
                     {% endif; %}
 
-                    <!-- Profile -->
-                    {% set signedInAsLabel = t('layout.profileDropdown.signedInAs') %}
+                    <!-- User menu -->
                     {% set controlPanelLabel = t('layout.profileDropdown.links.controlPanel') %}
                     {% set editProfileLabel = t('layout.profileDropdown.links.editProfile') %}
                     {% set accountSettingsLabel = t('layout.profileDropdown.links.accountSettings') %}
                     {% set signOutLabel = t('layout.profileDropdown.links.signOut') %}
+                    {% set themeLabel = t('layout.themeMenu.label') %}
+                    {% set themeLightLabel = t('layout.themeMenu.light') %}
+                    {% set themeAutoLabel = t('layout.themeMenu.auto') %}
+                    {% set themeDarkLabel = t('layout.themeMenu.dark') %}
+                    <?php
+                    $initials = '';
+                    if (!empty($current_user['first_name'])) {
+                        $initials .= strtoupper(substr($current_user['first_name'], 0, 1));
+                    }
+                    if (!empty($current_user['last_name'])) {
+                        $initials .= strtoupper(substr($current_user['last_name'], 0, 1));
+                    }
+                    $initials = $initials ?: 'U';
+                    $menuName = trim((string) ($current_user['first_name'] ?? '')) ?: (string) ($current_user['email'] ?? '');
+                    $avatarUrl = (string) ($current_user['avatar_url'] ?? '');
+                    $avatar = static function (string $size) use ($avatarUrl, $initials): string {
+                        if ($avatarUrl !== '') {
+                            return '<img src="'.e($avatarUrl).'" alt="" class="'.$size.' shrink-0 rounded-full object-cover">';
+                        }
 
-                    <div class="relative flex items-center dropdown h-header">
-                        <button type="button" class="inline-block p-0 transition-all duration-200 ease-linear bg-topbar rounded-full text-topbar-item dropdown-toggle btn hover:bg-topbar-item-bg-hover hover:text-topbar-item-hover group-data-[topbar=dark]:text-topbar-item-dark group-data-[topbar=dark]:bg-topbar-dark group-data-[topbar=dark]:hover:bg-topbar-item-bg-hover-dark group-data-[topbar=dark]:hover:text-topbar-item-hover-dark group-data-[topbar=brand]:bg-topbar-brand group-data-[topbar=brand]:hover:bg-topbar-item-bg-hover-brand group-data-[topbar=brand]:hover:text-topbar-item-hover-brand group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600 group-data-[topbar=brand]:text-topbar-item-brand group-data-[topbar=dark]:dark:hover:text-zink-50 group-data-[topbar=dark]:dark:text-zink-200" id="dropdownMenuButton" data-bs-toggle="dropdown">
-                            <div class="bg-pink-100 rounded-full">
-                                {% if current_user.avatar_url|notempty %}
-                                    <img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-full ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">
-                                {% else %}
-                                    <div class="flex items-center justify-center rounded-full size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
-                                        <?php
-                                            // generate user initials from first and last name
-                                            $initials = '';
-                if (!empty($current_user['first_name'])) {
-                    $initials .= strtoupper(substr($current_user['first_name'], 0, 1));
-                }
-                if (!empty($current_user['last_name'])) {
-                    $initials .= strtoupper(substr($current_user['last_name'], 0, 1));
-                }
-                echo e($initials ?: 'U');
-                ?>
-                                    </div>
-                                {% endif %}
-                            </div>
+                        return '<span class="'.$size.' shrink-0 inline-flex items-center justify-center rounded-full bg-custom-100 text-custom-500 text-xs font-semibold dark:bg-custom-950">'.e($initials).'</span>';
+                    };
+                    $menuItem = 'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:bg-slate-100 dark:text-zink-200 dark:hover:bg-zink-500 dark:hover:text-zink-50 dark:focus:bg-zink-500';
+                    $themeButton = 'inline-flex items-center justify-center size-7 rounded-md text-slate-500 transition-colors hover:text-slate-900 aria-pressed:bg-white aria-pressed:text-slate-900 aria-pressed:shadow-sm dark:text-zink-300 dark:hover:text-zink-50 dark:aria-pressed:bg-zink-400 dark:aria-pressed:text-zink-50';
+                    ?>
+                    <div class="relative flex items-center dropdown h-header" id="theme-menu">
+                        <button type="button" aria-haspopup="menu" aria-label="<?= e($menuName) ?>" id="dropdownMenuButton" data-bs-toggle="dropdown"
+                            class="dropdown-toggle inline-flex items-center gap-2 py-1 ltr:pl-1 ltr:pr-2 rtl:pr-1 rtl:pl-2 rounded-full text-sm font-medium transition-colors text-topbar-item hover:bg-topbar-item-bg-hover group-data-[topbar=dark]:text-zink-100 group-data-[topbar=dark]:dark:bg-zink-700 group-data-[topbar=dark]:dark:hover:bg-zink-600">
+                            <?= $avatar('size-8') ?>
+                            <span class="hidden sm:inline max-w-[9rem] truncate"><?= e($menuName) ?></span>
+                            {% cache 'lucide:menu:chevron-down' ttl=31536000 %}<i data-lucide="chevron-down" class="size-4 opacity-70" aria-hidden="true"></i>{% endcache %}
                         </button>
-                        <div class="absolute z-50 hidden p-4 ltr:text-left rtl:text-right bg-white rounded-md shadow-md !top-4 dropdown-menu min-w-[14rem] dark:bg-zink-600" aria-labelledby="dropdownMenuButton">
-                            <h6 class="mb-2 text-sm font-normal text-slate-500 dark:text-zink-300">{{ signedInAsLabel }}</h6>
-                            <a href="<?= e(lurl('/account/profile')) ?>" class="flex gap-3 mb-3">
-                                <div class="relative inline-block shrink-0">
-                                    <div class="rounded bg-slate-100 dark:bg-zink-500">
-                                        {% if current_user.avatar_url|notempty %}
-                                            <img src="{{ current_user.avatar_url }}" alt="" class="h-12 w-12 rounded-md ring-1 ring-offset-2 ring-slate-200 dark:ring-offset-zink-700 dark:ring-zink-500">
-                                        {% else %}
-                                            <div class="flex items-center justify-center rounded-md size-10 bg-custom-100 text-custom-500 ring-1 ring-offset-2 ring-custom-200 dark:ring-offset-zink-700 dark:ring-custom-900 dark:bg-custom-950">
-                                                <?php
-                        // generate user initials from first and last name
-                        $initials = '';
-                if (!empty($current_user['first_name'])) {
-                    $initials .= strtoupper(substr($current_user['first_name'], 0, 1));
-                }
-                if (!empty($current_user['last_name'])) {
-                    $initials .= strtoupper(substr($current_user['last_name'], 0, 1));
-                }
-                echo e($initials ?: 'U');
-                ?>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <span class="-top-1 ltr:-right-1 rtl:-left-1 absolute w-2.5 h-2.5 bg-green-400 border-2 border-white rounded-full dark:border-zink-600"></span>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-15">{{ current_user.first_name }}</h6>
-                                    <p class="text-slate-500 dark:text-zink-300">{{ current_user.email }}</p>
-                                </div>
+                        <div aria-labelledby="dropdownMenuButton"
+                            class="absolute z-50 hidden p-2 ltr:text-left rtl:text-right bg-white rounded-xl shadow-lg dropdown-menu w-72 dark:bg-zink-600 !top-3 max-sm:!fixed max-sm:!inset-x-0 max-sm:!bottom-0 max-sm:!top-auto max-sm:![transform:none] max-sm:!w-full max-sm:rounded-b-none max-sm:pb-6">
+                            <a href="<?= e(lurl('/account/profile')) ?>" class="flex items-center gap-3 px-3 py-3 mb-1 rounded-md hover:bg-slate-100 dark:hover:bg-zink-500">
+                                <?= $avatar('size-10') ?>
+                                <span class="min-w-0">
+                                    <span class="block text-sm font-semibold truncate text-slate-900 dark:text-zink-50"><?= e($menuName) ?></span>
+                                    <span class="block text-xs truncate text-slate-500 dark:text-zink-300">{{ current_user.email }}</span>
+                                </span>
                             </a>
                             <ul>
                                 <?php if (auth()->hasRole('administrator')) { ?>
-                                <!-- Stable entry: always Control Panel. The logo already leads back to the dashboard. -->
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/admin')) ?>">
-                                        {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                    <a class="<?= $menuItem ?>" href="<?= e(lurl('/admin')) ?>">
+                                        {% cache 'lucide:menu:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="size-4" aria-hidden="true"></i>{% endcache %}
                                         <span>{{ controlPanelLabel }}</span>
                                     </a>
                                 </li>
                                 <?php } ?>
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/account/profile')) ?>">
-                                        {% cache 'lucide:user-2' ttl=31536000 %}<i data-lucide="user-2" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                    <a class="<?= $menuItem ?>" href="<?= e(lurl('/account/profile')) ?>">
+                                        {% cache 'lucide:menu:user-2' ttl=31536000 %}<i data-lucide="user-2" class="size-4" aria-hidden="true"></i>{% endcache %}
                                         <span>{{ editProfileLabel }}</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="block ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500" href="<?= e(lurl('/account/preferences')) ?>">
-                                        {% cache 'lucide:settings' ttl=31536000 %}<i data-lucide="settings" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                    <a class="<?= $menuItem ?>" href="<?= e(lurl('/account/preferences')) ?>">
+                                        {% cache 'lucide:menu:settings' ttl=31536000 %}<i data-lucide="settings" class="size-4" aria-hidden="true"></i>{% endcache %}
                                         <span>{{ accountSettingsLabel }}</span>
                                     </a>
                                 </li>
-                                <li class="pt-2 mt-2 border-t border-slate-200 dark:border-zink-500">
+                                <li class="flex items-center justify-between gap-3 px-3 py-2">
+                                    <span class="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-zink-200">
+                                        {% cache 'lucide:menu:sun-moon' ttl=31536000 %}<i data-lucide="sun-moon" class="size-4" aria-hidden="true"></i>{% endcache %}
+                                        <span>{{ themeLabel }}</span>
+                                    </span>
+                                    <span class="inline-flex gap-0.5 p-0.5 rounded-lg bg-slate-100 dark:bg-zink-700" role="group" aria-label="<?= e($themeLabel) ?>">
+                                        <button type="button" class="<?= $themeButton ?>" data-theme-choice="light" title="{{ themeLightLabel }}" aria-label="{{ themeLightLabel }}">{% cache 'lucide:menu:sun' ttl=31536000 %}<i data-lucide="sun" class="size-4" aria-hidden="true"></i>{% endcache %}</button>
+                                        <button type="button" class="<?= $themeButton ?>" data-theme-choice="dark" title="{{ themeDarkLabel }}" aria-label="{{ themeDarkLabel }}">{% cache 'lucide:menu:moon' ttl=31536000 %}<i data-lucide="moon" class="size-4" aria-hidden="true"></i>{% endcache %}</button>
+                                        <button type="button" class="<?= $themeButton ?>" data-theme-choice="auto" title="{{ themeAutoLabel }}" aria-label="{{ themeAutoLabel }}">{% cache 'lucide:menu:monitor' ttl=31536000 %}<i data-lucide="monitor" class="size-4" aria-hidden="true"></i>{% endcache %}</button>
+                                    </span>
+                                </li>
+                                <li class="pt-1 mt-1 border-t border-slate-200 dark:border-zink-500">
                                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="block w-full ltr:text-left rtl:text-right ltr:pr-4 rtl:pl-4 py-1.5 text-base font-medium transition-all duration-200 ease-linear text-slate-600 dropdown-item hover:text-custom-500 focus:text-custom-500 dark:text-zink-200 dark:hover:text-custom-500 dark:focus:text-custom-500">
-                                            {% cache 'lucide:log-out' ttl=31536000 %}<i data-lucide="log-out" class="inline-block size-4 ltr:mr-2 rtl:ml-2"></i>{% endcache %}
+                                        <button type="submit" class="<?= $menuItem ?> w-full text-red-600 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400">
+                                            {% cache 'lucide:menu:log-out' ttl=31536000 %}<i data-lucide="log-out" class="size-4" aria-hidden="true"></i>{% endcache %}
                                             <span>{{ signOutLabel }}</span>
                                         </button>
                                     </form>
