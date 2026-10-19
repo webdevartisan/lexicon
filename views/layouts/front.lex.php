@@ -11,10 +11,13 @@ $siteName = site_setting('site_name', 'Lexicon');
 $frontNav = $nav_items ?? [];
 
 // The wordmark is the Home link and the primary button is "create a blog", so
-// repeating either in the bar would be dead weight. Both stay in the drawer
-// and the footer, where the full map is the point.
+// repeating either in the bar would be dead weight. Admin is a back-office
+// entry, not a page for readers to browse. All three stay in the drawer and the
+// footer, where the full map is the point.
 $barNav = array_filter($frontNav, static function (array $it): bool {
-    return ($it['href'] ?? '') !== '/' && ($it['key'] ?? '') !== 'navigation.createBlog';
+    return ($it['href'] ?? '') !== '/'
+        && ($it['key'] ?? '') !== 'navigation.createBlog'
+        && ($it['key'] ?? '') !== 'navigation.admin';
 });
 ?>
 <!DOCTYPE HTML>
