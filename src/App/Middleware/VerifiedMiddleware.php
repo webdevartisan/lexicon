@@ -29,7 +29,7 @@ final class VerifiedMiddleware implements MiddlewareInterface
 
         $message = chrome_translate('auth.verifyNeeded');
         $accept = $request->header('accept') ?? '';
-        $response = new Response;
+        $response = new Response();
 
         if ($request->isAjax() || stripos($accept, 'application/json') !== false) {
             $response->setStatusCode(403);

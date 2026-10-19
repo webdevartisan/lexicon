@@ -29,12 +29,12 @@ class JourneyTester extends \Codeception\Actor
      */
     public function chooseFromMenu(string $selectSelector, string $label, ?string $search = null): void
     {
-        $this->executeJS("document.querySelector(".json_encode($selectSelector).").parentElement.querySelector('.select-menu-button').click();");
+        $this->executeJS('document.querySelector('.json_encode($selectSelector).").parentElement.querySelector('.select-menu-button').click();");
         $this->waitForElementVisible('.select-menu-open .select-menu-list', 3);
         if ($search !== null) {
             $this->fillField('.select-menu-open .select-menu-search', $search);
         }
-        $this->click("//div[contains(@class,'select-menu-open')]//button[contains(@class,'select-menu-item')][normalize-space()=\"".$label."\"]");
+        $this->click("//div[contains(@class,'select-menu-open')]//button[contains(@class,'select-menu-item')][normalize-space()=\"".$label.'"]');
     }
 
     /**

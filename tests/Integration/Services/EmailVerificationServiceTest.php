@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Mail\NewPostMail;
 use App\Models\EmailVerificationModel;
 use App\Models\MailQueueModel;
 use App\Models\UserModel;

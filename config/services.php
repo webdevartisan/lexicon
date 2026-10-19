@@ -980,7 +980,7 @@ $container->setShared(App\Services\TwoFactor\TwoFactorPolicy::class, function ($
     return new App\Services\TwoFactor\TwoFactorPolicy(
         $c->get(App\Models\UserModel::class),
         $c->get(App\Services\TwoFactor\TwoFactorService::class),
-        new App\Policies\SystemPolicy,
+        new App\Policies\SystemPolicy(),
         (bool) $config['two_factor_required_for_admins']
     );
 });

@@ -517,8 +517,8 @@ function platform_page_meta(string $title, string $description, string $canonica
         'twitter_card' => 'summary',
     ]);
 
-    return implode("
-", $tags);
+    return implode('
+', $tags);
 }
 
 /**

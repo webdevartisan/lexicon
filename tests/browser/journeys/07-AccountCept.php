@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Facebook\WebDriver\WebDriverKeys;
 use Support\JourneyTester;
 
 $I = new JourneyTester($scenario);
