@@ -320,6 +320,10 @@ foreach ($socialNetworks as $network) {
 		<script src="/assets/js/csrf-lazy.js" defer></script>
 		<script src="/assets/js/scrolltop.js" defer></script>
 		{% include "partials/_auth_modal.lex.php" %}
+		<?php if (auth()->check()) { ?>
+		{% include "partials/account/_dialog.lex.php" %}
+		<script src="/assets/js/account-modal.js" defer></script>
+		<?php } ?>
 		{% yield scripts %}
 	</body>
 </html>

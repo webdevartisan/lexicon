@@ -14,9 +14,12 @@ $section = $accountSection ?? '';
 
 $items = [
     ['key' => 'profile',       'href' => '/account/profile',       'label' => 'account.nav.profile'],
+    ['key' => 'public',        'href' => '/account/public',        'label' => 'account.nav.public'],
+    ['key' => 'social',        'href' => '/account/social',        'label' => 'account.nav.social'],
     ['key' => 'preferences',   'href' => '/account/preferences',   'label' => 'account.nav.preferences'],
     ['key' => 'notifications', 'href' => '/account/notifications', 'label' => 'account.nav.notifications'],
     ['key' => 'security',      'href' => '/account/security',      'label' => 'account.nav.security'],
+    ['key' => 'delete',        'href' => '/account/delete',        'label' => 'account.nav.danger'],
 ];
 ?>
 <nav class="lx-account-nav" aria-label="<?= e($tr('navigation.account')) ?>">

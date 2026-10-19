@@ -278,6 +278,8 @@ $router->group([
     $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
 
     $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/public', ['controller' => 'AccountProfileController', 'action' => 'editPublic', 'method' => 'GET']);
+    $r->add('/social', ['controller' => 'AccountProfileController', 'action' => 'editSocial', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
     $r->add('/profile/avatar/crop', ['controller' => 'AccountProfileController', 'action' => 'cropAvatar', 'method' => 'POST']);
@@ -298,6 +300,7 @@ $router->group([
     $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);
 
     $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'editPassword', 'method' => 'GET']);
     $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
     $r->add('/security/two-factor', ['controller' => 'AccountTwoFactorController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/security/two-factor/start', ['controller' => 'AccountTwoFactorController', 'action' => 'start', 'method' => 'POST']);

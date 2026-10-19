@@ -14,6 +14,7 @@ use App\Services\Sessions\SessionRevoker;
 use DateTime;
 use DateTimeZone;
 use Exception;
+use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -27,6 +28,8 @@ use Framework\Core\Response;
  */
 final class AccountSecurityController extends AppController
 {
+    use RendersAccountPanel;
+
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
@@ -56,7 +59,7 @@ final class AccountSecurityController extends AppController
             $preferences['timezone'] ?? 'UTC'
         );
 
-        return $this->view('public.Account.security', [
+        return $this->accountView('security', [
             'user' => $user,
             'sessions' => $this->sessionList->forOwner(
                 $userId,
@@ -65,6 +68,20 @@ final class AccountSecurityController extends AppController
             ),
             'needsPassword' => !$this->recentConfirmation->isFresh(),
         ]);
+    }
+
+    /**
+     * Display the change-password form.
+     */
+    public function editPassword(): Response
+    {
+        $user = $this->users->findById((int) auth()->user()['id']);
+
+        if (!$user) {
+            throw new Exception('User record not found for the signed-in account');
+        }
+
+        return $this->accountView('password', ['user' => $user]);
     }
 
     /**
@@ -115,7 +132,7 @@ final class AccountSecurityController extends AppController
             ]);
             $this->flash('error', chrome_translate('account.flash.passwordError'));
 
-            return $this->redirect(lurl('/account/security'));
+            return $this->redirect(lurl('/account/security/password'));
         }
 
         // regenerate session ID after credential change to prevent session fixation
@@ -144,7 +161,7 @@ final class AccountSecurityController extends AppController
         ]);
         $this->flash('error', chrome_translate('account.flash.preferencesUnchanged'));
 
-        return $this->redirect(lurl('/account/security'));
+        return $this->redirect(lurl('/account/security/password'));
     }
 
     /**

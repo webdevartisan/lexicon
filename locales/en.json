@@ -1219,9 +1219,12 @@
     "account": {
         "nav": {
             "profile": "Profile",
+            "public": "Public page",
+            "social": "Social links",
             "preferences": "Preferences",
             "notifications": "Notifications",
-            "security": "Security"
+            "security": "Security",
+            "danger": "Danger"
         },
         "profile": {
             "heading": "Public profile",
@@ -1382,6 +1385,9 @@
             "requiredToContinue": "Set up two-step sign-in to open the control panel."
         },
         "security": {
+            "changePassword": "Change password",
+            "pageIntro": "Your password, two-step sign-in, devices and data.",
+            "passwordHeading": "Password",
             "heading": "Change password",
             "intro": "Use a strong password you don't reuse anywhere else.",
             "currentPassword": "Current password",
