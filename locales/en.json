@@ -2292,6 +2292,11 @@
                 "title": "Set up your profile",
                 "description": "Add your name and a photo so readers know who wrote the post.",
                 "action": "Edit profile"
+            },
+            "reviewer_profile": {
+                "title": "Set up your profile",
+                "description": "Add your name and a photo so writers know who reviewed their post.",
+                "action": "Edit profile"
             }
         },
         "start": {

@@ -631,7 +631,7 @@
         border-radius: 0.75rem;
     }
 
-    [data-mode=dark] .tox .tox-editor-header,
+    [data-mode=dark] .tox.tox-tinymce .tox-editor-header,
     [data-mode=dark] .tox .tox-menubar,
     [data-mode=dark] .tox .tox-toolbar,
     [data-mode=dark] .tox .tox-toolbar__primary,
@@ -646,10 +646,34 @@
         border-color: rgb(var(--sc-zink-600));
     }
 
+    /* promotion: false still leaves an empty upsell box beside the menubar. */
+    .tox .tox-promotion {
+        display: none;
+    }
+
+    /* The skin gives every button its own navy fill, so reset them onto the bar colour. */
+    [data-mode=dark] .tox .tox-tbtn,
+    [data-mode=dark] .tox .tox-mbtn,
+    [data-mode=dark] .tox .tox-tbtn:focus,
+    [data-mode=dark] .tox .tox-mbtn:focus:not(:disabled),
+    [data-mode=dark] .tox .tox-tbtn--disabled,
+    [data-mode=dark] .tox .tox-tbtn:disabled,
+    [data-mode=dark] .tox .tox-mbtn[disabled],
+    [data-mode=dark] .tox .tox-split-button__main:focus,
+    [data-mode=dark] .tox .tox-split-button__chevron:focus {
+        background: transparent;
+    }
+
     [data-mode=dark] .tox .tox-tbtn:hover,
-    [data-mode=dark] .tox .tox-mbtn:hover,
+    [data-mode=dark] .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+    [data-mode=dark] .tox .tox-tbtn--enabled,
+    [data-mode=dark] .tox .tox-mbtn--active,
     [data-mode=dark] .tox .tox-collection__item--active {
-        background-color: rgb(var(--sc-zink-600));
+        background: rgb(var(--sc-zink-600));
+    }
+
+    [data-mode=dark] .tox .tox-tbtn:active {
+        background: rgb(var(--sc-zink-500));
     }
 
 

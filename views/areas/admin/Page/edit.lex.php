@@ -72,24 +72,39 @@ $isPublished = (int) old('is_published', $page['is_published'] ?? 0) === 1;
 <script src="/cp-assets/js/dropzone.init.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/dropzone.init.js') ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 (function () {
-    var isDark = document.documentElement.getAttribute('data-mode') === 'dark';
-    tinymce.init({
-        selector: '#content',
-        height: 460,
-        license_key: 'gpl',
-        promotion: false,
-        skin: isDark ? 'oxide-dark' : 'oxide',
-        content_css: isDark ? 'dark' : 'default',
-        menubar: false,
-        plugins: 'lists link image table code fullscreen searchreplace preview wordcount visualblocks',
-        toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link image table | visualblocks preview code fullscreen',
-        branding: false,
-        statusbar: true,
-        content_style: 'body { background-color: ' + (isDark ? '#171717' : '#ffffff') + '; }',
-        setup: function (editor) {
-            editor.on('change', function () { tinymce.triggerSave(); });
-        },
-    });
+    function startEditor() {
+        var isDark = document.documentElement.getAttribute('data-mode') === 'dark';
+        tinymce.init({
+            selector: '#content',
+            height: 460,
+            license_key: 'gpl',
+            promotion: false,
+            skin: isDark ? 'oxide-dark' : 'oxide',
+            content_css: isDark ? 'dark' : 'default',
+            menubar: false,
+            plugins: 'lists link image table code fullscreen searchreplace preview wordcount visualblocks',
+            toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link image table | visualblocks preview code fullscreen',
+            branding: false,
+            statusbar: true,
+            content_style: 'body { background-color: ' + (isDark ? '#171717' : '#ffffff') + '; }' + (isDark ? ' .mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before { color: rgba(255, 255, 255, 0.4); }' : ''),
+            setup: function (editor) {
+                editor.on('change', function () { tinymce.triggerSave(); });
+            },
+        });
+    }
+
+    startEditor();
+
+    // The skin is fixed when TinyMCE starts, so a mode switch needs a fresh instance; triggerSave keeps the typed content.
+    var lastMode = document.documentElement.getAttribute('data-mode');
+    new MutationObserver(function () {
+        var mode = document.documentElement.getAttribute('data-mode');
+        if (mode === lastMode) { return; }
+        lastMode = mode;
+        tinymce.triggerSave();
+        tinymce.remove('#content');
+        startEditor();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode'] });
 })();
 </script>
 {% endblock %}
