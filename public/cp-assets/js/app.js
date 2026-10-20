@@ -204,43 +204,6 @@ function windowResizeHover() {
 }
 
 /**
- * Initialize the Light / Auto / Dark appearance menu
- *
- * layout.js owns resolving and applying the mode; here we only wire the menu
- * and show the current choice (topbar icon plus a check mark in the list).
- */
-function lightDarkMode() {
-    const menu = document.getElementById("theme-menu");
-    if (!menu || !window.lexiconTheme) return;
-
-    const render = () => {
-        const current = window.lexiconTheme.getPreference();
-        menu.querySelectorAll("[data-theme-icon]").forEach((icon) => {
-            icon.classList.toggle("hidden", icon.dataset.themeIcon !== current);
-        });
-        menu.querySelectorAll("[data-theme-choice]").forEach((item) => {
-            const active = item.dataset.themeChoice === current;
-            item.setAttribute("aria-pressed", active ? "true" : "false");
-            item.querySelector("[data-theme-check]")?.classList.toggle("hidden", !active);
-        });
-    };
-
-    menu.querySelectorAll("[data-theme-choice]").forEach((item) => {
-        item.addEventListener("click", () => {
-            window.lexiconTheme.setPreference(item.dataset.themeChoice);
-        });
-    });
-
-    // The attribute changes for any source: this menu, another tab, or the device theme flipping
-    new MutationObserver(render).observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["data-theme-pref"],
-    });
-
-    render();
-}
-
-/**
  * Initialize active menu highlighting
  * 
  * We highlight the current page's menu item based on URL path.
@@ -457,9 +420,6 @@ function initializeSidebarResize() {
 function init() {
     // We set up window event listeners first
     windowLoadContent();
-    
-    // We initialize theme switcher
-    lightDarkMode();
     
     // We initialize menu item scrolling
     initMenuItemScroll();

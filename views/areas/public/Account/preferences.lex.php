@@ -76,6 +76,14 @@
             </details>
         </section>
 
+        <section class="acct-appearance" aria-labelledby="appearance-heading">
+            <h3 class="acct-section" id="appearance-heading"><?= e($t('layout.themeMenu.label')) ?></h3>
+            <p class="acct-hint"><?= e($t('account.preferences.appearanceHelp')) ?></p>
+            <?php $themeChoicesLabelled = true; ?>
+            {% include "partials/_theme_choices.lex.php" %}
+            <?php $themeChoicesLabelled = false; ?>
+        </section>
+
         <form method="post" action="<?= e(lurl('/account/preferences/update')) ?>" class="acct-form">
             <?= csrf_field() ?>
 

@@ -7,7 +7,7 @@
         "themeMenu": {
             "label": "Appearance",
             "light": "Light",
-            "auto": "Auto",
+            "auto": "Device",
             "dark": "Dark"
         },
         "profileDropdown": {
@@ -15,9 +15,7 @@
             "links": {
                 "dashboard": "Dashboard",
                 "controlPanel": "Control Panel",
-                "editProfile": "Edit Profile",
-                "signOut": "Sign Out",
-                "accountSettings": "Settings"
+                "editProfile": "Edit Profile"
             }
         }
     },
@@ -1296,6 +1294,7 @@
             "emailModalSubmit": "Send confirmation link",
             "emailModalCancel": "Cancel",
             "interfaceSection": "Interface",
+            "appearanceHelp": "Applies right away to the menus, settings and dashboard in this browser.",
             "timezone": "Timezone",
             "timezoneHelp": "Dates and times across the site are shown in this zone.",
             "timezoneInvalid": "Please select a valid timezone.",

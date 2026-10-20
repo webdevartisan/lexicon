@@ -12,6 +12,7 @@ $old = old();
     <title>{% yield title %} | Lexicon CP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     {% include "partials/_favicons.lex.php" %}
+    <script src="/assets/js/appearance.js"></script>
     <script src="/cp-assets/js/layout.js"></script>
     <script defer src="/vendor/alpine/focus.min.js"></script>
     <script defer src="/vendor/alpine/alpine.min.js"></script>
@@ -158,7 +159,6 @@ $old = old();
 <script src="/cp-assets/js/confirm.js"></script>
 <script src="/cp-assets/js/select-menu.js"></script>
 <script src="/cp-assets/js/bulk-actions.js"></script>
-{% include "components/panel-dialog.lex.php" %}
 <script src="/cp-assets/js/blog-switcher.js"></script>
 <script src="/cp-assets/js/table-sort.js"></script>
 <script src="/cp-assets/js/queue-detail.js"></script>

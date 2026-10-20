@@ -64,6 +64,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
         <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
         <link rel="stylesheet" href="/assets/css/platform-chrome.css" />
+        <script src="/assets/js/appearance.js"></script>
         <link rel="stylesheet" href="/assets/css/lexicon.css" />
 
         {% yield meta %}

@@ -11,7 +11,7 @@ $I->signInAs('writer');
 
 $menus = [
     '/en' => ['.nav-user-btn', '.nav-user-menu'],
-    '/en/dashboard' => ['#dropdownMenuButton', '#theme-menu .dropdown-menu'],
+    '/en/dashboard' => ['.nav-user-btn', '.nav-user-menu'],
 ];
 
 foreach ($menus as $start => [$toggle, $menu]) {
@@ -33,11 +33,11 @@ foreach ($menus as $start => [$toggle, $menu]) {
 $I->amOnPage('/en/account/notifications');
 $I->seeElement('.acct-page .acct-form');
 
-// Preferences, reached through "Account settings" in the dashboard menu
+// Preferences, reached through Settings in the dashboard menu
 $I->amOnPage('/en/dashboard');
-$I->click('#dropdownMenuButton');
-$I->waitForElementVisible('#theme-menu .dropdown-menu', 5);
-$I->click('Settings', '#theme-menu .dropdown-menu');
+$I->click('.nav-user-btn');
+$I->waitForElementVisible('.nav-user-menu', 5);
+$I->click('Settings', '.nav-user-menu');
 $I->waitForElementVisible('[data-panel-dialog] .lx-account-nav', 10);
 $I->click('Preferences', '[data-panel-dialog] .lx-account-nav');
 $I->waitForText('Interface language', 10, '[data-panel-dialog]');

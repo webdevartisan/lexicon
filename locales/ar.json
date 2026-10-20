@@ -7,7 +7,7 @@
     "themeMenu": {
       "label": "المظهر",
       "light": "فاتح",
-      "auto": "تلقائي",
+      "auto": "الجهاز",
       "dark": "داكن"
     },
     "profileDropdown": {
@@ -15,9 +15,7 @@
       "links": {
         "dashboard": "لوحة التحكم",
         "controlPanel": "لوحة الإدارة",
-        "editProfile": "تعديل الملف الشخصي",
-        "signOut": "تسجيل الخروج",
-        "accountSettings": "الإعدادات"
+        "editProfile": "تعديل الملف الشخصي"
       }
     }
   },
@@ -1308,6 +1306,7 @@
       "emailModalSubmit": "إرسال رابط التأكيد",
       "emailModalCancel": "إلغاء",
       "interfaceSection": "الواجهة",
+      "appearanceHelp": "يُطبَّق فورًا على القوائم والإعدادات ولوحة التحكم في هذا المتصفح.",
       "timezone": "المنطقة الزمنية",
       "timezoneHelp": "تُعرض التواريخ والأوقات في الموقع بهذه المنطقة.",
       "timezoneInvalid": "يرجى اختيار منطقة زمنية صحيحة.",
