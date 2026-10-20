@@ -52,7 +52,7 @@ $bellListPath = '/notifications';
 
 // A disclosure, not an ARIA menu. The contents are ordinary navigation links,
 // so role="menu" would promise arrow-key semantics that do not exist here.
-$renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnread, $navUnreadNotifications, $navMenuLabel, $navMenuId, $logoutUrl, $navReturn, $tr): void { ?>
+$renderAccountMenu = static function () use ($navViewer, $navUnread, $navMenuLabel, $navMenuId, $logoutUrl, $navReturn, $tr): void { ?>
     <div class="nav-user platform-menu" data-platform-menu>
         <button type="button" class="nav-user-btn" data-platform-menu-toggle
                 aria-expanded="false" aria-controls="<?= e($navMenuId) ?>"
@@ -83,33 +83,22 @@ $renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnrea
         <nav class="platform-menu-list nav-user-menu" id="<?= e($navMenuId) ?>" data-platform-menu-list hidden
              aria-label="<?= e($tr('reader.accountMenu')) ?>">
             <ul>
+                <li><a href="<?= e(lurl('/saved')) ?>" data-panel><?= e($tr('reader.savedTitle')) ?></a></li>
                 <li>
-                    <a href="<?= e(lurl('/notifications')) ?>">
-                        <?= e($tr('reader.notificationsTitle')) ?>
-                        <?php if ($navUnreadNotifications > 0) { ?>
-                        <span class="nav-badge" aria-hidden="true"><?= $navUnreadNotifications > 99 ? '99+' : $navUnreadNotifications ?></span>
-                        <?php } ?>
-                    </a>
-                </li>
-                <li><a href="<?= e(lurl('/saved')) ?>"><?= e($tr('reader.savedTitle')) ?></a></li>
-                <li>
-                    <a href="<?= e(lurl('/replies')) ?>">
+                    <a href="<?= e(lurl('/replies')) ?>" data-panel>
                         <?= e($tr('reader.repliesTitle')) ?>
                         <?php if ($navUnread > 0) { ?>
                         <span class="nav-badge" data-reader-badge aria-hidden="true"><?= $navUnread > 99 ? '99+' : $navUnread ?></span>
                         <?php } ?>
                     </a>
                 </li>
-                <li><a href="<?= e(lurl('/subscriptions')) ?>"><?= e($tr('reader.subscriptionsTitle')) ?></a></li>
+                <li><a href="<?= e(lurl('/subscriptions')) ?>" data-panel><?= e($tr('reader.subscriptionsTitle')) ?></a></li>
             </ul>
 
             <hr />
 
             <ul>
-                <?php if (!$navIsReader) { ?>
-                <li><a href="<?= e(lurl('/dashboard')) ?>"><?= e($tr('header.dashboard')) ?></a></li>
-                <?php } ?>
-                <li><a href="<?= e(lurl('/account/profile')) ?>" data-account-open><?= e($tr('navigation.account')) ?></a></li>
+                <li><a href="<?= e(lurl('/account/profile')) ?>" data-panel="wide"><?= e($tr('navigation.account')) ?></a></li>
             </ul>
 
             <form method="post" action="<?= e($logoutUrl) ?>">
@@ -118,6 +107,7 @@ $renderAccountMenu = static function () use ($navViewer, $navIsReader, $navUnrea
                 <button type="submit"><?= e($tr('header.signOut')) ?></button>
             </form>
         </nav>
+        {% include "components/panel-dialog.lex.php" %}
     </div>
 <?php };
 

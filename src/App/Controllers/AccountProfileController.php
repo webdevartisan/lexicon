@@ -15,7 +15,6 @@ use App\Services\PublicCacheInvalidator;
 use App\Services\UploadService;
 use App\Services\UserHandleValidator;
 use Exception;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -28,8 +27,6 @@ use Framework\Core\Response;
  */
 final class AccountProfileController extends AppController
 {
-    use RendersAccountPanel;
-
     public function __construct(
         private UserModel $users,
         private UserProfileModel $profiles,
@@ -57,7 +54,7 @@ final class AccountProfileController extends AppController
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->accountView('profile', [
+        return $this->view('public.Account.profile', [
             'user' => $this->loadIdentity($userId),
             'profileUrlPrefix' => rtrim(base_url(), '/').lurl('/profile').'/',
         ]);
@@ -70,7 +67,7 @@ final class AccountProfileController extends AppController
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->accountView('public', [
+        return $this->view('public.Account.public', [
             'user' => $this->loadIdentity($userId),
             'profileUrlPrefix' => rtrim(base_url(), '/').lurl('/profile').'/',
         ]);
@@ -83,7 +80,7 @@ final class AccountProfileController extends AppController
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->accountView('social', ['user' => $this->loadIdentity($userId)]);
+        return $this->view('public.Account.social', ['user' => $this->loadIdentity($userId)]);
     }
 
     /**

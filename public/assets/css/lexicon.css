@@ -3628,7 +3628,9 @@ label {
 .lx-account { display: grid; gap: 1.5rem; }
 .lx-account-nav ul { list-style: none; margin: 0; padding: 0; }
 .lx-account-nav a {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     padding-block: 0.5rem;
     padding-inline: 0.75rem;
     border-radius: 6px;

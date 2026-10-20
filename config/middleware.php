@@ -8,6 +8,7 @@ return [
         'verified' => App\Middleware\VerifiedMiddleware::class,
         'two-factor' => App\Middleware\TwoFactorMiddleware::class,
         'theme' => \App\Middleware\ThemeResolverMiddleware::class,
+        'panel' => App\Middleware\PanelMiddleware::class,
     ],
     'global' => [
         // First, so a blocked IP is refused before any page cache can answer for it

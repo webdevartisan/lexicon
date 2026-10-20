@@ -14,7 +14,6 @@ use App\Services\Sessions\SessionRevoker;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -28,8 +27,6 @@ use Framework\Core\Response;
  */
 final class AccountSecurityController extends AppController
 {
-    use RendersAccountPanel;
-
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
@@ -59,7 +56,7 @@ final class AccountSecurityController extends AppController
             $preferences['timezone'] ?? 'UTC'
         );
 
-        return $this->accountView('security', [
+        return $this->view('public.Account.security', [
             'user' => $user,
             'sessions' => $this->sessionList->forOwner(
                 $userId,
@@ -81,7 +78,7 @@ final class AccountSecurityController extends AppController
             throw new Exception('User record not found for the signed-in account');
         }
 
-        return $this->accountView('password', ['user' => $user]);
+        return $this->view('public.Account.password', ['user' => $user]);
     }
 
     /**

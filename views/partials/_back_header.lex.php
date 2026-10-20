@@ -100,7 +100,6 @@
 
                     <!-- User menu -->
                     {% set controlPanelLabel = t('layout.profileDropdown.links.controlPanel') %}
-                    {% set editProfileLabel = t('layout.profileDropdown.links.editProfile') %}
                     {% set accountSettingsLabel = t('layout.profileDropdown.links.accountSettings') %}
                     {% set signOutLabel = t('layout.profileDropdown.links.signOut') %}
                     {% set themeLabel = t('layout.themeMenu.label') %}
@@ -137,7 +136,7 @@
                         </button>
                         <div aria-labelledby="dropdownMenuButton"
                             class="absolute z-50 hidden p-2 ltr:text-left rtl:text-right bg-white rounded-xl shadow-lg dropdown-menu w-72 dark:bg-zink-600 !top-3 max-sm:!fixed max-sm:!inset-x-0 max-sm:!bottom-0 max-sm:!top-auto max-sm:![transform:none] max-sm:!w-full max-sm:rounded-b-none max-sm:pb-6">
-                            <a href="<?= e(lurl('/account/profile')) ?>" data-account-open class="flex items-center gap-3 px-3 py-3 mb-1 rounded-md hover:bg-slate-100 dark:hover:bg-zink-500">
+                            <a href="<?= e(lurl('/account/profile')) ?>" data-panel="wide" class="flex items-center gap-3 px-3 py-3 mb-1 rounded-md hover:bg-slate-100 dark:hover:bg-zink-500">
                                 <?= $avatar('size-10') ?>
                                 <span class="min-w-0">
                                     <span class="block text-sm font-semibold truncate text-slate-900 dark:text-zink-50"><?= e($menuName) ?></span>
@@ -154,13 +153,7 @@
                                 </li>
                                 <?php } ?>
                                 <li>
-                                    <a class="<?= $menuItem ?>" data-account-open href="<?= e(lurl('/account/profile')) ?>">
-                                        {% cache 'lucide:menu:user-2' ttl=31536000 %}<i data-lucide="user-2" class="size-4" aria-hidden="true"></i>{% endcache %}
-                                        <span>{{ editProfileLabel }}</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="<?= $menuItem ?>" data-account-open href="<?= e(lurl('/account/preferences')) ?>">
+                                    <a class="<?= $menuItem ?>" data-panel="wide" href="<?= e(lurl('/account/profile')) ?>">
                                         {% cache 'lucide:menu:settings' ttl=31536000 %}<i data-lucide="settings" class="size-4" aria-hidden="true"></i>{% endcache %}
                                         <span>{{ accountSettingsLabel }}</span>
                                     </a>

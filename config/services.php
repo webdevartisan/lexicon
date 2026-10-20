@@ -250,6 +250,11 @@ $container->setShared(Framework\Interfaces\TemplateViewerInterface::class, funct
     );
 });
 
+// Same instance, so a layout switch made by middleware reaches the renderer the controllers use
+$container->setShared(Framework\Interfaces\LayoutSwitchInterface::class, function ($c) {
+    return $c->get(Framework\Interfaces\TemplateViewerInterface::class);
+});
+
 // ============================================================================
 // APPLICATION SERVICES (Shared Singletons)
 // ============================================================================

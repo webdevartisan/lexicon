@@ -34,7 +34,7 @@ $panelEmpty = [
         <?php } ?>
 
         <?php if (!empty($settingsPath)) { ?>
-        <a class="notif-icon-btn" href="<?= e(lurl($settingsPath)) ?>" title="<?= e($t('notifications.settings')) ?>" aria-label="<?= e($t('notifications.settings')) ?>">
+        <a class="notif-icon-btn" href="<?= e(lurl($settingsPath)) ?>" data-panel="wide" title="<?= e($t('notifications.settings')) ?>" aria-label="<?= e($t('notifications.settings')) ?>">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $notificationIcons['settings'] ?></svg>
         </a>
         <?php } ?>

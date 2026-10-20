@@ -124,3 +124,15 @@ test('the shipped config does not cache the routes the audit listed', function (
 
     expect($this->handler->calls)->toBe(6);
 });
+
+test('a modal fetch neither reads nor fills the page cache', function () {
+    $middleware = ($this->build)(['/about' => 3600]);
+    $page = new Request('/about', 'GET', [], [], [], [], [], []);
+    $panel = new Request('/about', 'GET', [], [], [], [], [], ['x-panel' => '1']);
+
+    $middleware->process($panel, $this->handler);
+    $middleware->process($page, $this->handler);
+    $middleware->process($panel, $this->handler);
+
+    expect($this->handler->calls)->toBe(3);
+});

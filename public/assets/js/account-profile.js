@@ -5,8 +5,8 @@
  * stored source so the coordinates sent back match the pixels the server will
  * crop. Re-crop reuses the stored source with no re-upload.
  *
- * Loaded by the /account/profile page and by the account dialog; both call
- * AccountProfile.init(root) on the markup of partials/account/_profile.lex.php.
+ * Runs on the /account/profile page, and on the Profile panel each time the
+ * modal shows it.
  * The cropper library loads on first use so the panel opens without it.
  */
 (function () {
@@ -233,10 +233,9 @@
         modal.addEventListener('cancel', closeCropper);
     }
 
-    window.AccountProfile = { init: init };
-
-    // On the full page the markup is already there; the dialog calls init after inserting it.
-    document.addEventListener('DOMContentLoaded', function () {
-        init(document);
+    document.addEventListener('panel:loaded', function (e) {
+        init(e.detail);
     });
+
+    init(document);
 })();

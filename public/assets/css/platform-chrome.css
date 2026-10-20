@@ -1427,14 +1427,13 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Account panels (partials/account/_*.lex.php).
+   The site modal (components/panel-dialog.lex.php) and the account pages.
 
-   One markup, two homes: the /account pages on the front and the account
-   dialog that opens from the avatar menu on both the front and the control
-   panel. Colours inherit from the container, so a panel reads as ink on paper
-   on the page and as light text on the menu card in the dialog.
+   The modal shows pages in the panel layout: the account pages, Saved, Replies
+   and Subscriptions. It opens on the front, in every blog theme and in the
+   control panel, and this is the one stylesheet all three load.
    ------------------------------------------------------------------------- */
-.acct-dialog,
+.panel-dialog,
 .acct-page {
   --acct-bg: #fff;
   --acct-side: #fafafa;
@@ -1450,8 +1449,9 @@
   --acct-knob: #fff;
 }
 
-/* The control panel's dark mode gets the matching dark card; the front stays light, like the reference. */
-[data-mode='dark'] .acct-dialog {
+/* The control panel's dark mode gets a dark card. An account page sets the light colours on itself, so it is named too. */
+[data-mode='dark'] .panel-dialog,
+[data-mode='dark'] .panel-dialog .acct-page {
   --acct-bg: var(--platform-menu-bg, #1c1c1c);
   --acct-side: rgba(128, 128, 128, .08);
   --acct-ink: var(--platform-menu-fg, #f2f2f2);
@@ -1468,8 +1468,8 @@
 
 .acct-page { max-width: 44rem; color: inherit; }
 
-.acct-dialog {
-  width: min(56rem, calc(100vw - 2rem));
+.panel-dialog {
+  width: min(44rem, calc(100vw - 2rem));
   max-width: none;
   padding: 0;
   border: 0;
@@ -1477,12 +1477,15 @@
   color: var(--acct-ink);
 }
 
-.acct-dialog::backdrop { background: rgba(0, 0, 0, .5); }
+.panel-dialog.is-wide { width: min(56rem, calc(100vw - 2rem)); }
 
-.acct-dialog-card {
+.panel-dialog::backdrop { background: rgba(0, 0, 0, .5); }
+
+.panel-dialog-card {
   position: relative;
   display: flex;
-  height: min(40rem, calc(100vh - 2rem));
+  min-height: min(22rem, calc(100vh - 2rem));
+  max-height: min(40rem, calc(100vh - 2rem));
   overflow: hidden;
   border: 1px solid var(--acct-line);
   border-radius: 1.25rem;
@@ -1492,78 +1495,20 @@
   line-height: 1.5;
 }
 
-.acct-dialog-nav {
-  flex: 0 0 14rem;
-  padding: 1.25rem .75rem;
-  border-inline-end: 1px solid var(--acct-line);
-  background: var(--acct-side);
-  overflow-y: auto;
-}
+.panel-dialog.is-wide .panel-dialog-card { height: min(40rem, calc(100vh - 2rem)); }
 
-.acct-dialog-who {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  margin: 0 0 1.5rem;
-  padding-inline: .5rem;
-  font-weight: 600;
-}
-
-.acct-dialog-who span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.acct-dialog-badge {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  overflow: hidden;
-  border-radius: .6rem;
-  background: var(--acct-hover);
-  font-size: .8rem;
-  font-weight: 700;
-}
-
-.acct-dialog-badge img { width: 100%; height: 100%; object-fit: cover; }
-
-.acct-dialog-nav-title {
-  margin: 0 0 .5rem;
-  padding-inline: .5rem;
-  font-size: .8rem;
-  font-weight: 500;
-  opacity: .6;
-}
-
-.acct-dialog-nav button {
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  width: 100%;
-  margin-block-end: .125rem;
-  padding: .6rem .75rem;
-  border: 0;
-  border-radius: .6rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.acct-dialog-nav button svg { flex: none; width: 1.15rem; height: 1.15rem; }
-.acct-dialog-nav button:hover,
-.acct-dialog-nav button:focus-visible { background: var(--acct-hover); outline: none; }
-.acct-dialog-nav button[aria-current='page'] { background: var(--acct-hover); font-weight: 600; }
-
-.acct-dialog-main {
+.panel-dialog-body {
   flex: 1;
   min-width: 0;
-  padding: 2rem 2.25rem 2rem;
+  padding: 1.75rem 2.25rem 2rem;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--acct-line) transparent;
 }
 
-.acct-dialog-close {
+.panel-dialog-body[aria-busy='true'] { opacity: .5; }
+
+.panel-dialog-close {
   position: absolute;
   top: .75rem;
   inset-inline-end: .75rem;
@@ -1574,24 +1519,68 @@
   height: 2rem;
   border: 0;
   border-radius: .5rem;
-  background: transparent;
+  background: var(--acct-bg);
   color: inherit;
   font-size: 1.25rem;
   cursor: pointer;
 }
 
-.acct-dialog-close:hover,
-.acct-dialog-close:focus-visible { background: var(--acct-hover); outline: none; }
+.panel-dialog-close:hover,
+.panel-dialog-close:focus-visible { background: var(--acct-hover); outline: none; }
 
-.acct-dialog-main[aria-busy='true'] { opacity: .5; }
+.panel-flash {
+  margin: 0 0 1rem;
+  padding: .6rem .9rem;
+  border-inline-start: 3px solid var(--acct-accent);
+  border-radius: .25rem;
+  background: var(--acct-hover);
+}
+
+.panel-flash.is-error { border-color: var(--acct-danger); }
+
+/* An account page brings its own menu, which becomes the modal's side column; the menu and the page scroll apart. */
+.panel-dialog-body:has(.lx-account) { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.panel-dialog .panel-page:has(.lx-account) { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.panel-dialog .panel-page:has(.lx-account) > .panel-flash { margin: 1rem 3.5rem 0 1rem; }
+.panel-dialog .lx-account { display: flex; flex: 1; align-items: stretch; gap: 0; min-height: 0; max-width: none; margin: 0; padding: 0; }
+.panel-dialog .acct-page { flex: 1; min-width: 0; max-width: none; padding: 2rem 2.25rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--acct-line) transparent; }
+
+.panel-dialog .lx-account-nav {
+  flex: 0 0 14rem;
+  padding: 1.25rem .75rem;
+  border-inline-end: 1px solid var(--acct-line);
+  background: var(--acct-side);
+  overflow-y: auto;
+}
+
+.panel-dialog .lx-account-nav ul { margin: 0; padding: 0; list-style: none; }
+
+.panel-dialog .lx-account-nav a {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-block-end: .125rem;
+  padding: .6rem .75rem;
+  border: 0;
+  border-radius: .6rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.panel-dialog .lx-account-nav a:hover,
+.panel-dialog .lx-account-nav a:focus-visible { background: var(--acct-hover); outline: none; }
+.panel-dialog .lx-account-nav a[aria-current='page'] { background: var(--acct-hover); color: inherit; font-weight: 600; }
+
+.lx-account-nav svg { flex: none; width: 1.15rem; height: 1.15rem; }
 
 @media (max-width: 640px) {
-  .acct-dialog-card { flex-direction: column; height: calc(100vh - 2rem); }
-  .acct-dialog-nav { flex: none; display: flex; gap: .25rem; overflow-x: auto; padding: .75rem .5rem; border-inline-end: 0; border-block-end: 1px solid var(--acct-line); }
-  .acct-dialog-who,
-  .acct-dialog-nav-title { display: none; }
-  .acct-dialog-nav button { width: auto; white-space: nowrap; }
-  .acct-dialog-main { padding: 1rem 1.25rem 1.5rem; }
+  .panel-dialog.is-wide .panel-dialog-card { height: calc(100vh - 2rem); }
+  .panel-dialog-body { padding: 1.25rem 1.25rem 1.5rem; }
+  .panel-dialog .lx-account { flex-direction: column; }
+  .panel-dialog .lx-account-nav { flex: none; padding: .75rem 2.75rem .75rem .5rem; overflow-x: auto; border-inline-end: 0; border-block-end: 1px solid var(--acct-line); scrollbar-width: none; }
+  .panel-dialog .lx-account-nav ul { display: flex; gap: .25rem; }
+  .panel-dialog .lx-account-nav a { white-space: nowrap; }
+  .panel-dialog .acct-page { padding: 1rem 1.25rem 1.5rem; }
 }
 
 .acct-title { margin: 0 0 .25rem; font-size: 1.15rem; font-weight: 600; }
@@ -1652,15 +1641,6 @@
 .acct-always:first-of-type { margin-block-start: .5rem; }
 .acct-card a { color: var(--acct-accent); }
 
-.acct-flash {
-  margin: 0 0 1rem;
-  padding: .6rem .9rem;
-  border-inline-start: 3px solid var(--acct-accent);
-  border-radius: .25rem;
-  background: var(--acct-hover);
-}
-
-.acct-flash.is-error { border-color: var(--acct-danger); }
 
 /* Account panel fields */
 .acct-form { display: block; }
@@ -1741,9 +1721,6 @@ select.acct-input optgroup { background: var(--platform-menu-bg, #1c1c1c); color
 .acct-crop .cropper-face { border-radius: 50%; }
 
 /* The front stylesheet styles bare inputs and headings; panel controls must win over it. */
-.acct-dialog input.acct-input,
-.acct-dialog select.acct-input,
-.acct-dialog textarea.acct-input,
 .acct-page input.acct-input,
 .acct-page select.acct-input,
 .acct-page textarea.acct-input {
@@ -1756,17 +1733,11 @@ select.acct-input optgroup { background: var(--platform-menu-bg, #1c1c1c); color
   font: inherit;
 }
 
-.acct-dialog input.acct-input:focus,
-.acct-dialog textarea.acct-input:focus,
 .acct-page input.acct-input:focus,
 .acct-page textarea.acct-input:focus { border-color: var(--acct-accent); box-shadow: none; outline: none; }
 
-.acct-dialog .acct-field.is-invalid input.acct-input,
 .acct-page .acct-field.is-invalid input.acct-input { border-color: var(--acct-danger); }
 
-.acct-dialog .acct-title,
-.acct-dialog .acct-section,
-.acct-dialog .acct-card-title,
 .acct-page .acct-title,
 .acct-page .acct-section,
 .acct-page .acct-card-title { font-family: inherit; letter-spacing: 0; text-transform: none; color: inherit; }
@@ -1806,9 +1777,6 @@ input.acct-sr-only {
 }
 
 /* Reference look (21st.dev settings-2): soft shadowed fields, black primary, switch rows */
-.acct-dialog input.acct-input,
-.acct-dialog select.acct-input,
-.acct-dialog textarea.acct-input,
 .acct-page input.acct-input,
 .acct-page select.acct-input,
 .acct-page textarea.acct-input {
@@ -1819,8 +1787,6 @@ input.acct-sr-only {
   color: var(--acct-ink, inherit);
 }
 
-.acct-dialog input.acct-input:focus,
-.acct-dialog textarea.acct-input:focus,
 .acct-page input.acct-input:focus,
 .acct-page textarea.acct-input:focus { border-color: var(--acct-accent); box-shadow: 0 0 0 1px var(--acct-accent); }
 
@@ -1828,7 +1794,6 @@ input.acct-sr-only {
 .acct-btn-primary { background: var(--acct-accent); box-shadow: none; }
 .acct-btn-primary:hover,
 .acct-btn-primary:focus-visible { background: var(--acct-accent); filter: brightness(1.25); }
-.acct-dialog .acct-card a,
 .acct-page .acct-card a { color: inherit; text-decoration: underline; }
 
 .acct-card { margin-block-start: 1.5rem; border-radius: .9rem; }
@@ -1869,13 +1834,106 @@ input.acct-sr-only {
 .acct-switch:checked { background: var(--acct-accent); }
 .acct-switch:checked::after { transform: translateX(1.15rem); }
 html[dir='rtl'] .acct-switch:checked::after { transform: translateX(-1.15rem); }
-[data-mode='dark'] .acct-dialog .acct-switch:checked::after { background: #111; }
+[data-mode='dark'] .panel-dialog .acct-switch:checked::after { background: #111; }
 .acct-switch:focus-visible { outline: 2px solid var(--acct-accent); outline-offset: 2px; }
-.acct-dialog .acct-card a.acct-btn,
 .acct-page .acct-card a.acct-btn { text-decoration: none; }
-.acct-dialog-main { scrollbar-width: thin; scrollbar-color: var(--acct-line) transparent; }
 .acct-btn { white-space: nowrap; }
 @media (max-width: 640px) {
-  .acct-dialog-nav { padding-inline-end: 2.75rem; scrollbar-width: none; }
   .acct-card-row { flex-wrap: wrap; }
+}
+
+/* -------------------------------------------------------------------------
+   Reader pages in the modal (Saved, Liked, Replies, Your comments,
+   Subscriptions). They keep their lx-reader markup; these rules give it the
+   modal's colours, and stand on their own because the blog themes and the
+   control panel do not load lexicon.css.
+   ------------------------------------------------------------------------- */
+.panel-dialog .lx-reader-head { margin: 0 0 1.25rem; }
+.panel-dialog .lx-reader-title { margin: 0; padding-inline-end: 2rem; font-family: inherit; font-size: 1.15rem; font-weight: 600; letter-spacing: 0; line-height: 1.3; color: inherit; }
+
+.panel-dialog .lx-reader-tabs { display: flex; gap: 1.25rem; margin-block-start: .75rem; border-block-end: 1px solid var(--acct-line); }
+.panel-dialog .lx-reader-tab { margin-block-end: -1px; padding: .45rem 0; border-block-end: 2px solid transparent; color: inherit; font-family: inherit; font-size: .85rem; font-weight: 500; letter-spacing: 0; opacity: .65; text-decoration: none; }
+.panel-dialog .lx-reader-tab:hover { opacity: 1; }
+.panel-dialog .lx-reader-tab.is-current { border-block-end-color: var(--acct-accent); font-weight: 600; opacity: 1; }
+
+.panel-dialog .lx-reader-list { margin: 0; padding: 0; list-style: none; }
+.panel-dialog .lx-reader-row { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 0; border-block-end: 1px solid var(--acct-line); }
+.panel-dialog .lx-reader-row:first-child { padding-block-start: .25rem; }
+.panel-dialog .lx-reader-row:last-child { border-block-end: 0; }
+.panel-dialog .lx-reader-thumb { flex: none; width: 4.5rem; aspect-ratio: 4 / 3; overflow: hidden; border-radius: .5rem; background: var(--acct-hover); }
+.panel-dialog .lx-reader-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.panel-dialog .lx-reader-body { flex: 1; min-width: 0; }
+.panel-dialog .lx-reader-blog { display: block; margin-block-end: .15rem; color: inherit; font-family: inherit; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .6; text-decoration: none; }
+.panel-dialog .lx-reader-row-title { margin: 0 0 .25rem; font-family: inherit; font-size: .95rem; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
+.panel-dialog .lx-reader-row-title a,
+.panel-dialog .lx-reader-context a,
+.panel-dialog .lx-reader-excerpt a { color: inherit; }
+.panel-dialog .lx-reader-context,
+.panel-dialog .lx-reader-excerpt { margin: 0 0 .3rem; color: inherit; font-size: .85rem; line-height: 1.5; }
+.panel-dialog .lx-reader-excerpt { display: -webkit-box; overflow: hidden; opacity: .72; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.panel-dialog .lx-reader-meta { display: flex; align-items: center; gap: .6rem; margin: 0; color: inherit; font-family: inherit; font-size: .75rem; letter-spacing: 0; opacity: .6; }
+.panel-dialog .lx-reader-flag,
+.panel-dialog .lx-reader-dot { padding: .05rem .45rem; border: 1px solid var(--acct-line); border-radius: 999px; font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; color: inherit; }
+.panel-dialog .lx-reader-row.is-unread .lx-reader-context strong { color: inherit; }
+
+/* Always shown here: the modal is small enough that a hidden Remove only hides it. */
+.panel-dialog .lx-reader-act { flex: none; margin: 0; opacity: 1; }
+.panel-dialog .lx-reader-act-btn {
+  min-height: 2.25rem;
+  padding: .35rem .8rem;
+  border: 1px solid var(--acct-line);
+  border-radius: .6rem;
+  background: var(--acct-field-bg, transparent);
+  box-shadow: var(--acct-field-shadow, none);
+  color: inherit;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.panel-dialog .lx-reader-act-btn:hover,
+.panel-dialog .lx-reader-act-btn:focus-visible { border-color: var(--acct-danger); color: var(--acct-danger); outline: none; }
+
+.panel-dialog .lx-reader-undo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 0 1rem; padding: .7rem 1rem; border: 1px solid var(--acct-line); border-radius: .75rem; background: var(--acct-hover); }
+.panel-dialog .lx-reader-undo p,
+.panel-dialog .lx-reader-undo form { margin: 0; }
+.panel-dialog .lx-reader-undo .lx-reader-act-btn:hover { border-color: var(--acct-accent); color: inherit; }
+
+.panel-dialog .lx-reader-empty { padding: 2rem 0 1rem; color: inherit; }
+.panel-dialog .lx-reader-empty p { max-width: 42ch; margin: 0 0 1rem; font-size: .9rem; opacity: .75; }
+.panel-dialog .lx-reader-markread { margin: 1rem 0 0; }
+
+.panel-dialog .lx-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  padding: .5rem 1rem;
+  border: 1px solid var(--acct-line);
+  border-radius: .6rem;
+  background: var(--acct-field-bg, transparent);
+  box-shadow: var(--acct-field-shadow, none);
+  color: inherit;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-decoration: none;
+  cursor: pointer;
+}
+.panel-dialog .lx-btn:hover { background: var(--acct-hover); color: inherit; }
+.panel-dialog .lx-btn-primary { border-color: var(--acct-accent); background: var(--acct-accent); box-shadow: none; color: var(--acct-on-accent); }
+.panel-dialog .lx-btn-primary:hover { background: var(--acct-accent); color: var(--acct-on-accent); filter: brightness(1.25); }
+
+.panel-dialog .lx-pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem; margin: 1.25rem 0 0; padding: 0; list-style: none; font-family: inherit; font-size: .85rem; }
+.panel-dialog .lx-pagination a,
+.panel-dialog .lx-pagination span { display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; min-height: 2.25rem; padding: .25rem .6rem; border-radius: .5rem; color: inherit; text-decoration: none; box-shadow: none; }
+.panel-dialog .lx-pagination a:hover,
+.panel-dialog .lx-pagination [aria-current='page'] { background: var(--acct-hover); }
+.panel-dialog .lx-pagination [aria-current='page'] { font-weight: 600; }
+.panel-dialog .lx-pagination svg { width: 1rem; height: 1rem; }
+
+@media (max-width: 640px) {
+  .panel-dialog .lx-reader-row { flex-wrap: wrap; }
+  .panel-dialog .lx-reader-thumb { width: 3.5rem; }
 }

@@ -14,7 +14,7 @@ trait TemplateInheritanceTrait
             return $code;
         }
 
-        $layoutRef = 'layouts/'.DIRECTORY_SEPARATOR.$matches['template'];
+        $layoutRef = 'layouts/'.DIRECTORY_SEPARATOR.($this->layoutOverride ?? $matches['template']);
 
         $basePath = $this->themes->resolveView(
             $this->viewResolver->resolveToRelativePath($layoutRef, $this->routeContext)

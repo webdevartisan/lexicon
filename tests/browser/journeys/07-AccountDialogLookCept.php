@@ -23,8 +23,8 @@ foreach ($shots as [$path, $name, $width, $height, $mode, $page, $ready]) {
     if ($mode !== null) {
         $I->executeJS("document.documentElement.setAttribute('data-mode', '$mode');");
     }
-    $I->executeJS("var l = document.createElement('a'); l.href = '/en/account/$page'; l.setAttribute('data-account-open', ''); document.body.prepend(l); l.click();");
-    $I->waitForElementVisible("[data-account-dialog] $ready", 10);
+    $I->executeJS("var l = document.createElement('a'); l.href = '/en/account/$page'; l.setAttribute('data-panel', 'wide'); document.body.prepend(l); l.click();");
+    $I->waitForElementVisible("[data-panel-dialog] $ready", 10);
     $I->makeScreenshot("account-dialog-$name");
 }
 

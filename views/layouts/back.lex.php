@@ -158,8 +158,7 @@ $old = old();
 <script src="/cp-assets/js/confirm.js"></script>
 <script src="/cp-assets/js/select-menu.js"></script>
 <script src="/cp-assets/js/bulk-actions.js"></script>
-{% include "partials/account/_dialog.lex.php" %}
-<script src="/assets/js/account-modal.js" defer></script>
+{% include "components/panel-dialog.lex.php" %}
 <script src="/cp-assets/js/blog-switcher.js"></script>
 <script src="/cp-assets/js/table-sort.js"></script>
 <script src="/cp-assets/js/queue-detail.js"></script>

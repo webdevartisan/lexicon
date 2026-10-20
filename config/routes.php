@@ -210,7 +210,7 @@ $router->group([
 // A creator reaches the same pages from the same menu a reader does.
 $router->group([
     'prefix' => '/saved',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'saved', 'method' => 'GET']);
     $r->add('/liked', ['controller' => 'ReaderController', 'action' => 'liked', 'method' => 'GET']);
@@ -222,7 +222,7 @@ $router->group([
 
 $router->group([
     'prefix' => '/replies',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'replies', 'method' => 'GET']);
     $r->add('/mine', ['controller' => 'ReaderController', 'action' => 'myComments', 'method' => 'GET']);
@@ -232,7 +232,7 @@ $router->group([
 
 $router->group([
     'prefix' => '/subscriptions',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'subscriptions', 'method' => 'GET']);
     $r->add('/{blogId:\d+}/unsubscribe', ['controller' => 'ReaderController', 'action' => 'unsubscribe', 'method' => 'POST']);
@@ -274,7 +274,7 @@ $router->group([
 // the foot of Preferences rather than from the rail.
 $router->group([
     'prefix' => '/account',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
 

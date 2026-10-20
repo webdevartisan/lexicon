@@ -10,7 +10,6 @@ use App\Services\Sessions\SessionRevoker;
 use App\Services\TwoFactor\TwoFactorPolicy;
 use App\Services\TwoFactor\TwoFactorRateLimiter;
 use App\Services\TwoFactor\TwoFactorService;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -23,8 +22,6 @@ use Framework\Core\Response;
  */
 final class AccountTwoFactorController extends AppController
 {
-    use RendersAccountPanel;
-
     private const NEW_CODES_KEY = 'two_factor_new_codes';
 
     public function __construct(
@@ -44,7 +41,7 @@ final class AccountTwoFactorController extends AppController
 
         $secret = $this->twoFactor->isEnabled($user) ? null : $this->twoFactor->pendingSecret((int) $user['id']);
 
-        return $this->accountView('two-factor', [
+        return $this->view('public.Account.two-factor', [
             'user' => $user,
             'enabled' => $this->twoFactor->isEnabled($user),
             'codesLeft' => $this->twoFactor->recoveryCodesLeft($user),

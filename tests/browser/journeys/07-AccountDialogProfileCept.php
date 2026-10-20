@@ -11,27 +11,27 @@ $I->signInAs('reader');
 $I->amOnPage('/en');
 $I->click('.nav-user-btn');
 $I->waitForElementVisible('.nav-user-menu', 5);
-$I->click('Account', '.nav-user-menu');
-$I->waitForElementVisible('[data-account-dialog] #first_name', 10);
-$I->seeElement('[data-account-dialog] .acct-avatar');
+$I->click('Settings', '.nav-user-menu');
+$I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
+$I->seeElement('[data-panel-dialog] .acct-avatar');
 
-$I->fillField('[data-account-dialog] #first_name', 'Walk');
-$I->fillField('[data-account-dialog] #last_name', 'Reader');
-$I->fillField('[data-account-dialog] #occupation', 'Walkthrough tester');
-$I->click('Save', '[data-account-dialog] form[action$="/account/profile/update"]');
-$I->waitForText('updated successfully', 10, '[data-account-dialog]');
-$I->seeInField('[data-account-dialog] #occupation', 'Walkthrough tester');
+$I->fillField('[data-panel-dialog] #first_name', 'Walk');
+$I->fillField('[data-panel-dialog] #last_name', 'Reader');
+$I->fillField('[data-panel-dialog] #occupation', 'Walkthrough tester');
+$I->click('Save', '[data-panel-dialog] form[action$="/account/profile/update"]');
+$I->waitForText('updated successfully', 10, '[data-panel-dialog]');
+$I->seeInField('[data-panel-dialog] #occupation', 'Walkthrough tester');
 
 // Upload opens the cropper, applying it closes it again
-$I->attachFile('[data-account-dialog] #avatar-input', $I->makeImage('walk-avatar'));
+$I->attachFile('[data-panel-dialog] #avatar-input', $I->makeImage('walk-avatar'));
 $I->waitForElementVisible('#avatar-cropper-modal .cropper-container', 15);
 $I->makeScreenshot('account-dialog-cropper');
 $I->click('#avatar-cropper-apply');
 $I->waitForElementNotVisible('#avatar-cropper-modal', 10);
-$I->seeElement('[data-account-dialog] #avatar-preview');
+$I->seeElement('[data-panel-dialog] #avatar-preview');
 
 // Removing the photo goes through the inline confirmation
-$I->click('[data-account-dialog] .acct-avatar-side .acct-details summary');
-$I->click('Remove current avatar', '[data-account-dialog] .acct-avatar-side .acct-details form');
-$I->waitForElement('[data-account-dialog] #avatar-placeholder', 10);
+$I->click('[data-panel-dialog] .acct-avatar-side .acct-details summary');
+$I->click('Remove current avatar', '[data-panel-dialog] .acct-avatar-side .acct-details form');
+$I->waitForElement('[data-panel-dialog] #avatar-placeholder', 10);
 $I->makeScreenshot('account-dialog-profile');

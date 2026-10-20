@@ -27,7 +27,7 @@ if ($readerTotalPages > 1) {
     <ul class="lx-pagination">
         <?php if ($readerCurrent > 1) { ?>
         <li>
-            <a href="<?= e($readerPageUrl($readerCurrent - 1)) ?>" class="lx-pagination-step" rel="prev">
+            <a data-panel-link href="<?= e($readerPageUrl($readerCurrent - 1)) ?>" class="lx-pagination-step" rel="prev">
                 {% cmp="lx-icon" name="chevron-left" %}
                 <span class="lx-visually-hidden"><?= e($t('reader.paginationPrev') ?: 'Previous page') ?></span>
             </a>
@@ -40,7 +40,7 @@ if ($readerTotalPages > 1) {
             <li><span class="lx-pagination-gap" aria-hidden="true">&hellip;</span></li>
             <?php } ?>
             <li>
-                <a href="<?= e($readerPageUrl($p)) ?>"
+                <a data-panel-link href="<?= e($readerPageUrl($p)) ?>"
                    <?= $p === $readerCurrent ? 'aria-current="page"' : '' ?>>
                     <?= (int) $p ?>
                 </a>
@@ -50,7 +50,7 @@ if ($readerTotalPages > 1) {
 
         <?php if ($readerCurrent < $readerTotalPages) { ?>
         <li>
-            <a href="<?= e($readerPageUrl($readerCurrent + 1)) ?>" class="lx-pagination-step" rel="next">
+            <a data-panel-link href="<?= e($readerPageUrl($readerCurrent + 1)) ?>" class="lx-pagination-step" rel="next">
                 <span class="lx-visually-hidden"><?= e($t('reader.paginationNext') ?: 'Next page') ?></span>
                 {% cmp="lx-icon" name="chevron-right" %}
             </a>

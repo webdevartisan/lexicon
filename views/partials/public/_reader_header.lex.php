@@ -58,6 +58,7 @@ $readerTitleKey = match ($readerSurface) {
             $isCurrent = $readerTab['surface'] === $readerSurface;
             ?>
         <a class="lx-reader-tab<?= $isCurrent ? ' is-current' : '' ?>"
+           data-panel-link
            href="<?= e(lurl($readerTab['path'])) ?>"
            <?= $isCurrent ? 'aria-current="page"' : '' ?>><?= e($t($readerTab['label'])) ?></a>
         <?php } ?>

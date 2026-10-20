@@ -17,7 +17,7 @@
         "controlPanel": "لوحة الإدارة",
         "editProfile": "تعديل الملف الشخصي",
         "signOut": "تسجيل الخروج",
-        "accountSettings": "إعدادات الحساب"
+        "accountSettings": "الإعدادات"
       }
     }
   },
@@ -79,7 +79,7 @@
     "contact": "اتصل بنا",
     "frontPage": "الصفحة الرئيسية",
     "pages": "الصفحات",
-    "account": "الحساب",
+    "account": "الإعدادات",
     "overview": "نظرة عامة",
     "reviewQueue": "قائمة المراجعة"
   },
@@ -956,8 +956,8 @@
     "metaMyComments": "تعليقاتك",
     "metaSubscriptions": "الاشتراكات",
     "notificationsTitle": "الإشعارات",
-    "savedTitle": "المحفوظات",
-    "repliesTitle": "الردود",
+    "savedTitle": "المقالات",
+    "repliesTitle": "التعليقات",
     "subscriptionsTitle": "الاشتراكات",
     "tabSaved": "المحفوظات",
     "tabLiked": "الإعجابات",
@@ -1099,6 +1099,9 @@
       "notTranslated": "غير مترجمة بعد",
       "deleteConfirm": "هل تريد حذف هذه الترجمة؟ سيرى قراء هذه اللغة النسخة الأصلية بدلاً منها."
     }
+  },
+  "panel": {
+    "loadFailed": "تعذر تحميل هذا الآن."
   },
   "a11y": {
     "skipToContent": "تخطَّ إلى المحتوى",

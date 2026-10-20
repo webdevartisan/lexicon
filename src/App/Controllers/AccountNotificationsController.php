@@ -6,7 +6,6 @@ namespace App\Controllers;
 
 use App\Models\UserPreferencesModel;
 use App\Services\NotificationPreferenceScope;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -20,8 +19,6 @@ use Framework\Core\Response;
  */
 final class AccountNotificationsController extends AppController
 {
-    use RendersAccountPanel;
-
     public function __construct(
         private UserPreferencesModel $prefs,
         private NotificationPreferenceScope $scope
@@ -35,7 +32,7 @@ final class AccountNotificationsController extends AppController
         $userId = (int) auth()->user()['id'];
         $applicable = $this->scope->applicableKeys($userId);
 
-        return $this->accountView('notifications', [
+        return $this->view('public.Account.notifications', [
             'toggles' => $this->loadToggles($userId, $applicable),
             'applicable' => $applicable,
         ]);

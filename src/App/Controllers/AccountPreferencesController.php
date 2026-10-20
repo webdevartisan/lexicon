@@ -11,7 +11,6 @@ use App\Services\LocaleRegistry;
 use App\Services\SessionLocaleSync;
 use DateTimeZone;
 use Exception;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -25,8 +24,6 @@ use Framework\Core\Response;
  */
 final class AccountPreferencesController extends AppController
 {
-    use RendersAccountPanel;
-
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
@@ -42,7 +39,7 @@ final class AccountPreferencesController extends AppController
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->accountView('preferences', [
+        return $this->view('public.Account.preferences', [
             'user' => $this->loadAccount($userId),
             'timezones' => $this->getGroupedTimezones(),
             'locales' => $this->localeOptions(),

@@ -17,7 +17,7 @@
                 "controlPanel": "Control Panel",
                 "editProfile": "Edit Profile",
                 "signOut": "Sign Out",
-                "accountSettings": "Account Settings"
+                "accountSettings": "Settings"
             }
         }
     },
@@ -79,7 +79,7 @@
         "contact": "Contact",
         "frontPage": "Front Page",
         "pages": "Pages",
-        "account": "Account",
+        "account": "Settings",
         "overview": "Overview",
         "reviewQueue": "Review queue"
     },
@@ -944,8 +944,8 @@
         "metaMyComments": "Your comments",
         "metaSubscriptions": "Subscriptions",
         "notificationsTitle": "Notifications",
-        "savedTitle": "Saved",
-        "repliesTitle": "Replies",
+        "savedTitle": "Articles",
+        "repliesTitle": "Comments",
         "subscriptionsTitle": "Subscriptions",
         "tabSaved": "Saved",
         "tabLiked": "Liked",
@@ -1087,6 +1087,9 @@
             "notTranslated": "Not translated yet",
             "deleteConfirm": "Delete this translation? Readers of this language will see the original post instead."
         }
+    },
+    "panel": {
+        "loadFailed": "Could not load this right now."
     },
     "a11y": {
         "skipToContent": "Skip to content",

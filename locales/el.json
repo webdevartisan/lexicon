@@ -17,7 +17,7 @@
                 "controlPanel": "Πίνακας διαχείρισης",
                 "editProfile": "Επεξεργασία προφίλ",
                 "signOut": "Αποσύνδεση",
-                "accountSettings": "Ρυθμίσεις λογαριασμού"
+                "accountSettings": "Ρυθμίσεις"
             }
         }
     },
@@ -79,7 +79,7 @@
         "contact": "Επικοινωνία",
         "frontPage": "Αρχική σελίδα",
         "pages": "Σελίδες",
-        "account": "Λογαριασμός",
+        "account": "Ρυθμίσεις",
         "overview": "Επισκόπηση",
         "reviewQueue": "Ουρά αξιολόγησης"
     },
@@ -944,8 +944,8 @@
         "metaMyComments": "Τα σχόλιά σας",
         "metaSubscriptions": "Συνδρομές",
         "notificationsTitle": "Ειδοποιήσεις",
-        "savedTitle": "Αποθηκευμένα",
-        "repliesTitle": "Απαντήσεις",
+        "savedTitle": "Άρθρα",
+        "repliesTitle": "Σχόλια",
         "subscriptionsTitle": "Συνδρομές",
         "tabSaved": "Αποθηκευμένα",
         "tabLiked": "Μου άρεσαν",
@@ -1087,6 +1087,9 @@
             "notTranslated": "Χωρίς μετάφραση",
             "deleteConfirm": "Να διαγραφεί η μετάφραση; Οι αναγνώστες αυτής της γλώσσας θα βλέπουν το πρωτότυπο."
         }
+    },
+    "panel": {
+        "loadFailed": "Δεν ήταν δυνατή η φόρτωση αυτή τη στιγμή."
     },
     "a11y": {
         "skipToContent": "Μετάβαση στο περιεχόμενο",

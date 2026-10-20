@@ -10,7 +10,6 @@ use App\Services\AccountErasureSchedulerService;
 use App\Services\AccountErasureService;
 use App\Services\PasswordConfirmRateLimiter;
 use Exception;
-use App\Traits\RendersAccountPanel;
 use Framework\Core\Response;
 
 /**
@@ -20,8 +19,6 @@ use Framework\Core\Response;
  */
 final class AccountDeletionController extends AppController
 {
-    use RendersAccountPanel;
-
     public function __construct(
         private UserModel $users,
         private AccountErasureService $erasure,
@@ -47,7 +44,7 @@ final class AccountDeletionController extends AppController
         // hard "Access denied". The real enforcement is in destroy().
         $blockers = $this->erasure->blockers($userId);
 
-        return $this->accountView('delete', [
+        return $this->view('public.Account.delete', [
             'user' => $userResource->toArray(),
             'blockers' => $blockers,
             'canDelete' => $this->erasure->canErase($userId) && Gate::allows('delete', $userResource, auth()->user()),
