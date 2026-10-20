@@ -13,10 +13,10 @@ if (!auth()->check()) {
     foreach (['titleLogin', 'titleReply', 'titleComment', 'titleLike', 'titleBookmark', 'intro', 'logIn', 'welcomeBack',
         'enterPasswordFor', 'createTitle', 'createIntro', 'createSubmit', 'welcomeNew', 'loggedIn', 'resetTitle',
         'resetIntro', 'resetSent', 'invalidEmail', 'passwordRequired', 'passwordTooShort', 'sessionExpired',
-        'serverError', 'networkError'] as $authModalKey) {
+        'serverError', 'networkError', 'codeRequired'] as $authModalKey) {
         $authModalText[$authModalKey] = $t('authModal.'.$authModalKey);
     }
-    foreach (['show', 'hide', 'checking', 'checkDone', 'checkFailed'] as $authModalKey) {
+    foreach (['show', 'hide', 'checking', 'checkDone', 'checkFailed', 'twoFactorTitle', 'twoFactorSubtitle'] as $authModalKey) {
         $authModalText[$authModalKey] = $t('auth.'.$authModalKey);
     }
     ?>
@@ -24,6 +24,7 @@ if (!auth()->check()) {
      data-return-to="<?= e($authModalReturnTo) ?>" data-nav-url="<?= e(lurl('/auth/nav')) ?>"
      data-identify-url="<?= e(lurl('/login/identify')) ?>" data-login-url="<?= e(lurl('/login')) ?>"
      data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>"
+     data-two-factor-url="<?= e(lurl('/login/two-factor')) ?>"
      data-captcha-url="/captcha/challenge"
      data-captcha-script="/assets/js/captcha.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/captcha.js') ?>"
      data-captcha-worker="/assets/vendor/altcha/pbkdf2.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/vendor/altcha/pbkdf2.js') ?>"
@@ -74,6 +75,17 @@ if (!auth()->check()) {
       <button class="lex-auth-btn" type="submit" data-auth-submit><?= e($t('authModal.logIn')) ?></button>
       <div class="lex-auth-links">
         <a href="<?= e(lurl('/password/forgot')) ?>" data-auth-forgot><?= e($t('authModal.forgot')) ?></a>
+        <button class="lex-auth-linkbtn" type="button" data-auth-back><?= e($t('authModal.differentEmail')) ?></button>
+      </div>
+    </form>
+
+    <form data-auth-step="code" hidden novalidate>
+      <label class="lex-auth-label" for="lex-auth-code"><?= e($t('auth.twoFactorCodeLabel')) ?></label>
+      <input class="lex-auth-input" type="text" id="lex-auth-code" name="code"
+             autocomplete="one-time-code" inputmode="text" autocapitalize="off" spellcheck="false" required>
+      <p class="lex-auth-hint"><?= e($t('auth.twoFactorHint')) ?></p>
+      <button class="lex-auth-btn" type="submit" data-auth-code-submit><?= e($t('auth.twoFactorSubmit')) ?></button>
+      <div class="lex-auth-links">
         <button class="lex-auth-linkbtn" type="button" data-auth-back><?= e($t('authModal.differentEmail')) ?></button>
       </div>
     </form>

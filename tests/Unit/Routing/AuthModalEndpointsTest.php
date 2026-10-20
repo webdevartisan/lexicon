@@ -11,9 +11,9 @@ $partial = file_get_contents(ROOT_PATH.'/views/partials/_auth_modal.lex.php');
 $script = file_get_contents(ROOT_PATH.'/public/assets/js/auth-modal.js');
 
 test('every endpoint the modal posts to is a POST route', function () use ($router, $partial) {
-    preg_match_all("#data-(?:identify|login|register|forgot)-url=\"<\?= e\(lurl\('([^']+)'\)\) \?>\"#", $partial, $matches);
+    preg_match_all("#data-(?:identify|login|register|forgot|two-factor)-url=\"<\?= e\(lurl\('([^']+)'\)\) \?>\"#", $partial, $matches);
 
-    expect($matches[1])->toHaveCount(4);
+    expect($matches[1])->toHaveCount(5);
 
     foreach ($matches[1] as $path) {
         expect($router->match($path, 'POST'))->not->toBeFalse("{$path} is not a POST route");

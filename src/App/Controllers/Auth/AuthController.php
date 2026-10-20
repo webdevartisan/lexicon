@@ -10,8 +10,8 @@ use App\Exceptions\AccountSuspendedException;
 use App\Services\Captcha\CaptchaInterface;
 use App\Services\Captcha\CaptchaResult;
 use App\Services\LoginRateLimiter;
-use App\Services\SignInCompleter;
 use App\Services\TwoFactor\TwoFactorService;
+use App\Traits\AnswersSignIn;
 use Framework\Core\Response;
 
 /**
@@ -24,6 +24,8 @@ use Framework\Core\Response;
  */
 final class AuthController extends AppController
 {
+    use AnswersSignIn;
+
     /**
      * Show the main login form.
      *
@@ -213,7 +215,7 @@ final class AuthController extends AppController
 
             auth()->startSession($user);
 
-            return $this->finishSignIn($returnTo, $isAjax);
+            return $this->finishSignIn($returnTo);
         }
 
         // ---------------------------------------------------------
@@ -232,7 +234,7 @@ final class AuthController extends AppController
         }
 
         // Authentication failed - flash error and redirect back
-        $this->flash('error', 'Invalid credentials');
+        $this->flash('error', chrome_translate('auth.invalidCredentials'));
 
         // Return Response
         return $this->redirectBack();
@@ -255,29 +257,8 @@ final class AuthController extends AppController
             'at' => time(),
         ]);
 
-        $path = lurl('/login/two-factor');
-
-        return $isAjax ? $this->jsonSuccess(['redirect' => $path]) : $this->redirect($path);
-    }
-
-    /**
-     * Land a signed-in user: the shared tail of the password and second steps.
-     */
-    private function finishSignIn(?string $returnTo, bool $isAjax): Response
-    {
-        $done = app(SignInCompleter::class)->complete($this->request, $returnTo);
-
-        if ($isAjax) {
-            // No flash here: the modal shows its own success state and
-            // usually finishes the action in place instead of navigating
-            return $this->jsonSuccess(['redirect' => $done['path']]);
-        }
-
-        if ($done['flash'] !== null) {
-            $this->flash($done['flash']['type'], $done['flash']['message']);
-        }
-
-        return $this->redirect($done['path']);
+        // The modal asks for the code in place; only the full page navigates
+        return $isAjax ? $this->jsonSuccess(['two_factor' => true]) : $this->redirect(lurl('/login/two-factor'));
     }
 
     /**

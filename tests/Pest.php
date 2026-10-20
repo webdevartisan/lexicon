@@ -214,13 +214,15 @@ expect()->extend('toMatchCachePattern', function (string $pattern) {
  * @param  array<string, mixed>  $post
  * @param  array<string, mixed>  $get
  * @param  array<string, mixed>  $server  Override or extend default server params
+ * @param  array<string, string>  $headers  Request headers, any case
  */
 function makeRequest(
     string $uri = '/',
     string $method = 'GET',
     array $post = [],
     array $get = [],
-    array $server = []
+    array $server = [],
+    array $headers = []
 ): \Framework\Core\Request {
     $defaultServer = ['REMOTE_ADDR' => '127.0.0.1'];
 
@@ -232,7 +234,7 @@ function makeRequest(
         [],
         [],
         array_merge($defaultServer, $server), // caller can override if needed
-        []
+        array_change_key_case($headers)
     );
 }
 

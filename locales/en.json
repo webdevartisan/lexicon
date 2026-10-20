@@ -1139,6 +1139,7 @@
         "twoFactorBack": "Back to log in",
         "twoFactorWrong": "That code did not work. Try the next one from your app, or use a recovery code.",
         "twoFactorTooMany": "Too many wrong codes. Try again in a few minutes.",
+        "invalidCredentials": "Invalid credentials",
         "registerTitle": "Create account",
         "registerSubtitle": "Save posts, follow blogs, join the conversation.",
         "registerBlogSubtitle": "Create your account first, then set up your blog.",
@@ -2164,6 +2165,7 @@
         "passwordRequired": "Password is required.",
         "passwordTooShort": "Your password needs at least {min} characters.",
         "sessionExpired": "Your session expired while this was open. Please try again.",
+        "codeRequired": "Enter the code from your app.",
         "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
         "networkError": "Could not reach the server. Check your connection and try again."
     },

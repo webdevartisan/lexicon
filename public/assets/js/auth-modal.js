@@ -8,6 +8,9 @@
   var emailForm = modal.querySelector('[data-auth-step="email"]');
   var passForm = modal.querySelector('[data-auth-step="password"]');
   var forgotForm = modal.querySelector('[data-auth-step="forgot"]');
+  var codeForm = modal.querySelector('[data-auth-step="code"]');
+  var codeInput = document.getElementById('lex-auth-code');
+  var codeSubmit = modal.querySelector('[data-auth-code-submit]');
   var forgotText = modal.querySelector('[data-auth-forgot-text]');
   var forgotSend = modal.querySelector('[data-auth-forgot-send]');
   var successBox = modal.querySelector('[data-auth-step="success"]');
@@ -32,6 +35,7 @@
     login: modal.getAttribute('data-login-url') || '/login',
     register: modal.getAttribute('data-register-url') || '/register/submit',
     forgot: modal.getAttribute('data-forgot-url') || '/password/forgot',
+    twoFactor: modal.getAttribute('data-two-factor-url') || '/login/two-factor',
     captcha: modal.getAttribute('data-captcha-url') || '/captcha/challenge'
   };
 
@@ -202,8 +206,51 @@
   function showStep(step) {
     emailForm.toggleAttribute('hidden', step !== 'email');
     passForm.toggleAttribute('hidden', step !== 'password');
+    codeForm.toggleAttribute('hidden', step !== 'code');
     forgotForm.toggleAttribute('hidden', step !== 'forgot');
     successBox.toggleAttribute('hidden', step !== 'success');
+  }
+
+  function backToEmail() {
+    clearError();
+    title.textContent = titles.login;
+    sub.textContent = tr('intro');
+    resetCheck();
+    showStep('email');
+    emailInput.focus();
+  }
+
+  function showCodeStep() {
+    // The right password already moved the visitor to a new session, so the token used for it is spent
+    freshToken = null;
+
+    title.textContent = tr('twoFactorTitle');
+    sub.textContent = tr('twoFactorSubtitle');
+    codeInput.value = '';
+    showStep('code');
+    codeInput.focus();
+  }
+
+  // Give the success state a beat, then finish what the reader started
+  function signedIn(message) {
+    // Signing in rotates the CSRF token, so the one used for this post is spent
+    freshToken = null;
+
+    successMsg.textContent = message;
+    showStep('success');
+
+    setTimeout(function () {
+      var done = state.onSuccess;
+      close();
+
+      // No callback means nothing to finish in place, so a reload is both
+      // the simplest way to show the logged-in header and what the reader
+      // expects after using the header login pill.
+      if (!done) { window.location.reload(); return; }
+
+      refreshAuthNav();
+      done();
+    }, 700);
   }
 
   function close() {
@@ -313,28 +360,38 @@
       submitBtn.disabled = false;
       if (!res.ok) { showError(failureMessage(res)); return; }
 
-      // Signing in rotates the CSRF token, so the one used for this post is spent
-      freshToken = null;
+      if (res.json.data && res.json.data.two_factor) { showCodeStep(); return; }
 
-      successMsg.textContent = state.mode === 'register' ? tr('welcomeNew') : tr('loggedIn');
-      showStep('success');
-
-      // Give the success state a beat, then finish what the reader started
-      setTimeout(function () {
-        var done = state.onSuccess;
-        close();
-
-        // No callback means nothing to finish in place, so a reload is both
-        // the simplest way to show the logged-in header and what the reader
-        // expects after using the header login pill.
-        if (!done) { window.location.reload(); return; }
-
-        refreshAuthNav();
-        done();
-      }, 700);
+      signedIn(state.mode === 'register' ? tr('welcomeNew') : tr('loggedIn'));
     }).catch(function (err) {
       submitBtn.disabled = false;
       if (err && err.captcha) { showError(tr('checkFailed')); return; }
+      networkFailure(err);
+    });
+  });
+
+  codeForm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    clearError();
+
+    var code = codeInput.value.trim();
+    if (code === '') { showError(tr('codeRequired')); return; }
+    codeSubmit.disabled = true;
+
+    post(urls.twoFactor, { code: code }).then(function (res) {
+      codeSubmit.disabled = false;
+
+      // The parked password step has expired, so no code can work any more
+      if (res.status === 419) {
+        backToEmail();
+        showError(failureMessage(res));
+        return;
+      }
+
+      if (!res.ok) { showError(failureMessage(res)); return; }
+      signedIn(tr('loggedIn'));
+    }).catch(function (err) {
+      codeSubmit.disabled = false;
       networkFailure(err);
     });
   });
@@ -380,13 +437,8 @@
     toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
   });
 
-  modal.querySelector('[data-auth-back]').addEventListener('click', function () {
-    clearError();
-    title.textContent = titles.login;
-    sub.textContent = tr('intro');
-    resetCheck();
-    showStep('email');
-    emailInput.focus();
+  modal.querySelectorAll('[data-auth-back]').forEach(function (back) {
+    back.addEventListener('click', backToEmail);
   });
 
   modal.querySelector('[data-auth-close]').addEventListener('click', close);

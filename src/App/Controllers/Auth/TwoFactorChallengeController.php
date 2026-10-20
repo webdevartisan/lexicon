@@ -6,9 +6,9 @@ namespace App\Controllers\Auth;
 
 use App\Controllers\AppController;
 use App\Models\UserModel;
-use App\Services\SignInCompleter;
 use App\Services\TwoFactor\TwoFactorRateLimiter;
 use App\Services\TwoFactor\TwoFactorService;
+use App\Traits\AnswersSignIn;
 use Framework\Core\Response;
 
 /**
@@ -17,13 +17,16 @@ use Framework\Core\Response;
  * The password step parks the user id in the session (see AuthController); this
  * controller turns that into a signed-in session once a valid code, or one of
  * the recovery codes, arrives. Wrong codes are charged to the account, not the
- * address, so moving around does not buy more guesses.
+ * address, so moving around does not buy more guesses. The full page and the
+ * blog modal post to the same action; the modal gets JSON back.
  *
  * GET  /login/two-factor → show()
  * POST /login/two-factor → submit()
  */
 final class TwoFactorChallengeController extends AppController
 {
+    use AnswersSignIn;
+
     public const PENDING_KEY = 'two_factor_pending';
 
     private const WINDOW_SECONDS = 600;
@@ -50,7 +53,8 @@ final class TwoFactorChallengeController extends AppController
 
         $pending = $this->pending();
         if ($pending === null) {
-            return $this->redirect('/login');
+            // 419 tells the modal the step is gone and it has to start over
+            return $this->backToLogin(chrome_translate('authModal.sessionExpired'), 419);
         }
 
         $userId = (int) $pending['user_id'];
@@ -75,20 +79,12 @@ final class TwoFactorChallengeController extends AppController
 
         // Suspended or removed between the two steps: the same answer a wrong password gets
         if (!$user || (int) $user['is_active'] !== 1) {
-            $this->flash('error', 'Invalid credentials');
-
-            return $this->redirect('/login');
+            return $this->backToLogin(chrome_translate('auth.invalidCredentials'), 401);
         }
 
         auth()->startSession($user);
 
-        $done = app(SignInCompleter::class)->complete($this->request, $pending['return_to']);
-
-        if ($done['flash'] !== null) {
-            $this->flash($done['flash']['type'], $done['flash']['message']);
-        }
-
-        return $this->redirect($done['path']);
+        return $this->finishSignIn($pending['return_to']);
     }
 
     /**
@@ -116,10 +112,16 @@ final class TwoFactorChallengeController extends AppController
     }
 
     /**
+     * Turn a code down and keep the step open for another try.
+     *
      * @param  array{user_id: int, return_to: string|null, at: int}  $pending
      */
     private function refuse(array $pending, string $message, int $status): Response
     {
+        if ($this->request->isAjax()) {
+            return $this->jsonError($message, $status);
+        }
+
         $response = $this->view('auth.login.two-factor', [
             'error' => $message,
             'return_to' => $pending['return_to'],
