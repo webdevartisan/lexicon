@@ -1968,6 +1968,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 .h-\[37\.5px\] {
   height: 37.5px;
 }
+.h-\[45vh\] {
+  height: 45vh;
+}
 .h-full {
   height: 100%;
 }
@@ -2067,6 +2070,10 @@ input[type=range]:focus::-webkit-slider-thumb {
 .w-auto {
   width: auto;
 }
+.w-fit {
+  width: -moz-fit-content;
+  width: fit-content;
+}
 .w-full {
   width: 100%;
 }
@@ -2120,6 +2127,9 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .max-w-\[calc\(100vw_-_2rem\)\] {
   max-width: calc(100vw - 2rem);
+}
+.max-w-full {
+  max-width: 100%;
 }
 .max-w-md {
   max-width: 28rem;
@@ -3541,6 +3551,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.accent-custom-500 {
+  accent-color: rgb(var(--sc-custom-500) / 1);
+}
 .opacity-0 {
   opacity: 0;
 }
@@ -4337,6 +4350,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
+.focus-visible\:ring-inset:focus-visible {
+  --tw-ring-inset: inset;
+}
 .focus-visible\:ring-custom-500:focus-visible {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(var(--sc-custom-500) / var(--tw-ring-opacity, 1));
@@ -4940,11 +4956,17 @@ input[type=range]:focus::-webkit-slider-thumb {
   .md\:h-4\/5 {
     height: 80%;
   }
+  .md\:h-\[70vh\] {
+    height: 70vh;
+  }
   .md\:max-h-\[80vh\] {
     max-height: 80vh;
   }
   .md\:max-h-\[90vh\] {
     max-height: 90vh;
+  }
+  .md\:max-h-\[calc\(100vh-2rem\)\] {
+    max-height: calc(100vh - 2rem);
   }
   .md\:w-4\/5 {
     width: 80%;
@@ -4998,6 +5020,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   .md\:grid-cols-5 {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
+  .md\:grid-cols-\[1\.3fr_1fr\] {
+    grid-template-columns: 1.3fr 1fr;
+  }
   .md\:grid-cols-\[minmax\(0\2c 1fr\)_320px\] {
     grid-template-columns: minmax(0,1fr) 320px;
   }
@@ -5018,6 +5043,9 @@ input[type=range]:focus::-webkit-slider-thumb {
   }
   .md\:self-start {
     align-self: flex-start;
+  }
+  .md\:overflow-y-auto {
+    overflow-y: auto;
   }
   .md\:rounded-xl {
     border-radius: 0.75rem;
@@ -6231,4 +6259,7 @@ input[type=range]:focus::-webkit-slider-thumb {
 }
 .\[\&\:\:-webkit-details-marker\]\:hidden::-webkit-details-marker {
   display: none;
+}
+.\[\&\:not\(\:first-child\)\]\:border-l:not(:first-child) {
+  border-left-width: 1px;
 }

@@ -21,62 +21,38 @@
         options = options || {};
 
         var tone = options.tone || (destructive.test(message) ? 'danger' : 'default');
-        var trigger = document.querySelector('[data-modal-target="' + (ids[tone] || ids['default']) + '"]');
-        var modal = trigger ? document.getElementById(trigger.getAttribute('data-modal-target')) : null;
+        var modal = document.getElementById(ids[tone] || ids['default']);
 
-        if (!modal) {
+        if (!modal || !window.cpModal) {
             return Promise.resolve(window.confirm(message));
         }
 
         var confirmButton = modal.querySelector('[data-modal-confirm]');
-        var cancelButton = modal.querySelector('[data-modal-cancel]');
 
         setText(modal, '[data-modal-title]', options.title || 'Are you sure?');
         setText(modal, '[data-modal-message]', message);
         modal.querySelector('[data-modal-message]').style.whiteSpace = 'pre-line';
         confirmButton.textContent = options.confirmLabel || 'Confirm';
-        cancelButton.textContent = options.cancelLabel || 'Cancel';
+        setText(modal, '[data-modal-cancel]', options.cancelLabel || 'Cancel');
 
         return new Promise(function (resolve) {
-            var settled = false;
-            var watcher;
-
-            function finish(answer) {
-                if (settled) {
-                    return;
-                }
-                settled = true;
-                watcher.disconnect();
-                confirmButton.removeEventListener('click', onConfirm);
-                modal.querySelectorAll('[data-modal-close]').forEach(function (el) {
-                    el.removeEventListener('click', onCancel);
-                });
-                resolve(answer);
-            }
+            var confirmed = false;
 
             function onConfirm() {
-                finish(true);
-                cancelButton.click();
+                confirmed = true;
+                window.cpModal.close(modal.id);
             }
 
-            function onCancel() {
-                finish(false);
+            // Every way out (the buttons, Escape, a click outside) ends here
+            function onClose() {
+                confirmButton.removeEventListener('click', onConfirm);
+                modal.removeEventListener('modal:close', onClose);
+                resolve(confirmed);
             }
 
             confirmButton.addEventListener('click', onConfirm);
-            modal.querySelectorAll('[data-modal-close]').forEach(function (el) {
-                el.addEventListener('click', onCancel);
-            });
-
-            // Escape and a click on the backdrop close the modal without touching a button
-            watcher = new MutationObserver(function () {
-                if (modal.classList.contains('hidden')) {
-                    finish(false);
-                }
-            });
-            watcher.observe(modal, {attributes: true, attributeFilter: ['class']});
-
-            trigger.click();
+            modal.addEventListener('modal:close', onClose);
+            window.cpModal.open(modal.id);
         });
     };
 })();

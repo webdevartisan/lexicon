@@ -5,7 +5,7 @@
  * when it opens, so only the tone is fixed here.
  *
  * Attributes:
- * - id: DOM id the hidden trigger in the layout points at
+ * - id: DOM id that cpConfirm() opens for this tone
  * - tone: 'default', 'danger' or 'warning'
  */
 $id = $id ?? 'confirmModal';

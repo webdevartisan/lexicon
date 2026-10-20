@@ -149,9 +149,6 @@ $old = old();
 <script src="/assets/js/platform-menu.js"></script>
 <script src="/cp-assets/js/row-actions.js"></script>
 {# One shared confirmation modal per tone; cp-assets/js/confirm.js fills in the text and opens it #}
-<button type="button" hidden data-modal-target="confirmModalDefault" aria-hidden="true" tabindex="-1"></button>
-<button type="button" hidden data-modal-target="confirmModalDanger" aria-hidden="true" tabindex="-1"></button>
-<button type="button" hidden data-modal-target="confirmModalWarning" aria-hidden="true" tabindex="-1"></button>
 {% cmp="confirm-modal" id="confirmModalDefault" tone="default" %}
 {% cmp="confirm-modal" id="confirmModalDanger" tone="danger" %}
 {% cmp="confirm-modal" id="confirmModalWarning" tone="warning" %}

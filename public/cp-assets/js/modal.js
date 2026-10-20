@@ -1,109 +1,112 @@
-    // drawer setting offCanvas
-    function drawerSetting() {
-        
-        // The layout and some pages both load this file; each control is wired once
-        const unbound = selector => Array.prototype.filter.call(document.querySelectorAll(selector), el => {
-            if (el.dataset.modalBound) return false;
-            el.dataset.modalBound = '1';
-            return true;
-        });
-        const allDrawerButtons = unbound('[data-drawer-target]');
-        const allDrawerCloseButtons = unbound('[data-drawer-close]');
-        const allModalButtons = unbound('[data-modal-target]');
-        const allModalCloseButtons = unbound('[data-modal-close]');
-        const bodyElement = document.body;       
-        
+/**
+ * Drawers and centred modals for the control panel. Controls carrying
+ * data-drawer-target / data-modal-target open them, data-drawer-close /
+ * data-modal-close close them, and scripts use window.cpModal.open(id, trigger)
+ * and window.cpModal.close(id). A closing modal fires `modal:close` on itself,
+ * whichever way it was closed.
+ *
+ * Modals stack, so a confirmation opened from inside an editor closes back onto
+ * the editor with the backdrop and scroll lock still in place.
+ *
+ * The layout and several pages both load this file, sometimes before the
+ * layout's own modals exist. The state and document listeners are created on the
+ * first load; every load wires the controls that are not wired yet.
+ */
+(function () {
+    const api = window.cpModal || createModalApi();
+    window.cpModal = api;
+    wireControls(api);
+
+    function createModalApi() {
+        const focusable = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const body = document.body;
+        const backdrop = document.getElementById('backDropDiv') || createBackdrop();
+        const openModals = [];
+        const hideTimers = new WeakMap();
         let openDrawerId = null;
-        let openModalId = null;
-        if(document.getElementById("backDropDiv")) {
-            var backDropOverlay = document.getElementById("backDropDiv");
-        } else {
-            var backDropOverlay = document.createElement('div');
-            backDropOverlay.className = 'fixed inset-0 bg-slate-900/40 dark:bg-zink-800/70 z-[1049] backdrop-overlay hidden';
-            backDropOverlay.id = 'backDropDiv';
-        }
-        if (allModalButtons.length > 0 || allDrawerButtons.length > 0)
-            document.body.appendChild(backDropOverlay);
 
-        // Function to toggle the state of drawers and modals
-        function toggleElementState(elementId, show, delay) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                if (!show) {
-                    element.classList.add('show');
-                    backDropOverlay.classList.add('hidden');
-                    setTimeout(() => {
-                        element.classList.add("hidden");
-                    }, 350);
-                } else {
-                    element.classList.remove("hidden");
-                    setTimeout(() => {
-                        element.classList.remove('show');
-                        backDropOverlay.classList.remove('hidden');
-                    }, delay);
-                }
-                bodyElement.classList.toggle('overflow-hidden', show);
-                if (show) {
-                    openDrawerId = elementId;
-                    openModalId = elementId;
-                } else {
-                    openDrawerId = null;
-                    openModalId = null;
-                }
-            }
+        function createBackdrop() {
+            const el = document.createElement('div');
+            el.className = 'fixed inset-0 bg-slate-900/40 dark:bg-zink-800/70 z-[1049] backdrop-overlay hidden';
+            el.id = 'backDropDiv';
+            body.appendChild(el);
+
+            return el;
         }
 
-        // Attach click event listeners to drawer buttons
-        allDrawerButtons.forEach(element => {
-            const drawerId = element.getAttribute('data-drawer-target');
-            if (drawerId) {
-                element.addEventListener('click', function () {
-                    toggleElementState(drawerId, true, 0);
-                });
-            }
-        });
+        function show(element, delay) {
+            clearTimeout(hideTimers.get(element));
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.classList.remove('show');
+                backdrop.classList.remove('hidden');
+            }, delay);
+        }
 
-        // Attach click event listeners to drawer close buttons
-        allDrawerCloseButtons.forEach(element => {
-            const drawerId = element.getAttribute('data-drawer-close');
-            if (drawerId) {
-                element.addEventListener('click', function () {
-                    toggleElementState(drawerId, false, 0);
-                });
-            }
-        });
+        // The slide-out transition needs the element visible for a moment before it hides
+        function hide(element) {
+            element.classList.add('show');
+            hideTimers.set(element, setTimeout(() => element.classList.add('hidden'), 350));
+        }
+
+        function syncPage() {
+            const anyOpen = openModals.length > 0 || openDrawerId !== null;
+            if (!anyOpen) backdrop.classList.add('hidden');
+            body.classList.toggle('overflow-hidden', anyOpen);
+        }
+
+        function topModal() {
+            const top = openModals[openModals.length - 1];
+
+            return top ? document.getElementById(top.id) : null;
+        }
 
         // Keyboard and focus behaviour of a modal dialog (WAI-ARIA APG): focus
         // moves in on open, Tab stays inside, Escape closes, and focus goes
         // back to whatever opened it.
-        const focusable = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-        let modalTrigger = null;
-
-        function openModal(modalId, trigger) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-            modalTrigger = trigger || document.activeElement;
-            toggleElementState(modalId, true, 200);
-            const first = modal.querySelector(focusable);
-            (first || modal).focus();
+        function open(id, trigger) {
+            const modal = document.getElementById(id);
+            if (!modal || openModals.some(entry => entry.id === id)) return;
+            openModals.push({ id: id, trigger: trigger || document.activeElement });
+            show(modal, 200);
+            syncPage();
+            (modal.querySelector(focusable) || modal).focus();
         }
 
-        function closeModal(modalId) {
-            toggleElementState(modalId, false, 200);
-            if (modalTrigger && document.body.contains(modalTrigger)) {
-                modalTrigger.focus();
-            }
-            modalTrigger = null;
+        function close(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            const index = openModals.findIndex(entry => entry.id === id);
+            const entry = index === -1 ? null : openModals.splice(index, 1)[0];
+            hide(modal);
+            syncPage();
+            if (entry && entry.trigger && body.contains(entry.trigger)) entry.trigger.focus();
+            modal.dispatchEvent(new CustomEvent('modal:close'));
+        }
+
+        function openDrawer(id) {
+            const drawer = document.getElementById(id);
+            if (!drawer) return;
+            openDrawerId = id;
+            show(drawer, 0);
+            syncPage();
+        }
+
+        function closeDrawer(id) {
+            const drawer = document.getElementById(id);
+            if (!drawer) return;
+            if (openDrawerId === id) openDrawerId = null;
+            hide(drawer);
+            syncPage();
         }
 
         document.addEventListener('keydown', function (event) {
-            if (!openModalId) return;
-            const modal = document.getElementById(openModalId);
+            const modal = topModal();
             if (!modal || !modal.hasAttribute('modal-center')) return;
 
             if (event.key === 'Escape') {
                 event.preventDefault();
-                closeModal(openModalId);
+                close(modal.id);
                 return;
             }
 
@@ -121,44 +124,38 @@
             }
         });
 
-        // Attach click event listeners to modal buttons
-        allModalButtons.forEach(element => {
-            const modalId = element.getAttribute('data-modal-target');
-            if (modalId) {
-                element.addEventListener('click', function () {
-                    openModal(modalId, element);
-                });
+        backdrop.addEventListener('click', function () {
+            const modal = topModal();
+            if (modal && modal.hasAttribute('modal-center')) {
+                close(modal.id);
+            } else if (openDrawerId) {
+                closeDrawer(openDrawerId);
             }
         });
 
-        // Attach click event listeners to modal close buttons
-        allModalCloseButtons.forEach(element => {
-            const modalId = element.getAttribute('data-modal-close');
-            if (modalId) {
-                element.addEventListener('click', function () {
-                    closeModal(modalId);
-                });
-            }
+        return { open: open, close: close, openDrawer: openDrawer, closeDrawer: closeDrawer };
+    }
+
+    function wireControls(modals) {
+        const unbound = selector => Array.prototype.filter.call(document.querySelectorAll(selector), el => {
+            if (el.dataset.modalBound) return false;
+            el.dataset.modalBound = '1';
+            return true;
         });
+        const wire = (selector, attribute, action) => unbound(selector).forEach(el => {
+            const id = el.getAttribute(attribute);
+            if (id) el.addEventListener('click', () => action(id, el));
+        });
+
+        wire('[data-drawer-target]', 'data-drawer-target', modals.openDrawer);
+        wire('[data-drawer-close]', 'data-drawer-close', modals.closeDrawer);
+        wire('[data-modal-target]', 'data-modal-target', modals.open);
+        wire('[data-modal-close]', 'data-modal-close', modals.close);
 
         // A form that failed validation reopens its modal so the errors are in view.
         const openOnLoad = document.querySelector('[data-modal-open-on-load]');
         if (openOnLoad && openOnLoad.id) {
-            if (allModalButtons.length === 0 && allDrawerButtons.length === 0) {
-                document.body.appendChild(backDropOverlay);
-            }
-            openModal(openOnLoad.id, document.querySelector('[data-modal-target="' + openOnLoad.id + '"]'));
+            modals.open(openOnLoad.id, document.querySelector('[data-modal-target="' + openOnLoad.id + '"]'));
         }
-
-        // Attach click event listener to backdrop-overlay
-        backDropOverlay?.addEventListener('click', function () {
-            const open = openModalId ? document.getElementById(openModalId) : null;
-            if (open && open.hasAttribute('modal-center')) {
-                closeModal(openModalId);
-            } else if (openDrawerId) {
-                toggleElementState(openDrawerId, false, 0);
-            }
-        });
     }
-
-    drawerSetting();
+})();
