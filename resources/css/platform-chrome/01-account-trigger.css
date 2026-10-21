@@ -192,24 +192,18 @@
   opacity: 1;
   box-shadow: inset 0 -2px 0 currentColor;
 }
-/* A sheet from the bottom on phones: the rows get the full width to tap. */
-@media (--lx-below-md) {
-  .nav-user-menu {
-    position: fixed;
-    inset: auto 0 0;
-    z-index: 60;
-    width: auto;
-    max-height: 85vh;
-    overflow-y: auto;
-    padding: .5rem .5rem calc(1rem + env(safe-area-inset-bottom));
-    border-radius: var(--lx-radius-xl) var(--lx-radius-xl) 0 0;
+/* On phones it hangs from the masthead like the bell's panel, inset to the viewport. */
+@media (--lx-below-sm) {
+  .nav-user {
+    position: static;
   }
 
-  .nav-user-menu a,
-  .nav-user-menu button { padding-block: .7rem; }
-
-  /* The cookie button floats over the sheet's last row. */
-  body:has(.nav-user-menu:not([hidden])) .consent-fab { visibility: hidden; }
+  .nav-user-menu {
+    top: 100%;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
 }
 
 /* Unread marker on the bar: centred on the circle's edge along the diagonal,

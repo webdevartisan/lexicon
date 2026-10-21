@@ -490,11 +490,6 @@ a {
   box-shadow: 4px 4px 0 var(--tint);
 }
 
-/* logged-in user chip + menu */
-.nav-user {
-  position: relative;
-}
-
 /* hamburger, mobile only */
 .nav-toggle {
   display: none;

@@ -159,8 +159,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .nav-pill:hover { background: var(--ink); color: var(--bone); }
 
-.nav-user { position: relative; }
-
 .nav-toggle {
     display: none;
     flex-direction: column;

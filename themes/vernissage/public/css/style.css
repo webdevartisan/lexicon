@@ -518,11 +518,6 @@ a {
   color: var(--plaster);
 }
 
-/* logged-in user chip + menu */
-.nav-user {
-  position: relative;
-}
-
 /* hamburger, mobile only */
 .nav-toggle {
   display: none;
