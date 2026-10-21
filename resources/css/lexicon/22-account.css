@@ -33,7 +33,7 @@
     font-weight: 500;
     line-height: 1.1;
 }
-@media (min-width: 720px) {
+@media (--lx-up-md) {
     .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: 2.5rem; }
     /* The page heading spans the full width above both the nav rail and the
        body, so the rail top-aligns with the form instead of the tall H1. */
@@ -47,7 +47,7 @@
 .lx-account-head { margin-block-end: 0; }
 .lx-account-head h1 { margin: 0 0 0.25rem; }
 .lx-grid-2 { display: grid; gap: 1rem; }
-@media (min-width: 560px) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
+@media (--lx-up-sm) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
 
 /* Front dialog, shared by the avatar cropper, avatar-remove and account-delete
    confirmations. Backdrop is fixed (not absolute) so it always covers the

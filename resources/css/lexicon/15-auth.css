@@ -490,7 +490,7 @@
 [data-mode='light'] .lx-error[data-tone='warning'] { --error-tone: #8a5a00; }
 [data-mode='light'] .lx-error[data-tone='danger'] { --error-tone: #b3261e; }
 
-@media (min-width: 720px) {
+@media (--lx-up-md) {
     .lx-error {
         grid-template-columns: 1fr 1fr;
         gap: 3rem;
