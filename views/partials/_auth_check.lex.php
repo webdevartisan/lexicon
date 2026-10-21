@@ -13,11 +13,11 @@
     </p>
 </noscript>
 <input type="hidden" name="altcha" value="">
-<p class="lx-check" data-captcha-status role="status" aria-live="polite" hidden
+<p class="lx-captcha" data-captcha-status role="status" aria-live="polite" hidden
    data-checking="<?= e($t('auth.checking')) ?>"
    data-done="<?= e($authCheckDone) ?>"
    data-failed="<?= e($t('auth.checkFailed')) ?>">
-    <span class="lx-check-mark" aria-hidden="true"></span>
+    <span class="lx-captcha-mark" aria-hidden="true"></span>
     <span data-captcha-text></span>
 </p>
 <script src="/assets/js/captcha.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/captcha.js') ?>"
