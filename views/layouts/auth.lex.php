@@ -32,6 +32,7 @@ $siteName = site_setting('site_name', 'Lexicon');
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
         <link rel="stylesheet" href="/assets/css/lexicon.css" />
+        <script src="/assets/js/appearance.js"></script>
 
         {% yield meta %}
     </head>
@@ -80,8 +81,23 @@ if (!empty($authError)) { ?>
             </div>
         </main>
 
+        <?php
+        // A page that creates an agreement states it here; the rest show the two
+        // policy links, so the bottom of every auth page reads the same.
+        ob_start();
+        ?>{% yield legal %}<?php
+        $authLegal = trim(ob_get_clean());
+        ?>
         <footer class="lx-authlegal">
-            {% yield legal %}
+            <?php if ($authLegal !== '') { ?>
+                <p><?= $authLegal ?></p>
+            <?php } else { ?>
+                <p>
+                    <a href="<?= e(lurl('/terms')) ?>"><?= e($t('footer.linkTerms')) ?></a>
+                    <span aria-hidden="true">·</span>
+                    <a href="<?= e(lurl('/privacy')) ?>"><?= e($t('footer.linkPrivacy')) ?></a>
+                </p>
+            <?php } ?>
         </footer>
 
         <?php

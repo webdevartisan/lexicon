@@ -113,11 +113,6 @@ $meterLevels = implode('|', [
         <?php } ?>
     </div>
 
-    <p class="lx-field-hint"><?= strtr(e($t('auth.legalNotice')), [
-        '{terms}' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
-        '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
-    ]) ?></p>
-
     <?php
     $authCheckNoscript = $t('auth.checkNoscriptRegister');
     $authCheckDone = $t('auth.checkDone');
@@ -128,3 +123,8 @@ $meterLevels = implode('|', [
     <button type="submit" class="lx-btn lx-authsubmit"><?= e($t('auth.registerSubmit')) ?></button>
 </form>
 {% endblock %}
+
+{% block legal %}<?= strtr(e($t('auth.legalNotice')), [
+    '{terms}' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
+    '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
+]) ?>{% endblock %}
