@@ -33,8 +33,8 @@ $debugRows = array_filter([
 
     <link rel="preload" href="/assets/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/assets/css/lexicon.css">
-    <link rel="stylesheet" href="/assets/css/platform-chrome.css">
+    <link rel="stylesheet" href="<?= e(platform_asset('assets/css/lexicon.css')) ?>">
+    <link rel="stylesheet" href="<?= e(platform_asset('assets/css/platform-chrome.css')) ?>">
     <script src="/assets/js/appearance.js"></script>
   </head>
 

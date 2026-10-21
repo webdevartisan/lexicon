@@ -745,6 +745,22 @@ function base_url(): string
 }
 
 /**
+ * Root-relative URL for a file under public/, stamped with its modified time.
+ *
+ * Browsers keep static files for a long time, so the stamp gives them a new URL whenever a deploy changes the file.
+ *
+ * @param  string  $path  Path under public/, such as "assets/css/lexicon.css"
+ * @return string The URL, without a stamp when the file is missing
+ */
+function platform_asset(string $path): string
+{
+    $url = '/'.ltrim($path, '/');
+    $file = ROOT_PATH.'/public'.$url;
+
+    return is_file($file) ? $url.'?v='.filemtime($file) : $url;
+}
+
+/**
  * Detect changed fields between new and existing data.
  *
  * Compare arrays and return only fields with different values.
