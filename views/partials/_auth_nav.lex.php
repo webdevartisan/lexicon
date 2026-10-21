@@ -49,7 +49,7 @@ if ($navVariant === 'platform') {
         <?php } ?>
     <?php } else { ?>
         <?php if (!$navIsReader || !empty($navViewer['can_create_blog'])) { ?>
-        <li>
+        <li<?= $navIsReader ? '' : ' class="lx-nav-dash"' ?>>
             <?php
             // A reader is already registered, so this goes to the form that
             // makes a blog, not to sign-up. A creator gets their dashboard.

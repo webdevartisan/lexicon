@@ -5,11 +5,11 @@
 .lx-nav {
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: var(--lx-z-nav);
     color: var(--lx-ink);
     background: var(--lx-paper);
-    transition: background 0.3s var(--lx-ease), box-shadow 0.3s var(--lx-ease),
-        color 0.3s var(--lx-ease), backdrop-filter 0.3s var(--lx-ease);
+    transition: background var(--lx-dur-slow) var(--lx-ease), box-shadow var(--lx-dur-slow) var(--lx-ease),
+        color var(--lx-dur-slow) var(--lx-ease), backdrop-filter var(--lx-dur-slow) var(--lx-ease);
 }
 
 .lx-nav-inner {
@@ -39,11 +39,11 @@
 .lx-logo {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.4rem;
+    gap: var(--lx-space-2);
     font-family: var(--lx-sans);
-    font-weight: 700;
-    font-size: 1.0625rem;
-    letter-spacing: 0.14em;
+    font-weight: var(--lx-weight-bold);
+    font-size: var(--lx-text-prose);
+    letter-spacing: var(--lx-track-wide);
     text-transform: uppercase;
     color: inherit;
     white-space: nowrap;
@@ -74,13 +74,14 @@
 
 .lx-nav-link {
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
     color: inherit;
     opacity: 0.72;
-    padding-block: 0.35rem;
+    white-space: nowrap;
+    padding-block: var(--lx-space-2);
     position: relative;
-    transition: opacity 0.2s var(--lx-ease);
+    transition: opacity var(--lx-dur) var(--lx-ease);
 }
 
 .lx-nav-link::after {
@@ -92,7 +93,7 @@
     background: currentColor;
     transform: scaleX(0);
     transform-origin: inline-start;
-    transition: transform 0.25s var(--lx-ease);
+    transition: transform var(--lx-dur-slow) var(--lx-ease);
 }
 
 .lx-nav-link:hover,
@@ -109,7 +110,7 @@
 .lx-nav-actions {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: var(--lx-space-2);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -121,6 +122,7 @@
 
 .lx-nav-toggle {
     display: none;
+    flex: none;
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
@@ -145,7 +147,7 @@
     width: 1.1rem;
     height: 1px;
     background: currentColor;
-    transition: transform 0.25s var(--lx-ease), opacity 0.2s var(--lx-ease);
+    transition: transform var(--lx-dur-slow) var(--lx-ease), opacity var(--lx-dur) var(--lx-ease);
 }
 
 .lx-nav-toggle span::before,
@@ -167,18 +169,18 @@
 .lx-drawer {
     position: fixed;
     inset: 0;
-    z-index: 150;
+    z-index: var(--lx-z-drawer);
     background: var(--lx-bind-deep);
     color: var(--lx-on-bind);
     display: flex;
     flex-direction: column;
-    padding: 1.5rem var(--lx-gutter) 2.5rem;
+    padding: var(--lx-space-5) var(--lx-gutter) var(--lx-space-7);
     overflow-y: auto;
     opacity: 0;
     transform: translateY(-1rem);
     /* Hidden via the [hidden] attribute, not visibility, so focus can enter the drawer. */
     pointer-events: none;
-    transition: opacity 0.3s var(--lx-ease), transform 0.3s var(--lx-ease);
+    transition: opacity var(--lx-dur-slow) var(--lx-ease), transform var(--lx-dur-slow) var(--lx-ease);
 }
 
 .lx-drawer[hidden] {
@@ -196,7 +198,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: 3rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: var(--lx-space-7);
 }
 
 .lx-drawer-close {
@@ -213,7 +215,7 @@
 
 .lx-drawer-links {
     list-style: none;
-    margin: 0 0 2.5rem;
+    margin: 0 0 var(--lx-space-7);
     padding: 0;
 }
 
@@ -223,9 +225,9 @@
 
 .lx-drawer-links a {
     display: block;
-    padding: 0.9rem 0;
+    padding: var(--lx-space-4) 0;
     font-family: var(--lx-serif);
-    font-size: 1.6rem;
+    font-size: var(--lx-text-2xl);
     color: var(--lx-on-bind);
 }
 
@@ -237,7 +239,7 @@
 .lx-drawer-actions {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--lx-space-3);
     margin-top: auto;
 }
 
@@ -249,6 +251,14 @@ body.lx-drawer-open {
     overflow: hidden;
 }
 
+/* The account menu also links to the dashboard, so its button gives way before the page links do. */
+@media (--lx-below-lg) {
+    .lx-nav-dash {
+        display: none;
+    }
+}
+
+/* Below the shared 960px on purpose: with the dashboard button gone, the links still fit down to here. */
 @media (max-width: 900px) {
     .lx-nav-links {
         display: none;
@@ -271,7 +281,7 @@ body.lx-drawer-open {
     }
 }
 
-@media (max-width: 480px) {
+/* Narrow phones only: from 480px up the bar still fits the logo, button and toggle. */\n@media (max-width: 480px) {
     .lx-nav-actions .lx-btn-primary {
         display: none;
     }
