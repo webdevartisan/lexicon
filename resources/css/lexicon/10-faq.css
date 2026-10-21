@@ -15,14 +15,14 @@
     display: grid;
     grid-template-columns: 2.75rem minmax(0, 1fr) 2rem;
     align-items: baseline;
-    gap: 0.5rem;
-    padding-block: 1.35rem;
+    gap: var(--lx-space-2);
+    padding-block: var(--lx-space-5);
     cursor: pointer;
     list-style: none;
     font-size: clamp(1.05rem, 1.7vw, 1.25rem);
-    font-weight: 500;
+    font-weight: var(--lx-weight-medium);
     line-height: 1.4;
-    transition: color 0.2s var(--lx-ease);
+    transition: color var(--lx-dur) var(--lx-ease);
 }
 
 .lx-note > summary::-webkit-details-marker {
@@ -35,9 +35,9 @@
 
 .lx-note-n {
     font-family: var(--lx-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-label);
     color: var(--lx-gilt-deep);
 }
 
@@ -57,7 +57,7 @@
     top: 50%;
     height: 1px;
     background: var(--lx-ink-2);
-    transition: transform 0.3s var(--lx-ease);
+    transition: transform var(--lx-dur-slow) var(--lx-ease);
 }
 
 .lx-note-sign::after {
@@ -69,15 +69,15 @@
 }
 
 .lx-note-body {
-    padding-block: 0 1.6rem;
+    padding-block: 0 var(--lx-space-5);
     padding-inline: 2.75rem 2rem;
     margin: 0;
     max-width: 68ch;
     color: var(--lx-ink-2);
-    line-height: 1.7;
+    line-height: var(--lx-leading-prose);
 }
 
-@media (max-width: 560px) {
+@media (--lx-below-sm) {
     .lx-note > summary {
         grid-template-columns: 1.75rem minmax(0, 1fr) 1.25rem;
     }

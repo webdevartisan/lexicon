@@ -31,13 +31,13 @@
 .lx-close h2 {
     margin: 0;
     font-size: clamp(2rem, 4.5vw, 3.5rem);
-    font-weight: 500;
+    font-weight: var(--lx-weight-medium);
     letter-spacing: -0.025em;
     max-width: 18ch;
 }
 
 .lx-close p {
-    margin: 1rem 0 0;
+    margin: var(--lx-space-4) 0 0;
     max-width: 44ch;
     color: var(--lx-on-bind-2);
 }
@@ -45,10 +45,10 @@
 .lx-close-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.85rem;
+    gap: var(--lx-space-3);
 }
 
-@media (max-width: 800px) {
+@media (--lx-below-md) {
     .lx-close-inner {
         grid-template-columns: minmax(0, 1fr);
         align-items: start;

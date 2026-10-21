@@ -25,8 +25,8 @@
 .lx-band-n {
     display: block;
     font-family: var(--lx-serif);
-    font-weight: 400;
-    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: var(--lx-weight-regular);
+    font-size: var(--lx-text-3xl);
     line-height: 1.05;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums lining-nums;
@@ -35,16 +35,16 @@
 
 .lx-band-label {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: var(--lx-space-2);
     font-family: var(--lx-sans);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
     text-transform: uppercase;
     color: var(--lx-ink-2);
 }
 
-@media (max-width: 560px) {
+@media (--lx-below-sm) {
     .lx-band-inner {
         grid-template-columns: minmax(0, 1fr);
         gap: 0;
@@ -54,9 +54,9 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        gap: 1rem;
+        gap: var(--lx-space-4);
         text-align: start;
-        padding-block: 0.85rem;
+        padding-block: var(--lx-space-3);
     }
 
     .lx-band-item + .lx-band-item {
