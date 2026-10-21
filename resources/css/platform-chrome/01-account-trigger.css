@@ -95,7 +95,6 @@
 .nav-user-menu {
   width: 16rem;
   padding: .4rem;
-  border-radius: var(--lx-radius-lg);
 }
 
 .nav-user-menu .nav-user-who { justify-content: flex-start; padding: .55rem .6rem; }

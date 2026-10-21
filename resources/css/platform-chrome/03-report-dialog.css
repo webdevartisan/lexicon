@@ -13,7 +13,7 @@
   overflow: auto;
   padding: 1.5rem 1.5rem 1.25rem;
   border: 0;
-  border-radius: var(--lx-radius-lg);
+  border-radius: var(--lx-radius-xl);
   background: #fff;
   color: #16181d;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
@@ -210,7 +210,7 @@
     width: 100vw;
     max-width: none;
     margin: auto 0 0;
-    border-radius: var(--lx-radius-lg) var(--lx-radius-lg) 0 0;
+    border-radius: var(--lx-radius-xl) var(--lx-radius-xl) 0 0;
     padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   }
 }

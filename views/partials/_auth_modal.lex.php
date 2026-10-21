@@ -114,7 +114,7 @@ if (!auth()->check()) {
 <style>
   .lex-auth-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(15, 18, 20, .6); backdrop-filter: blur(2px); }
   .lex-auth-overlay[hidden] { display: none; }
-  .lex-auth-card { position: relative; width: 100%; max-width: 380px; background: #fff; color: #16181d; border-radius: 10px; padding: 1.75rem 1.5rem 1.25rem; box-shadow: 0 24px 64px rgba(0, 0, 0, .35); font-family: inherit; }
+  .lex-auth-card { position: relative; width: 100%; max-width: 380px; background: #fff; color: #16181d; border-radius: var(--lx-radius-xl); padding: 1.75rem 1.5rem 1.25rem; box-shadow: 0 24px 64px rgba(0, 0, 0, .35); font-family: inherit; }
   /* This modal is dropped into whatever stylesheet the host page already has,
      and several blog themes style bare `button` and `input[type="..."]`
      selectors that outrank plain classes: uppercase display buttons, forced
@@ -174,7 +174,7 @@ if (!auth()->check()) {
   .lex-auth-card .lex-auth-foot a:hover { color: #16181d; }
   @media (max-width: 480px) {
     .lex-auth-overlay { align-items: flex-end; padding: 0; }
-    .lex-auth-card { max-width: none; border-radius: 12px 12px 0 0; padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+    .lex-auth-card { max-width: none; border-radius: var(--lx-radius-xl) var(--lx-radius-xl) 0 0; padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
   }
 </style>
 
