@@ -14,7 +14,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--lx-space-4);
     padding: clamp(1.1rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2.75rem);
 }
 
@@ -22,10 +22,10 @@
 .lx-authbar-alt a {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: var(--lx-space-2);
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
     color: var(--lx-ink);
 }
 
@@ -59,7 +59,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
+    gap: var(--lx-space-2);
     margin-bottom: clamp(1.5rem, 5vh, 2.5rem);
 }
 
@@ -77,25 +77,25 @@
 
 .lx-authmark-word {
     font-family: var(--lx-sans);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-bold);
+    letter-spacing: var(--lx-track-wide);
     text-transform: uppercase;
     color: var(--lx-ink);
 }
 
 .lx-authtitle {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--lx-space-2);
     text-align: center;
-    font-size: clamp(1.7rem, 5vw, 2.35rem);
-    font-weight: 500;
-    letter-spacing: -0.02em;
+    font-size: var(--lx-text-2xl);
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: var(--lx-track-tight);
 }
 
 .lx-authsub {
     margin: 0 0 clamp(1.75rem, 5vh, 2.5rem);
     text-align: center;
-    font-size: 0.95rem;
+    font-size: var(--lx-text-base);
     color: var(--lx-ink-2);
 }
 
@@ -105,13 +105,13 @@
 }
 
 .lx-authalert {
-    margin: 0 0 1.5rem;
-    padding: 0.7rem 0.9rem;
+    margin: 0 0 var(--lx-space-5);
+    padding: var(--lx-space-3) var(--lx-space-4);
     border-inline-start: 2px solid var(--lx-danger);
     background: var(--lx-danger-bg);
     color: var(--lx-danger);
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: var(--lx-text-sm);
+    line-height: var(--lx-leading-normal);
 }
 
 .lx-authalert.is-ok {
@@ -124,11 +124,11 @@
 .lx-check {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    margin: 1.5rem 0 0;
+    gap: var(--lx-space-2);
+    margin: var(--lx-space-5) 0 0;
     font-family: var(--lx-sans);
-    font-size: 0.85rem;
-    line-height: 1.45;
+    font-size: var(--lx-text-sm);
+    line-height: var(--lx-leading-normal);
     color: var(--lx-ink-2);
 }
 
@@ -186,7 +186,7 @@
 /* --- Fields ---------------------------------------------------------- */
 
 .lx-field {
-    margin-bottom: 1.6rem;
+    margin-bottom: var(--lx-space-5);
 }
 
 /* Wraps input + show/hide toggle so the toggle positions against the input, not the field. */
@@ -196,11 +196,11 @@
 
 .lx-field-label {
     display: block;
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--lx-space-2);
     font-family: var(--lx-sans);
-    font-size: 0.66rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
     text-transform: uppercase;
     color: var(--lx-ink-2);
 }
@@ -209,16 +209,16 @@
 .lx-field .lx-field-input {
     width: 100%;
     min-height: 2.75rem;
-    padding: 0.45rem 0;
+    padding: var(--lx-space-2) 0;
     background: transparent;
     border: 0;
     border-bottom: 1px solid var(--lx-field-line);
     border-radius: 0;
     font-family: var(--lx-serif);
-    font-size: 1.15rem;
-    line-height: 1.5;
+    font-size: var(--lx-text-md);
+    line-height: var(--lx-leading-normal);
     color: var(--lx-ink);
-    transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
+    transition: border-color var(--lx-dur) var(--lx-ease), box-shadow var(--lx-dur) var(--lx-ease);
 }
 
 .lx-field .lx-field-input::placeholder {
@@ -252,8 +252,8 @@
     border: 0;
     border-radius: 2px;
     font-family: var(--lx-sans);
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
     color: var(--lx-ink-2);
     cursor: pointer;
 }
@@ -264,26 +264,26 @@
 }
 
 .lx-field-error {
-    margin: 0.5rem 0 0;
+    margin: var(--lx-space-2) 0 0;
     font-family: var(--lx-sans);
-    font-size: 0.78rem;
+    font-size: var(--lx-text-xs);
     color: var(--lx-danger);
 }
 
 .lx-field-hint {
-    margin: 0.5rem 0 0;
+    margin: var(--lx-space-2) 0 0;
     font-family: var(--lx-sans);
-    font-size: 0.78rem;
+    font-size: var(--lx-text-xs);
     color: var(--lx-ink-2);
 }
 
 /* Small utilities that go with the form primitive. */
 
 .lx-form-actions {
-    margin-top: 1.6rem;
+    margin-top: var(--lx-space-5);
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--lx-space-3);
     align-items: center;
 }
 
@@ -300,16 +300,16 @@
    palette; the two variants only change the accent + text colour, not the base. */
 .lx-msg {
     display: block;
-    margin: 0 0 1rem;
-    padding: 0.85rem 1.05rem;
+    margin: 0 0 var(--lx-space-4);
+    padding: var(--lx-space-3) var(--lx-space-4);
     background: var(--lx-paper-raised);
     border: 1px solid var(--lx-rule);
     border-left: 3px solid var(--lx-rule-strong);
     border-radius: var(--lx-radius);
     color: var(--lx-ink);
     font-family: var(--lx-sans);
-    font-size: 0.92rem;
-    line-height: 1.5;
+    font-size: var(--lx-text-sm);
+    line-height: var(--lx-leading-normal);
 }
 
 .lx-msg-success {
@@ -326,7 +326,7 @@
 /* --- Password strength: advisory only; the server enforces password:basic (6 char min). --- */
 
 .lx-meter {
-    margin-top: 0.75rem;
+    margin-top: var(--lx-space-3);
 }
 
 .lx-meter[hidden] {
@@ -336,14 +336,14 @@
 .lx-meter-track {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.25rem;
+    gap: var(--lx-space-1);
     height: 3px;
 }
 
 .lx-meter-seg {
     background: var(--lx-rule);
     border-radius: 2px;
-    transition: background 0.25s var(--lx-ease);
+    transition: background var(--lx-dur) var(--lx-ease);
 }
 
 .lx-meter[data-level='1'] .lx-meter-seg:nth-child(-n + 1),
@@ -368,14 +368,14 @@
 }
 
 .lx-meter-label {
-    margin: 0.5rem 0 0;
+    margin: var(--lx-space-2) 0 0;
     font-family: var(--lx-sans);
-    font-size: 0.78rem;
+    font-size: var(--lx-text-xs);
     color: var(--lx-ink-2);
 }
 
 .lx-meter-level {
-    font-weight: 600;
+    font-weight: var(--lx-weight-semibold);
     color: var(--lx-meter-fill, var(--lx-ink-2));
 }
 
@@ -383,11 +383,11 @@
 
 .lx-authsubmit {
     width: 100%;
-    margin-top: 2rem;
+    margin-top: var(--lx-space-6);
 }
 
 .lx-authhelp {
-    margin-top: 2.25rem;
+    margin-top: var(--lx-space-6);
     text-align: center;
 }
 
@@ -397,8 +397,8 @@
 
 .lx-authhelp a {
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
     color: var(--lx-ink);
 }
 
@@ -410,7 +410,7 @@
     padding: 0 clamp(1.25rem, 4vw, 2.75rem) clamp(1.5rem, 4vh, 2.5rem);
     text-align: center;
     font-family: var(--lx-sans);
-    font-size: 0.75rem;
+    font-size: var(--lx-text-xs);
     color: var(--lx-ink-3);
 }
 
@@ -419,7 +419,7 @@
 }
 
 .lx-authlegal span[aria-hidden] {
-    margin-inline: 0.25rem;
+    margin-inline: var(--lx-space-1);
 }
 
 .lx-authlegal a {
@@ -431,7 +431,7 @@
     color: var(--lx-ink);
 }
 
-@media (max-width: 420px) {
+@media (--lx-below-sm) {
     .lx-authbar {
         padding-inline: 1.25rem;
     }
@@ -462,12 +462,12 @@
     --error-btn-bg: transparent;
     --error-btn-shadow: none;
     display: grid;
-    gap: 2.5rem;
+    gap: var(--lx-space-7);
     width: 100%;
     max-width: 60rem;
     padding: clamp(1.5rem, 5vw, 3rem);
     border: 1px solid var(--error-line);
-    border-radius: 1rem;
+    border-radius: var(--lx-radius-xl);
     background: var(--platform-menu-bg, #1c1c1c);
     color: var(--error-fg);
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
@@ -493,7 +493,7 @@
 @media (--lx-up-md) {
     .lx-error {
         grid-template-columns: 1fr 1fr;
-        gap: 3rem;
+        gap: var(--lx-space-8);
     }
 }
 
@@ -501,40 +501,40 @@
     display: inline-flex;
     align-items: center;
     margin: 0;
-    padding: 0.3rem 0.75rem;
+    padding: var(--lx-space-1) var(--lx-space-3);
     border-radius: 999px;
     background: color-mix(in srgb, var(--error-tone) 16%, transparent);
     color: var(--error-tone);
     font-family: var(--lx-sans);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-label);
     text-transform: uppercase;
 }
 
 .lx-error-title {
-    margin: 1.5rem 0 0;
+    margin: var(--lx-space-5) 0 0;
     color: var(--error-fg);
     font-family: var(--lx-serif);
-    font-size: clamp(2rem, 5vw, 3.25rem);
-    font-weight: 400;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    font-size: var(--lx-text-3xl);
+    font-weight: var(--lx-weight-regular);
+    line-height: var(--lx-leading-tight);
+    letter-spacing: var(--lx-track-tight);
 }
 
 .lx-error-text {
     max-width: 28rem;
-    margin: 1.25rem 0 0;
+    margin: var(--lx-space-5) 0 0;
     color: var(--error-muted);
-    font-size: 1rem;
-    line-height: 1.6;
+    font-size: var(--lx-text-base);
+    line-height: var(--lx-leading-prose);
 }
 
 .lx-error-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 2rem;
+    gap: var(--lx-space-3);
+    margin-top: var(--lx-space-6);
 }
 
 .lx-error-btn {
@@ -542,16 +542,16 @@
     align-items: center;
     justify-content: center;
     min-height: 2.5rem;
-    padding: 0.5rem 1.1rem;
+    padding: var(--lx-space-2) 1.1rem;
     border: 1px solid var(--error-line);
-    border-radius: 0.6rem;
+    border-radius: var(--lx-radius-md);
     background: var(--error-btn-bg);
     box-shadow: var(--error-btn-shadow);
     color: var(--error-fg);
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: background 0.2s var(--lx-ease), filter 0.2s var(--lx-ease);
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
+    transition: background var(--lx-dur) var(--lx-ease), filter var(--lx-dur) var(--lx-ease);
 }
 
 /* Same as the settings modal: hover and focus only change the fill. */
@@ -579,11 +579,11 @@
     margin: 0;
     color: var(--error-muted);
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
+    font-size: var(--lx-text-sm);
 }
 
 .lx-error-links {
-    margin: 0.75rem 0 0;
+    margin: var(--lx-space-3) 0 0;
     padding: 0;
     border-top: 1px solid var(--error-line);
     list-style: none;
@@ -597,14 +597,14 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--lx-space-4);
     /* Text lines up with the hairlines; only the hover fill reaches past them. */
-    margin: 0.25rem -0.75rem;
-    padding: 0.75rem;
+    margin: var(--lx-space-1) calc(-1 * var(--lx-space-3));
+    padding: var(--lx-space-3);
     border-radius: 0.5rem;
     color: var(--error-fg);
     font-family: var(--lx-sans);
-    transition: background 0.2s var(--lx-ease);
+    transition: background var(--lx-dur) var(--lx-ease);
 }
 
 .lx-error-link:hover,
@@ -616,16 +616,16 @@
 
 .lx-error-link-title {
     display: block;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: var(--lx-text-base);
+    font-weight: var(--lx-weight-semibold);
 }
 
 .lx-error-link-text {
     display: block;
-    margin-top: 0.25rem;
+    margin-top: var(--lx-space-1);
     color: var(--error-muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: var(--lx-text-sm);
+    line-height: var(--lx-leading-normal);
 }
 
 .lx-error-link svg {
@@ -634,7 +634,7 @@
     height: 1.125rem;
     margin-top: 0.125rem;
     color: var(--error-muted);
-    transition: transform 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+    transition: transform var(--lx-dur) var(--lx-ease), color var(--lx-dur) var(--lx-ease);
 }
 
 .lx-error-link:hover svg,
@@ -646,22 +646,22 @@
 .lx-error-debug {
     grid-column: 1 / -1;
     min-width: 0;
-    padding-top: 2rem;
+    padding-top: var(--lx-space-6);
     border-top: 1px solid var(--error-line);
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
+    font-size: var(--lx-text-sm);
 }
 
 .lx-error-debug dl {
     display: grid;
     grid-template-columns: max-content 1fr;
-    gap: 0.5rem 1rem;
+    gap: var(--lx-space-2) var(--lx-space-4);
     margin: 0;
 }
 
 .lx-error-debug dt {
     color: var(--error-muted);
-    font-weight: 600;
+    font-weight: var(--lx-weight-semibold);
 }
 
 .lx-error-debug dd {
@@ -672,14 +672,14 @@
 
 .lx-error-debug pre {
     max-height: 24rem;
-    margin: 1.25rem 0 0;
-    padding: 1rem;
+    margin: var(--lx-space-5) 0 0;
+    padding: var(--lx-space-4);
     overflow: auto;
     border-radius: 0.5rem;
     background: var(--error-hover);
     font-family: var(--lx-mono);
-    font-size: 0.8125rem;
-    line-height: 1.6;
+    font-size: var(--lx-text-xs);
+    line-height: var(--lx-leading-prose);
 }
 
 @media (prefers-reduced-motion: reduce) {
