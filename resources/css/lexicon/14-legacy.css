@@ -463,58 +463,6 @@
     }
 }
 
-/* Grid — legacy Editorial 12-column shim. Kept because the Folio theme still
-   uses .row on its blog listing; nothing in the front lexicon uses these. */
-.row {
-    display: flex;
-    flex-wrap: wrap;
-    margin-inline-start: -1.5rem;
-}
-
-.row > * {
-    padding-inline-start: 1.5rem;
-    width: 100%;
-}
-
-.row.gtr-50 {
-    margin-inline-start: -0.75rem;
-}
-
-.row.gtr-50 > * {
-    padding-inline-start: 0.75rem;
-}
-
-.row.aln-middle {
-    align-items: center;
-}
-
-.col-1 { width: 8.3333%; }
-.col-2 { width: 16.6666%; }
-.col-3 { width: 25%; }
-.col-4 { width: 33.3333%; }
-.col-5 { width: 41.6666%; }
-.col-6 { width: 50%; }
-.col-7 { width: 58.3333%; }
-.col-8 { width: 66.6666%; }
-.col-9 { width: 75%; }
-.col-10 { width: 83.3333%; }
-.col-11 { width: 91.6666%; }
-.col-12 { width: 100%; }
-
-@media (max-width: 980px) {
-    .col-6-medium { width: 50%; }
-    .col-12-medium { width: 100%; }
-}
-
-@media (max-width: 736px) {
-    .col-6-small { width: 50%; }
-    .col-12-small { width: 100%; }
-}
-
-@media (max-width: 480px) {
-    .col-12-xsmall { width: 100%; }
-}
-
 /* Blog directory grid. */
 .lx-blog-cards {
     display: grid;
