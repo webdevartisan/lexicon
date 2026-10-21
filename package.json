@@ -16,7 +16,9 @@
     "dev:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css --watch --verbose",
     "build:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css",
     "dev:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
-    "build:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media cssnano"
+    "build:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media cssnano",
+    "dev:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
+    "build:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media cssnano"
   },
   "keywords": [],
   "dependencies": {

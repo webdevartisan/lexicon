@@ -1,0 +1,152 @@
+/* The inbox pages: the same rows, with day headings, actions and a toolbar. */
+.notif-page .notif-list {
+  padding: 0;
+}
+
+.notif-page-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: 0 0 .75rem;
+}
+
+.notif-page-bar .notif-tabs {
+  margin: 0;
+}
+
+.notif-page-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.notif-page-tools form {
+  margin: 0;
+}
+
+.notif-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 1.5rem;
+  color: var(--notif-muted);
+  font-size: .82rem;
+  text-decoration: none;
+}
+
+.notif-toggle[aria-pressed='true'] {
+  color: var(--notif-fg);
+  font-weight: 600;
+}
+
+.notif-toggle-box {
+  width: 1.9rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  box-shadow: inset 0 0 0 1px var(--notif-line);
+  position: relative;
+}
+
+.notif-toggle-box::after {
+  content: '';
+  position: absolute;
+  top: .15rem;
+  inset-inline-start: .15rem;
+  width: .8rem;
+  height: .8rem;
+  border-radius: 50%;
+  background: var(--notif-muted);
+  transition: inset-inline-start .15s ease;
+}
+
+.notif-toggle[aria-pressed='true'] .notif-toggle-box {
+  background: var(--notif-unread);
+}
+
+.notif-toggle[aria-pressed='true'] .notif-toggle-box::after {
+  inset-inline-start: .95rem;
+  background: #fff;
+}
+
+.notif-text-btn {
+  padding: .35rem .7rem;
+  border: 1px solid var(--notif-line);
+  border-radius: 6px;
+  background: none;
+  color: var(--notif-fg);
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.notif-text-btn:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-text-btn.is-danger {
+  color: var(--notif-tone-critical);
+}
+
+.notif-day {
+  margin: 1.1rem 0 .1rem;
+  color: var(--notif-muted);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.notif-day:first-child {
+  margin-top: .25rem;
+}
+
+.notif-day + .notif-row {
+  border-top: 0;
+}
+
+.notif-act {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  gap: .1rem;
+}
+
+.notif-act form {
+  margin: 0;
+}
+
+.notif-row.is-focused {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--notif-tone-neutral);
+}
+
+.notif-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1rem;
+  color: var(--notif-muted);
+  font-size: .82rem;
+}
+
+.notif-pager a {
+  color: var(--notif-fg);
+  font-weight: 600;
+}
+
+@media (max-width: 30rem) {
+  .notif-meta {
+    flex-wrap: wrap;
+  }
+
+  .notif-act {
+    flex-direction: column;
+  }
+}
+

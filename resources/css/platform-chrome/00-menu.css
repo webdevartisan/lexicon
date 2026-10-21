@@ -1,0 +1,76 @@
+.platform-menu {
+  position: relative;
+}
+
+/* Light, chosen in the user menu (appearance.js sets data-mode). html raises it
+   above a theme's own :root repaint, so the choice wins inside themes too. */
+html[data-mode='light'] {
+  --platform-menu-bg: #fff;
+  --platform-menu-fg: #1e293b;
+  --platform-badge-bg: #b3261e;
+  --platform-badge-fg: #fff;
+}
+
+.platform-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 40;
+  min-width: 170px;
+  padding: .3rem;
+  border-radius: 6px;
+  background: var(--platform-menu-bg, #1c1c1c);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+}
+
+[data-mode='light'] .platform-menu-list {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+}
+
+.platform-menu-list form,
+.platform-menu-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Separates the reader's own things from the account controls below them. */
+.platform-menu-list hr {
+  margin: .3rem .2rem;
+  border: 0;
+  border-top: 1px solid rgba(128, 128, 128, .28);
+}
+
+.platform-menu-list button,
+.platform-menu-list a {
+  display: block;
+  width: 100%;
+  padding: .5rem .6rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--platform-menu-fg, #f2f2f2);
+  font: inherit;
+  font-size: .85em;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.platform-menu-list button:hover,
+.platform-menu-list a:hover {
+  background: rgba(128, 128, 128, .22);
+  /* Restated because the surrounding stylesheet underlines links on hover and
+     a menu row is a row, not prose. The highlight is the hover affordance. */
+  text-decoration: none;
+}
+
+/* The post action bar's own geometry: it clears a taller trigger and layers
+   above the sticky post chrome some themes park at the same edge. */
+.engage-menu-list {
+  top: calc(100% + 6px);
+  z-index: 50;
+  min-width: 150px;
+}
+

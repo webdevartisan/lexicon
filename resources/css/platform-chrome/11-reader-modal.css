@@ -1,0 +1,95 @@
+/* -------------------------------------------------------------------------
+   Reader pages in the modal (Saved, Liked, Replies, Your comments,
+   Subscriptions). They keep their lx-reader markup; these rules give it the
+   modal's colours, and stand on their own because the blog themes and the
+   control panel do not load lexicon.css.
+   ------------------------------------------------------------------------- */
+.panel-dialog .lx-reader-head { margin: 0 0 1.25rem; }
+.panel-dialog .lx-reader-title { margin: 0; padding-inline-end: 2rem; font-family: inherit; font-size: 1.15rem; font-weight: 600; letter-spacing: 0; line-height: 1.3; color: inherit; }
+
+.panel-dialog .lx-reader-tabs { display: flex; gap: 1.25rem; margin-block-start: .75rem; border-block-end: 1px solid var(--acct-line); }
+.panel-dialog .lx-reader-tab { margin-block-end: -1px; padding: .45rem 0; border-block-end: 2px solid transparent; color: inherit; font-family: inherit; font-size: .85rem; font-weight: 500; letter-spacing: 0; opacity: .65; text-decoration: none; }
+.panel-dialog .lx-reader-tab:hover { opacity: 1; }
+.panel-dialog .lx-reader-tab.is-current { border-block-end-color: var(--acct-accent); font-weight: 600; opacity: 1; }
+
+.panel-dialog .lx-reader-list { margin: 0; padding: 0; list-style: none; }
+.panel-dialog .lx-reader-row { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 0; border-block-end: 1px solid var(--acct-line); }
+.panel-dialog .lx-reader-row:first-child { padding-block-start: .25rem; }
+.panel-dialog .lx-reader-row:last-child { border-block-end: 0; }
+.panel-dialog .lx-reader-thumb { flex: none; width: 4.5rem; aspect-ratio: 4 / 3; overflow: hidden; border-radius: .5rem; background: var(--acct-hover); }
+.panel-dialog .lx-reader-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.panel-dialog .lx-reader-body { flex: 1; min-width: 0; }
+.panel-dialog .lx-reader-blog { display: block; margin-block-end: .15rem; color: inherit; font-family: inherit; font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .6; text-decoration: none; }
+.panel-dialog .lx-reader-row-title { margin: 0 0 .25rem; font-family: inherit; font-size: .95rem; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
+.panel-dialog .lx-reader-row-title a,
+.panel-dialog .lx-reader-context a,
+.panel-dialog .lx-reader-excerpt a { color: inherit; }
+.panel-dialog .lx-reader-context,
+.panel-dialog .lx-reader-excerpt { margin: 0 0 .3rem; color: inherit; font-size: .85rem; line-height: 1.5; }
+.panel-dialog .lx-reader-excerpt { display: -webkit-box; overflow: hidden; opacity: .72; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.panel-dialog .lx-reader-meta { display: flex; align-items: center; gap: .6rem; margin: 0; color: inherit; font-family: inherit; font-size: .75rem; letter-spacing: 0; opacity: .6; }
+.panel-dialog .lx-reader-flag,
+.panel-dialog .lx-reader-dot { padding: .05rem .45rem; border: 1px solid var(--acct-line); border-radius: 999px; font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; color: inherit; }
+.panel-dialog .lx-reader-row.is-unread .lx-reader-context strong { color: inherit; }
+
+/* Always shown here: the modal is small enough that a hidden Remove only hides it. */
+.panel-dialog .lx-reader-act { flex: none; margin: 0; opacity: 1; }
+.panel-dialog .lx-reader-act-btn {
+  min-height: 2.25rem;
+  padding: .35rem .8rem;
+  border: 1px solid var(--acct-line);
+  border-radius: .6rem;
+  background: var(--acct-field-bg, transparent);
+  box-shadow: var(--acct-field-shadow, none);
+  color: inherit;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.panel-dialog .lx-reader-act-btn:hover,
+.panel-dialog .lx-reader-act-btn:focus-visible { border-color: var(--acct-danger); color: var(--acct-danger); outline: none; }
+
+.panel-dialog .lx-reader-undo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0 0 1rem; padding: .7rem 1rem; border: 1px solid var(--acct-line); border-radius: .75rem; background: var(--acct-hover); }
+.panel-dialog .lx-reader-undo p,
+.panel-dialog .lx-reader-undo form { margin: 0; }
+.panel-dialog .lx-reader-undo .lx-reader-act-btn:hover { border-color: var(--acct-accent); color: inherit; }
+
+.panel-dialog .lx-reader-empty { padding: 2rem 0 1rem; color: inherit; }
+.panel-dialog .lx-reader-empty p { max-width: 42ch; margin: 0 0 1rem; font-size: .9rem; opacity: .75; }
+.panel-dialog .lx-reader-markread { margin: 1rem 0 0; }
+
+.panel-dialog .lx-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  padding: .5rem 1rem;
+  border: 1px solid var(--acct-line);
+  border-radius: .6rem;
+  background: var(--acct-field-bg, transparent);
+  box-shadow: var(--acct-field-shadow, none);
+  color: inherit;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-decoration: none;
+  cursor: pointer;
+}
+.panel-dialog .lx-btn:hover { background: var(--acct-hover); color: inherit; }
+.panel-dialog .lx-btn-primary { border-color: var(--acct-accent); background: var(--acct-accent); box-shadow: none; color: var(--acct-on-accent); }
+.panel-dialog .lx-btn-primary:hover { background: var(--acct-accent); color: var(--acct-on-accent); filter: brightness(1.25); }
+
+.panel-dialog .lx-pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem; margin: 1.25rem 0 0; padding: 0; list-style: none; font-family: inherit; font-size: .85rem; }
+.panel-dialog .lx-pagination a,
+.panel-dialog .lx-pagination span { display: inline-flex; align-items: center; justify-content: center; min-width: 2.25rem; min-height: 2.25rem; padding: .25rem .6rem; border-radius: .5rem; color: inherit; text-decoration: none; box-shadow: none; }
+.panel-dialog .lx-pagination a:hover,
+.panel-dialog .lx-pagination [aria-current='page'] { background: var(--acct-hover); }
+.panel-dialog .lx-pagination [aria-current='page'] { font-weight: 600; }
+.panel-dialog .lx-pagination svg { width: 1rem; height: 1rem; }
+
+@media (max-width: 640px) {
+  .panel-dialog .lx-reader-row { flex-wrap: wrap; }
+  .panel-dialog .lx-reader-thumb { width: 3.5rem; }
+}

@@ -1,0 +1,273 @@
+/* ---------------------------------------------------------------------------
+   Account menu trigger.
+
+   One definition, like the dropdown it opens. Every masthead used to style
+   these three classes itself, which meant six copies of the same button and a
+   reader meeting a different one on every blog.
+
+   It carries no colours of its own: the text is currentColor, so it follows
+   whatever masthead it lands in, and the two surfaces are neutral greys that
+   read on paper and on a dark bar alike. That is what makes one rule survive
+   five themes plus the platform front, and what keeps it legible when a
+   sticky bar swaps its background mid-scroll.
+   --------------------------------------------------------------------------- */
+
+.nav-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.25rem;
+  padding: .25rem .6rem .25rem .25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav-user-btn:hover,
+.nav-user-btn[aria-expanded='true'] {
+  background: rgba(128, 128, 128, .16);
+  border-color: rgba(128, 128, 128, .28);
+}
+
+.nav-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.nav-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, .28);
+  color: inherit;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.nav-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The name is the widest part and the least load-bearing: the avatar already
+   says whose account this is. It goes first when the bar runs out of room. */
+.nav-user-name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 60rem) {
+  .nav-user-name {
+    display: none;
+  }
+}
+
+/* The account menu is the one consumer whose items carry a trailing badge, so
+   only it needs a row rather than a block. The comment menus keep the block. */
+.nav-user-menu a,
+.nav-user-menu button {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.nav-row-icon { flex: none; opacity: .75; }
+.nav-row-icon + span { flex: 1; min-width: 0; }
+
+.nav-user.is-cp { display: flex; align-items: center; }
+
+.nav-user-menu {
+  width: 16rem;
+  padding: .4rem;
+  border-radius: .75rem;
+}
+
+.nav-user-menu .nav-user-who { justify-content: flex-start; padding: .55rem .6rem; }
+.nav-user-who .nav-avatar { width: 2.25rem; height: 2.25rem; font-size: .9rem; }
+.nav-user-who > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.nav-user-who strong,
+.nav-user-who small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-user-who strong { font-weight: 600; }
+.nav-user-who small { font-size: .8em; opacity: .62; }
+
+.nav-user-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .3rem .3rem .3rem .6rem;
+  color: var(--platform-menu-fg, #f2f2f2);
+  font-size: .85em;
+}
+
+.nav-theme-choices {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: .5rem;
+  background: rgba(128, 128, 128, .16);
+}
+
+.nav-user-menu .nav-theme-choices button {
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border-radius: .375rem;
+  opacity: .7;
+}
+
+/* Keyboard focus: the hover state plus a 2px line in the text colour, never a ring. */
+.nav-user-menu a:focus-visible,
+.nav-user-menu form button:focus-visible {
+  outline: none;
+  background: rgba(128, 128, 128, .22);
+  text-decoration: underline 2px;
+  text-underline-offset: .3em;
+}
+
+.nav-user-menu .nav-theme-choices button:hover { background: none; opacity: 1; }
+
+.nav-user-menu .nav-theme-choices button:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: inset 0 -2px 0 currentColor;
+}
+
+.nav-user-menu .nav-theme-choices button[aria-pressed='true'] {
+  background: var(--platform-menu-bg, #1c1c1c);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  opacity: 1;
+}
+
+.nav-user-menu .nav-theme-choices button[aria-pressed='true']:focus-visible {
+  box-shadow: inset 0 -2px 0 currentColor, 0 1px 2px rgba(0, 0, 0, .25);
+}
+
+/* The same buttons with their names, on the Preferences page. */
+.acct-appearance { margin-block-start: 1.75rem; }
+.nav-theme-choices.is-labelled { margin-block-start: .25rem; background: var(--acct-hover); }
+
+.nav-theme-choices.is-labelled button {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .4rem .8rem;
+  border: 0;
+  border-radius: .375rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: .85rem;
+  opacity: .75;
+  cursor: pointer;
+}
+
+.nav-theme-choices.is-labelled button:hover { opacity: 1; }
+
+.nav-theme-choices.is-labelled button[aria-pressed='true'] {
+  background: var(--acct-accent);
+  color: var(--acct-on-accent);
+  opacity: 1;
+}
+
+.nav-theme-choices.is-labelled button:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: inset 0 -2px 0 currentColor;
+}
+/* A sheet from the bottom on phones: the rows get the full width to tap. */
+@media (max-width: 640px) {
+  .nav-user-menu {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 60;
+    width: auto;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: .5rem .5rem calc(1rem + env(safe-area-inset-bottom));
+    border-radius: 1rem 1rem 0 0;
+  }
+
+  .nav-user-menu a,
+  .nav-user-menu button { padding-block: .7rem; }
+
+  /* The cookie button floats over the sheet's last row. */
+  body:has(.nav-user-menu:not([hidden])) .consent-fab { visibility: hidden; }
+}
+
+/* Unread marker on the bar: centred on the circle's edge along the diagonal,
+   the placement Material uses for badges on circular children. */
+.nav-dot {
+  position: absolute;
+  top: 14%;
+  right: 14%;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  /* Only red that clears 3:1 on all five mastheads; the deeper error red dies
+     at 2.9:1 on nocturne's near-black bar. */
+  background: #dc2626;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+/* Instead of a ring in the bar's colour, which differs per theme, the avatar
+   gives up a bite and the gap shows whatever is behind. */
+.nav-avatar-wrap:has(.nav-dot) .nav-avatar {
+  -webkit-mask-image: radial-gradient(circle at 86% 14%, transparent .375rem, #000 .4rem);
+  mask-image: radial-gradient(circle at 86% 14%, transparent .375rem, #000 .4rem);
+}
+
+/* Unread count, in the menu beside Replies. Proportions follow Primer and
+   Bootstrap: glyph two thirds of the pill, sides a quarter of it. */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  /* Round at one digit, grows to a pill from there. "99+" comes to 27px. */
+  min-width: .9375rem;
+  height: .9375rem;
+  /* Optical centring, not spacing: the font reserves 1.079em above the baseline
+     against 0.251em below, so a centred digit lands 0.6px low. */
+  padding: 0 .25rem 1px;
+  border-radius: 999px;
+  /* Material's dark-scheme error pair. The dot's red only reaches 2.6:1 on this
+     near-black menu. A theme repainting the surface must repaint these too. */
+  background: var(--platform-badge-bg, #ffb4ab);
+  color: var(--platform-badge-fg, #690005);
+  /* Pinned, or the digit inherits a theme's display serif and shifts height and
+     width per surface. lining-nums since a text serif may serve old-style. */
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .625rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Trims the box to cap height, centring the glyph exactly. Hands back the 1px. */
+@supports (text-box-edge: cap alphabetic) {
+  .nav-badge {
+    padding-bottom: 0;
+    text-box: trim-both cap alphabetic;
+  }
+}
+
