@@ -103,7 +103,6 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
         <div class="lx-entryhead" data-reveal="0">
             <h2><?= $headwordHtml(site_content('how.entryWord')) ?></h2>
             <em class="lx-pos"><?= e(site_content('how.entryPos')) ?></em>
-            <span class="lx-entryhead-rule" aria-hidden="true"></span>
         </div>
 
         <ol class="lx-steps">

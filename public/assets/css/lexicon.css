@@ -102,6 +102,7 @@
 
     --lx-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
     --lx-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --lx-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     --lx-measure: 76rem;
     --lx-gutter: clamp(1.25rem, 5vw, 4rem);
@@ -115,9 +116,12 @@
 
     --lx-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-    /* Bare RGB channels for consent.css `rgb(var(--primary-color-token)/.5)`; must stay defined. */
-    --primary-color: #1b3a6b;
-    --primary-color-token: 27 58 107;
+    /* Buttons match the settings modal's light palette (.acct-btn in platform-chrome.css). */
+    --lx-btn-ink: #111;
+    --lx-btn-surface: #fff;
+    --lx-btn-line: #e5e7eb;
+    --lx-btn-hover: #f1f1f1;
+    --lx-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================================================
@@ -293,13 +297,6 @@ hr {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--lx-ink-2);
-}
-
-.lx-eyebrow::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--lx-rule);
 }
 
 .lx-pos {
@@ -894,14 +891,6 @@ body.lx-drawer-open {
     font-size: clamp(1.1rem, 2vw, 1.5rem);
 }
 
-.lx-entryhead-rule {
-    flex: 1;
-    min-width: 2rem;
-    height: 1px;
-    background: var(--lx-rule);
-    transform: translateY(-0.35em);
-}
-
 .lx-steps {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
@@ -1042,7 +1031,8 @@ body.lx-drawer-open {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
     gap: clamp(1.75rem, 3.5vw, 2.75rem);
     margin: 0;
-    padding: 0;
+    padding: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
+    border-top: 2px solid var(--lx-ink);
     list-style: none;
 }
 
@@ -1449,22 +1439,21 @@ input[type='button'] {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    min-height: 2.875rem;
-    padding: 0.7rem 1.75rem;
-    border: 1px solid var(--lx-ink);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--lx-ink);
+    min-height: 2.5rem;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--lx-btn-line);
+    border-radius: 0.6rem;
+    background: var(--lx-btn-surface);
+    box-shadow: var(--lx-btn-shadow);
+    color: var(--lx-btn-ink);
     font-family: var(--lx-sans);
     font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-weight: 500;
     line-height: 1.2;
     text-align: center;
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.2s var(--lx-ease), color 0.2s var(--lx-ease),
-        border-color 0.2s var(--lx-ease), transform 0.15s var(--lx-ease);
+    transition: background 0.2s var(--lx-ease), filter 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease);
 }
 
 .lx-btn:hover,
@@ -1472,65 +1461,56 @@ input[type='button'] {
 button.button:hover,
 input[type='submit']:hover,
 input[type='button']:hover {
-    background: var(--lx-ink);
-    color: var(--lx-paper);
+    background: var(--lx-btn-hover);
     text-decoration: none;
 }
 
-.lx-btn:active,
-.button:active {
-    transform: translateY(1px);
-}
-
-/* Every .lx-btn is a pill now — shape is inherited from the base rule above.
-   Variants only differ by fill, border and text colour. */
+/* Hover only lifts the fill, as in the settings modal: no colour change. */
 .lx-btn-primary,
+.lx-authsubmit,
 .button.primary {
-    background: var(--lx-ink);
-    border-color: var(--lx-ink);
-    color: var(--lx-paper);
+    border-color: transparent;
+    background: var(--lx-btn-ink);
+    box-shadow: none;
+    color: var(--lx-btn-surface);
 }
 
 .lx-btn-primary:hover,
+.lx-authsubmit:hover,
 .button.primary:hover {
-    background: var(--lx-spot);
-    border-color: var(--lx-spot);
-    color: #fff;
+    background: var(--lx-btn-ink);
+    filter: brightness(1.25);
 }
 
 .lx-btn-gilt {
+    border-color: transparent;
     background: var(--lx-gilt);
-    border-color: var(--lx-gilt);
+    box-shadow: none;
     color: var(--lx-bind-deep);
 }
 
 .lx-btn-gilt:hover {
-    background: #ddb943;
-    border-color: #ddb943;
-    color: var(--lx-bind-deep);
+    background: var(--lx-gilt);
+    filter: brightness(1.08);
 }
 
+/* On the dark binding: the settings modal's dark palette. */
 .lx-btn-ghost {
-    border-color: var(--lx-rule-bind);
+    border-color: rgba(128, 128, 128, 0.3);
+    background: transparent;
+    box-shadow: none;
     color: var(--lx-on-bind);
 }
 
 .lx-btn-ghost:hover {
-    background: rgba(240, 241, 236, 0.1);
-    border-color: var(--lx-on-bind-2);
-    color: var(--lx-on-bind);
+    background: rgba(128, 128, 128, 0.16);
 }
 
 .lx-btn-quiet {
     border-color: transparent;
-    padding-inline: 0.75rem;
-}
-
-.lx-btn-quiet:hover {
     background: transparent;
-    color: var(--lx-spot);
-    border-color: transparent;
-    text-decoration: underline;
+    box-shadow: none;
+    padding-inline: 0.75rem;
 }
 
 .lx-nav.is-over .lx-btn-quiet {
@@ -1538,24 +1518,23 @@ input[type='button']:hover {
 }
 
 .lx-nav.is-over .lx-btn-quiet:hover {
-    color: var(--lx-gilt);
+    background: rgba(128, 128, 128, 0.16);
 }
 
 .lx-nav.is-over .lx-btn-primary {
     background: var(--lx-gilt);
-    border-color: var(--lx-gilt);
     color: var(--lx-bind-deep);
 }
 
 .lx-nav.is-over .lx-btn-primary:hover {
-    background: #ddb943;
-    border-color: #ddb943;
+    background: var(--lx-gilt);
+    filter: brightness(1.08);
 }
 
 .button.big,
 .lx-btn-big {
-    min-height: 3.25rem;
-    padding-inline: 1.9rem;
+    min-height: 3rem;
+    padding-inline: 1.5rem;
     font-size: 0.95rem;
 }
 
@@ -1587,11 +1566,11 @@ input[type='button']:hover {
 .lx-chip a:focus-visible,
 .lx-social a:focus-visible,
 .lx-gallery-body h3 a:focus-visible {
-    outline: 2px solid var(--lx-spot);
+    outline: 2px solid var(--lx-btn-ink);
     outline-offset: 2px;
 }
 
-/* On the transparent-over-hero nav the spot navy vanishes into the binding;
+/* On the transparent-over-hero nav the dark ring vanishes into the binding;
    the gilt reads on both paper and the dark bar. */
 .lx-nav.is-over .lx-btn:focus-visible,
 .lx-nav.is-over .button:focus-visible {
@@ -2721,20 +2700,7 @@ label {
 
 .lx-authsubmit {
     width: 100%;
-    min-height: 3.25rem;
     margin-top: 2rem;
-    background: var(--lx-ink);
-    border-color: var(--lx-ink);
-    color: var(--lx-paper);
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
-.lx-authsubmit:hover {
-    background: var(--lx-spot);
-    border-color: var(--lx-spot);
-    color: #fff;
 }
 
 .lx-authhelp {
@@ -2783,6 +2749,263 @@ label {
 @media (max-width: 420px) {
     .lx-authbar {
         padding-inline: 1.25rem;
+    }
+}
+
+/* --- Error pages ------------------------------------------------------- */
+
+/* The auth chrome with the mark in the bar instead of above a form. */
+.lx-authbar .lx-authmark {
+    min-height: 2.75rem;
+    margin: 0;
+}
+
+.lx-errormain {
+    align-items: center;
+}
+
+/* Painted like the confirm dialog and the menus in platform-chrome.css, so it
+   follows the reader's light or dark choice. Muted is 70% rather than the
+   menus' 62%, which falls under 4.5:1 for body text on the light card. */
+.lx-error {
+    --error-fg: var(--platform-menu-fg, #f2f2f2);
+    --error-muted: color-mix(in srgb, var(--error-fg) 70%, transparent);
+    --error-line: rgba(128, 128, 128, 0.3);
+    --error-hover: rgba(128, 128, 128, 0.16);
+    --error-tone: #a8c7fa;
+    --error-accent: #f2f2f2;
+    --error-on-accent: #111;
+    --error-btn-bg: transparent;
+    --error-btn-shadow: none;
+    display: grid;
+    gap: 2.5rem;
+    width: 100%;
+    max-width: 60rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid var(--error-line);
+    border-radius: 1rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--error-fg);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+}
+
+.lx-error[data-tone='warning'] { --error-tone: #ffd47d; }
+.lx-error[data-tone='danger'] { --error-tone: #ffb4ab; }
+
+[data-mode='light'] .lx-error {
+    --error-tone: #2659b5;
+    --error-hover: var(--lx-btn-hover);
+    --error-accent: var(--lx-btn-ink);
+    --error-on-accent: var(--lx-btn-surface);
+    --error-btn-bg: var(--lx-btn-surface);
+    --error-btn-shadow: var(--lx-btn-shadow);
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+[data-mode='light'] .lx-error[data-tone='warning'] { --error-tone: #8a5a00; }
+[data-mode='light'] .lx-error[data-tone='danger'] { --error-tone: #b3261e; }
+
+@media (min-width: 720px) {
+    .lx-error {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+}
+
+.lx-error-badge {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--error-tone) 16%, transparent);
+    color: var(--error-tone);
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.lx-error-title {
+    margin: 1.5rem 0 0;
+    color: var(--error-fg);
+    font-family: var(--lx-serif);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.lx-error-text {
+    max-width: 28rem;
+    margin: 1.25rem 0 0;
+    color: var(--error-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.lx-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.lx-error-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--error-line);
+    border-radius: 0.6rem;
+    background: var(--error-btn-bg);
+    box-shadow: var(--error-btn-shadow);
+    color: var(--error-fg);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s var(--lx-ease), filter 0.2s var(--lx-ease);
+}
+
+/* Same as the settings modal: hover and focus only change the fill. */
+.lx-error-btn:hover,
+.lx-error-btn:focus-visible {
+    background: var(--error-hover);
+    outline: none;
+    text-decoration: none;
+}
+
+.lx-error-btn.is-primary {
+    border-color: transparent;
+    background: var(--error-accent);
+    box-shadow: none;
+    color: var(--error-on-accent);
+}
+
+.lx-error-btn.is-primary:hover,
+.lx-error-btn.is-primary:focus-visible {
+    background: var(--error-accent);
+    filter: brightness(1.25);
+}
+
+.lx-error-more {
+    margin: 0;
+    color: var(--error-muted);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+
+.lx-error-links {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--error-line);
+    list-style: none;
+}
+
+.lx-error-links li {
+    border-bottom: 1px solid var(--error-line);
+}
+
+.lx-error-link {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    /* Text lines up with the hairlines; only the hover fill reaches past them. */
+    margin: 0.25rem -0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    color: var(--error-fg);
+    font-family: var(--lx-sans);
+    transition: background 0.2s var(--lx-ease);
+}
+
+.lx-error-link:hover,
+.lx-error-link:focus-visible {
+    background: var(--error-hover);
+    outline: none;
+    text-decoration: none;
+}
+
+.lx-error-link-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.lx-error-link-text {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--error-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.lx-error-link svg {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.125rem;
+    color: var(--error-muted);
+    transition: transform 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-error-link:hover svg,
+.lx-error-link:focus-visible svg {
+    color: var(--error-tone);
+    transform: translate(2px, -2px);
+}
+
+.lx-error-debug {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--error-line);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+
+.lx-error-debug dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+}
+
+.lx-error-debug dt {
+    color: var(--error-muted);
+    font-weight: 600;
+}
+
+.lx-error-debug dd {
+    margin: 0;
+    font-family: var(--lx-mono);
+    overflow-wrap: anywhere;
+}
+
+.lx-error-debug pre {
+    max-height: 24rem;
+    margin: 1.25rem 0 0;
+    padding: 1rem;
+    overflow: auto;
+    border-radius: 0.5rem;
+    background: var(--error-hover);
+    font-family: var(--lx-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lx-error-link svg {
+        transition: none;
+    }
+
+    .lx-error-link:hover svg,
+    .lx-error-link:focus-visible svg {
+        transform: none;
     }
 }
 
@@ -3407,42 +3630,6 @@ label {
     outline-offset: 2px;
 }
 
-/* Cookie banner buttons: consent.css defines none and its panel is near-black. */
-.consent-banner__inner .button {
-    border-color: var(--lx-rule-bind);
-    color: var(--lx-on-bind);
-    background: transparent;
-}
-
-.consent-banner__inner .button:hover {
-    background: rgba(240, 241, 236, 0.1);
-    border-color: var(--lx-on-bind-2);
-    color: var(--lx-on-bind);
-}
-
-.consent-banner__inner .button.primary {
-    background: var(--lx-gilt);
-    border-color: var(--lx-gilt);
-    color: var(--lx-bind-deep);
-}
-
-.consent-banner__inner .button.primary:hover {
-    background: #ddb943;
-    border-color: #ddb943;
-    color: var(--lx-bind-deep);
-}
-
-.consent-banner__inner .button.alt {
-    border-color: transparent;
-    color: var(--lx-on-bind-2);
-    text-decoration: underline;
-}
-
-.consent-banner__inner .button.alt:hover {
-    background: transparent;
-    border-color: transparent;
-}
-
 .text-center {
     text-align: center;
 }
@@ -3456,7 +3643,7 @@ label {
     padding: 1rem;
     background: var(--lx-paper-sunk);
     border-radius: var(--lx-radius);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--lx-mono);
     font-size: 0.8rem;
 }
 
@@ -4626,7 +4813,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 }
 .lx-recovery-codes code,
 .lx-twofactor-secret {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--lx-mono);
     letter-spacing: 0.08em;
 }
 .lx-twofactor-qr {
