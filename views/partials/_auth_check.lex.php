@@ -20,5 +20,5 @@
     <span class="lx-captcha-mark" aria-hidden="true"></span>
     <span data-captcha-text></span>
 </p>
-<script src="/assets/js/captcha.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/captcha.js') ?>"
-        data-worker="/assets/vendor/altcha/pbkdf2.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/vendor/altcha/pbkdf2.js') ?>" defer></script>
+<script src="<?= e(versioned_asset('/assets/js/captcha.js')) ?>"
+        data-worker="<?= e(versioned_asset('/assets/vendor/altcha/pbkdf2.js')) ?>" defer></script>

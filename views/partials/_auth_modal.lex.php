@@ -26,8 +26,8 @@ if (!auth()->check()) {
      data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>"
      data-two-factor-url="<?= e(lurl('/login/two-factor')) ?>"
      data-captcha-url="/captcha/challenge"
-     data-captcha-script="/assets/js/captcha.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/captcha.js') ?>"
-     data-captcha-worker="/assets/vendor/altcha/pbkdf2.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/vendor/altcha/pbkdf2.js') ?>"
+     data-captcha-script="<?= e(versioned_asset('/assets/js/captcha.js')) ?>"
+     data-captcha-worker="<?= e(versioned_asset('/assets/vendor/altcha/pbkdf2.js')) ?>"
      data-text="<?= e((string) json_encode($authModalText)) ?>">
   <div class="lex-auth-card">
     <button type="button" class="lex-auth-close" data-auth-close aria-label="<?= e($t('authModal.close')) ?>">&times;</button>
@@ -178,5 +178,5 @@ if (!auth()->check()) {
   }
 </style>
 
-<script defer src="/assets/js/auth-modal.js?v=<?= (int) filemtime(ROOT_PATH.'/public/assets/js/auth-modal.js') ?>"></script>
+<script defer src="<?= e(versioned_asset('/assets/js/auth-modal.js')) ?>"></script>
 <?php } ?>

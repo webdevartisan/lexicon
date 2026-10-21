@@ -3,7 +3,7 @@
 {% block title %}{{ t('setup.start.title') }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/blog-start.css?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/css/blog-start.css') ?>">
+<link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/blog-start.css')) ?>">
 {% endblock %}
 
 {% block body %}

@@ -18,8 +18,8 @@ $old = old();
     <script defer src="/vendor/alpine/alpine.min.js"></script>
 
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
-    <link rel="stylesheet" href="/cp-assets/css/fonts.css">
-    <link rel="stylesheet" href="/cp-assets/css/cp.css">
+    <link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/fonts.css')) ?>">
+    <link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/cp.css')) ?>">
     <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
     {# The notification bell and panel are platform chrome, shared with the front and every theme. #}
     <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>">
