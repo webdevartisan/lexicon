@@ -87,7 +87,6 @@
        clear WCAG 1.4.11's 3:1 for UI component boundaries. --lx-rule-strong is
        too faint for that, being drawn for decorative rules. */
     --lx-field-line: #7d8375;
-    --lx-spot: #1b3a6b;
 
     --lx-on-bind: #f0f1ec;
     --lx-on-bind-2: #a8b2c6;
@@ -161,7 +160,7 @@ video {
 }
 
 a {
-    color: var(--lx-spot);
+    color: var(--lx-ink);
     text-decoration: none;
     text-underline-offset: 0.18em;
     text-decoration-thickness: from-font;
@@ -220,7 +219,7 @@ hr {
 }
 
 :focus-visible {
-    outline: 2px solid var(--lx-spot);
+    outline: 2px solid var(--lx-ink);
     outline-offset: 3px;
     border-radius: 2px;
 }
@@ -1125,7 +1124,7 @@ body.lx-drawer-open {
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.04em;
-    color: var(--lx-spot);
+    color: var(--lx-ink);
 }
 
 .lx-cite-more span {
@@ -1173,7 +1172,7 @@ body.lx-drawer-open {
 }
 
 .lx-note > summary:hover {
-    color: var(--lx-spot);
+    color: var(--lx-ink);
 }
 
 .lx-note-n {
@@ -1976,7 +1975,7 @@ input[type='button']:hover {
 }
 
 .lx-pagination a:focus-visible {
-    outline: 2px solid var(--lx-spot);
+    outline: 2px solid var(--lx-ink);
     outline-offset: 2px;
 }
 
@@ -2195,7 +2194,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-    border-color: var(--lx-spot);
+    border-color: var(--lx-ink);
     box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.14);
 }
 
@@ -2291,6 +2290,11 @@ label {
     max-width: 42rem;
 }
 
+/* Links are ink like the text around them, so the underline is what marks them. */
+.lx-page-content a {
+    text-decoration: underline;
+}
+
 .lx-page-content h2 {
     margin-top: 2.5rem;
     font-size: clamp(1.4rem, 2.4vw, 1.85rem);
@@ -2347,8 +2351,7 @@ label {
 
 .lx-authbar-back:hover,
 .lx-authbar-alt a:hover {
-    color: var(--lx-spot);
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 .lx-authbar-back svg {
@@ -2720,7 +2723,7 @@ label {
 }
 
 .lx-authhelp a:hover {
-    color: var(--lx-spot);
+    text-decoration: underline;
 }
 
 .lx-authlegal {
@@ -3957,7 +3960,7 @@ label {
     margin-block-start: 1rem;
     padding: 0.75rem 1rem;
     border: 1px solid var(--lx-rule-strong);
-    border-inline-start: 3px solid var(--lx-spot);
+    border-inline-start: 3px solid var(--lx-ink);
     border-radius: var(--lx-radius);
     background: var(--lx-paper-sunk);
 }
@@ -4140,7 +4143,7 @@ label {
 }
 .lx-icon-btn:hover { background: var(--lx-ink); border-color: var(--lx-ink); color: var(--lx-paper); }
 .lx-icon-btn:focus-visible,
-.lx-icon-btn:focus-within { outline: 2px solid var(--lx-spot); outline-offset: 2px; }
+.lx-icon-btn:focus-within { outline: 2px solid var(--lx-ink); outline-offset: 2px; }
 .lx-icon-btn[hidden] { display: none; }
 .lx-icon-btn-danger { color: var(--lx-danger); border-color: #e4c2be; }
 .lx-icon-btn-danger:hover { background: var(--lx-danger); border-color: var(--lx-danger); color: #fff; }
@@ -4528,7 +4531,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 }
 
 .lx-invite-step-btn:focus-visible {
-    outline: 2px solid var(--lx-spot);
+    outline: 2px solid var(--lx-ink);
     outline-offset: 2px;
 }
 
@@ -4681,18 +4684,6 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     transform: scaleX(-1);
 }
 
-.lx-invite-primary {
-    border-color: var(--lx-ink);
-    background: var(--lx-ink);
-    color: var(--lx-paper);
-}
-
-.lx-invite-primary:hover {
-    border-color: var(--lx-spot);
-    background: var(--lx-spot);
-    color: #fff;
-}
-
 .lx-invite-back {
     border-color: var(--lx-rule-strong);
 }
@@ -4792,7 +4783,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     text-decoration: none;
     transition: border-color 0.2s var(--lx-ease), transform 0.2s var(--lx-ease);
 }
-.lx-welcome-choice:hover { border-color: var(--lx-spot); transform: translateY(-2px); }
+.lx-welcome-choice:hover { border-color: var(--lx-ink); transform: translateY(-2px); }
 .lx-welcome-choice-title {
     font-family: var(--lx-serif);
     font-size: 1.5rem;
@@ -4804,7 +4795,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     transition: text-decoration-color 0.2s var(--lx-ease);
 }
 .lx-welcome-choice:hover .lx-welcome-choice-title { text-decoration-color: currentColor; }
-.lx-welcome-choice:focus-visible { outline: none; border-color: var(--lx-spot); }
+.lx-welcome-choice:focus-visible { outline: none; border-color: var(--lx-ink); }
 .lx-welcome-choice:focus-visible .lx-welcome-choice-title { text-decoration-color: currentColor; text-decoration-thickness: 3px; }
 .lx-welcome-choice-text { color: var(--lx-ink-2); font-size: 0.95rem; }
 @media (prefers-reduced-motion: reduce) {

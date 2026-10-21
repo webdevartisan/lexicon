@@ -58,7 +58,7 @@ $arrowBack = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                 <?= csrf_field() ?>
                 <button type="submit" class="lx-btn lx-btn-quiet"><?= e($t('auth.inviteDecline')) ?></button>
             </form>
-            <button type="button" class="lx-btn lx-invite-primary" data-wizard-next><?= e($t('auth.inviteContinue')) ?><?= $arrow ?></button>
+            <button type="button" class="lx-btn lx-btn-primary lx-invite-primary" data-wizard-next><?= e($t('auth.inviteContinue')) ?><?= $arrow ?></button>
         </footer>
     </section>
 
@@ -139,7 +139,7 @@ $arrowBack = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 
             <footer class="lx-invite-foot">
                 <button type="button" class="lx-btn lx-invite-back" data-wizard-back><?= $arrowBack ?><?= e($t('auth.inviteBack')) ?></button>
-                <button type="submit" class="lx-btn lx-invite-primary"><?= e($t('auth.inviteCreateAndJoin')) ?><?= $arrow ?></button>
+                <button type="submit" class="lx-btn lx-btn-primary lx-invite-primary"><?= e($t('auth.inviteCreateAndJoin')) ?><?= $arrow ?></button>
             </footer>
         </form>
     </section>
