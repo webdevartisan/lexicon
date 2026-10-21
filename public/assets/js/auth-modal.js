@@ -21,6 +21,8 @@
   var hint = modal.querySelector('[data-auth-hint]');
   var forgot = modal.querySelector('[data-auth-forgot]');
   var registerOnly = modal.querySelector('[data-auth-register-only]');
+  var footLinks = modal.querySelector('[data-auth-foot-links]');
+  var legal = modal.querySelector('[data-auth-legal]');
   var ageInput = modal.querySelector('[data-auth-age]');
   var toggle = modal.querySelector('[data-auth-toggle]');
   var checkStatus = modal.querySelector('[data-captcha-status]');
@@ -209,6 +211,13 @@
     codeForm.toggleAttribute('hidden', step !== 'code');
     forgotForm.toggleAttribute('hidden', step !== 'forgot');
     successBox.toggleAttribute('hidden', step !== 'success');
+    if (step !== 'password') showLegal(false);
+  }
+
+  // The agreement sentence replaces the footer links only while an account is being created.
+  function showLegal(registering) {
+    legal.toggleAttribute('hidden', !registering);
+    footLinks.toggleAttribute('hidden', registering);
   }
 
   function backToEmail() {
@@ -296,6 +305,7 @@
         passInput.setAttribute('autocomplete', 'current-password');
         hint.setAttribute('hidden', '');
         registerOnly.setAttribute('hidden', '');
+        showLegal(false);
         forgot.removeAttribute('hidden');
       } else {
         title.textContent = tr('createTitle');
@@ -304,6 +314,7 @@
         passInput.setAttribute('autocomplete', 'new-password');
         hint.removeAttribute('hidden');
         registerOnly.removeAttribute('hidden');
+        showLegal(true);
         ageInput.checked = false;
         forgot.setAttribute('hidden', '');
         startRegisterCheck();

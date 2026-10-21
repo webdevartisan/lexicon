@@ -58,15 +58,6 @@ if (!auth()->check()) {
           <input type="checkbox" data-auth-age value="1" data-error="<?= e($t('auth.ageRequired', ['age' => $authModalAge])) ?>">
           <?= e($t('auth.ageConfirm', ['age' => $authModalAge])) ?>
         </label>
-        <p class="lex-auth-hint">
-          <?php
-          // The sentence shape differs per language, so the locale owns it and the links go in as placeholders.
-          echo $t('auth.legalNotice', [
-              'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
-              'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
-          ]);
-          ?>
-        </p>
       </div>
       <p class="lex-auth-status" data-captcha-status role="status" aria-live="polite" hidden>
         <span class="lex-auth-status-mark" aria-hidden="true"></span>
@@ -102,10 +93,20 @@ if (!auth()->check()) {
       <p class="lex-auth-success" data-auth-success-msg><?= e($t('authModal.loggedIn')) ?></p>
     </div>
 
-    <p class="lex-auth-foot">
+    <p class="lex-auth-foot" data-auth-foot-links>
       <a href="<?= e(lurl('/login').'?return_to='.urlencode($authModalReturnTo)) ?>"><?= e($t('authModal.fullPage')) ?></a>
+      <a href="<?= e(lurl('/terms')) ?>"><?= e($t('footer.linkTerms')) ?></a>
       <span aria-hidden="true">&middot;</span>
-      <span>Lexicon</span>
+      <a href="<?= e(lurl('/privacy')) ?>"><?= e($t('footer.linkPrivacy')) ?></a>
+    </p>
+    <p class="lex-auth-foot" data-auth-legal hidden>
+      <?php
+      // The sentence shape differs per language, so the locale owns it and the links go in as placeholders.
+      echo $t('auth.legalNotice', [
+          'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
+          'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
+      ]);
+      ?>
     </p>
   </div>
 </div>
@@ -143,7 +144,7 @@ if (!auth()->check()) {
   .lex-auth-card .lex-auth-error { margin: 0 0 .75rem; padding: .5rem .65rem; border-radius: 6px; background: #fdecec; color: #b3261e; font-size: .8rem; }
   .lex-auth-card .lex-auth-label { display: block; font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #444b55; margin-bottom: .35rem; }
   .lex-auth-card .lex-auth-labelrow { display: flex; align-items: center; justify-content: space-between; }
-  .lex-auth-card .lex-auth-toggle { font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; color: #5c6470 !important; cursor: pointer; padding: .25rem; width: auto; }
+  .lex-auth-card .lex-auth-toggle { font-size: .8125rem; color: #5c6470 !important; cursor: pointer; padding: .25rem; width: auto; }
   .lex-auth-card .lex-auth-input { display: block; width: 100%; height: auto; padding: .7rem .75rem; margin-bottom: .75rem; border: 1px solid #cdd3db; border-radius: 6px; background: #fff; color: #16181d; font-size: 1rem; }
   /* Focus thickens the bottom edge instead of drawing a ring, as the themes do. */
   .lex-auth-card .lex-auth-input:focus { border-color: #16181d; box-shadow: inset 0 -2px 0 #16181d; outline: none; }
@@ -165,8 +166,11 @@ if (!auth()->check()) {
   .lex-auth-card .lex-auth-links a, .lex-auth-card .lex-auth-linkbtn { padding: 0; width: auto; font-size: .78rem; color: #5c6470 !important; text-decoration: underline; cursor: pointer; }
   .lex-auth-card .lex-auth-links a:hover, .lex-auth-card .lex-auth-linkbtn:hover { color: #16181d !important; }
   .lex-auth-card .lex-auth-success { margin: .5rem 0 1rem; font-size: .95rem; font-weight: 600; color: #1b7f4b; }
-  .lex-auth-card .lex-auth-foot { display: flex; gap: .4rem; justify-content: center; margin: 1.25rem 0 0; font-size: .72rem; color: #9aa1ab; }
-  .lex-auth-card .lex-auth-foot a { color: #9aa1ab; text-decoration: underline; }
+  .lex-auth-card .lex-auth-foot { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: 1.25rem 0 0; font-size: .75rem; color: #5c6470; text-align: center; }
+  .lex-auth-card .lex-auth-foot[hidden] { display: none; }
+  .lex-auth-card .lex-auth-foot[data-auth-legal]:not([hidden]) { display: block; }
+  .lex-auth-card .lex-auth-foot a { color: #5c6470; text-decoration: underline; }
+  .lex-auth-card .lex-auth-foot a:first-child { flex-basis: 100%; }
   .lex-auth-card .lex-auth-foot a:hover { color: #16181d; }
   @media (max-width: 480px) {
     .lex-auth-overlay { align-items: flex-end; padding: 0; }

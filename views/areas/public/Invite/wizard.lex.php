@@ -135,11 +135,6 @@ $arrowBack = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
                         <p class="lx-field-error"><?= e($message) ?></p>
                     <?php } ?>
                 </div>
-
-                <p class="lx-field-hint"><?= strtr(e($t('auth.legalNotice')), [
-                    '{terms}' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
-                    '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
-                ]) ?></p>
             </div>
 
             <footer class="lx-invite-foot">
@@ -150,3 +145,8 @@ $arrowBack = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
     </section>
 </div>
 {% endblock %}
+
+{% block legal %}<?= strtr(e($t('auth.legalNotice')), [
+    '{terms}' => '<a href="'.e(lurl('/terms')).'">'.e($t('auth.termsLink')).'</a>',
+    '{privacy}' => '<a href="'.e(lurl('/privacy')).'">'.e($t('auth.privacyLink')).'</a>',
+]) ?>{% endblock %}
