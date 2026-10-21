@@ -1,4 +1,4 @@
-<?php  //[STAMP] 3f2bbf62c33c109c9742c5475c70140f
+<?php  //[STAMP] b28b579d485e3a18b47f3b33585ce74f
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4961,6 +4961,18 @@ trait JourneyTesterActions
      */
     public function scrollDownTo(string $selector): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('scrollDownTo', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Open the media library's upload panel unless it already shows, as it does on an empty library.
+     * Upload messages appear inside it, so a closed panel hides them.
+     * @see \Support\Helper\Lexicon::openTheMediaUploader()
+     */
+    public function openTheMediaUploader(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('openTheMediaUploader', func_get_args()));
     }
 
  

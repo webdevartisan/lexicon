@@ -17,17 +17,19 @@ $I->signInAs('writer');
 
 // A category and a tag
 $I->amOnPage("{$blog}/categories");
-$I->fillField('input[placeholder^="New category"]', 'Field notes');
-$I->pressKey('input[placeholder^="New category"]', WebDriverKeys::ENTER);
-$I->waitForText('Category added');
-$I->fillField('input[placeholder^="New tag"]', 'walks');
-$I->pressKey('input[placeholder^="New tag"]', WebDriverKeys::ENTER);
-$I->waitForText('Tag added');
+foreach (['category' => 'Field notes', 'tag' => 'walks'] as $type => $name) {
+    $I->click("button[data-taxonomy=\"add\"][data-type=\"{$type}\"]");
+    $I->waitForElementVisible('#taxonomyModal input[name="name"]');
+    $I->fillField('#taxonomyModal input[name="name"]', $name);
+    $I->pressKey('#taxonomyModal input[name="name"]', WebDriverKeys::ENTER);
+    $I->waitForText(ucfirst($type).' added');
+}
 $I->seeThePageLooksRight('20-category-and-tag');
 
 // An image in the media library
 $inline = $I->makeImage('walk-inline', '#8f5a3b');
 $I->amOnPage("{$blog}/media");
+$I->openTheMediaUploader();
 $I->attachFile('#media-uploader-input', $inline);
 $I->waitForText("{$inline} uploaded", 15);
 $I->dontSee('Upload failed');
@@ -116,7 +118,8 @@ $I->amOnPage('/en/dashboard/post');
 $I->seeThePageLooksRight('27-posts-list');
 $I->amOnPage('/en/dashboard/post/new');
 $I->waitForElement('#content_ifr', 15);
-$I->fillField('title', 'A post for tomorrow');
+// A stamp keeps the slug free when the journey runs again on the same blog
+$I->fillField('title', 'A post for tomorrow '.date('His'));
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $scheduledSlug = $I->grabValueFrom('slug');
 $I->scrollDownTo('#content_ifr');
