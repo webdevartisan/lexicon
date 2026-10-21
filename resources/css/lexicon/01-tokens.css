@@ -57,9 +57,9 @@
     --lx-z-modal: 1100;
 
     /* Buttons match the settings modal's light palette (.acct-btn in platform-chrome.css). */
-    --lx-btn-ink: #111;
+    --lx-btn-ink: #1e293b;
     --lx-btn-surface: #fff;
-    --lx-btn-line: #e5e7eb;
+    --lx-btn-line: #e2e8f0;
     --lx-btn-hover: #f1f1f1;
     --lx-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }

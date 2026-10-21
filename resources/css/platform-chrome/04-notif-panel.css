@@ -14,52 +14,52 @@
 .notif-page {
   --notif-fg: currentColor;
   --notif-muted: color-mix(in srgb, currentColor 70%, transparent);
-  --notif-line: rgba(128, 128, 128, .3);
+  --notif-line: var(--chrome-line);
   --notif-quote-bg: rgba(128, 128, 128, .12);
-  --notif-chip-bg: rgba(128, 128, 128, .16);
+  --notif-chip-bg: var(--chrome-hover);
   --notif-tabs-bg: rgba(128, 128, 128, .14);
   --notif-tab-on-bg: var(--notif-surface, #fff);
   /* Concrete colours, not currentColor: currentColor on a button resolves to
      the button's own text colour, which made the filled button white on white. */
-  --notif-primary-bg: #1c1c1c;
-  --notif-primary-fg: #fff;
-  --notif-unread: #15803d;
-  --notif-tone-positive: #1f6f43;
-  --notif-tone-attention: #8a5a00;
-  --notif-tone-critical: #b3261e;
-  --notif-tone-neutral: #2659b5;
+  --notif-primary-bg: var(--chrome-light-ink);
+  --notif-primary-fg: var(--chrome-light-bg);
+  --notif-unread: var(--chrome-light-unread);
+  --notif-tone-positive: var(--chrome-light-ok);
+  --notif-tone-attention: var(--chrome-light-warning);
+  --notif-tone-critical: var(--chrome-light-danger);
+  --notif-tone-neutral: var(--chrome-light-info);
 }
 
 .notif-panel {
-  --notif-surface: var(--platform-menu-bg, #1c1c1c);
-  --notif-fg: var(--platform-menu-fg, #f2f2f2);
+  --notif-surface: var(--platform-menu-bg, var(--chrome-dark-bg));
+  --notif-fg: var(--platform-menu-fg, var(--chrome-dark-ink));
   --notif-muted: color-mix(in srgb, var(--notif-fg) 70%, transparent);
   --notif-tab-on-bg: #2c2c2c;
-  --notif-primary-bg: #f2f2f2;
-  --notif-primary-fg: #1c1c1c;
-  --notif-unread: #3ddc84;
+  --notif-primary-bg: var(--chrome-dark-ink);
+  --notif-primary-fg: var(--chrome-dark-bg);
+  --notif-unread: var(--chrome-dark-unread);
   /* Light enough to clear 4.5:1 on the dark surface. */
-  --notif-tone-positive: #7ddba0;
-  --notif-tone-attention: #ffd47d;
-  --notif-tone-critical: #ffb4ab;
-  --notif-tone-neutral: #a8c7fa;
+  --notif-tone-positive: var(--chrome-dark-ok);
+  --notif-tone-attention: var(--chrome-dark-warning);
+  --notif-tone-critical: var(--chrome-dark-danger);
+  --notif-tone-neutral: var(--chrome-dark-info);
 }
 
 /* Light mode, chosen in the user menu. Keyed on data-mode, which appearance.js
    sets; the dashboard's .dark class on <html> is static and present in both. */
 [data-mode='light'] .notif-panel {
-  --notif-surface: #fff;
-  --notif-fg: #1e293b;
-  --notif-tab-on-bg: #fff;
-  --notif-primary-bg: #1e293b;
-  --notif-primary-fg: #fff;
-  --notif-unread: #15803d;
-  --notif-tone-positive: #1f6f43;
-  --notif-tone-attention: #8a5a00;
-  --notif-tone-critical: #b3261e;
-  --notif-tone-neutral: #2659b5;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  --notif-surface: var(--chrome-light-bg);
+  --notif-fg: var(--chrome-light-ink);
+  --notif-tab-on-bg: var(--chrome-light-bg);
+  --notif-primary-bg: var(--chrome-light-ink);
+  --notif-primary-fg: var(--chrome-light-bg);
+  --notif-unread: var(--chrome-light-unread);
+  --notif-tone-positive: var(--chrome-light-ok);
+  --notif-tone-attention: var(--chrome-light-warning);
+  --notif-tone-critical: var(--chrome-light-danger);
+  --notif-tone-neutral: var(--chrome-light-info);
+  border: 1px solid var(--chrome-light-edge);
+  box-shadow: var(--chrome-light-shadow);
 }
 
 /* Dark backgrounds the pages can sit on: the control panel's dark mode. The front
@@ -68,11 +68,11 @@
   --notif-surface: #1f2937;
   --notif-primary-bg: #f1f5f9;
   --notif-primary-fg: #1f2937;
-  --notif-unread: #3ddc84;
-  --notif-tone-positive: #7ddba0;
-  --notif-tone-attention: #ffd47d;
-  --notif-tone-critical: #ffb4ab;
-  --notif-tone-neutral: #a8c7fa;
+  --notif-unread: var(--chrome-dark-unread);
+  --notif-tone-positive: var(--chrome-dark-ok);
+  --notif-tone-attention: var(--chrome-dark-warning);
+  --notif-tone-critical: var(--chrome-dark-danger);
+  --notif-tone-neutral: var(--chrome-dark-info);
   --notif-tab-on-bg: #1f2937;
 }
 
@@ -97,7 +97,7 @@
 
 .nav-bell-btn:hover,
 .nav-bell-btn[aria-expanded='true'] {
-  background: rgba(128, 128, 128, .16);
+  background: var(--chrome-hover);
   border-color: rgba(128, 128, 128, .28);
   text-decoration: none;
 }

@@ -5,9 +5,9 @@
 /* Light, chosen in the user menu (appearance.js sets data-mode). html raises it
    above a theme's own :root repaint, so the choice wins inside themes too. */
 html[data-mode='light'] {
-  --platform-menu-bg: #fff;
-  --platform-menu-fg: #1e293b;
-  --platform-badge-bg: #b3261e;
+  --platform-menu-bg: var(--chrome-light-bg);
+  --platform-menu-fg: var(--chrome-light-ink);
+  --platform-badge-bg: var(--chrome-light-danger);
   --platform-badge-fg: #fff;
 }
 
@@ -19,13 +19,13 @@ html[data-mode='light'] {
   min-width: 170px;
   padding: .3rem;
   border-radius: 6px;
-  background: var(--platform-menu-bg, #1c1c1c);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+  background: var(--platform-menu-bg, var(--chrome-dark-bg));
+  box-shadow: var(--chrome-dark-shadow);
 }
 
 [data-mode='light'] .platform-menu-list {
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  border: 1px solid var(--chrome-light-edge);
+  box-shadow: var(--chrome-light-shadow);
 }
 
 .platform-menu-list form,
@@ -50,7 +50,7 @@ html[data-mode='light'] {
   border: 0;
   border-radius: 4px;
   background: none;
-  color: var(--platform-menu-fg, #f2f2f2);
+  color: var(--platform-menu-fg, var(--chrome-dark-ink));
   font: inherit;
   font-size: .85em;
   text-align: start;

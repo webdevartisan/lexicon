@@ -5,30 +5,30 @@
    --------------------------------------------------------------------------- */
 
 .confirm-card {
-  --confirm-fg: var(--platform-menu-fg, #f2f2f2);
+  --confirm-fg: var(--platform-menu-fg, var(--chrome-dark-ink));
   --confirm-muted: color-mix(in srgb, var(--confirm-fg) 70%, transparent);
-  --confirm-line: rgba(128, 128, 128, .3);
-  --confirm-hover: rgba(128, 128, 128, .14);
-  --confirm-tone: #a8c7fa;
-  background: var(--platform-menu-bg, #1c1c1c);
+  --confirm-line: var(--chrome-line);
+  --confirm-hover: var(--chrome-hover);
+  --confirm-tone: var(--chrome-dark-info);
+  background: var(--platform-menu-bg, var(--chrome-dark-bg));
   color: var(--confirm-fg);
   border: 1px solid var(--confirm-line);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+  box-shadow: var(--chrome-dark-shadow);
 }
 
-.confirm-card[data-tone='danger'] { --confirm-tone: #ffb4ab; }
-.confirm-card[data-tone='warning'] { --confirm-tone: #ffd47d; }
+.confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-dark-danger); }
+.confirm-card[data-tone='warning'] { --confirm-tone: var(--chrome-dark-warning); }
 
 [data-mode='light'] .confirm-card {
-  --confirm-fg: #1e293b;
-  --confirm-tone: #2659b5;
-  background: #fff;
-  border-color: #e2e8f0;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  --confirm-fg: var(--chrome-light-ink);
+  --confirm-tone: var(--chrome-light-info);
+  background: var(--chrome-light-bg);
+  border-color: var(--chrome-light-edge);
+  box-shadow: var(--chrome-light-shadow);
 }
 
-[data-mode='light'] .confirm-card[data-tone='danger'] { --confirm-tone: #b3261e; }
-[data-mode='light'] .confirm-card[data-tone='warning'] { --confirm-tone: #8a5a00; }
+[data-mode='light'] .confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-light-danger); }
+[data-mode='light'] .confirm-card[data-tone='warning'] { --confirm-tone: var(--chrome-light-warning); }
 
 .confirm-card .confirm-badge {
   background: color-mix(in srgb, var(--confirm-tone) 16%, transparent);

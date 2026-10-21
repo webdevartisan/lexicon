@@ -31,7 +31,7 @@
 
 .nav-user-btn:hover,
 .nav-user-btn[aria-expanded='true'] {
-  background: rgba(128, 128, 128, .16);
+  background: var(--chrome-hover);
   border-color: rgba(128, 128, 128, .28);
 }
 
@@ -112,7 +112,7 @@
   justify-content: space-between;
   gap: .75rem;
   padding: .3rem .3rem .3rem .6rem;
-  color: var(--platform-menu-fg, #f2f2f2);
+  color: var(--platform-menu-fg, var(--chrome-dark-ink));
   font-size: .85em;
 }
 
@@ -121,7 +121,7 @@
   gap: 2px;
   padding: 2px;
   border-radius: .5rem;
-  background: rgba(128, 128, 128, .16);
+  background: var(--chrome-hover);
 }
 
 .nav-user-menu .nav-theme-choices button {
@@ -151,7 +151,7 @@
 }
 
 .nav-user-menu .nav-theme-choices button[aria-pressed='true'] {
-  background: var(--platform-menu-bg, #1c1c1c);
+  background: var(--platform-menu-bg, var(--chrome-dark-bg));
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
   opacity: 1;
 }
@@ -252,7 +252,7 @@
   border-radius: 999px;
   /* Material's dark-scheme error pair. The dot's red only reaches 2.6:1 on this
      near-black menu. A theme repainting the surface must repaint these too. */
-  background: var(--platform-badge-bg, #ffb4ab);
+  background: var(--platform-badge-bg, var(--chrome-dark-danger));
   color: var(--platform-badge-fg, #690005);
   /* Pinned, or the digit inherits a theme's display serif and shifts height and
      width per surface. lining-nums since a text serif may serve old-style. */
