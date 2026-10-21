@@ -247,25 +247,34 @@
 .lx-slider-dots {
     display: flex;
     justify-content: center;
-    gap: var(--lx-space-2);
-    margin-top: var(--lx-space-4);
+    margin-top: var(--lx-space-3);
     padding: 0;
 }
 
+/* The button is the 24px tap target; the dot drawn inside it stays small. */
 .lx-slider-dot {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.lx-slider-dot::before {
+    content: '';
     width: 0.6rem;
     height: 0.6rem;
-    padding: 0;
-    background: var(--lx-rule-strong);
-    border: 0;
     border-radius: 50%;
-    cursor: pointer;
+    background: var(--lx-rule-strong);
     transition: background var(--lx-dur) var(--lx-ease), transform var(--lx-dur) var(--lx-ease);
 }
 
-.lx-slider-dot:hover { background: var(--lx-ink-3); }
+.lx-slider-dot:hover::before { background: var(--lx-ink-3); }
 
-.lx-slider-dot.is-active {
+.lx-slider-dot.is-active::before {
     background: var(--lx-ink);
     transform: scale(1.15);
 }

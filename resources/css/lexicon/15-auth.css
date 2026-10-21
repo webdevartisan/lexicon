@@ -23,6 +23,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--lx-space-2);
+    min-height: 2.5rem;
     font-family: var(--lx-sans);
     font-size: var(--lx-text-sm);
     font-weight: var(--lx-weight-medium);
@@ -60,7 +61,8 @@
     align-items: center;
     justify-content: center;
     gap: var(--lx-space-2);
-    margin-bottom: clamp(1.5rem, 5vh, 2.5rem);
+    min-height: 2.5rem;
+    margin-bottom: clamp(1rem, 4vh, 2rem);
 }
 
 .lx-authmark:hover {

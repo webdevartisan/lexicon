@@ -1192,6 +1192,7 @@ html[data-mode='light'] {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
+  min-height: 1.5rem;
   color: var(--notif-muted);
   font-size: .82rem;
   text-decoration: none;

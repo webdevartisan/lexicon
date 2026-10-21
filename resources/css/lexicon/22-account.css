@@ -178,7 +178,7 @@
 }
 
 .lx-check { display: flex; align-items: flex-start; gap: var(--lx-space-2); margin-block: var(--lx-space-3); font-size: var(--lx-text-sm); }
-.lx-check input { margin-block-start: 0.2rem; }
+.lx-check input { flex: none; width: 1.125rem; height: 1.125rem; margin: 0.1rem 0 0; }
 .lx-check-title { display: block; font-weight: var(--lx-weight-semibold); }
 
 .lx-visually-hidden,
