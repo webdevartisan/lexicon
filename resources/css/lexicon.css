@@ -2,6 +2,7 @@
    `npm run build:front-css`; public/assets/css/lexicon.css is build output. */
 
 @import "./lexicon/00-fonts.css";
+@import "./shared/scale.css";
 @import "./lexicon/01-tokens.css";
 @import "./lexicon/02-base.css";
 @import "./lexicon/03-type.css";

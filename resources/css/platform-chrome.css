@@ -13,6 +13,7 @@
  * public/assets/css/platform-chrome.css is build output.
  */
 
+@import "./shared/scale.css";
 @import "./platform-chrome/00-menu.css";
 @import "./platform-chrome/01-account-trigger.css";
 @import "./platform-chrome/02-bylines.css";
