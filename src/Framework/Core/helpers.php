@@ -745,16 +745,15 @@ function base_url(): string
 }
 
 /**
- * Root-relative URL for a file under public/, stamped with its modified time.
+ * Add the file's modified time to a static file URL.
  *
  * Browsers keep static files for a long time, so the stamp gives them a new URL whenever a deploy changes the file.
  *
- * @param  string  $path  Path under public/, such as "assets/css/lexicon.css"
- * @return string The URL, without a stamp when the file is missing
+ * @param  string  $url  Root-relative URL of a file under public/, such as "/assets/css/lexicon.css"
+ * @return string The same URL with ?v=<mtime>, unchanged when the file is missing
  */
-function platform_asset(string $path): string
+function versioned_asset(string $url): string
 {
-    $url = '/'.ltrim($path, '/');
     $file = ROOT_PATH.'/public'.$url;
 
     return is_file($file) ? $url.'?v='.filemtime($file) : $url;

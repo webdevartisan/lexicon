@@ -63,9 +63,9 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
         <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
-        <link rel="stylesheet" href="<?= e(platform_asset('assets/css/platform-chrome.css')) ?>" />
+        <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>" />
         <script src="/assets/js/appearance.js"></script>
-        <link rel="stylesheet" href="<?= e(platform_asset('assets/css/lexicon.css')) ?>" />
+        <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/lexicon.css')) ?>" />
 
         {% yield meta %}
 
