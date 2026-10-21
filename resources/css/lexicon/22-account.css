@@ -1,21 +1,21 @@
 /* /account section shell: a rail on the inline-start, content beside it. The
    rail is a plain stacked list on narrow viewports, never a scroll strip that
    would hide its own last item. */
-.lx-account { display: grid; gap: 1.5rem; }
+.lx-account { display: grid; gap: var(--lx-space-5); }
 .lx-account-nav ul { list-style: none; margin: 0; padding: 0; }
 .lx-account-nav a {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding-block: 0.5rem;
-    padding-inline: 0.75rem;
+    gap: var(--lx-space-2);
+    padding-block: var(--lx-space-2);
+    padding-inline: var(--lx-space-3);
     border-radius: 6px;
     border-inline-start: 3px solid transparent;
     color: var(--lx-ink-2);
     text-decoration: none;
 }
 .lx-account-nav a[aria-current="page"] {
-    font-weight: 600;
+    font-weight: var(--lx-weight-semibold);
     color: var(--lx-ink);
     background: var(--lx-paper-sunk);
     border-inline-start-color: var(--lx-gilt);
@@ -24,29 +24,29 @@
 .lx-account-nav a,
 .acct-page .acct-btn {
     font-family: var(--lx-sans);
-    font-size: 0.875rem;
+    font-size: var(--lx-text-sm);
 }
 /* The modal is printed outside <main>, so only the full page gets a full-size title. */
 .lx-main .lx-account .acct-title {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--lx-space-2);
     font-size: clamp(1.9rem, 4vw, 2.6rem);
-    font-weight: 500;
-    line-height: 1.1;
+    font-weight: var(--lx-weight-medium);
+    line-height: var(--lx-leading-tight);
 }
 @media (--lx-up-md) {
-    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: 2.5rem; }
+    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: var(--lx-space-7); }
     /* The page heading spans the full width above both the nav rail and the
        body, so the rail top-aligns with the form instead of the tall H1. */
     .lx-account-head { grid-column: 1 / -1; }
 }
 
 /* Shared front helpers the settings, welcome and reader pages use. */
-.lx-muted { color: #5b6472; font-size: 0.85rem; }
+.lx-muted { color: var(--lx-ink-2); font-size: var(--lx-text-sm); }
 /* No bottom margin: the grid gap already separates the head from the nav and
    body, and a margin on top of the gap opens an awkward void under the title. */
 .lx-account-head { margin-block-end: 0; }
-.lx-account-head h1 { margin: 0 0 0.25rem; }
-.lx-grid-2 { display: grid; gap: 1rem; }
+.lx-account-head h1 { margin: 0 0 var(--lx-space-1); }
+.lx-grid-2 { display: grid; gap: var(--lx-space-4); }
 @media (--lx-up-sm) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
 
 /* Front dialog, shared by the avatar cropper, avatar-remove and account-delete
@@ -56,11 +56,11 @@
 .lx-modal {
     position: fixed;
     inset: 0;
-    z-index: 1100;
+    z-index: var(--lx-z-modal);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
+    padding: var(--lx-space-5);
 }
 .lx-modal-backdrop { position: fixed; inset: 0; background: rgba(23, 26, 28, 0.6); }
 .lx-modal-panel {
@@ -68,16 +68,16 @@
     z-index: 1;
     inline-size: 100%;
     max-inline-size: 30rem;
-    padding: 1.5rem;
+    padding: var(--lx-space-5);
     background: var(--lx-paper-raised);
     color: var(--lx-ink);
     border: 1px solid var(--lx-rule);
     border-radius: var(--lx-radius-lg);
     box-shadow: 0 24px 60px rgba(13, 21, 38, 0.35);
 }
-.lx-modal-title { margin: 0 0 0.6rem; font-size: 1.15rem; font-family: var(--lx-serif); }
-.lx-modal-text { margin: 0; color: var(--lx-ink-2); font-size: 0.9rem; line-height: 1.55; }
-.lx-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.25rem; }
+.lx-modal-title { margin: 0 0 var(--lx-space-2); font-size: var(--lx-text-md); font-family: var(--lx-serif); }
+.lx-modal-text { margin: 0; color: var(--lx-ink-2); font-size: var(--lx-text-sm); line-height: var(--lx-leading-normal); }
+.lx-modal-actions { display: flex; gap: var(--lx-space-2); justify-content: flex-end; margin-top: var(--lx-space-5); }
 
 /* Secondary form button: readable on paper, unlike the binding-only ghost. */
 .lx-btn-subtle { border-color: var(--lx-rule-strong); color: var(--lx-ink-2); }
@@ -98,7 +98,7 @@
     border-bottom: 1px solid var(--lx-field-line);
     border-radius: 0;
     font-family: var(--lx-serif);
-    font-size: 1.15rem;
+    font-size: var(--lx-text-md);
     color: var(--lx-ink);
 }
 .lx-account .choices[data-type*="select-one"].is-focused .choices__inner,
@@ -118,7 +118,7 @@
    classes are named so this out-specifies the vendor's `.choices__list
    [aria-expanded]` rule (0,2,0), which otherwise wins the tie by load order. */
 .lx-account .choices__list--dropdown.choices__list {
-    margin-block-start: 0.35rem;
+    margin-block-start: var(--lx-space-2);
     background: var(--lx-paper-sunk);
     border: 1px solid var(--lx-rule-strong);
     border-radius: var(--lx-radius);
@@ -129,8 +129,8 @@
    beats the vendor's `.choices[data-type*=select-one] .choices__input` (0,3,0),
    which sets a white fill and would otherwise win the tie by load order. */
 .lx-account .choices__list--dropdown.choices__list .choices__input {
-    margin: 0.25rem 0.75rem 0.35rem;
-    padding: 0.35rem 0;
+    margin: var(--lx-space-1) var(--lx-space-3) var(--lx-space-2);
+    padding: var(--lx-space-2) 0;
     inline-size: calc(100% - 1.5rem);
     -webkit-appearance: none;
     appearance: none;
@@ -141,7 +141,7 @@
     box-shadow: none;
     outline: none;
     font-family: var(--lx-serif);
-    font-size: 1rem;
+    font-size: var(--lx-text-base);
     color: var(--lx-ink);
 }
 .lx-account .choices__list--dropdown.choices__list .choices__input:focus {
@@ -151,16 +151,16 @@
 }
 .lx-account .choices__list--dropdown.choices__list .choices__item {
     font-family: var(--lx-serif);
-    font-size: 1rem;
+    font-size: var(--lx-text-base);
     color: var(--lx-ink);
 }
 .lx-account .choices__list--dropdown.choices__list .choices__heading {
     margin: 0;
-    padding: 0.5rem 0.9rem 0.35rem;
+    padding: var(--lx-space-2) var(--lx-space-3) var(--lx-space-2);
     color: var(--lx-ink-3);
     font-family: var(--lx-sans);
-    font-size: 0.68rem;
-    font-weight: 600;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     border-block-end: 1px solid var(--lx-rule);
@@ -177,9 +177,9 @@
     box-shadow: inset 3px 0 0 0 var(--lx-gilt);
 }
 
-.lx-check { display: flex; align-items: flex-start; gap: 0.6rem; margin-block: 0.75rem; font-size: 0.9rem; }
+.lx-check { display: flex; align-items: flex-start; gap: var(--lx-space-2); margin-block: var(--lx-space-3); font-size: var(--lx-text-sm); }
 .lx-check input { margin-block-start: 0.2rem; }
-.lx-check-title { display: block; font-weight: 600; }
+.lx-check-title { display: block; font-weight: var(--lx-weight-semibold); }
 
 .lx-visually-hidden,
 input.lx-visually-hidden {

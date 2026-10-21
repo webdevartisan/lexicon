@@ -4,17 +4,17 @@
 
 .lx-stats-figures {
     justify-content: flex-start;
-    margin: 0 0 2rem;
+    margin: 0 0 var(--lx-space-6);
 }
 
 .lx-stats-chart {
-    margin: 0 0 2.5rem;
+    margin: 0 0 var(--lx-space-7);
 }
 
 .lx-stats-caption {
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--lx-space-3);
     font-family: var(--lx-sans);
-    font-size: 0.78rem;
+    font-size: var(--lx-text-xs);
     color: var(--lx-ink-3);
 }
 
@@ -23,7 +23,7 @@
     align-items: flex-end;
     gap: 2px;
     height: 10rem;
-    margin: 0 0 0.75rem;
+    margin: 0 0 var(--lx-space-3);
     padding: 0;
     list-style: none;
     border-bottom: 1px solid var(--lx-rule);
@@ -39,17 +39,17 @@
 
 .lx-stats-table {
     width: 100%;
-    margin-top: 0.75rem;
+    margin-top: var(--lx-space-3);
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: var(--lx-text-sm);
 }
 
 .lx-stats-table th,
 .lx-stats-table td {
-    padding: 0.35rem 0;
+    padding: var(--lx-space-2) 0;
     border-bottom: 1px solid var(--lx-rule);
     text-align: start;
-    font-weight: 400;
+    font-weight: var(--lx-weight-regular);
 }
 
 .lx-stats-table td {
@@ -60,13 +60,13 @@
 .lx-stats-lists {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 2rem;
+    gap: var(--lx-space-6);
 }
 
 .lx-stats-lists h2 {
-    margin: 0 0 0.75rem;
-    font-size: 1.15rem;
-    font-weight: 500;
+    margin: 0 0 var(--lx-space-3);
+    font-size: var(--lx-text-md);
+    font-weight: var(--lx-weight-medium);
 }
 
 .lx-stats-list {
@@ -78,8 +78,8 @@
 .lx-stats-list li {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.45rem 0;
+    gap: var(--lx-space-4);
+    padding: var(--lx-space-2) 0;
     border-bottom: 1px solid var(--lx-rule);
 }
 
@@ -89,8 +89,8 @@
 }
 
 .lx-stats-note {
-    margin-top: 2.5rem;
-    font-size: 0.85rem;
+    margin-top: var(--lx-space-7);
+    font-size: var(--lx-text-sm);
 }
 
 /* --- Invitation wizard -------------------------------------------------
@@ -104,7 +104,7 @@
 }
 
 .lx-invite {
-    margin-top: 0.5rem;
+    margin-top: var(--lx-space-2);
     border: 1px solid var(--lx-rule);
     border-radius: 18px;
     background: var(--lx-paper-raised);
@@ -121,14 +121,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.1rem;
+    gap: var(--lx-space-4);
+    margin-bottom: var(--lx-space-4);
 }
 
 .lx-invite-badge {
     flex: none;
     margin: 0;
-    padding: 0.3rem 0.7rem;
+    padding: var(--lx-space-1) var(--lx-space-3);
     border-radius: 999px;
     background: var(--lx-paper-sunk);
     font: 600 0.7rem/1 var(--lx-sans);
@@ -149,14 +149,14 @@
     height: 100%;
     border-radius: inherit;
     background: var(--lx-ink);
-    transition: width 0.35s ease;
+    transition: width var(--lx-dur-slow) ease;
 }
 
 .lx-invite-steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    margin: 1.1rem 0 0;
+    gap: var(--lx-space-2);
+    margin: var(--lx-space-4) 0 0;
     padding: 0;
     list-style: none;
 }
@@ -165,9 +165,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.45rem;
+    gap: var(--lx-space-2);
     width: 100%;
-    padding: 0.25rem;
+    padding: var(--lx-space-1);
     border: 0;
     border-radius: 10px;
     background: none;
@@ -197,7 +197,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     border: 1px solid var(--lx-rule-strong);
     border-radius: 50%;
     background: var(--lx-paper-raised);
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    transition: background var(--lx-dur), border-color var(--lx-dur), color var(--lx-dur);
 }
 
 .lx-invite-step-icon svg {
@@ -247,25 +247,25 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 }
 
 .lx-invite-title {
-    margin: 0 0 0.6rem;
+    margin: 0 0 var(--lx-space-2);
     font-family: var(--lx-serif);
     font-size: clamp(1.6rem, 4.5vw, 2.1rem);
-    font-weight: 500;
-    letter-spacing: -0.015em;
-    line-height: 1.15;
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: var(--lx-track-tight);
+    line-height: var(--lx-leading-tight);
 }
 
 .lx-invite-lede {
     max-width: 34rem;
-    margin: 0 0 1.75rem;
-    font-size: 1rem;
-    line-height: 1.6;
+    margin: 0 0 var(--lx-space-6);
+    font-size: var(--lx-text-base);
+    line-height: var(--lx-leading-prose);
     color: var(--lx-ink-2);
 }
 
 .lx-invite-lede strong {
     color: var(--lx-ink);
-    font-weight: 600;
+    font-weight: var(--lx-weight-semibold);
 }
 
 .lx-invite-facts {
@@ -278,8 +278,8 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 .lx-invite-facts > div {
     display: grid;
     grid-template-columns: 7.5rem 1fr;
-    gap: 1rem;
-    padding: 0.85rem 1.1rem;
+    gap: var(--lx-space-4);
+    padding: var(--lx-space-3) var(--lx-space-4);
 }
 
 .lx-invite-facts > div + div {
@@ -289,7 +289,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 .lx-invite-facts dt {
     padding-top: 0.15rem;
     font: 600 0.7rem/1.4 var(--lx-sans);
-    letter-spacing: 0.1em;
+    letter-spacing: var(--lx-track-label);
     text-transform: uppercase;
     color: var(--lx-ink-3);
 }
@@ -298,15 +298,15 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     margin: 0;
     min-width: 0;
     overflow-wrap: anywhere;
-    font-size: 0.95rem;
+    font-size: var(--lx-text-sm);
     color: var(--lx-ink);
 }
 
 .lx-invite-facts-note {
     display: block;
-    margin-top: 0.2rem;
-    font-size: 0.85rem;
-    line-height: 1.5;
+    margin-top: var(--lx-space-1);
+    font-size: var(--lx-text-sm);
+    line-height: var(--lx-leading-normal);
     color: var(--lx-ink-2);
 }
 
@@ -315,8 +315,8 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 1.1rem clamp(1.25rem, 5vw, 2.5rem);
+    gap: var(--lx-space-3);
+    padding: var(--lx-space-4) clamp(1.25rem, 5vw, 2.5rem);
     border-top: 1px solid var(--lx-rule);
     background: var(--lx-paper);
 }
@@ -351,7 +351,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     place-items: center;
     width: 3.25rem;
     height: 3.25rem;
-    margin-bottom: 1.1rem;
+    margin-bottom: var(--lx-space-4);
     border-radius: 50%;
     background: var(--lx-ok-bg);
     color: var(--lx-ok);
@@ -363,7 +363,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 }
 
 .lx-invite-done .lx-invite-title {
-    margin-bottom: 1.75rem;
+    margin-bottom: var(--lx-space-6);
 }
 
 .lx-invite-done .lx-invite-facts {
@@ -371,7 +371,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
 }
 
 .lx-invite.is-ready .lx-invite-panel:not([hidden]) {
-    animation: lx-invite-in-fwd 0.3s ease both;
+    animation: lx-invite-in-fwd var(--lx-dur-slow) ease both;
 }
 
 .lx-invite.is-ready[data-dir="back"] .lx-invite-panel:not([hidden]) {
@@ -388,7 +388,7 @@ button.lx-invite-step-btn:not(:disabled):hover .lx-invite-step-icon {
     to { opacity: 1; transform: none; }
 }
 
-@media (max-width: 30rem) {
+@media (--lx-below-sm) {
     .lx-invite-facts > div {
         grid-template-columns: 1fr;
         gap: 0.2rem;
