@@ -39,7 +39,7 @@
   width: 100%;
   padding: .5rem .75rem;
   font: inherit;
-  font-size: .875rem;
+  font-size: var(--lx-text-sm);
   line-height: 1.25rem;
   text-align: start;
   color: var(--menu-fg);
@@ -104,7 +104,7 @@
   margin-bottom: .25rem;
   padding: .5rem .75rem;
   font: inherit;
-  font-size: .875rem;
+  font-size: var(--lx-text-sm);
   color: var(--menu-fg);
   background: color-mix(in srgb, var(--platform-menu-bg, var(--chrome-dark-bg)) 92%, var(--menu-fg));
   border: 1px solid var(--menu-line);
@@ -116,8 +116,8 @@
 
 .select-menu-group {
   padding: .5rem .75rem .25rem;
-  font-size: .6875rem;
-  font-weight: 600;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--menu-muted);
@@ -131,7 +131,7 @@
   width: 100%;
   padding: .5rem .75rem;
   font: inherit;
-  font-size: .875rem;
+  font-size: var(--lx-text-sm);
   text-align: start;
   color: var(--menu-muted);
   background: transparent;

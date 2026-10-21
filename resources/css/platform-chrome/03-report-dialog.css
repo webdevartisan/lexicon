@@ -18,7 +18,7 @@
   color: #16181d;
   box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--lx-text-base);
   line-height: 1.4;
 }
 
@@ -39,14 +39,14 @@
 
 .lex-report .lex-report-title {
   margin: 0 0 .35rem;
-  font-size: 1.25rem;
+  font-size: var(--lx-text-lg);
   line-height: 1.25;
   color: #16181d !important;
 }
 
 .lex-report .lex-report-lede {
   margin: 0 0 1rem;
-  font-size: .85rem;
+  font-size: var(--lx-text-sm);
   color: #5c6470;
 }
 
@@ -61,8 +61,8 @@
   display: block;
   margin: 0 0 .5rem;
   padding: 0;
-  font-size: .75rem;
-  font-weight: 600;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
   letter-spacing: .04em;
   text-transform: uppercase;
   color: #444b55;
@@ -106,7 +106,7 @@
   gap: .1rem;
   padding: 0;
   cursor: pointer;
-  font-size: .9rem;
+  font-size: var(--lx-text-sm);
   color: #16181d !important;
 }
 
@@ -117,11 +117,11 @@
 }
 
 .lex-report .lex-report-option-label {
-  font-weight: 600;
+  font-weight: var(--lx-weight-semibold);
 }
 
 .lex-report .lex-report-option-hint {
-  font-size: .78rem;
+  font-size: var(--lx-text-xs);
   color: #5c6470;
 }
 
@@ -135,7 +135,7 @@
   border-radius: 6px;
   background: #fff;
   color: #16181d !important;
-  font-size: .95rem;
+  font-size: var(--lx-text-base);
   resize: vertical;
 }
 
@@ -152,7 +152,7 @@
   border-radius: 6px;
   background: #fdecec;
   color: #b3261e;
-  font-size: .8rem;
+  font-size: var(--lx-text-xs);
 }
 
 .lex-report .lex-report-error[hidden],
@@ -173,8 +173,8 @@
   padding: .65rem 1rem;
   border: 1px solid #16181d;
   border-radius: 6px;
-  font-size: .9rem;
-  font-weight: 600;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-semibold);
   line-height: normal;
   cursor: pointer;
 }
@@ -200,8 +200,8 @@
 
 .lex-report .lex-report-done p {
   margin: 0 0 1rem;
-  font-size: .95rem;
-  font-weight: 600;
+  font-size: var(--lx-text-base);
+  font-weight: var(--lx-weight-semibold);
   color: #1b7f4b;
 }
 

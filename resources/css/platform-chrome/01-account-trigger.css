@@ -23,8 +23,8 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: .8rem;
-  font-weight: 600;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
   line-height: 1;
   cursor: pointer;
 }
@@ -52,8 +52,8 @@
   border-radius: 50%;
   background: rgba(128, 128, 128, .28);
   color: inherit;
-  font-size: .75rem;
-  font-weight: 700;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-bold);
   text-transform: uppercase;
 }
 
@@ -99,11 +99,11 @@
 }
 
 .nav-user-menu .nav-user-who { justify-content: flex-start; padding: .55rem .6rem; }
-.nav-user-who .nav-avatar { width: 2.25rem; height: 2.25rem; font-size: .9rem; }
+.nav-user-who .nav-avatar { width: 2.25rem; height: 2.25rem; font-size: var(--lx-text-sm); }
 .nav-user-who > span:last-child { display: flex; flex-direction: column; min-width: 0; }
 .nav-user-who strong,
 .nav-user-who small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nav-user-who strong { font-weight: 600; }
+.nav-user-who strong { font-weight: var(--lx-weight-semibold); }
 .nav-user-who small { font-size: .8em; opacity: .62; }
 
 .nav-user-theme {
@@ -174,7 +174,7 @@
   background: none;
   color: inherit;
   font: inherit;
-  font-size: .85rem;
+  font-size: var(--lx-text-sm);
   opacity: .75;
   cursor: pointer;
 }
@@ -258,7 +258,7 @@
      width per surface. lining-nums since a text serif may serve old-style. */
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: .625rem;
-  font-weight: 700;
+  font-weight: var(--lx-weight-bold);
   line-height: 1;
   font-variant-numeric: lining-nums tabular-nums;
 }

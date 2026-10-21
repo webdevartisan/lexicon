@@ -54,7 +54,7 @@
   background: none;
   color: var(--notif-muted);
   font: inherit;
-  font-size: .8rem;
+  font-size: var(--lx-text-xs);
   text-decoration: none;
   cursor: pointer;
 }
@@ -90,7 +90,7 @@
   border-radius: 999px;
   background: var(--notif-chip-bg);
   font-size: .68rem;
-  font-weight: 700;
+  font-weight: var(--lx-weight-bold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -141,7 +141,7 @@
 .notif-avatar.is-letter {
   background: hsl(var(--avatar-hue, 210) 42% 42%);
   color: #fff;
-  font-weight: 700;
+  font-weight: var(--lx-weight-bold);
 }
 
 .notif-avatar.is-icon svg {
@@ -169,19 +169,19 @@
   flex: 1;
   margin: 0;
   color: var(--notif-muted);
-  font-size: .9rem;
+  font-size: var(--lx-text-sm);
   line-height: 1.4;
 }
 
 .notif-actor,
 .notif-target {
   color: var(--notif-fg);
-  font-weight: 600;
+  font-weight: var(--lx-weight-semibold);
 }
 
 .notif-row:not(.is-unread) .notif-actor,
 .notif-row:not(.is-unread) .notif-target {
-  font-weight: 500;
+  font-weight: var(--lx-weight-medium);
 }
 
 /* The sentence's link covers the whole row, so the row is one big target
@@ -235,7 +235,7 @@
   gap: .75rem;
   margin: .2rem 0 0;
   color: var(--notif-muted);
-  font-size: .78rem;
+  font-size: var(--lx-text-xs);
 }
 
 .notif-meta-start {
@@ -253,8 +253,8 @@
   border-radius: 999px;
   background: var(--notif-chip-bg);
   color: var(--notif-fg);
-  font-size: .75rem;
-  font-weight: 600;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -269,7 +269,7 @@
   border-radius: 8px;
   background: var(--notif-quote-bg);
   color: var(--notif-fg);
-  font-size: .85rem;
+  font-size: var(--lx-text-sm);
   line-height: 1.45;
   white-space: pre-line;
   overflow-wrap: anywhere;
@@ -307,8 +307,8 @@
   background: none;
   color: var(--notif-fg);
   font: inherit;
-  font-size: .82rem;
-  font-weight: 600;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-semibold);
   cursor: pointer;
 }
 
@@ -338,7 +338,7 @@
 .notif-empty {
   padding: 2rem 1rem;
   color: var(--notif-muted);
-  font-size: .85rem;
+  font-size: var(--lx-text-sm);
   text-align: center;
 }
 
@@ -365,7 +365,7 @@
 .notif-panel-status {
   margin: 0;
   padding: 1.5rem 1rem;
-  font-size: .85rem;
+  font-size: var(--lx-text-sm);
   text-align: center;
   opacity: .75;
 }
@@ -377,8 +377,8 @@
   border-top: 1px solid var(--notif-line);
   border-radius: 0;
   color: var(--notif-fg);
-  font-size: .82rem;
-  font-weight: 600;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-semibold);
   text-align: center;
   text-decoration: none;
 }
