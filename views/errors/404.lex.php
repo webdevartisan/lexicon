@@ -8,6 +8,6 @@
 
 {% block scripts %}
 <?php if (app(\App\Services\Analytics\AnalyticsSettings::class)->enabled()) { ?>
-<script src="/assets/js/insights.js" data-not-found defer></script>
+<script src="<?= e(versioned_asset('/assets/js/insights.js')) ?>" data-not-found defer></script>
 <?php } ?>
 {% endblock %}

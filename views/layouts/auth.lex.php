@@ -32,7 +32,7 @@ $siteName = site_setting('site_name', 'Lexicon');
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
         <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/lexicon.css')) ?>" />
-        <script src="/assets/js/appearance.js"></script>
+        <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
 
         {% yield meta %}
     </head>
@@ -110,7 +110,7 @@ if (!empty($authError)) { ?>
         {% include "partials/_consent_banner.lex.php" %}
         {% include "partials/_platform_insights_beacon.lex.php" %}
 
-        <script src="/assets/js/front.js" defer></script>
+        <script src="<?= e(versioned_asset('/assets/js/front.js')) ?>" defer></script>
         {% yield scripts %}
     </body>
 </html>

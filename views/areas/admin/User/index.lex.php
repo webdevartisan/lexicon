@@ -160,5 +160,5 @@ echo $bits === [] ? '<span class="text-slate-400 dark:text-zink-400">—</span>'
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 {% endblock %}

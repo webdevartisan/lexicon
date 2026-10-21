@@ -348,5 +348,5 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script src="/cp-assets/js/modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 {% endblock %}

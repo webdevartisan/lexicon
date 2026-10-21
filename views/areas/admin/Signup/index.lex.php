@@ -225,7 +225,7 @@ $settingsHref = lurl('/admin/settings#analytics');
 {% block scripts %}
 <script src="/cp-assets/libs/chart.js/chart.umd.min.js"></script>
 <script src="/cp-assets/libs/flatpickr/flatpickr.min.js"></script>
-<script src="/cp-assets/js/insights-chart.js"></script>
-<script src="/cp-assets/js/insights-range.js"></script>
-<script src="/cp-assets/js/tooltip.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/insights-chart.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/insights-range.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 {% endblock %}

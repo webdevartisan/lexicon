@@ -125,5 +125,5 @@ $pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibo
 
 {% block scripts %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
-<script src="/cp-assets/js/modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 {% endblock %}

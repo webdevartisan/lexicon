@@ -35,7 +35,7 @@ $debugRows = array_filter([
     <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/lexicon.css')) ?>">
     <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>">
-    <script src="/assets/js/appearance.js"></script>
+    <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
   </head>
 
   <body class="lx-authpage">

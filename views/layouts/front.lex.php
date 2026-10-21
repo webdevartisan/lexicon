@@ -64,7 +64,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
         <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
         <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>" />
-        <script src="/assets/js/appearance.js"></script>
+        <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
         <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/lexicon.css')) ?>" />
 
         {% yield meta %}
@@ -317,12 +317,12 @@ foreach ($socialNetworks as $network) {
 
         <button type="button" class="fab scroll-top-btn" title="<?= e($t('a11y.backToTop')) ?>" aria-label="<?= e($t('a11y.backToTop')) ?>"></button>
 
-		<script src="/assets/js/platform-menu.js" defer></script>
-		<script src="/assets/js/flash-toast.js" defer></script>
-		<script src="/assets/js/front.js" defer></script>
-		<script src="/assets/js/lang-switcher.js" defer></script>
-		<script src="/assets/js/csrf-lazy.js" defer></script>
-		<script src="/assets/js/scrolltop.js" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/platform-menu.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/flash-toast.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/front.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/lang-switcher.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/csrf-lazy.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/scrolltop.js')) ?>" defer></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}
 	</body>

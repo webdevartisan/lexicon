@@ -36,6 +36,6 @@
 
   <?php /* Lexicon's own controls, identical on every theme. */ ?>
   <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>">
-  <script src="/assets/js/appearance.js"></script>
-  <script defer src="/assets/js/platform-menu.js"></script>
+  <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
+  <script defer src="<?= e(versioned_asset('/assets/js/platform-menu.js')) ?>"></script>
   <link rel="stylesheet" href="<?= $asset('css/style.css') ?>">

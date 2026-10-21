@@ -27,5 +27,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/blog-archive.js" nonce="<?= csp_nonce() ?>" defer></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/blog-archive.js')) ?>" nonce="<?= csp_nonce() ?>" defer></script>
 {% endblock %}

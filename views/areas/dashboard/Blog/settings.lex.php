@@ -263,8 +263,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/modal.js"></script>
-<script src="/cp-assets/js/delete-blog-modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/delete-blog-modal.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['general', 'seo', 'discussion'];

@@ -121,5 +121,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/assets/js/account-profile.js" defer></script>
+<script src="<?= e(versioned_asset('/assets/js/account-profile.js')) ?>" defer></script>
 {% endblock %}

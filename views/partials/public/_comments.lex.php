@@ -876,7 +876,7 @@ $renderComment = static function (array $comment, int $depth) use (
   <form class="comment-token" hidden aria-hidden="true"><?= csrf_field_lazy() ?></form>
 </div>
 
-<script defer src="/assets/js/report-dialog.js"></script>
-<link rel="stylesheet" href="/assets/css/blog-confirm.css">
-<script defer src="/assets/js/blog-confirm.js"></script>
-<script defer src="/assets/js/comments.js"></script>
+<script defer src="<?= e(versioned_asset('/assets/js/report-dialog.js')) ?>"></script>
+<link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/blog-confirm.css')) ?>">
+<script defer src="<?= e(versioned_asset('/assets/js/blog-confirm.js')) ?>"></script>
+<script defer src="<?= e(versioned_asset('/assets/js/comments.js')) ?>"></script>

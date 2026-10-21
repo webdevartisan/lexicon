@@ -247,5 +247,5 @@ $legacyItems = array_filter($nav_items, fn ($item) => !isset($item['scope'])); /
 <?php } ?>
 
 
-<script src="/cp-assets/js/sidebar-active.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/sidebar-active.js')) ?>"></script>
 {% endcache %}

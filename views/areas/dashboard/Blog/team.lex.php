@@ -304,7 +304,7 @@ $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
 </div>
 {% endblock %}
 {% block scripts %}
-<script src='/cp-assets/js/tooltip.js'></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 // Live-update the small role explainer under the role select on the invite form.
 (function () {

@@ -299,8 +299,8 @@ $socialLabel = $t('blog.form.fields.social.'.$platform);
 {% block scripts %}
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/dropzone.init.js')) ?>"></script>
-<script src="/cp-assets/js/media-picker.js"></script>
-<script src="/cp-assets/js/modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['theme', 'branding'];

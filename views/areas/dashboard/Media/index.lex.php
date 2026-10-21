@@ -202,6 +202,6 @@ $editorBody = ob_get_clean();
 {% endblock %}
 {% block scripts %}
 <script src="/assets/vendor/cropper/cropper.min.js" nonce="<?= csp_nonce() ?>"></script>
-<script src="/cp-assets/js/media-editor.js" nonce="<?= csp_nonce() ?>"></script>
-<script src="/cp-assets/js/media-library.js" nonce="<?= csp_nonce() ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-editor.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-library.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
 {% endblock %}

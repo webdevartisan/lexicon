@@ -8,4 +8,4 @@
         <button type="button" class="panel-dialog-close" data-panel-close aria-label="<?= e(chrome_translate('a11y.dismiss')) ?>">&times;</button>
     </div>
 </dialog>
-<script src="/assets/js/panel-dialog.js" defer></script>
+<script src="<?= e(versioned_asset('/assets/js/panel-dialog.js')) ?>" defer></script>
