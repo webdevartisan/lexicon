@@ -18,7 +18,7 @@ html[data-mode='light'] {
   z-index: 40;
   min-width: 170px;
   padding: .3rem;
-  border-radius: 6px;
+  border-radius: var(--lx-radius);
   background: var(--platform-menu-bg, var(--chrome-dark-bg));
   box-shadow: var(--chrome-dark-shadow);
 }
@@ -48,7 +48,7 @@ html[data-mode='light'] {
   width: 100%;
   padding: .5rem .6rem;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--lx-radius);
   background: none;
   color: var(--platform-menu-fg, var(--chrome-dark-ink));
   font: inherit;

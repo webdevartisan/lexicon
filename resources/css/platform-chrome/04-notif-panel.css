@@ -128,7 +128,7 @@
 /* The bell sits beside the account menu and the nav toggle, so a panel pinned
    to it runs off a phone screen. Below this width it hangs from the masthead
    (fixed or sticky everywhere it appears), inset to the viewport. */
-@media (max-width: 30rem) {
+@media (--lx-below-sm) {
   .nav-bell {
     position: static;
   }

@@ -75,7 +75,7 @@
 .notif-text-btn {
   padding: .35rem .7rem;
   border: 1px solid var(--notif-line);
-  border-radius: 6px;
+  border-radius: var(--lx-radius);
   background: none;
   color: var(--notif-fg);
   font: inherit;
@@ -121,7 +121,7 @@
 }
 
 .notif-row.is-focused {
-  border-radius: 8px;
+  border-radius: var(--lx-radius-md);
   box-shadow: 0 0 0 2px var(--notif-tone-neutral);
 }
 
@@ -140,7 +140,7 @@
   font-weight: var(--lx-weight-semibold);
 }
 
-@media (max-width: 30rem) {
+@media (--lx-below-sm) {
   .notif-meta {
     flex-wrap: wrap;
   }

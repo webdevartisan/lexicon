@@ -62,7 +62,7 @@
   max-height: min(40rem, calc(100vh - 2rem));
   overflow: hidden;
   border: 1px solid var(--acct-line);
-  border-radius: 1.25rem;
+  border-radius: var(--lx-radius-xl);
   background: var(--acct-bg);
   box-shadow: 0 18px 50px rgba(15, 23, 42, .18);
   font-size: var(--lx-text-sm);
@@ -92,7 +92,7 @@
   width: 2rem;
   height: 2rem;
   border: 0;
-  border-radius: .5rem;
+  border-radius: var(--lx-radius-md);
   background: var(--acct-bg);
   color: inherit;
   font-size: var(--lx-text-lg);
@@ -106,7 +106,7 @@
   margin: 0 0 1rem;
   padding: .6rem .9rem;
   border-inline-start: 3px solid var(--acct-accent);
-  border-radius: .25rem;
+  border-radius: var(--lx-radius);
   background: var(--acct-hover);
 }
 
@@ -136,7 +136,7 @@
   margin-block-end: .125rem;
   padding: .6rem .75rem;
   border: 0;
-  border-radius: .6rem;
+  border-radius: var(--lx-radius-md);
   color: inherit;
   text-decoration: none;
 }
@@ -147,7 +147,7 @@
 
 .lx-account-nav svg { flex: none; width: 1.15rem; height: 1.15rem; }
 
-@media (max-width: 640px) {
+@media (--lx-below-md) {
   .panel-dialog.is-wide .panel-dialog-card { height: calc(100vh - 2rem); }
   .panel-dialog-body { padding: 1.25rem 1.25rem 1.5rem; }
   .panel-dialog .lx-account { flex-direction: column; }
@@ -188,7 +188,7 @@
 .acct-btn {
   padding: .5rem 1.1rem;
   border: 1px solid var(--acct-line);
-  border-radius: .5rem;
+  border-radius: var(--lx-radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -207,7 +207,7 @@
   margin-block-start: 2rem;
   padding: 1rem 1.25rem;
   border: 1px solid var(--acct-line);
-  border-radius: .75rem;
+  border-radius: var(--lx-radius-lg);
 }
 
 .acct-card-title { margin: 0 0 .25rem; font-size: var(--lx-text-base); font-weight: var(--lx-weight-semibold); }
@@ -219,7 +219,7 @@
 /* Account panel fields */
 .acct-form { display: block; }
 .acct-grid { display: grid; gap: 1rem; }
-@media (min-width: 560px) { .acct-grid { grid-template-columns: 1fr 1fr; } }
+@media (--lx-up-sm) { .acct-grid { grid-template-columns: 1fr 1fr; } }
 
 .acct-field { margin-block-end: 1rem; }
 .acct-label { display: block; margin: 0 0 .25rem; font-size: var(--lx-text-xs); font-weight: var(--lx-weight-semibold); opacity: .8; }
@@ -231,7 +231,7 @@
   width: 100%;
   padding: .5rem .75rem;
   border: 1px solid var(--acct-line);
-  border-radius: .5rem;
+  border-radius: var(--lx-radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -247,7 +247,7 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-details > summary::-webkit-details-marker { display: none; }
 .acct-details[open] > summary { margin-block-end: 1rem; }
 
-.acct-notice { margin-block-start: .75rem; padding: .75rem 1rem; border: 1px solid var(--acct-line); border-radius: .5rem; }
+.acct-notice { margin-block-start: .75rem; padding: .75rem 1rem; border: 1px solid var(--acct-line); border-radius: var(--lx-radius-md); }
 .acct-notice.is-warn { border-color: var(--acct-danger); }
 .acct-notice p { margin: 0 0 .5rem; }
 
@@ -278,12 +278,12 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
   width: min(32rem, calc(100vw - 2rem));
   padding: 1.25rem;
   border: 1px solid var(--acct-line);
-  border-radius: 1rem;
+  border-radius: var(--lx-radius-xl);
   background: var(--acct-bg);
   color: var(--acct-ink);
 }
 .acct-crop::backdrop { background: rgba(0, 0, 0, .55); }
-.acct-crop-stage { max-height: 60vh; overflow: hidden; border-radius: .5rem; background: var(--acct-hover); }
+.acct-crop-stage { max-height: 60vh; overflow: hidden; border-radius: var(--lx-radius-md); background: var(--acct-hover); }
 .acct-crop-stage img { display: block; max-width: 100%; }
 .acct-crop .cropper-view-box,
 .acct-crop .cropper-face { border-radius: 50%; }
@@ -294,7 +294,7 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-page textarea.acct-input {
   padding: .5rem .75rem;
   border: 1px solid var(--acct-line);
-  border-radius: .5rem;
+  border-radius: var(--lx-radius-md);
   background: transparent;
   color: inherit;
   box-shadow: none;
@@ -328,7 +328,7 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-codes code,
 .acct-secret { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--lx-text-base); letter-spacing: .04em; }
 .acct-secret { overflow-wrap: anywhere; }
-.acct-qr { width: 12rem; max-width: 100%; margin: .75rem 0; padding: .5rem; border-radius: .5rem; background: #fff; }
+.acct-qr { width: 12rem; max-width: 100%; margin: .75rem 0; padding: .5rem; border-radius: var(--lx-radius-md); background: #fff; }
 .acct-qr svg { display: block; width: 100%; height: auto; }
 .acct-card + section,
 .acct-card + .acct-section { margin-block-start: 2rem; }
@@ -349,7 +349,7 @@ input.acct-sr-only {
 .acct-page select.acct-input,
 .acct-page textarea.acct-input {
   border-color: var(--acct-line);
-  border-radius: .6rem;
+  border-radius: var(--lx-radius-md);
   background: var(--acct-field-bg);
   box-shadow: var(--acct-field-shadow);
   color: var(--acct-ink, inherit);
@@ -358,13 +358,13 @@ input.acct-sr-only {
 .acct-page input.acct-input:focus,
 .acct-page textarea.acct-input:focus { border-color: var(--acct-accent); box-shadow: 0 0 0 1px var(--acct-accent); }
 
-.acct-btn { border-radius: .6rem; background: var(--acct-field-bg, transparent); box-shadow: var(--acct-field-shadow, none); }
+.acct-btn { border-radius: var(--lx-radius-md); background: var(--acct-field-bg, transparent); box-shadow: var(--acct-field-shadow, none); }
 .acct-btn-primary { background: var(--acct-accent); box-shadow: none; }
 .acct-btn-primary:hover,
 .acct-btn-primary:focus-visible { background: var(--acct-accent); filter: brightness(1.25); }
 .acct-page .acct-card a { color: inherit; text-decoration: underline; }
 
-.acct-card { margin-block-start: 1.5rem; border-radius: .9rem; }
+.acct-card { margin-block-start: 1.5rem; border-radius: var(--lx-radius-xl); }
 .acct-card-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .acct-card-row > :first-child { min-width: 0; }
 .acct-card-row .acct-intro { margin: 0; }
@@ -406,7 +406,7 @@ html[dir='rtl'] .acct-switch:checked::after { transform: translateX(-1.15rem); }
 .acct-switch:focus-visible { outline: 2px solid var(--acct-accent); outline-offset: 2px; }
 .acct-page .acct-card a.acct-btn { text-decoration: none; }
 .acct-btn { white-space: nowrap; }
-@media (max-width: 640px) {
+@media (--lx-below-md) {
   .acct-card-row { flex-wrap: wrap; }
 }
 

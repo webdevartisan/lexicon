@@ -10,7 +10,7 @@
   height: 2rem;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--lx-radius);
   background: none;
   color: var(--notif-muted);
   cursor: pointer;
@@ -38,7 +38,7 @@
   gap: .2rem;
   margin: 0 1rem .35rem;
   padding: .2rem;
-  border-radius: 8px;
+  border-radius: var(--lx-radius-md);
   background: var(--notif-tabs-bg);
 }
 
@@ -50,7 +50,7 @@
   width: auto;
   padding: .35rem .65rem;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--lx-radius);
   background: none;
   color: var(--notif-muted);
   font: inherit;
@@ -266,7 +266,7 @@
 .notif-quote {
   margin: .55rem 0 0;
   padding: .6rem .75rem;
-  border-radius: 8px;
+  border-radius: var(--lx-radius-md);
   background: var(--notif-quote-bg);
   color: var(--notif-fg);
   font-size: var(--lx-text-sm);
@@ -303,7 +303,7 @@
   width: auto;
   padding: .4rem .9rem;
   border: 1px solid var(--notif-line);
-  border-radius: 8px;
+  border-radius: var(--lx-radius-md);
   background: none;
   color: var(--notif-fg);
   font: inherit;
