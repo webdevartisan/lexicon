@@ -33,7 +33,7 @@
 
         <div class="acct-head">
             <p><a class="acct-back" data-panel-link href="<?= e(lurl('/account/security')) ?>">&larr; <?= e($t('account.nav.security')) ?></a></p>
-            <h2 class="acct-title"><?= e($t('account.security.changePassword')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.security.changePassword')) ?></h1>
             <p class="acct-intro"><?= e($t('account.security.intro')) ?></p>
         </div>
 

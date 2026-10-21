@@ -20,7 +20,7 @@
         ?>
 
         <div class="acct-head">
-            <h2 class="acct-title"><?= e($t('account.preferences.heading')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.preferences.heading')) ?></h1>
             <p class="acct-intro"><?= e($t('account.preferences.intro')) ?></p>
         </div>
 

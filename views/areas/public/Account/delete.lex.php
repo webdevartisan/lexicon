@@ -19,7 +19,7 @@
         ?>
 
         <div class="acct-head">
-            <h2 class="acct-title"><?= e($t('account.delete.heading')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.delete.heading')) ?></h1>
             <p class="acct-intro"><?= e($t('account.delete.subtitle')) ?></p>
         </div>
 

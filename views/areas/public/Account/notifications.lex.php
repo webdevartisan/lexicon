@@ -35,7 +35,7 @@
         ?>
 
         <div class="acct-head">
-            <h2 class="acct-title"><?= e($t('account.notifications.heading')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.notifications.heading')) ?></h1>
             <p class="acct-intro"><?= e($t('account.notifications.intro')) ?></p>
             <p class="acct-intro"><?= e($t('account.notifications.inAppNote')) ?></p>
         </div>

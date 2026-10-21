@@ -15,7 +15,7 @@
         {% include "partials/account/_field.lex.php" %}
 
         <div class="acct-head">
-            <h2 class="acct-title"><?= e($t('account.profile.socialSection')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.profile.socialSection')) ?></h1>
         </div>
 
         <form method="post" action="<?= e(lurl('/account/profile/update')) ?>" class="acct-form">

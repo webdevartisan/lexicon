@@ -37,7 +37,7 @@
         ?>
 
         <div class="acct-head">
-            <h2 class="acct-title"><?= e($t('account.nav.security')) ?></h2>
+            <h1 class="acct-title"><?= e($t('account.nav.security')) ?></h1>
             <p class="acct-intro"><?= e($t('account.security.pageIntro')) ?></p>
         </div>
 
