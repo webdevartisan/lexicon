@@ -15,10 +15,22 @@ return (function () {
         b: top.b * top.a + under.b * (1 - top.a),
         a: 1,
     });
+    // What is painted under the text, not just its ancestors: the homepage nav is transparent over a
+    // sibling masthead. Whatever sits on top (the cookie button) is dropped, and text that is off-screen
+    // or covered falls back to its ancestors.
+    const stackUnder = (el) => {
+        const box = el.getBoundingClientRect();
+        const stack = document.elementsFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        const own = stack.indexOf(el);
+        if (own !== -1) return stack.slice(own);
+        const ancestors = [];
+        for (let e = el; e; e = e.parentElement) ancestors.push(e);
+        return ancestors;
+    };
     // Gradients and images cannot be sampled, so text over them is skipped instead of guessed.
     const backgroundOf = (el) => {
         const layers = [];
-        for (let e = el; e; e = e.parentElement) {
+        for (const e of stackUnder(el)) {
             const cs = getComputedStyle(e);
             if (cs.backgroundImage !== 'none') return null;
             const c = parse(cs.backgroundColor);
@@ -62,7 +74,8 @@ return (function () {
             const large = size >= 24 || (size >= 18.66 && +weight >= 700);
             if (ratio < (large ? 3 : 4.5)) fails.push({ text: text.slice(0, 30), ratio: +ratio.toFixed(2), size, cls: label(el) });
         }
-        if (size < 12) small.push({ text: text.slice(0, 26), size, cls: label(el) });
+        // Count badges are an accepted exception to the 12px floor
+        if (size < 12 && !/^\d+\+?$/.test(text)) small.push({ text: text.slice(0, 26), size, cls: label(el) });
     }
 
     const targets = [];
@@ -72,7 +85,10 @@ return (function () {
         if (!box.width || !box.height || cs.visibility === 'hidden' || cs.display === 'none') return;
         // Links inside running text are exempt under WCAG 2.2 target size
         if (el.tagName === 'A' && getComputedStyle(el).display === 'inline') return;
-        if (box.height < 24 || box.width < 24) {
+        // So is a control whose label does the same job at full size
+        const big = (b) => b.width >= 24 && b.height >= 24;
+        if ([...(el.labels || [])].some((l) => big(l.getBoundingClientRect()))) return;
+        if (!big(box)) {
             targets.push({ text: (el.textContent || el.name || '').trim().slice(0, 22), w: Math.round(box.width), h: Math.round(box.height), cls: label(el) });
         }
     });

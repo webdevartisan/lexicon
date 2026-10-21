@@ -1024,7 +1024,7 @@ html[data-mode='light'] {
   border-radius: 999px;
   background: var(--notif-chip-bg);
   color: var(--notif-fg);
-  font-size: .72rem;
+  font-size: .75rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1255,7 +1255,7 @@ html[data-mode='light'] {
 .notif-day {
   margin: 1.1rem 0 .1rem;
   color: var(--notif-muted);
-  font-size: .72rem;
+  font-size: .75rem;
   font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -1838,7 +1838,7 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-stats dd { margin: 0; font-size: 1.3rem; font-weight: 600; }
 .acct-stats dt { font-size: .8rem; opacity: .65; }
 
-.acct-badge { margin-inline-start: .5rem; padding: .1rem .5rem; border: 1px solid var(--acct-line); border-radius: 999px; font-size: .72rem; font-weight: 500; vertical-align: middle; }
+.acct-badge { margin-inline-start: .5rem; padding: .1rem .5rem; border: 1px solid var(--acct-line); border-radius: 999px; font-size: .75rem; font-weight: 500; vertical-align: middle; }
 .acct-badge.is-on { border-color: var(--acct-accent); color: var(--acct-accent); }
 
 .acct-crop {
@@ -1998,7 +1998,7 @@ html[dir='rtl'] .acct-switch:checked::after { transform: translateX(-1.15rem); }
 .panel-dialog .lx-reader-thumb { flex: none; width: 4.5rem; aspect-ratio: 4 / 3; overflow: hidden; border-radius: .5rem; background: var(--acct-hover); }
 .panel-dialog .lx-reader-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .panel-dialog .lx-reader-body { flex: 1; min-width: 0; }
-.panel-dialog .lx-reader-blog { display: block; margin-block-end: .15rem; color: inherit; font-family: inherit; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .6; text-decoration: none; }
+.panel-dialog .lx-reader-blog { display: block; margin-block-end: .15rem; color: inherit; font-family: inherit; font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; opacity: .6; text-decoration: none; }
 .panel-dialog .lx-reader-row-title { margin: 0 0 .25rem; font-family: inherit; font-size: .95rem; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
 .panel-dialog .lx-reader-row-title a,
 .panel-dialog .lx-reader-context a,

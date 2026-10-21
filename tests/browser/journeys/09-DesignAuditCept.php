@@ -65,3 +65,24 @@ $handle = $I->grabValueFrom('handle');
 $measure([...$readerPages, "/en/profile/{$handle}"]);
 
 file_put_contents(codecept_output_dir('design-audit.json'), json_encode($report, JSON_PRETTY_PRINT));
+
+$problems = [];
+foreach ($report as $mode => $pages) {
+    foreach ($pages as $page) {
+        $where = "{$mode} {$page['path']}";
+        foreach ($page['contrastFails'] as $fail) {
+            $problems[] = "{$where}: contrast {$fail['ratio']} on .{$fail['cls']} \"{$fail['text']}\"";
+        }
+        foreach ($page['smallText'] as $text) {
+            $problems[] = "{$where}: {$text['size']}px text on .{$text['cls']} \"{$text['text']}\"";
+        }
+        foreach ($page['smallTargets'] as $target) {
+            $problems[] = "{$where}: {$target['w']}x{$target['h']} target .{$target['cls']} \"{$target['text']}\"";
+        }
+        // The scrollbar makes this negative; only a positive number is real overflow
+        if ($page['sidewaysScroll'] > 0) {
+            $problems[] = "{$where}: scrolls sideways by {$page['sidewaysScroll']}px";
+        }
+    }
+}
+$I->assertSame([], $problems, 'Front design checks failed, full report in _output/design-audit.json');
