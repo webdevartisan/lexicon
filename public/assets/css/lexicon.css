@@ -1291,8 +1291,12 @@ body.lx-drawer-open {
    13. Footer — the colophon
    ========================================================================== */
 
+/* Ink rather than the navy binding, to match the buttons and menus. The
+   greys are neutral so they don't read blue on it. */
 .lx-foot {
-    background: var(--lx-bind-deep);
+    --lx-on-bind-2: #b4b8b1;
+    --lx-on-bind-3: #8c918a;
+    background: var(--lx-ink);
     color: var(--lx-on-bind-2);
     font-size: 0.9375rem;
 }
