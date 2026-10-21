@@ -19,8 +19,8 @@ body {
     color: var(--lx-ink);
     font-family: var(--lx-serif);
     font-optical-sizing: auto;
-    font-size: 1.0625rem;
-    line-height: 1.65;
+    font-size: var(--lx-text-prose);
+    line-height: var(--lx-leading-prose);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -54,19 +54,19 @@ h2,
 h3,
 h4 {
     font-family: var(--lx-serif);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -0.015em;
+    font-weight: var(--lx-weight-medium);
+    line-height: var(--lx-leading-tight);
+    letter-spacing: var(--lx-track-tight);
     margin: 0 0 0.5em;
     text-wrap: balance;
 }
 
 h1 {
-    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-size: var(--lx-text-3xl);
 }
 
 h2 {
-    font-size: clamp(1.75rem, 3.6vw, 2.6rem);
+    font-size: var(--lx-text-2xl);
 }
 
 h3 {
@@ -79,13 +79,13 @@ h4 {
 
 strong,
 b {
-    font-weight: 650;
+    font-weight: var(--lx-weight-semibold);
 }
 
 hr {
     border: 0;
     border-top: 1px solid var(--lx-rule);
-    margin: 2.5rem 0;
+    margin: var(--lx-space-7) 0;
 }
 
 ::selection {
@@ -128,20 +128,20 @@ hr {
 
 .lx-skip {
     position: absolute;
-    inset-inline-start: 1rem;
+    inset-inline-start: var(--lx-space-4);
     top: -4rem;
-    z-index: 200;
-    padding: 0.75rem 1.25rem;
+    z-index: var(--lx-z-skip);
+    padding: var(--lx-space-3) var(--lx-space-5);
     background: var(--lx-bind);
     color: var(--lx-on-bind);
     font-family: var(--lx-sans);
-    font-size: 0.85rem;
+    font-size: var(--lx-text-sm);
     border-radius: var(--lx-radius);
-    transition: top 0.2s var(--lx-ease);
+    transition: top var(--lx-dur) var(--lx-ease);
 }
 
 .lx-skip:focus {
-    top: 1rem;
+    top: var(--lx-space-4);
     text-decoration: none;
 }
 

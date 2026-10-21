@@ -16,12 +16,12 @@
 .lx-eyebrow {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    margin: 0 0 1.75rem;
+    gap: var(--lx-space-3);
+    margin: 0 0 var(--lx-space-6);
     font-family: var(--lx-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
     text-transform: uppercase;
     color: var(--lx-ink-2);
 }
@@ -29,7 +29,7 @@
 .lx-pos {
     font-family: var(--lx-serif);
     font-style: italic;
-    font-weight: 400;
+    font-weight: var(--lx-weight-regular);
     color: var(--lx-ink-2);
 }
 
@@ -47,7 +47,7 @@
 
 .lx-lede {
     font-size: clamp(1.1rem, 1.8vw, 1.3rem);
-    line-height: 1.55;
+    line-height: var(--lx-leading-normal);
     color: var(--lx-ink-2);
     max-width: 46ch;
 }
