@@ -2336,10 +2336,8 @@ label {
     align-items: center;
     gap: 0.4rem;
     font-family: var(--lx-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: var(--lx-ink);
 }
 
@@ -2567,10 +2565,8 @@ label {
     border: 0;
     border-radius: 2px;
     font-family: var(--lx-sans);
-    font-size: 0.66rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 0.8125rem;
+    font-weight: 500;
     color: var(--lx-ink-2);
     cursor: pointer;
 }
@@ -2714,10 +2710,8 @@ label {
 
 .lx-authhelp a {
     font-family: var(--lx-sans);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: var(--lx-ink);
 }
 
@@ -2765,8 +2759,7 @@ label {
 }
 
 /* Painted like the confirm dialog and the menus in platform-chrome.css, so it
-   follows the reader's light or dark choice. Muted is 70% rather than the
-   menus' 62%, which falls under 4.5:1 for body text on the light card. */
+   follows the reader's light or dark choice. */
 .lx-error {
     --error-fg: var(--platform-menu-fg, #f2f2f2);
     --error-muted: color-mix(in srgb, var(--error-fg) 70%, transparent);
