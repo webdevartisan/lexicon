@@ -16,14 +16,14 @@
   border-radius: var(--lx-radius-xl);
   background: #fff;
   color: #16181d;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, .35);
+  box-shadow: var(--chrome-dialog-shadow);
   font-family: inherit;
   font-size: var(--lx-text-base);
   line-height: 1.4;
 }
 
 .lex-report::backdrop {
-  background: rgba(15, 18, 20, .6);
+  background: var(--chrome-backdrop);
 }
 
 .lex-report button,

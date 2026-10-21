@@ -688,8 +688,8 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-sort > summary::-webkit-details-marker { display: none; }
   .comment-sort > summary:hover { opacity: 1; }
   .comment-sort > summary svg { width: 16px; height: 16px; }
-  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; padding: .35rem; border-radius: var(--lx-radius-lg); background: var(--platform-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
-  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: 5px; color: var(--platform-menu-fg, #f2f2f2); text-decoration: none; }
+  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; }
+  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: var(--lx-radius); color: var(--platform-menu-fg, #f2f2f2); text-decoration: none; }
   .comment-sort-list a:hover, .comment-sort-list a.is-current { background: rgba(128, 128, 128, .22); }
   .comment-sort-list strong { display: block; font-weight: 600; }
   .comment-sort-list span { display: block; margin-top: .1rem; font-size: .88em; opacity: .6; }

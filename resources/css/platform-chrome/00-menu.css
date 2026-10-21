@@ -2,30 +2,23 @@
   position: relative;
 }
 
-/* Light, chosen in the user menu (appearance.js sets data-mode). html raises it
-   above a theme's own :root repaint, so the choice wins inside themes too. */
-html[data-mode='light'] {
-  --platform-menu-bg: var(--chrome-light-bg);
-  --platform-menu-fg: var(--chrome-light-ink);
-  --platform-badge-bg: var(--chrome-light-danger);
-  --platform-badge-fg: #fff;
-}
-
 .platform-menu-list {
   position: absolute;
   top: calc(100% + 4px);
   inset-inline-end: 0;
   z-index: 40;
   min-width: 170px;
-  padding: .3rem;
-  border-radius: var(--lx-radius-lg);
-  background: var(--platform-menu-bg, var(--chrome-dark-bg));
-  box-shadow: var(--chrome-dark-shadow);
 }
 
-[data-mode='light'] .platform-menu-list {
-  border: 1px solid var(--chrome-light-edge);
-  box-shadow: var(--chrome-light-shadow);
+/* One card for every dropdown. The comment sort is a details element, not a
+   platform menu, so it is named here rather than restyled in the comments view. */
+.platform-menu-list,
+.comment-sort-list {
+  padding: .3rem;
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--lx-radius-lg);
+  background: var(--platform-menu-bg, var(--chrome-dark-bg));
+  box-shadow: var(--chrome-shadow);
 }
 
 .platform-menu-list form,

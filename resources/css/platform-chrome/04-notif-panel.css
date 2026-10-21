@@ -58,8 +58,6 @@
   --notif-tone-attention: var(--chrome-light-warning);
   --notif-tone-critical: var(--chrome-light-danger);
   --notif-tone-neutral: var(--chrome-light-info);
-  border: 1px solid var(--chrome-light-edge);
-  box-shadow: var(--chrome-light-shadow);
 }
 
 /* Dark backgrounds the pages can sit on: the control panel's dark mode. The front

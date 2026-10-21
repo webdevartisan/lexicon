@@ -12,8 +12,8 @@
   --confirm-tone: var(--chrome-dark-info);
   background: var(--platform-menu-bg, var(--chrome-dark-bg));
   color: var(--confirm-fg);
-  border: 1px solid var(--confirm-line);
-  box-shadow: var(--chrome-dark-shadow);
+  border: 1px solid var(--chrome-border);
+  box-shadow: var(--chrome-dialog-shadow);
 }
 
 .confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-dark-danger); }
@@ -22,9 +22,6 @@
 [data-mode='light'] .confirm-card {
   --confirm-fg: var(--chrome-light-ink);
   --confirm-tone: var(--chrome-light-info);
-  background: var(--chrome-light-bg);
-  border-color: var(--chrome-light-edge);
-  box-shadow: var(--chrome-light-shadow);
 }
 
 [data-mode='light'] .confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-light-danger); }
