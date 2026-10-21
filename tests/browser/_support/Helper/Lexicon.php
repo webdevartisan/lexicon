@@ -126,7 +126,7 @@ class Lexicon extends Module
         $browser->fillField('Email address', $email);
         $browser->fillField('Password', $password);
         $this->waitForTheSignUpCheck();
-        $browser->click('Log in', 'form[action="/login"]');
+        $browser->click('Sign in', 'form[action="/login"]');
         $browser->waitForJS("return !location.pathname.endsWith('/login')", 15);
         $browser->saveSessionSnapshot($person);
     }

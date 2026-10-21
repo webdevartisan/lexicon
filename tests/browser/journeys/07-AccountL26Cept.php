@@ -13,6 +13,6 @@ $I->declineCookies();
 $I->fillField('Email address', $I->recall('deletedEmail'));
 $I->fillField('Password', $I->recall('deletedPassword'));
 $I->waitForTheSignUpCheck();
-$I->click('Log in', 'form[action="/login"]');
+$I->click('Sign in', 'form[action="/login"]');
 $I->waitForElementVisible('[role=alert], .lx-field-error, .invalid-feedback, [data-error]');
 $I->dontSee('suspended');
