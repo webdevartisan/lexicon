@@ -2735,6 +2735,10 @@ label {
     margin: 0;
 }
 
+.lx-authlegal span[aria-hidden] {
+    margin-inline: 0.25rem;
+}
+
 .lx-authlegal a {
     color: var(--lx-ink-3);
     text-decoration: underline;

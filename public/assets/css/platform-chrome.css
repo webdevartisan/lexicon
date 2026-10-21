@@ -1886,7 +1886,7 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-session { padding: .75rem 0; border-block-start: 1px solid var(--acct-line); }
 .acct-session p { margin: 0; }
 .acct-session-client { font-weight: 600; }
-.acct-hint span + span::before { content: " \00b7 "; }
+.acct-hint span + span::before { content: " \00b7\00a0"; }
 .acct-signout { margin-block: .5rem 0; }
 .acct-signout form { max-width: 24rem; }
 
