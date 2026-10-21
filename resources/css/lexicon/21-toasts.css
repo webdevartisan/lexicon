@@ -6,10 +6,10 @@
     position: fixed;
     inset-block-start: 1rem;
     inset-inline-end: 1rem;
-    z-index: 1050;
+    z-index: var(--lx-z-toast);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--lx-space-3);
     width: 20rem;
     max-width: calc(100vw - 2rem);
     pointer-events: none;
@@ -17,23 +17,23 @@
 .lx-toast {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    padding-block: 0.75rem;
-    padding-inline: 1rem 2.5rem;
+    gap: var(--lx-space-3);
+    padding-block: var(--lx-space-3);
+    padding-inline: var(--lx-space-4) var(--lx-space-7);
     position: relative;
-    border-radius: 8px;
+    border-radius: var(--lx-radius-md);
     border-inline-start: 4px solid currentColor;
-    background: #fff;
+    background: var(--lx-btn-surface);
     box-shadow: 0 8px 24px rgba(16, 35, 63, 0.14);
     pointer-events: auto;
-    animation: lx-toast-in 0.25s ease;
+    animation: lx-toast-in var(--lx-dur-slow) ease;
 }
-.lx-toast.is-hiding { opacity: 0; transform: translateX(0.5rem); transition: opacity 0.25s ease, transform 0.25s ease; }
-.lx-toast-msg { color: #16233f; font-size: 0.9rem; line-height: 1.4; }
-.lx-toast.is-success { color: #1a7f4b; }
-.lx-toast.is-error   { color: #b3261e; }
-.lx-toast.is-warning { color: #b5730f; }
-.lx-toast.is-info    { color: #2036e6; }
+.lx-toast.is-hiding { opacity: 0; transform: translateX(0.5rem); transition: opacity var(--lx-dur-slow) ease, transform var(--lx-dur-slow) ease; }
+.lx-toast-msg { color: var(--lx-ink); font-size: var(--lx-text-sm); line-height: var(--lx-leading-normal); }
+.lx-toast.is-success { color: var(--lx-ok); }
+.lx-toast.is-error   { color: var(--lx-danger); }
+.lx-toast.is-warning { color: var(--lx-gilt-deep); }
+.lx-toast.is-info    { color: var(--lx-ink); }
 .lx-toast-close {
     position: absolute;
     inset-block-start: 0.35rem;
@@ -41,9 +41,9 @@
     border: 0;
     background: transparent;
     color: inherit;
-    font-size: 1.25rem;
+    font-size: var(--lx-text-lg);
     line-height: 1;
-    padding: 0.25rem 0.4rem;
+    padding: var(--lx-space-1) var(--lx-space-2);
     cursor: pointer;
     border-radius: 6px;
 }

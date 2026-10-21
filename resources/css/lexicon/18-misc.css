@@ -9,17 +9,17 @@
 .lang-switcher-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: var(--lx-space-2);
     min-height: 2.25rem;
-    padding: 0.35rem 0.75rem;
+    padding: var(--lx-space-2) var(--lx-space-3);
     background: transparent;
     border: 1px solid var(--lx-rule-bind);
     border-radius: var(--lx-radius);
     color: var(--lx-on-bind-2);
     font-family: var(--lx-sans);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-label);
     text-transform: uppercase;
     cursor: pointer;
 }
@@ -41,7 +41,7 @@
 
 /* Pin an absolute row size so the footer and masthead dropdowns match (.85em would differ). */
 .lang-switcher .lang-switcher-menu button,
-.lang-switcher .lang-switcher-menu a { font-size: 0.9rem; }
+.lang-switcher .lang-switcher-menu a { font-size: var(--lx-text-sm); }
 
 .lang-switcher-item button[aria-current='true'],
 .lang-switcher-item a[aria-current='true'] {
@@ -52,7 +52,7 @@
     position: fixed;
     inset-inline-end: 1.5rem;
     bottom: 1.5rem;
-    z-index: 90;
+    z-index: var(--lx-z-fab);
     display: grid;
     place-items: center;
     width: 2.75rem;
@@ -68,7 +68,7 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(0.5rem);
-    transition: opacity 0.25s var(--lx-ease), transform 0.25s var(--lx-ease), visibility 0.25s,
+    transition: opacity var(--lx-dur-slow) var(--lx-ease), transform var(--lx-dur-slow) var(--lx-ease), visibility var(--lx-dur-slow),
         background 0.2s var(--lx-ease), border-color 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
 }
 
@@ -109,10 +109,10 @@
 
 .stack-trace {
     overflow: auto;
-    padding: 1rem;
+    padding: var(--lx-space-4);
     background: var(--lx-paper-sunk);
     border-radius: var(--lx-radius);
     font-family: var(--lx-mono);
-    font-size: 0.8rem;
+    font-size: var(--lx-text-xs);
 }
 
