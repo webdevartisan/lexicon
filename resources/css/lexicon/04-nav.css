@@ -1,0 +1,279 @@
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+
+.lx-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    color: var(--lx-ink);
+    background: var(--lx-paper);
+    transition: background 0.3s var(--lx-ease), box-shadow 0.3s var(--lx-ease),
+        color 0.3s var(--lx-ease), backdrop-filter 0.3s var(--lx-ease);
+}
+
+.lx-nav-inner {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    min-height: var(--lx-nav-h);
+}
+
+.lx-nav.is-stuck {
+    background: rgba(240, 241, 236, 0.88);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    box-shadow: inset 0 -1px 0 var(--lx-rule);
+}
+
+.lx-nav.is-over {
+    background: transparent;
+    color: var(--lx-on-bind);
+}
+
+.lx-nav.is-over.is-stuck {
+    background: rgba(13, 21, 38, 0.9);
+    box-shadow: inset 0 -1px 0 var(--lx-rule-bind);
+}
+
+.lx-logo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-family: var(--lx-sans);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.lx-logo:hover {
+    text-decoration: none;
+}
+
+.lx-logo-mark {
+    width: 0.4rem;
+    height: 0.4rem;
+    background: var(--lx-gilt);
+    border-radius: 50%;
+    flex: none;
+    transform: translateY(-0.15em);
+}
+
+.lx-nav-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 1.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    margin-inline-end: auto;
+}
+
+.lx-nav-link {
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: inherit;
+    opacity: 0.72;
+    padding-block: 0.35rem;
+    position: relative;
+    transition: opacity 0.2s var(--lx-ease);
+}
+
+.lx-nav-link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.15rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: inline-start;
+    transition: transform 0.25s var(--lx-ease);
+}
+
+.lx-nav-link:hover,
+.lx-nav-link[aria-current] {
+    opacity: 1;
+    text-decoration: none;
+}
+
+.lx-nav-link:hover::after,
+.lx-nav-link[aria-current]::after {
+    transform: scaleX(1);
+}
+
+.lx-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lx-nav-actions form {
+    margin: 0;
+}
+
+.lx-nav-toggle {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-color: var(--lx-rule-strong);
+}
+
+.lx-nav.is-over .lx-nav-toggle {
+    border-color: var(--lx-rule-bind);
+}
+
+.lx-nav-toggle span,
+.lx-nav-toggle span::before,
+.lx-nav-toggle span::after {
+    display: block;
+    width: 1.1rem;
+    height: 1px;
+    background: currentColor;
+    transition: transform 0.25s var(--lx-ease), opacity 0.2s var(--lx-ease);
+}
+
+.lx-nav-toggle span::before,
+.lx-nav-toggle span::after {
+    content: '';
+    position: absolute;
+}
+
+.lx-nav-toggle span::before {
+    transform: translateY(-0.32rem);
+}
+
+.lx-nav-toggle span::after {
+    transform: translateY(0.32rem);
+}
+
+/* Mobile drawer */
+
+.lx-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: var(--lx-bind-deep);
+    color: var(--lx-on-bind);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem var(--lx-gutter) 2.5rem;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-1rem);
+    /* Hidden via the [hidden] attribute, not visibility, so focus can enter the drawer. */
+    pointer-events: none;
+    transition: opacity 0.3s var(--lx-ease), transform 0.3s var(--lx-ease);
+}
+
+.lx-drawer[hidden] {
+    display: none;
+}
+
+.lx-drawer.is-open {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.lx-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3rem;
+    margin-bottom: 2.5rem;
+}
+
+.lx-drawer-close {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: var(--lx-radius);
+    background: transparent;
+    color: inherit;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lx-drawer-links {
+    list-style: none;
+    margin: 0 0 2.5rem;
+    padding: 0;
+}
+
+.lx-drawer-links li + li {
+    border-top: 1px solid var(--lx-rule-bind);
+}
+
+.lx-drawer-links a {
+    display: block;
+    padding: 0.9rem 0;
+    font-family: var(--lx-serif);
+    font-size: 1.6rem;
+    color: var(--lx-on-bind);
+}
+
+.lx-drawer-links a:hover {
+    color: var(--lx-gilt);
+    text-decoration: none;
+}
+
+.lx-drawer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+}
+
+.lx-drawer-actions form {
+    margin: 0;
+}
+
+body.lx-drawer-open {
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .lx-nav-links {
+        display: none;
+    }
+
+    .lx-nav-actions {
+        margin-inline-start: auto;
+    }
+
+    .lx-nav-actions .lx-btn {
+        display: none;
+    }
+
+    .lx-nav-actions .lx-btn-primary {
+        display: inline-flex;
+    }
+
+    .lx-nav-toggle {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 480px) {
+    .lx-nav-actions .lx-btn-primary {
+        display: none;
+    }
+}
+

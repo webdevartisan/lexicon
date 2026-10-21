@@ -1,0 +1,28 @@
+/* Lexicon front-end design system. Edit the partials in resources/css/lexicon/ and run
+   `npm run build:front-css`; public/assets/css/lexicon.css is build output. */
+
+@import "./lexicon/00-fonts.css";
+@import "./lexicon/01-tokens.css";
+@import "./lexicon/02-base.css";
+@import "./lexicon/03-type.css";
+@import "./lexicon/04-nav.css";
+@import "./lexicon/05-cover.css";
+@import "./lexicon/06-data-band.css";
+@import "./lexicon/07-how-it-works.css";
+@import "./lexicon/08-features.css";
+@import "./lexicon/09-citations.css";
+@import "./lexicon/10-faq.css";
+@import "./lexicon/11-closing.css";
+@import "./lexicon/12-footer.css";
+@import "./lexicon/13-buttons.css";
+@import "./lexicon/14-legacy.css";
+@import "./lexicon/15-auth.css";
+@import "./lexicon/16-profile.css";
+@import "./lexicon/17-reader.css";
+@import "./lexicon/18-misc.css";
+@import "./lexicon/19-motion.css";
+@import "./lexicon/20-print.css";
+@import "./lexicon/21-toasts.css";
+@import "./lexicon/22-account.css";
+@import "./lexicon/23-public-stats.css";
+@import "./lexicon/24-welcome.css";

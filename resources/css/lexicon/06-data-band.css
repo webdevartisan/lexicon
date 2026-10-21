@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Data band — the seam between cover and paper
+   ========================================================================== */
+
+.lx-band {
+    background: var(--lx-paper-sunk);
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-band-inner {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-block: clamp(2rem, 4vw, 3rem);
+}
+
+.lx-band-item {
+    padding-inline: clamp(0.5rem, 3vw, 2rem);
+    text-align: center;
+}
+
+.lx-band-item + .lx-band-item {
+    border-inline-start: 1px solid var(--lx-rule);
+}
+
+.lx-band-n {
+    display: block;
+    font-family: var(--lx-serif);
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--lx-ink);
+}
+
+.lx-band-label {
+    display: block;
+    margin-top: 0.5rem;
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+@media (max-width: 560px) {
+    .lx-band-inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .lx-band-item {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        text-align: start;
+        padding-block: 0.85rem;
+    }
+
+    .lx-band-item + .lx-band-item {
+        border-inline-start: 0;
+        border-top: 1px solid var(--lx-rule);
+    }
+
+    .lx-band-label {
+        margin-top: 0;
+    }
+}
+

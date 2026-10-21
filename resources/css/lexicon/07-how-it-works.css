@@ -1,0 +1,89 @@
+/* ==========================================================================
+   Senses block — how it works
+   ========================================================================== */
+
+.lx-entryhead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 0 0 clamp(2rem, 4vw, 3rem);
+}
+
+.lx-entryhead h2 {
+    margin: 0;
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.lx-entryhead .lx-pos {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+.lx-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+}
+
+.lx-step {
+    counter-increment: step;
+    padding: 1.75rem clamp(1rem, 2.5vw, 2rem) 0.5rem;
+    border-top: 2px solid var(--lx-ink);
+    position: relative;
+}
+
+.lx-step:first-child {
+    padding-inline-start: 0;
+}
+
+.lx-step + .lx-step {
+    border-inline-start: 1px solid var(--lx-rule);
+}
+
+.lx-step::before {
+    content: counter(step);
+    display: block;
+    font-family: var(--lx-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--lx-gilt-deep);
+    margin-bottom: 1rem;
+}
+
+.lx-step h3 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    font-weight: 550;
+}
+
+.lx-step p {
+    margin: 0;
+    color: var(--lx-ink-2);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    .lx-step {
+        padding-inline: 0;
+        padding-block: 1.5rem 0.5rem;
+    }
+
+    .lx-step + .lx-step {
+        border-inline-start: 0;
+        border-top: 1px solid var(--lx-rule);
+    }
+
+    .lx-step:first-child {
+        border-top-width: 2px;
+    }
+}
+

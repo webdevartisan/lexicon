@@ -1,0 +1,531 @@
+/* /account section shell: a rail on the inline-start, content beside it. The
+   rail is a plain stacked list on narrow viewports, never a scroll strip that
+   would hide its own last item. */
+.lx-account { display: grid; gap: 1.5rem; }
+.lx-account-nav ul { list-style: none; margin: 0; padding: 0; }
+.lx-account-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    border-radius: 6px;
+    border-inline-start: 3px solid transparent;
+    color: var(--lx-ink-2);
+    text-decoration: none;
+}
+.lx-account-nav a[aria-current="page"] {
+    font-weight: 600;
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    border-inline-start-color: var(--lx-gilt);
+}
+/* Settings controls use the UI voice, like every other button and menu on the front. */
+.lx-account-nav a,
+.acct-page .acct-btn {
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+/* The modal is printed outside <main>, so only the full page gets a full-size title. */
+.lx-main .lx-account .acct-title {
+    margin-bottom: 0.5rem;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+}
+@media (min-width: 720px) {
+    .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: 2.5rem; }
+    /* The page heading spans the full width above both the nav rail and the
+       body, so the rail top-aligns with the form instead of the tall H1. */
+    .lx-account-head { grid-column: 1 / -1; }
+}
+
+/* Account pages: cards, fields layout, avatar, checkboxes. Front-native, since
+   the dashboard's equivalents are Tailwind/cp.css which the front never loads. */
+.lx-muted { color: #5b6472; font-size: 0.85rem; }
+/* No bottom margin: the grid gap already separates the head from the nav and
+   body, and a margin on top of the gap opens an awkward void under the title. */
+.lx-account-head { margin-block-end: 0; }
+.lx-account-head h1 { margin: 0 0 0.25rem; }
+.lx-account-body { display: grid; gap: 2rem; }
+/* The head and the danger zone are full-width strips; only the form and the
+   sidebar (aside, when a page has one) share the two-column row below the
+   head. Without this, grid auto-placement drops the head into column 1 and
+   the form into column 2 of the SAME row, leaving the row under the head
+   empty until whatever's left wraps down. */
+.lx-account-body > .lx-danger-zone {
+    grid-column: 1 / -1;
+}
+/* Below the two-column breakpoint the aside stacks BEFORE the form, so the
+   avatar and reference cards read as context first and the Save action stays
+   the last thing on the page instead of stranding cards beneath it. Scoped to
+   max-width so it never reorders the desktop columns. */
+@media (max-width: 899px) {
+    .lx-account-aside { order: -1; }
+}
+@media (min-width: 900px) {
+    .lx-account-body { grid-template-columns: 1fr 18rem; align-items: start; }
+    /* Stretch the form to the row height (set by the taller aside) and let the
+       action bar fall to the bottom, so a short form — e.g. a reader with a
+       single toggle — doesn't strand its buttons up beside a tall aside. On a
+       form taller than the aside there is no free space to absorb, so the auto
+       margin collapses and the padding below keeps the usual gap. */
+    .lx-account-form { align-self: stretch; display: flex; flex-direction: column; }
+    .lx-account-form .lx-account-actions {
+        margin-block-start: auto;
+        padding-block-start: 2.25rem;
+    }
+}
+/* A section heading has to read as a different kind of thing from the field
+   labels under it. Both being small uppercase grey made "Public page" and
+   "Public profile URL" look like one repeated label. The heading keeps the
+   serif voice at reading size in full ink, over a rule; the labels stay small,
+   uppercase and grey. */
+.lx-account-section {
+    font-family: var(--lx-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--lx-ink);
+    margin-block: 2.5rem 1.25rem;
+    padding-block-end: 0.5rem;
+    border-block-end: 1px solid var(--lx-rule);
+}
+.lx-account-section:first-of-type { margin-block-start: 0; }
+/* Every account form closes with the same action bar. No top rule: the fields
+   are underline-style, so a full-width border here would just read as one more
+   field line. The buttons themselves mark the end of the form; whitespace does
+   the separating. */
+.lx-account-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-block-start: 2.25rem;
+}
+.lx-grid-2 { display: grid; gap: 1rem; }
+@media (min-width: 560px) { .lx-grid-2 { grid-template-columns: 1fr 1fr; } }
+
+/* Pages with no aside span the full row, the way the danger zone already does,
+   so the 900px two-column rule above cannot pull their sections side by side. */
+.lx-account-body > .lx-account-main,
+.lx-account-body > .lx-account-close {
+    grid-column: 1 / -1;
+}
+.lx-account-main { display: grid; gap: 2rem; }
+
+/* A value the page states but does not edit, with its own action beside it.
+   Wraps to two rows before the address is allowed to truncate. */
+.lx-readout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding-block-end: 0.6rem;
+    border-block-end: 1px solid var(--lx-rule-strong);
+}
+.lx-readout-text { min-inline-size: 0; }
+.lx-readout-value {
+    margin: 0.35rem 0 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* Standing state the page is reporting, not an error and not a flash: it
+   survives reloads because it describes a row in the database. */
+.lx-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-start: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--lx-rule-strong);
+    border-inline-start: 3px solid var(--lx-ink);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-sunk);
+}
+.lx-notice p { margin: 0; font-size: 0.88rem; line-height: 1.5; }
+.lx-notice-warn { border-inline-start-color: var(--lx-danger); }
+
+/* Closing the account is the last thing on the page and reads as an exit, not
+   as an offer: a hairline and a lot of air instead of a tinted panel, and a
+   heading no louder than the section labels above it. */
+.lx-account-close {
+    margin-block-start: 1.5rem;
+    padding-block-start: 1.75rem;
+    border-block-start: 1px solid var(--lx-rule-strong);
+}
+.lx-account-close h2 {
+    margin: 0 0 0.35rem;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+.lx-account-close p { margin: 0 0 1rem; max-inline-size: 44ch; }
+
+/* Where you're signed in: one hairline row per device, icon tile, two quiet
+   meta lines, the action at the row's end. The current device sits first and
+   carries the badge rather than a different colour. */
+.lx-sessions-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+.lx-sessions-head p { margin: 0.35rem 0 0; max-inline-size: 52ch; }
+.lx-sessions-list { list-style: none; margin: 0; padding: 0; border-block-start: 1px solid var(--lx-rule-strong); }
+.lx-session {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding-block: 0.9rem;
+    border-block-end: 1px solid var(--lx-rule);
+}
+.lx-session-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink-2);
+}
+.lx-session.is-current .lx-session-icon { color: var(--lx-ink); border-color: var(--lx-rule-strong); }
+.lx-session-body { min-inline-size: 0; }
+.lx-session-client {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-weight: 600;
+}
+.lx-session-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin: 0.15rem 0 0;
+    font-size: 0.82rem;
+    color: var(--lx-ink-2);
+}
+.lx-sessions-note { margin: 0.75rem 0 0; }
+/* On a phone the button drops under the text instead of squeezing it. */
+@media (max-width: 559px) {
+    .lx-session { grid-template-columns: auto 1fr; }
+    .lx-session > .lx-btn { grid-column: 2; justify-self: start; }
+}
+
+/* Native dialog, so focus trapping, Escape and background inertness come from
+   the browser instead of being reimplemented. Shares the panel treatment with
+   the older .lx-modal markup. */
+.lx-dialog {
+    inline-size: 100%;
+    max-inline-size: 30rem;
+    padding: 0;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    box-shadow: 0 24px 60px rgba(13, 21, 38, 0.35);
+}
+.lx-dialog::backdrop { background: rgba(23, 26, 28, 0.6); }
+.lx-dialog-form { padding: 1.5rem; }
+.lx-dialog .lx-modal-text { margin-block-end: 1.5rem; }
+.lx-dialog .lx-field:last-of-type { margin-block-end: 0; }
+
+/* Front dialog, shared by the avatar cropper, avatar-remove and account-delete
+   confirmations. Backdrop is fixed (not absolute) so it always covers the
+   viewport regardless of any positioned ancestor. */
+.lx-modal[hidden] { display: none; }
+.lx-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+.lx-modal-backdrop { position: fixed; inset: 0; background: rgba(23, 26, 28, 0.6); }
+.lx-modal-panel {
+    position: relative;
+    z-index: 1;
+    inline-size: 100%;
+    max-inline-size: 30rem;
+    padding: 1.5rem;
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    box-shadow: 0 24px 60px rgba(13, 21, 38, 0.35);
+}
+.lx-modal-title { margin: 0 0 0.6rem; font-size: 1.15rem; font-family: var(--lx-serif); }
+.lx-modal-text { margin: 0; color: var(--lx-ink-2); font-size: 0.9rem; line-height: 1.55; }
+.lx-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+/* Cards recede into the paper rather than floating above it as bright white
+   boxes: the sunk tone matches the active nav item, so the aside reads as part
+   of the same stock as the rest of the page. Data chips inside use the raised
+   tone to lift off this surface. */
+.lx-card {
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    padding: 1.25rem;
+    margin-block-end: 1.25rem;
+    background: var(--lx-paper-sunk);
+}
+.lx-card:last-child { margin-block-end: 0; }
+/* Card titles echo the form section labels: small caps, quiet, so the aside
+   reads as reference material subordinate to the form. */
+.lx-card-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--lx-ink-2);
+    margin: 0 0 0.85rem;
+}
+.lx-stat { display: flex; justify-content: space-between; gap: 1rem; margin: 0.35rem 0; font-size: 0.85rem; }
+
+/* Avatar card: centred subject with a compact icon control bar under it. */
+.lx-card-avatar { text-align: center; }
+.lx-card-avatar .lx-card-title { text-align: start; }
+.lx-card-avatar .lx-avatar { margin-inline: auto; inline-size: 7rem; block-size: 7rem; }
+
+.lx-avatar-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-block-start: 0.9rem;
+}
+/* Compact, transparent icon controls. 44px hit area keeps them usable on
+   touch (WCAG 2.5.5). The visible label text is kept for assistive tech via
+   .lx-visually-hidden, and title gives a pointer tooltip. */
+.lx-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    cursor: pointer;
+    transition: background 0.15s var(--lx-ease), border-color 0.15s var(--lx-ease), color 0.15s var(--lx-ease);
+}
+.lx-icon-btn:hover { background: var(--lx-ink); border-color: var(--lx-ink); color: var(--lx-paper); }
+.lx-icon-btn:focus-visible,
+.lx-icon-btn:focus-within { outline: 2px solid var(--lx-ink); outline-offset: 2px; }
+.lx-icon-btn[hidden] { display: none; }
+.lx-icon-btn-danger { color: var(--lx-danger); border-color: #e4c2be; }
+.lx-icon-btn-danger:hover { background: var(--lx-danger); border-color: var(--lx-danger); color: #fff; }
+.lx-avatar-status { margin-block-start: 0.5rem; }
+
+/* Activity: a compact three-up stat grid, numbers first for scannability. */
+.lx-statgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+}
+.lx-stat-item {
+    text-align: center;
+    padding: 0.6rem 0.35rem;
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    background: var(--lx-paper-raised);
+}
+.lx-stat-num { margin: 0; font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: var(--lx-ink); font-variant-numeric: tabular-nums; }
+.lx-stat-num-sm { font-size: 1rem; padding-block: 0.18rem; }
+.lx-stat-label { margin: 0.2rem 0 0; font-size: 0.7rem; color: var(--lx-ink-2); }
+
+/* Public page: a preview card with a visibility badge and a distinct primary link. */
+.lx-pubcard-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-block-end: 0.6rem; }
+.lx-pubcard-head .lx-card-title { margin: 0; }
+.lx-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+}
+.lx-badge-on { color: var(--lx-ok); background: var(--lx-ok-bg); }
+.lx-badge-off { color: var(--lx-ink-2); background: var(--lx-paper-sunk); }
+.lx-pubcard-url {
+    margin: 0 0 0.85rem;
+    font-family: var(--lx-sans);
+    font-size: 0.8rem;
+    color: var(--lx-ink-2);
+    word-break: break-all;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius);
+    padding: 0.45rem 0.6rem;
+}
+.lx-pubcard-note { margin-block-start: 0.7rem; }
+
+/* Secondary form button: readable on paper, unlike the binding-only ghost. */
+.lx-btn-subtle { border-color: var(--lx-rule-strong); color: var(--lx-ink-2); }
+.lx-btn-subtle:hover { background: var(--lx-paper-sunk); color: var(--lx-ink); border-color: var(--lx-rule-strong); }
+
+/* Choices.js (searchable timezone) restyled to match the underline selects it
+   sits beside: the vendor default is a boxed white control with a blue accent,
+   which clashes with the paper + serif fields. Scoped to the account pages so
+   the dashboard's own Choices styling is untouched. */
+.lx-account .choices { margin-block-end: 0; }
+/* Specificity mirrors the vendor's own `.choices[data-type*=select-one]
+   .choices__inner` (0,3,0) so our transparent paper wins over its white. */
+.lx-account .choices[data-type*="select-one"] .choices__inner {
+    min-height: 2.75rem;
+    padding: 0.45rem 1.5rem 0.45rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--lx-field-line);
+    border-radius: 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices[data-type*="select-one"].is-focused .choices__inner,
+.lx-account .choices[data-type*="select-one"].is-open .choices__inner {
+    background: transparent;
+    border-bottom-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+}
+.lx-account .choices__list--single { padding: 0; }
+.lx-account .choices__list--single .choices__item { color: var(--lx-ink); }
+.lx-account .choices__placeholder { color: var(--lx-ink-3); opacity: 1; }
+/* Recolour the vendor caret to match the field ink. */
+.lx-account .choices[data-type*="select-one"]::after { border-color: var(--lx-ink-2) transparent transparent; }
+
+/* The popover sits on the same paper as the page, defined by a crisp rule and
+   a shallow shadow rather than a bright white card with a material drop. Both
+   classes are named so this out-specifies the vendor's `.choices__list
+   [aria-expanded]` rule (0,2,0), which otherwise wins the tie by load order. */
+.lx-account .choices__list--dropdown.choices__list {
+    margin-block-start: 0.35rem;
+    background: var(--lx-paper-sunk);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    box-shadow: 0 6px 18px rgba(13, 21, 38, 0.12);
+}
+/* The search box is an underline field, like every other input on the page,
+   not a boxed widget input. Doubled dropdown class keeps this at 0,4,0 so it
+   beats the vendor's `.choices[data-type*=select-one] .choices__input` (0,3,0),
+   which sets a white fill and would otherwise win the tie by load order. */
+.lx-account .choices__list--dropdown.choices__list .choices__input {
+    margin: 0.25rem 0.75rem 0.35rem;
+    padding: 0.35rem 0;
+    inline-size: calc(100% - 1.5rem);
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-block-end: 1px solid var(--lx-rule-strong);
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+    font-family: var(--lx-serif);
+    font-size: 1rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices__list--dropdown.choices__list .choices__input:focus {
+    border-block-end-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+    outline: none;
+}
+.lx-account .choices__list--dropdown.choices__list .choices__item {
+    font-family: var(--lx-serif);
+    font-size: 1rem;
+    color: var(--lx-ink);
+}
+.lx-account .choices__list--dropdown.choices__list .choices__heading {
+    margin: 0;
+    padding: 0.5rem 0.9rem 0.35rem;
+    color: var(--lx-ink-3);
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-block-end: 1px solid var(--lx-rule);
+}
+/* Doubled dropdown class again, so the highlight beats the vendor's #f2f2f2
+   (0,4,0) rather than tying and losing by load order. */
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable.is-highlighted,
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable:hover {
+    background: var(--lx-rule);
+    color: var(--lx-ink);
+}
+/* The chosen row keeps a hairline gilt marker, echoing the active nav rail. */
+.lx-account .choices__list--dropdown.choices__list .choices__item--selectable[aria-selected="true"] {
+    box-shadow: inset 3px 0 0 0 var(--lx-gilt);
+}
+
+.lx-check { display: flex; align-items: flex-start; gap: 0.6rem; margin-block: 0.75rem; font-size: 0.9rem; }
+.lx-check input { margin-block-start: 0.2rem; }
+.lx-check-title { display: block; font-weight: 600; }
+.lx-check-help { display: block; color: #5b6472; font-size: 0.8rem; }
+
+.lx-avatar {
+    inline-size: 6rem;
+    block-size: 6rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #eef1f6;
+    display: grid;
+    place-items: center;
+    margin-block-end: 0.75rem;
+}
+.lx-avatar-img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.lx-avatar-initials { font-size: 1.5rem; font-weight: 600; color: #5b6472; }
+
+.lx-visually-hidden,
+input.lx-visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.lx-btn-danger { color: #fff; background: #b3261e; border-color: #b3261e; }
+.lx-btn-danger:hover { background: #97201a; border-color: #97201a; }
+
+/* Destructive but not advertised: the outline reads as a warning where a solid
+   red fill competes with the page's own primary action. Used for the way out of
+   a settings page, never for the confirmation that actually destroys something. */
+.lx-btn-danger-outline { color: #8f1d16; background: transparent; border-color: #b57068; }
+.lx-btn-danger-outline:hover { background: #b3261e; border-color: #b3261e; color: #fff; }
+
+.lx-btn-sm { min-height: 2.25rem; padding: 0.35rem 1rem; font-size: 0.82rem; }
+
+.lx-danger-zone {
+    margin-block-start: 2rem;
+    padding: 1.25rem;
+    border: 1px solid #f2c9c6;
+    border-radius: 10px;
+    background: #fdf3f2;
+}
+.lx-danger-zone h2 { color: #b3261e; font-size: 0.95rem; margin: 0 0 0.35rem; }
+.lx-always { margin-block: 0.75rem; }
+.lx-always .lx-check-title { margin: 0; }
+
+/* Delete page: narrow single column, reached from Preferences. */
+.lx-account-narrow { max-inline-size: 40rem; }
+.lx-delete-list { margin-block: 0.75rem 1.5rem; padding-inline-start: 1.25rem; }
+.lx-delete-list li { margin-block: 0.4rem; }
+.lx-account-actions-split { justify-content: space-between; gap: 1rem; }
+

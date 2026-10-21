@@ -1,0 +1,143 @@
+/* ==========================================================================
+   Footer — the colophon
+   ========================================================================== */
+
+/* Ink rather than the navy binding, to match the buttons and menus. The
+   greys are neutral so they don't read blue on it. */
+.lx-foot {
+    --lx-on-bind-2: #b4b8b1;
+    --lx-on-bind-3: #8c918a;
+    background: var(--lx-ink);
+    color: var(--lx-on-bind-2);
+    font-size: 0.9375rem;
+}
+
+.lx-foot-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+    padding-block: clamp(3rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+}
+
+.lx-foot-brand .lx-logo {
+    color: var(--lx-on-bind);
+    margin-bottom: 1rem;
+}
+
+.lx-foot-tagline {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    color: var(--lx-gilt);
+    margin: 0 0 1rem;
+}
+
+.lx-foot-about {
+    margin: 0 0 1.5rem;
+    max-width: 42ch;
+    line-height: 1.7;
+}
+
+.lx-foot h2 {
+    margin: 0 0 1.1rem;
+    font-family: var(--lx-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-on-bind);
+}
+
+.lx-foot ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot li + li {
+    margin-top: 0.6rem;
+}
+
+.lx-foot a {
+    color: var(--lx-on-bind-2);
+}
+
+.lx-foot a:hover {
+    color: var(--lx-gilt);
+    text-decoration: none;
+}
+
+.lx-foot-contact li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+}
+
+.lx-foot-contact svg {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    opacity: 0.6;
+    transform: translateY(0.1em);
+}
+
+.lx-foot-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    padding-block: 1.5rem 2rem;
+    border-top: 1px solid var(--lx-rule-bind);
+    font-size: 0.8125rem;
+}
+
+.lx-foot-copy {
+    margin: 0;
+    margin-inline-end: auto;
+    color: var(--lx-on-bind-3);
+}
+
+.lx-foot-social {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot-social a {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: 50%;
+    color: var(--lx-on-bind-2);
+    transition: border-color 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-foot-social a:hover {
+    border-color: var(--lx-gilt);
+    color: var(--lx-gilt);
+}
+
+.lx-foot-social svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+@media (max-width: 900px) {
+    .lx-foot-inner {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lx-foot-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 520px) {
+    .lx-foot-inner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+

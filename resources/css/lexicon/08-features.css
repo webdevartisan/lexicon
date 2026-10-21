@@ -1,0 +1,66 @@
+/* ==========================================================================
+   Related entries — the features, set as a definition column
+   ========================================================================== */
+
+.lx-entries {
+    margin: 0;
+    border-top: 2px solid var(--lx-ink);
+}
+
+.lx-entry {
+    display: grid;
+    grid-template-columns: minmax(11rem, 22%) minmax(0, 1fr);
+    gap: clamp(1rem, 4vw, 3rem);
+    padding-block: clamp(1.75rem, 3.5vw, 2.75rem);
+    border-bottom: 1px solid var(--lx-rule);
+    transition: background 0.3s var(--lx-ease);
+}
+
+.lx-entry:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.lx-entry-word {
+    font-family: var(--lx-serif);
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.lx-entry-pos {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.lx-entry-def {
+    margin: 0;
+}
+
+.lx-entry-def h3 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.15rem, 1.9vw, 1.4rem);
+    font-weight: 550;
+}
+
+.lx-entry-def p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--lx-ink-2);
+    line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+    .lx-entry {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    .lx-entry-pos {
+        display: inline;
+        margin-inline-start: 0.5rem;
+    }
+}
+

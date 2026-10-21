@@ -1,0 +1,695 @@
+/* ==========================================================================
+   Auth pages
+   ========================================================================== */
+
+.lx-authpage {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--lx-paper);
+}
+
+.lx-authbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2.75rem);
+}
+
+.lx-authbar-back,
+.lx-authbar-alt a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lx-ink);
+}
+
+.lx-authbar-back:hover,
+.lx-authbar-alt a:hover {
+    text-decoration: underline;
+}
+
+.lx-authbar-back svg {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+
+[dir='rtl'] .lx-authbar-back svg {
+    transform: scaleX(-1);
+}
+
+.lx-authmain {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: clamp(0.5rem, 4vh, 2.5rem) clamp(1.25rem, 4vw, 2.75rem) clamp(2rem, 5vh, 3.5rem);
+}
+
+.lx-authcol {
+    width: 100%;
+    max-width: 25rem;
+}
+
+.lx-authmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-bottom: clamp(1.5rem, 5vh, 2.5rem);
+}
+
+.lx-authmark:hover {
+    text-decoration: none;
+}
+
+.lx-authmark-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--lx-gilt-deep);
+    flex: none;
+}
+
+.lx-authmark-word {
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lx-ink);
+}
+
+.lx-authtitle {
+    margin: 0 0 0.5rem;
+    text-align: center;
+    font-size: clamp(1.7rem, 5vw, 2.35rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+.lx-authsub {
+    margin: 0 0 clamp(1.75rem, 5vh, 2.5rem);
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--lx-ink-2);
+}
+
+/* The layout always emits the element; an empty one must not leave a gap. */
+.lx-authsub:empty {
+    display: none;
+}
+
+.lx-authalert {
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 0.9rem;
+    border-inline-start: 2px solid var(--lx-danger);
+    background: var(--lx-danger-bg);
+    color: var(--lx-danger);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.lx-authalert.is-ok {
+    border-inline-start-color: var(--lx-ok);
+    background: var(--lx-ok-bg);
+    color: var(--lx-ok);
+}
+
+/* Sign-in check status, shown above the submit button while the browser works. */
+.lx-check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--lx-ink-2);
+}
+
+.lx-check[hidden] {
+    display: none;
+}
+
+.lx-check-mark {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid var(--lx-rule);
+    border-top-color: var(--lx-ink);
+    border-radius: 50%;
+    animation: lx-check-spin 0.8s linear infinite;
+}
+
+.lx-check[data-state='done'] {
+    color: var(--lx-ok);
+}
+
+.lx-check[data-state='done'] .lx-check-mark {
+    border-color: var(--lx-ok);
+    background: var(--lx-ok);
+    animation: none;
+}
+
+.lx-check[data-state='failed'] {
+    color: var(--lx-danger);
+}
+
+.lx-check[data-state='failed'] .lx-check-mark {
+    border-color: var(--lx-danger);
+    animation: none;
+}
+
+@keyframes lx-check-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lx-check-mark {
+        animation: none;
+        border-top-color: var(--lx-rule);
+    }
+}
+
+.lx-authsubmit[aria-busy='true'] {
+    cursor: progress;
+    opacity: 0.6;
+}
+
+/* --- Fields ---------------------------------------------------------- */
+
+.lx-field {
+    margin-bottom: 1.6rem;
+}
+
+/* Wraps input + show/hide toggle so the toggle positions against the input, not the field. */
+.lx-field-control {
+    position: relative;
+}
+
+.lx-field-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-family: var(--lx-sans);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+/* Two classes deep to beat the (0,1,1) input rule in the component shims. */
+.lx-field .lx-field-input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.45rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--lx-field-line);
+    border-radius: 0;
+    font-family: var(--lx-serif);
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: var(--lx-ink);
+    transition: border-color 0.2s var(--lx-ease), box-shadow 0.2s var(--lx-ease);
+}
+
+.lx-field .lx-field-input::placeholder {
+    color: var(--lx-ink-3);
+    font-family: var(--lx-serif);
+}
+
+.lx-field-control .lx-field-input {
+    padding-inline-end: 3.75rem;
+}
+
+/* The underline is the focus indicator, so it thickens to 2px --lx-ink (drawn as a shadow). */
+.lx-field .lx-field-input:focus,
+.lx-field .lx-field-input:focus-visible {
+    outline: none;
+    border-bottom-color: var(--lx-ink);
+    box-shadow: 0 1px 0 0 var(--lx-ink);
+}
+
+.lx-field-invalid .lx-field-input {
+    border-bottom-color: var(--lx-danger);
+}
+
+.lx-field-toggle {
+    position: absolute;
+    inset-inline-end: 0;
+    bottom: 0.55rem;
+    min-height: 0;
+    padding: 0.25rem 0.15rem;
+    background: none;
+    border: 0;
+    border-radius: 2px;
+    font-family: var(--lx-sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--lx-ink-2);
+    cursor: pointer;
+}
+
+.lx-field-toggle:hover {
+    background: none;
+    color: var(--lx-ink);
+}
+
+.lx-field-error {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-danger);
+}
+
+.lx-field-hint {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-ink-2);
+}
+
+/* Small utilities that go with the form primitive. */
+
+.lx-form-actions {
+    margin-top: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Honeypot: kept in the DOM for form submission but off-screen for humans. */
+.lx-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Page-level flash / status messages. Left rule keeps it close to the bound-book
+   palette; the two variants only change the accent + text colour, not the base. */
+.lx-msg {
+    display: block;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1.05rem;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-left: 3px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.lx-msg-success {
+    border-left-color: var(--lx-gilt-deep);
+}
+
+.lx-msg-error {
+    background: var(--lx-danger-bg);
+    border-color: var(--lx-danger);
+    border-left-color: var(--lx-danger);
+    color: var(--lx-danger);
+}
+
+/* --- Password strength: advisory only; the server enforces password:basic (6 char min). --- */
+
+.lx-meter {
+    margin-top: 0.75rem;
+}
+
+.lx-meter[hidden] {
+    display: none;
+}
+
+.lx-meter-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    height: 3px;
+}
+
+.lx-meter-seg {
+    background: var(--lx-rule);
+    border-radius: 2px;
+    transition: background 0.25s var(--lx-ease);
+}
+
+.lx-meter[data-level='1'] .lx-meter-seg:nth-child(-n + 1),
+.lx-meter[data-level='2'] .lx-meter-seg:nth-child(-n + 2),
+.lx-meter[data-level='3'] .lx-meter-seg:nth-child(-n + 3),
+.lx-meter[data-level='4'] .lx-meter-seg {
+    background: var(--lx-meter-fill, var(--lx-ink-2));
+}
+
+.lx-meter[data-level='0'],
+.lx-meter[data-level='1'] {
+    --lx-meter-fill: var(--lx-danger);
+}
+
+.lx-meter[data-level='2'] {
+    --lx-meter-fill: var(--lx-gilt-deep);
+}
+
+.lx-meter[data-level='3'],
+.lx-meter[data-level='4'] {
+    --lx-meter-fill: var(--lx-ok);
+}
+
+.lx-meter-label {
+    margin: 0.5rem 0 0;
+    font-family: var(--lx-sans);
+    font-size: 0.78rem;
+    color: var(--lx-ink-2);
+}
+
+.lx-meter-level {
+    font-weight: 600;
+    color: var(--lx-meter-fill, var(--lx-ink-2));
+}
+
+/* --- Submit and the tail of the page --------------------------------- */
+
+.lx-authsubmit {
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.lx-authhelp {
+    margin-top: 2.25rem;
+    text-align: center;
+}
+
+.lx-authhelp:empty {
+    display: none;
+}
+
+.lx-authhelp a {
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--lx-ink);
+}
+
+.lx-authhelp a:hover {
+    text-decoration: underline;
+}
+
+.lx-authlegal {
+    padding: 0 clamp(1.25rem, 4vw, 2.75rem) clamp(1.5rem, 4vh, 2.5rem);
+    text-align: center;
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    color: var(--lx-ink-3);
+}
+
+.lx-authlegal p {
+    margin: 0;
+}
+
+.lx-authlegal span[aria-hidden] {
+    margin-inline: 0.25rem;
+}
+
+.lx-authlegal a {
+    color: var(--lx-ink-3);
+    text-decoration: underline;
+}
+
+.lx-authlegal a:hover {
+    color: var(--lx-ink);
+}
+
+@media (max-width: 420px) {
+    .lx-authbar {
+        padding-inline: 1.25rem;
+    }
+}
+
+/* --- Error pages ------------------------------------------------------- */
+
+/* The auth chrome with the mark in the bar instead of above a form. */
+.lx-authbar .lx-authmark {
+    min-height: 2.75rem;
+    margin: 0;
+}
+
+.lx-errormain {
+    align-items: center;
+}
+
+/* Painted like the confirm dialog and the menus in platform-chrome.css, so it
+   follows the reader's light or dark choice. */
+.lx-error {
+    --error-fg: var(--platform-menu-fg, #f2f2f2);
+    --error-muted: color-mix(in srgb, var(--error-fg) 70%, transparent);
+    --error-line: rgba(128, 128, 128, 0.3);
+    --error-hover: rgba(128, 128, 128, 0.16);
+    --error-tone: #a8c7fa;
+    --error-accent: #f2f2f2;
+    --error-on-accent: #111;
+    --error-btn-bg: transparent;
+    --error-btn-shadow: none;
+    display: grid;
+    gap: 2.5rem;
+    width: 100%;
+    max-width: 60rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid var(--error-line);
+    border-radius: 1rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--error-fg);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+}
+
+.lx-error[data-tone='warning'] { --error-tone: #ffd47d; }
+.lx-error[data-tone='danger'] { --error-tone: #ffb4ab; }
+
+[data-mode='light'] .lx-error {
+    --error-tone: #2659b5;
+    --error-hover: var(--lx-btn-hover);
+    --error-accent: var(--lx-btn-ink);
+    --error-on-accent: var(--lx-btn-surface);
+    --error-btn-bg: var(--lx-btn-surface);
+    --error-btn-shadow: var(--lx-btn-shadow);
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+[data-mode='light'] .lx-error[data-tone='warning'] { --error-tone: #8a5a00; }
+[data-mode='light'] .lx-error[data-tone='danger'] { --error-tone: #b3261e; }
+
+@media (min-width: 720px) {
+    .lx-error {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+}
+
+.lx-error-badge {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--error-tone) 16%, transparent);
+    color: var(--error-tone);
+    font-family: var(--lx-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.lx-error-title {
+    margin: 1.5rem 0 0;
+    color: var(--error-fg);
+    font-family: var(--lx-serif);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.lx-error-text {
+    max-width: 28rem;
+    margin: 1.25rem 0 0;
+    color: var(--error-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.lx-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.lx-error-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--error-line);
+    border-radius: 0.6rem;
+    background: var(--error-btn-bg);
+    box-shadow: var(--error-btn-shadow);
+    color: var(--error-fg);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s var(--lx-ease), filter 0.2s var(--lx-ease);
+}
+
+/* Same as the settings modal: hover and focus only change the fill. */
+.lx-error-btn:hover,
+.lx-error-btn:focus-visible {
+    background: var(--error-hover);
+    outline: none;
+    text-decoration: none;
+}
+
+.lx-error-btn.is-primary {
+    border-color: transparent;
+    background: var(--error-accent);
+    box-shadow: none;
+    color: var(--error-on-accent);
+}
+
+.lx-error-btn.is-primary:hover,
+.lx-error-btn.is-primary:focus-visible {
+    background: var(--error-accent);
+    filter: brightness(1.25);
+}
+
+.lx-error-more {
+    margin: 0;
+    color: var(--error-muted);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+
+.lx-error-links {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--error-line);
+    list-style: none;
+}
+
+.lx-error-links li {
+    border-bottom: 1px solid var(--error-line);
+}
+
+.lx-error-link {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    /* Text lines up with the hairlines; only the hover fill reaches past them. */
+    margin: 0.25rem -0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    color: var(--error-fg);
+    font-family: var(--lx-sans);
+    transition: background 0.2s var(--lx-ease);
+}
+
+.lx-error-link:hover,
+.lx-error-link:focus-visible {
+    background: var(--error-hover);
+    outline: none;
+    text-decoration: none;
+}
+
+.lx-error-link-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.lx-error-link-text {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--error-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.lx-error-link svg {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.125rem;
+    color: var(--error-muted);
+    transition: transform 0.2s var(--lx-ease), color 0.2s var(--lx-ease);
+}
+
+.lx-error-link:hover svg,
+.lx-error-link:focus-visible svg {
+    color: var(--error-tone);
+    transform: translate(2px, -2px);
+}
+
+.lx-error-debug {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--error-line);
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+
+.lx-error-debug dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+}
+
+.lx-error-debug dt {
+    color: var(--error-muted);
+    font-weight: 600;
+}
+
+.lx-error-debug dd {
+    margin: 0;
+    font-family: var(--lx-mono);
+    overflow-wrap: anywhere;
+}
+
+.lx-error-debug pre {
+    max-height: 24rem;
+    margin: 1.25rem 0 0;
+    padding: 1rem;
+    overflow: auto;
+    border-radius: 0.5rem;
+    background: var(--error-hover);
+    font-family: var(--lx-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lx-error-link svg {
+        transition: none;
+    }
+
+    .lx-error-link:hover svg,
+    .lx-error-link:focus-visible svg {
+        transform: none;
+    }
+}
+

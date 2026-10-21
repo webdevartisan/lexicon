@@ -1,0 +1,54 @@
+/* ==========================================================================
+   Typographic primitives
+   ========================================================================== */
+
+.lx-wrap {
+    width: 100%;
+    max-width: var(--lx-measure);
+    margin-inline: auto;
+    padding-inline: var(--lx-gutter);
+}
+
+.lx-section {
+    padding-block: var(--lx-section-y);
+}
+
+.lx-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 0 1.75rem;
+    font-family: var(--lx-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.lx-pos {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lx-ink-2);
+}
+
+.lx-pron {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    letter-spacing: 0.01em;
+}
+
+.lx-dot {
+    color: var(--lx-gilt-deep);
+    font-style: normal;
+    padding-inline: 0.06em;
+}
+
+.lx-lede {
+    font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+    line-height: 1.55;
+    color: var(--lx-ink-2);
+    max-width: 46ch;
+}
+

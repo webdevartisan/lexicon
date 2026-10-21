@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Print
+   ========================================================================== */
+
+@media print {
+    .lx-nav,
+    .lx-drawer,
+    .fab,
+    .lx-close,
+    .lx-foot-social {
+        display: none !important;
+    }
+
+    .lx-cover,
+    .lx-close {
+        background: none;
+        color: #000;
+    }
+
+    body {
+        background: #fff;
+    }
+}
+
