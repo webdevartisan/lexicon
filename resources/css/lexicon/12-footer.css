@@ -72,6 +72,11 @@
     align-items: baseline;
 }
 
+/* At 14px the line box is 23px, just under the 24px tap target minimum. */
+.lx-foot-contact a {
+    min-height: 1.5rem;
+}
+
 .lx-foot-contact svg {
     flex: none;
     width: 0.9rem;
