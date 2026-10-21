@@ -3824,6 +3824,19 @@ label {
     background: var(--lx-paper-sunk);
     border-inline-start-color: var(--lx-gilt);
 }
+/* Settings controls use the UI voice, like every other button and menu on the front. */
+.lx-account-nav a,
+.acct-page .acct-btn {
+    font-family: var(--lx-sans);
+    font-size: 0.875rem;
+}
+/* The modal is printed outside <main>, so only the full page gets a full-size title. */
+.lx-main .lx-account .acct-title {
+    margin-bottom: 0.5rem;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+}
 @media (min-width: 720px) {
     .lx-account { grid-template-columns: 12rem 1fr; align-items: start; column-gap: 2.5rem; }
     /* The page heading spans the full width above both the nav rail and the
