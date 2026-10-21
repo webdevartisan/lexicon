@@ -49,7 +49,7 @@
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1.5;
-    color: color-mix(in srgb, currentColor 62%, transparent);
+    color: color-mix(in srgb, currentColor 70%, transparent);
 }
 
 .blog-confirm-actions {

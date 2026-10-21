@@ -614,7 +614,7 @@ html[data-mode='light'] {
 .notif-panel,
 .notif-page {
   --notif-fg: currentColor;
-  --notif-muted: color-mix(in srgb, currentColor 62%, transparent);
+  --notif-muted: color-mix(in srgb, currentColor 70%, transparent);
   --notif-line: rgba(128, 128, 128, .3);
   --notif-quote-bg: rgba(128, 128, 128, .12);
   --notif-chip-bg: rgba(128, 128, 128, .16);
@@ -634,7 +634,7 @@ html[data-mode='light'] {
 .notif-panel {
   --notif-surface: var(--platform-menu-bg, #1c1c1c);
   --notif-fg: var(--platform-menu-fg, #f2f2f2);
-  --notif-muted: color-mix(in srgb, var(--notif-fg) 62%, transparent);
+  --notif-muted: color-mix(in srgb, var(--notif-fg) 70%, transparent);
   --notif-tab-on-bg: #2c2c2c;
   --notif-primary-bg: #f2f2f2;
   --notif-primary-fg: #1c1c1c;
@@ -663,8 +663,9 @@ html[data-mode='light'] {
   box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
 }
 
-/* Dark backgrounds the pages can sit on: the control panel's dark mode. */
-[data-mode='dark'] .notif-page {
+/* Dark backgrounds the pages can sit on: the control panel's dark mode. The front
+   reader pages stay on light paper whatever the menus are set to. */
+[data-mode='dark'] :not(.lx-reader) > .notif-page {
   --notif-surface: #1f2937;
   --notif-primary-bg: #f1f5f9;
   --notif-primary-fg: #1f2937;
@@ -1363,7 +1364,7 @@ html[data-mode='light'] {
 
 .confirm-card {
   --confirm-fg: var(--platform-menu-fg, #f2f2f2);
-  --confirm-muted: color-mix(in srgb, var(--confirm-fg) 62%, transparent);
+  --confirm-muted: color-mix(in srgb, var(--confirm-fg) 70%, transparent);
   --confirm-line: rgba(128, 128, 128, .3);
   --confirm-hover: rgba(128, 128, 128, .14);
   --confirm-tone: #a8c7fa;
@@ -1415,7 +1416,7 @@ html[data-mode='light'] {
 
 .select-menu {
   --menu-fg: var(--platform-menu-fg, #f2f2f2);
-  --menu-muted: color-mix(in srgb, var(--menu-fg) 62%, transparent);
+  --menu-muted: color-mix(in srgb, var(--menu-fg) 70%, transparent);
   --menu-line: rgba(128, 128, 128, .3);
   --menu-hover: rgba(128, 128, 128, .16);
   --menu-accent: #a8c7fa;
