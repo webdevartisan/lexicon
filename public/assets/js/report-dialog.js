@@ -49,37 +49,42 @@
     dialog = el('dialog', { class: 'lex-report', 'aria-labelledby': 'lex-report-title' });
 
     var form = el('form', { class: 'lex-report-form', novalidate: '' });
-    parts.title = el('h2', { id: 'lex-report-title', class: 'lex-report-title' });
-    var lede = el('p', { class: 'lex-report-lede' }, 'A moderator will look at it. The author is not told who reported it.');
+    parts.title = el('h2', { id: 'lex-report-title', class: 'acct-title' });
+    var lede = el('p', { class: 'acct-intro' }, 'A moderator will look at it. The author is not told who reported it.');
 
     parts.list = el('fieldset', { class: 'lex-report-reasons' });
-    parts.list.appendChild(el('legend', {}, 'What is wrong with it?'));
+    parts.list.appendChild(el('legend', { class: 'acct-label' }, 'What is wrong with it?'));
     parts.options = el('div', { class: 'lex-report-options' });
     parts.list.appendChild(parts.options);
 
-    var detailsLabel = el('label', { for: 'lex-report-details', class: 'lex-report-label' }, 'Anything a moderator should know? (optional)');
-    parts.details = el('textarea', { id: 'lex-report-details', name: 'details', rows: '3', maxlength: String(DETAILS_MAX) });
+    var detailsLabel = el('label', { for: 'lex-report-details', class: 'acct-label' }, 'Anything a moderator should know? (optional)');
+    parts.details = el('textarea', { id: 'lex-report-details', class: 'acct-input', name: 'details', rows: '3', maxlength: String(DETAILS_MAX) });
 
-    parts.error = el('p', { class: 'lex-report-error', role: 'alert' });
+    parts.error = el('p', { class: 'panel-flash is-error', role: 'alert' });
     parts.error.hidden = true;
 
-    var actions = el('div', { class: 'lex-report-actions' });
-    parts.cancel = el('button', { type: 'button', class: 'lex-report-cancel' }, 'Cancel');
-    parts.submit = el('button', { type: 'submit', class: 'lex-report-submit' }, 'Send report');
+    var actions = el('div', { class: 'acct-actions' });
+    parts.cancel = el('button', { type: 'button', class: 'acct-btn' }, 'Cancel');
+    parts.submit = el('button', { type: 'submit', class: 'acct-btn acct-btn-primary' }, 'Send report');
     actions.appendChild(parts.cancel);
     actions.appendChild(parts.submit);
 
-    form.appendChild(parts.title);
-    form.appendChild(lede);
+    var head = el('div', { class: 'acct-head' });
+    head.appendChild(parts.title);
+    head.appendChild(lede);
+    var details = el('div', { class: 'acct-field' });
+    details.appendChild(detailsLabel);
+    details.appendChild(parts.details);
+
+    form.appendChild(head);
     form.appendChild(parts.list);
-    form.appendChild(detailsLabel);
-    form.appendChild(parts.details);
+    form.appendChild(details);
     form.appendChild(parts.error);
     form.appendChild(actions);
 
     parts.done = el('div', { class: 'lex-report-done', role: 'status' });
     parts.doneText = el('p', {});
-    parts.close = el('button', { type: 'button', class: 'lex-report-submit' }, 'Close');
+    parts.close = el('button', { type: 'button', class: 'acct-btn acct-btn-primary' }, 'Close');
     parts.done.appendChild(parts.doneText);
     parts.done.appendChild(parts.close);
     parts.done.hidden = true;

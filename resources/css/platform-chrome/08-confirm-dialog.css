@@ -1,7 +1,6 @@
 /* ---------------------------------------------------------------------------
-   Confirmation dialog (components/confirm-modal). Painted like the notification
-   panel above: the same dark card and pastel accents, and a white card with the
-   darker accents in the control panel's light mode.
+   Confirmation dialog (components/confirm-modal). The card is the shared dialog
+   card in 03-dialogs.css; this adds the pastel accents, deeper ones in light mode.
    --------------------------------------------------------------------------- */
 
 .confirm-card {
@@ -10,10 +9,6 @@
   --confirm-line: var(--chrome-line);
   --confirm-hover: var(--chrome-hover);
   --confirm-tone: var(--chrome-dark-info);
-  background: var(--platform-menu-bg, var(--chrome-dark-bg));
-  color: var(--confirm-fg);
-  border: 1px solid var(--chrome-border);
-  box-shadow: var(--chrome-dialog-shadow);
 }
 
 .confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-dark-danger); }

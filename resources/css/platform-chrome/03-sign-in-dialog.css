@@ -1,12 +1,9 @@
 /* -------------------------------------------------------------------------
    Sign-in dialog (partials/_auth_modal.lex.php, public/assets/js/auth-modal.js)
 
-   It is dropped into whatever stylesheet the host page already has, and
-   several blog themes style bare `button` and `input[type="..."]` selectors
-   that outrank plain classes: uppercase display buttons, forced input metrics,
-   `color: ... !important`. Theme stylesheets load after this one, so every rule
-   carries two classes to win on specificity rather than order, and the two reset
-   blocks strip what a host theme injects. The colour resets need !important.
+   Title, labels, fields, buttons, the close button and the error use the
+   shared parts in 10-site-modal.css. What is left is particular to sign-in:
+   the overlay, the show/hide toggle, the check spinner and the small links.
    ------------------------------------------------------------------------- */
 
 .lex-auth-overlay {
@@ -17,72 +14,47 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: var(--chrome-backdrop);
 }
 
 .lex-auth-overlay[hidden] { display: none; }
 
-.lex-auth-overlay .lex-auth-card { position: relative; }
+.lex-auth-card { position: relative; }
+.lex-auth-card .acct-title { padding-inline-end: 2rem; }
+.lex-auth-card .lex-auth-submit { display: block; width: 100%; }
 
-.lex-auth-overlay .lex-auth-card button {
-  appearance: none; -webkit-appearance: none; background: none; border: 0;
-  box-shadow: none; font: inherit; letter-spacing: normal;
-  text-transform: none; text-align: inherit; height: auto;
-  line-height: normal; padding: 0; border-radius: 0; white-space: normal;
-  color: inherit !important;
+.lex-auth-card .lex-auth-labelrow { display: flex; align-items: center; justify-content: space-between; }
+
+.lex-auth-card .lex-auth-toggle,
+.lex-auth-card .lex-auth-linkbtn {
+  padding: .25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--lx-text-xs);
+  color: var(--form-muted);
+  cursor: pointer;
 }
 
-.lex-auth-overlay .lex-auth-card input {
-  appearance: none; -webkit-appearance: none; box-sizing: border-box;
-  height: auto; margin: 0; font: inherit; line-height: normal;
-  box-shadow: none;
-}
-
-/* The reset above also strips the native checkbox, so draw it back. */
-.lex-auth-overlay .lex-auth-card input[type="checkbox"] { appearance: auto; -webkit-appearance: checkbox; display: inline-block; width: 1.05rem; height: 1.05rem; padding: 0; flex: none; accent-color: var(--acct-accent); cursor: pointer; }
-.lex-auth-overlay .lex-auth-card .lex-auth-check { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
-
-/* The settings modal's close button: a square that lights up under the pointer. */
-.lex-auth-overlay .lex-auth-card .lex-auth-close { position: absolute; top: .75rem; inset-inline-end: .75rem; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: var(--lx-radius-md); font-size: var(--lx-text-lg); line-height: 1; color: var(--acct-ink) !important; cursor: pointer; }
-.lex-auth-overlay .lex-auth-card .lex-auth-close:hover,
-.lex-auth-overlay .lex-auth-card .lex-auth-close:focus-visible { background: var(--acct-hover); outline: none; }
-
-.lex-auth-overlay .lex-auth-card .lex-auth-title { margin: 0 0 .25rem; padding-inline-end: 2rem; font-size: var(--lx-text-md); font-weight: var(--lx-weight-semibold); line-height: 1.3; color: var(--acct-ink); }
-.lex-auth-overlay .lex-auth-card .lex-auth-sub { margin: 0 0 1.25rem; color: var(--form-muted); }
-.lex-auth-overlay .lex-auth-card .lex-auth-error { margin: 0 0 1rem; padding: .5rem .75rem; border: 1px solid var(--acct-danger); border-radius: var(--lx-radius-md); color: var(--acct-danger); }
-.lex-auth-overlay .lex-auth-card .lex-auth-label { display: block; margin: 0 0 .25rem; font-size: var(--lx-text-xs); font-weight: var(--lx-weight-semibold); opacity: .8; }
-.lex-auth-overlay .lex-auth-card .lex-auth-labelrow { display: flex; align-items: center; justify-content: space-between; }
-.lex-auth-overlay .lex-auth-card .lex-auth-toggle { padding: .25rem; width: auto; font-size: var(--lx-text-xs); color: var(--form-muted) !important; cursor: pointer; }
-.lex-auth-overlay .lex-auth-card .lex-auth-input { display: block; width: 100%; height: auto; margin-bottom: 1rem; padding: .5rem .75rem; border: 1px solid var(--acct-line); border-radius: var(--lx-radius-md); background: var(--acct-field-bg); box-shadow: var(--acct-field-shadow); color: var(--acct-ink); }
-.lex-auth-overlay .lex-auth-card .lex-auth-input:focus { border-color: var(--acct-accent); box-shadow: 0 0 0 1px var(--acct-accent); outline: none; }
-
-.lex-auth-overlay .lex-auth-card .lex-auth-status { display: flex; align-items: center; gap: .5rem; margin: 0 0 1rem; font-size: var(--lx-text-xs); color: var(--form-muted); }
-.lex-auth-overlay .lex-auth-card .lex-auth-status[hidden] { display: none; }
-.lex-auth-overlay .lex-auth-card .lex-auth-status-mark { flex: none; width: .8rem; height: .8rem; border: 2px solid var(--acct-line); border-top-color: var(--acct-ink); border-radius: 50%; animation: lex-auth-spin .8s linear infinite; }
-.lex-auth-overlay .lex-auth-card .lex-auth-status[data-state="done"] { color: var(--form-ok); }
-.lex-auth-overlay .lex-auth-card .lex-auth-status[data-state="done"] .lex-auth-status-mark { border-color: var(--form-ok); background: var(--form-ok); animation: none; }
-.lex-auth-overlay .lex-auth-card .lex-auth-status[data-state="failed"] { color: var(--acct-danger); }
-.lex-auth-overlay .lex-auth-card .lex-auth-status[data-state="failed"] .lex-auth-status-mark { border-color: var(--acct-danger); animation: none; }
+.lex-auth-card .lex-auth-status { display: flex; align-items: center; gap: .5rem; margin: 0 0 1rem; font-size: var(--lx-text-xs); color: var(--form-muted); }
+.lex-auth-card .lex-auth-status[hidden] { display: none; }
+.lex-auth-card .lex-auth-status-mark { flex: none; width: .8rem; height: .8rem; border: 2px solid var(--acct-line); border-top-color: var(--acct-ink); border-radius: 50%; animation: lex-auth-spin .8s linear infinite; }
+.lex-auth-card .lex-auth-status[data-state="done"] { color: var(--form-ok); }
+.lex-auth-card .lex-auth-status[data-state="done"] .lex-auth-status-mark { border-color: var(--form-ok); background: var(--form-ok); animation: none; }
+.lex-auth-card .lex-auth-status[data-state="failed"] { color: var(--acct-danger); }
+.lex-auth-card .lex-auth-status[data-state="failed"] .lex-auth-status-mark { border-color: var(--acct-danger); animation: none; }
 @keyframes lex-auth-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .lex-auth-overlay .lex-auth-card .lex-auth-status-mark { animation: none; border-top-color: var(--acct-line); } }
+@media (prefers-reduced-motion: reduce) { .lex-auth-card .lex-auth-status-mark { animation: none; border-top-color: var(--acct-line); } }
 
-.lex-auth-overlay .lex-auth-card .lex-auth-hint { margin: -.5rem 0 1rem; font-size: var(--lx-text-xs); opacity: .65; }
-.lex-auth-overlay .lex-auth-card .lex-auth-btn { display: block; width: 100%; height: auto; padding: .5rem 1.1rem; border: 1px solid transparent; border-radius: var(--lx-radius-md); background: var(--acct-accent); color: var(--acct-on-accent) !important; font-weight: var(--lx-weight-medium); line-height: 1.5; text-align: center; cursor: pointer; }
-.lex-auth-overlay .lex-auth-card .lex-auth-btn:hover,
-.lex-auth-overlay .lex-auth-card .lex-auth-btn:focus-visible { filter: brightness(1.25); outline: none; }
-.lex-auth-overlay .lex-auth-card .lex-auth-btn[disabled] { opacity: .6; cursor: wait; }
-.lex-auth-overlay .lex-auth-card .lex-auth-btn[aria-busy="true"] { cursor: progress; }
+.lex-auth-card .lex-auth-links { display: flex; justify-content: space-between; align-items: center; margin-top: .75rem; }
+.lex-auth-card .lex-auth-links a,
+.lex-auth-card .lex-auth-linkbtn { padding: 0; font-size: var(--lx-text-xs); color: var(--form-muted); text-decoration: underline; }
+.lex-auth-card .lex-auth-links a:hover,
+.lex-auth-card .lex-auth-linkbtn:hover,
+.lex-auth-card .lex-auth-toggle:hover { color: var(--acct-ink); }
 
-.lex-auth-overlay .lex-auth-card .lex-auth-links { display: flex; justify-content: space-between; align-items: center; margin-top: .75rem; }
-.lex-auth-overlay .lex-auth-card .lex-auth-links a,
-.lex-auth-overlay .lex-auth-card .lex-auth-linkbtn { padding: 0; width: auto; font-size: var(--lx-text-xs); color: var(--form-muted) !important; text-decoration: underline; cursor: pointer; }
-.lex-auth-overlay .lex-auth-card .lex-auth-links a:hover,
-.lex-auth-overlay .lex-auth-card .lex-auth-linkbtn:hover { color: var(--acct-ink) !important; }
-.lex-auth-overlay .lex-auth-card .lex-auth-success { margin: .5rem 0 1rem; font-size: var(--lx-text-base); font-weight: var(--lx-weight-semibold); color: var(--form-ok); }
-
-.lex-auth-overlay .lex-auth-card .lex-auth-foot { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: 1.25rem 0 0; font-size: var(--lx-text-xs); color: var(--form-muted); text-align: center; }
-.lex-auth-overlay .lex-auth-card .lex-auth-foot[hidden] { display: none; }
-.lex-auth-overlay .lex-auth-card .lex-auth-foot[data-auth-legal]:not([hidden]) { display: block; }
-.lex-auth-overlay .lex-auth-card .lex-auth-foot a { color: var(--form-muted); text-decoration: underline; }
-.lex-auth-overlay .lex-auth-card .lex-auth-foot a:first-child { flex-basis: 100%; }
-.lex-auth-overlay .lex-auth-card .lex-auth-foot a:hover { color: var(--acct-ink); }
+.lex-auth-card .lex-auth-foot { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: 1.25rem 0 0; font-size: var(--lx-text-xs); color: var(--form-muted); text-align: center; }
+.lex-auth-card .lex-auth-foot[hidden] { display: none; }
+.lex-auth-card .lex-auth-foot[data-auth-legal]:not([hidden]) { display: block; }
+.lex-auth-card .lex-auth-foot a { color: var(--form-muted); text-decoration: underline; }
+.lex-auth-card .lex-auth-foot a:first-child { flex-basis: 100%; }
+.lex-auth-card .lex-auth-foot a:hover { color: var(--acct-ink); }

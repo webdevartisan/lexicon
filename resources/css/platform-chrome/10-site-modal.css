@@ -9,7 +9,9 @@
 [data-mode='light'] .panel-dialog,
 [data-mode='light'] .panel-dialog .acct-page,
 [data-mode='light'] .lex-auth-card,
-[data-mode='light'] .lex-report {
+[data-mode='light'] .lex-report,
+[data-mode='light'] .confirm-card,
+[data-mode='light'] .blog-confirm {
   --acct-bg: var(--chrome-light-bg);
   --acct-side: #fafafa;
   --acct-ink: var(--chrome-light-ink);
@@ -26,11 +28,13 @@
 
 /* The modal follows the menus: dark unless Light is picked. A full account page
    keeps the light colours above, so the page inside the modal is named too.
-   The sign-in and report dialogs wear the same set. */
+   Every other dialog wears the same set. */
 .panel-dialog,
 .panel-dialog .acct-page,
 .lex-auth-card,
-.lex-report {
+.lex-report,
+.confirm-card,
+.blog-confirm {
   --acct-bg: var(--platform-menu-bg, var(--chrome-dark-bg));
   --acct-side: rgba(128, 128, 128, .08);
   --acct-ink: var(--platform-menu-fg, var(--chrome-dark-ink));
@@ -61,18 +65,12 @@
 
 .panel-dialog.is-wide { width: min(56rem, calc(100vw - 2rem)); }
 
-.panel-dialog::backdrop { background: var(--chrome-backdrop); }
-
 .panel-dialog-card {
   position: relative;
   display: flex;
   min-height: min(22rem, calc(100vh - 2rem));
   max-height: min(40rem, calc(100vh - 2rem));
   overflow: hidden;
-  border: 1px solid var(--acct-line);
-  border-radius: var(--lx-radius-xl);
-  background: var(--acct-bg);
-  box-shadow: var(--chrome-dialog-shadow);
   font-size: var(--lx-text-sm);
   line-height: 1.5;
 }
@@ -165,9 +163,102 @@
   .panel-dialog .acct-page { padding: 1rem 1.25rem 1.5rem; }
 }
 
-.acct-title { margin: 0 0 .25rem; font-size: var(--lx-text-md); font-weight: var(--lx-weight-semibold); }
-.acct-intro { margin: 0 0 .5rem; font-size: var(--lx-text-sm); opacity: .68; }
+/* Form parts shared by the account pages and the sign-in and report dialogs.
+   Host pages style bare headings, labels, fields and buttons (the front sheet
+   and some themes), so each part is scoped to its surfaces to win over them. */
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-title {
+  margin: 0 0 .25rem;
+  font-family: inherit;
+  font-size: var(--lx-text-md);
+  font-weight: var(--lx-weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-intro { margin: 0 0 .5rem; font-size: var(--lx-text-sm); opacity: .68; }
 .acct-head { margin-block-end: 1.25rem; }
+
+.acct-field { margin-block-end: 1rem; }
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-label {
+  display: block;
+  margin: 0 0 .25rem;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
+  opacity: .8;
+}
+
+.acct-hint { margin: .25rem 0 0; font-size: var(--lx-text-xs); opacity: .65; }
+.acct-error { margin: .25rem 0 0; font-size: var(--lx-text-sm); color: var(--acct-danger); }
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: .5rem .75rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-field-bg);
+  box-shadow: var(--acct-field-shadow);
+  color: var(--acct-ink);
+  font: inherit;
+  line-height: 1.5;
+}
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-input:focus {
+  border-color: var(--acct-accent);
+  box-shadow: 0 0 0 1px var(--acct-accent);
+  outline: none;
+}
+
+:is(.acct-page, .lex-auth-card, .lex-report) .is-invalid .acct-input { border-color: var(--acct-danger); }
+textarea.acct-input { resize: vertical; }
+select.acct-input option,
+select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink); }
+
+.acct-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-block-start: 1.75rem; }
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn {
+  display: inline-block;
+  height: auto;
+  margin: 0;
+  padding: .5rem 1.1rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-field-bg);
+  box-shadow: var(--acct-field-shadow);
+  color: var(--acct-ink);
+  font: inherit;
+  font-weight: var(--lx-weight-medium);
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn:hover,
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn:focus-visible { background: var(--acct-hover); outline: none; }
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn-primary {
+  border-color: transparent;
+  background: var(--acct-accent);
+  box-shadow: none;
+  color: var(--acct-on-accent);
+}
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn-primary:hover,
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn-primary:focus-visible { background: var(--acct-accent); filter: brightness(1.25); }
+
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn-danger { border-color: var(--acct-danger); color: var(--acct-danger); }
+:is(.acct-page, .lex-auth-card, .lex-report) .acct-btn[disabled] { opacity: .6; cursor: wait; }
 
 .acct-section {
   margin: 1.75rem 0 .75rem;
@@ -191,26 +282,6 @@
 .acct-check-title { display: block; font-weight: var(--lx-weight-medium); }
 .acct-check-help { display: block; margin: 0; font-size: var(--lx-text-sm); opacity: .68; }
 
-.acct-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-block-start: 1.75rem; }
-
-.acct-btn {
-  padding: .5rem 1.1rem;
-  border: 1px solid var(--acct-line);
-  border-radius: var(--lx-radius-md);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: var(--lx-weight-medium);
-  cursor: pointer;
-}
-
-.acct-btn:hover,
-.acct-btn:focus-visible { background: var(--acct-hover); outline: none; }
-
-.acct-btn-primary { border-color: transparent; background: var(--acct-accent); color: var(--acct-on-accent); }
-.acct-btn-primary:hover,
-.acct-btn-primary:focus-visible { background: var(--acct-accent); filter: brightness(1.08); }
-
 .acct-card {
   margin-block-start: 2rem;
   padding: 1rem 1.25rem;
@@ -221,34 +292,13 @@
 .acct-card-title { margin: 0 0 .25rem; font-size: var(--lx-text-base); font-weight: var(--lx-weight-semibold); }
 .acct-always { padding-block: .5rem; border-block-start: 1px solid var(--acct-line); }
 .acct-always:first-of-type { margin-block-start: .5rem; }
-.acct-card a { color: var(--acct-accent); }
+.acct-page .acct-card a:not(.acct-btn) { color: inherit; text-decoration: underline; }
 
-
-/* Account panel fields */
 .acct-form { display: block; }
 .acct-grid { display: grid; gap: 1rem; }
 @media (--lx-up-sm) { .acct-grid { grid-template-columns: 1fr 1fr; } }
 
-.acct-field { margin-block-end: 1rem; }
-.acct-label { display: block; margin: 0 0 .25rem; font-size: var(--lx-text-xs); font-weight: var(--lx-weight-semibold); opacity: .8; }
 .acct-value { margin: 0; font-weight: var(--lx-weight-medium); overflow-wrap: anywhere; }
-.acct-hint { margin: .25rem 0 0; font-size: var(--lx-text-xs); opacity: .65; }
-.acct-error { margin: .25rem 0 0; font-size: var(--lx-text-sm); color: var(--acct-danger); }
-
-.acct-input {
-  width: 100%;
-  padding: .5rem .75rem;
-  border: 1px solid var(--acct-line);
-  border-radius: var(--lx-radius-md);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-}
-
-.acct-input:focus-visible { outline: none; border-color: var(--acct-accent); }
-.acct-field.is-invalid .acct-input { border-color: var(--acct-danger); }
-select.acct-input option,
-select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink); }
 
 .acct-details { margin-block-start: 1rem; }
 .acct-details > summary { display: inline-block; list-style: none; }
@@ -259,7 +309,6 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-notice.is-warn { border-color: var(--acct-danger); }
 .acct-notice p { margin: 0 0 .5rem; }
 
-.acct-btn-danger { display: inline-block; border-color: var(--acct-danger); color: var(--acct-danger); text-decoration: none; }
 .acct-card-danger { border-color: color-mix(in srgb, var(--acct-danger) 50%, transparent); }
 
 /* Profile panel: avatar, cropper, stats */
@@ -272,7 +321,6 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-avatar-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin-block-start: .5rem; }
 .acct-avatar-side .acct-details { margin-block-start: .5rem; }
 .acct-avatar-side .acct-details summary { font-size: var(--lx-text-sm); }
-.acct-field textarea.acct-input { resize: vertical; }
 
 .acct-stats { display: flex; gap: 2rem; margin: .5rem 0 0; }
 .acct-stats div { margin: 0; }
@@ -285,37 +333,12 @@ select.acct-input optgroup { background: var(--acct-bg); color: var(--acct-ink);
 .acct-crop {
   width: min(32rem, calc(100vw - 2rem));
   padding: 1.25rem;
-  border: 1px solid var(--acct-line);
-  border-radius: var(--lx-radius-xl);
-  background: var(--acct-bg);
-  color: var(--acct-ink);
-  box-shadow: var(--chrome-dialog-shadow);
 }
-.acct-crop::backdrop { background: var(--chrome-backdrop); }
 .acct-crop-stage { max-height: 60vh; overflow: hidden; border-radius: var(--lx-radius-md); background: var(--acct-hover); }
 .acct-crop-stage img { display: block; max-width: 100%; }
 .acct-crop .cropper-view-box,
 .acct-crop .cropper-face { border-radius: 50%; }
 
-/* The front stylesheet styles bare inputs and headings; panel controls must win over it. */
-.acct-page input.acct-input,
-.acct-page select.acct-input,
-.acct-page textarea.acct-input {
-  padding: .5rem .75rem;
-  border: 1px solid var(--acct-line);
-  border-radius: var(--lx-radius-md);
-  background: transparent;
-  color: inherit;
-  box-shadow: none;
-  font: inherit;
-}
-
-.acct-page input.acct-input:focus,
-.acct-page textarea.acct-input:focus { border-color: var(--acct-accent); box-shadow: none; outline: none; }
-
-.acct-page .acct-field.is-invalid input.acct-input { border-color: var(--acct-danger); }
-
-.acct-page .acct-title,
 .acct-page .acct-section,
 .acct-page .acct-card-title { font-family: inherit; letter-spacing: 0; text-transform: none; color: inherit; }
 
@@ -352,26 +375,6 @@ input.acct-sr-only {
   overflow: hidden !important;
   clip: rect(0 0 0 0) !important;
 }
-
-/* Reference look (21st.dev settings-2): soft shadowed fields, black primary, switch rows */
-.acct-page input.acct-input,
-.acct-page select.acct-input,
-.acct-page textarea.acct-input {
-  border-color: var(--acct-line);
-  border-radius: var(--lx-radius-md);
-  background: var(--acct-field-bg);
-  box-shadow: var(--acct-field-shadow);
-  color: var(--acct-ink, inherit);
-}
-
-.acct-page input.acct-input:focus,
-.acct-page textarea.acct-input:focus { border-color: var(--acct-accent); box-shadow: 0 0 0 1px var(--acct-accent); }
-
-.acct-btn { border-radius: var(--lx-radius-md); background: var(--acct-field-bg, transparent); box-shadow: var(--acct-field-shadow, none); }
-.acct-btn-primary { background: var(--acct-accent); box-shadow: none; }
-.acct-btn-primary:hover,
-.acct-btn-primary:focus-visible { background: var(--acct-accent); filter: brightness(1.25); }
-.acct-page .acct-card a { color: inherit; text-decoration: underline; }
 
 .acct-card { margin-block-start: 1.5rem; border-radius: var(--lx-radius-xl); }
 .acct-card-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -413,8 +416,6 @@ input.acct-sr-only {
 html[dir='rtl'] .acct-switch:checked::after { transform: translateX(-1.15rem); }
 [data-mode='dark'] .panel-dialog .acct-switch:checked::after { background: var(--chrome-dark-bg); }
 .acct-switch:focus-visible { outline: 2px solid var(--acct-accent); outline-offset: 2px; }
-.acct-page .acct-card a.acct-btn { text-decoration: none; }
-.acct-btn { white-space: nowrap; }
 @media (--lx-below-md) {
   .acct-card-row { flex-wrap: wrap; }
 }

@@ -71,12 +71,7 @@
   min-width: max-content;
   max-height: 18rem;
   overflow-y: auto;
-  padding: .3rem;
   color: var(--menu-fg);
-  background: var(--platform-menu-bg, var(--chrome-dark-bg));
-  border: 1px solid var(--chrome-border);
-  border-radius: var(--lx-radius-lg);
-  box-shadow: var(--chrome-shadow);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px) scale(.98);

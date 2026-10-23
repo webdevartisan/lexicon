@@ -46,7 +46,7 @@ $modalWidths = match ($size) {
 <div id="<?= e($id) ?>" modal-center role="dialog" aria-modal="true" aria-labelledby="<?= e($id) ?>-title" tabindex="-1"
     <?= $openOnLoad ? 'data-modal-open-on-load' : '' ?>
     class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show">
-    <div class="confirm-card w-[calc(100vw-2rem)] <?= $modalWidths ?> overflow-hidden rounded-2xl flex flex-col max-h-[calc(100vh-2rem)] <?= $bare ? 'relative' : '' ?>" data-tone="<?= e($tone) ?>">
+    <div class="confirm-card w-[calc(100vw-2rem)] <?= $modalWidths ?> overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] <?= $bare ? 'relative' : '' ?>" data-tone="<?= e($tone) ?>">
 
         <?php if ($bare) { ?>
         <h5 id="<?= e($id) ?>-title" class="sr-only"><?= e($title) ?></h5>

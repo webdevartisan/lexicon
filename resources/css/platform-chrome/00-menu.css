@@ -10,10 +10,11 @@
   min-width: 170px;
 }
 
-/* One card for every dropdown. The comment sort is a details element, not a
-   platform menu, so it is named here rather than restyled in the comments view. */
+/* One card for every dropdown. The comment sort (a details element) and the
+   select menu are not platform menus, so they are named here too. */
 .platform-menu-list,
-.comment-sort-list {
+.comment-sort-list,
+.select-menu-list {
   padding: .3rem;
   border: 1px solid var(--chrome-border);
   border-radius: var(--lx-radius-lg);

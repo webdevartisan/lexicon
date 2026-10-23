@@ -30,31 +30,37 @@ if (!auth()->check()) {
      data-captcha-worker="<?= e(versioned_asset('/assets/vendor/altcha/pbkdf2.js')) ?>"
      data-text="<?= e((string) json_encode($authModalText)) ?>">
   <div class="lex-auth-card">
-    <button type="button" class="lex-auth-close" data-auth-close aria-label="<?= e($t('authModal.close')) ?>">&times;</button>
+    <button type="button" class="panel-dialog-close" data-auth-close aria-label="<?= e($t('authModal.close')) ?>">&times;</button>
 
-    <h2 class="lex-auth-title" id="lex-auth-title"><?= e($t('authModal.titleLogin')) ?></h2>
-    <p class="lex-auth-sub" data-auth-sub><?= e($t('authModal.intro')) ?></p>
+    <div class="acct-head">
+      <h2 class="acct-title" id="lex-auth-title"><?= e($t('authModal.titleLogin')) ?></h2>
+      <p class="acct-intro" data-auth-sub><?= e($t('authModal.intro')) ?></p>
+    </div>
 
-    <p class="lex-auth-error" data-auth-error role="alert" hidden></p>
+    <p class="panel-flash is-error" data-auth-error role="alert" hidden></p>
 
     <form data-auth-step="email" novalidate>
       <?= csrf_field_lazy() ?>
-      <label class="lex-auth-label" for="lex-auth-email"><?= e($t('authModal.email')) ?></label>
-      <input class="lex-auth-input" type="email" id="lex-auth-email" name="email"
-             autocomplete="email" inputmode="email" required>
-      <button class="lex-auth-btn" type="submit"><?= e($t('authModal.continue')) ?></button>
+      <div class="acct-field">
+        <label class="acct-label" for="lex-auth-email"><?= e($t('authModal.email')) ?></label>
+        <input class="acct-input" type="email" id="lex-auth-email" name="email"
+               autocomplete="email" inputmode="email" required>
+      </div>
+      <button class="acct-btn acct-btn-primary lex-auth-submit" type="submit"><?= e($t('authModal.continue')) ?></button>
     </form>
 
     <form data-auth-step="password" hidden novalidate>
-      <div class="lex-auth-labelrow">
-        <label class="lex-auth-label" for="lex-auth-password"><?= e($t('authModal.password')) ?></label>
-        <button class="lex-auth-toggle" type="button" data-auth-toggle aria-pressed="false"><?= e($t('auth.show')) ?></button>
+      <div class="acct-field">
+        <div class="lex-auth-labelrow">
+          <label class="acct-label" for="lex-auth-password"><?= e($t('authModal.password')) ?></label>
+          <button class="lex-auth-toggle" type="button" data-auth-toggle aria-pressed="false"><?= e($t('auth.show')) ?></button>
+        </div>
+        <input class="acct-input" type="password" id="lex-auth-password" name="password"
+               autocomplete="current-password" data-min-length="<?= $authModalMin ?>" required>
+        <p class="acct-hint" data-auth-hint hidden><?= e($t('authModal.minLength', ['min' => $authModalMin])) ?></p>
       </div>
-      <input class="lex-auth-input" type="password" id="lex-auth-password" name="password"
-             autocomplete="current-password" data-min-length="<?= $authModalMin ?>" required>
-      <p class="lex-auth-hint" data-auth-hint hidden><?= e($t('authModal.minLength', ['min' => $authModalMin])) ?></p>
-      <div data-auth-register-only hidden>
-        <label class="lex-auth-hint lex-auth-check">
+      <div class="acct-field" data-auth-register-only hidden>
+        <label class="acct-check acct-hint">
           <input type="checkbox" data-auth-age value="1" data-error="<?= e($t('auth.ageRequired', ['age' => $authModalAge])) ?>">
           <?= e($t('auth.ageConfirm', ['age' => $authModalAge])) ?>
         </label>
@@ -63,7 +69,7 @@ if (!auth()->check()) {
         <span class="lex-auth-status-mark" aria-hidden="true"></span>
         <span data-captcha-text></span>
       </p>
-      <button class="lex-auth-btn" type="submit" data-auth-submit><?= e($t('authModal.logIn')) ?></button>
+      <button class="acct-btn acct-btn-primary lex-auth-submit" type="submit" data-auth-submit><?= e($t('authModal.logIn')) ?></button>
       <div class="lex-auth-links">
         <a href="<?= e(lurl('/password/forgot')) ?>" data-auth-forgot><?= e($t('authModal.forgot')) ?></a>
         <button class="lex-auth-linkbtn" type="button" data-auth-back><?= e($t('authModal.differentEmail')) ?></button>
@@ -71,19 +77,21 @@ if (!auth()->check()) {
     </form>
 
     <form data-auth-step="code" hidden novalidate>
-      <label class="lex-auth-label" for="lex-auth-code"><?= e($t('auth.twoFactorCodeLabel')) ?></label>
-      <input class="lex-auth-input" type="text" id="lex-auth-code" name="code"
-             autocomplete="one-time-code" inputmode="text" autocapitalize="off" spellcheck="false" required>
-      <p class="lex-auth-hint"><?= e($t('auth.twoFactorHint')) ?></p>
-      <button class="lex-auth-btn" type="submit" data-auth-code-submit><?= e($t('auth.twoFactorSubmit')) ?></button>
+      <div class="acct-field">
+        <label class="acct-label" for="lex-auth-code"><?= e($t('auth.twoFactorCodeLabel')) ?></label>
+        <input class="acct-input" type="text" id="lex-auth-code" name="code"
+               autocomplete="one-time-code" inputmode="text" autocapitalize="off" spellcheck="false" required>
+        <p class="acct-hint"><?= e($t('auth.twoFactorHint')) ?></p>
+      </div>
+      <button class="acct-btn acct-btn-primary lex-auth-submit" type="submit" data-auth-code-submit><?= e($t('auth.twoFactorSubmit')) ?></button>
       <div class="lex-auth-links">
         <button class="lex-auth-linkbtn" type="button" data-auth-back><?= e($t('authModal.differentEmail')) ?></button>
       </div>
     </form>
 
     <form data-auth-step="forgot" hidden novalidate>
-      <p class="lex-auth-hint" data-auth-forgot-text style="margin: 0 0 .75rem;"></p>
-      <button class="lex-auth-btn" type="submit" data-auth-forgot-send><?= e($t('authModal.sendReset')) ?></button>
+      <p class="acct-intro" data-auth-forgot-text></p>
+      <button class="acct-btn acct-btn-primary lex-auth-submit" type="submit" data-auth-forgot-send><?= e($t('authModal.sendReset')) ?></button>
       <div class="lex-auth-links">
         <button class="lex-auth-linkbtn" type="button" data-auth-forgot-back><?= e($t('authModal.backToLogin')) ?></button>
       </div>

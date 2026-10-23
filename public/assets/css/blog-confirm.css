@@ -1,16 +1,7 @@
 .blog-confirm {
     width: min(24rem, calc(100vw - 2rem));
     padding: 0;
-    border: 1px solid var(--chrome-border);
-    border-radius: var(--lx-radius-xl);
-    background: var(--platform-menu-bg, #1c1c1c);
-    color: var(--platform-menu-fg, #f2f2f2);
-    box-shadow: var(--chrome-dialog-shadow);
     overflow: hidden;
-}
-
-.blog-confirm::backdrop {
-    background: var(--chrome-backdrop);
 }
 
 .blog-confirm-body {
