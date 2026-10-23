@@ -1,25 +1,14 @@
 /* -------------------------------------------------------------------------
    Report dialog (public/assets/js/report-dialog.js)
 
-   Drawn in the sign-in dialog's colours so both read as Lexicon, not the
-   blog. Several themes restyle bare button, textarea and radio selectors,
-   and older ones hide native radios behind a label::before, so every rule is
-   scoped to .lex-report and the colour resets carry !important.
+   Several themes restyle bare button, textarea and radio selectors, and older
+   ones hide native radios behind a label::before, so every rule is scoped to
+   .lex-report and the colour resets carry !important.
    ------------------------------------------------------------------------- */
 
 .lex-report {
-  width: min(420px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  padding: 1.5rem 1.5rem 1.25rem;
-  border: 0;
-  border-radius: var(--lx-radius-xl);
-  background: #fff;
-  color: #16181d;
-  box-shadow: var(--chrome-dialog-shadow);
-  font-family: inherit;
-  font-size: var(--lx-text-base);
-  line-height: 1.4;
 }
 
 .lex-report::backdrop {
@@ -38,16 +27,16 @@
 }
 
 .lex-report .lex-report-title {
-  margin: 0 0 .35rem;
-  font-size: var(--lx-text-lg);
-  line-height: 1.25;
-  color: #16181d !important;
+  margin: 0 0 .25rem;
+  font-size: var(--lx-text-md);
+  font-weight: var(--lx-weight-semibold);
+  line-height: 1.3;
+  color: var(--acct-ink) !important;
 }
 
 .lex-report .lex-report-lede {
-  margin: 0 0 1rem;
-  font-size: var(--lx-text-sm);
-  color: #5c6470;
+  margin: 0 0 1.25rem;
+  color: var(--form-muted);
 }
 
 .lex-report .lex-report-reasons {
@@ -59,13 +48,11 @@
 .lex-report legend,
 .lex-report .lex-report-label {
   display: block;
-  margin: 0 0 .5rem;
+  margin: 0 0 .25rem;
   padding: 0;
   font-size: var(--lx-text-xs);
   font-weight: var(--lx-weight-semibold);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: #444b55;
+  opacity: .8;
 }
 
 .lex-report .lex-report-options {
@@ -78,14 +65,16 @@
   display: flex;
   align-items: flex-start;
   gap: .6rem;
-  padding: .5rem .6rem;
-  border: 1px solid #e3e7ec;
-  border-radius: var(--lx-radius);
+  padding: .5rem .75rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-field-bg);
+  box-shadow: var(--acct-field-shadow);
 }
 
 .lex-report .lex-report-option:has(input:checked) {
-  border-color: #16181d;
-  background: #f5f6f8;
+  border-color: var(--acct-accent);
+  background: var(--acct-hover);
 }
 
 .lex-report input[type="radio"] {
@@ -95,9 +84,9 @@
   flex: none;
   width: 1rem;
   height: 1rem;
-  margin-top: .15rem;
+  margin-top: .2rem;
   opacity: 1;
-  accent-color: #16181d;
+  accent-color: var(--acct-accent);
 }
 
 .lex-report input[type="radio"] + label {
@@ -106,8 +95,7 @@
   gap: .1rem;
   padding: 0;
   cursor: pointer;
-  font-size: var(--lx-text-sm);
-  color: #16181d !important;
+  color: var(--acct-ink) !important;
 }
 
 .lex-report input[type="radio"] + label::before,
@@ -117,42 +105,45 @@
 }
 
 .lex-report .lex-report-option-label {
-  font-weight: var(--lx-weight-semibold);
+  font-weight: var(--lx-weight-medium);
 }
 
 .lex-report .lex-report-option-hint {
   font-size: var(--lx-text-xs);
-  color: #5c6470;
+  opacity: .65;
 }
 
 .lex-report textarea {
   display: block;
   width: 100%;
   min-height: 4.5rem;
-  margin-bottom: .75rem;
-  padding: .6rem .7rem;
-  border: 1px solid #cdd3db;
-  border-radius: var(--lx-radius);
-  background: #fff;
-  color: #16181d !important;
-  font-size: var(--lx-text-base);
+  margin-bottom: 1rem;
+  padding: .5rem .75rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-field-bg);
+  box-shadow: var(--acct-field-shadow);
+  color: var(--acct-ink) !important;
   resize: vertical;
 }
 
-.lex-report textarea:focus,
-.lex-report input[type="radio"]:focus-visible,
-.lex-report button:focus-visible {
-  outline: 2px solid #16181d;
+.lex-report textarea:focus {
+  border-color: var(--acct-accent);
+  box-shadow: 0 0 0 1px var(--acct-accent);
+  outline: none;
+}
+
+.lex-report input[type="radio"]:focus-visible {
+  outline: 2px solid var(--acct-accent);
   outline-offset: 2px;
 }
 
 .lex-report .lex-report-error {
-  margin: 0 0 .75rem;
-  padding: .5rem .65rem;
-  border-radius: var(--lx-radius);
-  background: #fdecec;
-  color: #b3261e;
-  font-size: var(--lx-text-xs);
+  margin: 0 0 1rem;
+  padding: .5rem .75rem;
+  border: 1px solid var(--acct-danger);
+  border-radius: var(--lx-radius-md);
+  color: var(--acct-danger);
 }
 
 .lex-report .lex-report-error[hidden],
@@ -163,29 +154,43 @@
 .lex-report .lex-report-actions {
   display: flex;
   justify-content: flex-end;
-  gap: .5rem;
+  gap: .75rem;
 }
 
 .lex-report .lex-report-submit,
 .lex-report .lex-report-cancel {
-  min-height: 44px;
   height: auto;
-  padding: .65rem 1rem;
-  border: 1px solid #16181d;
-  border-radius: var(--lx-radius);
-  font-size: var(--lx-text-sm);
-  font-weight: var(--lx-weight-semibold);
-  line-height: normal;
+  padding: .5rem 1.1rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-field-bg);
+  box-shadow: var(--acct-field-shadow);
+  font-weight: var(--lx-weight-medium);
+  line-height: 1.5;
   cursor: pointer;
 }
 
-.lex-report .lex-report-submit {
-  background: #16181d;
-  color: #fff !important;
+.lex-report .lex-report-cancel {
+  color: var(--acct-ink) !important;
 }
 
-.lex-report .lex-report-submit:hover {
-  background: #2c313a;
+.lex-report .lex-report-cancel:hover,
+.lex-report .lex-report-cancel:focus-visible {
+  background: var(--acct-hover);
+  outline: none;
+}
+
+.lex-report .lex-report-submit {
+  border-color: transparent;
+  background: var(--acct-accent);
+  box-shadow: none;
+  color: var(--acct-on-accent) !important;
+}
+
+.lex-report .lex-report-submit:hover,
+.lex-report .lex-report-submit:focus-visible {
+  filter: brightness(1.25);
+  outline: none;
 }
 
 .lex-report .lex-report-submit[disabled] {
@@ -193,25 +198,9 @@
   cursor: wait;
 }
 
-.lex-report .lex-report-cancel {
-  background: #fff;
-  color: #16181d !important;
-}
-
 .lex-report .lex-report-done p {
   margin: 0 0 1rem;
   font-size: var(--lx-text-base);
   font-weight: var(--lx-weight-semibold);
-  color: #1b7f4b;
+  color: var(--form-ok);
 }
-
-@media (--lx-below-sm) {
-  .lex-report {
-    width: 100vw;
-    max-width: none;
-    margin: auto 0 0;
-    border-radius: var(--lx-radius-xl) var(--lx-radius-xl) 0 0;
-    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
-  }
-}
-

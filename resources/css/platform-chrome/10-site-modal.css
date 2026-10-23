@@ -7,7 +7,9 @@
    ------------------------------------------------------------------------- */
 .acct-page,
 [data-mode='light'] .panel-dialog,
-[data-mode='light'] .panel-dialog .acct-page {
+[data-mode='light'] .panel-dialog .acct-page,
+[data-mode='light'] .lex-auth-card,
+[data-mode='light'] .lex-report {
   --acct-bg: var(--chrome-light-bg);
   --acct-side: #fafafa;
   --acct-ink: var(--chrome-light-ink);
@@ -23,9 +25,12 @@
 }
 
 /* The modal follows the menus: dark unless Light is picked. A full account page
-   keeps the light colours above, so the page inside the modal is named too. */
+   keeps the light colours above, so the page inside the modal is named too.
+   The sign-in and report dialogs wear the same set. */
 .panel-dialog,
-.panel-dialog .acct-page {
+.panel-dialog .acct-page,
+.lex-auth-card,
+.lex-report {
   --acct-bg: var(--platform-menu-bg, var(--chrome-dark-bg));
   --acct-side: rgba(128, 128, 128, .08);
   --acct-ink: var(--platform-menu-fg, var(--chrome-dark-ink));
@@ -49,7 +54,10 @@
   border: 0;
   background: transparent;
   color: var(--acct-ink);
+  color-scheme: dark;
 }
+
+[data-mode='light'] .panel-dialog { color-scheme: light; }
 
 .panel-dialog.is-wide { width: min(56rem, calc(100vw - 2rem)); }
 

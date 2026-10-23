@@ -18,7 +18,9 @@
 @import "./platform-chrome/00-menu.css";
 @import "./platform-chrome/01-account-trigger.css";
 @import "./platform-chrome/02-bylines.css";
+@import "./platform-chrome/03-form-dialogs.css";
 @import "./platform-chrome/03-report-dialog.css";
+@import "./platform-chrome/03-sign-in-dialog.css";
 @import "./platform-chrome/04-notif-panel.css";
 @import "./platform-chrome/05-notif-items.css";
 @import "./platform-chrome/06-notif-pages.css";

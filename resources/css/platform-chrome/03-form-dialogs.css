@@ -1,0 +1,29 @@
+/* -------------------------------------------------------------------------
+   The two dialogs with forms, sign-in and report. They wear the settings
+   modal's colours (the --acct-* set in 10-site-modal.css) and copy its title,
+   labels, fields and buttons, so all three read as one family.
+   ------------------------------------------------------------------------- */
+
+.lex-auth-card,
+.lex-report {
+  --form-muted: color-mix(in srgb, var(--acct-ink) 70%, transparent);
+  --form-ok: var(--chrome-dark-ok);
+  /* Native scrollbars, radios and fields draw to match the card. */
+  color-scheme: dark;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-xl);
+  background: var(--acct-bg);
+  color: var(--acct-ink);
+  box-shadow: var(--chrome-dialog-shadow);
+  font-family: inherit;
+  font-size: var(--lx-text-sm);
+  line-height: 1.5;
+}
+
+[data-mode='light'] .lex-auth-card,
+[data-mode='light'] .lex-report {
+  --form-ok: var(--chrome-light-ok);
+  color-scheme: light;
+}
