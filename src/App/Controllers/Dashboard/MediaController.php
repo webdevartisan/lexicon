@@ -36,7 +36,7 @@ final class MediaController extends AppController
         Gate::authorize('listPosts', $blog, $user);
 
         // Pull anything new on disk into the table the first time the library is opened for this blog
-        $this->mediaService->backfill($blog->id(), $blog->ownerId(), (int) $user['id']);
+        $this->mediaService->backfill($blog, (int) $user['id']);
 
         // Arriving with ?editUrl=... (e.g. "Edit" on the appearance page) indexes that
         // image if needed and tells the page to open the editor straight on it.
@@ -113,7 +113,7 @@ final class MediaController extends AppController
         $opts = $this->readEditOptions();
 
         try {
-            $item = $this->mediaService->process((int) $id, $blog->id(), $blog->ownerId(), $opts);
+            $item = $this->mediaService->process((int) $id, $blog, $opts);
         } catch (\InvalidArgumentException $e) {
             return $this->jsonError($e->getMessage(), 400);
         } catch (\Throwable $e) {
@@ -134,7 +134,7 @@ final class MediaController extends AppController
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
 
-        $added = $this->mediaService->backfill($blog->id(), $blog->ownerId(), (int) $user['id']);
+        $added = $this->mediaService->backfill($blog, (int) $user['id']);
 
         return $this->jsonSuccess(['added' => $added]);
     }
@@ -150,7 +150,7 @@ final class MediaController extends AppController
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
 
-        $summary = $this->mediaService->optimizeOversized($blog->id(), $blog->ownerId());
+        $summary = $this->mediaService->optimizeOversized($blog);
 
         return $this->jsonSuccess($summary);
     }
@@ -233,12 +233,7 @@ final class MediaController extends AppController
         }
 
         try {
-            $item = $this->mediaService->upload(
-                $this->request->files['file'],
-                (int) $user['id'],
-                $blog->id(),
-                $blog->ownerId(),
-            );
+            $item = $this->mediaService->upload($this->request->files['file'], (int) $user['id'], $blog);
         } catch (\InvalidArgumentException $e) {
             return $this->jsonError($e->getMessage(), 400);
         } catch (\Throwable $e) {

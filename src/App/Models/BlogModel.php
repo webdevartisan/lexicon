@@ -512,17 +512,29 @@ class BlogModel extends AppModel
      */
     public function createBlog(array $data): int
     {
-        $sql = 'INSERT INTO blogs (blog_name, blog_slug, description, owner_id) VALUES (?, ?, ?, ?)';
-        $this->database->execute($sql, [
-            $data['blog_name'],
-            $data['blog_slug'],
-            $data['description'],
-            $data['owner_id'],
+        $id = (int) $this->insert([
+            'blog_name' => $data['blog_name'],
+            'blog_slug' => $data['blog_slug'],
+            'description' => $data['description'],
+            'owner_id' => $data['owner_id'],
         ]);
 
         $this->blogCache()->blogCreated((string) $data['blog_slug']);
 
-        return (int) $this->database->lastInsertId();
+        return $id;
+    }
+
+    /**
+     * Insert a blog row, giving it the random key its upload folder is named after.
+     *
+     * @param  array<string, mixed>  $data  Column values
+     * @return bool|int The new blog ID, or false when nothing was inserted
+     */
+    public function insert(array $data): bool|int
+    {
+        $data['media_key'] ??= bin2hex(random_bytes(8));
+
+        return parent::insert($data);
     }
 
     /**

@@ -268,6 +268,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     blog_slug VARCHAR(200) NOT NULL UNIQUE,
     description TEXT DEFAULT NULL,
     owner_id INT NOT NULL,
+    media_key CHAR(16) NOT NULL COMMENT 'Random folder name for the blog uploads, so image URLs carry no ids; set by BlogModel::insert',
     status ENUM('draft','published','archived','suspended') NOT NULL DEFAULT 'draft',
     status_before_suspension VARCHAR(20) DEFAULT NULL COMMENT 'Status to restore when the owner suspension is lifted',
     is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick for the explore page featured blogs',
@@ -278,6 +279,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_owner (owner_id),
     INDEX idx_slug (blog_slug),
+    UNIQUE KEY uq_media_key (media_key),
     INDEX idx_status (status),
     INDEX idx_status_published (status, published_at),
     INDEX idx_featured (is_featured, published_at)

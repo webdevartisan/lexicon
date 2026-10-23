@@ -44,11 +44,11 @@ final class ArchiveMediaUrls
     }
 
     /**
-     * The blog a canonical upload URL is filed under, read from its folder.
+     * Whether a canonical upload URL is filed in the folder of the blog with this media key.
      */
-    public function blogIdOf(string $canonicalUrl): ?int
+    public function isInBlogFolder(string $canonicalUrl, string $mediaKey): bool
     {
-        return preg_match('#^/uploads/users/\d+/blogs/(\d+)/#', $canonicalUrl, $m) === 1 ? (int) $m[1] : null;
+        return str_starts_with($canonicalUrl, '/uploads/blogs/'.$mediaKey.'/');
     }
 
     /**

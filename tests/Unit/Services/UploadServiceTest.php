@@ -164,3 +164,37 @@ test('storeImageFromPath stores a genuine image under a content-hash name', func
 
     expect($url)->toBe('/uploads/test/Pixel_Art-'.substr(sha1($png), 0, 12).'.png');
 });
+
+test('blog images go in the blog key folder for this month, with no ids in the URL', function () {
+    [$dir, $url] = $this->uploader->blogUploadPath('0123456789abcdef');
+
+    expect($url)->toBe('/uploads/blogs/0123456789abcdef/'.date('Y/m'))
+        ->and(str_replace(DIRECTORY_SEPARATOR, '/', $dir))->toEndWith('/storage/uploads/blogs/0123456789abcdef/'.date('Y/m'));
+});
+
+test('a malformed media key is refused before any folder is touched', function (string $key) {
+    expect(fn () => $this->uploader->blogUploadPath($key))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => $this->uploader->deleteBlogUploads($key))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => $this->uploader->blogUploads($key))->toThrow(InvalidArgumentException::class);
+})->with([
+    'empty' => '',
+    'parent folder' => '..',
+    'wildcard' => '*',
+    'upper case' => '0123456789ABCDEF',
+    'too short' => '0123abcd',
+]);
+
+test('profile rows can only reach files in the avatars folder', function () {
+    expect($this->uploader->avatarFilePath('/uploads/blogs/0123456789abcdef/2026/10/banner-aaaaaaaaaaaa.jpg'))->toBeNull()
+        ->and($this->uploader->avatarFilePath('https://example.com/avatar.jpg'))->toBeNull()
+        ->and(str_replace(DIRECTORY_SEPARATOR, '/', (string) $this->uploader->avatarFilePath('/uploads/avatars/2026/10/avatar-aaaaaaaaaaaa.jpg')))
+        ->toEndWith('/storage/uploads/avatars/2026/10/avatar-aaaaaaaaaaaa.jpg');
+});
+
+test('pathOf refuses anything outside the uploads folder', function (string $url) {
+    expect(fn () => $this->uploader->pathOf($url))->toThrow(InvalidArgumentException::class);
+})->with([
+    'parent folder' => '/uploads/../.env',
+    'other folder' => '/config/app.php',
+    'outside address' => 'https://example.com/uploads/a.jpg',
+]);

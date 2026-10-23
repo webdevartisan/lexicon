@@ -11,7 +11,7 @@ beforeEach(function () {
 test('first-party images pass', function (string $src) {
     expect($this->guard->newExternalSources('<p><img src="'.$src.'" alt=""></p>'))->toBe([]);
 })->with([
-    '/uploads/users/1/blogs/6/postImages/a.webp',
+    '/uploads/blogs/0123456789abcdef/2026/10/post-image-aaaaaaaaaaaa.webp',
     'https://lexicon.test/uploads/a.png',
     'data:image/png;base64,iVBORw0KGgo=',
     'relative/path.png',

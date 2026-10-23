@@ -45,8 +45,7 @@ class UploadController extends AppController
             return $this->json(['error' => 'No image uploaded'], 400);
         }
 
-        // Build dir + base URL using your existing helper
-        [$dir, $baseUrl] = $this->uploader->userBlogPostPath($userId, $blogId);
+        [$dir, $baseUrl] = $this->uploader->blogUploadPath($blog->mediaKey());
 
         try {
             $url = $this->uploader->storeImage($file, [

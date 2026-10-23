@@ -233,9 +233,9 @@ final class AccountProfileController extends AppController
                 }
             }
 
-            $source = $this->uploader->storeAvatarSource($avatarFile, $userId);
+            $source = $this->uploader->storeAvatarSource($avatarFile);
             $rect = $this->centeredSquare($source['width'], $source['height']);
-            $avatarUrl = $this->uploader->renderAvatar($userId, $source['path'], $rect);
+            $avatarUrl = $this->uploader->renderAvatar($source['path'], $rect);
 
             $this->profiles->upsert($userId, [
                 'avatar_url' => $avatarUrl,
@@ -274,9 +274,8 @@ final class AccountProfileController extends AppController
             return $this->json(['error' => chrome_translate('account.flash.avatarError')], 400);
         }
 
-        [$dir] = $this->uploader->userProfilePath($userId);
-        $sourcePath = $dir.'/'.basename((string) $profile['avatar_source_url']);
-        if (!is_file($sourcePath)) {
+        $sourcePath = $this->uploader->avatarFilePath((string) $profile['avatar_source_url']);
+        if ($sourcePath === null || !is_file($sourcePath)) {
             return $this->json(['error' => chrome_translate('account.flash.avatarError')], 400);
         }
 
@@ -296,7 +295,7 @@ final class AccountProfileController extends AppController
                 $this->deleteAvatarFile($userId, $profile['avatar_url']);
             }
 
-            $avatarUrl = $this->uploader->renderAvatar($userId, $sourcePath, $rect);
+            $avatarUrl = $this->uploader->renderAvatar($sourcePath, $rect);
 
             $this->profiles->upsert($userId, [
                 'avatar_url' => $avatarUrl,
@@ -376,14 +375,7 @@ final class AccountProfileController extends AppController
     private function deleteAvatarFile(int $userId, string $avatarUrl): void
     {
         try {
-            [$dir, $url] = $this->uploader->userProfilePath($userId);
-
-            $filename = basename(parse_url($avatarUrl, PHP_URL_PATH));
-            $filePath = $dir.'/'.$filename;
-
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
+            $this->uploader->deleteAvatar($avatarUrl);
         } catch (Exception $e) {
             error_log("Failed to delete avatar file for user {$userId}: ".$e->getMessage());
         }

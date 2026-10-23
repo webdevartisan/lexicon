@@ -42,6 +42,11 @@ final class BlogDeletionService
      */
     public function deleteBlog(int $blogId, int $userId): array
     {
+        $blog = $this->blogs->getBlog($blogId);
+        if ($blog === false) {
+            throw new \RuntimeException("Blog {$blogId} does not exist.");
+        }
+
         $wasDefaultBlog = $this->preferences->isDefaultBlog($userId, $blogId);
         $authorHandles = $this->posts->authorHandlesInBlog($blogId);
 
@@ -69,7 +74,7 @@ final class BlogDeletionService
             ];
         });
 
-        $this->uploader->deleteBlogUploads($blogId);
+        $this->uploader->deleteBlogUploads($blog->mediaKey());
 
         if ($wasDefaultBlog) {
             $remainingBlogs = $this->blogs->getBlogsByOwnerId($userId);

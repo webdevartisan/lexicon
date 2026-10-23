@@ -30,24 +30,22 @@ final class MediaService
     /**
      * Deliberate library upload from the /media page.
      *
-     * Stores the file under the new per-blog "media" folder so it's easy
-     * to tell library uploads apart from post-images / branding on disk.
-     * Files are stored under the blog owner's directory tree (matching the
-     * existing branding / post-image conventions) regardless of which
-     * collaborator did the upload.
+     * The original file name is kept for the library only; the stored file is
+     * image-{hash}, so whatever the person called it never reaches a public URL.
      *
      * @param  array<string, mixed>  $file  Uploaded file entry from $_FILES
      * @return array<string, mixed> Indexed media row data
      */
-    public function upload(array $file, int $uploaderId, int $blogId, int $ownerId): array
+    public function upload(array $file, int $uploaderId, BlogResource $blog): array
     {
         if (!isset($file['name'])) {
             throw new InvalidArgumentException('No file uploaded.');
         }
 
         $originalName = (string) $file['name'];
+        $blogId = $blog->id();
 
-        [$dir, $baseUrl] = $this->blogMediaPath($ownerId, $blogId);
+        [$dir, $baseUrl] = $this->uploads->blogUploadPath($blog->mediaKey());
 
         $url = $this->uploads->storeImage($file, [
             'dir' => $dir,
@@ -55,7 +53,7 @@ final class MediaService
             'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
             'max_bytes' => 50 * 1024 * 1024,
             'preset' => 'media',
-            'rename' => pathinfo($originalName, PATHINFO_FILENAME) ?: 'image',
+            'rename' => 'image',
         ]);
 
         if (!$url) {
@@ -73,11 +71,7 @@ final class MediaService
     }
 
     /**
-     * Move a temp-uploaded featured image into the blog's post-image
-     * folder and index it in the library.
-     *
-     * Files land under the blog owner's directory tree no matter which
-     * collaborator uploaded, same as branding and inline post images.
+     * Move a temp-uploaded featured image into the blog's folder and index it in the library.
      *
      * @param  string  $tempFilename  Temp filename from UploadService::getUploadedFiles()
      * @param  int  $uploaderId  Acting user, for temp cleanup and the library row
@@ -85,16 +79,7 @@ final class MediaService
      */
     public function storeFeaturedImage(string $tempFilename, BlogResource $blog, int $uploaderId): string
     {
-        [$dir, $baseUrl] = $this->uploads->userBlogPostPath($blog->ownerId(), $blog->id());
-
-        $path = $this->uploads->moveTempToBranding(
-            $tempFilename,
-            $uploaderId,
-            $blog->id(),
-            'featured_image',
-            $dir,
-            $baseUrl
-        );
+        $path = $this->uploads->moveTempToBlog($tempFilename, $uploaderId, 'featured_image', $blog->mediaKey());
 
         $this->uploads->cleanupTempFiles($uploaderId);
 
@@ -140,11 +125,21 @@ final class MediaService
             return false;
         }
 
-        if (!$this->media->deleteForBlog($id, $blog->id())) {
+        // Row and slots go together or not at all, so a failure never leaves a slot
+        // pointing at a file the library no longer has. The file goes only after.
+        $deleted = $this->media->transaction(function () use ($id, $blog, $row): bool {
+            if (!$this->media->deleteForBlog($id, $blog->id())) {
+                return false;
+            }
+
+            $this->references->clear($blog, (string) $row['url']);
+
+            return true;
+        });
+
+        if (!$deleted) {
             return false;
         }
-
-        $this->references->clear($blog, (string) $row['url']);
 
         // disk_path is relative to storage/ (uploads/...)
         $absPath = ROOT_PATH.'/storage/'.ltrim((string) $row['disk_path'], '/');
@@ -208,9 +203,9 @@ final class MediaService
      *
      * @return array{processed: int, skipped: int, bytes_before: int, bytes_after: int, bytes_saved: int}
      */
-    public function optimizeOversized(int $blogId, int $ownerId, int $cap = 2048, int $quality = 80): array
+    public function optimizeOversized(BlogResource $blog, int $cap = 2048, int $quality = 80): array
     {
-        $rows = $this->media->listForBlog($blogId, ['limit' => 100000]);
+        $rows = $this->media->listForBlog($blog->id(), ['limit' => 100000]);
         $processed = 0;
         $skipped = 0;
         $before = 0;
@@ -224,7 +219,7 @@ final class MediaService
             }
 
             try {
-                $res = $this->process((int) $row['id'], $blogId, $ownerId, [
+                $res = $this->process((int) $row['id'], $blog, [
                     'mode' => 'overwrite',
                     'width' => $cap,
                     'height' => $cap,
@@ -306,8 +301,9 @@ final class MediaService
      *
      * @throws InvalidArgumentException|RuntimeException
      */
-    public function process(int $id, int $blogId, int $ownerId, array $opts): array
+    public function process(int $id, BlogResource $blog, array $opts): array
     {
+        $blogId = $blog->id();
         $row = $this->media->findForBlog($id, $blogId);
         if (!$row) {
             throw new InvalidArgumentException('Media item not found.');
@@ -336,7 +332,7 @@ final class MediaService
 
         [$destAbs, $destUrl] = $mode === 'overwrite'
             ? [$srcAbs, (string) $row['url']]
-            : $this->newMediaTarget($ownerId, $blogId, (string) ($row['original_name'] ?: $row['filename']), $outExt, $opts);
+            : $this->newMediaTarget($blog->mediaKey(), $outExt, $opts);
 
         $result = $this->runEdit($srcAbs, $destAbs, $opts, $procOpts);
 
@@ -421,22 +417,20 @@ final class MediaService
 
     /**
      * Build the absolute path and public URL for a brand-new derived image in the
-     * blog's media folder.
+     * blog's folder.
      *
      * @param  array<string, mixed>  $opts  Edit options, mixed into the hash for uniqueness
      * @return array{0: string, 1: string} [absolute path, public url]
      */
-    private function newMediaTarget(int $ownerId, int $blogId, string $baseName, string $ext, array $opts): array
+    private function newMediaTarget(string $mediaKey, string $ext, array $opts): array
     {
-        [$dir, $baseUrl] = $this->blogMediaPath($ownerId, $blogId);
+        [$dir, $baseUrl] = $this->uploads->blogUploadPath($mediaKey);
         if (!is_dir($dir)) {
             @mkdir($dir, 0775, true);
         }
 
-        $base = pathinfo($baseName, PATHINFO_FILENAME) ?: 'image';
-        $safeBase = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $base) ?: 'image';
-        $hash = substr(sha1($baseName.microtime().json_encode($opts)), 0, 12);
-        $filename = $safeBase.'-'.$hash.'.'.$ext;
+        $hash = substr(sha1($mediaKey.microtime().json_encode($opts)), 0, 12);
+        $filename = 'image-'.$hash.'.'.$ext;
 
         return [$dir.'/'.$filename, $baseUrl.'/'.$filename];
     }
@@ -476,58 +470,22 @@ final class MediaService
      *
      * Returns the number of newly indexed files.
      */
-    public function backfill(int $blogId, int $ownerId, ?int $uploaderId = null): int
+    public function backfill(BlogResource $blog, int $uploaderId): int
     {
         $added = 0;
-        $uploaderId ??= $ownerId;
 
-        $bases = [
-            $this->uploads->userBlogPostPath($ownerId, $blogId) + ['source' => 'post_image'],
-            $this->uploads->blogBrandingPath($ownerId, $blogId) + ['source' => 'branding'],
-            $this->blogMediaPath($ownerId, $blogId) + ['source' => 'backfill'],
-        ];
-
-        foreach ($bases as $base) {
-            [$dir, $baseUrl] = [$base[0], $base[1]];
-            $source = $base['source'];
-
-            if (!is_dir($dir)) {
+        foreach ($this->uploads->blogUploads($blog->mediaKey()) as $url) {
+            $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
                 continue;
             }
 
-            $files = scandir($dir) ?: [];
-            foreach ($files as $name) {
-                if ($name === '.' || $name === '..') {
-                    continue;
-                }
-                $absPath = $dir.'/'.$name;
-                if (!is_file($absPath)) {
-                    continue;
-                }
-                $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-                    continue;
-                }
-
-                $url = $baseUrl.'/'.$name;
-                if ($this->register($blogId, $uploaderId, $url, $source) !== null) {
-                    $added++;
-                }
+            if ($this->register($blog->id(), $uploaderId, $url, 'backfill') !== null) {
+                $added++;
             }
         }
 
         return $added;
-    }
-
-    /**
-     * @return array{string, string} Absolute directory and public base URL
-     */
-    public function blogMediaPath(int $userId, int $blogId): array
-    {
-        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/media';
-        $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/media';
-
-        return [$dir, $url];
     }
 
     /**
@@ -596,8 +554,8 @@ final class MediaService
     }
 
     /**
-     * Strip leading slash so a URL like /uploads/users/1/.../foo.jpg
-     * becomes a path relative to /public.
+     * Strip leading slash so a URL like /uploads/blogs/{key}/2026/10/foo.jpg
+     * becomes a path relative to /storage.
      *
      * Returns null for URLs that don't look like our uploads (so we
      * never accidentally index something we shouldn't).

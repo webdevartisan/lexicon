@@ -160,7 +160,7 @@ final class AppearanceController extends AppController
 
         $settingsData = array_merge(
             $settingsData,
-            $this->handleBrandingUploads($userId, $id, $blog->ownerId())
+            $this->handleBrandingUploads($userId, $blog)
         );
 
         $currentSettings = $this->settings->findByBlogId($id);
@@ -227,14 +227,12 @@ final class AppearanceController extends AppController
      * and returns path array for settings merge.
      *
      * @param  int  $userId  User ID (for temp cleanup)
-     * @param  int  $blogId  Blog ID
-     * @param  int|null  $ownerId  Owner ID (defaults to userId)
+     * @param  BlogResource  $blog  The blog being branded
      * @return array<string, string> Paths keyed by 'banner_path', 'logo_path', 'favicon_path'
      */
-    private function handleBrandingUploads(int $userId, int $blogId, ?int $ownerId = null): array
+    private function handleBrandingUploads(int $userId, BlogResource $blog): array
     {
-        $ownerId ??= $userId;
-
+        $blogId = $blog->id();
         $paths = [];
 
         // Library picks beat freshly-uploaded files, if the user selected an
@@ -255,8 +253,6 @@ final class AppearanceController extends AppController
 
         $uploadedFileNames = $this->uploader->getUploadedFiles($uploadedFiles);
 
-        [$dir, $baseUrl] = $this->uploader->blogBrandingPath($ownerId, $blogId);
-
         foreach ($uploadedFileNames as $fieldName => $fileName) {
             if (empty($fileName)) {
                 continue;
@@ -272,14 +268,7 @@ final class AppearanceController extends AppController
             }
 
             try {
-                $path = $this->uploader->moveTempToBranding(
-                    $fileName,
-                    $userId,
-                    $blogId,
-                    $type,
-                    $dir,
-                    $baseUrl
-                );
+                $path = $this->uploader->moveTempToBlog($fileName, $userId, $type, $blog->mediaKey());
                 $paths[$type.'_path'] = $path;
 
                 if ($path) {

@@ -62,5 +62,5 @@ it('accepts archive paths, outside addresses and local uploads as images', funct
 })->with([
     'archive path' => 'media/abc123.jpg',
     'outside' => 'https://images.example.com/a.jpg',
-    'local upload' => '/uploads/users/1/blogs/2/media/a.jpg',
+    'local upload' => '/uploads/blogs/0123456789abcdef/2026/10/image-aaaaaaaaaaaa.jpg',
 ]);

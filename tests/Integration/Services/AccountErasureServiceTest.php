@@ -39,7 +39,6 @@ beforeEach(function () {
     $this->deletedUserId = DatabaseHelper::deletedUser($this->db);
 
     $this->uploader = Mockery::mock(UploadServiceInterface::class)->shouldIgnoreMissing();
-    $this->uploader->shouldReceive('blogUploadsBy')->andReturn([])->byDefault();
     $cacheInvalidator = Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing();
 
     $this->service = new AccountErasureService(
@@ -102,7 +101,7 @@ test('erasing removes posts and comments, and empties a comment others replied t
         ->create($otherPostId, $this->otherId);
 
     $soloBlogId = BlogFactory::new($this->blogs)->published()->create($this->personId);
-    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($soloBlogId);
+    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($this->blogs->getBlog($soloBlogId)->mediaKey());
 
     $this->service->erase($this->personId);
 
@@ -134,7 +133,7 @@ test('erasing deletes a solo blog even when someone else commented in it', funct
         ->published()
         ->create();
     $othersCommentId = CommentFactory::new($this->comments)->create($soloPostId, $this->otherId);
-    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($soloBlogId);
+    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($this->blogs->getBlog($soloBlogId)->mediaKey());
 
     $this->service->erase($this->personId);
 
@@ -150,7 +149,7 @@ test('erasing deletes a solo blog even when it holds a departed collaborator\'s 
         ->withAttributes(['author_id' => $formerCollaboratorId, 'blog_id' => $soloBlogId])
         ->published()
         ->create();
-    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($soloBlogId);
+    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($this->blogs->getBlog($soloBlogId)->mediaKey());
 
     $this->service->erase($this->personId);
 
@@ -247,7 +246,7 @@ test('the record covers what the account wrote in its own blog too', function ()
         ->published()
         ->create();
     $soloCommentId = CommentFactory::new($this->comments)->create($soloPostId, $this->personId);
-    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($soloBlogId);
+    $this->uploader->shouldReceive('deleteBlogUploads')->once()->with($this->blogs->getBlog($soloBlogId)->mediaKey());
 
     $this->service->erase($this->personId);
 

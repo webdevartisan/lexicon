@@ -43,6 +43,14 @@ class BlogResource
         return (int) $this->data['owner_id'];
     }
 
+    /**
+     * Random name of the blog's upload folder.
+     */
+    public function mediaKey(): string
+    {
+        return (string) $this->data['media_key'];
+    }
+
     public function name(): string
     {
         return $this->data['blog_name'];
