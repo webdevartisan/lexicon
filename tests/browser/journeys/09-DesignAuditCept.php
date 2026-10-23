@@ -23,6 +23,7 @@ $setViewport = function (string $viewport) use ($I): void {
             $cdp->execute('Emulation.setDeviceMetricsOverride', [
                 'width' => 390, 'height' => 844, 'deviceScaleFactor' => 2, 'mobile' => true,
             ]);
+
             return;
         }
         $cdp->execute('Emulation.clearDeviceMetricsOverride');
