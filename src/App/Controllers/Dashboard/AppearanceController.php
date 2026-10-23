@@ -169,21 +169,11 @@ final class AppearanceController extends AppController
             $currentSettings = [];
         }
 
-        // Handle removal checkboxes
-        foreach (['remove_banner', 'remove_logo', 'remove_favicon'] as $removeKey) {
-            if (!empty($validated[$removeKey])) {
-                $type = explode('_', $removeKey)[1]; // banner, logo, favicon
-                $filePathKey = $type.'_path';
-
-                // Delete physical file
-                if (!empty($currentSettings[$filePathKey])) {
-                    $oldFile = ROOT_PATH.'/public'.$currentSettings[$filePathKey];
-                    if (file_exists($oldFile)) {
-                        @unlink($oldFile);
-                    }
-                }
-
-                $settingsData[$filePathKey] = null;
+        // Removing only empties the slot. The file stays in the media library,
+        // where a post may still be using it.
+        foreach (['banner', 'logo', 'favicon'] as $type) {
+            if (!empty($validated['remove_'.$type])) {
+                $settingsData[$type.'_path'] = null;
             }
         }
 

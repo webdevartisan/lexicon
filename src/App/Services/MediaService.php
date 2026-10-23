@@ -24,6 +24,7 @@ final class MediaService
         private MediaModel $media,
         private ImageProcessorInterface $images,
         private MediaUsageResolver $usage,
+        private MediaReferenceCleaner $references,
     ) {}
 
     /**
@@ -129,16 +130,21 @@ final class MediaService
     }
 
     /**
-     * Delete a media item by clearing out both parts of it: the file on disk
-     * and the database row that points to it. And if the file has already vanished,
-     * we still remove the row so the library can tidy itself up and stay consistent.
+     * Delete a media item: its library row, the post and branding slots that show it,
+     * and the file on disk. A file that has already vanished still loses its row.
      */
-    public function delete(int $id, int $blogId): bool
+    public function delete(int $id, BlogResource $blog): bool
     {
-        $row = $this->media->findForBlog($id, $blogId);
+        $row = $this->media->findForBlog($id, $blog->id());
         if (!$row) {
             return false;
         }
+
+        if (!$this->media->deleteForBlog($id, $blog->id())) {
+            return false;
+        }
+
+        $this->references->clear($blog, (string) $row['url']);
 
         // disk_path is relative to storage/ (uploads/...)
         $absPath = ROOT_PATH.'/storage/'.ltrim((string) $row['disk_path'], '/');
@@ -146,7 +152,7 @@ final class MediaService
             @unlink($absPath);
         }
 
-        return $this->media->deleteForBlog($id, $blogId);
+        return true;
     }
 
     /**

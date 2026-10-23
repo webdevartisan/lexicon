@@ -7,7 +7,7 @@
  * media-library.js builds it and hands in the request helper and the grid updates,
  * so the editor never reaches into the grid itself.
  *
- * @param {object} deps api, esc, humanSize, versioned, displayName, showCard, deleteItem
+ * @param {object} deps api, esc, humanSize, versioned, displayName, showCard, deleteItem, confirmDelete
  * @returns {{open: function(string|number, Element=): void}}
  */
 window.createMediaEditor = function (deps) {
@@ -18,6 +18,7 @@ window.createMediaEditor = function (deps) {
     var displayName = deps.displayName;
     var showCard = deps.showCard;
     var deleteItem = deps.deleteItem;
+    var confirmDelete = deps.confirmDelete;
 
     var modal = document.getElementById('media-editor');
     var form = document.getElementById('media-editor-form');
@@ -307,14 +308,8 @@ window.createMediaEditor = function (deps) {
 
     deleteButton.addEventListener('click', function () {
         var item = current;
-        var usages = item.usages || [];
-        var message = usages.length === 0
-            ? 'Delete this image? This cannot be undone.'
-            : 'This image is used in ' + usages.length + ' place(s):\n\n'
-                + usages.map(function (use) { return '• ' + use.label + ' (' + use.context + ')'; }).join('\n')
-                + '\n\nDeleting it will leave broken images there. Delete anyway?';
 
-        cpConfirm(message).then(function (ok) {
+        confirmDelete(item.usages || []).then(function (ok) {
             if (!ok) return;
             whileSaving(deleteButton, deleteItem(item.id).then(function () { cpModal.close('media-editor'); }));
         });

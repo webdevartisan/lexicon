@@ -84,13 +84,9 @@ final class LocaleAwareStaticBypass
         $mapper = new AssetPathMapper(ROOT_PATH);
         $file = $mapper->fileFromUrlPath($assetPath);
 
-        // If mapper returns null, this is not a known asset path; let the app handle it.
-        if ($file === null) {
-            return;
-        }
-
-        // File must exist and be readable; otherwise return a minimal 404.
-        if (!is_file($file) || !is_readable($file)) {
+        // No page lives under these roots, so a miss is a plain 404. Handing it to the
+        // app would add a locale redirect to /en/... first and render a full error page.
+        if ($file === null || !is_readable($file)) {
             http_response_code(404);
             header('Content-Type: text/plain; charset=utf-8');
             echo 'Not Found';

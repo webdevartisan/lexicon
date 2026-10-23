@@ -259,7 +259,7 @@ final class MediaController extends AppController
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
 
-        $ok = $this->mediaService->delete((int) $id, $blog->id());
+        $ok = $this->mediaService->delete((int) $id, $blog);
         if (!$ok) {
             return $this->jsonError('Media item not found.', 404);
         }
