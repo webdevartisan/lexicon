@@ -83,15 +83,3 @@ $captcha = $captcha ?? null;
 {% block help %}
 <a href="<?= e(lurl('/password/forgot')) ?>"><?= e($t('auth.cantLogIn')) ?></a>
 {% endblock %}
-
-{% block legal %}
-<?php
-// The sentence shape differs per language, so the locale file owns the whole
-// line and the two links go in as placeholders. Both the text and the anchors
-// are ours, never user input, which is what makes the raw echo safe here.
-echo $t('auth.legal', [
-    'terms' => '<a href="'.e(lurl('/terms')).'">'.e($t('footer.linkTerms')).'</a>',
-    'privacy' => '<a href="'.e(lurl('/privacy')).'">'.e($t('footer.linkPrivacy')).'</a>',
-]);
-?>
-{% endblock %}

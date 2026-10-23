@@ -7,7 +7,7 @@
         "themeMenu": {
             "label": "Appearance",
             "light": "Light",
-            "auto": "Auto",
+            "auto": "Device",
             "dark": "Dark"
         },
         "profileDropdown": {
@@ -15,16 +15,14 @@
             "links": {
                 "dashboard": "Dashboard",
                 "controlPanel": "Control Panel",
-                "editProfile": "Edit Profile",
-                "signOut": "Sign Out",
-                "accountSettings": "Account Settings"
+                "editProfile": "Edit Profile"
             }
         }
     },
     "navigation": {
         "home": "Home",
         "adminNotifications": "Notifications",
-        "createBlog": "Create a Blog",
+        "createBlog": "Create a blog",
         "discover": "Discover",
         "admin": "Admin",
         "accountSettings": "Account Settings",
@@ -74,12 +72,12 @@
         "auditLog": "Audit Log",
         "moderation": "Moderation",
         "system": "System",
-        "gettingStarted": "Getting Started",
+        "gettingStarted": "Getting started",
         "about": "About",
         "contact": "Contact",
         "frontPage": "Front Page",
         "pages": "Pages",
-        "account": "Account",
+        "account": "Settings",
         "overview": "Overview",
         "reviewQueue": "Review queue"
     },
@@ -193,6 +191,12 @@
                 "needsChanges": "Needs changes",
                 "archived": "Archived"
             },
+            "view": {
+                "label": "View",
+                "cards": "Cards",
+                "compact": "Compact list",
+                "col": {"author": "Author", "visibility": "Visibility", "actions": "Actions", "public": "Public", "title": "Title", "status": "Status", "updated": "Updated", "comments": "Comments"}
+            },
             "sort": {
                 "label": "Sort",
                 "newest": "Newest first",
@@ -203,6 +207,8 @@
             "filters": {
                 "all": "All",
                 "search": "Search",
+                "title": "Filters",
+                "status": "Status",
                 "searchPlaceholder": "Search by title or content...",
                 "category": "Category",
                 "tag": "Tag",
@@ -443,7 +449,7 @@
         "createFirstBlog": "Create a blog",
         "startWritingHint": "Feel like writing?",
         "startWriting": "Start a blog",
-        "signOut": "Sign Out",
+        "signOut": "Sign out",
         "signedInAs": "Signed in as",
         "editProfile": "Edit Profile",
         "myBlogs": "My Blogs",
@@ -463,8 +469,8 @@
         "description": "Start a blog in minutes on Lexicon. Write alone or with your team, publish fast and keep full ownership of your words."
     },
     "header": {
-        "signIn": "Sign In",
-        "signOut": "Sign Out",
+        "signIn": "Sign in",
+        "signOut": "Sign out",
         "dashboard": "Dashboard",
         "logoTagline": "Your ideas, your audience, your blog.",
         "social": {
@@ -557,7 +563,7 @@
         "rightsReserved": "All rights reserved.",
         "aboutTitle": "About Lexicon",
         "aboutText": "Lexicon is a blogging platform for people who value simplicity, speed and creative control. Write alone or with your team, publish in minutes and keep full ownership of your words.",
-        "quickLinksTitle": "Quick Links",
+        "quickLinksTitle": "Quick links",
         "linkHome": "Home",
         "linkAbout": "About",
         "linkContact": "Contact",
@@ -569,8 +575,8 @@
         "socialTwitterAria": "Follow us on X",
         "socialFacebookAria": "Follow us on Facebook",
         "socialInstagramAria": "Follow us on Instagram",
-        "linkExplore": "Explore Blogs",
-        "linkGettingStarted": "Getting Started",
+        "linkExplore": "Explore blogs",
+        "linkGettingStarted": "Getting started",
         "socialMediumAria": "Read us on Medium"
     },
     "blog": {
@@ -936,8 +942,8 @@
         "metaMyComments": "Your comments",
         "metaSubscriptions": "Subscriptions",
         "notificationsTitle": "Notifications",
-        "savedTitle": "Saved",
-        "repliesTitle": "Replies",
+        "savedTitle": "Articles",
+        "repliesTitle": "Comments",
         "subscriptionsTitle": "Subscriptions",
         "tabSaved": "Saved",
         "tabLiked": "Liked",
@@ -1080,6 +1086,9 @@
             "deleteConfirm": "Delete this translation? Readers of this language will see the original post instead."
         }
     },
+    "panel": {
+        "loadFailed": "Could not load this right now."
+    },
     "a11y": {
         "skipToContent": "Skip to content",
         "openMenu": "Open menu",
@@ -1117,19 +1126,20 @@
         "hide": "Hide",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "cantLogIn": "Can't log in?",
-        "loginTitle": "Log in",
+        "cantLogIn": "Can't sign in?",
+        "loginTitle": "Sign in",
         "loginSubtitle": "Welcome back.",
-        "loginSubtitleReturn": "Log in to pick up where you left off.",
-        "loginSubmit": "Log in",
+        "loginSubtitleReturn": "Sign in to pick up where you left off.",
+        "loginSubmit": "Sign in",
         "twoFactorTitle": "Two-step sign-in",
         "twoFactorSubtitle": "Enter the code from your authenticator app.",
         "twoFactorCodeLabel": "Code",
         "twoFactorHint": "The 6 digits from your app, or one of your recovery codes.",
         "twoFactorSubmit": "Continue",
-        "twoFactorBack": "Back to log in",
+        "twoFactorBack": "Back to sign in",
         "twoFactorWrong": "That code did not work. Try the next one from your app, or use a recovery code.",
         "twoFactorTooMany": "Too many wrong codes. Try again in a few minutes.",
+        "invalidCredentials": "Invalid credentials",
         "registerTitle": "Create account",
         "registerSubtitle": "Save posts, follow blogs, join the conversation.",
         "registerBlogSubtitle": "Create your account first, then set up your blog.",
@@ -1143,7 +1153,7 @@
         "forgotTitle": "Reset your password",
         "forgotSubtitle": "Enter your email address and we will send you a link.",
         "forgotSubmit": "Send reset link",
-        "backToLogin": "Back to log in",
+        "backToLogin": "Back to sign in",
         "resetTitle": "Choose a new password",
         "resetSubtitle": "Pick something you have not used anywhere else.",
         "resetSubmit": "Save new password",
@@ -1211,9 +1221,12 @@
     "account": {
         "nav": {
             "profile": "Profile",
+            "public": "Public page",
+            "social": "Social links",
             "preferences": "Preferences",
             "notifications": "Notifications",
-            "security": "Security"
+            "security": "Security",
+            "danger": "Danger"
         },
         "profile": {
             "heading": "Public profile",
@@ -1282,6 +1295,7 @@
             "emailModalSubmit": "Send confirmation link",
             "emailModalCancel": "Cancel",
             "interfaceSection": "Interface",
+            "appearanceHelp": "Applies right away to the menus, settings and dashboard in this browser.",
             "timezone": "Timezone",
             "timezoneHelp": "Dates and times across the site are shown in this zone.",
             "timezoneInvalid": "Please select a valid timezone.",
@@ -1362,7 +1376,7 @@
             "codesHeading": "Your recovery codes",
             "codesIntro": "Keep these somewhere safe. Each one works once if you lose your phone. They will not be shown again.",
             "onHeading": "Two-step sign-in is on",
-            "onText": "You will be asked for a code from your app each time you log in.",
+            "onText": "You will be asked for a code from your app each time you sign in.",
             "codesLeft": "Recovery codes left",
             "renewCodes": "Get new recovery codes",
             "codesRenewed": "New recovery codes created. The old ones no longer work.",
@@ -1374,13 +1388,16 @@
             "requiredToContinue": "Set up two-step sign-in to open the control panel."
         },
         "security": {
+            "changePassword": "Change password",
+            "pageIntro": "Your password, two-step sign-in, devices and data.",
+            "passwordHeading": "Password",
             "heading": "Change password",
             "intro": "Use a strong password you don't reuse anywhere else.",
             "currentPassword": "Current password",
             "newPassword": "New password",
             "confirmPassword": "Confirm new password",
             "activityHeading": "Sign-in activity",
-            "lastLogin": "Last login",
+            "lastLogin": "Last sign-in",
             "never": "Never",
             "save": "Update password"
         },
@@ -2118,23 +2135,23 @@
     },
     "authModal": {
         "close": "Close",
-        "titleLogin": "Log in to continue",
-        "titleReply": "Log in to reply",
-        "titleComment": "Log in to comment",
-        "titleLike": "Log in to like this post",
-        "titleBookmark": "Log in to save this post",
-        "intro": "Enter your email to log in or create your reader account.",
+        "titleLogin": "Sign in to continue",
+        "titleReply": "Sign in to reply",
+        "titleComment": "Sign in to comment",
+        "titleLike": "Sign in to like this post",
+        "titleBookmark": "Sign in to save this post",
+        "intro": "Enter your email to sign in or create your reader account.",
         "email": "Email",
         "continue": "Continue →",
         "password": "Password",
         "minLength": "At least {min} characters.",
-        "logIn": "Log in →",
+        "logIn": "Sign in →",
         "forgot": "Forgot password?",
         "differentEmail": "Use a different email",
         "sendReset": "Send reset link",
-        "backToLogin": "Back to login",
-        "loggedIn": "You’re logged in!",
-        "fullPage": "Use the full login page",
+        "backToLogin": "Back to sign in",
+        "loggedIn": "You’re signed in!",
+        "fullPage": "Use the full sign-in page",
         "welcomeBack": "Welcome back",
         "enterPasswordFor": "Enter the password for {email}.",
         "createTitle": "Create your account",
@@ -2148,6 +2165,7 @@
         "passwordRequired": "Password is required.",
         "passwordTooShort": "Your password needs at least {min} characters.",
         "sessionExpired": "Your session expired while this was open. Please try again.",
+        "codeRequired": "Enter the code from your app.",
         "serverError": "Something went wrong on our side (error {status}). Please try again in a moment.",
         "networkError": "Could not reach the server. Check your connection and try again."
     },
@@ -2273,6 +2291,11 @@
             "member_profile": {
                 "title": "Set up your profile",
                 "description": "Add your name and a photo so readers know who wrote the post.",
+                "action": "Edit profile"
+            },
+            "reviewer_profile": {
+                "title": "Set up your profile",
+                "description": "Add your name and a photo so writers know who reviewed their post.",
                 "action": "Edit profile"
             }
         },

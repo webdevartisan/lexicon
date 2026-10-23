@@ -9,7 +9,7 @@ $readerBase = (string) ($pagination['basePath'] ?? '/saved');
 <div class="lx-reader-empty">
     <?php if ($readerOutOfRange) { ?>
         <p><?= e($t('reader.outOfRange')) ?></p>
-        <a class="lx-btn lx-btn-quiet" href="<?= e(lurl($readerBase)) ?>"><?= e($t('reader.outOfRangeAction')) ?></a>
+        <a class="lx-btn lx-btn-quiet" data-panel-link href="<?= e(lurl($readerBase)) ?>"><?= e($t('reader.outOfRangeAction')) ?></a>
     <?php } else { ?>
         <p><?= e($readerEmptyMessage ?? '') ?></p>
         <a class="lx-btn lx-btn-primary" href="<?= e(lurl('/discover')) ?>"><?= e($t('reader.discover')) ?></a>

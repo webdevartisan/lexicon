@@ -14,20 +14,26 @@
     "copy:tinymce": "shx cp -r node_modules/tinymce public/vendor/tinymce",
     "copy:alpine": "shx mkdir -p public/vendor/alpine && shx cp node_modules/@alpinejs/csp/dist/cdn.min.js public/vendor/alpine/alpine.min.js && shx cp node_modules/@alpinejs/focus/dist/cdn.min.js public/vendor/alpine/focus.min.js",
     "dev:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css --watch --verbose",
-    "build:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css"
+    "build:cp-css": "postcss ./resources/css/cp.css -o ./public/cp-assets/css/cp.css",
+    "dev:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
+    "build:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media cssnano",
+    "dev:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
+    "build:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media cssnano"
   },
   "keywords": [],
   "dependencies": {
-    "tinymce": "^8.2.1",
-    "lucide": "^0.344.0",
-    "jsdom": "^23.0.0",
+    "@alpinejs/csp": "~3.14.9",
     "@alpinejs/focus": "~3.14.9",
-    "@alpinejs/csp": "~3.14.9"
+    "jsdom": "^23.0.0",
+    "lucide": "^0.344.0",
+    "tinymce": "^8.2.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",
+    "cssnano": "^7.1.9",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.1",
+    "postcss-custom-media": "^12.0.3",
     "postcss-import": "^16.1.1",
     "shx": "^0.3.4",
     "tailwindcss": "^3.4.19"

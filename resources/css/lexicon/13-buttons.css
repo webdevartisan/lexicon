@@ -1,0 +1,151 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.lx-btn,
+.button,
+button.button,
+input[type='submit'],
+input[type='button'] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lx-space-2);
+    min-height: 2.5rem;
+    padding: var(--lx-space-2) 1.1rem;
+    border: 1px solid var(--lx-btn-line);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-btn-surface);
+    box-shadow: var(--lx-btn-shadow);
+    color: var(--lx-btn-ink);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-medium);
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--lx-dur) var(--lx-ease), filter var(--lx-dur) var(--lx-ease), border-color var(--lx-dur) var(--lx-ease);
+}
+
+.lx-btn:hover,
+.button:hover,
+button.button:hover,
+input[type='submit']:hover,
+input[type='button']:hover {
+    background: var(--lx-btn-hover);
+    text-decoration: none;
+}
+
+/* Hover only lifts the fill, as in the settings modal: no colour change. */
+.lx-btn-primary,
+.lx-authsubmit,
+.button.primary {
+    border-color: transparent;
+    background: var(--lx-btn-ink);
+    box-shadow: none;
+    color: var(--lx-btn-surface);
+}
+
+.lx-btn-primary:hover,
+.lx-authsubmit:hover,
+.button.primary:hover {
+    background: var(--lx-btn-ink);
+    filter: brightness(1.25);
+}
+
+.lx-btn-gilt {
+    border-color: transparent;
+    background: var(--lx-gilt);
+    box-shadow: none;
+    color: var(--lx-bind-deep);
+}
+
+.lx-btn-gilt:hover {
+    background: var(--lx-gilt);
+    filter: brightness(1.08);
+}
+
+/* On the dark binding: the settings modal's dark palette. */
+.lx-btn-ghost {
+    border-color: rgba(128, 128, 128, 0.3);
+    background: transparent;
+    box-shadow: none;
+    color: var(--lx-on-bind);
+}
+
+.lx-btn-ghost:hover {
+    background: rgba(128, 128, 128, 0.16);
+}
+
+.lx-btn-quiet {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    padding-inline: var(--lx-space-3);
+}
+
+.lx-nav.is-over .lx-btn-quiet {
+    color: var(--lx-on-bind);
+}
+
+.lx-nav.is-over .lx-btn-quiet:hover {
+    background: rgba(128, 128, 128, 0.16);
+}
+
+.lx-nav.is-over .lx-btn-primary {
+    background: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+.lx-nav.is-over .lx-btn-primary:hover {
+    background: var(--lx-gilt);
+    filter: brightness(1.08);
+}
+
+.button.big,
+.lx-btn-big {
+    min-height: 3rem;
+    padding-inline: var(--lx-space-5);
+    font-size: var(--lx-text-base);
+}
+
+.button.small,
+.lx-btn-small {
+    min-height: 2.25rem;
+    padding: var(--lx-space-2) var(--lx-space-3);
+    font-size: var(--lx-text-xs);
+}
+
+.button.fit,
+.lx-btn-fit {
+    width: 100%;
+}
+
+.button.disabled,
+.lx-btn[disabled],
+.button[disabled] {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* Shared keyboard-focus ring. Colour-only focus (hover fill reused as focus)
+   fails WCAG 2.4.7 for anyone navigating without a pointer, so every primitive
+   that carries a real hit target gets the same visible outline. Kept on
+   :focus-visible so mouse clicks stay quiet. */
+.lx-btn:focus-visible,
+.button:focus-visible,
+.lx-chip a:focus-visible,
+.lx-social a:focus-visible,
+.lx-gallery-body h3 a:focus-visible {
+    outline: 2px solid var(--lx-btn-ink);
+    outline-offset: 2px;
+}
+
+/* On the transparent-over-hero nav the dark ring vanishes into the binding;
+   the gilt reads on both paper and the dark bar. */
+.lx-nav.is-over .lx-btn:focus-visible,
+.lx-nav.is-over .button:focus-visible {
+    outline-color: var(--lx-gilt);
+}
+

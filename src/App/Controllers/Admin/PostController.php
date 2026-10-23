@@ -7,13 +7,17 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
+use App\Models\CategoryModel;
 use App\Models\PostListingModel;
 use App\Models\PostModel;
+use App\Models\TagModel;
 use App\Resources\SystemResource;
 use App\Services\ExternalMediaGuard;
 use App\Services\MediaService;
 use App\Services\PostContentSanitizer;
 use App\Services\PublicCacheInvalidator;
+use App\Services\UploadService;
+use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Database;
@@ -39,6 +43,9 @@ class PostController extends AppController
         private PostContentSanitizer $contentSanitizer,
         private MediaService $media,
         private PostListingModel $postListing,
+        private CategoryModel $categories,
+        private TagModel $tags,
+        private UploadService $uploader,
     ) {}
 
     /**
@@ -213,8 +220,9 @@ class PostController extends AppController
             // is currently showing without hunting for it through the pages.
             pinned: 'p.featured_on_home DESC');
 
+        $perPage = PageSize::fromRequest($this->request, 20);
         $result = $this->postListing->findAllForAdmin(
-            $page, 20, $status, $q,
+            $page, $perPage, $status, $q,
             $blogId > 0 ? $blogId : null,
             $featured, $visibility, $sort->orderBy()
         );
@@ -222,6 +230,7 @@ class PostController extends AppController
         return $this->view([
             'posts' => $result['data'],
             'pagination' => $result['pagination'],
+            'perPage' => $perPage,
             'status' => $status,
             'q' => $q,
             'featured' => $featured,
@@ -306,22 +315,31 @@ class PostController extends AppController
     public function edit(string $id): Response
     {
         $post = $this->getPost($id);
-        $blogs = $this->getBlogs();
+        $blogId = (int) $post['blog_id'];
 
         return $this->view('post.edit', [
             'post' => $post,
-            'blogs' => $blogs,
+            'blogs' => $this->getBlogs(),
+            'categoryChoices' => ['' => 'No category'] + array_column($this->categories->getByBlogId($blogId), 'name', 'id'),
+            'blogTags' => $this->tags->getByBlogId($blogId),
+            'postTagIds' => array_map(static fn (array $tag): int => (int) $tag['id'], $this->model->tags((int) $id)),
+            'author' => $this->model->author((int) $post['author_id']),
         ]);
     }
 
     /**
-     * Handle update submission
+     * Save the post's content, organisation, publishing state and SEO fields.
+     *
+     * Category and tags belong to one blog, so moving a post to another blog
+     * clears them rather than leaving links into the wrong blog.
      */
     public function update(string $id): Response
     {
         csrf()->assertValid($this->request->postParam('_token'));
 
         $post = $this->getPost($id);
+        $section = preg_replace('/[^a-z]/', '', (string) ($this->request->post['_section'] ?? '')) ?: 'content';
+        $backTo = '/admin/posts/'.(int) $id.'/edit#'.$section;
 
         $input = $this->validatePostInput();
 
@@ -330,32 +348,75 @@ class PostController extends AppController
             return $rejected;
         }
 
+        $seo = $this->validateOrFail([
+            'meta_title' => 'max:200',
+            'meta_description' => 'max:500',
+            'focus_keyword' => 'max:100',
+            'canonical_url' => 'max:500',
+            'og_title' => 'max:200',
+            'og_description' => 'max:500',
+        ])->validated();
+
+        $canonical = trim((string) ($seo['canonical_url'] ?? ''));
+        if ($canonical !== '' && filter_var($canonical, FILTER_VALIDATE_URL) === false) {
+            $this->flash('error', 'The canonical URL must be a full address, such as https://example.com/post.');
+
+            return $this->redirect($backTo);
+        }
+
         // Reversing a moderation hide belongs to its report case, where the
         // decision is recorded, so the edit form cannot republish the post.
         $staysHidden = ($post['status'] ?? '') === 'moderated';
+        $status = $staysHidden ? 'moderated' : $input['status'];
+        $blogId = (int) $input['blog_id'];
+        $moved = $blogId !== (int) $post['blog_id'];
+        $submitted = $this->request->post;
+
+        $visibility = (string) ($submitted['visibility'] ?? '');
+        $categoryId = (int) ($submitted['category_id'] ?? 0);
 
         $data = [
             'title' => $input['title'],
             'slug' => $input['slug'] ?? $post['slug'],
             'content' => $input['content'],
             'excerpt' => $input['excerpt'] ?? null,
-            'featured_image' => $input['featured_image'] ?? null,
-            'status' => $staysHidden ? 'moderated' : $input['status'],
-            'blog_id' => (int) $input['blog_id'],
+            'featured_image' => $this->resolveFeaturedImage($post, $blogId),
+            'status' => $status,
+            'blog_id' => $blogId,
+            'visibility' => in_array($visibility, PostModel::VISIBILITIES, true) ? $visibility : $post['visibility'],
+            'category_id' => !$moved && $categoryId > 0 && $this->categories->findForBlog($categoryId, $blogId) !== null ? $categoryId : null,
+            'comments_enabled' => !empty($submitted['comments_enabled']) ? 1 : 0,
+            'meta_title' => trim((string) ($seo['meta_title'] ?? '')) ?: null,
+            'meta_description' => trim((string) ($seo['meta_description'] ?? '')) ?: null,
+            'focus_keyword' => trim((string) ($seo['focus_keyword'] ?? '')) ?: null,
+            'canonical_url' => $canonical ?: null,
+            'meta_noindex' => !empty($submitted['meta_noindex']) ? 1 : 0,
+            'meta_nofollow' => !empty($submitted['meta_nofollow']) ? 1 : 0,
+            'og_title' => trim((string) ($seo['og_title'] ?? '')) ?: null,
+            'og_description' => trim((string) ($seo['og_description'] ?? '')) ?: null,
         ];
 
-        if ($this->model->update($id, $data)) {
-            $this->flash('success', $staysHidden
-                ? 'Post updated. It stays hidden because of a moderation decision; restore it from its report case.'
-                : 'Post updated.');
-
-            return $this->redirectToList('/admin/posts');
+        if ($status === 'published' && empty($post['published_at'])) {
+            $data['published_at'] = date('Y-m-d H:i:s');
         }
 
-        return $this->view('post.edit', [
-            'errors' => ['Could not update the post. Please try again.'],
-            'post' => $data,
-        ]);
+        if (!$this->model->update($id, $data)) {
+            $this->flash('error', 'Could not update the post. Please try again.');
+
+            return $this->redirect($backTo);
+        }
+
+        $wanted = array_map('intval', (array) ($submitted['tag_ids'] ?? []));
+        $allowed = array_map(static fn (array $tag): int => (int) $tag['id'], $this->tags->getByBlogId($blogId));
+        $this->tags->syncIdsForPost((int) $id, $moved ? [] : array_values(array_intersect($wanted, $allowed)));
+
+        audit()->log((int) auth()->user()['id'], 'post.updated', 'post', (int) $id, ['title' => $data['title']], $this->request->ip());
+
+        $this->flash('success', $staysHidden
+            ? 'Post updated. It stays hidden because of a moderation decision; restore it from its report case.'
+            : 'Post updated.');
+
+        return $this->redirect($backTo);
     }
 
     /**
@@ -393,6 +454,40 @@ class PostController extends AppController
         $this->flash('success', 'Post deleted.');
 
         return $this->redirectToList('/admin/posts');
+    }
+
+    /**
+     * The featured image after this save: a fresh upload, an explicit removal,
+     * or what the post already had.
+     *
+     * A failed upload keeps the old image and says so, instead of throwing the
+     * rest of the edit away.
+     *
+     * @param  array<string, mixed>  $post  The post as stored
+     */
+    private function resolveFeaturedImage(array $post, int $blogId): ?string
+    {
+        $current = $post['featured_image'] ?? null;
+
+        if (($this->request->post['remove_featured_image'] ?? '') === '1') {
+            $current = null;
+        }
+
+        $files = $this->uploader->getUploadedFiles($this->request->post['uploaded_featured_image_files'] ?? []);
+        $blog = $files === [] ? null : $this->blogModel->getBlog($blogId);
+
+        if ($blog === null || $blog === false) {
+            return $current;
+        }
+
+        try {
+            return $this->media->storeFeaturedImage((string) $files[0], $blog, (int) auth()->user()['id']);
+        } catch (\Throwable $e) {
+            error_log('Featured image failed for post in blog '.$blogId.': '.$e->getMessage());
+            $this->flash('error', 'The featured image could not be stored, so the old one was kept.');
+
+            return $current;
+        }
     }
 
     /**

@@ -3,7 +3,7 @@
 {% block title %}{{ t('setup.start.title') }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/cp-assets/css/blog-start.css?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/css/blog-start.css') ?>">
+<link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/blog-start.css')) ?>">
 {% endblock %}
 
 {% block body %}
@@ -96,6 +96,6 @@ $inputClass = 'form-input w-full border-slate-200 focus:border-custom-500 focus:
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/slug-field.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/slug-field.js') ?>"></script>
-<script src="/cp-assets/js/blog-start.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/blog-start.js') ?>" data-slug-check="<?= e(lurl('/dashboard/slug-check')) ?>?type=blog"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/slug-field.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/blog-start.js')) ?>" data-slug-check="<?= e(lurl('/dashboard/slug-check')) ?>?type=blog"></script>
 {% endblock %}

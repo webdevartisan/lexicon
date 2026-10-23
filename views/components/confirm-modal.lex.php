@@ -5,7 +5,7 @@
  * when it opens, so only the tone is fixed here.
  *
  * Attributes:
- * - id: DOM id the hidden trigger in the layout points at
+ * - id: DOM id that cpConfirm() opens for this tone
  * - tone: 'default', 'danger' or 'warning'
  */
 $id = $id ?? 'confirmModal';
@@ -15,7 +15,7 @@ $iconName = $tone === 'default' ? 'shield-question' : 'alert-triangle';
 ?>
 <div id="<?= e($id) ?>" modal-center role="alertdialog" aria-modal="true" aria-labelledby="<?= e($id) ?>-title" aria-describedby="<?= e($id) ?>-message" tabindex="-1"
     class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show">
-    <div class="confirm-card w-[calc(100vw-2rem)] overflow-hidden md:w-[24rem] rounded-2xl" data-tone="<?= e($tone) ?>">
+    <div class="confirm-card w-[calc(100vw-2rem)] overflow-hidden md:w-[24rem]" data-tone="<?= e($tone) ?>">
         <div class="flex flex-col items-center gap-2 p-8 text-center">
             <div class="confirm-badge flex items-center justify-center rounded-full size-12">
                 <i data-lucide="<?= e($iconName) ?>" class="size-6" aria-hidden="true"></i>

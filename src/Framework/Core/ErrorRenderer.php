@@ -115,11 +115,6 @@ final class ErrorRenderer
             return [419, 'errors/419.lex.php'];
         }
 
-        // should keep a dedicated template error page if a view explodes, because it’s actionable in dev.
-        if ($e instanceof TemplateRenderException) {
-            return [500, 'errors/500-template.lex.php'];
-        }
-
         // any other HttpException (e.g. plain NotFoundException) carries its own status;
         // trust it instead of collapsing every non-special-cased exception to 500.
         if ($e instanceof HttpException) {

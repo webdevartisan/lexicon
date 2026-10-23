@@ -1,0 +1,146 @@
+/* ---------------------------------------------------------------------------
+   Select menu (cp-assets/js/select-menu.js). The same card, ink and accent as
+   the notification panel and the confirmation dialog.
+   --------------------------------------------------------------------------- */
+
+.select-menu {
+  --menu-fg: var(--platform-menu-fg, var(--chrome-dark-ink));
+  --menu-muted: color-mix(in srgb, var(--menu-fg) 70%, transparent);
+  --menu-line: var(--chrome-line);
+  --menu-hover: var(--chrome-hover);
+  --menu-accent: var(--chrome-dark-info);
+  position: relative;
+  display: inline-block;
+  min-width: 8rem;
+  max-width: 100%;
+}
+
+.select-menu-block { display: block; width: 100%; }
+
+[data-mode='light'] .select-menu {
+  --menu-fg: var(--chrome-light-ink);
+  --menu-accent: var(--chrome-light-info);
+}
+
+.select-menu-native {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden;
+}
+
+.select-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  width: 100%;
+  padding: .5rem .75rem;
+  font: inherit;
+  font-size: var(--lx-text-sm);
+  line-height: 1.25rem;
+  text-align: start;
+  color: var(--menu-fg);
+  background: var(--platform-menu-bg, var(--chrome-dark-bg));
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--lx-radius-md);
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.select-menu-button:hover { background: color-mix(in srgb, var(--platform-menu-bg, var(--chrome-dark-bg)) 88%, var(--menu-fg)); }
+[data-mode='light'] .select-menu-button:hover { background: #f8fafc; }
+.select-menu-button:focus-visible,
+.select-menu-open .select-menu-button { outline: none; border-color: var(--menu-accent); }
+.select-menu-invalid { border-color: var(--chrome-dark-danger); }
+[data-mode='light'] .select-menu-invalid { border-color: var(--chrome-light-danger); }
+.select-menu-button:disabled { opacity: .55; cursor: not-allowed; }
+
+.select-menu-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.select-menu-chevron { display: inline-flex; flex: none; color: var(--menu-muted); transition: transform .2s ease; }
+.select-menu-open .select-menu-chevron { transform: rotate(180deg); }
+
+.select-menu-list {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + .375rem);
+  z-index: 60;
+  min-width: max-content;
+  max-height: 18rem;
+  overflow-y: auto;
+  color: var(--menu-fg);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(.98);
+  transform-origin: top;
+  transition: opacity .15s ease, transform .18s ease, visibility 0s .18s;
+}
+
+.select-menu-open .select-menu-list {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity .15s ease, transform .18s ease;
+}
+
+.select-menu-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  margin-bottom: .25rem;
+  padding: .5rem .75rem;
+  font: inherit;
+  font-size: var(--lx-text-sm);
+  color: var(--menu-fg);
+  background: color-mix(in srgb, var(--platform-menu-bg, var(--chrome-dark-bg)) 92%, var(--menu-fg));
+  border: 1px solid var(--menu-line);
+  border-radius: var(--lx-radius-md);
+}
+
+[data-mode='light'] .select-menu-search { background: #f8fafc; border-color: var(--chrome-light-edge); }
+.select-menu-search:focus { outline: none; border-color: var(--menu-accent); }
+
+.select-menu-group {
+  padding: .5rem .75rem .25rem;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--menu-muted);
+}
+
+.select-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  width: 100%;
+  padding: .5rem .75rem;
+  font: inherit;
+  font-size: var(--lx-text-sm);
+  text-align: start;
+  color: var(--menu-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--lx-radius-md);
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.select-menu-item:hover,
+.select-menu-item:focus-visible { outline: none; color: var(--menu-fg); background: var(--menu-hover); }
+.select-menu-item:disabled { opacity: .45; cursor: not-allowed; }
+.select-menu-item[hidden], .select-menu-group[hidden] { display: none; }
+.select-menu-item-on { color: var(--menu-fg); }
+.select-menu-check { display: inline-flex; color: var(--menu-accent); opacity: 0; }
+.select-menu-item-on .select-menu-check { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .select-menu-list, .select-menu-chevron, .select-menu-button, .select-menu-item { transition: none; }
+}
+

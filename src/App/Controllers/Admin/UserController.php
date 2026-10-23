@@ -15,10 +15,12 @@ use App\Resources\SystemResource;
 use App\Services\AccountErasureService;
 use App\Services\DisplayNameService;
 use App\Services\EmailChangeIssuer;
+use App\Services\ImpersonationService;
 use App\Services\LocaleRegistry;
 use App\Services\NotificationPreferenceScope;
 use App\Services\PublicCacheInvalidator;
 use App\Services\UserDossierService;
+use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 
@@ -53,6 +55,7 @@ class UserController extends ManagedUserController
         private NotificationPreferenceScope $notificationScope,
         private LocaleRegistry $locales,
         private UserDossierService $dossier,
+        private ImpersonationService $impersonation,
     ) {
         parent::__construct($users, $erasure);
     }
@@ -74,13 +77,15 @@ class UserController extends ManagedUserController
             'created' => 'u.created_at',
         ], defaultKey: 'created', defaultDirection: 'desc', tiebreaker: 'u.id DESC');
 
-        $result = $this->users->findAllForAdmin($page, 20, $q, $active, $role, $sort->orderBy(), $this->erasure->deletedUserId());
+        $perPage = PageSize::fromRequest($this->request, 20);
+        $result = $this->users->findAllForAdmin($page, $perPage, $q, $active, $role, $sort->orderBy(), $this->erasure->deletedUserId());
 
         $actor = $this->actor();
 
         return $this->view('user.index', [
             'users' => $result['data'],
             'pagination' => $result['pagination'],
+            'perPage' => $perPage,
             'q' => $q,
             'active' => $active,
             'role' => $role,
@@ -168,9 +173,23 @@ class UserController extends ManagedUserController
         $user = $this->target($id);
         $this->guardAdministratorTarget($user);
         $userId = (int) $user['id'];
+        $actor = $this->actor();
+        $canManageUsers = Gate::allows('manageUsers', SystemResource::class, $actor);
+        $dossier = $this->dossier->build($user);
 
         return $this->view('user.edit', [
             'user' => $user,
+            'isSelf' => $userId === $this->actorId(),
+            'targetIsAdmin' => $this->isAdministrator($userId),
+            'actorIsAdmin' => Gate::allows('actOnAdministrators', SystemResource::class, $actor),
+            'canManageUsers' => $canManageUsers,
+            'canAssignSiteRoles' => Gate::allows('assignSystemRoles', SystemResource::class, $actor),
+            'impersonationRefusal' => Gate::allows('impersonateUsers', SystemResource::class, $actor)
+                ? $this->impersonation->refusalReason($actor, $userId)
+                : 'Only administrators can sign in as another account.',
+            'siteRoles' => $dossier['siteRoles'],
+            'memberBlogs' => $dossier['blogs'],
+            'pendingErasure' => $dossier['pendingErasure'],
             'profile' => $this->dossier->profile($userId) ?? [],
             'preferences' => $this->dossier->preferences($userId) ?? [],
             'socialLinks' => $this->dossier->socialLinks($userId),
@@ -235,7 +254,9 @@ class UserController extends ManagedUserController
             ? 'Saved. The new email address takes effect once they confirm it from that inbox.'
             : 'Saved.');
 
-        return $this->redirect($this->showUrl($userId));
+        $section = preg_replace('/[^a-z]/', '', (string) $this->request->postParam('_section')) ?: 'account';
+
+        return $this->redirect('/admin/users/'.$userId.'/edit#'.$section);
     }
 
     public function delete(string $id): Response

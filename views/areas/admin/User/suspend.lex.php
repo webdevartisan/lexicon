@@ -124,5 +124,5 @@ $oldReason = (string) old('reason', '');
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/suspend-form.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/suspend-form.js')) ?>"></script>
 {% endblock %}

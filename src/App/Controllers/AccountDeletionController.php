@@ -65,7 +65,7 @@ final class AccountDeletionController extends AppController
         if (!$userResource) {
             $this->flash('error', chrome_translate('account.flash.userNotFound'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/delete'));
         }
 
         try {
@@ -73,7 +73,7 @@ final class AccountDeletionController extends AppController
         } catch (Exception $e) {
             $this->flash('error', chrome_translate('account.flash.deletionNotAuthorized'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/delete'));
         }
 
         // Throttled like every other password confirmation here: without a limit
@@ -82,14 +82,14 @@ final class AccountDeletionController extends AppController
         if ($this->passwordThrottle->tooManyAttempts($userId)) {
             $this->flash('error', chrome_translate('account.flash.deletionThrottled'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/delete'));
         }
 
         if (!$this->users->verifyPassword($userId, (string) $this->request->postParam('password'))) {
             $this->passwordThrottle->hit($userId);
             $this->flash('error', chrome_translate('account.flash.deletionCancelled'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/delete'));
         }
 
         $this->passwordThrottle->clear($userId);

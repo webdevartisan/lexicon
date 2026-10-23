@@ -1,0 +1,60 @@
+/* -------------------------------------------------------------------------
+   Sign-in dialog (partials/_auth_modal.lex.php, public/assets/js/auth-modal.js)
+
+   Title, labels, fields, buttons, the close button and the error use the
+   shared parts in 10-site-modal.css. What is left is particular to sign-in:
+   the overlay, the show/hide toggle, the check spinner and the small links.
+   ------------------------------------------------------------------------- */
+
+.lex-auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.lex-auth-overlay[hidden] { display: none; }
+
+.lex-auth-card { position: relative; }
+.lex-auth-card .acct-title { padding-inline-end: 2rem; }
+.lex-auth-card .lex-auth-submit { display: block; width: 100%; }
+
+.lex-auth-card .lex-auth-labelrow { display: flex; align-items: center; justify-content: space-between; }
+
+.lex-auth-card .lex-auth-toggle,
+.lex-auth-card .lex-auth-linkbtn {
+  padding: .25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--lx-text-xs);
+  color: var(--form-muted);
+  cursor: pointer;
+}
+
+.lex-auth-card .lex-auth-status { display: flex; align-items: center; gap: .5rem; margin: 0 0 1rem; font-size: var(--lx-text-xs); color: var(--form-muted); }
+.lex-auth-card .lex-auth-status[hidden] { display: none; }
+.lex-auth-card .lex-auth-status-mark { flex: none; width: .8rem; height: .8rem; border: 2px solid var(--acct-line); border-top-color: var(--acct-ink); border-radius: 50%; animation: lex-auth-spin .8s linear infinite; }
+.lex-auth-card .lex-auth-status[data-state="done"] { color: var(--form-ok); }
+.lex-auth-card .lex-auth-status[data-state="done"] .lex-auth-status-mark { border-color: var(--form-ok); background: var(--form-ok); animation: none; }
+.lex-auth-card .lex-auth-status[data-state="failed"] { color: var(--acct-danger); }
+.lex-auth-card .lex-auth-status[data-state="failed"] .lex-auth-status-mark { border-color: var(--acct-danger); animation: none; }
+@keyframes lex-auth-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lex-auth-card .lex-auth-status-mark { animation: none; border-top-color: var(--acct-line); } }
+
+.lex-auth-card .lex-auth-links { display: flex; justify-content: space-between; align-items: center; margin-top: .75rem; }
+.lex-auth-card .lex-auth-links a,
+.lex-auth-card .lex-auth-linkbtn { padding: 0; font-size: var(--lx-text-xs); color: var(--form-muted); text-decoration: underline; }
+.lex-auth-card .lex-auth-links a:hover,
+.lex-auth-card .lex-auth-linkbtn:hover,
+.lex-auth-card .lex-auth-toggle:hover { color: var(--acct-ink); }
+
+.lex-auth-card .lex-auth-foot { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin: 1.25rem 0 0; font-size: var(--lx-text-xs); color: var(--form-muted); text-align: center; }
+.lex-auth-card .lex-auth-foot[hidden] { display: none; }
+.lex-auth-card .lex-auth-foot[data-auth-legal]:not([hidden]) { display: block; }
+.lex-auth-card .lex-auth-foot a { color: var(--form-muted); text-decoration: underline; }
+.lex-auth-card .lex-auth-foot a:first-child { flex-basis: 100%; }
+.lex-auth-card .lex-auth-foot a:hover { color: var(--acct-ink); }

@@ -5,5 +5,5 @@
   <a href="<?= e(lurl('/privacy')) ?>"><?= e($t('analytics.publicNoticeLink')) ?></a>
 </p>
 <?php } ?>
-<script src="/assets/js/insights.js" defer></script>
+<script src="<?= e(versioned_asset('/assets/js/insights.js')) ?>" defer></script>
 <?php } ?>

@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
-{% block title %}{{ blog.blog_name }} · <?= e($t('archive.page.title')) ?>{% endblock %}
-{% block subtitle %}<?= e($t('archive.page.subtitle')) ?>{% endblock %}
+{% block title %}<?= e($t('archive.page.title')) ?>{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline"><?= e($t('archive.page.subtitle')) ?></span>{% endblock %}
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
   <?php if (!empty($importError)) { ?>
@@ -27,5 +27,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/blog-archive.js" nonce="<?= csp_nonce() ?>" defer></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/blog-archive.js')) ?>" nonce="<?= csp_nonce() ?>" defer></script>
 {% endblock %}

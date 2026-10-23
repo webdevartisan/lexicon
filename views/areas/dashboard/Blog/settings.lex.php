@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ t('blog.settings.pageTitle') }}{% endblock %}
-{% block subtitle %}{{ t('blog.settings.pageSubtitle') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('blog.settings.pageSubtitle') }}</span>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
@@ -263,8 +263,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/modal.js"></script>
-<script src="/cp-assets/js/delete-blog-modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/delete-blog-modal.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['general', 'seo', 'discussion'];

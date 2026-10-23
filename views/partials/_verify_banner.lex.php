@@ -9,7 +9,7 @@
 $verifyUser = auth()->user();
 if (email_unverified($verifyUser)) {
 ?>
-<link rel="stylesheet" href="/assets/css/verify-banner.css">
+<link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/verify-banner.css')) ?>">
 <div class="lx-verify" role="region" aria-label="<?= e(chrome_translate('auth.verifyResend')) ?>">
     <p class="lx-verify-text"><?= e(chrome_translate('auth.verifyBanner', ['email' => $verifyUser['email']])) ?></p>
     <form method="post" action="<?= e(lurl('/account/verify-email/resend')) ?>" class="lx-verify-form">

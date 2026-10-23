@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Closing panel — the back cover
+   ========================================================================== */
+
+.lx-close {
+    position: relative;
+    background: var(--lx-bind);
+    color: var(--lx-on-bind);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.lx-close::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(100% 120% at 90% 100%, rgba(201, 162, 39, 0.16), transparent 60%),
+        linear-gradient(2deg, var(--lx-bind) 0%, var(--lx-bind-deep) 100%);
+}
+
+.lx-close-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+
+.lx-close h2 {
+    margin: 0;
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: -0.025em;
+    max-width: 18ch;
+}
+
+.lx-close p {
+    margin: var(--lx-space-4) 0 0;
+    max-width: 44ch;
+    color: var(--lx-on-bind-2);
+}
+
+.lx-close-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--lx-space-3);
+}
+
+@media (--lx-below-md) {
+    .lx-close-inner {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+}
+

@@ -14,10 +14,10 @@
         display: flex;
         align-items: center;
         margin-inline: 0.75rem;
-        margin-block: 0.25rem;
-        padding-block: 0.625rem;
+        margin-block: 0.125rem;
+        padding-block: 0.5rem;
         padding-inline: 0.75rem 1.25rem;
-        border-radius: 0.375rem;
+        border-radius: 0.5rem;
         font-size: 0.8125rem;
         font-weight: 400;
         color: rgb(var(--sc-vertical-menu-item));
@@ -38,6 +38,7 @@
     /* An accent rail carries the current page on the dark sidebar, where any
        fill light enough to read on its own would be louder than the page needs. */
     .sidebar-menu-item.active::before {
+        display: none;
         content: "";
         position: absolute;
         inset-block: 0.375rem;
@@ -147,6 +148,535 @@
         box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
     }
 
+    /*
+     * Data tables: a rounded hairline frame, quiet header labels and soft row
+     * dividers. Wrap any table in .data-table inside a .card with a body of p-0.
+     */
+    .data-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table thead tr {
+        border-bottom: 1px solid rgb(226 232 240);
+    }
+
+    :is([data-mode=dark] .data-table) thead tr {
+        border-bottom-color: rgb(var(--sc-zink-600));
+    }
+
+    .data-table th {
+        padding: 0.75rem 1rem;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+        color: rgb(100 116 139);
+    }
+
+    :is([data-mode=dark] .data-table) th {
+        color: rgb(var(--sc-zink-200));
+    }
+
+    .data-table tbody tr {
+        border-top: 1px solid rgb(241 245 249);
+    }
+
+    .data-table tbody tr:first-child {
+        border-top: 0;
+    }
+
+    :is([data-mode=dark] .data-table) tbody tr {
+        border-top-color: rgb(var(--sc-zink-600));
+    }
+
+    .data-table td {
+        padding: 0.875rem 1rem;
+        vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+        background-color: rgb(248 250 252);
+    }
+
+    :is([data-mode=dark] .data-table) tbody tr:hover {
+        background-color: rgb(255 255 255 / 0.03);
+    }
+
+    /* Dark native scrollbars and form chrome instead of the bright default. */
+    [data-mode=dark] {
+        color-scheme: dark;
+    }
+
+    /* On/off switch: a checkbox drawn as a track and thumb. */
+    .switch {
+        appearance: none;
+        position: relative;
+        flex-shrink: 0;
+        width: 2.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        background-color: rgb(203 213 225);
+        cursor: pointer;
+        transition: background-color 0.15s linear;
+    }
+
+    .switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 9999px;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+        transition: transform 0.15s ease;
+    }
+
+    .switch:checked {
+        background-color: rgb(15 23 42);
+    }
+
+    .switch:checked::after {
+        transform: translateX(1rem);
+    }
+
+    [dir=rtl] .switch::after {
+        left: auto;
+        right: 2px;
+    }
+
+    [dir=rtl] .switch:checked::after {
+        transform: translateX(-1rem);
+    }
+
+    .switch:focus-visible {
+        outline: 2px solid rgb(var(--sc-zink-400));
+        outline-offset: 2px;
+    }
+
+    :is([data-mode=dark] .switch) {
+        background-color: rgb(var(--sc-zink-500));
+    }
+
+    :is([data-mode=dark] .switch):checked {
+        background-color: rgb(var(--sc-zink-100));
+    }
+
+    :is([data-mode=dark] .switch):checked::after {
+        background-color: rgb(var(--sc-zink-800));
+    }
+
+    /* Status pills: tinted fill, no outline. */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1.25rem;
+    }
+
+
+    /*
+     * Settings pages: a section menu on the left, the panels on the right.
+     * On narrow screens the menu becomes a scrolling row above the panels.
+     */
+    .settings-layout {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 768px) {
+        .settings-layout {
+            grid-template-columns: 14rem minmax(0, 1fr);
+            gap: 2.5rem;
+        }
+    }
+
+    .settings-nav {
+        display: flex;
+        gap: 0.25rem;
+        overflow-x: auto;
+    }
+
+    @media (min-width: 768px) {
+        .settings-nav {
+            flex-direction: column;
+            align-self: start;
+            position: sticky;
+            top: calc(theme('spacing.header') + 1rem);
+        }
+    }
+
+    .settings-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        white-space: nowrap;
+        text-align: start;
+        color: rgb(100 116 139);
+        transition: color 0.15s linear, background-color 0.15s linear;
+    }
+
+    .settings-nav-item:hover {
+        color: rgb(15 23 42);
+        background-color: rgb(244 244 245);
+    }
+
+    .settings-nav-item.active {
+        color: rgb(15 23 42);
+        background-color: rgb(238 238 240);
+    }
+
+    :is([data-mode=dark] .settings-nav-item) {
+        color: rgb(var(--sc-zink-200));
+    }
+
+    :is([data-mode=dark] .settings-nav-item):hover,
+    :is([data-mode=dark] .settings-nav-item).active {
+        color: rgb(var(--sc-zink-50));
+        background-color: rgb(var(--sc-zink-600));
+    }
+
+
+    /*
+     * Queue pages (moderation, comments), after Orbit Mail: one rounded frame,
+     * the list on the left, the open item on the right, each scrolling on its
+     * own. Below lg the detail slides over the list as a full-screen sheet.
+     */
+    .queue {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        border: 1px solid rgb(229 229 229);
+        border-radius: 0.75rem;
+        background-color: #fff;
+        overflow: hidden;
+    }
+
+    :is([data-mode=dark] .queue) {
+        border-color: rgb(var(--sc-zink-600));
+        background-color: rgb(var(--sc-zink-700));
+    }
+
+    @media (min-width: 1024px) {
+        .queue {
+            grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
+            height: calc(100vh - theme('spacing.header') - 8rem);
+            min-height: 30rem;
+        }
+    }
+
+    .queue-list,
+    .queue-body {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(163 163 163 / 0.5) transparent;
+    }
+
+    .queue-item[aria-selected=true] .queue-avatar {
+        background-color: #fff;
+    }
+
+    :is([data-mode=dark] .queue-item)[aria-selected=true] .queue-avatar {
+        background-color: rgb(var(--sc-zink-500));
+    }
+
+    .queue-list {
+        min-width: 0;
+        overflow-y: auto;
+        border-inline-end: 1px solid rgb(229 229 229);
+    }
+
+    :is([data-mode=dark] .queue-list) {
+        border-color: rgb(var(--sc-zink-600));
+    }
+
+    .queue-head {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.75rem;
+        background-color: inherit;
+        border-bottom: 1px solid rgb(229 229 229);
+        color: rgb(100 116 139);
+    }
+
+    .queue-list .queue-head {
+        background-color: #fff;
+    }
+
+    :is([data-mode=dark] .queue-head) {
+        border-color: rgb(var(--sc-zink-600));
+        color: rgb(var(--sc-zink-200));
+    }
+
+    :is([data-mode=dark] .queue-list) .queue-head {
+        background-color: rgb(var(--sc-zink-700));
+    }
+
+    .queue-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.875rem 1rem;
+        text-align: start;
+        transition: background-color 0.15s linear;
+    }
+
+    .queue-item:hover {
+        background-color: rgb(244 244 245);
+    }
+
+    .queue-item[aria-selected=true] {
+        background-color: rgb(238 238 240);
+    }
+
+    :is([data-mode=dark] .queue-item):hover {
+        background-color: rgb(var(--sc-zink-600));
+    }
+
+    :is([data-mode=dark] .queue-item)[aria-selected=true] {
+        background-color: rgb(var(--sc-zink-600));
+    }
+
+    .queue-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        background-color: rgb(238 238 240);
+        color: rgb(71 85 105);
+    }
+
+    :is([data-mode=dark] .queue-avatar) {
+        background-color: rgb(var(--sc-zink-500));
+        color: rgb(var(--sc-zink-100));
+    }
+
+    .queue-detail {
+        display: none;
+        min-width: 0;
+    }
+
+    .queue-detail[data-active] {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .queue-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid rgb(229 229 229);
+    }
+
+    :is([data-mode=dark] .queue-bar) {
+        border-color: rgb(var(--sc-zink-600));
+    }
+
+    .queue-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        color: rgb(100 116 139);
+        transition: background-color 0.15s linear, color 0.15s linear;
+    }
+
+    .queue-icon:hover {
+        background-color: rgb(238 238 240);
+        color: rgb(15 23 42);
+    }
+
+    :is([data-mode=dark] .queue-icon) {
+        color: rgb(var(--sc-zink-200));
+    }
+
+    :is([data-mode=dark] .queue-icon):hover {
+        background-color: rgb(var(--sc-zink-600));
+        color: rgb(var(--sc-zink-50));
+    }
+
+    .queue-body {
+        flex: 1 1 auto;
+        padding: 1.25rem;
+        overflow-y: auto;
+    }
+
+    @media (max-width: 1023.98px) {
+        .queue:not([data-open]) .queue-detail {
+            display: none;
+        }
+
+        .queue[data-open] .queue-list {
+            display: none;
+        }
+
+        .queue[data-open] .queue-detail[data-active] {
+            position: fixed;
+            inset: 0;
+            z-index: 1004;
+            background-color: rgb(250 250 250);
+        }
+
+        :is([data-mode=dark] .queue[data-open] .queue-detail[data-active]) {
+            background-color: rgb(var(--sc-zink-800));
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .queue-back {
+            display: none;
+        }
+    }
+
+    /* The wordmark from the public site: a gilt dot and spaced capitals. */
+    .cp-logo {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        font-weight: 700;
+        font-size: 1.0625rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        color: rgb(15 23 42);
+    }
+
+    :is([data-mode=dark] .cp-logo) {
+        color: rgb(var(--sc-zink-50));
+    }
+
+    .cp-logo:hover {
+        text-decoration: none;
+    }
+
+    .cp-logo-mark {
+        flex: none;
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 9999px;
+        background: #c9a227;
+        transform: translateY(-0.15em);
+    }
+
+    .group[data-sidebar-size="sm"] .cp-logo-mark {
+        width: 0.75rem;
+        height: 0.75rem;
+        transform: none;
+    }
+
+
+    /*
+     * Solid accent buttons and active filter tabs use the same neutral primary
+     * as the shared button: near-black on light, near-white on dark. Linked
+     * text and outlines keep the blue accent.
+     */
+    :is(button, a).bg-custom-500 {
+        background-color: rgb(15 23 42);
+        border-color: rgb(15 23 42);
+        color: #fff;
+    }
+
+    :is(button, a).bg-custom-500:hover,
+    :is(button, a).bg-custom-500:focus {
+        background-color: rgb(51 65 85);
+        border-color: rgb(51 65 85);
+        color: #fff;
+    }
+
+    :is([data-mode=dark] :is(button, a).bg-custom-500) {
+        background-color: rgb(var(--sc-zink-100));
+        border-color: rgb(var(--sc-zink-100));
+        color: rgb(var(--sc-zink-800));
+    }
+
+    :is([data-mode=dark] :is(button, a).bg-custom-500):hover,
+    :is([data-mode=dark] :is(button, a).bg-custom-500):focus {
+        background-color: #fff;
+        border-color: #fff;
+        color: rgb(var(--sc-zink-800));
+    }
+
+    :is([data-mode=dark] :is(button, a).bg-custom-500) .bg-white\/20 {
+        background-color: rgb(0 0 0 / 0.12);
+        color: inherit;
+    }
+
+    /* TinyMCE ships a navy dark skin; bring its chrome onto the panel palette. */
+    [data-mode=dark] .tox.tox-tinymce {
+        border-color: rgb(var(--sc-zink-600));
+        border-radius: 0.75rem;
+    }
+
+    [data-mode=dark] .tox.tox-tinymce .tox-editor-header,
+    [data-mode=dark] .tox .tox-menubar,
+    [data-mode=dark] .tox .tox-toolbar,
+    [data-mode=dark] .tox .tox-toolbar__primary,
+    [data-mode=dark] .tox .tox-toolbar-overlord,
+    [data-mode=dark] .tox .tox-statusbar,
+    [data-mode=dark] .tox .tox-menu,
+    [data-mode=dark] .tox .tox-dialog,
+    [data-mode=dark] .tox .tox-dialog__header,
+    [data-mode=dark] .tox .tox-dialog__footer,
+    [data-mode=dark] .tox .tox-collection--list .tox-collection__group {
+        background-color: rgb(var(--sc-zink-700));
+        border-color: rgb(var(--sc-zink-600));
+    }
+
+    /* promotion: false still leaves an empty upsell box beside the menubar. */
+    .tox .tox-promotion {
+        display: none;
+    }
+
+    /* The skin gives every button its own navy fill, so reset them onto the bar colour. */
+    [data-mode=dark] .tox .tox-tbtn,
+    [data-mode=dark] .tox .tox-mbtn,
+    [data-mode=dark] .tox .tox-tbtn:focus,
+    [data-mode=dark] .tox .tox-mbtn:focus:not(:disabled),
+    [data-mode=dark] .tox .tox-tbtn--disabled,
+    [data-mode=dark] .tox .tox-tbtn:disabled,
+    [data-mode=dark] .tox .tox-mbtn[disabled],
+    [data-mode=dark] .tox .tox-split-button__main:focus,
+    [data-mode=dark] .tox .tox-split-button__chevron:focus {
+        background: transparent;
+    }
+
+    [data-mode=dark] .tox .tox-tbtn:hover,
+    [data-mode=dark] .tox .tox-mbtn:hover:not(:disabled):not(.tox-mbtn--active),
+    [data-mode=dark] .tox .tox-tbtn--enabled,
+    [data-mode=dark] .tox .tox-mbtn--active,
+    [data-mode=dark] .tox .tox-collection__item--active {
+        background: rgb(var(--sc-zink-600));
+    }
+
+    [data-mode=dark] .tox .tox-tbtn:active {
+        background: rgb(var(--sc-zink-500));
+    }
+
+
     .btn {
         display: inline-block;
         border-radius: .375rem;
@@ -169,7 +699,7 @@
     .form-input {
         display: block;
         width: 100%;
-        border-radius: .375rem;
+        border-radius: .5rem;
         border-width: 1px;
         padding: .5rem 1rem;
         font-size: .875rem
@@ -181,7 +711,7 @@
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        border-radius: .375rem;
+        border-radius: .5rem;
         border-width: 1px;
         padding: .5rem 2.5rem .5rem .75rem;
         font-size: .875rem;
@@ -217,9 +747,9 @@
 
     :is([data-mode=dark] .form-file)::-webkit-file-upload-button {
         --tw-bg-opacity: 1;
-        background-color: rgb(28 46 69 / var(--tw-bg-opacity));
+        background-color: rgb(var(--sc-zink-600) / var(--tw-bg-opacity));
         --tw-text-opacity: 1;
-        color: rgb(146 175 211 / var(--tw-text-opacity))
+        color: rgb(var(--sc-zink-200) / var(--tw-text-opacity))
     }
 
     .form-file.form-file-sm::-webkit-file-upload-button {
@@ -232,45 +762,16 @@
 
     .card {
         margin-bottom: 1.25rem;
-        border-radius: .375rem;
-        border-width: 0px;
-        border-color: transparent;
-        --tw-bg-opacity: 1;
-        background-color: rgb(255 255 255 / var(--tw-bg-opacity));
-        --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
-        --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
-        -webkit-box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        --tw-shadow-color: #e2e8f0;
-        --tw-shadow: var(--tw-shadow-colored)
-    }
-
-    .group[data-skin=bordered] .card {
-        border-width: 1px;
-        --tw-border-opacity: 1;
-        border-color: rgb(226 232 240 / var(--tw-border-opacity));
-        --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / .05);
-        --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
-        --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
-        --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
-        -webkit-box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        --tw-shadow-color: #f1f5f9;
-        --tw-shadow: var(--tw-shadow-colored)
+        border-radius: .75rem;
+        border: 1px solid rgb(226 232 240);
+        background-color: rgb(255 255 255);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / .04);
     }
 
     :is([data-mode=dark] .card) {
-        --tw-bg-opacity: 1;
-        background-color: rgb(19 35 55 / var(--tw-bg-opacity));
-        --tw-shadow-color: rgb(35 58 87 / .2);
-        --tw-shadow: var(--tw-shadow-colored)
-    }
-
-    .group[data-skin=bordered] :is([data-mode=dark] .card) {
-        --tw-border-opacity: 1;
-        border-color: rgb(35 58 87 / var(--tw-border-opacity));
-        --tw-shadow-color: rgb(35 58 87 / .3);
-        --tw-shadow: var(--tw-shadow-colored)
+        border-color: rgb(var(--sc-zink-600));
+        background-color: rgb(var(--sc-zink-700));
+        box-shadow: none;
     }
 
     .card .card-body {

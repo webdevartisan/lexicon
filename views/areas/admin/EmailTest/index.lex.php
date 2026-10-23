@@ -12,15 +12,15 @@
     </p>
 
     <!-- Mail configuration -->
-    <div class="card border-blue-200 dark:border-blue-800">
-        <div class="card-body bg-blue-50 dark:bg-blue-900/10">
+    <div class="card">
+        <div class="card-body">
             <div class="flex items-start gap-3 mb-4">
-                <div class="flex items-center justify-center size-10 bg-blue-100 dark:bg-blue-500/20 rounded-md shrink-0">
-                    <i data-lucide="settings" class="size-5 text-blue-500"></i>
+                <div class="flex items-center justify-center size-10 bg-slate-100 dark:bg-zink-600 rounded-lg shrink-0">
+                    <i data-lucide="settings" class="size-5 text-slate-500 dark:text-zink-200"></i>
                 </div>
                 <div class="flex-1">
-                    <h2 class="text-sm font-semibold text-blue-900 dark:text-blue-400">Mail Configuration</h2>
-                    <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                    <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-50">Mail Configuration</h2>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-zink-200">
                         Current transport settings from the environment, and a plain test message to verify them.
                     </p>
                 </div>
@@ -56,7 +56,7 @@
                 >
                 <button
                     type="submit"
-                    class="btn bg-blue-600 text-white hover:bg-blue-700 border-blue-600 hover:border-blue-700 dark:bg-blue-500 dark:border-blue-500"
+                    class="btn bg-custom-500 text-white border-custom-500"
                 >
                     <i data-lucide="send" class="inline-block size-4 mr-1"></i>
                     Send Test

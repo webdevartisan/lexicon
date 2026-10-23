@@ -43,7 +43,7 @@ class GuidedSetupFactsModel extends AppModel
     /**
      * What a collaborator has already done on someone else's blog.
      *
-     * @return array{wrote_post: bool, submitted_post: bool}
+     * @return array{wrote_post: bool, submitted_post: bool, saved_draft: bool, has_profile: bool}
      */
     public function forMember(int $userId, int $blogId): array
     {
@@ -51,13 +51,20 @@ class GuidedSetupFactsModel extends AppModel
                 EXISTS (SELECT 1 FROM posts WHERE blog_id = ? AND author_id = ?
                         AND status IN ('pending', 'scheduled', 'published')) AS wrote_post,
                 EXISTS (SELECT 1 FROM posts WHERE blog_id = ? AND author_id = ?
-                        AND status IN ('pending', 'published')) AS submitted_post";
+                        AND status IN ('pending', 'published')) AS submitted_post,
+                EXISTS (SELECT 1 FROM posts WHERE blog_id = ? AND author_id = ?
+                        AND status = 'draft') AS saved_draft,
+                EXISTS (SELECT 1 FROM user_profiles WHERE user_id = ?
+                        AND (COALESCE(TRIM(bio), '') <> '' OR COALESCE(avatar_url, '') <> '')) AS has_profile";
 
-        $row = $this->database->query($sql, [$blogId, $userId, $blogId, $userId])->fetch(\PDO::FETCH_ASSOC) ?: [];
+        $params = [$blogId, $userId, $blogId, $userId, $blogId, $userId, $userId];
+        $row = $this->database->query($sql, $params)->fetch(\PDO::FETCH_ASSOC) ?: [];
 
         return [
             'wrote_post' => (bool) ($row['wrote_post'] ?? false),
             'submitted_post' => (bool) ($row['submitted_post'] ?? false),
+            'saved_draft' => (bool) ($row['saved_draft'] ?? false),
+            'has_profile' => (bool) ($row['has_profile'] ?? false),
         ];
     }
 }

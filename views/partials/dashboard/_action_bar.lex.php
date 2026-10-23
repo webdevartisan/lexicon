@@ -105,4 +105,4 @@ $primaryClass = $primary['variant'] === 'green'
   </div>
   <?php } ?>
 </div>
-<script src="/cp-assets/js/action-bar.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/action-bar.js') ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/action-bar.js')) ?>"></script>

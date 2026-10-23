@@ -1,0 +1,59 @@
+/* Flash toasts for front POST results. A fixed overlay in the top inline-end
+   corner, so a save confirmation never shoves the page down. The dashboard has
+   the same behaviour in Tailwind/cp.css, which the front does not load, so the
+   look is rebuilt here. Logical properties keep it in the right corner in RTL. */
+.lx-toasts {
+    position: fixed;
+    inset-block-start: 1rem;
+    inset-inline-end: 1rem;
+    z-index: var(--lx-z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-3);
+    width: 20rem;
+    max-width: calc(100vw - 2rem);
+    pointer-events: none;
+}
+.lx-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--lx-space-3);
+    padding-block: var(--lx-space-3);
+    padding-inline: var(--lx-space-4) var(--lx-space-7);
+    position: relative;
+    border-radius: var(--lx-radius-md);
+    border-inline-start: 4px solid currentColor;
+    background: var(--lx-btn-surface);
+    box-shadow: 0 8px 24px rgba(16, 35, 63, 0.14);
+    pointer-events: auto;
+    animation: lx-toast-in var(--lx-dur-slow) ease;
+}
+.lx-toast.is-hiding { opacity: 0; transform: translateX(0.5rem); transition: opacity var(--lx-dur-slow) ease, transform var(--lx-dur-slow) ease; }
+.lx-toast-msg { color: var(--lx-ink); font-size: var(--lx-text-sm); line-height: var(--lx-leading-normal); }
+.lx-toast.is-success { color: var(--lx-ok); }
+.lx-toast.is-error   { color: var(--lx-danger); }
+.lx-toast.is-warning { color: var(--lx-gilt-deep); }
+.lx-toast.is-info    { color: var(--lx-ink); }
+.lx-toast-close {
+    position: absolute;
+    inset-block-start: 0.35rem;
+    inset-inline-end: 0.4rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: var(--lx-text-lg);
+    line-height: 1;
+    padding: var(--lx-space-1) var(--lx-space-2);
+    cursor: pointer;
+    border-radius: 6px;
+}
+.lx-toast-close:hover { background: rgba(16, 35, 63, 0.06); }
+@keyframes lx-toast-in {
+    from { opacity: 0; transform: translateX(0.75rem); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lx-toast { animation: none; }
+    .lx-toast.is-hiding { transition: none; }
+}
+

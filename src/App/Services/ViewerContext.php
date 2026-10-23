@@ -24,8 +24,8 @@ use App\Resources\BlogResource;
 final class ViewerContext
 {
     /**
-     * @var array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null|false
-     *                                                                                                                                                      False means "not resolved yet"; null is a real answer meaning nobody is signed in.
+     * @var array{name: string, email: string, is_admin: bool, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null|false
+     *                                                                                                                                                                                     False means "not resolved yet"; null is a real answer meaning nobody is signed in.
      */
     private array|null|false $current = false;
 
@@ -39,8 +39,8 @@ final class ViewerContext
     /**
      * Summary of the current user for masthead rendering.
      *
-     * @return array{name: string, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null
-     *                                                                                                                                                   Null when nobody is logged in.
+     * @return array{name: string, email: string, is_admin: bool, avatar_url: string|null, is_reader: bool, can_create_blog: bool, unread_replies: int, unread_notifications: int}|null
+     *                                                                                                                                                                                  Null when nobody is logged in.
      */
     public function current(): ?array
     {
@@ -57,6 +57,8 @@ final class ViewerContext
 
         return $this->current = [
             'name' => $user['display_name_cached'] ?? $user['handle'],
+            'email' => (string) ($user['email'] ?? ''),
+            'is_admin' => auth()->hasRole('administrator'),
             'avatar_url' => $this->profiles->getProfileAvatar($userId)['avatar_url'] ?? null,
             // Decides which primary button the masthead shows. Deliberately not
             // the back area's isReader, which is only computed on dashboard

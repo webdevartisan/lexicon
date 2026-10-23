@@ -430,5 +430,5 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
 
 {% block scripts %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
-<script src="/cp-assets/js/modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 {% endblock %}

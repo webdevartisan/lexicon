@@ -161,5 +161,54 @@ test('a reviewer who cannot write gets no review explainer', function () {
         [$this->blogId]
     );
 
-    expect(($this->keysOf)($this->setup->forUser($reviewerId, $this->blogId)))->toBe(['member_profile']);
+    expect(($this->keysOf)($this->setup->forUser($reviewerId, $this->blogId)))->toBe(['reviewer_profile']);
+});
+
+test('a co-owner shares the blog steps their role can act on', function () {
+    $slug = 'partner_'.bin2hex(random_bytes(4));
+    $this->db->query("INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) VALUES ('Partner', ?, '', 'blog', 0, 60)", [$slug]);
+    $this->db->query(
+        "INSERT INTO role_permissions (role_id, permission_id)
+         SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_slug IN ('create_posts', 'edit_own_blog', 'delete_own_blog')
+         WHERE r.role_slug = ?",
+        [$slug]
+    );
+    $partnerId = UserFactory::new($this->users)->create();
+    ($this->addMember)($this->blogId, $partnerId, $slug, $this->ownerId);
+    $this->db->execute('UPDATE blogs SET description = ? WHERE id = ?', ['Notes on slow travel', $this->blogId]);
+
+    $setup = $this->setup->forUser($partnerId, $this->blogId);
+
+    expect($setup['audience'])->toBe('co_owner')
+        ->and(($this->keysOf)($setup))->toBe(['start', 'first_post', 'look', 'share'])
+        ->and(($this->step)($setup, 'look')->done)->toBeTrue();
+});
+
+test('a profile filled in before joining ticks member_profile', function () {
+    $authorId = UserFactory::new($this->users)->create();
+    ($this->addMember)($this->blogId, $authorId, 'author', $this->ownerId);
+    $this->db->execute(
+        'INSERT INTO user_profiles (user_id, bio) VALUES (?, ?) ON DUPLICATE KEY UPDATE bio = VALUES(bio)',
+        [$authorId, 'Writes about trains']
+    );
+
+    expect(($this->step)($this->setup->forUser($authorId, $this->blogId), 'member_profile')->done)->toBeTrue();
+});
+
+test('a contributor on a blog without review finishes the post step with a draft', function () {
+    $contributorId = UserFactory::new($this->users)->create();
+    ($this->addMember)($this->blogId, $contributorId, 'contributor', $this->ownerId);
+    PostFactory::new($this->posts)
+        ->withAttributes(['author_id' => $contributorId, 'blog_id' => $this->blogId, 'status' => 'draft'])
+        ->create();
+
+    expect(($this->step)($this->setup->forUser($contributorId, $this->blogId), 'member_first_post')->done)->toBeTrue();
+
+    $this->db->execute(
+        'INSERT INTO blog_settings (blog_id, workflow_enabled) VALUES (?, 1)
+         ON DUPLICATE KEY UPDATE workflow_enabled = 1',
+        [$this->blogId]
+    );
+
+    expect(($this->step)($this->setup->forUser($contributorId, $this->blogId), 'member_first_post')->done)->toBeFalse();
 });

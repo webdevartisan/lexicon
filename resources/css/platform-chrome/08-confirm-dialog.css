@@ -1,0 +1,45 @@
+/* ---------------------------------------------------------------------------
+   Confirmation dialog (components/confirm-modal). The card is the shared dialog
+   card in 03-dialogs.css; this adds the pastel accents, deeper ones in light mode.
+   --------------------------------------------------------------------------- */
+
+.confirm-card {
+  --confirm-fg: var(--platform-menu-fg, var(--chrome-dark-ink));
+  --confirm-muted: color-mix(in srgb, var(--confirm-fg) 70%, transparent);
+  --confirm-line: var(--chrome-line);
+  --confirm-hover: var(--chrome-hover);
+  --confirm-tone: var(--chrome-dark-info);
+}
+
+.confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-dark-danger); }
+.confirm-card[data-tone='warning'] { --confirm-tone: var(--chrome-dark-warning); }
+
+[data-mode='light'] .confirm-card {
+  --confirm-fg: var(--chrome-light-ink);
+  --confirm-tone: var(--chrome-light-info);
+}
+
+[data-mode='light'] .confirm-card[data-tone='danger'] { --confirm-tone: var(--chrome-light-danger); }
+[data-mode='light'] .confirm-card[data-tone='warning'] { --confirm-tone: var(--chrome-light-warning); }
+
+.confirm-card .confirm-badge {
+  background: color-mix(in srgb, var(--confirm-tone) 16%, transparent);
+  color: var(--confirm-tone);
+}
+
+.confirm-card .confirm-message { color: var(--confirm-muted); }
+
+.confirm-card .confirm-actions { border-top: 1px solid var(--confirm-line); }
+
+.confirm-card .confirm-button {
+  color: var(--confirm-fg);
+  background: transparent;
+}
+
+.confirm-card .confirm-button + .confirm-button { border-left: 1px solid var(--confirm-line); }
+
+.confirm-card .confirm-button:hover,
+.confirm-card .confirm-button:focus-visible { background: var(--confirm-hover); outline: none; }
+
+.confirm-card .confirm-button-ok { color: var(--confirm-tone); }
+

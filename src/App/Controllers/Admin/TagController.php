@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\AppController;
 use App\Models\BlogModel;
 use App\Models\TagModel;
+use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
@@ -37,8 +38,9 @@ class TagController extends AppController
             'created' => 't.created_at',
         ], defaultKey: 'name', defaultDirection: 'asc', tiebreaker: 't.id DESC');
 
+        $perPage = PageSize::fromRequest($this->request, 20);
         $result = $this->model->findAllForAdmin(
-            $page, 20, $q,
+            $page, $perPage, $q,
             $blogId > 0 ? $blogId : null,
             $used, $sort->orderBy()
         );
@@ -46,6 +48,7 @@ class TagController extends AppController
         return $this->view('tag.index', [
             'tags' => $result['data'],
             'pagination' => $result['pagination'],
+            'perPage' => $perPage,
             'q' => $q,
             'used' => $used,
             'blogId' => $blogId,

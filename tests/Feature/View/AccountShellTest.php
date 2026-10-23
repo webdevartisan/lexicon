@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 /**
  * The rail is page navigation, not tabs: a nav with an accessible name and
- * aria-current="page", never role="tablist". Four items, deletion excluded.
+ * aria-current="page", never role="tablist". In the modal its links move the
+ * modal to the next page instead of leaving it.
  */
 $partial = file_get_contents(ROOT_PATH.'/views/partials/_account_shell.lex.php');
 
@@ -19,7 +20,7 @@ test('the rail carries aria-current and an accessible name', function () use ($p
     expect($partial)->toMatch('/<nav[^>]+aria-label/');
 });
 
-test('the four rail destinations are present and delete is not a rail item', function () use ($partial) {
+test('every account page is a rail destination', function () use ($partial) {
     // The rail is data-driven: hrefs live in the $items array and go through
     // lurl() in the loop, so assert on the paths and that lurl() is applied.
     expect($partial)->toContain("'/account/profile'");
@@ -27,5 +28,9 @@ test('the four rail destinations are present and delete is not a rail item', fun
     expect($partial)->toContain("'/account/notifications'");
     expect($partial)->toContain("'/account/security'");
     expect($partial)->toContain('lurl($item[');
-    expect($partial)->not->toContain("'/account/delete'");
+    expect($partial)->toContain("'/account/delete'");
+});
+
+test('rail links stay inside the modal', function () use ($partial) {
+    expect($partial)->toContain('data-panel-link');
 });

@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Tokens
+   ========================================================================== */
+
+:root {
+    --lx-paper: #f0f1ec;
+    --lx-paper-raised: #fbfbf8;
+    --lx-paper-sunk: #e7e9e1;
+
+    --lx-bind: #16233f;
+    --lx-bind-deep: #0d1526;
+    --lx-bind-soft: #24355a;
+
+    /* Bright foil only sits on the binding; the deep value holds AA on paper. */
+    --lx-gilt: #c9a227;
+    --lx-gilt-deep: #7a5d0e;
+
+    --lx-ink: #171a1c;
+    --lx-ink-2: #5c6470;
+    /* Kept at AA on paper: it carries real text (dates, bylines, placeholders). */
+    --lx-ink-3: #646b76;
+    --lx-rule: #d3d7cd;
+    --lx-rule-strong: #b9bfb2;
+    /* A field's underline is the only thing marking where it is, so it has to
+       clear WCAG 1.4.11's 3:1 for UI component boundaries. --lx-rule-strong is
+       too faint for that, being drawn for decorative rules. */
+    --lx-field-line: #7d8375;
+
+    --lx-on-bind: #f0f1ec;
+    --lx-on-bind-2: #a8b2c6;
+    /* Dark panels need their own tertiary; --lx-ink-3 drops below AA on them. */
+    --lx-on-bind-3: #7e8798;
+    --lx-rule-bind: rgba(240, 241, 236, 0.16);
+
+    --lx-danger: #a3261c;
+    --lx-danger-bg: #fbeceb;
+    --lx-ok: #1b6b45;
+    --lx-ok-bg: #e8f2ec;
+
+    --lx-serif: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+    --lx-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --lx-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --lx-measure: 76rem;
+    --lx-gutter: clamp(1.25rem, 5vw, 4rem);
+    --lx-section-y: clamp(4.5rem, 10vw, 8.5rem);
+
+    /* The cover underlaps the masthead by this much, so the bar carries no border. */
+    --lx-nav-h: 4.5rem;
+
+    --lx-z-raised: 2;
+    --lx-z-fab: 90;
+    --lx-z-nav: 100;
+    --lx-z-drawer: 150;
+    --lx-z-skip: 200;
+    --lx-z-toast: 1050;
+    --lx-z-modal: 1100;
+
+    /* Buttons match the settings modal's light palette (.acct-btn in platform-chrome.css). */
+    --lx-btn-ink: #1e293b;
+    --lx-btn-surface: #fff;
+    --lx-btn-line: #e2e8f0;
+    --lx-btn-hover: #f1f1f1;
+    --lx-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}

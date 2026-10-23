@@ -12,16 +12,17 @@ $old = old();
     <title>{% yield title %} | Lexicon CP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     {% include "partials/_favicons.lex.php" %}
-    <script src="/cp-assets/js/layout.js"></script>
+    <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
+    <script src="<?= e(versioned_asset('/cp-assets/js/layout.js')) ?>"></script>
     <script defer src="/vendor/alpine/focus.min.js"></script>
     <script defer src="/vendor/alpine/alpine.min.js"></script>
 
     <link rel="stylesheet" href="/cp-assets/css/vendors/simplebar.css">
-    <link rel="stylesheet" href="/cp-assets/css/fonts.css">
-    <link rel="stylesheet" href="/cp-assets/css/cp.css">
+    <link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/fonts.css')) ?>">
+    <link rel="stylesheet" href="<?= e(versioned_asset('/cp-assets/css/cp.css')) ?>">
     <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">
     {# The notification bell and panel are platform chrome, shared with the front and every theme. #}
-    <link rel="stylesheet" href="/assets/css/platform-chrome.css">
+    <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>">
     {% yield head %}
 
 </head>
@@ -32,7 +33,7 @@ $old = old();
 
     
     <div class="app-menu w-vertical-menu bg-vertical-menu ltr:border-r rtl:border-l border-vertical-menu-border fixed bottom-0 top-0 z-[1003] transition-all duration-75 ease-linear group-data-[sidebar-size=sm]:w-vertical-menu-sm group-data-[sidebar-size=sm]:pt-header group-data-[sidebar=dark]:bg-vertical-menu-dark group-data-[sidebar=dark]:border-vertical-menu-dark group-data-[sidebar=brand]:bg-vertical-menu-brand group-data-[sidebar=brand]:border-vertical-menu-brand group-data-[sidebar=modern]:bg-gradient-to-tr group-data-[sidebar=modern]:to-vertical-menu-to-modern group-data-[sidebar=modern]:from-vertical-menu-form-modern hidden md:block print:hidden group-data-[sidebar-size=sm]:absolute group-data-[sidebar=modern]:border-vertical-menu-border-modern group-data-[sidebar=dark]:dark:bg-zink-700 group-data-[sidebar=dark]:dark:border-zink-600">
-        <div class="flex items-center justify-center px-5 text-center h-header group-data-[sidebar-size=sm]:fixed group-data-[sidebar-size=sm]:top-0 group-data-[sidebar-size=sm]:bg-vertical-menu group-data-[sidebar-size=sm]:group-data-[sidebar=dark]:bg-vertical-menu-dark group-data-[sidebar-size=sm]:group-data-[sidebar=brand]:bg-vertical-menu-brand group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:bg-gradient-to-br group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:to-vertical-menu-to-modern group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:from-vertical-menu-form-modern group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:bg-vertical-menu-modern group-data-[sidebar-size=sm]:z-10 group-data-[sidebar-size=sm]:w-[calc(theme('spacing.vertical-menu-sm')_-_1px)] group-data-[sidebar-size=sm]:group-data-[sidebar=dark]:dark:bg-zink-700">
+        <div class="flex items-center justify-start px-6 group-data-[sidebar-size=sm]:justify-center group-data-[sidebar-size=sm]:px-0 h-header group-data-[sidebar-size=sm]:fixed group-data-[sidebar-size=sm]:top-0 group-data-[sidebar-size=sm]:bg-vertical-menu group-data-[sidebar-size=sm]:group-data-[sidebar=dark]:bg-vertical-menu-dark group-data-[sidebar-size=sm]:group-data-[sidebar=brand]:bg-vertical-menu-brand group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:bg-gradient-to-br group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:to-vertical-menu-to-modern group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:from-vertical-menu-form-modern group-data-[sidebar-size=sm]:group-data-[sidebar=modern]:bg-vertical-menu-modern group-data-[sidebar-size=sm]:z-10 group-data-[sidebar-size=sm]:w-[calc(theme('spacing.vertical-menu-sm')_-_1px)] group-data-[sidebar-size=sm]:group-data-[sidebar=dark]:dark:bg-zink-700">
             
             {% cmp="logo" %}
 
@@ -73,8 +74,8 @@ $old = old();
                 <?php } ?>
 
                 {% if noBreadcrumb|empty %}
-                <div class="flex flex-col gap-2 py-4 md:flex-row md:items-center print:hidden">
-                    <div class="grow">
+                <div class="flex items-center gap-3 py-4 print:hidden">
+                    <div class="grow min-w-0">
                         <h5 class="text-2xl font-semibold">
                             {% if (empty($hideTitle)): %}
                                 {% yield title %}
@@ -84,8 +85,7 @@ $old = old();
                             {% yield subtitle %}
                         </p>
                     </div>
-                    <!-- Breadcrumb -->
-                    {% include "partials/_breadcrumbs.lex.php" %}
+                    <div class="shrink-0 empty:hidden">{% yield actions %}</div>
                     {% if (!empty($breadcrumb)): %}
                     <ul class="flex items-center gap-2 text-sm font-normal shrink-0">
                         <li class="relative before:content-['\ea54'] before:font-remix ltr:before:-right-1 rtl:before:-left-1  before:absolute before:text-[18px] before:-top-[3px] ltr:pr-4 rtl:pl-4 before:text-slate-400 dark:text-zink-200">
@@ -145,30 +145,29 @@ $old = old();
 <script src="/cp-assets/libs/tippy.js/tippy-bundle.umd.min.js"></script>
 <script src="/cp-assets/libs/simplebar/simplebar.min.js"></script>
 <!-- <script src="/cp-assets/libs/prismjs/prism.js"></script> -->
-<script src="/cp-assets/js/dropdown.js"></script>
-<script src="/assets/js/platform-menu.js"></script>
-<script src="/cp-assets/js/row-actions.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/dropdown.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/assets/js/platform-menu.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/row-actions.js')) ?>"></script>
 {# One shared confirmation modal per tone; cp-assets/js/confirm.js fills in the text and opens it #}
-<button type="button" hidden data-modal-target="confirmModalDefault" aria-hidden="true" tabindex="-1"></button>
-<button type="button" hidden data-modal-target="confirmModalDanger" aria-hidden="true" tabindex="-1"></button>
-<button type="button" hidden data-modal-target="confirmModalWarning" aria-hidden="true" tabindex="-1"></button>
 {% cmp="confirm-modal" id="confirmModalDefault" tone="default" %}
 {% cmp="confirm-modal" id="confirmModalDanger" tone="danger" %}
 {% cmp="confirm-modal" id="confirmModalWarning" tone="warning" %}
-<script src="/cp-assets/js/modal.js"></script>
-<script src="/cp-assets/js/confirm.js"></script>
-<script src="/cp-assets/js/select-menu.js"></script>
-<script src="/cp-assets/js/bulk-actions.js"></script>
-<script src="/cp-assets/js/blog-switcher.js"></script>
-<script src="/cp-assets/js/table-sort.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/confirm.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/select-menu.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/bulk-actions.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/blog-switcher.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/table-sort.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/queue-detail.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/panel-tabs.js')) ?>"></script>
 
 {% yield scripts %}
 
 <!-- App js -->
-<script src="/cp-assets/js/sidebar-state-manager.js"></script>
-<script src="/cp-assets/js/components/alert.js"></script>
-<script src="/cp-assets/js/app.js"></script>
-<script src="/cp-assets/js/lucide.init.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/sidebar-state-manager.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/components/alert.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/app.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/lucide.init.js')) ?>"></script>
 
 </body>
 

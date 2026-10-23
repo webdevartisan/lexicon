@@ -13,8 +13,9 @@ use App\ValueObjects\SetupStep;
 /**
  * Builds the "Your next steps" list for one person on one blog.
  *
- * Owners get the six steps that take a blog from created to shared.
- * Collaborators get a shorter list picked from what their role allows, so a
+ * Owners get the six steps that take a blog from created to shared, and
+ * co-owners get the same blog steps their role can act on. Other
+ * collaborators get a shorter list picked from what their role allows, so a
  * custom role gets sensible steps without being named here.
  */
 final class GuidedSetupService
@@ -38,13 +39,15 @@ final class GuidedSetupService
             return null;
         }
 
-        $isOwner = $blog->ownerId() === $userId;
-        if (!$isOwner && !$this->blogs->userCanAccessBlog($userId, $blogId)) {
+        $audience = $this->audience($blog, $userId);
+        if ($audience === null) {
             return null;
         }
 
         $marks = $this->marks->marksFor($userId, $blogId);
-        $steps = $isOwner ? $this->ownerSteps($blog, $marks) : $this->memberSteps($blog, $userId, $marks);
+        $steps = $audience === 'member'
+            ? $this->memberSteps($blog, $userId, $marks)
+            : $this->ownerSteps($blog, $userId, $marks);
         $done = count(array_filter($steps, fn (SetupStep $step) => $step->done));
 
         return [
@@ -52,27 +55,58 @@ final class GuidedSetupService
             'done' => $done,
             'total' => count($steps),
             'state' => $this->state($marks, $done === count($steps)),
-            'audience' => $isOwner ? 'owner' : 'member',
+            'audience' => $audience,
         ];
     }
 
     /**
+     * Which list a person gets: 'owner', 'co_owner', 'member', or null when
+     * they have no access to the blog.
+     */
+    private function audience(BlogResource $blog, int $userId): ?string
+    {
+        if ($blog->ownerId() === $userId) {
+            return 'owner';
+        }
+
+        if (!$this->blogs->userCanAccessBlog($userId, $blog->id())) {
+            return null;
+        }
+
+        // Only the owner bundle and co-owner roles may delete the blog, which
+        // separates someone who runs it from an editor who works on it.
+        return $blog->userCan($userId, 'delete_own_blog') ? 'co_owner' : 'member';
+    }
+
+    /**
+     * The blog's own setup, shared by the owner and co-owners. Steps that
+     * lead to a page the person's role can't open are left out.
+     *
      * @param  array<string, true>  $marks
      * @return SetupStep[]
      */
-    private function ownerSteps(BlogResource $blog, array $marks): array
+    private function ownerSteps(BlogResource $blog, int $userId, array $marks): array
     {
         $facts = $this->facts->forOwner($blog->id(), $blog->ownerId());
         $base = '/dashboard/blog/'.$blog->id();
 
-        return [
+        $steps = [
             $this->step('start', true, null, false),
             $this->step('first_post', $facts['published_post'], '/dashboard/post/new', true, 'setup.steps.first_post.done'),
-            $this->step('look', isset($marks['look_chosen']) || $facts['has_look'], $base.'/appearance'),
-            $this->step('share', isset($marks['link_copied']), null),
-            $this->step('followers', $facts['has_subscriber'] || isset($marks['subscribers_seen']), $base.'/subscribers'),
-            $this->step('team', $facts['has_team'], $base.'/team'),
         ];
+
+        if ($blog->userCan($userId, 'edit_own_blog')) {
+            $steps[] = $this->step('look', isset($marks['look_chosen']) || $facts['has_look'], $base.'/appearance');
+        }
+
+        $steps[] = $this->step('share', isset($marks['link_copied']), null);
+
+        if ($blog->userCan($userId, 'manage_team')) {
+            $steps[] = $this->step('followers', $facts['has_subscriber'] || isset($marks['subscribers_seen']), $base.'/subscribers');
+            $steps[] = $this->step('team', $facts['has_team'], $base.'/team');
+        }
+
+        return $steps;
     }
 
     /**
@@ -83,16 +117,21 @@ final class GuidedSetupService
     {
         $facts = $this->facts->forMember($userId, $blog->id());
         $steps = [];
+        $writes = $blog->userCan($userId, 'create_posts');
 
-        if ($blog->userCan($userId, 'create_posts')) {
-            $steps[] = $this->step('member_first_post', $facts['wrote_post'], '/dashboard/post/new');
+        if ($writes) {
+            $canPublish = $blog->canPublish($userId);
+            // Without review, someone who can't publish has only a Save button, so a draft is as far as they can go.
+            $wrote = $facts['wrote_post'] || (!$canPublish && !$blog->reviewsPosts() && $facts['saved_draft']);
+            $steps[] = $this->step('member_first_post', $wrote, '/dashboard/post/new');
 
-            if ($blog->reviewsPosts() && !$blog->canPublish($userId)) {
+            if ($blog->reviewsPosts() && !$canPublish) {
                 $steps[] = $this->step('member_review', $facts['submitted_post'], null);
             }
         }
 
-        $steps[] = $this->step('member_profile', isset($marks['profile_saved']), '/account/profile');
+        $profileDone = $facts['has_profile'] || isset($marks['profile_saved']);
+        $steps[] = $this->step($writes ? 'member_profile' : 'reviewer_profile', $profileDone, '/account/profile');
 
         return $steps;
     }

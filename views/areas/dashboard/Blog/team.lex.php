@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
-{% block title %}{{ blog.blog_name }} · {{ t('navigation.team') }}{% endblock %}
-{% block subtitle %}{{ t('dashboard.team.subtitle') }}{% endblock %}
+{% block title %}{{ t('navigation.team') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('dashboard.team.subtitle') }}</span>{% endblock %}
 {% block body %}
 <?php
 $roleBadge = [
@@ -47,14 +47,6 @@ $passwordLabel = $t('dashboard.team.transfer.password');
 $transferLabel = $t('dashboard.team.transfer.title');
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
-
-    <div class="flex items-center justify-between gap-3 mb-5">
-        <a href="<?= e(lurl('/dashboard')) ?>"
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-            {% cache 'lucide:arrow-left' ttl=31536000 %}<i data-lucide="arrow-left" class="size-4"></i>{% endcache %}
-            <span><?= e($t('dashboard.overview.back')) ?></span>
-        </a>
-    </div>
 
     <?php if (empty($workflowEnabled)) { ?>
     <div class="mb-5 p-3 rounded-md border border-slate-200 bg-slate-50 dark:bg-zink-700 dark:border-zink-600 flex items-start gap-2 text-xs text-slate-600 dark:text-zink-200">
@@ -312,7 +304,7 @@ $revokeConfirmAttr = 'data-confirm="'.e($revokeConfirmMsg).'"';
 </div>
 {% endblock %}
 {% block scripts %}
-<script src='/cp-assets/js/tooltip.js'></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 // Live-update the small role explainer under the role select on the invite form.
 (function () {

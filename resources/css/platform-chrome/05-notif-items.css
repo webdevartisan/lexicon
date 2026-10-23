@@ -1,0 +1,390 @@
+/* Ghost icon buttons: the panel header's two tools and each page row's actions.
+   Restated against .platform-menu-list's row rules, which would otherwise
+   stretch them across the panel. */
+.notif-icon-btn,
+.platform-menu-list .notif-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lx-radius);
+  background: none;
+  color: var(--notif-muted);
+  cursor: pointer;
+}
+
+.notif-icon-btn:hover,
+.platform-menu-list .notif-icon-btn:hover {
+  background: var(--notif-chip-bg);
+  color: var(--notif-fg);
+}
+
+.notif-icon-btn.is-danger:hover {
+  color: var(--notif-tone-critical);
+}
+
+.notif-icon-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* A segmented control: tabs sit in a tray, the current one raised out of it. */
+.notif-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .2rem;
+  margin: 0 1rem .35rem;
+  padding: .2rem;
+  border-radius: var(--lx-radius-md);
+  background: var(--notif-tabs-bg);
+}
+
+.notif-tab,
+.platform-menu-list .notif-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  width: auto;
+  padding: .35rem .65rem;
+  border: 0;
+  border-radius: var(--lx-radius);
+  background: none;
+  color: var(--notif-muted);
+  font: inherit;
+  font-size: var(--lx-text-xs);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.notif-tab:hover,
+.platform-menu-list .notif-tab:hover {
+  background: none;
+  color: var(--notif-fg);
+  text-decoration: none;
+}
+
+.notif-tab[aria-selected='true'],
+.notif-tab[aria-current='page'] {
+  background: var(--notif-tab-on-bg);
+  color: var(--notif-fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+
+.notif-tab:focus-visible,
+.notif-icon-btn:focus-visible,
+.notif-sentence a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.notif-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 .3rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  font-size: .68rem;
+  font-weight: var(--lx-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.notif-panel .notif-tabpanel {
+  /* Eight rows a tab is what the endpoint sends; a tall one scrolls rather
+     than running off a short window. */
+  max-height: min(26rem, 60vh);
+  overflow-y: auto;
+}
+
+.notif-list {
+  margin: 0;
+  padding: 0 1rem;
+  list-style: none;
+}
+
+.notif-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .85rem 0;
+}
+
+.notif-row + .notif-row {
+  border-top: 1px dashed var(--notif-line);
+}
+
+.notif-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--notif-chip-bg);
+}
+
+.notif-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hue from the name, as in comment threads, so nobody's letter needs storing. */
+.notif-avatar.is-letter {
+  background: hsl(var(--avatar-hue, 210) 42% 42%);
+  color: #fff;
+  font-weight: var(--lx-weight-bold);
+}
+
+.notif-avatar.is-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.notif-avatar[data-tone='positive'] { color: var(--notif-tone-positive); }
+.notif-avatar[data-tone='attention'] { color: var(--notif-tone-attention); }
+.notif-avatar[data-tone='critical'] { color: var(--notif-tone-critical); }
+.notif-avatar[data-tone='neutral'] { color: var(--notif-tone-neutral); }
+
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-line {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+}
+
+.notif-sentence {
+  flex: 1;
+  margin: 0;
+  color: var(--notif-muted);
+  font-size: var(--lx-text-sm);
+  line-height: 1.4;
+}
+
+.notif-actor,
+.notif-target {
+  color: var(--notif-fg);
+  font-weight: var(--lx-weight-semibold);
+}
+
+.notif-row:not(.is-unread) .notif-actor,
+.notif-row:not(.is-unread) .notif-target {
+  font-weight: var(--lx-weight-medium);
+}
+
+/* The sentence's link covers the whole row, so the row is one big target
+   while the page's action buttons stay clickable above it. */
+.notif-sentence a,
+.platform-menu-list .notif-sentence a {
+  display: inline;
+  width: auto;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  text-decoration: none;
+}
+
+.notif-sentence a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.notif-sentence a:hover .notif-target {
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.notif-panel .notif-list {
+  padding: 0;
+}
+
+.notif-panel .notif-row {
+  padding: .85rem 1rem;
+}
+
+.notif-panel .notif-row:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-dot {
+  flex: none;
+  width: .5rem;
+  height: .5rem;
+  margin-top: .4rem;
+  border-radius: 50%;
+  background: var(--notif-unread);
+}
+
+.notif-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: .2rem 0 0;
+  color: var(--notif-muted);
+  font-size: var(--lx-text-xs);
+}
+
+.notif-meta-start {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  min-width: 0;
+}
+
+.notif-source {
+  max-width: 14rem;
+  overflow: hidden;
+  padding: .05rem .45rem;
+  border-radius: 999px;
+  background: var(--notif-chip-bg);
+  color: var(--notif-fg);
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-ago {
+  flex: none;
+}
+
+.notif-quote {
+  margin: .55rem 0 0;
+  padding: .6rem .75rem;
+  border-radius: var(--lx-radius-md);
+  background: var(--notif-quote-bg);
+  color: var(--notif-fg);
+  font-size: var(--lx-text-sm);
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.notif-quote.is-clamped {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Answer an invitation in place. Raised above the row's stretched link. */
+.notif-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .6rem;
+}
+
+.notif-actions form {
+  margin: 0;
+}
+
+.notif-action-btn,
+.platform-menu-list .notif-action-btn {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: .4rem .9rem;
+  border: 1px solid var(--notif-line);
+  border-radius: var(--lx-radius-md);
+  background: none;
+  color: var(--notif-fg);
+  font: inherit;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-semibold);
+  cursor: pointer;
+}
+
+.notif-action-btn:hover,
+.platform-menu-list .notif-action-btn:hover {
+  background: var(--notif-quote-bg);
+}
+
+.notif-action-btn.is-primary,
+.platform-menu-list .notif-action-btn.is-primary {
+  border-color: transparent;
+  background: var(--notif-primary-bg);
+  color: var(--notif-primary-fg);
+}
+
+.notif-action-btn.is-primary:hover,
+.platform-menu-list .notif-action-btn.is-primary:hover {
+  background: var(--notif-primary-bg);
+  opacity: .88;
+}
+
+.notif-action-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.notif-empty {
+  padding: 2rem 1rem;
+  color: var(--notif-muted);
+  font-size: var(--lx-text-sm);
+  text-align: center;
+}
+
+.notif-empty p {
+  max-width: 22rem;
+  margin: .75rem auto 0;
+}
+
+.notif-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--notif-chip-bg);
+}
+
+.notif-empty-icon svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.notif-panel-status {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  font-size: var(--lx-text-sm);
+  text-align: center;
+  opacity: .75;
+}
+
+.notif-panel-foot,
+.platform-menu-list .notif-panel-foot {
+  display: block;
+  padding: .7rem 1rem;
+  border-top: 1px solid var(--notif-line);
+  border-radius: 0;
+  color: var(--notif-fg);
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-semibold);
+  text-align: center;
+  text-decoration: none;
+}
+
+.notif-panel-foot:hover {
+  background: var(--notif-quote-bg);
+  text-decoration: none;
+}
+

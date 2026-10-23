@@ -16,7 +16,7 @@ if (!empty($impersonation)) {
     $impAdmin = '@'.$impersonation['admin_handle'];
     $impMinutes = (int) $impersonation['minutes_left'];
 ?>
-<link rel="stylesheet" href="/assets/css/impersonation-banner.css">
+<link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/impersonation-banner.css')) ?>">
 <div class="lx-impersonation" role="region" aria-label="Signed in as another account">
     <p class="lx-impersonation-text">
         <strong>You are signed in as <?= e($impTarget) ?>.</strong>

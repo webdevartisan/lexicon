@@ -14,7 +14,7 @@ $password = "Walk-{$stamp}-7!";
 // A visitor signs up from the homepage
 $I->amOnPage('/en');
 $I->declineCookies();
-$I->click('Create a Blog');
+$I->click('Create a blog');
 $I->waitForElementVisible('#email');
 $I->seeThePageLooksRight('01-sign-up');
 $I->fillField('Email address', $email);

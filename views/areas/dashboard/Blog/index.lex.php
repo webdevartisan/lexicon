@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 {% block title %}{{ t('dashboard.blogs.title') }}{% endblock %}
-{% block subtitle %}{{ t('dashboard.blogs.subtitle') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('dashboard.blogs.subtitle') }}</span>{% endblock %}
 {% block body %}
 <?php
 $sortOptions = [

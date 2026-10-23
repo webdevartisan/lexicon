@@ -111,6 +111,7 @@ $router->group([
     'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/delete', ['controller' => 'CommentController', 'action' => 'destroy', 'method' => 'POST']);
+    $r->add('/{id:\d+}/edit', ['controller' => 'CommentController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/{id:\d+}/vote', ['controller' => 'CommentController', 'action' => 'vote', 'method' => 'POST']);
     $r->add('/{id:\d+}/report', ['controller' => 'CommentController', 'action' => 'report', 'method' => 'POST']);
     $r->add('/{id:\d+}/pin', ['controller' => 'CommentController', 'action' => 'pin', 'method' => 'POST']);
@@ -209,7 +210,7 @@ $router->group([
 // A creator reaches the same pages from the same menu a reader does.
 $router->group([
     'prefix' => '/saved',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'saved', 'method' => 'GET']);
     $r->add('/liked', ['controller' => 'ReaderController', 'action' => 'liked', 'method' => 'GET']);
@@ -221,7 +222,7 @@ $router->group([
 
 $router->group([
     'prefix' => '/replies',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'replies', 'method' => 'GET']);
     $r->add('/mine', ['controller' => 'ReaderController', 'action' => 'myComments', 'method' => 'GET']);
@@ -231,7 +232,7 @@ $router->group([
 
 $router->group([
     'prefix' => '/subscriptions',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'ReaderController', 'action' => 'subscriptions', 'method' => 'GET']);
     $r->add('/{blogId:\d+}/unsubscribe', ['controller' => 'ReaderController', 'action' => 'unsubscribe', 'method' => 'POST']);
@@ -273,11 +274,13 @@ $router->group([
 // the foot of Preferences rather than from the rail.
 $router->group([
     'prefix' => '/account',
-    'middleware' => ['auth'],
+    'middleware' => ['auth', 'panel'],
 ], function (Router $r) {
     $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
 
     $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/public', ['controller' => 'AccountProfileController', 'action' => 'editPublic', 'method' => 'GET']);
+    $r->add('/social', ['controller' => 'AccountProfileController', 'action' => 'editSocial', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
     $r->add('/profile/avatar/crop', ['controller' => 'AccountProfileController', 'action' => 'cropAvatar', 'method' => 'POST']);
@@ -298,6 +301,7 @@ $router->group([
     $r->add('/notifications/update', ['controller' => 'AccountNotificationsController', 'action' => 'update', 'method' => 'POST']);
 
     $r->add('/security', ['controller' => 'AccountSecurityController', 'action' => 'edit', 'method' => 'GET']);
+    $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'editPassword', 'method' => 'GET']);
     $r->add('/security/password', ['controller' => 'AccountSecurityController', 'action' => 'updatePassword', 'method' => 'POST']);
     $r->add('/security/two-factor', ['controller' => 'AccountTwoFactorController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/security/two-factor/start', ['controller' => 'AccountTwoFactorController', 'action' => 'start', 'method' => 'POST']);
@@ -628,7 +632,6 @@ $router->group([
     $r->add('/reports/reporters/{id:\d+}/resume', ['controller' => 'ReporterController', 'action' => 'resume', 'method' => 'POST']);
 
     // Report reasons, their rules and the safeguards. Administrators only.
-    $r->add('/reports/settings', ['controller' => 'ModerationSettingsController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/reports/settings/safeguards', ['controller' => 'ModerationSettingsController', 'action' => 'updateSafeguards', 'method' => 'POST']);
     $r->add('/reports/settings/reasons/{slug:[a-z_]+}', ['controller' => 'ModerationSettingsController', 'action' => 'updateReason', 'method' => 'POST']);
 

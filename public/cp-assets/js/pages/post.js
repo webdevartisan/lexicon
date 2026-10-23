@@ -193,13 +193,23 @@ function initScheduleAwareness() {
   const publishLabel = primary ? primary.dataset.publishLabel : '';
   const publishIntent = primary ? primary.getAttribute('value') : '';
 
+  // A post published before keeps its past date, which holds nothing back,
+  // so only a date still ahead turns publishing into scheduling.
+  function isScheduling() {
+    const picker = dateField._flatpickr;
+    if (!picker) return dateField.value.trim() !== '';
+    const picked = picker.selectedDates[0];
+    return picked !== undefined && picked.getTime() > Date.now();
+  }
+
   function refresh() {
     const hasDate = dateField.value.trim() !== '';
+    const scheduling = isScheduling();
 
     if (clearBtn) clearBtn.classList.toggle('hidden', !hasDate);
 
     if (hint) {
-      hint.textContent = hasDate
+      hint.textContent = scheduling
         ? 'Publishing is held until this time. A sweep runs every minute, so it may go live a moment late.'
         : 'Leave empty to go live as soon as you publish.';
     }
@@ -209,8 +219,8 @@ function initScheduleAwareness() {
     if (!primary || !label) return;
     if (publishIntent !== 'publish' && publishIntent !== 'schedule') return;
 
-    label.textContent = hasDate ? 'Schedule' : publishLabel;
-    if (icon) icon.setAttribute('data-lucide', hasDate ? 'calendar-clock' : 'send');
+    label.textContent = scheduling ? 'Schedule' : publishLabel;
+    if (icon) icon.setAttribute('data-lucide', scheduling ? 'calendar-clock' : 'send');
     if (window.lucide) window.lucide.createIcons();
   }
 

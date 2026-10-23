@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Welcome: "What would you like to do?" after sign-up
+   ========================================================================== */
+.lx-welcome { padding-block: clamp(2.5rem, 8vw, 5rem); }
+.lx-welcome-choices {
+    display: grid;
+    gap: var(--lx-space-4);
+    margin: var(--lx-space-6) 0 0;
+    padding: 0;
+    list-style: none;
+}
+@media (--lx-up-md) {
+    .lx-welcome-choices { grid-template-columns: 1fr 1fr; }
+}
+.lx-welcome-choice {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-2);
+    block-size: 100%;
+    padding: var(--lx-space-5);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius-lg);
+    background: var(--lx-paper-raised);
+    color: var(--lx-ink);
+    text-decoration: none;
+    transition: border-color var(--lx-dur) var(--lx-ease), transform var(--lx-dur) var(--lx-ease);
+}
+.lx-welcome-choice:hover { border-color: var(--lx-ink); transform: translateY(-2px); }
+.lx-welcome-choice-title {
+    font-family: var(--lx-serif);
+    font-size: 1.5rem;
+    line-height: 1.2;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--lx-dur) var(--lx-ease);
+}
+.lx-welcome-choice:hover .lx-welcome-choice-title { text-decoration-color: currentColor; }
+.lx-welcome-choice:focus-visible { outline: none; border-color: var(--lx-ink); }
+.lx-welcome-choice:focus-visible .lx-welcome-choice-title { text-decoration-color: currentColor; text-decoration-thickness: 3px; }
+.lx-welcome-choice-text { color: var(--lx-ink-2); font-size: var(--lx-text-sm); }
+@media (prefers-reduced-motion: reduce) {
+    .lx-welcome-choice { transition: none; }
+    .lx-welcome-choice:hover { transform: none; }
+}
+.lx-recovery-codes {
+    list-style: none;
+    margin: var(--lx-space-4) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--lx-space-2);
+}
+.lx-recovery-codes li {
+    padding: var(--lx-space-2) var(--lx-space-3);
+    border: 1px solid var(--lx-rule-strong);
+    background: var(--lx-paper-sunk);
+    text-align: center;
+}
+.lx-recovery-codes code,
+.lx-twofactor-secret {
+    font-family: var(--lx-mono);
+    letter-spacing: 0.08em;
+}
+.lx-twofactor-qr {
+    inline-size: 12.5rem;
+    margin-block: var(--lx-space-4);
+    background: #fff;
+    padding: var(--lx-space-2);
+    border: 1px solid var(--lx-rule-strong);
+}
+.lx-twofactor-qr svg { display: block; inline-size: 100%; block-size: auto; }
+.lx-card .lx-stat + .lx-account-form { margin-block-start: var(--lx-space-5); }

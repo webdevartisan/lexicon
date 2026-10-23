@@ -1,0 +1,31 @@
+/*
+ * Platform chrome.
+ *
+ * Controls Lexicon renders on top of a blog's theme: the post action bar's
+ * overflow menu, the comment menus, and the viewer's account menu. They are
+ * Lexicon speaking rather than the blog, so they look the same on every theme.
+ *
+ * A theme repaints them through --platform-menu-bg and --platform-menu-fg
+ * instead of restyling the rules. That pair is the whole escape hatch; a theme
+ * that needs more than a repaint should say so rather than fork the markup.
+ *
+ * Edit the partials in resources/css/platform-chrome/ and run `npm run build:chrome-css`;
+ * public/assets/css/platform-chrome.css is build output.
+ */
+
+@import "./shared/scale.css";
+@import "./platform-chrome/00-palette.css";
+@import "./platform-chrome/00-menu.css";
+@import "./platform-chrome/01-account-trigger.css";
+@import "./platform-chrome/02-bylines.css";
+@import "./platform-chrome/03-dialogs.css";
+@import "./platform-chrome/03-report-dialog.css";
+@import "./platform-chrome/03-sign-in-dialog.css";
+@import "./platform-chrome/04-notif-panel.css";
+@import "./platform-chrome/05-notif-items.css";
+@import "./platform-chrome/06-notif-pages.css";
+@import "./platform-chrome/07-insights-notice.css";
+@import "./platform-chrome/08-confirm-dialog.css";
+@import "./platform-chrome/09-select-menu.css";
+@import "./platform-chrome/10-site-modal.css";
+@import "./platform-chrome/11-reader-modal.css";

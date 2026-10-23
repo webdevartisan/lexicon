@@ -1,0 +1,55 @@
+/* -------------------------------------------------------------------------
+   Every dialog wears one card: the settings modal, sign-in, report, the avatar
+   cropper and both confirmations. Colours come from the --acct-* set in
+   10-site-modal.css, which all of them take.
+   ------------------------------------------------------------------------- */
+
+.panel-dialog-card,
+.lex-auth-card,
+.lex-report,
+.acct-crop,
+.confirm-card,
+.blog-confirm {
+  border: 1px solid var(--acct-line);
+  border-radius: var(--lx-radius-xl);
+  background: var(--acct-bg);
+  color: var(--acct-ink);
+  box-shadow: var(--chrome-dialog-shadow);
+}
+
+.panel-dialog::backdrop,
+.lex-report::backdrop,
+.acct-crop::backdrop,
+.blog-confirm::backdrop,
+.lex-auth-overlay {
+  background: var(--chrome-backdrop);
+}
+
+/* The two dialogs with forms use the settings modal's form parts, so all
+   three read as one family. Native scrollbars, radios and fields draw to
+   match the card. */
+.lex-auth-card,
+.lex-report {
+  --form-muted: color-mix(in srgb, var(--acct-ink) 70%, transparent);
+  --form-ok: var(--chrome-dark-ok);
+  color-scheme: dark;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  font-family: inherit;
+  font-size: var(--lx-text-sm);
+  line-height: 1.5;
+}
+
+[data-mode='light'] .lex-auth-card,
+[data-mode='light'] .lex-report {
+  --form-ok: var(--chrome-light-ok);
+  color-scheme: light;
+}
+
+.lex-auth-card .lex-auth-success,
+.lex-report .lex-report-done p {
+  margin: .5rem 0 1rem;
+  font-size: var(--lx-text-base);
+  font-weight: var(--lx-weight-semibold);
+  color: var(--form-ok);
+}

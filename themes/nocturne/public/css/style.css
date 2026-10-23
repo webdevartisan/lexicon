@@ -273,10 +273,6 @@ a {
   transform: translateY(-1px);
 }
 
-.nav-user {
-  position: relative;
-}
-
 .nav-toggle {
   display: none;
   flex-direction: column;

@@ -60,6 +60,18 @@ class Lexicon extends Module
     }
 
     /**
+     * Open the media library's upload panel unless it already shows, as it does on an empty library.
+     * Upload messages appear inside it, so a closed panel hides them.
+     */
+    public function openTheMediaUploader(): void
+    {
+        $browser = $this->browser();
+        if ($browser->executeJS("return document.getElementById('media-upload-panel').classList.contains('hidden')")) {
+            $browser->click('#media-upload-toggle');
+        }
+    }
+
+    /**
      * Open the replies under a comment unless they already show, as they do right after replying.
      */
     public function showRepliesTo(string $commentId): void
@@ -126,7 +138,7 @@ class Lexicon extends Module
         $browser->fillField('Email address', $email);
         $browser->fillField('Password', $password);
         $this->waitForTheSignUpCheck();
-        $browser->click('Log in', 'form[action="/login"]');
+        $browser->click('Sign in', 'form[action="/login"]');
         $browser->waitForJS("return !location.pathname.endsWith('/login')", 15);
         $browser->saveSessionSnapshot($person);
     }

@@ -34,7 +34,7 @@ $itemPlural = $itemPlural ?? null;
 {% set postPlural = t('components.paginator.info.postPlural') %}
 
 <?php if (!empty($pagination) && $pagination['total_pages'] > 1) { ?>
-    <nav class="pagination" aria-label="{{ paginationLabel }}">
+    <nav class="pagination flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="{{ paginationLabel }}">
         <?php
         /**
          * Build pagination URL with preserved parameters.
@@ -76,18 +76,18 @@ $itemPlural = $itemPlural ?? null;
     }
     ?>
 
-        <ul class="flex flex-wrap items-center gap-2 justify-center">
+        <ul class="flex flex-wrap items-center gap-2 justify-center sm:order-2">
             <!-- Previous Button -->
             <li>
                 <?php if ($pagination['has_previous']) { ?>
                     <a href="<?= e($buildPaginationUrl($pagination['current_page'] - 1)) ?>" data-page-link
-                       class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
+                       class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($previousPageLabel) ?>">
                         {% cache 'lucide:chevron-left' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
                     </a>
                 <?php } else { ?>
                     <!-- disable the previous button on first page -->
-                    <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
+                    <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
                           aria-disabled="true"
                           aria-label="<?= e($previousUnavailableLabel) ?>">
                         {% cache 'lucide:chevron-left' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-left"></i>{% endcache %}
@@ -100,14 +100,14 @@ $itemPlural = $itemPlural ?? null;
                 <li>
                     <?php if ($i === $pagination['current_page']) { ?>
                         <!-- apply the "active" class to the current page for visual distinction -->
-                        <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500 [&.active]:text-custom-50 dark:[&.active]:text-custom-50 [&.active]:bg-custom-500 dark:[&.active]:bg-custom-500 [&.active]:border-custom-500 dark:[&.active]:border-custom-500 active"
+                        <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500 [&.active]:text-white [&.active]:bg-slate-900 [&.active]:border-slate-900 dark:[&.active]:text-zink-800 dark:[&.active]:bg-zink-100 dark:[&.active]:border-zink-100 active"
                               aria-current="page"
                               aria-label="<?= e($currentPageLabel) ?> <?= $i ?>">
                             <?= $i ?>
                         </span>
                     <?php } else { ?>
                         <a href="<?= e($buildPaginationUrl($i)) ?>" data-page-link
-                           class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500 [&.active]:text-custom-50 dark:[&.active]:text-custom-50 [&.active]:bg-custom-500 dark:[&.active]:bg-custom-500 [&.active]:border-custom-500 dark:[&.active]:border-custom-500"
+                           class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500 [&.active]:text-white [&.active]:bg-slate-900 [&.active]:border-slate-900 dark:[&.active]:text-zink-800 dark:[&.active]:bg-zink-100 dark:[&.active]:border-zink-100"
                            aria-label="<?= e($goToPageLabel) ?> <?= $i ?>">
                             <?= $i ?>
                         </a>
@@ -119,13 +119,13 @@ $itemPlural = $itemPlural ?? null;
             <li>
                 <?php if ($pagination['has_next']) { ?>
                     <a href="<?= e($buildPaginationUrl($pagination['current_page'] + 1)) ?>" data-page-link
-                       class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
+                       class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-500 dark:text-zink-200 hover:text-custom-500 dark:hover:text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10 focus:bg-custom-50 dark:focus:bg-custom-500/10 focus:text-custom-500 dark:focus:text-custom-500"
                        aria-label="<?= e($nextPageLabel) ?>">
                         {% cache 'lucide:chevron-right' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
                     </a>
                 <?php } else { ?>
                     <!-- disable the next button on last page -->
-                    <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-full border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
+                    <span class="inline-flex items-center justify-center bg-white size-8 dark:bg-zink-700 transition-all duration-150 ease-linear border rounded-lg border-slate-200 dark:border-zink-500 text-slate-400 dark:text-zink-300 cursor-auto disabled"
                           aria-disabled="true"
                           aria-label="<?= e($nextUnavailableLabel) ?>">
                         {% cache 'lucide:chevron-right' ttl=31536000 %}<i class="size-4 rtl:rotate-180" data-lucide="chevron-right"></i>{% endcache %}
@@ -135,7 +135,7 @@ $itemPlural = $itemPlural ?? null;
         </ul>
 
         <!-- Pagination Info -->
-        <div class="flex justify-center mt-3 text-sm text-slate-500 dark:text-zink-200">
+        <div class="flex justify-center text-sm text-slate-500 dark:text-zink-200 sm:order-1">
             <?= e($showingText) ?>
             <span class="font-semibold mx-1">
                 <?= (($pagination['current_page'] - 1) * $pagination['per_page']) + 1 ?>

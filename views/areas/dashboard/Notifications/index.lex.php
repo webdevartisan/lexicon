@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}<?= e($t('reader.notificationsTitle')) ?>{% endblock %}
-{% block subtitle %}<?= e($t('notifications.subtitle')) ?>{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline"><?= e($t('notifications.subtitle')) ?></span>{% endblock %}
 
 {% block body %}
 <?php $pageSkin = 'cp'; ?>

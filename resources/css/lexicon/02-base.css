@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--lx-paper);
+    color: var(--lx-ink);
+    font-family: var(--lx-serif);
+    font-optical-sizing: auto;
+    font-size: var(--lx-text-prose);
+    line-height: var(--lx-leading-prose);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: var(--lx-ink);
+    text-decoration: none;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: from-font;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+p {
+    margin: 0 0 1.1em;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--lx-serif);
+    font-weight: var(--lx-weight-medium);
+    line-height: var(--lx-leading-tight);
+    letter-spacing: var(--lx-track-tight);
+    margin: 0 0 0.5em;
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: var(--lx-text-3xl);
+}
+
+h2 {
+    font-size: var(--lx-text-2xl);
+}
+
+h3 {
+    font-size: clamp(1.2rem, 2vw, 1.45rem);
+}
+
+h4 {
+    font-size: 1.05rem;
+}
+
+strong,
+b {
+    font-weight: var(--lx-weight-semibold);
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--lx-rule);
+    margin: var(--lx-space-7) 0;
+}
+
+::selection {
+    background: var(--lx-gilt);
+    color: var(--lx-bind-deep);
+}
+
+:focus-visible {
+    outline: 2px solid var(--lx-ink);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.lx-cover :focus-visible,
+.lx-close :focus-visible,
+.lx-foot :focus-visible,
+.lx-drawer :focus-visible,
+.lx-nav.is-over :focus-visible {
+    outline-color: var(--lx-gilt);
+}
+
+/* Screen-reader-only text. `.label` is used by legacy accessible labels
+   (e.g. inside social icon links). */
+.label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.lx-icon {
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+}
+
+.lx-skip {
+    position: absolute;
+    inset-inline-start: var(--lx-space-4);
+    top: -4rem;
+    z-index: var(--lx-z-skip);
+    padding: var(--lx-space-3) var(--lx-space-5);
+    background: var(--lx-bind);
+    color: var(--lx-on-bind);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+    border-radius: var(--lx-radius);
+    transition: top var(--lx-dur) var(--lx-ease);
+}
+
+.lx-skip:focus {
+    top: var(--lx-space-4);
+    text-decoration: none;
+}
+

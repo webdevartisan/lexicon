@@ -10,6 +10,7 @@ $I->wantTo('put the same image into the media library twice');
 $I->signInAs('writer');
 $image = $I->makeImage('walk-twice');
 $I->amOnPage('/en/dashboard/blog/'.$I->recall('blogId').'/media');
+$I->openTheMediaUploader();
 $I->attachFile('#media-uploader-input', $image);
 $I->waitForText("{$image} uploaded", 15);
 $I->attachFile('#media-uploader-input', $image);

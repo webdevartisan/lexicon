@@ -141,7 +141,7 @@ $authorInThread = static function (array $nodes, int $authorId) use (&$authorInT
 $renderComment = static function (array $comment, int $depth) use (
     &$renderComment, $postId, $commentsOpen, $viewerVotes, $canRemove,
     $canPin, $viewerIsGuest, $indentCap, $replyBatch, $avatar, $postAuthorId,
-    $postAuthor, $heartedIds, $authorInThread
+    $postAuthor, $heartedIds, $authorInThread, $viewerId
 ): void {
     $id = (int) $comment['id'];
     $removed = !empty($comment['deleted_at']);
@@ -154,6 +154,8 @@ $renderComment = static function (array $comment, int $depth) use (
     $authorLabel = $authorHandle !== '' ? '@'.$authorHandle : $authorName;
     $myVote = (int) ($viewerVotes[$id] ?? 0);
     $byAuthor = $postAuthorId > 0 && (int) ($comment['user_id'] ?? 0) === $postAuthorId;
+    $isMine = $viewerId > 0 && (int) ($comment['user_id'] ?? 0) === $viewerId;
+    $canEdit = $isMine && $commentsOpen && !$removed;
 
     // The author endorsing their own comment is not an endorsement, it is a
     // person agreeing with themselves, so it earns no heart.
@@ -214,6 +216,9 @@ $renderComment = static function (array $comment, int $depth) use (
               <?php if (!empty($comment['created_at'])) { ?>
                 <time><?= e(relative_time($comment['created_at'])) ?></time>
               <?php } ?>
+              <?php if (!$removed && !empty($comment['edited_at'])) { ?>
+                <span class="comment-edited" title="<?= e(local_datetime($comment['edited_at'])) ?>">edited</span>
+              <?php } ?>
             </p>
 
             <?php if ($removed) { ?>
@@ -223,6 +228,17 @@ $renderComment = static function (array $comment, int $depth) use (
                 <?php if ($showMention) { ?><a class="comment-mention<?= $answeredGone ? ' is-gone' : '' ?>" href="#comment-<?= $answeredId ?>"><?= e($mentionLabel) ?></a> <?php } ?>
                 <?= nl2br(e($comment['content'] ?? '')) ?>
               </p>
+
+              <?php if ($canEdit) { ?>
+                <form class="reply-form edit-form" id="edit-form-<?= $id ?>" action="/comments/<?= $id ?>/edit" method="post" hidden>
+                  <?= csrf_field() ?>
+                  <textarea name="content" rows="2" maxlength="2000" aria-label="Edit your comment" required><?= e($comment['content'] ?? '') ?></textarea>
+                  <div class="comment-form-actions">
+                    <button type="button" class="reply-toggle reply-cancel" data-edit-cancel="<?= $id ?>">Cancel</button>
+                    <button type="submit" class="btn-reply">Save</button>
+                  </div>
+                </form>
+              <?php } ?>
 
               <div class="comment-actions">
                 <div class="comment-votes" data-comment-id="<?= $id ?>">
@@ -312,7 +328,11 @@ $renderComment = static function (array $comment, int $depth) use (
             <div class="platform-menu-list comment-menu-list" data-menu-list hidden>
               <button type="button" data-copy-comment data-anchor="#comment-<?= $id ?>">Copy link</button>
 
-              <?php if (!$viewerIsGuest) { ?>
+              <?php if ($canEdit) { ?>
+                <button type="button" data-edit-comment="<?= $id ?>">Edit</button>
+              <?php } ?>
+
+              <?php if (!$viewerIsGuest && !$isMine) { ?>
                 <button type="button" data-report-comment data-comment-id="<?= $id ?>">Report</button>
               <?php } ?>
 
@@ -449,7 +469,8 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-thread-root .comment-meta strong {
     font-size: inherit; line-height: inherit;
   }
-  .comment-thread-root .comment-meta time {
+  .comment-thread-root .comment-meta time,
+  .comment-thread-root .comment-meta .comment-edited {
     margin: 0; font-size: var(--c-time); letter-spacing: normal;
     text-transform: none; opacity: .6;
   }
@@ -667,8 +688,8 @@ $renderComment = static function (array $comment, int $depth) use (
   .comment-sort > summary::-webkit-details-marker { display: none; }
   .comment-sort > summary:hover { opacity: 1; }
   .comment-sort > summary svg { width: 16px; height: 16px; }
-  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; padding: .35rem; border-radius: 8px; background: var(--platform-menu-bg, #1c1c1c); box-shadow: 0 8px 26px rgba(0, 0, 0, .3); }
-  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: 5px; color: var(--platform-menu-fg, #f2f2f2); text-decoration: none; }
+  .comment-sort-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; min-width: 250px; }
+  .comment-sort-list a { display: block; padding: .6rem .75rem; border-radius: var(--lx-radius); color: var(--platform-menu-fg, #f2f2f2); text-decoration: none; }
   .comment-sort-list a:hover, .comment-sort-list a.is-current { background: rgba(128, 128, 128, .22); }
   .comment-sort-list strong { display: block; font-weight: 600; }
   .comment-sort-list span { display: block; margin-top: .1rem; font-size: .88em; opacity: .6; }
@@ -855,7 +876,7 @@ $renderComment = static function (array $comment, int $depth) use (
   <form class="comment-token" hidden aria-hidden="true"><?= csrf_field_lazy() ?></form>
 </div>
 
-<script defer src="/assets/js/report-dialog.js"></script>
-<link rel="stylesheet" href="/assets/css/blog-confirm.css">
-<script defer src="/assets/js/blog-confirm.js"></script>
-<script defer src="/assets/js/comments.js"></script>
+<script defer src="<?= e(versioned_asset('/assets/js/report-dialog.js')) ?>"></script>
+<link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/blog-confirm.css')) ?>">
+<script defer src="<?= e(versioned_asset('/assets/js/blog-confirm.js')) ?>"></script>
+<script defer src="<?= e(versioned_asset('/assets/js/comments.js')) ?>"></script>

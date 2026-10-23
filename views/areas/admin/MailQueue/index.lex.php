@@ -152,6 +152,7 @@ foreach ($tierOptions as $tierOpt) {
     </div>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if entries|empty %}
         {% cmp="empty-state" icon="mail-check" title="Nothing in the queue" message="Everything the platform sends passes through here and clears as the tier workers deliver it." %}
     {% else %}

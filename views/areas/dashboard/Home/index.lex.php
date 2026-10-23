@@ -272,6 +272,6 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
 </div>
 {% endblock %}
 {% block scripts %}
-<script src='/cp-assets/js/tooltip.js'></script>
-<script src="/cp-assets/js/next-steps.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/next-steps.js') ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/next-steps.js')) ?>"></script>
 {% endblock %}

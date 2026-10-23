@@ -196,6 +196,11 @@ class CacheMiddleware implements MiddlewareInterface
             return true;
         }
 
+        // A modal fetch gets the bare page; storing it would hand that to the next full visit
+        if ($request->header('X-Panel') !== null) {
+            return true;
+        }
+
         // Defence in depth. The auth check above already excludes every one of
         // these, since they all require a session; the list stands so that
         // loosening that check can never silently start caching private pages.

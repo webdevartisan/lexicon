@@ -1,0 +1,148 @@
+/* ==========================================================================
+   Footer — the colophon
+   ========================================================================== */
+
+/* Ink rather than the navy binding, to match the buttons and menus. The
+   greys are neutral so they don't read blue on it. */
+.lx-foot {
+    --lx-on-bind-2: #b4b8b1;
+    --lx-on-bind-3: #8c918a;
+    background: var(--lx-ink);
+    color: var(--lx-on-bind-2);
+    font-size: var(--lx-text-sm);
+}
+
+.lx-foot-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: clamp(2rem, 4vw, 3.5rem);
+    padding-block: clamp(3rem, 6vw, 4.5rem) clamp(2rem, 4vw, 3rem);
+}
+
+.lx-foot-brand .lx-logo {
+    color: var(--lx-on-bind);
+    margin-bottom: var(--lx-space-4);
+}
+
+.lx-foot-tagline {
+    font-family: var(--lx-serif);
+    font-style: italic;
+    color: var(--lx-gilt);
+    margin: 0 0 var(--lx-space-4);
+}
+
+.lx-foot-about {
+    margin: 0 0 var(--lx-space-5);
+    max-width: 42ch;
+    line-height: var(--lx-leading-prose);
+}
+
+.lx-foot h2 {
+    margin: 0 0 var(--lx-space-4);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
+    text-transform: uppercase;
+    color: var(--lx-on-bind);
+}
+
+.lx-foot ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot li + li {
+    margin-top: var(--lx-space-3);
+}
+
+.lx-foot a {
+    color: var(--lx-on-bind-2);
+}
+
+.lx-foot a:hover {
+    color: var(--lx-gilt);
+    text-decoration: none;
+}
+
+.lx-foot-contact li {
+    display: flex;
+    gap: var(--lx-space-2);
+    align-items: baseline;
+}
+
+/* At 14px the line box is 23px, just under the 24px tap target minimum. */
+.lx-foot-contact a {
+    min-height: 1.5rem;
+}
+
+.lx-foot-contact svg {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    opacity: 0.6;
+    transform: translateY(0.1em);
+}
+
+.lx-foot-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--lx-space-4) var(--lx-space-5);
+    padding-block: var(--lx-space-5) var(--lx-space-6);
+    border-top: 1px solid var(--lx-rule-bind);
+    font-size: var(--lx-text-xs);
+}
+
+.lx-foot-copy {
+    margin: 0;
+    margin-inline-end: auto;
+    color: var(--lx-on-bind-3);
+}
+
+.lx-foot-social {
+    display: flex;
+    gap: var(--lx-space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lx-foot-social a {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--lx-rule-bind);
+    border-radius: 50%;
+    color: var(--lx-on-bind-2);
+    transition: border-color var(--lx-dur) var(--lx-ease), color var(--lx-dur) var(--lx-ease);
+}
+
+.lx-foot-social a:hover {
+    border-color: var(--lx-gilt);
+    color: var(--lx-gilt);
+}
+
+.lx-foot-social svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+/* Three link groups, so three columns: two would strand the last one on a row of its own. */
+@media (--lx-below-lg) {
+    .lx-foot-inner {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .lx-foot-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (--lx-below-sm) {
+    .lx-foot-inner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

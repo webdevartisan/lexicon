@@ -6,6 +6,7 @@ namespace Framework\View;
 
 use Framework\Exceptions\NotFoundException;
 use Framework\Exceptions\TemplateRenderException;
+use Framework\Interfaces\LayoutSwitchInterface;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Interfaces\ThemeResolverInterface;
 use Framework\View\Traits\TemplateCacheTrait;
@@ -15,7 +16,7 @@ use Framework\View\Traits\TemplateInheritanceTrait;
 use Framework\View\Traits\TemplatePhpDirectivesTrait;
 use Framework\View\Traits\TemplateVariablesTrait;
 
-class TemplateRenderer implements TemplateViewerInterface
+class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
 {
     use TemplateCacheTrait;
     use TemplateComponentsTrait;
@@ -54,6 +55,9 @@ class TemplateRenderer implements TemplateViewerInterface
      */
     private array $compilationDependencies = [];
 
+    /** Layout used in place of the one a view extends, set for the rest of the request. */
+    private ?string $layoutOverride = null;
+
     /**
      * @param  ThemeResolverInterface  $themes  Resolves themed template paths.
      * @param  ViewNameResolverInterface  $viewResolver  Maps template names to relative paths.
@@ -83,6 +87,11 @@ class TemplateRenderer implements TemplateViewerInterface
     public function addGlobals(array $vars): void
     {
         $this->globals = array_replace($this->globals, $vars);
+    }
+
+    public function useLayout(string $layout): void
+    {
+        $this->layoutOverride = $layout;
     }
 
     /**

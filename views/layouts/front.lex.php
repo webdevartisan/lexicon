@@ -11,10 +11,13 @@ $siteName = site_setting('site_name', 'Lexicon');
 $frontNav = $nav_items ?? [];
 
 // The wordmark is the Home link and the primary button is "create a blog", so
-// repeating either in the bar would be dead weight. Both stay in the drawer
-// and the footer, where the full map is the point.
+// repeating either in the bar would be dead weight. Admin is a back-office
+// entry, not a page for readers to browse. All three stay in the drawer and the
+// footer, where the full map is the point.
 $barNav = array_filter($frontNav, static function (array $it): bool {
-    return ($it['href'] ?? '') !== '/' && ($it['key'] ?? '') !== 'navigation.createBlog';
+    return ($it['href'] ?? '') !== '/'
+        && ($it['key'] ?? '') !== 'navigation.createBlog'
+        && ($it['key'] ?? '') !== 'navigation.admin';
 });
 ?>
 <!DOCTYPE HTML>
@@ -60,8 +63,9 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <link rel="preload" href="/assets/fonts/instrumentsans-latin.woff2" as="font" type="font/woff2" crossorigin />
 
         <?php /* Lexicon's own controls, shared with every blog theme. */ ?>
-        <link rel="stylesheet" href="/assets/css/platform-chrome.css" />
-        <link rel="stylesheet" href="/assets/css/lexicon.css" />
+        <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>" />
+        <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
+        <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/lexicon.css')) ?>" />
 
         {% yield meta %}
 
@@ -313,12 +317,12 @@ foreach ($socialNetworks as $network) {
 
         <button type="button" class="fab scroll-top-btn" title="<?= e($t('a11y.backToTop')) ?>" aria-label="<?= e($t('a11y.backToTop')) ?>"></button>
 
-		<script src="/assets/js/platform-menu.js" defer></script>
-		<script src="/assets/js/flash-toast.js" defer></script>
-		<script src="/assets/js/front.js" defer></script>
-		<script src="/assets/js/lang-switcher.js" defer></script>
-		<script src="/assets/js/csrf-lazy.js" defer></script>
-		<script src="/assets/js/scrolltop.js" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/platform-menu.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/flash-toast.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/front.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/lang-switcher.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/csrf-lazy.js')) ?>" defer></script>
+		<script src="<?= e(versioned_asset('/assets/js/scrolltop.js')) ?>" defer></script>
 		{% include "partials/_auth_modal.lex.php" %}
 		{% yield scripts %}
 	</body>

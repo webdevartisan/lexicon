@@ -57,6 +57,7 @@ foreach ($resourceTypeOptions as $opt) {
     </form>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if entries|empty %}
         {% cmp="empty-state" icon="history" title="No audit entries" message="Actions like deletions, approvals, and role changes will be recorded here." %}
     {% else %}

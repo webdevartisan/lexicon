@@ -28,7 +28,13 @@ $safeClass = $itemClass.' text-slate-600 hover:bg-slate-50 focus:bg-slate-100 da
 $dangerClass = $itemClass.' text-red-600 hover:bg-red-50 focus:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus:bg-red-500/10';
 
 $renderItem = static function (array $item, string $class): string {
-    $icon = '<i data-lucide="'.e((string) ($item['icon'] ?? 'circle')).'" class="size-4 shrink-0" aria-hidden="true"></i>';
+    $iconName = (string) ($item['icon'] ?? 'circle');
+    $icon = fragment()->remember(
+        'lucide:row-item:'.$iconName,
+        static fn (): string => '<i data-lucide="'.e($iconName).'" class="size-4 shrink-0" aria-hidden="true"></i>',
+        31536000,
+        false
+    );
     $label = '<span>'.e((string) ($item['label'] ?? '')).'</span>';
 
     if (!empty($item['post'])) {
@@ -55,7 +61,7 @@ $renderItem = static function (array $item, string $class): string {
           aria-controls="<?= e($menuId) ?>"
           aria-label="<?= e('Actions for '.$title) ?>"
           class="p-2 text-slate-500 rounded-md transition-colors hover:text-custom-500 hover:bg-custom-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 dark:text-zink-300 dark:hover:bg-custom-500/10">
-    <i data-lucide="more-vertical" class="size-4" aria-hidden="true"></i>
+    {% cache 'lucide:more-vertical:row' ttl=31536000 %}<i data-lucide="more-vertical" class="size-4" aria-hidden="true"></i>{% endcache %}
   </button>
   <div id="<?= e($menuId) ?>"
        role="menu"

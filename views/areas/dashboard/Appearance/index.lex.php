@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}{{ t('blog.themes.pageTitle') }}{% endblock %}
-{% block subtitle %}{{ t('blog.themes.pageSubtitle') }}{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">{{ t('blog.themes.pageSubtitle') }}</span>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">
@@ -298,9 +298,9 @@ $socialLabel = $t('blog.form.fields.social.'.$platform);
 
 {% block scripts %}
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
-<script src="/cp-assets/js/dropzone.init.js?v=<?= (int) filemtime(ROOT_PATH.'/public/cp-assets/js/dropzone.init.js') ?>"></script>
-<script src="/cp-assets/js/media-picker.js"></script>
-<script src="/cp-assets/js/modal.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/dropzone.init.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     var sections = ['theme', 'branding'];

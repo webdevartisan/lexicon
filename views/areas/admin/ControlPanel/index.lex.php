@@ -358,5 +358,5 @@ $rows = [
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 {% endblock %}

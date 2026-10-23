@@ -1,0 +1,168 @@
+/* ---------------------------------------------------------------------------
+   Notifications: the bell, the panel it opens, and the rows both inbox pages
+   share. One definition for the Lexicon front, all five themes, the dashboard
+   and the admin topbar.
+
+   Colours come from tokens. The panel defaults to the dark platform surface
+   the account menu uses, so it reads the same on every theme; the control
+   panel's light mode repaints it light (see .is-cp below). The pages carry no
+   surface of their own and take the page's text colour, with tones tuned for
+   a light background unless a dark one says otherwise.
+   --------------------------------------------------------------------------- */
+
+.notif-panel,
+.notif-page {
+  --notif-fg: currentColor;
+  --notif-muted: color-mix(in srgb, currentColor 70%, transparent);
+  --notif-line: var(--chrome-line);
+  --notif-quote-bg: rgba(128, 128, 128, .12);
+  --notif-chip-bg: var(--chrome-hover);
+  --notif-tabs-bg: rgba(128, 128, 128, .14);
+  --notif-tab-on-bg: var(--notif-surface, #fff);
+  /* Concrete colours, not currentColor: currentColor on a button resolves to
+     the button's own text colour, which made the filled button white on white. */
+  --notif-primary-bg: var(--chrome-light-ink);
+  --notif-primary-fg: var(--chrome-light-bg);
+  --notif-unread: var(--chrome-light-unread);
+  --notif-tone-positive: var(--chrome-light-ok);
+  --notif-tone-attention: var(--chrome-light-warning);
+  --notif-tone-critical: var(--chrome-light-danger);
+  --notif-tone-neutral: var(--chrome-light-info);
+}
+
+.notif-panel {
+  --notif-surface: var(--platform-menu-bg, var(--chrome-dark-bg));
+  --notif-fg: var(--platform-menu-fg, var(--chrome-dark-ink));
+  --notif-muted: color-mix(in srgb, var(--notif-fg) 70%, transparent);
+  --notif-tab-on-bg: #2c2c2c;
+  --notif-primary-bg: var(--chrome-dark-ink);
+  --notif-primary-fg: var(--chrome-dark-bg);
+  --notif-unread: var(--chrome-dark-unread);
+  /* Light enough to clear 4.5:1 on the dark surface. */
+  --notif-tone-positive: var(--chrome-dark-ok);
+  --notif-tone-attention: var(--chrome-dark-warning);
+  --notif-tone-critical: var(--chrome-dark-danger);
+  --notif-tone-neutral: var(--chrome-dark-info);
+}
+
+/* Light mode, chosen in the user menu. Keyed on data-mode, which appearance.js
+   sets; the dashboard's .dark class on <html> is static and present in both. */
+[data-mode='light'] .notif-panel {
+  --notif-surface: var(--chrome-light-bg);
+  --notif-fg: var(--chrome-light-ink);
+  --notif-tab-on-bg: var(--chrome-light-bg);
+  --notif-primary-bg: var(--chrome-light-ink);
+  --notif-primary-fg: var(--chrome-light-bg);
+  --notif-unread: var(--chrome-light-unread);
+  --notif-tone-positive: var(--chrome-light-ok);
+  --notif-tone-attention: var(--chrome-light-warning);
+  --notif-tone-critical: var(--chrome-light-danger);
+  --notif-tone-neutral: var(--chrome-light-info);
+}
+
+/* Dark backgrounds the pages can sit on: the control panel's dark mode. The front
+   reader pages stay on light paper whatever the menus are set to. */
+[data-mode='dark'] :not(.lx-reader) > .notif-page {
+  --notif-surface: #1f2937;
+  --notif-primary-bg: #f1f5f9;
+  --notif-primary-fg: #1f2937;
+  --notif-unread: var(--chrome-dark-unread);
+  --notif-tone-positive: var(--chrome-dark-ok);
+  --notif-tone-attention: var(--chrome-dark-warning);
+  --notif-tone-critical: var(--chrome-dark-danger);
+  --notif-tone-neutral: var(--chrome-dark-info);
+  --notif-tab-on-bg: #1f2937;
+}
+
+/* The bell itself has no colour of its own, so it follows any masthead. */
+.nav-bell {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-bell-btn:hover,
+.nav-bell-btn[aria-expanded='true'] {
+  background: var(--chrome-hover);
+  border-color: rgba(128, 128, 128, .28);
+  text-decoration: none;
+}
+
+/* Sits on the bell's shoulder the way the dot sits on the avatar's. */
+.nav-bell-badge {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  transform: translate(35%, -20%);
+  pointer-events: none;
+}
+
+[dir='rtl'] .nav-bell-badge {
+  transform: translate(-35%, -20%);
+}
+
+.notif-panel {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  overflow: hidden;
+  background: var(--notif-surface);
+  color: var(--notif-fg);
+  font-size: var(--lx-text-base);
+  line-height: 1.4;
+}
+
+/* The bell sits beside the account menu and the nav toggle, so a panel pinned
+   to it runs off a phone screen. Below this width it hangs from the masthead
+   (fixed or sticky everywhere it appears), inset to the viewport. */
+@media (--lx-below-sm) {
+  .nav-bell {
+    position: static;
+  }
+
+  .nav-bell .notif-panel {
+    top: 100%;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+}
+
+.notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .85rem .5rem .5rem 1rem;
+}
+
+[dir='rtl'] .notif-panel-head {
+  padding: .85rem 1rem .5rem .5rem;
+}
+
+.notif-panel-title {
+  font-size: var(--lx-text-base);
+  font-weight: var(--lx-weight-bold);
+}
+
+.notif-panel-tools {
+  display: flex;
+  align-items: center;
+  gap: .15rem;
+}
+
+.notif-panel-tools form {
+  margin: 0;
+}
+

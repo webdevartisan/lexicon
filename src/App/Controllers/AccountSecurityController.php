@@ -68,6 +68,20 @@ final class AccountSecurityController extends AppController
     }
 
     /**
+     * Display the change-password form.
+     */
+    public function editPassword(): Response
+    {
+        $user = $this->users->findById((int) auth()->user()['id']);
+
+        if (!$user) {
+            throw new Exception('User record not found for the signed-in account');
+        }
+
+        return $this->view('public.Account.password', ['user' => $user]);
+    }
+
+    /**
      * Change the account password and rotate the session.
      */
     public function updatePassword(): Response
@@ -115,7 +129,7 @@ final class AccountSecurityController extends AppController
             ]);
             $this->flash('error', chrome_translate('account.flash.passwordError'));
 
-            return $this->redirect(lurl('/account/security'));
+            return $this->redirect(lurl('/account/security/password'));
         }
 
         // regenerate session ID after credential change to prevent session fixation
@@ -144,7 +158,7 @@ final class AccountSecurityController extends AppController
         ]);
         $this->flash('error', chrome_translate('account.flash.preferencesUnchanged'));
 
-        return $this->redirect(lurl('/account/security'));
+        return $this->redirect(lurl('/account/security/password'));
     }
 
     /**

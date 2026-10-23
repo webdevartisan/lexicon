@@ -1,7 +1,8 @@
 /**
  * Confirmation dialog for the public blog pages, used in place of the
- * browser's confirm(). The blog themes load none of the site or control
- * panel stylesheets, so this brings its own (blog-confirm.css).
+ * browser's confirm(). The card is the shared dialog card in platform-chrome.css;
+ * the blog themes lack the control panel's utility classes, so the layout lives
+ * in blog-confirm.css.
  *
  * window.blogConfirm(message) resolves true when the reader confirms and false
  * when they cancel, press Escape or click outside the box.

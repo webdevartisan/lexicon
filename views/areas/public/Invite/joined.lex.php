@@ -35,7 +35,7 @@
         </div>
 
         <footer class="lx-invite-foot lx-invite-foot-end">
-            <a class="lx-btn lx-invite-primary" href="<?= e(lurl('/dashboard')) ?>"><?= e($t('auth.inviteJoinedCta')) ?>
+            <a class="lx-btn lx-btn-primary lx-invite-primary" href="<?= e(lurl('/dashboard')) ?>"><?= e($t('auth.inviteJoinedCta')) ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
         </footer>

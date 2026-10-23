@@ -71,5 +71,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/assets/js/reader.js" defer></script>
+<script src="<?= e(versioned_asset('/assets/js/reader.js')) ?>" defer></script>
 {% endblock %}

@@ -1,0 +1,701 @@
+/* ==========================================================================
+   Legacy component shims
+   ========================================================================== */
+
+/* :not(.lx-bleed) also buys specificity over legacy components' own margins. */
+.lx-main > *:not(.lx-bleed) {
+    width: 100%;
+    max-width: var(--lx-measure);
+    margin-inline: auto;
+    padding-inline: var(--lx-gutter);
+}
+
+/* Scoped so a .lx-bleed section keeps its own padding. */
+.lx-main > section:not(.lx-bleed),
+.lx-main > article:not(.lx-bleed) {
+    padding-block: clamp(1.25rem, 4.5vw, 2.5rem);
+}
+
+.lx-main > section:not(.lx-bleed) + section:not(.lx-bleed) {
+    border-top: 1px solid var(--lx-rule);
+}
+
+/* Section header used by directory pages. Element-agnostic — put the class on
+   whatever tag suits the section (usually <header>). */
+.lx-section-head {
+    margin-bottom: var(--lx-space-6);
+}
+
+.lx-section-head h1,
+.lx-section-head h2 {
+    margin: 0 0 var(--lx-space-2);
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    font-weight: var(--lx-weight-medium);
+}
+
+.lx-section-head h1 + p,
+.lx-section-head h2 + p,
+.lx-section-head > p {
+    margin: 0;
+    color: var(--lx-ink-2);
+    max-width: 56ch;
+}
+
+/* Compact editorial header used at the top of directory pages. */
+.lx-page-head {
+    padding-block: clamp(1rem, 2.5vw, 1.5rem) clamp(0.25rem, 0.5vw, 0.5rem);
+}
+
+.lx-page-head h1 {
+    margin: 0 0 var(--lx-space-2);
+    font-size: var(--lx-text-3xl);
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: -0.025em;
+}
+
+.lx-page-head > p {
+    margin: 0;
+    max-width: 48ch;
+    font-size: clamp(1.05rem, 1.7vw, 1.2rem);
+    color: var(--lx-ink-2);
+}
+
+/* Featured slider — one slide per viewport, native scroll-snap under the hood,
+   arrows and dots driven by front.js. Reduced-motion viewers get instant scroll
+   and no autoplay. */
+.lx-slider {
+    position: relative;
+    padding: clamp(1.5rem, 3vw, 2.25rem) 0 clamp(1rem, 2vw, 1.5rem);
+    background: var(--lx-paper-sunk);
+    border-block: 1px solid var(--lx-rule);
+}
+
+/* Clone slides used to fake seamless loop-around; hidden from AT and the
+   dot count. */
+.lx-slider-rail [data-slider-clone] {
+    pointer-events: auto;
+}
+
+/* Rail holds a peek of the neighbouring cards on either side so the scroll
+   reads as "next card" rather than "whole page slid across." Snap centers the
+   card in the viewport at rest. */
+.lx-slider-rail {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lx-slider-rail::-webkit-scrollbar { display: none; }
+
+/* One slide fills the viewport width — snap step is a full viewport, so the
+   next card comes into view cleanly with no other card visible alongside. */
+.lx-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--lx-gutter);
+}
+
+/* Each slide is a self-contained card — bordered, raised paper, subtle shadow —
+   so the featured blog reads as a plate in a book instead of a bare image
+   floating next to text. */
+.lx-slide-card {
+    width: 100%;
+    max-width: 72rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(22, 35, 63, 0.04), 0 22px 48px -28px rgba(22, 35, 63, 0.28);
+}
+
+/* Side by side, the image stretches to the text's height; stacked, it keeps a fixed shape. */
+@media (--lx-below-md) {
+    .lx-slide-card {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lx-slide-media {
+        aspect-ratio: 4 / 3;
+    }
+}
+
+.lx-slide-media {
+    position: relative;
+    overflow: hidden;
+    background: var(--lx-bind);
+}
+
+.lx-slide-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.lx-slide-media-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--lx-gilt);
+    font-family: var(--lx-serif);
+    font-size: clamp(4rem, 10vw, 7rem);
+    line-height: 1;
+}
+
+.lx-slide-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-3);
+    padding: clamp(1.75rem, 3.5vw, 2.75rem);
+    justify-content: center;
+}
+
+.lx-slide-eyebrow {
+    margin: 0;
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
+    text-transform: uppercase;
+    color: var(--lx-gilt-deep);
+}
+
+.lx-slide-title {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: var(--lx-weight-medium);
+    line-height: var(--lx-leading-tight);
+    letter-spacing: var(--lx-track-tight);
+}
+
+.lx-slide-title a { color: var(--lx-ink); }
+
+.lx-slide-meta {
+    margin: 0;
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: var(--lx-track-label);
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+.lx-slide-desc {
+    margin: 0;
+    color: var(--lx-ink-2);
+    font-size: var(--lx-text-base);
+    line-height: var(--lx-leading-prose);
+    max-width: 42ch;
+}
+
+.lx-slide-cta {
+    margin-top: var(--lx-space-2);
+    align-self: start;
+}
+
+/* Prev / next arrows sit on the card at vertical middle. Paper-white fill so
+   they stay legible on both the dark image side and the light body side of
+   the card. Positioned relative to the .lx-slider section, nudged to the
+   card's edges (card is max 72rem wide, centered). */
+.lx-slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 50%;
+    color: var(--lx-ink);
+    font-size: var(--lx-text-sm);
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(22, 35, 63, 0.35);
+    transition: background var(--lx-dur) var(--lx-ease), color var(--lx-dur) var(--lx-ease), transform var(--lx-dur) var(--lx-ease);
+    z-index: var(--lx-z-raised);
+}
+
+.lx-slider-nav:hover {
+    background: var(--lx-ink);
+    border-color: var(--lx-ink);
+    color: var(--lx-paper);
+    transform: translateY(-50%) scale(1.06);
+}
+
+/* Land the arrows on the card's edges: card is max 72rem centered, so the
+   arrows sit at half-card-width from the viewport centre. Falls back to a
+   small inset on narrow screens. */
+.lx-slider-prev { left: max(0.75rem, calc(50% - 35rem)); }
+.lx-slider-next { right: max(0.75rem, calc(50% - 35rem)); }
+
+@media (--lx-below-md) {
+    .lx-slider-nav { display: none; }
+}
+
+.lx-slider-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--lx-space-3);
+    padding: 0;
+}
+
+/* The button is the 24px tap target; the dot drawn inside it stays small. */
+.lx-slider-dot {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.lx-slider-dot::before {
+    content: '';
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--lx-rule-strong);
+    transition: background var(--lx-dur) var(--lx-ease), transform var(--lx-dur) var(--lx-ease);
+}
+
+.lx-slider-dot:hover::before { background: var(--lx-ink-3); }
+
+.lx-slider-dot.is-active::before {
+    background: var(--lx-ink);
+    transform: scale(1.15);
+}
+
+/* Search field with the submit affordance inside the input.
+   Uses a real <button> so click and Enter both work. */
+.lx-search-field {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lx-search-field input[type='search'] {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.4rem 2.75rem 0.4rem 1rem;
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: 999px;
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color var(--lx-dur) var(--lx-ease), box-shadow var(--lx-dur) var(--lx-ease);
+}
+
+.lx-search-field input[type='search']:focus,
+.lx-search-field input[type='search']:focus-visible {
+    outline: none;
+    border-color: var(--lx-ink);
+    box-shadow: 0 0 0 3px rgba(23, 26, 28, 0.08);
+}
+
+.lx-search-field input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.lx-search-field-submit {
+    position: absolute;
+    inset-inline-end: 0.3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--lx-ink-2);
+    cursor: pointer;
+    transition: background var(--lx-dur) var(--lx-ease), color var(--lx-dur) var(--lx-ease);
+}
+
+.lx-search-field-submit:hover,
+.lx-search-field-submit:focus-visible {
+    background: var(--lx-ink);
+    color: var(--lx-paper);
+    outline: none;
+}
+
+/* Clear link — only rendered when the input has a value. Sits to the left of
+   the submit magnifier; input padding widens to make room. */
+.lx-search-field.has-value input[type='search'] {
+    padding-inline-end: 4.5rem;
+}
+
+.lx-search-field-clear {
+    position: absolute;
+    inset-inline-end: 2.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.9rem;
+    height: 1.9rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--lx-ink-3);
+    font-size: var(--lx-text-sm);
+    text-decoration: none;
+    transition: background var(--lx-dur) var(--lx-ease), color var(--lx-dur) var(--lx-ease);
+}
+
+.lx-search-field-clear:hover,
+.lx-search-field-clear:focus-visible {
+    background: var(--lx-paper-sunk);
+    color: var(--lx-ink);
+    outline: none;
+    text-decoration: none;
+}
+
+/* Modern minimal pagination: text-first prev/next with plain numbered links,
+   underlined current page. Generous spacing so the numbers can breathe. */
+.lx-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lx-space-4);
+    margin: var(--lx-space-8) 0 clamp(3rem, 6vw, 5rem);
+    padding: 0;
+    list-style: none;
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+}
+
+.lx-pagination a,
+.lx-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: var(--lx-space-2) var(--lx-space-3);
+    color: var(--lx-ink-2);
+    text-decoration: none;
+    border-radius: var(--lx-radius);
+    transition: color var(--lx-dur) var(--lx-ease), background var(--lx-dur) var(--lx-ease);
+}
+
+.lx-pagination a:hover {
+    color: var(--lx-ink);
+    background: var(--lx-paper-sunk);
+    text-decoration: none;
+}
+
+.lx-pagination a:focus-visible {
+    outline: 2px solid var(--lx-ink);
+    outline-offset: 2px;
+}
+
+.lx-pagination [aria-current='page'] {
+    color: var(--lx-ink);
+    font-weight: var(--lx-weight-semibold);
+    background: transparent;
+    box-shadow: inset 0 -2px 0 0 var(--lx-ink);
+    border-radius: 0;
+    padding-bottom: var(--lx-space-2);
+}
+
+.lx-pagination-step {
+    color: var(--lx-ink-3);
+    padding-inline: var(--lx-space-2);
+}
+
+.lx-pagination-gap {
+    color: var(--lx-ink-3);
+    padding-inline: var(--lx-space-2);
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Explore toolbar: tabs on the left, slim search on the right. Wraps under 640px.
+   Top margin gives the toolbar breathing room from the slider band above.
+   scroll-margin-top clears the sticky nav plus a bit of air, so the JS auto-scroll
+   after a tab / search / paginator change doesn't leave the toolbar hidden. */
+.lx-explore-head {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    scroll-margin-top: calc(var(--lx-nav-h) + 1rem);
+}
+
+.lx-explore-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--lx-space-4);
+    margin: 0 0 var(--lx-space-6);
+    padding-bottom: 0;
+    border-bottom: 1px solid var(--lx-rule);
+    scroll-margin-top: calc(var(--lx-nav-h) + 1rem);
+}
+
+.lx-explore-toolbar > .lx-explore-tabs {
+    margin: 0;
+    border-bottom: 0;
+}
+
+.lx-explore-toolbar > .lx-explore-search {
+    display: flex;
+    align-items: stretch;
+    gap: var(--lx-space-2);
+    margin: 0 0 var(--lx-space-2);
+    max-width: 22rem;
+    flex: 1 1 16rem;
+}
+
+/* Search input styling now lives on .lx-search-field so any page can reuse it;
+   .lx-explore-search is just the form wrapper the toolbar aligns. */
+
+@media (--lx-below-md) {
+    .lx-explore-toolbar > .lx-explore-search {
+        max-width: none;
+        flex-basis: 100%;
+    }
+}
+
+/* Blog directory grid. */
+.lx-blog-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    margin: 0 0 var(--lx-space-5);
+    padding: 0;
+    list-style: none;
+}
+
+.lx-blog-card h3 {
+    margin: 0 0 var(--lx-space-2);
+    font-size: var(--lx-text-lg);
+    font-weight: var(--lx-weight-medium);
+    line-height: var(--lx-leading-snug);
+}
+
+.lx-blog-card h3 a {
+    color: var(--lx-ink);
+}
+
+/* Sticks primary action to the bottom of the card so cards of varying content
+   height still line up. */
+.lx-blog-card .lx-blog-card-actions {
+    margin-top: auto;
+    margin-bottom: 0;
+    padding-top: var(--lx-space-3);
+}
+
+/* Metadata line: sans, small, uppercase, tracked. Used on cards and post rows. */
+p.meta,
+.meta {
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-medium);
+    letter-spacing: var(--lx-track-label);
+    text-transform: uppercase;
+    color: var(--lx-ink-3);
+}
+
+/* Admin/dashboard container primitive; not used by the front. */
+.card {
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+/* Pagination */
+ul.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--lx-space-2);
+    list-style: none;
+    margin: var(--lx-space-6) 0 0;
+    padding: 0;
+}
+
+.pagination-gap {
+    display: inline-block;
+    padding-inline: 0.35rem;
+    color: var(--lx-ink-3);
+}
+
+/* Forms */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+input[type='url'],
+input[type='tel'],
+input[type='number'],
+select,
+textarea {
+    width: 100%;
+    min-height: 2.875rem;
+    padding: var(--lx-space-3) var(--lx-space-3);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule-strong);
+    border-radius: var(--lx-radius);
+    color: var(--lx-ink);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-base);
+    line-height: 1.4;
+    transition: border-color var(--lx-dur) var(--lx-ease), box-shadow var(--lx-dur) var(--lx-ease);
+}
+
+textarea {
+    min-height: 9rem;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--lx-ink);
+    box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.14);
+}
+
+/* Suppress the outline only for :not(:focus-visible); keyboard focus keeps it. */
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--lx-ink-3);
+}
+
+label {
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+    font-weight: var(--lx-weight-semibold);
+}
+
+/* Explore page tabs */
+.lx-explore-tabs {
+    display: flex;
+    gap: var(--lx-space-6);
+    margin: 0 0 var(--lx-space-6);
+    border-bottom: 1px solid var(--lx-rule);
+}
+
+.lx-explore-tab {
+    position: relative;
+    padding-block: var(--lx-space-3);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-xs);
+    font-weight: var(--lx-weight-semibold);
+    letter-spacing: var(--lx-track-wide);
+    text-transform: uppercase;
+    color: var(--lx-ink-2);
+}
+
+.lx-explore-tab::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--lx-gilt-deep);
+    transform: scaleX(0);
+    transition: transform var(--lx-dur-slow) var(--lx-ease);
+}
+
+.lx-explore-tab:hover {
+    color: var(--lx-ink);
+    text-decoration: none;
+}
+
+.lx-explore-tab.active {
+    color: var(--lx-ink);
+}
+
+.lx-explore-tab.active::after {
+    transform: scaleX(1);
+}
+
+.lx-blog-card {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-rule);
+    border-radius: var(--lx-radius-lg);
+    transition: border-color var(--lx-dur-slow) var(--lx-ease), transform var(--lx-dur-slow) var(--lx-ease);
+}
+
+.lx-blog-card:hover {
+    border-color: var(--lx-rule-strong);
+    transform: translateY(-2px);
+}
+
+.lx-blog-card .meta {
+    margin-bottom: var(--lx-space-3);
+}
+
+.lx-search-meta {
+    margin-top: var(--lx-space-4);
+    font-family: var(--lx-sans);
+    font-size: var(--lx-text-sm);
+    color: var(--lx-ink-2);
+}
+
+/* Static content pages */
+.lx-page-content {
+    max-width: 42rem;
+}
+
+/* Links are ink like the text around them, so the underline is what marks them. */
+.lx-page-content a {
+    text-decoration: underline;
+}
+
+.lx-page-content h2 {
+    margin-top: var(--lx-space-7);
+    font-size: clamp(1.4rem, 2.4vw, 1.85rem);
+}
+
+.lx-page-content ul,
+.lx-page-content ol {
+    margin: 0 0 var(--lx-space-5);
+    padding-inline-start: 1.25rem;
+}
+
+.lx-page-content li + li {
+    margin-top: var(--lx-space-2);
+}
+
+.lx-page-content blockquote {
+    margin: var(--lx-space-6) 0;
+    padding-inline-start: 1.25rem;
+    border-inline-start: 2px solid var(--lx-gilt-deep);
+    font-style: italic;
+    color: var(--lx-ink-2);
+}
+

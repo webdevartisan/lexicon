@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}<?= e((string) ($post['title'] ?? '')) ?> · <?= e($t('navigation.insights')) ?>{% endblock %}
-{% block subtitle %}<?= e($t('analytics.postSubtitle')) ?>{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline"><?= e($t('analytics.postSubtitle')) ?></span>{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">

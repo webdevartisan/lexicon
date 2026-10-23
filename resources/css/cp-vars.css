@@ -6,17 +6,17 @@
   --sc-custom-500: 59 130 246;
   --sc-custom-600: 37 99 235;
 
-  --sc-zink-50: 248 250 252;
-  --sc-zink-100: 200 215 233;
-  --sc-zink-200: 146 175 211;
-  --sc-zink-300: 203 213 225;
-  --sc-zink-400: 148 163 184;
-  --sc-zink-500: 35 58 87;
-  --sc-zink-600: 28 46 69;
-  --sc-zink-700: 19 35 55;
-  --sc-zink-800: 15 24 36;
+  --sc-zink-50: 250 250 250;
+  --sc-zink-100: 229 229 229;
+  --sc-zink-200: 163 163 163;
+  --sc-zink-300: 190 190 190;
+  --sc-zink-400: 140 140 140;
+  --sc-zink-500: 52 52 52;
+  --sc-zink-600: 38 38 38;
+  --sc-zink-700: 23 23 23;
+  --sc-zink-800: 15 15 15;
 
-  --sc-body-bg: 248 250 252;
+  --sc-body-bg: 250 250 250;
   --sc-body-bordered: 241 245 249;
 
   --sc-topbar-bg: 255 255 255;
@@ -26,8 +26,8 @@
   --sc-topbar-item-hover: 59 130 246;
   --sc-topbar-item-bg-hover: 241 245 249;
 
-  --sc-topbar-bg-dark: 15 23 42;
-  --sc-topbar-border-dark: 51 65 85;
+  --sc-topbar-bg-dark: 20 20 20;
+  --sc-topbar-border-dark: 38 38 38;
 
   --sc-topbar-bg-brand: 59 130 246;
   --sc-topbar-border-brand: 37 99 235;
@@ -35,31 +35,31 @@
   --sc-vertical-menu-bg: 255 255 255;
   --sc-vertical-menu-border: 226 232 240;
 
-  --sc-vertical-menu-bg-dark: 15 23 42;
-  --sc-vertical-menu-border-dark: 51 65 85;
+  --sc-vertical-menu-bg-dark: 20 20 20;
+  --sc-vertical-menu-border-dark: 38 38 38;
 
   --sc-vertical-menu-bg-brand: 59 130 246;
   --sc-vertical-menu-border-brand: 37 99 235;
 
   --sc-vertical-menu-item: 51 65 85;
-  --sc-vertical-menu-item-hover: 37 99 235;
+  --sc-vertical-menu-item-hover: 15 23 42;
 
-  --sc-vertical-menu-item-bg-hover: 241 245 249;
+  --sc-vertical-menu-item-bg-hover: 244 244 245;
 
   /* custom-600 rather than custom-500: the lighter blue only reaches 3:1 on the
      custom-100 fill, which is under the AA floor for label text. */
-  --sc-vertical-menu-item-active: 37 99 235;
-  --sc-vertical-menu-item-bg-active: 219 234 254;
+  --sc-vertical-menu-item-active: 15 23 42;
+  --sc-vertical-menu-item-bg-active: 238 238 240;
 }
 
 [data-mode="dark"] {
-  --sc-vertical-menu-item: 146 175 211;
-  --sc-vertical-menu-item-hover: 226 232 240;
+  --sc-vertical-menu-item: 163 163 163;
+  --sc-vertical-menu-item-hover: 245 245 245;
 
   /* The dark sidebar sits on zink-700, so the old zink-600 fills landed within
      a hair of the surface and neither hover nor the current page showed up. */
-  --sc-vertical-menu-item-bg-hover: 35 58 87;
+  --sc-vertical-menu-item-bg-hover: 36 36 36;
 
   --sc-vertical-menu-item-active: 255 255 255;
-  --sc-vertical-menu-item-bg-active: 29 56 96;
+  --sc-vertical-menu-item-bg-active: 46 46 46;
 }

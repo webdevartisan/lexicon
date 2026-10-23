@@ -1,0 +1,46 @@
+/* The chrome's two cards. Menus, panels and dialogs are dark unless Light is
+   picked; the full account and inbox pages sit on light paper either way. */
+:root {
+  --chrome-dark-bg: #1c1c1c;
+  --chrome-dark-ink: #f2f2f2;
+  --chrome-dark-shadow: 0 8px 26px rgba(0, 0, 0, .3);
+
+  --chrome-light-bg: #fff;
+  --chrome-light-ink: #1e293b;
+  --chrome-light-edge: #e2e8f0;
+  --chrome-light-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+
+  /* Grey at part opacity reads on either card. */
+  --chrome-line: rgba(128, 128, 128, .3);
+  --chrome-hover: rgba(128, 128, 128, .16);
+
+  /* Pastel tones clear 4.5:1 on the dark card, the deep ones on white. */
+  --chrome-dark-info: #a8c7fa;
+  --chrome-dark-ok: #7ddba0;
+  --chrome-dark-warning: #ffd47d;
+  --chrome-dark-danger: #ffb4ab;
+  --chrome-dark-unread: #3ddc84;
+
+  --chrome-light-info: #2659b5;
+  --chrome-light-ok: #1f6f43;
+  --chrome-light-warning: #8a5a00;
+  --chrome-light-danger: #b3261e;
+  --chrome-light-unread: #15803d;
+
+  /* What every dropdown and dialog wears; the light block below swaps them. */
+  --chrome-border: var(--chrome-line);
+  --chrome-shadow: var(--chrome-dark-shadow);
+  --chrome-dialog-shadow: 0 18px 50px rgba(15, 23, 42, .18);
+  --chrome-backdrop: rgba(0, 0, 0, .5);
+}
+
+/* Light, chosen in the user menu (appearance.js sets data-mode). html raises it
+   above a theme's own :root repaint, so the choice wins inside themes too. */
+html[data-mode='light'] {
+  --platform-menu-bg: var(--chrome-light-bg);
+  --platform-menu-fg: var(--chrome-light-ink);
+  --platform-badge-bg: var(--chrome-light-danger);
+  --platform-badge-fg: #fff;
+  --chrome-border: var(--chrome-light-edge);
+  --chrome-shadow: var(--chrome-light-shadow);
+}

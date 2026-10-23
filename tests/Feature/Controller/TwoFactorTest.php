@@ -265,3 +265,80 @@ describe('second sign-in step', function () {
         expect(\Framework\Core\App::container()->get(\Framework\Session::class)->get(TwoFactorChallengeController::PENDING_KEY))->toBeNull();
     });
 });
+
+describe('second sign-in step from the blog modal', function () {
+    beforeEach(function () {
+        $this->controller = new TwoFactorChallengeController($this->service, $this->throttle, $this->users);
+
+        $this->park = function (?int $at = null): void {
+            \Framework\Core\App::container()->get(\Framework\Session::class)->set(TwoFactorChallengeController::PENDING_KEY, [
+                'user_id' => $this->userId,
+                'return_to' => null,
+                'at' => $at ?? time(),
+            ]);
+        };
+
+        $this->answer = function (string $code): array {
+            $request = makeRequest('/login/two-factor', 'POST', ['_token' => csrf()->getToken(), 'code' => $code], [], [], [
+                'X-Requested-With' => 'XMLHttpRequest',
+            ]);
+            setupController($this->controller, $request, $this->viewer);
+            $response = callController($this->controller, 'submit', $request);
+
+            return [$response->getStatusCode(), json_decode($response->getBody(), true)];
+        };
+    });
+
+    test('a right password asks the modal for a code without signing in', function () {
+        ($this->enable)();
+        $this->db->query('UPDATE users SET password = ? WHERE id = ?', [password_hash('long enough secret', PASSWORD_DEFAULT), $this->userId]);
+        $email = $this->users->findById($this->userId)['email'];
+
+        $request = makeRequest('/login', 'POST', [
+            '_token' => csrf()->getToken(),
+            'email' => $email,
+            'password' => 'long enough secret',
+        ], [], [], ['X-Requested-With' => 'XMLHttpRequest']);
+        $controller = new \App\Controllers\Auth\AuthController();
+        setupController($controller, $request, $this->viewer);
+        $body = json_decode($controller->submit()->getBody(), true);
+
+        expect($body['success'])->toBeTrue();
+        expect($body['data'])->toBe(['two_factor' => true]);
+        expect(auth()->check())->toBeFalse();
+    });
+
+    test('a wrong code is refused with a message the modal can show', function () {
+        ($this->enable)();
+        ($this->park)();
+
+        [$status, $body] = ($this->answer)('000000');
+
+        expect($status)->toBe(422);
+        expect($body['success'])->toBeFalse();
+        expect($body['error'])->toBe(chrome_translate('auth.twoFactorWrong'));
+        expect(auth()->check())->toBeFalse();
+    });
+
+    test('an expired step tells the modal to start over', function () {
+        ($this->enable)();
+        ($this->park)(time() - 601);
+
+        [$status, $body] = ($this->answer)('123456');
+
+        expect($status)->toBe(419);
+        expect($body['error'])->toBe(chrome_translate('authModal.sessionExpired'));
+        expect(auth()->check())->toBeFalse();
+    });
+
+    test('a right code signs in and answers with JSON', function () {
+        [$secret] = ($this->enable)();
+        ($this->park)();
+
+        [$status, $body] = ($this->answer)($this->totp->codeAt($secret, $this->totp->stepAt(time()) + 1));
+
+        expect($status)->toBe(200);
+        expect($body['success'])->toBeTrue();
+        expect((int) auth()->user()['id'])->toBe($this->userId);
+    });
+});

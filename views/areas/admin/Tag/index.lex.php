@@ -36,6 +36,7 @@ $selectedBlogKey = $blogId > 0 ? (string) $blogId : '';
     </div>
 
     <div data-table-region>
+        {% cmp="page-size" perPage="{$perPage}" %}
     {% if tags|empty %}
         {% cmp="empty-state" icon="tags" title="{$emptyTitle}" message="{$emptyMessage}" %}
     {% else %}
@@ -92,5 +93,5 @@ $deleteUrl = '/admin/tags/'.$tag['id'].'/delete';
 {% endblock %}
 
 {% block scripts %}
-<script src="/cp-assets/js/tooltip.js"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 {% endblock %}
