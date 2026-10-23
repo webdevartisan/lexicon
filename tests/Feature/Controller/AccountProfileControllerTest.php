@@ -100,7 +100,7 @@ afterEach(function () {
 test('the account route group sits behind auth middleware', function () {
     $routes = file_get_contents(ROOT_PATH.'/config/routes.php');
     // The /account group declares auth, so a guest is redirected before any action.
-    expect($routes)->toMatch("/'prefix'\\s*=>\\s*'\\/account',\\s*'middleware'\\s*=>\\s*\\['auth'\\]/");
+    expect($routes)->toMatch("/'prefix'\\s*=>\\s*'\\/account',\\s*'middleware'\\s*=>\\s*\\['auth'[,\\]]/");
 });
 
 test('edit renders the account profile view', function () {

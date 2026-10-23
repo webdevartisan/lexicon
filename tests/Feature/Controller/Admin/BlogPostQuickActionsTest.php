@@ -64,6 +64,7 @@ beforeEach(function () {
         $container->get(BlogOwnershipService::class),
         $container->get(BlogDeletionService::class),
         new App\Models\AnalyticsStatsModel($this->db),
+        new App\Models\BlogSettingsModel($this->db),
     );
 
     $this->postController = new PostController(
@@ -75,6 +76,9 @@ beforeEach(function () {
         $container->get(PostContentSanitizer::class),
         $container->get(MediaService::class),
         new App\Models\PostListingModel($this->db),
+        new App\Models\CategoryModel($this->db),
+        new App\Models\TagModel($this->db),
+        $container->get(App\Services\UploadService::class),
     );
 
     $this->mockViewer = new class() implements TemplateViewerInterface
