@@ -75,6 +75,16 @@ class PostResource
         return $this->data['status'];
     }
 
+    /**
+     * Autosave writes straight into the post, so it is only safe while the post
+     * is unfinished work. Once it is live, booked or archived, a half-typed edit
+     * would reach readers or go out on schedule.
+     */
+    public function acceptsAutosave(): bool
+    {
+        return in_array($this->status(), ['draft', 'pending'], true);
+    }
+
     public function comments_enabled(): int
     {
         return $this->data['comments_enabled'];

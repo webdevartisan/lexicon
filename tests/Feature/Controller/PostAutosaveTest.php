@@ -91,6 +91,35 @@ it('saves the rest of the draft and reports a date it cannot read', function () 
         ->and($saved['published_at'])->toBeNull();
 });
 
+it('leaves a post alone once it has left draft', function (string $status) {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query('UPDATE posts SET status = ? WHERE id = ?', [$status, $created['id']]);
+
+    [$code, $body] = ($this->autosave)([
+        'id' => $created['id'],
+        'title' => 'Half-typed title',
+        'content' => '<p>Half-typed body</p>',
+        'published_at' => '01.01.30 09:00',
+    ]);
+
+    $saved = $this->posts->find($created['id']);
+    expect($code)->toBe(400)
+        ->and($body['error'])->toContain('Autosave only keeps drafts')
+        ->and($saved['title'])->toBe('Autosaved draft')
+        ->and($saved['content'])->toBe('<p>Body</p>')
+        ->and($saved['published_at'])->toBeNull();
+})->with(['scheduled', 'published', 'archived', 'moderated']);
+
+it('keeps autosaving a submission that is still with its writer', function () {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query("UPDATE posts SET status = 'pending' WHERE id = ?", [$created['id']]);
+
+    [$code] = ($this->autosave)(['id' => $created['id'], 'title' => 'Second pass']);
+
+    expect($code)->toBe(200)
+        ->and($this->posts->find($created['id'])['title'])->toBe('Second pass');
+});
+
 it('stores a readable date in UTC', function () {
     [, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'published_at' => '25.12.26 09:30', 'timezone' => 'Europe/Athens']);
 

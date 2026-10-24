@@ -64,6 +64,13 @@ final class PostAutosaveService
                 return ['success' => false, 'error' => 'Unauthorized'];
             }
 
+            if (!$post->acceptsAutosave()) {
+                return [
+                    'success' => false,
+                    'error' => 'Autosave only keeps drafts, and this post is no longer one. Use the save button to keep your changes.',
+                ];
+            }
+
             // Don't allow slug changes on autosave
             unset($data['slug']);
 

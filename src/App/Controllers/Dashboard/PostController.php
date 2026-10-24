@@ -459,6 +459,7 @@ final class PostController extends AppController
             'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
             'workflowState' => $workflowState,
             'status' => $status,
+            'autosave' => $post->acceptsAutosave(),
             'workflowEnabled' => $workflowEnabled,
             'canRequestReview' => $canRequestReview,
             'latestReview' => $latestReview,
