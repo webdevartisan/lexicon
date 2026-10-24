@@ -9,7 +9,8 @@ declare(strict_types=1);
  * pre-release and carries no external links worth preserving.
  */
 $routes = file_get_contents(ROOT_PATH.'/config/routes.php');
-$nav = file_get_contents(ROOT_PATH.'/views/partials/_auth_nav.lex.php');
+// The account links live in the user menu shared by the front and the dashboard.
+$menu = file_get_contents(ROOT_PATH.'/views/partials/_user_menu.lex.php');
 
 test('the dead export and id-update routes are gone', function () use ($routes) {
     expect($routes)->not->toContain("'controller' => 'DataExport'");
@@ -31,8 +32,8 @@ test('the old dashboard settings controllers are deleted', function () {
     expect(file_exists(ROOT_PATH.'/src/App/Controllers/Dashboard/AccountDeletionController.php'))->toBeFalse();
 });
 
-test('the account menu points at the front', function () use ($nav) {
-    expect($nav)->toContain("lurl('/account/profile')");
-    expect($nav)->not->toContain("lurl('/dashboard/profile')");
-    expect($nav)->toContain('navigation.account');
+test('the account menu points at the front', function () use ($menu) {
+    expect($menu)->toContain("lurl('/account/profile')");
+    expect($menu)->not->toContain("lurl('/dashboard/profile')");
+    expect($menu)->toContain('navigation.account');
 });
