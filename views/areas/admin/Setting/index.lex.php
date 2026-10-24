@@ -27,15 +27,6 @@ $regEnabled = old('registration_enabled', $settings['registration_enabled'] ?? '
 $emailVerification = old('require_email_verification', $settings['require_email_verification'] ?? '1');
 // Maintenance state comes from the flag file, not the settings table
 $maintenance = old('maintenance_mode', !empty($maintenance_active) ? '1' : '0');
-$currentRole = old('default_user_role', $settings['default_user_role'] ?? '4');
-
-$roleOptions = [];
-foreach ($roles ?? [] as $r) {
-    // administrators are never a sensible self-registration default
-    if (($r['role_slug'] ?? '') !== 'administrator') {
-        $roleOptions[(string) $r['id']] = $r['role_name'];
-    }
-}
 
 $onOff = static function (string $current, string $onLabel, string $offLabel): string {
     return '<option value="1"'.($current == '1' ? ' selected' : '').'>'.e($onLabel).'</option>'
@@ -94,7 +85,7 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
             {{ csrf_field() }}
             <div class="card-body">
                 <h3 class="<?= $sectionTitleClass ?>">Registration &amp; Availability</h3>
-                <p class="<?= $sectionHintClass ?>">Who can sign up, what they become, and whether the site is open to visitors.</p>
+                <p class="<?= $sectionHintClass ?>">Who can sign up and whether the site is open to visitors.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
@@ -103,16 +94,6 @@ foreach ($tabs as $tabKey => [$tabIcon, $tabLabel]) { ?>
                             <?= $onOff((string) $regEnabled, 'Enabled', 'Disabled') ?>
                         </select>
                         <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">Disable to prevent new user registrations</p>
-                    </div>
-
-                    <div>
-                        <label for="default_user_role" class="inline-block mb-2 text-base font-medium">Default User Role</label>
-                        <select id="default_user_role" name="default_user_role" required class="<?= $selectClass ?>">
-                            <?php foreach ($roleOptions as $roleId => $roleName) { ?>
-                            <option value="<?= e($roleId) ?>" <?= $roleId == $currentRole ? 'selected' : '' ?>><?= e($roleName) ?></option>
-                            <?php } ?>
-                        </select>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">Assigned to new users after registration</p>
                     </div>
 
                     <div>
