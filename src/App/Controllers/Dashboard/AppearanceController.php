@@ -239,9 +239,14 @@ final class AppearanceController extends AppController
         // existing image, drop it straight into the corresponding _path slot.
         foreach (['banner', 'logo', 'favicon'] as $type) {
             $picked = trim((string) ($this->request->post[$type.'_library_url'] ?? ''));
-            if ($picked !== '') {
-                $paths[$type.'_path'] = $picked;
-                $this->mediaService->register($blogId, $userId, $picked, 'branding');
+            if ($picked === '') {
+                continue;
+            }
+
+            try {
+                $paths[$type.'_path'] = $this->mediaService->usePicked($blog, $picked, 'branding');
+            } catch (\InvalidArgumentException $e) {
+                $this->flash('error', ucfirst($type).' not changed: '.$e->getMessage());
             }
         }
 
@@ -272,7 +277,7 @@ final class AppearanceController extends AppController
                 $paths[$type.'_path'] = $path;
 
                 if ($path) {
-                    $this->mediaService->register($blogId, $userId, $path, 'branding');
+                    $this->mediaService->register($blog, $userId, $path, 'branding');
                 }
             } catch (\Throwable $e) {
                 error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());

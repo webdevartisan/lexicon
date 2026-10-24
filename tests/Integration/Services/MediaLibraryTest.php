@@ -8,6 +8,7 @@ use App\Models\BlogSettingsModel;
 use App\Models\MediaModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use App\Resources\BlogResource;
 use App\Services\BlogCacheInvalidator;
 use App\Services\MediaReferenceCleaner;
 use App\Services\MediaService;
@@ -18,10 +19,11 @@ use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 
 /**
- * Deleting a library image must not leave a blog pointing at a missing file.
+ * A blog's media library only holds files from the blog's own folder, and deleting
+ * one must not leave the blog pointing at a missing file.
  *
- * The media rows point at files that do not exist: storage/uploads is shared with
- * the dev site, and a missing file is exactly the case the delete has to handle.
+ * Most media rows here point at files that do not exist: a missing file is exactly
+ * the case the delete has to handle.
  */
 beforeEach(function () {
     $this->blogs = new BlogModel($this->db);
@@ -60,6 +62,36 @@ beforeEach(function () {
         }
     };
     $this->media = new MediaService(new UploadService($images), $this->mediaRows, $images, $usage, $this->cleaner);
+
+    // storage/uploads is shared with the dev site, so real files only ever go in a test blog's own random folder.
+    $this->testFolders = [];
+    $this->putFile = function (BlogResource $blog, string $name): string {
+        $url = '/uploads/blogs/'.$blog->mediaKey().'/2026/10/'.$name;
+        $path = ROOT_PATH.'/storage'.$url;
+        @mkdir(dirname($path), 0775, true);
+        file_put_contents($path, base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+        ));
+        $this->testFolders[] = ROOT_PATH.'/storage/uploads/blogs/'.$blog->mediaKey();
+
+        return $url;
+    };
+});
+
+afterEach(function () {
+    foreach (array_unique($this->testFolders) as $folder) {
+        if (!is_dir($folder)) {
+            continue;
+        }
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($items as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+        rmdir($folder);
+    }
 });
 
 it('gives every new blog its own random folder key', function () {
@@ -117,4 +149,21 @@ it('refuses to delete a library row from another blog', function () {
 
     expect($this->media->delete($mediaId, $other))->toBeFalse()
         ->and($this->posts->find($this->postId)['featured_image'])->toBe($this->url);
+});
+
+it('never takes a file from another blog into the library, however it is offered', function () {
+    $other = $this->blogs->getBlog(BlogFactory::new($this->blogs)->create($this->blog->ownerId()));
+    $foreign = ($this->putFile)($other, 'banner-cccccccccccc.png');
+
+    expect($this->media->register($this->blog, $this->blog->ownerId(), $foreign, 'upload'))->toBeNull()
+        ->and($this->media->ensureIndexed($this->blog, $foreign))->toBeNull()
+        ->and(fn () => $this->media->usePicked($this->blog, $foreign, 'branding'))->toThrow(InvalidArgumentException::class)
+        ->and($this->mediaRows->findByPathForBlog($this->blog->id(), ltrim($foreign, '/')))->toBeNull();
+});
+
+it('leaves files it finds on disk without an owner, so erasing whoever looked cannot delete them', function () {
+    $url = ($this->putFile)($this->blog, 'image-dddddddddddd.png');
+
+    expect($this->media->backfill($this->blog))->toBe(1)
+        ->and($this->mediaRows->findByPathForBlog($this->blog->id(), ltrim($url, '/'))['user_id'])->toBeNull();
 });

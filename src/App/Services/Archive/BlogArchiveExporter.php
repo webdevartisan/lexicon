@@ -7,6 +7,7 @@ namespace App\Services\Archive;
 use App\Models\MediaModel;
 use App\Models\PostArchiveModel;
 use App\Resources\BlogResource;
+use App\Services\UploadService;
 use RuntimeException;
 use ZipArchive;
 
@@ -199,7 +200,7 @@ final class BlogArchiveExporter
             return $this->tokens[$url];
         }
 
-        if (!$this->urls->isInBlogFolder($url, $blog->mediaKey())) {
+        if (!UploadService::isBlogFile($url, $blog->mediaKey())) {
             $this->warn('foreign_file', $postSlug, $url);
 
             return null;

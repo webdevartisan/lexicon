@@ -39,6 +39,8 @@ final class UploadService implements UploadServiceInterface
 
     private const AVATARS_URL = '/uploads/avatars';
 
+    private const MEDIA_KEY_PATTERN = '/^[0-9a-f]{16}$/';
+
     /**
      * @param  ImageProcessorInterface  $images  Resizes and re-encodes every stored upload
      */
@@ -254,6 +256,16 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
+     * Whether a public URL names a file in the folder of the blog with this media key.
+     */
+    public static function isBlogFile(string $url, string $mediaKey): bool
+    {
+        return preg_match(self::MEDIA_KEY_PATTERN, $mediaKey) === 1
+            && str_starts_with($url, self::BLOGS_URL.'/'.$mediaKey.'/')
+            && !str_contains($url, '..');
+    }
+
+    /**
      * Folder holding everything stored for a blog.
      *
      * @throws InvalidArgumentException When the key is malformed, so an empty or crafted
@@ -261,7 +273,7 @@ final class UploadService implements UploadServiceInterface
      */
     private function blogRoot(string $mediaKey): string
     {
-        if (preg_match('/^[0-9a-f]{16}$/', $mediaKey) !== 1) {
+        if (preg_match(self::MEDIA_KEY_PATTERN, $mediaKey) !== 1) {
             throw new InvalidArgumentException('Not a blog media key.');
         }
 
@@ -352,7 +364,7 @@ final class UploadService implements UploadServiceInterface
      */
     public function avatarFilePath(string $url): ?string
     {
-        if (!str_starts_with($url, self::AVATARS_URL.'/')) {
+        if (!str_starts_with($url, self::AVATARS_URL.'/') || str_contains($url, '..')) {
             return null;
         }
 

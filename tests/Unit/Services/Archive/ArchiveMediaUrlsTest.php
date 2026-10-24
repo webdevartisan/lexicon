@@ -30,14 +30,6 @@ it('treats outside and traversing addresses as not ours', function (string $valu
     'plain relative' => 'media/a.jpg',
 ]);
 
-it('tells whether an upload sits in a given blog folder', function () {
-    $url = '/uploads/blogs/0123456789abcdef/2026/10/image-123.jpg';
-
-    expect($this->urls->isInBlogFolder($url, '0123456789abcdef'))->toBeTrue()
-        ->and($this->urls->isInBlogFolder($url, 'fedcba9876543210'))->toBeFalse()
-        ->and($this->urls->isInBlogFolder('/uploads/avatars/2026/10/avatar-1.jpg', '0123456789abcdef'))->toBeFalse();
-});
-
 it('rewrites src, href and every srcset candidate', function () {
     $html = '<img src="a" srcset="a 1x, b 2x"><a href=\'b\'>x</a><img src="keep">';
 

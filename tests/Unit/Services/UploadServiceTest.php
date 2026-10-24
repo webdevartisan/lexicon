@@ -184,9 +184,20 @@ test('a malformed media key is refused before any folder is touched', function (
     'too short' => '0123abcd',
 ]);
 
+test('a blog file is one inside that blog key folder and nowhere else', function () {
+    $url = '/uploads/blogs/0123456789abcdef/2026/10/image-aaaaaaaaaaaa.jpg';
+
+    expect(UploadService::isBlogFile($url, '0123456789abcdef'))->toBeTrue()
+        ->and(UploadService::isBlogFile($url, 'fedcba9876543210'))->toBeFalse()
+        ->and(UploadService::isBlogFile('/uploads/avatars/2026/10/avatar-aaaaaaaaaaaa.jpg', '0123456789abcdef'))->toBeFalse()
+        ->and(UploadService::isBlogFile('/uploads/blogs/0123456789abcdef/../fedcba9876543210/a.jpg', '0123456789abcdef'))->toBeFalse()
+        ->and(UploadService::isBlogFile('/uploads/blogs//a.jpg', ''))->toBeFalse();
+});
+
 test('profile rows can only reach files in the avatars folder', function () {
     expect($this->uploader->avatarFilePath('/uploads/blogs/0123456789abcdef/2026/10/banner-aaaaaaaaaaaa.jpg'))->toBeNull()
         ->and($this->uploader->avatarFilePath('https://example.com/avatar.jpg'))->toBeNull()
+        ->and($this->uploader->avatarFilePath('/uploads/avatars/../blogs/0123456789abcdef/a.jpg'))->toBeNull()
         ->and(str_replace(DIRECTORY_SEPARATOR, '/', (string) $this->uploader->avatarFilePath('/uploads/avatars/2026/10/avatar-aaaaaaaaaaaa.jpg')))
         ->toEndWith('/storage/uploads/avatars/2026/10/avatar-aaaaaaaaaaaa.jpg');
 });

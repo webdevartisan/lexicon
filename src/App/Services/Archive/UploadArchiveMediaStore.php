@@ -38,7 +38,7 @@ final class UploadArchiveMediaStore implements ArchiveMediaStoreInterface
             'rename' => 'image',
         ]);
 
-        $row = $this->media->register($blogId, $userId, $url, 'upload', $name);
+        $row = $this->media->register($blog, $userId, $url, 'upload', $name);
         if ($row !== null && $alt !== null) {
             $this->mediaRows->updateForBlog((int) $row['id'], $blogId, ['alt_text' => $alt]);
         }

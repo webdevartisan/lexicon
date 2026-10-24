@@ -36,14 +36,14 @@ final class MediaController extends AppController
         Gate::authorize('listPosts', $blog, $user);
 
         // Pull anything new on disk into the table the first time the library is opened for this blog
-        $this->mediaService->backfill($blog, (int) $user['id']);
+        $this->mediaService->backfill($blog);
 
         // Arriving with ?editUrl=... (e.g. "Edit" on the appearance page) indexes that
         // image if needed and tells the page to open the editor straight on it.
         $autoEditId = null;
         $editUrl = trim((string) ($this->request->get['editUrl'] ?? ''));
         if ($editUrl !== '') {
-            $row = $this->mediaService->ensureIndexed($blog->id(), (int) $user['id'], $editUrl);
+            $row = $this->mediaService->ensureIndexed($blog, $editUrl);
             $autoEditId = $row['id'] ?? null;
         }
 
@@ -134,7 +134,7 @@ final class MediaController extends AppController
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
 
-        $added = $this->mediaService->backfill($blog, (int) $user['id']);
+        $added = $this->mediaService->backfill($blog);
 
         return $this->jsonSuccess(['added' => $added]);
     }

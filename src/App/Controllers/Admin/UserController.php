@@ -19,6 +19,7 @@ use App\Services\ImpersonationService;
 use App\Services\LocaleRegistry;
 use App\Services\NotificationPreferenceScope;
 use App\Services\PublicCacheInvalidator;
+use App\Services\UploadService;
 use App\Services\UserDossierService;
 use App\ValueObjects\PageSize;
 use App\ValueObjects\TableSort;
@@ -56,6 +57,7 @@ class UserController extends ManagedUserController
         private LocaleRegistry $locales,
         private UserDossierService $dossier,
         private ImpersonationService $impersonation,
+        private UploadService $uploader,
     ) {
         parent::__construct($users, $erasure);
     }
@@ -350,7 +352,8 @@ class UserController extends ManagedUserController
         ], $current);
 
         // Moderation removes an avatar, it never uploads one on someone's behalf.
-        if ($this->request->postParam('remove_avatar') && !empty($current['avatar_url'])) {
+        $removeAvatar = $this->request->postParam('remove_avatar') && !empty($current['avatar_url']);
+        if ($removeAvatar) {
             $changes['avatar_url'] = null;
             $changes['avatar_source_url'] = null;
             $changes['avatar_crop'] = null;
@@ -360,7 +363,29 @@ class UserController extends ManagedUserController
             $this->profiles->upsert($userId, $changes);
         }
 
+        // Once the row stops naming them nothing can find these files again, so they go now.
+        if ($removeAvatar) {
+            $this->deleteAvatarFiles($userId, [$current['avatar_url'], $current['avatar_source_url'] ?? null]);
+        }
+
         return $changes;
+    }
+
+    /**
+     * Delete a removed avatar's files. The profile is already saved, so a file that
+     * will not go is logged rather than failing the whole save.
+     *
+     * @param  list<mixed>  $urls  The avatar and its crop source, as the profile held them
+     */
+    private function deleteAvatarFiles(int $userId, array $urls): void
+    {
+        foreach ($urls as $url) {
+            try {
+                $this->uploader->deleteAvatar((string) $url);
+            } catch (\RuntimeException $e) {
+                error_log("Could not delete an avatar file of user {$userId}: ".$e->getMessage());
+            }
+        }
     }
 
     /**

@@ -68,7 +68,7 @@ class UploadController extends AppController
 
         // Record the new file in the per-blog library so it shows up in the
         // grid and the picker the next time someone needs to reuse it.
-        $this->mediaService->register($blogId, $userId, $url, 'post_image');
+        $this->mediaService->register($blog, $userId, $url, 'post_image');
 
         // TinyMCE expects { location: "<url>" }
         return $this->json(['location' => $url], 200);

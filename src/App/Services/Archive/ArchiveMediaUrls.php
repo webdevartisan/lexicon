@@ -44,14 +44,6 @@ final class ArchiveMediaUrls
     }
 
     /**
-     * Whether a canonical upload URL is filed in the folder of the blog with this media key.
-     */
-    public function isInBlogFolder(string $canonicalUrl, string $mediaKey): bool
-    {
-        return str_starts_with($canonicalUrl, '/uploads/blogs/'.$mediaKey.'/');
-    }
-
-    /**
      * Whether a value looks like an absolute web address outside this site.
      */
     public function isExternal(string $value): bool

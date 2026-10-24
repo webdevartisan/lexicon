@@ -83,35 +83,51 @@ final class MediaService
 
         $this->uploads->cleanupTempFiles($uploaderId);
 
-        $this->register((int) $blog->id(), $uploaderId, $path, 'post_image');
+        $this->register($blog, $uploaderId, $path, 'post_image');
 
         return $path;
     }
 
     /**
-     * Make sure a file that was uploaded through one of the existing
-     * flows (post featured image, TinyMCE inline, branding) has a row
-     * in the library. Safe to call repeatedly.
+     * Make sure a file in the blog's folder has a row in the library. Safe to call repeatedly.
      *
+     * @param  int|null  $userId  Who uploaded the file, or null when that is not known
      * @param  string|null  $originalName  Name the file had before it was stored, when known
      * @return array<string, mixed>|null Indexed media row data, or null if skipped
      */
-    public function register(int $blogId, ?int $userId, string $url, string $source, ?string $originalName = null): ?array
+    public function register(BlogResource $blog, ?int $userId, string $url, string $source, ?string $originalName = null): ?array
     {
-        if (trim($url) === '') {
+        // The library deletes and rewrites its files, so it must never take in a file from
+        // outside the blog's own folder, such as another blog's image or someone's avatar.
+        if (!UploadService::isBlogFile($url, $blog->mediaKey())) {
             return null;
         }
 
         $diskPath = $this->urlToDiskPath($url);
-        if ($diskPath === null) {
+        if ($diskPath === null || $this->media->existsByPath($blog->id(), $diskPath)) {
             return null;
         }
 
-        if ($this->media->existsByPath($blogId, $diskPath)) {
-            return null;
+        return $this->indexFile($url, $blog->id(), $userId, $source, $originalName);
+    }
+
+    /**
+     * Take an image picked from the library for one of the blog's slots.
+     *
+     * @return string The picked URL
+     *
+     * @throws InvalidArgumentException When the URL is not a file in this blog's folder
+     */
+    public function usePicked(BlogResource $blog, string $url, string $source): string
+    {
+        if (!UploadService::isBlogFile($url, $blog->mediaKey())) {
+            throw new InvalidArgumentException("Pick an image from this blog's media library.");
         }
 
-        return $this->indexFile($url, $blogId, $userId, $source, $originalName);
+        // A pick is normally indexed already. If it is not, nobody knows who uploaded it, so the row gets no owner.
+        $this->register($blog, null, $url, $source);
+
+        return $url;
     }
 
     /**
@@ -155,16 +171,16 @@ final class MediaService
      * the fly if needed. Lets callers outside the library (e.g. the appearance page)
      * hand off any branding image to the editor even if a backfill never ran.
      *
-     * @return array<string, mixed>|null The row, or null if the URL isn't a stored upload
+     * @return array<string, mixed>|null The row, or null if the URL isn't a file in this blog's folder
      */
-    public function ensureIndexed(int $blogId, ?int $userId, string $url, string $source = 'branding'): ?array
+    public function ensureIndexed(BlogResource $blog, string $url, string $source = 'branding'): ?array
     {
         $diskPath = $this->urlToDiskPath($url);
         if ($diskPath === null) {
             return null;
         }
 
-        $row = $this->media->findByPathForBlog($blogId, $diskPath);
+        $row = $this->media->findByPathForBlog($blog->id(), $diskPath);
         if ($row) {
             return $row;
         }
@@ -173,9 +189,10 @@ final class MediaService
             return null;
         }
 
-        $this->register($blogId, $userId, $url, $source);
+        // Whoever clicked Edit did not necessarily upload it, so the row gets no owner
+        $this->register($blog, null, $url, $source);
 
-        return $this->media->findByPathForBlog($blogId, $diskPath);
+        return $this->media->findByPathForBlog($blog->id(), $diskPath);
     }
 
     /**
@@ -468,9 +485,12 @@ final class MediaService
      * Scan that imports existing files on disk for a blog.
      * Idempotent: existing rows are skipped via the unique index.
      *
+     * Files found this way get no owner. Whoever opened the library did not upload
+     * them, and account erasure deletes the unused files an owner leaves behind.
+     *
      * Returns the number of newly indexed files.
      */
-    public function backfill(BlogResource $blog, int $uploaderId): int
+    public function backfill(BlogResource $blog): int
     {
         $added = 0;
 
@@ -480,7 +500,7 @@ final class MediaService
                 continue;
             }
 
-            if ($this->register($blog->id(), $uploaderId, $url, 'backfill') !== null) {
+            if ($this->register($blog, null, $url, 'backfill') !== null) {
                 $added++;
             }
         }

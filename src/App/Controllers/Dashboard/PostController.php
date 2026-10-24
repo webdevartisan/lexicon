@@ -1083,13 +1083,7 @@ final class PostController extends AppController
     {
         $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
         if ($picked !== '') {
-            if (!$this->mediaService->isLocalUploadUrl($picked)) {
-                throw new \InvalidArgumentException('Featured images must come from your media library or an upload, not an outside address.');
-            }
-
-            $this->mediaService->register((int) $blog->id(), $userId, $picked, 'post_image');
-
-            return $picked;
+            return $this->mediaService->usePicked($blog, $picked, 'post_image');
         }
 
         $uploadedFiles = $this->uploader->getUploadedFiles(
