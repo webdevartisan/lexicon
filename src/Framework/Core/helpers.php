@@ -765,6 +765,9 @@ function versioned_asset(string $url): string
  * Compare arrays and return only fields with different values.
  * Used for efficient database updates (update only changed fields).
  *
+ * The check is strict and rows come back with native types, so pass a flag as 1 or 0,
+ * not '1' or '0', or it counts as changed on every save.
+ *
  * @param  array<string, mixed>  $newData  New data
  * @param  array<string, mixed>  $existing  Existing data
  * @return array<string, mixed> Changed fields only

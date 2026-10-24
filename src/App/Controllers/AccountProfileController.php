@@ -143,7 +143,7 @@ final class AccountProfileController extends AppController
                 $this->users->updateById($userId, $userUpdate);
             }
 
-            $profileData = changedFields(['is_public' => $this->request->postParam('is_public') ? '1' : '0'], $this->profiles->findOrCreate($userId));
+            $profileData = changedFields(['is_public' => $this->request->postParam('is_public') ? 1 : 0], $this->profiles->findOrCreate($userId));
             if (!empty($profileData)) {
                 $this->profiles->upsert($userId, $profileData);
             }

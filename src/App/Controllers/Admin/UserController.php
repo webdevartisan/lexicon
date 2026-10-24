@@ -348,7 +348,7 @@ class UserController extends ManagedUserController
             'bio' => $input['bio'] ?? '',
             'occupation' => $input['occupation'] ?? '',
             'location' => $input['location'] ?? '',
-            'is_public' => $this->request->postParam('is_public') ? '1' : '0',
+            'is_public' => $this->request->postParam('is_public') ? 1 : 0,
         ], $current);
 
         // Moderation removes an avatar, it never uploads one on someone's behalf.
