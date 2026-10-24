@@ -131,3 +131,27 @@ test('a set-cookie header is never replayed from cache', function () {
 
     expect($hit->getHeader('Set-Cookie'))->toBeNull();
 });
+
+/**
+ * A browser that may reuse a page without asking keeps showing a post after it
+ * is unpublished, and keeps the signed-out page after the reader signs in.
+ */
+test('a public html page makes the browser check first, on a miss and on a hit', function () {
+    $request = new Request('/blog/notes/a-post', 'GET', [], [], [], [], [], []);
+    $handler = ($this->handlerFor)('text/html; charset=utf-8', '<p>Post</p>');
+
+    $miss = $this->middleware->process($request, $handler);
+    $hit = $this->middleware->process($request, $handler);
+
+    expect($miss->getHeader('Cache-Control'))->toBe('public, no-cache')
+        ->and($hit->getHeader('Cache-Control'))->toBe('public, no-cache');
+});
+
+test('a feed keeps its short browser lifetime', function () {
+    $request = new Request('/blog/notes/feed.xml', 'GET', [], [], [], [], [], []);
+    $handler = ($this->handlerFor)('application/rss+xml; charset=utf-8', '<rss/>');
+
+    $response = $this->middleware->process($request, $handler);
+
+    expect($response->getHeader('Cache-Control'))->toBe('public, max-age=120, stale-while-revalidate=60');
+});

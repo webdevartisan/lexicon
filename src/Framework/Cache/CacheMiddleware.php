@@ -158,8 +158,12 @@ class CacheMiddleware implements MiddlewareInterface
     /**
      * Set browser/CDN cache headers
      *
-     * coordinate browser cache with server cache for optimal performance.
-     * Browser cache TTL is typically shorter than server cache TTL.
+     * HTML pages are always checked with the server before a browser reuses
+     * them: a post can be unpublished, or the reader can sign in, and nothing
+     * can take a copy back out of a browser once it has one. The server cache
+     * answers that check, and ConditionalGetMiddleware turns an unchanged page
+     * into an empty 304. Other responses, such as feeds, keep a short lifetime
+     * (20% of the server TTL, at most five minutes).
      */
     private function setBrowserCacheHeaders(Response $response, int $ttl): void
     {
@@ -175,19 +179,26 @@ class CacheMiddleware implements MiddlewareInterface
             return;
         }
 
-        // calculate browser TTL (20% of server TTL, max 5 minutes)
         $browserTtl = (int) min($ttl * 0.2, 300);
 
-        if ($browserTtl > 0) {
-            // set public cache with stale-while-revalidate
-            $swr = (int) min($browserTtl, 60);
-            $response->addHeader(
-                'Cache-Control',
-                "public, max-age={$browserTtl}, stale-while-revalidate={$swr}"
-            );
-        } else {
-            $response->addHeader('Cache-Control', 'public, no-cache, must-revalidate');
+        if ($browserTtl === 0 || $this->isHtml($response)) {
+            $response->addHeader('Cache-Control', 'public, no-cache');
+
+            return;
         }
+
+        $swr = (int) min($browserTtl, 60);
+        $response->addHeader('Cache-Control', "public, max-age={$browserTtl}, stale-while-revalidate={$swr}");
+    }
+
+    /**
+     * A response with no content type is HTML too: PHP sends text/html by default.
+     */
+    private function isHtml(Response $response): bool
+    {
+        $type = $response->getHeader('Content-Type');
+
+        return $type === null || stripos($type, 'text/html') !== false;
     }
 
     private function shouldSkipCache(Request $request): bool

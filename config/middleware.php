@@ -13,6 +13,8 @@ return [
     'global' => [
         // First, so a blocked IP is refused before any page cache can answer for it
         App\Middleware\BlockedIpMiddleware::class,
+        // Outside everything that rewrites the body, so its hash matches the page sent
+        Framework\Http\Middleware\ConditionalGetMiddleware::class,
         App\Middleware\SecurityHeadersMiddleware::class,
         App\Middleware\LocaleMiddleware::class,
         App\Middleware\TranslationGlobalsMiddleware::class,
