@@ -256,13 +256,26 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
+     * Whether a URL points at a file this site stored under /uploads: a plain path, with
+     * no address, query or parent folder in it.
+     *
+     * Anything else, an external address in particular, is refused wherever a
+     * library pick is accepted, since the Content-Security-Policy would block it.
+     */
+    public static function isUploadUrl(string $url): bool
+    {
+        return preg_match('#^/uploads/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*/)*[A-Za-z0-9_-][A-Za-z0-9._-]*$#', $url) === 1
+            && !str_contains($url, '..');
+    }
+
+    /**
      * Whether a public URL names a file in the folder of the blog with this media key.
      */
     public static function isBlogFile(string $url, string $mediaKey): bool
     {
         return preg_match(self::MEDIA_KEY_PATTERN, $mediaKey) === 1
             && str_starts_with($url, self::BLOGS_URL.'/'.$mediaKey.'/')
-            && !str_contains($url, '..');
+            && self::isUploadUrl($url);
     }
 
     /**

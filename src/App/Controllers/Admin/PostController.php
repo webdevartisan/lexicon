@@ -506,7 +506,7 @@ class PostController extends AppController
         }
 
         $image = trim((string) ($input['featured_image'] ?? ''));
-        if ($image !== '' && $image !== $previousImage && !$this->media->isLocalUploadUrl($image)) {
+        if ($image !== '' && $image !== $previousImage && !UploadService::isUploadUrl($image)) {
             $errors['featured_image'] = ['The featured image must be one of this site\'s uploads, for example /uploads/....'];
         }
 

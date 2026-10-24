@@ -194,6 +194,15 @@ test('a blog file is one inside that blog key folder and nowhere else', function
         ->and(UploadService::isBlogFile('/uploads/blogs//a.jpg', ''))->toBeFalse();
 });
 
+test('a blog file must also be a plain upload path', function (string $name) {
+    expect(UploadService::isBlogFile('/uploads/blogs/0123456789abcdef/2026/10/'.$name, '0123456789abcdef'))->toBeFalse();
+})->with([
+    'space' => 'a b.jpg',
+    'quote' => "a'b.jpg",
+    'query' => 'a.jpg?v=2',
+    'empty name' => '',
+]);
+
 test('profile rows can only reach files in the avatars folder', function () {
     expect($this->uploader->avatarFilePath('/uploads/blogs/0123456789abcdef/2026/10/banner-aaaaaaaaaaaa.jpg'))->toBeNull()
         ->and($this->uploader->avatarFilePath('https://example.com/avatar.jpg'))->toBeNull()
