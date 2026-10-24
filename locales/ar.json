@@ -277,6 +277,7 @@
       "waiting": "{count} بالانتظار",
       "empty": "لا شيء بالانتظار. قائمة المراجعة فارغة.",
       "states": {
+        "draft": "لم تُرسل بعد",
         "in_review": "قيد المراجعة",
         "needs_changes": "تحتاج إلى تعديلات",
         "approved": "جاهزة للنشر"
@@ -359,7 +360,8 @@
         "draft": "مسودة",
         "pending": "بالانتظار",
         "scheduled": "مجدولة",
-        "archived": "مؤرشفة"
+        "archived": "مؤرشفة",
+        "moderated": "محجوبة بقرار إشراف"
       },
       "underReview": "قيد المراجعة حاليًا",
       "reviewedBy": "يراجعها {reviewer}",

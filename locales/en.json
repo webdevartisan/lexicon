@@ -277,6 +277,7 @@
             "waiting": "{count} waiting",
             "empty": "Nothing waiting. The queue is empty.",
             "states": {
+                "draft": "Not submitted",
                 "in_review": "In review",
                 "needs_changes": "Needs changes",
                 "approved": "Ready to publish"
@@ -359,7 +360,8 @@
                 "draft": "Draft",
                 "pending": "Pending",
                 "scheduled": "Scheduled",
-                "archived": "Archived"
+                "archived": "Archived",
+                "moderated": "Hidden by moderation"
             },
             "underReview": "Currently under review",
             "reviewedBy": "Reviewed by {reviewer}",
