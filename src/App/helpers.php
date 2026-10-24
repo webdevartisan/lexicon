@@ -355,9 +355,16 @@ function relative_time(?string $utc, bool $short = false): string
     $ahead = $seconds > 0;
     $seconds = abs($seconds);
 
+    // Counting seconds reads like a glitch on something that just happened: "0 seconds ago".
     if ($seconds < 60) {
-        $text = $short ? $seconds.'s' : plural_unit($seconds, 'second');
-    } elseif ($seconds < 3600) {
+        if ($ahead) {
+            return $short ? 'in <1m' : 'in under a minute';
+        }
+
+        return $short ? 'now' : 'just now';
+    }
+
+    if ($seconds < 3600) {
         $count = (int) round($seconds / 60);
         $text = $short ? $count.'m' : plural_unit($count, 'minute');
     } elseif ($seconds < 86400) {

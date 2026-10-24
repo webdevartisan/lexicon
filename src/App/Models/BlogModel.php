@@ -52,6 +52,12 @@ class BlogModel extends AppModel
     public const ROLES = ['editor', 'author', 'contributor', 'reviewer'];
 
     /**
+     * Readers browsing the platform only see a blog once it has something to
+     * read. One condition, so the directory and the featured strip can't disagree.
+     */
+    private const HAS_PUBLISHED_POST = "EXISTS (SELECT 1 FROM posts p WHERE p.blog_id = b.id AND p.status = 'published')";
+
+    /**
      * Collaborator roles offered on the team page: the shipped list plus any
      * admin-created custom roles with blog scope.
      *
@@ -820,7 +826,8 @@ class BlogModel extends AppModel
      *
      * Curation replaces the old "most posts wins" ordering so nobody can spam
      * their way onto a platform owned surface. Only published blogs with the
-     * admin flag appear; an empty result simply hides the section.
+     * admin flag and at least one published post appear; an empty result
+     * simply hides the section.
      *
      * @param  int  $limit  Maximum number of blogs to return
      * @return array<int, array<string, mixed>> Array of blog records with ownername and postcount
@@ -835,10 +842,10 @@ class BlogModel extends AppModel
             FROM blogs b
             INNER JOIN users u ON b.owner_id = u.id
             LEFT JOIN blog_settings bs ON bs.blog_id = b.id
-            WHERE b.is_featured = 1 AND b.status = 'published'
+            WHERE b.is_featured = 1 AND b.status = 'published' AND ".self::HAS_PUBLISHED_POST.'
             ORDER BY b.published_at DESC
             LIMIT ?
-        ";
+        ';
         $stmt = $this->database->query($sql, [$limit]);
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -883,8 +890,7 @@ class BlogModel extends AppModel
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        $where = "b.status = 'published'
-                  AND EXISTS (SELECT 1 FROM posts p WHERE p.blog_id = b.id AND p.status = 'published')";
+        $where = "b.status = 'published' AND ".self::HAS_PUBLISHED_POST;
         $params = [];
 
         if ($search !== '') {

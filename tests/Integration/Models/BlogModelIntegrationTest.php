@@ -20,6 +20,18 @@ beforeEach(function () {
     $this->blogModel = new BlogModel($this->db);
     $this->userModel = new UserModel($this->db);
     $this->postModel = new PostModel($this->db);
+
+    // Explore surfaces skip blogs with nothing to read, so blogs meant to show up there need a post.
+    $this->publishPostIn = function (int $blogId, int $authorId): void {
+        PostFactory::new($this->postModel)
+            ->withAttributes([
+                'author_id' => $authorId,
+                'blog_id' => $blogId,
+                'status' => 'published',
+                'published_at' => date('Y-m-d H:i:s'),
+            ])
+            ->create();
+    };
 });
 
 // ============================================================================
@@ -386,6 +398,8 @@ it('gets featured creators with custom limit', function (int $limit) {
 
     $blog1 = BlogFactory::new($this->blogModel)->published()->create($owner1);
     $blog2 = BlogFactory::new($this->blogModel)->published()->create($owner2);
+    ($this->publishPostIn)($blog1, $owner1);
+    ($this->publishPostIn)($blog2, $owner2);
 
     $this->blogModel->setExploreFeatured($blog1, true);
     $this->blogModel->setExploreFeatured($blog2, true);
@@ -617,16 +631,12 @@ it('returns only admin featured published blogs as featured creators', function 
     $busyId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
     $draftFeaturedId = BlogFactory::new($this->blogModel)->draft()->create($ownerId);
 
+    ($this->publishPostIn)($featuredId, $ownerId);
+    ($this->publishPostIn)($draftFeaturedId, $ownerId);
+
     // The unflagged blog has more posts, which must not matter
     for ($i = 0; $i < 3; $i++) {
-        PostFactory::new($this->postModel)
-            ->withAttributes([
-                'author_id' => $ownerId,
-                'blog_id' => $busyId,
-                'status' => 'published',
-                'published_at' => date('Y-m-d H:i:s'),
-            ])
-            ->create();
+        ($this->publishPostIn)($busyId, $ownerId);
     }
 
     $this->blogModel->setExploreFeatured($featuredId, true);
@@ -638,6 +648,24 @@ it('returns only admin featured published blogs as featured creators', function 
     expect($ids)->toContain($featuredId)
         ->not->toContain($busyId)
         ->not->toContain($draftFeaturedId);
+});
+
+/**
+ * A featured blog with nothing published would send readers to an empty page,
+ * so it waits off the explore page until its first post, as the directory does.
+ */
+it('leaves a featured blog out until it has a published post', function () {
+    $ownerId = UserFactory::new($this->userModel)->create();
+    $blogId = BlogFactory::new($this->blogModel)->published()->create($ownerId);
+    $this->blogModel->setExploreFeatured($blogId, true);
+
+    $featuredIds = fn (): array => array_map('intval', array_column($this->blogModel->getFeaturedCreators(100), 'id'));
+
+    expect($featuredIds())->not->toContain($blogId);
+
+    ($this->publishPostIn)($blogId, $ownerId);
+
+    expect($featuredIds())->toContain($blogId);
 });
 
 /**

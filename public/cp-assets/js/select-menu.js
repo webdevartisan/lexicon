@@ -175,6 +175,11 @@
         close(true);
       } else if (e.key === 'Tab') {
         close(false);
+      } else if (e.key === 'Enter' && target === search) {
+        // Left alone, Enter in the search box submits the whole form with the old value.
+        e.preventDefault();
+        var first = items.filter(function (it) { return !it.el.disabled && !it.el.hidden; })[0];
+        if (first) choose(first.option.index);
       } else if (e.key.length === 1 && target !== search) {
         var typed = e.key.toLowerCase();
         var hit = items.filter(function (it) {
