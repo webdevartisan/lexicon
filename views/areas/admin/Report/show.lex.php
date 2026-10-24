@@ -36,20 +36,6 @@ $notCounted = [
     'filed_before_rules' => 'Filed before these rules',
 ];
 $outcomeLabels = ['pending' => 'Pending', 'upheld' => 'Upheld', 'dismissed' => 'Dismissed', 'unfounded' => 'Unfounded'];
-$eventLabels = [
-    'moderation.rule_proposed' => 'Rule proposed an action',
-    'moderation.rule_escalated' => 'Rule sent the case to a person',
-    'moderation.rule_skipped' => 'Rule skipped, already done',
-    'moderation.action_failed' => 'Automatic action failed',
-    'moderation.content_hidden' => 'Content hidden',
-    'moderation.content_restored' => 'Content restored',
-    'moderation.author_warned' => 'Author warned',
-    'moderation.author_suspended' => 'Author suspended',
-    'moderation.review_started' => 'Review started',
-    'moderation.escalated' => 'Escalated',
-    'moderation.case_dismissed' => 'Case dismissed',
-    'moderation.case_upheld' => 'Case upheld',
-];
 $decision = (string) old('_decision', '');
 $reopenUphold = $decision === 'uphold';
 $reopenDismiss = $decision === 'dismiss';
@@ -199,7 +185,7 @@ if ($decision !== '' && !empty($errors)) {
                             <span class="shrink-0 mt-1 inline-block size-2 rounded-full <?= $isSystem ? 'bg-sky-500' : 'bg-custom-500' ?>" aria-hidden="true"></span>
                             <div>
                                 <p class="text-slate-900 dark:text-zink-50">
-                                    <span class="font-medium"><?= e($eventLabels[$event['action']] ?? (string) $event['action']) ?></span>
+                                    <span class="font-medium"><?= e(\App\Presenters\ActivityPresenter::label((string) $event['action'])) ?></span>
                                     <?php if (isset($d['action']) && $event['action'] === 'moderation.rule_proposed') { ?>
                                     : <?= e($actionNames[$d['action']] ?? (string) $d['action']) ?>
                                     <?php } ?>

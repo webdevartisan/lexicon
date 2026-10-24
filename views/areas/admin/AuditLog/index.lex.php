@@ -29,17 +29,16 @@ $actionColor = static function (string $action): string {
         <div class="card-body">
             <div class="flex flex-col md:flex-row md:items-center gap-3">
                 <?php
-                // The select component maps a flat list to value => label; prepend the
-                // "all" sentinel so it reads as a real filter option. Action and resource
-                // slugs are already lowercase keys, so they are shown verbatim.
+                // The select component maps value => label; prepend the "all" sentinel so
+                // it reads as a real filter option. Values stay codes, labels are words.
                 $actionChoices = ['' => 'All actions'];
 foreach ($actionOptions as $opt) {
-    $actionChoices[$opt] = $opt;
+    $actionChoices[$opt] = \App\Presenters\ActivityPresenter::label((string) $opt);
 }
 
 $resourceChoices = ['' => 'All resource types'];
 foreach ($resourceTypeOptions as $opt) {
-    $resourceChoices[$opt] = $opt;
+    $resourceChoices[$opt] = \App\Presenters\ActivityPresenter::target((string) $opt, null);
 }
 ?>
                 {% cmp="select" name="action" options="{$actionChoices}" selectedKey="{$actionFilter}" onchange="this.form.submit()" %}
@@ -84,12 +83,12 @@ foreach ($resourceTypeOptions as $opt) {
                             <?= e((string) ($entry['handle'] ?? 'system')) ?>
                         </td>
                         <td class="px-3.5 py-2.5">
-                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $actionColor((string) $entry['action']) ?>">
-                                <?= e((string) $entry['action']) ?>
+                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border <?= $actionColor((string) $entry['action']) ?>" title="<?= e((string) $entry['action']) ?>">
+                                <?= e(\App\Presenters\ActivityPresenter::label((string) $entry['action'])) ?>
                             </span>
                         </td>
                         <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
-                            <?= e((string) $entry['resource_type']) ?><?= $entry['resource_id'] !== null ? ' #'.e((string) $entry['resource_id']) : '' ?>
+                            <?= e(\App\Presenters\ActivityPresenter::target($entry['resource_type'], $entry['resource_id'])) ?>
                         </td>
                         <td class="px-3.5 py-2.5 text-xs text-slate-500 dark:text-zink-300 whitespace-normal max-w-md break-words">
                             <?php
