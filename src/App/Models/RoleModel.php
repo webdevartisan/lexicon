@@ -15,6 +15,17 @@ class RoleModel extends AppModel
     protected ?string $table = 'roles';
 
     /**
+     * How many people hold role `r`, read from where each kind is stored: site
+     * roles in user_roles, blog roles in active memberships, and Blog Owner from
+     * the blogs, because owning a blog is not a membership.
+     */
+    private const HOLDER_COUNT = "CASE
+        WHEN r.scope = 'system' THEN (SELECT COUNT(*) FROM user_roles AS ur WHERE ur.role_id = r.id)
+        WHEN r.role_slug = 'blog_owner' THEN (SELECT COUNT(DISTINCT b.owner_id) FROM blogs AS b)
+        ELSE (SELECT COUNT(DISTINCT bu.user_id) FROM blog_users AS bu WHERE bu.role = r.role_slug AND bu.is_active = 1)
+    END";
+
+    /**
      * Get total role count.
      *
      * @return int Total roles
@@ -55,31 +66,27 @@ class RoleModel extends AppModel
     }
 
     /**
-     * All roles with how many users hold each, grouped counts in one query.
+     * All roles with how many people hold each.
      *
      * @return array<int, array<string, mixed>> Roles ordered by scope then level, each with users_count
      */
     public function findAllWithUserCounts(): array
     {
-        $sql = "
-            SELECT r.*, COUNT(ur.id) AS users_count
+        $sql = 'SELECT r.*, '.self::HOLDER_COUNT." AS users_count
             FROM {$this->getTable()} AS r
-            LEFT JOIN user_roles AS ur ON ur.role_id = r.id
-            GROUP BY r.id
-            ORDER BY r.scope = 'system' DESC, r.level DESC
-        ";
+            ORDER BY r.scope = 'system' DESC, r.level DESC";
 
         return $this->database->query($sql)->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     /**
-     * How many users currently hold a role.
+     * How many people currently hold a role, 0 for an unknown role.
      */
     public function userCount(int $roleId): int
     {
-        $stmt = $this->database->query('SELECT COUNT(*) FROM user_roles WHERE role_id = ?', [$roleId]);
+        $sql = 'SELECT '.self::HOLDER_COUNT." FROM {$this->getTable()} AS r WHERE r.id = ?";
 
-        return (int) $stmt->fetchColumn();
+        return (int) $this->database->query($sql, [$roleId])->fetchColumn();
     }
 
     /**
