@@ -45,12 +45,13 @@ final class BlogActionPresenter
                 ],
                 'pill' => self::PILLS['published'],
             ],
+            // Archived posts offer the same three, in the same places.
             'archived' => [
-                'primary' => self::button(self::INTENT_UPDATE, 'Save', 'save', 'blue'),
+                'primary' => self::button(self::INTENT_SAVE_DRAFT, 'Restore as draft', 'undo-2', 'blue'),
                 'secondary' => null,
                 'menu' => [
-                    self::button(self::INTENT_PUBLISH, 'Publish again', 'send', 'slate'),
-                    self::button(self::INTENT_SAVE_DRAFT, 'Move to draft', 'undo-2', 'slate'),
+                    self::button(self::INTENT_PUBLISH, 'Publish', 'send', 'slate'),
+                    self::button(self::INTENT_UPDATE, 'Save, keep archived', 'save', 'slate'),
                 ],
                 'pill' => self::PILLS['archived'],
             ],

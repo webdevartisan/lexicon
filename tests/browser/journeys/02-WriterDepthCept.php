@@ -122,21 +122,24 @@ $I->amAGuest();
 $I->amOnPage($postUrl);
 $I->dontSeeInTitle('Page not found');
 
-// Archiving takes it away too, and publishing from the menu brings it back
+// Archiving takes it away too. It comes back as a draft first, then publishing brings it back
 $I->signInAs('writer');
 $I->amOnPage($postEditUrl);
 $I->click('summary[title="More actions"]');
 $I->click('button[name=intent][value=archive]');
 $I->waitForText('Post updated');
 $I->see('Archived');
+$I->see('Restore as draft', '[data-actionbar-primary]');
 $I->seeThePageLooksRight('26-post-archived');
 $I->amAGuest();
 $I->amOnPage($postUrl);
 $I->seeInTitle('Page not found');
 $I->signInAs('writer');
 $I->amOnPage($postEditUrl);
-$I->click('summary[title="More actions"]');
-$I->click('Publish', '[role=menu]');
+$I->click('[data-actionbar-primary]');
+$I->waitForText('Post updated');
+$I->see('Draft');
+$I->click('Publish');
 $I->waitForText('Post updated');
 $I->see('Published');
 $I->amAGuest();

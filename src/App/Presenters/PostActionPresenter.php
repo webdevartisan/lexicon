@@ -155,6 +155,11 @@ final class PostActionPresenter
                 : self::button(self::INTENT_PUBLISH, 'Publish now', 'send', 'green');
         }
 
+        // Coming back as a draft leaves room to check the post before it goes live again.
+        if ($status === 'archived' && $canPublish) {
+            return self::button(self::INTENT_SAVE_DRAFT, 'Restore as draft', 'undo-2', 'blue');
+        }
+
         return self::button(self::INTENT_UPDATE, 'Update', 'save', 'blue');
     }
 
@@ -183,7 +188,7 @@ final class PostActionPresenter
     }
 
     /**
-     * Rarer state changes, tucked behind the overflow control.
+     * Rarer moves, tucked behind the overflow control.
      *
      * @return array<int, array<string, string>>
      */
@@ -207,8 +212,8 @@ final class PostActionPresenter
                 self::button(self::INTENT_ARCHIVE, 'Archive', 'archive', 'slate'),
             ],
             'archived' => [
-                self::button(self::INTENT_SAVE_DRAFT, 'Restore as draft', 'undo-2', 'slate'),
                 self::button(self::INTENT_PUBLISH, 'Publish', 'send', 'slate'),
+                self::button(self::INTENT_UPDATE, 'Save, keep archived', 'save', 'slate'),
             ],
             default => [],
         };

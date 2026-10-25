@@ -22,11 +22,13 @@ test('a published blog saves with update and keeps unpublish and archive in the 
         ->and(array_column($actions['menu'], 'intent'))->toBe(['unpublish', 'archive']);
 });
 
-test('an archived blog can be published again or moved to draft', function () {
+test('an archived blog is restored as a draft, with publishing and saving as it is in the menu', function () {
     $actions = BlogActionPresenter::for('archived');
 
-    expect($actions['primary']['intent'])->toBe('update')
-        ->and(array_column($actions['menu'], 'intent'))->toBe(['publish', 'save_draft']);
+    expect($actions['primary']['intent'])->toBe('save_draft')
+        ->and($actions['primary']['label'])->toBe('Restore as draft')
+        ->and(array_column($actions['menu'], 'intent'))->toBe(['publish', 'update'])
+        ->and(array_column($actions['menu'], 'label'))->toBe(['Publish', 'Save, keep archived']);
 });
 
 test('intents map to statuses and anything else keeps the current one', function (?string $intent, string $current, string $expected) {
@@ -47,4 +49,12 @@ test('it returns the same shape as the post presenter so both share one action b
 
     expect(array_keys($blog))->toBe(array_keys($post))
         ->and(array_keys($blog['primary']))->toBe(array_keys($post['primary']));
+});
+
+test('an archived blog and an archived post offer the same buttons', function () {
+    $blog = BlogActionPresenter::for('archived');
+    $post = PostActionPresenter::for('archived', true, false);
+
+    expect($blog['primary'])->toBe($post['primary'])
+        ->and($blog['menu'])->toBe($post['menu']);
 });
