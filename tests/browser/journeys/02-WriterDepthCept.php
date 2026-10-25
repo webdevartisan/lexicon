@@ -69,6 +69,23 @@ $I->click('Update');
 $I->waitForText('Post updated');
 $I->seeThePageLooksRight('22-post-with-images');
 
+// Switching light and dark is not an edit, and words typed before a switch stay
+$editorReady = "return !!(tinymce.get('content') && tinymce.get('content').initialized);";
+$switchMode = "var root = document.documentElement; root.setAttribute('data-mode', root.getAttribute('data-mode') === 'dark' ? 'light' : 'dark');";
+$wouldWarn = "var e = new Event('beforeunload', {cancelable: true}); window.dispatchEvent(e); return e.defaultPrevented;";
+$I->waitForJS($editorReady, 15);
+$I->executeJS($switchMode);
+$I->waitForJS($editorReady, 15);
+$I->assertFalse($I->executeJS($wouldWarn));
+$I->executeJS("var ed = tinymce.get('content'); ed.focus(); ed.selection.select(ed.getBody(), true); ed.selection.collapse(false);");
+$I->switchToIFrame('#content_ifr');
+$I->type(' Typed before a switch.');
+$I->switchToIFrame();
+$I->executeJS($switchMode);
+$I->waitForJS($editorReady, 15);
+$I->assertTrue($I->executeJS($wouldWarn));
+$I->assertStringContainsString('Typed before a switch.', $I->executeJS("return tinymce.get('content').getContent();"));
+
 // Readers see the category, the tag and the images, and the links work
 $I->amAGuest();
 $I->amOnPage($postUrl);

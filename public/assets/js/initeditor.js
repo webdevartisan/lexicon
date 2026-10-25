@@ -161,6 +161,10 @@ function startEditor() {
     },
 
     setup: function (editor) {
+      editor.on('init', function () {
+        started = { text: editor.getElement().value, content: editor.getContent() };
+      });
+
       editor.on('change', function () {
         tinymce.triggerSave();
         if (window.refreshPostPreviews) window.refreshPostPreviews();
@@ -239,15 +243,27 @@ function startEditor() {
   });
 }
 
+// The text box and the editor's reading of it when the current editor started.
+var started = { text: '', content: '' };
+
 startEditor();
 
-// The skin is fixed when TinyMCE starts, so switching mode needs a fresh instance; triggerSave keeps the typed content.
+// The skin is fixed when TinyMCE starts, so switching mode needs a fresh instance.
 var lastMode = document.documentElement.getAttribute('data-mode');
 new MutationObserver(function () {
   var mode = document.documentElement.getAttribute('data-mode');
   if (mode === lastMode) return;
   lastMode = mode;
-  tinymce.triggerSave();
+
+  var editor = tinymce.get('content');
+  var box = editor.getElement();
+  // Removing an editor writes its content into the box in its own format. With
+  // nothing changed, the box gets its starting text back, or the leave warning
+  // would take the reformatting for an edit. The dirty flag can't decide this:
+  // TinyMCE only sets it on key-up, and text can arrive without one.
+  var unchanged = editor.initialized && editor.getContent() === started.content;
+  editor.save();
   tinymce.remove('#content');
+  if (unchanged) box.value = started.text;
   startEditor();
 }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode'] });
