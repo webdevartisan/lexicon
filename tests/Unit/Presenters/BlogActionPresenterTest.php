@@ -48,7 +48,7 @@ test('it returns the same shape as the post presenter so both share one action b
     $post = PostActionPresenter::for('draft', true, false);
 
     expect(array_keys($blog))->toBe(array_keys($post))
-        ->and(array_keys($blog['primary']))->toBe(array_keys($post['primary']));
+        ->and($post['primary'])->toHaveKeys(array_keys($blog['primary']));
 });
 
 test('an archived blog and an archived post offer the same buttons', function () {

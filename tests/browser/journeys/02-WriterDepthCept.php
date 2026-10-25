@@ -175,6 +175,26 @@ $I->amAGuest();
 $I->amOnPage("/en/blog/{$blogSlug}/{$scheduledSlug}");
 $I->seeInTitle('Page not found');
 
+// Its main button updates the schedule, and clearing the date offers to publish it now instead
+$I->signInAs('writer');
+$I->amOnPage($scheduledEditUrl);
+$I->waitForElement('#content_ifr', 15);
+$I->see('Update schedule', '[data-actionbar-primary]');
+$I->scrollDownTo('[data-clear-schedule]');
+$I->click('[data-clear-schedule]');
+$I->see('Publish now', '[data-actionbar-primary]');
+
+// "Publish now" from the menu puts it live straight away, though its date is still ahead
+$I->amOnPage($scheduledEditUrl);
+$I->waitForElement('#content_ifr', 15);
+$I->click('summary[title="More actions"]');
+$I->click('Publish now', '[role=menu]');
+$I->waitForText('Post updated');
+$I->see('Published');
+$I->amAGuest();
+$I->amOnPage("/en/blog/{$blogSlug}/{$scheduledSlug}");
+$I->dontSeeInTitle('Page not found');
+
 // A draft can be deleted
 $I->signInAs('writer');
 $I->amOnPage('/en/dashboard/post/new');
@@ -201,7 +221,7 @@ $I->seeThePageLooksRight('29-draft-deleted');
 $I->amOnPage($draftUrl);
 $I->seeInTitle('not found');
 
-// Deleting a scheduled post with unsaved edits doesn't then ask about leaving the page
+// Deleting a live post with unsaved edits doesn't then ask about leaving the page
 $I->amOnPage($scheduledEditUrl);
 $I->waitForElement('#content_ifr', 15);
 $I->fillField('title', 'Changed, then deleted');

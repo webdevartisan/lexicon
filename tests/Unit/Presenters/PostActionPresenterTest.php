@@ -47,3 +47,36 @@ test('someone who cannot publish only saves an archived post', function () {
     expect($actions['primary']['intent'])->toBe('update')
         ->and($actions['menu'])->toBe([]);
 });
+
+test('publish now on a scheduled post publishes whatever the date says', function () {
+    $menu = PostActionPresenter::for('scheduled', true, false, true)['menu'];
+
+    expect($menu[0]['intent'])->toBe('publish_now')
+        ->and($menu[0]['label'])->toBe('Publish now')
+        ->and(PostActionPresenter::statusForIntent('publish_now', 'scheduled', true))->toBe('published');
+});
+
+test('a button that publishes or schedules has words for a date ahead and for none', function (string $status, ?string $workflowState, string $later, string $now) {
+    foreach ([true, false] as $hasFutureDate) {
+        $primary = PostActionPresenter::for($status, true, true, $hasFutureDate, $workflowState)['primary'];
+
+        expect($primary['later'])->toBe(['label' => $later, 'icon' => 'calendar-clock'])
+            ->and($primary['now'])->toBe(['label' => $now, 'icon' => 'send']);
+    }
+})->with([
+    'draft' => ['draft', null, 'Schedule', 'Publish'],
+    'scheduled' => ['scheduled', null, 'Update schedule', 'Publish now'],
+    'submission in review' => ['pending', 'in_review', 'Schedule', 'Approve & publish'],
+]);
+
+test('a button the date makes no difference to has one wording', function (string $status, bool $canPublish) {
+    $primary = PostActionPresenter::for($status, $canPublish, true, true)['primary'];
+
+    expect($primary)->not->toHaveKey('later')
+        ->and($primary)->not->toHaveKey('now');
+})->with([
+    'published' => ['published', true],
+    'archived' => ['archived', true],
+    'draft for a writer' => ['draft', false],
+    'scheduled for a writer' => ['scheduled', false],
+]);

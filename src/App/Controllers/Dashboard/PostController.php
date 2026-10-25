@@ -662,8 +662,10 @@ final class PostController extends AppController
             $data['featured_image'] = null;
         }
 
-        // Set published_at when transitioning to published
-        if ($newStatus === 'published' && $oldStatus !== 'published' && empty($data['published_at'])) {
+        // Going live dates the post now, unless a past date was picked for it. A date
+        // still ahead only gets this far through "Publish now", which means now.
+        if ($newStatus === 'published' && $oldStatus !== 'published'
+            && (empty($data['published_at']) || strtotime($data['published_at'].' UTC') > time())) {
             $utcNow = new DateTime('now', new DateTimeZone('UTC'));
             $data['published_at'] = $utcNow->format('Y-m-d H:i:s');
         }

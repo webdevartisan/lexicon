@@ -180,6 +180,8 @@ function initSocialTabs() {
  *
  * The backend decides this the same way, from the date rather than the button,
  * so the label is only there to keep the two from looking like they disagree.
+ * The server sends the button's words for both cases; buttons the date makes
+ * no difference to, like "Save draft", come without them.
  */
 function initScheduleAwareness() {
   const dateField = document.getElementById('published_at');
@@ -189,9 +191,22 @@ function initScheduleAwareness() {
   if (!dateField) return;
 
   const label = primary ? primary.querySelector('[data-primary-label]') : null;
-  const icon = primary ? primary.querySelector('i') : null;
-  const publishLabel = primary ? primary.dataset.publishLabel : '';
-  const publishIntent = primary ? primary.getAttribute('value') : '';
+  const words = primary && primary.dataset.labelLater ? {
+    later: { label: primary.dataset.labelLater, icon: primary.dataset.iconLater },
+    now: { label: primary.dataset.labelNow, icon: primary.dataset.iconNow },
+  } : null;
+
+  // Lucide swaps each <i> for an <svg>, so look the icon up every time and start it over.
+  function showIcon(name) {
+    const current = primary.querySelector('[data-lucide]');
+    if (!current || current.getAttribute('data-lucide') === name) return;
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', name);
+    icon.setAttribute('aria-hidden', 'true');
+    icon.className = 'size-4';
+    current.replaceWith(icon);
+    if (window.lucide) window.lucide.createIcons();
+  }
 
   // A post published before keeps its past date, which holds nothing back,
   // so only a date still ahead turns publishing into scheduling.
@@ -214,14 +229,11 @@ function initScheduleAwareness() {
         : 'Leave empty to go live as soon as you publish.';
     }
 
-    // Only relabel the buttons that actually publish; "Save draft" and
-    // "Submit for review" mean the same thing whatever the date says.
-    if (!primary || !label) return;
-    if (publishIntent !== 'publish' && publishIntent !== 'schedule') return;
+    if (!words || !label) return;
 
-    label.textContent = scheduling ? 'Schedule' : publishLabel;
-    if (icon) icon.setAttribute('data-lucide', scheduling ? 'calendar-clock' : 'send');
-    if (window.lucide) window.lucide.createIcons();
+    const shown = scheduling ? words.later : words.now;
+    label.textContent = shown.label;
+    showIcon(shown.icon);
   }
 
   dateField.addEventListener('change', refresh);
