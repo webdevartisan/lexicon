@@ -280,7 +280,7 @@ if ($q !== '') {
                             ['label' => $t('components.postCard.visibility.makePublic'), 'icon' => 'globe', 'post' => $dashPost('make-public'), 'confirm' => $t('components.postCard.visibility.makePublicConfirm'), 'can' => $can['publish'] && $postVisibility !== 'public'],
                             ['label' => $t('components.postCard.visibility.makePrivate'), 'icon' => 'lock', 'post' => $dashPost('make-private'), 'confirm' => $t('components.postCard.visibility.makePrivateConfirm'), 'can' => $can['publish'] && $postVisibility !== 'private'],
                             ['label' => $t('components.postCard.visibility.unlist'), 'icon' => 'eye-off', 'post' => $dashPost('unlist'), 'confirm' => $t('components.postCard.visibility.unlistConfirm'), 'can' => $can['publish'] && $postVisibility !== 'unlisted'],
-                            ['label' => $t('components.postCard.tooltips.delete'), 'icon' => 'trash-2', 'post' => $dashPost('delete'), 'danger' => true, 'can' => $can['delete']],
+                            ['label' => $t('components.postCard.tooltips.delete'), 'icon' => 'trash-2', 'post' => $dashPost('destroy').'?r='.urlencode($returnToken), 'confirm' => $t('components.postCard.deleteConfirm', ['title' => $rowTitle]), 'danger' => true, 'can' => $can['delete']],
                         ];
                         ?>
                         <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-zink-700/40">

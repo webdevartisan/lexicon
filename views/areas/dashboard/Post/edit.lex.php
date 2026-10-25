@@ -29,16 +29,7 @@
   {% cmp="go-live-form" line="{$visibility}" id="go-live-form" returnTo="{$goLiveReturn}" %}
 </div>
 
-{% cmp="modal" 
-    id="confirmModal" 
-    title="Are you sure?" 
-    icon="alert-circle"
-    variant="danger"
-    message="This action cannot be undone."
-    confirmText="Yes, Continue"
-    cancelText="Cancel" 
-    form="deletePost" %}
-<form method="POST" action="/dashboard/post/{{ post.id }}/destroy" id="deletePost">
+<form method="POST" action="/dashboard/post/<?= (int) $post['id'] ?>/destroy?r=<?= e(urlencode((string) ($returnToken ?? ''))) ?>" id="deletePost" data-discards-changes>
     {{ csrf_field() }}
 </form>
 {% endblock %}

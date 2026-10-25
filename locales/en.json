@@ -369,6 +369,7 @@
             "unclaimed": "No reviewer has claimed this post yet",
             "feature": "Feature on homepage",
             "unfeature": "Unfeature",
+            "deleteConfirm": "Permanently delete “{title}”? This cannot be undone.",
             "actions": {
                 "preview": "Preview"
             },

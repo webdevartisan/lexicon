@@ -831,25 +831,8 @@ final class PostController extends AppController
     }
 
     /**
-     * Show post deletion confirmation.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function delete(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('delete', $post, $user);
-
-        return $this->view('post.delete', [
-            'post' => $post->toArray(),
-        ]);
-    }
-
-    /**
-     * Delete post permanently.
+     * Delete a post permanently, then go back to the post list it was deleted
+     * from (the list's return token in `r`), or to the post list.
      *
      * @param  string  $id  Post ID
      */
@@ -861,8 +844,6 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
         Gate::authorize('delete', $post, $user);
 
-        $postData = $post->toArray();
-
         $this->model->delete((int) $id);
 
         audit()->log(
@@ -870,13 +851,15 @@ final class PostController extends AppController
             'post.deleted',
             'post',
             (int) $id,
-            ['title' => $postData['title'], 'slug' => $postData['slug']],
+            ['title' => $post->title(), 'slug' => $post->slug()],
             $this->request->ip()
         );
 
-        $this->flash('success', 'Post deleted successfully.');
+        $this->flash('success', '“'.$post->title().'” deleted.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirect(
+            $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post'])
+        );
     }
 
     /**

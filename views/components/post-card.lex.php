@@ -237,10 +237,9 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
                     <?php if ($can['delete']) { ?>
                     <div class="my-1.5 border-t border-slate-100 dark:border-zink-500" aria-hidden="true"></div>
 
-                    <!-- No JS confirm here: the delete action renders its own confirmation page. -->
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/delete" class="m-0">
+                    <form method="POST" action="/dashboard/post/<?= (int) $post['id'] ?>/destroy?r=<?= e(urlencode($returnToken)) ?>" class="m-0">
                         {{ csrf_field() }}
-                        <button type="submit"
+                        <button type="submit" data-confirm="<?= e($t('components.postCard.deleteConfirm', ['title' => (string) $post['title']])) ?>"
                             class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors">
                             {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
                             <span>{{ deleteTooltip }}</span>

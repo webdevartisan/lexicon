@@ -166,6 +166,7 @@ $I->click('.flatpickr-calendar.open [aria-label="'.date('F j, Y', strtotime('+1 
 $I->pressKey('#published_at', WebDriverKeys::ESCAPE);
 $I->click('Schedule');
 $I->waitForText('Post saved');
+$scheduledEditUrl = $I->grabFromCurrentUrl();
 $I->seeThePageLooksRight('28-post-scheduled');
 $I->amAGuest();
 $I->amOnPage("/en/blog/{$blogSlug}/{$scheduledSlug}");
@@ -186,13 +187,30 @@ $I->waitForText('Post saved');
 $draftUrl = $I->grabFromCurrentUrl();
 $I->pressKey('body', WebDriverKeys::END);
 $I->wait(1);
+// The question names the post, and deleting goes back to the post list
 $I->click('Delete post');
-$I->waitForText('Are you sure?');
-$I->click('Yes, Continue');
-$I->waitForText('Post deleted');
+$I->waitForElementVisible('#confirmModalDanger');
+$I->see('Permanently delete “A post to delete”?', '#confirmModalDanger');
+$I->click('#confirmModalDanger [data-modal-confirm]');
+$I->waitForText('“A post to delete” deleted.');
+$I->seeCurrentUrlMatches('~/dashboard/post($|\?)~');
 $I->seeThePageLooksRight('29-draft-deleted');
 $I->amOnPage($draftUrl);
 $I->seeInTitle('not found');
+
+// Deleting a scheduled post with unsaved edits doesn't then ask about leaving the page
+$I->amOnPage($scheduledEditUrl);
+$I->waitForElement('#content_ifr', 15);
+$I->fillField('title', 'Changed, then deleted');
+// Added after the page's own leave check, so it records what that check decided
+$I->executeJS("sessionStorage.removeItem('leaveWarned'); window.addEventListener('beforeunload', function (e) { sessionStorage.setItem('leaveWarned', String(e.defaultPrevented)); });");
+$I->pressKey('body', WebDriverKeys::END);
+$I->wait(1);
+$I->click('Delete post');
+$I->waitForElementVisible('#confirmModalDanger');
+$I->click('#confirmModalDanger [data-modal-confirm]');
+$I->waitForText('deleted.');
+$I->assertSame('false', $I->executeJS("return sessionStorage.getItem('leaveWarned');"));
 
 // Trying and switching themes
 $I->amOnPage("/en/blog/{$blogSlug}?_theme=nocturne");

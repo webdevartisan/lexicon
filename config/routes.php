@@ -474,12 +474,10 @@ $router->group([
 
     $r->add('/post/{id:\d+}/edit', ['controller' => 'PostController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/draft', ['controller' => 'PostStatusController', 'action' => 'draft', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/archive', ['controller' => 'PostStatusController', 'action' => 'archive', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
-    $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/unpublish', ['controller' => 'PostStatusController', 'action' => 'unpublish', 'method' => 'POST']);
 

@@ -289,7 +289,8 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             <p class="text-[11px] leading-relaxed text-red-600/80 dark:text-red-400/80">
               Deleting removes the post and its comments. Archive it instead if you only want it off the public site.
             </p>
-            {% cmp="btn" type="button" variant="red" icon="trash-2" label="Delete post" size="xs" dataModalTarget="confirmModal" %}
+            <?php $deleteAttrs = ['form' => 'deletePost', 'data-confirm' => $t('components.postCard.deleteConfirm', ['title' => (string) $post['title']])]; ?>
+            {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Delete post" size="xs" attrs="{$deleteAttrs}" %}
           </div>
         </section>
         {% endif %}

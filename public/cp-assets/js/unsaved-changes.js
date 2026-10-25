@@ -31,10 +31,15 @@
             return fieldValues() !== loaded || Boolean(editor && editor.isDirty()) || Boolean(imageWaiting);
         }
 
-        // formdata fires only when the browser really sends the form, including the upload
+        // formdata fires only when the browser really sends a form, including the upload
         // script's own form.submit(), so a save stopped by a failed upload still warns.
-        form.addEventListener('formdata', function () {
-            if (!reading) {
+        // Besides the form itself, sending a form marked data-discards-changes (delete)
+        // means the edits are being given up on purpose.
+        document.addEventListener('formdata', function (event) {
+            if (reading) {
+                return;
+            }
+            if (event.target === form || event.target.hasAttribute('data-discards-changes')) {
                 sending = true;
             }
         });
