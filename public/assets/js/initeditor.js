@@ -20,6 +20,12 @@ function existingSources(html) {
   return found;
 }
 
+// Read when sending, because the token can be swapped in the background once it expires.
+function formToken(editor) {
+  var input = editor.formElement && editor.formElement.querySelector('input[name="_token"]');
+  return input ? input.value : '';
+}
+
 function openLibrary(editor, onSelect) {
   if (!window.MediaPicker) {
     editor.notificationManager.open({ text: 'Media library not loaded.', type: 'error' });
@@ -30,11 +36,9 @@ function openLibrary(editor, onSelect) {
     editor.notificationManager.open({ text: 'Pick a blog before inserting images.', type: 'warning' });
     return;
   }
-  var postForm = document.querySelector('form[data-autosave-form]');
-  var tokenInput = postForm && postForm.querySelector('input[name="_token"]');
 
   window.MediaPicker.open(blogId, {
-    csrfToken: tokenInput ? tokenInput.value : '',
+    csrfToken: formToken(editor),
     onSelect: onSelect,
   });
 }
@@ -129,9 +133,6 @@ function startEditor() {
           return;
         }
 
-        const postForm = document.querySelector('form[data-autosave-form]');
-        const csrfToken = postForm.querySelector('input[name="_token"]').value;
-
         const formData = new FormData();
         formData.append('image', blobInfo.blob(), blobInfo.filename());
         formData.append('blog_id', blogId);
@@ -142,7 +143,7 @@ function startEditor() {
           credentials: 'same-origin',
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken
+            'X-CSRF-TOKEN': formToken(tinymce.get('content'))
           },
         })
         .then(response => response.json())

@@ -51,6 +51,20 @@ $I->click('[data-picker-grid] img');
 $I->switchToIFrame('#content_ifr');
 $I->seeElement('img');
 $I->switchToIFrame();
+
+// A pasted image uploads too, though autosave leaves this live post alone
+$I->dontSeeElement('form[data-autosave-form]');
+$I->executeJS(<<<'JS'
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 40;
+    canvas.getContext('2d').fillRect(0, 0, 40, 40);
+    var editor = tinymce.get('content');
+    editor.insertContent('<img id="walk-pasted" src="' + canvas.toDataURL('image/png') + '">');
+    editor.uploadImages();
+JS);
+$I->switchToIFrame('#content_ifr');
+$I->waitForElement('#walk-pasted[src*="/uploads/"]', 15);
+$I->switchToIFrame();
 $I->click('Update');
 $I->waitForText('Post updated');
 $I->seeThePageLooksRight('22-post-with-images');
