@@ -7,6 +7,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use App\ValueObjects\PostFieldRules;
 use Framework\Core\App;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Security\Csrf;
@@ -118,6 +119,28 @@ it('keeps autosaving a submission that is still with its writer', function () {
 
     expect($code)->toBe(200)
         ->and($this->posts->find($created['id'])['title'])->toBe('Second pass');
+});
+
+it('creates a draft from just a title', function () {
+    [$code, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'content' => '']);
+
+    expect($code)->toBe(200)
+        ->and($this->posts->find($body['id'])['status'])->toBe('draft');
+
+    // The browser leaves an empty body out of the request, so the column can be NULL.
+    $this->db->query('UPDATE posts SET content = NULL WHERE id = ?', [$body['id']]);
+    expect($this->posts->findResource($body['id'])->content())->toBe('');
+});
+
+it('refuses to empty a submission that is waiting for review', function () {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query("UPDATE posts SET status = 'pending' WHERE id = ?", [$created['id']]);
+
+    [$code, $body] = ($this->autosave)(['id' => $created['id'], 'content' => '']);
+
+    expect($code)->toBe(400)
+        ->and($body['errors']['content'][0])->toBe(PostFieldRules::TEXT_REQUIRED)
+        ->and($this->posts->find($created['id'])['content'])->toBe('<p>Body</p>');
 });
 
 it('stores a readable date in UTC', function () {

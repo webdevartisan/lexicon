@@ -327,6 +327,10 @@ final class PostController extends AppController
             (int) $blog->id()
         );
 
+        if (PostFieldRules::missingText($data['status'], $data['content'])) {
+            return $this->rejectField('content', PostFieldRules::TEXT_REQUIRED);
+        }
+
         $data['blog_id'] = $blog->id();
         $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
 
@@ -549,7 +553,7 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
-            'content' => 'required|max:60000',
+            'content' => 'max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
             'published_at' => 'max:20',
@@ -618,6 +622,10 @@ final class PostController extends AppController
 
                 return $this->redirectBack();
             }
+        }
+
+        if (PostFieldRules::missingText($newStatus, $newData['content'])) {
+            return $this->rejectField('content', PostFieldRules::TEXT_REQUIRED);
         }
 
         // Detect changed fields
@@ -774,7 +782,7 @@ final class PostController extends AppController
                 'slug' => 'slug|min:2|max:100',
                 // No status rule: autosave never sends one, and the "in" rule
                 // rejects an absent value rather than skipping it.
-                'content' => 'required|max:60000',
+                'content' => 'max:60000',
                 'excerpt' => 'max:300',
                 'timezone' => 'timezone',
                 'published_at' => 'max:20',
@@ -895,6 +903,8 @@ final class PostController extends AppController
         $applied = 0;
         $skipped = 0;
         $moderated = 0;
+        $withoutText = 0;
+        $targetStatus = ['publish' => 'published', 'review' => 'pending'][$action] ?? null;
 
         foreach ($ids as $id) {
             $post = $this->model->findResource($id);
@@ -911,6 +921,11 @@ final class PostController extends AppController
 
             if ($action !== 'delete' && $post->status() === 'moderated') {
                 $moderated++;
+                continue;
+            }
+
+            if ($targetStatus !== null && PostFieldRules::missingText($targetStatus, $post->content())) {
+                $withoutText++;
                 continue;
             }
 
@@ -956,6 +971,9 @@ final class PostController extends AppController
         }
         if ($moderated > 0) {
             $msg .= ", {$moderated} left as they are because a moderator hid them";
+        }
+        if ($withoutText > 0) {
+            $msg .= ", {$withoutText} left as they are because they have no text yet";
         }
         $this->flash('success', $msg.'.');
 

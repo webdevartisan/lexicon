@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Gate;
 use App\Helpers\TimezoneHelper;
 use App\Models\PostModel;
+use App\ValueObjects\PostFieldRules;
 use DateTime;
 use DateTimeZone;
 
@@ -68,6 +69,14 @@ final class PostAutosaveService
                 return [
                     'success' => false,
                     'error' => 'Autosave only keeps drafts, and this post is no longer one. Use the save button to keep your changes.',
+                ];
+            }
+
+            if (isset($data['content']) && PostFieldRules::missingText($post->status(), (string) $data['content'])) {
+                return [
+                    'success' => false,
+                    'error' => PostFieldRules::TEXT_REQUIRED,
+                    'errors' => ['content' => [PostFieldRules::TEXT_REQUIRED]],
                 ];
             }
 

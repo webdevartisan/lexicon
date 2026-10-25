@@ -17,6 +17,7 @@ use App\Services\BlogLaunchService;
 use App\Services\BlogRoleLabels;
 use App\Services\SubscriberNotificationService;
 use App\Services\WorkflowService;
+use App\ValueObjects\PostFieldRules;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -205,6 +206,12 @@ final class PostReviewController extends AppController
         $post = $this->getPost((int) $id);
 
         Gate::authorize('update', $post, $user);
+
+        if (PostFieldRules::missingText('pending', $post->content())) {
+            $this->flash('error', PostFieldRules::TEXT_REQUIRED);
+
+            return $this->redirectBack();
+        }
 
         try {
             $this->workflowService->submitForReview((int) $id, (int) $user['id']);

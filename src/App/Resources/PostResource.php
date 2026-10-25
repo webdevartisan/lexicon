@@ -51,7 +51,7 @@ class PostResource
 
     public function content(): string
     {
-        return $this->data['content'];
+        return (string) ($this->data['content'] ?? '');
     }
 
     public function excerpt(): string
