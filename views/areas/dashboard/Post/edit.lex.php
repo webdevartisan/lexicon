@@ -21,7 +21,7 @@
     action="/dashboard/post/{{ post.id }}/update"
     enctype="multipart/form-data"
     data-dropzone-form
-    class="space-y-3"<?= $autosave ? ' data-autosave-form' : '' ?>>
+    class="space-y-3"<?= $autosave ? ' data-autosave-form' : ' data-unsaved-warning' ?>>
     <input type="hidden" name="r" value="<?= e(old('r', $returnToken ?? '')) ?>" >
     {% include "partials/dashboard/post/_form.lex.php" %}
   </form>
@@ -52,4 +52,6 @@
 <script src="<?= e(versioned_asset('/cp-assets/js/pages/post.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
+<?php /* Last, so it reads the fields after the other scripts have filled them in. */ ?>
+<script src="<?= e(versioned_asset('/cp-assets/js/unsaved-changes.js')) ?>"></script>
 {% endblock %}
