@@ -12,6 +12,7 @@ $old = old();
     <title>{% yield title %} | Lexicon CP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     {% include "partials/_favicons.lex.php" %}
+    {% include "partials/_device_zone.lex.php" %}
     <script src="<?= e(versioned_asset('/assets/js/appearance.js')) ?>"></script>
     <script src="<?= e(versioned_asset('/cp-assets/js/layout.js')) ?>"></script>
     <script defer src="/vendor/alpine/focus.min.js"></script>

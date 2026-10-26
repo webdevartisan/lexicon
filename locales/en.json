@@ -1308,6 +1308,8 @@
             "timezone": "Timezone",
             "timezoneHelp": "Dates and times across the site are shown in this zone.",
             "timezoneInvalid": "Please select a valid timezone.",
+            "timezoneAuto": "Automatic (follow this device)",
+            "timezoneAutoNow": "Automatic (this device: {zone})",
             "timezonePlaceholder": "Select timezone",
             "language": "Interface language",
             "languageAuto": "Automatic (follow page language)",

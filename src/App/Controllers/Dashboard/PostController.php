@@ -21,6 +21,7 @@ use App\Presenters\PostActionPresenter;
 use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Services\AccountZone;
 use App\Services\ActiveBlog;
 use App\Services\BlogLaunchService;
 use App\Services\ExternalMediaGuard;
@@ -78,6 +79,7 @@ final class PostController extends AppController
         private ActiveBlog $activeBlog,
         private PostListingModel $postListing,
         private BlogLaunchService $blogLaunch,
+        private AccountZone $zones,
     ) {}
 
     /**
@@ -1190,14 +1192,12 @@ final class PostController extends AppController
     }
 
     /**
-     * The zone a writer reads and picks publish dates in: their account's, or
-     * the site's when they set none.
+     * The zone a writer reads and picks publish dates in. Not viewer_timezone(),
+     * which caches its answer for the whole process and so for every test after the first.
      */
     private function writerZone(int $userId): string
     {
-        $zone = $this->preference->getTimezone($userId);
-
-        return TimezoneHelper::isValid($zone) ? $zone : site_timezone();
+        return $this->zones->resolve($userId);
     }
 
     /**

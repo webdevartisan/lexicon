@@ -38,6 +38,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <meta name="theme-color" content="#16233f" />
 
         {% include "partials/_favicons.lex.php" %}
+        {% include "partials/_device_zone.lex.php" %}
 
 		<link rel="canonical" href="{{ head.canonicalUrl }}" />
 

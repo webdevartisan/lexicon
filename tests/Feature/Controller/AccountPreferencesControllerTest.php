@@ -6,6 +6,7 @@ use App\Controllers\AccountPreferencesController;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\LocaleRegistry;
 use App\Services\SessionLocaleSync;
 use Framework\Core\App;
@@ -78,7 +79,16 @@ beforeEach(function () {
             $this->pending,
             $c->get(LocaleRegistry::class),
             $c->get(SessionLocaleSync::class),
+            new AccountZone($this->prefs, $c->get(Session::class)),
         );
+    };
+
+    $this->reportDeviceZone = function (string $zone) {
+        $controller = ($this->makeController)();
+        $request = makeRequest('/account/device-zone', 'POST', ['zone' => $zone]);
+        setupController($controller, $request, $this->viewer);
+
+        return callController($controller, 'rememberDeviceZone', $request);
     };
 
     $this->switchZone = function (string $zone, string $returnTo) {
@@ -114,6 +124,37 @@ test('saving preferences stores the timezone', function () {
 
     expect($response->getStatusCode())->toBe(302)
         ->and($this->prefs->findOrCreate($this->userId)['timezone'])->toBe('Europe/Athens');
+});
+
+test('choosing Automatic clears the picked zone', function () {
+    $this->prefs->upsert($this->userId, ['timezone' => 'Europe/Athens']);
+    $controller = ($this->makeController)();
+
+    $request = makeRequest('/account/preferences/update', 'POST', [
+        '_token' => csrf()->getToken(),
+        'timezone' => 'auto',
+        'locale' => 'auto',
+    ]);
+    setupController($controller, $request, $this->viewer);
+
+    $response = callController($controller, 'update', $request);
+
+    expect($response->getStatusCode())->toBe(302)
+        ->and($this->prefs->getTimezone($this->userId))->toBeNull();
+});
+
+test('the zone the browser reports is kept for the session under its current name', function () {
+    $response = ($this->reportDeviceZone)('Asia/Calcutta');
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(App::container()->get(Session::class)->get('device_zone'))->toBe('Asia/Kolkata');
+});
+
+test('a reported zone that is not a zone is turned away', function () {
+    $response = ($this->reportDeviceZone)('Somewhere/Else');
+
+    expect($response->getStatusCode())->toBe(422)
+        ->and(App::container()->get(Session::class)->get('device_zone'))->toBeNull();
 });
 
 test('the preferences form cannot change the email even when one is posted', function () {

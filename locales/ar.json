@@ -1320,6 +1320,8 @@
       "timezone": "المنطقة الزمنية",
       "timezoneHelp": "تُعرض التواريخ والأوقات في الموقع بهذه المنطقة.",
       "timezoneInvalid": "يرجى اختيار منطقة زمنية صحيحة.",
+      "timezoneAuto": "تلقائي (يتبع هذا الجهاز)",
+      "timezoneAutoNow": "تلقائي (هذا الجهاز: {zone})",
       "timezonePlaceholder": "اختر المنطقة الزمنية",
       "language": "لغة الواجهة",
       "languageAuto": "تلقائي (يتبع لغة الصفحة)",

@@ -18,39 +18,26 @@ class TimezoneHelper
     /**
      * Get timezones grouped by region for select dropdown.
      *
-     * We group timezones like "America/New_York" by their region prefix
-     * to create organized optgroups in the UI.
-     *
-     * TODO: Cache this result as it's expensive and static.
+     * Zones like "America/New_York" are grouped by their region prefix for the
+     * select's option groups.
      *
      * @return array<string, string[]>
      */
     public static function getGroupedTimezones(): array
     {
-        // could check cache here before computing
-        // if (Cache::has('grouped_timezones')) {
-        //     return Cache::get('grouped_timezones');
-        // }
-
-        $zones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
         $grouped = [];
 
-        foreach ($zones as $zone) {
-            // split "America/New_York" into ["America", "New_York"]
+        foreach (DateTimeZone::listIdentifiers(DateTimeZone::ALL) as $zone) {
             $parts = explode('/', $zone, 2);
-            $region = $parts[0];
 
-            // skip deprecated/unusual zones without region prefix
+            // Zones such as "UTC" have no region prefix
             if (count($parts) === 1) {
                 $grouped['Other'][] = $zone;
                 continue;
             }
 
-            $grouped[$region][] = $zone;
+            $grouped[$parts[0]][] = $zone;
         }
-
-        // should cache this for 24 hours since it never changes
-        // Cache::put('grouped_timezones', $grouped, 86400);
 
         return $grouped;
     }

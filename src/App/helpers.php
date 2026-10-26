@@ -13,7 +13,7 @@ use App\Helpers\TimezoneHelper;
 use App\Models\BlogSettingsModel;
 use App\Models\SettingModel;
 use App\Models\SiteContentModel;
-use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\AssetPathMapper;
 use App\Services\LocaleRegistry;
 use App\Services\TranslationService;
@@ -222,10 +222,8 @@ function site_timezone(): string
 }
 
 /**
- * Timezone the signed in viewer reads dates in.
- *
- * Falls back to the site timezone rather than UTC, since most accounts never
- * open the preferences page and UTC would be wrong for all of them.
+ * Timezone the signed in viewer reads dates in: the one they picked, else their
+ * device's (see AccountZone), else the site's. Guests get the site's.
  *
  * @return string A valid timezone identifier
  */
@@ -239,15 +237,7 @@ function viewer_timezone(): string
 
     $user = auth()->user();
 
-    if ($user) {
-        $preference = app(UserPreferencesModel::class)->getTimezone((int) $user['id']);
-
-        if (TimezoneHelper::isValid($preference)) {
-            return $zone = $preference;
-        }
-    }
-
-    return $zone = site_timezone();
+    return $zone = $user ? app(AccountZone::class)->resolve((int) $user['id']) : site_timezone();
 }
 
 /**

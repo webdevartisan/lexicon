@@ -94,6 +94,9 @@
                     <label class="acct-label" for="timezone"><?= e($t('account.preferences.timezone')) ?></label>
                     <?php $tz = old('timezone') ?? $user['timezone']; ?>
                     <select class="acct-input" name="timezone" id="timezone" aria-describedby="timezone_hint">
+                        <option value="auto" <?= $tz === 'auto' ? 'selected' : '' ?>><?= e($deviceZone === null
+                            ? $t('account.preferences.timezoneAuto')
+                            : $t('account.preferences.timezoneAutoNow', ['zone' => \App\Helpers\TimezoneHelper::label($deviceZone)])) ?></option>
                         <?php foreach ($timezones as $region => $zones) { ?>
                         <optgroup label="<?= e($region) ?>">
                             <?php foreach ($zones as $zone) { ?>

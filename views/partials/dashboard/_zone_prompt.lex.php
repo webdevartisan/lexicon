@@ -1,14 +1,17 @@
 <?php
 /**
  * Offers to show dates on this device's clock when it reads a different time
- * from the account's. Stays hidden until zone-prompt.js compares the two,
- * since only the browser knows which zone it is in. Left out while an admin is
- * signed in as someone else, because the device is the admin's, not theirs.
+ * from the zone the account picked. Accounts on Automatic already follow the
+ * device, so they never see it. Stays hidden until zone-prompt.js compares the
+ * two, since only the browser knows which zone it is in. Left out while an admin
+ * is signed in as someone else, because the device is the admin's, not theirs.
  *
  * No early return: includes are inlined into the layout at compile time.
  */
-if (auth()->check() && empty($impersonation)) {
-    $zonePromptAccount = viewer_timezone();
+$zonePromptAccount = auth()->check() && empty($impersonation)
+    ? app(\App\Services\AccountZone::class)->chosen((int) auth()->user()['id'])
+    : null;
+if ($zonePromptAccount !== null) {
     $zonePromptLabel = \App\Helpers\TimezoneHelper::label($zonePromptAccount);
     // The device's zone is filled in by the browser, so each {device} becomes an empty slot for it.
     $zonePromptFill = static fn (string $text): string => implode('<span data-zone-device></span>', array_map('e', explode('{device}', $text)));

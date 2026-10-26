@@ -93,8 +93,14 @@ $I->click('Sign in', 'form[action="/login"]');
 $I->waitForJS("return !location.pathname.endsWith('/login')", 15);
 $I->saveSessionSnapshot('member');
 
-// Preferences, an email change that is cancelled, and notification settings
+// A new account follows this device's clock, and Preferences names it once the browser has said
 $I->amOnPage('/en/account/preferences');
+$I->waitForJS("return document.querySelector('#timezone').value === 'auto'", 5);
+$I->waitForJS("return document.querySelector('meta[name=device-zone]').content !== '' || performance.getEntriesByType('resource').some(e => e.name.includes('/account/device-zone'))", 10);
+$I->reloadPage();
+$I->waitForJS("return document.querySelector('#timezone option[value=auto]').textContent.includes('this device:')", 5);
+
+// Preferences, an email change that is cancelled, and notification settings
 $I->selectOption('#timezone', 'Europe/Athens');
 $I->click('Save changes', 'form[action$="/account/preferences/update"]');
 $I->waitForText('Preferences saved');
