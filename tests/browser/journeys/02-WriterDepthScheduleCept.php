@@ -48,5 +48,6 @@ $I->wait(max(0, $due - time()) + 2);
 $I->runConsoleCommand('posts:publish-due');
 $I->amOnPage("/en/blog/{$blogSlug}/{$slug}");
 $I->dontSeeInTitle('Page not found');
-$I->see($title);
+// The title fades in, and until it has a reader cannot see it either
+$I->waitForText($title, 5, 'h1');
 $I->seeThePageLooksRight('schedule-live');
