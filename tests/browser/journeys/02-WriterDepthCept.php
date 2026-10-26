@@ -86,6 +86,13 @@ $I->waitForJS($editorReady, 15);
 $I->assertTrue($I->executeJS($wouldWarn));
 $I->assertStringContainsString('Typed before a switch.', $I->executeJS("return tinymce.get('content').getContent();"));
 
+// Words that arrive without a key press, the way dictation sends them, are an edit too
+$I->amOnPage($postEditUrl);
+$I->waitForJS($editorReady, 15);
+$I->assertFalse($I->executeJS($wouldWarn));
+$I->executeJS("var ed = tinymce.get('content'); ed.selection.select(ed.getBody(), true); ed.selection.collapse(false); ed.getDoc().execCommand('insertText', false, ' Dictated, not typed.');");
+$I->assertTrue($I->executeJS($wouldWarn));
+
 // Readers see the category, the tag and the images, and the links work
 $I->amAGuest();
 $I->amOnPage($postUrl);
