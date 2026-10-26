@@ -13,6 +13,8 @@ modules:
             path: ''
             window_size: 1280x900
             wait: 5
+            # A fresh browser per journey: after 07-AccountTwoFactor, keys typed in the same browser never reach the page
+            restart: true
             capabilities:
                 acceptInsecureCerts: true
                 goog:chromeOptions:
