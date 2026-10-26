@@ -133,6 +133,16 @@ function registration_open(): bool
 }
 
 /**
+ * Sign-up page that sends the new account straight on to creating its blog, in the current language.
+ *
+ * @return string The localized sign-up URL
+ */
+function blog_signup_url(): string
+{
+    return lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'));
+}
+
+/**
  * Whether a self-service sign-up must follow the mailed link before it can write.
  */
 function email_verification_required(): bool

@@ -19,7 +19,6 @@ return [
      */
     'front' => [
         ['label' => 'Home', 'href' => '/', 'auth' => null, 'key' => 'navigation.home'],
-        ['label' => 'Create a blog', 'href' => '/login', 'auth' => false, 'key' => 'navigation.createBlog'],
         ['label' => 'Create a blog', 'href' => '/dashboard/blog/new', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['create_blogs'], 'key' => 'navigation.createBlog'],
         ['label' => 'Discover', 'href' => '/discover', 'auth' => null, 'key' => 'navigation.discover'],
         ['label' => 'Getting started', 'href' => '/getting-started', 'auth' => null, 'key' => 'navigation.gettingStarted'],

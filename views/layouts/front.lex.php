@@ -129,7 +129,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
             <div class="lx-drawer-actions">
                 {% if (!auth()->check()): %}
                     <?php if (registration_open()) { ?>
-                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'))) ?>">{{ t('navigation.createBlog') }}</a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(blog_signup_url()) ?>">{{ t('navigation.createBlog') }}</a>
                     <?php } ?>
                     <a class="lx-btn lx-btn-ghost lx-btn-fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
                 {% else %}
@@ -210,6 +210,9 @@ foreach ($socialNetworks as $network) {
                     <ul>
                         <?php foreach ($frontNav as $it) { ?>
                         <li><a href="<?= e(lurl($it['href'])) ?>"><?= e(nav_label($it)) ?></a></li>
+                        <?php } ?>
+                        <?php if (!auth()->check() && registration_open()) { ?>
+                        <li><a href="<?= e(blog_signup_url()) ?>">{{ t('navigation.createBlog') }}</a></li>
                         <?php } ?>
                     </ul>
                 </nav>

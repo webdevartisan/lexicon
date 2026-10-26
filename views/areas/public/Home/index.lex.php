@@ -62,14 +62,14 @@ $homeShowsCta = auth()->check()
     ? (!$homeViewerIsReader || !empty($viewer['can_create_blog']))
     : registration_open();
 $homeCtaUrl = !auth()->check()
-    ? '/register?return_to='.rawurlencode(lurl('/dashboard/blog/new'))
-    : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
+    ? blog_signup_url()
+    : lurl($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
 $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
     ? site_content('banner.cta')
     : site_content('banner.ctaDashboard');
 ?>
         <div class="lx-cover-actions">
-            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
+            <?php if ($homeShowsCta) { ?><a href="<?= e($homeCtaUrl) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
             <a href="<?= e(lurl('/discover')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.discover') }}</a>
         </div>
 
@@ -226,7 +226,7 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey]) {
             <p><?= e(site_content('cta.body')) ?></p>
         </div>
         <div class="lx-close-actions">
-            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
+            <?php if ($homeShowsCta) { ?><a href="<?= e($homeCtaUrl) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
         </div>
     </div>
 </section>

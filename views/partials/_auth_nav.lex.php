@@ -45,7 +45,7 @@ if ($navVariant === 'platform') {
     if ($navIsGuest) { ?>
         <li><a href="<?= e($loginUrl) ?>" class="lx-btn lx-btn-quiet"><?= e($tr('header.signIn')) ?></a></li>
         <?php if (registration_open()) { ?>
-        <li><a href="<?= e(lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'))) ?>" class="lx-btn lx-btn-primary"><?= e($tr('navigation.createBlog')) ?></a></li>
+        <li><a href="<?= e(blog_signup_url()) ?>" class="lx-btn lx-btn-primary"><?= e($tr('navigation.createBlog')) ?></a></li>
         <?php } ?>
     <?php } else { ?>
         <?php if (!$navIsReader || !empty($navViewer['can_create_blog'])) { ?>
