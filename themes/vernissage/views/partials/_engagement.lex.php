@@ -9,7 +9,7 @@ $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
 <style>
-  .post-engagement { display: flex; align-items: center; gap: .5rem; padding: 1.5rem 0; margin-top: 1.5rem; border-top: 1px solid var(--rule); position: relative; }
+  .post-engagement { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: 1.5rem 0; margin-top: 1.5rem; border-top: 1px solid var(--rule); position: relative; }
   .post-engagement .engage-btn { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem 1.1rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--plaster); color: var(--stone); font-family: var(--mono); font-size: var(--type-mono); letter-spacing: .12em; text-transform: uppercase; line-height: 1; cursor: pointer; transition: border-color .18s var(--ease-out), color .18s var(--ease-out), background .18s var(--ease-out); }
   .post-engagement .engage-btn:hover { border-color: var(--ink); color: var(--ink); }
   .post-engagement .engage-btn svg { width: 15px; height: 15px; display: block; }

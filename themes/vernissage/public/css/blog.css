@@ -360,6 +360,11 @@
   border-top: 1px solid var(--rule);
 }
 
+/* Carries the blog title, which can be any length */
+.collection-footer .collection-count {
+  white-space: normal;
+}
+
 @media (max-width: 800px) {
   .salon-grid {
     grid-template-columns: 1fr;

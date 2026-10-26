@@ -79,6 +79,11 @@
   transition: opacity .15s ease, transform .18s ease, visibility 0s .18s;
 }
 
+/* On a phone a list wider than its button runs off the screen, so long items wrap instead */
+@media (--lx-below-sm) {
+  .select-menu-list { min-width: 0; }
+}
+
 .select-menu-open .select-menu-list {
   opacity: 1;
   visibility: visible;

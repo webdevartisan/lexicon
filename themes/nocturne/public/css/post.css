@@ -203,6 +203,7 @@
 .post-engagement {
   grid-column: 3 / span 8;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 0;

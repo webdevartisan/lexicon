@@ -27,9 +27,9 @@ if (!isset($tabs[$activeTab]) && $activeTab !== 'global') {
             </a>
             {% endforeach; %}
         </div>
-        <p class="text-xs text-slate-400 dark:text-zink-300 flex items-center gap-1.5">
-            <i data-lucide="info" class="size-3.5"></i>
-            To add a language, add it to <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">languages</code> in <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">config/localization.php</code> and add <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">locales/&lt;code&gt;.json</code>.
+        <p class="text-xs text-slate-400 dark:text-zink-300 flex items-start gap-1.5">
+            <i data-lucide="info" class="size-3.5 mt-0.5 shrink-0"></i>
+            <span>To add a language, add it to <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">languages</code> in <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">config/localization.php</code> and add <code class="px-1 rounded bg-slate-100 dark:bg-zink-700">locales/&lt;code&gt;.json</code>.</span>
         </p>
     </div>
 
