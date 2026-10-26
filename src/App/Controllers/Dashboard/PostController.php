@@ -267,9 +267,11 @@ final class PostController extends AppController
 
         $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($blogSettings['workflow_enabled']);
+        $zone = $this->writerZone($userId);
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'publishZone' => $zone,
             'backUrl' => $this->backUrlPath(),
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
@@ -277,7 +279,7 @@ final class PostController extends AppController
             'workflowEnabled' => $workflowEnabled,
             'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
-            'visibility' => VisibilityPresenter::forPost(['status' => 'draft'], $blog, $userId),
+            'visibility' => VisibilityPresenter::forPost(['status' => 'draft'], $blog, $userId, $zone),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
@@ -301,7 +303,7 @@ final class PostController extends AppController
         Gate::authorize('createPost', $blog, $user);
 
         $validator = $this->validateOrFail([
-            'published_at' => 'max:20',
+            'published_at' => 'max:19',
         ] + PostFieldRules::CORE + self::SEO_RULES);
 
         $data = $validator->validated();
@@ -312,7 +314,8 @@ final class PostController extends AppController
         // Convert published_at to UTC before resolving the intent, because
         // whether the date is in the future decides publish versus schedule.
         if (!empty($data['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            $data['timezone'] = $this->formZone($data, (int) $user['id']);
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], $data['timezone']);
             if ($utc === null) {
                 return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
             }
@@ -415,24 +418,15 @@ final class PostController extends AppController
         Gate::authorize('update', $post, $user);
         $this->activeBlog->follow($user, $blog);
 
-        // Convert published_at to display timezone
-        $displayDate = null;
-        if (!empty($post->publishedAt())) {
-            $dt = new DateTime($post->publishedAt(), new DateTimeZone('UTC'));
-            $dt->setTimezone(new DateTimeZone($post->timezone()));
-            $displayDate = $dt->format('d.m.y H:i');
-        }
-
         $workflowState = $post->workflowState();
         $status = $post->status();
 
         $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
 
+        $zone = $this->writerZone((int) $user['id']);
         $postArray = $post->toArray();
-        $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id']);
-        if ($displayDate) {
-            $postArray['published_at'] = $displayDate;
-        }
+        $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id'], $zone);
+        $postArray['published_at'] = TimezoneHelper::utcToLocal($post->publishedAt(), $zone);
 
         $postTags = array_map(
             static fn (array $t): string => (string) $t['name'],
@@ -453,6 +447,7 @@ final class PostController extends AppController
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
+            'publishZone' => $zone,
             'postAnalytics' => $this->postAnalytics($blog, (int) $post->id(), (string) ($postArray['status'] ?? '')),
             'translationsEnabled' => $translationsEnabled,
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
@@ -556,7 +551,7 @@ final class PostController extends AppController
             'content' => 'max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'max:20',
+            'published_at' => 'max:19',
             'remove_featured_image' => 'boolean',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
@@ -566,11 +561,10 @@ final class PostController extends AppController
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
         $newData = $this->normalizeSeoFields($newData);
 
-        $timezone = $newData['timezone'] ?? 'UTC';
-
         // Normalize published_at to UTC for comparison
         if (!empty($newData['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $timezone);
+            $newData['timezone'] = $this->formZone($newData, (int) $user['id']);
+            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $newData['timezone'], $post->publishedAt());
             if ($utc === null) {
                 return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
             }
@@ -787,7 +781,7 @@ final class PostController extends AppController
                 'content' => 'max:60000',
                 'excerpt' => 'max:300',
                 'timezone' => 'timezone',
-                'published_at' => 'max:20',
+                'published_at' => 'max:19',
             ]);
 
             if ($validator->fails()) {
@@ -816,6 +810,7 @@ final class PostController extends AppController
                 }
             }
 
+            $validated['timezone'] = $this->formZone($validated, (int) $user['id']);
             $result = $this->autosaveService->save($validated, (int) $user['id'], $postId, $blogId);
 
             $statusCode = $result['success'] ? 200 : 400;
@@ -1192,6 +1187,30 @@ final class PostController extends AppController
         }
 
         return $data;
+    }
+
+    /**
+     * The zone a writer reads and picks publish dates in: their account's, or
+     * the site's when they set none.
+     */
+    private function writerZone(int $userId): string
+    {
+        $zone = $this->preference->getTimezone($userId);
+
+        return TimezoneHelper::isValid($zone) ? $zone : site_timezone();
+    }
+
+    /**
+     * The zone the form showed its date in. A form that does not say was
+     * drawn on the writer's clock.
+     *
+     * @param  array<string, mixed>  $data  Validated input
+     */
+    private function formZone(array $data, int $userId): string
+    {
+        $zone = (string) ($data['timezone'] ?? '');
+
+        return TimezoneHelper::isValid($zone) ? $zone : $this->writerZone($userId);
     }
 
     /**

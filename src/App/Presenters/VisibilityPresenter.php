@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presenters;
 
+use App\Helpers\TimezoneHelper;
 use App\Resources\BlogResource;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -29,9 +30,10 @@ final class VisibilityPresenter
      * have their own notices.
      *
      * @param  array<string, mixed>  $post  Post row with raw UTC published_at
+     * @param  string  $timezone  The zone the viewer reads dates in
      * @return Line|null
      */
-    public static function forPost(array $post, BlogResource $blog, int $viewerId): ?array
+    public static function forPost(array $post, BlogResource $blog, int $viewerId, string $timezone): ?array
     {
         $status = (string) ($post['status'] ?? 'draft');
         $visibility = (string) ($post['visibility'] ?? 'public');
@@ -39,7 +41,7 @@ final class VisibilityPresenter
         return match ($status) {
             'draft' => self::draftLine($blog, $viewerId),
             'pending' => self::line('scheduled', 'pending'),
-            'scheduled' => self::line('scheduled', 'scheduled', ['date' => self::localDate($post)]),
+            'scheduled' => self::line('scheduled', 'scheduled', ['date' => self::localDate($post, $timezone)]),
             'published' => self::publishedLine($post, $visibility, $blog, $viewerId),
             default => null,
         };
@@ -116,14 +118,16 @@ final class VisibilityPresenter
     }
 
     /**
+     * The date on the viewer's clock, with the zone named.
+     *
      * @param  array<string, mixed>  $post
      */
-    private static function localDate(array $post): string
+    private static function localDate(array $post, string $timezone): string
     {
-        $timezone = (string) ($post['timezone'] ?? '') ?: 'UTC';
         $utc = new DateTimeImmutable((string) ($post['published_at'] ?? 'now'), new DateTimeZone('UTC'));
+        $date = $utc->setTimezone(new DateTimeZone($timezone))->format('M j, Y · g:i a');
 
-        return $utc->setTimezone(new DateTimeZone($timezone))->format('j M Y, H:i');
+        return $date.' ('.TimezoneHelper::label($timezone).')';
     }
 
     /**

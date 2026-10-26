@@ -114,7 +114,7 @@ it('keeps a post with no text in draft whatever the editor asks for', function (
         ->and(($this->session)('_errors')['content'][0] ?? '')->toBe(PostFieldRules::TEXT_REQUIRED);
 })->with([
     'publish' => [['intent' => 'publish']],
-    'schedule' => [['intent' => 'schedule', 'published_at' => '01.01.30 09:00']],
+    'schedule' => [['intent' => 'schedule', 'published_at' => '2030-01-01 09:00:00']],
     'submit for review' => [['intent' => 'submit_review']],
 ]);
 

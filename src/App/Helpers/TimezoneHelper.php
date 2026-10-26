@@ -82,28 +82,61 @@ class TimezoneHelper
         return in_array($timezone, DateTimeZone::listIdentifiers(DateTimeZone::ALL), true);
     }
 
-    public const INVALID_PUBLISH_DATE = 'Enter the date as dd.mm.yy hh:mm, for example 25.12.26 09:30.';
+    /** How the date picker holds a publish date: the wall clock time in the writer's zone. */
+    public const PICKER_FORMAT = 'Y-m-d H:i:s';
+
+    public const INVALID_PUBLISH_DATE = 'That date could not be read. Pick it again from the calendar.';
 
     /**
-     * Convert a publish date typed in the writer's timezone to UTC for storage.
+     * Convert a publish date picked in the writer's zone to UTC for storage.
      *
-     * @param  string  $value  Date as typed, e.g. '25.12.26 09:30'
-     * @param  string  $timezone  The writer's timezone identifier
+     * @param  string  $value  Date as the picker sends it, e.g. '2026-11-20 10:00:00'
+     * @param  string  $timezone  The zone the picker showed
+     * @param  string|null  $current  The UTC date already stored, kept when the value is how the page showed it
      * @return string|null UTC 'Y-m-d H:i:s', or null when the date or the zone cannot be understood
      */
-    public static function localToUtc(string $value, string $timezone): ?string
+    public static function localToUtc(string $value, string $timezone, ?string $current = null): ?string
     {
         if (!self::isValid($timezone)) {
             return null;
         }
 
-        $date = DateTime::createFromFormat('!d.m.y H:i', trim($value), new DateTimeZone($timezone));
+        // When the clocks go back an hour happens twice, and reading it again can
+        // land on the other one, so a date nobody touched would move.
+        if ($current !== null && self::utcToLocal($current, $timezone) === trim($value)) {
+            return $current;
+        }
+
+        $date = DateTime::createFromFormat('!'.self::PICKER_FORMAT, trim($value), new DateTimeZone($timezone));
         $problems = DateTime::getLastErrors();
-        // Without this, 31.02 or 25:99 roll over into a different date instead of failing.
+        // Without this, Feb 31 or 25:99 roll over into a different date instead of failing.
         if ($date === false || ($problems !== false && ($problems['warning_count'] > 0 || $problems['error_count'] > 0))) {
             return null;
         }
 
         return $date->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Turn a stored UTC date into the date picker's value in the writer's zone.
+     *
+     * @param  string|null  $utc  Datetime as stored, 'Y-m-d H:i:s'
+     * @param  string  $timezone  The zone to show it in
+     * @return string The picker's format, or '' when there is no date
+     */
+    public static function utcToLocal(?string $utc, string $timezone): string
+    {
+        return local_datetime($utc, self::PICKER_FORMAT, $timezone);
+    }
+
+    /**
+     * A zone identifier written the way people read it.
+     *
+     * @param  string  $timezone  Identifier, e.g. 'America/New_York'
+     * @return string e.g. 'America/New York'
+     */
+    public static function label(string $timezone): string
+    {
+        return str_replace('_', ' ', $timezone);
     }
 }

@@ -214,7 +214,9 @@ function initScheduleAwareness() {
     const picker = dateField._flatpickr;
     if (!picker) return dateField.value.trim() !== '';
     const picked = picker.selectedDates[0];
-    return picked !== undefined && picked.getTime() > Date.now();
+    const zone = dateField.dataset.timezone;
+    const now = zone && window.ZoneClock ? window.ZoneClock.now(zone) : new Date();
+    return picked !== undefined && picked > now;
   }
 
   function refresh() {

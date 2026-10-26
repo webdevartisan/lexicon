@@ -40,10 +40,16 @@ final class PostAutosaveService
             $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
         }
 
+        $post = $postId ? $this->posts->findResource($postId) : false;
+        if ($postId && !$post) {
+            return ['success' => false, 'error' => 'Post not found'];
+        }
+
         // A date that cannot be read is left out and reported, and the rest of the draft still saves.
         $fieldErrors = [];
         if (!empty($data['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            $current = $post ? $post->publishedAt() : null;
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'), $current);
             if ($utc === null) {
                 unset($data['published_at']);
                 $fieldErrors['published_at'] = [TimezoneHelper::INVALID_PUBLISH_DATE];
@@ -52,14 +58,7 @@ final class PostAutosaveService
             }
         }
 
-        if ($postId) {
-            // Update existing post
-            $post = $this->posts->findResource($postId);
-
-            if (!$post) {
-                return ['success' => false, 'error' => 'Post not found'];
-            }
-
+        if ($post) {
             // The same rule as the editor's Save: it covers the in-review lock and a writer who lost access.
             if (!Gate::allows('update', $post, auth()->user())) {
                 return ['success' => false, 'error' => 'Unauthorized'];

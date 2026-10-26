@@ -9,30 +9,36 @@ document.addEventListener("DOMContentLoaded", () => {
             const d = item.dataset;
             const opts = {};
 
+            const now =() => (d.timezone && window.ZoneClock ? window.ZoneClock.now(d.timezone) : new Date());
+
             // Base date format
             if (d.dateFormat) opts.dateFormat = d.dateFormat;
 
-            // Minimum date (e.g., "today")
-            if (d.minDate) opts.minDate = d.minDate;
+            // Minimum date (e.g., "today"). A date saved before it, like an old
+            // draft's, still shows instead of the field coming up empty.
+            if (d.minDate) {
+                opts.minDate = d.minDate === "today" ? new Date(now().setHours(0, 0, 0, 0)) : d.minDate;
+                opts.allowInvalidPreload = true;
+            }
 
             /* -----------------------------------------------------
              * TIME SUPPORT
              * ----------------------------------------------------- */
             if (item.hasAttribute("data-enable-time")) {
                 opts.enableTime = true;
-                opts.dateFormat = `${d.dateFormat} H:i`;
+                opts.locale = { amPM: ["am", "pm"] };
 
                 // Disable past dates, allow today, block past times later
                 if (d.minDate === "today") {
                     opts.enable = [
                         function(date) {
-                            const now = new Date();
+                            const current = now();
 
                             // Check if the date is today
                             const isSameDay =
-                                date.getFullYear() === now.getFullYear() &&
-                                date.getMonth() === now.getMonth() &&
-                                date.getDate() === now.getDate();
+                                date.getFullYear() === current.getFullYear() &&
+                                date.getMonth() === current.getMonth() &&
+                                date.getDate() === current.getDate();
 
                             if (isSameDay) {
                                 return true; // allow today
@@ -40,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             // Normalize both dates to midnight
                             const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const today = new Date(current.getFullYear(), current.getMonth(), current.getDate());
 
                             return day >= today; // allow today & future
                         }
@@ -51,17 +57,17 @@ document.addEventListener("DOMContentLoaded", () => {
                  * Restrict past times when selecting today
                  * ------------------------------------------------- */
                 opts.onChange = function(selectedDates, dateStr, instance) {
-                    const now = new Date();
+                    const current = now();
                     const selected = selectedDates[0];
                     if (!selected) return;
 
                     const isToday =
-                        selected.getFullYear() === now.getFullYear() &&
-                        selected.getMonth() === now.getMonth() &&
-                        selected.getDate() === now.getDate();
+                        selected.getFullYear() === current.getFullYear() &&
+                        selected.getMonth() === current.getMonth() &&
+                        selected.getDate() === current.getDate();
 
                     if (isToday) {
-                        instance.set("minTime", `${now.getHours()}:${now.getMinutes()}`);
+                        instance.set("minTime", `${current.getHours()}:${current.getMinutes()}`);
                     } else {
                         instance.set("minTime", null);
                     }
@@ -86,7 +92,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (d.disableDate) opts.disable = d.disableDate.split(",");
             if (d.weekNumber) opts.weekNumbers = true;
 
-            flatpickr(item, opts);
+            const picker = flatpickr(item, opts);
+
+            // The readable copy is the box people see and click, so the label belongs to it.
+            if (picker.altInput && item.id) {
+                picker.altInput.id = `${item.id}-shown`;
+                document.querySelectorAll(`label[for="${item.id}"]`).forEach(label => {
+                    label.htmlFor = picker.altInput.id;
+                });
+            }
         }
 
         /* ---------------------------------------------------------
@@ -109,8 +123,4 @@ document.addEventListener("DOMContentLoaded", () => {
             flatpickr(item, opts);
         }
     });
-    const timezoneField = document.getElementById("timezone");
-    if (timezoneField) {
-        timezoneField.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    }
 });

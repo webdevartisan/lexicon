@@ -164,9 +164,9 @@ $I->switchToIFrame();
 // The side column sticks while scrolling, so its lower half only shows at the end of the page
 $I->pressKey('body', WebDriverKeys::END);
 $I->wait(1);
-$I->click('#published_at');
+$I->click('#published_at-shown');
 $I->click('.flatpickr-calendar.open [aria-label="'.date('F j, Y', strtotime('+1 day')).'"]');
-$I->pressKey('#published_at', WebDriverKeys::ESCAPE);
+$I->pressKey('#published_at-shown', WebDriverKeys::ESCAPE);
 $I->click('Schedule');
 $I->waitForText('Post saved');
 $scheduledEditUrl = $I->grabFromCurrentUrl();

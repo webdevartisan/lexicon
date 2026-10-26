@@ -59,7 +59,7 @@ beforeEach(function () {
             'title' => 'Going out',
             'content' => '<p>Ready to go.</p>',
             'timezone' => 'UTC',
-            'published_at' => gmdate('d.m.y H:i', $dateShown ?? $this->goesLiveAt),
+            'published_at' => gmdate('Y-m-d H:i:s', $dateShown ?? $this->goesLiveAt),
             'intent' => $intent,
         ]);
         $controller = App::container()->get(PostController::class);
@@ -99,5 +99,5 @@ it('keeps scheduling when publishing with the date still ahead', function () {
     $saved = $this->posts->find($this->scheduledId);
 
     expect($saved['status'])->toBe('scheduled')
-        ->and(strtotime($saved['published_at'].' UTC'))->toBe(intdiv($this->goesLiveAt, 60) * 60);
+        ->and(strtotime($saved['published_at'].' UTC'))->toBe($this->goesLiveAt);
 });
