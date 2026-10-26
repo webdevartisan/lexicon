@@ -82,6 +82,35 @@ class TimezoneHelper
         return in_array($timezone, DateTimeZone::listIdentifiers(DateTimeZone::ALL), true);
     }
 
+    /**
+     * The name PHP lists for a zone, turning an older name such as Asia/Calcutta
+     * into the one used today, Asia/Kolkata.
+     *
+     * @param  string  $name  Zone identifier, current or old
+     * @return string|null The listed name, or null when no listed zone keeps the same clock
+     */
+    public static function currentName(string $name): ?string
+    {
+        if (self::isValid($name)) {
+            return $name;
+        }
+
+        if (!in_array($name, DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC), true)) {
+            return null;
+        }
+
+        // PHP does not say which name an old one became, but the two share every clock change.
+        $history = (new DateTimeZone($name))->getTransitions();
+
+        foreach (self::getAllTimezones() as $zone) {
+            if ((new DateTimeZone($zone))->getTransitions() === $history) {
+                return $zone;
+            }
+        }
+
+        return null;
+    }
+
     /** How the date picker holds a publish date: the wall clock time in the writer's zone. */
     public const PICKER_FORMAT = 'Y-m-d H:i:s';
 

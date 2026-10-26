@@ -29,7 +29,6 @@
 <script src="/cp-assets/libs/dropzone/dropzone-min.js"></script>
 <script src="/cp-assets/libs/flatpickr/flatpickr.min.js"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/dropzone.init.js')) ?>"></script>
-<script src="<?= e(versioned_asset('/cp-assets/js/zone-clock.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/flatpickr.init.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/autosave.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/pages/post.js')) ?>"></script>

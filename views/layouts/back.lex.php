@@ -73,6 +73,8 @@ $old = old();
                 </div>
                 <?php } ?>
 
+                {% include "partials/dashboard/_zone_prompt.lex.php" %}
+
                 {% if noBreadcrumb|empty %}
                 <div class="flex items-center gap-3 py-4 print:hidden">
                     <div class="grow min-w-0">
@@ -160,6 +162,8 @@ $old = old();
 <script src="<?= e(versioned_asset('/cp-assets/js/table-sort.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/queue-detail.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/panel-tabs.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/zone-clock.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/zone-prompt.js')) ?>"></script>
 
 {% yield scripts %}
 

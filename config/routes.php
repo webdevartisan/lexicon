@@ -288,6 +288,7 @@ $router->group([
 
     $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/preferences/update', ['controller' => 'AccountPreferencesController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/preferences/timezone', ['controller' => 'AccountPreferencesController', 'action' => 'updateTimezone', 'method' => 'POST']);
 
     // The sign-in address is a credential, so it has its own password-gated,
     // token-confirmed flow rather than being a field in the preferences form.

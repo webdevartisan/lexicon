@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const d = item.dataset;
             const opts = {};
 
-            const now =() => (d.timezone && window.ZoneClock ? window.ZoneClock.now(d.timezone) : new Date());
+            const now = () => (d.timezone && window.ZoneClock ? window.ZoneClock.now(d.timezone) : new Date());
 
             // Base date format
             if (d.dateFormat) opts.dateFormat = d.dateFormat;

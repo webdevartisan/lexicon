@@ -146,6 +146,12 @@
             "label": "Active blog",
             "choose": "Choose a blog"
         },
+        "zonePrompt": {
+            "label": "Time zone",
+            "text": "This device is on {device} time. Dates here show {account} time.",
+            "use": "Use {device}",
+            "keep": "Keep {account}"
+        },
         "blogs": {
             "title": "Blogs",
             "subtitle": "The blogs you own and the ones you were invited to. Open one to work in it.",
@@ -1456,7 +1462,9 @@
             "deletionThrottled": "Too many password attempts. Wait a few minutes and try again.",
             "deletionNotAuthorized": "You are not authorized to delete this account.",
             "userNotFound": "User not found.",
-            "otherDevicesSignedOut": "Your other devices were signed out."
+            "otherDevicesSignedOut": "Your other devices were signed out.",
+            "zoneSwitched": "Dates now show {zone} time.",
+            "zoneUnknown": "This device's time zone could not be saved. Pick yours in Preferences."
         },
         "sessions": {
             "heading": "Where you're signed in",

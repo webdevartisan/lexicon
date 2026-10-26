@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Helpers\TimezoneHelper;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
@@ -86,6 +87,29 @@ final class AccountPreferencesController extends AppController
         $this->flash('success', chrome_translate('account.flash.preferencesSaved'));
 
         return $this->redirect(lurl('/account/preferences', $adopted));
+    }
+
+    /**
+     * Save the timezone on its own, leaving the language and every other
+     * preference as they are, then go back to the page it was changed from.
+     */
+    public function updateTimezone(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $back = safe_return_to((string) $this->request->postParam('return_to')) ?? lurl('/dashboard');
+        $zone = TimezoneHelper::currentName((string) $this->request->postParam('timezone'));
+
+        if ($zone === null) {
+            $this->flash('error', chrome_translate('account.flash.zoneUnknown'));
+
+            return $this->redirect($back);
+        }
+
+        $this->prefs->upsert((int) auth()->user()['id'], ['timezone' => $zone]);
+        $this->flash('success', chrome_translate('account.flash.zoneSwitched', ['zone' => TimezoneHelper::label($zone)]));
+
+        return $this->redirect($back);
     }
 
     /**
