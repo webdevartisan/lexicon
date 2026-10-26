@@ -25,7 +25,7 @@ $I->seeThePageLooksRight('10-asked-to-sign-in');
 
 // They create an account right there in the sign-in window
 $I->fillField('#lex-auth-email', $email);
-$I->click('Continue');
+$I->click('Continue', '[data-auth-step="email"]');
 $I->waitForElementVisible('#lex-auth-password');
 $I->fillField('#lex-auth-password', $password);
 $I->checkOption('[data-auth-age]');

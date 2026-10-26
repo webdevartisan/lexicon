@@ -171,7 +171,7 @@ $I->dontSeeElement('form[action$="/revoke"]');
 $I->seeThePageLooksRight('58-reader-removed');
 $I->signInAs('reader');
 $I->amOnPage("{$blog}/settings");
-$I->seeInTitle('403');
+$I->seeInTitle('Access denied');
 
 // An invitation to someone without an account can be cancelled
 $nobody = "walk-nobody-{$stamp}@example.test";
