@@ -19,6 +19,7 @@ $greekTitle = 'Γεια σου από τον περίπατο';
 $I->signInAs('writer');
 $I->amOnPage("/en/dashboard/post/{$postId}/translations/el");
 if (count($I->grabMultiple('#deleteTranslation')) > 0) {
+    $I->scrollDownTo('button[form=deleteTranslation]');
     $I->click('Delete Translation');
     $I->acceptConfirm();
     $I->waitForText('Translation deleted');
@@ -67,6 +68,7 @@ $I->dontSeeInTitle($greekTitle);
 // Deleting the translation sends Greek readers back to the original
 $I->signInAs('writer');
 $I->amOnPage("/en/dashboard/post/{$postId}/translations/el");
+$I->scrollDownTo('button[form=deleteTranslation]');
 $I->click('Delete Translation');
 $I->acceptConfirm('Delete this translation?');
 $I->waitForText('Translation deleted');

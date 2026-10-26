@@ -109,6 +109,20 @@ class Lexicon extends Module
     }
 
     /**
+     * Write the first words of a new post into its still empty editor.
+     */
+    public function writeInTheEmptyEditor(string $text): void
+    {
+        $browser = $this->browser();
+        $this->scrollDownTo('#content_ifr');
+        $browser->switchToIFrame('#content_ifr');
+        // The placeholder lies over the empty paragraph and on a phone covers its middle, so tap the editor itself
+        $browser->click('#tinymce');
+        $browser->type($text);
+        $browser->switchToIFrame();
+    }
+
+    /**
      * Open the replies under a comment unless they already show, as they do right after replying.
      */
     public function showRepliesTo(string $commentId): void

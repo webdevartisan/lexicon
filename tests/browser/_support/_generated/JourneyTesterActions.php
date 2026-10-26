@@ -1,4 +1,4 @@
-<?php  //[STAMP] 84ad7fd15fca988f14e9e21df3d0e8a3
+<?php  //[STAMP] 1dda134c35b999bbc934e0770ab88eb0
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4995,6 +4995,17 @@ trait JourneyTesterActions
      */
     public function openTheMediaUploader(): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('openTheMediaUploader', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Write the first words of a new post into its still empty editor.
+     * @see \Support\Helper\Lexicon::writeInTheEmptyEditor()
+     */
+    public function writeInTheEmptyEditor(string $text): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('writeInTheEmptyEditor', func_get_args()));
     }
 
  

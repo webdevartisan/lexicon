@@ -18,11 +18,7 @@ $I->waitForElement('#content_ifr', 15);
 $I->fillField('title', $title);
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $slug = $I->grabValueFrom('slug');
-$I->scrollDownTo('#content_ifr');
-$I->switchToIFrame('#content_ifr');
-$I->click('#tinymce p');
-$I->type('This one waits for the scheduler.');
-$I->switchToIFrame();
+$I->writeInTheEmptyEditor('This one waits for the scheduler.');
 // The side column sticks while scrolling, so its lower half only shows at the end of the page
 $I->pressKey('body', WebDriverKeys::END);
 $I->wait(1);
