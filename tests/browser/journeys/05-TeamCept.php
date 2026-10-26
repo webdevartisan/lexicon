@@ -46,9 +46,9 @@ foreach (['Start your blog', 'Publish your first post', 'Make it look like yours
     $I->dontSee($ownerStep, '[data-next-steps]');
 }
 $I->seeThePageLooksRight('51-contributor-next-steps');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('51-contributor-next-steps-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 
 // A post submitted straight from New post goes into review
 $I->amOnPage('/en/dashboard/post/new');

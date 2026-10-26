@@ -22,3 +22,10 @@ modules:
                     excludeSwitches: ["enable-logging"]
         - Asserts
         - Support\Helper\Lexicon
+# vendor/bin/codecept run -c tests/browser --env phone walks every journey on a 375px phone screen
+env:
+    phone:
+        modules:
+            config:
+                Support\Helper\Lexicon:
+                    phone: true

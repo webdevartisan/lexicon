@@ -1,4 +1,4 @@
-<?php  //[STAMP] b28b579d485e3a18b47f3b33585ce74f
+<?php  //[STAMP] 84ad7fd15fca988f14e9e21df3d0e8a3
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4938,6 +4938,28 @@ trait JourneyTesterActions
      */
     public function amAGuest(): void {
         $this->getScenario()->runStep(new \Codeception\Step\Condition('amAGuest', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Look at pages on a 375px phone screen until putThePhoneAway().
+     * @see \Support\Helper\Lexicon::amOnAPhone()
+     */
+    public function amOnAPhone(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Condition('amOnAPhone', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Go back to the run's own screen, which stays the phone when the whole run is on one.
+     * @see \Support\Helper\Lexicon::putThePhoneAway()
+     */
+    public function putThePhoneAway(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('putThePhoneAway', func_get_args()));
     }
 
  

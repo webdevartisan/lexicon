@@ -45,9 +45,9 @@ $I->fillField('slug', "walk-{$stamp}");
 $I->waitForText("/blog/walk-{$stamp}", 5, '[data-address]');
 $I->waitForText('This address is available.');
 $blogSlug = "walk-{$stamp}";
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('03-start-name-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->click('Continue');
 $I->waitForText("What's it about?");
 $I->see('Step 2 of 3');
@@ -64,9 +64,9 @@ $I->seeCheckboxIsChecked('#theme-offset');
 $I->scrollDownTo('[data-theme-card=offset]');
 $I->waitForJS("return document.querySelector('[data-theme-card=offset] img').complete");
 $I->seeThePageLooksRight('04-start-look');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('04-start-look-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->click('Continue');
 $I->waitForElement('#content_ifr', 15);
 $I->seeInCurrentUrl("/post/new?blog_id={$blogId}");
@@ -123,9 +123,9 @@ if ($I->executeJS("return document.getElementById('next-steps-url').offsetParent
 $I->waitForText('4 of 6 done', 10, '[data-next-steps]');
 $I->reloadPage();
 $I->see('4 of 6 done', '[data-next-steps]');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('05-next-steps-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 
 // A guest can read it
 $I->amAGuest();
@@ -148,7 +148,7 @@ $I->click('Update');
 $I->waitForText('Post updated');
 $I->see('so only you and your team can see this post', '[data-visibility-line]');
 $I->seeThePageLooksRight('08-post-updated');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('08-post-updated-phone');
 // The docked bar grows with the visibility line, so the form's last field must still clear it
 $clearance = $I->executeJS(<<<'JS'
@@ -158,7 +158,7 @@ $clearance = $I->executeJS(<<<'JS'
     return Math.round(document.querySelector('[data-actionbar]').getBoundingClientRect().top - contentBottom);
     JS);
 $I->assertGreaterThanOrEqual(0, $clearance, "The docked bar covers the end of the form by {$clearance}px");
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->amOnPage('/en/dashboard/post');
 $I->see('Your blog is offline.', '[data-visibility-line]');
 $I->seeThePageLooksRight('08-post-list-offline');

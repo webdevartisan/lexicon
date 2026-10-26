@@ -5,24 +5,61 @@ declare(strict_types=1);
 namespace Support\Helper;
 
 use Codeception\Module;
+use Codeception\TestInterface;
 
 /**
  * The few Lexicon actions the built-in WebDriver steps can't say in one line.
  */
 class Lexicon extends Module
 {
+    /** @var array{phone: bool} */
+    protected array $config = ['phone' => false];
+
+    /**
+     * Start every journey on a phone when the whole run is (--env phone).
+     */
+    public function _before(TestInterface $test): void
+    {
+        if ($this->config['phone']) {
+            $this->amOnAPhone();
+        }
+    }
+
     /**
      * Become a first-time visitor: no cookies, and no pages kept from earlier.
      */
     public function amAGuest(): void
     {
-        $driver = $this->browser()->webDriver;
-        $driver->manage()->deleteAllCookies();
+        $this->browser()->webDriver->manage()->deleteAllCookies();
         // Public pages may be kept by the browser for minutes, which would hide what a new visitor sees
-        $driver->executeCustomCommand('/session/:sessionId/goog/cdp/execute', 'POST', [
-            'cmd' => 'Network.clearBrowserCache',
-            'params' => new \stdClass(),
+        $this->sendToChrome('Network.clearBrowserCache');
+    }
+
+    /**
+     * Look at pages on a 375px phone screen until putThePhoneAway().
+     */
+    public function amOnAPhone(): void
+    {
+        // Laid out like a narrow desktop window, because a mobile viewport shrinks a page that is
+        // too wide to fit the screen, and seeThePageLooksRight could no longer see it scroll sideways
+        $this->sendToChrome('Emulation.setDeviceMetricsOverride', [
+            'width' => 375,
+            'height' => 812,
+            'deviceScaleFactor' => 2,
+            'mobile' => false,
         ]);
+    }
+
+    /**
+     * Go back to the run's own screen, which stays the phone when the whole run is on one.
+     */
+    public function putThePhoneAway(): void
+    {
+        if ($this->config['phone']) {
+            return;
+        }
+
+        $this->sendToChrome('Emulation.clearDeviceMetricsOverride');
     }
 
     /**
@@ -203,7 +240,8 @@ class Lexicon extends Module
     public function followTheConfirmLinkMailedTo(string $email): void
     {
         preg_match_all('/^(DB_HOST|DB_NAME|DB_USER|DB_PASSWORD)=(.*)$/m', file_get_contents(dirname(__DIR__, 4).'/.env'), $found);
-        $env = array_map(fn ($value) => trim($value, " \"'"), array_combine($found[1], $found[2]));
+        $env = array_map(fn ($value) => trim($value, " \"'
+"), array_combine($found[1], $found[2]));
         $pdo = new \PDO("mysql:host={$env['DB_HOST']};dbname={$env['DB_NAME']};charset=utf8mb4", $env['DB_USER'], $env['DB_PASSWORD']);
         $statement = $pdo->prepare('SELECT body_html FROM mail_queue WHERE to_email = ? ORDER BY id DESC LIMIT 20');
         $statement->execute([$email]);
@@ -269,5 +307,18 @@ class Lexicon extends Module
     private function browser(): Browser
     {
         return $this->getModule(Browser::class);
+    }
+
+    /**
+     * Run a Chrome DevTools command on the open tab.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    private function sendToChrome(string $command, array $params = []): void
+    {
+        $this->browser()->webDriver->executeCustomCommand('/session/:sessionId/goog/cdp/execute', 'POST', [
+            'cmd' => $command,
+            'params' => $params === [] ? new \stdClass() : $params,
+        ]);
     }
 }
