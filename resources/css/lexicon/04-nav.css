@@ -281,7 +281,8 @@ body.lx-drawer-open {
     }
 }
 
-/* Narrow phones only: from 480px up the bar still fits the logo, button and toggle. */\n@media (max-width: 480px) {
+/* Narrow phones only: from 480px up the bar still fits the logo, button and toggle. */
+@media (max-width: 480px) {
     .lx-nav-actions .lx-btn-primary {
         display: none;
     }
