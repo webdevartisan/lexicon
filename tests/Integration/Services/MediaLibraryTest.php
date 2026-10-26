@@ -161,6 +161,15 @@ it('never takes a file from another blog into the library, however it is offered
         ->and($this->mediaRows->findByPathForBlog($this->blog->id(), ltrim($foreign, '/')))->toBeNull();
 });
 
+it('replies with the name the file was uploaded under, so a new card does not read image-...', function () {
+    $url = ($this->putFile)($this->blog, 'image-eeeeeeeeeeee.png');
+
+    $row = $this->media->register($this->blog, $this->blog->ownerId(), $url, 'upload', 'harbour at dusk.png');
+
+    expect($row['original_name'])->toBe('harbour at dusk.png')
+        ->and($row['filename'])->toBe('image-eeeeeeeeeeee.png');
+});
+
 it('leaves files it finds on disk without an owner, so erasing whoever looked cannot delete them', function () {
     $url = ($this->putFile)($this->blog, 'image-dddddddddddd.png');
 

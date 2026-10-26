@@ -528,13 +528,7 @@ final class MediaService
         $filename = basename($diskPath);
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $size = (int) (filesize($absPath) ?: 0);
-
-        $mime = null;
-        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo) {
-            $mime = @finfo_file($finfo, $absPath) ?: null;
-            finfo_close($finfo);
-        }
+        $mime = $this->sniffMime($absPath);
 
         $width = null;
         $height = null;
@@ -564,6 +558,7 @@ final class MediaService
             'blog_id' => $blogId,
             'url' => $url,
             'filename' => $filename,
+            'original_name' => $originalName,
             'mime_type' => $mime,
             'extension' => $ext,
             'size_bytes' => $size,
