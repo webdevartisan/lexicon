@@ -2353,5 +2353,119 @@
             "readTitle": "Read and follow blogs",
             "readText": "Save posts, follow writers, join discussions."
         }
+    },
+    "comments": {
+        "heading": {
+            "one": "{count} Comment",
+            "other": "{count} Comments"
+        },
+        "formLabel": "Add a comment…",
+        "formButton": "Comment",
+        "closed": "Comments are closed for this post.",
+        "guestNote": "You'll be asked to sign in, and what you wrote is kept.",
+        "guestReplyNote": "You'll be asked to sign in, and your reply is kept.",
+        "commentingAs": "Commenting as {name}.",
+        "sortBy": "Sort by",
+        "sortTop": "Top",
+        "sortTopHint": "Highest rated first",
+        "sortNew": "Newest",
+        "sortNewHint": "Most recent first",
+        "pinnedBy": "Pinned by {name}",
+        "removedName": "[removed]",
+        "removedByModerator": "This comment was removed by a moderator.",
+        "removedByAuthor": "This comment was deleted by its author.",
+        "inReplyToRemoved": "in reply to [removed]",
+        "edited": "edited",
+        "editLabel": "Edit your comment",
+        "cancel": "Cancel",
+        "save": "Save",
+        "agree": "Agree with this comment",
+        "disagree": "Disagree with this comment",
+        "theAuthor": "The author",
+        "authorLiked": "{name} liked this",
+        "authorLikedComment": "{name} liked this comment",
+        "authorReplied": "{name} replied",
+        "reply": "Reply",
+        "replyTo": "Reply to {name}…",
+        "replies": {
+            "one": "{count} reply",
+            "other": "{count} replies"
+        },
+        "hideReplies": {
+            "one": "Hide reply",
+            "other": "Hide replies"
+        },
+        "showMore": {
+            "one": "Show {count} more reply",
+            "other": "Show {count} more replies"
+        },
+        "moreActions": "More actions on this comment",
+        "copyLink": "Copy link",
+        "linkCopied": "Link copied",
+        "edit": "Edit",
+        "report": "Report",
+        "pin": "Pin to top",
+        "unpin": "Unpin",
+        "remove": "Remove",
+        "removeConfirm": "Remove this comment? Any replies to it stay in the thread.",
+        "failed": "Something went wrong. Please try again.",
+        "notDone": "That did not work. Please try again."
+    },
+    "reportDialog": {
+        "title": {
+            "comment": "Report this comment",
+            "post": "Report this post"
+        },
+        "intro": "A moderator will look at it. The author is not told who reported it.",
+        "reasons": "What is wrong with it?",
+        "details": "Anything a moderator should know? (optional)",
+        "cancel": "Cancel",
+        "send": "Send report",
+        "sending": "Sending...",
+        "close": "Close",
+        "pickReason": "Choose what is wrong with it.",
+        "thanks": "Thanks. A moderator will look at it.",
+        "failed": "That report could not be sent. Please try again.",
+        "reasonsFailed": "The list of reasons could not be loaded. Close this and try again."
+    },
+    "blogConfirm": {
+        "label": "Please confirm",
+        "title": "Are you sure?",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
+    "themes": {
+        "closest": {
+            "comments": {
+                "heading": {
+                    "one": "Trail register — {count} entry",
+                    "other": "Trail register — {count} entries"
+                },
+                "formLabel": "Add an entry to the register…",
+                "formButton": "Leave an entry",
+                "closed": "The register is closed for this waypoint."
+            }
+        },
+        "offset": {
+            "comments": {
+                "heading": {
+                    "one": "Letters — {count} Comment",
+                    "other": "Letters — {count} Comments"
+                },
+                "formLabel": "Write something worth printing…",
+                "formButton": "Send"
+            }
+        },
+        "vernissage": {
+            "comments": {
+                "heading": {
+                    "one": "The Visitors’ Book — {count} Entry",
+                    "other": "The Visitors’ Book — {count} Entries"
+                },
+                "formLabel": "Leave a note for the gallery…",
+                "formButton": "Sign the book",
+                "closed": "The visitors’ book is closed for this work."
+            }
+        }
     }
 }

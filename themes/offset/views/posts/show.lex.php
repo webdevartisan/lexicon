@@ -103,9 +103,9 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'title_prefix' => 'Letters &mdash; ',
-          'form_label' => 'Write something worth printing&hellip;',
-          'form_button' => 'Send',
+          'heading' => 'themes.offset.comments.heading',
+          'form_label' => 'themes.offset.comments.formLabel',
+          'form_button' => 'themes.offset.comments.formButton',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>

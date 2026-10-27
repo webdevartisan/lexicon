@@ -8,11 +8,28 @@
  * when they cancel, press Escape or click outside the box.
  */
 (function () {
+    var script = document.currentScript;
+    var wording = readText(script);
+
+    /** The wording the page rendered in the reader's language. */
+    function readText(script) {
+        try {
+            return JSON.parse((script && script.getAttribute('data-text')) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
     window.blogConfirm = function (message) {
         return new Promise(function (resolve) {
             var dialog = document.createElement('dialog');
             dialog.className = 'blog-confirm';
-            dialog.setAttribute('aria-label', 'Please confirm');
+            dialog.setAttribute('aria-label', wording.label);
+            // The page is marked with the post's language; the dialog speaks the reader's
+            if (script && script.getAttribute('data-lang')) {
+                dialog.lang = script.getAttribute('data-lang');
+                dialog.dir = script.getAttribute('data-dir') || 'auto';
+            }
 
             var icon = document.createElement('div');
             icon.className = 'blog-confirm-icon';
@@ -20,7 +37,7 @@
 
             var title = document.createElement('h2');
             title.className = 'blog-confirm-title';
-            title.textContent = 'Are you sure?';
+            title.textContent = wording.title;
 
             var text = document.createElement('p');
             text.className = 'blog-confirm-message';
@@ -35,12 +52,12 @@
             var cancel = document.createElement('button');
             cancel.type = 'button';
             cancel.className = 'blog-confirm-button';
-            cancel.textContent = 'Cancel';
+            cancel.textContent = wording.cancel;
 
             var ok = document.createElement('button');
             ok.type = 'button';
             ok.className = 'blog-confirm-button blog-confirm-ok';
-            ok.textContent = 'Confirm';
+            ok.textContent = wording.confirm;
 
             var actions = document.createElement('div');
             actions.className = 'blog-confirm-actions';

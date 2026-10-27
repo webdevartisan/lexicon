@@ -104,12 +104,10 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'title_prefix' => 'The Visitors&rsquo; Book &mdash; ',
-          'noun' => 'Entry',
-          'noun_plural' => 'Entries',
-          'form_label' => 'Leave a note for the gallery&hellip;',
-          'form_button' => 'Sign the book',
-          'closed' => 'The visitors&rsquo; book is closed for this work.',
+          'heading' => 'themes.vernissage.comments.heading',
+          'form_label' => 'themes.vernissage.comments.formLabel',
+          'form_button' => 'themes.vernissage.comments.formButton',
+          'closed' => 'themes.vernissage.comments.closed',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>

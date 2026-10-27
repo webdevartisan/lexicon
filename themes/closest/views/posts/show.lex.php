@@ -106,12 +106,10 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'title_prefix' => 'Trail register &mdash; ',
-          'noun' => 'entry',
-          'noun_plural' => 'entries',
-          'form_label' => 'Add an entry to the register&hellip;',
-          'form_button' => 'Leave an entry',
-          'closed' => 'The register is closed for this waypoint.',
+          'heading' => 'themes.closest.comments.heading',
+          'form_label' => 'themes.closest.comments.formLabel',
+          'form_button' => 'themes.closest.comments.formButton',
+          'closed' => 'themes.closest.comments.closed',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>

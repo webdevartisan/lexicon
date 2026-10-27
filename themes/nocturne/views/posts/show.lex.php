@@ -95,9 +95,6 @@ $title = e($post['title'] ?? 'Untitled');
 <section class="post-comments">
   <div class="container">
     <div class="inner">
-      <?php $comment_labels = [
-          'form_label' => 'Add a comment&hellip;',
-      ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>
   </div>

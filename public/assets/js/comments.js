@@ -16,6 +16,9 @@
 
   var loggedIn = root.getAttribute('data-auth') === '1';
   var loginUrl = root.getAttribute('data-login');
+  var failedText = root.getAttribute('data-text-failed');
+  var notDoneText = root.getAttribute('data-text-not-done');
+  var copiedText = root.getAttribute('data-text-link-copied');
   var tokenInput = root.querySelector('.comment-token input[name="_token"]');
 
   function token() {
@@ -74,11 +77,11 @@
         // An error page carries nothing a reader can act on, so it becomes one
         // plain sentence rather than a parse exception nobody sees.
         if (json === null) {
-          throw failure('failed', 'Something went wrong. Please try again.');
+          throw failure('failed', failedText);
         }
 
         if (!response.ok || json.success === false) {
-          throw failure('failed', json.error || 'That did not work. Please try again.');
+          throw failure('failed', json.error || notDoneText);
         }
 
         return json.data;
@@ -239,7 +242,7 @@
     var url = location.origin + location.pathname + location.search + button.getAttribute('data-anchor');
     var restore = button.textContent;
     var done = function () {
-      button.textContent = 'Link copied';
+      button.textContent = copiedText;
       setTimeout(function () { button.textContent = restore; }, 1500);
     };
 
