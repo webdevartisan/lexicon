@@ -1,0 +1,61 @@
+/* One language switcher for the front page and every blog theme. The list is
+   the shared platform menu; the button takes the colour of the text around it,
+   so it sits in any footer without a theme having to restyle it. */
+.lang-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-switcher-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lx-space-2);
+  min-height: 2.25rem;
+  padding: var(--lx-space-2) var(--lx-space-3);
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: var(--lx-radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lx-text-xs);
+  font-weight: var(--lx-weight-semibold);
+  letter-spacing: var(--lx-track-label);
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lang-switcher-toggle:hover {
+  border-color: currentColor;
+}
+
+/* It lives at the bottom of the page, so it opens upward; the script flips it when there is no room */
+.lang-switcher-menu { display: none; }
+.lang-switcher .lang-switcher-menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+  inset-inline: auto 0;
+}
+.lang-switcher-menu.show { display: block; }
+
+/* Footers style their own lists and links (bullets, capitals, link colours), and
+   the switcher sits inside one, so the rows restate the menu's own look */
+.lang-switcher .lang-switcher-menu,
+.lang-switcher .lang-switcher-item {
+  margin: 0;
+  list-style: none;
+}
+.lang-switcher .lang-switcher-item { padding: 0; }
+
+.lang-switcher .lang-switcher-menu button,
+.lang-switcher .lang-switcher-menu a {
+  color: var(--platform-menu-fg, var(--chrome-dark-ink));
+  font-size: var(--lx-text-sm);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.lang-switcher-item button[aria-current='true'],
+.lang-switcher-item a[aria-current='true'] {
+  font-weight: var(--lx-weight-semibold);
+}

@@ -2,46 +2,17 @@
    Language switcher, back-to-top, misc
    ========================================================================== */
 
-.lang-switcher {
-    position: relative;
-}
-
+/* The switcher itself is shared (platform-chrome/12-lang-switcher.css); the front only paints it */
 .lang-switcher-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--lx-space-2);
-    min-height: 2.25rem;
-    padding: var(--lx-space-2) var(--lx-space-3);
-    background: transparent;
-    border: 1px solid var(--lx-rule-bind);
-    border-radius: var(--lx-radius);
+    border-color: var(--lx-rule-bind);
     color: var(--lx-on-bind-2);
     font-family: var(--lx-sans);
-    font-size: var(--lx-text-xs);
-    font-weight: var(--lx-weight-semibold);
-    letter-spacing: var(--lx-track-label);
-    text-transform: uppercase;
-    cursor: pointer;
 }
 
 .lang-switcher-toggle:hover {
     color: var(--lx-gilt);
     border-color: var(--lx-gilt);
-    background: transparent;
 }
-
-/* Reuses the account menu dropdown via .platform-menu-list; only opens upward. */
-.lang-switcher-menu { display: none; }
-.lang-switcher .lang-switcher-menu {
-    top: auto;
-    bottom: calc(100% + 4px);
-    inset-inline: auto 0;
-}
-.lang-switcher-menu.show { display: block; }
-
-/* Pin an absolute row size so the footer and masthead dropdowns match (.85em would differ). */
-.lang-switcher .lang-switcher-menu button,
-.lang-switcher .lang-switcher-menu a { font-size: var(--lx-text-sm); }
 
 .lang-switcher-item button[aria-current='true'],
 .lang-switcher-item a[aria-current='true'] {
