@@ -440,7 +440,7 @@ class BlogController extends AppController
         LocaleState::setLocaleSet($postLocaleSet);
         $this->refreshHeadI18n();
 
-        if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault)) {
+        if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault, (int) $ctx['blog']['id'])) {
             return $redirect;
         }
 
@@ -810,7 +810,8 @@ class BlogController extends AppController
     {
         return $this->localeRedirect(
             $ctx['localeSet'],
-            (string) ($ctx['settings']['default_locale'] ?? 'en')
+            (string) ($ctx['settings']['default_locale'] ?? 'en'),
+            (int) ($ctx['blog']['id'] ?? 0)
         );
     }
 
@@ -823,10 +824,12 @@ class BlogController extends AppController
      *
      * @param  string[]  $localeSet  Locales this page exists in
      * @param  string  $default  The page's own default locale
+     * @param  int  $blogId  The blog the page belongs to
      */
-    private function localeRedirect(array $localeSet, string $default): ?Response
+    private function localeRedirect(array $localeSet, string $default, int $blogId): ?Response
     {
-        $target = $this->localeResolver->redirectTarget($localeSet, locale(), $default);
+        $target = $this->readerLocaleTarget($localeSet, $blogId)
+            ?? $this->localeResolver->redirectTarget($localeSet, locale(), $default);
 
         if ($target === null) {
             return null;
@@ -843,6 +846,26 @@ class BlogController extends AppController
             '/'.$target.($path === '/' ? '' : $path).$query,
             302
         );
+    }
+
+    /**
+     * The reader's own language, when they chose a fixed one and this page exists in it.
+     *
+     * Only a fixed choice makes the interface differ from the page; Automatic and
+     * guests always match, so they read whichever version they opened. The blog's
+     * own team stays put too, since they open translations to check them.
+     *
+     * @param  string[]  $localeSet  Locales this page exists in
+     */
+    private function readerLocaleTarget(array $localeSet, int $blogId): ?string
+    {
+        $reader = LocaleState::get()->chromeLocale;
+
+        if ($reader === locale() || !in_array($reader, $localeSet, true)) {
+            return null;
+        }
+
+        return $this->viewerCanPreview($blogId) ? null : $reader;
     }
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
