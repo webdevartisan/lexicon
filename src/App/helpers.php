@@ -312,7 +312,59 @@ function local_datetime(?string $utc, string $format = 'M j, Y', ?string $timezo
         return '';
     }
 
-    return $when->setTimezone(new DateTimeZone($timezone))->format($format);
+    $when = $when->setTimezone(new DateTimeZone($timezone));
+    $locale = App\Services\LocaleState::get()->chromeLocale;
+
+    return $locale === 'en' ? $when->format($format) : localized_date_format($when, $format, $locale);
+}
+
+/**
+ * Format a date the way another language writes it.
+ *
+ * The date() format says which parts to show; ICU decides their order and
+ * words, so Greek gets "27 Οκτ 2026" where English has "Oct 27, 2026". A
+ * format with no words in it ('Y-m-d', 'c') is for machines and tables and
+ * comes out exactly as asked.
+ *
+ * @param  DateTimeImmutable  $when  Moment already in the zone to show
+ * @param  string  $format  Any date() format string
+ * @param  string  $locale  Locale code
+ * @return string Formatted datetime
+ */
+function localized_date_format(DateTimeImmutable $when, string $format, string $locale): string
+{
+    if (preg_match('/[MFDlaA]/', $format) !== 1 || str_contains($format, '\\')) {
+        return $when->format($format);
+    }
+
+    $parts = [
+        'Y' => 'y', 'y' => 'yy', 'F' => 'MMMM', 'M' => 'MMM', 'm' => 'MM', 'n' => 'M', 'd' => 'dd', 'j' => 'd',
+        'l' => 'EEEE', 'D' => 'EEE', 'H' => 'HH', 'G' => 'H', 'h' => 'hh', 'g' => 'h', 'i' => 'mm', 's' => 'ss',
+        'a' => 'a', 'A' => 'a', 'T' => 'z',
+    ];
+    $skeleton = '';
+
+    foreach (str_split($format) as $letter) {
+        $skeleton .= $parts[$letter] ?? '';
+    }
+
+    // Latin digits, the same ones the rest of the interface counts in
+    $icuLocale = $locale.'@numbers=latn';
+    $zone = $when->getTimezone();
+
+    static $formatters = [];
+    $key = $icuLocale.'|'.$skeleton.'|'.$zone->getName();
+
+    if (!array_key_exists($key, $formatters)) {
+        $pattern = (new IntlDatePatternGenerator($icuLocale))->getBestPattern($skeleton);
+        $formatters[$key] = $pattern === false ? null : IntlDateFormatter::create(
+            $icuLocale, IntlDateFormatter::NONE, IntlDateFormatter::NONE, $zone, IntlDateFormatter::GREGORIAN, $pattern
+        );
+    }
+
+    $text = $formatters[$key]?->format($when);
+
+    return is_string($text) ? $text : $when->format($format);
 }
 
 /**
@@ -355,40 +407,34 @@ function relative_time(?string $utc, bool $short = false): string
     $ahead = $seconds > 0;
     $seconds = abs($seconds);
 
+    $words = $short ? 'time.short.' : 'time.';
+
     // Counting seconds reads like a glitch on something that just happened: "0 seconds ago".
     if ($seconds < 60) {
-        if ($ahead) {
-            return $short ? 'in <1m' : 'in under a minute';
-        }
-
-        return $short ? 'now' : 'just now';
+        return chrome_translate($words.($ahead ? 'soon' : 'now'));
     }
 
     if ($seconds < 3600) {
-        $count = (int) round($seconds / 60);
-        $text = $short ? $count.'m' : plural_unit($count, 'minute');
+        [$unit, $count] = ['minute', (int) round($seconds / 60)];
     } elseif ($seconds < 86400) {
-        $count = (int) round($seconds / 3600);
-        $text = $short ? $count.'h' : plural_unit($count, 'hour');
+        [$unit, $count] = ['hour', (int) round($seconds / 3600)];
     } elseif ($seconds < 604800) {
-        $count = (int) round($seconds / 86400);
-        $text = $short ? $count.'d' : plural_unit($count, 'day');
+        [$unit, $count] = ['day', (int) round($seconds / 86400)];
     } elseif ($seconds < 2592000) {
         // Floor, not round, from here up: rounding lets five and a half weeks
         // read as "6 weeks" when the next unit has already taken over.
-        $count = (int) floor($seconds / 604800);
-        $text = $short ? $count.'w' : plural_unit($count, 'week');
+        [$unit, $count] = ['week', (int) floor($seconds / 604800)];
     } elseif ($seconds < 31536000) {
         // Capped at 11 so a 30-day month never counts its way to "12 months",
         // which is a year by any reader's arithmetic.
-        $count = min(11, (int) floor($seconds / 2592000));
-        $text = $short ? $count.'mo' : plural_unit($count, 'month');
+        [$unit, $count] = ['month', min(11, (int) floor($seconds / 2592000))];
     } else {
-        $count = (int) floor($seconds / 31536000);
-        $text = $short ? $count.'y' : plural_unit($count, 'year');
+        [$unit, $count] = ['year', (int) floor($seconds / 31536000)];
     }
 
-    return $ahead ? 'in '.$text : $text.' ago';
+    $amount = chrome_translate($words.$unit.($short ? '' : ($count === 1 ? '.one' : '.other')), ['count' => $count]);
+
+    return chrome_translate($ahead ? 'time.ahead' : 'time.ago', ['time' => $amount]);
 }
 
 /**

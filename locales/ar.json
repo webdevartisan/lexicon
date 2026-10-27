@@ -2479,5 +2479,45 @@
         "closed": "سجلّ الزوّار مغلق لهذا العمل."
       }
     }
+  },
+  "time": {
+    "now": "الآن",
+    "soon": "خلال أقل من دقيقة",
+    "ago": "منذ {time}",
+    "ahead": "خلال {time}",
+    "minute": {
+      "one": "دقيقة واحدة",
+      "other": "{count} دقائق"
+    },
+    "hour": {
+      "one": "ساعة واحدة",
+      "other": "{count} ساعات"
+    },
+    "day": {
+      "one": "يوم واحد",
+      "other": "{count} أيام"
+    },
+    "week": {
+      "one": "أسبوع واحد",
+      "other": "{count} أسابيع"
+    },
+    "month": {
+      "one": "شهر واحد",
+      "other": "{count} أشهر"
+    },
+    "year": {
+      "one": "سنة واحدة",
+      "other": "{count} سنوات"
+    },
+    "short": {
+      "now": "الآن",
+      "soon": "خلال <1د",
+      "minute": "{count}د",
+      "hour": "{count}س",
+      "day": "{count}ي",
+      "week": "{count}أس",
+      "month": "{count}ش",
+      "year": "{count}سن"
+    }
   }
 }

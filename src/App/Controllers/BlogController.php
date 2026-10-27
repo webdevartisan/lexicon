@@ -847,8 +847,7 @@ class BlogController extends AppController
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
     {
-        $clone = (new \DateTimeImmutable('@'.$dt->getTimestamp()))->setTimezone(new \DateTimeZone($tz));
-
-        return $clone->format('jS M Y'); // e.g. 5th Nov 2025
+        // e.g. 5th Nov 2025, and in the reader's own words and order on a Greek or Arabic page
+        return local_datetime(gmdate('Y-m-d H:i:s', $dt->getTimestamp()), 'jS M Y', $tz);
     }
 }

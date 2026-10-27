@@ -2467,5 +2467,45 @@
                 "closed": "Το βιβλίο επισκεπτών είναι κλειστό για αυτό το έργο."
             }
         }
+    },
+    "time": {
+        "now": "μόλις τώρα",
+        "soon": "σε λιγότερο από ένα λεπτό",
+        "ago": "πριν από {time}",
+        "ahead": "σε {time}",
+        "minute": {
+            "one": "{count} λεπτό",
+            "other": "{count} λεπτά"
+        },
+        "hour": {
+            "one": "{count} ώρα",
+            "other": "{count} ώρες"
+        },
+        "day": {
+            "one": "{count} ημέρα",
+            "other": "{count} ημέρες"
+        },
+        "week": {
+            "one": "{count} εβδομάδα",
+            "other": "{count} εβδομάδες"
+        },
+        "month": {
+            "one": "{count} μήνα",
+            "other": "{count} μήνες"
+        },
+        "year": {
+            "one": "{count} χρόνο",
+            "other": "{count} χρόνια"
+        },
+        "short": {
+            "now": "τώρα",
+            "soon": "σε <1λ",
+            "minute": "{count}λ",
+            "hour": "{count}ώ",
+            "day": "{count}ημ",
+            "week": "{count}εβδ",
+            "month": "{count}μην",
+            "year": "{count}χρ"
+        }
     }
 }

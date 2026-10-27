@@ -2467,5 +2467,45 @@
                 "closed": "The visitors’ book is closed for this work."
             }
         }
+    },
+    "time": {
+        "now": "just now",
+        "soon": "in under a minute",
+        "ago": "{time} ago",
+        "ahead": "in {time}",
+        "minute": {
+            "one": "{count} minute",
+            "other": "{count} minutes"
+        },
+        "hour": {
+            "one": "{count} hour",
+            "other": "{count} hours"
+        },
+        "day": {
+            "one": "{count} day",
+            "other": "{count} days"
+        },
+        "week": {
+            "one": "{count} week",
+            "other": "{count} weeks"
+        },
+        "month": {
+            "one": "{count} month",
+            "other": "{count} months"
+        },
+        "year": {
+            "one": "{count} year",
+            "other": "{count} years"
+        },
+        "short": {
+            "now": "now",
+            "soon": "in <1m",
+            "minute": "{count}m",
+            "hour": "{count}h",
+            "day": "{count}d",
+            "week": "{count}w",
+            "month": "{count}mo",
+            "year": "{count}y"
+        }
     }
 }
