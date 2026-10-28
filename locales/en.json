@@ -986,7 +986,14 @@
         "someone": "Someone",
         "paginationAria": "Pagination",
         "accountMenu": "Your account",
-        "accountMenuUnread": "Your account, {count} unread replies"
+        "accountMenuUnread": "Your account, {count} unread replies",
+        "wait": {
+            "seconds": "You are going a little fast. Try again in a few seconds.",
+            "minutes": {
+                "one": "You are going a little fast. Try again in {count} minute.",
+                "other": "You are going a little fast. Try again in {count} minutes."
+            }
+        }
     },
     "notifications": {
         "tabAll": "All",
@@ -2409,7 +2416,36 @@
         "remove": "Remove",
         "removeConfirm": "Remove this comment? Any replies to it stay in the thread.",
         "failed": "Something went wrong. Please try again.",
-        "notDone": "That did not work. Please try again."
+        "notDone": "That did not work. Please try again.",
+        "flash": {
+            "required": "Comment content is required.",
+            "signInToComment": "Sign in or create an account to post your comment. We saved it for you.",
+            "signInToReply": "Sign in or create an account to post your reply. We saved it for you.",
+            "replySignIn": "Sign in to reply to comments.",
+            "gone": "That comment no longer exists.",
+            "unavailable": "That comment is not available.",
+            "parentUnavailable": "The comment you are replying to is unavailable.",
+            "postMissing": "Post not found.",
+            "notAvailable": "Comments are not available for this post.",
+            "createFailed": "Failed to create comment. Please try again.",
+            "posted": "Comment posted.",
+            "replyPosted": "Reply posted.",
+            "awaitingModeration": "Thanks! Your comment was submitted and is awaiting moderation.",
+            "editOwnOnly": "You can only edit your own comments.",
+            "unchanged": "Nothing changed.",
+            "updated": "Your comment was updated.",
+            "tooShort": "Your comment is too short.",
+            "tooLong": "Your comment is too long. Maximum {max} characters.",
+            "cannotRemove": "You cannot remove that comment.",
+            "removedOwn": "Your comment was removed.",
+            "removed": "Comment removed.",
+            "cannotReportOwn": "You cannot report your own comment.",
+            "reported": "Thanks. This comment has been sent to the moderators.",
+            "alreadyReported": "You already reported this comment.",
+            "cannotPin": "You cannot pin that comment.",
+            "pinned": "Comment pinned to the top.",
+            "unpinned": "Comment unpinned."
+        }
     },
     "reportDialog": {
         "title": {

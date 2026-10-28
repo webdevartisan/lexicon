@@ -49,11 +49,9 @@ trait ThrottlesReaderInteractions
     private function waitMessage(int $seconds): string
     {
         if ($seconds < 60) {
-            return 'You are going a little fast. Try again in a few seconds.';
+            return chrome_translate('reader.wait.seconds');
         }
 
-        $minutes = (int) ceil($seconds / 60);
-
-        return "You are going a little fast. Try again in {$minutes} minute".($minutes === 1 ? '' : 's').'.';
+        return translate_count('reader.wait.minutes', (int) ceil($seconds / 60));
     }
 }

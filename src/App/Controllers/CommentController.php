@@ -63,7 +63,7 @@ class CommentController extends AppController
         // the login hop instead of throwing it away with an error.
         if ($user === null) {
             if ($postId <= 0 || $content === '') {
-                $this->flash('error', 'Comment content is required.');
+                $this->flash('error', chrome_translate('comments.flash.required'));
 
                 return $this->redirectBack();
             }
@@ -77,8 +77,7 @@ class CommentController extends AppController
             $returnPath = $this->refererPath();
             $this->comments->capturePending($postId, $parentId, $content, $returnPath);
 
-            $kind = $parentId > 0 ? 'reply' : 'comment';
-            $this->flash('info', "Log in or create an account to post your {$kind}. We saved it for you.");
+            $this->flash('info', chrome_translate($parentId > 0 ? 'comments.flash.signInToReply' : 'comments.flash.signInToComment'));
 
             return $this->redirect(lurl('/login').'?return_to='.urlencode($returnPath));
         }
@@ -122,7 +121,7 @@ class CommentController extends AppController
         $comment = $this->commentModel->findById($commentId);
 
         if ($comment === null) {
-            $this->flash('error', 'That comment no longer exists.');
+            $this->flash('error', chrome_translate('comments.flash.gone'));
 
             return $this->redirectBack();
         }
@@ -130,7 +129,7 @@ class CommentController extends AppController
         $isModerator = $this->moderatesComment($commentId, $user);
 
         if (!$this->removal->canRemove($comment, (int) $user['id'], $isModerator)) {
-            $this->flash('error', 'You cannot remove that comment.');
+            $this->flash('error', chrome_translate('comments.flash.cannotRemove'));
 
             return $this->redirectBack();
         }
@@ -151,7 +150,7 @@ class CommentController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', $isOwnComment ? 'Your comment was removed.' : 'Comment removed.');
+        $this->flash('success', chrome_translate($isOwnComment ? 'comments.flash.removedOwn' : 'comments.flash.removed'));
 
         return $this->redirect($this->backUrlPath());
     }
@@ -197,7 +196,7 @@ class CommentController extends AppController
         $comment = $this->votableComment($commentId);
 
         if ($comment === null) {
-            return $this->jsonError('That comment is not available.', 404);
+            return $this->jsonError(chrome_translate('comments.flash.unavailable'), 404);
         }
 
         $userId = (int) auth()->user()['id'];
@@ -230,14 +229,14 @@ class CommentController extends AppController
         $commentId = (int) $id;
 
         if (($comment = $this->votableComment($commentId)) === null) {
-            return $this->jsonError('That comment is not available.', 404);
+            return $this->jsonError(chrome_translate('comments.flash.unavailable'), 404);
         }
 
         $userId = (int) auth()->user()['id'];
 
         // Reporting your own comment is a removal, not a report.
         if (!empty($comment['user_id']) && (int) $comment['user_id'] === $userId) {
-            return $this->jsonError('You cannot report your own comment.', 422);
+            return $this->jsonError(chrome_translate('comments.flash.cannotReportOwn'), 422);
         }
 
         $details = $this->request->post['details'] ?? null;
@@ -268,9 +267,7 @@ class CommentController extends AppController
         return $this->jsonSuccess([
             'reported' => true,
             // A repeat report is not an error; it just does not count twice.
-            'message' => $result['recorded']
-                ? 'Thanks. This comment has been sent to the moderators.'
-                : 'You already reported this comment.',
+            'message' => chrome_translate($result['recorded'] ? 'comments.flash.reported' : 'comments.flash.alreadyReported'),
         ]);
     }
 
@@ -286,7 +283,7 @@ class CommentController extends AppController
         $comment = $this->commentModel->findById($commentId);
 
         if ($comment === null || !$this->canPinComment($commentId, $user)) {
-            $this->flash('error', 'You cannot pin that comment.');
+            $this->flash('error', chrome_translate('comments.flash.cannotPin'));
 
             return $this->redirectBack();
         }
@@ -305,7 +302,7 @@ class CommentController extends AppController
             $this->request->ip()
         );
 
-        $this->flash('success', $pinning ? 'Comment pinned to the top.' : 'Comment unpinned.');
+        $this->flash('success', chrome_translate($pinning ? 'comments.flash.pinned' : 'comments.flash.unpinned'));
 
         return $this->redirect($this->backUrlPath().'#comment-'.$commentId);
     }

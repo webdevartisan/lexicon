@@ -51,7 +51,7 @@ class CommentService
         $userId = $user ? (int) $user['id'] : null;
 
         if ($postId <= 0 || $content === '') {
-            return $this->failure('Comment content is required.');
+            return $this->failure(chrome_translate('comments.flash.required'));
         }
 
         if (email_unverified($user)) {
@@ -65,15 +65,15 @@ class CommentService
         $post = $this->postModel->find((string) $postId);
 
         if (!$post) {
-            return $this->failure('Post not found.');
+            return $this->failure(chrome_translate('comments.flash.postMissing'));
         }
 
         if ($post['status'] !== 'published' || $post['visibility'] !== 'public') {
-            return $this->failure('Comments are not available for this post.');
+            return $this->failure(chrome_translate('comments.flash.notAvailable'));
         }
 
         if (!$this->commentsOpen($post)) {
-            return $this->failure('Comments are closed for this post.');
+            return $this->failure(chrome_translate('comments.closed'));
         }
 
         $parentId = (int) $parentId;
@@ -81,16 +81,16 @@ class CommentService
         $replyToId = null;
 
         if ($parentId > 0) {
-            // Replies require an account; guests are captured upstream and
-            // resumed here after login, so this only rejects direct misuse
+            // Replies require an account. Guests are captured upstream and
+            // resumed here after sign-in, so this only rejects direct misuse
             if ($userId === null) {
-                return $this->failure('Please log in to reply to comments.');
+                return $this->failure(chrome_translate('comments.flash.replySignIn'));
             }
 
             $parent = $this->commentModel->findApprovedParent($parentId, $postId);
 
             if (!$parent) {
-                return $this->failure('The comment you are replying to is unavailable.');
+                return $this->failure(chrome_translate('comments.flash.parentUnavailable'));
             }
 
             // Null when they commented as a guest and so have no account to notify.
@@ -127,7 +127,7 @@ class CommentService
         $commentId = $this->commentModel->create($comment);
 
         if ($commentId === false) {
-            return $this->failure('Failed to create comment. Please try again.');
+            return $this->failure(chrome_translate('comments.flash.createFailed'));
         }
 
         $commentId = (int) $commentId;
@@ -151,7 +151,7 @@ class CommentService
         if ($autoPublish) {
             return [
                 'ok' => true,
-                'message' => $isReply ? 'Reply posted.' : 'Comment posted.',
+                'message' => chrome_translate($isReply ? 'comments.flash.replyPosted' : 'comments.flash.posted'),
                 'id' => $commentId,
             ];
         }
@@ -160,7 +160,7 @@ class CommentService
         // anchoring to it would drop the reader on a fragment that renders nothing.
         return [
             'ok' => true,
-            'message' => 'Thanks! Your comment was submitted and is awaiting moderation.',
+            'message' => chrome_translate('comments.flash.awaitingModeration'),
             'id' => null,
         ];
     }
@@ -185,15 +185,15 @@ class CommentService
         $userId = (int) $user['id'];
 
         if ($comment === null || !empty($comment['deleted_at']) || !empty($comment['hidden_at'])) {
-            return $this->failure('That comment no longer exists.');
+            return $this->failure(chrome_translate('comments.flash.gone'));
         }
 
         if (empty($comment['user_id']) || (int) $comment['user_id'] !== $userId || $comment['status'] === 'spam') {
-            return $this->failure('You can only edit your own comments.');
+            return $this->failure(chrome_translate('comments.flash.editOwnOnly'));
         }
 
         if ($content === '') {
-            return $this->failure('Comment content is required.');
+            return $this->failure(chrome_translate('comments.flash.required'));
         }
 
         if ($error = $this->contentLengthError($content)) {
@@ -203,16 +203,16 @@ class CommentService
         $post = $this->postModel->find((string) $comment['post_id']);
 
         if (!$post || $post['status'] !== 'published' || !$this->commentsOpen($post)) {
-            return $this->failure('Comments are closed for this post.');
+            return $this->failure(chrome_translate('comments.closed'));
         }
 
         if (!$this->commentModel->updateContent($commentId, $content)) {
-            return ['ok' => true, 'message' => 'Nothing changed.', 'id' => $commentId];
+            return ['ok' => true, 'message' => chrome_translate('comments.flash.unchanged'), 'id' => $commentId];
         }
 
         audit()->log($userId, 'comment.edited', 'comment', $commentId, ['post_id' => (int) $comment['post_id']], $ip);
 
-        return ['ok' => true, 'message' => 'Your comment was updated.', 'id' => $commentId];
+        return ['ok' => true, 'message' => chrome_translate('comments.flash.updated'), 'id' => $commentId];
     }
 
     /**
@@ -233,11 +233,11 @@ class CommentService
         $length = mb_strlen($content);
 
         if ($length < self::MIN_LENGTH) {
-            return 'Your comment is too short.';
+            return chrome_translate('comments.flash.tooShort');
         }
 
         if ($length > self::MAX_LENGTH) {
-            return 'Your comment is too long. Maximum '.self::MAX_LENGTH.' characters.';
+            return chrome_translate('comments.flash.tooLong', ['max' => self::MAX_LENGTH]);
         }
 
         return null;
