@@ -92,7 +92,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
             // menu in English on /el and /ar.
             foreach ($barNav as $it) { ?>
                     <li>
-                        <a class="lx-nav-link" href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a>
+                        <a class="lx-nav-link" href="<?= e(lurl($it['href'])) ?>" <?= $it['current_attr'] ?>><?= e(nav_label($it)) ?></a>
                     </li>
                     <?php } ?>
                 </ul>
@@ -122,7 +122,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
             <ul class="lx-drawer-links">
                 <?php foreach ($frontNav as $it) { ?>
-                <li><a href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }} {{ it['panel_attr'] }}><?= e(nav_label($it)) ?></a></li>
+                <li><a href="<?= e(lurl($it['href'])) ?>" <?= $it['current_attr'] ?> <?= $it['panel_attr'] ?>><?= e(nav_label($it)) ?></a></li>
                 <?php } ?>
             </ul>
 
@@ -209,7 +209,7 @@ foreach ($socialNetworks as $network) {
                     <h2>{{ t('footer.quickLinksTitle') }}</h2>
                     <ul>
                         <?php foreach ($frontNav as $it) { ?>
-                        <li><a href="<?= e(lurl($it['href'])) ?>" {{ it['panel_attr'] }}><?= e(nav_label($it)) ?></a></li>
+                        <li><a href="<?= e(lurl($it['href'])) ?>" <?= $it['panel_attr'] ?>><?= e(nav_label($it)) ?></a></li>
                         <?php } ?>
                         <?php if (!auth()->check() && registration_open()) { ?>
                         <li><a href="<?= e(blog_signup_url()) ?>">{{ t('navigation.createBlog') }}</a></li>
