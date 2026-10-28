@@ -310,13 +310,13 @@ class BlogController extends AppController
                 'totalPosts' => $found['total'],
             ],
             'searchTerm' => $term,
-            'archiveKicker' => 'Search',
-            'archiveTitle' => $term === '' ? 'Search' : '&ldquo;'.$name.'&rdquo;',
+            'archiveKicker' => e($this->t('blogPage.results.searchKicker')),
+            'archiveTitle' => $term === '' ? e($this->t('blogPage.results.searchTitle')) : '&ldquo;'.$name.'&rdquo;',
             'archiveDek' => match (true) {
-                $throttled => 'Too many searches just now. Try again in a minute.',
-                $term === '' => 'Type a word to search every post.',
-                $found['total'] === 0 => 'Nothing matched <em>'.$name.'</em>.',
-                default => 'Posts matching <em>'.$name.'</em>.',
+                $throttled => e($this->t('blogPage.results.throttled')),
+                $term === '' => e($this->t('blogPage.results.empty')),
+                $found['total'] === 0 => translate_html('blogPage.results.none', ['term' => '<em>'.$name.'</em>']),
+                default => translate_html('blogPage.results.matching', ['term' => '<em>'.$name.'</em>']),
             },
         ]);
     }
@@ -361,9 +361,9 @@ class BlogController extends AppController
         return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
-            'archiveKicker' => 'Category &mdash; '.$name,
+            'archiveKicker' => translate_html('blogPage.results.categoryKicker', ['name' => $name]),
             'archiveTitle' => $name,
-            'archiveDek' => 'Posts filed under <em>'.$name.'</em>.',
+            'archiveDek' => translate_html('blogPage.results.categoryDek', ['name' => '<em>'.$name.'</em>']),
         ]);
     }
 
@@ -390,9 +390,9 @@ class BlogController extends AppController
         return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
-            'archiveKicker' => 'Tagged &mdash; '.$name,
+            'archiveKicker' => translate_html('blogPage.results.tagKicker', ['name' => $name]),
             'archiveTitle' => '#'.$name,
-            'archiveDek' => 'Posts tagged <em>'.$name.'</em>.',
+            'archiveDek' => translate_html('blogPage.results.tagDek', ['name' => '<em>'.$name.'</em>']),
         ]);
     }
 

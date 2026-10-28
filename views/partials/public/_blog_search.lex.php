@@ -2,10 +2,10 @@
 $searchAction = lurl('/blog/'.rawurlencode((string) ($blog['blog_slug'] ?? '')).'/search');
 ?>
 <form class="blog-search" method="get" action="<?= e($searchAction) ?>" role="search">
-  <label class="blog-search-label" for="blog-search-q">Search this blog</label>
+  <label class="blog-search-label" for="blog-search-q"><?= e($t('blogPage.search.label')) ?></label>
   <div class="blog-search-row">
-    <input id="blog-search-q" class="blog-search-input" type="search" name="q" value="<?= e($searchTerm ?? '') ?>" maxlength="100" placeholder="Search posts" autocomplete="off">
-    <button class="blog-search-button" type="submit">Search</button>
+    <input id="blog-search-q" class="blog-search-input" type="search" name="q" value="<?= e($searchTerm ?? '') ?>" maxlength="100" placeholder="<?= e($t('blogPage.search.placeholder')) ?>" autocomplete="off">
+    <button class="blog-search-button" type="submit"><?= e($t('blogPage.search.button')) ?></button>
   </div>
 </form>
 

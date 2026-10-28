@@ -1,0 +1,79 @@
+{
+    "comments": {
+        "heading": {
+            "one": "Letters · {count} Comment",
+            "other": "Letters · {count} Comments"
+        },
+        "formLabel": "Write something worth printing…",
+        "formButton": "Send"
+    },
+    "nav": {
+        "home": "Home",
+        "archive": "Archive",
+        "subscribe": "Subscribe",
+        "primary": "Primary",
+        "openMenu": "Open menu",
+        "homeOf": "{blog}, home",
+        "filterByCategory": "Filter posts by category"
+    },
+    "minutes": "{count} Min",
+    "by": "By {author}",
+    "emailLabel": "Your address",
+    "home": {
+        "volume": "{blog} · Vol. {year}",
+        "edition": {
+            "one": "Edition of {count} Post",
+            "other": "Edition of {count} Posts"
+        },
+        "readingTotal": "{count} Min of Reading",
+        "tagline": "Fresh from the press",
+        "subtitle": "Essays and dispatches, proofed, inked, and published.",
+        "readLead": "Read the lead story",
+        "fallbackCategory": "Article",
+        "leadStory": "Lead story · {category}",
+        "readPost": "Read the post",
+        "indexTitle": "The Index.",
+        "indexCount": {
+            "one": "{count} post",
+            "other": "{count} posts"
+        },
+        "all": "All",
+        "showing": "Showing {shown} of {total} · {blog}",
+        "openAll": "Open the full catalogue",
+        "inCategory": "{count} posts in {name}",
+        "viewAll": "View all",
+        "est": "Est.",
+        "colophonEyebrow": "Colophon · About this blog",
+        "colophonDefault": "{blog}, written, proofed, and published in small editions.",
+        "colophonFine": "{blog} is set in Archivo & Schibsted Grotesk, printed on porcelain #EEF0F1 with one plate of cobalt, and published on {platform}.",
+        "newsEyebrow": "The proof run",
+        "newsHeading": "Every new post, hot off the press.",
+        "newsText": "One email per post. No tracking, easy unsubscribe.",
+        "subscribe": "Subscribe",
+        "newsFine": "Free. Unsubscribe any time"
+    },
+    "archive": {
+        "pageTitle": "Archive · {blog}",
+        "kicker": "The Catalogue · {blog}",
+        "heading": "Everything in Print.",
+        "dek": "Every post from {blog}, catalogued in reverse chronological order.",
+        "count": {
+            "one": "{count} Post",
+            "other": "{count} Posts"
+        },
+        "back": "← Back to the front page",
+        "fallbackCategory": "Post",
+        "empty": "Nothing in print yet.",
+        "sheet": "Sheet {page} / {pages} · showing {from} to {to} of {total}",
+        "pagination": "Pagination",
+        "prev": "← Prev",
+        "next": "Next →"
+    },
+    "post": {
+        "backTo": "Back to {blog}",
+        "previous": "← Previous",
+        "next": "Next →",
+        "related": "Also in print",
+        "read": "Read"
+    }
+}

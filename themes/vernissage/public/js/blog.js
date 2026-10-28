@@ -28,6 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterList = document.querySelector(".filter-list");
   var grid = document.querySelector(".salon-grid");
   if (filterList && grid) {
+    // Wording comes from the page, in the reader's language
+    var wording = {};
+    try { wording = JSON.parse(filterList.getAttribute("data-text") || "{}"); } catch (err) { /* keep the empty strings */ }
+    var fill = function (template, values) {
+      return String(template || "").replace(/\{(\w+)\}/g, function (match, key) { return key in values ? values[key] : match; });
+    };
+    var countText = function (n) { return fill(n === 1 ? (wording.count || {}).one : (wording.count || {}).other, { count: n }); };
     var countEl = document.getElementById("filter-count");
     var pills = filterList.querySelectorAll("li");
 
@@ -51,13 +58,13 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!filter) {
         if (footerCount) footerCount.innerHTML = allCountHtml;
         footerLink.setAttribute("href", allArchive);
-        if (footerLabel) footerLabel.textContent = "Open the catalogue raisonné";
+        if (footerLabel) footerLabel.textContent = wording.openAll || "";
         footer.style.display = allMore ? "" : "none";
       } else if (count > 6) {
         var base = window.location.pathname.replace(/\/+$/, "");
-        if (footerCount) footerCount.textContent = count + " works in " + name;
+        if (footerCount) footerCount.textContent = fill(wording.inCategory, { count: count, name: name });
         footerLink.setAttribute("href", base + "/category/" + encodeURIComponent(filter));
-        if (footerLabel) footerLabel.textContent = "View the whole room";
+        if (footerLabel) footerLabel.textContent = wording.viewAll || "";
         footer.style.display = "";
       } else {
         footer.style.display = "none";
@@ -95,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
             grid.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("is-in"); });
             if (countEl) {
               var n = grid.querySelectorAll(".work").length;
-              countEl.textContent = n + " work" + (n === 1 ? "" : "s");
+              countEl.textContent = countText(n);
             }
             updateFooter(li);
           })

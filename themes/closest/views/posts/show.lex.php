@@ -29,7 +29,7 @@ $title = e($post['title'] ?? 'Untitled');
         <a class="wp-chip" href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
       <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= $minutes ?> Min &asymp; <?= $km ?> km</span>
+      <span><?= e($t('closest::post.meta', ['minutes' => $minutes, 'km' => $km])) ?></span>
     </div>
 
     <h1 class="post-hero-title reveal"><?= $title ?></h1>
@@ -39,9 +39,9 @@ $title = e($post['title'] ?? 'Untitled');
     <?php } ?>
 
     <div class="post-hero-byline">
-      <?php if ($author) { ?><span>Surveyed by <?= $author ?></span><?php } ?>
+      <?php if ($author) { ?><span><?= translate_html('closest::post.by', ['author' => $author]) ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        Back to <?= e($blog['blog_name'] ?? 'Blog') ?>
+        <?= e($t('closest::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -52,7 +52,7 @@ $title = e($post['title'] ?? 'Untitled');
 <div class="container">
   <div class="inset post-cover" id="post-cover">
     <span class="inset-img"><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /></span>
-    <span class="inset-cap">Fig. 01 &middot; <?= $title ?></span>
+    <span class="inset-cap"><?= translate_html('closest::post.fig', ['title' => $title]) ?></span>
   </div>
 </div>
 <?php } ?>
@@ -65,7 +65,7 @@ $title = e($post['title'] ?? 'Untitled');
 
     <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
     <div class="post-tags reveal">
-      <span class="post-tags-label">Marked</span>
+      <span class="post-tags-label"><?= e($t('closest::post.marked')) ?></span>
       <?php foreach ($post['tags'] as $tag) { ?>
         <a class="post-tag" href="<?= lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) $tag['slug'])) ?>"><?= e($tag['name']) ?></a>
       <?php } ?>
@@ -82,7 +82,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="post-nav-item prev">
-        <span class="post-nav-label">&larr; Back down the trail</span>
+        <span class="post-nav-label"><?= e($t('closest::post.previous')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -91,7 +91,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="post-nav-item next">
-        <span class="post-nav-label">Onward &rarr;</span>
+        <span class="post-nav-label"><?= e($t('closest::post.next')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -106,10 +106,10 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'heading' => 'themes.closest.comments.heading',
-          'form_label' => 'themes.closest.comments.formLabel',
-          'form_button' => 'themes.closest.comments.formButton',
-          'closed' => 'themes.closest.comments.closed',
+          'heading' => 'closest::comments.heading',
+          'form_label' => 'closest::comments.formLabel',
+          'form_button' => 'closest::comments.formButton',
+          'closed' => 'closest::comments.closed',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>
@@ -119,7 +119,7 @@ $title = e($post['title'] ?? 'Untitled');
 <?php if (!empty($related) && is_array($related)) { ?>
 <section class="post-related" data-insights-related>
   <div class="container">
-    <h2 class="reveal">Nearby on the map</h2>
+    <h2 class="reveal"><?= e($t('closest::post.related')) ?></h2>
     <div class="related-grid">
       <?php foreach ($related as $rel) {
           $rTitle = e($rel['title'] ?? 'Post');
@@ -138,7 +138,7 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          Walk over
+          <?= e($t('closest::post.read')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

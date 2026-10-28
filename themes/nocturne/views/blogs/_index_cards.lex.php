@@ -9,7 +9,7 @@ foreach (($cards ?? []) as $i => $post) {
     $img = preg_match($validImg, $cover) ? e($cover) : $asset('img/cover-placeholder.svg');
     $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
     $title = e($post['title'] ?? 'Untitled');
-    $cat = trim((string) ($post['category'] ?? 'Post'));
+    $cat = trim((string) ($post['category'] ?? $t('nocturne::archive.fallbackCategory')));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
@@ -25,7 +25,7 @@ foreach (($cards ?? []) as $i => $post) {
     <div class="idx-meta">
       <span class="cat"><?= e($cat) ?></span>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= $author ?> &middot; <?= $minutes ?> Min</span>
+      <span><?= translate_html('nocturne::archive.byline', ['author' => $author, 'count' => $minutes]) ?></span>
     </div>
     <?php if (!empty($tags)) { ?>
     <div class="idx-tags">

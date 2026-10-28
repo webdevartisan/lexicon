@@ -11,6 +11,7 @@
 
   var loggedIn = bar.getAttribute('data-auth') === '1';
   var loginUrl = bar.getAttribute('data-login');
+  var text = function (name) { return bar.getAttribute('data-text-' + name) || ''; };
   var tokenInput = document.querySelector('#engage-token input[name="_token"]');
   var popover = bar.querySelector('[data-share-popover]');
   var shareBtn = bar.querySelector('[data-share-toggle]');
@@ -101,7 +102,7 @@
           return json.data && json.data.message;
         }, function (error) {
           // An error page is not JSON, and its parse error means nothing to a reader
-          throw error && error.kind === 'auth' ? error : { message: 'That report could not be sent. Please try again.' };
+          throw error && error.kind === 'auth' ? error : { message: text('report-failed') };
         });
       },
       onAuth: function () { authenticateThen(button); }
@@ -148,7 +149,7 @@
         btn.classList.toggle('is-active', !!data.active);
         btn.setAttribute('aria-pressed', data.active ? 'true' : 'false');
         btn.querySelector('svg').setAttribute('fill', data.active ? 'currentColor' : 'none');
-        btn.querySelector('span:last-child').textContent = data.active ? 'Saved' : 'Save';
+        btn.querySelector('span:last-child').textContent = text(data.active ? 'saved' : 'save');
       })
       .catch(function () { /* leave state as rendered; next click retries */ })
       .finally(function () { btn.dataset.busy = '0'; });
@@ -167,8 +168,8 @@
         var link = copyBtn.getAttribute('data-link');
         var label = copyBtn.querySelector('[data-copy-label]');
         var done = function () {
-          label.textContent = 'Copied!';
-          setTimeout(function () { label.textContent = 'Copy link'; }, 1500);
+          label.textContent = text('copied');
+          setTimeout(function () { label.textContent = text('copy'); }, 1500);
         };
 
         if (navigator.clipboard && navigator.clipboard.writeText) {

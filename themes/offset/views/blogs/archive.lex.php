@@ -1,5 +1,5 @@
 {% extends "base.lex.php" %}
-{% block title %}Archive &mdash; {{ blog.blog_name }}{% endblock %}
+{% block title %}<?= e($t('offset::archive.pageTitle', ['blog' => $blog['blog_name'] ?? ''])) ?>{% endblock %}
 {% block styles %}
   <link rel="stylesheet" href="<?= $asset('css/archive.css') ?>">
 {% endblock %}
@@ -23,15 +23,15 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 <?php
   // Headings are overridable so this same layout backs the full archive and the
   // category/tag listings. Defaults keep the plain "/archive" page unchanged.
-  $kicker = $archiveKicker ?? ('The Catalogue &mdash; '.$blogTitle);
-  $heading = $archiveTitle ?? 'Everything in Print.';
-  $dek = $archiveDek ?? ('Every post from <em>'.$blogTitle.'</em>, catalogued in reverse chronological order.');
+  $kicker = $archiveKicker ?? translate_html('offset::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? e($t('offset::archive.heading'));
+  $dek = $archiveDek ?? translate_html('offset::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
       <span><?= $kicker ?></span>
-      <span><?= $totalPosts ?> Post<?= $totalPosts === 1 ? '' : 's' ?></span>
+      <span><?= e(translate_count('offset::archive.count', $totalPosts)) ?></span>
     </div>
 
     <h1 class="archive-title"><?= $heading ?></h1>
@@ -43,7 +43,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
-      &larr; Back to the front page
+      <?= e($t('offset::archive.back')) ?>
     </a>
   </div>
 </section>
@@ -62,7 +62,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
           $img = preg_match($validImg, $cover) ? $cover : $asset('img/cover-placeholder.svg');
           $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
           $title = e($post['title'] ?? 'Untitled');
-          $cat = trim((string) ($post['category'] ?? 'Post'));
+          $cat = trim((string) ($post['category'] ?? $t('offset::archive.fallbackCategory')));
           $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
           $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
           $minutes = reading_time($post['content'] ?? '');
@@ -85,13 +85,13 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
           <div class="row-main">
             <h3 class="row-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
-            <span class="row-author">By <?= $author ?></span>
+            <span class="row-author"><?= translate_html('offset::by', ['author' => $author]) ?></span>
           </div>
 
           <div class="row-meta">
             <span class="row-cat"><?= e($cat) ?></span>
             <?php if ($date) { ?><span class="row-date"><?= $date ?></span><?php } ?>
-            <span class="row-min"><?= $minutes ?> Min</span>
+            <span class="row-min"><?= e($t('offset::minutes', ['count' => $minutes])) ?></span>
           </div>
 
           <span class="row-arrow" aria-hidden="true">
@@ -101,19 +101,19 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       <?php } ?>
       </div>
     <?php } else { ?>
-      <p class="catalogue-empty">Nothing in print yet.</p>
+      <p class="catalogue-empty"><?= e($t('offset::archive.empty')) ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
     <div class="archive-pagination reveal">
       <span class="archive-pagination-info">
-        Sheet <?= sprintf('%02d', $current) ?> / <?= sprintf('%02d', $total) ?> &mdash; showing <?= sprintf('%02d', $first) ?>&ndash;<?= sprintf('%02d', $last) ?> of <?= sprintf('%02d', $totalPosts) ?>
+        <?= translate_html('offset::archive.sheet', ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
       </span>
-      <nav class="archive-pagination-nav" aria-label="Pagination">
+      <nav class="archive-pagination-nav" aria-label="<?= e($t('offset::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev">&larr; Prev</a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('offset::archive.prev')) ?></a>
         <?php } else { ?>
-          <span class="is-disabled">&larr; Prev</span>
+          <span class="is-disabled"><?= e($t('offset::archive.prev')) ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -125,9 +125,9 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next">Next &rarr;</a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('offset::archive.next')) ?></a>
         <?php } else { ?>
-          <span class="is-disabled">Next &rarr;</span>
+          <span class="is-disabled"><?= e($t('offset::archive.next')) ?></span>
         <?php } ?>
       </nav>
     </div>

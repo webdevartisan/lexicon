@@ -23,7 +23,7 @@
   ?>
   <header class="masthead" role="banner">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($user['blog_name'] ?? 'Nocturne') ?>, home">
+      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('nocturne::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Nocturne'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Nocturne') ?>" style="max-height:38px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -31,17 +31,17 @@
         <?php } ?>
       </a>
 
-      <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="<?= $homeUrl ?>">Home</a>
-        <a href="<?= $archiveUrl ?>">Archive</a>
-        <a href="<?= $subscribeUrl ?>">Subscribe</a>
+      <nav class="nav" id="primaryNav" aria-label="<?= e($t('nocturne::nav.primary')) ?>">
+        <a href="<?= $homeUrl ?>"><?= e($t('nocturne::nav.home')) ?></a>
+        <a href="<?= $archiveUrl ?>"><?= e($t('nocturne::nav.archive')) ?></a>
+        <a href="<?= $subscribeUrl ?>"><?= e($t('nocturne::nav.subscribe')) ?></a>
       </nav>
 
       <div class="masthead-actions">
         <span data-auth-nav="theme" style="display:contents">
           {% include "partials/_auth_nav.lex.php" %}
         </span>
-        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
+        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('nocturne::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -59,7 +59,7 @@
       <div class="foot-lamp" aria-hidden="true"></div>
 
       <div class="foot-top">
-        <p class="foot-note">Written after hours.<br />Read whenever you like.</p>
+        <p class="foot-note"><?= translate_html('nocturne::footer.note', ['br' => '<br />']) ?></p>
 
         {% include "partials/public/_theme_social_links.lex.php" %}
       </div>
@@ -70,7 +70,7 @@
 
       <div class="foot-bottom">
         <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Nocturne') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
+        <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

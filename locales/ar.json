@@ -2446,40 +2446,6 @@
     "cancel": "إلغاء",
     "confirm": "تأكيد"
   },
-  "themes": {
-    "closest": {
-      "comments": {
-        "heading": {
-          "one": "سجلّ الدرب — {count} مُدخل",
-          "other": "سجلّ الدرب — {count} مُدخلات"
-        },
-        "formLabel": "أضف مُدخلًا إلى السجلّ…",
-        "formButton": "اترك مُدخلًا",
-        "closed": "السجلّ مغلق عند هذه المحطة."
-      }
-    },
-    "offset": {
-      "comments": {
-        "heading": {
-          "one": "رسائل — {count} تعليق",
-          "other": "رسائل — {count} تعليقات"
-        },
-        "formLabel": "اكتب شيئًا يستحق الطباعة…",
-        "formButton": "إرسال"
-      }
-    },
-    "vernissage": {
-      "comments": {
-        "heading": {
-          "one": "سجلّ الزوّار — {count} مُدخل",
-          "other": "سجلّ الزوّار — {count} مُدخلات"
-        },
-        "formLabel": "اترك ملاحظة للمعرض…",
-        "formButton": "وقّع في السجلّ",
-        "closed": "سجلّ الزوّار مغلق لهذا العمل."
-      }
-    }
-  },
   "time": {
     "now": "الآن",
     "soon": "خلال أقل من دقيقة",
@@ -2518,6 +2484,43 @@
       "week": "{count}أس",
       "month": "{count}ش",
       "year": "{count}سن"
+    }
+  },
+  "blogPage": {
+    "actions": {
+      "agree": "أوافق على هذه التدوينة",
+      "disagree": "لا أوافق على هذه التدوينة",
+      "bookmark": "حفظ هذه التدوينة",
+      "save": "حفظ",
+      "saved": "محفوظة",
+      "shareLabel": "مشاركة هذه التدوينة",
+      "share": "مشاركة",
+      "copyLink": "نسخ الرابط",
+      "copied": "تم النسخ!",
+      "shareOn": "المشاركة على {network}",
+      "more": "مزيد من الإجراءات على هذه التدوينة",
+      "report": "إبلاغ"
+    },
+    "search": {
+      "label": "البحث في هذه المدونة",
+      "placeholder": "ابحث في التدوينات",
+      "button": "بحث"
+    },
+    "footer": {
+      "hostedBy": "النشر والاستضافة عبر {platform}",
+      "social": "حسابات التواصل الاجتماعي"
+    },
+    "results": {
+      "searchKicker": "بحث",
+      "searchTitle": "بحث",
+      "throttled": "عمليات بحث كثيرة الآن. حاول مرة أخرى بعد دقيقة.",
+      "empty": "اكتب كلمة للبحث في كل التدوينات.",
+      "none": "لا شيء يطابق {term}.",
+      "matching": "تدوينات تطابق {term}.",
+      "categoryKicker": "التصنيف: {name}",
+      "categoryDek": "تدوينات مصنفة تحت {name}.",
+      "tagKicker": "الوسم: {name}",
+      "tagDek": "تدوينات موسومة بـ {name}."
     }
   }
 }

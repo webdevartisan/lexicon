@@ -1,5 +1,5 @@
 {% extends "base.lex.php" %}
-{% block title %}Archive &mdash; {{ blog.blog_name }}{% endblock %}
+{% block title %}<?= e($t('nocturne::archive.pageTitle', ['blog' => $blog['blog_name'] ?? ''])) ?>{% endblock %}
 {% block styles %}
   <link rel="stylesheet" href="<?= $asset('css/archive.css') ?>">
 {% endblock %}
@@ -21,16 +21,16 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
   // Headings are overridable so this same layout backs the full archive and
   // the category/tag listings.
-  $kicker = $archiveKicker ?? ('The Ledger &mdash; '.$blogTitle);
-  $heading = $archiveTitle ?? 'Every Night, Filed.';
-  $dek = $archiveDek ?? ('Every post from <em>'.$blogTitle.'</em>, newest first.');
+  $kicker = $archiveKicker ?? translate_html('nocturne::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? e($t('nocturne::archive.heading'));
+  $dek = $archiveDek ?? translate_html('nocturne::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 
 <section class="ledger-hero">
   <div class="container">
     <div class="ledger-rail">
       <span><?= $kicker ?></span>
-      <span><?= $totalPosts ?> Post<?= $totalPosts === 1 ? '' : 's' ?></span>
+      <span><?= e(translate_count('nocturne::home.postCount', $totalPosts)) ?></span>
     </div>
 
     <h1 class="ledger-title"><?= $heading ?></h1>
@@ -41,7 +41,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="ledger-back link-arrow">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
-      Back to the front page
+      <?= e($t('nocturne::archive.back')) ?>
     </a>
   </div>
 </section>
@@ -55,7 +55,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
           $img = preg_match($validImg, $cover) ? e($cover) : $asset('img/cover-placeholder.svg');
           $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
           $title = e($post['title'] ?? 'Untitled');
-          $cat = trim((string) ($post['category'] ?? 'Post'));
+          $cat = trim((string) ($post['category'] ?? $t('nocturne::archive.fallbackCategory')));
           $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
           $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
           $minutes = reading_time($post['content'] ?? '');
@@ -70,7 +70,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         <div class="idx-meta">
           <span class="cat"><?= e($cat) ?></span>
           <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-          <span><?= $author ?> &middot; <?= $minutes ?> Min</span>
+          <span><?= translate_html('nocturne::archive.byline', ['author' => $author, 'count' => $minutes]) ?></span>
         </div>
       </article>
       <?php } ?>
@@ -78,19 +78,19 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <div class="idx-float" id="idx-float" aria-hidden="true"><img src="" alt="" /></div>
     <?php } else { ?>
-      <p class="ledger-empty">No posts yet. The lamp is on, though.</p>
+      <p class="ledger-empty"><?= e($t('nocturne::archive.empty')) ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
     <div class="ledger-pagination reveal">
       <span class="ledger-pagination-info">
-        Showing <?= sprintf('%02d', $first) ?>&ndash;<?= sprintf('%02d', $last) ?> of <?= sprintf('%02d', $totalPosts) ?>
+        <?= translate_html('nocturne::archive.showing', ['from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
       </span>
-      <nav class="ledger-pagination-nav" aria-label="Pagination">
+      <nav class="ledger-pagination-nav" aria-label="<?= e($t('nocturne::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev">&larr; Prev</a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('nocturne::archive.prev')) ?></a>
         <?php } else { ?>
-          <span class="is-disabled">&larr; Prev</span>
+          <span class="is-disabled"><?= e($t('nocturne::archive.prev')) ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -102,9 +102,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next">Next &rarr;</a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('nocturne::archive.next')) ?></a>
         <?php } else { ?>
-          <span class="is-disabled">Next &rarr;</span>
+          <span class="is-disabled"><?= e($t('nocturne::archive.next')) ?></span>
         <?php } ?>
       </nav>
     </div>

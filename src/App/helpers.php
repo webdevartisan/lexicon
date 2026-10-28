@@ -40,6 +40,38 @@ function chrome_translate(string|array $key, array $params = []): string
 }
 
 /**
+ * Translate a sentence that carries markup, such as a byline link or an
+ * emphasised name. The wording is escaped first, so only the values passed
+ * here, which the caller has already made safe, reach the page as HTML.
+ *
+ * @param  string  $key  Dotted key
+ * @param  array<string, string|int>  $html  Placeholder name => safe HTML or number
+ * @return string HTML ready to print
+ */
+function translate_html(string $key, array $html = []): string
+{
+    $pairs = [];
+    foreach ($html as $name => $value) {
+        $pairs['{'.$name.'}'] = (string) $value;
+    }
+
+    return strtr(e(chrome_translate($key)), $pairs);
+}
+
+/**
+ * Translate a count into its one/other form, e.g. "1 post" or "4 posts".
+ *
+ * @param  string  $key  Dotted key whose entry holds "one" and "other"
+ * @param  int  $count  The number the sentence is about
+ * @param  array<string, string|int>  $params  Further placeholders
+ * @return string Plain text, still to be escaped
+ */
+function translate_count(string $key, int $count, array $params = []): string
+{
+    return chrome_translate($key.'.'.($count === 1 ? 'one' : 'other'), ['count' => $count] + $params);
+}
+
+/**
  * Editable site text with translation fallback.
  *
  * Resolution order: admin override for the current locale, then a

@@ -26,26 +26,26 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 <section class="press-hero" id="top">
   <div class="container">
     <div class="hero-meta-top">
-      <span><?= $blogTitle ?> &mdash; Vol. <?= date('Y') ?></span>
-      <span>Edition of <?= $postCount ?> Post<?= $postCount === 1 ? '' : 's' ?></span>
-      <span><?= $totalMinutes ?> Min of Reading</span>
+      <span><?= translate_html('offset::home.volume', ['blog' => $blogTitle, 'year' => date('Y')]) ?></span>
+      <span><?= e(translate_count('offset::home.edition', $postCount)) ?></span>
+      <span><?= e($t('offset::home.readingTotal', ['count' => $totalMinutes])) ?></span>
     </div>
 
     <div class="hero-stage">
       <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
       <span class="proof-stamp" aria-hidden="true">
-        <?= !empty($settings['tagline']) ? e($settings['tagline']) : 'Fresh from the press' ?>
+        <?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('offset::home.tagline')) ?>
       </span>
     </div>
 
     <div class="hero-bottom">
       <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'Essays and dispatches, proofed, inked, and published.' ?>
+        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('offset::home.subtitle')) ?>
       </p>
       <?php if ($featuredPost) { ?>
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
-          Read the lead story
+          <?= e($t('offset::home.readLead')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -62,7 +62,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $fCat = e($featuredPost['category'] ?? 'Article');
+    $fCat = e($featuredPost['category'] ?? $t('offset::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="lead" id="lead">
@@ -74,7 +74,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
       <div class="lead-body">
         <div class="lead-tag reveal">
-          <span class="eyebrow">Lead story &mdash; <?= $fCat ?></span>
+          <span class="eyebrow"><?= translate_html('offset::home.leadStory', ['category' => $fCat]) ?></span>
           <?php if ($fDate) { ?><span class="eyebrow"><?= $fDate ?></span><?php } ?>
         </div>
 
@@ -85,12 +85,12 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <?php } ?>
 
         <div class="lead-byline reveal">
-          <?php if ($fAuthor) { ?><span>By <?= $fAuthor ?></span><?php } ?>
-          <span><?= $fMinutes ?> Min</span>
+          <?php if ($fAuthor) { ?><span><?= translate_html('offset::by', ['author' => $fAuthor]) ?></span><?php } ?>
+          <span><?= e($t('offset::minutes', ['count' => $fMinutes])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          Read the post
+          <?= e($t('offset::home.readPost')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -105,13 +105,14 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 <section class="index" id="index">
   <div class="container">
     <div class="index-head">
-      <h2 class="index-title reveal">The Index.</h2>
-      <span class="index-count reveal" id="filter-count"><?= count($gridPosts) ?> post<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="index-title reveal"><?= e($t('offset::home.indexTitle')) ?></h2>
+      <span class="index-count reveal" id="filter-count"><?= e(translate_count('offset::home.indexCount', count($gridPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('offset::nav.filterByCategory')) ?>"
+        data-text="<?= e(json_encode(['openAll' => $t('offset::home.openAll'), 'inCategory' => $t('offset::home.inCategory'), 'viewAll' => $t('offset::home.viewAll'), 'count' => ['one' => $t('offset::home.indexCount.one'), 'other' => $t('offset::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('offset::home.all')) ?></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -146,9 +147,9 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="index-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="index-count" id="index-footer-count">Showing <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
+      <span class="index-count" id="index-footer-count"><?= translate_html('offset::home.showing', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Open the full catalogue</span>
+        <span id="index-footer-label"><?= e($t('offset::home.openAll')) ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -165,24 +166,22 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       $aboutLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
   $aboutLabelClass = mb_strlen($aboutLabel) > 6 ? ' colophon-number--word' : '';
   ?>
-      <p class="colophon-number<?= $aboutLabelClass ?> reveal">Est.<br /><?= e($aboutLabel) ?></p>
+      <p class="colophon-number<?= $aboutLabelClass ?> reveal"><?= e($t('offset::home.est')) ?><br /><?= e($aboutLabel) ?></p>
       <div class="colophon-body">
-        <span class="eyebrow reveal">Colophon &mdash; About this blog</span>
+        <span class="eyebrow reveal"><?= e($t('offset::home.colophonEyebrow')) ?></span>
         <p class="colophon-statement reveal">
           <?php if (!empty($settings['about_text'])) { ?>
             <?= e($settings['about_text']) ?>
           <?php } elseif (!empty($settings['subtitle'])) { ?>
             <?= e($settings['subtitle']) ?>
           <?php } else { ?>
-            <?= $blogTitle ?> &mdash; written, proofed, and published in small editions.
+            <?= translate_html('offset::home.colophonDefault', ['blog' => $blogTitle]) ?>
           <?php } ?>
         </p>
-        <span class="colophon-sign reveal">&mdash; <?= $ownerName ?></span>
+        <span class="colophon-sign reveal"><?= $ownerName ?></span>
 
         <p class="colophon-fine reveal">
-          <?= $blogTitle ?> is set in Archivo &amp; Schibsted Grotesk,
-          printed on porcelain #EEF0F1 with one plate of cobalt,
-          and published on <?= e(env('APP_NAME', 'the web')) ?>.
+          <?= translate_html('offset::home.colophonFine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
         </p>
       </div>
     </div>
@@ -193,24 +192,24 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
   <div class="container">
     <div class="news-slab">
       <div class="news-copy">
-        <span class="eyebrow reveal">The proof run</span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'Every new post, hot off the press.' ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One email per post. No tracking, easy unsubscribe.' ?></p>
+        <span class="eyebrow reveal"><?= e($t('offset::home.newsEyebrow')) ?></span>
+        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('offset::home.newsHeading')) ?></h2>
+        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('offset::home.newsText')) ?></p>
       </div>
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub">Your address</label>
+        <label for="email-sub"><?= e($t('offset::emailLabel')) ?></label>
         <div class="news-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@proof-room.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            Subscribe
+            <?= e($t('offset::home.subscribe')) ?>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="news-fine">Free &mdash; unsubscribe any time</span>
+        <span class="news-fine"><?= e($t('offset::home.newsFine')) ?></span>
       </form>
     </div>
   </div>

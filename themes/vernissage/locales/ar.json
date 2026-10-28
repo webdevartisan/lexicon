@@ -1,0 +1,83 @@
+{
+    "comments": {
+        "heading": {
+            "one": "سجلّ الزوّار · {count} مُدخل",
+            "other": "سجلّ الزوّار · {count} مُدخلات"
+        },
+        "formLabel": "اترك ملاحظة للمعرض…",
+        "formButton": "وقّع في السجلّ",
+        "closed": "سجلّ الزوّار مغلق لهذا العمل."
+    },
+    "nav": {
+        "home": "المعرض",
+        "archive": "الكتالوج",
+        "subscribe": "العرض الخاص",
+        "primary": "التنقل الرئيسي",
+        "openMenu": "فتح القائمة",
+        "homeOf": "{blog}، الصفحة الرئيسية"
+    },
+    "minutes": "{count} دقائق",
+    "emailLabel": "عنوان بريدك",
+    "footer": {
+        "hours": "مفتوح يوميًا. الدخول مجاني"
+    },
+    "home": {
+        "season": "{blog} · موسم {year}",
+        "collection": {
+            "one": "مجموعة من {count} عمل",
+            "other": "مجموعة من {count} أعمال"
+        },
+        "viewingTotal": "{count} دقائق من المشاهدة",
+        "tagline": "المعرض مفتوح الآن",
+        "subtitle": "مجموعة دائمة من المقالات والرسائل، تُعلَّق عملًا بعد عمل.",
+        "viewCentrepiece": "شاهد العمل المحوري",
+        "fallbackCategory": "عمل",
+        "onView": "معروض · {category}",
+        "viewWork": "شاهد العمل",
+        "collectionTitle": "المجموعة.",
+        "workCount": {
+            "one": "{count} عمل",
+            "other": "{count} أعمال"
+        },
+        "filter": "تصفية الأعمال حسب القاعة",
+        "all": "كل القاعات",
+        "hanging": "معروض {shown} من {total} · {blog}",
+        "openAll": "افتح الكتالوج الشامل",
+        "inCategory": "{count} أعمال في {name}",
+        "viewAll": "شاهد القاعة كاملة",
+        "est": "منذ",
+        "curatorEyebrow": "ملاحظة القيّم · عن هذه المدونة",
+        "curatorDefault": "{blog}، جُمعت وعُلّقت وبقيت معروضة على الدوام.",
+        "fine": "تُصفّ {blog} بخطَّي Bodoni Moda وHanken Grotesk، وتُعلَّق على جصّ ‎#F4F1E9 أمام جدار واحد بلون الفيريديان، وتُنشر على {platform}.",
+        "newsEyebrow": "العرض الخاص",
+        "newsHeading": "يسعدنا دعوتك.",
+        "newsText": "دعوة واحدة لكل عمل جديد. بلا ضجيج، ويمكنك مغادرة القائمة في أي وقت.",
+        "subscribe": "سأحضر",
+        "newsFine": "مجانًا. ألغِ الاشتراك متى شئت",
+        "catNo": "رقم {number}"
+    },
+    "archive": {
+        "pageTitle": "الكتالوج · {blog}",
+        "kicker": "الكتالوج الشامل · {blog}",
+        "heading": "الأعمال الكاملة.",
+        "dek": "كل أعمال {blog}، مفهرسة بأحدث المقتنيات أولًا.",
+        "count": {
+            "one": "{count} عمل",
+            "other": "{count} أعمال"
+        },
+        "back": "→ العودة إلى المعرض",
+        "empty": "لا شيء معروض بعد.",
+        "plate": "اللوحة {page} / {pages} · المدخلات {from} إلى {to} من {total}",
+        "pagination": "التنقل بين الصفحات",
+        "prev": "→ السابق",
+        "next": "التالي ←"
+    },
+    "post": {
+        "fig": "شكل I · {title}",
+        "backTo": "العودة إلى {blog}",
+        "previous": "→ العمل السابق",
+        "next": "العمل التالي ←",
+        "related": "معروض أيضًا",
+        "read": "شاهد"
+    }
+}

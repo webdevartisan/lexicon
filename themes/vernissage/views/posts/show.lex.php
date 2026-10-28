@@ -28,7 +28,7 @@ $title = e($post['title'] ?? 'Untitled');
         <a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
       <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= $minutes ?> Min</span>
+      <span><?= e($t('vernissage::minutes', ['count' => $minutes])) ?></span>
     </div>
 
     <h1 class="work-hero-title reveal"><?= $title ?></h1>
@@ -40,7 +40,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="work-hero-byline">
       <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)))) : '' ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        Back to <?= e($blog['blog_name'] ?? 'the exhibition') ?>
+        <?= e($t('vernissage::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -51,7 +51,7 @@ $title = e($post['title'] ?? 'Untitled');
 <div class="container">
   <figure class="work-figure" id="work-figure">
     <span class="frame work-cover"><span class="frame-img"><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /></span></span>
-    <figcaption class="work-figcap">Fig. I &mdash; <?= $title ?></figcaption>
+    <figcaption class="work-figcap"><?= translate_html('vernissage::post.fig', ['title' => $title]) ?></figcaption>
   </figure>
 </div>
 <?php } ?>
@@ -80,7 +80,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="work-nav-item prev">
-        <span class="work-nav-label">&larr; Previous work</span>
+        <span class="work-nav-label"><?= e($t('vernissage::post.previous')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -89,7 +89,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="work-nav-item next">
-        <span class="work-nav-label">Next work &rarr;</span>
+        <span class="work-nav-label"><?= e($t('vernissage::post.next')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -104,10 +104,10 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'heading' => 'themes.vernissage.comments.heading',
-          'form_label' => 'themes.vernissage.comments.formLabel',
-          'form_button' => 'themes.vernissage.comments.formButton',
-          'closed' => 'themes.vernissage.comments.closed',
+          'heading' => 'vernissage::comments.heading',
+          'form_label' => 'vernissage::comments.formLabel',
+          'form_button' => 'vernissage::comments.formButton',
+          'closed' => 'vernissage::comments.closed',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>
@@ -117,7 +117,7 @@ $title = e($post['title'] ?? 'Untitled');
 <?php if (!empty($related) && is_array($related)) { ?>
 <section class="work-related" data-insights-related>
   <div class="container">
-    <h2 class="reveal">Also on view</h2>
+    <h2 class="reveal"><?= e($t('vernissage::post.related')) ?></h2>
     <div class="related-grid">
       <?php foreach ($related as $rel) {
           $rTitle = e($rel['title'] ?? 'Work');
@@ -136,7 +136,7 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          View
+          <?= e($t('vernissage::post.read')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

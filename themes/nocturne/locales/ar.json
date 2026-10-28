@@ -1,0 +1,75 @@
+{
+    "nav": {
+        "home": "الرئيسية",
+        "archive": "الأرشيف",
+        "subscribe": "اشترك",
+        "primary": "التنقل الرئيسي",
+        "openMenu": "فتح القائمة",
+        "homeOf": "{blog}، الصفحة الرئيسية",
+        "filterByCategory": "تصفية التدوينات حسب التصنيف"
+    },
+    "minutes": "{count} دقائق",
+    "by": "بقلم {author}",
+    "emailLabel": "عنوان بريدك",
+    "footer": {
+        "note": "كُتبت بعد منتصف الليل.{br}اقرأها متى شئت."
+    },
+    "home": {
+        "edition": "الطبعة الليلية",
+        "tagline": "كُتبت بعد منتصف الليل",
+        "postCount": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "readingTotal": "{count} دقائق من القراءة",
+        "subtitle": "مقالات وملاحظات للساعات الصغيرة.",
+        "scrollCue": "انتقل إلى قصة غلاف الليلة",
+        "tonight": "قراءة الليلة",
+        "fallbackCategory": "مقال",
+        "coverStory": "قصة غلاف الليلة",
+        "readPost": "اقرأ التدوينة",
+        "indexTitle": "الفهرس",
+        "indexCount": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "all": "الكل",
+        "showing": "عرض {shown} من {total} · {blog}",
+        "openAll": "افتح الأرشيف كاملًا",
+        "inCategory": "{count} تدوينات في {name}",
+        "viewAll": "عرض الكل",
+        "nightcap": "كأس آخر الليل",
+        "nightcapMeta": "واحدة للساعات الهادئة · {count} دقائق",
+        "nightcapSource": "من {title} بقلم {author}",
+        "pour": "اقرأها كاملة",
+        "desk": "من مكتب {owner}",
+        "deskDefault": "{blog}، غرفة دافئة لقرّاء يصلون متأخرين.",
+        "newsEyebrow": "رسالة الليل",
+        "newsHeading": "تدوينات جديدة من {blog}، تصلك وأنت نائم.",
+        "newsText": "بلا تتبّع، بلا خوارزميات، وإلغاء اشتراك سهل.",
+        "subscribe": "اشترك",
+        "newsFine": "مجانًا. ألغِ الاشتراك متى شئت"
+    },
+    "archive": {
+        "pageTitle": "الأرشيف · {blog}",
+        "kicker": "السجل · {blog}",
+        "heading": "كل ليلة، محفوظة.",
+        "dek": "كل تدوينات {blog}، الأحدث أولًا.",
+        "back": "العودة إلى الصفحة الأولى",
+        "fallbackCategory": "تدوينة",
+        "byline": "{author} · {count} دقائق",
+        "empty": "لا توجد تدوينات بعد. لكن المصباح مضاء.",
+        "showing": "عرض {from} إلى {to} من {total}",
+        "pagination": "التنقل بين الصفحات",
+        "prev": "→ السابق",
+        "next": "التالي ←"
+    },
+    "post": {
+        "minRead": "{count} دقائق قراءة",
+        "backTo": "العودة إلى {blog}",
+        "previous": "→ السابقة",
+        "next": "التالية ←",
+        "related": "للساعات الصغيرة",
+        "read": "اقرأ"
+    }
+}

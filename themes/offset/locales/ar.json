@@ -1,0 +1,79 @@
+{
+    "comments": {
+        "heading": {
+            "one": "رسائل · {count} تعليق",
+            "other": "رسائل · {count} تعليقات"
+        },
+        "formLabel": "اكتب شيئًا يستحق الطباعة…",
+        "formButton": "إرسال"
+    },
+    "nav": {
+        "home": "الرئيسية",
+        "archive": "الأرشيف",
+        "subscribe": "اشترك",
+        "primary": "التنقل الرئيسي",
+        "openMenu": "فتح القائمة",
+        "homeOf": "{blog}، الصفحة الرئيسية",
+        "filterByCategory": "تصفية التدوينات حسب التصنيف"
+    },
+    "minutes": "{count} دقائق",
+    "by": "بقلم {author}",
+    "emailLabel": "عنوان بريدك",
+    "home": {
+        "volume": "{blog} · المجلد {year}",
+        "edition": {
+            "one": "إصدار من {count} تدوينة",
+            "other": "إصدار من {count} تدوينات"
+        },
+        "readingTotal": "{count} دقائق من القراءة",
+        "tagline": "طازج من المطبعة",
+        "subtitle": "مقالات ورسائل، مُدقَّقة ومحبَّرة ومنشورة.",
+        "readLead": "اقرأ القصة الرئيسية",
+        "fallbackCategory": "مقال",
+        "leadStory": "القصة الرئيسية · {category}",
+        "readPost": "اقرأ التدوينة",
+        "indexTitle": "الفهرس.",
+        "indexCount": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "all": "الكل",
+        "showing": "عرض {shown} من {total} · {blog}",
+        "openAll": "افتح الكتالوج كاملًا",
+        "inCategory": "{count} تدوينات في {name}",
+        "viewAll": "عرض الكل",
+        "est": "منذ",
+        "colophonEyebrow": "بيانات الطبع · عن هذه المدونة",
+        "colophonDefault": "{blog}، مكتوبة ومُدقَّقة ومنشورة في إصدارات صغيرة.",
+        "colophonFine": "تُصفّ {blog} بخطَّي Archivo وSchibsted Grotesk، وتُطبع على ورق خزفي ‎#EEF0F1 بلوح واحد من الكوبالت، وتُنشر على {platform}.",
+        "newsEyebrow": "بروفة الطباعة",
+        "newsHeading": "كل تدوينة جديدة، ساخنة من المطبعة.",
+        "newsText": "رسالة واحدة لكل تدوينة. بلا تتبّع، وإلغاء اشتراك سهل.",
+        "subscribe": "اشترك",
+        "newsFine": "مجانًا. ألغِ الاشتراك متى شئت"
+    },
+    "archive": {
+        "pageTitle": "الأرشيف · {blog}",
+        "kicker": "الكتالوج · {blog}",
+        "heading": "كل ما طُبع.",
+        "dek": "كل تدوينات {blog}، مفهرسة من الأحدث إلى الأقدم.",
+        "count": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "back": "→ العودة إلى الصفحة الأولى",
+        "fallbackCategory": "تدوينة",
+        "empty": "لم يُطبع شيء بعد.",
+        "sheet": "الورقة {page} / {pages} · عرض {from} إلى {to} من {total}",
+        "pagination": "التنقل بين الصفحات",
+        "prev": "→ السابق",
+        "next": "التالي ←"
+    },
+    "post": {
+        "backTo": "العودة إلى {blog}",
+        "previous": "→ السابقة",
+        "next": "التالية ←",
+        "related": "من المطبعة أيضًا",
+        "read": "اقرأ"
+    }
+}

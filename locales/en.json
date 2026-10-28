@@ -2434,40 +2434,6 @@
         "cancel": "Cancel",
         "confirm": "Confirm"
     },
-    "themes": {
-        "closest": {
-            "comments": {
-                "heading": {
-                    "one": "Trail register — {count} entry",
-                    "other": "Trail register — {count} entries"
-                },
-                "formLabel": "Add an entry to the register…",
-                "formButton": "Leave an entry",
-                "closed": "The register is closed for this waypoint."
-            }
-        },
-        "offset": {
-            "comments": {
-                "heading": {
-                    "one": "Letters — {count} Comment",
-                    "other": "Letters — {count} Comments"
-                },
-                "formLabel": "Write something worth printing…",
-                "formButton": "Send"
-            }
-        },
-        "vernissage": {
-            "comments": {
-                "heading": {
-                    "one": "The Visitors’ Book — {count} Entry",
-                    "other": "The Visitors’ Book — {count} Entries"
-                },
-                "formLabel": "Leave a note for the gallery…",
-                "formButton": "Sign the book",
-                "closed": "The visitors’ book is closed for this work."
-            }
-        }
-    },
     "time": {
         "now": "just now",
         "soon": "in under a minute",
@@ -2506,6 +2472,43 @@
             "week": "{count}w",
             "month": "{count}mo",
             "year": "{count}y"
+        }
+    },
+    "blogPage": {
+        "actions": {
+            "agree": "Agree with this post",
+            "disagree": "Disagree with this post",
+            "bookmark": "Bookmark this post",
+            "save": "Save",
+            "saved": "Saved",
+            "shareLabel": "Share this post",
+            "share": "Share",
+            "copyLink": "Copy link",
+            "copied": "Copied!",
+            "shareOn": "Share on {network}",
+            "more": "More actions on this post",
+            "report": "Report"
+        },
+        "search": {
+            "label": "Search this blog",
+            "placeholder": "Search posts",
+            "button": "Search"
+        },
+        "footer": {
+            "hostedBy": "Published & hosted by {platform}",
+            "social": "Social profiles"
+        },
+        "results": {
+            "searchKicker": "Search",
+            "searchTitle": "Search",
+            "throttled": "Too many searches just now. Try again in a minute.",
+            "empty": "Type a word to search every post.",
+            "none": "Nothing matched {term}.",
+            "matching": "Posts matching {term}.",
+            "categoryKicker": "Category: {name}",
+            "categoryDek": "Posts filed under {name}.",
+            "tagKicker": "Tagged: {name}",
+            "tagDek": "Posts tagged {name}."
         }
     }
 }

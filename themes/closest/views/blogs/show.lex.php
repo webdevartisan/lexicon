@@ -15,7 +15,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   $hasMore = $postCount > 1 + count($gridPosts);
 
   // Total trail: reading minutes across the landing's posts, and the distance
-  // they'd cover at walking pace (5 km/h) — the atlas measures reading in km.
+  // they'd cover at walking pace (5 km/h). The atlas measures reading in km.
   $totalMinutes = 0;
   foreach (($posts ?? []) as $p) {
       $totalMinutes += reading_time($p['content'] ?? '');
@@ -32,9 +32,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="trailhead" id="top">
   <div class="container">
     <div class="th-meta">
-      <span>Est. <?= e(!empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y')) ?> &middot; Field atlas</span>
-      <span><?= $postCount ?> Waypoint<?= $postCount === 1 ? '' : 's' ?></span>
-      <span><?= $totalMinutes ?> Min &asymp; <?= $totalKm ?> km of trail</span>
+      <span><?= e($t('closest::home.est', ['year' => !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y')])) ?></span>
+      <span><?= e(translate_count('closest::home.waypoints', $postCount)) ?></span>
+      <span><?= e($t('closest::home.trail', ['minutes' => $totalMinutes, 'km' => $totalKm])) ?></span>
     </div>
 
     <h1 class="th-name" data-split><?= $blogTitle ?></h1>
@@ -47,13 +47,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       </svg>
       <a class="yah" id="yah" href="#nearest" tabindex="-1">
         <span class="yah-pin"><span></span></span>
-        <span class="yah-label">You are here</span>
+        <span class="yah-label"><?= e($t('closest::home.youAreHere')) ?></span>
       </a>
     </div>
 
     <div class="th-bottom">
       <p class="th-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'Notes from the field, plotted one waypoint at a time.' ?>
+        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('closest::home.subtitle')) ?>
       </p>
       <?php if (!empty($settings['tagline'])) { ?>
         <span class="th-blaze reveal"><?= e($settings['tagline']) ?></span>
@@ -70,7 +70,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e($fmtDate($featuredPost['published_at'] ?? ''));
-    $fCat = e($featuredPost['category'] ?? 'Field note');
+    $fCat = e($featuredPost['category'] ?? $t('closest::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="nearest" id="nearest">
@@ -78,13 +78,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     <div class="nearest-grid">
       <a href="<?= $fUrl ?>" class="inset nearest-inset reveal" aria-hidden="true" tabindex="-1">
         <span class="inset-img"><img src="<?= $fImg ?>" alt="" loading="eager" /></span>
-        <span class="inset-cap">Inset W-01 &middot; <?= $fCat ?></span>
+        <span class="inset-cap"><?= translate_html('closest::home.inset', ['category' => $fCat]) ?></span>
       </a>
 
       <div class="nearest-body">
         <div class="nearest-tag reveal">
-          <span class="wp-chip wp-chip--blaze">W-01 &middot; Nearest</span>
-          <span class="eyebrow">0.0 km from here</span>
+          <span class="wp-chip wp-chip--blaze"><?= e($t('closest::home.nearest')) ?></span>
+          <span class="eyebrow"><?= e($t('closest::home.distance')) ?></span>
         </div>
 
         <h2 class="nearest-title reveal"><a href="<?= $fUrl ?>"><?= $fTitle ?></a></h2>
@@ -94,13 +94,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         <?php } ?>
 
         <div class="nearest-byline reveal">
-          <?php if ($fAuthor) { ?><span>By <?= $fAuthor ?></span><?php } ?>
+          <?php if ($fAuthor) { ?><span><?= translate_html('closest::by', ['author' => $fAuthor]) ?></span><?php } ?>
           <?php if ($fDate) { ?><span><?= $fDate ?></span><?php } ?>
-          <span><?= $fMinutes ?> Min</span>
+          <span><?= e($t('closest::minutes', ['count' => $fMinutes])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          Walk to the nearest post
+          <?= e($t('closest::home.walkNearest')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -115,13 +115,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="route" id="route">
   <div class="container">
     <div class="route-head">
-      <h2 class="route-title reveal">The route.</h2>
-      <span class="route-count reveal" id="filter-count"><?= count($gridPosts) ?> waypoint<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="route-title reveal"><?= e($t('closest::home.routeTitle')) ?></h2>
+      <span class="route-count reveal" id="filter-count"><?= e(translate_count('closest::home.routeCount', count($gridPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('closest::nav.filterByCategory')) ?>"
+        data-text="<?= e(json_encode(['openAll' => $t('closest::home.openAll'), 'inCategory' => $t('closest::home.inCategory'), 'viewAll' => $t('closest::home.viewAll'), 'count' => ['one' => $t('closest::home.routeCount.one'), 'other' => $t('closest::home.routeCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">Full route</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('closest::home.all')) ?></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -139,9 +140,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="route-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="route-count" id="index-footer-count">Waypoints <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> plotted &mdash; <?= $blogTitle ?></span>
+      <span class="route-count" id="index-footer-count"><?= translate_html('closest::home.plotted', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Follow the full route</span>
+        <span id="index-footer-label"><?= e($t('closest::home.openAll')) ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -153,16 +154,16 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="legend-grid">
       <div class="legend-side">
-        <h2 class="legend-title reveal">The<br />legend.</h2>
+        <h2 class="legend-title reveal"><?= translate_html('closest::home.legendTitle', ['br' => '<br />']) ?></h2>
         <?php $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'); ?>
-        <span class="legend-est reveal">Surveyed since <?= e($estLabel) ?></span>
+        <span class="legend-est reveal"><?= e($t('closest::home.surveyedSince', ['year' => $estLabel])) ?></span>
       </div>
 
       <div class="legend-body">
         <ul class="legend-key reveal" aria-hidden="true">
-          <li><span class="key-sym key-sym--dot"></span> One published waypoint</li>
-          <li><span class="key-sym key-sym--blaze"></span> A blaze &mdash; marks the active leg</li>
-          <li><span class="key-sym key-sym--dash"></span> Trail ahead, not yet written</li>
+          <li><span class="key-sym key-sym--dot"></span> <?= e($t('closest::home.keyDot')) ?></li>
+          <li><span class="key-sym key-sym--blaze"></span> <?= e($t('closest::home.keyBlaze')) ?></li>
+          <li><span class="key-sym key-sym--dash"></span> <?= e($t('closest::home.keyDash')) ?></li>
         </ul>
 
         <p class="legend-statement reveal">
@@ -171,14 +172,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
           <?php } elseif (!empty($settings['subtitle'])) { ?>
             <?= e($settings['subtitle']) ?>
           <?php } else { ?>
-            <?= $blogTitle ?> &mdash; surveyed on foot, plotted in words, published waypoint by waypoint.
+            <?= translate_html('closest::home.aboutDefault', ['blog' => $blogTitle]) ?>
           <?php } ?>
         </p>
-        <span class="legend-sign reveal">&mdash; <?= $ownerName ?>, surveyor</span>
+        <span class="legend-sign reveal"><?= translate_html('closest::home.sign', ['owner' => $ownerName]) ?></span>
 
         <p class="legend-fine reveal">
-          <?= $blogTitle ?> is set in Besley &amp; Barlow, drawn on chart paper #F3F5EE
-          with one blaze of trail orange, and published on <?= e(env('APP_NAME', 'the web')) ?>.
+          <?= translate_html('closest::home.fine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
         </p>
       </div>
     </div>
@@ -189,24 +189,24 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="dispatch-slab">
       <div class="dispatch-copy">
-        <span class="eyebrow reveal">Field dispatches</span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'Every new waypoint, sent from the trail.' ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One email per post. No tracking, easy unsubscribe.' ?></p>
+        <span class="eyebrow reveal"><?= e($t('closest::home.newsEyebrow')) ?></span>
+        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('closest::home.newsHeading')) ?></h2>
+        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('closest::home.newsText')) ?></p>
       </div>
 
       <form class="dispatch-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub">Your address</label>
+        <label for="email-sub"><?= e($t('closest::emailLabel')) ?></label>
         <div class="dispatch-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@basecamp.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            Subscribe
+            <?= e($t('closest::home.subscribe')) ?>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="dispatch-fine">Free &mdash; unsubscribe at any waypoint</span>
+        <span class="dispatch-fine"><?= e($t('closest::home.newsFine')) ?></span>
       </form>
     </div>
   </div>

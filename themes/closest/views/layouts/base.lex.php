@@ -23,7 +23,7 @@
   ?>
   <header class="masthead" role="banner">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($user['blog_name'] ?? 'Closest') ?>, home">
+      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('closest::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Closest'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Closest') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -32,17 +32,17 @@
         <?php } ?>
       </a>
 
-      <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="<?= $homeUrl ?>">Trailhead</a>
-        <a href="<?= $archiveUrl ?>">Route log</a>
-        <a href="<?= $subscribeUrl ?>">Dispatches</a>
+      <nav class="nav" id="primaryNav" aria-label="<?= e($t('closest::nav.primary')) ?>">
+        <a href="<?= $homeUrl ?>"><?= e($t('closest::nav.home')) ?></a>
+        <a href="<?= $archiveUrl ?>"><?= e($t('closest::nav.archive')) ?></a>
+        <a href="<?= $subscribeUrl ?>"><?= e($t('closest::nav.subscribe')) ?></a>
       </nav>
 
       <div class="masthead-actions">
         <span data-auth-nav="theme" style="display:contents">
           {% include "partials/_auth_nav.lex.php" %}
         </span>
-        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
+        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('closest::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -66,7 +66,7 @@
         <span class="scale-bar">
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </span>
-        <span class="scale-cap">0&ensp;&mdash;&ensp;5 km &middot; sheet <?= date('Y') ?> &middot; grid <?= $gridRef ?></span>
+        <span class="scale-cap"><?= translate_html('closest::footer.scale', ['year' => date('Y'), 'grid' => e($gridRef)]) ?></span>
         <svg class="declination" viewBox="0 0 24 40" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 36V8" /><path d="M8 12l4-6 4 6" /><path d="M12 3l1.2 2.4-1.2-.7-1.2.7z" fill="currentColor" stroke="none" /></svg>
       </div>
 
@@ -78,7 +78,7 @@
 
       <div class="foot-bottom">
         <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
+        <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

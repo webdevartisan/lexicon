@@ -40,9 +40,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="hero" id="top">
   <div class="container">
     <div class="hero-rail">
-      <span>The Night Edition</span>
-      <span><?= !empty($settings['tagline']) ? e($settings['tagline']) : 'Written after hours' ?></span>
-      <span><?= $postCount ?> Post<?= $postCount === 1 ? '' : 's' ?> &middot; <?= $totalMinutes ?> Min of Reading</span>
+      <span><?= e($t('nocturne::home.edition')) ?></span>
+      <span><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('nocturne::home.tagline')) ?></span>
+      <span><?= e(translate_count('nocturne::home.postCount', $postCount)) ?> &middot; <?= e($t('nocturne::home.readingTotal', ['count' => $totalMinutes])) ?></span>
     </div>
 
     <h1 class="hero-name">
@@ -54,11 +54,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <div class="hero-foot">
       <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'Essays and notes for the small hours.' ?>
+        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('nocturne::home.subtitle')) ?>
       </p>
       <?php if ($featuredPost) { ?>
-      <a href="#coverstory" class="hero-cue reveal" aria-label="Scroll to tonight's cover story">
-        <span>Tonight's reading</span>
+      <a href="#coverstory" class="hero-cue reveal" aria-label="<?= e($t('nocturne::home.scrollCue')) ?>">
+        <span><?= e($t('nocturne::home.tonight')) ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
       </a>
       <?php } ?>
@@ -75,14 +75,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $fCat = e($featuredPost['category'] ?? 'Article');
+    $fCat = e($featuredPost['category'] ?? $t('nocturne::home.fallbackCategory'));
     $fMin = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="cover" id="coverstory">
   <div class="container">
     <div class="cover-grid">
       <div class="cover-body">
-        <span class="eyebrow reveal">Tonight's cover story</span>
+        <span class="eyebrow reveal"><?= e($t('nocturne::home.coverStory')) ?></span>
         <h2 class="cover-title reveal"><a href="<?= $fUrl ?>"><?= $fTitle ?></a></h2>
 
         <?php if ($fExc) { ?>
@@ -92,16 +92,16 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         <div class="cover-meta reveal">
           <span><?= $fCat ?></span>
           <?php if ($fDate) { ?><span><?= $fDate ?></span><?php } ?>
-          <span><?= $fMin ?> Min</span>
+          <span><?= e($t('nocturne::minutes', ['count' => $fMin])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          Read the post
+          <?= e($t('nocturne::home.readPost')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
 
         <?php if ($fAuthor) { ?>
-        <div class="cover-byline reveal">By <?= $fAuthor ?></div>
+        <div class="cover-byline reveal"><?= translate_html('nocturne::by', ['author' => $fAuthor]) ?></div>
         <?php } ?>
       </div>
 
@@ -119,13 +119,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="index" id="index">
   <div class="container">
     <div class="index-head">
-      <h2 class="index-title reveal">The Index</h2>
-      <span class="index-count reveal" id="filter-count"><?= count($indexPosts) ?> post<?= count($indexPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="index-title reveal"><?= e($t('nocturne::home.indexTitle')) ?></h2>
+      <span class="index-count reveal" id="filter-count"><?= e(translate_count('nocturne::home.indexCount', count($indexPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('nocturne::nav.filterByCategory')) ?>"
+        data-text="<?= e(json_encode(['openAll' => $t('nocturne::home.openAll'), 'inCategory' => $t('nocturne::home.inCategory'), 'viewAll' => $t('nocturne::home.viewAll'), 'count' => ['one' => $t('nocturne::home.indexCount.one'), 'other' => $t('nocturne::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('nocturne::home.all')) ?></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -142,9 +143,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="index-foot reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="index-count" id="index-footer-count">Showing <?= sprintf('%02d', 1 + count($indexPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
+      <span class="index-count" id="index-footer-count"><?= translate_html('nocturne::home.showing', ['shown' => sprintf('%02d', 1 + count($indexPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Open the full archive</span>
+        <span id="index-footer-label"><?= e($t('nocturne::home.openAll')) ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -172,8 +173,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="nightcap">
   <div class="container">
     <div class="nightcap-head reveal">
-      <span class="eyebrow">The Nightcap</span>
-      <span class="eyebrow">One for the slow hours &mdash; <?= $ncMinutes ?> Min</span>
+      <span class="eyebrow"><?= e($t('nocturne::home.nightcap')) ?></span>
+      <span class="eyebrow"><?= e($t('nocturne::home.nightcapMeta', ['count' => $ncMinutes])) ?></span>
     </div>
 
     <blockquote class="nightcap-quote reveal">
@@ -181,9 +182,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     </blockquote>
 
     <div class="nightcap-foot reveal">
-      <span class="nightcap-source">from <a href="<?= $ncUrl ?>"><em><?= $ncTitle ?></em></a> by <?= $ncAuthor ?></span>
+      <span class="nightcap-source"><?= translate_html('nocturne::home.nightcapSource', ['title' => '<a href="'.$ncUrl.'"><em>'.$ncTitle.'</em></a>', 'author' => $ncAuthor]) ?></span>
       <a href="<?= $ncUrl ?>" class="link-arrow">
-        Pour the full read
+        <?= e($t('nocturne::home.pour')) ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -200,17 +201,17 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
   ?>
       <p class="desk-mark<?= $aboutLabelClass ?> reveal"><?= e($aboutLabel) ?></p>
       <div class="desk-body">
-        <span class="eyebrow reveal">From the desk of <?= $ownerName ?></span>
+        <span class="eyebrow reveal"><?= translate_html('nocturne::home.desk', ['owner' => $ownerName]) ?></span>
         <p class="desk-statement reveal">
           <?php if (!empty($settings['about_text'])) { ?>
             <?= e($settings['about_text']) ?>
           <?php } elseif (!empty($settings['subtitle'])) { ?>
             <?= e($settings['subtitle']) ?>
           <?php } else { ?>
-            <?= $blogTitle ?>, a room kept warm for readers who arrive late.
+            <?= translate_html('nocturne::home.deskDefault', ['blog' => $blogTitle]) ?>
           <?php } ?>
         </p>
-        <span class="desk-sign reveal">&mdash; <?= $ownerName ?></span>
+        <span class="desk-sign reveal"><?= $ownerName ?></span>
       </div>
     </div>
   </div>
@@ -220,24 +221,24 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
   <div class="container">
     <div class="nightletter-grid">
       <div class="nightletter-copy">
-        <span class="eyebrow reveal">The Night Letter</span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'New posts from '.$blogTitle.', delivered while you sleep.' ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'No tracking, no algorithms, easy unsubscribe.' ?></p>
+        <span class="eyebrow reveal"><?= e($t('nocturne::home.newsEyebrow')) ?></span>
+        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : translate_html('nocturne::home.newsHeading', ['blog' => $blogTitle]) ?></h2>
+        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('nocturne::home.newsText')) ?></p>
       </div>
 
       <form class="nightletter-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub">Your address</label>
+        <label for="email-sub"><?= e($t('nocturne::emailLabel')) ?></label>
         <div class="nightletter-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@latehours.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            Subscribe
+            <?= e($t('nocturne::home.subscribe')) ?>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="nightletter-fine">Free &mdash; unsubscribe any time</span>
+        <span class="nightletter-fine"><?= e($t('nocturne::home.newsFine')) ?></span>
       </form>
     </div>
   </div>

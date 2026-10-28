@@ -27,15 +27,15 @@ $title = e($post['title'] ?? 'Untitled');
         <a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
       <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= $minutes ?> Min read</span>
+      <span><?= e($t('nocturne::post.minRead', ['count' => $minutes])) ?></span>
     </div>
 
     <h1 class="post-hero-title reveal"><?= $title ?></h1>
 
     <div class="post-hero-byline">
-      <?php if ($author) { ?><span>By <?= $author ?></span><?php } ?>
+      <?php if ($author) { ?><span><?= translate_html('nocturne::by', ['author' => $author]) ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        Back to <?= e($blog['blog_name'] ?? 'Blog') ?>
+        <?= e($t('nocturne::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -72,7 +72,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="post-nav-item prev">
-        <span class="post-nav-label">&larr; Previous</span>
+        <span class="post-nav-label"><?= e($t('nocturne::post.previous')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -81,7 +81,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="post-nav-item next">
-        <span class="post-nav-label">Next &rarr;</span>
+        <span class="post-nav-label"><?= e($t('nocturne::post.next')) ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -103,7 +103,7 @@ $title = e($post['title'] ?? 'Untitled');
 <?php if (!empty($related) && is_array($related)) { ?>
 <section class="post-related" data-insights-related>
   <div class="container">
-    <h2 class="reveal">For the small hours</h2>
+    <h2 class="reveal"><?= e($t('nocturne::post.related')) ?></h2>
     <div class="related-grid">
       <?php foreach ($related as $rel) {
           $rTitle = e($rel['title'] ?? 'Post');
@@ -120,11 +120,11 @@ $title = e($post['title'] ?? 'Untitled');
           <img src="<?= $rImg ?>" alt="<?= $rTitle ?>" loading="lazy" />
         </a>
         <?php } ?>
-        <span class="related-min"><?= $rMin ?> Min</span>
+        <span class="related-min"><?= e($t('nocturne::minutes', ['count' => $rMin])) ?></span>
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          Read
+          <?= e($t('nocturne::post.read')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

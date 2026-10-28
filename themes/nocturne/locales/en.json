@@ -1,0 +1,75 @@
+{
+    "nav": {
+        "home": "Home",
+        "archive": "Archive",
+        "subscribe": "Subscribe",
+        "primary": "Primary",
+        "openMenu": "Open menu",
+        "homeOf": "{blog}, home",
+        "filterByCategory": "Filter posts by category"
+    },
+    "minutes": "{count} Min",
+    "by": "By {author}",
+    "emailLabel": "Your address",
+    "footer": {
+        "note": "Written after hours.{br}Read whenever you like."
+    },
+    "home": {
+        "edition": "The Night Edition",
+        "tagline": "Written after hours",
+        "postCount": {
+            "one": "{count} Post",
+            "other": "{count} Posts"
+        },
+        "readingTotal": "{count} Min of Reading",
+        "subtitle": "Essays and notes for the small hours.",
+        "scrollCue": "Scroll to tonight's cover story",
+        "tonight": "Tonight's reading",
+        "fallbackCategory": "Article",
+        "coverStory": "Tonight's cover story",
+        "readPost": "Read the post",
+        "indexTitle": "The Index",
+        "indexCount": {
+            "one": "{count} post",
+            "other": "{count} posts"
+        },
+        "all": "All",
+        "showing": "Showing {shown} of {total} · {blog}",
+        "openAll": "Open the full archive",
+        "inCategory": "{count} posts in {name}",
+        "viewAll": "View all",
+        "nightcap": "The Nightcap",
+        "nightcapMeta": "One for the slow hours · {count} Min",
+        "nightcapSource": "from {title} by {author}",
+        "pour": "Pour the full read",
+        "desk": "From the desk of {owner}",
+        "deskDefault": "{blog}, a room kept warm for readers who arrive late.",
+        "newsEyebrow": "The Night Letter",
+        "newsHeading": "New posts from {blog}, delivered while you sleep.",
+        "newsText": "No tracking, no algorithms, easy unsubscribe.",
+        "subscribe": "Subscribe",
+        "newsFine": "Free. Unsubscribe any time"
+    },
+    "archive": {
+        "pageTitle": "Archive · {blog}",
+        "kicker": "The Ledger · {blog}",
+        "heading": "Every Night, Filed.",
+        "dek": "Every post from {blog}, newest first.",
+        "back": "Back to the front page",
+        "fallbackCategory": "Post",
+        "byline": "{author} · {count} Min",
+        "empty": "No posts yet. The lamp is on, though.",
+        "showing": "Showing {from} to {to} of {total}",
+        "pagination": "Pagination",
+        "prev": "← Prev",
+        "next": "Next →"
+    },
+    "post": {
+        "minRead": "{count} Min read",
+        "backTo": "Back to {blog}",
+        "previous": "← Previous",
+        "next": "Next →",
+        "related": "For the small hours",
+        "read": "Read"
+    }
+}

@@ -1,0 +1,69 @@
+{
+    "nav": {
+        "home": "Home",
+        "archive": "Archive",
+        "subscribe": "Subscribe",
+        "primary": "Primary",
+        "openMenu": "Open menu",
+        "homeOf": "{blog}, home",
+        "filterByCategory": "Filter posts by category"
+    },
+    "minutes": "{count} Min",
+    "by": "By {author}",
+    "emailLabel": "Your address",
+    "home": {
+        "year": "{blog} · {year}",
+        "tagline": "A Journal of Slow Reading",
+        "postCount": {
+            "one": "{count} Post",
+            "other": "{count} Posts"
+        },
+        "minRead": "{count} Min Read",
+        "subtitle": "A collection of essays, ideas, and slow reading.",
+        "begin": "Begin reading",
+        "fallbackCategory": "Article",
+        "readPost": "Read the post",
+        "indexTitle": "The Index",
+        "indexCount": {
+            "one": "{count} post",
+            "other": "{count} posts"
+        },
+        "all": "All",
+        "showing": "Showing {shown} of {total} · {blog}",
+        "openAll": "Open the full archive",
+        "inCategory": "{count} posts in {name}",
+        "viewAll": "View all",
+        "longRead": "The Long Read",
+        "featured": "Featured · {count} Min",
+        "postMinutes": "Post · {count} Min",
+        "continue": "{title}. Continue reading the full article in its slow, deliberate form.",
+        "readFull": "Read the full post →",
+        "aboutEyebrow": "About this blog",
+        "aboutDefault": "{blog}, a place for slow reading.",
+        "newsEyebrow": "Stay in touch",
+        "newsHeading": "Read {blog} from your own quiet rooms.",
+        "newsText": "No tracking, no algorithms, easy unsubscribe.",
+        "subscribe": "Subscribe",
+        "newsFine": "Free. Unsubscribe any time"
+    },
+    "archive": {
+        "pageTitle": "Archive · {blog}",
+        "kicker": "The Archive · {blog}",
+        "heading": "The Full Index.",
+        "dek": "Every post from {blog}, arranged in reverse chronological order.",
+        "back": "← Back to the front page",
+        "fallbackCategory": "Post",
+        "empty": "No posts yet.",
+        "showing": "Showing {from} to {to} of {total}",
+        "pagination": "Pagination",
+        "prev": "← Prev",
+        "next": "Next →"
+    },
+    "post": {
+        "backTo": "Back to {blog}",
+        "previous": "← Previous",
+        "next": "Next →",
+        "related": "More to read",
+        "read": "Read"
+    }
+}

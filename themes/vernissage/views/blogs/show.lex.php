@@ -40,14 +40,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <section class="gallery-hero" id="top">
   <div class="container">
     <div class="hero-meta-top">
-      <span><?= $blogTitle ?> &mdash; Season <?= date('Y') ?></span>
-      <span>Collection of <?= $postCount ?> Work<?= $postCount === 1 ? '' : 's' ?></span>
-      <span><?= $totalMinutes ?> Min of Viewing</span>
+      <span><?= translate_html('vernissage::home.season', ['blog' => $blogTitle, 'year' => date('Y')]) ?></span>
+      <span><?= e(translate_count('vernissage::home.collection', $postCount)) ?></span>
+      <span><?= e($t('vernissage::home.viewingTotal', ['count' => $totalMinutes])) ?></span>
     </div>
 
     <div class="hero-stage">
       <span class="hero-kicker reveal">
-        <?= !empty($settings['tagline']) ? e($settings['tagline']) : 'The exhibition is now open' ?>
+        <?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('vernissage::home.tagline')) ?>
       </span>
       <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
       <div class="ornament hero-ornament" aria-hidden="true">
@@ -57,12 +57,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
     <div class="hero-bottom">
       <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'A permanent collection of essays and dispatches, hung one work at a time.' ?>
+        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('vernissage::home.subtitle')) ?>
       </p>
       <?php if ($featuredPost) { ?>
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
-          View the centrepiece
+          <?= e($t('vernissage::home.viewCentrepiece')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -79,7 +79,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $fCat = e($featuredPost['category'] ?? 'Work');
+    $fCat = e($featuredPost['category'] ?? $t('vernissage::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="centrepiece" id="centrepiece">
@@ -91,7 +91,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
       <div class="centre-body">
         <div class="centre-tag reveal">
-          <span class="eyebrow">On view &mdash; <?= $fCat ?></span>
+          <span class="eyebrow"><?= translate_html('vernissage::home.onView', ['category' => $fCat]) ?></span>
           <?php if ($fDate) { ?><span class="eyebrow"><?= $fDate ?></span><?php } ?>
         </div>
 
@@ -103,11 +103,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
         <div class="centre-byline reveal">
           <?php if ($fAuthor) { ?><span><?= $fAuthor ?>, <?= date('Y') ?></span><?php } ?>
-          <span><?= $fMinutes ?> Min</span>
+          <span><?= e($t('vernissage::minutes', ['count' => $fMinutes])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          View the work
+          <?= e($t('vernissage::home.viewWork')) ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -122,13 +122,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <section class="collection" id="collection">
   <div class="container">
     <div class="collection-head">
-      <h2 class="collection-title reveal">The Collection.</h2>
-      <span class="collection-count reveal" id="filter-count"><?= count($gridPosts) ?> work<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="collection-title reveal"><?= e($t('vernissage::home.collectionTitle')) ?></h2>
+      <span class="collection-count reveal" id="filter-count"><?= e(translate_count('vernissage::home.workCount', count($gridPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter works by room">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('vernissage::home.filter')) ?>"
+        data-text="<?= e(json_encode(['openAll' => $t('vernissage::home.openAll'), 'inCategory' => $t('vernissage::home.inCategory'), 'viewAll' => $t('vernissage::home.viewAll'), 'count' => ['one' => $t('vernissage::home.workCount.one'), 'other' => $t('vernissage::home.workCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All rooms</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('vernissage::home.all')) ?></a></li>
       <?php foreach (($categories ?? []) as $ci => $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -143,9 +144,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="collection-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="collection-count" id="index-footer-count">Hanging <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
+      <span class="collection-count" id="index-footer-count"><?= translate_html('vernissage::home.hanging', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Open the catalogue raisonn&eacute;</span>
+        <span id="index-footer-label"><?= e($t('vernissage::home.openAll')) ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -162,24 +163,22 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
   $estLabelClass = mb_strlen($estLabel) > 6 ? ' curator-est--word' : '';
   ?>
-      <p class="curator-est<?= $estLabelClass ?> reveal">Est.<br /><?= e($estLabel) ?></p>
+      <p class="curator-est<?= $estLabelClass ?> reveal"><?= e($t('vernissage::home.est')) ?><br /><?= e($estLabel) ?></p>
       <div class="curator-body">
-        <span class="eyebrow reveal">Curator's note &mdash; About this blog</span>
+        <span class="eyebrow reveal"><?= e($t('vernissage::home.curatorEyebrow')) ?></span>
         <p class="curator-statement reveal">
           <?php if (!empty($settings['about_text'])) { ?>
             <?= e($settings['about_text']) ?>
           <?php } elseif (!empty($settings['subtitle'])) { ?>
             <?= e($settings['subtitle']) ?>
           <?php } else { ?>
-            <?= $blogTitle ?> &mdash; collected, hung, and kept on permanent view.
+            <?= translate_html('vernissage::home.curatorDefault', ['blog' => $blogTitle]) ?>
           <?php } ?>
         </p>
-        <span class="curator-sign reveal">&mdash; <?= $ownerName ?></span>
+        <span class="curator-sign reveal"><?= $ownerName ?></span>
 
         <p class="curator-fine reveal">
-          <?= $blogTitle ?> is set in Bodoni Moda &amp; Hanken Grotesk,
-          hung on plaster #F4F1E9 behind one wall of viridian,
-          and published on <?= e(env('APP_NAME', 'the web')) ?>.
+          <?= translate_html('vernissage::home.fine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
         </p>
       </div>
     </div>
@@ -190,23 +189,23 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
   <div class="container">
     <div class="invite-card reveal">
       <div class="invite-inner">
-        <span class="eyebrow">The private view</span>
-        <h2><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'You are cordially invited.' ?></h2>
-        <p><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One invitation per new work. No noise, and you may leave the list at any time.' ?></p>
+        <span class="eyebrow"><?= e($t('vernissage::home.newsEyebrow')) ?></span>
+        <h2><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('vernissage::home.newsHeading')) ?></h2>
+        <p><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('vernissage::home.newsText')) ?></p>
 
         <form class="invite-form" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
           <?= csrf_field_lazy() ?>
-          <label for="email-sub">Your address</label>
+          <label for="email-sub"><?= e($t('vernissage::emailLabel')) ?></label>
           <div class="invite-input">
             <input id="email-sub" name="email" type="email" placeholder="guest@private-view.gallery"
               value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
               autocomplete="email" maxlength="255" required />
             <button type="submit">
-              RSVP
+              <?= e($t('vernissage::home.subscribe')) ?>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </button>
           </div>
-          <span class="invite-fine">Free &mdash; unsubscribe any time</span>
+          <span class="invite-fine"><?= e($t('vernissage::home.newsFine')) ?></span>
         </form>
       </div>
     </div>

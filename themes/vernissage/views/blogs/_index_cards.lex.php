@@ -10,7 +10,7 @@ foreach (($cards ?? []) as $i => $post) {
     $img = preg_match($validImg, $cover) ? $cover : $asset('img/cover-placeholder.svg');
     $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
     $title = e($post['title'] ?? 'Untitled');
-    $cat = trim((string) ($post['category'] ?? 'Work'));
+    $cat = trim((string) ($post['category'] ?? $t('vernissage::home.fallbackCategory')));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
@@ -25,13 +25,13 @@ foreach (($cards ?? []) as $i => $post) {
     </a>
 
     <div class="work-plaque">
-      <span class="plaque"><span class="plaque-no">Cat. <?= sprintf('%02d', $i + 1) ?></span> &mdash; <?= e($cat) ?></span>
+      <span class="plaque"><span class="plaque-no"><?= e($t('vernissage::home.catNo', ['number' => sprintf('%02d', $i + 1)])) ?></span> &middot; <?= e($cat) ?></span>
       <h3 class="work-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
       <p class="work-attrib"><?= $author ?>, <?= e($year) ?></p>
 
       <div class="work-meta">
         <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-        <span><?= $minutes ?> Min</span>
+        <span><?= e($t('vernissage::minutes', ['count' => $minutes])) ?></span>
         <?php if (!empty($tags)) { ?>
           <?php foreach (array_slice($tags, 0, 2) as $cardTag) {
               $tUrl = lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) ($cardTag['slug'] ?? '')));

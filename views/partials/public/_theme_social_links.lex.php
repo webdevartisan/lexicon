@@ -20,7 +20,7 @@
   ];
   ?>
       <?php if (!empty($socialLinks)) { ?>
-      <nav class="foot-social" aria-label="Social profiles">
+      <nav class="foot-social" aria-label="<?= e($t('blogPage.footer.social')) ?>">
         <?php foreach ($socialLinks as $platform => $url) { ?>
           <?php if (empty($socialIcons[$platform])) {
               continue;
