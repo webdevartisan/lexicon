@@ -538,9 +538,7 @@ class BlogController extends AppController
             $robots[] = 'nofollow';
         }
 
-        $serpTitle = !empty($post['meta_title'])
-            ? $post['meta_title']
-            : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
+        $serpTitle = post_search_title($post, $ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
         $serpDescription = !empty($post['meta_description'])
             ? $post['meta_description']
             : (post_excerpt($post) ?: ($ctx['meta']['description'] ?? ''));
@@ -739,8 +737,6 @@ class BlogController extends AppController
 
         // 5) Logged-in reader shown in the theme masthead. Full-page cache only
         // serves guests, so viewer-specific markup never leaks between users.
-        // Shared with the /auth/nav endpoint, which re-renders the same masthead
-        // after a modal login.
         $viewer = app(\App\Services\ViewerContext::class)->current();
 
         // Every themed page renders these, so the subscribe confirmation (and any

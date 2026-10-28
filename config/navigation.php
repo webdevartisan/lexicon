@@ -19,7 +19,7 @@ return [
      */
     'front' => [
         ['label' => 'Home', 'href' => '/', 'auth' => null, 'key' => 'navigation.home'],
-        ['label' => 'Create a blog', 'href' => '/dashboard/blog/new', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['create_blogs'], 'key' => 'navigation.createBlog'],
+        ['label' => 'Create a blog', 'href' => '/start', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['create_blogs'], 'key' => 'navigation.createBlog', 'panel' => true],
         ['label' => 'Discover', 'href' => '/discover', 'auth' => null, 'key' => 'navigation.discover'],
         ['label' => 'Getting started', 'href' => '/getting-started', 'auth' => null, 'key' => 'navigation.gettingStarted'],
         ['label' => 'About', 'href' => '/about', 'auth' => null, 'key' => 'navigation.about'],
@@ -80,6 +80,7 @@ return [
             'policy' => 'reviewPosts',
             'show_if' => 'workflowEnabled',
             'icon' => 'clipboard-check',
+            'counter' => 'postsInReview',
             'key' => 'navigation.reviewQueue',
         ],
         [
@@ -89,6 +90,7 @@ return [
             'scope' => 'contextual',
             'replace_blog_id' => true,
             'policy' => 'update',
+            'counter' => 'pendingComments',
             'key' => 'navigation.comments',
         ],
         [
@@ -192,7 +194,7 @@ return [
         ['label' => 'Content', 'href' => '#', 'type' => 'section_header', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs', 'manage_all_posts', 'handle_reports', 'manage_taxonomy'], 'key' => 'navigation.contentSection'],
         ['label' => 'Blogs', 'href' => '/admin/blogs', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_blogs'], 'key' => 'navigation.blogs'],
         ['label' => 'Posts', 'href' => '/admin/posts', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_all_posts'], 'key' => 'navigation.posts'],
-        ['label' => 'Moderation', 'href' => '/admin/reports', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['handle_reports'], 'key' => 'navigation.moderation'],
+        ['label' => 'Moderation', 'href' => '/admin/reports', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['handle_reports'], 'counter' => 'openReports', 'key' => 'navigation.moderation'],
         ['label' => 'Categories', 'href' => '/admin/categories', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.categories'],
         ['label' => 'Tags', 'href' => '/admin/tags', 'auth' => true, 'roles' => ['administrator'], 'permissions' => ['manage_taxonomy'], 'key' => 'navigation.tags'],
 

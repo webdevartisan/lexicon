@@ -75,7 +75,7 @@ final class SeoHealth
                 continue;
             }
 
-            $title = self::searchTitle($post, $blog['blog_name']);
+            $title = post_search_title($post, $blog['blog_name']);
             $byTitle[mb_strtolower($title)][] = $row;
 
             foreach (self::findings($post, $title) as $check => $detail) {
@@ -174,18 +174,6 @@ final class SeoHealth
             $images[0],
             static fn (string $tag): bool => !preg_match('/\balt\s*=\s*("[^"]*\S[^"]*"|\'[^\']*\S[^\']*\')/i', $tag)
         ));
-    }
-
-    /**
-     * The title a search result shows, the same way the post page builds it.
-     *
-     * @param  array<string, mixed>  $post
-     */
-    private static function searchTitle(array $post, string $blogName): string
-    {
-        $metaTitle = trim((string) ($post['meta_title'] ?? ''));
-
-        return $metaTitle !== '' ? $metaTitle : $post['title'].' - '.$blogName;
     }
 
     /**

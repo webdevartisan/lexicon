@@ -1,7 +1,6 @@
 <?php
-// Masthead auth controls, rendered two ways. The layouts include it on every
-// page load, and GET /auth/nav re-renders it after a modal login so the header
-// can flip to the logged-in state without reloading the page.
+// Masthead auth controls, included by every layout on each page load. A
+// sign-in through the modal reloads the page, so this is always current.
 //
 // Variants: 'theme' for the five blog themes (identical markup in all of them),
 // 'platform' for the Lexicon front layout. The two differ only in the wrapper
@@ -18,6 +17,7 @@
 // the old bar that nobody reaches for often, and it was sitting in the space
 // the reader's own things needed.
 $navVariant = ($authNavVariant ?? 'theme') === 'platform' ? 'platform' : 'theme';
+$userMenuHome = $navVariant === 'theme';
 $navReturn = $authNavReturnTo ?? (string) ($_SERVER['REQUEST_URI'] ?? '/');
 $navViewer = $viewer ?? null;
 
@@ -54,7 +54,7 @@ if ($navVariant === 'platform') {
             // A reader is already registered, so this goes to the form that
             // makes a blog, not to sign-up. A creator gets their dashboard.
         ?>
-            <a href="<?= e(lurl($navIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>" class="lx-btn lx-btn-primary">
+            <a href="<?= e(lurl($navIsReader ? '/start' : '/dashboard')) ?>" class="lx-btn lx-btn-primary"<?= $navIsReader ? ' data-panel' : '' ?>>
                 <?= e($tr($navIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?>
             </a>
         </li>

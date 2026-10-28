@@ -46,9 +46,10 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
         <input id="meta_title" name="meta_title" type="text" maxlength="70"
           value="<?= e($post['meta_title'] ?? '') ?>"
           data-char-limit="60"
+          data-title-suffix="<?= e(search_title_suffix((string) ($blog['blog_name'] ?? ''))) ?>"
           class="<?= $inputClass ?>"
           placeholder="Defaults to post title">
-        <p class="<?= $hintClass ?>">50-60 characters displays without truncation.</p>
+        <p class="<?= $hintClass ?>">50-60 characters displays without truncation. Left empty, it uses the post title and blog name.</p>
       </div>
 
       <div>
@@ -118,7 +119,7 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
           </div>
         </div>
         <div id="seo_preview_title" class="mt-2 line-clamp-2 text-base leading-snug text-[#1a0dab] dark:text-blue-400">
-          <?= e($post['meta_title'] ?? $post['title'] ?? 'Your post title will appear here') ?>
+          <?= e(trim((string) ($post['title'] ?? '')) !== '' ? post_search_title($post ?? [], (string) ($blog['blog_name'] ?? '')) : 'Your post title will appear here') ?>
         </div>
         <div id="seo_preview_desc" class="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-600 dark:text-zink-300">
           <?= e(($post['meta_description'] ?? '') ?: (post_excerpt($post ?? []) ?: 'Your meta description or excerpt will appear here in search results...')) ?>

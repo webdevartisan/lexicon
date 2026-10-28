@@ -423,8 +423,6 @@ final class PostController extends AppController
         $workflowState = $post->workflowState();
         $status = $post->status();
 
-        $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
-
         $zone = $this->writerZone((int) $user['id']);
         $postArray = $post->toArray();
         $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id'], $zone);
@@ -455,7 +453,6 @@ final class PostController extends AppController
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
             'availableLocales' => $this->localeRegistry->supported(),
-            'postUrl' => $postUrl,
             // Not the Referer: after a save that is this very page.
             'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
             'workflowState' => $workflowState,

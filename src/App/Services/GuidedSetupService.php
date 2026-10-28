@@ -13,8 +13,8 @@ use App\ValueObjects\SetupStep;
 /**
  * Builds the "Your next steps" list for one person on one blog.
  *
- * Owners get the six steps that take a blog from created to shared, and
- * co-owners get the same blog steps their role can act on. Other
+ * Owners get the five steps that take a blog from created to shared, on their
+ * first blog only, and co-owners get the same blog steps their role can act on. Other
  * collaborators get a shorter list picked from what their role allows, so a
  * custom role gets sensible steps without being named here.
  */
@@ -42,6 +42,11 @@ final class GuidedSetupService
         $audience = $this->audience($blog, $userId);
         if ($audience === null) {
             return null;
+        }
+
+        // Someone starting a second blog already knows these steps, so the card stays on their first one
+        if ($audience === 'owner' && $this->facts->ownsOlderBlog($userId, $blog->id())) {
+            return ['steps' => [], 'done' => 0, 'total' => 0, 'state' => 'dismissed', 'audience' => $audience];
         }
 
         $marks = $this->marks->marksFor($userId, $blogId);
@@ -87,26 +92,41 @@ final class GuidedSetupService
      */
     private function ownerSteps(BlogResource $blog, int $userId, array $marks): array
     {
-        $facts = $this->facts->forOwner($blog->id(), $blog->ownerId());
+        $facts = $this->facts->forOwner($blog->id(), $userId);
         $base = '/dashboard/blog/'.$blog->id();
 
-        $steps = [
-            $this->step('start', true, null, false),
-            $this->step('first_post', $facts['published_post'], '/dashboard/post/new', true, 'setup.steps.first_post.done'),
-        ];
+        $steps = [$this->step('start', true, null, false)];
 
         if ($blog->userCan($userId, 'edit_own_blog')) {
             $steps[] = $this->step('look', isset($marks['look_chosen']) || $facts['has_look'], $base.'/appearance');
         }
 
-        $steps[] = $this->step('share', isset($marks['link_copied']), null);
-
-        if ($blog->userCan($userId, 'manage_team')) {
-            $steps[] = $this->step('followers', $facts['has_subscriber'] || isset($marks['subscribers_seen']), $base.'/subscribers');
-            $steps[] = $this->step('team', $facts['has_team'], $base.'/team');
-        }
+        $profileDone = $facts['has_profile'] || isset($marks['profile_saved']);
+        $steps[] = $this->step('profile', $profileDone, '/account/profile');
+        $steps[] = $this->step('first_post', $facts['published_post'], '/dashboard/post/new', true, 'setup.steps.first_post.done');
+        $steps[] = $this->shareStep($blog, isset($marks['link_copied']) || $facts['has_readers']);
 
         return $steps;
+    }
+
+    /**
+     * Copying the link only makes sense once readers can open it, so an
+     * offline blog gets a note in place of the button.
+     */
+    private function shareStep(BlogResource $blog, bool $shared): SetupStep
+    {
+        if ($shared || $blog->status() === 'published') {
+            return $this->step('share', $shared, null);
+        }
+
+        return new SetupStep(
+            key: 'share',
+            done: false,
+            titleKey: 'setup.steps.share.title',
+            descriptionKey: 'setup.steps.share.offline',
+            actionUrl: null,
+            actionLabelKey: null,
+        );
     }
 
     /**

@@ -171,7 +171,18 @@ function registration_open(): bool
  */
 function blog_signup_url(): string
 {
-    return lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'));
+    return lurl('/register').'?return_to='.rawurlencode(lurl('/start'));
+}
+
+/**
+ * Whether an address is the first step of Start your blog, in any language.
+ *
+ * @param  string|null  $path  A local path such as a sign-up's return_to
+ * @return bool True for /start and /{locale}/start
+ */
+function is_blog_start_path(?string $path): bool
+{
+    return $path !== null && preg_match('#^(/[a-z]{2})?/start$#', $path) === 1;
 }
 
 /**

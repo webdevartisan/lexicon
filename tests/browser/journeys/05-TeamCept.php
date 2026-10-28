@@ -42,7 +42,7 @@ $I->amOnPage('/en/dashboard');
 $I->waitForElementVisible('[data-next-steps] section');
 $I->see('Write your first post here', '[data-next-steps]');
 $I->see('See how review works', '[data-next-steps]');
-foreach (['Start your blog', 'Publish your first post', 'Make it look like yours', 'Tell people about it', 'Let readers follow you', 'Write with someone'] as $ownerStep) {
+foreach (['Start your blog', 'Publish your first post', 'Make it look like yours', 'Tell people about it'] as $ownerStep) {
     $I->dontSee($ownerStep, '[data-next-steps]');
 }
 $I->seeThePageLooksRight('51-contributor-next-steps');

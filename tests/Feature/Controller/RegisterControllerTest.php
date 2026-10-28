@@ -549,20 +549,59 @@ it('stops a sixth account from the same IP within the hour', function () {
 // WHERE A NEW ACCOUNT LANDS
 // ============================================================================
 
-it('sign-up from create a blog lands on start your blog', function () {
+it('an unconfirmed sign-up from create a blog is told to check the inbox, and the link opens start your blog', function () {
+    $email = 'writer'.bin2hex(random_bytes(4)).'@example.test';
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+        'return_to' => '/en/start',
+    ]);
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $response = callController($this->controller, 'submit', $request);
+    $session = Framework\Core\App::container()->get(Framework\Session::class);
+
+    expect($response->getHeader('Location'))->not->toContain('/dashboard')
+        ->and($session->get('_flash', [])['success'] ?? [])->toContain(chrome_translate('auth.checkInbox', ['email' => $email]))
+        ->and($session->get(\App\Services\EmailVerificationService::RETURN_SESSION_KEY))->toBe('/en/start');
+});
+
+it('a confirmed sign-up from create a blog lands on start your blog', function () {
+    withSetting($this, 'require_email_verification', '0');
     $request = makeRequest('/register', 'POST', [
         '_token' => $this->csrfToken,
         'email' => 'writer'.bin2hex(random_bytes(4)).'@example.test',
         'password' => 'SecurePass123!',
         'age_confirmed' => '1',
-        'return_to' => '/en/dashboard/blog/new',
+        'return_to' => '/en/start',
     ]);
     setupController($this->controller, $request, $this->mockViewer);
 
     $response = callController($this->controller, 'submit', $request);
 
-    expect($response->getHeader('Location'))->toContain('/en/dashboard/blog/new')
+    expect($response->getHeader('Location'))->toContain('/en/start')
         ->and(Framework\Core\App::container()->get(Framework\Session::class)->get('_flash', [])['success'] ?? [])->toContain(chrome_translate('setup.signup.welcomeWriter'));
+});
+
+it('tells the sign-in window to ask for the email to be confirmed', function () {
+    $email = 'reader'.bin2hex(random_bytes(4)).'@example.test';
+    $request = makeRequest('/register', 'POST', [
+        '_token' => $this->csrfToken,
+        'email' => $email,
+        'password' => 'SecurePass123!',
+        'age_confirmed' => '1',
+        'return_to' => '/en/blog/some-blog/some-post',
+    ]);
+    $request->headers['x-requested-with'] = 'XMLHttpRequest';
+    setupController($this->controller, $request, $this->mockViewer);
+
+    $body = json_decode(callController($this->controller, 'submit', $request)->getBody(), true);
+
+    expect($body['data']['confirm_email'])->toBeTrue()
+        ->and($body['data']['message'])->toBe(chrome_translate('auth.checkInbox', ['email' => $email]))
+        ->and($body['data']['redirect'])->toBe('/en/blog/some-blog/some-post');
 });
 
 it('sign-up with no return_to lands on the welcome choice', function () {
@@ -605,14 +644,14 @@ it('pending invite still wins', function () {
         'email' => $email,
         'password' => 'SecurePass123!',
         'age_confirmed' => '1',
-        'return_to' => '/en/dashboard/blog/new',
+        'return_to' => '/en/start',
     ]);
     setupController($controller, $request, $this->mockViewer);
 
     $response = callController($controller, 'submit', $request);
 
     expect($response->getHeader('Location'))->toEndWith('/dashboard')
-        ->and($response->getHeader('Location'))->not->toContain('/blog/new');
+        ->and($response->getHeader('Location'))->not->toContain('/start');
 });
 
 /**

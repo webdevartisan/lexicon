@@ -86,30 +86,6 @@ final class AuthController extends AppController
     }
 
     /**
-     * Render the masthead auth controls for the current session.
-     *
-     * The modal logs a reader in without navigating, which leaves the
-     * server-rendered "Log in" pill on screen. This hands back the same
-     * partial the layouts use so the header can be swapped in place.
-     */
-    public function nav(): Response
-    {
-        $variant = ($this->request->get['variant'] ?? '') === 'platform' ? 'platform' : 'theme';
-        $returnTo = safe_return_to((string) ($this->request->get['return_to'] ?? '')) ?? '/';
-
-        $html = $this->viewer()->render('partials/_auth_nav.lex.php', [
-            'authNavVariant' => $variant,
-            'authNavReturnTo' => $returnTo,
-            'viewer' => app(\App\Services\ViewerContext::class)->current(),
-        ]);
-
-        // Never cache: the markup is specific to one logged-in reader.
-        $this->response->addHeader('Cache-Control', 'no-store, must-revalidate');
-
-        return $this->jsonSuccess(['html' => $html]);
-    }
-
-    /**
      * Handle login form submission.
      *
      * Serves both the full login page (redirects + flashes) and the

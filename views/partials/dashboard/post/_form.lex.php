@@ -37,12 +37,6 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     </div>
     <?php } ?>
 
-    {% if (($postStatus !== 'draft') && ($postStatus !== 'pending')): %}
-      <div class="flex justify-between">
-        {% cmp="url-with-open-button" previewUrl="{$postUrl}" %}
-      </div>
-    {% endif; %}
-
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] <?= empty($visibility) ? 'max-lg:pb-24' : 'max-lg:pb-40' ?>">
 
       <main class="min-w-0 space-y-6">

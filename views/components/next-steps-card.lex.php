@@ -52,6 +52,7 @@ $blogUrl = (string) ($blogUrl ?? '');
     ];
     $hiddenUnless = static fn (bool $visible): string => $visible ? '' : ' style="display: none"';
     $ghostButton = 'inline-flex shrink-0 items-center justify-center rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:border-custom-500 hover:text-custom-600 focus:border-custom-500 focus:outline-none focus:ring focus:ring-custom-100 dark:border-zink-500 dark:text-zink-100 dark:hover:text-custom-300 dark:focus:ring-custom-500/20';
+    $quietButton = 'text-sm font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline focus:underline focus:decoration-2 focus:outline-none dark:text-zink-300 dark:hover:text-zink-100';
     $csrf = csrf_field();
     ?>
 <div class="mb-6" data-next-steps x-data="nextSteps" data-config="<?= e(json_encode($config, JSON_UNESCAPED_SLASHES)) ?>">
@@ -73,10 +74,16 @@ $blogUrl = (string) ($blogUrl ?? '');
           <h2 id="next-steps-title" x-ref="heading" tabindex="-1" class="text-base font-semibold text-slate-900 focus:outline-none dark:text-zink-50"><?= e($t('setup.card.title')) ?></h2>
           <p class="mt-1 text-sm text-slate-500 dark:text-zink-300" x-text="progressText"><?= e($t('setup.card.progress', ['done' => $setup['done'], 'total' => $setup['total']])) ?></p>
         </div>
-        <form method="post" action="<?= e($config['urls']['hide']) ?>" @submit.prevent="hide">
-          <?= $csrf ?>
-          <button type="submit" class="text-sm font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline focus:underline focus:decoration-2 focus:outline-none dark:text-zink-300 dark:hover:text-zink-100"><?= e($t('setup.card.hide')) ?></button>
-        </form>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <form method="post" action="<?= e($config['urls']['hide']) ?>" @submit.prevent="hide">
+            <?= $csrf ?>
+            <button type="submit" class="<?= $quietButton ?>"><?= e($t('setup.card.hide')) ?></button>
+          </form>
+          <form method="post" action="<?= e($config['urls']['dismiss']) ?>" @submit.prevent="dismiss">
+            <?= $csrf ?>
+            <button type="submit" class="<?= $quietButton ?>"><?= e($t('setup.card.dismiss')) ?></button>
+          </form>
+        </div>
       </div>
 
       <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zink-600" role="progressbar" aria-labelledby="next-steps-title" aria-valuemin="0" :aria-valuemax="total" :aria-valuenow="done" aria-valuemax="<?= (int) $setup['total'] ?>" aria-valuenow="<?= (int) $setup['done'] ?>">
@@ -86,6 +93,7 @@ $blogUrl = (string) ($blogUrl ?? '');
       <ol class="mt-4 divide-y divide-slate-100 dark:divide-zink-600">
         <?php foreach ($setup['steps'] as $step) {
             $isShare = $step->key === 'share';
+            $canCopy = $isShare && $step->actionLabelKey !== null;
             $isNext = $step->key === $firstOpenKey;
             ?>
         <li class="py-3 first:pt-0 last:pb-0" data-step="<?= e($step->key) ?>">
@@ -125,7 +133,7 @@ $blogUrl = (string) ($blogUrl ?? '');
                 </ol>
               </details>
               <?php } ?>
-              <?php if ($isShare) { ?>
+              <?php if ($canCopy) { ?>
               <div x-show="fallback" style="display: none" class="mt-2">
                 <label class="sr-only" for="next-steps-url"><?= e($t('setup.card.copyFallback')) ?></label>
                 <input id="next-steps-url" type="text" readonly value="<?= e($blogUrl) ?>" x-ref="urlInput" @focus="selectAddress"
@@ -138,7 +146,7 @@ $blogUrl = (string) ($blogUrl ?? '');
             </div>
             <?php if ($step->actionUrl !== null) { ?>
             <a href="<?= e(lurl($step->actionUrl)) ?>" class="<?= $ghostButton ?>"><?= e($t((string) $step->actionLabelKey)) ?></a>
-            <?php } elseif ($isShare) { ?>
+            <?php } elseif ($canCopy) { ?>
             <button type="button" @click="copy" class="<?= $ghostButton ?>" style="display: none" x-show="ready">
               <span x-text="copyLabel"><?= e($t((string) $step->actionLabelKey)) ?></span>
             </button>
@@ -163,6 +171,7 @@ $blogUrl = (string) ($blogUrl ?? '');
           <li><a class="font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none" href="<?= e(lurl('/dashboard/blog/'.$blogId.'/insights')) ?>"><?= e($t('setup.card.insights')) ?></a></li>
           <li><a class="font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none" href="<?= e(lurl('/dashboard/blog/'.$blogId.'/backup')) ?>"><?= e($t('setup.card.backup')) ?></a></li>
           <li><a class="font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none" href="<?= e(lurl('/dashboard/blog/'.$blogId.'/settings').'#general') ?>"><?= e($t('setup.card.translations')) ?></a></li>
+          <li><a class="font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none" href="<?= e(lurl('/dashboard/blog/'.$blogId.'/team')) ?>"><?= e($t('setup.card.team')) ?></a></li>
         </ul>
         <?php } ?>
       </div>

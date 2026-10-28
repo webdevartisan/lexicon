@@ -45,14 +45,14 @@ beforeEach(function () {
     };
 });
 
-test('new owner sees six steps with start done', function () {
+test('new owner sees five steps with start done', function () {
     $setup = $this->setup->forUser($this->ownerId, $this->blogId);
 
     expect($setup['audience'])->toBe('owner')
         ->and($setup['state'])->toBe('open')
-        ->and(($this->keysOf)($setup))->toBe(['start', 'first_post', 'look', 'share', 'followers', 'team'])
+        ->and(($this->keysOf)($setup))->toBe(['start', 'look', 'profile', 'first_post', 'share'])
         ->and($setup['done'])->toBe(1)
-        ->and($setup['total'])->toBe(6)
+        ->and($setup['total'])->toBe(5)
         ->and(($this->step)($setup, 'start')->done)->toBeTrue()
         ->and(($this->step)($setup, 'first_post')->done)->toBeFalse();
 });
@@ -68,6 +68,67 @@ test('publishing a post ticks first_post', function () {
     expect(($this->step)($setup, 'first_post')->done)->toBeTrue()
         ->and(($this->step)($setup, 'first_post')->doneNoteKey)->toBe('setup.steps.first_post.done')
         ->and($setup['done'])->toBe(2);
+});
+
+test('an offline blog shows the share step without a copy button', function () {
+    $share = ($this->step)($this->setup->forUser($this->ownerId, $this->blogId), 'share');
+
+    expect($share->done)->toBeFalse()
+        ->and($share->actionLabelKey)->toBeNull()
+        ->and($share->descriptionKey)->toBe('setup.steps.share.offline');
+
+    $this->db->execute("UPDATE blogs SET status = 'published' WHERE id = ?", [$this->blogId]);
+    $share = ($this->step)($this->setup->forUser($this->ownerId, $this->blogId), 'share');
+
+    expect($share->actionLabelKey)->toBe('setup.steps.share.action')
+        ->and($share->descriptionKey)->toBe('setup.steps.share.description');
+});
+
+test('a bio ticks the owner profile step', function () {
+    $this->db->execute(
+        'INSERT INTO user_profiles (user_id, bio) VALUES (?, ?) ON DUPLICATE KEY UPDATE bio = VALUES(bio)',
+        [$this->ownerId, 'Writes about trains']
+    );
+
+    expect(($this->step)($this->setup->forUser($this->ownerId, $this->blogId), 'profile')->done)->toBeTrue();
+});
+
+test('readers outside the team tick the share step', function () {
+    $this->db->execute("UPDATE blogs SET status = 'published' WHERE id = ?", [$this->blogId]);
+    $postId = PostFactory::new($this->posts)
+        ->withAttributes(['author_id' => $this->ownerId, 'blog_id' => $this->blogId])
+        ->published()
+        ->create();
+    $shared = fn () => ($this->step)($this->setup->forUser($this->ownerId, $this->blogId), 'share')->done;
+    $subscribe = fn (?int $userId, string $email) => $this->db->execute(
+        'INSERT INTO blog_subscribers (blog_id, user_id, email, token, confirmed_at) VALUES (?, ?, ?, ?, NOW())',
+        [$this->blogId, $userId, $email, bin2hex(random_bytes(32))]
+    );
+    $comment = fn (int $userId) => $this->db->execute(
+        "INSERT INTO comments (post_id, user_id, content, status) VALUES (?, ?, 'Nice', 'approved')",
+        [$postId, $userId]
+    );
+
+    $subscribe($this->ownerId, 'owner@example.test');
+    $editorId = UserFactory::new($this->users)->create();
+    ($this->addMember)($this->blogId, $editorId, 'editor', $this->ownerId);
+    $comment($editorId);
+    $comment($this->ownerId);
+
+    expect($shared())->toBeFalse();
+
+    $comment(UserFactory::new($this->users)->create());
+
+    expect($shared())->toBeTrue();
+});
+
+test('a confirmed subscriber ticks the share step', function () {
+    $this->db->execute(
+        'INSERT INTO blog_subscribers (blog_id, email, token, confirmed_at) VALUES (?, ?, ?, NOW())',
+        [$this->blogId, 'reader@example.test', bin2hex(random_bytes(32))]
+    );
+
+    expect(($this->step)($this->setup->forUser($this->ownerId, $this->blogId), 'share')->done)->toBeTrue();
 });
 
 test('description alone ticks look', function () {
@@ -124,25 +185,40 @@ test('author on a review blog gets member_review and no publish step', function 
 });
 
 test('all done gives finished, and dismissed wins over finished', function () {
-    $friendId = UserFactory::new($this->users)->create();
     PostFactory::new($this->posts)
         ->withAttributes(['author_id' => $this->ownerId, 'blog_id' => $this->blogId])
         ->published()
         ->create();
     $this->marks->mark($this->ownerId, $this->blogId, 'look_chosen');
     $this->marks->mark($this->ownerId, $this->blogId, 'link_copied');
-    $this->marks->mark($this->ownerId, $this->blogId, 'subscribers_seen');
-    ($this->addMember)($this->blogId, $friendId, 'editor', $this->ownerId);
+    $this->db->execute(
+        'INSERT INTO user_profiles (user_id, bio) VALUES (?, ?) ON DUPLICATE KEY UPDATE bio = VALUES(bio)',
+        [$this->ownerId, 'Writes about trains']
+    );
 
     $setup = $this->setup->forUser($this->ownerId, $this->blogId);
 
     expect($setup['state'])->toBe('finished')
-        ->and($setup['done'])->toBe(6);
+        ->and($setup['done'])->toBe(5);
 
     $this->marks->mark($this->ownerId, $this->blogId, 'hidden');
     $this->marks->mark($this->ownerId, $this->blogId, 'dismissed');
 
     expect($this->setup->forUser($this->ownerId, $this->blogId)['state'])->toBe('dismissed');
+});
+
+test('only the owner\'s first blog gets the card', function () {
+    $secondBlogId = BlogFactory::new($this->blogs)->draft()->create($this->ownerId);
+    $hostId = UserFactory::new($this->users)->create();
+    $joinedBlogId = BlogFactory::new($this->blogs)->create($hostId);
+    ($this->addMember)($joinedBlogId, $this->ownerId, 'author', $hostId);
+
+    $second = $this->setup->forUser($this->ownerId, $secondBlogId);
+
+    expect($second['state'])->toBe('dismissed')
+        ->and($second['steps'])->toBe([])
+        ->and($this->setup->forUser($this->ownerId, $this->blogId)['state'])->toBe('open')
+        ->and($this->setup->forUser($this->ownerId, $joinedBlogId)['state'])->toBe('open');
 });
 
 test('stranger gets null', function () {
@@ -166,7 +242,8 @@ test('a reviewer who cannot write gets no review explainer', function () {
 
 test('a co-owner shares the blog steps their role can act on', function () {
     $slug = 'partner_'.bin2hex(random_bytes(4));
-    $this->db->query("INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) VALUES ('Partner', ?, '', 'blog', 0, 60)", [$slug]);
+    // The roles table survives between runs, so the name has to be as unique as the slug
+    $this->db->query("INSERT INTO roles (role_name, role_slug, description, scope, is_system, level) VALUES (?, ?, '', 'blog', 0, 60)", [$slug, $slug]);
     $this->db->query(
         "INSERT INTO role_permissions (role_id, permission_id)
          SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_slug IN ('create_posts', 'edit_own_blog', 'delete_own_blog')
@@ -180,7 +257,7 @@ test('a co-owner shares the blog steps their role can act on', function () {
     $setup = $this->setup->forUser($partnerId, $this->blogId);
 
     expect($setup['audience'])->toBe('co_owner')
-        ->and(($this->keysOf)($setup))->toBe(['start', 'first_post', 'look', 'share'])
+        ->and(($this->keysOf)($setup))->toBe(['start', 'look', 'profile', 'first_post', 'share'])
         ->and(($this->step)($setup, 'look')->done)->toBeTrue();
 });
 

@@ -162,9 +162,16 @@ $router->group([
     'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/vote', ['controller' => 'PostEngagementController', 'action' => 'vote', 'method' => 'POST']);
-    $r->add('/{id:\d+}/bookmark', ['controller' => 'PostEngagementController', 'action' => 'toggleBookmark', 'method' => 'POST']);
     $r->add('/{id:\d+}/report', ['controller' => 'PostEngagementController', 'action' => 'report', 'method' => 'POST']);
 });
+
+// Saving is private and the count is never shown, so it doesn't wait for the email to be confirmed
+$router->add('/posts/{id:\d+}/bookmark', [
+    'controller' => 'PostEngagementController',
+    'action' => 'toggleBookmark',
+    'method' => 'POST',
+    'middleware' => ['auth'],
+]);
 
 // Public blog invitation landing (reached from the email link; no auth required)
 $router->add('/invite/joined', ['controller' => 'InviteController', 'action' => 'joined', 'method' => 'GET']);
@@ -182,7 +189,6 @@ $router->group([
     $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
     $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'show', 'method' => 'GET']);
     $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'submit', 'method' => 'POST']);
-    $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
     $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'POST']);
 
     $r->add('/register', ['controller' => 'RegisterController', 'action' => 'show', 'method' => 'GET']);
@@ -319,6 +325,21 @@ $router->group([
     $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'destroy', 'method' => 'POST']);
 });
 
+// Start your blog: three steps on the main site, which also open in the site modal.
+// Not under /dashboard, since that address brings the control panel's menus with it.
+$router->group([
+    'prefix' => '/start',
+    'namespace' => 'Dashboard',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/{blogId:\d+}/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/{blogId:\d+}/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
+    $r->add('/{blogId:\d+}/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/{blogId:\d+}/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
+});
+
 // Grouped routes for user dashboard - all require authentication middleware
 $router->group([
     'prefix' => '/dashboard',
@@ -335,14 +356,8 @@ $router->group([
     // Personal account settings moved to the front under /account. The old
     // dashboard settings routes are deleted, not redirected.
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.
     $r->add('/blog/{id:\d+}/settings', ['controller' => 'BlogController', 'action' => 'settings', 'method' => 'GET']);
-    // Start your blog, steps 2 and 3; step 1 is /blog/new
-    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
-    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
 
     // Appearance hub: theme browser plus branding and front-page texts.
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
@@ -468,7 +483,6 @@ $router->group([
     // The plural spellings are deliberate: several views post to /blogs/... and
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
-    $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/go-live', ['controller' => 'BlogController', 'action' => 'goLive', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);

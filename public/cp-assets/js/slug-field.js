@@ -4,6 +4,10 @@
  *
  * SlugField.bind({ source: 'name', target: 'slug', min: 2, max: 50, checkUrl: '/dashboard/slug-check?type=blog' })
  *
+ * Pages outside the control panel pass root (where to find the two fields, as the
+ * site modal can sit over a page with the same ids), tones and feedbackClass in
+ * their own class names, shaped like TONES below.
+ *
  * slugify() here and slugify() in src/Framework/Core/helpers.php must agree,
  * and the format check must match Validator::validateSlug(), or a slug that looks
  * fine while typing would still be refused on save.
@@ -51,9 +55,13 @@
     }
 
     function bind(opts) {
-        var source = document.getElementById(opts.source);
-        var target = document.getElementById(opts.target);
+        var root = opts.root || document;
+        var source = root.querySelector('#' + opts.source);
+        var target = root.querySelector('#' + opts.target);
         if (!source || !target) return;
+
+        var tones = opts.tones || TONES;
+        var feedbackClass = opts.feedbackClass || 'mt-1 text-sm';
 
         opts.min = opts.min || 2;
         opts.max = opts.max || 100;
@@ -62,7 +70,7 @@
         feedback.id = opts.target + '_feedback';
         feedback.setAttribute('aria-live', 'polite');
         feedback.hidden = true;
-        var anchor = target.parentNode.classList.contains('flex') ? target.parentNode : target;
+        var anchor = target.parentNode.matches('.flex, [data-slug-row]') ? target.parentNode : target;
         anchor.parentNode.insertBefore(feedback, anchor.nextSibling);
 
         // A slug the writer typed is theirs, so stop overwriting it. Emptying the
@@ -72,10 +80,10 @@
         var latest = 0;
 
         function paint(tone, message, blocks) {
-            Object.keys(TONES).forEach(function (name) {
-                if (TONES[name].border) target.classList.remove(TONES[name].border);
+            Object.keys(tones).forEach(function (name) {
+                if (tones[name].border) target.classList.remove(tones[name].border);
             });
-            if (TONES[tone].border) target.classList.add(TONES[tone].border);
+            if (tones[tone].border) target.classList.add(tones[tone].border);
 
             target.setAttribute('aria-invalid', tone === 'error' ? 'true' : 'false');
             target.setAttribute('aria-describedby', feedback.id);
@@ -83,7 +91,7 @@
 
             feedback.hidden = false;
             feedback.textContent = message;
-            feedback.className = 'mt-1 text-sm ' + TONES[tone].text;
+            feedback.className = feedbackClass + ' ' + tones[tone].text;
         }
 
         function askServer(slug) {
@@ -117,7 +125,7 @@
 
         function show() {
             // The server message described the value that was submitted, not this one.
-            var serverError = document.getElementById(opts.target + '_error');
+            var serverError = root.querySelector('#' + opts.target + '_error');
             if (serverError) serverError.remove();
 
             clearTimeout(timer);

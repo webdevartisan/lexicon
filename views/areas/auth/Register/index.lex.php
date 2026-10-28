@@ -4,7 +4,7 @@
 
 {% block heading %}<?= e($t('auth.registerTitle')) ?>{% endblock %}
 
-{% block sub %}<?= e($t(str_contains((string) ($return_to ?? ''), '/dashboard/blog/new') ? 'auth.registerBlogSubtitle' : 'auth.registerSubtitle')) ?>{% endblock %}
+{% block sub %}<?= e($t(is_blog_start_path($return_to ?? null) ? 'auth.registerBlogSubtitle' : 'auth.registerSubtitle')) ?>{% endblock %}
 
 {% block altAction %}
 <?php

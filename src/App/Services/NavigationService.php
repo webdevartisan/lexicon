@@ -112,9 +112,12 @@ class NavigationService
                 'key' => $key, // Translation key for i18n
                 // precompute attributes to avoid PHP logic in templates
                 'current_attr' => $current ? 'aria-current="page"' : '',
+                'panel_attr' => !empty($it['panel']) ? 'data-panel' : '',
                 'tag' => $tag,
                 'disabled' => !empty($it['disabled']),
                 'badge' => $it['badge'] ?? null,
+                // Names a live count from NavBadgeCounts, filled in outside the cached sidebar
+                'counter' => $it['counter'] ?? null,
                 'icon' => $it['icon'] ?? null,
                 'children' => $children,
             ];

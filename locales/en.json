@@ -42,6 +42,7 @@
         "mediaLibrary": "Media Library",
         "insights": "Insights",
         "toggleGroup": "Show or hide {name}",
+        "toggleSidebar": "Show or hide the sidebar",
         "insightsPages": {
             "overview": "Summary",
             "blogs": "Blogs",
@@ -481,6 +482,7 @@
         "signIn": "Sign in",
         "signOut": "Sign out",
         "dashboard": "Dashboard",
+        "siteHome": "{site} home",
         "logoTagline": "Your ideas, your audience, your blog.",
         "social": {
             "twitter": "Twitter",
@@ -1231,6 +1233,11 @@
         "verifyNeeded": "Confirm your email address first. We sent you a link.",
         "verifyCommentSaved": "We saved your comment. It posts as soon as you confirm your email.",
         "verifyAlready": "Your email is already confirmed.",
+        "emailTaken": "This email already has an account. Sign in instead.",
+        "registerFailed": "We couldn't create your account. Please try again.",
+        "joinedBlog": "Welcome! You've joined the blog as {role}.",
+        "accountReady": "Welcome! Your account is ready.",
+        "checkInbox": "Check your inbox. We sent a link to {email}. Commenting, following and writing start once you confirm it.",
         "registrationClosed": "New sign-ups are closed for now.",
         "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
@@ -2160,11 +2167,10 @@
         "titleComment": "Sign in to comment",
         "titleLike": "Sign in to like this post",
         "titleBookmark": "Sign in to save this post",
-        "intro": "Enter your email to sign in or create your reader account.",
+        "intro": "Enter your email. New here? We’ll set up your account.",
         "email": "Email",
         "continue": "Continue →",
         "password": "Password",
-        "minLength": "At least {min} characters.",
         "logIn": "Sign in →",
         "forgot": "Forgot password?",
         "differentEmail": "Use a different email",
@@ -2175,9 +2181,9 @@
         "welcomeBack": "Welcome back",
         "enterPasswordFor": "Enter the password for {email}.",
         "createTitle": "Create your account",
-        "createIntro": "New here? Set a password and your reader account is ready.",
+        "createIntro": "Set a password to create your account.",
         "createSubmit": "Create account →",
-        "welcomeNew": "Welcome to Lexicon! Your reader account is ready.",
+        "gotIt": "Got it",
         "resetTitle": "Reset your password",
         "resetIntro": "We’ll email a password reset link to {email}.",
         "resetSent": "If that email exists in our system, a reset link has been sent.",
@@ -2260,6 +2266,8 @@
             "insights": "Insights",
             "backup": "Backup and restore",
             "translations": "Translations",
+            "team": "Team",
+            "dismiss": "Don't show again",
             "done": "Done",
             "review": {
                 "write": "Write your post and press Submit for review.",
@@ -2285,18 +2293,14 @@
             },
             "share": {
                 "title": "Tell people about it",
-                "description": "Copy your blog's link and share it.",
+                "description": "Copy your blog's link and share it. Readers can subscribe from your blog to get new posts by email.",
+                "offline": "Your link works once your first post is published.",
                 "action": "Copy link"
             },
-            "followers": {
-                "title": "Let readers follow you",
-                "description": "Readers can subscribe and get new posts by email.",
-                "action": "See how"
-            },
-            "team": {
-                "title": "Write with someone",
-                "description": "Invite a friend to write or edit with you.",
-                "action": "Invite"
+            "profile": {
+                "title": "Set up your profile",
+                "description": "Add a photo and a short bio so readers know who writes here.",
+                "action": "Edit profile"
             },
             "member_first_post": {
                 "title": "Write your first post here",

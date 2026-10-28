@@ -99,7 +99,7 @@ test('hide then show round-trips', function () {
     $hidden = ($this->call)('hide');
 
     expect($hidden->getStatusCode())->toBe(200)
-        ->and(($this->body)($hidden))->toBe(['state' => 'hidden', 'done' => 1, 'total' => 6]);
+        ->and(($this->body)($hidden))->toBe(['state' => 'hidden', 'done' => 1, 'total' => 5]);
 
     $shown = ($this->call)('show');
 
@@ -107,11 +107,12 @@ test('hide then show round-trips', function () {
         ->and($this->marks->marksFor($this->ownerId, $this->blogId))->toBe([]);
 });
 
-test('dismiss refused before finished', function () {
+test('dismiss works before the steps are finished', function () {
     $response = ($this->call)('dismiss');
 
-    expect($response->getStatusCode())->toBe(422)
-        ->and($this->marks->marksFor($this->ownerId, $this->blogId))->toBe([]);
+    expect($response->getStatusCode())->toBe(200)
+        ->and(($this->body)($response)['state'])->toBe('dismissed')
+        ->and($this->marks->marksFor($this->ownerId, $this->blogId))->toBe(['dismissed' => true]);
 });
 
 test('copied marks link_copied', function () {
@@ -151,7 +152,7 @@ test('overview renders the card for a new owner', function () {
     setupController($controller, makeRequest('/dashboard', 'GET'), $this->viewer);
     $controller->index();
 
-    expect($this->viewer->capturedData['setup']['total'])->toBe(6)
+    expect($this->viewer->capturedData['setup']['total'])->toBe(5)
         ->and($this->viewer->capturedData['setup']['done'])->toBe(1)
         ->and($this->viewer->capturedData['setup']['state'])->toBe('open');
 });

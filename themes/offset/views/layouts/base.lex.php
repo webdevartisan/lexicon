@@ -39,9 +39,7 @@
       </nav>
 
       <div class="masthead-actions">
-        <span data-auth-nav="theme" style="display:contents">
-          {% include "partials/_auth_nav.lex.php" %}
-        </span>
+        {% include "partials/_auth_nav.lex.php" %}
         <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('offset::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>

@@ -1,27 +1,122 @@
 @layer components {
 
     /*
-     * Sidebar navigation rows.
+     * Sidebar width and motion. The sidebar, the topbar and the page all read
+     * these two values, so collapsing moves them as one piece. Logical insets
+     * and margins follow the page direction, which keeps Arabic laid out right.
+     */
+    :root {
+        --cp-sidebar-w: theme('width.vertical-menu');
+        --cp-sidebar-motion: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    :root[data-sidebar-size="sm"] {
+        --cp-sidebar-w: theme('width.vertical-menu-sm');
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :root {
+            --cp-sidebar-motion: 0s linear;
+        }
+    }
+
+    .app-menu {
+        width: var(--cp-sidebar-w);
+        inset-inline-start: 0;
+    }
+
+    /* Labels come back before the sidebar has finished widening; clipping stops them spilling over the page. */
+    :root[data-sidebar-size="lg"] .app-menu {
+        overflow-x: clip;
+    }
+
+    .cp-topbar {
+        inset-inline: 0;
+    }
+
+    @media (min-width: 768px) {
+        .cp-topbar {
+            inset-inline-start: var(--cp-sidebar-w);
+        }
+
+        .cp-sidebar-offset {
+            margin-inline-start: var(--cp-sidebar-w);
+        }
+    }
+
+    /* app.js sets data-sidebar-motion after load, so the size a page opens with never plays as an animation. */
+    :root[data-sidebar-motion] .app-menu {
+        transition: width var(--cp-sidebar-motion);
+    }
+
+    :root[data-sidebar-motion] .cp-topbar {
+        transition: inset-inline-start var(--cp-sidebar-motion);
+    }
+
+    :root[data-sidebar-motion] .cp-sidebar-offset {
+        transition: margin-inline-start var(--cp-sidebar-motion);
+    }
+
+    /* The topbar button shows what a click does: close while the sidebar is open, open while it is a rail. */
+    .sidebar-toggle-open,
+    :root[data-sidebar-size="sm"] .sidebar-toggle-close {
+        display: none;
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-toggle-open {
+        display: block;
+    }
+
+    /* Phones keep the sidebar as a closed drawer, so the button always offers to open it. */
+    @media (max-width: 767.98px) {
+        .sidebar-toggle-close {
+            display: none;
+        }
+
+        .sidebar-toggle-open {
+            display: block;
+        }
+    }
+
+    [dir="rtl"] .cp-flip-rtl {
+        transform: scaleX(-1);
+    }
+
+    /*
+     * Sidebar rows.
      *
      * Colours come from the --sc-vertical-menu-item-* tokens, which cp-vars.css
      * redefines per theme, so one set of rules covers light and dark. The tokens
-     * hold bare RGB triplets, hence the rgb() wrappers: dropping them yields an
-     * invalid colour and the browser silently falls back to transparent, which
-     * is exactly how the hover fill went missing in light mode before.
+     * hold bare RGB triplets, hence the rgb() wrappers.
      */
+    .sidebar-entry {
+        position: relative;
+    }
+
+    .sidebar-heading {
+        padding: 1rem 1.375rem 0.375rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgb(var(--sc-vertical-menu-item) / 0.6);
+        cursor: default;
+    }
+
     .sidebar-menu-item {
         position: relative;
         display: flex;
         align-items: center;
+        gap: 0.625rem;
         margin-inline: 0.75rem;
-        margin-block: 0.125rem;
-        padding-block: 0.5rem;
-        padding-inline: 0.75rem 1.25rem;
-        border-radius: 0.5rem;
+        margin-block: 1px;
+        padding: 0.4375rem 0.625rem;
+        border-radius: 0.375rem;
         font-size: 0.8125rem;
-        font-weight: 400;
+        line-height: 1.25rem;
+        white-space: nowrap;
         color: rgb(var(--sc-vertical-menu-item));
-        transition: color 0.15s linear, background-color 0.15s linear, width 0.15s linear;
+        transition: color 0.15s linear, background-color 0.15s linear;
     }
 
     .sidebar-menu-item:hover {
@@ -35,19 +130,6 @@
         font-weight: 500;
     }
 
-    /* An accent rail carries the current page on the dark sidebar, where any
-       fill light enough to read on its own would be louder than the page needs. */
-    .sidebar-menu-item.active::before {
-        display: none;
-        content: "";
-        position: absolute;
-        inset-block: 0.375rem;
-        inset-inline-start: 0;
-        width: 3px;
-        border-radius: 3px;
-        background-color: rgb(var(--sc-custom-500));
-    }
-
     /* Parent of the open section. Tinting the label is enough while the children
        are visible; collapsed rails hide them, so there the parent takes the fill. */
     .sidebar-menu-item.active-within {
@@ -55,97 +137,274 @@
         font-weight: 500;
     }
 
-    /* Collapsible group rows: the toggle floats inside the pill instead of
-       sitting beside it, so hover and active fills cover the whole row. */
+    .sidebar-menu-item.is-disabled {
+        cursor: default;
+        opacity: 0.4;
+        user-select: none;
+    }
+
+    .sidebar-menu-item.is-disabled:hover {
+        color: rgb(var(--sc-vertical-menu-item));
+        background-color: transparent;
+    }
+
+    .sidebar-menu-icon {
+        display: flex;
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        opacity: 0.75;
+        transition: opacity 0.15s linear;
+    }
+
+    .sidebar-menu-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke-width: 1.75;
+    }
+
+    .sidebar-menu-item:hover .sidebar-menu-icon,
+    .sidebar-menu-item.active .sidebar-menu-icon,
+    .sidebar-menu-item.active-within .sidebar-menu-icon {
+        opacity: 1;
+    }
+
+    .sidebar-menu-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-badge {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding-inline: 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        color: rgb(var(--sc-custom-500));
+        background-color: rgb(var(--sc-custom-500) / 0.14);
+    }
+
+    /* The display above would otherwise beat the hidden attribute. */
+    .sidebar-badge[hidden] {
+        display: none;
+    }
+
+    .sidebar-tag {
+        flex: none;
+        padding: 0.125rem 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        background-color: rgb(var(--sc-vertical-menu-item-bg-active));
+    }
+
+    .sidebar-empty {
+        margin-top: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.75rem;
+        text-align: center;
+        color: rgb(var(--sc-vertical-menu-item));
+    }
+
+    /* Collapsible groups: the toggle floats inside the pill instead of sitting
+       beside it, so hover and active fills cover the whole row. */
     .sidebar-menu-row {
         position: relative;
     }
 
-    .sidebar-menu-item--group {
-        padding-inline-end: 2.75rem;
+    .sidebar-menu-item-group {
+        padding-inline-end: 2.25rem;
     }
 
     .sidebar-menu-toggle {
         position: absolute;
         top: 50%;
-        inset-inline-end: 1.25rem;
+        inset-inline-end: 1rem;
         display: flex;
         padding: 0.25rem;
-        color: inherit;
+        border-radius: 0.25rem;
+        color: rgb(var(--sc-vertical-menu-item));
         opacity: 0.6;
         transform: translateY(-50%);
-        transition: opacity 0.15s linear;
+        transition: opacity 0.15s linear, background-color 0.15s linear;
     }
 
     .sidebar-menu-toggle:hover {
         opacity: 1;
-    }
-
-    .sidebar-menu-toggle svg {
-        transition: transform 0.15s linear;
-    }
-
-    .sidebar-menu-toggle.is-open svg {
-        transform: rotate(180deg);
-    }
-
-    .group[data-sidebar-size="sm"] .sidebar-menu-item {
-        margin-block: 0;
-    }
-
-    /* The collapsed rail hides the toggle, so the row goes back to the plain
-       padding and lines up with its siblings again. */
-    .group[data-sidebar-size="sm"] .sidebar-menu-item--group {
-        padding-inline-end: 1.25rem;
-    }
-
-    .group[data-sidebar-size="sm"] .sidebar-menu-item.active-within {
         background-color: rgb(var(--sc-vertical-menu-item-bg-active));
     }
 
-    /* On the icon-only rail the hovered row grows out over the page to show its
-       label, so it needs a surface and a shadow of its own to read as a flyout. */
-    .group[data-sidebar-size="sm"] .group\/sm:hover > .sidebar-menu-item,
-    .group[data-sidebar-size="sm"] .group\/sm:hover > .sidebar-menu-row > .sidebar-menu-item {
+    .sidebar-menu-toggle svg {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    .sidebar-menu-toggle.is-open svg {
+        transform: rotate(90deg);
+    }
+
+    [dir="rtl"] .sidebar-menu-toggle svg {
+        transform: scaleX(-1);
+    }
+
+    [dir="rtl"] .sidebar-menu-toggle.is-open svg {
+        transform: scaleX(-1) rotate(90deg);
+    }
+
+    /* Children slide open by animating the row track from nothing to its natural
+       height. Visibility follows, so closed links drop out of the tab order. */
+    .sidebar-submenu {
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .sidebar-submenu.is-open {
+        grid-template-rows: 1fr;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    :root[data-sidebar-motion] .sidebar-submenu {
+        transition: grid-template-rows var(--cp-sidebar-motion), opacity var(--cp-sidebar-motion), visibility var(--cp-sidebar-motion);
+    }
+
+    :root[data-sidebar-motion] .sidebar-menu-toggle svg {
+        transition: transform var(--cp-sidebar-motion);
+    }
+
+    /* The guide line sits under the parent icon's centre: row margin + padding + half the icon. */
+    .sidebar-submenu-list {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        margin-inline-start: 1.875rem;
+        padding-inline-start: 0.5rem;
+    }
+
+    .sidebar-submenu-list::before {
+        content: "";
+        position: absolute;
+        inset-block: 0.25rem;
+        inset-inline-start: 0;
+        width: 1px;
+        background-color: rgb(var(--sc-vertical-menu-item) / 0.2);
+    }
+
+    .sidebar-submenu .sidebar-menu-item {
+        margin-inline: 0 0.75rem;
+        padding-block: 0.375rem;
+    }
+
+    .sidebar-submenu .sidebar-menu-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* The current child marks its spot on the guide line. */
+    .sidebar-submenu .sidebar-menu-item.active::before {
+        content: "";
+        position: absolute;
+        inset-block: 0.375rem;
+        inset-inline-start: calc(-0.5rem - 0.5px);
+        width: 2px;
+        border-radius: 2px;
+        background-color: currentColor;
+    }
+
+    /*
+     * Icon-only rail. Labels, toggles and headings hide; hovering a row grows it
+     * out over the page as a flyout with its label and, for a group, its children.
+     */
+    :root[data-sidebar-size="sm"] .sidebar-heading,
+    :root[data-sidebar-size="sm"] .sidebar-empty,
+    :root[data-sidebar-size="sm"] .sidebar-menu-label,
+    :root[data-sidebar-size="sm"] .sidebar-menu-toggle,
+    :root[data-sidebar-size="sm"] .sidebar-tag,
+    :root[data-sidebar-size="sm"] .sidebar-submenu {
+        display: none;
+    }
+
+    /* Centres the icon in the rail: (rail - row margins - icon) / 2. */
+    :root[data-sidebar-size="sm"] .sidebar-menu-item {
+        margin-block: 2px;
+        padding-inline: calc((var(--cp-sidebar-w) - 1.5rem - 1.25rem) / 2);
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-menu-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-menu-item.active-within {
+        background-color: rgb(var(--sc-vertical-menu-item-bg-active));
+    }
+
+    /* A count on the rail shrinks to a dot on the icon's corner. */
+    :root[data-sidebar-size="sm"] .sidebar-badge {
+        position: absolute;
+        top: 0.25rem;
+        inset-inline-start: calc((var(--cp-sidebar-w) - 1.5rem) / 2 + 0.375rem);
+        min-width: 0;
+        width: 0.5rem;
+        height: 0.5rem;
+        padding: 0;
+        font-size: 0;
+        background-color: rgb(var(--sc-custom-500));
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-entry:hover > .sidebar-menu-item,
+    :root[data-sidebar-size="sm"] .sidebar-entry:hover > .sidebar-menu-row > .sidebar-menu-item {
         z-index: 10;
-        width: calc(theme('spacing.vertical-menu-sm') * 3.63);
+        width: calc(var(--cp-sidebar-w) * 3.63);
+        gap: 2.25rem;
         color: rgb(var(--sc-vertical-menu-item-hover));
         background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
         box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
     }
 
-    /* SimpleBar wraps the menu when the sidebar starts expanded and unMount()
-       leaves the wrappers (and their inline overflow) in place, which clips the flyouts below until a reload. */
-    .group[data-sidebar-size="sm"] #scrollbar .simplebar-wrapper,
-    .group[data-sidebar-size="sm"] #scrollbar .simplebar-mask,
-    .group[data-sidebar-size="sm"] #scrollbar .simplebar-offset,
-    .group[data-sidebar-size="sm"] #scrollbar .simplebar-content-wrapper {
-        overflow: visible !important;
+    :root[data-sidebar-size="sm"] .sidebar-entry:hover .sidebar-menu-label {
+        display: block;
     }
 
-    /* A mask fades the last rows instead of a coloured overlay, so it suits every sidebar theme.
-       Without it the menu just stops at the edge and nothing says it keeps going. */
-    .group[data-sidebar-size="lg"] #scrollbar[data-more-below] .simplebar-content-wrapper {
-        -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
-        mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
-    }
-
-    /* Stops the page behind the drawer scrolling once the menu reaches its end. */
-    #scrollbar .simplebar-content-wrapper {
-        overscroll-behavior: contain;
-    }
-
-    /* Children of a group open under the hovered row on the icon-only rail. */
-    .group[data-sidebar-size="sm"] .group\/sm:hover > [data-nav-submenu] {
+    :root[data-sidebar-size="sm"] .sidebar-entry:hover > .sidebar-submenu {
         position: absolute;
         z-index: 10;
         display: block;
         inset-inline-start: 0.75rem;
-        width: calc(theme('spacing.vertical-menu-sm') * 3.63);
-        padding: 0.25rem 0;
+        width: calc(var(--cp-sidebar-w) * 3.63);
+        padding-block: 0.25rem;
         border-radius: 0 0 0.375rem 0.375rem;
+        opacity: 1;
+        visibility: visible;
         background-color: rgb(var(--sc-vertical-menu-item-bg-hover));
         box-shadow: 0 10px 24px -8px rgb(15 23 42 / 0.45);
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-submenu-list {
+        margin-inline-start: calc(var(--cp-sidebar-w) - 0.75rem);
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-submenu .sidebar-menu-item {
+        margin-inline: 0 0.5rem;
+        padding-inline: 0.625rem;
+    }
+
+    :root[data-sidebar-size="sm"] .sidebar-submenu .sidebar-menu-icon {
+        width: 0.875rem;
+        height: 0.875rem;
     }
 
     /*
@@ -779,10 +1038,6 @@
     }
 
     @media (min-width: 768px) {
-        .ltr\:md\:left-vertical-menu:where([dir=ltr], [dir=ltr] *) {
-            left: 16.25rem !important;
-        }
-
         .ltr\:md\:text-end:where([dir=ltr], [dir=ltr] *) {
             text-align: end
         }
@@ -795,29 +1050,42 @@
             padding-right: 0
         }
 
-        .group[data-sidebar-size=sm] .group-data-\[sidebar-size\=sm\]\:ltr\:md\:left-vertical-menu-sm:where([dir=ltr], [dir=ltr] *) {
-            left: 4.375rem !important;
-        }
-
         .group[data-layout=horizontal][data-sidebar-size=lg] .group-data-\[layout\=horizontal\]\:group-data-\[sidebar-size\=lg\]\:ltr\:md\:ml-auto:where([dir=ltr], [dir=ltr] *) {
             margin-left: auto
-        }
-
-        .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:ltr\:md\:ml-vertical-menu:where([dir=ltr], [dir=ltr] *) {
-            margin-left: 16.25rem
-        }
-
-        /* RTL counterparts. The page content and the footer both
-           ask for these; without them an Arabic control panel had no sidebar
-           offset at all and the sidebar sat on top of the content. */
-        .group[data-sidebar-size=lg] .group-data-\[sidebar-size\=lg\]\:rtl\:md\:mr-vertical-menu:where([dir=rtl], [dir=rtl] *) {
-            margin-right: 16.25rem
         }
 
         .group[data-layout=horizontal] .group-data-\[layout\=horizontal\]\:ltr\:md\:pl-0:where([dir=ltr], [dir=ltr] *) {
             padding-left: 0
         }
     }
+}
+
+/* SimpleBar builds its wrappers at runtime, so no template names these classes and Tailwind
+   purges any rule about them inside a layer; they live out here.
+   SimpleBar stays mounted once the sidebar has been expanded, and its hidden overflow
+   would clip the rail's hover labels to the rail. */
+:root[data-sidebar-size="sm"] #scrollbar .simplebar-wrapper,
+:root[data-sidebar-size="sm"] #scrollbar .simplebar-mask,
+:root[data-sidebar-size="sm"] #scrollbar .simplebar-offset,
+:root[data-sidebar-size="sm"] #scrollbar .simplebar-content-wrapper {
+    overflow: visible !important;
+}
+
+/* The rail scrolls with the page, so its scrollbar would only sit over the hover labels. */
+:root[data-sidebar-size="sm"] #scrollbar .simplebar-track {
+    display: none;
+}
+
+/* A mask fades the last rows instead of a coloured overlay, so it suits every sidebar theme.
+   Without it the menu just stops at the edge and nothing says it keeps going. */
+:root[data-sidebar-size="lg"] #scrollbar[data-more-below] .simplebar-content-wrapper {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent);
+}
+
+/* Stops the page behind the drawer scrolling once the menu reaches its end. */
+#scrollbar .simplebar-content-wrapper {
+    overscroll-behavior: contain;
 }
 
 /* Flash toast entrance. Kept outside the layers so purging never drops it. */

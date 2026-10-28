@@ -34,7 +34,7 @@
     var key = group.getAttribute('data-nav-group-key') || '';
 
     function setOpen(open) {
-      submenu.classList.toggle('hidden', !open);
+      submenu.classList.toggle('is-open', open);
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       // The chevron turns from a class on the button: lucide swaps the <i> for
       // an <svg> of its own, so a reference to the original icon goes stale.
@@ -60,7 +60,7 @@
     }
 
     toggle.addEventListener('click', function () {
-      var open = submenu.classList.contains('hidden');
+      var open = !submenu.classList.contains('is-open');
       setOpen(open);
       remember(key, open);
     });
@@ -72,6 +72,23 @@
       link.classList.add('active');
       link.setAttribute('aria-current', 'page');
     }
+  });
+
+  // Counts come from the page, not the cached menu; a slot with no count stays hidden.
+  var nav = document.getElementById('navbar-nav');
+  var counts = {};
+  try {
+    counts = JSON.parse((nav && nav.getAttribute('data-nav-badges')) || '{}');
+  } catch (e) {
+    // A malformed attribute only costs the badges, not the menu.
+  }
+
+  document.querySelectorAll('[data-nav-badge]').forEach(function (badge) {
+    var count = parseInt(counts[badge.getAttribute('data-nav-badge')], 10);
+    if (!(count > 0)) return;
+
+    badge.textContent = count > 99 ? '99+' : String(count);
+    badge.hidden = false;
   });
 
   // Reveal the active item after page-load initialization.

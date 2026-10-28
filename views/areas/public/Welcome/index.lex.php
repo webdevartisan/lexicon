@@ -9,8 +9,8 @@
 {% block body %}
 <?php
 $choices = [
-    ['href' => lurl('/dashboard/blog/new'), 'title' => 'setup.welcome.startTitle', 'text' => 'setup.welcome.startText', 'key' => 'start'],
-    ['href' => lurl('/').'?welcome=1', 'title' => 'setup.welcome.readTitle', 'text' => 'setup.welcome.readText', 'key' => 'read'],
+    ['href' => lurl('/start'), 'title' => 'setup.welcome.startTitle', 'text' => 'setup.welcome.startText', 'key' => 'start', 'panel' => true],
+    ['href' => lurl('/').'?welcome=1', 'title' => 'setup.welcome.readTitle', 'text' => 'setup.welcome.readText', 'key' => 'read', 'panel' => false],
 ];
 ?>
 <section class="lx-wrap lx-account-narrow lx-welcome">
@@ -21,7 +21,7 @@ $choices = [
     <ul class="lx-welcome-choices">
         <?php foreach ($choices as $choice) { ?>
         <li>
-            <a class="lx-welcome-choice" href="<?= e($choice['href']) ?>" data-welcome-choice="<?= e($choice['key']) ?>">
+            <a class="lx-welcome-choice" href="<?= e($choice['href']) ?>" data-welcome-choice="<?= e($choice['key']) ?>"<?= $choice['panel'] ? ' data-panel' : '' ?>>
                 <span class="lx-welcome-choice-title"><?= e($t($choice['title'])) ?></span>
                 <span class="lx-welcome-choice-text"><?= e($t($choice['text'])) ?></span>
             </a>

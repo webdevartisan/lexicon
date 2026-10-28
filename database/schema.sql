@@ -728,7 +728,7 @@ COMMENT='Per-blog email subscribers for new post notifications';
 CREATE TABLE IF NOT EXISTS guided_setup_marks (
     user_id INT NOT NULL,
     blog_id INT NOT NULL,
-    mark VARCHAR(32) NOT NULL COMMENT 'hidden, dismissed, link_copied, look_chosen, subscribers_seen, profile_saved',
+    mark VARCHAR(32) NOT NULL COMMENT 'hidden, dismissed, link_copied, look_chosen, profile_saved',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, blog_id, mark),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

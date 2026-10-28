@@ -6,7 +6,8 @@
 //
 // Expects $viewer (ViewerContext, a global on every page). Optional:
 // $userMenuClass for the caller's layout classes, $userMenuReturn for where
-// sign-out comes back to.
+// sign-out comes back to, $userMenuHome to add a link to the platform's home
+// page (blog themes, where nothing else leads back to it).
 $umTr = isset($t) && is_callable($t) ? $t : static fn (string $key, array $p = []): string => $key;
 $umViewer = $viewer ?? [];
 $umUnread = (int) ($umViewer['unread_replies'] ?? 0);
@@ -32,6 +33,7 @@ $umIcons = [
     'saved' => '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
     'replies' => $notificationIcons['message-circle'],
     'subscriptions' => '<path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/>',
+    'home' => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     'dashboard' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
     'admin' => '<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
     'settings' => $notificationIcons['settings'],
@@ -85,6 +87,9 @@ $umIcon = static function (string $name) use ($umIcons): void { ?>
         <hr />
 
         <ul>
+            <?php if (!empty($userMenuHome)) { ?>
+            <li><a href="<?= e(lurl('/')) ?>"><?php $umIcon('home'); ?><span><?= e($umTr('header.siteHome', ['site' => (string) site_setting('site_name', 'Lexicon')])) ?></span></a></li>
+            <?php } ?>
             <?php if (empty($umViewer['is_reader'])) { ?>
             <li><a href="<?= e(lurl('/dashboard')) ?>"><?php $umIcon('dashboard'); ?><span><?= e($umTr('header.dashboard')) ?></span></a></li>
             <?php } ?>

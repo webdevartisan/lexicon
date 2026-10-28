@@ -24,7 +24,7 @@ test('the modal script falls back to live routes, never the removed login endpoi
     expect($script)->not->toContain('/login/submit');
 
     preg_match_all("#\|\| '(/[a-z/]+)'#", $script, $fallbacks);
-    foreach (array_diff($fallbacks[1], ['/auth/nav']) as $path) {
+    foreach ($fallbacks[1] as $path) {
         expect($router->match($path, 'POST'))->not->toBeFalse("{$path} is not a POST route");
     }
 });

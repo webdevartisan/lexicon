@@ -38,6 +38,8 @@
 
             if (!loaded) {
                 var script = document.createElement('script');
+                // An added script runs whenever it arrives; this keeps the page's order, so a helper loads before its user.
+                script.async = false;
                 script.src = tag.src;
                 document.head.appendChild(script);
             }

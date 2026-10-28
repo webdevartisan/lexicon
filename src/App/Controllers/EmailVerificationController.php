@@ -47,9 +47,13 @@ final class EmailVerificationController extends AppController
 
         $this->flash('success', chrome_translate('auth.verifyDone'));
 
-        // A comment held back while the address was unproven posts now, if this is the same browser.
+        // Same browser: post a comment held back while the address was unproven,
+        // otherwise go back to the page they signed up from.
         $signedIn = auth()->user();
         if ($signedIn !== null && (int) $signedIn['id'] === $userId) {
+            $back = safe_return_to((string) $this->session->get(EmailVerificationService::RETURN_SESSION_KEY, ''));
+            $this->session->remove(EmailVerificationService::RETURN_SESSION_KEY);
+
             $resume = $this->comments->resumePending($this->users->find($userId), $this->request->ip());
             if ($resume !== null) {
                 $this->flash($resume['ok'] ? 'success' : 'error', $resume['message']);
@@ -57,7 +61,7 @@ final class EmailVerificationController extends AppController
                 return $this->redirect($resume['path']);
             }
 
-            return $this->redirect(lurl('/'));
+            return $this->redirect($back ?? lurl('/'));
         }
 
         return $this->redirect(lurl('/login'));
