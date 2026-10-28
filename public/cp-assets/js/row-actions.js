@@ -72,7 +72,8 @@
             return;
         }
 
-        if (open && !open.menu.contains(e.target)) close(false);
+        // A plain button item hands off to a page script, such as a dialog, so the menu has done its job.
+        if (open && (!open.menu.contains(e.target) || e.target.closest('button[type="button"]'))) close(false);
     });
 
     document.addEventListener('keydown', function (e) {

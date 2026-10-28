@@ -367,6 +367,9 @@ $router->group([
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/rename', ['controller' => 'PostRenameController', 'action' => 'rename', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'suggest', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'store', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostStatusController', 'action' => 'makePublic', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostStatusController', 'action' => 'makePrivate', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostStatusController', 'action' => 'unlist', 'method' => 'POST']);

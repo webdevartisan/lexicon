@@ -168,10 +168,11 @@ final class PostController extends AppController
             workflowState: $workflowFilter,
         );
 
+        $canCreate = Gate::allows('createPost', $blog, $user);
         $views = $this->postViews($blog, $result['data']);
         foreach ($result['data'] as &$p) {
             $p['tags'] = $this->model->tags((int) $p['id']);
-            $p['can'] = $this->postAbilities($p, $blog, $user);
+            $p['can'] = $this->postAbilities($p, $blog, $user, $canCreate);
             $p['views'] = (int) ($views[(int) $p['id']]['views'] ?? 0);
         }
         unset($p);
@@ -193,7 +194,8 @@ final class PostController extends AppController
             'returnToken' => $returnToken,
             'blogSlug' => $blog->slug(),
             'managesAll' => $managesAll,
-            'canCreate' => Gate::allows('createPost', $blog, $user),
+            'canCreate' => $canCreate,
+            'blogId' => $blogId,
             'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'q' => $q,
             'tableSort' => $tableSort,
@@ -227,19 +229,23 @@ final class PostController extends AppController
      *
      * @param  array<string, mixed>  $post  List row
      * @param  array<string, mixed>  $user
-     * @return array{update: bool, open: bool, publish: bool, delete: bool}
+     * @param  bool  $canCreate  Whether the user may write in this blog, which copying needs
+     * @return array{update: bool, open: bool, publish: bool, delete: bool, duplicate: bool}
      */
-    private function postAbilities(array $post, BlogResource $blog, array $user): array
+    private function postAbilities(array $post, BlogResource $blog, array $user, bool $canCreate): array
     {
         $resource = new PostResource($post, $blog);
         $update = Gate::allows('update', $resource, $user);
+        $own = $resource->authorId() === (int) $user['id'];
 
         return [
             'update' => $update,
             // Writers can still open their own locked posts; the edit page shows them read-only.
-            'open' => $update || $resource->authorId() === (int) $user['id'],
+            'open' => $update || $own,
             'publish' => Gate::allows('publish', $resource, $user),
             'delete' => Gate::allows('delete', $resource, $user),
+            'duplicate' => $canCreate && $resource->status() !== 'moderated'
+                && ($own || Gate::allows('view', $resource, $user)),
         ];
     }
 

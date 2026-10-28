@@ -253,7 +253,23 @@
                 "delete": "Delete",
                 "deleteConfirm": "Permanently delete {n}? This cannot be undone."
             },
-            "selectPost": "Select post: {title}"
+            "selectPost": "Select post: {title}",
+            "rename": {
+                "button": "Rename",
+                "label": "Post title",
+                "length": "Use 2 to 100 characters for the title.",
+                "failed": "The title could not be saved. Try again."
+            },
+            "duplicate": {
+                "action": "Duplicate",
+                "title": "Duplicate post",
+                "confirm": "Duplicate",
+                "cancel": "Cancel",
+                "titleLabel": "Title",
+                "linkLabel": "Post link",
+                "loading": "Preparing the copy…",
+                "failed": "This post could not be copied right now."
+            }
         },
         "overview": {
             "title": "Overview",
@@ -390,7 +406,11 @@
                 "makePrivateConfirm": "Make this post private? Only the blog's team will be able to see it.",
                 "unlistConfirm": "Hide this post from listings? It stays reachable by direct link, but drops out of the blog, search and discover."
             },
-            "actionsMenu": "Post actions"
+            "featured": "Featured on homepage"
+        },
+        "rowActions": {
+            "label": "Actions for {title}",
+            "newTab": "(opens in a new tab)"
         },
         "paginator": {
             "ariaLabels": {

@@ -13,6 +13,7 @@
  *     newTab  open the href in a new tab, announced to screen readers
  *     post    form action, for actions that change something (sent with CSRF)
  *     confirm question asked before a post action is sent
+ *     data    data attributes for a plain button that a page script handles, such as opening a dialog
  *     danger  destructive styling, grouped after a divider at the end
  *     can     false leaves the item out, so the menu only offers what the viewer may do
  */
@@ -23,11 +24,13 @@ $safe = array_values(array_filter($items, static fn (array $item): bool => empty
 $destructive = array_values(array_filter($items, static fn (array $item): bool => !empty($item['danger'])));
 
 $menuId = 'row-actions-'.bin2hex(random_bytes(4));
+$menuLabel = $t('components.rowActions.label', ['title' => $title]);
+$newTabNote = '<span class="sr-only"> '.e($t('components.rowActions.newTab')).'</span>';
 $itemClass = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors focus:outline-none';
 $safeClass = $itemClass.' text-slate-600 hover:bg-slate-50 focus:bg-slate-100 dark:text-zink-200 dark:hover:bg-zink-600 dark:focus:bg-zink-600';
 $dangerClass = $itemClass.' text-red-600 hover:bg-red-50 focus:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus:bg-red-500/10';
 
-$renderItem = static function (array $item, string $class): string {
+$renderItem = static function (array $item, string $class) use ($newTabNote): string {
     $iconName = (string) ($item['icon'] ?? 'circle');
     $icon = fragment()->remember(
         'lucide:row-item:'.$iconName,
@@ -46,10 +49,19 @@ $renderItem = static function (array $item, string $class): string {
             .'</form>';
     }
 
-    $newTab = empty($item['newTab']) ? '' : ' target="_blank" rel="noopener"';
-    $newTabNote = empty($item['newTab']) ? '' : '<span class="sr-only"> (opens in a new tab)</span>';
+    if (!empty($item['data'])) {
+        $attributes = '';
+        foreach ($item['data'] as $name => $value) {
+            $attributes .= ' data-'.e((string) $name).'="'.e((string) $value).'"';
+        }
 
-    return '<a href="'.e(lurl((string) ($item['href'] ?? '#'))).'" role="menuitem" tabindex="-1"'.$newTab.' class="'.$class.'">'.$icon.$label.$newTabNote.'</a>';
+        return '<button type="button" role="menuitem" tabindex="-1"'.$attributes.' class="'.$class.'">'.$icon.$label.'</button>';
+    }
+
+    $newTab = empty($item['newTab']) ? '' : ' target="_blank" rel="noopener"';
+    $note = empty($item['newTab']) ? '' : $newTabNote;
+
+    return '<a href="'.e(lurl((string) ($item['href'] ?? '#'))).'" role="menuitem" tabindex="-1"'.$newTab.' class="'.$class.'">'.$icon.$label.$note.'</a>';
 };
 ?>
 <?php if ($items !== []) { ?>
@@ -59,13 +71,13 @@ $renderItem = static function (array $item, string $class): string {
           aria-haspopup="menu"
           aria-expanded="false"
           aria-controls="<?= e($menuId) ?>"
-          aria-label="<?= e('Actions for '.$title) ?>"
+          aria-label="<?= e($menuLabel) ?>"
           class="p-2 text-slate-500 rounded-md transition-colors hover:text-custom-500 hover:bg-custom-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 dark:text-zink-300 dark:hover:bg-custom-500/10">
     {% cache 'lucide:more-vertical:row' ttl=31536000 %}<i data-lucide="more-vertical" class="size-4" aria-hidden="true"></i>{% endcache %}
   </button>
   <div id="<?= e($menuId) ?>"
        role="menu"
-       aria-label="<?= e('Actions for '.$title) ?>"
+       aria-label="<?= e($menuLabel) ?>"
        hidden
        data-row-actions-menu
        class="z-[1050] w-48 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-zink-500 dark:bg-zink-700">

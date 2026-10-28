@@ -259,29 +259,14 @@ if ($q !== '') {
                         $postId = (int) $post['id'];
                         $postStatus = (string) ($post['status'] ?? 'draft');
                         $postVisibility = (string) ($post['visibility'] ?? 'public');
-                        $can = ($post['can'] ?? []) + ['update' => true, 'open' => true, 'publish' => true, 'delete' => true];
-                        $editHref = '/dashboard/post/'.$postId.'/edit?r='.urlencode($returnToken);
-                        $publicHref = $postStatus === 'published' && !empty($post['slug'])
-                            ? '/blog/'.rawurlencode((string) $blogSlug).'/'.rawurlencode((string) $post['slug'])
-                            : '';
+                        $can = ($post['can'] ?? []) + ['update' => true, 'open' => true];
+                        $editHref = lurl('/dashboard/post/'.$postId.'/edit?r='.urlencode($returnToken));
                         $rowTitle = (string) $post['title'];
                         [$visibilityStatus, $visibilityLabel] = match ($postVisibility) {
                             'private' => ['draft', $t('components.postCard.visibility.private')],
                             'unlisted' => ['pending', $t('components.postCard.visibility.unlisted')],
                             default => ['published', $t('dashboard.posts.view.col.public')],
                         };
-                        $dashPost = static fn (string $to): string => buildLocalizedUrl('/dashboard/post/'.$postId.'/'.$to);
-                        $rowActions = [
-                            ['label' => $t('components.postCard.tooltips.edit'), 'icon' => 'pencil', 'href' => $editHref, 'can' => $can['update']],
-                            ['label' => $t('components.postCard.actions.preview'), 'icon' => 'external-link', 'href' => $publicHref, 'newTab' => true, 'can' => $publicHref !== ''],
-                            ['label' => $t('components.postCard.tooltips.publish'), 'icon' => 'send', 'post' => $dashPost('publish'), 'can' => $can['publish'] && in_array($postStatus, ['draft', 'archived', 'scheduled'], true)],
-                            ['label' => $t('components.postCard.tooltips.draft'), 'icon' => 'pencil-ruler', 'post' => $dashPost('draft'), 'can' => $can['publish'] && in_array($postStatus, ['archived', 'published', 'scheduled'], true)],
-                            ['label' => $t('components.postCard.tooltips.archive'), 'icon' => 'archive', 'post' => $dashPost('archive'), 'can' => $can['publish'] && $postStatus !== 'archived'],
-                            ['label' => $t('components.postCard.visibility.makePublic'), 'icon' => 'globe', 'post' => $dashPost('make-public'), 'confirm' => $t('components.postCard.visibility.makePublicConfirm'), 'can' => $can['publish'] && $postVisibility !== 'public'],
-                            ['label' => $t('components.postCard.visibility.makePrivate'), 'icon' => 'lock', 'post' => $dashPost('make-private'), 'confirm' => $t('components.postCard.visibility.makePrivateConfirm'), 'can' => $can['publish'] && $postVisibility !== 'private'],
-                            ['label' => $t('components.postCard.visibility.unlist'), 'icon' => 'eye-off', 'post' => $dashPost('unlist'), 'confirm' => $t('components.postCard.visibility.unlistConfirm'), 'can' => $can['publish'] && $postVisibility !== 'unlisted'],
-                            ['label' => $t('components.postCard.tooltips.delete'), 'icon' => 'trash-2', 'post' => $dashPost('destroy').'?r='.urlencode($returnToken), 'confirm' => $t('components.postCard.deleteConfirm', ['title' => $rowTitle]), 'danger' => true, 'can' => $can['delete']],
-                        ];
                         ?>
                         <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-zink-700/40">
                             <?php if ($managesAll) { ?>
@@ -290,12 +275,25 @@ if ($q !== '') {
                                     aria-label="<?= e($t('dashboard.posts.selectPost', ['title' => $rowTitle])) ?>">
                             </td>
                             <?php } ?>
-                            <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50 max-w-[14rem] truncate">
-                                <?php if ($can['open']) { ?>
-                                <a href="<?= e(lurl($editHref)) ?>" class="hover:text-custom-500 transition-colors"><?= e(truncate($rowTitle, 70)) ?></a>
-                                <?php } else { ?>
-                                <?= e(truncate($rowTitle, 70)) ?>
-                                <?php } ?>
+                            <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
+                                <div class="flex flex-wrap items-center gap-1 max-w-[16rem]" data-post-title data-title="<?= e($rowTitle) ?>" data-rename-url="<?= e(lurl('/dashboard/post/'.$postId.'/rename')) ?>">
+                                    <?php if (!empty($post['is_featured'])) { ?>
+                                    {% cmp="featured-star" %}
+                                    <?php } ?>
+                                    <span class="flex-1 min-w-0 truncate" data-post-title-text>
+                                        <?php if ($can['open']) { ?>
+                                        <a href="<?= e($editHref) ?>" class="hover:text-custom-500 transition-colors"><?= e($rowTitle) ?></a>
+                                        <?php } else { ?>
+                                        <?= e($rowTitle) ?>
+                                        <?php } ?>
+                                    </span>
+                                    <?php if ($can['update']) { ?>
+                                    <button type="button" data-post-rename title="<?= e($t('dashboard.posts.rename.button')) ?>" aria-label="<?= e($t('dashboard.posts.rename.button')) ?>"
+                                        class="shrink-0 p-1 rounded-md text-slate-400 hover:text-custom-500 hover:bg-slate-100 dark:text-zink-300 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+                                        {% cache 'lucide:pencil:rename' ttl=31536000 %}<i data-lucide="pencil" class="size-3.5" aria-hidden="true"></i>{% endcache %}
+                                    </button>
+                                    <?php } ?>
+                                </div>
                             </td>
                             <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300">
                                 <?= !empty($post['author_handle']) ? '@'.e((string) $post['author_handle']) : '—' ?>
@@ -310,7 +308,7 @@ if ($q !== '') {
                             <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($post['updated_at'] ?? $post['created_at'] ?? null, 'M j, Y')) ?></td>
                             <td class="px-3.5 py-2.5">
                                 <div class="flex items-center justify-end gap-1">
-                                    {% cmp="row-actions" title="{$rowTitle}" items="{$rowActions}" %}
+                                    {% cmp="post-actions" post="{$post}" blogSlug="{$blogSlug}" returnToken="{$returnToken}" %}
                                 </div>
                             </td>
                         </tr>
@@ -349,8 +347,41 @@ if ($q !== '') {
     {% endif %}
 
 </div>
+
+<div hidden data-post-tools
+     data-rename-label="<?= e($t('dashboard.posts.rename.label')) ?>"
+     data-rename-length="<?= e($t('dashboard.posts.rename.length')) ?>"
+     data-rename-failed="<?= e($t('dashboard.posts.rename.failed')) ?>"><?= csrf_field() ?></div>
+
+<?php if ($canCreate) { ?>
+<?php
+$duplicateTitle = $t('dashboard.posts.duplicate.title');
+$duplicateConfirm = $t('dashboard.posts.duplicate.confirm');
+$cancelLabel = $t('dashboard.posts.duplicate.cancel');
+$duplicateBody = '<div data-duplicate-slot></div>';
+$titleLabel = $t('dashboard.posts.duplicate.titleLabel');
+$linkLabel = $t('dashboard.posts.duplicate.linkLabel');
+$linkPrefix = e(base_url().'/blog/'.$blogSlug.'/');
+?>
+{% cmp="modal" id="postDuplicateModal" title="{$duplicateTitle}" icon="copy" body="{$duplicateBody}" form="postDuplicateForm" confirmText="{$duplicateConfirm}" cancelText="{$cancelLabel}" %}
+<template id="postDuplicateTemplate"
+          data-loading="<?= e($t('dashboard.posts.duplicate.loading')) ?>"
+          data-failed="<?= e($t('dashboard.posts.duplicate.failed')) ?>">
+    <form id="postDuplicateForm" method="POST" class="space-y-4 text-left"
+          data-check-url="<?= e(lurl('/dashboard/slug-check').'?type=post&blog_id='.(int) $blogId) ?>">
+        <?= csrf_field() ?>
+        {% cmp="input" type="text" name="title" label="{$titleLabel}" required="true" %}
+        {% cmp="input" type="text" name="slug" label="{$linkLabel}" prefix="{$linkPrefix}" required="true" %}
+    </form>
+</template>
+<?php } ?>
 {% endblock %}
 
 {% block scripts %}
 <script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/post-rename.js')) ?>"></script>
+<?php if ($canCreate) { ?>
+<script src="<?= e(versioned_asset('/cp-assets/js/slug-field.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/post-duplicate.js')) ?>"></script>
+<?php } ?>
 {% endblock %}
