@@ -47,11 +47,11 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             <?php $title = $post['title'] ?? ''; ?>
             {% cmp="input" type="text" label="title" value="{$title}" %}
 
-            {% if (($postStatus === 'draft') || ($postStatus === 'pending')): %}
+            <?php if (!empty($linkEditable)) { ?>
             <?php $slug = $post['slug'] ?? ''; ?>
-            <?php $baseUrl = base_url().'/blog/'.$blog['blog_slug'].'/' ?? '/'; ?>
+            <?php $baseUrl = base_url().'/blog/'.$blog['blog_slug'].'/'; ?>
             {% cmp="input" type="text" label="Post Link" name="slug" value="{$slug}" placeholder="a-short-url-friendly-title" prefix="{$baseUrl}" underlabel="Lowercase letters, numbers, and hyphens only."%}
-            {% endif; %}
+            <?php } ?>
 
             <div>
               <?php $content = old('content') ?? $post['content'] ?? ''; ?>

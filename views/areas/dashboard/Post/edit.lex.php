@@ -43,6 +43,15 @@
 <script src="<?= e(versioned_asset('/cp-assets/js/pages/post.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
+<?php if (!empty($linkEditable)) { ?>
+<?php $slugCheckUrl = lurl('/dashboard/slug-check').'?type=post&blog_id='.(int) $post['blog_id'].'&except='.(int) $post['id']; ?>
+<script src="<?= e(versioned_asset('/cp-assets/js/slug-field.js')) ?>"></script>
+<script nonce="<?= csp_nonce() ?>">
+  document.addEventListener('DOMContentLoaded', function () {
+    SlugField.bind({ source: 'title', target: 'slug', min: 2, max: 100, checkUrl: <?= json_encode($slugCheckUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?> });
+  });
+</script>
+<?php } ?>
 <?php /* Last, so it reads the fields after the other scripts have filled them in. */ ?>
 <script src="<?= e(versioned_asset('/cp-assets/js/unsaved-changes.js')) ?>"></script>
 {% endblock %}

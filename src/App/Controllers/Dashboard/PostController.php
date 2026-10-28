@@ -284,6 +284,7 @@ final class PostController extends AppController
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
+            'linkEditable' => true,
             'workflowEnabled' => $workflowEnabled,
             'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
@@ -464,6 +465,7 @@ final class PostController extends AppController
             'workflowState' => $workflowState,
             'status' => $status,
             'autosave' => $post->acceptsAutosave(),
+            'linkEditable' => $post->linkEditable(),
             'workflowEnabled' => $workflowEnabled,
             'canRequestReview' => $canRequestReview,
             'latestReview' => $latestReview,
@@ -504,6 +506,28 @@ final class PostController extends AppController
             'postUrl' => base_url().'/blog/'.$blog->slug().'/'.$post->slug(),
             'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
         ]);
+    }
+
+    /**
+     * Keep the typed address only while the post's link may still change, with a
+     * number added when another post in the blog already uses it.
+     *
+     * @param  array<string, mixed>  $data  Validated editor fields
+     * @param  PostResource  $post  The post being saved
+     * @return array<string, mixed> The fields, with slug only when it may be saved
+     */
+    private function withRequestedSlug(array $data, PostResource $post): array
+    {
+        $slug = (string) ($data['slug'] ?? '');
+        unset($data['slug']);
+
+        if ($slug === '' || !$post->linkEditable()) {
+            return $data;
+        }
+
+        $data['slug'] = $this->model->availableSlug((int) $post->blogId(), $slug, (int) $post->id());
+
+        return $data;
     }
 
     /**
@@ -553,6 +577,7 @@ final class PostController extends AppController
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
+            'slug' => 'slug|min:2|max:100',
             'content' => 'max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
@@ -561,7 +586,7 @@ final class PostController extends AppController
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
 
-        $newData = $validator->validated();
+        $newData = $this->withRequestedSlug($validator->validated(), $post);
         $newData['content'] = $this->contentSanitizer->clean((string) $newData['content']);
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
         $newData = $this->normalizeSeoFields($newData);

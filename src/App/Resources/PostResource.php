@@ -85,6 +85,22 @@ class PostResource
         return in_array($this->status(), ['draft', 'pending'], true);
     }
 
+    /**
+     * A post's address may change until readers have seen it, so links already
+     * shared or indexed keep working. Moving a live post back to draft keeps its
+     * publish date, which is how a pulled back post is told apart from a new one.
+     */
+    public function linkEditable(): bool
+    {
+        if (!$this->acceptsAutosave()) {
+            return false;
+        }
+
+        $publishedAt = $this->publishedAt();
+
+        return $publishedAt === null || strtotime($publishedAt.' UTC') > time();
+    }
+
     public function comments_enabled(): int
     {
         return $this->data['comments_enabled'];

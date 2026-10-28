@@ -79,8 +79,11 @@ final class PostAutosaveService
                 ];
             }
 
-            // Don't allow slug changes on autosave
-            unset($data['slug']);
+            if (!empty($data['slug']) && $post->linkEditable()) {
+                $data['slug'] = $this->posts->availableSlug($post->blogId(), (string) $data['slug'], $postId);
+            } else {
+                unset($data['slug']);
+            }
 
             $rejection = $this->outsideMediaRejection((string) ($data['content'] ?? ''), $post->content());
             if ($rejection !== null) {
@@ -88,7 +91,7 @@ final class PostAutosaveService
             }
 
             $this->posts->update($postId, $data);
-            $savedSlug = $post->slug();
+            $savedSlug = (string) ($data['slug'] ?? $post->slug());
 
         } else {
             if ($blogId === null) {

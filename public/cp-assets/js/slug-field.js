@@ -147,16 +147,15 @@
             timer = setTimeout(function () { askServer(slug); }, CHECK_DELAY);
         }
 
-        function lock(savedSlug) {
+        function saved(savedSlug) {
             clearTimeout(timer);
             latest++;
             target.value = savedSlug;
-            target.readOnly = true;
-            paint('ok', 'Saved as ' + savedSlug + '. The address is fixed once the draft exists.', false);
+            paint('ok', 'Saved as ' + savedSlug + '. You can change it until the post is published.', false);
         }
 
         source.addEventListener('input', function () {
-            if (typedByHand || target.readOnly) return;
+            if (typedByHand) return;
             target.value = slugify(source.value);
             show();
         });
@@ -167,7 +166,7 @@
         });
 
         target.addEventListener('slug:saved', function (e) {
-            if (e.detail && e.detail.slug) lock(e.detail.slug);
+            if (e.detail && e.detail.slug) saved(e.detail.slug);
         });
 
         if (target.value !== '') show();

@@ -527,7 +527,11 @@ class Validator
 
     protected function validateSlug(mixed $value, ?string $param, string $field): bool
     {
-        if (!is_string($value) || trim($value) === '') {
+        if ($value === null || $value === '') {
+            return true; // skip validation for empty unless 'required' is also set
+        }
+
+        if (!is_string($value)) {
             return false;
         }
 
