@@ -42,7 +42,7 @@ $title = e($post['title'] ?? 'Untitled');
       <?php if ($author) { ?><span><?= translate_html('closest::post.by', ['author' => $author]) ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
         <?= e($t('closest::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -139,7 +139,7 @@ $title = e($post['title'] ?? 'Untitled');
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
           <?= e($t('closest::post.read')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>

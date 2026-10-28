@@ -6,7 +6,7 @@
 .tour-progress {
   position: fixed;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   width: 3px;
   z-index: 150;
@@ -24,7 +24,7 @@
 
 @media (max-width: 800px) {
   .tour-progress {
-    right: 0;
+    inset-inline-end: 0;
     bottom: auto;
     width: auto;
     height: 3px;
@@ -143,8 +143,8 @@
 /* the opening letter, set large in the display didone; post.js picks the
    first real paragraph since editors nest content arbitrarily deep */
 .work-essay .has-dropcap::first-letter {
-  float: left;
-  padding-right: 0.14em;
+  float: inline-start;
+  padding-inline-end: 0.14em;
   font-family: var(--disp);
   font-weight: 540;
   font-size: 4.1em;
@@ -183,7 +183,7 @@
 .work-essay blockquote {
   margin: 2em 0;
   padding: 0.35em 0 0.35em 1.6em;
-  border-left: 2px solid var(--viridian);
+  border-inline-start: 2px solid var(--viridian);
   font-family: var(--disp);
   font-style: italic;
   font-weight: 460;
@@ -207,7 +207,7 @@
 .work-essay ul,
 .work-essay ol {
   margin: 0 0 1.35em;
-  padding-left: 1.4em;
+  padding-inline-start: 1.4em;
 }
 
 .work-essay li {

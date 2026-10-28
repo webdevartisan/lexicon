@@ -32,7 +32,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     </div>
 
     <div class="hero-stage">
-      <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
+      <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
       <span class="proof-stamp" aria-hidden="true">
         <?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('offset::home.tagline')) ?>
       </span>
@@ -46,7 +46,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
           <?= e($t('offset::home.readLead')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>
@@ -91,7 +91,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
           <?= e($t('offset::home.readPost')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
     </div>
@@ -150,7 +150,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       <span class="index-count" id="index-footer-count"><?= translate_html('offset::home.showing', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
         <span id="index-footer-label"><?= e($t('offset::home.openAll')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -206,7 +206,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
             autocomplete="email" maxlength="255" required />
           <button type="submit">
             <?= e($t('offset::home.subscribe')) ?>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
         <span class="news-fine"><?= e($t('offset::home.newsFine')) ?></span>

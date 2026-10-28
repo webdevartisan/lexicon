@@ -77,7 +77,7 @@
   text-transform: uppercase;
   color: var(--moss);
   vertical-align: 0.45em;
-  margin-right: 0.4rem;
+  margin-inline-end: 0.4rem;
 }
 
 .log-rows .log-year:first-child {

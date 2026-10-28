@@ -13,9 +13,9 @@
   --rule: rgba(23, 25, 28, 0.16);
   --rule-strong: rgba(23, 25, 28, 0.4);
 
-  --disp: "Archivo", "Arial Narrow", Impact, sans-serif;
-  --sans: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --mono: "Spline Sans Mono", "SFMono-Regular", Consolas, monospace;
+  --disp: "Archivo", "IBM Plex Sans Arabic", "Arial Narrow", Impact, sans-serif;
+  --sans: "Schibsted Grotesk", "IBM Plex Sans Arabic", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Spline Sans Mono", "IBM Plex Sans Arabic", "SFMono-Regular", Consolas, monospace;
 
   --type-mono: 0.72rem;
   --type-small: 0.95rem;
@@ -375,15 +375,15 @@ a {
   padding: 0.85rem 1.1rem;
   background: var(--porcelain);
   border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--slate);
+  border-inline-start: 4px solid var(--slate);
   box-shadow: 6px 6px 0 var(--tint);
   font-size: var(--type-small);
 }
 
-.alert-success { border-left-color: #1e9e5a; }
-.alert-danger { border-left-color: #d0342c; }
-.alert-warning { border-left-color: #f2c200; }
-.alert-info { border-left-color: var(--cobalt); }
+.alert-success { border-inline-start-color: #1e9e5a; }
+.alert-danger { border-inline-start-color: #d0342c; }
+.alert-warning { border-inline-start-color: #f2c200; }
+.alert-info { border-inline-start-color: var(--cobalt); }
 
 /* ---------- masthead ---------- */
 
@@ -473,6 +473,7 @@ a {
 }
 
 .nav-pill {
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--type-mono);
   letter-spacing: 0.16em;
@@ -528,8 +529,8 @@ a {
   .nav {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     flex-direction: column;
     align-items: flex-start;
     gap: 0;
@@ -654,3 +655,18 @@ footer.site {
 }
 
 /* ---------- language switcher ---------- */
+
+/* ---------- right-to-left ---------- */
+
+/* Joined scripts come apart when letter-spaced, and most labels here set their own tracking */
+:lang(ar) {
+  letter-spacing: normal !important;
+}
+
+.arrow:dir(rtl) {
+  scale: -1 1;
+}
+
+.press-progress span:dir(rtl) {
+  transform-origin: 100% 50%;
+}

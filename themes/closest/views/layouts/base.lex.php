@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#dispatches';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('closest::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Closest'])) ?>">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('closest::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Closest'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Closest') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -60,7 +60,7 @@
     // sheet title. The grid ref is a stable hash of the slug, pure decoration.
     $gridRef = strtoupper(substr(dechex(crc32((string) ($blog['blog_slug'] ?? 'closest'))), 0, 4));
   ?>
-  <footer class="sheet-margin">
+  <footer class="sheet-margin" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       <div class="sheet-row" aria-hidden="true">
         <span class="scale-bar">
@@ -73,11 +73,11 @@
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-sheet-wrap" aria-hidden="true">
-        <div class="foot-sheet"><?= e($user['blog_name'] ?? 'Closest') ?></div>
+        <div class="foot-sheet" dir="auto"><?= e($user['blog_name'] ?? 'Closest') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
         <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>

@@ -97,7 +97,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
           <?= e($t('nocturne::home.readPost')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
 
         <?php if ($fAuthor) { ?>
@@ -146,7 +146,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
       <span class="index-count" id="index-footer-count"><?= translate_html('nocturne::home.showing', ['shown' => sprintf('%02d', 1 + count($indexPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
         <span id="index-footer-label"><?= e($t('nocturne::home.openAll')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -185,7 +185,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
       <span class="nightcap-source"><?= translate_html('nocturne::home.nightcapSource', ['title' => '<a href="'.$ncUrl.'"><em>'.$ncTitle.'</em></a>', 'author' => $ncAuthor]) ?></span>
       <a href="<?= $ncUrl ?>" class="link-arrow">
         <?= e($t('nocturne::home.pour')) ?>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -235,7 +235,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
             autocomplete="email" maxlength="255" required />
           <button type="submit">
             <?= e($t('nocturne::home.subscribe')) ?>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
         <span class="nightletter-fine"><?= e($t('nocturne::home.newsFine')) ?></span>

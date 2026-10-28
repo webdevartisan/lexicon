@@ -21,13 +21,13 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#nightletter';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('nocturne::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Nocturne'])) ?>">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('nocturne::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Nocturne'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Nocturne') ?>" style="max-height:38px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
-          <span class="wordmark-dot" aria-hidden="true"></span><?= e($user['blog_name'] ?? 'Nocturne') ?>
+          <span class="wordmark-dot" aria-hidden="true"></span><span class="wordmark-name"><?= e($user['blog_name'] ?? 'Nocturne') ?></span>
         <?php } ?>
       </a>
 
@@ -54,7 +54,7 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       <div class="foot-lamp" aria-hidden="true"></div>
 
@@ -65,11 +65,11 @@
       </div>
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'Nocturne') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'Nocturne') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Nocturne') ?>.</span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Nocturne') ?>.</span>
         <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>

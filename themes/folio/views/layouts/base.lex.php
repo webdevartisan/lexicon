@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#newsletter';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('folio::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Folio'])) ?>">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('folio::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Folio'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Folio') ?>" style="max-height:40px;height:auto;width:auto;object-fit:contain;filter:none;">
         <?php } else { ?>
@@ -54,16 +54,16 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'FOLIO') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'FOLIO') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Folio') ?>.</span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Folio') ?>.</span>
         <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>

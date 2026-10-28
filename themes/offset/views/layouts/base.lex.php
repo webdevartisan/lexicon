@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#newsletter';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('offset::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Offset'])) ?>">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('offset::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Offset'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Offset') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -55,7 +55,7 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <?php
       // Printers run a control strip on every sheet to check ink coverage;
       // ours doubles as the footer's only decoration.
@@ -75,11 +75,11 @@
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'OFFSET') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'OFFSET') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Offset') ?>.</span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Offset') ?>.</span>
         <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>

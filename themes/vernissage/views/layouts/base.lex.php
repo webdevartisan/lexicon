@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#private-view';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($t('vernissage::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Vernissage'])) ?>">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('vernissage::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Vernissage'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Vernissage') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -55,7 +55,7 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       <div class="foot-ornament" aria-hidden="true">
         <span class="foot-rule"></span>
@@ -66,13 +66,13 @@
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'Vernissage') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'Vernissage') ?></div>
       </div>
 
       <p class="foot-hours"><?= e($t('vernissage::footer.hours')) ?></p>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Vernissage') ?>.</span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Vernissage') ?>.</span>
         <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>

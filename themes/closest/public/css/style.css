@@ -16,9 +16,9 @@
   --rule: #d9dfcc;
   --rule-strong: #aab49b;
 
-  --serif: "Besley", Georgia, "Times New Roman", serif;
-  --sign: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
-  --mono: "Space Mono", "Courier New", monospace;
+  --serif: "Besley", "Noto Kufi Arabic", Georgia, "Times New Roman", serif;
+  --sign: "Barlow Semi Condensed", "Noto Kufi Arabic", "Arial Narrow", Arial, sans-serif;
+  --mono: "Space Mono", "Noto Kufi Arabic", "Courier New", monospace;
 
   --type-body: 1.0625rem;
   --type-small: 0.9375rem;
@@ -178,16 +178,16 @@ a {
 
 .inset::before {
   top: -1px;
-  left: -1px;
+  inset-inline-start: -1px;
   border-top-width: 2px;
-  border-left-width: 2px;
+  border-inline-start-width: 2px;
 }
 
 .inset::after {
   bottom: -1px;
-  right: -1px;
+  inset-inline-end: -1px;
   border-bottom-width: 2px;
-  border-right-width: 2px;
+  border-inline-end-width: 2px;
 }
 
 .inset:hover::before,
@@ -270,7 +270,7 @@ a {
 .flash-wrap {
   position: fixed;
   top: 5rem;
-  right: 1.25rem;
+  inset-inline-end: 1.25rem;
   z-index: 200;
   display: grid;
   gap: 0.5rem;
@@ -280,7 +280,7 @@ a {
 .alert {
   padding: 0.8rem 1.1rem;
   border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--spruce);
+  border-inline-start: 4px solid var(--spruce);
   border-radius: 3px;
   background: var(--chart);
   font-family: var(--sign);
@@ -289,15 +289,15 @@ a {
 }
 
 .alert-success {
-  border-left-color: #2e7d4f;
+  border-inline-start-color: #2e7d4f;
 }
 
 .alert-danger {
-  border-left-color: #b3261e;
+  border-inline-start-color: #b3261e;
 }
 
 .alert-warning {
-  border-left-color: var(--blaze);
+  border-inline-start-color: var(--blaze);
 }
 
 /* ---------- masthead ---------- */
@@ -382,6 +382,7 @@ a {
 }
 
 .nav-pill {
+  white-space: nowrap;
   padding: 0.45rem 1.05rem;
   border: 1px solid var(--spruce);
   border-radius: 3px;
@@ -437,12 +438,12 @@ a {
 
 .route-wrap {
   position: relative;
-  padding-left: 2.4rem;
+  padding-inline-start: 2.4rem;
 }
 
 .route-rail {
   position: absolute;
-  left: 0.7rem;
+  inset-inline-start: 0.7rem;
   top: 0.5rem;
   bottom: 0.5rem;
   width: 2px;
@@ -481,8 +482,8 @@ a {
 
 .wp-node {
   position: absolute;
-  left: -2.4rem;
-  margin-left: 0.7rem;
+  inset-inline-start: -2.4rem;
+  margin-inline-start: 0.7rem;
   top: 50%;
   width: 12px;
   height: 12px;
@@ -646,7 +647,7 @@ a {
 .declination {
   width: 16px;
   height: 26px;
-  margin-left: auto;
+  margin-inline-start: auto;
   color: rgba(243, 245, 238, 0.55);
 }
 
@@ -748,8 +749,8 @@ a {
   .nav {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
@@ -816,16 +817,16 @@ a {
 
 @media (max-width: 800px) {
   .route-wrap {
-    padding-left: 1.6rem;
+    padding-inline-start: 1.6rem;
   }
 
   .route-rail {
-    left: 0.35rem;
+    inset-inline-start: 0.35rem;
   }
 
   .wp-node {
-    left: -1.6rem;
-    margin-left: 0.35rem;
+    inset-inline-start: -1.6rem;
+    margin-inline-start: 0.35rem;
     width: 10px;
     height: 10px;
   }
@@ -840,8 +841,31 @@ a {
   }
 
   .flash-wrap {
-    left: 1.25rem;
+    inset-inline-start: 1.25rem;
   }
 }
 
 /* ---------- language switcher ---------- */
+
+/* ---------- right-to-left ---------- */
+
+/* Joined scripts come apart when letter-spaced, and most labels here set their own tracking */
+:lang(ar) {
+  letter-spacing: normal !important;
+}
+
+.arrow:dir(rtl) {
+  scale: -1 1;
+}
+
+.trail-ruler span:dir(rtl) {
+  transform-origin: right;
+}
+
+.waypoint:dir(rtl):hover {
+  background: linear-gradient(to left, var(--panel), transparent 85%);
+}
+
+.waypoint:dir(rtl):hover .wp-arrow {
+  transform: translateX(-4px);
+}

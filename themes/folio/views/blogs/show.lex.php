@@ -40,7 +40,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       <span><?= e(translate_count('folio::home.postCount', $postCount)) ?> / <?= e($t('folio::home.minRead', ['count' => $totalMinutes])) ?></span>
     </div>
 
-    <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
+    <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
 
     <div class="hero-bottom">
       <p class="hero-dek reveal">
@@ -50,7 +50,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
           <?= e($t('folio::home.begin')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>
@@ -89,7 +89,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
         <a href="<?= $fUrl ?>" class="link-arrow" style="align-self:flex-start;margin-top:var(--step-2);">
           <?= e($t('folio::home.readPost')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
 
         <?php if ($fAuthor) { ?>
@@ -138,7 +138,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       <span class="filter-count" id="index-footer-count"><?= translate_html('folio::home.showing', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
         <span id="index-footer-label"><?= e($t('folio::home.openAll')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -241,7 +241,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
             autocomplete="email" maxlength="255" required />
           <button type="submit">
             <?= e($t('folio::home.subscribe')) ?>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
         <span class="news-fine"><?= e($t('folio::home.newsFine')) ?></span>

@@ -37,7 +37,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       <span><?= e($t('closest::home.trail', ['minutes' => $totalMinutes, 'km' => $totalKm])) ?></span>
     </div>
 
-    <h1 class="th-name" data-split><?= $blogTitle ?></h1>
+    <h1 class="th-name" data-split dir="auto"><?= $blogTitle ?></h1>
 
     <div class="th-route" aria-hidden="true">
       <svg viewBox="0 0 1200 150" preserveAspectRatio="none" focusable="false">
@@ -101,7 +101,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
           <?= e($t('closest::home.walkNearest')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
     </div>
@@ -143,7 +143,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       <span class="route-count" id="index-footer-count"><?= translate_html('closest::home.plotted', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
         <span id="index-footer-label"><?= e($t('closest::home.openAll')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -203,7 +203,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
             autocomplete="email" maxlength="255" required />
           <button type="submit">
             <?= e($t('closest::home.subscribe')) ?>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
         <span class="dispatch-fine"><?= e($t('closest::home.newsFine')) ?></span>

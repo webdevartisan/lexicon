@@ -8,12 +8,14 @@ document.addEventListener("DOMContentLoaded", function () {
     words.forEach(function (word, wi) {
       var w = document.createElement("span");
       w.className = "word";
-      for (var i = 0; i < word.length; i++) {
+      // Joined scripts such as Arabic lose their letter shapes when split, so those words move whole
+      var pieces = /[֐-ࣿ]/.test(word) ? [word] : Array.from(word);
+      pieces.forEach(function (piece) {
         var c = document.createElement("span");
         c.className = "char";
-        c.textContent = word[i];
+        c.textContent = piece;
         w.appendChild(c);
-      }
+      });
       headline.appendChild(w);
       if (wi < words.length - 1) headline.appendChild(document.createTextNode(" "));
     });

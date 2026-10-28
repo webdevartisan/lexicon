@@ -8,7 +8,7 @@ $encodedUrl = rawurlencode($shareUrl);
 $encodedTitle = rawurlencode($shareTitle);
 $loginUrl = e(lurl('/login'));
 ?>
-<div class="post-engagement" data-auth="<?= $engagement['logged_in'] ? '1' : '0' ?>" data-login="<?= $loginUrl ?>"
+<div class="post-engagement" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>" data-auth="<?= $engagement['logged_in'] ? '1' : '0' ?>" data-login="<?= $loginUrl ?>"
      data-text-save="<?= e($t('blogPage.actions.save')) ?>" data-text-saved="<?= e($t('blogPage.actions.saved')) ?>"
      data-text-copy="<?= e($t('blogPage.actions.copyLink')) ?>" data-text-copied="<?= e($t('blogPage.actions.copied')) ?>"
      data-text-report-failed="<?= e($t('reportDialog.failed')) ?>">

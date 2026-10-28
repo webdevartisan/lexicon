@@ -49,7 +49,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       <span class="hero-kicker reveal">
         <?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('vernissage::home.tagline')) ?>
       </span>
-      <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
+      <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
       <div class="ornament hero-ornament" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l9 10-9 10L3 12z" /></svg>
       </div>
@@ -63,7 +63,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
           <?= e($t('vernissage::home.viewCentrepiece')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>
@@ -108,7 +108,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
           <?= e($t('vernissage::home.viewWork')) ?>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
     </div>
@@ -147,7 +147,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       <span class="collection-count" id="index-footer-count"><?= translate_html('vernissage::home.hanging', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
         <span id="index-footer-label"><?= e($t('vernissage::home.openAll')) ?></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -202,7 +202,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
               autocomplete="email" maxlength="255" required />
             <button type="submit">
               <?= e($t('vernissage::home.subscribe')) ?>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </button>
           </div>
           <span class="invite-fine"><?= e($t('vernissage::home.newsFine')) ?></span>
