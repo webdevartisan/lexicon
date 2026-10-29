@@ -50,6 +50,14 @@ $I->waitForElementVisible('[data-picker-grid] img');
 $I->click('[data-picker-grid] img');
 $I->switchToIFrame('#content_ifr');
 $I->seeElement('img');
+$I->click('img');
+$I->switchToIFrame();
+
+// The picture's pop up has the same wrap buttons as editing on the post page
+$I->waitForElementVisible('.tox-pop button[aria-label="Left, text wraps on the right"]');
+$I->click('.tox-pop button[aria-label="Left, text wraps on the right"]');
+$I->switchToIFrame('#content_ifr');
+$I->seeElement('img.img-wrap-left');
 $I->switchToIFrame();
 
 // A pasted image uploads too, though autosave leaves this live post alone

@@ -38,14 +38,8 @@ function startEditor() {
 
     quickbars_insert_toolbar: 'medialibrary table',
     quickbars_selection_toolbar: 'bold italic textcolour | h2 h3 | link blockquote',
-    quickbars_image_toolbar: 'alignleft aligncenter alignright | replaceimage imagesettings',
+    quickbars_image_toolbar: EditorMedia.IMAGE_TOOLBAR,
     object_resizing: 'img',
-
-    image_class_list: [
-      { title: 'None', value: '' },
-      { title: 'Wrap right', value: 'img-wrap-right' },
-      { title: 'Wrap left', value: 'img-wrap-left' }
-    ],
 
     content_style: `
       body {

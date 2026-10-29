@@ -80,14 +80,6 @@
     return false;
   }
 
-  var TEXT_BLOCKS = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,div';
-
-  // Aligns text only. TinyMCE's own alignment also floats a selected image,
-  // which would be a second, competing way to do what the wrap buttons do.
-  function textAlign(side) {
-    return { selector: TEXT_BLOCKS, styles: { textAlign: side } };
-  }
-
   function editorConfig() {
     return {
       target: bodyEl,
@@ -110,12 +102,7 @@
       toolbar: 'blocks | alignleft aligncenter alignright | bullist numlist blockquote | medialibrary table | undo redo',
       quickbars_insert_toolbar: false,
       quickbars_selection_toolbar: 'bold italic underline textcolour | link',
-      quickbars_image_toolbar: 'wrapleft wrapcenter wrapright | imageup imagedown | replaceimage imagesettings',
-      formats: {
-        alignleft: textAlign('left'),
-        aligncenter: textAlign('center'),
-        alignright: textAlign('right')
-      },
+      quickbars_image_toolbar: window.EditorMedia.IMAGE_TOOLBAR,
       object_resizing: 'img',
       image_description: true,
       // Images come from the media library, which uploads them properly first.

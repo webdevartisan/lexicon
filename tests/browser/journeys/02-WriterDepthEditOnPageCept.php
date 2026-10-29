@@ -151,7 +151,7 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
     ));
 
     // Size and alt text open in full view as well
-    $clickPop('Size, alt text and wrap');
+    $clickPop('Size and alt text');
     $I->waitForElementVisible('.tox-dialog');
     $I->assertTrue($I->executeJS($inFullView('.tox-dialog')));
     $I->click('.tox-dialog button[aria-label="Close"]');
@@ -196,6 +196,20 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
         "var img = document.querySelector('{$inserted}');"
         ." return img.parentNode.nodeName === 'P' && !!(document.querySelector('{$landing}').compareDocumentPosition(img) & Node.DOCUMENT_POSITION_PRECEDING);"
     ));
+
+    // A picture an older editor centred with inline styles reads as Centre, and pressing Centre again turns it off
+    $old = "{$body} img.walk-old";
+    $I->executeJS(
+        "var ed = tinymce.activeEditor; ed.selection.select(ed.getBody().lastChild, true); ed.selection.collapse(false);"
+        ." ed.insertContent('<p><img class=\"walk-old\" style=\"display: block; margin-left: auto; margin-right: auto\" src=\"{$url}\" alt=\"\"></p>');"
+    );
+    $I->seeElement("{$old}.img-center");
+    $I->assertNull($I->executeJS("return document.querySelector('{$old}').getAttribute('style');"));
+    $I->executeJS("document.querySelector('{$old}').scrollIntoView({block: 'center'});");
+    $I->click($old);
+    $clickPop('Centre, no text beside it');
+    $I->dontSeeElement("{$old}.img-center");
+    $I->executeJS("var dom = tinymce.activeEditor.dom; dom.remove(dom.select('img.walk-old'));");
 
     // The cover comes from the same library and lands in the theme's own frame
     $I->scrollTo('[data-edit-cover]');

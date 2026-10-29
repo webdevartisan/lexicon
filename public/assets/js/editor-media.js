@@ -4,14 +4,43 @@
  *
  * EditorMedia.install(editor, { blogId, token }) registers the buttons
  * medialibrary, replaceimage, imagesettings, wrapleft, wrapcenter, wrapright,
- * imageup and imagedown,
- * and drops images from other websites. token is a function, read on every
- * use, because the form's token can be renewed while the page is open.
+ * imageup and imagedown, makes the align buttons align text only, and drops
+ * images from other websites. token is a function, read on every use, because
+ * the form's token can be renewed while the page is open.
+ * EditorMedia.IMAGE_TOOLBAR is the pop up both editors show beside a picture.
  */
 (function () {
   'use strict';
 
   var WRAPS = ['img-wrap-left', 'img-center', 'img-wrap-right'];
+  var IMAGE_TOOLBAR = 'wrapleft wrapcenter wrapright | imageup imagedown | replaceimage imagesettings';
+  var TEXT_BLOCKS = 'p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th,div';
+  var PLACEMENT_STYLES = ['float', 'display', 'margin', 'margin-left', 'margin-right', 'margin-top', 'margin-bottom'];
+
+  // What an inline placement from TinyMCE's own image alignment, or a pasted page, meant as a wrap.
+  function wrapFromStyles(styles) {
+    if (styles.float === 'left') return 'img-wrap-left';
+    if (styles.float === 'right') return 'img-wrap-right';
+    var margin = (styles.margin || '').split(/\s+/);
+    var right = styles['margin-right'] || margin[1] || margin[0];
+    var left = styles['margin-left'] || margin[3] || margin[1] || margin[0];
+    return left === 'auto' && right === 'auto' ? 'img-center' : '';
+  }
+
+  // Inline placement outranks the wrap classes and would leave every wrap button without effect.
+  function adoptOldPlacement(editor, node) {
+    var style = node.attr('style');
+    if (!style) return;
+    var styles = editor.dom.parseStyle(style);
+    var wrap = wrapFromStyles(styles);
+    PLACEMENT_STYLES.forEach(function (name) { delete styles[name]; });
+    node.attr('style', editor.dom.serializeStyle(styles) || null);
+    if (!wrap) return;
+    var classes = (node.attr('class') || '').split(/\s+/).filter(function (name) {
+      return name && WRAPS.indexOf(name) === -1;
+    });
+    node.attr('class', classes.concat(wrap).join(' '));
+  }
 
   function isOwnImage(src) {
     if (/^(data:image\/|blob:)/i.test(src)) return true;
@@ -74,9 +103,11 @@
     function setWrap(wrap) {
       var image = selectedImage(editor);
       if (!image) return;
+      // Pressing the active wrap again turns it off, back to the theme's own picture on a line of its own
+      var turningOff = editor.dom.hasClass(image, wrap);
       editor.undoManager.transact(function () {
         WRAPS.forEach(function (name) { editor.dom.removeClass(image, name); });
-        if (wrap) editor.dom.addClass(image, wrap);
+        if (!turningOff) editor.dom.addClass(image, wrap);
       });
       editor.nodeChanged();
     }
@@ -135,9 +166,15 @@
     editor.on('PreInit', function () {
       var alreadyThere = existingSources(startingHtml(editor));
 
+      // TinyMCE's own alignment also floats a selected image, a second way to do what the wrap buttons do.
+      ['left', 'center', 'right'].forEach(function (side) {
+        editor.formatter.register('align' + side, { selector: TEXT_BLOCKS, styles: { textAlign: side } });
+      });
+
       editor.parser.addNodeFilter('img', function (nodes) {
         var dropped = 0;
         nodes.forEach(function (node) {
+          adoptOldPlacement(editor, node);
           var src = node.attr('src') || '';
           if (!isOwnImage(src) && !alreadyThere[src]) {
             node.remove();
@@ -166,10 +203,10 @@
       onAction: insertFromLibrary
     });
 
-    // The stock "imageoptions" button is a premium feature, so open the image dialog (size, alt, wrap) directly.
+    // The stock "imageoptions" button is a premium feature, so open the image dialog (size, alt) directly.
     editor.ui.registry.addButton('imagesettings', {
       icon: 'image-options',
-      tooltip: 'Size, alt text and wrap',
+      tooltip: 'Size and alt text',
       onAction: function () { editor.execCommand('mceImage'); }
     });
 
@@ -209,5 +246,5 @@
     });
   }
 
-  window.EditorMedia = { install: install };
+  window.EditorMedia = { install: install, IMAGE_TOOLBAR: IMAGE_TOOLBAR };
 }());
