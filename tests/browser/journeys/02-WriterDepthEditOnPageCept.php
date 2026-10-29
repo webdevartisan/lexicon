@@ -135,13 +135,39 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
     $inserted = "{$body} img[src=\"{$url}\"]";
     $I->waitForElement($inserted);
 
+    // A picture an older editor centred with inline styles reads as Centre, and pressing Centre again turns it off
+    $old = "{$body} img.walk-old";
+    $I->executeJS(
+        "var ed = tinymce.activeEditor, line = ed.dom.add(ed.getBody(), 'p', {}, '');"
+        .' ed.selection.setCursorLocation(line, 0);'
+        ." ed.insertContent('<img class=\"walk-old\" style=\"display: block; margin-left: auto; margin-right: auto\" src=\"{$url}\" alt=\"\" width=\"120\">');"
+    );
+    $I->seeElement("{$old}.img-center");
+    $I->assertNull($I->executeJS("return document.querySelector('{$old}').getAttribute('style');"));
+    $I->executeJS("document.querySelector('{$old}').scrollIntoView({block: 'center'});");
+    $I->click($old);
+    $clickPop('Centre, no text beside it');
+    $I->dontSeeElement("{$old}.img-center");
+
+    // With no wrap it follows its paragraph's alignment, starting on the left in every theme
+    $gaps = "var img = document.querySelector('{$old}'), b = img.getBoundingClientRect(), p = img.parentNode.getBoundingClientRect();"
+        .' return [Math.round(b.left - p.left), Math.round(p.right - b.right)];';
+    [$left, $right] = $I->executeJS($gaps);
+    $I->assertLessThan(3, $left);
+    $I->assertGreaterThan(20, $right);
+    $I->click($old);
+    $I->click("{$bar} button[aria-label=\"Align center\"]");
+    [$left, $right] = $I->executeJS($gaps);
+    $I->assertEqualsWithDelta($left, $right, 3);
+    $I->executeJS("var dom = tinymce.activeEditor.dom; dom.remove(dom.getParent(dom.select('img.walk-old')[0], 'p'));");
+
     // Clicking the image offers wrapping and moving; text then flows around it
     $I->executeJS("document.querySelector('{$inserted}').scrollIntoView({block: 'center'});");
     $I->click($inserted);
     $clickPop('Left, text wraps on the right');
     $I->seeElement("{$inserted}.img-wrap-left");
 
-    // Centre puts it on a line of its own, in the middle, which is also how wrapping is turned off
+    // Centre puts it on a line of its own, in the middle
     $clickPop('Centre, no text beside it');
     $I->seeElement("{$inserted}.img-center");
     $I->dontSeeElement("{$inserted}.img-wrap-left");
@@ -196,20 +222,6 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
         "var img = document.querySelector('{$inserted}');"
         ." return img.parentNode.nodeName === 'P' && !!(document.querySelector('{$landing}').compareDocumentPosition(img) & Node.DOCUMENT_POSITION_PRECEDING);"
     ));
-
-    // A picture an older editor centred with inline styles reads as Centre, and pressing Centre again turns it off
-    $old = "{$body} img.walk-old";
-    $I->executeJS(
-        "var ed = tinymce.activeEditor; ed.selection.select(ed.getBody().lastChild, true); ed.selection.collapse(false);"
-        ." ed.insertContent('<p><img class=\"walk-old\" style=\"display: block; margin-left: auto; margin-right: auto\" src=\"{$url}\" alt=\"\"></p>');"
-    );
-    $I->seeElement("{$old}.img-center");
-    $I->assertNull($I->executeJS("return document.querySelector('{$old}').getAttribute('style');"));
-    $I->executeJS("document.querySelector('{$old}').scrollIntoView({block: 'center'});");
-    $I->click($old);
-    $clickPop('Centre, no text beside it');
-    $I->dontSeeElement("{$old}.img-center");
-    $I->executeJS("var dom = tinymce.activeEditor.dom; dom.remove(dom.select('img.walk-old'));");
 
     // The cover comes from the same library and lands in the theme's own frame
     $I->scrollTo('[data-edit-cover]');

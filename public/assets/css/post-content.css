@@ -53,6 +53,13 @@ body img.img-center {
     margin-inline: auto;
 }
 
+/* A picture with no wrap sits in its line, so the paragraph's alignment places it in every theme. Themes mark their post text with data-edit-body. */
+:is([data-edit-body], .mce-content-body) :is(p, li, td, th, blockquote) > img:not(.img-wrap-left, .img-wrap-right, .img-center) {
+    display: inline-block;
+    margin-inline: 0;
+    vertical-align: bottom;
+}
+
 /* Too narrow for text beside a picture. */
 @media (max-width: 600px) {
     body img.img-wrap-left,
