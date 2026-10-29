@@ -106,15 +106,12 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
     $clickPop('Text colour');
     $I->click($menuItem('Accent'));
     $I->seeElement("{$body} p:first-of-type span.color-accent");
-    // Folio is black and white only, so its Accent keeps the text colour
-    if ($theme !== 'folio') {
-        $I->assertTrue($I->executeJS(
-            "var probe = document.createElement('span'); probe.style.color = 'var(--post-accent)'; document.body.appendChild(probe);"
-            .' var accent = getComputedStyle(probe).color; probe.remove();'
-            .' return accent !== getComputedStyle(document.body).color'
-            ." && getComputedStyle(document.querySelector('{$body} span.color-accent')).color === accent;"
-        ));
-    }
+    $I->assertTrue($I->executeJS(
+        "var probe = document.createElement('span'); probe.style.color = 'var(--post-accent)'; document.body.appendChild(probe);"
+        .' var accent = getComputedStyle(probe).color; probe.remove();'
+        .' return accent !== getComputedStyle(document.body).color'
+        ." && getComputedStyle(document.querySelector('{$body} span.color-accent')).color === accent;"
+    ));
     $clickPop('Text colour');
     $I->click($menuItem('Normal'));
     $I->dontSeeElement("{$body} .color-accent");
@@ -203,6 +200,7 @@ foreach (['folio', 'closest', 'vernissage', 'nocturne', 'offset'] as $theme) {
     // Move down puts the picture in the next paragraph, the way a phone moves it
     $landing = "{$body} p.walk-landing";
     $I->executeJS("var ed = tinymce.activeEditor; ed.dom.add(ed.getBody(), 'p', {'class': 'walk-landing'}, 'Drop the picture somewhere in this sentence.');");
+    $I->executeJS("document.querySelector('{$inserted}').scrollIntoView({block: 'center'});");
     $I->click($inserted);
     $clickPop('Move down a paragraph');
     $I->seeElement("{$landing} img[src=\"{$url}\"]");

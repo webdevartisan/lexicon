@@ -1,9 +1,12 @@
 :root {
+    --post-accent: var(--rubric);
     --bone: #f7f5f0;
     --bone-deep: #ede9e0;
     --ink: #0a0a0a;
     --ink-soft: #1d1d1b;
     --muted: #6b6a64;
+    /* The one colour in Folio, kept for words a writer marks as Accent. */
+    --rubric: #9b1c1c;
     --rule: rgba(10, 10, 10, 0.14);
     --rule-strong: rgba(10, 10, 10, 0.85);
 
