@@ -21,7 +21,7 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#dispatches';
   ?>
-  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
+  <header class="masthead" role="banner" data-edit-header lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
       <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('closest::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Closest'])) ?>">
         <?php if ($logo) { ?>

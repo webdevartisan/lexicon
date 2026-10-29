@@ -1,0 +1,192 @@
+/* The media library picker on blog pages. The control panel styles the same
+   markup with its utility classes; themes load none of those. */
+
+.media-picker {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    font: 400 0.875rem/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--platform-menu-fg, #f2f2f2);
+}
+
+.media-picker.hidden,
+.media-picker .hidden {
+    display: none !important;
+}
+
+.media-picker-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.media-picker-panel {
+    position: absolute;
+    top: 2.5rem;
+    bottom: 2.5rem;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    width: min(900px, calc(100vw - 2rem));
+    overflow: hidden;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 1rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+    transform: translateX(-50%);
+}
+
+.media-picker-head,
+.media-picker-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.media-picker-head {
+    justify-content: space-between;
+}
+
+.media-picker-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.media-picker-close {
+    display: inline-flex;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.media-picker-close:hover {
+    background: rgba(128, 128, 128, 0.15);
+}
+
+.media-picker-field {
+    min-height: 2.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 0.6rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.media-picker-field[type="search"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.media-picker-field option {
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+}
+
+.media-picker-upload,
+.media-picker-more {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.6rem;
+    background: #f2f2f2;
+    color: #111;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.media-picker-upload:hover,
+.media-picker-more:hover {
+    filter: brightness(0.92);
+}
+
+.media-picker-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.media-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.media-picker-card {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 0.6rem;
+    background: rgba(128, 128, 128, 0.1);
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.media-picker-card:hover,
+.media-picker-card:focus-visible {
+    border-color: #a8c7fa;
+    outline: none;
+}
+
+.media-picker-thumb {
+    aspect-ratio: 1;
+    overflow: hidden;
+}
+
+.media-picker-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: cover;
+}
+
+.media-picker-name {
+    display: block;
+    padding: 0.4rem 0.5rem;
+    overflow: hidden;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.media-picker-empty {
+    padding: 2.5rem 0;
+    text-align: center;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.media-picker-more-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+html[data-mode="light"] .media-picker-panel {
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+html[data-mode="light"] .media-picker-upload,
+html[data-mode="light"] .media-picker-more {
+    background: #111;
+    color: #fff;
+}
+
+html[data-mode="light"] .media-picker-card:hover,
+html[data-mode="light"] .media-picker-card:focus-visible {
+    border-color: #2659b5;
+}

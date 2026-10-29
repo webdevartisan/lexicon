@@ -368,6 +368,7 @@ $router->group([
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/rename', ['controller' => 'PostRenameController', 'action' => 'rename', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/in-place', ['controller' => 'PostInPlaceController', 'action' => 'save', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'suggest', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'store', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostStatusController', 'action' => 'makePublic', 'method' => 'POST']);

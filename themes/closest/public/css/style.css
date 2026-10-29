@@ -5,6 +5,7 @@
    ------------------------------------------------------------------ */
 
 :root {
+  --post-accent: var(--blaze-deep);
   --chart: #f3f5ee;
   --panel: #e9edde;
   --spruce: #1c2620;

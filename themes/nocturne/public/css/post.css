@@ -88,6 +88,8 @@
 }
 
 .post-content {
+  /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+  display: flow-root;
   grid-column: 3 / span 8;
   font-size: 1.22rem;
   line-height: 1.78;

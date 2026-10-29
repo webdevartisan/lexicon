@@ -21,7 +21,7 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#private-view';
   ?>
-  <header class="masthead" role="banner" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
+  <header class="masthead" role="banner" data-edit-header lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
       <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('vernissage::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Vernissage'])) ?>">
         <?php if ($logo) { ?>

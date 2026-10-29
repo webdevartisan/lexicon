@@ -101,6 +101,31 @@ class PostResource
         return $publishedAt === null || strtotime($publishedAt.' UTC') > time();
     }
 
+    /**
+     * Fingerprint of the title and text, so an editor can tell whether someone
+     * saved them after the page was opened. Changes to other fields do not count.
+     */
+    public function textVersion(): string
+    {
+        return self::versionOf($this->title(), $this->content());
+    }
+
+    /**
+     * Whether the title or text were saved by someone after the given fingerprint was taken.
+     */
+    public function textChangedSince(string $version): bool
+    {
+        return !hash_equals($this->textVersion(), $version);
+    }
+
+    /**
+     * The same fingerprint for a title and text that are about to be stored.
+     */
+    public static function versionOf(string $title, string $content): string
+    {
+        return hash('sha256', $title."\0".$content);
+    }
+
     public function comments_enabled(): int
     {
         return $this->data['comments_enabled'];

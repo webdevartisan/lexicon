@@ -6,6 +6,8 @@
 {% block head %}
 <script src="/vendor/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
 <script nonce="<?= csp_nonce() ?>">window.editorBlogId = <?= (int) ($post['blog_id'] ?? 0) ?>;</script>
+<script src="<?= e(versioned_asset('/assets/js/editor-media.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/assets/js/editor-colours.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/assets/js/initeditor.js')) ?>" referrerpolicy="origin"></script>
 {% endblock %}
 

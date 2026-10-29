@@ -2,6 +2,7 @@
    one wall of viridian. Shared base for every page of the theme. */
 
 :root {
+  --post-accent: var(--viridian);
   --plaster: #f4f1e9;
   --plaster-2: #eae5d9;
   --mat: #faf8f2;

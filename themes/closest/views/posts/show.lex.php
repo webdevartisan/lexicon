@@ -32,7 +32,7 @@ $title = e($post['title'] ?? 'Untitled');
       <span><?= e($t('closest::post.meta', ['minutes' => $minutes, 'km' => $km])) ?></span>
     </div>
 
-    <h1 class="post-hero-title reveal"><?= $title ?></h1>
+    <h1 class="post-hero-title reveal" data-edit-title><?= $title ?></h1>
 
     <?php if ($standfirst !== '') { ?>
       <p class="post-standfirst reveal"><?= e($standfirst) ?></p>
@@ -48,10 +48,10 @@ $title = e($post['title'] ?? 'Untitled');
   </div>
 </section>
 
-<?php if ($heroImg) { ?>
+<?php if ($heroImg || !empty($edit_in_place)) { ?>
 <div class="container">
-  <div class="inset post-cover" id="post-cover">
-    <span class="inset-img"><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /></span>
+  <div class="inset post-cover" id="post-cover" data-edit-cover<?= $heroImg ? '' : ' hidden' ?>>
+    <span class="inset-img" data-edit-cover-slot><?php if ($heroImg) { ?><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /><?php } ?></span>
     <span class="inset-cap"><?= translate_html('closest::post.fig', ['title' => $title]) ?></span>
   </div>
 </div>
@@ -59,7 +59,7 @@ $title = e($post['title'] ?? 'Untitled');
 
 <div class="container">
   <div class="post-layout">
-    <div class="post-content reveal">
+    <div class="post-content reveal" data-edit-body>
       <?= $post['content'] ?? '' ?>
     </div>
 
@@ -147,6 +147,8 @@ $title = e($post['title'] ?? 'Untitled');
   </div>
 </section>
 <?php } ?>
+
+{% include "partials/public/_edit_in_place.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

@@ -447,6 +447,9 @@ class BlogController extends AppController
         // Swap in the viewer-locale translation before any derived fields (meta, excerpt) are built.
         $post = $this->localizePosts([$post], $ctx['settings'])[0];
 
+        // A translated view would save its text over the original, so it is not editable in place.
+        $shownTranslated = !empty($ctx['settings']['translations_enabled']) && locale() !== $postDefault;
+
         // Normalize timestamps
         $rawTs = $post['published_at'] ?? $post['created_at'] ?? gmdate('Y-m-d H:i:s');
         $post['published_at_raw'] = $rawTs;
@@ -653,7 +656,31 @@ class BlogController extends AppController
             'viewer_avatar' => $viewerAvatar,
             'comment_author_hearts' => $authorHearts,
             'comment_author' => $authorIdentity,
+            'edit_in_place' => $canPreview && !$shownTranslated ? $this->inPlaceEditing((int) $post['id']) : null,
         ]));
+    }
+
+    /**
+     * What the post page needs to edit a post in place, or null when this viewer may not edit it.
+     *
+     * The stored text goes along because a theme may rearrange the text it shows.
+     *
+     * @return array{save_url: string, editor_url: string, version: string, blog_id: int, content: string}|null
+     */
+    private function inPlaceEditing(int $postId): ?array
+    {
+        $post = $this->postModel->findResource($postId);
+        if ($post === false || !Gate::allows('update', $post, auth()->user())) {
+            return null;
+        }
+
+        return [
+            'save_url' => lurl('/dashboard/post/'.$postId.'/in-place'),
+            'editor_url' => lurl('/dashboard/post/'.$postId.'/edit'),
+            'version' => $post->textVersion(),
+            'blog_id' => $post->blogId(),
+            'content' => $post->content(),
+        ];
     }
 
     /**

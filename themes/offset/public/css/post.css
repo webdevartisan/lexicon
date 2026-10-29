@@ -104,6 +104,13 @@
   }
 }
 
+/* An empty cover keeps the plate's shape, so the author sees where the picture will sit. */
+.is-editing-in-place .plate.post-cover.is-empty {
+  display: block;
+  min-height: 0;
+  outline: none;
+}
+
 /* ---------- layout + prose ---------- */
 
 .post-layout {
@@ -112,6 +119,8 @@
 }
 
 .post-content {
+  /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+  display: flow-root;
   font-size: var(--type-body);
   line-height: 1.75;
   color: var(--carbon-soft);

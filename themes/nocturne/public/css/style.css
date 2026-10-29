@@ -2,6 +2,7 @@
    oversized serif index. Shared base for every page of the theme. */
 
 :root {
+  --post-accent: var(--brass);
   --night: #131110;
   --night-2: #1a1714;
   --night-3: #242019;

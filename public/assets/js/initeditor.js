@@ -1,46 +1,7 @@
-function isOwnImage(src) {
-  if (/^(data:image\/|blob:)/i.test(src)) return true;
-  if (src.indexOf('//') === 0) return false;
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(src)) return true;
-  try {
-    return new URL(src).host === window.location.host;
-  } catch (e) {
-    return false;
-  }
-}
-
-// Outside images the post already had when it opened. They are left alone,
-// matching the server, which only refuses newly added ones.
-function existingSources(html) {
-  var found = {};
-  var doc = new DOMParser().parseFromString(html, 'text/html');
-  doc.querySelectorAll('img[src]').forEach(function (img) {
-    found[img.getAttribute('src')] = true;
-  });
-  return found;
-}
-
 // Read when sending, because the token can be swapped in the background once it expires.
 function formToken(editor) {
   var input = editor.formElement && editor.formElement.querySelector('input[name="_token"]');
   return input ? input.value : '';
-}
-
-function openLibrary(editor, onSelect) {
-  if (!window.MediaPicker) {
-    editor.notificationManager.open({ text: 'Media library not loaded.', type: 'error' });
-    return;
-  }
-  var blogId = window.editorBlogId ? String(window.editorBlogId) : '';
-  if (!blogId) {
-    editor.notificationManager.open({ text: 'Pick a blog before inserting images.', type: 'warning' });
-    return;
-  }
-
-  window.MediaPicker.open(blogId, {
-    csrfToken: formToken(editor),
-    onSelect: onSelect,
-  });
 }
 
 /**
@@ -60,7 +21,7 @@ function startEditor() {
     remove_script_host: true,
 
     skin: isDark ? 'oxide-dark' : 'oxide',
-    content_css: isDark ? 'dark' : 'default',
+    content_css: [isDark ? 'dark' : 'default', '/assets/css/post-content.css'],
 
     menubar: 'edit insert format',
     menu: {
@@ -70,13 +31,13 @@ function startEditor() {
              'wordcount visualblocks codesample charmap accordion quickbars',
 
     // Advanced tools sit last so they fold into the "..." drawer on narrow screens.
-    toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | ' +
+    toolbar: 'undo redo | styles | bold italic underline textcolour | alignleft aligncenter alignright | ' +
              'bullist numlist | link medialibrary table | ' +
              'emoticons codesample charmap accordion visualblocks preview code fullscreen',
     toolbar_mode: 'sliding',
 
     quickbars_insert_toolbar: 'medialibrary table',
-    quickbars_selection_toolbar: 'bold italic | h2 h3 | link blockquote',
+    quickbars_selection_toolbar: 'bold italic textcolour | h2 h3 | link blockquote',
     quickbars_image_toolbar: 'alignleft aligncenter alignright | replaceimage imagesettings',
     object_resizing: 'img',
 
@@ -87,24 +48,13 @@ function startEditor() {
     ],
 
     content_style: `
-      body { background-color: ${isDark ? '#171717' : '#ffffff'}; }
+      body {
+        background-color: ${isDark ? '#171717' : '#ffffff'};
+        --post-accent: ${isDark ? '#a8c7fa' : '#2659b5'};
+      }
       ${isDark ? '.mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before { color: rgba(255, 255, 255, 0.4); }' : ''}
       img {
         max-width: 100%;
-        height: auto;
-      }
-
-      img.img-wrap-right {
-        float: right;
-        margin: 0 0 12px 16px;
-        max-width: 220px;
-        height: auto;
-      }
-
-      img.img-wrap-left {
-        float: left;
-        margin: 0 16px 12px 0;
-        max-width: 220px;
         height: auto;
       }
     `,
@@ -114,8 +64,12 @@ function startEditor() {
     image_description: true,
     file_picker_types: 'image',
     file_picker_callback: function (callback) {
-      openLibrary(tinymce.activeEditor, function (picked) {
-        callback(picked.url, { alt: picked.alt || '' });
+      if (!window.MediaPicker) return;
+      window.MediaPicker.open(String(window.editorBlogId || ''), {
+        csrfToken: formToken(tinymce.activeEditor),
+        onSelect: function (picked) {
+          callback(picked.url, { alt: picked.alt || '' });
+        },
       });
     },
 
@@ -170,75 +124,11 @@ function startEditor() {
         if (window.refreshPostPreviews) window.refreshPostPreviews();
       });
 
-      // Paste and the image dialog both route through the parser, so this catches
-      // an outside address however it arrives. The server refuses them as well.
-      editor.on('PreInit', function () {
-        var alreadyThere = existingSources(editor.getElement().value || '');
-
-        editor.parser.addNodeFilter('img', function (nodes) {
-          var dropped = 0;
-          nodes.forEach(function (node) {
-            var src = node.attr('src') || '';
-            if (!isOwnImage(src) && !alreadyThere[src]) {
-              node.remove();
-              dropped++;
-            }
-          });
-          if (dropped > 0) {
-            editor.notificationManager.open({
-              text: 'Images from other websites are blocked by the site\'s security policy. Upload the image or pick it from the media library instead.',
-              type: 'warning',
-              timeout: 8000
-            });
-          }
-        });
+      EditorMedia.install(editor, {
+        blogId: window.editorBlogId,
+        token: function () { return formToken(editor); },
       });
-
-      // Custom toolbar button that opens the per-blog Media Library picker
-      // and inserts the chosen image at the cursor.
-      function insertFromLibrary() {
-        openLibrary(editor, function (picked) {
-          // Reuse the image's stored alt text so inserted images aren't left undescribed.
-          var alt = (picked.alt || '')
-            .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          editor.insertContent('<img src="' + picked.url + '" alt="' + alt + '">');
-        });
-      }
-
-      editor.ui.registry.addButton('medialibrary', {
-        icon: 'gallery',
-        tooltip: 'Insert image from library',
-        onAction: insertFromLibrary,
-      });
-
-      editor.ui.registry.addMenuItem('medialibrary', {
-        icon: 'gallery',
-        text: 'Image from library',
-        onAction: insertFromLibrary,
-      });
-
-      // The stock "imageoptions" button is a premium feature, so open the image dialog (size, alt, wrap) directly.
-      editor.ui.registry.addButton('imagesettings', {
-        icon: 'image-options',
-        tooltip: 'Size, alt text and wrap',
-        onAction: function () {
-          editor.execCommand('mceImage');
-        },
-      });
-
-      editor.ui.registry.addButton('replaceimage', {
-        icon: 'gallery',
-        tooltip: 'Replace from library',
-        onAction: function () {
-          openLibrary(editor, function (picked) {
-            editor.dom.setAttribs(editor.selection.getNode(), { src: picked.url, 'data-mce-src': picked.url });
-            editor.dom.setAttrib(editor.selection.getNode(), 'alt', picked.alt || '');
-            editor.nodeChanged();
-            editor.fire('change');
-          });
-        },
-      });
+      EditorColours.install(editor);
     }
   });
 }

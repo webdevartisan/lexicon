@@ -50,6 +50,8 @@ final class PostFieldRules
 
     public const TEXT_REQUIRED = 'Write the post before publishing it or sending it for review. A draft can be saved with only a title.';
 
+    public const TEXT_CHANGED_ELSEWHERE = 'Someone saved this post after you opened it. Copy your changes, then reload to see theirs.';
+
     /**
      * A draft may wait for its text. Any other status puts the post in front of
      * readers or a reviewer, so it needs some.

@@ -61,6 +61,8 @@
     padding: var(--step-6) 0 var(--step-7);
   }
   .post-content {
+    /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+    display: flow-root;
     grid-column: 3 / span 8;
     font-size: var(--type-body);
     line-height: 1.75;

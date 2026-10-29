@@ -465,6 +465,7 @@ final class PostController extends AppController
             'workflowState' => $workflowState,
             'status' => $status,
             'autosave' => $post->acceptsAutosave(),
+            'textVersion' => $post->textVersion(),
             'linkEditable' => $post->linkEditable(),
             'workflowEnabled' => $workflowEnabled,
             'canRequestReview' => $canRequestReview,
@@ -574,6 +575,13 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
 
         Gate::authorize('update', $post, $user);
+
+        // Before any write below (tags and the featured flag save early). A request
+        // that names no version has no opened copy to compare against.
+        $version = (string) $this->request->postParam('version', '');
+        if ($version !== '' && $post->textChangedSince($version)) {
+            return $this->rejectField('content', PostFieldRules::TEXT_CHANGED_ELSEWHERE);
+        }
 
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
@@ -812,6 +820,7 @@ final class PostController extends AppController
                 'excerpt' => 'max:300',
                 'timezone' => 'timezone',
                 'published_at' => 'max:19',
+                'version' => 'max:64',
             ]);
 
             if ($validator->fails()) {

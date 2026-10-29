@@ -36,6 +36,9 @@ final class PostAutosaveService
      */
     public function save(array $data, int $userId, ?int $postId = null, ?int $blogId = null): array
     {
+        $version = (string) ($data['version'] ?? '');
+        unset($data['version']);
+
         if (isset($data['content'])) {
             $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
         }
@@ -69,6 +72,10 @@ final class PostAutosaveService
                     'success' => false,
                     'error' => 'Autosave only keeps drafts, and this post is no longer one. Use the save button to keep your changes.',
                 ];
+            }
+
+            if ($version !== '' && $post->textChangedSince($version)) {
+                return ['success' => false, 'error' => PostFieldRules::TEXT_CHANGED_ELSEWHERE, 'conflict' => true];
             }
 
             if (isset($data['content']) && PostFieldRules::missingText($post->status(), (string) $data['content'])) {
@@ -117,11 +124,15 @@ final class PostAutosaveService
         $userTimezone = $data['timezone'] ?? date_default_timezone_get();
         $dt = new DateTime('now', new DateTimeZone($userTimezone));
 
+        // Read back rather than rebuilt, so the editor's next save compares against exactly what was stored.
+        $stored = $this->posts->findResource($postId);
+
         return [
             'success' => true,
             'id' => $postId,
             'saved_at' => $dt->format('g:i:s A'),
             'slug' => $savedSlug,
+            'version' => $stored ? $stored->textVersion() : '',
         ] + ($fieldErrors === [] ? [] : ['errors' => $fieldErrors]);
     }
 

@@ -1,0 +1,64 @@
+/* Post body markup the editors produce, for every theme and the dashboard
+   editor, so it looks the same while writing and when published. */
+
+/* Zero specificity, so a theme that styles its own tables always wins. */
+:where(table) {
+    width: 100%;
+    margin: 1.5em 0;
+    border-collapse: collapse;
+}
+
+:where(th, td) {
+    padding: 0.5em 0.75em;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    text-align: start;
+    vertical-align: top;
+}
+
+:where(th) {
+    font-weight: 600;
+}
+
+/* Text colours a writer picked. Each theme sets --post-accent from its own palette. */
+.color-accent {
+    color: var(--post-accent, inherit);
+}
+
+.color-muted {
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+/* Images a writer set to wrap or centre. "body" outranks themes' own ".post-content img" margins. */
+
+body img.img-wrap-left,
+body img.img-wrap-right {
+    max-width: min(45%, 320px);
+    height: auto;
+}
+
+body img.img-wrap-left {
+    float: left;
+    margin: 0.35em 1.5em 1em 0;
+}
+
+body img.img-wrap-right {
+    float: right;
+    margin: 0.35em 0 1em 1.5em;
+}
+
+body img.img-center {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+}
+
+/* Too narrow for text beside a picture. */
+@media (max-width: 600px) {
+    body img.img-wrap-left,
+    body img.img-wrap-right {
+        float: none;
+        max-width: 100%;
+        margin: 1.5em 0;
+    }
+}

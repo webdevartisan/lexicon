@@ -125,6 +125,17 @@
   color: var(--stone);
 }
 
+/* An empty cover keeps the frame's shape, so the author sees where the picture will sit. */
+.is-editing-in-place figure.work-figure.is-empty {
+  display: block;
+  min-height: 0;
+  outline: none;
+}
+
+.is-editing-in-place .work-figure.is-empty .work-figcap {
+  display: none;
+}
+
 /* ---------- the essay ---------- */
 
 .work-layout {
@@ -134,6 +145,8 @@
 }
 
 .work-essay {
+  /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+  display: flow-root;
   font-family: var(--text);
   font-size: var(--type-body);
   line-height: 1.75;
