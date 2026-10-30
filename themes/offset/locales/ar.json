@@ -30,7 +30,8 @@
         "subtitle": "مقالات ورسائل، مُدقَّقة ومحبَّرة ومنشورة.",
         "readLead": "اقرأ القصة الرئيسية",
         "fallbackCategory": "مقال",
-        "leadStory": "القصة الرئيسية · {category}",
+        "leadStoryLine": "القصة الرئيسية",
+        "leadStory": "{line} · {category}",
         "readPost": "اقرأ التدوينة",
         "indexTitle": "الفهرس.",
         "indexCount": {

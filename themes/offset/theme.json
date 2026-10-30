@@ -4,5 +4,20 @@
   "version": "1.0.0",
   "author": "Lexicon",
   "description": "A print studio's proof room: porcelain paper, cobalt ink plates, duotone covers that develop on hover.",
-  "compat": ">=1.0"
+  "compat": ">=1.0",
+  "editableTexts": [
+    "home.readLead",
+    "home.leadStoryLine",
+    "home.readPost",
+    "home.indexTitle",
+    "home.est",
+    "home.colophonEyebrow",
+    "home.newsEyebrow",
+    "home.newsFine",
+    "archive.kicker",
+    "archive.heading",
+    "archive.dek",
+    "archive.empty",
+    "post.related"
+  ]
 }

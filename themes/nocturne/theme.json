@@ -4,5 +4,24 @@
   "version": "1.0.0",
   "author": "Lexicon",
   "description": "An after-dark reading room, warm darkness, brass light, oversized serif index with floating cover previews.",
-  "compat": ">=1.0"
+  "compat": ">=1.0",
+  "editableTexts": [
+    "home.edition",
+    "home.tonight",
+    "home.coverStory",
+    "home.readPost",
+    "home.indexTitle",
+    "home.nightcap",
+    "home.nightcapLine",
+    "home.pour",
+    "home.desk",
+    "home.newsEyebrow",
+    "footer.note",
+    "footer.noteMore",
+    "archive.kicker",
+    "archive.heading",
+    "archive.dek",
+    "archive.empty",
+    "post.related"
+  ]
 }

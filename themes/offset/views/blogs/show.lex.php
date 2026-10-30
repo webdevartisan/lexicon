@@ -33,19 +33,15 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
     <div class="hero-stage">
       <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
-      <span class="proof-stamp" aria-hidden="true">
-        <?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('offset::home.tagline')) ?>
-      </span>
+      <span class="proof-stamp" aria-hidden="true"<?= edit_text_attrs('tagline', $t('offset::home.tagline')) ?>><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('offset::home.tagline')) ?></span>
     </div>
 
     <div class="hero-bottom">
-      <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('offset::home.subtitle')) ?>
-      </p>
+      <p class="hero-dek reveal"<?= edit_text_attrs('subtitle', $t('offset::home.subtitle')) ?>><?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('offset::home.subtitle')) ?></p>
       <?php if ($featuredPost) { ?>
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
-          <?= e($t('offset::home.readLead')) ?>
+          <span<?= $wording->attrs('offset::home.readLead') ?>><?= $wording->html('offset::home.readLead') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -74,7 +70,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 
       <div class="lead-body">
         <div class="lead-tag reveal">
-          <span class="eyebrow"><?= translate_html('offset::home.leadStory', ['category' => $fCat]) ?></span>
+          <span class="eyebrow"><?php $leadStoryLine = '<span'.$wording->attrs('offset::home.leadStoryLine').'>'.$wording->html('offset::home.leadStoryLine').'</span>'; ?><?= translate_html('offset::home.leadStory', ['line' => $leadStoryLine, 'category' => $fCat]) ?></span>
           <?php if ($fDate) { ?><span class="eyebrow"><?= $fDate ?></span><?php } ?>
         </div>
 
@@ -90,7 +86,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          <?= e($t('offset::home.readPost')) ?>
+          <span<?= $wording->attrs('offset::home.readPost') ?>><?= $wording->html('offset::home.readPost') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -105,7 +101,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 <section class="index" id="index">
   <div class="container">
     <div class="index-head">
-      <h2 class="index-title reveal"><?= e($t('offset::home.indexTitle')) ?></h2>
+      <h2 class="index-title reveal"<?= $wording->attrs('offset::home.indexTitle') ?>><?= $wording->html('offset::home.indexTitle') ?></h2>
       <span class="index-count reveal" id="filter-count"><?= e(translate_count('offset::home.indexCount', count($gridPosts))) ?></span>
     </div>
 
@@ -166,18 +162,11 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       $aboutLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
   $aboutLabelClass = mb_strlen($aboutLabel) > 6 ? ' colophon-number--word' : '';
   ?>
-      <p class="colophon-number<?= $aboutLabelClass ?> reveal"><?= e($t('offset::home.est')) ?><br /><?= e($aboutLabel) ?></p>
+      <p class="colophon-number<?= $aboutLabelClass ?> reveal"><span<?= $wording->attrs('offset::home.est') ?>><?= $wording->html('offset::home.est') ?></span><br /><span<?= edit_text_attrs('founded_year', date('Y')) ?>><?= e($aboutLabel) ?></span></p>
       <div class="colophon-body">
-        <span class="eyebrow reveal"><?= e($t('offset::home.colophonEyebrow')) ?></span>
-        <p class="colophon-statement reveal">
-          <?php if (!empty($settings['about_text'])) { ?>
-            <?= e($settings['about_text']) ?>
-          <?php } elseif (!empty($settings['subtitle'])) { ?>
-            <?= e($settings['subtitle']) ?>
-          <?php } else { ?>
-            <?= translate_html('offset::home.colophonDefault', ['blog' => $blogTitle]) ?>
-          <?php } ?>
-        </p>
+        <span class="eyebrow reveal"<?= $wording->attrs('offset::home.colophonEyebrow') ?>><?= $wording->html('offset::home.colophonEyebrow') ?></span>
+        <?php $aboutDefault = !empty($settings['subtitle']) ? e($settings['subtitle']) : translate_html('offset::home.colophonDefault', ['blog' => $blogTitle]); ?>
+        <p class="colophon-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
         <span class="colophon-sign reveal"><?= $ownerName ?></span>
 
         <p class="colophon-fine reveal">
@@ -192,9 +181,9 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
   <div class="container">
     <div class="news-slab">
       <div class="news-copy">
-        <span class="eyebrow reveal"><?= e($t('offset::home.newsEyebrow')) ?></span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('offset::home.newsHeading')) ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('offset::home.newsText')) ?></p>
+        <span class="eyebrow reveal"<?= $wording->attrs('offset::home.newsEyebrow') ?>><?= $wording->html('offset::home.newsEyebrow') ?></span>
+        <h2 class="reveal"<?= edit_text_attrs('newsletter_heading', $t('offset::home.newsHeading')) ?>><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('offset::home.newsHeading')) ?></h2>
+        <p class="reveal"<?= edit_text_attrs('newsletter_text', $t('offset::home.newsText')) ?>><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('offset::home.newsText')) ?></p>
       </div>
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
@@ -209,11 +198,12 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
             <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="news-fine"><?= e($t('offset::home.newsFine')) ?></span>
+        <span class="news-fine"<?= $wording->attrs('offset::home.newsFine') ?>><?= $wording->html('offset::home.newsFine') ?></span>
       </form>
     </div>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

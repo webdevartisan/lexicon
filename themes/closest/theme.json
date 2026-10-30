@@ -4,5 +4,22 @@
   "version": "2.0.0",
   "author": "Lexicon",
   "description": "A field atlas: chart paper, spruce ink, one blaze of trail orange. Posts are waypoints; the newest is the closest.",
-  "compat": ">=1.0"
+  "compat": ">=1.0",
+  "editableTexts": [
+    "home.est",
+    "home.youAreHere",
+    "home.walkNearest",
+    "home.routeTitle",
+    "home.keyDot",
+    "home.keyBlaze",
+    "home.keyDash",
+    "home.sign",
+    "home.newsEyebrow",
+    "home.newsFine",
+    "archive.kicker",
+    "archive.heading",
+    "archive.dek",
+    "archive.empty",
+    "post.related"
+  ]
 }

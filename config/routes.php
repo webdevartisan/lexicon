@@ -363,6 +363,7 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/appearance/activate', ['controller' => 'AppearanceController', 'action' => 'activate', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/appearance/update', ['controller' => 'AppearanceController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/texts', ['controller' => 'BlogTextController', 'action' => 'save', 'method' => 'POST']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);

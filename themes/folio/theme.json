@@ -3,6 +3,23 @@
   "key": "folio",
   "version": "1.0.0",
   "author": "Lexicon",
-  "description": "A quiet literary magazine theme — editorial typography, GSAP scroll animations.",
-  "compat": ">=1.0"
+  "description": "A quiet literary magazine theme, editorial typography, GSAP scroll animations.",
+  "compat": ">=1.0",
+  "editableTexts": [
+    "home.begin",
+    "home.readPost",
+    "home.indexTitle",
+    "home.longRead",
+    "home.featuredLine",
+    "home.continue",
+    "home.readFull",
+    "home.aboutEyebrow",
+    "home.newsEyebrow",
+    "home.newsFine",
+    "archive.kicker",
+    "archive.heading",
+    "archive.dek",
+    "archive.empty",
+    "post.related"
+  ]
 }

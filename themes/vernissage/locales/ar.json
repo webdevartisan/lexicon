@@ -32,7 +32,8 @@
         "subtitle": "مجموعة دائمة من المقالات والرسائل، تُعلَّق عملًا بعد عمل.",
         "viewCentrepiece": "شاهد العمل المحوري",
         "fallbackCategory": "عمل",
-        "onView": "معروض · {category}",
+        "onViewLine": "معروض",
+        "onView": "{line} · {category}",
         "viewWork": "شاهد العمل",
         "collectionTitle": "المجموعة.",
         "workCount": {

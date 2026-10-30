@@ -13,17 +13,8 @@
   var bodyEl = document.querySelector('[data-edit-body]');
   if (!bar || !titleEl || !bodyEl) return;
 
-  // Out of the theme's content area: a theme that stacks its own layers there would
-  // otherwise draw its footer over the bar, however high the bar's z-index.
-  document.body.appendChild(bar);
-
   var coverEl = document.querySelector('[data-edit-cover]');
   var toolbarEl = bar.querySelector('[data-edit-toolbar]');
-  var startBtn = bar.querySelector('[data-edit-start]');
-  var cancelBtn = bar.querySelector('[data-edit-cancel]');
-  var saveBtn = bar.querySelector('[data-edit-save]');
-  var moreLink = bar.querySelector('[data-edit-more]');
-  var statusEl = bar.querySelector('[data-edit-status]');
   var versionInput = bar.querySelector('[data-edit-version]');
   // The text as stored. What the page shows may have been rearranged by the theme's own script.
   var sourceEl = bar.querySelector('[data-edit-source]');
@@ -35,26 +26,20 @@
   // Undefined while the cover is untouched, '' once removed, a URL once picked.
   var pickedCover;
 
-  function say(text, tone) {
-    statusEl.textContent = text || '';
-    if (tone) {
-      statusEl.setAttribute('data-tone', tone);
-    } else {
-      statusEl.removeAttribute('data-tone');
-    }
-  }
+  // The theme's own texts on this page, when the author may also reword those.
+  var texts = window.EditTexts ? window.EditTexts.attach(bar) : null;
+
+  var editBar = window.EditBar.attach(bar, {
+    isDirty: isDirty,
+    isEditing: function () { return editor !== null; },
+    discardMessage: 'Your changes to this post will be lost.'
+  });
+  var say = editBar.say;
+  var setBusy = editBar.setBusy;
 
   function showEditing(on) {
-    startBtn.hidden = on;
-    cancelBtn.hidden = !on;
-    saveBtn.hidden = !on;
-    moreLink.hidden = !on;
+    editBar.showEditing(on);
     toolbarEl.hidden = !on;
-    document.documentElement.classList.toggle('is-editing-in-place', on);
-  }
-
-  function setBusy(on) {
-    [startBtn, cancelBtn, saveBtn].forEach(function (button) { button.disabled = on; });
   }
 
   function loadEditorScript() {
@@ -125,7 +110,8 @@
     if (editor === null) return false;
     return editor.isDirty()
       || titleEl.textContent.trim() !== original.title.trim()
-      || pickedCover !== undefined;
+      || pickedCover !== undefined
+      || (texts !== null && texts.isDirty());
   }
 
   function makeTitleEditable(on) {
@@ -367,20 +353,6 @@
     requestAnimationFrame(function () { root.style.overflowAnchor = ''; });
   }
 
-  // Phones draw the on-screen keyboard over fixed elements, so the bar rides above it.
-  function liftAboveKeyboard() {
-    var viewport = window.visualViewport;
-    var covered = viewport && viewport.scale <= 1.01
-      ? window.innerHeight - viewport.height - viewport.offsetTop
-      : 0;
-    bar.style.bottom = covered > 1 ? 'calc(' + Math.round(covered) + 'px + 0.5rem)' : '';
-  }
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', liftAboveKeyboard);
-    window.visualViewport.addEventListener('scroll', liftAboveKeyboard);
-  }
-
   /* Editing */
 
   function start() {
@@ -398,6 +370,7 @@
       .then(function (editors) {
         editor = editors[0];
         makeTitleEditable(true);
+        if (texts) texts.start();
         // Nothing takes focus: the author starts typing wherever they tap.
         keepInPlace(function () {
           startCoverEditing();
@@ -424,15 +397,10 @@
     });
   }
 
-  function confirmDiscard() {
-    var message = 'Your changes to this post will be lost.';
-    return window.blogConfirm ? window.blogConfirm(message) : Promise.resolve(window.confirm(message));
-  }
-
   function cancel() {
-    var discard = isDirty() ? confirmDiscard() : Promise.resolve(true);
-    discard.then(function (yes) {
+    editBar.confirmDiscard().then(function (yes) {
       if (!yes) return;
+      if (texts) texts.stop(false);
       stop(original.cover);
       titleEl.textContent = original.title;
       bodyEl.innerHTML = original.body;
@@ -452,27 +420,19 @@
     setBusy(true);
     say('Saving…');
 
-    fetch(bar.getAttribute('data-save-url'), {
-      method: 'POST',
-      body: data,
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-    })
-      .then(function (response) {
-        return response.json()
-          .catch(function () { return {}; })
-          .then(function (json) {
-            if (!response.ok) throw new Error(json.error || 'The post could not be saved. Try again.');
-            return json;
-          });
+    editBar.send(data, 'The post could not be saved. Try again.')
+      .then(function (saved) {
+        // Kept before the theme texts save, so trying again after a failed one is not taken for an edit made elsewhere.
+        versionInput.value = saved.version;
+        return (texts ? texts.save(editBar.send) : Promise.resolve()).then(function () { return saved; });
       })
       .then(function (saved) {
+        if (texts) texts.stop(true);
         stop(saved.cover || '');
         titleEl.textContent = saved.title;
         // The server's own cleaned copy of the text, the same HTML readers get.
         bodyEl.innerHTML = saved.content;
         sourceEl.innerHTML = saved.content;
-        versionInput.value = saved.version;
         say('Saved');
       })
       .catch(function (error) { say(error.message, 'error'); })
@@ -486,20 +446,7 @@
     }
   });
 
-  document.addEventListener('keydown', function (event) {
-    if (editor && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-      event.preventDefault();
-      bar.requestSubmit(saveBtn);
-    }
-  });
-
-  window.addEventListener('beforeunload', function (event) {
-    if (!isDirty()) return;
-    event.preventDefault();
-    event.returnValue = '';
-  });
-
-  startBtn.addEventListener('click', start);
-  cancelBtn.addEventListener('click', cancel);
+  editBar.startBtn.addEventListener('click', start);
+  editBar.cancelBtn.addEventListener('click', cancel);
   bar.addEventListener('submit', save);
 }());

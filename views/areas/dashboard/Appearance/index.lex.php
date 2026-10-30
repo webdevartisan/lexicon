@@ -243,28 +243,49 @@ $previewUrl = $previewBase.'?_theme='.rawurlencode($themeKey);
           <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.frontPage.description') }}</p>
         </div>
         <div class="p-4 space-y-4 md:p-5">
-          <?php $value = $settings['tagline'] ?? ''; ?>
-          {% cmp="input" type="text" name="tagline" label="{$taglineLabel}" value="{$value}" placeholder="{$taglinePlaceholder}" underlabel="{$taglineUnderlabel}" %}
+          <input type="hidden" name="text_locale" value="<?= e($textLocale) ?>">
+          <?php if (count($textLocales) > 1) { ?>
+          <nav class="flex flex-wrap items-center gap-2" aria-label="<?= e($t('blog.form.sections.frontPage.language')) ?>">
+            <span class="text-xs font-medium text-slate-500 dark:text-zink-300"><?= e($t('blog.form.sections.frontPage.language')) ?></span>
+            <?php foreach ($textLocales as $code => $name) {
+                $isCurrent = $code === $textLocale;
+                $langHref = '/dashboard/blog/'.$blogId.'/appearance?lang='.$code.'#branding';
+                ?>
+            <a href="<?= e($langHref) ?>" class="px-3 py-1 text-xs rounded-md border <?= $isCurrent ? 'border-custom-500 text-custom-500' : 'border-slate-200 text-slate-500 dark:border-zink-500 dark:text-zink-200' ?>"<?= $isCurrent ? ' aria-current="true"' : '' ?>><?= e($name) ?></a>
+            <?php } ?>
+          </nav>
+          <?php $baseLocale = (string) array_key_first($textLocales); ?>
+          <?php if ($textLocale !== $baseLocale) { ?>
+          <p class="text-xs text-slate-500 dark:text-zink-300"><?= e($t('blog.form.sections.frontPage.fallbackNote', ['language' => $textLocales[$baseLocale]])) ?></p>
+          <?php } ?>
+          <?php } ?>
 
-          <?php $value = $settings['subtitle'] ?? ''; ?>
-          {% cmp="input" type="text" name="subtitle" label="{$subtitleLabel}" value="{$value}" placeholder="{$subtitlePlaceholder}" underlabel="{$subtitleUnderlabel}" %}
+          <?php
+          // Outside the blog's own language an empty field shows that language's wording, so it stands in as the hint.
+          $hint = static fn (string $field, string $themeHint): string => $texts[$field]['fallback'] !== '' ? $texts[$field]['fallback'] : $themeHint;
+          ?>
+          <?php $value = $texts['tagline']['value']; $placeholder = $hint('tagline', $taglinePlaceholder); ?>
+          {% cmp="input" type="text" name="tagline" label="{$taglineLabel}" value="{$value}" placeholder="{$placeholder}" underlabel="{$taglineUnderlabel}" %}
 
-          <?php $value = $settings['about_text'] ?? ''; ?>
-          {% cmp="input" type="textarea" name="about_text" label="{$aboutTextLabel}" value="{$value}" rows="3" placeholder="{$aboutTextPlaceholder}" %}
+          <?php $value = $texts['subtitle']['value']; $placeholder = $hint('subtitle', $subtitlePlaceholder); ?>
+          {% cmp="input" type="text" name="subtitle" label="{$subtitleLabel}" value="{$value}" placeholder="{$placeholder}" underlabel="{$subtitleUnderlabel}" %}
+
+          <?php $value = $texts['about_text']['value']; $placeholder = $hint('about_text', $aboutTextPlaceholder); ?>
+          {% cmp="input" type="textarea" name="about_text" label="{$aboutTextLabel}" value="{$value}" rows="3" placeholder="{$placeholder}" %}
 
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <?php $value = $settings['founded_year'] ?? ''; ?>
-              {% cmp="input" type="text" name="founded_year" label="{$foundedYearLabel}" value="{$value}" placeholder="{$foundedYearPlaceholder}" underlabel="{$foundedYearUnderlabel}" %}
+              <?php $value = $texts['founded_year']['value']; $placeholder = $hint('founded_year', $foundedYearPlaceholder); ?>
+              {% cmp="input" type="text" name="founded_year" label="{$foundedYearLabel}" value="{$value}" placeholder="{$placeholder}" underlabel="{$foundedYearUnderlabel}" %}
             </div>
           </div>
 
           <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600 space-y-4">
-            <?php $value = $settings['newsletter_heading'] ?? ''; ?>
-            {% cmp="input" type="text" name="newsletter_heading" label="{$newsHeadingLabel}" value="{$value}" placeholder="{$newsHeadingPlaceholder}" underlabel="{$newsHeadingUnderlabel}" %}
+            <?php $value = $texts['newsletter_heading']['value']; $placeholder = $hint('newsletter_heading', $newsHeadingPlaceholder); ?>
+            {% cmp="input" type="text" name="newsletter_heading" label="{$newsHeadingLabel}" value="{$value}" placeholder="{$placeholder}" underlabel="{$newsHeadingUnderlabel}" %}
 
-            <?php $value = $settings['newsletter_text'] ?? ''; ?>
-            {% cmp="input" type="text" name="newsletter_text" label="{$newsTextLabel}" value="{$value}" placeholder="{$newsTextPlaceholder}" underlabel="{$newsTextUnderlabel}" %}
+            <?php $value = $texts['newsletter_text']['value']; $placeholder = $hint('newsletter_text', $newsTextPlaceholder); ?>
+            {% cmp="input" type="text" name="newsletter_text" label="{$newsTextLabel}" value="{$value}" placeholder="{$placeholder}" underlabel="{$newsTextUnderlabel}" %}
           </div>
         </div>
       </section>

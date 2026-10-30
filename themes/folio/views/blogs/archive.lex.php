@@ -23,22 +23,24 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <?php
   // Headings are overridable so this same layout backs the full archive and the
   // category/tag listings. Defaults keep the plain "/archive" page unchanged.
-  $kicker = $archiveKicker ?? translate_html('folio::archive.kicker', ['blog' => $blogTitle]);
-  $heading = $archiveTitle ?? e($t('folio::archive.heading'));
-  $dek = $archiveDek ?? translate_html('folio::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('folio::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('folio::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('folio::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('folio::archive.heading');
+  $dek = $archiveDek ?? $wording->html('folio::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('folio::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
-      <span><?= $kicker ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
       <span><?= e(translate_count('folio::home.postCount', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="archive-title"><?= $heading ?></h1>
+    <h1 class="archive-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="archive-dek">
-      <?= $dek ?>
-    </p>
+    <p class="archive-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
@@ -83,7 +85,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
       <?php } ?>
     </div>
     <?php } else { ?>
-      <p style="font-family:var(--mono);text-transform:uppercase;letter-spacing:0.18em;color:var(--muted);"><?= e($t('folio::archive.empty')) ?></p>
+      <p style="font-family:var(--mono);text-transform:uppercase;letter-spacing:0.18em;color:var(--muted);"<?= $wording->attrs('folio::archive.empty') ?>><?= $wording->html('folio::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
@@ -116,4 +118,5 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}

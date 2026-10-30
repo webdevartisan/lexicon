@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Models\BlogSettingsModel;
+use App\Services\BlogWording;
 use App\Services\LocaleRegistry;
 use App\Services\ThemeService;
 use Framework\Core\Request;
@@ -77,6 +78,7 @@ final class ThemeResolverMiddleware implements MiddlewareInterface
 
         // Publish theme and asset() to viewer globals
         $asset = fn (string $p) => $this->themes->assetUrl($p); // /themes/{active}/public/... or /assets/... fallback
-        $this->viewer->addGlobals(['theme' => $theme, 'asset' => $asset]);
+        // Blog pages pass the blog's own wording; anything else drawn in the theme shows the theme's.
+        $this->viewer->addGlobals(['theme' => $theme, 'asset' => $asset, 'wording' => BlogWording::none()]);
     }
 }

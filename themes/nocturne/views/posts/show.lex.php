@@ -105,7 +105,7 @@ $title = e($post['title'] ?? 'Untitled');
 <?php if (!empty($related) && is_array($related)) { ?>
 <section class="post-related" data-insights-related>
   <div class="container">
-    <h2 class="reveal"><?= e($t('nocturne::post.related')) ?></h2>
+    <h2 class="reveal"<?= $wording->attrs('nocturne::post.related') ?>><?= $wording->html('nocturne::post.related') ?></h2>
     <div class="related-grid">
       <?php foreach ($related as $rel) {
           $rTitle = e($rel['title'] ?? 'Post');

@@ -30,7 +30,8 @@
         "subtitle": "Essays and dispatches, proofed, inked, and published.",
         "readLead": "Read the lead story",
         "fallbackCategory": "Article",
-        "leadStory": "Lead story · {category}",
+        "leadStoryLine": "Lead story",
+        "leadStory": "{line} · {category}",
         "readPost": "Read the post",
         "indexTitle": "The Index.",
         "indexCount": {

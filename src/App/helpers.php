@@ -112,6 +112,23 @@ function site_content(string $name, ?string $default = null): string
 }
 
 /**
+ * Attributes that mark a front-page text a blog owner can edit on the page.
+ *
+ * Rendered for every visitor so the cached page stays the same for all; only
+ * an owner's page loads the script that reads them.
+ *
+ * @param  string  $field  The text, such as tagline
+ * @param  string  $default  What the theme shows while the text is empty; HTML is reduced to its text
+ * @return string The attributes, each with a leading space
+ */
+function edit_text_attrs(string $field, string $default = ''): string
+{
+    $plain = html_entity_decode(strip_tags($default), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    return ' data-edit-text="'.e($field).'" data-edit-default="'.e(trim($plain)).'"';
+}
+
+/**
  * Label for a navigation item, translated when a translation exists.
  *
  * NavigationService emits both an English `label` and a `key`. Rendering the

@@ -26,9 +26,10 @@ class ThemeService implements ThemeResolverInterface
      * The directory name is the canonical key: view and asset resolution both
      * build paths from it, so a mismatched "key" in theme.json would point at
      * a theme that cannot render. Each entry carries name, description,
-     * version, author and a screenshot URL (null when the theme ships none).
+     * version, author, a screenshot URL (null when the theme ships none) and
+     * the theme's own texts an owner may reword.
      *
-     * @return array<string, array<string, string|null>> Sorted by display name
+     * @return array<string, array{key: string, name: string, description: string, version: string, author: string, screenshot: ?string, editable_texts: string[]}> Sorted by display name
      */
     public function available(): array
     {
@@ -56,6 +57,10 @@ class ThemeService implements ThemeResolverInterface
                 'version' => (string) ($meta['version'] ?? ''),
                 'author' => (string) ($meta['author'] ?? ''),
                 'screenshot' => $screenshot,
+                'editable_texts' => array_values(array_filter(
+                    (array) ($meta['editableTexts'] ?? []),
+                    'is_string'
+                )),
             ];
         }
 
@@ -72,6 +77,23 @@ class ThemeService implements ThemeResolverInterface
     public function isValidKey(string $key): bool
     {
         return array_key_exists($key, $this->available());
+    }
+
+    /**
+     * The theme's own texts an owner may reword, as full translation keys (nocturne::home.edition).
+     *
+     * @return string[]
+     */
+    public function editableTexts(?string $theme): array
+    {
+        if ($theme === null || !$this->isValidKey($theme)) {
+            return [];
+        }
+
+        return array_map(
+            static fn (string $key): string => $theme.'::'.$key,
+            $this->available()[$theme]['editable_texts']
+        );
     }
 
     public function activate(?string $theme): void

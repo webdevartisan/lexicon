@@ -12,7 +12,8 @@
     "by": "By {author}",
     "emailLabel": "Your address",
     "footer": {
-        "note": "Written after hours.{br}Read whenever you like."
+        "note": "Written after hours.",
+        "noteMore": "Read whenever you like."
     },
     "home": {
         "edition": "The Night Edition",
@@ -39,7 +40,8 @@
         "inCategory": "{count} posts in {name}",
         "viewAll": "View all",
         "nightcap": "The Nightcap",
-        "nightcapMeta": "One for the slow hours · {count} Min",
+        "nightcapLine": "One for the slow hours",
+        "nightcapMeta": "{line} · {count} Min",
         "nightcapSource": "from {title} by {author}",
         "pour": "Pour the full read",
         "desk": "From the desk of {owner}",

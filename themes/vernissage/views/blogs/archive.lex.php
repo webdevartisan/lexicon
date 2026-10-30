@@ -37,22 +37,24 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <?php
   // Headings are overridable so this same layout backs the full catalogue and
   // the category/tag listings. Defaults keep the plain "/archive" page unchanged.
-  $kicker = $archiveKicker ?? translate_html('vernissage::archive.kicker', ['blog' => $blogTitle]);
-  $heading = $archiveTitle ?? e($t('vernissage::archive.heading'));
-  $dek = $archiveDek ?? translate_html('vernissage::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('vernissage::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('vernissage::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('vernissage::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('vernissage::archive.heading');
+  $dek = $archiveDek ?? $wording->html('vernissage::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('vernissage::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
-      <span><?= $kicker ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
       <span><?= e(translate_count('vernissage::archive.count', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="archive-title"><?= $heading ?></h1>
+    <h1 class="archive-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="archive-dek">
-      <?= $dek ?>
-    </p>
+    <p class="archive-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
@@ -115,7 +117,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       <?php } ?>
       </div>
     <?php } else { ?>
-      <p class="catalogue-empty"><?= e($t('vernissage::archive.empty')) ?></p>
+      <p class="catalogue-empty"<?= $wording->attrs('vernissage::archive.empty') ?>><?= $wording->html('vernissage::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
@@ -148,4 +150,5 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}

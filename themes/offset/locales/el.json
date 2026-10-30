@@ -30,7 +30,8 @@
         "subtitle": "Δοκίμια και ανταποκρίσεις, διορθωμένα, μελανωμένα και δημοσιευμένα.",
         "readLead": "Διαβάστε το κύριο θέμα",
         "fallbackCategory": "Άρθρο",
-        "leadStory": "Κύριο θέμα · {category}",
+        "leadStoryLine": "Κύριο θέμα",
+        "leadStory": "{line} · {category}",
         "readPost": "Διαβάστε την ανάρτηση",
         "indexTitle": "Το ευρετήριο.",
         "indexCount": {

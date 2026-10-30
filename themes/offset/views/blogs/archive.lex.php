@@ -23,22 +23,24 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
 <?php
   // Headings are overridable so this same layout backs the full archive and the
   // category/tag listings. Defaults keep the plain "/archive" page unchanged.
-  $kicker = $archiveKicker ?? translate_html('offset::archive.kicker', ['blog' => $blogTitle]);
-  $heading = $archiveTitle ?? e($t('offset::archive.heading'));
-  $dek = $archiveDek ?? translate_html('offset::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('offset::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('offset::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('offset::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('offset::archive.heading');
+  $dek = $archiveDek ?? $wording->html('offset::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('offset::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
-      <span><?= $kicker ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
       <span><?= e(translate_count('offset::archive.count', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="archive-title"><?= $heading ?></h1>
+    <h1 class="archive-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="archive-dek">
-      <?= $dek ?>
-    </p>
+    <p class="archive-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
@@ -101,7 +103,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
       <?php } ?>
       </div>
     <?php } else { ?>
-      <p class="catalogue-empty"><?= e($t('offset::archive.empty')) ?></p>
+      <p class="catalogue-empty"<?= $wording->attrs('offset::archive.empty') ?>><?= $wording->html('offset::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
@@ -134,4 +136,5 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}

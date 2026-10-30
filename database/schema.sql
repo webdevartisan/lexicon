@@ -330,6 +330,25 @@ CREATE TABLE IF NOT EXISTS blog_settings (
 COMMENT='Blog-specific configuration and display settings';
 
 -- ----------------------------------------------------------------------------
+-- Blog Texts
+-- ----------------------------------------------------------------------------
+-- A blog's own wording, one row per language and text. The front-page texts in
+-- blog_settings are in the blog's own language; a row here keyed by the column
+-- name (tagline) rewords one for readers of another language. Keys are plain
+-- names so any installed theme can add its own without a schema change.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS blog_texts (
+    blog_id INT NOT NULL,
+    locale VARCHAR(5) NOT NULL,
+    text_key VARCHAR(150) NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (blog_id, locale, text_key),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-language wording of a blog''s texts';
+
+-- ----------------------------------------------------------------------------
 -- Blog Users Table (formerly blog_authors)
 -- ----------------------------------------------------------------------------
 -- We track blog membership with roles to enable flexible permission models

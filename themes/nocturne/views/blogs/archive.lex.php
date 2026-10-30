@@ -21,21 +21,25 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
   // Headings are overridable so this same layout backs the full archive and
   // the category/tag listings.
-  $kicker = $archiveKicker ?? translate_html('nocturne::archive.kicker', ['blog' => $blogTitle]);
-  $heading = $archiveTitle ?? e($t('nocturne::archive.heading'));
-  $dek = $archiveDek ?? translate_html('nocturne::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('nocturne::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('nocturne::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('nocturne::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('nocturne::archive.heading');
+  $dek = $archiveDek ?? $wording->html('nocturne::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('nocturne::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 
 <section class="ledger-hero">
   <div class="container">
     <div class="ledger-rail">
-      <span><?= $kicker ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
       <span><?= e(translate_count('nocturne::home.postCount', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="ledger-title"><?= $heading ?></h1>
+    <h1 class="ledger-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="ledger-dek"><?= $dek ?></p>
+    <p class="ledger-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
@@ -78,7 +82,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <div class="idx-float" id="idx-float" aria-hidden="true"><img src="" alt="" /></div>
     <?php } else { ?>
-      <p class="ledger-empty"><?= e($t('nocturne::archive.empty')) ?></p>
+      <p class="ledger-empty"<?= $wording->attrs('nocturne::archive.empty') ?>><?= $wording->html('nocturne::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
@@ -111,6 +115,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

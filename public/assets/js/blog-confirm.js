@@ -8,6 +8,11 @@
  * when they cancel, press Escape or click outside the box.
  */
 (function () {
+    // A page with both comments and an edit bar includes this twice; the first one is enough.
+    if (window.blogConfirm) {
+        return;
+    }
+
     var script = document.currentScript;
     var wording = readText(script);
 

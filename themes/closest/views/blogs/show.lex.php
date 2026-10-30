@@ -32,7 +32,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="trailhead" id="top">
   <div class="container">
     <div class="th-meta">
-      <span><?= e($t('closest::home.est', ['year' => !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y')])) ?></span>
+      <?php $estParams = ['year' => e(!empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'))]; ?>
+      <span<?= $wording->attrs('closest::home.est', $estParams) ?>><?= $wording->html('closest::home.est', $estParams) ?></span>
       <span><?= e(translate_count('closest::home.waypoints', $postCount)) ?></span>
       <span><?= e($t('closest::home.trail', ['minutes' => $totalMinutes, 'km' => $totalKm])) ?></span>
     </div>
@@ -47,16 +48,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       </svg>
       <a class="yah" id="yah" href="#nearest" tabindex="-1">
         <span class="yah-pin"><span></span></span>
-        <span class="yah-label"><?= e($t('closest::home.youAreHere')) ?></span>
+        <span class="yah-label"<?= $wording->attrs('closest::home.youAreHere') ?>><?= $wording->html('closest::home.youAreHere') ?></span>
       </a>
     </div>
 
     <div class="th-bottom">
-      <p class="th-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('closest::home.subtitle')) ?>
-      </p>
-      <?php if (!empty($settings['tagline'])) { ?>
-        <span class="th-blaze reveal"><?= e($settings['tagline']) ?></span>
+      <p class="th-dek reveal"<?= edit_text_attrs('subtitle', $t('closest::home.subtitle')) ?>><?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('closest::home.subtitle')) ?></p>
+      <?php if (!empty($settings['tagline']) || !empty($edit_texts)) { ?>
+        <span class="th-blaze reveal"<?= edit_text_attrs('tagline') ?><?= empty($settings['tagline']) ? ' hidden' : '' ?>><?= e($settings['tagline'] ?? '') ?></span>
       <?php } ?>
     </div>
   </div>
@@ -100,7 +99,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          <?= e($t('closest::home.walkNearest')) ?>
+          <span<?= $wording->attrs('closest::home.walkNearest') ?>><?= $wording->html('closest::home.walkNearest') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
@@ -115,7 +114,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="route" id="route">
   <div class="container">
     <div class="route-head">
-      <h2 class="route-title reveal"><?= e($t('closest::home.routeTitle')) ?></h2>
+      <h2 class="route-title reveal"<?= $wording->attrs('closest::home.routeTitle') ?>><?= $wording->html('closest::home.routeTitle') ?></h2>
       <span class="route-count reveal" id="filter-count"><?= e(translate_count('closest::home.routeCount', count($gridPosts))) ?></span>
     </div>
 
@@ -156,26 +155,19 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       <div class="legend-side">
         <h2 class="legend-title reveal"><?= translate_html('closest::home.legendTitle', ['br' => '<br />']) ?></h2>
         <?php $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'); ?>
-        <span class="legend-est reveal"><?= e($t('closest::home.surveyedSince', ['year' => $estLabel])) ?></span>
+        <span class="legend-est reveal"><?= translate_html('closest::home.surveyedSince', ['year' => '<span'.edit_text_attrs('founded_year', date('Y')).'>'.e($estLabel).'</span>']) ?></span>
       </div>
 
       <div class="legend-body">
         <ul class="legend-key reveal" aria-hidden="true">
-          <li><span class="key-sym key-sym--dot"></span> <?= e($t('closest::home.keyDot')) ?></li>
-          <li><span class="key-sym key-sym--blaze"></span> <?= e($t('closest::home.keyBlaze')) ?></li>
-          <li><span class="key-sym key-sym--dash"></span> <?= e($t('closest::home.keyDash')) ?></li>
+          <li><span class="key-sym key-sym--dot"></span> <span<?= $wording->attrs('closest::home.keyDot') ?>><?= $wording->html('closest::home.keyDot') ?></span></li>
+          <li><span class="key-sym key-sym--blaze"></span> <span<?= $wording->attrs('closest::home.keyBlaze') ?>><?= $wording->html('closest::home.keyBlaze') ?></span></li>
+          <li><span class="key-sym key-sym--dash"></span> <span<?= $wording->attrs('closest::home.keyDash') ?>><?= $wording->html('closest::home.keyDash') ?></span></li>
         </ul>
 
-        <p class="legend-statement reveal">
-          <?php if (!empty($settings['about_text'])) { ?>
-            <?= e($settings['about_text']) ?>
-          <?php } elseif (!empty($settings['subtitle'])) { ?>
-            <?= e($settings['subtitle']) ?>
-          <?php } else { ?>
-            <?= translate_html('closest::home.aboutDefault', ['blog' => $blogTitle]) ?>
-          <?php } ?>
-        </p>
-        <span class="legend-sign reveal"><?= translate_html('closest::home.sign', ['owner' => $ownerName]) ?></span>
+        <?php $aboutDefault = !empty($settings['subtitle']) ? e($settings['subtitle']) : translate_html('closest::home.aboutDefault', ['blog' => $blogTitle]); ?>
+        <p class="legend-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
+        <span class="legend-sign reveal"<?= $wording->attrs('closest::home.sign', ['owner' => $ownerName]) ?>><?= $wording->html('closest::home.sign', ['owner' => $ownerName]) ?></span>
 
         <p class="legend-fine reveal">
           <?= translate_html('closest::home.fine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
@@ -189,9 +181,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="dispatch-slab">
       <div class="dispatch-copy">
-        <span class="eyebrow reveal"><?= e($t('closest::home.newsEyebrow')) ?></span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('closest::home.newsHeading')) ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('closest::home.newsText')) ?></p>
+        <span class="eyebrow reveal"<?= $wording->attrs('closest::home.newsEyebrow') ?>><?= $wording->html('closest::home.newsEyebrow') ?></span>
+        <h2 class="reveal"<?= edit_text_attrs('newsletter_heading', $t('closest::home.newsHeading')) ?>><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('closest::home.newsHeading')) ?></h2>
+        <p class="reveal"<?= edit_text_attrs('newsletter_text', $t('closest::home.newsText')) ?>><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('closest::home.newsText')) ?></p>
       </div>
 
       <form class="dispatch-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
@@ -206,11 +198,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
             <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="dispatch-fine"><?= e($t('closest::home.newsFine')) ?></span>
+        <span class="dispatch-fine"<?= $wording->attrs('closest::home.newsFine') ?>><?= $wording->html('closest::home.newsFine') ?></span>
       </form>
     </div>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

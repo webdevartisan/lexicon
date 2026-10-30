@@ -67,7 +67,7 @@
         <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'Vernissage') ?></div>
       </div>
 
-      <p class="foot-hours"><?= e($t('vernissage::footer.hours')) ?></p>
+      <p class="foot-hours"<?= $wording->attrs('vernissage::footer.hours') ?>><?= $wording->html('vernissage::footer.hours') ?></p>
 
       <div class="foot-bottom">
         <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Vernissage') ?>.</span>

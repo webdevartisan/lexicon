@@ -32,7 +32,8 @@
         "subtitle": "A permanent collection of essays and dispatches, hung one work at a time.",
         "viewCentrepiece": "View the centrepiece",
         "fallbackCategory": "Work",
-        "onView": "On view · {category}",
+        "onViewLine": "On view",
+        "onView": "{line} · {category}",
         "viewWork": "View the work",
         "collectionTitle": "The Collection.",
         "workCount": {

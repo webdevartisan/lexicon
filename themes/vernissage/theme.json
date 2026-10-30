@@ -4,5 +4,22 @@
   "version": "1.0.0",
   "author": "Lexicon",
   "description": "A private gallery opening: plaster walls, one wall of viridian, works hung in frames that draw the room's light on hover.",
-  "compat": ">=1.0"
+  "compat": ">=1.0",
+  "editableTexts": [
+    "home.viewCentrepiece",
+    "home.onViewLine",
+    "home.viewWork",
+    "home.collectionTitle",
+    "home.est",
+    "home.curatorEyebrow",
+    "home.newsEyebrow",
+    "home.subscribe",
+    "home.newsFine",
+    "footer.hours",
+    "archive.kicker",
+    "archive.heading",
+    "archive.dek",
+    "archive.empty",
+    "post.related"
+  ]
 }

@@ -57,7 +57,7 @@
       <div class="foot-lamp" aria-hidden="true"></div>
 
       <div class="foot-top">
-        <p class="foot-note"><?= translate_html('nocturne::footer.note', ['br' => '<br />']) ?></p>
+        <p class="foot-note"><span<?= $wording->attrs('nocturne::footer.note') ?>><?= $wording->html('nocturne::footer.note') ?></span><br /><span<?= $wording->attrs('nocturne::footer.noteMore') ?>><?= $wording->html('nocturne::footer.noteMore') ?></span></p>
 
         {% include "partials/public/_theme_social_links.lex.php" %}
       </div>

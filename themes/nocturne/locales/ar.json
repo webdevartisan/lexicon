@@ -12,7 +12,8 @@
     "by": "بقلم {author}",
     "emailLabel": "عنوان بريدك",
     "footer": {
-        "note": "كُتبت بعد منتصف الليل.{br}اقرأها متى شئت."
+        "note": "كُتبت بعد منتصف الليل.",
+        "noteMore": "اقرأها متى شئت."
     },
     "home": {
         "edition": "الطبعة الليلية",
@@ -39,7 +40,8 @@
         "inCategory": "{count} تدوينات في {name}",
         "viewAll": "عرض الكل",
         "nightcap": "كأس آخر الليل",
-        "nightcapMeta": "واحدة للساعات الهادئة · {count} دقائق",
+        "nightcapLine": "واحدة للساعات الهادئة",
+        "nightcapMeta": "{line} · {count} دقائق",
         "nightcapSource": "من {title} بقلم {author}",
         "pour": "اقرأها كاملة",
         "desk": "من مكتب {owner}",

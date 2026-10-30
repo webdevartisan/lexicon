@@ -40,8 +40,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="hero" id="top">
   <div class="container">
     <div class="hero-rail">
-      <span><?= e($t('nocturne::home.edition')) ?></span>
-      <span><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('nocturne::home.tagline')) ?></span>
+      <span<?= $wording->attrs('nocturne::home.edition') ?>><?= $wording->html('nocturne::home.edition') ?></span>
+      <span<?= edit_text_attrs('tagline', $t('nocturne::home.tagline')) ?>><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('nocturne::home.tagline')) ?></span>
       <span><?= e(translate_count('nocturne::home.postCount', $postCount)) ?> &middot; <?= e($t('nocturne::home.readingTotal', ['count' => $totalMinutes])) ?></span>
     </div>
 
@@ -53,12 +53,10 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     </h1>
 
     <div class="hero-foot">
-      <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('nocturne::home.subtitle')) ?>
-      </p>
+      <p class="hero-dek reveal"<?= edit_text_attrs('subtitle', $t('nocturne::home.subtitle')) ?>><?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('nocturne::home.subtitle')) ?></p>
       <?php if ($featuredPost) { ?>
       <a href="#coverstory" class="hero-cue reveal" aria-label="<?= e($t('nocturne::home.scrollCue')) ?>">
-        <span><?= e($t('nocturne::home.tonight')) ?></span>
+        <span<?= $wording->attrs('nocturne::home.tonight') ?>><?= $wording->html('nocturne::home.tonight') ?></span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
       </a>
       <?php } ?>
@@ -82,7 +80,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
   <div class="container">
     <div class="cover-grid">
       <div class="cover-body">
-        <span class="eyebrow reveal"><?= e($t('nocturne::home.coverStory')) ?></span>
+        <span class="eyebrow reveal"<?= $wording->attrs('nocturne::home.coverStory') ?>><?= $wording->html('nocturne::home.coverStory') ?></span>
         <h2 class="cover-title reveal"><a href="<?= $fUrl ?>"><?= $fTitle ?></a></h2>
 
         <?php if ($fExc) { ?>
@@ -96,7 +94,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          <?= e($t('nocturne::home.readPost')) ?>
+          <span<?= $wording->attrs('nocturne::home.readPost') ?>><?= $wording->html('nocturne::home.readPost') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
 
@@ -119,7 +117,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="index" id="index">
   <div class="container">
     <div class="index-head">
-      <h2 class="index-title reveal"><?= e($t('nocturne::home.indexTitle')) ?></h2>
+      <h2 class="index-title reveal"<?= $wording->attrs('nocturne::home.indexTitle') ?>><?= $wording->html('nocturne::home.indexTitle') ?></h2>
       <span class="index-count reveal" id="filter-count"><?= e(translate_count('nocturne::home.indexCount', count($indexPosts))) ?></span>
     </div>
 
@@ -173,8 +171,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 <section class="nightcap">
   <div class="container">
     <div class="nightcap-head reveal">
-      <span class="eyebrow"><?= e($t('nocturne::home.nightcap')) ?></span>
-      <span class="eyebrow"><?= e($t('nocturne::home.nightcapMeta', ['count' => $ncMinutes])) ?></span>
+      <span class="eyebrow"<?= $wording->attrs('nocturne::home.nightcap') ?>><?= $wording->html('nocturne::home.nightcap') ?></span>
+      <?php $ncLine = '<span'.$wording->attrs('nocturne::home.nightcapLine').'>'.$wording->html('nocturne::home.nightcapLine').'</span>'; ?>
+      <span class="eyebrow"><?= translate_html('nocturne::home.nightcapMeta', ['line' => $ncLine, 'count' => (int) $ncMinutes]) ?></span>
     </div>
 
     <blockquote class="nightcap-quote reveal">
@@ -184,7 +183,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     <div class="nightcap-foot reveal">
       <span class="nightcap-source"><?= translate_html('nocturne::home.nightcapSource', ['title' => '<a href="'.$ncUrl.'"><em>'.$ncTitle.'</em></a>', 'author' => $ncAuthor]) ?></span>
       <a href="<?= $ncUrl ?>" class="link-arrow">
-        <?= e($t('nocturne::home.pour')) ?>
+        <span<?= $wording->attrs('nocturne::home.pour') ?>><?= $wording->html('nocturne::home.pour') ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -199,18 +198,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         $aboutLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
   $aboutLabelClass = mb_strlen($aboutLabel) > 6 ? ' desk-mark--word' : '';
   ?>
-      <p class="desk-mark<?= $aboutLabelClass ?> reveal"><?= e($aboutLabel) ?></p>
+      <p class="desk-mark<?= $aboutLabelClass ?> reveal"<?= edit_text_attrs('founded_year', date('Y')) ?>><?= e($aboutLabel) ?></p>
       <div class="desk-body">
-        <span class="eyebrow reveal"><?= translate_html('nocturne::home.desk', ['owner' => $ownerName]) ?></span>
-        <p class="desk-statement reveal">
-          <?php if (!empty($settings['about_text'])) { ?>
-            <?= e($settings['about_text']) ?>
-          <?php } elseif (!empty($settings['subtitle'])) { ?>
-            <?= e($settings['subtitle']) ?>
-          <?php } else { ?>
-            <?= translate_html('nocturne::home.deskDefault', ['blog' => $blogTitle]) ?>
-          <?php } ?>
-        </p>
+        <span class="eyebrow reveal"<?= $wording->attrs('nocturne::home.desk', ['owner' => $ownerName]) ?>><?= $wording->html('nocturne::home.desk', ['owner' => $ownerName]) ?></span>
+        <?php $aboutDefault = !empty($settings['subtitle']) ? e($settings['subtitle']) : translate_html('nocturne::home.deskDefault', ['blog' => $blogTitle]); ?>
+        <p class="desk-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
         <span class="desk-sign reveal"><?= $ownerName ?></span>
       </div>
     </div>
@@ -221,9 +213,10 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
   <div class="container">
     <div class="nightletter-grid">
       <div class="nightletter-copy">
-        <span class="eyebrow reveal"><?= e($t('nocturne::home.newsEyebrow')) ?></span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : translate_html('nocturne::home.newsHeading', ['blog' => $blogTitle]) ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('nocturne::home.newsText')) ?></p>
+        <span class="eyebrow reveal"<?= $wording->attrs('nocturne::home.newsEyebrow') ?>><?= $wording->html('nocturne::home.newsEyebrow') ?></span>
+        <?php $newsHeadingDefault = translate_html('nocturne::home.newsHeading', ['blog' => $blogTitle]); ?>
+        <h2 class="reveal"<?= edit_text_attrs('newsletter_heading', $newsHeadingDefault) ?>><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : $newsHeadingDefault ?></h2>
+        <p class="reveal"<?= edit_text_attrs('newsletter_text', $t('nocturne::home.newsText')) ?>><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('nocturne::home.newsText')) ?></p>
       </div>
 
       <form class="nightletter-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
@@ -243,6 +236,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     </div>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

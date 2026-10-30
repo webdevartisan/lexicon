@@ -23,22 +23,24 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <?php
   // Headings are overridable so this same layout backs the full route log and
   // the category/tag listings. Defaults keep the plain "/archive" page intact.
-  $kicker = $archiveKicker ?? translate_html('closest::archive.kicker', ['blog' => $blogTitle]);
-  $heading = $archiveTitle ?? e($t('closest::archive.heading'));
-  $dek = $archiveDek ?? translate_html('closest::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('closest::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('closest::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('closest::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('closest::archive.heading');
+  $dek = $archiveDek ?? $wording->html('closest::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('closest::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="log-hero">
   <div class="container">
     <div class="log-meta-top">
-      <span><?= $kicker ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
       <span><?= e(translate_count('closest::home.waypoints', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="log-title"><?= $heading ?></h1>
+    <h1 class="log-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="log-dek">
-      <?= $dek ?>
-    </p>
+    <p class="log-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
@@ -105,7 +107,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         </div>
       </div>
     <?php } else { ?>
-      <p class="log-empty"><?= e($t('closest::archive.empty')) ?></p>
+      <p class="log-empty"<?= $wording->attrs('closest::archive.empty') ?>><?= $wording->html('closest::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
@@ -138,6 +140,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

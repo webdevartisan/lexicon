@@ -8,6 +8,9 @@
   <?= csrf_field() ?>
   <input type="hidden" name="version" value="<?= e($edit_in_place['version']) ?>" data-edit-version>
   <template data-edit-source><?= $edit_in_place['content'] ?></template>
+  <?php if (!empty($edit_texts)) { ?>
+  {% include "partials/public/_edit_texts_data.lex.php" %}
+  <?php } ?>
   <div class="edit-bar-toolbar" data-edit-toolbar hidden></div>
   <div class="edit-bar-actions">
     <span class="edit-bar-status" data-edit-status role="status" aria-live="polite"></span>
@@ -20,5 +23,10 @@
 <script defer src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
 <script defer src="<?= e(versioned_asset('/assets/js/editor-media.js')) ?>"></script>
 <script defer src="<?= e(versioned_asset('/assets/js/editor-colours.js')) ?>"></script>
+{% include "partials/public/_blog_confirm.lex.php" %}
+<script defer src="<?= e(versioned_asset('/assets/js/edit-bar.js')) ?>"></script>
+<?php if (!empty($edit_texts)) { ?>
+<script defer src="<?= e(versioned_asset('/assets/js/edit-texts.js')) ?>"></script>
+<?php } ?>
 <script defer src="<?= e(versioned_asset('/assets/js/edit-in-place.js')) ?>"></script>
 <?php } ?>

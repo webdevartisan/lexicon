@@ -32,7 +32,8 @@
         "subtitle": "Μια μόνιμη συλλογή από δοκίμια και ανταποκρίσεις, κρεμασμένα ένα έργο τη φορά.",
         "viewCentrepiece": "Δείτε το κεντρικό έργο",
         "fallbackCategory": "Έργο",
-        "onView": "Σε έκθεση · {category}",
+        "onViewLine": "Σε έκθεση",
+        "onView": "{line} · {category}",
         "viewWork": "Δείτε το έργο",
         "collectionTitle": "Η συλλογή.",
         "workCount": {

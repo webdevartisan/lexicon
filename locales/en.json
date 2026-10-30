@@ -583,7 +583,7 @@
     },
     "about": {
         "title": "About",
-        "body": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started — and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace."
+        "body": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started, and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace."
     },
     "contact": {
         "title": "Get in touch",
@@ -675,7 +675,9 @@
                 },
                 "frontPage": {
                     "title": "Front Page Text",
-                    "description": "Wording your theme shows on the blog's public pages. Empty fields fall back to the theme's defaults."
+                    "description": "Wording your theme shows on the blog's public pages. Empty fields fall back to the theme's defaults.",
+                    "language": "Language",
+                    "fallbackNote": "Empty fields show the {language} text."
                 },
                 "discussion": {
                     "title": "Discussion",

@@ -334,15 +334,93 @@ html[data-mode="light"] .edit-bar-btn.is-primary {
 
 /* Shows the author which parts of the page they can type into. */
 .is-editing-in-place [data-edit-title],
-.is-editing-in-place [data-edit-body] {
+.is-editing-in-place [data-edit-body],
+.is-editing-in-place [data-edit-text] {
     outline: 1px dashed rgba(128, 128, 128, 0.5);
     outline-offset: 0.75rem;
 }
 
 .is-editing-in-place [data-edit-title]:focus,
-.is-editing-in-place [data-edit-body].mce-edit-focus {
+.is-editing-in-place [data-edit-body].mce-edit-focus,
+.is-editing-in-place [data-edit-text]:focus {
     outline-style: solid;
     outline-color: currentColor;
+}
+
+/* Front-page texts sit in tight spots, so their frame stays close. A theme may still have
+   one faded out for its intro, or never faded in one that was hidden while empty. */
+.is-editing-in-place [data-edit-text] {
+    outline-offset: 0.35rem;
+    min-width: 4ch;
+    cursor: text;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* An empty text shows, faded, what readers will see in its place. */
+.is-editing-in-place [data-edit-text]:empty::before {
+    content: attr(data-edit-placeholder);
+    opacity: 0.45;
+}
+
+/* A pencil in the text's own colour marks each text; a click on it lands in the text. */
+.is-editing-in-place [data-edit-text]::after {
+    content: "";
+    display: inline-block;
+    /* Grows with small text but stays a small mark beside big headings */
+    width: clamp(12px, 0.85em, 20px);
+    height: clamp(12px, 0.85em, 20px);
+    margin-inline-start: clamp(4px, 0.4em, 10px);
+    vertical-align: -0.05em;
+    background-color: currentColor;
+    opacity: 0.6;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.is-editing-in-place [data-edit-text]:focus::after {
+    opacity: 1;
+}
+
+/* Puts one text back to its default; floats at the text's corner in the bar's colours, readable on any theme. */
+.edit-reset {
+    position: fixed;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 50%;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.edit-reset[hidden] {
+    display: none;
+}
+
+.edit-reset svg {
+    width: 14px;
+    height: 14px;
+}
+
+.edit-reset:hover,
+.edit-reset:focus-visible {
+    outline: none;
+    background: color-mix(in srgb, var(--platform-menu-bg, #1c1c1c) 80%, var(--platform-menu-fg, #f2f2f2));
+}
+
+/* A placeholder such as the blog name: filled in by the page, moved or removed whole, never typed into. */
+.edit-token {
+    padding: 0 0.3em;
+    border-radius: 0.3em;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    white-space: nowrap;
+    cursor: default;
 }
 
 /* Room below the text so the bar never sits over its last lines. */

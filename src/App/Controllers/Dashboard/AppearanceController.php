@@ -10,7 +10,11 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\GuidedSetupMarkModel;
 use App\Resources\BlogResource;
+use App\Services\BlogCacheInvalidator;
+use App\Services\BlogLocales;
 use App\Services\BlogThemeService;
+use App\Services\FrontPageTexts;
+use App\Services\LocaleRegistry;
 use App\Services\MediaService;
 use App\Services\ThemeService;
 use App\Services\UploadService;
@@ -34,6 +38,9 @@ final class AppearanceController extends AppController
         private MediaService $mediaService,
         private GuidedSetupMarkModel $setupMarks,
         private BlogThemeService $blogThemes,
+        private BlogLocales $blogLocales,
+        private FrontPageTexts $frontTexts,
+        private BlogCacheInvalidator $blogCache,
     ) {}
 
     /**
@@ -65,7 +72,7 @@ final class AppearanceController extends AppController
             'currentTheme' => $themes[$currentKey] ?? null,
             'socialLinks' => BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null),
             'socialPlatforms' => BlogSettingsModel::SOCIAL_PLATFORMS,
-        ]);
+        ] + $this->textLanguages($blog->id(), $settings, (string) ($this->request->get['lang'] ?? '')));
     }
 
     /**
@@ -121,13 +128,7 @@ final class AppearanceController extends AppController
         $userId = (int) $user['id'];
         $id = (int) $blogId;
 
-        $rules = [
-            'tagline' => 'max:160',
-            'subtitle' => 'max:255',
-            'about_text' => 'max:500',
-            'founded_year' => 'max:20',
-            'newsletter_heading' => 'max:255',
-            'newsletter_text' => 'max:255',
+        $rules = FrontPageTexts::RULES + [
             'remove_banner' => 'boolean',
             'remove_logo' => 'boolean',
             'remove_favicon' => 'boolean',
@@ -149,12 +150,6 @@ final class AppearanceController extends AppController
         }
 
         $settingsData = [
-            'tagline' => trim((string) ($validated['tagline'] ?? '')),
-            'subtitle' => trim((string) ($validated['subtitle'] ?? '')),
-            'about_text' => trim((string) ($validated['about_text'] ?? '')),
-            'founded_year' => trim((string) ($validated['founded_year'] ?? '')),
-            'newsletter_heading' => trim((string) ($validated['newsletter_heading'] ?? '')),
-            'newsletter_text' => trim((string) ($validated['newsletter_text'] ?? '')),
             'social_links' => $socialLinks === [] ? null : json_encode($socialLinks, JSON_UNESCAPED_SLASHES),
         ];
 
@@ -163,11 +158,17 @@ final class AppearanceController extends AppController
             $this->handleBrandingUploads($userId, $blog)
         );
 
-        $currentSettings = $this->settings->findByBlogId($id);
-        if ($currentSettings === null) {
-            $this->settings->createDefaultForBlog($id, []);
-            $currentSettings = [];
-        }
+        $currentSettings = $this->settings->findOrCreate($id);
+        $textLocale = $this->textLocale(
+            $this->blogLocales->for($id, $currentSettings),
+            $currentSettings,
+            (string) $this->request->postParam('text_locale', '')
+        );
+        $texts = array_fill_keys(array_keys(FrontPageTexts::RULES), '');
+        $textChanges = $this->frontTexts->save($blog, $currentSettings, $textLocale, array_replace(
+            $texts,
+            array_intersect_key($validated, $texts)
+        ));
 
         // Removing only empties the slot. The file stays in the media library,
         // where a post may still be using it.
@@ -181,25 +182,58 @@ final class AppearanceController extends AppController
 
         if (!empty($settingsChanges)) {
             $this->settings->updateForBlog($id, $settingsChanges);
+            // Branding renders on every public page of the blog.
+            $this->blogCache->forgetBlog($blog->slug());
+        }
 
-            // Branding and front-page texts render on every public page of the
-            // blog, so purge them all, the landing page included.
-            cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
-
-            audit()->log(
-                $userId,
-                'blog.updated',
-                'blog',
-                $id,
-                $settingsChanges,
-                $this->request->ip()
-            );
+        if ($settingsChanges !== [] || $textChanges !== []) {
+            $logged = $textChanges === [] ? $settingsChanges : $settingsChanges + $textChanges + ['locale' => $textLocale];
+            audit()->log($userId, 'blog.updated', 'blog', $id, $logged, $this->request->ip());
         }
 
         $this->setupMarks->mark($userId, $id, 'look_chosen');
         $this->flash('success', 'Appearance updated.');
 
-        return $this->redirect('/dashboard/blog/'.$blogId.'/appearance#branding');
+        $lang = $textLocale === BlogLocales::base($currentSettings) ? '' : '?lang='.$textLocale;
+
+        return $this->redirect('/dashboard/blog/'.$blogId.'/appearance'.$lang.'#branding');
+    }
+
+    /**
+     * The languages the front-page texts can be written in, and the texts in the one picked.
+     *
+     * @param  array<string, mixed>  $settings  Blog settings row
+     * @return array{textLocales: array<string, string>, textLocale: string, texts: array<string, array{value: string, fallback: string}>}
+     */
+    private function textLanguages(int $blogId, array $settings, string $requested): array
+    {
+        $registry = LocaleRegistry::instance();
+        $locales = $this->blogLocales->for($blogId, $settings);
+        $locale = $this->textLocale($locales, $settings, $requested);
+
+        $names = [];
+        foreach ($locales as $code) {
+            $names[$code] = $registry->nativeName($code);
+        }
+
+        return [
+            'textLocales' => $names,
+            'textLocale' => $locale,
+            'texts' => $this->frontTexts->forEditing($blogId, $settings, $locale),
+        ];
+    }
+
+    /**
+     * The asked-for language when the blog's pages exist in it, else the blog's own.
+     *
+     * @param  string[]  $locales  Languages the blog's pages exist in
+     * @param  array<string, mixed>  $settings  Blog settings row
+     */
+    private function textLocale(array $locales, array $settings, string $requested): string
+    {
+        return in_array($requested, $locales, true)
+            ? $requested
+            : BlogLocales::base($settings);
     }
 
     /**
