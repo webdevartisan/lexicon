@@ -28,8 +28,22 @@ $items = [
     ['key' => 'delete',        'href' => '/account/delete',        'label' => 'account.nav.danger',
         'icon' => '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'],
 ];
+
+$current = null;
+foreach ($items as $item) {
+    if ($item['key'] === $section) {
+        $current = $item;
+    }
+}
 ?>
 <nav class="lx-account-nav" aria-label="<?= e($tr('navigation.account')) ?>">
+    <button type="button" class="lx-account-nav-toggle" aria-expanded="false" data-panel-menu>
+        <?php if ($current !== null) { ?>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $current['icon'] ?></svg>
+        <?php } ?>
+        <span><?= e($tr($current !== null ? $current['label'] : 'navigation.account')) ?></span>
+        <svg class="lx-account-nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
     <ul>
         <?php foreach ($items as $item) {
             $isCurrent = $section === $item['key'];

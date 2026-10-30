@@ -97,6 +97,22 @@ class Lexicon extends Module
     }
 
     /**
+     * Go to a page from the open settings dialog's menu. On a phone the menu is folded into
+     * one button, so that opens first.
+     */
+    public function openSettingsPage(string $label): void
+    {
+        $browser = $this->browser();
+        $nav = '[data-panel-dialog] .lx-account-nav';
+        $toggles = $browser->_findElements("$nav [data-panel-menu]");
+        if ($toggles !== [] && $toggles[0]->isDisplayed()) {
+            $toggles[0]->click();
+        }
+
+        $browser->click($label, "$nav ul");
+    }
+
+    /**
      * Open the media library's upload panel unless it already shows, as it does on an empty library.
      * Upload messages appear inside it, so a closed panel hides them.
      */

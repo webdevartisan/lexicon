@@ -92,6 +92,8 @@
   position: absolute;
   top: .75rem;
   inset-inline-end: .75rem;
+  /* Above the phone menu row, which is raised so its dropdown covers the page below it. */
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -153,13 +155,64 @@
 
 .lx-account-nav svg { flex: none; width: 1.15rem; height: 1.15rem; }
 
+/* Only the modal on a phone shows it; the full page and the side column list every page. */
+.lx-account-nav-toggle { display: none; }
+
 @media (--lx-below-md) {
   .panel-dialog.is-wide .panel-dialog-card { height: calc(100vh - 2rem); }
   .panel-dialog-body { padding: 1.25rem 1.25rem 1.5rem; }
   .panel-dialog .lx-account { flex-direction: column; }
-  .panel-dialog .lx-account-nav { flex: none; padding: .75rem 2.75rem .75rem .5rem; overflow-x: auto; border-inline-end: 0; border-block-end: 1px solid var(--acct-line); scrollbar-width: none; }
-  .panel-dialog .lx-account-nav ul { display: flex; gap: .25rem; }
-  .panel-dialog .lx-account-nav a { white-space: nowrap; }
+
+  /* Seven pages do not fit across a phone, so the menu folds into one button that names the open page. */
+  .panel-dialog .lx-account-nav {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    padding-block: .75rem;
+    padding-inline: .75rem 3.25rem;
+    overflow: visible;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--acct-line);
+  }
+
+  .panel-dialog .lx-account-nav-toggle {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    margin: 0;
+    padding: .55rem .75rem;
+    border: 1px solid var(--acct-line);
+    border-radius: var(--lx-radius-md);
+    background: var(--acct-hover);
+    color: inherit;
+    font: inherit;
+    font-weight: var(--lx-weight-semibold);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .panel-dialog .lx-account-nav-toggle:hover,
+  .panel-dialog .lx-account-nav-toggle:focus-visible { border-color: currentColor; outline: none; }
+  .lx-account-nav-toggle .lx-account-nav-caret { width: 1rem; height: 1rem; margin-inline-start: auto; transition: transform .15s; }
+  .lx-account-nav-toggle[aria-expanded='true'] .lx-account-nav-caret { transform: rotate(180deg); }
+
+  .panel-dialog .lx-account-nav-toggle[aria-expanded='false'] + ul { display: none; }
+
+  /* The same card as every other dropdown (00-menu.css), in the modal's own colours so it follows Light. */
+  .panel-dialog .lx-account-nav ul {
+    position: absolute;
+    top: calc(100% - .5rem);
+    inset-inline: .75rem 3.25rem;
+    padding: .3rem;
+    border: 1px solid var(--acct-line);
+    border-radius: var(--lx-radius-lg);
+    background: var(--acct-bg);
+    box-shadow: var(--chrome-shadow);
+  }
+
+  .panel-dialog .lx-account-nav ul a { margin: 0; }
+  .panel-dialog-card:has(.lx-account-nav) .panel-dialog-close:not(:hover, :focus-visible) { background: transparent; }
   .panel-dialog .acct-page { padding: 1rem 1.25rem 1.5rem; }
 }
 

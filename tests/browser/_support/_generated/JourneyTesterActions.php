@@ -1,4 +1,4 @@
-<?php  //[STAMP] 5f338e57900d6099f956a508fe990a35
+<?php  //[STAMP] be1ef657762be0f56136e17d5d5c9f6d
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4983,6 +4983,18 @@ trait JourneyTesterActions
      */
     public function scrollDownTo(string $selector): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('scrollDownTo', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Go to a page from the open settings dialog's menu. On a phone the menu is folded into
+     * one button, so that opens first.
+     * @see \Support\Helper\Lexicon::openSettingsPage()
+     */
+    public function openSettingsPage(string $label): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('openSettingsPage', func_get_args()));
     }
 
  
