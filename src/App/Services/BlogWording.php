@@ -6,7 +6,8 @@ namespace App\Services;
 
 /**
  * A theme's own texts as one blog shows them in one language: the owner's
- * wording where they wrote some, the theme's everywhere else.
+ * wording where they wrote some, nothing where they removed the text, and the
+ * theme's everywhere else.
  */
 final class BlogWording
 {
@@ -40,10 +41,10 @@ final class BlogWording
      */
     public function html(string $key, array $params = []): string
     {
-        $own = $this->own[$key] ?? '';
-        if ($own === '') {
+        if (!isset($this->own[$key])) {
             return translate_html($key, $params);
         }
+        $own = $this->own[$key];
 
         $pairs = [];
         foreach ($params as $name => $value) {
@@ -54,15 +55,17 @@ final class BlogWording
     }
 
     /**
-     * Attributes that let an owner reword this text on the page, or '' when the theme keeps it fixed.
+     * Attributes for the text's element: what lets an owner reword it on the page, and hidden
+     * once they removed it.
      *
      * @param  string  $key  Translation key
      * @param  array<string, string|int>  $params  The same placeholders passed to html()
      */
     public function attrs(string $key, array $params = []): string
     {
+        $hidden = ($this->own[$key] ?? null) === '' ? ' hidden' : '';
         if (!in_array($key, $this->editable, true)) {
-            return '';
+            return $hidden;
         }
 
         $tokens = [];
@@ -73,21 +76,23 @@ final class BlogWording
         $attrs = edit_text_attrs($key, translate_html($key, $params))
             .' data-edit-template="'.e(chrome_translate($key)).'"';
 
-        return $tokens === []
-            ? $attrs
-            : $attrs.' data-edit-tokens="'.e((string) json_encode($tokens, JSON_UNESCAPED_UNICODE)).'"';
+        if ($tokens !== []) {
+            $attrs .= ' data-edit-tokens="'.e((string) json_encode($tokens, JSON_UNESCAPED_UNICODE)).'"';
+        }
+
+        return $attrs.$hidden;
     }
 
     /**
-     * Each rewordable text as the owner stored it, '' while it follows the theme.
+     * Each rewordable text as the owner stored it: '' once removed, null while it follows the theme.
      *
-     * @return array<string, array{value: string, fallback: string, wording: true}>
+     * @return array<string, array{value: string|null, fallback: string, wording: true}>
      */
     public function forEditing(): array
     {
         $fields = [];
         foreach ($this->editable as $key) {
-            $fields[$key] = ['value' => $this->own[$key] ?? '', 'fallback' => '', 'wording' => true];
+            $fields[$key] = ['value' => $this->own[$key] ?? null, 'fallback' => '', 'wording' => true];
         }
 
         return $fields;

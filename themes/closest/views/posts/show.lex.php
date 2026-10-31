@@ -29,7 +29,8 @@ $title = e($post['title'] ?? 'Untitled');
         <a class="wp-chip" href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
       <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= e($t('closest::post.meta', ['minutes' => $minutes, 'km' => $km])) ?></span>
+      <?php $metaParams = ['minutes' => (int) $minutes, 'km' => e((string) $km)]; ?>
+      <span<?= $wording->attrs('closest::post.meta', $metaParams) ?>><?= $wording->html('closest::post.meta', $metaParams) ?></span>
     </div>
 
     <h1 class="post-hero-title reveal" data-edit-title><?= $title ?></h1>
@@ -39,9 +40,9 @@ $title = e($post['title'] ?? 'Untitled');
     <?php } ?>
 
     <div class="post-hero-byline">
-      <?php if ($author) { ?><span><?= translate_html('closest::post.by', ['author' => $author]) ?></span><?php } ?>
+      <?php if ($author) { ?><span<?= $wording->attrs('closest::post.by', ['author' => $author]) ?>><?= $wording->html('closest::post.by', ['author' => $author]) ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        <?= e($t('closest::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
+        <span<?= $wording->attrs('closest::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?>><?= $wording->html('closest::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -52,7 +53,7 @@ $title = e($post['title'] ?? 'Untitled');
 <div class="container">
   <div class="inset post-cover" id="post-cover" data-edit-cover<?= $heroImg ? '' : ' hidden' ?>>
     <span class="inset-img" data-edit-cover-slot><?php if ($heroImg) { ?><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /><?php } ?></span>
-    <span class="inset-cap"><?= translate_html('closest::post.fig', ['title' => $title]) ?></span>
+    <span class="inset-cap"<?= $wording->attrs('closest::post.fig', ['title' => $title]) ?>><?= $wording->html('closest::post.fig', ['title' => $title]) ?></span>
   </div>
 </div>
 <?php } ?>
@@ -65,7 +66,7 @@ $title = e($post['title'] ?? 'Untitled');
 
     <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
     <div class="post-tags reveal">
-      <span class="post-tags-label"><?= e($t('closest::post.marked')) ?></span>
+      <span class="post-tags-label"<?= $wording->attrs('closest::post.marked') ?>><?= $wording->html('closest::post.marked') ?></span>
       <?php foreach ($post['tags'] as $tag) { ?>
         <a class="post-tag" href="<?= lurl('/blog/'.$blogSlug.'/tag/'.urlencode((string) $tag['slug'])) ?>"><?= e($tag['name']) ?></a>
       <?php } ?>
@@ -82,7 +83,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="post-nav-item prev">
-        <span class="post-nav-label"><?= e($t('closest::post.previous')) ?></span>
+        <span class="post-nav-label"<?= $wording->attrs('closest::post.previous') ?>><?= $wording->html('closest::post.previous') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -91,7 +92,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="post-nav-item next">
-        <span class="post-nav-label"><?= e($t('closest::post.next')) ?></span>
+        <span class="post-nav-label"<?= $wording->attrs('closest::post.next') ?>><?= $wording->html('closest::post.next') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -138,7 +139,7 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          <?= e($t('closest::post.read')) ?>
+          <span<?= $wording->attrs('closest::post.read') ?>><?= $wording->html('closest::post.read') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

@@ -32,9 +32,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="<?= e($t('nocturne::nav.primary')) ?>">
-        <a href="<?= $homeUrl ?>"><?= e($t('nocturne::nav.home')) ?></a>
-        <a href="<?= $archiveUrl ?>"><?= e($t('nocturne::nav.archive')) ?></a>
-        <a href="<?= $subscribeUrl ?>"><?= e($t('nocturne::nav.subscribe')) ?></a>
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('nocturne::nav.home') ?>><?= $wording->html('nocturne::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('nocturne::nav.archive') ?>><?= $wording->html('nocturne::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('nocturne::nav.subscribe') ?>><?= $wording->html('nocturne::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">

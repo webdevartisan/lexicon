@@ -40,7 +40,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="work-hero-byline">
       <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)))) : '' ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        <?= e($t('vernissage::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
+        <span<?= $wording->attrs('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?>><?= $wording->html('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -51,7 +51,8 @@ $title = e($post['title'] ?? 'Untitled');
 <div class="container">
   <figure class="work-figure" id="work-figure" data-edit-cover<?= $heroImg ? '' : ' hidden' ?>>
     <span class="frame work-cover"><span class="frame-img" data-edit-cover-slot><?php if ($heroImg) { ?><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /><?php } ?></span></span>
-    <figcaption class="work-figcap"><?= translate_html('vernissage::post.fig', ['title' => $title]) ?></figcaption>
+    <?php $figParams = ['title' => $title]; ?>
+    <figcaption class="work-figcap"<?= $wording->attrs('vernissage::post.fig', $figParams) ?>><?= $wording->html('vernissage::post.fig', $figParams) ?></figcaption>
   </figure>
 </div>
 <?php } ?>
@@ -80,7 +81,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="work-nav-item prev">
-        <span class="work-nav-label"><?= e($t('vernissage::post.previous')) ?></span>
+        <span class="work-nav-label"<?= $wording->attrs('vernissage::post.previous') ?>><?= $wording->html('vernissage::post.previous') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -89,7 +90,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="work-nav-item next">
-        <span class="work-nav-label"><?= e($t('vernissage::post.next')) ?></span>
+        <span class="work-nav-label"<?= $wording->attrs('vernissage::post.next') ?>><?= $wording->html('vernissage::post.next') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -136,7 +137,7 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          <?= e($t('vernissage::post.read')) ?>
+          <span<?= $wording->attrs('vernissage::post.read') ?>><?= $wording->html('vernissage::post.read') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

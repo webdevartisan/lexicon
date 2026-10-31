@@ -45,7 +45,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="log-back">
-      <?= e($t('closest::archive.back')) ?>
+      <span<?= $wording->attrs('closest::archive.back') ?>><?= $wording->html('closest::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -77,7 +77,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
           <?php if ($year !== '' && $year !== $lastYear) {
               $lastYear = $year;
               ?>
-          <h2 class="log-year reveal"><span><?= e($t('closest::archive.season')) ?></span> <?= e($year) ?></h2>
+          <h2 class="log-year reveal"><span<?= $wording->attrs('closest::archive.season') ?>><?= $wording->html('closest::archive.season') ?></span> <?= e($year) ?></h2>
           <?php } ?>
 
           <article class="waypoint reveal" data-card-link="<?= e($url) ?>">
@@ -112,14 +112,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
     <?php if ($total > 1) { ?>
     <div class="log-pagination reveal">
-      <span class="log-pagination-info">
-        <?= translate_html('closest::archive.leg', ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
-      </span>
+      <?php $legParams = ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+      <span class="log-pagination-info"<?= $wording->attrs('closest::archive.leg', $legParams) ?>><?= $wording->html('closest::archive.leg', $legParams) ?></span>
       <nav class="log-pagination-nav" aria-label="<?= e($t('closest::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('closest::archive.prev')) ?></a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('closest::archive.prev') ?>><?= $wording->html('closest::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('closest::archive.prev')) ?></span>
+          <span class="is-disabled"><span<?= $wording->attrs('closest::archive.prev') ?>><?= $wording->html('closest::archive.prev') ?></span></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -131,9 +130,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('closest::archive.next')) ?></a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('closest::archive.next') ?>><?= $wording->html('closest::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('closest::archive.next')) ?></span>
+          <span class="is-disabled"><span<?= $wording->attrs('closest::archive.next') ?>><?= $wording->html('closest::archive.next') ?></span></span>
         <?php } ?>
       </nav>
     </div>

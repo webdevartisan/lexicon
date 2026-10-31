@@ -40,7 +40,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="post-hero-byline">
       <?php if ($author) { ?><span><?= translate_html('offset::by', ['author' => $author]) ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        <?= e($t('offset::post.backTo', ['blog' => $blog['blog_name'] ?? ''])) ?>
+        <span<?= $wording->attrs('offset::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?>><?= $wording->html('offset::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -79,7 +79,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="post-nav-item prev">
-        <span class="post-nav-label"><?= e($t('offset::post.previous')) ?></span>
+        <span class="post-nav-label"<?= $wording->attrs('offset::post.previous') ?>><?= $wording->html('offset::post.previous') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -88,7 +88,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="post-nav-item next">
-        <span class="post-nav-label"><?= e($t('offset::post.next')) ?></span>
+        <span class="post-nav-label"<?= $wording->attrs('offset::post.next') ?>><?= $wording->html('offset::post.next') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="post-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -134,7 +134,7 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          <?= e($t('offset::post.read')) ?>
+          <span<?= $wording->attrs('offset::post.read') ?>><?= $wording->html('offset::post.read') ?></span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>

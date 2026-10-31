@@ -363,6 +363,11 @@ html[data-mode="light"] .edit-bar-btn.is-primary {
     opacity: 0.45;
 }
 
+/* An emptied theme text is removed for readers, so its wording shows struck through. */
+.is-editing-in-place [data-edit-wording]:empty::before {
+    text-decoration: line-through;
+}
+
 /* A pencil in the text's own colour marks each text; a click on it lands in the text. */
 .is-editing-in-place [data-edit-text]::after {
     content: "";
@@ -421,6 +426,11 @@ html[data-mode="light"] .edit-bar-btn.is-primary {
     background: color-mix(in srgb, currentColor 14%, transparent);
     white-space: nowrap;
     cursor: default;
+}
+
+/* A placeholder that shows nothing, such as a line break, still needs a visible tag to keep or move. */
+.edit-token:empty::before {
+    content: "\21B5";
 }
 
 /* Room below the text so the bar never sits over its last lines. */

@@ -182,6 +182,21 @@ it('escapes theme wording an owner typed', function () {
     expect($wording->html('nocturne::home.edition'))->toBe('Tea &amp; &lt;b&gt;toast&lt;/b&gt;');
 });
 
+it('keeps a removed theme text removed and lets the theme wording take it back', function () {
+    $this->settings->updateForBlog($this->blogId, ['theme' => 'nocturne']);
+    ($this->save)(['wording_locale' => 'en', 'wording' => ['nocturne::home.edition' => '']]);
+
+    $wording = App::container()->get(ThemeWording::class)->load($this->blogId, 'nocturne', 'en');
+    expect($this->texts->forLocale($this->blogId, 'en'))->toBe(['nocturne::home.edition' => ''])
+        ->and($wording->html('nocturne::home.edition'))->toBe('')
+        ->and($wording->attrs('nocturne::home.edition'))->toEndWith(' hidden');
+
+    // Worded the way the theme words it, the text follows the theme again
+    ($this->save)(['wording_locale' => 'en', 'wording' => ['nocturne::home.edition' => 'The Night Edition']]);
+
+    expect($this->texts->forLocale($this->blogId, 'en'))->toBe([]);
+});
+
 it('refuses a theme text the theme keeps fixed', function () {
     $this->settings->updateForBlog($this->blogId, ['theme' => 'nocturne']);
 

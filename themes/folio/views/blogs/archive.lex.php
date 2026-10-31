@@ -45,7 +45,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
-      <?= e($t('folio::archive.back')) ?>
+      <span<?= $wording->attrs('folio::archive.back') ?>><?= $wording->html('folio::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -91,13 +91,14 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     <?php if ($total > 1) { ?>
     <div class="archive-pagination reveal">
       <span class="archive-pagination-info">
-        <?= translate_html('folio::archive.showing', ['from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
+        <?php $showingParams = ['from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+        <span<?= $wording->attrs('folio::archive.showing', $showingParams) ?>><?= $wording->html('folio::archive.showing', $showingParams) ?></span>
       </span>
       <nav class="archive-pagination-nav" aria-label="<?= e($t('folio::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('folio::archive.prev')) ?></a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('folio::archive.prev') ?>><?= $wording->html('folio::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('folio::archive.prev')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('folio::archive.prev') ?>><?= $wording->html('folio::archive.prev') ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -109,9 +110,9 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('folio::archive.next')) ?></a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('folio::archive.next') ?>><?= $wording->html('folio::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('folio::archive.next')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('folio::archive.next') ?>><?= $wording->html('folio::archive.next') ?></span>
         <?php } ?>
       </nav>
     </div>

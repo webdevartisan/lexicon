@@ -59,7 +59,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
-      <?= e($t('vernissage::archive.back')) ?>
+      <span<?= $wording->attrs('vernissage::archive.back') ?>><?= $wording->html('vernissage::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -123,13 +123,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     <?php if ($total > 1) { ?>
     <div class="archive-pagination reveal">
       <span class="archive-pagination-info">
-        <?= translate_html('vernissage::archive.plate', ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
+        <?php $plateParams = ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+        <span<?= $wording->attrs('vernissage::archive.plate', $plateParams) ?>><?= $wording->html('vernissage::archive.plate', $plateParams) ?></span>
       </span>
       <nav class="archive-pagination-nav" aria-label="<?= e($t('vernissage::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('vernissage::archive.prev')) ?></a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('vernissage::archive.prev') ?>><?= $wording->html('vernissage::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('vernissage::archive.prev')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('vernissage::archive.prev') ?>><?= $wording->html('vernissage::archive.prev') ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -141,9 +142,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('vernissage::archive.next')) ?></a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('vernissage::archive.next') ?>><?= $wording->html('vernissage::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('vernissage::archive.next')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('vernissage::archive.next') ?>><?= $wording->html('vernissage::archive.next') ?></span>
         <?php } ?>
       </nav>
     </div>

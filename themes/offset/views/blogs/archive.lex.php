@@ -45,7 +45,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
-      <?= e($t('offset::archive.back')) ?>
+      <span<?= $wording->attrs('offset::archive.back') ?>><?= $wording->html('offset::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -109,13 +109,14 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     <?php if ($total > 1) { ?>
     <div class="archive-pagination reveal">
       <span class="archive-pagination-info">
-        <?= translate_html('offset::archive.sheet', ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
+        <?php $sheetParams = ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+        <span<?= $wording->attrs('offset::archive.sheet', $sheetParams) ?>><?= $wording->html('offset::archive.sheet', $sheetParams) ?></span>
       </span>
       <nav class="archive-pagination-nav" aria-label="<?= e($t('offset::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('offset::archive.prev')) ?></a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('offset::archive.prev') ?>><?= $wording->html('offset::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('offset::archive.prev')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('offset::archive.prev') ?>><?= $wording->html('offset::archive.prev') ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -127,9 +128,9 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('offset::archive.next')) ?></a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('offset::archive.next') ?>><?= $wording->html('offset::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('offset::archive.next')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('offset::archive.next') ?>><?= $wording->html('offset::archive.next') ?></span>
         <?php } ?>
       </nav>
     </div>

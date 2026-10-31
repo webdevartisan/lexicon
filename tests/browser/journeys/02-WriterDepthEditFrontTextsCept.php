@@ -22,6 +22,12 @@ $tagline = '[data-edit-text="tagline"]';
 $selectAll = static fn (string $selector): string => "var el = document.querySelector('{$selector}');"
     ." el.scrollIntoView({block: 'center'}); el.focus(); var range = document.createRange(); range.selectNodeContents(el);"
     .' var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);';
+// On a phone the header links wait behind the menu button
+$reveal = static fn (string $selector): string => "var toggle = document.querySelector('.nav-toggle');"
+    ." if (document.querySelector('{$selector}').offsetParent === null && toggle && toggle.offsetParent"
+    ." && toggle.getAttribute('aria-expanded') === 'false') toggle.click();";
+// The reset arrow beside a theme text gives it the theme's wording back
+$resetText = static fn (string $selector): string => "document.querySelector('".str_replace('data-edit-text', 'data-edit-reset-for', $selector)."').click();";
 $pseudo = static fn (string $selector, string $which): string => "return getComputedStyle(document.querySelector('{$selector}'), '{$which}').content;";
 $saveAndReload = static function () use ($I, $bar): void {
     $I->executeJS('window.__beforeSave = true;');
@@ -173,13 +179,13 @@ $I->waitForText('Saved', 15, "{$bar} [data-edit-status]");
 $I->amOnPage($I->recall('postUrl'));
 $I->see('Read it at breakfast.', $footer);
 
-// Clearing a theme text gives the theme's wording back; the walk blog keeps none of its own
+// Resetting a theme text gives the theme's wording back; the walk blog keeps none of its own
 foreach ([[$home, $edition, 'The Night Edition'], [$home.'/archive', $heading, 'Every Night, Filed.']] as [$page, $text, $theirs]) {
     $I->amOnPage($page);
     $I->click('Edit page', $bar);
-    $I->executeJS($selectAll($text).' document.execCommand("delete");');
+    $I->executeJS($resetText($text));
     if ($text === $edition) {
-        $I->executeJS($selectAll($footer).' document.execCommand("delete");');
+        $I->executeJS($resetText($footer));
     }
     $saveAndReload();
     $I->assertSame($theirs, $I->executeJS("return document.querySelector('{$text}').textContent.trim();"));
@@ -226,7 +232,7 @@ foreach ([
     $I->amOnPage($page);
     $I->click('Edit page', $bar);
     foreach (array_keys($texts) as $text) {
-        $I->executeJS($selectAll($text).' document.execCommand("delete");');
+        $I->executeJS($resetText($text));
     }
     $saveAndReload();
     foreach ($texts as $text => $theirs) {
@@ -237,9 +243,16 @@ foreach ([
     }
 }
 
-// The other themes' own texts: a plain line, a label beside a category, and a button
+// The other themes' own texts: plain lines, labels beside data, a header link, a filter tab, a form label and a button
 foreach ([
-    'closest' => ['closest::home.keyDot' => 'One published waypoint', 'closest::home.youAreHere' => 'You are here'],
+    'closest' => [
+        'closest::home.keyDot' => 'One published waypoint',
+        'closest::home.youAreHere' => 'You are here',
+        'closest::nav.home' => 'Trailhead',
+        'closest::home.all' => 'Full route',
+        'closest::emailLabel' => 'Your address',
+        'closest::home.surveyedSinceLine' => 'Surveyed since',
+    ],
     'offset' => ['offset::home.leadStoryLine' => 'Lead story', 'offset::home.est' => 'Est.'],
     'vernissage' => ['vernissage::home.subscribe' => 'RSVP', 'vernissage::footer.hours' => 'Open daily. Admission free'],
 ] as $theme => $texts) {
@@ -248,6 +261,7 @@ foreach ([
     $I->click('Edit page', $bar);
     foreach (array_keys($texts) as $key) {
         $text = "[data-edit-text=\"{$key}\"]";
+        $I->executeJS($reveal($text));
         // A click on a text inside a button or link places the cursor and sends nothing
         $I->executeJS("document.querySelector('{$text}').click();");
         $I->executeJS($selectAll($text));
@@ -258,6 +272,11 @@ foreach ([
     foreach (array_keys($texts) as $key) {
         $I->assertSame("Walk {$theme}", $I->executeJS("return document.querySelector('[data-edit-text=\"{$key}\"]').textContent;"));
     }
+    if ($theme === 'closest') {
+        // The founding year after the label is still its own text, and the filter tab did not filter
+        $I->seeElement('.legend-est [data-edit-text="founded_year"]');
+        $I->seeElement('.filter-list li.is-active [data-edit-text="closest::home.all"]');
+    }
     if ($theme === 'offset') {
         // The category beside the label stays the post's
         $I->assertMatchesRegularExpression('/^Walk offset · \S/', (string) $I->executeJS(
@@ -267,11 +286,35 @@ foreach ([
 
     $I->click('Edit page', $bar);
     foreach (array_keys($texts) as $key) {
-        $I->executeJS($selectAll("[data-edit-text=\"{$key}\"]").' document.execCommand("delete");');
+        $I->executeJS($resetText("[data-edit-text=\"{$key}\"]"));
     }
     $saveAndReload();
     foreach ($texts as $key => $theirs) {
         $I->assertSame($theirs, $I->executeJS("return document.querySelector('[data-edit-text=\"{$key}\"]').textContent.trim();"));
     }
 }
+
+// Emptying a text removes it for readers, while a link keeps needing words
+$removed = '[data-edit-text="offset::home.colophonEyebrow"]';
+$link = '[data-edit-text="offset::nav.home"]';
+$shownAs = static fn (string $selector): string => "return getComputedStyle(document.querySelector('{$selector}')).display;";
 $useTheme('offset');
+$I->amOnPage($home);
+$I->click('Edit page', $bar);
+$I->executeJS($selectAll($removed).' document.execCommand("delete");');
+$I->executeJS($reveal($link));
+$I->executeJS($selectAll($link).' document.execCommand("delete");');
+$I->executeJS("document.querySelector('{$link}').blur();");
+$I->assertSame('Home', $I->executeJS("return document.querySelector('{$link}').textContent;"));
+$I->see('needs words', "{$bar} [data-edit-status]");
+$saveAndReload();
+$I->assertSame('none', $I->executeJS($shownAs($removed)));
+
+// While editing, the removed text waits as an empty box; its reset arrow brings the theme wording back
+$I->click('Edit page', $bar);
+$I->assertNotSame('none', $I->executeJS($shownAs($removed)));
+$I->assertSame('', $I->executeJS("return document.querySelector('{$removed}').textContent;"));
+$I->executeJS("document.querySelector('[data-edit-reset-for=\"offset::home.colophonEyebrow\"]').click();");
+$saveAndReload();
+$I->assertSame('Colophon · About this blog', $I->executeJS("return document.querySelector('{$removed}').textContent.trim();"));
+$I->assertNotSame('none', $I->executeJS($shownAs($removed)));

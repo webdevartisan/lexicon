@@ -35,9 +35,10 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 <section class="hero" id="top">
   <div class="container">
     <div class="hero-meta-top">
-      <span><?= translate_html('folio::home.year', ['blog' => $blogTitle, 'year' => date('Y')]) ?></span>
+      <?php $yearParams = ['blog' => $blogTitle, 'year' => date('Y')]; ?>
+      <span<?= $wording->attrs('folio::home.year', $yearParams) ?>><?= $wording->html('folio::home.year', $yearParams) ?></span>
       <span<?= edit_text_attrs('tagline', $t('folio::home.tagline')) ?>><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('folio::home.tagline')) ?></span>
-      <span><?= e(translate_count('folio::home.postCount', $postCount)) ?> / <?= e($t('folio::home.minRead', ['count' => $totalMinutes])) ?></span>
+      <span><?= e(translate_count('folio::home.postCount', $postCount)) ?> / <span<?= $wording->attrs('folio::home.minRead', ['count' => (int) $totalMinutes]) ?>><?= $wording->html('folio::home.minRead', ['count' => (int) $totalMinutes]) ?></span></span>
     </div>
 
     <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
@@ -112,9 +113,9 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('folio::nav.filterByCategory')) ?>"
-        data-text="<?= e(json_encode(['openAll' => $t('folio::home.openAll'), 'inCategory' => $t('folio::home.inCategory'), 'viewAll' => $t('folio::home.viewAll'), 'count' => ['one' => $t('folio::home.indexCount.one'), 'other' => $t('folio::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
+        data-text="<?= e(json_encode(['inCategory' => $t('folio::home.inCategory'), 'count' => ['one' => $t('folio::home.indexCount.one'), 'other' => $t('folio::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('folio::home.all')) ?></a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('folio::home.all') ?>><?= $wording->html('folio::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -133,9 +134,11 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="articles-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="filter-count" id="index-footer-count"><?= translate_html('folio::home.showing', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
+      <?php $shownCount = ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="filter-count"><span id="index-footer-count"<?= $wording->attrs('folio::home.showing', $shownCount) ?>><?= $wording->html('folio::home.showing', $shownCount) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label"><?= e($t('folio::home.openAll')) ?></span>
+        <span id="index-footer-label"<?= $wording->attrs('folio::home.openAll') ?>><?= $wording->html('folio::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('folio::home.viewAll')) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -183,7 +186,7 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
       <div class="longread-author reveal">
         <strong><?= $lrAuthor ?></strong>
-        <span><?= e($t('folio::home.postMinutes', ['count' => $lrMinutes])) ?></span>
+        <span<?= $wording->attrs('folio::home.postMinutes', ['count' => (int) $lrMinutes]) ?>><?= $wording->html('folio::home.postMinutes', ['count' => (int) $lrMinutes]) ?></span>
       </div>
 
       <div class="longread-body reveal">
@@ -228,13 +231,13 @@ $blogTitle = e($blog['blog_name'] ?? 'FOLIO');
 
       <form class="news-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub"><?= e($t('folio::emailLabel')) ?></label>
+        <label for="email-sub"><span<?= $wording->attrs('folio::emailLabel') ?>><?= $wording->html('folio::emailLabel') ?></span></label>
         <div class="news-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@quiet-room.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            <?= e($t('folio::home.subscribe')) ?>
+            <span<?= $wording->attrs('folio::home.subscribe') ?>><?= $wording->html('folio::home.subscribe') ?></span>
             <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>

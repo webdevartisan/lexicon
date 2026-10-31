@@ -116,7 +116,11 @@ class FrontPageTexts
         if ($locale === BlogLocales::base($settings)) {
             $this->settings->updateForBlog($blog->id(), $changes);
         } else {
-            $this->texts->saveForLocale($blog->id(), $locale, $changes);
+            // A cleared text has no row, so readers see the blog's own language or the theme's default
+            $this->texts->saveForLocale($blog->id(), $locale, array_map(
+                static fn (string $value): ?string => $value === '' ? null : $value,
+                $changes
+            ));
         }
 
         $this->blogCache->forgetBlog($blog->slug());

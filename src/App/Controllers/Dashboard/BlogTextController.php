@@ -205,8 +205,8 @@ final class BlogTextController extends AppController
     /**
      * Changes as the audit log records them, each key with its language.
      *
-     * @param  array<string, string>  $changes
-     * @return array<string, string>
+     * @param  array<string, string|null>  $changes
+     * @return array<string, string|null>
      */
     private function withLocale(array $changes, string $locale): array
     {

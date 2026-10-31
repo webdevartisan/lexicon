@@ -33,9 +33,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="<?= e($t('offset::nav.primary')) ?>">
-        <a href="<?= $homeUrl ?>"><?= e($t('offset::nav.home')) ?></a>
-        <a href="<?= $archiveUrl ?>"><?= e($t('offset::nav.archive')) ?></a>
-        <a href="<?= $subscribeUrl ?>"><?= e($t('offset::nav.subscribe')) ?></a>
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('offset::nav.home') ?>><?= $wording->html('offset::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('offset::nav.archive') ?>><?= $wording->html('offset::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('offset::nav.subscribe') ?>><?= $wording->html('offset::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">

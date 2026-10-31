@@ -42,7 +42,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     <div class="hero-rail">
       <span<?= $wording->attrs('nocturne::home.edition') ?>><?= $wording->html('nocturne::home.edition') ?></span>
       <span<?= edit_text_attrs('tagline', $t('nocturne::home.tagline')) ?>><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('nocturne::home.tagline')) ?></span>
-      <span><?= e(translate_count('nocturne::home.postCount', $postCount)) ?> &middot; <?= e($t('nocturne::home.readingTotal', ['count' => $totalMinutes])) ?></span>
+      <span><?= e(translate_count('nocturne::home.postCount', $postCount)) ?> &middot; <span<?= $wording->attrs('nocturne::home.readingTotal', ['count' => (int) $totalMinutes]) ?>><?= $wording->html('nocturne::home.readingTotal', ['count' => (int) $totalMinutes]) ?></span></span>
     </div>
 
     <h1 class="hero-name">
@@ -122,9 +122,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('nocturne::nav.filterByCategory')) ?>"
-        data-text="<?= e(json_encode(['openAll' => $t('nocturne::home.openAll'), 'inCategory' => $t('nocturne::home.inCategory'), 'viewAll' => $t('nocturne::home.viewAll'), 'count' => ['one' => $t('nocturne::home.indexCount.one'), 'other' => $t('nocturne::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
+        data-text="<?= e(json_encode(['inCategory' => $t('nocturne::home.inCategory'), 'count' => ['one' => $t('nocturne::home.indexCount.one'), 'other' => $t('nocturne::home.indexCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('nocturne::home.all')) ?></a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('nocturne::home.all') ?>><?= $wording->html('nocturne::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -141,9 +141,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="index-foot reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="index-count" id="index-footer-count"><?= translate_html('nocturne::home.showing', ['shown' => sprintf('%02d', 1 + count($indexPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
+      <?php $shownCount = ['shown' => sprintf('%02d', 1 + count($indexPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="index-count"><span id="index-footer-count"<?= $wording->attrs('nocturne::home.showing', $shownCount) ?>><?= $wording->html('nocturne::home.showing', $shownCount) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label"><?= e($t('nocturne::home.openAll')) ?></span>
+        <span id="index-footer-label"<?= $wording->attrs('nocturne::home.openAll') ?>><?= $wording->html('nocturne::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('nocturne::home.viewAll')) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -181,7 +183,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     </blockquote>
 
     <div class="nightcap-foot reveal">
-      <span class="nightcap-source"><?= translate_html('nocturne::home.nightcapSource', ['title' => '<a href="'.$ncUrl.'"><em>'.$ncTitle.'</em></a>', 'author' => $ncAuthor]) ?></span>
+      <?php $sourceParams = ['title' => '<a href="'.$ncUrl.'"><em>'.$ncTitle.'</em></a>', 'author' => $ncAuthor]; ?>
+      <span class="nightcap-source"<?= $wording->attrs('nocturne::home.nightcapSource', $sourceParams) ?>><?= $wording->html('nocturne::home.nightcapSource', $sourceParams) ?></span>
       <a href="<?= $ncUrl ?>" class="link-arrow">
         <span<?= $wording->attrs('nocturne::home.pour') ?>><?= $wording->html('nocturne::home.pour') ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -221,17 +224,17 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
       <form class="nightletter-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub"><?= e($t('nocturne::emailLabel')) ?></label>
+        <label for="email-sub"><span<?= $wording->attrs('nocturne::emailLabel') ?>><?= $wording->html('nocturne::emailLabel') ?></span></label>
         <div class="nightletter-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@latehours.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            <?= e($t('nocturne::home.subscribe')) ?>
+            <span<?= $wording->attrs('nocturne::home.subscribe') ?>><?= $wording->html('nocturne::home.subscribe') ?></span>
             <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="nightletter-fine"><?= e($t('nocturne::home.newsFine')) ?></span>
+        <span class="nightletter-fine"<?= $wording->attrs('nocturne::home.newsFine') ?>><?= $wording->html('nocturne::home.newsFine') ?></span>
       </form>
     </div>
   </div>

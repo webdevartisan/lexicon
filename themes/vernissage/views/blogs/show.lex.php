@@ -40,9 +40,10 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <section class="gallery-hero" id="top">
   <div class="container">
     <div class="hero-meta-top">
-      <span><?= translate_html('vernissage::home.season', ['blog' => $blogTitle, 'year' => date('Y')]) ?></span>
+      <?php $seasonParams = ['blog' => $blogTitle, 'year' => date('Y')]; ?>
+      <span<?= $wording->attrs('vernissage::home.season', $seasonParams) ?>><?= $wording->html('vernissage::home.season', $seasonParams) ?></span>
       <span><?= e(translate_count('vernissage::home.collection', $postCount)) ?></span>
-      <span><?= e($t('vernissage::home.viewingTotal', ['count' => $totalMinutes])) ?></span>
+      <span<?= $wording->attrs('vernissage::home.viewingTotal', ['count' => (int) $totalMinutes]) ?>><?= $wording->html('vernissage::home.viewingTotal', ['count' => (int) $totalMinutes]) ?></span>
     </div>
 
     <div class="hero-stage">
@@ -123,9 +124,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('vernissage::home.filter')) ?>"
-        data-text="<?= e(json_encode(['openAll' => $t('vernissage::home.openAll'), 'inCategory' => $t('vernissage::home.inCategory'), 'viewAll' => $t('vernissage::home.viewAll'), 'count' => ['one' => $t('vernissage::home.workCount.one'), 'other' => $t('vernissage::home.workCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
+        data-text="<?= e(json_encode(['inCategory' => $t('vernissage::home.inCategory'), 'count' => ['one' => $t('vernissage::home.workCount.one'), 'other' => $t('vernissage::home.workCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('vernissage::home.all')) ?></a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('vernissage::home.all') ?>><?= $wording->html('vernissage::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $ci => $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -140,9 +141,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="collection-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="collection-count" id="index-footer-count"><?= translate_html('vernissage::home.hanging', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
+      <?php $shownCount = ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="collection-count"><span id="index-footer-count"<?= $wording->attrs('vernissage::home.hanging', $shownCount) ?>><?= $wording->html('vernissage::home.hanging', $shownCount) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label"><?= e($t('vernissage::home.openAll')) ?></span>
+        <span id="index-footer-label"<?= $wording->attrs('vernissage::home.openAll') ?>><?= $wording->html('vernissage::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('vernissage::home.viewAll')) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -167,7 +170,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <span class="curator-sign reveal"><?= $ownerName ?></span>
 
         <p class="curator-fine reveal">
-          <?= translate_html('vernissage::home.fine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
+          <?php $fineParams = ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]; ?>
+          <span<?= $wording->attrs('vernissage::home.fine', $fineParams) ?>><?= $wording->html('vernissage::home.fine', $fineParams) ?></span>
         </p>
       </div>
     </div>
@@ -184,7 +188,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
         <form class="invite-form" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
           <?= csrf_field_lazy() ?>
-          <label for="email-sub"><?= e($t('vernissage::emailLabel')) ?></label>
+          <label for="email-sub"><span<?= $wording->attrs('vernissage::emailLabel') ?>><?= $wording->html('vernissage::emailLabel') ?></span></label>
           <div class="invite-input">
             <input id="email-sub" name="email" type="email" placeholder="guest@private-view.gallery"
               value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"

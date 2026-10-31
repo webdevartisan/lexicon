@@ -35,7 +35,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       <?php $estParams = ['year' => e(!empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'))]; ?>
       <span<?= $wording->attrs('closest::home.est', $estParams) ?>><?= $wording->html('closest::home.est', $estParams) ?></span>
       <span><?= e(translate_count('closest::home.waypoints', $postCount)) ?></span>
-      <span><?= e($t('closest::home.trail', ['minutes' => $totalMinutes, 'km' => $totalKm])) ?></span>
+      <?php $trailParams = ['minutes' => (int) $totalMinutes, 'km' => e((string) $totalKm)]; ?>
+      <span<?= $wording->attrs('closest::home.trail', $trailParams) ?>><?= $wording->html('closest::home.trail', $trailParams) ?></span>
     </div>
 
     <h1 class="th-name" data-split dir="auto"><?= $blogTitle ?></h1>
@@ -77,13 +78,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     <div class="nearest-grid">
       <a href="<?= $fUrl ?>" class="inset nearest-inset reveal" aria-hidden="true" tabindex="-1">
         <span class="inset-img"><img src="<?= $fImg ?>" alt="" loading="eager" /></span>
-        <span class="inset-cap"><?= translate_html('closest::home.inset', ['category' => $fCat]) ?></span>
+        <span class="inset-cap"<?= $wording->attrs('closest::home.inset', ['category' => $fCat]) ?>><?= $wording->html('closest::home.inset', ['category' => $fCat]) ?></span>
       </a>
 
       <div class="nearest-body">
         <div class="nearest-tag reveal">
-          <span class="wp-chip wp-chip--blaze"><?= e($t('closest::home.nearest')) ?></span>
-          <span class="eyebrow"><?= e($t('closest::home.distance')) ?></span>
+          <span class="wp-chip wp-chip--blaze"<?= $wording->attrs('closest::home.nearest') ?>><?= $wording->html('closest::home.nearest') ?></span>
+          <span class="eyebrow"<?= $wording->attrs('closest::home.distance') ?>><?= $wording->html('closest::home.distance') ?></span>
         </div>
 
         <h2 class="nearest-title reveal"><a href="<?= $fUrl ?>"><?= $fTitle ?></a></h2>
@@ -119,9 +120,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     </div>
 
     <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('closest::nav.filterByCategory')) ?>"
-        data-text="<?= e(json_encode(['openAll' => $t('closest::home.openAll'), 'inCategory' => $t('closest::home.inCategory'), 'viewAll' => $t('closest::home.viewAll'), 'count' => ['one' => $t('closest::home.routeCount.one'), 'other' => $t('closest::home.routeCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
+        data-text="<?= e(json_encode(['inCategory' => $t('closest::home.inCategory'), 'count' => ['one' => $t('closest::home.routeCount.one'), 'other' => $t('closest::home.routeCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><?= e($t('closest::home.all')) ?></a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('closest::home.all') ?>><?= $wording->html('closest::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -139,9 +140,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="route-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="route-count" id="index-footer-count"><?= translate_html('closest::home.plotted', ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]) ?></span>
+      <?php $plotted = ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="route-count"><span id="index-footer-count"<?= $wording->attrs('closest::home.plotted', $plotted) ?>><?= $wording->html('closest::home.plotted', $plotted) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label"><?= e($t('closest::home.openAll')) ?></span>
+        <span id="index-footer-label"<?= $wording->attrs('closest::home.openAll') ?>><?= $wording->html('closest::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('closest::home.viewAll')) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
@@ -153,9 +156,11 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="legend-grid">
       <div class="legend-side">
-        <h2 class="legend-title reveal"><?= translate_html('closest::home.legendTitle', ['br' => '<br />']) ?></h2>
+        <?php $legendBreak = ['br' => '<br />']; ?>
+        <h2 class="legend-title reveal"<?= $wording->attrs('closest::home.legendTitle', $legendBreak) ?>><?= $wording->html('closest::home.legendTitle', $legendBreak) ?></h2>
         <?php $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'); ?>
-        <span class="legend-est reveal"><?= translate_html('closest::home.surveyedSince', ['year' => '<span'.edit_text_attrs('founded_year', date('Y')).'>'.e($estLabel).'</span>']) ?></span>
+        <?php $surveyedLine = '<span'.$wording->attrs('closest::home.surveyedSinceLine').'>'.$wording->html('closest::home.surveyedSinceLine').'</span>'; ?>
+        <span class="legend-est reveal"><?= translate_html('closest::home.surveyedSince', ['line' => $surveyedLine, 'year' => '<span'.edit_text_attrs('founded_year', date('Y')).'>'.e($estLabel).'</span>']) ?></span>
       </div>
 
       <div class="legend-body">
@@ -169,9 +174,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         <p class="legend-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
         <span class="legend-sign reveal"<?= $wording->attrs('closest::home.sign', ['owner' => $ownerName]) ?>><?= $wording->html('closest::home.sign', ['owner' => $ownerName]) ?></span>
 
-        <p class="legend-fine reveal">
-          <?= translate_html('closest::home.fine', ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]) ?>
-        </p>
+        <?php $fineParams = ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]; ?>
+        <p class="legend-fine reveal"<?= $wording->attrs('closest::home.fine', $fineParams) ?>><?= $wording->html('closest::home.fine', $fineParams) ?></p>
       </div>
     </div>
   </div>
@@ -188,13 +192,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
       <form class="dispatch-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub"><?= e($t('closest::emailLabel')) ?></label>
+        <label for="email-sub"><span<?= $wording->attrs('closest::emailLabel') ?>><?= $wording->html('closest::emailLabel') ?></span></label>
         <div class="dispatch-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@basecamp.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            <?= e($t('closest::home.subscribe')) ?>
+            <span<?= $wording->attrs('closest::home.subscribe') ?>><?= $wording->html('closest::home.subscribe') ?></span>
             <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>

@@ -7,8 +7,8 @@ namespace App\Models;
 /**
  * A blog's own wording per language, one row per text.
  *
- * An empty text is never stored: clearing one deletes its row, so readers fall
- * back to whatever shows without it.
+ * No row means the blog has no wording of its own for that text. A row with an
+ * empty value is kept on purpose: the owner removed the text.
  */
 class BlogTextModel extends AppModel
 {
@@ -30,15 +30,15 @@ class BlogTextModel extends AppModel
     }
 
     /**
-     * Store the given texts in one language; an empty value removes that text.
+     * Store the given texts in one language; null drops a text's row.
      *
-     * @param  array<string, string>  $texts  Text key => value
+     * @param  array<string, string|null>  $texts  Text key => value
      */
     public function saveForLocale(int $blogId, string $locale, array $texts): void
     {
         $this->database->transaction(function () use ($blogId, $locale, $texts): void {
             foreach ($texts as $key => $value) {
-                if ($value === '') {
+                if ($value === null) {
                     $this->database->execute(
                         "DELETE FROM {$this->getTable()} WHERE blog_id = ? AND locale = ? AND text_key = ?",
                         [$blogId, $locale, $key]

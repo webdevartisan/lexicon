@@ -35,6 +35,9 @@
     // What each text showed before editing, so Cancel can put the theme's own rendering back.
     var shown = [];
     var started = [];
+    // The texts the last save sent, which stop() then shows as saved.
+    var lastSaved = [];
+    var status = bar.querySelector('[data-edit-status]');
 
     function keyOf(el) {
       return el.getAttribute('data-edit-text');
@@ -52,10 +55,16 @@
       }
     }
 
-    // A theme text starts from the owner's wording, else the theme's, so a small change needs no retyping.
+    function templateOf(el) {
+      return el.getAttribute('data-edit-template') || '';
+    }
+
+    // A theme text starts from the owner's wording, empty once they removed it, else the theme's,
+    // so a small change needs no retyping.
     function startingText(el) {
       var field = fieldOf(el);
-      return field.wording ? (field.value || el.getAttribute('data-edit-template') || '') : field.value;
+      if (!field.wording) return field.value;
+      return field.value !== null ? field.value : templateOf(el);
     }
 
     function render(el, text) {
@@ -87,10 +96,34 @@
       return text.replace(/\s+/g, ' ').trim();
     }
 
-    // What gets stored: a theme text left as the theme words it is stored as nothing.
-    function valueOf(el) {
+    // Whether the text is no longer its default, which is when its reset button shows.
+    function isOwn(el) {
       var text = serialize(el);
-      return fieldOf(el).wording && text === el.getAttribute('data-edit-template') ? '' : text;
+      return fieldOf(el).wording ? text !== templateOf(el) : text !== '';
+    }
+
+    // Placeholders filled in with what they show, for a text drawn as plain words.
+    function filled(el, text) {
+      var tokens = tokensOf(el);
+      return text.replace(/\{([a-z_]+)\}/gi, function (match, name) {
+        return Object.prototype.hasOwnProperty.call(tokens, name) ? tokens[name] : match;
+      });
+    }
+
+    // Links, buttons and labels need words to be read or clicked, and a text sharing its line
+    // with other words would leave them dangling, so only the rest can be removed.
+    function needsWords(el) {
+      if (el.closest('a, button, label')) return true;
+      return Array.prototype.some.call(el.parentNode.childNodes, function (node) {
+        return node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '';
+      });
+    }
+
+    function keepWords(el) {
+      if (!editing || !fieldOf(el).wording || serialize(el) !== '' || !needsWords(el)) return;
+      render(el, templateOf(el));
+      mirror(el);
+      if (status) status.textContent = 'That text needs words, so it is back to the theme wording.';
     }
 
     // An empty text shows readers the blog's wording in its own language, else the theme's default.
@@ -116,7 +149,7 @@
     // Back to the default: the theme's wording, or for a front-page text, empty so its fallback shows.
     function resetText(el) {
       if (fieldOf(el).wording) {
-        render(el, el.getAttribute('data-edit-template') || '');
+        render(el, templateOf(el));
       } else {
         el.textContent = '';
       }
@@ -124,6 +157,14 @@
 
     function resetAll() {
       els.forEach(resetText);
+    }
+
+    // A text the page shows more than once, such as a label on every card, is one text, so all copies change together.
+    function mirror(el) {
+      var text = serialize(el);
+      els.forEach(function (other) {
+        if (other !== el && keyOf(other) === keyOf(el)) render(other, text);
+      });
     }
 
     // Each changed text gets a reset button at its corner. The buttons float above the page
@@ -146,6 +187,7 @@
         button.innerHTML = RESET_ICON;
         button.addEventListener('click', function () {
           resetText(el);
+          mirror(el);
           el.focus();
         });
         document.body.appendChild(button);
@@ -160,17 +202,19 @@
       var header = document.querySelector('[data-edit-header]');
       var below = header ? header.getBoundingClientRect().bottom : 0;
       var rects = els.map(function (el) { return el.getBoundingClientRect(); });
-      var changedNow = els.map(function (el) { return valueOf(el) !== ''; });
+      var changedNow = els.map(isOwn);
 
       rects.forEach(function (rect, i) {
         var button = resets[i];
-        var show = changedNow[i] && rect.width > 0 && rect.top - size > below && rect.top < window.innerHeight;
+        // Texts in the header itself never slide under it, so only the rest are kept clear of it.
+        var clear = header && header.contains(els[i]) ? rect.bottom > 0 : rect.top - size > below;
+        var show = changedNow[i] && rect.width > 0 && clear && rect.top < window.innerHeight;
         button.hidden = !show;
         if (!show) return;
         var rtl = getComputedStyle(els[i]).direction === 'rtl';
         var x = rtl ? rect.left - size / 2 - 6 : rect.right - size / 2 + 6;
         button.style.left = Math.min(Math.max(x, 4), window.innerWidth - size - 4) + 'px';
-        button.style.top = (rect.top - size / 2 - 6) + 'px';
+        button.style.top = Math.max(rect.top - size / 2 - 6, 4) + 'px';
       });
       frame = window.requestAnimationFrame(placeResets);
     }
@@ -182,32 +226,33 @@
       els.forEach(function (el) {
         render(el, startingText(el));
         el.setAttribute('data-edit-placeholder', placeholderOf(el));
+        if (fieldOf(el).wording) el.setAttribute('data-edit-wording', '');
         el.hidden = false;
         // A decorative text the theme hides from screen readers still has to be reachable while it is a text box.
         el.removeAttribute('aria-hidden');
         makeEditable(el, true);
       });
-      started = els.map(valueOf);
+      started = els.map(serialize);
       editing = true;
       showResets(true);
     }
 
-    // Saved texts show as typed, placeholders filled in; anything else goes back to what the theme drew.
+    // Saved texts show as typed, placeholders filled in, and removed ones hide; the rest go back to what the theme drew.
     function stop(saved) {
       showResets(false);
       els.forEach(function (el, i) {
         makeEditable(el, false);
-        if (saved && fieldOf(el).value !== '') {
-          var tokens = tokensOf(el);
-          el.textContent = fieldOf(el).value.replace(/\{([a-z_]+)\}/gi, function (match, name) {
-            return Object.prototype.hasOwnProperty.call(tokens, name) ? tokens[name] : match;
-          });
-        } else if (saved && fieldOf(el).wording && started[i] !== '') {
-          el.textContent = el.getAttribute('data-edit-default');
+        var field = fieldOf(el);
+        var hidden = shown[i].hidden;
+        // A cleared front-page text is not removed: readers get its fallback, which the theme drew before
+        if (saved && lastSaved.indexOf(el) !== -1 && (field.wording || field.value !== '')) {
+          var text = field.wording && field.value === null ? templateOf(el) : field.value;
+          el.textContent = filled(el, text);
+          hidden = text === '';
         } else {
           el.innerHTML = shown[i].html;
         }
-        el.hidden = shown[i].hidden;
+        el.hidden = hidden;
         if (shown[i].ariaHidden !== null) el.setAttribute('aria-hidden', shown[i].ariaHidden);
       });
       editing = false;
@@ -237,7 +282,7 @@
     }
 
     function changed() {
-      return els.filter(function (el, i) { return valueOf(el) !== started[i]; });
+      return els.filter(function (el, i) { return serialize(el) !== started[i]; });
     }
 
     function isDirty() {
@@ -245,6 +290,7 @@
     }
 
     function save(send) {
+      els.forEach(keepWords);
       var edited = changed();
       if (edited.length === 0) return Promise.resolve();
 
@@ -253,14 +299,19 @@
       data.append('locale', dataEl.getAttribute('data-locale'));
       data.append('wording_locale', dataEl.getAttribute('data-wording-locale'));
       edited.forEach(function (el) {
-        data.append(fieldOf(el).wording ? 'wording[' + keyOf(el) + ']' : keyOf(el), valueOf(el));
+        data.append(fieldOf(el).wording ? 'wording[' + keyOf(el) + ']' : keyOf(el), serialize(el));
       });
 
       return send(data, 'The page could not be saved. Try again.', dataEl.getAttribute('data-save-url'))
         .then(function () {
-          edited.forEach(function (el) { fieldOf(el).value = valueOf(el); });
+          edited.forEach(function (el) {
+            var text = serialize(el);
+            // Worded as the theme words it, the text follows the theme again, as the server keeps it.
+            fieldOf(el).value = fieldOf(el).wording && text === templateOf(el) ? null : text;
+          });
+          lastSaved = edited;
           // What is saved is the new starting point, so leaving the page (or the reload that follows) asks nothing.
-          started = els.map(valueOf);
+          started = els.map(serialize);
         });
     }
 
@@ -271,13 +322,16 @@
       });
       // Deleting every letter leaves a stray line break behind, which would hide the faded placeholder.
       el.addEventListener('input', function () {
-        if (editing && el.textContent === '') el.textContent = '';
+        if (!editing) return;
+        if (el.textContent === '') el.textContent = '';
+        mirror(el);
       });
+      el.addEventListener('blur', function () { keepWords(el); });
     });
 
     // Some texts sit inside links and buttons; while they are text boxes a click places the cursor instead of leaving or sending.
     document.addEventListener('click', function (event) {
-      if (editing && event.target.closest('[data-edit-text]') && event.target.closest('a, button')) event.preventDefault();
+      if (editing && event.target.closest('[data-edit-text]') && event.target.closest('a, button, label')) event.preventDefault();
     }, true);
 
     return { start: start, stop: stop, redraw: redraw, isDirty: isDirty, save: save, resetAll: resetAll };

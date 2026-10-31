@@ -20,6 +20,25 @@
     "archive.heading",
     "archive.dek",
     "archive.empty",
-    "post.related"
+    "post.related",
+    "nav.home",
+    "nav.archive",
+    "nav.subscribe",
+    "home.all",
+    "emailLabel",
+    "home.openAll",
+    "archive.back",
+    "archive.prev",
+    "archive.next",
+    "post.backTo",
+    "post.previous",
+    "post.next",
+    "post.read",
+    "home.season",
+    "home.viewingTotal",
+    "home.hanging",
+    "home.fine",
+    "archive.plate",
+    "post.fig"
   ]
 }

@@ -32,9 +32,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="<?= e($t('folio::nav.primary')) ?>">
-        <a href="<?= $homeUrl ?>"><?= e($t('folio::nav.home')) ?></a>
-        <a href="<?= $archiveUrl ?>"><?= e($t('folio::nav.archive')) ?></a>
-        <a href="<?= $subscribeUrl ?>"><?= e($t('folio::nav.subscribe')) ?></a>
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('folio::nav.home') ?>><?= $wording->html('folio::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('folio::nav.archive') ?>><?= $wording->html('folio::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('folio::nav.subscribe') ?>><?= $wording->html('folio::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">

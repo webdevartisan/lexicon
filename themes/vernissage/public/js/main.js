@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
         toggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
     nav.querySelectorAll("a").forEach(function (a) {
-        a.addEventListener("click", function () {
+        a.addEventListener("click", function (e) {
+        // A tap that only places the cursor in the link's text keeps the menu open.
+        if (e.defaultPrevented) return;
         nav.classList.remove("is-open");
         toggle.classList.remove("is-open");
         toggle.setAttribute("aria-expanded", "false");

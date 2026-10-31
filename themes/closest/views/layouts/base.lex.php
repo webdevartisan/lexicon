@@ -33,9 +33,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="<?= e($t('closest::nav.primary')) ?>">
-        <a href="<?= $homeUrl ?>"><?= e($t('closest::nav.home')) ?></a>
-        <a href="<?= $archiveUrl ?>"><?= e($t('closest::nav.archive')) ?></a>
-        <a href="<?= $subscribeUrl ?>"><?= e($t('closest::nav.subscribe')) ?></a>
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('closest::nav.home') ?>><?= $wording->html('closest::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('closest::nav.archive') ?>><?= $wording->html('closest::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('closest::nav.subscribe') ?>><?= $wording->html('closest::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">
@@ -64,7 +64,8 @@
         <span class="scale-bar">
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </span>
-        <span class="scale-cap"><?= translate_html('closest::footer.scale', ['year' => date('Y'), 'grid' => e($gridRef)]) ?></span>
+        <?php $scaleParams = ['year' => date('Y'), 'grid' => e($gridRef)]; ?>
+        <span class="scale-cap"<?= $wording->attrs('closest::footer.scale', $scaleParams) ?>><?= $wording->html('closest::footer.scale', $scaleParams) ?></span>
         <svg class="declination" viewBox="0 0 24 40" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 36V8" /><path d="M8 12l4-6 4 6" /><path d="M12 3l1.2 2.4-1.2-.7-1.2.7z" fill="currentColor" stroke="none" /></svg>
       </div>
 

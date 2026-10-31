@@ -33,9 +33,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="<?= e($t('vernissage::nav.primary')) ?>">
-        <a href="<?= $homeUrl ?>"><?= e($t('vernissage::nav.home')) ?></a>
-        <a href="<?= $archiveUrl ?>"><?= e($t('vernissage::nav.archive')) ?></a>
-        <a href="<?= $subscribeUrl ?>"><?= e($t('vernissage::nav.subscribe')) ?></a>
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('vernissage::nav.home') ?>><?= $wording->html('vernissage::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('vernissage::nav.archive') ?>><?= $wording->html('vernissage::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('vernissage::nav.subscribe') ?>><?= $wording->html('vernissage::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">

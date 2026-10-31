@@ -46,9 +46,16 @@ document.addEventListener("DOMContentLoaded", function () {
     var footerCount = document.getElementById("index-footer-count");
     var footerLink = document.getElementById("index-footer-link");
     var footerLabel = document.getElementById("index-footer-label");
-    var allCountHtml = footerCount ? footerCount.innerHTML : "";
+    var legCount = document.getElementById("index-footer-leg");
+    var legLabel = document.getElementById("index-footer-leg-label");
     var allArchive = footer ? footer.getAttribute("data-archive") : "";
     var allMore = footer ? footer.getAttribute("data-allmore") === "1" : false;
+
+    // The full list's wording can be the owner's own, so it is shown and hidden, never retyped.
+    function showFullList(on) {
+      [footerCount, footerLabel].forEach(function (el) { if (el) el.hidden = !on; });
+      [legCount, legLabel].forEach(function (el) { if (el) el.hidden = on; });
+    }
 
     function updateFooter(li) {
       if (!footer || !footerLink) return;
@@ -58,15 +65,14 @@ document.addEventListener("DOMContentLoaded", function () {
       var name = b ? b.textContent.trim() : "";
 
       if (!filter) {
-        if (footerCount) footerCount.innerHTML = allCountHtml;
+        showFullList(true);
         footerLink.setAttribute("href", allArchive);
-        if (footerLabel) footerLabel.textContent = wording.openAll || "";
         footer.style.display = allMore ? "" : "none";
       } else if (count > 6) {
         var base = window.location.pathname.replace(/\/+$/, "");
-        if (footerCount) footerCount.textContent = fill(wording.inCategory, { count: count, name: name });
+        if (legCount) legCount.textContent = fill(wording.inCategory, { count: count, name: name });
         footerLink.setAttribute("href", base + "/category/" + encodeURIComponent(filter));
-        if (footerLabel) footerLabel.textContent = wording.viewAll || "";
+        showFullList(false);
         footer.style.display = "";
       } else {
         footer.style.display = "none";
@@ -76,7 +82,8 @@ document.addEventListener("DOMContentLoaded", function () {
     pills.forEach(function (li) {
       li.addEventListener("click", function (e) {
         var btn = li.querySelector("a");
-        if (!btn) return;
+        // A click already taken, such as placing the cursor in the tab's text while editing it, is not a filter.
+        if (!btn || e.defaultPrevented) return;
         e.preventDefault();
         if (li.classList.contains("is-active")) return;
         var filter = btn.getAttribute("data-filter") || "";

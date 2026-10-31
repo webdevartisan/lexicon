@@ -62,17 +62,20 @@ class ThemeWording
     /**
      * Store the wording that changed in one language and clear the blog's cached pages.
      *
-     * @param  array<string, string>  $values  Translation key => wording, already validated; '' goes back to the theme's
-     * @return array<string, string> The wording that changed
+     * @param  array<string, string>  $values  Translation key => wording, already validated; '' removes the text
+     * @return array<string, string|null> The wording that changed, null where it follows the theme again
      */
     public function save(BlogResource $blog, ?string $theme, string $locale, array $values): array
     {
         $current = $this->texts->forLocale($blog->id(), $locale);
+        $themes = new TranslationService($locale);
 
         $changes = [];
         foreach ($values as $key => $value) {
-            if ($this->isEditable($theme, $key) && $value !== ($current[$key] ?? '')) {
-                $changes[$key] = $value;
+            // Worded exactly as the theme words it, the text follows the theme, so later theme updates reach it
+            $own = $value === $themes->translate($key) ? null : $value;
+            if ($this->isEditable($theme, $key) && $own !== ($current[$key] ?? null)) {
+                $changes[$key] = $own;
             }
         }
 

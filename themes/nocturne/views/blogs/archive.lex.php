@@ -45,7 +45,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="ledger-back link-arrow">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
-      <?= e($t('nocturne::archive.back')) ?>
+      <span<?= $wording->attrs('nocturne::archive.back') ?>><?= $wording->html('nocturne::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -88,13 +88,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
     <?php if ($total > 1) { ?>
     <div class="ledger-pagination reveal">
       <span class="ledger-pagination-info">
-        <?= translate_html('nocturne::archive.showing', ['from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]) ?>
+        <?php $showingParams = ['from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+        <span<?= $wording->attrs('nocturne::archive.showing', $showingParams) ?>><?= $wording->html('nocturne::archive.showing', $showingParams) ?></span>
       </span>
       <nav class="ledger-pagination-nav" aria-label="<?= e($t('nocturne::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev"><?= e($t('nocturne::archive.prev')) ?></a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('nocturne::archive.prev') ?>><?= $wording->html('nocturne::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('nocturne::archive.prev')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('nocturne::archive.prev') ?>><?= $wording->html('nocturne::archive.prev') ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -106,9 +107,9 @@ $blogTitle = e($blog['blog_name'] ?? 'Nocturne');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next"><?= e($t('nocturne::archive.next')) ?></a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('nocturne::archive.next') ?>><?= $wording->html('nocturne::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled"><?= e($t('nocturne::archive.next')) ?></span>
+          <span class="is-disabled"<?= $wording->attrs('nocturne::archive.next') ?>><?= $wording->html('nocturne::archive.next') ?></span>
         <?php } ?>
       </nav>
     </div>
