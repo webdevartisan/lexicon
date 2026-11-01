@@ -81,7 +81,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <header class="lx-nav<?= $navMode === 'over' ? ' is-over' : '' ?>" data-lx-nav="<?= e($navMode) ?>">
             <div class="lx-wrap lx-nav-inner">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo-mark" aria-hidden="true"></span>
+                    <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                     <?= e($siteName) ?>
                 </a>
 
@@ -113,7 +113,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <div class="lx-drawer" id="lx-drawer" hidden>
             <div class="lx-drawer-head">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo-mark" aria-hidden="true"></span>
+                    <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                     <?= e($siteName) ?>
                 </a>
                 <button type="button" class="lx-drawer-close" data-lx-drawer-close
@@ -198,7 +198,7 @@ foreach ($socialNetworks as $network) {
             <div class="lx-wrap lx-foot-inner">
                 <div class="lx-foot-brand">
                     <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                        <span class="lx-logo-mark" aria-hidden="true"></span>
+                        <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                         <?= e($siteName) ?>
                     </a>
                     <p class="lx-foot-tagline">{{ t('header.logoTagline') }}</p>

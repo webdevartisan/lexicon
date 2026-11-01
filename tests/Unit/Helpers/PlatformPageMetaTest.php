@@ -8,8 +8,8 @@ test('a platform page gets a description, share tags and a canonical url', funct
     expect($html)->toContain('<meta name="description" content="How data is handled." />')
         ->and($html)->toContain('property="og:title" content="Privacy Policy"')
         ->and($html)->toContain('property="og:url" content="https://example.test/en/privacy"')
-        ->and($html)->toContain('property="og:image" content="https://example.test/assets/icon/android-chrome-512x512.png"')
-        ->and($html)->toContain('name="twitter:card" content="summary"');
+        ->and($html)->toContain('property="og:image" content="https://example.test/assets/icon/og-default.png"')
+        ->and($html)->toContain('name="twitter:card" content="summary_large_image"');
 });
 
 test('a page without a description prints no description tag', function () {

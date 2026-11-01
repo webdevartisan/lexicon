@@ -37,9 +37,15 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-    padding-block: clamp(3.5rem, 9vw, 7rem) clamp(3.5rem, 8vw, 6rem);
-    min-height: min(88vh, 52rem);
+    padding-block: clamp(1.5rem, 9vw, 7rem) clamp(3.5rem, 8vw, 6rem);
     align-content: center;
+}
+
+/* Only wide screens get the tall cover; on a phone the extra height just becomes empty space above the headword. */
+@media (min-width: 1000px) {
+    .lx-cover-inner {
+        min-height: min(88vh, 52rem);
+    }
 }
 
 .lx-cover-meta {

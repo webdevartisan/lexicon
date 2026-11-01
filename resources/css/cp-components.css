@@ -814,7 +814,7 @@
     /* The wordmark from the public site: a gilt dot and spaced capitals. */
     .cp-logo {
         display: inline-flex;
-        align-items: baseline;
+        align-items: center;
         gap: 0.4rem;
         font-weight: 700;
         font-size: 1.0625rem;
@@ -822,6 +822,7 @@
         text-transform: uppercase;
         white-space: nowrap;
         color: rgb(15 23 42);
+        -webkit-text-stroke: 0.3px currentColor;
     }
 
     :is([data-mode=dark] .cp-logo) {
@@ -834,17 +835,13 @@
 
     .cp-logo-mark {
         flex: none;
-        width: 0.4rem;
-        height: 0.4rem;
-        border-radius: 9999px;
-        background: #c9a227;
-        transform: translateY(-0.15em);
+        width: 1.75rem;
+        height: 1.75rem;
     }
 
     .group[data-sidebar-size="sm"] .cp-logo-mark {
-        width: 0.75rem;
-        height: 0.75rem;
-        transform: none;
+        width: 1.5rem;
+        height: 1.5rem;
     }
 
 

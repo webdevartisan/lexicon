@@ -43,7 +43,7 @@ $debugRows = array_filter([
 
     <header class="lx-authbar">
       <a class="lx-authmark" href="<?= e($homeHref) ?>" aria-label="Lexicon home">
-        <span class="lx-authmark-dot" aria-hidden="true"></span>
+        <img class="lx-authmark-dot" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="24" height="24" />
         <span class="lx-authmark-word">Lexicon</span>
       </a>
     </header>

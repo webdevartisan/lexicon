@@ -595,8 +595,7 @@ function social_meta_tags(array $meta): string
  *
  * Blog pages build theirs in BlogController; this covers the pages that sit
  * on the front layout (home, discover, the content pages). The share image is
- * the app icon, so link previews use the small "summary" card rather than the
- * large one that would crop it.
+ * the wide logo card, so link previews use the large card.
  *
  * @param  string  $title  Page title for og:title
  * @param  string  $description  Meta description, omitted when empty
@@ -625,9 +624,8 @@ function platform_page_meta(string $title, string $description, string $canonica
         'description' => $description,
         'url' => $canonical,
         'site_name' => (string) site_setting('site_name', 'Lexicon'),
-        'og_image' => $origin.'/assets/icon/android-chrome-512x512.png',
+        'og_image' => $origin.'/assets/icon/og-default.png',
         'og_image_alt' => (string) site_setting('site_name', 'Lexicon'),
-        'twitter_card' => 'summary',
     ]);
 
     return implode('
