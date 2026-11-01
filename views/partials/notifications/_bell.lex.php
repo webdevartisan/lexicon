@@ -9,15 +9,14 @@
 //
 // Expects $bellCount (unread) and $bellListPath (unlocalized inbox path).
 // $bellClass adds the caller's own layout classes to the wrapper.
-$bellTr = isset($t) && is_callable($t) ? $t : static fn (string $key, array $p = []): string => $key;
 $bellCount = (int) ($bellCount ?? 0);
 $bellListPath = (string) ($bellListPath ?? '/notifications');
 
 // The count is part of the name, so a screen reader hears "Notifications,
 // 6 unread" and the badge itself stays out of the tree.
 $bellLabel = $bellCount > 0
-    ? $bellTr('notifications.bellUnread', ['count' => $bellCount])
-    : $bellTr('reader.notificationsTitle');
+    ? $t('notifications.bellUnread', ['count' => $bellCount])
+    : $t('reader.notificationsTitle');
 ?>
 <div class="nav-bell platform-menu<?= !empty($bellClass) ? ' '.e($bellClass) : '' ?>" data-platform-menu>
     <a class="nav-bell-btn" href="<?= e(lurl($bellListPath)) ?>"
@@ -34,7 +33,7 @@ $bellLabel = $bellCount > 0
 
     <div class="platform-menu-list notif-panel" id="notification-panel" data-platform-menu-list
          data-panel-url="<?= e(lurl($bellListPath.'/panel')) ?>"
-         data-panel-error="<?= e($bellTr('notifications.loadFailed')) ?>" hidden>
-        <p class="notif-panel-status"><?= e($bellTr('notifications.loading')) ?></p>
+         data-panel-error="<?= e($t('notifications.loadFailed')) ?>" hidden>
+        <p class="notif-panel-status"><?= e($t('notifications.loading')) ?></p>
     </div>
 </div>

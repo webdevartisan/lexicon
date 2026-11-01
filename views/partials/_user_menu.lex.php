@@ -8,7 +8,6 @@
 // $userMenuClass for the caller's layout classes, $userMenuReturn for where
 // sign-out comes back to, $userMenuHome to add a link to the platform's home
 // page (blog themes, where nothing else leads back to it).
-$umTr = isset($t) && is_callable($t) ? $t : static fn (string $key, array $p = []): string => $key;
 $umViewer = $viewer ?? [];
 $umUnread = (int) ($umViewer['unread_replies'] ?? 0);
 $umName = (string) ($umViewer['name'] ?? '');
@@ -25,8 +24,8 @@ $umAvatar = static function () use ($umViewer, $umName): void { ?>
 // The count is part of the button's name, so a screen reader hears "Your
 // account, 14 unread replies"; the dot is the same fact drawn.
 $umLabel = $umUnread > 0
-    ? $umTr('reader.accountMenuUnread', ['count' => $umUnread])
-    : $umTr('reader.accountMenu');
+    ? $t('reader.accountMenuUnread', ['count' => $umUnread])
+    : $t('reader.accountMenu');
 
 // The comment and settings glyphs come from the notification set the bell uses.
 $umIcons = [
@@ -58,7 +57,7 @@ $umIcon = static function (string $name) use ($umIcons): void { ?>
     </button>
 
     <nav class="platform-menu-list nav-user-menu" id="account-menu" data-platform-menu-list hidden
-         aria-label="<?= e($umTr('reader.accountMenu')) ?>">
+         aria-label="<?= e($t('reader.accountMenu')) ?>">
         <a class="nav-user-who" href="<?= e(lurl('/account/profile')) ?>" data-panel="wide">
             <?php $umAvatar(); ?>
             <span>
@@ -72,35 +71,35 @@ $umIcon = static function (string $name) use ($umIcons): void { ?>
         <hr />
 
         <ul>
-            <li><a href="<?= e(lurl('/saved')) ?>" data-panel><?php $umIcon('saved'); ?><span><?= e($umTr('reader.savedTitle')) ?></span></a></li>
+            <li><a href="<?= e(lurl('/saved')) ?>" data-panel><?php $umIcon('saved'); ?><span><?= e($t('reader.savedTitle')) ?></span></a></li>
             <li>
                 <a href="<?= e(lurl('/replies')) ?>" data-panel>
-                    <?php $umIcon('replies'); ?><span><?= e($umTr('reader.repliesTitle')) ?></span>
+                    <?php $umIcon('replies'); ?><span><?= e($t('reader.repliesTitle')) ?></span>
                     <?php if ($umUnread > 0) { ?>
                     <span class="nav-badge" data-reader-badge aria-hidden="true"><?= $umUnread > 99 ? '99+' : $umUnread ?></span>
                     <?php } ?>
                 </a>
             </li>
-            <li><a href="<?= e(lurl('/subscriptions')) ?>" data-panel><?php $umIcon('subscriptions'); ?><span><?= e($umTr('reader.subscriptionsTitle')) ?></span></a></li>
+            <li><a href="<?= e(lurl('/subscriptions')) ?>" data-panel><?php $umIcon('subscriptions'); ?><span><?= e($t('reader.subscriptionsTitle')) ?></span></a></li>
         </ul>
 
         <hr />
 
         <ul>
             <?php if (!empty($userMenuHome)) { ?>
-            <li><a href="<?= e(lurl('/')) ?>"><?php $umIcon('home'); ?><span><?= e($umTr('header.siteHome', ['site' => (string) site_setting('site_name', 'Lexicon')])) ?></span></a></li>
+            <li><a href="<?= e(lurl('/')) ?>"><?php $umIcon('home'); ?><span><?= e($t('header.siteHome', ['site' => (string) site_setting('site_name', 'Lexicon')])) ?></span></a></li>
             <?php } ?>
             <?php if (empty($umViewer['is_reader'])) { ?>
-            <li><a href="<?= e(lurl('/dashboard')) ?>"><?php $umIcon('dashboard'); ?><span><?= e($umTr('header.dashboard')) ?></span></a></li>
+            <li><a href="<?= e(lurl('/dashboard')) ?>"><?php $umIcon('dashboard'); ?><span><?= e($t('header.dashboard')) ?></span></a></li>
             <?php } ?>
             <?php if (!empty($umViewer['is_admin'])) { ?>
-            <li><a href="<?= e(lurl('/admin')) ?>"><?php $umIcon('admin'); ?><span><?= e($umTr('layout.profileDropdown.links.controlPanel')) ?></span></a></li>
+            <li><a href="<?= e(lurl('/admin')) ?>"><?php $umIcon('admin'); ?><span><?= e($t('layout.profileDropdown.links.controlPanel')) ?></span></a></li>
             <?php } ?>
-            <li><a href="<?= e(lurl('/account/profile')) ?>" data-panel="wide"><?php $umIcon('settings'); ?><span><?= e($umTr('navigation.account')) ?></span></a></li>
+            <li><a href="<?= e(lurl('/account/profile')) ?>" data-panel="wide"><?php $umIcon('settings'); ?><span><?= e($t('navigation.account')) ?></span></a></li>
         </ul>
 
         <div class="nav-user-theme">
-            <?php $umIcon('appearance'); ?><span><?= e($umTr('layout.themeMenu.label')) ?></span>
+            <?php $umIcon('appearance'); ?><span><?= e($t('layout.themeMenu.label')) ?></span>
             {% include "partials/_theme_choices.lex.php" %}
         </div>
 
@@ -111,7 +110,7 @@ $umIcon = static function (string $name) use ($umIcons): void { ?>
             <?php if (!empty($userMenuReturn)) { ?>
             <input type="hidden" name="return_to" value="<?= e($userMenuReturn) ?>">
             <?php } ?>
-            <button type="submit"><?php $umIcon('signout'); ?><span><?= e($umTr('header.signOut')) ?></span></button>
+            <button type="submit"><?php $umIcon('signout'); ?><span><?= e($t('header.signOut')) ?></span></button>
         </form>
     </nav>
     {% include "components/panel-dialog.lex.php" %}

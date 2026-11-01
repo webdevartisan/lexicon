@@ -6,10 +6,6 @@
 // This is page navigation, not tabs. Five server-rendered URLs with five POST
 // targets are pages: ARIA tab roles would promise a screen reader same-page
 // panels and arrow-key switching, then deliver a full page load instead.
-//
-// $t is the injected translation closure; fall back to the raw key for a
-// standalone render, matching _auth_nav.lex.php.
-$tr = isset($t) && is_callable($t) ? $t : static fn (string $k, array $p = []): string => $k;
 $section = $accountSection ?? '';
 
 $items = [
@@ -36,12 +32,12 @@ foreach ($items as $item) {
     }
 }
 ?>
-<nav class="lx-account-nav" aria-label="<?= e($tr('navigation.account')) ?>">
+<nav class="lx-account-nav" aria-label="<?= e($t('navigation.account')) ?>">
     <button type="button" class="lx-account-nav-toggle" aria-expanded="false" data-panel-menu>
         <?php if ($current !== null) { ?>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $current['icon'] ?></svg>
         <?php } ?>
-        <span><?= e($tr($current !== null ? $current['label'] : 'navigation.account')) ?></span>
+        <span><?= e($t($current !== null ? $current['label'] : 'navigation.account')) ?></span>
         <svg class="lx-account-nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <ul>
@@ -51,7 +47,7 @@ foreach ($items as $item) {
         <li>
             <a href="<?= e(lurl($item['href'])) ?>" data-panel-link<?= $isCurrent ? ' aria-current="page"' : '' ?>>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $item['icon'] ?></svg>
-                <?= e($tr($item['label'])) ?>
+                <?= e($t($item['label'])) ?>
             </a>
         </li>
         <?php } ?>
