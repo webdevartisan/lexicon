@@ -62,14 +62,15 @@ $homeShowsCta = auth()->check()
     ? (!$homeViewerIsReader || !empty($viewer['can_create_blog']))
     : registration_open();
 $homeCtaUrl = !auth()->check()
-    ? '/register?return_to='.rawurlencode(lurl('/dashboard/blog/new'))
-    : ($homeViewerIsReader ? '/dashboard/blog/new' : '/dashboard');
+    ? blog_signup_url()
+    : lurl($homeViewerIsReader ? '/start' : '/dashboard');
+$homeCtaPanel = auth()->check() && $homeViewerIsReader;
 $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
     ? site_content('banner.cta')
     : site_content('banner.ctaDashboard');
 ?>
         <div class="lx-cover-actions">
-            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
+            <?php if ($homeShowsCta) { ?><a href="<?= e($homeCtaUrl) ?>" class="lx-btn lx-btn-gilt lx-btn-big"<?= $homeCtaPanel ? ' data-panel' : '' ?>><?= e($homeCtaLabel) ?></a><?php } ?>
             <a href="<?= e(lurl('/discover')) ?>" class="lx-btn lx-btn-ghost lx-btn-big">{{ t('navigation.discover') }}</a>
         </div>
 
@@ -149,7 +150,7 @@ $excerpt = post_excerpt($post);
 $postTitle = (string) ($post['title'] ?? '');
 ?>
             <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">
-                <a href="<?= e($postUrl) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
+                <a href="<?= e($postUrl) ?>" class="lx-cite-media" data-image-loader tabindex="-1" aria-hidden="true">
                     <?php if (!empty($post['featured_image'])) { ?>
                         <img src="<?= e($post['featured_image']) ?>" alt="" loading="lazy" />
                     <?php } else { ?>
@@ -226,7 +227,7 @@ foreach ($guides as $guideIndex => [$guideHref, $guideKey]) {
             <p><?= e(site_content('cta.body')) ?></p>
         </div>
         <div class="lx-close-actions">
-            <?php if ($homeShowsCta) { ?><a href="<?= e(lurl($homeCtaUrl)) ?>" class="lx-btn lx-btn-gilt lx-btn-big"><?= e($homeCtaLabel) ?></a><?php } ?>
+            <?php if ($homeShowsCta) { ?><a href="<?= e($homeCtaUrl) ?>" class="lx-btn lx-btn-gilt lx-btn-big"<?= $homeCtaPanel ? ' data-panel' : '' ?>><?= e($homeCtaLabel) ?></a><?php } ?>
         </div>
     </div>
 </section>

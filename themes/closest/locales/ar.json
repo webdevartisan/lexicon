@@ -1,0 +1,100 @@
+{
+    "comments": {
+        "heading": {
+            "one": "سجلّ الدرب · {count} مُدخل",
+            "other": "سجلّ الدرب · {count} مُدخلات"
+        },
+        "formLabel": "أضف مُدخلًا إلى السجلّ…",
+        "formButton": "اترك مُدخلًا",
+        "closed": "السجلّ مغلق عند هذه المحطة."
+    },
+    "nav": {
+        "home": "نقطة الانطلاق",
+        "archive": "سجل المسار",
+        "subscribe": "رسائل الميدان",
+        "primary": "التنقل الرئيسي",
+        "openMenu": "فتح القائمة",
+        "homeOf": "{blog}، الصفحة الرئيسية",
+        "filterByCategory": "تصفية التدوينات حسب التصنيف"
+    },
+    "minutes": "{count} دقائق",
+    "by": "بقلم {author}",
+    "emailLabel": "عنوان بريدك",
+    "footer": {
+        "scale": "0 إلى 5 كم · لوحة {year} · شبكة {grid}"
+    },
+    "home": {
+        "est": "منذ {year} · أطلس ميداني",
+        "waypoints": {
+            "one": "{count} محطة",
+            "other": "{count} محطات"
+        },
+        "trail": "{minutes} دقائق ≈ {km} كم من الدرب",
+        "youAreHere": "أنت هنا",
+        "subtitle": "ملاحظات من الميدان، تُرسم محطةً بعد محطة.",
+        "fallbackCategory": "ملاحظة ميدانية",
+        "inset": "إطار W-01 · {category}",
+        "nearest": "W-01 · الأقرب",
+        "distance": "0.0 كم من هنا",
+        "walkNearest": "امشِ إلى أقرب تدوينة",
+        "routeTitle": "المسار.",
+        "routeCount": {
+            "one": "{count} محطة",
+            "other": "{count} محطات"
+        },
+        "all": "المسار كاملًا",
+        "plotted": "المحطات {shown} من {total} على الخريطة · {blog}",
+        "openAll": "اتبع المسار كاملًا",
+        "inCategory": "{count} محطات في مرحلة {name}",
+        "viewAll": "اتبع هذه المرحلة",
+        "legendTitle": "مفتاح{br}الخريطة.",
+        "surveyedSinceLine": "تُمسح منذ",
+        "surveyedSince": "{line} {year}",
+        "keyDot": "محطة منشورة واحدة",
+        "keyBlaze": "علامة تحدد المرحلة الحالية",
+        "keyDash": "درب أمامنا، لم يُكتب بعد",
+        "aboutDefault": "{blog}، مُسحت سيرًا على الأقدام، ورُسمت بالكلمات، ونُشرت محطةً بعد محطة.",
+        "sign": "{owner}، المسّاح",
+        "fine": "تُصفّ {blog} بخطَّي Besley وBarlow، وتُرسم على ورق خرائط ‎#F3F5EE بعلامة واحدة من برتقالي الدروب، وتُنشر على {platform}.",
+        "newsEyebrow": "رسائل الميدان",
+        "newsHeading": "كل محطة جديدة، مرسلة من الدرب.",
+        "newsText": "رسالة واحدة لكل تدوينة. بلا تتبّع، وإلغاء اشتراك سهل.",
+        "subscribe": "اشترك",
+        "newsFine": "مجانًا. ألغِ الاشتراك عند أي محطة",
+        "gap": {
+            "sameDay": "اليوم نفسه",
+            "days": {
+                "one": "قبل يوم واحد",
+                "other": "قبل {count} أيام"
+            },
+            "months": {
+                "one": "قبل شهر واحد",
+                "other": "قبل {count} أشهر"
+            }
+        }
+    },
+    "archive": {
+        "pageTitle": "سجل المسار · {blog}",
+        "kicker": "سجل المسار · {blog}",
+        "heading": "كل محطة، على الخريطة.",
+        "dek": "المسح الكامل لـ {blog}، الأحدث أولًا.",
+        "back": "→ العودة إلى نقطة الانطلاق",
+        "season": "موسم",
+        "empty": "لم تُرسم أي محطات بعد.",
+        "leg": "المرحلة {page} / {pages} · المحطات {from} إلى {to} من {total}",
+        "pagination": "التنقل بين الصفحات",
+        "prev": "→ المرحلة السابقة",
+        "next": "المرحلة التالية ←"
+    },
+    "post": {
+        "meta": "{minutes} دقائق ≈ {km} كم",
+        "by": "مسح: {author}",
+        "backTo": "العودة إلى {blog}",
+        "fig": "شكل 01 · {title}",
+        "marked": "علامات",
+        "previous": "→ عودة على الدرب",
+        "next": "إلى الأمام ←",
+        "related": "قريب على الخريطة",
+        "read": "امشِ إليها"
+    }
+}

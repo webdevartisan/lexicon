@@ -25,12 +25,17 @@ $I->seeThePageLooksRight('10-asked-to-sign-in');
 
 // They create an account right there in the sign-in window
 $I->fillField('#lex-auth-email', $email);
-$I->click('Continue');
+$I->click('Continue', '[data-auth-step="email"]');
 $I->waitForElementVisible('#lex-auth-password');
 $I->fillField('#lex-auth-password', $password);
 $I->checkOption('[data-auth-age]');
 $I->waitForTheSignUpCheck();
 $I->click('[data-auth-submit]');
+
+// The new account is told to confirm its email before the window lets go
+$I->waitForText('Check your inbox', 15, '[data-auth-success-msg]');
+$I->see($email, '[data-auth-success-msg]');
+$I->click('[data-auth-got-it]');
 
 // The comment is kept until the address is confirmed, then it goes through
 $I->waitForText('It posts as soon as you confirm your email', 15);

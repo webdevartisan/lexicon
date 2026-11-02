@@ -6,10 +6,6 @@
 // This is page navigation, not tabs. Five server-rendered URLs with five POST
 // targets are pages: ARIA tab roles would promise a screen reader same-page
 // panels and arrow-key switching, then deliver a full page load instead.
-//
-// $t is the injected translation closure; fall back to the raw key for a
-// standalone render, matching _auth_nav.lex.php.
-$tr = isset($t) && is_callable($t) ? $t : static fn (string $k, array $p = []): string => $k;
 $section = $accountSection ?? '';
 
 $items = [
@@ -28,8 +24,22 @@ $items = [
     ['key' => 'delete',        'href' => '/account/delete',        'label' => 'account.nav.danger',
         'icon' => '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'],
 ];
+
+$current = null;
+foreach ($items as $item) {
+    if ($item['key'] === $section) {
+        $current = $item;
+    }
+}
 ?>
-<nav class="lx-account-nav" aria-label="<?= e($tr('navigation.account')) ?>">
+<nav class="lx-account-nav" aria-label="<?= e($t('navigation.account')) ?>">
+    <button type="button" class="lx-account-nav-toggle" aria-expanded="false" data-panel-menu>
+        <?php if ($current !== null) { ?>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $current['icon'] ?></svg>
+        <?php } ?>
+        <span><?= e($t($current !== null ? $current['label'] : 'navigation.account')) ?></span>
+        <svg class="lx-account-nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
     <ul>
         <?php foreach ($items as $item) {
             $isCurrent = $section === $item['key'];
@@ -37,7 +47,7 @@ $items = [
         <li>
             <a href="<?= e(lurl($item['href'])) ?>" data-panel-link<?= $isCurrent ? ' aria-current="page"' : '' ?>>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><?= $item['icon'] ?></svg>
-                <?= e($tr($item['label'])) ?>
+                <?= e($t($item['label'])) ?>
             </a>
         </li>
         <?php } ?>

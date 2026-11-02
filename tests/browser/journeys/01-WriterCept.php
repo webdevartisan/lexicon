@@ -14,7 +14,7 @@ $password = "Walk-{$stamp}-7!";
 // A visitor signs up from the homepage
 $I->amOnPage('/en');
 $I->declineCookies();
-$I->click('Create a blog');
+$I->click('Create your blog');
 $I->waitForElementVisible('#email');
 $I->seeThePageLooksRight('01-sign-up');
 $I->fillField('Email address', $email);
@@ -26,15 +26,16 @@ $I->click('Create account');
 // A new account has to prove its address before it can start a blog
 $I->waitForText('Confirm your email', 15);
 $I->followTheConfirmLinkMailedTo($email);
-$I->amOnPage('/en/dashboard/blog/new');
+$I->amOnPage('/en/start');
 $I->waitForText('What will you call your blog?', 15);
-$I->seeInCurrentUrl('/dashboard/blog/new');
+$I->seeInCurrentUrl('/en/start');
 $I->dontSee('Too many accounts were created');
 $I->seeThePageLooksRight('02-signed-up');
 $I->saveSessionSnapshot('writer');
 
 // The writer starts a blog in three steps: name, what it's about, a look
 $I->see('Step 1 of 3');
+$I->dontSeeElement('[data-address-box]');
 $I->fillField('name', "Walkthrough {$stamp}");
 $I->fillField('first_name', 'Wanda');
 $I->fillField('last_name', 'Walker');
@@ -45,14 +46,13 @@ $I->fillField('slug', "walk-{$stamp}");
 $I->waitForText("/blog/walk-{$stamp}", 5, '[data-address]');
 $I->waitForText('This address is available.');
 $blogSlug = "walk-{$stamp}";
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('03-start-name-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->click('Continue');
 $I->waitForText("What's it about?");
 $I->see('Step 2 of 3');
-$blogId = $I->grabFromCurrentUrl('~/blog/(\d+)/start~');
-$I->waitForJS('return !!window.Alpine');
+$blogId = $I->grabFromCurrentUrl('~/start/(\d+)/~');
 $I->fillField('description', 'Notes from a walk through the setup.');
 $I->seeThePageLooksRight('04-start-about');
 $I->click('Continue');
@@ -64,14 +64,16 @@ $I->seeCheckboxIsChecked('#theme-offset');
 $I->scrollDownTo('[data-theme-card=offset]');
 $I->waitForJS("return document.querySelector('[data-theme-card=offset] img').complete");
 $I->seeThePageLooksRight('04-start-look');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('04-start-look-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->click('Continue');
 $I->waitForElement('#content_ifr', 15);
 $I->seeInCurrentUrl("/post/new?blog_id={$blogId}");
 $I->amOnPage('/en/dashboard');
-$I->see('2 of 6 done', '[data-next-steps]');
+$I->see('2 of 5 done', '[data-next-steps]');
+$I->see('Your link works once your first post is published.', '[data-step=share]');
+$I->dontSee('Copy link', '[data-step=share]');
 
 // An empty post can't be published
 $I->amOnPage('/en/dashboard/post/new');
@@ -87,11 +89,12 @@ $I->waitForElementNotVisible('[data-close]');
 $I->fillField('title', 'Hello from the walkthrough');
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $postSlug = $I->grabValueFrom('slug');
-$I->scrollDownTo('#content_ifr');
-$I->switchToIFrame('#content_ifr');
-$I->click('#tinymce p');
-$I->type('This is my first post.');
-$I->switchToIFrame();
+$I->writeInTheEmptyEditor('This is my first post.');
+// Search and social fields left empty show what the post will use, as the writer types
+$I->waitForJS("return document.getElementById('meta_title').placeholder === 'Hello from the walkthrough - Walkthrough {$stamp}'", 5);
+$I->scrollDownTo('input[name=title]');
+$I->click('input[name=title]');
+$I->waitForJS("return document.getElementById('og_description').placeholder === 'This is my first post.'", 5);
 $I->click('Publish');
 $I->waitForText('Your blog is live now');
 $I->seeCurrentUrlMatches('~/post/\d+~');
@@ -105,27 +108,31 @@ $I->amOnPage($postEditUrl);
 
 // The next steps card counts the first post, hides and comes back, and ticks the share step
 $I->amOnPage('/en/dashboard');
-$I->see('3 of 6 done', '[data-next-steps]');
+$I->see('3 of 5 done', '[data-next-steps]');
 $I->see('Your blog went live with it.', '[data-step=first_post]');
 $I->seeThePageLooksRight('05-next-steps');
 $I->click('Hide for now');
-$I->waitForText('Next steps (3 of 6)');
+$I->waitForText('Next steps (3 of 5)');
 $I->reloadPage();
-$I->waitForText('Next steps (3 of 6)');
+$I->waitForText('Next steps (3 of 5)');
 $I->dontSee('Hide for now');
-$I->click('Next steps (3 of 6)');
+$I->click('Next steps (3 of 5)');
 $I->waitForText('Hide for now');
 $I->click('Copy link', '[data-step=share]');
 // Headless Chrome may refuse the clipboard; the card then shows the address to copy by hand
 if ($I->executeJS("return document.getElementById('next-steps-url').offsetParent !== null")) {
     $I->click('#next-steps-url');
 }
-$I->waitForText('4 of 6 done', 10, '[data-next-steps]');
+$I->waitForText('4 of 5 done', 10, '[data-next-steps]');
 $I->reloadPage();
-$I->see('4 of 6 done', '[data-next-steps]');
-$I->resizeWindow(390, 844);
+$I->see('4 of 5 done', '[data-next-steps]');
+$I->amOnAPhone();
 $I->seeThePageLooksRight('05-next-steps-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
+$I->click("Don't show again");
+$I->waitForElementNotVisible('[data-next-steps] section');
+$I->reloadPage();
+$I->dontSeeElement('[data-next-steps]');
 
 // A guest can read it
 $I->amAGuest();
@@ -148,7 +155,7 @@ $I->click('Update');
 $I->waitForText('Post updated');
 $I->see('so only you and your team can see this post', '[data-visibility-line]');
 $I->seeThePageLooksRight('08-post-updated');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('08-post-updated-phone');
 // The docked bar grows with the visibility line, so the form's last field must still clear it
 $clearance = $I->executeJS(<<<'JS'
@@ -158,7 +165,7 @@ $clearance = $I->executeJS(<<<'JS'
     return Math.round(document.querySelector('[data-actionbar]').getBoundingClientRect().top - contentBottom);
     JS);
 $I->assertGreaterThanOrEqual(0, $clearance, "The docked bar covers the end of the form by {$clearance}px");
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 $I->amOnPage('/en/dashboard/post');
 $I->see('Your blog is offline.', '[data-visibility-line]');
 $I->seeThePageLooksRight('08-post-list-offline');
@@ -185,11 +192,11 @@ $I->seeThePageLooksRight('09-blog-back-online');
 
 // The start steps read right to left in Arabic
 $I->loadSessionSnapshot('writer');
-$I->amOnPage('/ar/dashboard/blog/new');
+$I->amOnPage('/ar/start');
 $I->seeElement('html[dir=rtl]');
-$I->seeElement('form[action*="blog/create"]');
+$I->waitForElementVisible('form#blog-create-form', 5);
 $I->seeThePageLooksRight('10-start-name-rtl');
-$I->amOnPage("/ar/dashboard/blog/{$blogId}/start/look");
+$I->amOnPage("/ar/start/{$blogId}/look");
 $I->seeElement('[data-theme-card]');
 $I->scrollDownTo('[data-theme-card=offset]');
 $I->waitForJS("return document.querySelector('[data-theme-card=offset] img').complete");

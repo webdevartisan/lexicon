@@ -35,6 +35,12 @@ final class UploadService implements UploadServiceInterface
         'favicon' => ['max_w' => 256, 'max_h' => 256, 'quality' => 90],
     ];
 
+    private const BLOGS_URL = '/uploads/blogs';
+
+    private const AVATARS_URL = '/uploads/avatars';
+
+    private const MEDIA_KEY_PATTERN = '/^[0-9a-f]{16}$/';
+
     /**
      * @param  ImageProcessorInterface  $images  Resizes and re-encodes every stored upload
      */
@@ -211,18 +217,80 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Get upload directory and URL for blog post images.
+     * Folder and public URL for a blog's new images, one subfolder per month.
      *
-     * @param  int  $userId  User ID
-     * @param  int  $blogId  Blog ID
+     * @param  string  $mediaKey  The blog's media_key
      * @return array{0: string, 1: string} [directory_path, url_base]
      */
-    public function userBlogPostPath(int $userId, int $blogId): array
+    public function blogUploadPath(string $mediaKey): array
     {
-        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
-        $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/postImages';
+        $month = date('Y/m');
 
-        return [$dir, $url];
+        return [$this->blogRoot($mediaKey).'/'.$month, self::BLOGS_URL.'/'.$mediaKey.'/'.$month];
+    }
+
+    /**
+     * Public URLs of every file stored for a blog.
+     *
+     * @param  string  $mediaKey  The blog's media_key
+     * @return list<string>
+     */
+    public function blogUploads(string $mediaKey): array
+    {
+        $root = $this->blogRoot($mediaKey);
+        if (!is_dir($root)) {
+            return [];
+        }
+
+        $urls = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+
+        foreach ($files as $file) {
+            if ($file->isFile()) {
+                $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), strlen($root) + 1));
+                $urls[] = self::BLOGS_URL.'/'.$mediaKey.'/'.$relative;
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Whether a URL points at a file this site stored under /uploads: a plain path, with
+     * no address, query or parent folder in it.
+     *
+     * Anything else, an external address in particular, is refused wherever a
+     * library pick is accepted, since the Content-Security-Policy would block it.
+     */
+    public static function isUploadUrl(string $url): bool
+    {
+        return preg_match('#^/uploads/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*/)*[A-Za-z0-9_-][A-Za-z0-9._-]*$#', $url) === 1
+            && !str_contains($url, '..');
+    }
+
+    /**
+     * Whether a public URL names a file in the folder of the blog with this media key.
+     */
+    public static function isBlogFile(string $url, string $mediaKey): bool
+    {
+        return preg_match(self::MEDIA_KEY_PATTERN, $mediaKey) === 1
+            && str_starts_with($url, self::BLOGS_URL.'/'.$mediaKey.'/')
+            && self::isUploadUrl($url);
+    }
+
+    /**
+     * Folder holding everything stored for a blog.
+     *
+     * @throws InvalidArgumentException When the key is malformed, so an empty or crafted
+     *                                  value can never point at the folder of all blogs
+     */
+    private function blogRoot(string $mediaKey): string
+    {
+        if (preg_match(self::MEDIA_KEY_PATTERN, $mediaKey) !== 1) {
+            throw new InvalidArgumentException('Not a blog media key.');
+        }
+
+        return $this->pathOf(self::BLOGS_URL.'/'.$mediaKey);
     }
 
     /**
@@ -236,9 +304,9 @@ final class UploadService implements UploadServiceInterface
      *
      * @throws InvalidArgumentException|RuntimeException
      */
-    public function storeAvatarSource(array $file, int $userId): array
+    public function storeAvatarSource(array $file): array
     {
-        [$dir, $baseUrl] = $this->userProfilePath($userId);
+        [$dir, $baseUrl] = $this->avatarPath();
 
         $url = $this->storeImage($file, [
             'dir' => $dir,
@@ -246,7 +314,9 @@ final class UploadService implements UploadServiceInterface
             'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
             'max_bytes' => 20 * 1024 * 1024,
             'preset' => 'avatar_source',
-            'rename' => 'avatar-source',
+            // Everyone's avatars share one folder, so a content-only name would let two
+            // people who upload the same picture share, and delete, each other's file.
+            'rename' => 'avatar-source-'.bin2hex(random_bytes(4)),
         ]);
 
         if ($url === null) {
@@ -267,9 +337,9 @@ final class UploadService implements UploadServiceInterface
      * @param  array{x: int, y: int, width: int, height: int}  $rect  Crop rect in source pixels
      * @return string Public URL of the rendered avatar
      */
-    public function renderAvatar(int $userId, string $sourcePath, array $rect): string
+    public function renderAvatar(string $sourcePath, array $rect): string
     {
-        [$dir, $baseUrl] = $this->userProfilePath($userId);
+        [$dir, $baseUrl] = $this->avatarPath();
 
         if (!is_dir($dir)) {
             @mkdir($dir, 0775, true);
@@ -289,32 +359,43 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Get upload directory and URL for user profile images.
+     * Folder and public URL for new avatars, one subfolder per month. The profile row
+     * records each file's URL, so nothing about the person goes into the path.
      *
-     * @param  int  $userId  User ID
      * @return array{0: string, 1: string} [directory_path, url_base]
      */
-    public function userProfilePath(int $userId): array
+    private function avatarPath(): array
     {
-        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/profile';
-        $url = '/uploads/users/'.$userId.'/profile';
+        $url = self::AVATARS_URL.'/'.date('Y/m');
 
-        return [$dir, $url];
+        return [$this->pathOf($url), $url];
     }
 
     /**
-     * Get upload directory and URL for blog branding assets.
-     *
-     * @param  int  $userId  User ID
-     * @param  int  $blogId  Blog ID
-     * @return array{0: string, 1: string} [directory_path, url_base]
+     * Absolute path of an avatar file, or null when the URL is not in the avatars folder.
+     * Profile rows go through this, so they can never point the app at a blog's image.
      */
-    public function blogBrandingPath(int $userId, int $blogId): array
+    public function avatarFilePath(string $url): ?string
     {
-        $dir = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs/'.$blogId.'/branding';
-        $url = '/uploads/users/'.$userId.'/blogs/'.$blogId.'/branding';
+        if (!str_starts_with($url, self::AVATARS_URL.'/') || str_contains($url, '..')) {
+            return null;
+        }
 
-        return [$dir, $url];
+        return $this->pathOf($url);
+    }
+
+    /**
+     * Absolute path of a stored upload, from its public URL.
+     *
+     * @throws InvalidArgumentException When the URL is not a local upload
+     */
+    public function pathOf(string $url): string
+    {
+        if (!str_starts_with($url, '/uploads/') || str_contains($url, '..')) {
+            throw new InvalidArgumentException("Not a stored upload: {$url}");
+        }
+
+        return ROOT_PATH.'/storage'.$url;
     }
 
     /**
@@ -402,37 +483,6 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Move file from temporary to permanent post images location.
-     *
-     * @param  string  $tempFilename  Filename in temp directory
-     * @param  int  $userId  User ID
-     * @param  int  $blogId  Blog ID
-     * @return string|null Public URL of moved file, or null if source missing
-     */
-    public function moveTempToPermanent(string $tempFilename, int $userId, int $blogId): ?string
-    {
-        $tempPath = ROOT_PATH.'/storage/uploads/temp/'.$userId.'/'.$tempFilename;
-
-        if (!file_exists($tempPath)) {
-            return null;
-        }
-
-        [$dir, $baseUrl] = $this->userBlogPostPath($userId, $blogId);
-
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0775, true);
-        }
-
-        $destPath = $dir.'/'.$tempFilename;
-
-        if (rename($tempPath, $destPath)) {
-            return $baseUrl.'/'.$tempFilename;
-        }
-
-        return null;
-    }
-
-    /**
      * Parse Dropzone uploaded files JSON response.
      *
      * Handles both single JSON string and array of JSON strings.
@@ -469,30 +519,21 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Move temporary file to blog branding folder with semantic naming.
-     *
-     * Generates content-based hash and applies semantic prefix (banner, logo, favicon).
-     * Example output: /uploads/users/32/blogs/25/branding/banner-db56fa563064.webp
+     * Move a temp upload into the blog's folder, named after its role and its content.
+     * Example output: /uploads/blogs/3f9c2a7d41b08e65/2026/10/banner-db56fa563064.webp
      *
      * @param  string  $tempFilename  Filename in temp directory, as the browser reported it
      * @param  int  $userId  The user who uploaded the temp file (whose temp folder holds it)
-     * @param  int  $blogId  Blog ID
-     * @param  string  $prefix  Semantic prefix: 'banner', 'logo', or 'favicon'
-     * @param  string  $dir  Target directory path
-     * @param  string  $baseUrl  Target URL base
+     * @param  string  $prefix  Role of the image: 'banner', 'logo', 'favicon' or 'featured_image'
+     * @param  string  $mediaKey  The blog's media_key
      * @return string Public URL of moved file
      *
      * @throws InvalidArgumentException If the filename is not a temp image name or the file is gone
      * @throws RuntimeException If copy operation fails
      */
-    public function moveTempToBranding(
-        string $tempFilename,
-        int $userId,
-        int $blogId,
-        string $prefix,
-        string $dir,
-        string $baseUrl
-    ): string {
+    public function moveTempToBlog(string $tempFilename, int $userId, string $prefix, string $mediaKey): string
+    {
+        [$dir, $baseUrl] = $this->blogUploadPath($mediaKey);
         $tempPath = $this->tempFilePath($tempFilename, $userId);
 
         $ext = strtolower(pathinfo($tempFilename, PATHINFO_EXTENSION));
@@ -544,110 +585,58 @@ final class UploadService implements UploadServiceInterface
     }
 
     /**
-     * Delete a person's own files: profile images and abandoned temp uploads.
+     * Delete a person's own files: their avatar images and abandoned temp uploads.
      *
      * Blog files are not here even when this person uploaded them. They belong to
      * the blog, and a blog that outlives the account still shows them.
      *
-     * @param  int  $userId  User ID
+     * @param  int  $userId  User ID, which names their temp folder
+     * @param  list<string>  $avatarUrls  Public URLs of their avatar and its crop source
      */
-    public function deleteProfileUploads(int $userId): void
+    public function deleteProfileUploads(int $userId, array $avatarUrls): void
     {
-        [$profileDir] = $this->userProfilePath($userId);
+        foreach ($avatarUrls as $url) {
+            $this->deleteAvatar($url);
+        }
 
-        $this->deleteDirectory($profileDir);
         $this->cleanupTempFiles($userId);
     }
 
     /**
-     * Delete every file uploaded to a blog, whoever uploaded it.
+     * Delete an avatar file by its URL. A URL outside the avatars folder is left alone.
      *
-     * Files live under the uploader's folder, so a blog with several writers has
-     * one folder per writer.
-     *
-     * @param  int  $blogId  Blog ID
+     * @throws RuntimeException When the file exists but could not be removed
      */
-    public function deleteBlogUploads(int $blogId): void
+    public function deleteAvatar(string $url): void
     {
-        $dirs = glob(ROOT_PATH.'/storage/uploads/users/*/blogs/'.$blogId, GLOB_ONLYDIR);
-
-        if ($dirs === false) {
-            throw new RuntimeException("Could not list upload folders for blog {$blogId}.");
-        }
-
-        foreach ($dirs as $dir) {
-            $this->deleteDirectory($dir);
+        if ($this->avatarFilePath($url) !== null) {
+            $this->deleteUpload($url);
         }
     }
 
     /**
-     * Every file a person uploaded to blogs, as public URLs grouped by blog.
+     * Delete every file stored for a blog, whoever uploaded it.
      *
-     * @return array<int, list<string>>
+     * @param  string  $mediaKey  The blog's media_key
      */
-    public function blogUploadsBy(int $userId): array
+    public function deleteBlogUploads(string $mediaKey): void
     {
-        $root = ROOT_PATH.'/storage/uploads/users/'.$userId.'/blogs';
-        $uploads = [];
-
-        if (!is_dir($root)) {
-            return $uploads;
-        }
-
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
-
-        foreach ($files as $file) {
-            if (!$file->isFile()) {
-                continue;
-            }
-
-            $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), strlen($root) + 1));
-            $blogId = (int) strtok($relative, '/');
-            $uploads[$blogId][] = '/uploads/users/'.$userId.'/blogs/'.$relative;
-        }
-
-        return $uploads;
+        $this->deleteDirectory($this->blogRoot($mediaKey));
     }
 
     /**
-     * Delete one stored upload by its public URL.
+     * Delete one stored upload by its public URL. A file that is already gone is fine.
+     *
+     * @throws InvalidArgumentException When the URL is not a local upload
+     * @throws RuntimeException When the file exists but could not be removed
      */
     public function deleteUpload(string $url): void
     {
-        if (!str_starts_with($url, '/uploads/') || str_contains($url, '..')) {
-            throw new InvalidArgumentException("Not a stored upload: {$url}");
-        }
-
-        $path = ROOT_PATH.'/storage'.$url;
+        $path = $this->pathOf($url);
 
         if (is_file($path) && !unlink($path)) {
             throw new RuntimeException("Could not delete file {$path}.");
         }
-    }
-
-    /**
-     * Remove a person's upload folder once nothing is left in it, empty subfolders included.
-     */
-    public function deleteEmptyUserFolder(int $userId): void
-    {
-        $root = ROOT_PATH.'/storage/uploads/users/'.$userId;
-
-        if (!is_dir($root)) {
-            return;
-        }
-
-        $entries = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($entries as $entry) {
-            if ($entry->isFile()) {
-                return;
-            }
-        }
-
-        $this->deleteDirectory($root);
     }
 
     /**

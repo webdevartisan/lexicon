@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#dispatches';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" data-edit-header lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($user['blog_name'] ?? 'Closest') ?>, home">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('closest::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Closest'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Closest') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -32,17 +32,15 @@
         <?php } ?>
       </a>
 
-      <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="<?= $homeUrl ?>">Trailhead</a>
-        <a href="<?= $archiveUrl ?>">Route log</a>
-        <a href="<?= $subscribeUrl ?>">Dispatches</a>
+      <nav class="nav" id="primaryNav" aria-label="<?= e($t('closest::nav.primary')) ?>">
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('closest::nav.home') ?>><?= $wording->html('closest::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('closest::nav.archive') ?>><?= $wording->html('closest::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('closest::nav.subscribe') ?>><?= $wording->html('closest::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">
-        <span data-auth-nav="theme" style="display:contents">
-          {% include "partials/_auth_nav.lex.php" %}
-        </span>
-        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
+        {% include "partials/_auth_nav.lex.php" %}
+        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('closest::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -60,25 +58,26 @@
     // sheet title. The grid ref is a stable hash of the slug, pure decoration.
     $gridRef = strtoupper(substr(dechex(crc32((string) ($blog['blog_slug'] ?? 'closest'))), 0, 4));
   ?>
-  <footer class="sheet-margin">
+  <footer class="sheet-margin" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       <div class="sheet-row" aria-hidden="true">
         <span class="scale-bar">
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </span>
-        <span class="scale-cap">0&ensp;&mdash;&ensp;5 km &middot; sheet <?= date('Y') ?> &middot; grid <?= $gridRef ?></span>
+        <?php $scaleParams = ['year' => date('Y'), 'grid' => e($gridRef)]; ?>
+        <span class="scale-cap"<?= $wording->attrs('closest::footer.scale', $scaleParams) ?>><?= $wording->html('closest::footer.scale', $scaleParams) ?></span>
         <svg class="declination" viewBox="0 0 24 40" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 36V8" /><path d="M8 12l4-6 4 6" /><path d="M12 3l1.2 2.4-1.2-.7-1.2.7z" fill="currentColor" stroke="none" /></svg>
       </div>
 
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-sheet-wrap" aria-hidden="true">
-        <div class="foot-sheet"><?= e($user['blog_name'] ?? 'Closest') ?></div>
+        <div class="foot-sheet" dir="auto"><?= e($user['blog_name'] ?? 'Closest') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Closest') ?>.</span>
+        <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

@@ -38,12 +38,18 @@
 
 .hero-headline {
   margin: 0;
+  text-align: left;
   font-family: var(--disp);
   font-weight: 540;
   font-size: var(--type-display);
   line-height: 1.02;
   letter-spacing: 0.005em;
   overflow-wrap: anywhere;
+}
+
+/* The name keeps its own reading order but lines up with the page */
+:root:dir(rtl) .hero-headline {
+  text-align: right;
 }
 
 /* split chars rise from behind the baseline; hidden until the intro is set
@@ -358,6 +364,11 @@
   margin-top: calc(var(--step-4) + var(--step-3));
   padding-top: var(--step-2);
   border-top: 1px solid var(--rule);
+}
+
+/* Carries the blog title, which can be any length */
+.collection-footer .collection-count {
+  white-space: normal;
 }
 
 @media (max-width: 800px) {

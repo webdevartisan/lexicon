@@ -11,6 +11,7 @@ use App\Resources\PostResource;
 use App\Services\BlogLaunchService;
 use App\Services\SubscriberNotificationService;
 use App\Services\WorkflowService;
+use App\ValueObjects\PostFieldRules;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -43,6 +44,12 @@ class PostStatusController extends AppController
         $post = $this->guardStatusChange((int) $id);
         if ($post instanceof Response) {
             return $post;
+        }
+
+        if (PostFieldRules::missingText('published', $post->content())) {
+            $this->flash('error', PostFieldRules::TEXT_REQUIRED);
+
+            return $this->redirectBack();
         }
 
         $user = auth()->user();

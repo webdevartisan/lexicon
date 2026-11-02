@@ -34,7 +34,7 @@ $submit = function (string $form) use ($I): void {
 };
 
 // A leftover from an earlier run must not decide how this one starts
-shell_exec('php '.escapeshellarg(dirname(__DIR__, 3).'/cli').' two-factor:reset '.escapeshellarg($email));
+$I->runConsoleCommand('two-factor:reset '.escapeshellarg($email));
 
 // Setting it up asks for the password, then for a real code from the app
 $signIn();

@@ -21,6 +21,8 @@ final class PostActionPresenter
 
     public const INTENT_PUBLISH = 'publish';
 
+    public const INTENT_PUBLISH_NOW = 'publish_now';
+
     public const INTENT_SCHEDULE = 'schedule';
 
     public const INTENT_UPDATE = 'update';
@@ -34,6 +36,7 @@ final class PostActionPresenter
         self::INTENT_SAVE_DRAFT,
         self::INTENT_SUBMIT_REVIEW,
         self::INTENT_PUBLISH,
+        self::INTENT_PUBLISH_NOW,
         self::INTENT_SCHEDULE,
         self::INTENT_UPDATE,
         self::INTENT_UNPUBLISH,
@@ -57,7 +60,7 @@ final class PostActionPresenter
      * @param  bool  $workflowOn  Whether the blog runs the review pipeline
      * @param  bool  $hasFutureDate  Whether published_at is set to a future time
      * @param  string|null  $workflowState  Review state, e.g. 'needs_changes'
-     * @return array{primary: array<string, string>, secondary: array<string, string>|null, menu: array<int, array<string, string>>, pill: array{label: string, tone: string}}
+     * @return array{primary: array<string, string|array{label: string, icon: string}>, secondary: array<string, string>|null, menu: array<int, array<string, string>>, pill: array{label: string, tone: string}}
      */
     public static function for(
         string $status,
@@ -67,7 +70,8 @@ final class PostActionPresenter
         ?string $workflowState = null
     ): array {
         return [
-            'primary' => self::primary($status, $canPublish, $workflowOn, $hasFutureDate, $workflowState),
+            'primary' => self::primary($status, $canPublish, $workflowOn, $hasFutureDate, $workflowState)
+                + self::dateWording($status, $canPublish, $workflowOn, $workflowState),
             'secondary' => self::secondary($status, $canPublish, $workflowOn),
             'menu' => self::menu($status, $canPublish, $hasFutureDate),
             'pill' => self::PILLS[$status] ?? self::PILLS['draft'],
@@ -94,6 +98,8 @@ final class PostActionPresenter
             // Publishing with a future date still defers; the date wins over
             // the button so the two can never disagree.
             self::INTENT_PUBLISH => $hasFutureDate ? 'scheduled' : 'published',
+            // Only offered while the date is still ahead, and says now on the button.
+            self::INTENT_PUBLISH_NOW => 'published',
             self::INTENT_ARCHIVE => 'archived',
             default => $currentStatus,
         };
@@ -155,7 +161,35 @@ final class PostActionPresenter
                 : self::button(self::INTENT_PUBLISH, 'Publish now', 'send', 'green');
         }
 
+        // Coming back as a draft leaves room to check the post before it goes live again.
+        if ($status === 'archived' && $canPublish) {
+            return self::button(self::INTENT_SAVE_DRAFT, 'Restore as draft', 'undo-2', 'blue');
+        }
+
         return self::button(self::INTENT_UPDATE, 'Update', 'save', 'blue');
+    }
+
+    /**
+     * The primary's words with a date still ahead and without one, so the editor
+     * can relabel it while the date changes. Only a button that publishes or
+     * schedules gets them; the date makes no difference to the others.
+     *
+     * @return array<string, array{label: string, icon: string}>
+     */
+    private static function dateWording(string $status, bool $canPublish, bool $workflowOn, ?string $workflowState): array
+    {
+        $later = self::primary($status, $canPublish, $workflowOn, true, $workflowState);
+        $now = self::primary($status, $canPublish, $workflowOn, false, $workflowState);
+        $goesLive = [self::INTENT_PUBLISH, self::INTENT_SCHEDULE];
+
+        if (!in_array($later['intent'], $goesLive, true) || !in_array($now['intent'], $goesLive, true)) {
+            return [];
+        }
+
+        return [
+            'later' => ['label' => $later['label'], 'icon' => $later['icon']],
+            'now' => ['label' => $now['label'], 'icon' => $now['icon']],
+        ];
     }
 
     /**
@@ -183,7 +217,7 @@ final class PostActionPresenter
     }
 
     /**
-     * Rarer state changes, tucked behind the overflow control.
+     * Rarer moves, tucked behind the overflow control.
      *
      * @return array<int, array<string, string>>
      */
@@ -198,7 +232,7 @@ final class PostActionPresenter
                 self::button(self::INTENT_SAVE_DRAFT, 'Return to draft', 'undo-2', 'slate'),
             ],
             'scheduled' => array_values(array_filter([
-                $hasFutureDate ? self::button(self::INTENT_PUBLISH, 'Publish now', 'send', 'slate') : null,
+                $hasFutureDate ? self::button(self::INTENT_PUBLISH_NOW, 'Publish now', 'send', 'slate') : null,
                 self::button(self::INTENT_SAVE_DRAFT, 'Cancel schedule', 'undo-2', 'slate'),
                 self::button(self::INTENT_ARCHIVE, 'Archive', 'archive', 'slate'),
             ])),
@@ -207,8 +241,8 @@ final class PostActionPresenter
                 self::button(self::INTENT_ARCHIVE, 'Archive', 'archive', 'slate'),
             ],
             'archived' => [
-                self::button(self::INTENT_SAVE_DRAFT, 'Restore as draft', 'undo-2', 'slate'),
                 self::button(self::INTENT_PUBLISH, 'Publish', 'send', 'slate'),
+                self::button(self::INTENT_UPDATE, 'Save, keep archived', 'save', 'slate'),
             ],
             default => [],
         };

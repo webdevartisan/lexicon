@@ -54,7 +54,7 @@ $siteName = site_setting('site_name', 'Lexicon');
             <div class="lx-authcol">
 
                 <a class="lx-authmark" href="<?= e($homeHref) ?>" aria-label="<?= e($siteName) ?>">
-                    <span class="lx-authmark-dot" aria-hidden="true"></span>
+                    <img class="lx-authmark-dot" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="24" height="24" />
                     <span class="lx-authmark-word"><?= e($siteName) ?></span>
                 </a>
 

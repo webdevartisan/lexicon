@@ -86,6 +86,7 @@ class DatabaseHelper
             'guided_setup_marks',
             'blog_subscribers',
             'blog_invitations',
+            'blog_texts',
             'blog_settings',
             'blog_users',
             'blogs',

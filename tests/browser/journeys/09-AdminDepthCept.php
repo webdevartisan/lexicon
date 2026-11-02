@@ -16,8 +16,12 @@ $readerEmail = $I->recall('readerEmail');
 // The case for the reply the reader reported, found by this run's blog name
 $I->signInAs('admin');
 $I->amOnPage('/en/admin/reports?status=all');
-$I->click("//tr[contains(., '".$I->recall('blogName')."')]//a");
-$I->see('Thanks for reading');
+$caseItem = "//button[@data-queue-item][contains(., '".$I->recall('blogName')."')]";
+$caseId = $I->grabAttributeFrom($caseItem, 'data-queue-item');
+$I->click($caseItem);
+$I->waitForElementVisible("[data-queue-panel=\"{$caseId}\"]");
+$I->click('Open case', "[data-queue-panel=\"{$caseId}\"]");
+$I->waitForText('Thanks for reading');
 $I->seeThePageLooksRight('90-report-case');
 $I->click('Dismiss the reports');
 $I->waitForElementVisible('#dismiss-note');

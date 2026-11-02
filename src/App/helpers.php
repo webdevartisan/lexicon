@@ -13,7 +13,7 @@ use App\Helpers\TimezoneHelper;
 use App\Models\BlogSettingsModel;
 use App\Models\SettingModel;
 use App\Models\SiteContentModel;
-use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\AssetPathMapper;
 use App\Services\LocaleRegistry;
 use App\Services\TranslationService;
@@ -37,6 +37,38 @@ function chrome_translate(string|array $key, array $params = []): string
     $translators[$locale] ??= new TranslationService($locale);
 
     return $translators[$locale]->translate($key, $params);
+}
+
+/**
+ * Translate a sentence that carries markup, such as a byline link or an
+ * emphasised name. The wording is escaped first, so only the values passed
+ * here, which the caller has already made safe, reach the page as HTML.
+ *
+ * @param  string  $key  Dotted key
+ * @param  array<string, string|int>  $html  Placeholder name => safe HTML or number
+ * @return string HTML ready to print
+ */
+function translate_html(string $key, array $html = []): string
+{
+    $pairs = [];
+    foreach ($html as $name => $value) {
+        $pairs['{'.$name.'}'] = (string) $value;
+    }
+
+    return strtr(e(chrome_translate($key)), $pairs);
+}
+
+/**
+ * Translate a count into its one/other form, e.g. "1 post" or "4 posts".
+ *
+ * @param  string  $key  Dotted key whose entry holds "one" and "other"
+ * @param  int  $count  The number the sentence is about
+ * @param  array<string, string|int>  $params  Further placeholders
+ * @return string Plain text, still to be escaped
+ */
+function translate_count(string $key, int $count, array $params = []): string
+{
+    return chrome_translate($key.'.'.($count === 1 ? 'one' : 'other'), ['count' => $count] + $params);
 }
 
 /**
@@ -77,6 +109,23 @@ function site_content(string $name, ?string $default = null): string
     }
 
     return chrome_translate($name);
+}
+
+/**
+ * Attributes that mark a front-page text a blog owner can edit on the page.
+ *
+ * Rendered for every visitor so the cached page stays the same for all; only
+ * an owner's page loads the script that reads them.
+ *
+ * @param  string  $field  The text, such as tagline
+ * @param  string  $default  What the theme shows while the text is empty; HTML is reduced to its text
+ * @return string The attributes, each with a leading space
+ */
+function edit_text_attrs(string $field, string $default = ''): string
+{
+    $plain = html_entity_decode(strip_tags($default), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    return ' data-edit-text="'.e($field).'" data-edit-default="'.e(trim($plain)).'"';
 }
 
 /**
@@ -130,6 +179,27 @@ function site_setting(string $name, ?string $default = null): ?string
 function registration_open(): bool
 {
     return app(SettingModel::class)->get('registration_enabled', '1') !== '0';
+}
+
+/**
+ * Sign-up page that sends the new account straight on to creating its blog, in the current language.
+ *
+ * @return string The localized sign-up URL
+ */
+function blog_signup_url(): string
+{
+    return lurl('/register').'?return_to='.rawurlencode(lurl('/start'));
+}
+
+/**
+ * Whether an address is the first step of Start your blog, in any language.
+ *
+ * @param  string|null  $path  A local path such as a sign-up's return_to
+ * @return bool True for /start and /{locale}/start
+ */
+function is_blog_start_path(?string $path): bool
+{
+    return $path !== null && preg_match('#^(/[a-z]{2})?/start$#', $path) === 1;
 }
 
 /**
@@ -222,10 +292,8 @@ function site_timezone(): string
 }
 
 /**
- * Timezone the signed in viewer reads dates in.
- *
- * Falls back to the site timezone rather than UTC, since most accounts never
- * open the preferences page and UTC would be wrong for all of them.
+ * Timezone the signed in viewer reads dates in: the one they picked, else their
+ * device's (see AccountZone), else the site's. Guests get the site's.
  *
  * @return string A valid timezone identifier
  */
@@ -239,15 +307,7 @@ function viewer_timezone(): string
 
     $user = auth()->user();
 
-    if ($user) {
-        $preference = app(UserPreferencesModel::class)->getTimezone((int) $user['id']);
-
-        if (TimezoneHelper::isValid($preference)) {
-            return $zone = $preference;
-        }
-    }
-
-    return $zone = site_timezone();
+    return $zone = $user ? app(AccountZone::class)->resolve((int) $user['id']) : site_timezone();
 }
 
 /**
@@ -312,7 +372,59 @@ function local_datetime(?string $utc, string $format = 'M j, Y', ?string $timezo
         return '';
     }
 
-    return $when->setTimezone(new DateTimeZone($timezone))->format($format);
+    $when = $when->setTimezone(new DateTimeZone($timezone));
+    $locale = App\Services\LocaleState::get()->chromeLocale;
+
+    return $locale === 'en' ? $when->format($format) : localized_date_format($when, $format, $locale);
+}
+
+/**
+ * Format a date the way another language writes it.
+ *
+ * The date() format says which parts to show; ICU decides their order and
+ * words, so Greek gets "27 Οκτ 2026" where English has "Oct 27, 2026". A
+ * format with no words in it ('Y-m-d', 'c') is for machines and tables and
+ * comes out exactly as asked.
+ *
+ * @param  DateTimeImmutable  $when  Moment already in the zone to show
+ * @param  string  $format  Any date() format string
+ * @param  string  $locale  Locale code
+ * @return string Formatted datetime
+ */
+function localized_date_format(DateTimeImmutable $when, string $format, string $locale): string
+{
+    if (preg_match('/[MFDlaA]/', $format) !== 1 || str_contains($format, '\\')) {
+        return $when->format($format);
+    }
+
+    $parts = [
+        'Y' => 'y', 'y' => 'yy', 'F' => 'MMMM', 'M' => 'MMM', 'm' => 'MM', 'n' => 'M', 'd' => 'dd', 'j' => 'd',
+        'l' => 'EEEE', 'D' => 'EEE', 'H' => 'HH', 'G' => 'H', 'h' => 'hh', 'g' => 'h', 'i' => 'mm', 's' => 'ss',
+        'a' => 'a', 'A' => 'a', 'T' => 'z',
+    ];
+    $skeleton = '';
+
+    foreach (str_split($format) as $letter) {
+        $skeleton .= $parts[$letter] ?? '';
+    }
+
+    // Latin digits, the same ones the rest of the interface counts in
+    $icuLocale = $locale.'@numbers=latn';
+    $zone = $when->getTimezone();
+
+    static $formatters = [];
+    $key = $icuLocale.'|'.$skeleton.'|'.$zone->getName();
+
+    if (!array_key_exists($key, $formatters)) {
+        $pattern = (new IntlDatePatternGenerator($icuLocale))->getBestPattern($skeleton);
+        $formatters[$key] = $pattern === false ? null : IntlDateFormatter::create(
+            $icuLocale, IntlDateFormatter::NONE, IntlDateFormatter::NONE, $zone, IntlDateFormatter::GREGORIAN, $pattern
+        );
+    }
+
+    $text = $formatters[$key]?->format($when);
+
+    return is_string($text) ? $text : $when->format($format);
 }
 
 /**
@@ -355,33 +467,34 @@ function relative_time(?string $utc, bool $short = false): string
     $ahead = $seconds > 0;
     $seconds = abs($seconds);
 
+    $words = $short ? 'time.short.' : 'time.';
+
+    // Counting seconds reads like a glitch on something that just happened: "0 seconds ago".
     if ($seconds < 60) {
-        $text = $short ? $seconds.'s' : plural_unit($seconds, 'second');
-    } elseif ($seconds < 3600) {
-        $count = (int) round($seconds / 60);
-        $text = $short ? $count.'m' : plural_unit($count, 'minute');
+        return chrome_translate($words.($ahead ? 'soon' : 'now'));
+    }
+
+    if ($seconds < 3600) {
+        [$unit, $count] = ['minute', (int) round($seconds / 60)];
     } elseif ($seconds < 86400) {
-        $count = (int) round($seconds / 3600);
-        $text = $short ? $count.'h' : plural_unit($count, 'hour');
+        [$unit, $count] = ['hour', (int) round($seconds / 3600)];
     } elseif ($seconds < 604800) {
-        $count = (int) round($seconds / 86400);
-        $text = $short ? $count.'d' : plural_unit($count, 'day');
+        [$unit, $count] = ['day', (int) round($seconds / 86400)];
     } elseif ($seconds < 2592000) {
         // Floor, not round, from here up: rounding lets five and a half weeks
         // read as "6 weeks" when the next unit has already taken over.
-        $count = (int) floor($seconds / 604800);
-        $text = $short ? $count.'w' : plural_unit($count, 'week');
+        [$unit, $count] = ['week', (int) floor($seconds / 604800)];
     } elseif ($seconds < 31536000) {
         // Capped at 11 so a 30-day month never counts its way to "12 months",
         // which is a year by any reader's arithmetic.
-        $count = min(11, (int) floor($seconds / 2592000));
-        $text = $short ? $count.'mo' : plural_unit($count, 'month');
+        [$unit, $count] = ['month', min(11, (int) floor($seconds / 2592000))];
     } else {
-        $count = (int) floor($seconds / 31536000);
-        $text = $short ? $count.'y' : plural_unit($count, 'year');
+        [$unit, $count] = ['year', (int) floor($seconds / 31536000)];
     }
 
-    return $ahead ? 'in '.$text : $text.' ago';
+    $amount = chrome_translate($words.$unit.($short ? '' : ($count === 1 ? '.one' : '.other')), ['count' => $count]);
+
+    return chrome_translate($ahead ? 'time.ahead' : 'time.ago', ['time' => $amount]);
 }
 
 /**
@@ -482,8 +595,7 @@ function social_meta_tags(array $meta): string
  *
  * Blog pages build theirs in BlogController; this covers the pages that sit
  * on the front layout (home, discover, the content pages). The share image is
- * the app icon, so link previews use the small "summary" card rather than the
- * large one that would crop it.
+ * the wide logo card, so link previews use the large card.
  *
  * @param  string  $title  Page title for og:title
  * @param  string  $description  Meta description, omitted when empty
@@ -512,9 +624,8 @@ function platform_page_meta(string $title, string $description, string $canonica
         'description' => $description,
         'url' => $canonical,
         'site_name' => (string) site_setting('site_name', 'Lexicon'),
-        'og_image' => $origin.'/assets/icon/android-chrome-512x512.png',
+        'og_image' => $origin.'/assets/icon/og-default.png',
         'og_image_alt' => (string) site_setting('site_name', 'Lexicon'),
-        'twitter_card' => 'summary',
     ]);
 
     return implode('

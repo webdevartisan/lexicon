@@ -99,7 +99,7 @@ test('deletion is a POST action, reached from a GET confirm page', function () {
     expect($source)->toContain('csrf()->assertValid');
 });
 
-test('a wrong password cancels the deletion', function () {
+test('a wrong password cancels the deletion and stays on the delete page', function () {
     $this->scheduler->shouldNotReceive('schedule');
 
     $request = makeRequest('/account/delete', 'POST', [
@@ -111,7 +111,7 @@ test('a wrong password cancels the deletion', function () {
     $response = callController($this->controller, 'destroy', $request);
 
     expect($response->getStatusCode())->toBe(302)
-        ->and($response->getHeader('Location'))->toContain('/account/preferences');
+        ->and($response->getHeader('Location'))->toContain('/account/delete');
 });
 
 test('a blocked account goes back to the confirm page instead of being erased', function () {

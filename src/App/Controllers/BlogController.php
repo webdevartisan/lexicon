@@ -18,11 +18,15 @@ use App\Models\PublishedPostModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
+use App\Services\BlogLocales;
+use App\Services\BlogWording;
 use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
+use App\Services\FrontPageTexts;
 use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
 use App\Services\SearchRateLimiter;
+use App\Services\ThemeWording;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -45,7 +49,10 @@ class BlogController extends AppController
         private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
         private HeadI18nBuilder $headI18n,
-        private SearchRateLimiter $searchThrottle
+        private SearchRateLimiter $searchThrottle,
+        private BlogLocales $blogLocales,
+        private FrontPageTexts $frontTexts,
+        private ThemeWording $themeWording
     ) {}
 
     /** @var array<int, array{name: string, handle: string, link_handle: ?string}> Per-request cache, keyed by user id. */
@@ -171,6 +178,9 @@ class BlogController extends AppController
             }
         }
 
+        $ctx['edit_texts'] = $this->textEditing($blogId, $ctx['settings'], $ctx['wording'], true);
+        $ctx['settings'] = $this->frontTexts->shownIn($blogId, $ctx['settings'], locale());
+
         return $this->view('Blogs/show.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichCardPosts($posts), $ctx['settings']),
             'categories' => $this->categoryModel->getPublishedByBlogId($blogId),
@@ -276,6 +286,7 @@ class BlogController extends AppController
                 'perPage' => $postsData['perPage'],
                 'totalPosts' => $postsData['totalPosts'],
             ],
+            'edit_texts' => $this->textEditing($blogId, $ctx['settings'], $ctx['wording'], false),
         ]);
     }
 
@@ -310,13 +321,13 @@ class BlogController extends AppController
                 'totalPosts' => $found['total'],
             ],
             'searchTerm' => $term,
-            'archiveKicker' => 'Search',
-            'archiveTitle' => $term === '' ? 'Search' : '&ldquo;'.$name.'&rdquo;',
+            'archiveKicker' => e($this->t('blogPage.results.searchKicker')),
+            'archiveTitle' => $term === '' ? e($this->t('blogPage.results.searchTitle')) : '&ldquo;'.$name.'&rdquo;',
             'archiveDek' => match (true) {
-                $throttled => 'Too many searches just now. Try again in a minute.',
-                $term === '' => 'Type a word to search every post.',
-                $found['total'] === 0 => 'Nothing matched <em>'.$name.'</em>.',
-                default => 'Posts matching <em>'.$name.'</em>.',
+                $throttled => e($this->t('blogPage.results.throttled')),
+                $term === '' => e($this->t('blogPage.results.empty')),
+                $found['total'] === 0 => translate_html('blogPage.results.none', ['term' => '<em>'.$name.'</em>']),
+                default => translate_html('blogPage.results.matching', ['term' => '<em>'.$name.'</em>']),
             },
         ]);
     }
@@ -361,9 +372,9 @@ class BlogController extends AppController
         return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
-            'archiveKicker' => 'Category &mdash; '.$name,
+            'archiveKicker' => translate_html('blogPage.results.categoryKicker', ['name' => $name]),
             'archiveTitle' => $name,
-            'archiveDek' => 'Posts filed under <em>'.$name.'</em>.',
+            'archiveDek' => translate_html('blogPage.results.categoryDek', ['name' => '<em>'.$name.'</em>']),
         ]);
     }
 
@@ -390,9 +401,9 @@ class BlogController extends AppController
         return $this->view('Blogs/archive.lex.php', $ctx + [
             'posts' => $this->localizePosts($this->enrichPostAuthors($posts), $ctx['settings']),
             'pagination' => $this->taxonomyPagination(count($posts)),
-            'archiveKicker' => 'Tagged &mdash; '.$name,
+            'archiveKicker' => translate_html('blogPage.results.tagKicker', ['name' => $name]),
             'archiveTitle' => '#'.$name,
-            'archiveDek' => 'Posts tagged <em>'.$name.'</em>.',
+            'archiveDek' => translate_html('blogPage.results.tagDek', ['name' => '<em>'.$name.'</em>']),
         ]);
     }
 
@@ -440,12 +451,15 @@ class BlogController extends AppController
         LocaleState::setLocaleSet($postLocaleSet);
         $this->refreshHeadI18n();
 
-        if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault)) {
+        if ($redirect = $this->localeRedirect($postLocaleSet, $postDefault, (int) $ctx['blog']['id'])) {
             return $redirect;
         }
 
         // Swap in the viewer-locale translation before any derived fields (meta, excerpt) are built.
         $post = $this->localizePosts([$post], $ctx['settings'])[0];
+
+        // A translated view would save its text over the original, so it is not editable in place.
+        $shownTranslated = !empty($ctx['settings']['translations_enabled']) && locale() !== $postDefault;
 
         // Normalize timestamps
         $rawTs = $post['published_at'] ?? $post['created_at'] ?? gmdate('Y-m-d H:i:s');
@@ -538,9 +552,7 @@ class BlogController extends AppController
             $robots[] = 'nofollow';
         }
 
-        $serpTitle = !empty($post['meta_title'])
-            ? $post['meta_title']
-            : ($post['title'] ?? 'Post').' - '.($ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
+        $serpTitle = post_search_title($post, $ctx['blog']['blog_name'] ?? $ctx['user']['handle']."'s Blog");
         $serpDescription = !empty($post['meta_description'])
             ? $post['meta_description']
             : (post_excerpt($post) ?: ($ctx['meta']['description'] ?? ''));
@@ -602,9 +614,9 @@ class BlogController extends AppController
         // it, the way a channel owner hearts a comment under their own video.
         // The author, not the blog owner: those are different people on roughly
         // half the posts here, and it is the author's thread. Their own votes
-        // are the signal, so there is no separate gesture to store — one extra
-        // indexed read, and it turns on who wrote the post rather than on who
-        // is reading it, which is what keeps the thread cacheable.
+        // are the signal, so there is no separate gesture to store. It costs one
+        // extra indexed read, and it turns on who wrote the post rather than on
+        // who is reading it, which is what keeps the thread cacheable.
         $authorId = (int) ($post['author_id'] ?? 0);
         $authorHearts = [];
         $authorIdentity = null;
@@ -636,6 +648,8 @@ class BlogController extends AppController
 
         // array_merge, not +: the post-level meta must override the blog-level
         // meta already present in $ctx (the + operator kept the left side).
+        $editInPlace = $canPreview && !$shownTranslated ? $this->inPlaceEditing((int) $post['id']) : null;
+
         return $this->view('Posts/show.lex.php', array_merge($ctx, [
             'engagement' => $engagement,
             'share_url' => $shareUrl,
@@ -655,7 +669,58 @@ class BlogController extends AppController
             'viewer_avatar' => $viewerAvatar,
             'comment_author_hearts' => $authorHearts,
             'comment_author' => $authorIdentity,
+            'edit_in_place' => $editInPlace,
+            // The theme's own texts on this page join the post's edit, so they share its bar.
+            'edit_texts' => $editInPlace !== null ? $this->textEditing((int) $ctx['blog']['id'], $ctx['settings'], $ctx['wording'], false) : null,
         ]));
+    }
+
+    /**
+     * What the post page needs to edit a post in place, or null when this viewer may not edit it.
+     *
+     * The stored text goes along because a theme may rearrange the text it shows.
+     *
+     * @return array{save_url: string, editor_url: string, version: string, blog_id: int, content: string}|null
+     */
+    private function inPlaceEditing(int $postId): ?array
+    {
+        $post = $this->postModel->findResource($postId);
+        if ($post === false || !Gate::allows('update', $post, auth()->user())) {
+            return null;
+        }
+
+        return [
+            'save_url' => lurl('/dashboard/post/'.$postId.'/in-place'),
+            'editor_url' => lurl('/dashboard/post/'.$postId.'/edit'),
+            'version' => $post->textVersion(),
+            'blog_id' => $post->blogId(),
+            'content' => $post->content(),
+        ];
+    }
+
+    /**
+     * What a blog page needs to edit its texts in place, or null when this viewer may not.
+     *
+     * @param  array<string, mixed>  $settings  Blog settings row, before any translation
+     * @param  bool  $frontTexts  Whether the page shows the front-page texts from the blog settings
+     * @return array{save_url: string, settings_url: string, locale: string, wording_locale: string, fields: array<string, array<string, mixed>>}|null
+     */
+    private function textEditing(int $blogId, array $settings, BlogWording $wording, bool $frontTexts): ?array
+    {
+        $blog = auth()->check() ? $this->model->getBlog($blogId) : false;
+        if ($blog === false || !Gate::allows('update', $blog, auth()->user())) {
+            return null;
+        }
+
+        $fields = $frontTexts ? $this->frontTexts->forEditing($blogId, $settings, locale()) : [];
+
+        return [
+            'save_url' => lurl('/dashboard/blog/'.$blogId.'/texts'),
+            'settings_url' => lurl('/dashboard/blog/'.$blogId.'/appearance?lang='.locale().'#branding'),
+            'locale' => locale(),
+            'wording_locale' => LocaleState::get()->chromeLocale,
+            'fields' => $fields + $wording->forEditing(),
+        ];
     }
 
     /**
@@ -739,8 +804,6 @@ class BlogController extends AppController
 
         // 5) Logged-in reader shown in the theme masthead. Full-page cache only
         // serves guests, so viewer-specific markup never leaks between users.
-        // Shared with the /auth/nav endpoint, which re-renders the same masthead
-        // after a modal login.
         $viewer = app(\App\Services\ViewerContext::class)->current();
 
         // Every themed page renders these, so the subscribe confirmation (and any
@@ -749,11 +812,14 @@ class BlogController extends AppController
 
         // Which languages this blog's own pages exist in. Recorded on LocaleState
         // so the head globals stop advertising translations that do not exist.
-        $localeSet = $this->blogLocaleSet((int) $blog['id'], $settings);
+        $localeSet = $this->blogLocales->for((int) $blog['id'], $settings);
         LocaleState::setLocaleSet($localeSet);
         $this->refreshHeadI18n();
 
-        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet');
+        // The theme's texts as this blog words them; every themed page shows some.
+        $wording = $this->themeWording->forPage((int) $blog['id'], isset($settings['theme']) ? (string) $settings['theme'] : null);
+
+        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet', 'wording');
     }
 
     /**
@@ -762,26 +828,6 @@ class BlogController extends AppController
     private function viewerCanPreview(int $blogId): bool
     {
         return auth()->check() && $this->model->userCanAccessBlog((int) auth()->user()['id'], $blogId);
-    }
-
-    /**
-     * Locales a blog's own pages exist in: its base language, plus any locale a
-     * post has been translated into once the blog opts into translations.
-     *
-     * @param  array<string, mixed>  $settings  Blog settings row
-     * @return string[]
-     */
-    private function blogLocaleSet(int $blogId, array $settings): array
-    {
-        $default = (string) ($settings['default_locale'] ?? 'en');
-
-        if (empty($settings['translations_enabled'])) {
-            return [$default];
-        }
-
-        return array_values(array_unique(
-            array_merge([$default], $this->translations->localesForBlog($blogId))
-        ));
     }
 
     /**
@@ -810,7 +856,8 @@ class BlogController extends AppController
     {
         return $this->localeRedirect(
             $ctx['localeSet'],
-            (string) ($ctx['settings']['default_locale'] ?? 'en')
+            (string) ($ctx['settings']['default_locale'] ?? 'en'),
+            (int) ($ctx['blog']['id'] ?? 0)
         );
     }
 
@@ -823,10 +870,12 @@ class BlogController extends AppController
      *
      * @param  string[]  $localeSet  Locales this page exists in
      * @param  string  $default  The page's own default locale
+     * @param  int  $blogId  The blog the page belongs to
      */
-    private function localeRedirect(array $localeSet, string $default): ?Response
+    private function localeRedirect(array $localeSet, string $default, int $blogId): ?Response
     {
-        $target = $this->localeResolver->redirectTarget($localeSet, locale(), $default);
+        $target = $this->readerLocaleTarget($localeSet, $blogId)
+            ?? $this->localeResolver->redirectTarget($localeSet, locale(), $default);
 
         if ($target === null) {
             return null;
@@ -845,10 +894,29 @@ class BlogController extends AppController
         );
     }
 
+    /**
+     * The reader's own language, when they chose a fixed one and this page exists in it.
+     *
+     * Only a fixed choice makes the interface differ from the page; Automatic and
+     * guests always match, so they read whichever version they opened. The blog's
+     * own team stays put too, since they open translations to check them.
+     *
+     * @param  string[]  $localeSet  Locales this page exists in
+     */
+    private function readerLocaleTarget(array $localeSet, int $blogId): ?string
+    {
+        $reader = LocaleState::get()->chromeLocale;
+
+        if ($reader === locale() || !in_array($reader, $localeSet, true)) {
+            return null;
+        }
+
+        return $this->viewerCanPreview($blogId) ? null : $reader;
+    }
+
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
     {
-        $clone = (new \DateTimeImmutable('@'.$dt->getTimestamp()))->setTimezone(new \DateTimeZone($tz));
-
-        return $clone->format('jS M Y'); // e.g. 5th Nov 2025
+        // e.g. 5th Nov 2025, and in the reader's own words and order on a Greek or Arabic page
+        return local_datetime(gmdate('Y-m-d H:i:s', $dt->getTimestamp()), 'jS M Y', $tz);
     }
 }

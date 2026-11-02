@@ -268,6 +268,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     blog_slug VARCHAR(200) NOT NULL UNIQUE,
     description TEXT DEFAULT NULL,
     owner_id INT NOT NULL,
+    media_key CHAR(16) NOT NULL COMMENT 'Random folder name for the blog uploads, so image URLs carry no ids; set by BlogModel::insert',
     status ENUM('draft','published','archived','suspended') NOT NULL DEFAULT 'draft',
     status_before_suspension VARCHAR(20) DEFAULT NULL COMMENT 'Status to restore when the owner suspension is lifted',
     is_featured TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Admin pick for the explore page featured blogs',
@@ -278,6 +279,7 @@ CREATE TABLE IF NOT EXISTS blogs (
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_owner (owner_id),
     INDEX idx_slug (blog_slug),
+    UNIQUE KEY uq_media_key (media_key),
     INDEX idx_status (status),
     INDEX idx_status_published (status, published_at),
     INDEX idx_featured (is_featured, published_at)
@@ -326,6 +328,25 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     INDEX idx_indexable (indexable)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Blog-specific configuration and display settings';
+
+-- ----------------------------------------------------------------------------
+-- Blog Texts
+-- ----------------------------------------------------------------------------
+-- A blog's own wording, one row per language and text. The front-page texts in
+-- blog_settings are in the blog's own language; a row here keyed by the column
+-- name (tagline) rewords one for readers of another language. Keys are plain
+-- names so any installed theme can add its own without a schema change.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS blog_texts (
+    blog_id INT NOT NULL,
+    locale VARCHAR(5) NOT NULL,
+    text_key VARCHAR(150) NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (blog_id, locale, text_key),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Per-language wording of a blog''s texts';
 
 -- ----------------------------------------------------------------------------
 -- Blog Users Table (formerly blog_authors)
@@ -726,7 +747,7 @@ COMMENT='Per-blog email subscribers for new post notifications';
 CREATE TABLE IF NOT EXISTS guided_setup_marks (
     user_id INT NOT NULL,
     blog_id INT NOT NULL,
-    mark VARCHAR(32) NOT NULL COMMENT 'hidden, dismissed, link_copied, look_chosen, subscribers_seen, profile_saved',
+    mark VARCHAR(32) NOT NULL COMMENT 'hidden, dismissed, link_copied, look_chosen, profile_saved',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, blog_id, mark),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

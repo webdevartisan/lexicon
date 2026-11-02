@@ -21,6 +21,7 @@ use App\Presenters\PostActionPresenter;
 use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Resources\PostResource;
+use App\Services\AccountZone;
 use App\Services\ActiveBlog;
 use App\Services\BlogLaunchService;
 use App\Services\ExternalMediaGuard;
@@ -78,6 +79,7 @@ final class PostController extends AppController
         private ActiveBlog $activeBlog,
         private PostListingModel $postListing,
         private BlogLaunchService $blogLaunch,
+        private AccountZone $zones,
     ) {}
 
     /**
@@ -166,10 +168,11 @@ final class PostController extends AppController
             workflowState: $workflowFilter,
         );
 
+        $canCreate = Gate::allows('createPost', $blog, $user);
         $views = $this->postViews($blog, $result['data']);
         foreach ($result['data'] as &$p) {
             $p['tags'] = $this->model->tags((int) $p['id']);
-            $p['can'] = $this->postAbilities($p, $blog, $user);
+            $p['can'] = $this->postAbilities($p, $blog, $user, $canCreate);
             $p['views'] = (int) ($views[(int) $p['id']]['views'] ?? 0);
         }
         unset($p);
@@ -191,7 +194,8 @@ final class PostController extends AppController
             'returnToken' => $returnToken,
             'blogSlug' => $blog->slug(),
             'managesAll' => $managesAll,
-            'canCreate' => Gate::allows('createPost', $blog, $user),
+            'canCreate' => $canCreate,
+            'blogId' => $blogId,
             'status' => $workflowFilter !== '' ? $workflowFilter : $status,
             'q' => $q,
             'tableSort' => $tableSort,
@@ -225,19 +229,23 @@ final class PostController extends AppController
      *
      * @param  array<string, mixed>  $post  List row
      * @param  array<string, mixed>  $user
-     * @return array{update: bool, open: bool, publish: bool, delete: bool}
+     * @param  bool  $canCreate  Whether the user may write in this blog, which copying needs
+     * @return array{update: bool, open: bool, publish: bool, delete: bool, duplicate: bool}
      */
-    private function postAbilities(array $post, BlogResource $blog, array $user): array
+    private function postAbilities(array $post, BlogResource $blog, array $user, bool $canCreate): array
     {
         $resource = new PostResource($post, $blog);
         $update = Gate::allows('update', $resource, $user);
+        $own = $resource->authorId() === (int) $user['id'];
 
         return [
             'update' => $update,
             // Writers can still open their own locked posts; the edit page shows them read-only.
-            'open' => $update || $resource->authorId() === (int) $user['id'],
+            'open' => $update || $own,
             'publish' => Gate::allows('publish', $resource, $user),
             'delete' => Gate::allows('delete', $resource, $user),
+            'duplicate' => $canCreate && $resource->status() !== 'moderated'
+                && ($own || Gate::allows('view', $resource, $user)),
         ];
     }
 
@@ -267,17 +275,20 @@ final class PostController extends AppController
 
         $blogSettings = $this->blogSettingsModel->findByBlogId((int) $blog->id());
         $workflowEnabled = !empty($blogSettings['workflow_enabled']);
+        $zone = $this->writerZone($userId);
 
         return $this->view([
             'blog' => $blog->toArray(),
+            'publishZone' => $zone,
             'backUrl' => $this->backUrlPath(),
             'categories' => $this->categoryModel->getByBlogId((int) $blog->id()),
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
+            'linkEditable' => true,
             'workflowEnabled' => $workflowEnabled,
             'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),
-            'visibility' => VisibilityPresenter::forPost(['status' => 'draft'], $blog, $userId),
+            'visibility' => VisibilityPresenter::forPost(['status' => 'draft'], $blog, $userId, $zone),
         ] + $this->authorFieldData($blog, $user, (int) $user['id']));
     }
 
@@ -301,7 +312,7 @@ final class PostController extends AppController
         Gate::authorize('createPost', $blog, $user);
 
         $validator = $this->validateOrFail([
-            'published_at' => 'max:20',
+            'published_at' => 'max:19',
         ] + PostFieldRules::CORE + self::SEO_RULES);
 
         $data = $validator->validated();
@@ -312,7 +323,8 @@ final class PostController extends AppController
         // Convert published_at to UTC before resolving the intent, because
         // whether the date is in the future decides publish versus schedule.
         if (!empty($data['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            $data['timezone'] = $this->formZone($data, (int) $user['id']);
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], $data['timezone']);
             if ($utc === null) {
                 return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
             }
@@ -326,6 +338,10 @@ final class PostController extends AppController
             $this->workflowService->canPublish($blog, (int) $user['id']),
             (int) $blog->id()
         );
+
+        if (PostFieldRules::missingText($data['status'], $data['content'])) {
+            return $this->rejectField('content', PostFieldRules::TEXT_REQUIRED);
+        }
 
         $data['blog_id'] = $blog->id();
         $data['slug'] = $this->model->availableSlug((int) $blog->id(), $data['slug']);
@@ -411,24 +427,13 @@ final class PostController extends AppController
         Gate::authorize('update', $post, $user);
         $this->activeBlog->follow($user, $blog);
 
-        // Convert published_at to display timezone
-        $displayDate = null;
-        if (!empty($post->publishedAt())) {
-            $dt = new DateTime($post->publishedAt(), new DateTimeZone('UTC'));
-            $dt->setTimezone(new DateTimeZone($post->timezone()));
-            $displayDate = $dt->format('d.m.y H:i');
-        }
-
         $workflowState = $post->workflowState();
         $status = $post->status();
 
-        $postUrl = base_url().'/blog/'.$blog->toArray()['blog_slug'].'/'.$post->toArray()['slug'];
-
+        $zone = $this->writerZone((int) $user['id']);
         $postArray = $post->toArray();
-        $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id']);
-        if ($displayDate) {
-            $postArray['published_at'] = $displayDate;
-        }
+        $visibility = VisibilityPresenter::forPost($postArray, $blog, (int) $user['id'], $zone);
+        $postArray['published_at'] = TimezoneHelper::utcToLocal($post->publishedAt(), $zone);
 
         $postTags = array_map(
             static fn (array $t): string => (string) $t['name'],
@@ -449,16 +454,19 @@ final class PostController extends AppController
         return $this->view([
             'post' => $postArray,
             'blog' => $blog->toArray(),
+            'publishZone' => $zone,
             'postAnalytics' => $this->postAnalytics($blog, (int) $post->id(), (string) ($postArray['status'] ?? '')),
             'translationsEnabled' => $translationsEnabled,
             'translations' => $translationsEnabled ? $this->translationModel->findForPost((int) $post->id()) : [],
             'defaultLocale' => (string) ($blogSettings['default_locale'] ?? 'en'),
             'availableLocales' => $this->localeRegistry->supported(),
-            'postUrl' => $postUrl,
             // Not the Referer: after a save that is this very page.
             'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
             'workflowState' => $workflowState,
             'status' => $status,
+            'autosave' => $post->acceptsAutosave(),
+            'textVersion' => $post->textVersion(),
+            'linkEditable' => $post->linkEditable(),
             'workflowEnabled' => $workflowEnabled,
             'canRequestReview' => $canRequestReview,
             'latestReview' => $latestReview,
@@ -499,6 +507,28 @@ final class PostController extends AppController
             'postUrl' => base_url().'/blog/'.$blog->slug().'/'.$post->slug(),
             'backUrl' => $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post']),
         ]);
+    }
+
+    /**
+     * Keep the typed address only while the post's link may still change, with a
+     * number added when another post in the blog already uses it.
+     *
+     * @param  array<string, mixed>  $data  Validated editor fields
+     * @param  PostResource  $post  The post being saved
+     * @return array<string, mixed> The fields, with slug only when it may be saved
+     */
+    private function withRequestedSlug(array $data, PostResource $post): array
+    {
+        $slug = (string) ($data['slug'] ?? '');
+        unset($data['slug']);
+
+        if ($slug === '' || !$post->linkEditable()) {
+            return $data;
+        }
+
+        $data['slug'] = $this->model->availableSlug((int) $post->blogId(), $slug, (int) $post->id());
+
+        return $data;
     }
 
     /**
@@ -546,26 +576,33 @@ final class PostController extends AppController
 
         Gate::authorize('update', $post, $user);
 
+        // Before any write below (tags and the featured flag save early). A request
+        // that names no version has no opened copy to compare against.
+        $version = (string) $this->request->postParam('version', '');
+        if ($version !== '' && $post->textChangedSince($version)) {
+            return $this->rejectField('content', PostFieldRules::TEXT_CHANGED_ELSEWHERE);
+        }
+
         $validator = $this->validateOrFail([
             'title' => 'required|title|min:2|max:100',
-            'content' => 'required|max:60000',
+            'slug' => 'slug|min:2|max:100',
+            'content' => 'max:60000',
             'excerpt' => 'max:300',
             'timezone' => 'timezone',
-            'published_at' => 'max:20',
+            'published_at' => 'max:19',
             'remove_featured_image' => 'boolean',
             'comments_enabled' => 'boolean',
         ] + self::SEO_RULES);
 
-        $newData = $validator->validated();
+        $newData = $this->withRequestedSlug($validator->validated(), $post);
         $newData['content'] = $this->contentSanitizer->clean((string) $newData['content']);
         $newData['comments_enabled'] = !empty($newData['comments_enabled']) ? 1 : 0;
         $newData = $this->normalizeSeoFields($newData);
 
-        $timezone = $newData['timezone'] ?? 'UTC';
-
         // Normalize published_at to UTC for comparison
         if (!empty($newData['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $timezone);
+            $newData['timezone'] = $this->formZone($newData, (int) $user['id']);
+            $utc = TimezoneHelper::localToUtc((string) $newData['published_at'], $newData['timezone'], $post->publishedAt());
             if ($utc === null) {
                 return $this->rejectField('published_at', TimezoneHelper::INVALID_PUBLISH_DATE);
             }
@@ -619,6 +656,10 @@ final class PostController extends AppController
             }
         }
 
+        if (PostFieldRules::missingText($newStatus, $newData['content'])) {
+            return $this->rejectField('content', PostFieldRules::TEXT_REQUIRED);
+        }
+
         // Detect changed fields
         $data = array_diff_assoc($newData, $originalData);
 
@@ -653,8 +694,10 @@ final class PostController extends AppController
             $data['featured_image'] = null;
         }
 
-        // Set published_at when transitioning to published
-        if ($newStatus === 'published' && $oldStatus !== 'published' && empty($data['published_at'])) {
+        // Going live dates the post now, unless a past date was picked for it. A date
+        // still ahead only gets this far through "Publish now", which means now.
+        if ($newStatus === 'published' && $oldStatus !== 'published'
+            && (empty($data['published_at']) || strtotime($data['published_at'].' UTC') > time())) {
             $utcNow = new DateTime('now', new DateTimeZone('UTC'));
             $data['published_at'] = $utcNow->format('Y-m-d H:i:s');
         }
@@ -773,10 +816,11 @@ final class PostController extends AppController
                 'slug' => 'slug|min:2|max:100',
                 // No status rule: autosave never sends one, and the "in" rule
                 // rejects an absent value rather than skipping it.
-                'content' => 'required|max:60000',
+                'content' => 'max:60000',
                 'excerpt' => 'max:300',
                 'timezone' => 'timezone',
-                'published_at' => 'max:20',
+                'published_at' => 'max:19',
+                'version' => 'max:64',
             ]);
 
             if ($validator->fails()) {
@@ -805,6 +849,7 @@ final class PostController extends AppController
                 }
             }
 
+            $validated['timezone'] = $this->formZone($validated, (int) $user['id']);
             $result = $this->autosaveService->save($validated, (int) $user['id'], $postId, $blogId);
 
             $statusCode = $result['success'] ? 200 : 400;
@@ -822,25 +867,8 @@ final class PostController extends AppController
     }
 
     /**
-     * Show post deletion confirmation.
-     *
-     * @param  string  $id  Post ID
-     */
-    public function delete(string $id): Response
-    {
-        csrf()->assertValid($this->request->postParam('_token'));
-
-        $user = auth()->user();
-        $post = $this->getPost((int) $id);
-        Gate::authorize('delete', $post, $user);
-
-        return $this->view('post.delete', [
-            'post' => $post->toArray(),
-        ]);
-    }
-
-    /**
-     * Delete post permanently.
+     * Delete a post permanently, then go back to the post list it was deleted
+     * from (the list's return token in `r`), or to the post list.
      *
      * @param  string  $id  Post ID
      */
@@ -852,8 +880,6 @@ final class PostController extends AppController
         $post = $this->getPost((int) $id);
         Gate::authorize('delete', $post, $user);
 
-        $postData = $post->toArray();
-
         $this->model->delete((int) $id);
 
         audit()->log(
@@ -861,13 +887,15 @@ final class PostController extends AppController
             'post.deleted',
             'post',
             (int) $id,
-            ['title' => $postData['title'], 'slug' => $postData['slug']],
+            ['title' => $post->title(), 'slug' => $post->slug()],
             $this->request->ip()
         );
 
-        $this->flash('success', 'Post deleted successfully.');
+        $this->flash('success', '“'.$post->title().'” deleted.');
 
-        return $this->redirect('/dashboard');
+        return $this->redirect(
+            $this->returnTokenUrl($this->request->getParam('r'), '/dashboard/post', ['/dashboard/post'])
+        );
     }
 
     /**
@@ -894,6 +922,8 @@ final class PostController extends AppController
         $applied = 0;
         $skipped = 0;
         $moderated = 0;
+        $withoutText = 0;
+        $targetStatus = ['publish' => 'published', 'review' => 'pending'][$action] ?? null;
 
         foreach ($ids as $id) {
             $post = $this->model->findResource($id);
@@ -910,6 +940,11 @@ final class PostController extends AppController
 
             if ($action !== 'delete' && $post->status() === 'moderated') {
                 $moderated++;
+                continue;
+            }
+
+            if ($targetStatus !== null && PostFieldRules::missingText($targetStatus, $post->content())) {
+                $withoutText++;
                 continue;
             }
 
@@ -955,6 +990,9 @@ final class PostController extends AppController
         }
         if ($moderated > 0) {
             $msg .= ", {$moderated} left as they are because a moderator hid them";
+        }
+        if ($withoutText > 0) {
+            $msg .= ", {$withoutText} left as they are because they have no text yet";
         }
         $this->flash('success', $msg.'.');
 
@@ -1083,13 +1121,7 @@ final class PostController extends AppController
     {
         $picked = trim((string) ($this->request->post['featured_image_library_url'] ?? ''));
         if ($picked !== '') {
-            if (!$this->mediaService->isLocalUploadUrl($picked)) {
-                throw new \InvalidArgumentException('Featured images must come from your media library or an upload, not an outside address.');
-            }
-
-            $this->mediaService->register((int) $blog->id(), $userId, $picked, 'post_image');
-
-            return $picked;
+            return $this->mediaService->usePicked($blog, $picked, 'post_image');
         }
 
         $uploadedFiles = $this->uploader->getUploadedFiles(
@@ -1194,6 +1226,28 @@ final class PostController extends AppController
         }
 
         return $data;
+    }
+
+    /**
+     * The zone a writer reads and picks publish dates in. Not viewer_timezone(),
+     * which caches its answer for the whole process and so for every test after the first.
+     */
+    private function writerZone(int $userId): string
+    {
+        return $this->zones->resolve($userId);
+    }
+
+    /**
+     * The zone the form showed its date in. A form that does not say was
+     * drawn on the writer's clock.
+     *
+     * @param  array<string, mixed>  $data  Validated input
+     */
+    private function formZone(array $data, int $userId): string
+    {
+        $zone = (string) ($data['timezone'] ?? '');
+
+        return TimezoneHelper::isValid($zone) ? $zone : $this->writerZone($userId);
     }
 
     /**

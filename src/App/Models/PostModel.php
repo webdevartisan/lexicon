@@ -245,6 +245,21 @@ class PostModel extends AppModel
     }
 
     /**
+     * Titles in a blog that start with the given text, for naming a copy.
+     *
+     * @param  int  $blogId  Blog to look in
+     * @param  string  $prefix  Start of the title
+     * @return string[]
+     */
+    public function titlesStartingWith(int $blogId, string $prefix): array
+    {
+        $pattern = addcslashes($prefix, '\\%_').'%';
+        $sql = "SELECT title FROM {$this->getTable()} WHERE blog_id = :blog_id AND title LIKE :pattern";
+
+        return array_column($this->database->query($sql, [':blog_id' => $blogId, ':pattern' => $pattern])->fetchAll(), 'title');
+    }
+
+    /**
      * Get the author (User) of a post.
      *
      * @param  int  $userId  User ID

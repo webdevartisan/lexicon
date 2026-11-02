@@ -1,6 +1,41 @@
 (function () {
+  // Signing in reloads the page so every part of it knows the reader. Whatever
+  // they pressed to get here is remembered and pressed again once it has loaded.
+  var RESUME_KEY = 'lexicon.resume';
+
+  function resumeAfterSignIn() {
+    var saved = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null');
+      sessionStorage.removeItem(RESUME_KEY);
+    } catch (err) {
+      return;
+    }
+
+    if (!saved || saved.path !== window.location.pathname) return;
+    var target = document.querySelector(saved.selector);
+    if (target) target.click();
+  }
+
+  function rememberResume(selector) {
+    try {
+      sessionStorage.setItem(RESUME_KEY, JSON.stringify({ path: window.location.pathname, selector: selector }));
+    } catch (err) {
+      // Without storage the reader presses it again themselves
+    }
+  }
+
   var modal = document.getElementById('lex-auth-modal');
-  if (!modal || window.LexiconAuth) return;
+  if (!modal) {
+    // Signed in: the page scripts listening for that press load before DOMContentLoaded fires
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', resumeAfterSignIn);
+    } else {
+      resumeAfterSignIn();
+    }
+    return;
+  }
+  if (window.LexiconAuth) return;
 
   var title = document.getElementById('lex-auth-title');
   var sub = modal.querySelector('[data-auth-sub]');
@@ -15,6 +50,7 @@
   var forgotSend = modal.querySelector('[data-auth-forgot-send]');
   var successBox = modal.querySelector('[data-auth-step="success"]');
   var successMsg = modal.querySelector('[data-auth-success-msg]');
+  var gotIt = modal.querySelector('[data-auth-got-it]');
   var emailInput = document.getElementById('lex-auth-email');
   var passInput = document.getElementById('lex-auth-password');
   var submitBtn = modal.querySelector('[data-auth-submit]');
@@ -30,8 +66,6 @@
   var pageToken = modal.querySelector('input[name="_token"]').value;
   var freshToken = null;
   var returnTo = modal.getAttribute('data-return-to') || '/';
-  // Locale-prefixed so the nav fetch does not eat a 308 on every login
-  var authNavUrl = modal.getAttribute('data-nav-url') || '/auth/nav';
   var urls = {
     identify: modal.getAttribute('data-identify-url') || '/login/identify',
     login: modal.getAttribute('data-login-url') || '/login',
@@ -71,7 +105,7 @@
     bookmark: tr('titleBookmark')
   };
 
-  var state = { mode: 'login', email: '', onSuccess: null, lastFocus: null, registerCheck: null };
+  var state = { mode: 'login', email: '', onSuccess: null, resume: null, signedIn: false, lastFocus: null, registerCheck: null };
 
   // Resolves for every answer the server gives, including errors, so only a
   // request that never got an answer ends up in a .catch.
@@ -159,49 +193,6 @@
     submitBtn.removeAttribute('aria-busy');
   }
 
-  // The theme script bound its user-menu handler at load, when this page was
-  // still guest markup and the menu did not exist. Bind the swapped-in copy
-  // here. No risk of double binding: the modal only renders for guests.
-  function bindUserMenu(root) {
-    var menu = root.querySelector('.nav-user');
-    var btn = menu && menu.querySelector('.nav-user-btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      var open = menu.classList.toggle('is-open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-
-    document.addEventListener('click', function () {
-      menu.classList.remove('is-open');
-      btn.setAttribute('aria-expanded', 'false');
-    });
-  }
-
-  // Logging in without navigating leaves the guest header on screen, which
-  // reads as if the login failed. Pull the logged-in markup and swap it in.
-  function refreshAuthNav() {
-    var host = document.querySelector('[data-auth-nav]');
-    if (!host) return Promise.resolve();
-
-    var url = authNavUrl + '?variant=' + encodeURIComponent(host.getAttribute('data-auth-nav') || 'theme')
-            + '&return_to=' + encodeURIComponent(returnTo);
-
-    return fetch(url, {
-      credentials: 'same-origin',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (j && j.success && j.data && typeof j.data.html === 'string') {
-          host.innerHTML = j.data.html;
-          bindUserMenu(host);
-        }
-      })
-      .catch(function (err) { console.error('Could not refresh the header after logging in:', err); });
-  }
-
   function showError(msg) { errEl.textContent = msg; errEl.removeAttribute('hidden'); }
   function clearError() { errEl.setAttribute('hidden', ''); }
 
@@ -240,26 +231,34 @@
     codeInput.focus();
   }
 
-  // Give the success state a beat, then finish what the reader started
-  function signedIn(message) {
+  // A new account that still has to confirm its email waits for "Got it", so
+  // the message is read; anyone else gets a beat to see the success state.
+  function signedIn(message, waitForReader) {
     // Signing in rotates the CSRF token, so the one used for this post is spent
     freshToken = null;
+    state.signedIn = true;
 
     successMsg.textContent = message;
+    gotIt.toggleAttribute('hidden', !waitForReader);
     showStep('success');
 
-    setTimeout(function () {
-      var done = state.onSuccess;
-      close();
+    if (waitForReader) {
+      gotIt.focus();
+      return;
+    }
 
-      // No callback means nothing to finish in place, so a reload is both
-      // the simplest way to show the logged-in header and what the reader
-      // expects after using the header login pill.
-      if (!done) { window.location.reload(); return; }
+    setTimeout(finish, 700);
+  }
 
-      refreshAuthNav();
-      done();
-    }, 700);
+  // A comment form posts itself, which loads a fresh page anyway. Anything else
+  // reloads the page so every part of it knows the reader.
+  function finish() {
+    var done = state.onSuccess;
+    close();
+
+    if (done) { done(); return; }
+    if (state.resume) rememberResume(state.resume);
+    window.location.reload();
   }
 
   function close() {
@@ -268,10 +267,17 @@
     if (state.lastFocus && state.lastFocus.focus) state.lastFocus.focus();
   }
 
+  // Once signed in, closing the window still has to bring the page up to date
+  function dismiss() {
+    if (state.signedIn) { finish(); return; }
+    close();
+  }
+
   window.LexiconAuth = {
     open: function (opts) {
       opts = opts || {};
       state.onSuccess = opts.onSuccess || null;
+      state.resume = opts.resume || null;
       state.mode = 'login';
       state.lastFocus = document.activeElement;
       title.textContent = titles[opts.reason] || titles.login;
@@ -373,7 +379,12 @@
 
       if (res.json.data && res.json.data.two_factor) { showCodeStep(); return; }
 
-      signedIn(state.mode === 'register' ? tr('welcomeNew') : tr('loggedIn'));
+      var welcome = res.json.data || {};
+      if (state.mode === 'register') {
+        signedIn(welcome.message || tr('loggedIn'), !!welcome.confirm_email);
+      } else {
+        signedIn(tr('loggedIn'), false);
+      }
     }).catch(function (err) {
       submitBtn.disabled = false;
       if (err && err.captcha) { showError(tr('checkFailed')); return; }
@@ -400,7 +411,7 @@
       }
 
       if (!res.ok) { showError(failureMessage(res)); return; }
-      signedIn(tr('loggedIn'));
+      signedIn(tr('loggedIn'), false);
     }).catch(function (err) {
       codeSubmit.disabled = false;
       networkFailure(err);
@@ -452,11 +463,12 @@
     back.addEventListener('click', backToEmail);
   });
 
-  modal.querySelector('[data-auth-close]').addEventListener('click', close);
-  modal.addEventListener('click', function (ev) { if (ev.target === modal) close(); });
+  modal.querySelector('[data-auth-close]').addEventListener('click', dismiss);
+  modal.addEventListener('click', function (ev) { if (ev.target === modal) dismiss(); });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape' && !modal.hasAttribute('hidden')) close();
+    if (ev.key === 'Escape' && !modal.hasAttribute('hidden')) dismiss();
   });
+  gotIt.addEventListener('click', finish);
 
   // Login triggers: the theme header pill (same markup in every theme) and
   // any link opting in via data-auth-login (platform front pages).

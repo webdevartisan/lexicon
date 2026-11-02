@@ -2,6 +2,7 @@
    oversized serif index. Shared base for every page of the theme. */
 
 :root {
+  --post-accent: var(--brass);
   --night: #131110;
   --night-2: #1a1714;
   --night-3: #242019;
@@ -15,9 +16,9 @@
   --rule-strong: rgba(235, 228, 216, 0.3);
   --glow: rgba(201, 162, 93, 0.14);
 
-  --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
-  --text: "Newsreader", Georgia, "Times New Roman", serif;
-  --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --serif: "Instrument Serif", "Markazi Text", "Iowan Old Style", Georgia, serif;
+  --text: "Newsreader", "Markazi Text", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", "Markazi Text", "SFMono-Regular", Consolas, monospace;
 
   --type-mono: 0.72rem;
   --type-small: 0.95rem;
@@ -140,7 +141,7 @@ a {
 .flash-wrap {
   position: fixed;
   top: 5.25rem;
-  right: var(--pad-x);
+  inset-inline-end: var(--pad-x);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -155,21 +156,21 @@ a {
   letter-spacing: 0.04em;
   background: var(--night-2);
   border: 1px solid var(--rule-strong);
-  border-left: 3px solid var(--brass);
+  border-inline-start: 3px solid var(--brass);
   color: var(--paper);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
 }
 
-.alert-success { border-left-color: #7d9d6f; }
-.alert-danger { border-left-color: var(--ember); }
-.alert-warning { border-left-color: var(--brass); }
+.alert-success { border-inline-start-color: #7d9d6f; }
+.alert-danger { border-inline-start-color: var(--ember); }
+.alert-warning { border-inline-start-color: var(--brass); }
 
 /* Masthead */
 .masthead {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   z-index: 100;
   transition: background 0.35s var(--ease-soft), border-color 0.35s var(--ease-soft);
   border-bottom: 1px solid transparent;
@@ -201,6 +202,12 @@ a {
   letter-spacing: 0.01em;
   color: var(--paper);
   white-space: nowrap;
+  min-width: 0;
+}
+
+.wordmark-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .wordmark-dot {
@@ -232,7 +239,7 @@ a {
 .nav a::after {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   width: 100%;
   height: 1px;
@@ -257,6 +264,7 @@ a {
 }
 
 .nav-pill {
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--type-mono);
   letter-spacing: 0.18em;
@@ -380,7 +388,7 @@ a {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
 }
 
@@ -421,7 +429,7 @@ a {
 .idx-float {
   position: fixed;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   width: min(300px, 26vw);
   aspect-ratio: 4 / 5;
   pointer-events: none;
@@ -647,7 +655,7 @@ footer.site {
     flex-direction: row;
     align-items: center;
     gap: 1.1rem;
-    text-align: left;
+    text-align: start;
     white-space: normal;
   }
 
@@ -685,83 +693,23 @@ footer.site {
 }
 
 /* ---------- language switcher ---------- */
-/* Shared markup from views/partials/_language_switcher.lex.php. An entry is a
-   link for guests and a form button for signed-in readers, so both are styled. */
 
-.lang-switcher {
-  position: relative;
-  display: inline-block;
+/* ---------- right-to-left ---------- */
+
+/* Joined scripts come apart when letter-spaced, and most labels here set their own tracking */
+:lang(ar) {
+  letter-spacing: normal !important;
 }
 
-.lang-switcher__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.6rem;
-  background: transparent;
-  border: 1px solid var(--rule-strong);
-  border-radius: 2px;
-  color: var(--paper-2);
-  font-family: var(--mono);
-  font-size: var(--type-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.18s ease, border-color 0.18s ease;
+.arrow:dir(rtl) {
+  scale: -1 1;
 }
 
-.lang-switcher__toggle:hover {
-  color: var(--brass-bright);
-  border-color: var(--brass-bright);
+.nav a:dir(rtl)::after {
+  transform-origin: right;
 }
 
-/* Sits in the footer, so it opens upward by default; the script re-measures. */
-.lang-switcher__menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
-  z-index: 40;
-  display: none;
-  min-width: 11rem;
-  margin: 0;
-  padding: 0.25rem;
-  list-style: none;
-  background: var(--night-3);
-  border: 1px solid var(--rule-strong);
-  border-radius: 2px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
-}
-
-.lang-switcher__menu.show { display: block; }
-
-.lang-switcher__item {
-  display: block;
-  margin: 0;
-}
-
-.lang-switcher__item a,
-.lang-switcher__item button {
-  display: block;
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  background: transparent;
-  border: 0;
-  border-bottom: 0;
-  border-radius: 2px;
-  color: var(--paper);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.lang-switcher__item a:hover,
-.lang-switcher__item button:hover {
-  background: var(--night-2);
-  color: var(--paper);
-}
-
-.lang-switcher__item a[aria-current="true"],
-.lang-switcher__item button[aria-current="true"] {
-  color: var(--brass-bright);
+.idx-row:dir(rtl):hover .idx-title,
+.idx-row:dir(rtl):focus-within .idx-title {
+  transform: translateX(-0.4rem);
 }

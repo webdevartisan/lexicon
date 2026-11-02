@@ -5,6 +5,7 @@
    ------------------------------------------------------------------ */
 
 :root {
+  --post-accent: var(--blaze-deep);
   --chart: #f3f5ee;
   --panel: #e9edde;
   --spruce: #1c2620;
@@ -16,9 +17,9 @@
   --rule: #d9dfcc;
   --rule-strong: #aab49b;
 
-  --serif: "Besley", Georgia, "Times New Roman", serif;
-  --sign: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
-  --mono: "Space Mono", "Courier New", monospace;
+  --serif: "Besley", "Noto Kufi Arabic", Georgia, "Times New Roman", serif;
+  --sign: "Barlow Semi Condensed", "Noto Kufi Arabic", "Arial Narrow", Arial, sans-serif;
+  --mono: "Space Mono", "Noto Kufi Arabic", "Courier New", monospace;
 
   --type-body: 1.0625rem;
   --type-small: 0.9375rem;
@@ -178,16 +179,16 @@ a {
 
 .inset::before {
   top: -1px;
-  left: -1px;
+  inset-inline-start: -1px;
   border-top-width: 2px;
-  border-left-width: 2px;
+  border-inline-start-width: 2px;
 }
 
 .inset::after {
   bottom: -1px;
-  right: -1px;
+  inset-inline-end: -1px;
   border-bottom-width: 2px;
-  border-right-width: 2px;
+  border-inline-end-width: 2px;
 }
 
 .inset:hover::before,
@@ -270,7 +271,7 @@ a {
 .flash-wrap {
   position: fixed;
   top: 5rem;
-  right: 1.25rem;
+  inset-inline-end: 1.25rem;
   z-index: 200;
   display: grid;
   gap: 0.5rem;
@@ -280,7 +281,7 @@ a {
 .alert {
   padding: 0.8rem 1.1rem;
   border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--spruce);
+  border-inline-start: 4px solid var(--spruce);
   border-radius: 3px;
   background: var(--chart);
   font-family: var(--sign);
@@ -289,15 +290,15 @@ a {
 }
 
 .alert-success {
-  border-left-color: #2e7d4f;
+  border-inline-start-color: #2e7d4f;
 }
 
 .alert-danger {
-  border-left-color: #b3261e;
+  border-inline-start-color: #b3261e;
 }
 
 .alert-warning {
-  border-left-color: var(--blaze);
+  border-inline-start-color: var(--blaze);
 }
 
 /* ---------- masthead ---------- */
@@ -382,6 +383,7 @@ a {
 }
 
 .nav-pill {
+  white-space: nowrap;
   padding: 0.45rem 1.05rem;
   border: 1px solid var(--spruce);
   border-radius: 3px;
@@ -437,12 +439,12 @@ a {
 
 .route-wrap {
   position: relative;
-  padding-left: 2.4rem;
+  padding-inline-start: 2.4rem;
 }
 
 .route-rail {
   position: absolute;
-  left: 0.7rem;
+  inset-inline-start: 0.7rem;
   top: 0.5rem;
   bottom: 0.5rem;
   width: 2px;
@@ -481,8 +483,8 @@ a {
 
 .wp-node {
   position: absolute;
-  left: -2.4rem;
-  margin-left: 0.7rem;
+  inset-inline-start: -2.4rem;
+  margin-inline-start: 0.7rem;
   top: 50%;
   width: 12px;
   height: 12px;
@@ -646,7 +648,7 @@ a {
 .declination {
   width: 16px;
   height: 26px;
-  margin-left: auto;
+  margin-inline-start: auto;
   color: rgba(243, 245, 238, 0.55);
 }
 
@@ -748,8 +750,8 @@ a {
   .nav {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
@@ -816,16 +818,16 @@ a {
 
 @media (max-width: 800px) {
   .route-wrap {
-    padding-left: 1.6rem;
+    padding-inline-start: 1.6rem;
   }
 
   .route-rail {
-    left: 0.35rem;
+    inset-inline-start: 0.35rem;
   }
 
   .wp-node {
-    left: -1.6rem;
-    margin-left: 0.35rem;
+    inset-inline-start: -1.6rem;
+    margin-inline-start: 0.35rem;
     width: 10px;
     height: 10px;
   }
@@ -840,88 +842,31 @@ a {
   }
 
   .flash-wrap {
-    left: 1.25rem;
+    inset-inline-start: 1.25rem;
   }
 }
 
 /* ---------- language switcher ---------- */
-/* Shared markup from views/partials/_language_switcher.lex.php. An entry is a
-   link for guests and a form button for signed-in readers, so both are styled. */
 
-.lang-switcher {
-  position: relative;
-  display: inline-block;
+/* ---------- right-to-left ---------- */
+
+/* Joined scripts come apart when letter-spaced, and most labels here set their own tracking */
+:lang(ar) {
+  letter-spacing: normal !important;
 }
 
-.lang-switcher__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.6rem;
-  background: transparent;
-  border: 1px solid rgba(243, 245, 238, 0.3);
-  border-radius: 2px;
-  color: rgba(243, 245, 238, 0.8);
-  font-family: var(--sign);
-  font-size: var(--type-small);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.18s ease, border-color 0.18s ease;
+.arrow:dir(rtl) {
+  scale: -1 1;
 }
 
-.lang-switcher__toggle:hover {
-  color: var(--blaze);
-  border-color: var(--blaze);
+.trail-ruler span:dir(rtl) {
+  transform-origin: right;
 }
 
-/* Sits in the footer, so it opens upward by default; the script re-measures. */
-.lang-switcher__menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
-  z-index: 40;
-  display: none;
-  min-width: 11rem;
-  margin: 0;
-  padding: 0.25rem;
-  list-style: none;
-  background: var(--spruce);
-  border: 1px solid var(--rule-strong);
-  border-radius: 2px;
-  box-shadow: 0 12px 28px rgba(21, 32, 25, 0.45);
+.waypoint:dir(rtl):hover {
+  background: linear-gradient(to left, var(--panel), transparent 85%);
 }
 
-.lang-switcher__menu.show { display: block; }
-
-.lang-switcher__item {
-  display: block;
-  margin: 0;
-}
-
-.lang-switcher__item a,
-.lang-switcher__item button {
-  display: block;
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  background: transparent;
-  border: 0;
-  border-bottom: 0;
-  border-radius: 2px;
-  color: var(--chart);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.lang-switcher__item a:hover,
-.lang-switcher__item button:hover {
-  background: var(--spruce-soft);
-  color: var(--chart);
-}
-
-.lang-switcher__item a[aria-current="true"],
-.lang-switcher__item button[aria-current="true"] {
-  color: var(--blaze);
+.waypoint:dir(rtl):hover .wp-arrow {
+  transform: translateX(-4px);
 }

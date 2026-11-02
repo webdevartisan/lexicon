@@ -38,6 +38,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <meta name="theme-color" content="#16233f" />
 
         {% include "partials/_favicons.lex.php" %}
+        {% include "partials/_device_zone.lex.php" %}
 
 		<link rel="canonical" href="{{ head.canonicalUrl }}" />
 
@@ -80,7 +81,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <header class="lx-nav<?= $navMode === 'over' ? ' is-over' : '' ?>" data-lx-nav="<?= e($navMode) ?>">
             <div class="lx-wrap lx-nav-inner">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo-mark" aria-hidden="true"></span>
+                    <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                     <?= e($siteName) ?>
                 </a>
 
@@ -91,12 +92,12 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
             // menu in English on /el and /ar.
             foreach ($barNav as $it) { ?>
                     <li>
-                        <a class="lx-nav-link" href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a>
+                        <a class="lx-nav-link" href="<?= e(lurl($it['href'])) ?>" <?= $it['current_attr'] ?>><?= e(nav_label($it)) ?></a>
                     </li>
                     <?php } ?>
                 </ul>
 
-                <ul class="lx-nav-actions" data-auth-nav="platform">
+                <ul class="lx-nav-actions">
                     <?php $authNavVariant = 'platform'; ?>
                     {% include "partials/_auth_nav.lex.php" %}
                 </ul>
@@ -112,7 +113,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
         <div class="lx-drawer" id="lx-drawer" hidden>
             <div class="lx-drawer-head">
                 <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                    <span class="lx-logo-mark" aria-hidden="true"></span>
+                    <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                     <?= e($siteName) ?>
                 </a>
                 <button type="button" class="lx-drawer-close" data-lx-drawer-close
@@ -121,14 +122,14 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
 
             <ul class="lx-drawer-links">
                 <?php foreach ($frontNav as $it) { ?>
-                <li><a href="<?= e(lurl($it['href'])) ?>" {{ it['current_attr'] }}><?= e(nav_label($it)) ?></a></li>
+                <li><a href="<?= e(lurl($it['href'])) ?>" <?= $it['current_attr'] ?> <?= $it['panel_attr'] ?>><?= e(nav_label($it)) ?></a></li>
                 <?php } ?>
             </ul>
 
             <div class="lx-drawer-actions">
                 {% if (!auth()->check()): %}
                     <?php if (registration_open()) { ?>
-                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl('/register').'?return_to='.rawurlencode(lurl('/dashboard/blog/new'))) ?>">{{ t('navigation.createBlog') }}</a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(blog_signup_url()) ?>">{{ t('navigation.createBlog') }}</a>
                     <?php } ?>
                     <a class="lx-btn lx-btn-ghost lx-btn-fit" href="<?= e(lurl('/login')) ?>">{{ t('header.signIn') }}</a>
                 {% else %}
@@ -139,7 +140,7 @@ $barNav = array_filter($frontNav, static function (array $it): bool {
                     $drawerIsReader = !empty($viewer['is_reader']);
 ?>
                     <?php if (!$drawerIsReader || !empty($viewer['can_create_blog'])) { ?>
-                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl($drawerIsReader ? '/dashboard/blog/new' : '/dashboard')) ?>"><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
+                    <a class="lx-btn lx-btn-gilt lx-btn-fit" href="<?= e(lurl($drawerIsReader ? '/start' : '/dashboard')) ?>"<?= $drawerIsReader ? ' data-panel' : '' ?>><?= e($t($drawerIsReader ? 'navigation.createBlog' : 'header.dashboard')) ?></a>
                     <?php } ?>
                     <form method="post" action="<?= e(lurl('/logout')) ?>">
                         <?= csrf_field() ?>
@@ -197,7 +198,7 @@ foreach ($socialNetworks as $network) {
             <div class="lx-wrap lx-foot-inner">
                 <div class="lx-foot-brand">
                     <a href="<?= e(lurl('/')) ?>" class="lx-logo">
-                        <span class="lx-logo-mark" aria-hidden="true"></span>
+                        <img class="lx-logo-mark" src="<?= e(versioned_asset('/assets/icon/android-chrome-192x192.png')) ?>" alt="" width="28" height="28" />
                         <?= e($siteName) ?>
                     </a>
                     <p class="lx-foot-tagline">{{ t('header.logoTagline') }}</p>
@@ -208,7 +209,10 @@ foreach ($socialNetworks as $network) {
                     <h2>{{ t('footer.quickLinksTitle') }}</h2>
                     <ul>
                         <?php foreach ($frontNav as $it) { ?>
-                        <li><a href="<?= e(lurl($it['href'])) ?>"><?= e(nav_label($it)) ?></a></li>
+                        <li><a href="<?= e(lurl($it['href'])) ?>" <?= $it['panel_attr'] ?>><?= e(nav_label($it)) ?></a></li>
+                        <?php } ?>
+                        <?php if (!auth()->check() && registration_open()) { ?>
+                        <li><a href="<?= e(blog_signup_url()) ?>">{{ t('navigation.createBlog') }}</a></li>
                         <?php } ?>
                     </ul>
                 </nav>

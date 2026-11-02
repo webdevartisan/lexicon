@@ -128,6 +128,32 @@ function post_excerpt(array $post, int $limit = 160): string
 }
 
 /**
+ * The title a search result gives a post: the writer's own search title, or
+ * the post title followed by the blog's name.
+ *
+ * @param  array<string, mixed>  $post  Post row with title and meta_title
+ * @param  string  $blogName  Name of the blog the post belongs to
+ * @return string The title search engines are given
+ */
+function post_search_title(array $post, string $blogName): string
+{
+    $metaTitle = trim((string) ($post['meta_title'] ?? ''));
+
+    return $metaTitle !== '' ? $metaTitle : (string) ($post['title'] ?? '').search_title_suffix($blogName);
+}
+
+/**
+ * The part of a search title that names the blog, for when the writer leaves the field empty.
+ *
+ * @param  string  $blogName  Name of the blog
+ * @return string Text that follows the post title
+ */
+function search_title_suffix(string $blogName): string
+{
+    return ' - '.$blogName;
+}
+
+/**
  * Render an author name, linked to their public profile when they have one.
  *
  * Returns the escaped name alone when no slug is given, so private profiles
@@ -764,6 +790,9 @@ function versioned_asset(string $url): string
  *
  * Compare arrays and return only fields with different values.
  * Used for efficient database updates (update only changed fields).
+ *
+ * The check is strict and rows come back with native types, so pass a flag as 1 or 0,
+ * not '1' or '0', or it counts as changed on every save.
  *
  * @param  array<string, mixed>  $newData  New data
  * @param  array<string, mixed>  $existing  Existing data

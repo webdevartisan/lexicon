@@ -7,6 +7,7 @@ namespace App\Services\Archive;
 use App\Models\MediaModel;
 use App\Models\PostArchiveModel;
 use App\Resources\BlogResource;
+use App\Services\UploadService;
 use RuntimeException;
 use ZipArchive;
 
@@ -65,7 +66,7 @@ final class BlogArchiveExporter
         }
 
         try {
-            $count = $this->writePosts($blogId, $postsFile, $options['include_drafts'] ?? true, $progress);
+            $count = $this->writePosts($blog, $postsFile, $options['include_drafts'] ?? true, $progress);
             $moderated = $this->posts->moderatedInBlog($blogId);
 
             $this->zip->addFile($postsFile, ArchiveFormat::POSTS);
@@ -109,7 +110,7 @@ final class BlogArchiveExporter
      * @param  callable(string, int): void|null  $progress
      * @return int Number of posts written
      */
-    private function writePosts(int $blogId, string $file, bool $includeDrafts, ?callable $progress): int
+    private function writePosts(BlogResource $blog, string $file, bool $includeDrafts, ?callable $progress): int
     {
         $handle = fopen($file, 'wb');
         if ($handle === false) {
@@ -121,11 +122,11 @@ final class BlogArchiveExporter
 
         try {
             fwrite($handle, '[');
-            while (($rows = $this->posts->exportPage($blogId, $afterId, self::PAGE_SIZE, $includeDrafts)) !== []) {
+            while (($rows = $this->posts->exportPage($blog->id(), $afterId, self::PAGE_SIZE, $includeDrafts)) !== []) {
                 $tags = $this->posts->tagsForPosts(array_map(static fn (array $r): int => (int) $r['id'], $rows));
 
                 foreach ($rows as $row) {
-                    $json = json_encode($this->record($row, $tags[(int) $row['id']] ?? [], $blogId), $this->jsonFlags());
+                    $json = json_encode($this->record($row, $tags[(int) $row['id']] ?? [], $blog), $this->jsonFlags());
                     fwrite($handle, ($count > 0 ? ',' : '')."\n".$json);
                     $this->bytes += strlen($json);
                     $this->assertWithinLimits(++$count);
@@ -151,7 +152,7 @@ final class BlogArchiveExporter
      * @param  list<array{name: string, slug: string}>  $tags
      * @return array<string, mixed>
      */
-    private function record(array $row, array $tags, int $blogId): array
+    private function record(array $row, array $tags, BlogResource $blog): array
     {
         $slug = (string) $row['slug'];
         $post = [];
@@ -168,7 +169,7 @@ final class BlogArchiveExporter
                 ->format('Y-m-d\TH:i:s\Z');
         }
 
-        $toToken = fn (string $value): ?string => $this->tokenFor($value, $blogId, $slug);
+        $toToken = fn (string $value): ?string => $this->tokenFor($value, $blog, $slug);
         $post['content'] = $this->urls->rewrite((string) $post['content'], $toToken);
         foreach (ArchiveFormat::IMAGE_FIELDS as $field) {
             if (is_string($post[$field]) && $post[$field] !== '') {
@@ -189,7 +190,7 @@ final class BlogArchiveExporter
      * The archive path for a local upload of this blog, adding the file on first sight.
      * Returns null, so the reference is kept as it is, for anything that is not one.
      */
-    private function tokenFor(string $value, int $blogId, string $postSlug): ?string
+    private function tokenFor(string $value, BlogResource $blog, string $postSlug): ?string
     {
         $url = $this->urls->canonical($value);
         if ($url === null) {
@@ -199,7 +200,7 @@ final class BlogArchiveExporter
             return $this->tokens[$url];
         }
 
-        if ($this->urls->blogIdOf($url) !== $blogId) {
+        if (!UploadService::isBlogFile($url, $blog->mediaKey())) {
             $this->warn('foreign_file', $postSlug, $url);
 
             return null;
@@ -212,7 +213,7 @@ final class BlogArchiveExporter
             return null;
         }
 
-        return $this->tokens[$url] = $this->addMedia($url, $disk, $blogId);
+        return $this->tokens[$url] = $this->addMedia($url, $disk, $blog->id());
     }
 
     /**

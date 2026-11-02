@@ -43,5 +43,5 @@ $I->waitForElement('#content_ifr', 15);
 $I->seeThePageLooksRight('73-author-new-post');
 foreach (['settings', 'team', 'backup'] as $area) {
     $I->amOnPage("{$blog}/{$area}");
-    $I->seeInTitle('403');
+    $I->seeInTitle('Access denied');
 }

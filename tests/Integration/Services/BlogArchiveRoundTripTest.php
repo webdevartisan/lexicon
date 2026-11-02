@@ -39,7 +39,6 @@ beforeEach(function () {
 
     $users = new UserModel($this->db);
     $this->ownerId = UserFactory::new($users)->create();
-    $this->formerOwnerId = UserFactory::new($users)->create();
     $this->otherAuthorId = UserFactory::new($users)->create();
 
     $blogs = new BlogModel($this->db);
@@ -62,7 +61,7 @@ beforeEach(function () {
 
         public function store(string $path, string $sourceRoot, string $name, ?string $alt, BlogResource $blog, int $userId): string
         {
-            $url = '/uploads/users/'.$blog->ownerId().'/blogs/'.$blog->id().'/media/'.$name;
+            $url = '/uploads/blogs/'.$blog->mediaKey().'/2026/10/'.$name;
             is_dir(dirname($this->root.$url)) || mkdir(dirname($this->root.$url), 0775, true);
             copy($path, $this->root.$url);
 
@@ -114,11 +113,11 @@ beforeEach(function () {
     };
 
     $this->seedSource = function (): void {
-        $mine = '/uploads/users/'.$this->ownerId.'/blogs/'.$this->sourceId;
-        $theirs = '/uploads/users/'.$this->formerOwnerId.'/blogs/'.$this->sourceId;
-        ($this->image)($mine.'/postImages/feat-aaaaaaaaaaaa.jpg', [10, 20, 30]);
-        ($this->image)($mine.'/postImages/inline-bbbbbbbbbbbb.jpg', [40, 50, 60]);
-        ($this->image)($theirs.'/media/old-cccccccccccc.jpg', [70, 80, 90]);
+        $thisMonth = '/uploads/blogs/'.$this->source->mediaKey().'/2026/09';
+        $lastYear = '/uploads/blogs/'.$this->source->mediaKey().'/2025/12';
+        ($this->image)($thisMonth.'/featured_image-aaaaaaaaaaaa.jpg', [10, 20, 30]);
+        ($this->image)($thisMonth.'/post-image-bbbbbbbbbbbb.jpg', [40, 50, 60]);
+        ($this->image)($lastYear.'/image-cccccccccccc.jpg', [70, 80, 90]);
 
         $categoryId = $this->categories->findOrCreateForBlog($this->sourceId, 'Field Notes');
         $postId = PostFactory::new($this->posts)->withAttributes([
@@ -129,9 +128,9 @@ beforeEach(function () {
             'slug' => 'harbour-morning',
             'status' => 'published',
             'published_at' => '2026-01-01 10:00:00',
-            'featured_image' => $mine.'/postImages/feat-aaaaaaaaaaaa.jpg',
-            'content' => '<p><img src="../../../../uploads/users/'.$this->ownerId.'/blogs/'.$this->sourceId.'/postImages/inline-bbbbbbbbbbbb.jpg"></p>'
-                .'<p><img src="'.$theirs.'/media/old-cccccccccccc.jpg"></p>',
+            'featured_image' => $thisMonth.'/featured_image-aaaaaaaaaaaa.jpg',
+            'content' => '<p><img src="../../../..'.$thisMonth.'/post-image-bbbbbbbbbbbb.jpg"></p>'
+                .'<p><img src="'.$lastYear.'/image-cccccccccccc.jpg"></p>',
         ])->create();
         $this->tags->syncForPost($postId, $this->sourceId, ['Travel', 'Photo']);
 
@@ -168,7 +167,7 @@ it('carries posts, taxonomy and media into another blog', function () {
         'SELECT t.slug FROM post_tags pt JOIN tags t ON t.id = pt.tag_id WHERE pt.post_id = ? ORDER BY t.slug',
         [$post['id']]
     )->fetchAll(PDO::FETCH_ASSOC), 'slug');
-    $targetMedia = '/uploads/users/'.$this->ownerId.'/blogs/'.$this->targetId.'/media/';
+    $targetMedia = '/uploads/blogs/'.$this->target->mediaKey().'/';
 
     expect(count($result['created']))->toBe(2)
         ->and($result['failed'])->toBe([])

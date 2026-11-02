@@ -64,14 +64,14 @@ afterEach(function () {
 test('about saves description and goes to look', function () {
     $response = ($this->call)('saveAbout', 'POST', ['description' => 'Notes on slow travel']);
 
-    expect($response->getHeader('Location'))->toContain("/dashboard/blog/{$this->blogId}/start/look")
+    expect($response->getHeader('Location'))->toContain("/start/{$this->blogId}/look")
         ->and($this->blogs->getBlog($this->blogId)->description())->toBe('Notes on slow travel');
 });
 
 test('about skip leaves description empty', function () {
     $response = ($this->call)('saveAbout', 'POST', ['description' => 'ignored', 'intent' => 'skip']);
 
-    expect($response->getHeader('Location'))->toContain("/dashboard/blog/{$this->blogId}/start/look")
+    expect($response->getHeader('Location'))->toContain("/start/{$this->blogId}/look")
         ->and($this->blogs->getBlog($this->blogId)->description())->toBe('');
 });
 
@@ -86,7 +86,7 @@ test('look activates theme and marks look_chosen', function () {
 test('look rejects an unknown theme key', function () {
     $response = ($this->call)('saveLook', 'POST', ['theme' => 'not-a-theme']);
 
-    expect($response->getHeader('Location'))->toContain("/dashboard/blog/{$this->blogId}/start/look")
+    expect($response->getHeader('Location'))->toContain("/start/{$this->blogId}/look")
         ->and($this->settings->findByBlogId($this->blogId)['theme'])->toBe('folio')
         ->and((new GuidedSetupMarkModel($this->db))->marksFor($this->ownerId, $this->blogId))->toBe([]);
 });

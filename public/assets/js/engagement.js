@@ -11,6 +11,7 @@
 
   var loggedIn = bar.getAttribute('data-auth') === '1';
   var loginUrl = bar.getAttribute('data-login');
+  var text = function (name) { return bar.getAttribute('data-text-' + name) || ''; };
   var tokenInput = document.querySelector('#engage-token input[name="_token"]');
   var popover = bar.querySelector('[data-share-popover]');
   var shareBtn = bar.querySelector('[data-share-toggle]');
@@ -33,9 +34,17 @@
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     }).then(function (r) {
-      if (r.status === 401 || r.status === 403 || r.status === 419 || r.redirected) throw { kind: 'auth' };
-      return r.json();
+      // A signed-in reader turned away (an unconfirmed email) is told why rather than asked to sign in again
+      if (r.status === 401 || (r.status === 403 && !loggedIn) || r.status === 419 || r.redirected) throw { kind: 'auth' };
+      return r.json().then(function (json) {
+        if (!r.ok || json.success === false) throw { kind: 'refused', message: json.error };
+        return json;
+      });
     });
+  }
+
+  function showRefusal(error) {
+    if (error && error.kind === 'refused' && window.LexiconToast) window.LexiconToast.show(error.message);
   }
 
   /** Send the viewer through auth, then re-fire the control they pressed. */
@@ -45,20 +54,12 @@
       return;
     }
 
+    var kind = btn.getAttribute('data-engage');
+
+    // The page reloads after sign-in, and the modal presses this control again
     window.LexiconAuth.open({
-      reason: btn.getAttribute('data-engage') || 'report',
-      onSuccess: function () {
-        // The session changed, so the token rendered with the page is stale.
-        fetch('/csrf-token', { credentials: 'same-origin' })
-          .then(function (r) { return r.json(); })
-          .then(function (json) {
-            if (tokenInput && json.token) tokenInput.value = json.token;
-            loggedIn = true;
-            bar.setAttribute('data-auth', '1');
-            btn.click();
-          })
-          .catch(function () { window.location.reload(); });
-      }
+      reason: kind || 'report',
+      resume: kind ? '.post-engagement [data-engage="' + kind + '"]' : '.post-engagement [data-report-post]'
     });
   }
 
@@ -97,11 +98,11 @@
       opener: button,
       send: function (fields) {
         return post(button.getAttribute('data-url'), fields).then(function (json) {
-          if (json.success === false) throw { message: json.error };
           return json.data && json.data.message;
         }, function (error) {
+          if (error && (error.kind === 'auth' || error.kind === 'refused')) throw error;
           // An error page is not JSON, and its parse error means nothing to a reader
-          throw error && error.kind === 'auth' ? error : { message: 'That report could not be sent. Please try again.' };
+          throw { message: text('report-failed') };
         });
       },
       onAuth: function () { authenticateThen(button); }
@@ -148,9 +149,10 @@
         btn.classList.toggle('is-active', !!data.active);
         btn.setAttribute('aria-pressed', data.active ? 'true' : 'false');
         btn.querySelector('svg').setAttribute('fill', data.active ? 'currentColor' : 'none');
-        btn.querySelector('span:last-child').textContent = data.active ? 'Saved' : 'Save';
+        btn.querySelector('span:last-child').textContent = text(data.active ? 'saved' : 'save');
       })
-      .catch(function () { /* leave state as rendered; next click retries */ })
+      // The bar stays as rendered and the next click retries
+      .catch(showRefusal)
       .finally(function () { btn.dataset.busy = '0'; });
   });
 
@@ -167,8 +169,8 @@
         var link = copyBtn.getAttribute('data-link');
         var label = copyBtn.querySelector('[data-copy-label]');
         var done = function () {
-          label.textContent = 'Copied!';
-          setTimeout(function () { label.textContent = 'Copy link'; }, 1500);
+          label.textContent = text('copied');
+          setTimeout(function () { label.textContent = text('copy'); }, 1500);
         };
 
         if (navigator.clipboard && navigator.clipboard.writeText) {

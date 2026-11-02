@@ -19,6 +19,7 @@
   .hero-meta-top span + span { color: var(--ink-soft); }
   .hero-headline {
     font-family: var(--serif);
+    text-align: left;
     font-weight: 360;
     font-style: italic;
     font-size: var(--type-display-1);
@@ -28,7 +29,9 @@
     font-variation-settings: "opsz" 144, "SOFT" 50;
     overflow: hidden;
   }
-  .hero-headline .word { display: inline-block; overflow: hidden; vertical-align: top; padding-right: 0.15em; }
+  /* The name keeps its own reading order but lines up with the page */
+  :root:dir(rtl) .hero-headline { text-align: right; }
+  .hero-headline .word { display: inline-block; overflow: hidden; vertical-align: top; padding-inline-end: 0.15em; }
   .hero-headline .char { display: inline-block; will-change: transform; }
   /* Once .is-ready lands the chars stay put even if GSAP never ran. */
   .hero-headline.is-ready .char { opacity: 1 !important; transform: none !important; }
@@ -42,11 +45,11 @@
   }
   .hero-dek { grid-column: 1 / span 6; font-size: var(--type-lede); line-height: 1.45; max-width: 38ch; color: var(--ink-soft); }
   .hero-dek em { font-family: var(--serif); font-style: italic; font-weight: 400; }
-  .hero-pointer { grid-column: 10 / span 3; justify-self: end; text-align: right; }
+  .hero-pointer { grid-column: 10 / span 3; justify-self: end; text-align: end; }
 
   @media (max-width: 800px) {
     .hero-dek { grid-column: 1 / -1; }
-    .hero-pointer { grid-column: 1 / -1; justify-self: start; text-align: left; margin-top: var(--step-3); }
+    .hero-pointer { grid-column: 1 / -1; justify-self: start; text-align: start; margin-top: var(--step-3); }
   }
 
   .lead { padding: var(--step-6) 0 var(--step-7); border-top: 1px solid var(--ink); }
@@ -102,7 +105,7 @@
   .article-image { aspect-ratio: 5 / 6; overflow: hidden; position: relative; background: var(--bone-deep); }
   .article-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease-out); }
   .article-image::after { content: ""; position: absolute; inset: 0; border: 1px solid transparent; transition: border-color 0.4s; pointer-events: none; }
-  .article-arrow { position: absolute; right: 1rem; bottom: 1rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--bone); color: var(--ink); display: grid; place-items: center; opacity: 0; transform: translateY(8px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); }
+  .article-arrow { position: absolute; inset-inline-end: 1rem; bottom: 1rem; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--bone); color: var(--ink); display: grid; place-items: center; opacity: 0; transform: translateY(8px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); }
   .article:hover .article-image img { transform: scale(1.04); }
   .article:hover .article-arrow { opacity: 1; transform: translateY(0); }
   /* flex-grow keeps tags and bylines bottom-aligned across cards whose titles wrap differently */

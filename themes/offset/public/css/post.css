@@ -6,8 +6,8 @@
 .press-progress {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   height: 3px;
   z-index: 130;
   background: transparent;
@@ -104,6 +104,13 @@
   }
 }
 
+/* An empty cover keeps the plate's shape, so the author sees where the picture will sit. */
+.is-editing-in-place .plate.post-cover.is-empty {
+  display: block;
+  min-height: 0;
+  outline: none;
+}
+
 /* ---------- layout + prose ---------- */
 
 .post-layout {
@@ -112,6 +119,8 @@
 }
 
 .post-content {
+  /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+  display: flow-root;
   font-size: var(--type-body);
   line-height: 1.75;
   color: var(--carbon-soft);
@@ -168,7 +177,7 @@
 .post-content blockquote {
   margin: 2em 0;
   padding: 0.4rem 0 0.4rem 1.6rem;
-  border-left: 3px solid var(--cobalt);
+  border-inline-start: 3px solid var(--cobalt);
   font-size: var(--type-lede);
   font-weight: 460;
   line-height: 1.5;
@@ -182,7 +191,7 @@
 .post-content ul,
 .post-content ol {
   margin: 0 0 1.35em;
-  padding-left: 1.4em;
+  padding-inline-start: 1.4em;
 }
 
 .post-content li {
@@ -247,7 +256,7 @@
 .post-content td {
   padding: 0.7rem 0.9rem;
   border: 1px solid var(--rule);
-  text-align: left;
+  text-align: start;
 }
 
 .post-content th {
@@ -306,13 +315,13 @@
 
 .post-nav-item.next {
   align-items: flex-end;
-  text-align: right;
-  border-left: 1px solid var(--rule);
-  padding-left: var(--step-2);
+  text-align: end;
+  border-inline-start: 1px solid var(--rule);
+  padding-inline-start: var(--step-2);
 }
 
 .post-nav-item.prev {
-  padding-right: var(--step-2);
+  padding-inline-end: var(--step-2);
 }
 
 .post-nav-label {
@@ -342,11 +351,11 @@
   }
 
   .post-nav-item.next {
-    border-left: 0;
+    border-inline-start: 0;
     border-top: 1px solid var(--rule);
-    padding-left: 0;
+    padding-inline-start: 0;
     align-items: flex-start;
-    text-align: left;
+    text-align: start;
   }
 }
 

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Gate;
 use App\Helpers\TimezoneHelper;
 use App\Models\PostModel;
+use App\ValueObjects\PostFieldRules;
 use DateTime;
 use DateTimeZone;
 
@@ -35,14 +36,23 @@ final class PostAutosaveService
      */
     public function save(array $data, int $userId, ?int $postId = null, ?int $blogId = null): array
     {
+        $version = (string) ($data['version'] ?? '');
+        unset($data['version']);
+
         if (isset($data['content'])) {
             $data['content'] = $this->contentSanitizer->clean((string) $data['content']);
+        }
+
+        $post = $postId ? $this->posts->findResource($postId) : false;
+        if ($postId && !$post) {
+            return ['success' => false, 'error' => 'Post not found'];
         }
 
         // A date that cannot be read is left out and reported, and the rest of the draft still saves.
         $fieldErrors = [];
         if (!empty($data['published_at'])) {
-            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'));
+            $current = $post ? $post->publishedAt() : null;
+            $utc = TimezoneHelper::localToUtc((string) $data['published_at'], (string) ($data['timezone'] ?? 'UTC'), $current);
             if ($utc === null) {
                 unset($data['published_at']);
                 $fieldErrors['published_at'] = [TimezoneHelper::INVALID_PUBLISH_DATE];
@@ -51,21 +61,36 @@ final class PostAutosaveService
             }
         }
 
-        if ($postId) {
-            // Update existing post
-            $post = $this->posts->findResource($postId);
-
-            if (!$post) {
-                return ['success' => false, 'error' => 'Post not found'];
-            }
-
+        if ($post) {
             // The same rule as the editor's Save: it covers the in-review lock and a writer who lost access.
             if (!Gate::allows('update', $post, auth()->user())) {
                 return ['success' => false, 'error' => 'Unauthorized'];
             }
 
-            // Don't allow slug changes on autosave
-            unset($data['slug']);
+            if (!$post->acceptsAutosave()) {
+                return [
+                    'success' => false,
+                    'error' => 'Autosave only keeps drafts, and this post is no longer one. Use the save button to keep your changes.',
+                ];
+            }
+
+            if ($version !== '' && $post->textChangedSince($version)) {
+                return ['success' => false, 'error' => PostFieldRules::TEXT_CHANGED_ELSEWHERE, 'conflict' => true];
+            }
+
+            if (isset($data['content']) && PostFieldRules::missingText($post->status(), (string) $data['content'])) {
+                return [
+                    'success' => false,
+                    'error' => PostFieldRules::TEXT_REQUIRED,
+                    'errors' => ['content' => [PostFieldRules::TEXT_REQUIRED]],
+                ];
+            }
+
+            if (!empty($data['slug']) && $post->linkEditable()) {
+                $data['slug'] = $this->posts->availableSlug($post->blogId(), (string) $data['slug'], $postId);
+            } else {
+                unset($data['slug']);
+            }
 
             $rejection = $this->outsideMediaRejection((string) ($data['content'] ?? ''), $post->content());
             if ($rejection !== null) {
@@ -73,7 +98,7 @@ final class PostAutosaveService
             }
 
             $this->posts->update($postId, $data);
-            $savedSlug = $post->slug();
+            $savedSlug = (string) ($data['slug'] ?? $post->slug());
 
         } else {
             if ($blogId === null) {
@@ -99,11 +124,15 @@ final class PostAutosaveService
         $userTimezone = $data['timezone'] ?? date_default_timezone_get();
         $dt = new DateTime('now', new DateTimeZone($userTimezone));
 
+        // Read back rather than rebuilt, so the editor's next save compares against exactly what was stored.
+        $stored = $this->posts->findResource($postId);
+
         return [
             'success' => true,
             'id' => $postId,
             'saved_at' => $dt->format('g:i:s A'),
             'slug' => $savedSlug,
+            'version' => $stored ? $stored->textVersion() : '',
         ] + ($fieldErrors === [] ? [] : ['errors' => $fieldErrors]);
     }
 

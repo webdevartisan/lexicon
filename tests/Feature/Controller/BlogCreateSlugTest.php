@@ -40,12 +40,12 @@ beforeEach(function () {
     $this->blogs = new BlogModel($this->db);
 
     $this->create = function (string $name, string $slug) {
-        $request = makeRequest('/dashboard/blog/create', 'POST', [
+        $request = makeRequest('/start', 'POST', [
             '_token' => App::container()->get(Csrf::class)->getToken(),
             'name' => $name,
             'slug' => $slug,
             'description' => '',
-        ], [], ['HTTP_REFERER' => base_url().'/en/dashboard/blog/new']);
+        ], [], ['HTTP_REFERER' => base_url().'/en/start']);
 
         $controller = App::container()->get(BlogController::class);
         setupController($controller, $request, Mockery::mock(TemplateViewerInterface::class)->shouldIgnoreMissing());
@@ -92,6 +92,6 @@ it('create redirects to start about', function () {
     $response = ($this->create)('Start flow', $slug);
     $blog = $this->blogs->getBlogBySlug($slug);
 
-    expect($response->getHeader('Location'))->toContain('/dashboard/blog/'.$blog['id'].'/start/about')
+    expect($response->getHeader('Location'))->toContain('/start/'.$blog['id'].'/about')
         ->and(App::container()->get(Session::class)->get('_flash', []))->not->toHaveKey('success');
 });

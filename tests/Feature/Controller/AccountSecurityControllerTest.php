@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AccountSecurityController;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\PasswordConfirmRateLimiter;
 use App\Services\Sessions\RecentPasswordConfirmation;
 use App\Services\Sessions\SessionList;
@@ -47,7 +48,7 @@ beforeEach(function () {
     $this->throttle = new PasswordConfirmRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()));
     $this->controller = new AccountSecurityController(
         $this->users,
-        new UserPreferencesModel($this->db),
+        new AccountZone(new UserPreferencesModel($this->db), new \Framework\Session()),
         $this->throttle,
         SessionTestHelper::revoker($this->db),
         new SessionList(SessionTestHelper::registry($this->db), new \Framework\Session(), $this->users),

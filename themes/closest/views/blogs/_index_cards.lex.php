@@ -13,7 +13,7 @@ foreach (($cards ?? []) as $i => $post) {
     $img = preg_match($validImg, $cover) ? $cover : $asset('img/cover-placeholder.svg');
     $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
     $title = e($post['title'] ?? 'Untitled');
-    $cat = trim((string) ($post['category'] ?? 'Field note'));
+    $cat = trim((string) ($post['category'] ?? $t('closest::home.fallbackCategory')));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
     $minutes = reading_time($post['content'] ?? '');
@@ -27,13 +27,11 @@ foreach (($cards ?? []) as $i => $post) {
     if ($prevStamp && $stamp) {
         $days = (int) floor(($prevStamp - $stamp) / 86400);
         if ($days <= 0) {
-            $gapLabel = 'Same day';
-        } elseif ($days === 1) {
-            $gapLabel = '1 day back';
+            $gapLabel = $t('closest::home.gap.sameDay');
         } elseif ($days < 60) {
-            $gapLabel = $days.' days back';
+            $gapLabel = translate_count('closest::home.gap.days', $days);
         } else {
-            $gapLabel = round($days / 30).' months back';
+            $gapLabel = translate_count('closest::home.gap.months', (int) round($days / 30));
         }
     }
     $prevStamp = $stamp ?: $prevStamp;
@@ -52,7 +50,7 @@ foreach (($cards ?? []) as $i => $post) {
 
     <div class="wp-main">
       <h3 class="wp-title"><a href="<?= $url ?>"><?= $title ?></a></h3>
-      <span class="wp-author">By <?= $author ?></span>
+      <span class="wp-author"><?= translate_html('closest::by', ['author' => $author]) ?></span>
       <?php if (!empty($tags)) { ?>
       <div class="wp-tags">
         <?php foreach (array_slice($tags, 0, 2) as $cardTag) {
@@ -67,11 +65,11 @@ foreach (($cards ?? []) as $i => $post) {
     <div class="wp-meta">
       <span class="wp-chip"><?= e($cat) ?></span>
       <?php if ($date) { ?><span class="wp-date"><?= $date ?></span><?php } ?>
-      <span class="wp-min"><?= $minutes ?> Min</span>
+      <span class="wp-min"><?= e($t('closest::minutes', ['count' => $minutes])) ?></span>
     </div>
 
     <span class="wp-arrow" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <svg class="arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </span>
   </article>
 <?php } ?>

@@ -16,6 +16,9 @@
 
   var loggedIn = root.getAttribute('data-auth') === '1';
   var loginUrl = root.getAttribute('data-login');
+  var failedText = root.getAttribute('data-text-failed');
+  var notDoneText = root.getAttribute('data-text-not-done');
+  var copiedText = root.getAttribute('data-text-link-copied');
   var tokenInput = root.querySelector('.comment-token input[name="_token"]');
 
   function token() {
@@ -58,7 +61,8 @@
       // 419 is a stale token, and a redirect means fetch followed its way to
       // the login page. Signing in again fixes both, so neither is worth an
       // error message.
-      if (response.status === 401 || response.status === 403 || response.status === 419 || response.redirected) {
+      // A signed-in reader turned away (an unconfirmed email) is told why rather than asked to sign in again
+      if (response.status === 401 || (response.status === 403 && !loggedIn) || response.status === 419 || response.redirected) {
         throw failure('auth');
       }
 
@@ -74,11 +78,11 @@
         // An error page carries nothing a reader can act on, so it becomes one
         // plain sentence rather than a parse exception nobody sees.
         if (json === null) {
-          throw failure('failed', 'Something went wrong. Please try again.');
+          throw failure('failed', failedText);
         }
 
         if (!response.ok || json.success === false) {
-          throw failure('failed', json.error || 'That did not work. Please try again.');
+          throw failure('failed', json.error || notDoneText);
         }
 
         return json.data;
@@ -239,7 +243,7 @@
     var url = location.origin + location.pathname + location.search + button.getAttribute('data-anchor');
     var restore = button.textContent;
     var done = function () {
-      button.textContent = 'Link copied';
+      button.textContent = copiedText;
       setTimeout(function () { button.textContent = restore; }, 1500);
     };
 
@@ -280,21 +284,13 @@
       return;
     }
 
-    window.LexiconAuth.open({
-      reason: reason,
-      onSuccess: function () {
-        // The session changed, so the token rendered with the page is stale.
-        fetch('/csrf-token', { credentials: 'same-origin' })
-          .then(function (r) { return r.json(); })
-          .then(function (json) {
-            if (tokenInput && json.token) tokenInput.value = json.token;
-            loggedIn = true;
-            root.setAttribute('data-auth', '1');
-            button.click();
-          })
-          .catch(function () { window.location.reload(); });
-      }
-    });
+    var commentId = button.getAttribute('data-comment-id') || button.closest('[data-comment-id]').getAttribute('data-comment-id');
+    var target = button.hasAttribute('data-report-comment')
+      ? '[data-report-comment][data-comment-id="' + commentId + '"]'
+      : '.comment-votes[data-comment-id="' + commentId + '"] [data-vote="' + button.getAttribute('data-vote') + '"]';
+
+    // The page reloads after sign-in, and the modal presses this button again
+    window.LexiconAuth.open({ reason: reason, resume: target });
   }
 
   /**
@@ -414,7 +410,11 @@
         delete group.dataset.pending;
         paintVote(group, confirmed);
 
-        if (error.kind === 'auth') authenticateThen(button, 'vote');
+        if (error.kind === 'auth') {
+          authenticateThen(button, 'vote');
+        } else if (error.kind === 'failed' && window.LexiconToast) {
+          window.LexiconToast.show(error.message);
+        }
       })
       .finally(function () {
         if (!chained) group.classList.remove('is-busy');

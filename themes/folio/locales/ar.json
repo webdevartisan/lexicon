@@ -1,0 +1,70 @@
+{
+    "nav": {
+        "home": "الرئيسية",
+        "archive": "الأرشيف",
+        "subscribe": "اشترك",
+        "primary": "التنقل الرئيسي",
+        "openMenu": "فتح القائمة",
+        "homeOf": "{blog}، الصفحة الرئيسية",
+        "filterByCategory": "تصفية التدوينات حسب التصنيف"
+    },
+    "minutes": "{count} دقائق",
+    "by": "بقلم {author}",
+    "emailLabel": "عنوان بريدك",
+    "home": {
+        "year": "{blog} · {year}",
+        "tagline": "مجلة للقراءة المتأنية",
+        "postCount": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "minRead": "{count} دقائق قراءة",
+        "subtitle": "مجموعة من المقالات والأفكار والقراءة المتأنية.",
+        "begin": "ابدأ القراءة",
+        "fallbackCategory": "مقال",
+        "readPost": "اقرأ التدوينة",
+        "indexTitle": "الفهرس",
+        "indexCount": {
+            "one": "{count} تدوينة",
+            "other": "{count} تدوينات"
+        },
+        "all": "الكل",
+        "showing": "عرض {shown} من {total} · {blog}",
+        "openAll": "افتح الأرشيف كاملًا",
+        "inCategory": "{count} تدوينات في {name}",
+        "viewAll": "عرض الكل",
+        "longRead": "القراءة الطويلة",
+        "featuredLine": "مختارة",
+        "featured": "{line} · {count} دقائق",
+        "postMinutes": "تدوينة · {count} دقائق",
+        "continue": "{title}. تابع قراءة المقال كاملًا على مهل.",
+        "readFull": "اقرأ التدوينة كاملة ←",
+        "aboutEyebrow": "عن هذه المدونة",
+        "aboutDefault": "{blog}، مكان للقراءة المتأنية.",
+        "newsEyebrow": "ابقَ على تواصل",
+        "newsHeading": "اقرأ {blog} من غرفك الهادئة.",
+        "newsText": "بلا تتبّع، بلا خوارزميات، وإلغاء اشتراك سهل.",
+        "subscribe": "اشترك",
+        "newsFine": "مجانًا. ألغِ الاشتراك متى شئت"
+    },
+    "archive": {
+        "pageTitle": "الأرشيف · {blog}",
+        "kicker": "الأرشيف · {blog}",
+        "heading": "الفهرس الكامل.",
+        "dek": "كل تدوينات {blog}، مرتبة من الأحدث إلى الأقدم.",
+        "back": "→ العودة إلى الصفحة الأولى",
+        "fallbackCategory": "تدوينة",
+        "empty": "لا توجد تدوينات بعد.",
+        "showing": "عرض {from} إلى {to} من {total}",
+        "pagination": "التنقل بين الصفحات",
+        "prev": "→ السابق",
+        "next": "التالي ←"
+    },
+    "post": {
+        "backTo": "العودة إلى {blog}",
+        "previous": "→ السابقة",
+        "next": "التالية ←",
+        "related": "المزيد للقراءة",
+        "read": "اقرأ"
+    }
+}

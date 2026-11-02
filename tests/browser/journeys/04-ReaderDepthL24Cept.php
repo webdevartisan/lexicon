@@ -46,6 +46,6 @@ $I->scrollDownTo("#{$mine}");
 $I->makeScreenshot('l24-comment-edited');
 
 // Other people's comments still offer Report, and no Edit
-$other = $I->grabAttributeFrom("//li[starts-with(@id, 'comment-')][not(@id='{$mine}')][.//*[@data-report-comment]]", 'id');
-$I->seeElementInDOM("#{$other} [data-report-comment]");
+$other = $I->grabAttributeFrom("//li[starts-with(@id, 'comment-')][not(@id='{$mine}')][*[contains(concat(' ', @class, ' '), ' comment-row ')]//*[@data-report-comment]]", 'id');
+$I->seeElementInDOM("#{$other} > .comment-row [data-report-comment]");
 $I->dontSeeElementInDOM("#{$other} > .comment-row [data-edit-comment]");

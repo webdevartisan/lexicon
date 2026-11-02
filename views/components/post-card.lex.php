@@ -3,7 +3,8 @@ $post = $post ?? [];
 $blogSlug = $blogSlug ?? '';
 $returnToken = $returnToken ?? '';
 // Pages that list posts for one role pass what that person may do with each; without it every action shows.
-$can = ($post['can'] ?? []) + ['update' => true, 'open' => true, 'publish' => true, 'delete' => true];
+$can = ($post['can'] ?? []) + ['update' => true, 'open' => true];
+$postId = (int) $post['id'];
 $viewCount = (int) ($post['views'] ?? 0);
 
 $status = $post['status'] ?? 'draft';
@@ -21,21 +22,10 @@ $visibilityChips = [
     'unlisted' => ['bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:border-amber-800', 'eye-off', $t('components.postCard.visibility.unlisted')],
     'private' => ['bg-slate-100 text-slate-700 border-slate-200 dark:bg-zink-800 dark:text-zink-100 dark:border-zink-600', 'lock', $t('components.postCard.visibility.private')],
 ];
-$visibilityActions = [
-    ['to' => 'make-public', 'icon' => 'globe', 'label' => $t('components.postCard.visibility.makePublic'), 'confirm' => $t('components.postCard.visibility.makePublicConfirm'), 'show' => $visibility !== 'public'],
-    ['to' => 'make-private', 'icon' => 'lock', 'label' => $t('components.postCard.visibility.makePrivate'), 'confirm' => $t('components.postCard.visibility.makePrivateConfirm'), 'show' => $visibility !== 'private'],
-    ['to' => 'unlist', 'icon' => 'eye-off', 'label' => $t('components.postCard.visibility.unlist'), 'confirm' => $t('components.postCard.visibility.unlistConfirm'), 'show' => $visibility !== 'unlisted'],
-];
 
 $dateRaw = $post['published_at'] ?? $post['updated_at'] ?? $post['created_at'] ?? '';
 $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
 ?>
-{% set previewText = t('components.postCard.actions.preview') %}
-{% set editTooltip = t('components.postCard.tooltips.edit') %}
-{% set publishTooltip = t('components.postCard.tooltips.publish') %}
-{% set draftTooltip = t('components.postCard.tooltips.draft') %}
-{% set archiveTooltip = t('components.postCard.tooltips.archive') %}
-{% set deleteTooltip = t('components.postCard.tooltips.delete') %}
 
 <div class="card flex flex-col h-full gap-2 transition border border-slate-200 dark:border-zink-600 rounded-lg peer-checked:border-custom-500 peer-checked:bg-slate-100 dark:peer-checked:bg-zink-800/60">
     <div class="card-body flex flex-col flex-1">
@@ -88,15 +78,24 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <?php } ?>
         </div>
 
-        <h6 class="mb-2 text-15 line-clamp-2">
-            <?php if ($can['open']) { ?>
-            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>" class="hover:text-custom-500 transition-colors">
-                {{ post.title }}
-            </a>
-            <?php } else { ?>
-            {{ post.title }}
+        <div class="flex flex-wrap items-start gap-1 mb-2" data-post-title data-title="<?= e((string) $post['title']) ?>" data-rename-url="<?= e(lurl('/dashboard/post/'.$postId.'/rename')) ?>">
+            <?php if (!empty($post['is_featured'])) { ?>
+            <span class="shrink-0 mt-1">{% cmp="featured-star" %}</span>
             <?php } ?>
-        </h6>
+            <h6 class="flex-1 min-w-0 text-15 line-clamp-2" data-post-title-text>
+                <?php if ($can['open']) { ?>
+                <a href="<?= e(lurl('/dashboard/post/'.$postId.'/edit?r='.urlencode($returnToken))) ?>" class="hover:text-custom-500 transition-colors">{{ post.title }}</a>
+                <?php } else { ?>
+                {{ post.title }}
+                <?php } ?>
+            </h6>
+            <?php if ($can['update']) { ?>
+            <button type="button" data-post-rename title="<?= e($t('dashboard.posts.rename.button')) ?>" aria-label="<?= e($t('dashboard.posts.rename.button')) ?>"
+                class="shrink-0 p-1 rounded-md text-slate-400 hover:text-custom-500 hover:bg-slate-100 dark:text-zink-300 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
+                {% cache 'lucide:pencil:rename' ttl=31536000 %}<i data-lucide="pencil" class="size-3.5" aria-hidden="true"></i>{% endcache %}
+            </button>
+            <?php } ?>
+        </div>
         <p class="text-slate-500 dark:text-zink-200 line-clamp-3 text-sm flex-1">
             <?= e(post_excerpt($post, 120)) ?>
         </p>
@@ -143,14 +142,8 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <?php } ?>
         </div>
 
-        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
-            <?php if ($can['update']) { ?>
-            <a href="<?= e(lurl('/dashboard/post/'.(int) $post['id'].'/edit?r='.urlencode($returnToken))) ?>"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors">
-                {% cache 'lucide:pencil' ttl=31536000 %}<i data-lucide="pencil" class="size-4"></i>{% endcache %}
-                <span>{{ editTooltip }}</span>
-            </a>
-            <?php } else { ?>
+        <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
+            <?php if (!$can['update']) { ?>
             <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-zink-300">
                 {% cache 'lucide:lock:sm' ttl=31536000 %}<i data-lucide="lock" class="size-3"></i>{% endcache %}
                 <?= e($t('components.postCard.locked')) ?>
@@ -158,98 +151,9 @@ $dateDisplay = local_datetime($dateRaw ?: null, 'M j, Y');
             <?php } ?>
 
             <!-- Secondary actions live in one menu so cards stay readable on small screens. -->
-            <?php if ($status === 'published' || $can['publish'] || $can['update'] || $can['delete']) { ?>
-            <div class="relative dropdown">
-                <button type="button" aria-haspopup="menu" aria-label="<?= e($t('components.postCard.actionsMenu')) ?>"
-                    class="dropdown-toggle p-2 text-slate-500 hover:text-custom-500 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">
-                    {% cache 'lucide:more-vertical' ttl=31536000 %}<i data-lucide="more-vertical" class="size-4"></i>{% endcache %}
-                </button>
-
-                <div class="absolute z-50 hidden py-1.5 ltr:text-left rtl:text-right bg-white rounded-md shadow-md dropdown-menu min-w-[11rem] dark:bg-zink-600">
-                    {% if ($post['status'] === 'published'): %}
-                    <a href="<?= e(lurl('/blog/'.$blogSlug.'/'.$post['slug'])) ?>" target="_blank" rel="noopener"
-                        class="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                        {% cache 'lucide:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4"></i>{% endcache %}
-                        <span>{{ previewText }}</span>
-                    </a>
-                    {% endif %}
-
-                    {% if ($can['publish'] && (($post['status'] === 'draft') || ($post['status'] === 'archived') || ($post['status'] === 'scheduled'))): %}
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/publish" class="m-0">
-                        {{ csrf_field() }}
-                        <button type="submit"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                            {% cache 'lucide:send' ttl=31536000 %}<i data-lucide="send" class="size-4"></i>{% endcache %}
-                            <span>{{ publishTooltip }}</span>
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    {% if ($can['publish'] && (($post['status'] === 'archived') || ($post['status'] === 'published') || ($post['status'] === 'scheduled'))): %}
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/draft" class="m-0">
-                        {{ csrf_field() }}
-                        <button type="submit"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                            {% cache 'lucide:pencil-ruler' ttl=31536000 %}<i data-lucide="pencil-ruler" class="size-4"></i>{% endcache %}
-                            <span>{{ draftTooltip }}</span>
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    {% if ($can['publish'] && $post['status'] !== 'archived'): %}
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/archive" class="m-0">
-                        {{ csrf_field() }}
-                        <button type="submit"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                            {% cache 'lucide:archive' ttl=31536000 %}<i data-lucide="archive" class="size-4"></i>{% endcache %}
-                            <span>{{ archiveTooltip }}</span>
-                        </button>
-                    </form>
-                    {% endif %}
-
-                    <?php if ($can['publish']) { foreach ($visibilityActions as $action) { if (!$action['show']) { continue; } ?>
-                    <form method="POST" action="/dashboard/post/<?= (int) $post['id'] ?>/<?= e($action['to']) ?>" class="m-0">
-                        <?= csrf_field() ?>
-                        <button type="submit" data-confirm="<?= e($action['confirm']) ?>"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-custom-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                            <i data-lucide="<?= e($action['icon']) ?>" class="size-4" aria-hidden="true"></i>
-                            <span><?= e($action['label']) ?></span>
-                        </button>
-                    </form>
-                    <?php } } ?>
-
-                    <?php if ($can['update']) { ?>
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/feature" class="m-0">
-                        {{ csrf_field() }}
-                        <button type="submit"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-amber-500 dark:text-zink-200 dark:hover:bg-zink-500 transition-colors">
-                            <?php if (!empty($post['is_featured'])) { ?>
-                                {% cache 'lucide:star:filled' ttl=31536000 %}<i data-lucide="star" class="size-4 fill-amber-400 text-amber-500"></i>{% endcache %}
-                                <span><?= e($t('components.postCard.unfeature')) ?></span>
-                            <?php } else { ?>
-                                {% cache 'lucide:star:outline' ttl=31536000 %}<i data-lucide="star" class="size-4"></i>{% endcache %}
-                                <span><?= e($t('components.postCard.feature')) ?></span>
-                            <?php } ?>
-                        </button>
-                    </form>
-                    <?php } ?>
-
-                    <?php if ($can['delete']) { ?>
-                    <div class="my-1.5 border-t border-slate-100 dark:border-zink-500" aria-hidden="true"></div>
-
-                    <!-- No JS confirm here: the delete action renders its own confirmation page. -->
-                    <form method="POST" action="/dashboard/post/{{ post.id }}/delete" class="m-0">
-                        {{ csrf_field() }}
-                        <button type="submit"
-                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 transition-colors">
-                            {% cache 'lucide:trash-2' ttl=31536000 %}<i data-lucide="trash-2" class="size-4"></i>{% endcache %}
-                            <span>{{ deleteTooltip }}</span>
-                        </button>
-                    </form>
-                    <?php } ?>
-                </div>
+            <div class="ms-auto">
+                {% cmp="post-actions" post="{$post}" blogSlug="{$blogSlug}" returnToken="{$returnToken}" %}
             </div>
-            <?php } ?>
         </div>
     </div>
 </div>

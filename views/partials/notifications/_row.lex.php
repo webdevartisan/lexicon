@@ -9,21 +9,20 @@
 // the target, escaped as a whole, and only then are the markers swapped for
 // the two escaped names. Every value in it is escaped exactly once, and every
 // language gets the same emphasis without HTML in the locale files.
-$rowTr = isset($t) && is_callable($t) ? $t : static fn (string $key, array $p = []): string => $key;
 $rowIsPage = ($rowContext ?? 'panel') === 'page';
 $rowSentence = $item['sentence'];
-$rowActor = $rowSentence['actor'] ?? $rowTr('notifications.someone');
-$rowTarget = $rowSentence['target'] ?? $rowTr($rowSentence['targetFallback'] ?? 'notifications.aPost');
+$rowActor = $rowSentence['actor'] ?? $t('notifications.someone');
+$rowTarget = $rowSentence['target'] ?? $t($rowSentence['targetFallback'] ?? 'notifications.aPost');
 $rowText = str_replace(
     ["\u{E000}", "\u{E001}"],
     ['<strong class="notif-actor">'.e($rowActor).'</strong>', '<strong class="notif-target">'.e($rowTarget).'</strong>'],
-    e($rowTr($rowSentence['key'], array_merge($rowSentence['params'], ['actor' => "\u{E000}", 'target' => "\u{E001}"])))
+    e($t($rowSentence['key'], array_merge($rowSentence['params'], ['actor' => "\u{E000}", 'target' => "\u{E001}"])))
 );
 
 $rowOpenUrl = lurl($listPath.'/'.$item['id'].'/open');
 $rowSource = $item['scope'] === 'content'
-    ? ($item['source'] ?? $rowTr('notifications.aBlogSource'))
-    : ($item['scope'] === 'personal' ? $rowTr('notifications.tab.personal') : null);
+    ? ($item['source'] ?? $t('notifications.aBlogSource'))
+    : ($item['scope'] === 'personal' ? $t('notifications.tab.personal') : null);
 
 // Within the week a weekday reads faster than a date, the way the reference does it.
 $rowAge = $item['createdAt'] !== null ? time() - (int) strtotime($item['createdAt'].' UTC') : PHP_INT_MAX;
@@ -57,7 +56,7 @@ $rowClasses = 'notif-row'.($item['isUnread'] ? ' is-unread' : '').($rowIsPage &&
                 <?php } ?>
             </p>
             <?php if ($item['isUnread']) { ?>
-            <span class="notif-dot" role="img" aria-label="<?= e($rowTr('reader.unread')) ?>"></span>
+            <span class="notif-dot" role="img" aria-label="<?= e($t('reader.unread')) ?>"></span>
             <?php } ?>
         </div>
 
@@ -84,12 +83,12 @@ $rowClasses = 'notif-row'.($item['isUnread'] ? ' is-unread' : '').($rowIsPage &&
             <form method="post" action="<?= e(buildLocalizedUrl($item['invite']['decline'])) ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" name="notification" value="<?= (int) $item['id'] ?>">
-                <button type="submit" class="notif-action-btn"><?= e($rowTr('notifications.decline')) ?></button>
+                <button type="submit" class="notif-action-btn"><?= e($t('notifications.decline')) ?></button>
             </form>
             <form method="post" action="<?= e(buildLocalizedUrl($item['invite']['accept'])) ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" name="notification" value="<?= (int) $item['id'] ?>">
-                <button type="submit" class="notif-action-btn is-primary"><?= e($rowTr('notifications.accept')) ?></button>
+                <button type="submit" class="notif-action-btn is-primary"><?= e($t('notifications.accept')) ?></button>
             </form>
         </div>
         <?php } ?>
@@ -100,14 +99,14 @@ $rowClasses = 'notif-row'.($item['isUnread'] ? ' is-unread' : '').($rowIsPage &&
         <?php if ($item['isUnread']) { ?>
         <form method="post" action="<?= e(buildLocalizedUrl($listPath.'/'.$item['id'].'/read')) ?>">
             <?= csrf_field() ?>
-            <button type="submit" class="notif-icon-btn" title="<?= e($rowTr('notifications.markRead')) ?>" aria-label="<?= e($rowTr('notifications.markRead')) ?>">
+            <button type="submit" class="notif-icon-btn" title="<?= e($t('notifications.markRead')) ?>" aria-label="<?= e($t('notifications.markRead')) ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             </button>
         </form>
         <?php } ?>
         <form method="post" action="<?= e(buildLocalizedUrl($listPath.'/'.$item['id'].'/delete')) ?>">
             <?= csrf_field() ?>
-            <button type="submit" class="notif-icon-btn is-danger" title="<?= e($rowTr('reader.remove')) ?>" aria-label="<?= e($rowTr('reader.remove')) ?>">
+            <button type="submit" class="notif-icon-btn is-danger" title="<?= e($t('reader.remove')) ?>" aria-label="<?= e($t('reader.remove')) ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
         </form>

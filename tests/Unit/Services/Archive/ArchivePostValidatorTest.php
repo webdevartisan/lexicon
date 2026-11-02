@@ -50,6 +50,7 @@ it('refuses what the editor refuses', function (array $overrides, string $fragme
     'bad slug' => [['slug' => 'Bad Slug!'], 'Slug'],
     'long title' => [['title' => str_repeat('t', 101)], 'Title'],
     'long content' => [['content' => str_repeat('a', 60001)], 'Content'],
+    'published with no text' => [['content' => ''], 'only a draft can be left empty'],
     'array title' => [['title' => ['x']], 'title field is not text'],
     'bad date' => [['published_at' => 'yesterday'], 'publish date'],
     'script url image' => [['featured_image' => 'javascript:alert(1)'], 'Featured image'],
@@ -57,10 +58,14 @@ it('refuses what the editor refuses', function (array $overrides, string $fragme
     'too long meta title' => [['meta_title' => str_repeat('m', 71)], 'Meta title'],
 ]);
 
+it('accepts a draft with only a title', function () {
+    expect($this->validator->validate(($this->post)(['status' => 'draft', 'content' => '']))['errors'])->toBe([]);
+});
+
 it('accepts archive paths, outside addresses and local uploads as images', function (string $value) {
     expect($this->validator->validate(($this->post)(['featured_image' => $value]))['errors'])->toBe([]);
 })->with([
     'archive path' => 'media/abc123.jpg',
     'outside' => 'https://images.example.com/a.jpg',
-    'local upload' => '/uploads/users/1/blogs/2/media/a.jpg',
+    'local upload' => '/uploads/blogs/0123456789abcdef/2026/10/image-aaaaaaaaaaaa.jpg',
 ]);

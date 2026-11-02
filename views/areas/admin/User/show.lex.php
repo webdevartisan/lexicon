@@ -400,8 +400,8 @@ $suspendedBy = static fn (array $s): string => ($s['source'] ?? 'moderator') ===
                         <tr>
                             <td class="<?= $td ?>"><?= e($when($row['created_at'])) ?></td>
                             <td class="<?= $td ?>">@<?= e($text($row['actor_handle'] ?? 'system')) ?><?= $actingAs !== null ? ' <span class="'.$hint.'">as #'.$actingAs.'</span>' : '' ?></td>
-                            <td class="<?= $td ?>"><?= e($row['action']) ?></td>
-                            <td class="<?= $td ?>"><?= e($text($row['resource_type'])) ?><?= $row['resource_id'] !== null ? ' #'.(int) $row['resource_id'] : '' ?></td>
+                            <td class="<?= $td ?>" title="<?= e((string) $row['action']) ?>"><?= e(\App\Presenters\ActivityPresenter::label((string) $row['action'])) ?></td>
+                            <td class="<?= $td ?>"><?= e($text(\App\Presenters\ActivityPresenter::target($row['resource_type'], $row['resource_id']))) ?></td>
                             <td class="<?= $td ?>"><?= e($text($row['ip_address'])) ?></td>
                         </tr>
                         <?php } ?>

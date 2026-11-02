@@ -39,21 +39,13 @@ final class GuidedSetupController extends AppController
     }
 
     /**
-     * Only a finished card can be put away for good.
+     * Put the card away for good, finished or not.
      *
      * @param  string  $blogId  Blog ID
      */
     public function dismiss(string $blogId): Response
     {
-        return $this->apply((int) $blogId, function (int $userId, int $id, array $setup): ?Response {
-            if ($setup['state'] !== 'finished') {
-                return $this->respond(['error' => 'not_finished'] + $this->progress($setup), 422);
-            }
-
-            $this->marks->mark($userId, $id, 'dismissed');
-
-            return null;
-        });
+        return $this->apply((int) $blogId, fn (int $userId, int $id) => $this->marks->mark($userId, $id, 'dismissed'));
     }
 
     /**

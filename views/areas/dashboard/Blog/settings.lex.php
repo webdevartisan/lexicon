@@ -100,7 +100,7 @@
                   {% cmp="select" name="locale" options="{$locales}" label="{$localeLabel}" selectedKey="{$value}" %}
                 </div>
                 <div>
-                  <?php $value = $settings['timezone'] ?? ''; ?>
+                  <?php $value = $settings['timezone'] ?? 'UTC'; ?>
                   {% cmp="select" name="timezone" groups="{$timezones}" label="{$timezoneLabel}" selectedKey="{$value}" %}
                 </div>
               </div>

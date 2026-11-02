@@ -21,7 +21,7 @@
     border-inline-start-color: var(--lx-gilt);
 }
 /* Settings controls use the UI voice, like every other button and menu on the front. */
-.lx-account-nav a,
+.lx-account-nav,
 .acct-page .acct-btn {
     font-family: var(--lx-sans);
     font-size: var(--lx-text-sm);

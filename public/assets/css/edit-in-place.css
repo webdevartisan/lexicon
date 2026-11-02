@@ -1,0 +1,571 @@
+/* Centred with margins, never a transform: TinyMCE puts its dialogs inside the bar,
+   and a transform would make them place themselves against the bar, not the window. */
+.edit-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 1.25rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: fit-content;
+    max-width: calc(100vw - 2rem);
+    margin-inline: auto;
+    padding: 0.5rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 0.9rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+    font: 500 0.875rem/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.is-editing-in-place .edit-bar {
+    width: min(46rem, calc(100vw - 2rem));
+}
+
+.edit-bar [hidden] {
+    display: none !important;
+}
+
+.edit-bar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.edit-bar-status {
+    margin-inline-end: auto;
+    padding: 0 0.5rem;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+.edit-bar-status:empty {
+    display: none;
+}
+
+.edit-bar-status[data-tone="error"] {
+    color: #ffb4ab;
+}
+
+.edit-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 0.6rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.edit-bar-btn:hover {
+    background: rgba(128, 128, 128, 0.15);
+}
+
+.edit-bar-btn:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.edit-bar-btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.edit-bar-btn.is-primary {
+    border-color: transparent;
+    background: #f2f2f2;
+    color: #111;
+}
+
+.edit-bar-btn.is-primary:hover {
+    filter: brightness(0.92);
+}
+
+/* TinyMCE draws its own frame and background around the toolbar; inside the bar they would double up. */
+.edit-bar-toolbar {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.edit-bar-toolbar .tox.tox-tinymce-inline,
+.edit-bar-toolbar .tox .tox-editor-header,
+.edit-bar-toolbar .tox .tox-toolbar,
+.edit-bar-toolbar .tox .tox-toolbar__overflow,
+.edit-bar-toolbar .tox .tox-toolbar__primary {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.edit-bar-toolbar .tox .tox-editor-header {
+    padding: 0;
+}
+
+.edit-bar-toolbar .tox .tox-toolbar__group {
+    padding: 0 0.25rem;
+}
+
+/* The skin's own navy buttons, here and in the pop ups next to text and images,
+   give way to the bar's colours. html.is-editing-in-place outranks the skin. */
+html.is-editing-in-place .tox .tox-tbtn,
+html.is-editing-in-place .tox .tox-split-button {
+    background: transparent;
+    color: var(--platform-menu-fg, #f2f2f2);
+}
+
+/* The skin paints its icons a fixed white or navy; they follow the text colour so light mode shows them. */
+html.is-editing-in-place .tox .tox-tbtn svg,
+html.is-editing-in-place .tox .tox-split-button svg,
+html.is-editing-in-place .tox .tox-dialog svg,
+html.is-editing-in-place .tox .tox-collection svg {
+    fill: currentColor;
+}
+
+html.is-editing-in-place .tox .tox-tbtn:hover,
+html.is-editing-in-place .tox .tox-split-button:hover,
+html.is-editing-in-place .tox .tox-tbtn--enabled,
+html.is-editing-in-place .tox .tox-tbtn--enabled:hover {
+    background: rgba(128, 128, 128, 0.16);
+    color: var(--platform-menu-fg, #f2f2f2);
+}
+
+html.is-editing-in-place .tox .tox-tbtn--disabled,
+html.is-editing-in-place .tox .tox-tbtn--disabled:hover {
+    background: transparent;
+    color: color-mix(in srgb, var(--platform-menu-fg, #f2f2f2) 35%, transparent);
+}
+
+html.is-editing-in-place .tox .tox-tbtn--select {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+html.is-editing-in-place .tox .tox-pop__dialog,
+html.is-editing-in-place .tox .tox-pop .tox-toolbar,
+html.is-editing-in-place .tox .tox-menu,
+html.is-editing-in-place .tox .tox-collection--list {
+    border-color: rgba(128, 128, 128, 0.3);
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+}
+
+html.is-editing-in-place .tox .tox-pop__dialog {
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+}
+
+/* Pop ups land at once instead of gliding, so moving one clear of a theme header measures where it really is. */
+html.is-editing-in-place .tox .tox-pop--transition {
+    transition: none;
+}
+
+html.is-editing-in-place .tox .tox-pop::before,
+html.is-editing-in-place .tox .tox-pop::after {
+    display: none;
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-pop__dialog {
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+/* Link and image dialogs in the platform menu colours instead of the skin's. */
+html.is-editing-in-place .tox .tox-dialog-wrap__backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+
+html.is-editing-in-place .tox .tox-dialog {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 1rem;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html.is-editing-in-place .tox .tox-dialog__header,
+html.is-editing-in-place .tox .tox-dialog__body,
+html.is-editing-in-place .tox .tox-dialog__footer {
+    background: transparent;
+    color: inherit;
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer {
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+html.is-editing-in-place .tox .tox-dialog__title {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+html.is-editing-in-place .tox .tox-label,
+html.is-editing-in-place .tox .tox-checkbox__label {
+    color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+html.is-editing-in-place .tox .tox-textfield,
+html.is-editing-in-place .tox .tox-listbox--select,
+html.is-editing-in-place .tox .tox-lock.tox-button,
+html.is-editing-in-place .tox .tox-browse-url {
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 0.6rem;
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+}
+
+html.is-editing-in-place .tox .tox-control-wrap .tox-textfield,
+html.is-editing-in-place .tox .tox-form__controls-h-stack .tox-textfield {
+    border-radius: 0.6rem;
+}
+
+html.is-editing-in-place .tox .tox-textfield:focus,
+html.is-editing-in-place .tox .tox-listbox--select:focus {
+    border-color: #a8c7fa;
+    box-shadow: none;
+    outline: none;
+}
+
+html.is-editing-in-place .tox .tox-lock.tox-button:hover,
+html.is-editing-in-place .tox .tox-browse-url:hover,
+html.is-editing-in-place .tox .tox-button--naked:hover {
+    background: rgba(128, 128, 128, 0.15);
+    color: inherit;
+}
+
+html.is-editing-in-place .tox .tox-button--naked {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer .tox-button {
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.6rem;
+    background: #f2f2f2;
+    color: #111;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer .tox-button:hover {
+    filter: brightness(0.92);
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer .tox-button--secondary {
+    border-color: rgba(128, 128, 128, 0.3);
+    background: transparent;
+    color: inherit;
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer .tox-button--secondary:hover {
+    background: rgba(128, 128, 128, 0.15);
+    filter: none;
+}
+
+html.is-editing-in-place .tox .tox-dialog__footer .tox-button:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-dialog {
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-dialog__footer,
+html[data-mode="light"].is-editing-in-place .tox .tox-textfield,
+html[data-mode="light"].is-editing-in-place .tox .tox-listbox--select,
+html[data-mode="light"].is-editing-in-place .tox .tox-lock.tox-button {
+    border-color: #e2e8f0;
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-textfield:focus,
+html[data-mode="light"].is-editing-in-place .tox .tox-listbox--select:focus {
+    border-color: #2659b5;
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-dialog__footer .tox-button {
+    background: #111;
+    color: #fff;
+}
+
+html[data-mode="light"].is-editing-in-place .tox .tox-dialog__footer .tox-button--secondary {
+    border-color: #e2e8f0;
+    background: #fff;
+    color: inherit;
+}
+
+html[data-mode="light"] .edit-bar {
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+html[data-mode="light"] .edit-bar-toolbar {
+    border-bottom-color: #e2e8f0;
+}
+
+html[data-mode="light"] .edit-bar-status[data-tone="error"] {
+    color: #b3261e;
+}
+
+html[data-mode="light"] .edit-bar-btn.is-primary {
+    background: #111;
+    color: #fff;
+}
+
+/* Shows the author which parts of the page they can type into. */
+.is-editing-in-place [data-edit-title],
+.is-editing-in-place [data-edit-body],
+.is-editing-in-place [data-edit-text] {
+    outline: 1px dashed rgba(128, 128, 128, 0.5);
+    outline-offset: 0.75rem;
+}
+
+.is-editing-in-place [data-edit-title]:focus,
+.is-editing-in-place [data-edit-body].mce-edit-focus,
+.is-editing-in-place [data-edit-text]:focus {
+    outline-style: solid;
+    outline-color: currentColor;
+}
+
+/* Front-page texts sit in tight spots, so their frame stays close. A theme may still have
+   one faded out for its intro, or never faded in one that was hidden while empty. */
+.is-editing-in-place [data-edit-text] {
+    outline-offset: 0.35rem;
+    min-width: 4ch;
+    cursor: text;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* An empty text shows, faded, what readers will see in its place. */
+.is-editing-in-place [data-edit-text]:empty::before {
+    content: attr(data-edit-placeholder);
+    opacity: 0.45;
+}
+
+/* An emptied theme text is removed for readers, so its wording shows struck through. */
+.is-editing-in-place [data-edit-wording]:empty::before {
+    text-decoration: line-through;
+}
+
+/* A pencil in the text's own colour marks each text; a click on it lands in the text. */
+.is-editing-in-place [data-edit-text]::after {
+    content: "";
+    display: inline-block;
+    /* Grows with small text but stays a small mark beside big headings */
+    width: clamp(12px, 0.85em, 20px);
+    height: clamp(12px, 0.85em, 20px);
+    margin-inline-start: clamp(4px, 0.4em, 10px);
+    vertical-align: -0.05em;
+    background-color: currentColor;
+    opacity: 0.6;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.83 2.83 0 0 0-4-4L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z'/%3E%3Cpath d='m15 5 4 4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.is-editing-in-place [data-edit-text]:focus::after {
+    opacity: 1;
+}
+
+/* Puts one text back to its default; floats at the text's corner in the bar's colours, readable on any theme. */
+.edit-reset {
+    position: fixed;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 50%;
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.edit-reset[hidden] {
+    display: none;
+}
+
+.edit-reset svg {
+    width: 14px;
+    height: 14px;
+}
+
+.edit-reset:hover,
+.edit-reset:focus-visible {
+    outline: none;
+    background: color-mix(in srgb, var(--platform-menu-bg, #1c1c1c) 80%, var(--platform-menu-fg, #f2f2f2));
+}
+
+/* A placeholder such as the blog name: filled in by the page, moved or removed whole, never typed into. */
+.edit-token {
+    padding: 0 0.3em;
+    border-radius: 0.3em;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* A placeholder that shows nothing, such as a line break, still needs a visible tag to keep or move. */
+.edit-token:empty::before {
+    content: "\21B5";
+}
+
+/* Room below the text so the bar never sits over its last lines. */
+.is-editing-in-place [data-edit-body] {
+    margin-bottom: 12rem;
+}
+
+.is-editing-in-place [data-edit-body] img {
+    cursor: grab;
+}
+
+.is-moving-image,
+.is-moving-image * {
+    cursor: grabbing !important;
+    user-select: none;
+}
+
+[data-edit-body] img[data-mce-moving] {
+    opacity: 0.35;
+}
+
+.edit-drop-marker {
+    position: fixed;
+    z-index: 1001;
+    width: 3px;
+    border-radius: 2px;
+    background: #a8c7fa;
+    pointer-events: none;
+}
+
+html[data-mode="light"] .edit-drop-marker {
+    background: #2659b5;
+}
+
+/* Cover */
+
+/* An empty cover slot waits hidden until editing starts, whatever display the theme gives the cover. */
+[data-edit-cover][hidden] {
+    display: none !important;
+}
+
+[data-edit-cover].is-edited::after {
+    display: none;
+}
+
+.is-editing-in-place [data-edit-cover] {
+    position: relative;
+}
+
+.is-editing-in-place [data-edit-cover].is-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 12rem;
+    outline: 1px dashed rgba(128, 128, 128, 0.5);
+    outline-offset: -1px;
+}
+
+.edit-cover-controls {
+    position: absolute;
+    inset-inline-end: 2rem;
+    bottom: 1rem;
+    z-index: 1;
+    display: flex;
+    gap: 0.5rem;
+    font: 500 0.875rem/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Centred in an empty cover, so a tall frame never puts the button behind the edit bar. */
+.is-empty .edit-cover-controls {
+    inset: 0;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+}
+
+.edit-cover-controls .edit-bar-btn {
+    background: var(--platform-menu-bg, #1c1c1c);
+    color: var(--platform-menu-fg, #f2f2f2);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+}
+
+.edit-cover-controls .edit-bar-btn:hover {
+    filter: brightness(1.15);
+}
+
+/* Phones show their own overlay scrollbar; a desktop window this narrow gets a thin one in the bar's colours. */
+.edit-bar-toolbar .tox .tox-toolbar--scrolling {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+/* The cookie settings button sits where the bar is; it comes back when editing ends. */
+.is-editing-in-place .consent-fab {
+    display: none;
+}
+
+/* Phones: edge to edge, one toolbar row, smaller buttons, so the text keeps most of the screen. */
+@media (max-width: 640px) {
+    .edit-bar {
+        bottom: 0.5rem;
+        padding: 0.375rem;
+        gap: 0.375rem;
+    }
+
+    .is-editing-in-place .edit-bar {
+        left: 0.5rem;
+        right: 0.5rem;
+        width: auto;
+        max-width: none;
+    }
+
+    .edit-bar-toolbar {
+        padding-bottom: 0.375rem;
+    }
+
+    .edit-bar-actions {
+        flex-wrap: nowrap;
+        gap: 0.375rem;
+    }
+
+    .edit-bar-btn {
+        min-height: 2.25rem;
+        padding: 0 0.75rem;
+    }
+
+    .edit-bar-status {
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .edit-cover-controls {
+        inset-inline-end: 1rem;
+        bottom: 0.75rem;
+    }
+}

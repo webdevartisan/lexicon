@@ -10,7 +10,11 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\GuidedSetupMarkModel;
 use App\Resources\BlogResource;
+use App\Services\BlogCacheInvalidator;
+use App\Services\BlogLocales;
 use App\Services\BlogThemeService;
+use App\Services\FrontPageTexts;
+use App\Services\LocaleRegistry;
 use App\Services\MediaService;
 use App\Services\ThemeService;
 use App\Services\UploadService;
@@ -34,6 +38,9 @@ final class AppearanceController extends AppController
         private MediaService $mediaService,
         private GuidedSetupMarkModel $setupMarks,
         private BlogThemeService $blogThemes,
+        private BlogLocales $blogLocales,
+        private FrontPageTexts $frontTexts,
+        private BlogCacheInvalidator $blogCache,
     ) {}
 
     /**
@@ -65,7 +72,7 @@ final class AppearanceController extends AppController
             'currentTheme' => $themes[$currentKey] ?? null,
             'socialLinks' => BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null),
             'socialPlatforms' => BlogSettingsModel::SOCIAL_PLATFORMS,
-        ]);
+        ] + $this->textLanguages($blog->id(), $settings, (string) ($this->request->get['lang'] ?? '')));
     }
 
     /**
@@ -121,13 +128,7 @@ final class AppearanceController extends AppController
         $userId = (int) $user['id'];
         $id = (int) $blogId;
 
-        $rules = [
-            'tagline' => 'max:160',
-            'subtitle' => 'max:255',
-            'about_text' => 'max:500',
-            'founded_year' => 'max:20',
-            'newsletter_heading' => 'max:255',
-            'newsletter_text' => 'max:255',
+        $rules = FrontPageTexts::RULES + [
             'remove_banner' => 'boolean',
             'remove_logo' => 'boolean',
             'remove_favicon' => 'boolean',
@@ -149,41 +150,31 @@ final class AppearanceController extends AppController
         }
 
         $settingsData = [
-            'tagline' => trim((string) ($validated['tagline'] ?? '')),
-            'subtitle' => trim((string) ($validated['subtitle'] ?? '')),
-            'about_text' => trim((string) ($validated['about_text'] ?? '')),
-            'founded_year' => trim((string) ($validated['founded_year'] ?? '')),
-            'newsletter_heading' => trim((string) ($validated['newsletter_heading'] ?? '')),
-            'newsletter_text' => trim((string) ($validated['newsletter_text'] ?? '')),
             'social_links' => $socialLinks === [] ? null : json_encode($socialLinks, JSON_UNESCAPED_SLASHES),
         ];
 
         $settingsData = array_merge(
             $settingsData,
-            $this->handleBrandingUploads($userId, $id, $blog->ownerId())
+            $this->handleBrandingUploads($userId, $blog)
         );
 
-        $currentSettings = $this->settings->findByBlogId($id);
-        if ($currentSettings === null) {
-            $this->settings->createDefaultForBlog($id, []);
-            $currentSettings = [];
-        }
+        $currentSettings = $this->settings->findOrCreate($id);
+        $textLocale = $this->textLocale(
+            $this->blogLocales->for($id, $currentSettings),
+            $currentSettings,
+            (string) $this->request->postParam('text_locale', '')
+        );
+        $texts = array_fill_keys(array_keys(FrontPageTexts::RULES), '');
+        $textChanges = $this->frontTexts->save($blog, $currentSettings, $textLocale, array_replace(
+            $texts,
+            array_intersect_key($validated, $texts)
+        ));
 
-        // Handle removal checkboxes
-        foreach (['remove_banner', 'remove_logo', 'remove_favicon'] as $removeKey) {
-            if (!empty($validated[$removeKey])) {
-                $type = explode('_', $removeKey)[1]; // banner, logo, favicon
-                $filePathKey = $type.'_path';
-
-                // Delete physical file
-                if (!empty($currentSettings[$filePathKey])) {
-                    $oldFile = ROOT_PATH.'/public'.$currentSettings[$filePathKey];
-                    if (file_exists($oldFile)) {
-                        @unlink($oldFile);
-                    }
-                }
-
-                $settingsData[$filePathKey] = null;
+        // Removing only empties the slot. The file stays in the media library,
+        // where a post may still be using it.
+        foreach (['banner', 'logo', 'favicon'] as $type) {
+            if (!empty($validated['remove_'.$type])) {
+                $settingsData[$type.'_path'] = null;
             }
         }
 
@@ -191,25 +182,58 @@ final class AppearanceController extends AppController
 
         if (!empty($settingsChanges)) {
             $this->settings->updateForBlog($id, $settingsChanges);
+            // Branding renders on every public page of the blog.
+            $this->blogCache->forgetBlog($blog->slug());
+        }
 
-            // Branding and front-page texts render on every public page of the
-            // blog, so purge them all, the landing page included.
-            cache()->deletePattern('*:GET:/blog/'.$blog->slug().'*');
-
-            audit()->log(
-                $userId,
-                'blog.updated',
-                'blog',
-                $id,
-                $settingsChanges,
-                $this->request->ip()
-            );
+        if ($settingsChanges !== [] || $textChanges !== []) {
+            $logged = $textChanges === [] ? $settingsChanges : $settingsChanges + $textChanges + ['locale' => $textLocale];
+            audit()->log($userId, 'blog.updated', 'blog', $id, $logged, $this->request->ip());
         }
 
         $this->setupMarks->mark($userId, $id, 'look_chosen');
         $this->flash('success', 'Appearance updated.');
 
-        return $this->redirect('/dashboard/blog/'.$blogId.'/appearance#branding');
+        $lang = $textLocale === BlogLocales::base($currentSettings) ? '' : '?lang='.$textLocale;
+
+        return $this->redirect('/dashboard/blog/'.$blogId.'/appearance'.$lang.'#branding');
+    }
+
+    /**
+     * The languages the front-page texts can be written in, and the texts in the one picked.
+     *
+     * @param  array<string, mixed>  $settings  Blog settings row
+     * @return array{textLocales: array<string, string>, textLocale: string, texts: array<string, array{value: string, fallback: string}>}
+     */
+    private function textLanguages(int $blogId, array $settings, string $requested): array
+    {
+        $registry = LocaleRegistry::instance();
+        $locales = $this->blogLocales->for($blogId, $settings);
+        $locale = $this->textLocale($locales, $settings, $requested);
+
+        $names = [];
+        foreach ($locales as $code) {
+            $names[$code] = $registry->nativeName($code);
+        }
+
+        return [
+            'textLocales' => $names,
+            'textLocale' => $locale,
+            'texts' => $this->frontTexts->forEditing($blogId, $settings, $locale),
+        ];
+    }
+
+    /**
+     * The asked-for language when the blog's pages exist in it, else the blog's own.
+     *
+     * @param  string[]  $locales  Languages the blog's pages exist in
+     * @param  array<string, mixed>  $settings  Blog settings row
+     */
+    private function textLocale(array $locales, array $settings, string $requested): string
+    {
+        return in_array($requested, $locales, true)
+            ? $requested
+            : BlogLocales::base($settings);
     }
 
     /**
@@ -237,23 +261,26 @@ final class AppearanceController extends AppController
      * and returns path array for settings merge.
      *
      * @param  int  $userId  User ID (for temp cleanup)
-     * @param  int  $blogId  Blog ID
-     * @param  int|null  $ownerId  Owner ID (defaults to userId)
+     * @param  BlogResource  $blog  The blog being branded
      * @return array<string, string> Paths keyed by 'banner_path', 'logo_path', 'favicon_path'
      */
-    private function handleBrandingUploads(int $userId, int $blogId, ?int $ownerId = null): array
+    private function handleBrandingUploads(int $userId, BlogResource $blog): array
     {
-        $ownerId ??= $userId;
-
+        $blogId = $blog->id();
         $paths = [];
 
         // Library picks beat freshly-uploaded files, if the user selected an
         // existing image, drop it straight into the corresponding _path slot.
         foreach (['banner', 'logo', 'favicon'] as $type) {
             $picked = trim((string) ($this->request->post[$type.'_library_url'] ?? ''));
-            if ($picked !== '') {
-                $paths[$type.'_path'] = $picked;
-                $this->mediaService->register($blogId, $userId, $picked, 'branding');
+            if ($picked === '') {
+                continue;
+            }
+
+            try {
+                $paths[$type.'_path'] = $this->mediaService->usePicked($blog, $picked, 'branding');
+            } catch (\InvalidArgumentException $e) {
+                $this->flash('error', ucfirst($type).' not changed: '.$e->getMessage());
             }
         }
 
@@ -264,8 +291,6 @@ final class AppearanceController extends AppController
         ];
 
         $uploadedFileNames = $this->uploader->getUploadedFiles($uploadedFiles);
-
-        [$dir, $baseUrl] = $this->uploader->blogBrandingPath($ownerId, $blogId);
 
         foreach ($uploadedFileNames as $fieldName => $fileName) {
             if (empty($fileName)) {
@@ -282,18 +307,11 @@ final class AppearanceController extends AppController
             }
 
             try {
-                $path = $this->uploader->moveTempToBranding(
-                    $fileName,
-                    $userId,
-                    $blogId,
-                    $type,
-                    $dir,
-                    $baseUrl
-                );
+                $path = $this->uploader->moveTempToBlog($fileName, $userId, $type, $blog->mediaKey());
                 $paths[$type.'_path'] = $path;
 
                 if ($path) {
-                    $this->mediaService->register($blogId, $userId, $path, 'branding');
+                    $this->mediaService->register($blog, $userId, $path, 'branding');
                 }
             } catch (\Throwable $e) {
                 error_log("{$type} upload failed for blog {$blogId}: ".$e->getMessage());

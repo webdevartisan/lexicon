@@ -369,6 +369,15 @@ describe('Validator String Rules', function () {
     });
 
     /**
+     * An empty slug is left to the required rule, like the other format rules.
+     */
+    test('slug leaves an empty value to the required rule', function () {
+        expect((new Validator([]))->rules(['slug' => 'slug'])->passes())->toBeTrue()
+            ->and((new Validator(['slug' => '']))->rules(['slug' => 'required|slug'])->passes())->toBeFalse()
+            ->and((new Validator(['slug' => ['a']]))->rules(['slug' => 'slug'])->passes())->toBeFalse();
+    });
+
+    /**
      * Verify slug rule fails for uppercase letters.
      *
      * Enforce lowercase for URL consistency and SEO best practices.

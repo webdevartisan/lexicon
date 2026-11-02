@@ -42,6 +42,7 @@
         "mediaLibrary": "Media Library",
         "insights": "Insights",
         "toggleGroup": "Show or hide {name}",
+        "toggleSidebar": "Show or hide the sidebar",
         "insightsPages": {
             "overview": "Summary",
             "blogs": "Blogs",
@@ -146,6 +147,12 @@
             "label": "Active blog",
             "choose": "Choose a blog"
         },
+        "zonePrompt": {
+            "label": "Time zone",
+            "text": "This device is on {device} time. Dates here show {account} time.",
+            "use": "Use {device}",
+            "keep": "Keep {account}"
+        },
         "blogs": {
             "title": "Blogs",
             "subtitle": "The blogs you own and the ones you were invited to. Open one to work in it.",
@@ -246,7 +253,23 @@
                 "delete": "Delete",
                 "deleteConfirm": "Permanently delete {n}? This cannot be undone."
             },
-            "selectPost": "Select post: {title}"
+            "selectPost": "Select post: {title}",
+            "rename": {
+                "button": "Rename",
+                "label": "Post title",
+                "length": "Use 2 to 100 characters for the title.",
+                "failed": "The title could not be saved. Try again."
+            },
+            "duplicate": {
+                "action": "Duplicate",
+                "title": "Duplicate post",
+                "confirm": "Duplicate",
+                "cancel": "Cancel",
+                "titleLabel": "Title",
+                "linkLabel": "Post link",
+                "loading": "Preparing the copy…",
+                "failed": "This post could not be copied right now."
+            }
         },
         "overview": {
             "title": "Overview",
@@ -277,6 +300,7 @@
             "waiting": "{count} waiting",
             "empty": "Nothing waiting. The queue is empty.",
             "states": {
+                "draft": "Not submitted",
                 "in_review": "In review",
                 "needs_changes": "Needs changes",
                 "approved": "Ready to publish"
@@ -359,7 +383,8 @@
                 "draft": "Draft",
                 "pending": "Pending",
                 "scheduled": "Scheduled",
-                "archived": "Archived"
+                "archived": "Archived",
+                "moderated": "Hidden by moderation"
             },
             "underReview": "Currently under review",
             "reviewedBy": "Reviewed by {reviewer}",
@@ -367,6 +392,7 @@
             "unclaimed": "No reviewer has claimed this post yet",
             "feature": "Feature on homepage",
             "unfeature": "Unfeature",
+            "deleteConfirm": "Permanently delete “{title}”? This cannot be undone.",
             "actions": {
                 "preview": "Preview"
             },
@@ -380,7 +406,11 @@
                 "makePrivateConfirm": "Make this post private? Only the blog's team will be able to see it.",
                 "unlistConfirm": "Hide this post from listings? It stays reachable by direct link, but drops out of the blog, search and discover."
             },
-            "actionsMenu": "Post actions"
+            "featured": "Featured on homepage"
+        },
+        "rowActions": {
+            "label": "Actions for {title}",
+            "newTab": "(opens in a new tab)"
         },
         "paginator": {
             "ariaLabels": {
@@ -472,6 +502,7 @@
         "signIn": "Sign in",
         "signOut": "Sign out",
         "dashboard": "Dashboard",
+        "siteHome": "{site} home",
         "logoTagline": "Your ideas, your audience, your blog.",
         "social": {
             "twitter": "Twitter",
@@ -552,7 +583,7 @@
     },
     "about": {
         "title": "About",
-        "body": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started — and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace."
+        "body": "Lexicon is a new blogging platform built for creators who value simplicity, speed, and creative control. We're just getting started, and you're invited to be part of it. Whether you're writing your first post or launching a new project, Lexicon gives you a clean, flexible way to publish and build your blog at your own pace."
     },
     "contact": {
         "title": "Get in touch",
@@ -644,7 +675,9 @@
                 },
                 "frontPage": {
                     "title": "Front Page Text",
-                    "description": "Wording your theme shows on the blog's public pages. Empty fields fall back to the theme's defaults."
+                    "description": "Wording your theme shows on the blog's public pages. Empty fields fall back to the theme's defaults.",
+                    "language": "Language",
+                    "fallbackNote": "Empty fields show the {language} text."
                 },
                 "discussion": {
                     "title": "Discussion",
@@ -977,7 +1010,14 @@
         "someone": "Someone",
         "paginationAria": "Pagination",
         "accountMenu": "Your account",
-        "accountMenuUnread": "Your account, {count} unread replies"
+        "accountMenuUnread": "Your account, {count} unread replies",
+        "wait": {
+            "seconds": "You are going a little fast. Try again in a few seconds.",
+            "minutes": {
+                "one": "You are going a little fast. Try again in {count} minute.",
+                "other": "You are going a little fast. Try again in {count} minutes."
+            }
+        }
     },
     "notifications": {
         "tabAll": "All",
@@ -1215,6 +1255,11 @@
         "verifyNeeded": "Confirm your email address first. We sent you a link.",
         "verifyCommentSaved": "We saved your comment. It posts as soon as you confirm your email.",
         "verifyAlready": "Your email is already confirmed.",
+        "emailTaken": "This email already has an account. Sign in instead.",
+        "registerFailed": "We couldn't create your account. Please try again.",
+        "joinedBlog": "Welcome! You've joined the blog as {role}.",
+        "accountReady": "Welcome! Your account is ready.",
+        "checkInbox": "Check your inbox. We sent a link to {email}. Commenting, following and writing start once you confirm it.",
         "registrationClosed": "New sign-ups are closed for now.",
         "tooManyRegistrations": "Too many accounts were created from your network recently. Please try again later."
     },
@@ -1299,6 +1344,8 @@
             "timezone": "Timezone",
             "timezoneHelp": "Dates and times across the site are shown in this zone.",
             "timezoneInvalid": "Please select a valid timezone.",
+            "timezoneAuto": "Automatic (follow this device)",
+            "timezoneAutoNow": "Automatic (this device: {zone})",
             "timezonePlaceholder": "Select timezone",
             "language": "Interface language",
             "languageAuto": "Automatic (follow page language)",
@@ -1453,7 +1500,9 @@
             "deletionThrottled": "Too many password attempts. Wait a few minutes and try again.",
             "deletionNotAuthorized": "You are not authorized to delete this account.",
             "userNotFound": "User not found.",
-            "otherDevicesSignedOut": "Your other devices were signed out."
+            "otherDevicesSignedOut": "Your other devices were signed out.",
+            "zoneSwitched": "Dates now show {zone} time.",
+            "zoneUnknown": "This device's time zone could not be saved. Pick yours in Preferences."
         },
         "sessions": {
             "heading": "Where you're signed in",
@@ -2140,11 +2189,10 @@
         "titleComment": "Sign in to comment",
         "titleLike": "Sign in to like this post",
         "titleBookmark": "Sign in to save this post",
-        "intro": "Enter your email to sign in or create your reader account.",
+        "intro": "Enter your email. New here? We’ll set up your account.",
         "email": "Email",
         "continue": "Continue →",
         "password": "Password",
-        "minLength": "At least {min} characters.",
         "logIn": "Sign in →",
         "forgot": "Forgot password?",
         "differentEmail": "Use a different email",
@@ -2155,9 +2203,9 @@
         "welcomeBack": "Welcome back",
         "enterPasswordFor": "Enter the password for {email}.",
         "createTitle": "Create your account",
-        "createIntro": "New here? Set a password and your reader account is ready.",
+        "createIntro": "Set a password to create your account.",
         "createSubmit": "Create account →",
-        "welcomeNew": "Welcome to Lexicon! Your reader account is ready.",
+        "gotIt": "Got it",
         "resetTitle": "Reset your password",
         "resetIntro": "We’ll email a password reset link to {email}.",
         "resetSent": "If that email exists in our system, a reset link has been sent.",
@@ -2240,6 +2288,8 @@
             "insights": "Insights",
             "backup": "Backup and restore",
             "translations": "Translations",
+            "team": "Team",
+            "dismiss": "Don't show again",
             "done": "Done",
             "review": {
                 "write": "Write your post and press Submit for review.",
@@ -2265,18 +2315,14 @@
             },
             "share": {
                 "title": "Tell people about it",
-                "description": "Copy your blog's link and share it.",
+                "description": "Copy your blog's link and share it. Readers can subscribe from your blog to get new posts by email.",
+                "offline": "Your link works once your first post is published.",
                 "action": "Copy link"
             },
-            "followers": {
-                "title": "Let readers follow you",
-                "description": "Readers can subscribe and get new posts by email.",
-                "action": "See how"
-            },
-            "team": {
-                "title": "Write with someone",
-                "description": "Invite a friend to write or edit with you.",
-                "action": "Invite"
+            "profile": {
+                "title": "Set up your profile",
+                "description": "Add a photo and a short bio so readers know who writes here.",
+                "action": "Edit profile"
             },
             "member_first_post": {
                 "title": "Write your first post here",
@@ -2339,6 +2385,192 @@
             "startText": "Write and publish your own posts.",
             "readTitle": "Read and follow blogs",
             "readText": "Save posts, follow writers, join discussions."
+        }
+    },
+    "comments": {
+        "heading": {
+            "one": "{count} Comment",
+            "other": "{count} Comments"
+        },
+        "formLabel": "Add a comment…",
+        "formButton": "Comment",
+        "closed": "Comments are closed for this post.",
+        "guestNote": "You'll be asked to sign in, and what you wrote is kept.",
+        "guestReplyNote": "You'll be asked to sign in, and your reply is kept.",
+        "commentingAs": "Commenting as {name}.",
+        "sortBy": "Sort by",
+        "sortTop": "Top",
+        "sortTopHint": "Highest rated first",
+        "sortNew": "Newest",
+        "sortNewHint": "Most recent first",
+        "pinnedBy": "Pinned by {name}",
+        "removedName": "[removed]",
+        "removedByModerator": "This comment was removed by a moderator.",
+        "removedByAuthor": "This comment was deleted by its author.",
+        "inReplyToRemoved": "in reply to [removed]",
+        "edited": "edited",
+        "editLabel": "Edit your comment",
+        "cancel": "Cancel",
+        "save": "Save",
+        "agree": "Agree with this comment",
+        "disagree": "Disagree with this comment",
+        "theAuthor": "The author",
+        "authorLiked": "{name} liked this",
+        "authorLikedComment": "{name} liked this comment",
+        "authorReplied": "{name} replied",
+        "reply": "Reply",
+        "replyTo": "Reply to {name}…",
+        "replies": {
+            "one": "{count} reply",
+            "other": "{count} replies"
+        },
+        "hideReplies": {
+            "one": "Hide reply",
+            "other": "Hide replies"
+        },
+        "showMore": {
+            "one": "Show {count} more reply",
+            "other": "Show {count} more replies"
+        },
+        "moreActions": "More actions on this comment",
+        "copyLink": "Copy link",
+        "linkCopied": "Link copied",
+        "edit": "Edit",
+        "report": "Report",
+        "pin": "Pin to top",
+        "unpin": "Unpin",
+        "remove": "Remove",
+        "removeConfirm": "Remove this comment? Any replies to it stay in the thread.",
+        "failed": "Something went wrong. Please try again.",
+        "notDone": "That did not work. Please try again.",
+        "flash": {
+            "required": "Comment content is required.",
+            "signInToComment": "Sign in or create an account to post your comment. We saved it for you.",
+            "signInToReply": "Sign in or create an account to post your reply. We saved it for you.",
+            "replySignIn": "Sign in to reply to comments.",
+            "gone": "That comment no longer exists.",
+            "unavailable": "That comment is not available.",
+            "parentUnavailable": "The comment you are replying to is unavailable.",
+            "postMissing": "Post not found.",
+            "notAvailable": "Comments are not available for this post.",
+            "createFailed": "Failed to create comment. Please try again.",
+            "posted": "Comment posted.",
+            "replyPosted": "Reply posted.",
+            "awaitingModeration": "Thanks! Your comment was submitted and is awaiting moderation.",
+            "editOwnOnly": "You can only edit your own comments.",
+            "unchanged": "Nothing changed.",
+            "updated": "Your comment was updated.",
+            "tooShort": "Your comment is too short.",
+            "tooLong": "Your comment is too long. Maximum {max} characters.",
+            "cannotRemove": "You cannot remove that comment.",
+            "removedOwn": "Your comment was removed.",
+            "removed": "Comment removed.",
+            "cannotReportOwn": "You cannot report your own comment.",
+            "reported": "Thanks. This comment has been sent to the moderators.",
+            "alreadyReported": "You already reported this comment.",
+            "cannotPin": "You cannot pin that comment.",
+            "pinned": "Comment pinned to the top.",
+            "unpinned": "Comment unpinned."
+        }
+    },
+    "reportDialog": {
+        "title": {
+            "comment": "Report this comment",
+            "post": "Report this post"
+        },
+        "intro": "A moderator will look at it. The author is not told who reported it.",
+        "reasons": "What is wrong with it?",
+        "details": "Anything a moderator should know? (optional)",
+        "cancel": "Cancel",
+        "send": "Send report",
+        "sending": "Sending...",
+        "close": "Close",
+        "pickReason": "Choose what is wrong with it.",
+        "thanks": "Thanks. A moderator will look at it.",
+        "failed": "That report could not be sent. Please try again.",
+        "reasonsFailed": "The list of reasons could not be loaded. Close this and try again."
+    },
+    "blogConfirm": {
+        "label": "Please confirm",
+        "title": "Are you sure?",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
+    "time": {
+        "now": "just now",
+        "soon": "in under a minute",
+        "ago": "{time} ago",
+        "ahead": "in {time}",
+        "minute": {
+            "one": "{count} minute",
+            "other": "{count} minutes"
+        },
+        "hour": {
+            "one": "{count} hour",
+            "other": "{count} hours"
+        },
+        "day": {
+            "one": "{count} day",
+            "other": "{count} days"
+        },
+        "week": {
+            "one": "{count} week",
+            "other": "{count} weeks"
+        },
+        "month": {
+            "one": "{count} month",
+            "other": "{count} months"
+        },
+        "year": {
+            "one": "{count} year",
+            "other": "{count} years"
+        },
+        "short": {
+            "now": "now",
+            "soon": "in <1m",
+            "minute": "{count}m",
+            "hour": "{count}h",
+            "day": "{count}d",
+            "week": "{count}w",
+            "month": "{count}mo",
+            "year": "{count}y"
+        }
+    },
+    "blogPage": {
+        "actions": {
+            "agree": "Agree with this post",
+            "disagree": "Disagree with this post",
+            "bookmark": "Bookmark this post",
+            "save": "Save",
+            "saved": "Saved",
+            "shareLabel": "Share this post",
+            "share": "Share",
+            "copyLink": "Copy link",
+            "copied": "Copied!",
+            "shareOn": "Share on {network}",
+            "more": "More actions on this post",
+            "report": "Report"
+        },
+        "search": {
+            "label": "Search this blog",
+            "placeholder": "Search posts",
+            "button": "Search"
+        },
+        "footer": {
+            "hostedBy": "Published & hosted by {platform}",
+            "social": "Social profiles"
+        },
+        "results": {
+            "searchKicker": "Search",
+            "searchTitle": "Search",
+            "throttled": "Too many searches just now. Try again in a minute.",
+            "empty": "Type a word to search every post.",
+            "none": "Nothing matched {term}.",
+            "matching": "Posts matching {term}.",
+            "categoryKicker": "Category: {name}",
+            "categoryDek": "Posts filed under {name}.",
+            "tagKicker": "Tagged: {name}",
+            "tagDek": "Posts tagged {name}."
         }
     }
 }

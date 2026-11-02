@@ -21,7 +21,7 @@ $discoverClearUrl = lurl('/discover?'.http_build_query(['tab' => $tab]));
             ?>
             <article class="lx-slide" data-slider-slide>
                 <div class="lx-slide-card">
-                    <a href="<?= e($creatorUrl) ?>" class="lx-slide-media" tabindex="-1" aria-hidden="true">
+                    <a href="<?= e($creatorUrl) ?>" class="lx-slide-media" data-image-loader tabindex="-1" aria-hidden="true">
                         {% if creatorBanner %}
                             <img src="<?= e($creatorBanner) ?>" alt="" loading="lazy" />
                         {% else %}

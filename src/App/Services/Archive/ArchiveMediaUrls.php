@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Archive;
 
-use App\Services\MediaService;
+use App\Services\UploadService;
 
 /**
  * Finds and rewrites the media references inside a post, for export and import alike.
@@ -40,15 +40,7 @@ final class ArchiveMediaUrls
         $value = (string) preg_replace('#^/[a-z]{2}(?:-[A-Za-z]{2})?(?=/uploads/)#', '', $value);
         $value = strtok($value, '?#') ?: '';
 
-        return MediaService::isLocalUploadUrl($value) ? $value : null;
-    }
-
-    /**
-     * The blog a canonical upload URL is filed under, read from its folder.
-     */
-    public function blogIdOf(string $canonicalUrl): ?int
-    {
-        return preg_match('#^/uploads/users/\d+/blogs/(\d+)/#', $canonicalUrl, $m) === 1 ? (int) $m[1] : null;
+        return UploadService::isUploadUrl($value) ? $value : null;
     }
 
     /**

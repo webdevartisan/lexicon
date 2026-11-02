@@ -14,12 +14,6 @@ $base = '/admin/reports/reporters/'.(int) $reporter['id'];
 
 $outcomeLabels = ['pending' => 'Waiting', 'upheld' => 'Upheld', 'dismissed' => 'Dismissed', 'unfounded' => 'Unfounded'];
 $notCounted = ['new_account' => 'new account', 'unfounded_history' => 'unfounded history', 'filed_before_rules' => 'filed before the rules'];
-$eventLabels = [
-    'moderation.reporter_warned' => 'Warned about unfounded reports',
-    'moderation.reporting_paused' => 'Reporting paused',
-    'moderation.reporting_resumed' => 'Pause ended early',
-];
-
 $decided = $summary['upheld'] + $summary['dismissed'] + $summary['unfounded'];
 $unfoundedShare = $decided > 0 ? (int) round($summary['unfounded'] / $decided * 100) : null;
 
@@ -111,7 +105,7 @@ if ($decision !== '' && !empty($errors)) {
                             ?>
                         <li class="text-sm">
                             <p>
-                                <span class="font-medium"><?= e($eventLabels[$event['action']] ?? $event['action']) ?></span>
+                                <span class="font-medium"><?= e(\App\Presenters\ActivityPresenter::label((string) $event['action'])) ?></span>
                                 <span class="<?= $small ?>">
                                     <?php if (isset($details['rule'])) { ?>
                                     automatically, at the unfounded-report limit,

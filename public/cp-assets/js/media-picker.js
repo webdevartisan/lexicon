@@ -34,33 +34,35 @@
 
         el = document.createElement('div');
         el.id = MOUNT_ID;
-        el.className = 'fixed inset-0 z-[1100] hidden';
+        // The media-picker-* names are for blog pages, which style the picker
+        // with media-picker.css because they have none of the panel's utility classes.
+        el.className = 'media-picker fixed inset-0 z-[1100] hidden';
         el.innerHTML = ''
-            + '<div class="absolute inset-0 bg-black/50" data-picker-close></div>'
-            + '<div class="absolute inset-x-4 top-10 bottom-10 md:inset-x-auto md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[min(900px,90vw)] md:max-h-[80vh] bg-white dark:bg-zink-700 rounded-lg shadow-xl flex flex-col overflow-hidden">'
-            + '  <header class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 dark:border-zink-500">'
-            + '    <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-50">Pick an image</h3>'
-            + '    <button type="button" class="p-1 text-slate-500 hover:text-slate-700 dark:hover:text-zink-100" data-picker-close aria-label="Close">'
+            + '<div class="media-picker-backdrop absolute inset-0 bg-black/50" data-picker-close></div>'
+            + '<div class="media-picker-panel absolute inset-x-4 top-10 bottom-10 md:inset-x-auto md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[min(900px,90vw)] md:max-h-[80vh] bg-white dark:bg-zink-700 rounded-lg shadow-xl flex flex-col overflow-hidden">'
+            + '  <header class="media-picker-head flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 dark:border-zink-500">'
+            + '    <h3 class="media-picker-title text-sm font-semibold text-slate-900 dark:text-zink-50">Pick an image</h3>'
+            + '    <button type="button" class="media-picker-close p-1 text-slate-500 hover:text-slate-700 dark:hover:text-zink-100" data-picker-close aria-label="Close">'
             + '      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
             + '    </button>'
             + '  </header>'
-            + '  <div class="px-4 py-3 border-b border-slate-200 dark:border-zink-500 flex items-center gap-2">'
-            + '    <input type="search" data-picker-q placeholder="Search filename…" aria-label="Search images by filename" class="form-input grow ' + FIELD_CLASS + '">'
-            + '    <select data-picker-sort aria-label="Sort images" class="form-select w-auto ' + FIELD_CLASS + '">'
+            + '  <div class="media-picker-tools px-4 py-3 border-b border-slate-200 dark:border-zink-500 flex items-center gap-2">'
+            + '    <input type="search" data-picker-q placeholder="Search filename…" aria-label="Search images by filename" class="media-picker-field form-input grow ' + FIELD_CLASS + '">'
+            + '    <select data-picker-sort aria-label="Sort images" class="media-picker-field form-select w-auto ' + FIELD_CLASS + '">'
             + '      <option value="newest">Newest</option>'
             + '      <option value="oldest">Oldest</option>'
             + '      <option value="largest">Largest</option>'
             + '    </select>'
-            + '    <label class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors cursor-pointer">'
+            + '    <label class="media-picker-upload inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-custom-500 border border-custom-500 rounded-md hover:bg-custom-600 transition-colors cursor-pointer">'
             + '      <span>Upload</span>'
             + '      <input type="file" data-picker-upload class="hidden" accept="image/*">'
             + '    </label>'
             + '  </div>'
-            + '  <div class="flex-1 overflow-y-auto p-4">'
-            + '    <div data-picker-grid class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>'
-            + '    <p data-picker-empty class="text-sm text-slate-500 dark:text-zink-300 py-10 text-center hidden">No images yet. Use Upload to add one.</p>'
-            + '    <div data-picker-more-wrap class="flex justify-center mt-4 hidden">'
-            + '      <button type="button" data-picker-more class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">Load more</button>'
+            + '  <div class="media-picker-body flex-1 overflow-y-auto p-4">'
+            + '    <div data-picker-grid class="media-picker-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>'
+            + '    <p data-picker-empty class="media-picker-empty text-sm text-slate-500 dark:text-zink-300 py-10 text-center hidden">No images yet. Use Upload to add one.</p>'
+            + '    <div data-picker-more-wrap class="media-picker-more-wrap flex justify-center mt-4 hidden">'
+            + '      <button type="button" data-picker-more class="media-picker-more inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">Load more</button>'
             + '    </div>'
             + '  </div>'
             + '</div>';
@@ -138,11 +140,11 @@
         var thumb = esc(versioned(item.url, item));
         return ''
             + '<button type="button" data-picker-pick="' + url + '" data-picker-id="' + id + '" data-picker-alt="' + alt + '" '
-            + 'class="group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-600 hover:ring-2 hover:ring-custom-500 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">'
-            + '  <div class="aspect-square overflow-hidden">'
+            + 'class="media-picker-card group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-600 hover:ring-2 hover:ring-custom-500 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500">'
+            + '  <div class="media-picker-thumb aspect-square overflow-hidden">'
             + '    <img src="' + thumb + '" alt="' + alt + '" loading="lazy" class="w-full h-full object-cover transition-transform group-hover/media:scale-105">'
             + '  </div>'
-            + '  <span class="block px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate text-left" title="' + name + '">' + name + '</span>'
+            + '  <span class="media-picker-name block px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate text-left" title="' + name + '">' + name + '</span>'
             + '</button>';
     }
 

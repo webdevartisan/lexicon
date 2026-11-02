@@ -8,12 +8,14 @@ document.addEventListener("DOMContentLoaded", function () {
     words.forEach(function (word, wi) {
       var w = document.createElement("span");
       w.className = "word";
-      for (var i = 0; i < word.length; i++) {
+      // Joined scripts such as Arabic lose their letter shapes when split, so those words move whole
+      var pieces = /[֐-ࣿ]/.test(word) ? [word] : Array.from(word);
+      pieces.forEach(function (piece) {
         var c = document.createElement("span");
         c.className = "char";
-        c.textContent = word[i];
+        c.textContent = piece;
         w.appendChild(c);
-      }
+      });
       headline.appendChild(w);
       if (wi < words.length - 1) headline.appendChild(document.createTextNode(" "));
     });
@@ -44,6 +46,13 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterList = document.querySelector(".filter-list");
   var grid = document.querySelector(".index-rows");
   if (filterList && grid) {
+    // Wording comes from the page, in the reader's language
+    var wording = {};
+    try { wording = JSON.parse(filterList.getAttribute("data-text") || "{}"); } catch (err) { /* keep the empty strings */ }
+    var fill = function (template, values) {
+      return String(template || "").replace(/\{(\w+)\}/g, function (match, key) { return key in values ? values[key] : match; });
+    };
+    var countText = function (n) { return fill(n === 1 ? (wording.count || {}).one : (wording.count || {}).other, { count: n }); };
     var countEl = document.getElementById("filter-count");
     var pills = filterList.querySelectorAll("li");
 
@@ -53,9 +62,16 @@ document.addEventListener("DOMContentLoaded", function () {
     var footerCount = document.getElementById("index-footer-count");
     var footerLink = document.getElementById("index-footer-link");
     var footerLabel = document.getElementById("index-footer-label");
-    var allCountHtml = footerCount ? footerCount.innerHTML : "";
+    var legCount = document.getElementById("index-footer-leg");
+    var legLabel = document.getElementById("index-footer-leg-label");
     var allArchive = footer ? footer.getAttribute("data-archive") : "";
     var allMore = footer ? footer.getAttribute("data-allmore") === "1" : false;
+
+    // The full route's wording can be the owner's own, so it is shown and hidden, never retyped.
+    function showFullRoute(on) {
+      [footerCount, footerLabel].forEach(function (el) { if (el) el.hidden = !on; });
+      [legCount, legLabel].forEach(function (el) { if (el) el.hidden = on; });
+    }
 
     function updateFooter(li) {
       if (!footer || !footerLink) return;
@@ -65,15 +81,14 @@ document.addEventListener("DOMContentLoaded", function () {
       var name = b ? b.textContent.trim() : "";
 
       if (!filter) {
-        if (footerCount) footerCount.innerHTML = allCountHtml;
+        showFullRoute(true);
         footerLink.setAttribute("href", allArchive);
-        if (footerLabel) footerLabel.textContent = "Follow the full route";
         footer.style.display = allMore ? "" : "none";
       } else if (count > 6) {
         var base = window.location.pathname.replace(/\/+$/, "");
-        if (footerCount) footerCount.textContent = count + " waypoints on the " + name + " leg";
+        if (legCount) legCount.textContent = fill(wording.inCategory, { count: count, name: name });
+        showFullRoute(false);
         footerLink.setAttribute("href", base + "/category/" + encodeURIComponent(filter));
-        if (footerLabel) footerLabel.textContent = "Follow this leg";
         footer.style.display = "";
       } else {
         footer.style.display = "none";
@@ -83,7 +98,8 @@ document.addEventListener("DOMContentLoaded", function () {
     pills.forEach(function (li) {
       li.addEventListener("click", function (e) {
         var btn = li.querySelector("a");
-        if (!btn) return;
+        // A click already taken, such as placing the cursor in the tab's text while editing it, is not a filter.
+        if (!btn || e.defaultPrevented) return;
         e.preventDefault();
         if (li.classList.contains("is-active")) return;
         var filter = btn.getAttribute("data-filter") || "";
@@ -111,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
             grid.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("is-in"); });
             if (countEl) {
               var n = grid.querySelectorAll(".waypoint").length;
-              countEl.textContent = n + " waypoint" + (n === 1 ? "" : "s");
+              countEl.textContent = countText(n);
             }
             updateFooter(li);
             bindNodes();

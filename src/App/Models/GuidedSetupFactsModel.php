@@ -13,31 +13,51 @@ class GuidedSetupFactsModel extends AppModel
     protected ?string $table = 'blogs';
 
     /**
-     * What the owner has already done on their blog.
+     * What has already been done on the blog, plus whether the person viewing
+     * the card has filled in their profile.
      *
-     * @return array{published_post: bool, has_look: bool, has_subscriber: bool, has_team: bool}
+     * Readers count as proof the blog was shared, since people often copy the
+     * link from the address bar rather than the card: a confirmed subscriber
+     * other than the owner, or a comment from someone outside the team.
+     *
+     * @return array{published_post: bool, has_look: bool, has_profile: bool, has_readers: bool}
      */
-    public function forOwner(int $blogId, int $ownerId): array
+    public function forOwner(int $blogId, int $userId): array
     {
         $sql = "SELECT
                 EXISTS (SELECT 1 FROM posts WHERE blog_id = b.id AND status = 'published') AS published_post,
                 (COALESCE(TRIM(b.description), '') <> ''
                     OR EXISTS (SELECT 1 FROM blog_settings
                                WHERE blog_id = b.id AND COALESCE(logo_path, '') <> '')) AS has_look,
-                EXISTS (SELECT 1 FROM blog_subscribers WHERE blog_id = b.id) AS has_subscriber,
-                (EXISTS (SELECT 1 FROM blog_invitations WHERE blog_id = b.id AND invited_by = ?)
-                    OR EXISTS (SELECT 1 FROM blog_users WHERE blog_id = b.id AND is_active = 1)) AS has_team
+                {$this->hasProfileSql()} AS has_profile,
+                (EXISTS (SELECT 1 FROM blog_subscribers s
+                         WHERE s.blog_id = b.id AND s.confirmed_at IS NOT NULL
+                           AND (s.user_id IS NULL OR s.user_id <> b.owner_id))
+                    OR EXISTS (SELECT 1 FROM comments c JOIN posts p ON p.id = c.post_id
+                               WHERE p.blog_id = b.id AND c.status = 'approved' AND c.user_id <> b.owner_id
+                                 AND NOT EXISTS (SELECT 1 FROM blog_users bu
+                                                 WHERE bu.blog_id = b.id AND bu.user_id = c.user_id))) AS has_readers
             FROM blogs b
             WHERE b.id = ?";
 
-        $row = $this->database->query($sql, [$ownerId, $blogId])->fetch(\PDO::FETCH_ASSOC) ?: [];
+        $row = $this->database->query($sql, [$userId, $blogId])->fetch(\PDO::FETCH_ASSOC) ?: [];
 
         return [
             'published_post' => (bool) ($row['published_post'] ?? false),
             'has_look' => (bool) ($row['has_look'] ?? false),
-            'has_subscriber' => (bool) ($row['has_subscriber'] ?? false),
-            'has_team' => (bool) ($row['has_team'] ?? false),
+            'has_profile' => (bool) ($row['has_profile'] ?? false),
+            'has_readers' => (bool) ($row['has_readers'] ?? false),
         ];
+    }
+
+    /**
+     * Whether the owner started another blog before this one.
+     */
+    public function ownsOlderBlog(int $ownerId, int $blogId): bool
+    {
+        $sql = 'SELECT EXISTS (SELECT 1 FROM blogs WHERE owner_id = ? AND id < ?)';
+
+        return (bool) $this->database->query($sql, [$ownerId, $blogId])->fetchColumn();
     }
 
     /**
@@ -54,8 +74,7 @@ class GuidedSetupFactsModel extends AppModel
                         AND status IN ('pending', 'published')) AS submitted_post,
                 EXISTS (SELECT 1 FROM posts WHERE blog_id = ? AND author_id = ?
                         AND status = 'draft') AS saved_draft,
-                EXISTS (SELECT 1 FROM user_profiles WHERE user_id = ?
-                        AND (COALESCE(TRIM(bio), '') <> '' OR COALESCE(avatar_url, '') <> '')) AS has_profile";
+                {$this->hasProfileSql()} AS has_profile";
 
         $params = [$blogId, $userId, $blogId, $userId, $blogId, $userId, $userId];
         $row = $this->database->query($sql, $params)->fetch(\PDO::FETCH_ASSOC) ?: [];
@@ -66,5 +85,14 @@ class GuidedSetupFactsModel extends AppModel
             'saved_draft' => (bool) ($row['saved_draft'] ?? false),
             'has_profile' => (bool) ($row['has_profile'] ?? false),
         ];
+    }
+
+    /**
+     * A profile counts once it has a bio or a photo. Takes the user id as one placeholder.
+     */
+    private function hasProfileSql(): string
+    {
+        return "EXISTS (SELECT 1 FROM user_profiles WHERE user_id = ?
+                        AND (COALESCE(TRIM(bio), '') <> '' OR COALESCE(avatar_url, '') <> ''))";
     }
 }

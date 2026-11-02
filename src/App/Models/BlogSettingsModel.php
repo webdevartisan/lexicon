@@ -106,6 +106,25 @@ class BlogSettingsModel extends AppModel
     }
 
     /**
+     * Settings for a blog, creating the default row first for an older blog that has none.
+     *
+     * @return array<string, mixed>
+     */
+    public function findOrCreate(int $blogId): array
+    {
+        $settings = $this->findByBlogId($blogId);
+        if ($settings !== null) {
+            return $settings;
+        }
+
+        $this->createDefaultForBlog($blogId, []);
+        // The missing row may have been cached as missing.
+        $this->blogCache()->forgetSettings($blogId);
+
+        return $this->findByBlogId($blogId) ?? [];
+    }
+
+    /**
      * Create default settings for a new blog.
      *
      * Applies sensible defaults for theme, locale, timezone, and features.

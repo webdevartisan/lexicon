@@ -81,6 +81,7 @@ final class BlogController extends AppController
             'q' => $q,
             'status' => $status,
             'sort' => $sort,
+            'can_create_blog' => Gate::allows('create', BlogResource::class, $user),
         ]);
     }
 
@@ -247,7 +248,7 @@ final class BlogController extends AppController
                 $this->request->ip()
             );
 
-            return $this->redirect('/dashboard/blog/'.$blogId.'/start/about');
+            return $this->redirect('/start/'.$blogId.'/about');
 
         } catch (\PDOException $e) {
             return $this->view('blog.new', [

@@ -129,7 +129,7 @@
         }
         
         // Regular text/textarea fields
-        const fieldsToSave = ['blog_id', 'title', 'slug', 'content', 'excerpt', 'published_at', 'timezone'];
+        const fieldsToSave = ['blog_id', 'title', 'slug', 'content', 'excerpt', 'published_at', 'timezone', 'version'];
         
         fieldsToSave.forEach(fieldName => {
             const field = form.querySelector(`[name="${fieldName}"]`);
@@ -187,6 +187,12 @@
             
             if (data.success) {
                 clearFieldErrors();
+
+                // The editor's own save must compare against what autosave just stored.
+                const versionField = form.querySelector('[name="version"]');
+                if (versionField && data.version) {
+                    versionField.value = data.version;
+                }
                 if (data.errors) {
                     showFieldErrors(data.errors);
                     showSaveIndicator('Auto-saved at ' + data.saved_at + ', except the fields marked in red', 'error');

@@ -40,30 +40,27 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <section class="gallery-hero" id="top">
   <div class="container">
     <div class="hero-meta-top">
-      <span><?= $blogTitle ?> &mdash; Season <?= date('Y') ?></span>
-      <span>Collection of <?= $postCount ?> Work<?= $postCount === 1 ? '' : 's' ?></span>
-      <span><?= $totalMinutes ?> Min of Viewing</span>
+      <?php $seasonParams = ['blog' => $blogTitle, 'year' => date('Y')]; ?>
+      <span<?= $wording->attrs('vernissage::home.season', $seasonParams) ?>><?= $wording->html('vernissage::home.season', $seasonParams) ?></span>
+      <span><?= e(translate_count('vernissage::home.collection', $postCount)) ?></span>
+      <span<?= $wording->attrs('vernissage::home.viewingTotal', ['count' => (int) $totalMinutes]) ?>><?= $wording->html('vernissage::home.viewingTotal', ['count' => (int) $totalMinutes]) ?></span>
     </div>
 
     <div class="hero-stage">
-      <span class="hero-kicker reveal">
-        <?= !empty($settings['tagline']) ? e($settings['tagline']) : 'The exhibition is now open' ?>
-      </span>
-      <h1 class="hero-headline" data-split><?= $blogTitle ?></h1>
+      <span class="hero-kicker reveal"<?= edit_text_attrs('tagline', $t('vernissage::home.tagline')) ?>><?= !empty($settings['tagline']) ? e($settings['tagline']) : e($t('vernissage::home.tagline')) ?></span>
+      <h1 class="hero-headline" data-split dir="auto"><?= $blogTitle ?></h1>
       <div class="ornament hero-ornament" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l9 10-9 10L3 12z" /></svg>
       </div>
     </div>
 
     <div class="hero-bottom">
-      <p class="hero-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'A permanent collection of essays and dispatches, hung one work at a time.' ?>
-      </p>
+      <p class="hero-dek reveal"<?= edit_text_attrs('subtitle', $t('vernissage::home.subtitle')) ?>><?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('vernissage::home.subtitle')) ?></p>
       <?php if ($featuredPost) { ?>
       <div class="hero-pointer reveal">
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($featuredPost['slug'] ?? '')) ?>" class="link-arrow">
-          View the centrepiece
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <span<?= $wording->attrs('vernissage::home.viewCentrepiece') ?>><?= $wording->html('vernissage::home.viewCentrepiece') ?></span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>
@@ -79,7 +76,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
-    $fCat = e($featuredPost['category'] ?? 'Work');
+    $fCat = e($featuredPost['category'] ?? $t('vernissage::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="centrepiece" id="centrepiece">
@@ -91,7 +88,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
       <div class="centre-body">
         <div class="centre-tag reveal">
-          <span class="eyebrow">On view &mdash; <?= $fCat ?></span>
+          <span class="eyebrow"><?php $onViewLine = '<span'.$wording->attrs('vernissage::home.onViewLine').'>'.$wording->html('vernissage::home.onViewLine').'</span>'; ?><?= translate_html('vernissage::home.onView', ['line' => $onViewLine, 'category' => $fCat]) ?></span>
           <?php if ($fDate) { ?><span class="eyebrow"><?= $fDate ?></span><?php } ?>
         </div>
 
@@ -103,12 +100,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
         <div class="centre-byline reveal">
           <?php if ($fAuthor) { ?><span><?= $fAuthor ?>, <?= date('Y') ?></span><?php } ?>
-          <span><?= $fMinutes ?> Min</span>
+          <span><?= e($t('vernissage::minutes', ['count' => $fMinutes])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          View the work
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <span<?= $wording->attrs('vernissage::home.viewWork') ?>><?= $wording->html('vernissage::home.viewWork') ?></span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
     </div>
@@ -122,13 +119,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <section class="collection" id="collection">
   <div class="container">
     <div class="collection-head">
-      <h2 class="collection-title reveal">The Collection.</h2>
-      <span class="collection-count reveal" id="filter-count"><?= count($gridPosts) ?> work<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="collection-title reveal"<?= $wording->attrs('vernissage::home.collectionTitle') ?>><?= $wording->html('vernissage::home.collectionTitle') ?></h2>
+      <span class="collection-count reveal" id="filter-count"><?= e(translate_count('vernissage::home.workCount', count($gridPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter works by room">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('vernissage::home.filter')) ?>"
+        data-text="<?= e(json_encode(['inCategory' => $t('vernissage::home.inCategory'), 'count' => ['one' => $t('vernissage::home.workCount.one'), 'other' => $t('vernissage::home.workCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">All rooms</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('vernissage::home.all') ?>><?= $wording->html('vernissage::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $ci => $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -143,10 +141,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="collection-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="collection-count" id="index-footer-count">Hanging <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> &mdash; <?= $blogTitle ?></span>
+      <?php $shownCount = ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="collection-count"><span id="index-footer-count"<?= $wording->attrs('vernissage::home.hanging', $shownCount) ?>><?= $wording->html('vernissage::home.hanging', $shownCount) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Open the catalogue raisonn&eacute;</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <span id="index-footer-label"<?= $wording->attrs('vernissage::home.openAll') ?>><?= $wording->html('vernissage::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('vernissage::home.viewAll')) ?></span>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -162,24 +162,16 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y');
   $estLabelClass = mb_strlen($estLabel) > 6 ? ' curator-est--word' : '';
   ?>
-      <p class="curator-est<?= $estLabelClass ?> reveal">Est.<br /><?= e($estLabel) ?></p>
+      <p class="curator-est<?= $estLabelClass ?> reveal"><span<?= $wording->attrs('vernissage::home.est') ?>><?= $wording->html('vernissage::home.est') ?></span><br /><span<?= edit_text_attrs('founded_year', date('Y')) ?>><?= e($estLabel) ?></span></p>
       <div class="curator-body">
-        <span class="eyebrow reveal">Curator's note &mdash; About this blog</span>
-        <p class="curator-statement reveal">
-          <?php if (!empty($settings['about_text'])) { ?>
-            <?= e($settings['about_text']) ?>
-          <?php } elseif (!empty($settings['subtitle'])) { ?>
-            <?= e($settings['subtitle']) ?>
-          <?php } else { ?>
-            <?= $blogTitle ?> &mdash; collected, hung, and kept on permanent view.
-          <?php } ?>
-        </p>
-        <span class="curator-sign reveal">&mdash; <?= $ownerName ?></span>
+        <span class="eyebrow reveal"<?= $wording->attrs('vernissage::home.curatorEyebrow') ?>><?= $wording->html('vernissage::home.curatorEyebrow') ?></span>
+        <?php $aboutDefault = !empty($settings['subtitle']) ? e($settings['subtitle']) : translate_html('vernissage::home.curatorDefault', ['blog' => $blogTitle]); ?>
+        <p class="curator-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
+        <span class="curator-sign reveal"><?= $ownerName ?></span>
 
         <p class="curator-fine reveal">
-          <?= $blogTitle ?> is set in Bodoni Moda &amp; Hanken Grotesk,
-          hung on plaster #F4F1E9 behind one wall of viridian,
-          and published on <?= e(env('APP_NAME', 'the web')) ?>.
+          <?php $fineParams = ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]; ?>
+          <span<?= $wording->attrs('vernissage::home.fine', $fineParams) ?>><?= $wording->html('vernissage::home.fine', $fineParams) ?></span>
         </p>
       </div>
     </div>
@@ -190,28 +182,29 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
   <div class="container">
     <div class="invite-card reveal">
       <div class="invite-inner">
-        <span class="eyebrow">The private view</span>
-        <h2><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'You are cordially invited.' ?></h2>
-        <p><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One invitation per new work. No noise, and you may leave the list at any time.' ?></p>
+        <span class="eyebrow"<?= $wording->attrs('vernissage::home.newsEyebrow') ?>><?= $wording->html('vernissage::home.newsEyebrow') ?></span>
+        <h2<?= edit_text_attrs('newsletter_heading', $t('vernissage::home.newsHeading')) ?>><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('vernissage::home.newsHeading')) ?></h2>
+        <p<?= edit_text_attrs('newsletter_text', $t('vernissage::home.newsText')) ?>><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('vernissage::home.newsText')) ?></p>
 
         <form class="invite-form" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
           <?= csrf_field_lazy() ?>
-          <label for="email-sub">Your address</label>
+          <label for="email-sub"><span<?= $wording->attrs('vernissage::emailLabel') ?>><?= $wording->html('vernissage::emailLabel') ?></span></label>
           <div class="invite-input">
             <input id="email-sub" name="email" type="email" placeholder="guest@private-view.gallery"
               value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
               autocomplete="email" maxlength="255" required />
             <button type="submit">
-              RSVP
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              <span<?= $wording->attrs('vernissage::home.subscribe') ?>><?= $wording->html('vernissage::home.subscribe') ?></span>
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </button>
           </div>
-          <span class="invite-fine">Free &mdash; unsubscribe any time</span>
+          <span class="invite-fine"<?= $wording->attrs('vernissage::home.newsFine') ?>><?= $wording->html('vernissage::home.newsFine') ?></span>
         </form>
       </div>
     </div>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

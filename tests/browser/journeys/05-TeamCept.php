@@ -42,23 +42,19 @@ $I->amOnPage('/en/dashboard');
 $I->waitForElementVisible('[data-next-steps] section');
 $I->see('Write your first post here', '[data-next-steps]');
 $I->see('See how review works', '[data-next-steps]');
-foreach (['Start your blog', 'Publish your first post', 'Make it look like yours', 'Tell people about it', 'Let readers follow you', 'Write with someone'] as $ownerStep) {
+foreach (['Start your blog', 'Publish your first post', 'Make it look like yours', 'Tell people about it'] as $ownerStep) {
     $I->dontSee($ownerStep, '[data-next-steps]');
 }
 $I->seeThePageLooksRight('51-contributor-next-steps');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('51-contributor-next-steps-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 
 // A post submitted straight from New post goes into review
 $I->amOnPage('/en/dashboard/post/new');
 $I->waitForElement('#content_ifr', 15);
 $I->fillField('title', $straight);
-$I->scrollDownTo('#content_ifr');
-$I->switchToIFrame('#content_ifr');
-$I->click('#tinymce p');
-$I->type('A contributor draft that needs a reviewer.');
-$I->switchToIFrame();
+$I->writeInTheEmptyEditor('A contributor draft that needs a reviewer.');
 $I->click('Submit for review');
 $I->waitForText('Submitted for review');
 $I->seeElement('#content_ifr');
@@ -71,11 +67,7 @@ $I->waitForElement('#content_ifr', 15);
 $I->fillField('title', $viaDraft);
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $viaDraftSlug = $I->grabValueFrom('slug');
-$I->scrollDownTo('#content_ifr');
-$I->switchToIFrame('#content_ifr');
-$I->click('#tinymce p');
-$I->type('A contributor draft that needs a reviewer.');
-$I->switchToIFrame();
+$I->writeInTheEmptyEditor('A contributor draft that needs a reviewer.');
 $I->click('Save draft');
 $I->waitForText('Post saved');
 $I->click('Submit for review');
@@ -171,7 +163,7 @@ $I->dontSeeElement('form[action$="/revoke"]');
 $I->seeThePageLooksRight('58-reader-removed');
 $I->signInAs('reader');
 $I->amOnPage("{$blog}/settings");
-$I->seeInTitle('403');
+$I->seeInTitle('Access denied');
 
 // An invitation to someone without an account can be cancelled
 $nobody = "walk-nobody-{$stamp}@example.test";

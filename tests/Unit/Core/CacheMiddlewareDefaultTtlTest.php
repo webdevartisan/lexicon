@@ -116,13 +116,13 @@ test('the shipped config does not cache the routes the audit listed', function (
     $config = require ROOT_PATH.'/config/cache.php';
     $middleware = ($this->build)($config['ttl_rules'], (int) $config['default_ttl']);
 
-    foreach (['/report-reasons', '/auth/nav', '/robots.txt'] as $uri) {
+    foreach (['/report-reasons', '/robots.txt'] as $uri) {
         $request = new Request($uri, 'GET', [], [], [], [], [], []);
         $middleware->process($request, $this->handler);
         $middleware->process($request, $this->handler);
     }
 
-    expect($this->handler->calls)->toBe(6);
+    expect($this->handler->calls)->toBe(4);
 });
 
 test('a modal fetch neither reads nor fills the page cache', function () {

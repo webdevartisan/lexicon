@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
     nav.querySelectorAll("a").forEach(function (a) {
-      a.addEventListener("click", function () {
+      a.addEventListener("click", function (e) {
+        // A tap that only places the cursor in the link's text keeps the menu open.
+        if (e.defaultPrevented) return;
         nav.classList.remove("is-open");
         toggle.classList.remove("is-open");
         toggle.setAttribute("aria-expanded", "false");
@@ -80,6 +82,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (footSheet && footWrap) {
       var headroom = footWrap.clientWidth - footSheet.scrollWidth;
       var drift = Math.max(Math.min(headroom, 0), -80);
+      // Right-to-left text overflows to the left, so the drift runs the other way
+      if (getComputedStyle(footSheet).direction === "rtl") drift = -drift;
       gsap.fromTo(footSheet, { x: 0 }, { x: drift, ease: "none", scrollTrigger: { trigger: footWrap, start: "top bottom", end: "bottom bottom", scrub: 0.8 } });
     }
   }

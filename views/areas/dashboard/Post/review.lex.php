@@ -127,12 +127,12 @@
                     ?>
 
                     <p class="flex items-center justify-between gap-3">
-                        <span class="text-slate-500 dark:text-zink-300">Visibility</span>
-                        <span class="<?= $statusBadge ?>"><?= e($status) ?></span>
+                        <span class="text-slate-500 dark:text-zink-300">Status</span>
+                        <span class="<?= $statusBadge ?>"><?= e($t('components.postCard.status.'.$status)) ?></span>
                     </p>
                     <p class="flex items-center justify-between gap-3">
-                        <span class="text-slate-500 dark:text-zink-300">Workflow state</span>
-                        <span class="<?= $wfBadge ?>"><?= e(str_replace('_', ' ', $wf)) ?></span>
+                        <span class="text-slate-500 dark:text-zink-300">Review</span>
+                        <span class="<?= $wfBadge ?>"><?= e($t('dashboard.reviewQueue.states.'.$wf)) ?></span>
                     </p>
                     <div class="pt-3 mt-1 border-t border-dashed border-slate-200 dark:border-zink-600">
                         <p class="flex items-center justify-between gap-3">

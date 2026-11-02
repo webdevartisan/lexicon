@@ -24,7 +24,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 class NavGlobalsMiddleware
 {
     /** Cache-busting stamp for the rendered sidebar markup. */
-    private const SIDEBAR_MARKUP_VERSION = 9;
+    private const SIDEBAR_MARKUP_VERSION = 10;
 
     /**
      * @var NavigationService Navigation service instance
@@ -79,6 +79,7 @@ class NavGlobalsMiddleware
         private \App\Services\ActiveBlog $activeBlog,
         private \App\Services\BlogRoleLabels $roleLabels,
         private \App\Models\BlogSettingsModel $blogSettings,
+        private \App\Services\NavBadgeCounts $badgeCounts,
     ) {
         $this->nav = $nav;
         $this->auth = $auth;
@@ -181,6 +182,14 @@ class NavGlobalsMiddleware
             }
         }
 
+        // Counts change all the time, so they travel beside the cached sidebar rather than inside it.
+        $navBadges = [];
+        try {
+            $navBadges = $this->badgeCounts->for($items, $selectedBlog);
+        } catch (\Throwable $e) {
+            error_log('Sidebar badge counts failed: '.$e->getMessage());
+        }
+
         // Per-user sidebar cache key. The active blog is in it, and the links hash
         // follows the role, so switching blog or role swaps the sidebar. The
         // mode suffix swaps the cached sidebar the moment a reader turns creator.
@@ -198,6 +207,7 @@ class NavGlobalsMiddleware
         // add navigation globals to all templates
         $this->viewer->addGlobals([
             'nav_items' => $items,
+            'nav_badges' => $navBadges,
             'nav_area' => $area,
             'current_user' => $user,
             'selected_blog' => $selectedBlog, // BlogResource or null

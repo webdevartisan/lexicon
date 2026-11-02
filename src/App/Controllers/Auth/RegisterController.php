@@ -11,6 +11,7 @@ use App\Services\BlogRoleLabels;
 use App\Services\Captcha\CaptchaInterface;
 use App\Services\Captcha\CaptchaResult;
 use App\Services\CommentService;
+use App\Services\EmailVerificationService;
 use App\Services\InvitationService;
 use Framework\Core\Response;
 use Framework\Helpers\RateLimiter;
@@ -98,7 +99,7 @@ final class RegisterController extends AppController
         ];
         $ageRequired = chrome_translate('auth.ageRequired', ['age' => minimum_signup_age()]);
         $messages = [
-            'email.unique' => 'This email address is already registered. Try logging in instead.',
+            'email.unique' => chrome_translate('auth.emailTaken'),
             'age_confirmed.required' => $ageRequired,
             'age_confirmed.in' => $ageRequired,
         ];
@@ -122,29 +123,36 @@ final class RegisterController extends AppController
         $invite = $pendingToken !== '' ? $this->invitationModel->findValidByToken(hash('sha256', $pendingToken)) : false;
         $inviteMatches = $invite !== false && strcasecmp((string) $invite['email'], $validated['email']) === 0;
 
-        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request, $inviteMatches || !email_verification_required());
+        $verified = $inviteMatches || !email_verification_required();
+        $userId = $this->registrar->register($validated['email'], $validated['password'], $this->request, $verified);
 
         if ($userId === null) {
             if ($isAjax) {
-                return $this->jsonError('Registration failed. Please try again.', 500);
+                return $this->jsonError(chrome_translate('auth.registerFailed'), 500);
             }
 
-            $this->flash('error', 'Registration failed. Please try again.');
+            $this->flash('error', chrome_translate('auth.registerFailed'));
 
             return $this->redirectBack();
         }
 
         $this->rateLimiter->hit($this->registrationKey(), self::REGISTRATION_DECAY_SECONDS);
 
+        // The confirmation link usually opens in this same browser, so it can bring them back here
+        if (!$verified && $returnTo !== null) {
+            $this->session->set(EmailVerificationService::RETURN_SESSION_KEY, $returnTo);
+        }
+        $welcome = $this->welcomeMessage($verified, $validated['email']);
+
         // A reply captured before signup gets posted now and wins the
         // redirect: the new reader lands back on the comment they answered.
         $resume = app(CommentService::class)->resumePending(auth()->user(), $this->request->ip());
         if ($resume !== null) {
             if ($isAjax) {
-                return $this->jsonSuccess(['redirect' => $resume['path']]);
+                return $this->jsonSuccess(['redirect' => $resume['path'], 'message' => $welcome, 'confirm_email' => !$verified]);
             }
 
-            $this->flash($resume['ok'] ? 'success' : 'error', 'Welcome to Lexicon! '.$resume['message']);
+            $this->flash($resume['ok'] ? 'success' : 'error', $resume['message']);
 
             return $this->redirect($resume['path']);
         }
@@ -158,10 +166,10 @@ final class RegisterController extends AppController
                     $this->session->remove('pending_invite_token');
 
                     if ($isAjax) {
-                        return $this->jsonSuccess(['redirect' => lurl('/dashboard')]);
+                        return $this->jsonSuccess(['redirect' => lurl('/dashboard'), 'message' => $welcome, 'confirm_email' => false]);
                     }
 
-                    $this->flash('success', "Welcome! You've joined the blog as ".app(BlogRoleLabels::class)->label($invite['role']).'.');
+                    $this->flash('success', chrome_translate('auth.joinedBlog', ['role' => app(BlogRoleLabels::class)->label($invite['role'])]));
 
                     return $this->redirect(lurl('/dashboard'));
                 } catch (\RuntimeException) {
@@ -172,22 +180,51 @@ final class RegisterController extends AppController
             $this->session->remove('pending_invite_token');
         }
 
-        // Follow what they clicked: "Create a Blog" carries on into Start your
-        // blog, a reader goes back to the post, and anyone else gets asked.
         if ($isAjax) {
-            // No flash: the modal shows its own success state and usually
-            // finishes the reader's action in place instead of navigating
-            return $this->jsonSuccess(['redirect' => $returnTo ?? lurl('/welcome')]);
+            // No flash: the modal shows the message itself, then reloads the page
+            return $this->jsonSuccess(['redirect' => $returnTo ?? lurl('/welcome'), 'message' => $welcome, 'confirm_email' => !$verified]);
         }
 
-        if ($returnTo !== null && preg_match('#^(/[a-z]{2})?/dashboard/blog/new$#', $returnTo) === 1) {
+        return $this->welcomeRedirect($verified, $welcome, $returnTo);
+    }
+
+    /**
+     * What a new account is told: to check their inbox, or that it is ready.
+     */
+    private function welcomeMessage(bool $verified, string $email): string
+    {
+        return $verified
+            ? chrome_translate('auth.accountReady')
+            : chrome_translate('auth.checkInbox', ['email' => $email]);
+    }
+
+    /**
+     * Follow what they clicked: "Create a Blog" carries on into Start your
+     * blog, a reader goes back to the post, and anyone else gets asked.
+     */
+    private function welcomeRedirect(bool $verified, string $welcome, ?string $returnTo): Response
+    {
+        $startsBlog = is_blog_start_path($returnTo);
+
+        if (!$verified) {
+            $this->flash('success', $welcome);
+
+            // Start your blog refuses an unconfirmed address, so the link in the email opens it instead
+            if ($startsBlog) {
+                return $this->redirect(lurl('/'));
+            }
+
+            return $this->redirect($returnTo ?? lurl('/welcome'));
+        }
+
+        if ($startsBlog) {
             $this->flash('success', chrome_translate('setup.signup.welcomeWriter'));
 
             return $this->redirect($returnTo);
         }
 
         if ($returnTo !== null) {
-            $this->flash('success', 'Welcome to Lexicon! Your reader account is ready.');
+            $this->flash('success', $welcome);
 
             return $this->redirect($returnTo);
         }

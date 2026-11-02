@@ -28,10 +28,10 @@ $title = e($post['title'] ?? 'Untitled');
         <a href="<?= lurl('/blog/'.$blogSlug.'/category/'.urlencode((string) $catSlug)) ?>"><?= e($cat) ?></a>
       <?php } ?>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
-      <span><?= $minutes ?> Min</span>
+      <span><?= e($t('vernissage::minutes', ['count' => $minutes])) ?></span>
     </div>
 
-    <h1 class="work-hero-title reveal"><?= $title ?></h1>
+    <h1 class="work-hero-title reveal" data-edit-title><?= $title ?></h1>
 
     <?php if ($standfirst !== '') { ?>
       <p class="work-standfirst reveal"><?= e($standfirst) ?></p>
@@ -40,25 +40,26 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="work-hero-byline">
       <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)))) : '' ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
-        Back to <?= e($blog['blog_name'] ?? 'the exhibition') ?>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <span<?= $wording->attrs('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?>><?= $wording->html('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?></span>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
 </section>
 
-<?php if ($heroImg) { ?>
+<?php if ($heroImg || !empty($edit_in_place)) { ?>
 <div class="container">
-  <figure class="work-figure" id="work-figure">
-    <span class="frame work-cover"><span class="frame-img"><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /></span></span>
-    <figcaption class="work-figcap">Fig. I &mdash; <?= $title ?></figcaption>
+  <figure class="work-figure" id="work-figure" data-edit-cover<?= $heroImg ? '' : ' hidden' ?>>
+    <span class="frame work-cover"><span class="frame-img" data-edit-cover-slot><?php if ($heroImg) { ?><img src="<?= $heroImg ?>" alt="<?= $title ?>" loading="eager" decoding="async" /><?php } ?></span></span>
+    <?php $figParams = ['title' => $title]; ?>
+    <figcaption class="work-figcap"<?= $wording->attrs('vernissage::post.fig', $figParams) ?>><?= $wording->html('vernissage::post.fig', $figParams) ?></figcaption>
   </figure>
 </div>
 <?php } ?>
 
 <div class="container">
   <div class="work-layout">
-    <div class="work-essay reveal">
+    <div class="work-essay reveal" data-edit-body>
       <?= $post['content'] ?? '' ?>
     </div>
 
@@ -80,7 +81,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="inner">
       <?php if (!empty($prev_post)) { ?>
       <div class="work-nav-item prev">
-        <span class="work-nav-label">&larr; Previous work</span>
+        <span class="work-nav-label"<?= $wording->attrs('vernissage::post.previous') ?>><?= $wording->html('vernissage::post.previous') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($prev_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($prev_post['title'] ?? 'Previous') ?>
         </a>
@@ -89,7 +90,7 @@ $title = e($post['title'] ?? 'Untitled');
 
       <?php if (!empty($next_post)) { ?>
       <div class="work-nav-item next">
-        <span class="work-nav-label">Next work &rarr;</span>
+        <span class="work-nav-label"<?= $wording->attrs('vernissage::post.next') ?>><?= $wording->html('vernissage::post.next') ?></span>
         <a href="<?= lurl('/blog/'.$blogSlug.'/'.urlencode($next_post['slug'] ?? '')) ?>" class="work-nav-title">
           <?= e($next_post['title'] ?? 'Next') ?>
         </a>
@@ -104,12 +105,10 @@ $title = e($post['title'] ?? 'Untitled');
   <div class="container">
     <div class="inner">
       <?php $comment_labels = [
-          'title_prefix' => 'The Visitors&rsquo; Book &mdash; ',
-          'noun' => 'Entry',
-          'noun_plural' => 'Entries',
-          'form_label' => 'Leave a note for the gallery&hellip;',
-          'form_button' => 'Sign the book',
-          'closed' => 'The visitors&rsquo; book is closed for this work.',
+          'heading' => 'vernissage::comments.heading',
+          'form_label' => 'vernissage::comments.formLabel',
+          'form_button' => 'vernissage::comments.formButton',
+          'closed' => 'vernissage::comments.closed',
       ]; ?>
       {% include "partials/public/_comments.lex.php" %}
     </div>
@@ -119,7 +118,7 @@ $title = e($post['title'] ?? 'Untitled');
 <?php if (!empty($related) && is_array($related)) { ?>
 <section class="work-related" data-insights-related>
   <div class="container">
-    <h2 class="reveal">Also on view</h2>
+    <h2 class="reveal"<?= $wording->attrs('vernissage::post.related') ?>><?= $wording->html('vernissage::post.related') ?></h2>
     <div class="related-grid">
       <?php foreach ($related as $rel) {
           $rTitle = e($rel['title'] ?? 'Work');
@@ -138,8 +137,8 @@ $title = e($post['title'] ?? 'Untitled');
         <h3 class="related-title"><a href="<?= $rUrl ?>"><?= $rTitle ?></a></h3>
         <?php if ($rExc) { ?><p class="related-exc"><?= $rExc ?></p><?php } ?>
         <a href="<?= $rUrl ?>" class="link-arrow">
-          View
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <span<?= $wording->attrs('vernissage::post.read') ?>><?= $wording->html('vernissage::post.read') ?></span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
       <?php } ?>
@@ -147,6 +146,8 @@ $title = e($post['title'] ?? 'Untitled');
   </div>
 </section>
 <?php } ?>
+
+{% include "partials/public/_edit_in_place.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

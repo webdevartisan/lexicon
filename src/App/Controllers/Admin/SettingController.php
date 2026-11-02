@@ -6,7 +6,6 @@ namespace App\Controllers\Admin;
 
 use App\Auth;
 use App\Controllers\AppController;
-use App\Models\RoleModel;
 use App\Models\SettingModel;
 use App\Services\Analytics\AnalyticsSettings;
 use App\Services\Analytics\CountryLookup;
@@ -17,7 +16,7 @@ use Framework\Core\Response;
 /**
  * Manage site-wide settings.
  *
- * We organize settings into logical sections (identity, content, users, email)
+ * We organize settings into logical sections (identity, users, email, insights)
  * to keep the interface manageable as the platform grows.
  */
 final class SettingController extends AppController
@@ -28,7 +27,6 @@ final class SettingController extends AppController
     public function __construct(
         protected Auth $auth,
         private SettingModel $settings,
-        private RoleModel $roles,
         private MaintenanceMode $maintenance,
         private AnalyticsSettings $analytics,
         private CountryLookup $countries,
@@ -43,7 +41,6 @@ final class SettingController extends AppController
         return $this->view([
             'settings' => $this->settings->all(),
             'mail_config' => $this->getMailConfig(),
-            'roles' => $this->roles->findAll(),
             'maintenance_active' => MaintenanceMode::active(),
             'analytics' => $this->analytics->storedValues(),
             'analytics_aggregated_at' => $this->analytics->aggregatedAt(),
@@ -125,7 +122,6 @@ final class SettingController extends AppController
 
             // registration and availability
             'registration_enabled' => 'boolean',
-            'default_user_role' => 'required|integer',
             'require_email_verification' => 'boolean',
             'maintenance_mode' => 'boolean',
         ];

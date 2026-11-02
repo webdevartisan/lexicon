@@ -38,8 +38,8 @@
 
 .lx-logo {
     display: inline-flex;
-    align-items: baseline;
-    gap: var(--lx-space-2);
+    align-items: center;
+    gap: calc(var(--lx-space-2) * 0.875);
     font-family: var(--lx-sans);
     font-weight: var(--lx-weight-bold);
     font-size: var(--lx-text-prose);
@@ -47,6 +47,8 @@
     text-transform: uppercase;
     color: inherit;
     white-space: nowrap;
+    /* Instrument Sans stops at 700, so a hairline stroke in the text colour stands in for a heavier weight */
+    -webkit-text-stroke: 0.3px currentColor;
 }
 
 .lx-logo:hover {
@@ -54,12 +56,9 @@
 }
 
 .lx-logo-mark {
-    width: 0.4rem;
-    height: 0.4rem;
-    background: var(--lx-gilt);
-    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
     flex: none;
-    transform: translateY(-0.15em);
 }
 
 .lx-nav-links {
@@ -281,7 +280,8 @@ body.lx-drawer-open {
     }
 }
 
-/* Narrow phones only: from 480px up the bar still fits the logo, button and toggle. */\n@media (max-width: 480px) {
+/* Narrow phones only: from 480px up the bar still fits the logo, button and toggle. */
+@media (max-width: 480px) {
     .lx-nav-actions .lx-btn-primary {
         display: none;
     }

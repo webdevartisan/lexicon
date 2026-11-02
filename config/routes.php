@@ -162,9 +162,16 @@ $router->group([
     'middleware' => ['auth', 'verified'],
 ], function (Router $r) {
     $r->add('/{id:\d+}/vote', ['controller' => 'PostEngagementController', 'action' => 'vote', 'method' => 'POST']);
-    $r->add('/{id:\d+}/bookmark', ['controller' => 'PostEngagementController', 'action' => 'toggleBookmark', 'method' => 'POST']);
     $r->add('/{id:\d+}/report', ['controller' => 'PostEngagementController', 'action' => 'report', 'method' => 'POST']);
 });
+
+// Saving is private and the count is never shown, so it doesn't wait for the email to be confirmed
+$router->add('/posts/{id:\d+}/bookmark', [
+    'controller' => 'PostEngagementController',
+    'action' => 'toggleBookmark',
+    'method' => 'POST',
+    'middleware' => ['auth'],
+]);
 
 // Public blog invitation landing (reached from the email link; no auth required)
 $router->add('/invite/joined', ['controller' => 'InviteController', 'action' => 'joined', 'method' => 'GET']);
@@ -182,7 +189,6 @@ $router->group([
     $r->add('/login/identify', ['controller' => 'AuthController',   'action' => 'identify', 'method' => 'POST']);
     $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'show', 'method' => 'GET']);
     $r->add('/login/two-factor', ['controller' => 'TwoFactorChallengeController', 'action' => 'submit', 'method' => 'POST']);
-    $r->add('/auth/nav', ['controller' => 'AuthController',   'action' => 'nav', 'method' => 'GET']);
     $r->add('/logout', ['controller' => 'AuthController',   'action' => 'logout', 'method' => 'POST']);
 
     $r->add('/register', ['controller' => 'RegisterController', 'action' => 'show', 'method' => 'GET']);
@@ -288,6 +294,8 @@ $router->group([
 
     $r->add('/preferences', ['controller' => 'AccountPreferencesController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/preferences/update', ['controller' => 'AccountPreferencesController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/preferences/timezone', ['controller' => 'AccountPreferencesController', 'action' => 'updateTimezone', 'method' => 'POST']);
+    $r->add('/device-zone', ['controller' => 'AccountPreferencesController', 'action' => 'rememberDeviceZone', 'method' => 'POST']);
 
     // The sign-in address is a credential, so it has its own password-gated,
     // token-confirmed flow rather than being a field in the preferences form.
@@ -317,6 +325,21 @@ $router->group([
     $r->add('/delete', ['controller' => 'AccountDeletionController', 'action' => 'destroy', 'method' => 'POST']);
 });
 
+// Start your blog: three steps on the main site, which also open in the site modal.
+// Not under /dashboard, since that address brings the control panel's menus with it.
+$router->group([
+    'prefix' => '/start',
+    'namespace' => 'Dashboard',
+    'middleware' => ['auth'],
+], function (Router $r) {
+    $r->add('/', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
+    $r->add('/{blogId:\d+}/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/{blogId:\d+}/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
+    $r->add('/{blogId:\d+}/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET', 'middleware' => ['panel']]);
+    $r->add('/{blogId:\d+}/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
+});
+
 // Grouped routes for user dashboard - all require authentication middleware
 $router->group([
     'prefix' => '/dashboard',
@@ -333,23 +356,22 @@ $router->group([
     // Personal account settings moved to the front under /account. The old
     // dashboard settings routes are deleted, not redirected.
     $r->add('/blog', ['controller' => 'BlogController', 'action' => 'index', 'method' => 'GET']);
-    $r->add('/blog/new', ['controller' => 'BlogController', 'action' => 'new', 'method' => 'GET']);
     // Sectioned blog settings; the old /blogs/{id}/edit URL redirects here.
     $r->add('/blog/{id:\d+}/settings', ['controller' => 'BlogController', 'action' => 'settings', 'method' => 'GET']);
-    // Start your blog, steps 2 and 3; step 1 is /blog/new
-    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'about', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/start/about', ['controller' => 'BlogStartController', 'action' => 'saveAbout', 'method' => 'POST']);
-    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'look', 'method' => 'GET']);
-    $r->add('/blog/{blogId:\d+}/start/look', ['controller' => 'BlogStartController', 'action' => 'saveLook', 'method' => 'POST']);
 
     // Appearance hub: theme browser plus branding and front-page texts.
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/appearance/activate', ['controller' => 'AppearanceController', 'action' => 'activate', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/appearance/update', ['controller' => 'AppearanceController', 'action' => 'update', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/texts', ['controller' => 'BlogTextController', 'action' => 'save', 'method' => 'POST']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/review', ['controller' => 'PostReviewController', 'action' => 'review', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/feature', ['controller' => 'PostController', 'action' => 'feature', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/rename', ['controller' => 'PostRenameController', 'action' => 'rename', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/in-place', ['controller' => 'PostInPlaceController', 'action' => 'save', 'method' => 'POST']);
+    $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'suggest', 'method' => 'GET']);
+    $r->add('/post/{id:\d+}/duplicate', ['controller' => 'PostDuplicateController', 'action' => 'store', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/make-public', ['controller' => 'PostStatusController', 'action' => 'makePublic', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/make-private', ['controller' => 'PostStatusController', 'action' => 'makePrivate', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/unlist', ['controller' => 'PostStatusController', 'action' => 'unlist', 'method' => 'POST']);
@@ -466,7 +488,6 @@ $router->group([
     // The plural spellings are deliberate: several views post to /blogs/... and
     // /posts/..., and Dispatcher::normalizeControllerName() singularizes before
     // appending "Controller", so both spellings reach the same class.
-    $r->add('/blog/create', ['controller' => 'BlogController', 'action' => 'create', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/go-live', ['controller' => 'BlogController', 'action' => 'goLive', 'method' => 'POST']);
     $r->add('/blog/{id:\d+}/destroy', ['controller' => 'BlogController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/blogs/{id:\d+}/update', ['controller' => 'BlogController', 'action' => 'update', 'method' => 'POST']);
@@ -474,12 +495,10 @@ $router->group([
 
     $r->add('/post/{id:\d+}/edit', ['controller' => 'PostController', 'action' => 'edit', 'method' => 'GET']);
     $r->add('/post/{id:\d+}/update', ['controller' => 'PostController', 'action' => 'update', 'method' => 'POST']);
-    $r->add('/post/{id:\d+}/delete', ['controller' => 'PostController', 'action' => 'delete', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/draft', ['controller' => 'PostStatusController', 'action' => 'draft', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/archive', ['controller' => 'PostStatusController', 'action' => 'archive', 'method' => 'POST']);
     $r->add('/post/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
-    $r->add('/posts/{id:\d+}/destroy', ['controller' => 'PostController', 'action' => 'destroy', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/publish', ['controller' => 'PostStatusController', 'action' => 'publish', 'method' => 'POST']);
     $r->add('/posts/{id:\d+}/unpublish', ['controller' => 'PostStatusController', 'action' => 'unpublish', 'method' => 'POST']);
 

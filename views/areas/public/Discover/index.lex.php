@@ -28,7 +28,7 @@ $discoverRobots = ($searchQuery ?? '') !== '' ? 'noindex, follow' : null;
                 $hasImage = !empty($post['featured_image']);
                 ?>
                 <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
-                    <a href="<?= e($postUrl) ?>" class="lx-gallery-media" tabindex="-1" aria-hidden="true">
+                    <a href="<?= e($postUrl) ?>" class="lx-gallery-media" data-image-loader tabindex="-1" aria-hidden="true">
                         {% if post.featured_image %}
                             <img src="{{ post.featured_image }}" alt="" loading="lazy" />
                         {% else %}

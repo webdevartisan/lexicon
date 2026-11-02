@@ -33,12 +33,13 @@ final class PostFieldRules
     ];
 
     /**
-     * Title, slug, body and the other core fields of a new post.
+     * Title, slug, body and the other core fields of a new post. The body may
+     * be empty here; missingText() decides that once the status is known.
      */
     public const CORE = [
         'title' => 'required|title|min:2|max:100',
         'slug' => 'required|slug|min:2|max:100',
-        'content' => 'required|max:60000',
+        'content' => 'max:60000',
         'excerpt' => 'max:300',
         'timezone' => 'timezone',
         'comments_enabled' => 'boolean',
@@ -46,4 +47,20 @@ final class PostFieldRules
 
     /** Longest slug the editor accepts, also the cap for numbered copies. */
     public const SLUG_MAX = 100;
+
+    public const TEXT_REQUIRED = 'Write the post before publishing it or sending it for review. A draft can be saved with only a title.';
+
+    public const TEXT_CHANGED_ELSEWHERE = 'Someone saved this post after you opened it. Copy your changes, then reload to see theirs.';
+
+    /**
+     * A draft may wait for its text. Any other status puts the post in front of
+     * readers or a reviewer, so it needs some.
+     *
+     * @param  string  $status  The status the post is about to have
+     * @param  string|null  $content  Its body
+     */
+    public static function missingText(string $status, ?string $content): bool
+    {
+        return $status !== 'draft' && trim((string) $content) === '';
+    }
 }

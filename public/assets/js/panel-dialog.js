@@ -38,10 +38,18 @@
 
             if (!loaded) {
                 var script = document.createElement('script');
+                // An added script runs whenever it arrives; this keeps the page's order, so a helper loads before its user.
+                script.async = false;
                 script.src = tag.src;
                 document.head.appendChild(script);
             }
         });
+    }
+
+    // A panel's own menu button (data-panel-menu) shows the list that follows it.
+    // Each new page brings a fresh, closed one, so only a click or Escape closes it.
+    function openMenu() {
+        return body.querySelector('[data-panel-menu][aria-expanded="true"]');
     }
 
     function show(response, html) {
@@ -136,6 +144,26 @@
         // The dialog element itself is only hit on the backdrop.
         if (e.target === dialog || e.target.closest('[data-panel-close]')) {
             dialog.close();
+            return;
+        }
+
+        var toggle = e.target.closest('[data-panel-menu]');
+        var open = openMenu();
+        if (open && open !== toggle) {
+            open.setAttribute('aria-expanded', 'false');
+        }
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', toggle === open ? 'false' : 'true');
+        }
+    });
+
+    // Escape shuts an open menu first and the modal only on the next press.
+    dialog.addEventListener('cancel', function (e) {
+        var open = openMenu();
+        if (open) {
+            e.preventDefault();
+            open.setAttribute('aria-expanded', 'false');
+            open.focus();
         }
     });
 

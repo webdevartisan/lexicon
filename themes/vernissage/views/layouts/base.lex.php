@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#private-view';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" data-edit-header lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($user['blog_name'] ?? 'Vernissage') ?>, home">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('vernissage::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Vernissage'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Vernissage') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -32,17 +32,15 @@
         <?php } ?>
       </a>
 
-      <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="<?= $homeUrl ?>">Exhibition</a>
-        <a href="<?= $archiveUrl ?>">Catalogue</a>
-        <a href="<?= $subscribeUrl ?>">Private View</a>
+      <nav class="nav" id="primaryNav" aria-label="<?= e($t('vernissage::nav.primary')) ?>">
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('vernissage::nav.home') ?>><?= $wording->html('vernissage::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('vernissage::nav.archive') ?>><?= $wording->html('vernissage::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('vernissage::nav.subscribe') ?>><?= $wording->html('vernissage::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">
-        <span data-auth-nav="theme" style="display:contents">
-          {% include "partials/_auth_nav.lex.php" %}
-        </span>
-        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
+        {% include "partials/_auth_nav.lex.php" %}
+        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('vernissage::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -55,7 +53,7 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="container">
       <div class="foot-ornament" aria-hidden="true">
         <span class="foot-rule"></span>
@@ -66,14 +64,14 @@
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'Vernissage') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'Vernissage') ?></div>
       </div>
 
-      <p class="foot-hours">Open daily &mdash; admission free</p>
+      <p class="foot-hours"<?= $wording->attrs('vernissage::footer.hours') ?>><?= $wording->html('vernissage::footer.hours') ?></p>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Vernissage') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Vernissage') ?>.</span>
+        <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

@@ -28,6 +28,7 @@
 
 .hero-headline {
   margin: 0;
+  text-align: left;
   font-family: var(--disp);
   font-stretch: 125%;
   font-weight: 860;
@@ -36,6 +37,11 @@
   letter-spacing: -0.005em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+}
+
+/* The name keeps its own reading order but lines up with the page */
+:root:dir(rtl) .hero-headline {
+  text-align: right;
 }
 
 .hero-headline .word {
@@ -53,7 +59,7 @@
 /* the proof stamp: approval, inked slightly askew over the headline */
 .proof-stamp {
   position: absolute;
-  right: clamp(0px, 4vw, 3rem);
+  inset-inline-end: clamp(0px, 4vw, 3rem);
   bottom: 0.2em;
   transform: rotate(-4deg);
   padding: 0.65rem 1.15rem;

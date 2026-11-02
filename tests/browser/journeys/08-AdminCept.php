@@ -13,7 +13,7 @@ if (!getenv('WALK_ADMIN_EMAIL') || !getenv('WALK_ADMIN_PASSWORD')) {
 
 $I->signInAs('admin');
 $I->amOnPage('/en/admin');
-$I->dontSeeInTitle('403');
+$I->dontSeeInTitle('Access denied');
 $I->seeThePageLooksRight('80-admin-overview');
 
 $I->amOnPage('/en/admin/users?q='.urlencode($I->recall('writerEmail')));
@@ -22,12 +22,12 @@ $I->seeThePageLooksRight('81-admin-finds-writer');
 
 // Only a screenshot here: this page scrolls sideways, which 08-AdminReportsWidthCept tracks
 $I->amOnPage('/en/admin/reports');
-$I->dontSeeInTitle('403');
+$I->dontSeeInTitle('Access denied');
 $I->makeScreenshot('82-admin-reports');
 
 foreach (['blogs', 'settings', 'mail-queue', 'scheduled-tasks', 'audit-log', 'front-page', 'roles'] as $area) {
     $I->amOnPage("/en/admin/{$area}");
     $I->dontSeeInTitle('not found');
-    $I->dontSeeInTitle('403');
+    $I->dontSeeInTitle('Access denied');
     $I->seeThePageLooksRight("82-admin-{$area}");
 }

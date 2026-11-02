@@ -37,12 +37,6 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     </div>
     <?php } ?>
 
-    {% if (($postStatus !== 'draft') && ($postStatus !== 'pending')): %}
-      <div class="flex justify-between">
-        {% cmp="url-with-open-button" previewUrl="{$postUrl}" %}
-      </div>
-    {% endif; %}
-
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] <?= empty($visibility) ? 'max-lg:pb-24' : 'max-lg:pb-40' ?>">
 
       <main class="min-w-0 space-y-6">
@@ -53,11 +47,11 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             <?php $title = $post['title'] ?? ''; ?>
             {% cmp="input" type="text" label="title" value="{$title}" %}
 
-            {% if (($postStatus === 'draft') || ($postStatus === 'pending')): %}
+            <?php if (!empty($linkEditable)) { ?>
             <?php $slug = $post['slug'] ?? ''; ?>
-            <?php $baseUrl = base_url().'/blog/'.$blog['blog_slug'].'/' ?? '/'; ?>
+            <?php $baseUrl = base_url().'/blog/'.$blog['blog_slug'].'/'; ?>
             {% cmp="input" type="text" label="Post Link" name="slug" value="{$slug}" placeholder="a-short-url-friendly-title" prefix="{$baseUrl}" underlabel="Lowercase letters, numbers, and hyphens only."%}
-            {% endif; %}
+            <?php } ?>
 
             <div>
               <?php $content = old('content') ?? $post['content'] ?? ''; ?>
@@ -212,11 +206,13 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
 
             <?php if ($showScheduling) { ?>
             <div>
-              <label for="published_at" class="mb-1.5 block text-xs font-medium text-slate-500 dark:text-zink-300">
-                Publish date &amp; time
+              <?php $publishZone = (string) ($publishZone ?? site_timezone()); ?>
+              <label for="published_at" class="mb-1.5 flex items-baseline justify-between gap-2 text-xs font-medium text-slate-500 dark:text-zink-300">
+                <span>Publish date &amp; time</span>
+                <span class="text-[11px] font-normal text-slate-400 dark:text-zink-400"><?= e(\App\Helpers\TimezoneHelper::label($publishZone)) ?></span>
               </label>
               <?php $publishedAt = old('published_at') ?? $post['published_at'] ?? null; ?>
-              <input type="hidden" name="timezone" id="timezone">
+              <input type="hidden" name="timezone" id="timezone" value="<?= e($publishZone) ?>">
               <input
                 id="published_at"
                 name="published_at"
@@ -224,8 +220,10 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
                 type="text"
                 class="form-input border-slate-200 placeholder:text-slate-400 focus:border-custom-500 focus:outline-none disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-500 dark:border-zink-500 dark:bg-zink-700 dark:text-zink-100 dark:placeholder:text-zink-200 dark:focus:border-custom-800 dark:disabled:border-zink-500 dark:disabled:bg-zink-600 dark:disabled:text-zink-200"
                 data-provider="flatpickr"
+                data-timezone="<?= e($publishZone) ?>"
                 data-min-date="today"
-                data-date-format="d.m.y"
+                data-date-format="Y-m-d H:i:S"
+                data-alt-format="M j, Y · h:i K"
                 data-enable-time=""
                 readonly="readonly"
                 placeholder="Publish immediately">
@@ -289,7 +287,8 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             <p class="text-[11px] leading-relaxed text-red-600/80 dark:text-red-400/80">
               Deleting removes the post and its comments. Archive it instead if you only want it off the public site.
             </p>
-            {% cmp="btn" type="button" variant="red" icon="trash-2" label="Delete post" size="xs" dataModalTarget="confirmModal" %}
+            <?php $deleteAttrs = ['form' => 'deletePost', 'data-confirm' => $t('components.postCard.deleteConfirm', ['title' => (string) $post['title']])]; ?>
+            {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Delete post" size="xs" attrs="{$deleteAttrs}" %}
           </div>
         </section>
         {% endif %}

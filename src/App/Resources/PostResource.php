@@ -51,7 +51,7 @@ class PostResource
 
     public function content(): string
     {
-        return $this->data['content'];
+        return (string) ($this->data['content'] ?? '');
     }
 
     public function excerpt(): string
@@ -73,6 +73,57 @@ class PostResource
     public function status(): string
     {
         return $this->data['status'];
+    }
+
+    /**
+     * Autosave writes straight into the post, so it is only safe while the post
+     * is unfinished work. Once it is live, booked or archived, a half-typed edit
+     * would reach readers or go out on schedule.
+     */
+    public function acceptsAutosave(): bool
+    {
+        return in_array($this->status(), ['draft', 'pending'], true);
+    }
+
+    /**
+     * A post's address may change until readers have seen it, so links already
+     * shared or indexed keep working. Moving a live post back to draft keeps its
+     * publish date, which is how a pulled back post is told apart from a new one.
+     */
+    public function linkEditable(): bool
+    {
+        if (!$this->acceptsAutosave()) {
+            return false;
+        }
+
+        $publishedAt = $this->publishedAt();
+
+        return $publishedAt === null || strtotime($publishedAt.' UTC') > time();
+    }
+
+    /**
+     * Fingerprint of the title and text, so an editor can tell whether someone
+     * saved them after the page was opened. Changes to other fields do not count.
+     */
+    public function textVersion(): string
+    {
+        return self::versionOf($this->title(), $this->content());
+    }
+
+    /**
+     * Whether the title or text were saved by someone after the given fingerprint was taken.
+     */
+    public function textChangedSince(string $version): bool
+    {
+        return !hash_equals($this->textVersion(), $version);
+    }
+
+    /**
+     * The same fingerprint for a title and text that are about to be stored.
+     */
+    public static function versionOf(string $title, string $content): string
+    {
+        return hash('sha256', $title."\0".$content);
     }
 
     public function comments_enabled(): int

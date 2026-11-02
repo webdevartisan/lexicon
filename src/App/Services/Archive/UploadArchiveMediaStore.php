@@ -12,7 +12,7 @@ use App\Services\UploadService;
 
 /**
  * Stores archive images the way every other upload is stored: checked, resized and
- * re-encoded by UploadService, under the blog owner's media folder, and indexed in
+ * re-encoded by UploadService, in the blog's own folder, and indexed in
  * the blog's library. Content-hash file names make a repeated import a no-op.
  */
 final class UploadArchiveMediaStore implements ArchiveMediaStoreInterface
@@ -26,8 +26,7 @@ final class UploadArchiveMediaStore implements ArchiveMediaStoreInterface
     public function store(string $path, string $sourceRoot, string $name, ?string $alt, BlogResource $blog, int $userId): string
     {
         $blogId = (int) $blog->id();
-        $baseName = pathinfo($name, PATHINFO_FILENAME) ?: 'image';
-        [$dir, $baseUrl] = $this->media->blogMediaPath($blog->ownerId(), $blogId);
+        [$dir, $baseUrl] = $this->uploads->blogUploadPath($blog->mediaKey());
 
         $url = $this->uploads->storeImageFromPath($path, $name, [
             'source_root' => $sourceRoot,
@@ -36,10 +35,10 @@ final class UploadArchiveMediaStore implements ArchiveMediaStoreInterface
             'allowed_ext' => ArchiveFormat::IMAGE_EXTENSIONS,
             'max_bytes' => ArchiveFormat::MAX_IMAGE_BYTES,
             'preset' => 'media',
-            'rename' => $baseName,
+            'rename' => 'image',
         ]);
 
-        $row = $this->media->register($blogId, $userId, $url, 'upload', $name);
+        $row = $this->media->register($blog, $userId, $url, 'upload', $name);
         if ($row !== null && $alt !== null) {
             $this->mediaRows->updateForBlog((int) $row['id'], $blogId, ['alt_text' => $alt]);
         }

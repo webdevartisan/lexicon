@@ -126,6 +126,10 @@ class AccountErasureService
             $this->blogDeletion->deleteBlog($blogId, $userId);
         }
 
+        // The profile and media rows that name these files go with the account below.
+        $avatarUrls = $this->avatarUrls($userId);
+        $blogUploads = $this->blogUploadsBy($userId);
+
         $this->database->transaction(function () use ($user, $userId, $deletedUserId, $postIds, $commentIds, $erasedBy, $erasedByIp): void {
             $this->eraseOwnContent($userId, $deletedUserId);
 
@@ -154,9 +158,8 @@ class AccountErasureService
             $this->recountCommentVotes($votedComments);
         });
 
-        $this->uploader->deleteProfileUploads($userId);
-        $this->deleteUnusedBlogUploads($userId);
-        $this->uploader->deleteEmptyUserFolder($userId);
+        $this->uploader->deleteProfileUploads($userId, $avatarUrls);
+        $this->deleteUnusedBlogUploads($blogUploads);
 
         $this->cacheInvalidator->purgeAuthorSurfaces((string) $user['handle']);
         $this->cacheInvalidator->purgeHome();
@@ -276,19 +279,54 @@ class AccountErasureService
     }
 
     /**
+     * The person's avatar and its crop source.
+     *
+     * @return list<string>
+     */
+    private function avatarUrls(int $userId): array
+    {
+        $row = $this->database->query(
+            'SELECT avatar_url, avatar_source_url FROM user_profiles WHERE user_id = ?',
+            [$userId]
+        )->fetch(\PDO::FETCH_ASSOC);
+
+        return $row === false ? [] : array_values(array_filter([$row['avatar_url'], $row['avatar_source_url']]));
+    }
+
+    /**
+     * Every library file this person uploaded to a blog, as public URLs grouped by blog.
+     *
+     * @return array<int, list<string>>
+     */
+    private function blogUploadsBy(int $userId): array
+    {
+        $rows = $this->database->query('SELECT blog_id, url FROM media WHERE user_id = ?', [$userId])
+            ->fetchAll(\PDO::FETCH_ASSOC);
+
+        $uploads = [];
+        foreach ($rows as $row) {
+            $uploads[(int) $row['blog_id']][] = (string) $row['url'];
+        }
+
+        return $uploads;
+    }
+
+    /**
      * Their deleted posts are gone, so files they uploaded that nothing else uses go too.
      * Images still shown by someone else's post or a blog's branding stay.
+     *
+     * @param  array<int, list<string>>  $uploads  Public URLs grouped by blog
      */
-    private function deleteUnusedBlogUploads(int $userId): void
+    private function deleteUnusedBlogUploads(array $uploads): void
     {
-        foreach ($this->uploader->blogUploadsBy($userId) as $blogId => $urls) {
+        foreach ($uploads as $blogId => $urls) {
             foreach ($urls as $url) {
                 if ($this->mediaUsage->usages($blogId, $url) !== []) {
                     continue;
                 }
 
                 $this->uploader->deleteUpload($url);
-                $this->database->execute('DELETE FROM media WHERE disk_path = ?', [ltrim($url, '/')]);
+                $this->database->execute('DELETE FROM media WHERE blog_id = ? AND url = ?', [$blogId, $url]);
             }
         }
     }

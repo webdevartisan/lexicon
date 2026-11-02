@@ -178,7 +178,7 @@ $kpiCols = ['', 'lg:grid-cols-1', 'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-c
             <?php } ?>
         </ul>
     <?php };
-    $updatedMeta = static fn (array $row): string => $t('dashboard.blogStatus.'.($row['status'] ?? 'draft')).' · '.local_datetime($row['updated_at'] ?? $row['created_at'] ?? null, 'M j');
+    $updatedMeta = static fn (array $row): string => $t('components.postCard.status.'.($row['status'] ?? 'draft')).' · '.local_datetime($row['updated_at'] ?? $row['created_at'] ?? null, 'M j');
     ?>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

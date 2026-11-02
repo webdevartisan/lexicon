@@ -1,0 +1,84 @@
+{
+    "comments": {
+        "heading": {
+            "one": "The Visitors’ Book · {count} Entry",
+            "other": "The Visitors’ Book · {count} Entries"
+        },
+        "formLabel": "Leave a note for the gallery…",
+        "formButton": "Sign the book",
+        "closed": "The visitors’ book is closed for this work."
+    },
+    "nav": {
+        "home": "Exhibition",
+        "archive": "Catalogue",
+        "subscribe": "Private View",
+        "primary": "Primary",
+        "openMenu": "Open menu",
+        "homeOf": "{blog}, home"
+    },
+    "minutes": "{count} Min",
+    "emailLabel": "Your address",
+    "footer": {
+        "hours": "Open daily. Admission free"
+    },
+    "home": {
+        "season": "{blog} · Season {year}",
+        "collection": {
+            "one": "Collection of {count} Work",
+            "other": "Collection of {count} Works"
+        },
+        "viewingTotal": "{count} Min of Viewing",
+        "tagline": "The exhibition is now open",
+        "subtitle": "A permanent collection of essays and dispatches, hung one work at a time.",
+        "viewCentrepiece": "View the centrepiece",
+        "fallbackCategory": "Work",
+        "onViewLine": "On view",
+        "onView": "{line} · {category}",
+        "viewWork": "View the work",
+        "collectionTitle": "The Collection.",
+        "workCount": {
+            "one": "{count} work",
+            "other": "{count} works"
+        },
+        "filter": "Filter works by room",
+        "all": "All rooms",
+        "hanging": "Hanging {shown} of {total} · {blog}",
+        "openAll": "Open the catalogue raisonné",
+        "inCategory": "{count} works in {name}",
+        "viewAll": "View the whole room",
+        "est": "Est.",
+        "curatorEyebrow": "Curator's note · About this blog",
+        "curatorDefault": "{blog}, collected, hung, and kept on permanent view.",
+        "fine": "{blog} is set in Bodoni Moda & Hanken Grotesk, hung on plaster #F4F1E9 behind one wall of viridian, and published on {platform}.",
+        "newsEyebrow": "The private view",
+        "newsHeading": "You are cordially invited.",
+        "newsText": "One invitation per new work. No noise, and you may leave the list at any time.",
+        "subscribe": "RSVP",
+        "newsFine": "Free. Unsubscribe any time",
+        "catNo": "Cat. {number}"
+    },
+    "archive": {
+        "pageTitle": "Catalogue · {blog}",
+        "kicker": "Catalogue Raisonné · {blog}",
+        "heading": "The Complete Works.",
+        "dek": "Every work from {blog}, catalogued with the most recent acquisitions first.",
+        "count": {
+            "one": "{count} Work",
+            "other": "{count} Works"
+        },
+        "back": "← Back to the exhibition",
+        "empty": "Nothing on view yet.",
+        "plate": "Plate {page} / {pages} · entries {from} to {to} of {total}",
+        "pagination": "Pagination",
+        "prev": "← Prev",
+        "next": "Next →"
+    },
+    "post": {
+        "fig": "Fig. I · {title}",
+        "backTo": "Back to {blog}",
+        "previous": "← Previous work",
+        "next": "Next work →",
+        "related": "Also on view",
+        "read": "View"
+    }
+}

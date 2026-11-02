@@ -36,7 +36,7 @@ function visibilityPost(array $overrides = []): array
 }
 
 test('published post on a live blog is live with an open link', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog(), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog(), 1, 'UTC');
 
     expect($line['tone'])->toBe('live')
         ->and($line['key'])->toBe('setup.visibility.live')
@@ -44,7 +44,7 @@ test('published post on a live blog is live with an open link', function () {
 });
 
 test('published post on a draft blog says the blog is offline and offers to go live', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog('draft'), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog('draft'), 1, 'UTC');
 
     expect($line['tone'])->toBe('offline')
         ->and($line['key'])->toBe('setup.visibility.offlinePost')
@@ -52,14 +52,14 @@ test('published post on a draft blog says the blog is offline and offers to go l
 });
 
 test('offline action hidden for a member without update rights', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog('draft'), 2);
+    $line = VisibilityPresenter::forPost(visibilityPost(), visibilityBlog('draft'), 2, 'UTC');
 
     expect($line['key'])->toBe('setup.visibility.offlinePost')
         ->and($line['action'])->toBeNull();
 });
 
 test('draft on a blog that never went live says publishing puts it online', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog('draft', hasPublishedPost: false), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog('draft', hasPublishedPost: false), 1, 'UTC');
 
     expect($line['tone'])->toBe('draft')
         ->and($line['key'])->toBe('setup.visibility.draftFirst')
@@ -67,42 +67,42 @@ test('draft on a blog that never went live says publishing puts it online', func
 });
 
 test('draft the viewer can publish', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog(), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog(), 1, 'UTC');
 
     expect($line['key'])->toBe('setup.visibility.draft');
 });
 
 test('draft on a blog taken offline does not promise to bring it back', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog('draft', hasPublishedPost: true), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog('draft', hasPublishedPost: true), 1, 'UTC');
 
     expect($line['key'])->toBe('setup.visibility.draft');
 });
 
 test('author on review blog gets the review draft line', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog(reviews: true), 2);
+    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'draft']), visibilityBlog(reviews: true), 2, 'UTC');
 
     expect($line['key'])->toBe('setup.visibility.draftReview');
 });
 
 test('submitted post says it is in review', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'pending']), visibilityBlog(reviews: true), 2);
+    $line = VisibilityPresenter::forPost(visibilityPost(['status' => 'pending']), visibilityBlog(reviews: true), 2, 'UTC');
 
     expect($line['tone'])->toBe('scheduled')
         ->and($line['key'])->toBe('setup.visibility.pending');
 });
 
-test('scheduled post shows the date in its time zone', function () {
-    $post = visibilityPost(['status' => 'scheduled', 'published_at' => '2026-11-03 07:30:00', 'timezone' => 'Europe/Athens']);
+test('scheduled post shows the date on the viewer clock, and names it', function () {
+    $post = visibilityPost(['status' => 'scheduled', 'published_at' => '2026-11-03 14:30:00', 'timezone' => 'Europe/Athens']);
 
-    $line = VisibilityPresenter::forPost($post, visibilityBlog(), 1);
+    $line = VisibilityPresenter::forPost($post, visibilityBlog(), 1, 'America/New_York');
 
     expect($line['tone'])->toBe('scheduled')
         ->and($line['key'])->toBe('setup.visibility.scheduled')
-        ->and($line['params'])->toBe(['date' => '3 Nov 2026, 09:30']);
+        ->and($line['params'])->toBe(['date' => 'Nov 3, 2026 · 9:30 am (America/New York)']);
 });
 
 test('private post is private', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'private']), visibilityBlog(), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'private']), visibilityBlog(), 1, 'UTC');
 
     expect($line['tone'])->toBe('private')
         ->and($line['key'])->toBe('setup.visibility.private')
@@ -110,7 +110,7 @@ test('private post is private', function () {
 });
 
 test('unlisted post on a live blog can be opened by link', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'unlisted']), visibilityBlog(), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'unlisted']), visibilityBlog(), 1, 'UTC');
 
     expect($line['tone'])->toBe('live')
         ->and($line['key'])->toBe('setup.visibility.unlisted')
@@ -118,7 +118,7 @@ test('unlisted post on a live blog can be opened by link', function () {
 });
 
 test('unlisted post on a draft blog says the blog is offline', function () {
-    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'unlisted']), visibilityBlog('draft'), 1);
+    $line = VisibilityPresenter::forPost(visibilityPost(['visibility' => 'unlisted']), visibilityBlog('draft'), 1, 'UTC');
 
     expect($line['key'])->toBe('setup.visibility.offlinePost');
 });

@@ -67,6 +67,13 @@ document.addEventListener("DOMContentLoaded", function () {
   var filterList = document.querySelector(".filter-list");
   var list = document.getElementById("idx-list");
   if (filterList && list) {
+    // Wording comes from the page, in the reader's language
+    var wording = {};
+    try { wording = JSON.parse(filterList.getAttribute("data-text") || "{}"); } catch (err) { /* keep the empty strings */ }
+    var fill = function (template, values) {
+      return String(template || "").replace(/\{(\w+)\}/g, function (match, key) { return key in values ? values[key] : match; });
+    };
+    var countText = function (n) { return fill(n === 1 ? (wording.count || {}).one : (wording.count || {}).other, { count: n }); };
     var countEl = document.getElementById("filter-count");
     var pills = filterList.querySelectorAll("li");
 
@@ -76,9 +83,16 @@ document.addEventListener("DOMContentLoaded", function () {
     var footerCount = document.getElementById("index-footer-count");
     var footerLink = document.getElementById("index-footer-link");
     var footerLabel = document.getElementById("index-footer-label");
-    var allCountHtml = footerCount ? footerCount.innerHTML : "";
+    var legCount = document.getElementById("index-footer-leg");
+    var legLabel = document.getElementById("index-footer-leg-label");
     var allArchive = footer ? footer.getAttribute("data-archive") : "";
     var allMore = footer ? footer.getAttribute("data-allmore") === "1" : false;
+
+    // The full list's wording can be the owner's own, so it is shown and hidden, never retyped.
+    function showFullList(on) {
+      [footerCount, footerLabel].forEach(function (el) { if (el) el.hidden = !on; });
+      [legCount, legLabel].forEach(function (el) { if (el) el.hidden = on; });
+    }
 
     function updateFooter(li) {
       if (!footer || !footerLink) return;
@@ -88,15 +102,14 @@ document.addEventListener("DOMContentLoaded", function () {
       var name = b ? b.textContent.trim() : "";
 
       if (!filter) {
-        if (footerCount) footerCount.innerHTML = allCountHtml;
+        showFullList(true);
         footerLink.setAttribute("href", allArchive);
-        if (footerLabel) footerLabel.textContent = "Open the full archive";
         footer.style.display = allMore ? "" : "none";
       } else if (count > 6) {
         var base = window.location.pathname.replace(/\/+$/, "");
-        if (footerCount) footerCount.textContent = count + " posts in " + name;
+        if (legCount) legCount.textContent = fill(wording.inCategory, { count: count, name: name });
         footerLink.setAttribute("href", base + "/category/" + encodeURIComponent(filter));
-        if (footerLabel) footerLabel.textContent = "View all";
+        showFullList(false);
         footer.style.display = "";
       } else {
         footer.style.display = "none";
@@ -106,7 +119,8 @@ document.addEventListener("DOMContentLoaded", function () {
     pills.forEach(function (li) {
       li.addEventListener("click", function (e) {
         var btn = li.querySelector("a");
-        if (!btn) return;
+        // A click already taken, such as placing the cursor in the tab's text while editing it, is not a filter.
+        if (!btn || e.defaultPrevented) return;
         e.preventDefault();
         if (li.classList.contains("is-active")) return;
         var filter = btn.getAttribute("data-filter") || "";
@@ -133,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
             list.querySelectorAll(".reveal, .img-veil").forEach(function (el) { el.classList.add("is-in"); });
             if (countEl) {
               var n = list.querySelectorAll(".idx-row").length;
-              countEl.textContent = n + " post" + (n === 1 ? "" : "s");
+              countEl.textContent = countText(n);
             }
             updateFooter(li);
           })

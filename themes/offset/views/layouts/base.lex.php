@@ -21,9 +21,9 @@
   $archiveUrl = lurl('/blog/'.urlencode($blog['blog_slug'] ?? '').'/archive');
   $subscribeUrl = $homeUrl.'#newsletter';
   ?>
-  <header class="masthead" role="banner">
+  <header class="masthead" role="banner" data-edit-header lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <div class="inner">
-      <a href="<?= $homeUrl ?>" class="wordmark" aria-label="<?= e($user['blog_name'] ?? 'Offset') ?>, home">
+      <a href="<?= $homeUrl ?>" class="wordmark" dir="auto" aria-label="<?= e($t('offset::nav.homeOf', ['blog' => $user['blog_name'] ?? 'Offset'])) ?>">
         <?php if ($logo) { ?>
           <img src="<?= e($logo) ?>" alt="<?= e($user['blog_name'] ?? 'Offset') ?>" style="max-height:36px;height:auto;width:auto;object-fit:contain;">
         <?php } else { ?>
@@ -32,17 +32,15 @@
         <?php } ?>
       </a>
 
-      <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="<?= $homeUrl ?>">Home</a>
-        <a href="<?= $archiveUrl ?>">Archive</a>
-        <a href="<?= $subscribeUrl ?>">Subscribe</a>
+      <nav class="nav" id="primaryNav" aria-label="<?= e($t('offset::nav.primary')) ?>">
+        <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('offset::nav.home') ?>><?= $wording->html('offset::nav.home') ?></span></a>
+        <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('offset::nav.archive') ?>><?= $wording->html('offset::nav.archive') ?></span></a>
+        <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('offset::nav.subscribe') ?>><?= $wording->html('offset::nav.subscribe') ?></span></a>
       </nav>
 
       <div class="masthead-actions">
-        <span data-auth-nav="theme" style="display:contents">
-          {% include "partials/_auth_nav.lex.php" %}
-        </span>
-        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="Open menu">
+        {% include "partials/_auth_nav.lex.php" %}
+        <button class="nav-toggle" type="button" aria-controls="primaryNav" aria-expanded="false" aria-label="<?= e($t('offset::nav.openMenu')) ?>">
           <span></span><span></span><span></span>
         </button>
       </div>
@@ -55,7 +53,7 @@
 
   {% include "partials/_popular_posts.lex.php" %}
 
-  <footer class="site">
+  <footer class="site" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>">
     <?php
       // Printers run a control strip on every sheet to check ink coverage;
       // ours doubles as the footer's only decoration.
@@ -75,12 +73,12 @@
       {% include "partials/public/_theme_social_links.lex.php" %}
 
       <div class="foot-display-wrap" aria-hidden="true">
-        <div class="foot-display"><?= e($user['blog_name'] ?? 'OFFSET') ?></div>
+        <div class="foot-display" dir="auto"><?= e($user['blog_name'] ?? 'OFFSET') ?></div>
       </div>
 
       <div class="foot-bottom">
-        <span>&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Offset') ?>.</span>
-        <span>Published &amp; hosted by <a href="/"><?= e(env('APP_NAME', '')) ?></a></span>
+        <span dir="auto">&copy; <?= date('Y') ?> <?= e($user['blog_name'] ?? 'Offset') ?>.</span>
+        <span><?= translate_html('blogPage.footer.hostedBy', ['platform' => '<a href="/">'.e(env('APP_NAME', '')).'</a>']) ?></span>
         {% include "partials/_language_switcher.lex.php" %}
       </div>
     </div>

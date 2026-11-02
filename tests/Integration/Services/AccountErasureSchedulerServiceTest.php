@@ -42,7 +42,6 @@ beforeEach(function () {
     DatabaseHelper::deletedUser($this->db);
 
     $uploader = Mockery::mock(UploadServiceInterface::class)->shouldIgnoreMissing();
-    $uploader->shouldReceive('blogUploadsBy')->andReturn([])->byDefault();
     $cacheInvalidator = Mockery::mock(PublicCacheInvalidator::class)->shouldIgnoreMissing();
 
     $this->erasure = new AccountErasureService(

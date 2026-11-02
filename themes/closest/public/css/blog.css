@@ -24,12 +24,18 @@
 
 .th-name {
   margin: clamp(1.5rem, 4vw, 3rem) 0 0;
+  text-align: left;
   font-family: var(--serif);
   font-weight: 850;
   font-size: clamp(2.7rem, 9.5vw, 7.8rem);
   line-height: 0.98;
   letter-spacing: -0.025em;
   overflow-wrap: anywhere;
+}
+
+/* The name keeps its own reading order but lines up with the page */
+:root:dir(rtl) .th-name {
+  text-align: right;
 }
 
 /* word/char split for the rise-in; overflow hidden per word clips the run */

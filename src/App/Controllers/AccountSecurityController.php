@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\UserModel;
-use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\LocaleState;
 use App\Services\PasswordConfirmRateLimiter;
 use App\Services\Sessions\RecentPasswordConfirmation;
@@ -29,7 +29,7 @@ final class AccountSecurityController extends AppController
 {
     public function __construct(
         private UserModel $users,
-        private UserPreferencesModel $prefs,
+        private AccountZone $zones,
         private PasswordConfirmRateLimiter $passwordThrottle,
         private SessionRevoker $revoker,
         private SessionList $sessionList,
@@ -49,20 +49,13 @@ final class AccountSecurityController extends AppController
             throw new Exception("User record not found for ID {$userId}");
         }
 
-        $preferences = $this->prefs->findOrCreate($userId) ?: [];
+        $zone = $this->zones->resolve($userId);
 
-        $user['last_login'] = $this->formatLastLogin(
-            $user['last_login'] ?? null,
-            $preferences['timezone'] ?? 'UTC'
-        );
+        $user['last_login'] = $this->formatLastLogin($user['last_login'] ?? null, $zone);
 
         return $this->view('public.Account.security', [
             'user' => $user,
-            'sessions' => $this->sessionList->forOwner(
-                $userId,
-                LocaleState::get()->chromeLocale,
-                $preferences['timezone'] ?? 'UTC'
-            ),
+            'sessions' => $this->sessionList->forOwner($userId, LocaleState::get()->chromeLocale, $zone),
             'needsPassword' => !$this->recentConfirmation->isFresh(),
         ]);
     }

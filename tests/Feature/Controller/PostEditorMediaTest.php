@@ -137,7 +137,21 @@ it('refuses an outside address picked as the featured image', function () {
 
     expect($response->getHeader('Location'))->toContain('/edit')
         ->and($this->posts->find($this->postId)['featured_image'])->toBeNull()
-        ->and(implode(' ', flashedErrors()))->toContain('outside address');
+        ->and(implode(' ', flashedErrors()))->toContain('media library');
+});
+
+it('refuses an image from another blog picked as the featured image, and keeps it out of the library', function () {
+    $blogs = new BlogModel($this->db);
+    $other = $blogs->getBlog(BlogFactory::new($blogs)->create($this->userId));
+    $foreign = '/uploads/blogs/'.$other->mediaKey().'/2026/10/banner-aaaaaaaaaaaa.jpg';
+
+    ($this->save)(['featured_image_library_url' => $foreign]);
+
+    $rows = $this->db->query('SELECT COUNT(*) FROM media WHERE url = ?', [$foreign])->fetchColumn();
+
+    expect($this->posts->find($this->postId)['featured_image'])->toBeNull()
+        ->and((int) $rows)->toBe(0)
+        ->and(implode(' ', flashedErrors()))->toContain('media library');
 });
 
 it('rejects a save carrying an invalid CSRF token', function () {

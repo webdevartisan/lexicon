@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Controllers\Dashboard\PostController;
+use App\Helpers\TimezoneHelper;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
+use App\ValueObjects\PostFieldRules;
 use Framework\Core\App;
 use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Security\Csrf;
@@ -82,18 +84,80 @@ it('refuses to create a draft in a blog the writer does not belong to', function
 });
 
 it('saves the rest of the draft and reports a date it cannot read', function () {
-    [$status, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'published_at' => '18.09.26 25:99']);
+    [$status, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'published_at' => '2026-09-18 25:99:00']);
 
     $saved = $this->posts->find($body['id']);
     expect($status)->toBe(200)
-        ->and($body['errors']['published_at'][0])->toContain('dd.mm.yy hh:mm')
+        ->and($body['errors']['published_at'][0])->toBe(TimezoneHelper::INVALID_PUBLISH_DATE)
         ->and($saved['title'])->toBe('Autosaved draft')
         ->and($saved['published_at'])->toBeNull();
 });
 
+it('leaves a post alone once it has left draft', function (string $status) {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query('UPDATE posts SET status = ? WHERE id = ?', [$status, $created['id']]);
+
+    [$code, $body] = ($this->autosave)([
+        'id' => $created['id'],
+        'title' => 'Half-typed title',
+        'content' => '<p>Half-typed body</p>',
+        'published_at' => '2030-01-01 09:00:00',
+    ]);
+
+    $saved = $this->posts->find($created['id']);
+    expect($code)->toBe(400)
+        ->and($body['error'])->toContain('Autosave only keeps drafts')
+        ->and($saved['title'])->toBe('Autosaved draft')
+        ->and($saved['content'])->toBe('<p>Body</p>')
+        ->and($saved['published_at'])->toBeNull();
+})->with(['scheduled', 'published', 'archived', 'moderated']);
+
+it('keeps autosaving a submission that is still with its writer', function () {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query("UPDATE posts SET status = 'pending' WHERE id = ?", [$created['id']]);
+
+    [$code] = ($this->autosave)(['id' => $created['id'], 'title' => 'Second pass']);
+
+    expect($code)->toBe(200)
+        ->and($this->posts->find($created['id'])['title'])->toBe('Second pass');
+});
+
+it('creates a draft from just a title', function () {
+    [$code, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'content' => '']);
+
+    expect($code)->toBe(200)
+        ->and($this->posts->find($body['id'])['status'])->toBe('draft');
+
+    // The browser leaves an empty body out of the request, so the column can be NULL.
+    $this->db->query('UPDATE posts SET content = NULL WHERE id = ?', [$body['id']]);
+    expect($this->posts->findResource($body['id'])->content())->toBe('');
+});
+
+it('refuses to empty a submission that is waiting for review', function () {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    $this->db->query("UPDATE posts SET status = 'pending' WHERE id = ?", [$created['id']]);
+
+    [$code, $body] = ($this->autosave)(['id' => $created['id'], 'content' => '']);
+
+    expect($code)->toBe(400)
+        ->and($body['errors']['content'][0])->toBe(PostFieldRules::TEXT_REQUIRED)
+        ->and($this->posts->find($created['id'])['content'])->toBe('<p>Body</p>');
+});
+
 it('stores a readable date in UTC', function () {
-    [, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'published_at' => '25.12.26 09:30', 'timezone' => 'Europe/Athens']);
+    [, $body] = ($this->autosave)(['blog_id' => $this->sharedBlogId, 'published_at' => '2026-12-25 09:30:00', 'timezone' => 'Europe/Athens']);
 
     expect($body)->not->toHaveKey('errors')
         ->and((string) $this->posts->find($body['id'])['published_at'])->toBe('2026-12-25 07:30:00');
+});
+
+it('keeps an untouched date in the hour the clocks repeat', function () {
+    [, $created] = ($this->autosave)(['blog_id' => $this->sharedBlogId]);
+    // The second of the two 01:30s in New York that night, the one PHP reads back as the first.
+    $this->db->query('UPDATE posts SET published_at = ? WHERE id = ?', ['2027-11-07 06:30:00', $created['id']]);
+
+    [, $body] = ($this->autosave)(['id' => $created['id'], 'published_at' => '2027-11-07 01:30:00', 'timezone' => 'America/New_York']);
+
+    expect($body)->not->toHaveKey('errors')
+        ->and((string) $this->posts->find($created['id'])['published_at'])->toBe('2027-11-07 06:30:00');
 });

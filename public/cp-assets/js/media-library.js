@@ -135,6 +135,21 @@
         return api('/' + id + '/destroy', {}).then(function () { removeCard(id); });
     }
 
+    // The server empties banner, logo and featured or social image slots on delete,
+    // but an image inside a post's text stays there and breaks, so say which is which.
+    function confirmDelete(usages) {
+        if (usages.length === 0) return cpConfirm('Delete this image? This cannot be undone.');
+
+        var list = usages.map(function (use) { return '• ' + use.label + ' (' + use.context + ')'; }).join('\n');
+        var inBody = usages.some(function (use) { return use.in_body; });
+        var message = 'This image is used in ' + usages.length + ' place(s):\n\n' + list
+            + '\n\nDeleting it leaves those spots without an image.'
+            + (inBody ? ' Where it sits inside a post\'s text, it will show as a broken image.' : '')
+            + '\n\nDelete anyway?';
+
+        return cpConfirm(message);
+    }
+
     // The next page starts after the cards on screen, which stays right after
     // uploads and deletes shift the list.
     function loadItems(replace) {
@@ -179,9 +194,10 @@
         var id = card.getAttribute('data-media-id');
 
         if (e.target.closest('[data-media-delete]')) {
-            cpConfirm('Delete this image? Posts that reference it will show a broken image.').then(function (ok) {
-                if (ok) deleteItem(id).catch(function (error) { window.alert(error.message); });
-            });
+            api('/' + id + '/details')
+                .then(function (item) { return confirmDelete(item.usages || []); })
+                .then(function (ok) { if (ok) return deleteItem(id); })
+                .catch(function (error) { window.alert(error.message); });
         } else if (e.target.closest('[data-media-open]')) {
             editor.open(id, e.target.closest('[data-media-open]'));
         }
@@ -297,6 +313,7 @@
         displayName: displayName,
         showCard: showCard,
         deleteItem: deleteItem,
+        confirmDelete: confirmDelete,
     });
 
     // Arriving from an "Edit" link elsewhere (the appearance page) opens straight onto that image

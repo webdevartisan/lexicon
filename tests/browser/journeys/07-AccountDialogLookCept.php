@@ -10,15 +10,17 @@ $I->wantTo('see the account dialog at laptop and phone width, in light and dark'
 $I->signInAs('reader');
 
 $shots = [
-    ['/en', 'front-notifications', 1280, 900, null, 'notifications', '.acct-switch'],
-    ['/en', 'front-security', 1280, 900, null, 'security', '.acct-card-row'],
-    ['/en', 'front-profile', 1280, 900, null, 'profile', '.acct-avatar'],
-    ['/en/dashboard', 'cp-dark-security', 1280, 900, 'dark', 'security', '.acct-card-row'],
-    ['/en', 'phone-security', 390, 800, null, 'security', '.acct-card-row'],
+    ['/en', 'front-notifications', false, null, 'notifications', '.acct-switch'],
+    ['/en', 'front-security', false, null, 'security', '.acct-card-row'],
+    ['/en', 'front-profile', false, null, 'profile', '.acct-avatar'],
+    ['/en/dashboard', 'cp-dark-security', false, 'dark', 'security', '.acct-card-row'],
+    ['/en', 'phone-security', true, null, 'security', '.acct-card-row'],
 ];
 
-foreach ($shots as [$path, $name, $width, $height, $mode, $page, $ready]) {
-    $I->resizeWindow($width, $height);
+foreach ($shots as [$path, $name, $onAPhone, $mode, $page, $ready]) {
+    if ($onAPhone) {
+        $I->amOnAPhone();
+    }
     $I->amOnPage($path);
     if ($mode !== null) {
         $I->executeJS("document.documentElement.setAttribute('data-mode', '$mode');");
@@ -28,4 +30,4 @@ foreach ($shots as [$path, $name, $width, $height, $mode, $page, $ready]) {
     $I->makeScreenshot("account-dialog-$name");
 }
 
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();

@@ -233,6 +233,68 @@
     transform: scale(1.04);
 }
 
+.lx-gallery-media[data-image-loader] {
+    position: relative;
+    aspect-ratio: 5 / 3;
+}
+
+.lx-gallery.is-wide .lx-gallery-media[data-image-loader] {
+    aspect-ratio: 2 / 1;
+}
+
+.lx-gallery-media[data-image-loader] img {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    max-height: none;
+    transition: transform 0.6s var(--lx-ease), opacity 0.3s ease;
+}
+
+[data-image-loader].is-loading img {
+    opacity: 0;
+}
+
+.lx-loader-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(var(--lx-loader-cols), var(--lx-loader-cell));
+    grid-auto-rows: var(--lx-loader-cell);
+    gap: var(--lx-loader-gap);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.lx-loader-grid span {
+    border-radius: 2px;
+    background: var(--lx-rule);
+    animation: lx-loader-blink var(--lx-loader-blink) ease-in-out var(--lx-loader-delay) infinite backwards;
+}
+
+.lx-loader-grid.is-filling span {
+    opacity: 1;
+    transform: scale(var(--lx-loader-grow));
+    transition: background-color var(--lx-loader-fill) ease, transform var(--lx-loader-fill) ease;
+    animation: none;
+}
+
+.lx-loader-grid.is-fading span {
+    opacity: 0;
+    transition: opacity var(--lx-loader-fade) ease calc(var(--lx-loader-delay) * 0.6);
+}
+
+@keyframes lx-loader-blink {
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
 .is-textonly .lx-gallery-media {
     aspect-ratio: 5 / 3;
 }

@@ -11,8 +11,8 @@
  * $comment_sort_urls, $viewer_name, $viewer_avatar, $comment_author,
  * $comment_author_hearts.
  *
- * A theme sets $comment_labels before including this to keep its own voice;
- * every key falls back to neutral wording. See the defaults below.
+ * A theme sets $comment_labels to its own locale keys before including this to
+ * keep its voice; every label it leaves out uses the shared wording below.
  */
 $commentList = $comments ?? [];
 $commentsOpen = !empty($comments_enabled);
@@ -68,16 +68,23 @@ $countThread = static function (array $nodes) use (&$countThread): int {
 $totalComments = $countThread($commentList);
 
 $labels = array_merge([
-    'title_prefix' => '',
-    'noun' => 'Comment',
-    'noun_plural' => 'Comments',
-    'form_label' => 'Add a comment…',
-    'form_button' => 'Comment',
-    'closed' => 'Comments are closed for this post.',
+    'heading' => 'comments.heading',
+    'form_label' => 'comments.formLabel',
+    'form_button' => 'comments.formButton',
+    'closed' => 'comments.closed',
 ], $comment_labels ?? []);
 
-$commentsHeading = $labels['title_prefix'].number_format($totalComments).' '
-    .($totalComments === 1 ? $labels['noun'] : $labels['noun_plural']);
+/**
+ * A counted phrase from a key holding "one" and "other" forms.
+ *
+ * @param  string  $key  Key of the pair
+ * @param  int  $count  How many
+ */
+$plural = static function (string $key, int $count) use ($t): string {
+    return $t($key.'.'.($count === 1 ? 'one' : 'other'), ['count' => number_format($count)]);
+};
+
+$commentsHeading = $plural($labels['heading'], $totalComments);
 
 /**
  * A person's picture, or a coloured disc carrying their initial.
@@ -141,7 +148,7 @@ $authorInThread = static function (array $nodes, int $authorId) use (&$authorInT
 $renderComment = static function (array $comment, int $depth) use (
     &$renderComment, $postId, $commentsOpen, $viewerVotes, $canRemove,
     $canPin, $viewerIsGuest, $indentCap, $replyBatch, $avatar, $postAuthorId,
-    $postAuthor, $heartedIds, $authorInThread, $viewerId
+    $postAuthor, $heartedIds, $authorInThread, $viewerId, $t, $plural
 ): void {
     $id = (int) $comment['id'];
     $removed = !empty($comment['deleted_at']);
@@ -179,15 +186,17 @@ $renderComment = static function (array $comment, int $depth) use (
     // mention would leave the reply reading as an opening remark, which is the
     // one thing it is not.
     $mentionLabel = $answeredGone
-        ? 'in reply to [removed]'
+        ? $t('comments.inReplyToRemoved')
         : '@'.(string) (($comment['parent_handle'] ?? '') ?: ($comment['parent_name'] ?? ''));
 
     // A removed comment keeps its slot and its timestamp so the replies under
     // it still read in order, but it stops being a person saying something:
     // no name, no body, nothing to vote on or answer.
     $removedText = ($comment['deleted_by'] ?? 'author') === 'moderator'
-        ? 'This comment was removed by a moderator.'
-        : 'This comment was deleted by its author.';
+        ? $t('comments.removedByModerator')
+        : $t('comments.removedByAuthor');
+
+    $postAuthorName = (string) ($postAuthor['name'] ?? '') ?: $t('comments.theAuthor');
     ?>
     <li class="comment-item<?= $depth === 0 ? ' reveal' : '' ?><?= $removed ? ' is-removed' : '' ?>" id="comment-<?= $id ?>">
       <div class="comment-row">
@@ -203,13 +212,13 @@ $renderComment = static function (array $comment, int $depth) use (
             <?php if ($pinned && !empty($comment['pinned_by_name'])) { ?>
               <p class="comment-pinned">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3v2l1.5 1.5V11l2 2v2h-6v6l-1 1-1-1v-6h-6v-2l2-2V6.5L9 5V3z"/></svg>
-                Pinned by @<?= e(($comment['pinned_by_handle'] ?? '') ?: $comment['pinned_by_name']) ?>
+                <?= e($t('comments.pinnedBy', ['name' => '@'.(($comment['pinned_by_handle'] ?? '') ?: $comment['pinned_by_name'])])) ?>
               </p>
             <?php } ?>
 
             <p class="comment-meta">
               <?php if ($removed) { ?>
-                <strong class="comment-ghost">[removed]</strong>
+                <strong class="comment-ghost"><?= e($t('comments.removedName')) ?></strong>
               <?php } else { ?>
                 <strong class="comment-author<?= $byAuthor ? ' is-post-author' : '' ?>"><?= profile_link($authorLabel, $comment['author_profile_handle']) ?></strong>
               <?php } ?>
@@ -217,14 +226,14 @@ $renderComment = static function (array $comment, int $depth) use (
                 <time><?= e(relative_time($comment['created_at'])) ?></time>
               <?php } ?>
               <?php if (!$removed && !empty($comment['edited_at'])) { ?>
-                <span class="comment-edited" title="<?= e(local_datetime($comment['edited_at'])) ?>">edited</span>
+                <span class="comment-edited" title="<?= e(local_datetime($comment['edited_at'])) ?>"><?= e($t('comments.edited')) ?></span>
               <?php } ?>
             </p>
 
             <?php if ($removed) { ?>
               <p class="comment-body comment-removed"><?= e($removedText) ?></p>
             <?php } else { ?>
-              <p class="comment-body">
+              <p class="comment-body" dir="auto">
                 <?php if ($showMention) { ?><a class="comment-mention<?= $answeredGone ? ' is-gone' : '' ?>" href="#comment-<?= $answeredId ?>"><?= e($mentionLabel) ?></a> <?php } ?>
                 <?= nl2br(e($comment['content'] ?? '')) ?>
               </p>
@@ -232,10 +241,10 @@ $renderComment = static function (array $comment, int $depth) use (
               <?php if ($canEdit) { ?>
                 <form class="reply-form edit-form" id="edit-form-<?= $id ?>" action="/comments/<?= $id ?>/edit" method="post" hidden>
                   <?= csrf_field() ?>
-                  <textarea name="content" rows="2" maxlength="2000" aria-label="Edit your comment" required><?= e($comment['content'] ?? '') ?></textarea>
+                  <textarea name="content" rows="2" maxlength="2000" dir="auto" aria-label="<?= e($t('comments.editLabel')) ?>" required><?= e($comment['content'] ?? '') ?></textarea>
                   <div class="comment-form-actions">
-                    <button type="button" class="reply-toggle reply-cancel" data-edit-cancel="<?= $id ?>">Cancel</button>
-                    <button type="submit" class="btn-reply">Save</button>
+                    <button type="button" class="reply-toggle reply-cancel" data-edit-cancel="<?= $id ?>"><?= e($t('comments.cancel')) ?></button>
+                    <button type="submit" class="btn-reply"><?= e($t('comments.save')) ?></button>
                   </div>
                 </form>
               <?php } ?>
@@ -244,7 +253,7 @@ $renderComment = static function (array $comment, int $depth) use (
                 <div class="comment-votes" data-comment-id="<?= $id ?>">
                   <button type="button" class="comment-vote<?= $myVote === 1 ? ' is-active' : '' ?>"
                           data-vote="up" aria-pressed="<?= $myVote === 1 ? 'true' : 'false' ?>"
-                          aria-label="Agree with this comment">
+                          aria-label="<?= e($t('comments.agree')) ?>">
                     <svg viewBox="0 0 24 24" fill="<?= $myVote === 1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 22V10l5-8a2.5 2.5 0 0 1 2.4 3.2L13.5 9H19a2.5 2.5 0 0 1 2.4 3.2l-2 7A2.5 2.5 0 0 1 17 22z"/><path d="M7 10H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
                     <span data-vote-count="up"><?= $up > 0 ? number_format($up) : '' ?></span>
                   </button>
@@ -255,21 +264,21 @@ $renderComment = static function (array $comment, int $depth) use (
                 ?>
                   <button type="button" class="comment-vote<?= $myVote === -1 ? ' is-active' : '' ?>"
                           data-vote="down" aria-pressed="<?= $myVote === -1 ? 'true' : 'false' ?>"
-                          aria-label="Disagree with this comment">
+                          aria-label="<?= e($t('comments.disagree')) ?>">
                     <svg viewBox="0 0 24 24" fill="<?= $myVote === -1 ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2v12l-5 8a2.5 2.5 0 0 1-2.4-3.2l.9-3.8H5a2.5 2.5 0 0 1-2.4-3.2l2-7A2.5 2.5 0 0 1 7 2z"/><path d="M17 14h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-3"/></svg>
                   </button>
                 </div>
 
                 <?php if ($hearted) { ?>
-                  <span class="comment-heart" title="<?= e(($postAuthor['name'] ?? 'The author').' liked this') ?>">
+                  <span class="comment-heart" title="<?= e($t('comments.authorLiked', ['name' => $postAuthorName])) ?>">
                     <?= $avatar((string) ($postAuthor['name'] ?? ''), $postAuthor['avatar'] ?? null) ?>
                     <svg class="comment-heart-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-8-4.9-8-10.4A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 3.6C20 16.1 12 21 12 21z"/></svg>
-                    <span class="sr-only"><?= e(($postAuthor['name'] ?? 'The author').' liked this comment') ?></span>
+                    <span class="sr-only"><?= e($t('comments.authorLikedComment', ['name' => $postAuthorName])) ?></span>
                   </span>
                 <?php } ?>
 
                 <?php if ($commentsOpen) { ?>
-                  <button type="button" class="reply-toggle" data-reply-toggle="<?= $id ?>">Reply</button>
+                  <button type="button" class="reply-toggle" data-reply-toggle="<?= $id ?>"><?= e($t('comments.reply')) ?></button>
                 <?php } ?>
               </div>
 
@@ -278,14 +287,14 @@ $renderComment = static function (array $comment, int $depth) use (
                   <?= csrf_field_lazy() ?>
                   <input type="hidden" name="post_id" value="<?= $postId ?>">
                   <input type="hidden" name="parent_comment_id" value="<?= $id ?>">
-                  <textarea name="content" rows="1" maxlength="2000"
-                            placeholder="Reply to <?= e($authorLabel) ?>…" required></textarea>
+                  <textarea name="content" rows="1" maxlength="2000" dir="auto"
+                            placeholder="<?= e($t('comments.replyTo', ['name' => $authorLabel])) ?>" required></textarea>
                   <?php if ($viewerIsGuest) { ?>
-                    <p class="comment-form-note">You'll be asked to log in, and your reply is kept.</p>
+                    <p class="comment-form-note"><?= e($t('comments.guestReplyNote')) ?></p>
                   <?php } ?>
                   <div class="comment-form-actions">
-                    <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>">Cancel</button>
-                    <button type="submit" class="btn-reply">Reply</button>
+                    <button type="button" class="reply-toggle reply-cancel" data-reply-cancel="<?= $id ?>"><?= e($t('comments.cancel')) ?></button>
+                    <button type="submit" class="btn-reply"><?= e($t('comments.reply')) ?></button>
                   </div>
                 </form>
               <?php } ?>
@@ -295,7 +304,7 @@ $renderComment = static function (array $comment, int $depth) use (
           <?php if ($replies !== []) { ?>
             <?php
             $replyTotal = count($replies);
-              $replyWord = $replyTotal === 1 ? 'reply' : 'replies';
+              $replyCount = $plural('comments.replies', $replyTotal);
 
               // The author's face on the toggle says the person who wrote the
               // post is somewhere down there, which is the thing that decides
@@ -306,14 +315,14 @@ $renderComment = static function (array $comment, int $depth) use (
                     aria-expanded="false"
                     aria-controls="replies-<?= $id ?>"
                     data-collapse-toggle="<?= $id ?>"
-                    data-label-show="<?= $replyTotal ?> <?= $replyWord ?>"
-                    data-label-hide="Hide <?= $replyWord ?>">
+                    data-label-show="<?= e($replyCount) ?>"
+                    data-label-hide="<?= e($plural('comments.hideReplies', $replyTotal)) ?>">
               <?php if ($authorAnswered) { ?>
                 <?= $avatar((string) ($postAuthor['name'] ?? ''), $postAuthor['avatar'] ?? null) ?>
-                <span class="sr-only"><?= e(($postAuthor['name'] ?? 'The author').' replied') ?></span>
+                <span class="sr-only"><?= e($t('comments.authorReplied', ['name' => $postAuthorName])) ?></span>
               <?php } ?>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-              <span data-collapse-label><?= $replyTotal ?> <?= $replyWord ?></span>
+              <span data-collapse-label><?= e($replyCount) ?></span>
             </button>
           <?php } ?>
         </div>
@@ -321,33 +330,33 @@ $renderComment = static function (array $comment, int $depth) use (
         <?php if (!$removed) { ?>
           <div class="comment-menu platform-menu" data-comment-menu>
             <button type="button" class="comment-menu-button" data-menu-toggle
-                    aria-haspopup="true" aria-expanded="false" aria-label="More actions on this comment">
+                    aria-haspopup="true" aria-expanded="false" aria-label="<?= e($t('comments.moreActions')) ?>">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
             </button>
 
             <div class="platform-menu-list comment-menu-list" data-menu-list hidden>
-              <button type="button" data-copy-comment data-anchor="#comment-<?= $id ?>">Copy link</button>
+              <button type="button" data-copy-comment data-anchor="#comment-<?= $id ?>"><?= e($t('comments.copyLink')) ?></button>
 
               <?php if ($canEdit) { ?>
-                <button type="button" data-edit-comment="<?= $id ?>">Edit</button>
+                <button type="button" data-edit-comment="<?= $id ?>"><?= e($t('comments.edit')) ?></button>
               <?php } ?>
 
               <?php if (!$viewerIsGuest && !$isMine) { ?>
-                <button type="button" data-report-comment data-comment-id="<?= $id ?>">Report</button>
+                <button type="button" data-report-comment data-comment-id="<?= $id ?>"><?= e($t('comments.report')) ?></button>
               <?php } ?>
 
               <?php if ($canPin && $depth === 0) { ?>
                 <form action="/comments/<?= $id ?>/pin" method="post">
                   <?= csrf_field() ?>
-                  <button type="submit"><?= $pinned ? 'Unpin' : 'Pin to top' ?></button>
+                  <button type="submit"><?= e($t($pinned ? 'comments.unpin' : 'comments.pin')) ?></button>
                 </form>
               <?php } ?>
 
               <?php if ($canRemove($comment)) { ?>
                 <form action="/comments/<?= $id ?>/delete" method="post"
-                      data-confirm="Remove this comment? Any replies to it stay in the thread.">
+                      data-confirm="<?= e($t('comments.removeConfirm')) ?>">
                   <?= csrf_field() ?>
-                  <button type="submit" class="is-destructive">Remove</button>
+                  <button type="submit" class="is-destructive"><?= e($t('comments.remove')) ?></button>
                 </form>
               <?php } ?>
             </div>
@@ -377,7 +386,7 @@ $renderComment = static function (array $comment, int $depth) use (
           <?php if ($hidden > 0) { ?>
             <li class="comment-more" data-more-row="<?= $id ?>">
               <button type="button" class="reply-toggle" data-show-more="<?= $id ?>">
-                Show <?= $hidden ?> more <?= $hidden === 1 ? 'reply' : 'replies' ?>
+                <?= e($plural('comments.showMore', $hidden)) ?>
               </button>
             </li>
           <?php } ?>
@@ -807,26 +816,28 @@ $renderComment = static function (array $comment, int $depth) use (
   }
 </style>
 
-<div class="comment-thread-root" id="comments"
-     data-auth="<?= $viewerIsGuest ? '0' : '1' ?>" data-login="<?= e(lurl('/login')) ?>">
+<div class="comment-thread-root" id="comments" lang="<?= e($chromeLang) ?>" dir="<?= e($chromeDir) ?>"
+     data-auth="<?= $viewerIsGuest ? '0' : '1' ?>" data-login="<?= e(lurl('/login')) ?>"
+     data-text-failed="<?= e($t('comments.failed')) ?>" data-text-not-done="<?= e($t('comments.notDone')) ?>"
+     data-text-link-copied="<?= e($t('comments.linkCopied')) ?>">
 
   <div class="comment-thread-head">
-    <h2 class="comments-title"><?= $commentsHeading ?></h2>
+    <h2 class="comments-title"><?= e($commentsHeading) ?></h2>
 
     <?php if ($totalComments > 1) { ?>
       <details class="comment-sort">
         <summary>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M6 12h12M9 17h6"/></svg>
-          Sort by
+          <?= e($t('comments.sortBy')) ?>
         </summary>
         <div class="comment-sort-list">
           <a href="<?= e($sortUrls['top']) ?>"<?= $sort === 'top' ? ' class="is-current" aria-current="true"' : '' ?>>
-            <strong>Top</strong>
-            <span>Highest rated first</span>
+            <strong><?= e($t('comments.sortTop')) ?></strong>
+            <span><?= e($t('comments.sortTopHint')) ?></span>
           </a>
           <a href="<?= e($sortUrls['new']) ?>"<?= $sort === 'new' ? ' class="is-current" aria-current="true"' : '' ?>>
-            <strong>Newest</strong>
-            <span>Most recent first</span>
+            <strong><?= e($t('comments.sortNew')) ?></strong>
+            <span><?= e($t('comments.sortNewHint')) ?></span>
           </a>
         </div>
       </details>
@@ -842,27 +853,27 @@ $renderComment = static function (array $comment, int $depth) use (
         <?= $avatar((string) ($viewer_name ?? 'Guest'), $viewer_avatar ?? null) ?>
 
         <div class="comment-main">
-          <label class="sr-only" for="comment_content"><?= $labels['form_label'] ?></label>
-          <textarea id="comment_content" name="content" rows="1" maxlength="2000"
-                    placeholder="<?= $labels['form_label'] ?>" required></textarea>
+          <label class="sr-only" for="comment_content"><?= e($t($labels['form_label'])) ?></label>
+          <textarea id="comment_content" name="content" rows="1" maxlength="2000" dir="auto"
+                    placeholder="<?= e($t($labels['form_label'])) ?>" required></textarea>
 
           <p class="comment-form-note">
             <?php if ($viewerIsGuest) { ?>
-              You'll be asked to log in, and what you wrote is kept.
+              <?= e($t('comments.guestNote')) ?>
             <?php } else { ?>
-              Commenting as <?= e((string) ($viewer_name ?? '')) ?>.
+              <?= e($t('comments.commentingAs', ['name' => (string) ($viewer_name ?? '')])) ?>
             <?php } ?>
           </p>
 
           <div class="comment-form-actions">
-            <button type="button" class="reply-toggle" data-composer-cancel>Cancel</button>
-            <button type="submit" class="btn-submit"><?= $labels['form_button'] ?></button>
+            <button type="button" class="reply-toggle" data-composer-cancel><?= e($t('comments.cancel')) ?></button>
+            <button type="submit" class="btn-submit"><?= e($t($labels['form_button'])) ?></button>
           </div>
         </div>
       </div>
     </form>
   <?php } else { ?>
-    <p class="comments-closed"><?= $labels['closed'] ?></p>
+    <p class="comments-closed"><?= e($t($labels['closed'])) ?></p>
   <?php } ?>
 
   <?php if ($totalComments > 0) { ?>
@@ -876,7 +887,6 @@ $renderComment = static function (array $comment, int $depth) use (
   <form class="comment-token" hidden aria-hidden="true"><?= csrf_field_lazy() ?></form>
 </div>
 
-<script defer src="<?= e(versioned_asset('/assets/js/report-dialog.js')) ?>"></script>
-<link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/blog-confirm.css')) ?>">
-<script defer src="<?= e(versioned_asset('/assets/js/blog-confirm.js')) ?>"></script>
+{% include "partials/public/_report_dialog.lex.php" %}
+{% include "partials/public/_blog_confirm.lex.php" %}
 <script defer src="<?= e(versioned_asset('/assets/js/comments.js')) ?>"></script>

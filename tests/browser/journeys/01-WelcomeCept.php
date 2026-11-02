@@ -24,9 +24,9 @@ $I->seeInCurrentUrl('/welcome');
 $I->see('Start a blog', '[data-welcome-choice=start]');
 $I->see('Read and follow blogs', '[data-welcome-choice=read]');
 $I->seeThePageLooksRight('01w-welcome');
-$I->resizeWindow(390, 844);
+$I->amOnAPhone();
 $I->seeThePageLooksRight('01w-welcome-phone');
-$I->resizeWindow(1280, 900);
+$I->putThePhoneAway();
 
 // Choosing to read lands on the reading hub with its welcome note
 $I->click('[data-welcome-choice=read]');

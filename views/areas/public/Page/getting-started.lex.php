@@ -13,7 +13,7 @@
         <p>{{ t('pages.gettingStartedIntro') }}</p>
     </header>
 
-    <div class="lx-gallery">
+    <div class="lx-gallery is-wide">
         {% foreach ($guides as $guide): %}
         <?php
         $guideUrl = '/getting-started/'.rawurlencode($guide['slug']);
@@ -21,7 +21,7 @@
         ?>
         <article class="lx-gallery-card">
             <?php if ($guideThumb !== '' && $guideThumb !== null) { ?>
-            <a href="<?= e($guideUrl) ?>" class="lx-gallery-media" tabindex="-1" aria-hidden="true">
+            <a href="<?= e($guideUrl) ?>" class="lx-gallery-media" data-image-loader tabindex="-1" aria-hidden="true">
                 <img src="<?= e($guideThumb) ?>" alt="" loading="lazy" />
             </a>
             <?php } ?>

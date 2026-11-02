@@ -45,8 +45,7 @@ class UploadController extends AppController
             return $this->json(['error' => 'No image uploaded'], 400);
         }
 
-        // Build dir + base URL using your existing helper
-        [$dir, $baseUrl] = $this->uploader->userBlogPostPath($userId, $blogId);
+        [$dir, $baseUrl] = $this->uploader->blogUploadPath($blog->mediaKey());
 
         try {
             $url = $this->uploader->storeImage($file, [
@@ -69,7 +68,7 @@ class UploadController extends AppController
 
         // Record the new file in the per-blog library so it shows up in the
         // grid and the picker the next time someone needs to reuse it.
-        $this->mediaService->register($blogId, $userId, $url, 'post_image');
+        $this->mediaService->register($blog, $userId, $url, 'post_image');
 
         // TinyMCE expects { location: "<url>" }
         return $this->json(['location' => $url], 200);

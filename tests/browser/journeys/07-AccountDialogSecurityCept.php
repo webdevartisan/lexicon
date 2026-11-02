@@ -14,7 +14,7 @@ $I->waitForElementVisible('.nav-user-menu', 5);
 $I->click('Settings', '.nav-user-menu');
 $I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
 
-$I->click('Security', '[data-panel-dialog] .lx-account-nav');
+$I->openSettingsPage('Security');
 $I->waitForText('Where you', 10, '[data-panel-dialog]');
 $I->see('This device', '[data-panel-dialog]');
 $I->dontSee('Sign-in activity', '[data-panel-dialog]');
@@ -38,7 +38,7 @@ $I->waitForText('Where you', 10, '[data-panel-dialog]');
 
 // Your data stays on Security; closing the account has its own Danger tab
 $I->see('Your data', '[data-panel-dialog]');
-$I->click('Danger', '[data-panel-dialog] nav');
+$I->openSettingsPage('Danger');
 $I->waitForElementVisible('[data-panel-dialog] .acct-details summary', 10);
 $I->dontSeeElement('[data-panel-dialog] .acct-details form input[name=password]:not([hidden])[type=password]:checked');
 $I->makeScreenshot('account-dialog-delete');

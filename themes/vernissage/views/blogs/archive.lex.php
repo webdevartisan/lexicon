@@ -1,5 +1,5 @@
 {% extends "base.lex.php" %}
-{% block title %}Catalogue &mdash; {{ blog.blog_name }}{% endblock %}
+{% block title %}<?= e($t('vernissage::archive.pageTitle', ['blog' => $blog['blog_name'] ?? ''])) ?>{% endblock %}
 {% block styles %}
   <link rel="stylesheet" href="<?= $asset('css/archive.css') ?>">
 {% endblock %}
@@ -37,27 +37,29 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
 <?php
   // Headings are overridable so this same layout backs the full catalogue and
   // the category/tag listings. Defaults keep the plain "/archive" page unchanged.
-  $kicker = $archiveKicker ?? ('Catalogue Raisonn&eacute; &mdash; '.$blogTitle);
-  $heading = $archiveTitle ?? 'The Complete Works.';
-  $dek = $archiveDek ?? ('Every work from <em>'.$blogTitle.'</em>, catalogued with the most recent acquisitions first.');
+  // Only the full archive's own wording can be changed on the page; listings bring their own.
+  $kicker = $archiveKicker ?? $wording->html('vernissage::archive.kicker', ['blog' => $blogTitle]);
+  $kickerAttrs = isset($archiveKicker) ? '' : $wording->attrs('vernissage::archive.kicker', ['blog' => $blogTitle]);
+  $heading = $archiveTitle ?? $wording->html('vernissage::archive.heading');
+  $headingAttrs = isset($archiveTitle) ? '' : $wording->attrs('vernissage::archive.heading');
+  $dek = $archiveDek ?? $wording->html('vernissage::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
+  $dekAttrs = isset($archiveDek) ? '' : $wording->attrs('vernissage::archive.dek', ['blog' => '<em>'.$blogTitle.'</em>']);
   ?>
 <section class="archive-hero">
   <div class="container">
     <div class="archive-meta-top">
-      <span><?= $kicker ?></span>
-      <span><?= $totalPosts ?> Work<?= $totalPosts === 1 ? '' : 's' ?></span>
+      <span<?= $kickerAttrs ?>><?= $kicker ?></span>
+      <span><?= e(translate_count('vernissage::archive.count', $totalPosts)) ?></span>
     </div>
 
-    <h1 class="archive-title"><?= $heading ?></h1>
+    <h1 class="archive-title"<?= $headingAttrs ?>><?= $heading ?></h1>
 
-    <p class="archive-dek">
-      <?= $dek ?>
-    </p>
+    <p class="archive-dek"<?= $dekAttrs ?>><?= $dek ?></p>
 
     {% include "partials/public/_blog_search.lex.php" %}
 
     <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="archive-back">
-      &larr; Back to the exhibition
+      <span<?= $wording->attrs('vernissage::archive.back') ?>><?= $wording->html('vernissage::archive.back') ?></span>
     </a>
   </div>
 </section>
@@ -76,7 +78,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
           $img = preg_match($validImg, $cover) ? $cover : $asset('img/cover-placeholder.svg');
           $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
           $title = e($post['title'] ?? 'Untitled');
-          $cat = trim((string) ($post['category'] ?? 'Work'));
+          $cat = trim((string) ($post['category'] ?? $t('vernissage::home.fallbackCategory')));
           $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
           $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
           $minutes = reading_time($post['content'] ?? '');
@@ -91,7 +93,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <?php } ?>
 
         <article class="work-row reveal" data-card-link="<?= e($url) ?>">
-          <span class="row-no">Cat. <?= sprintf('%02d', $n) ?></span>
+          <span class="row-no"><?= e($t('vernissage::home.catNo', ['number' => sprintf('%02d', $n)])) ?></span>
 
           <span class="frame row-thumb" aria-hidden="true">
             <span class="frame-img"><img src="<?= e($img) ?>" alt="" loading="lazy" /></span>
@@ -105,7 +107,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
           <div class="row-meta">
             <span class="row-cat"><?= e($cat) ?></span>
             <?php if ($date) { ?><span class="row-date"><?= $date ?></span><?php } ?>
-            <span class="row-min"><?= $minutes ?> Min</span>
+            <span class="row-min"><?= e($t('vernissage::minutes', ['count' => $minutes])) ?></span>
           </div>
 
           <span class="row-arrow" aria-hidden="true">
@@ -115,19 +117,20 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
       <?php } ?>
       </div>
     <?php } else { ?>
-      <p class="catalogue-empty">Nothing on view yet.</p>
+      <p class="catalogue-empty"<?= $wording->attrs('vernissage::archive.empty') ?>><?= $wording->html('vernissage::archive.empty') ?></p>
     <?php } ?>
 
     <?php if ($total > 1) { ?>
     <div class="archive-pagination reveal">
       <span class="archive-pagination-info">
-        Plate <?= sprintf('%02d', $current) ?> / <?= sprintf('%02d', $total) ?> &mdash; entries <?= sprintf('%02d', $first) ?>&ndash;<?= sprintf('%02d', $last) ?> of <?= sprintf('%02d', $totalPosts) ?>
+        <?php $plateParams = ['page' => sprintf('%02d', $current), 'pages' => sprintf('%02d', $total), 'from' => sprintf('%02d', $first), 'to' => sprintf('%02d', $last), 'total' => sprintf('%02d', $totalPosts)]; ?>
+        <span<?= $wording->attrs('vernissage::archive.plate', $plateParams) ?>><?= $wording->html('vernissage::archive.plate', $plateParams) ?></span>
       </span>
-      <nav class="archive-pagination-nav" aria-label="Pagination">
+      <nav class="archive-pagination-nav" aria-label="<?= e($t('vernissage::archive.pagination')) ?>">
         <?php if ($current > 1) { ?>
-          <a href="?page=<?= $current - 1 ?>" rel="prev">&larr; Prev</a>
+          <a href="?page=<?= $current - 1 ?>" rel="prev"><span<?= $wording->attrs('vernissage::archive.prev') ?>><?= $wording->html('vernissage::archive.prev') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled">&larr; Prev</span>
+          <span class="is-disabled"<?= $wording->attrs('vernissage::archive.prev') ?>><?= $wording->html('vernissage::archive.prev') ?></span>
         <?php } ?>
 
         <?php for ($p = 1; $p <= $total; $p++) { ?>
@@ -139,13 +142,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
         <?php } ?>
 
         <?php if ($current < $total) { ?>
-          <a href="?page=<?= $current + 1 ?>" rel="next">Next &rarr;</a>
+          <a href="?page=<?= $current + 1 ?>" rel="next"><span<?= $wording->attrs('vernissage::archive.next') ?>><?= $wording->html('vernissage::archive.next') ?></span></a>
         <?php } else { ?>
-          <span class="is-disabled">Next &rarr;</span>
+          <span class="is-disabled"<?= $wording->attrs('vernissage::archive.next') ?>><?= $wording->html('vernissage::archive.next') ?></span>
         <?php } ?>
       </nav>
     </div>
     <?php } ?>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}

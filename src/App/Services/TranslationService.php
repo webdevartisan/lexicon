@@ -9,6 +9,10 @@ use Framework\Interfaces\TranslatorInterface;
 /**
  * TranslationService loads locale JSON and resolves translations by exact key (flat dotted)
  * or by traversing nested arrays using a dot path (structured), with simple {name} interpolation.
+ *
+ * A key written as "offset::nav.home" belongs to a theme. Themes keep their own text in
+ * themes/{name}/locales/{locale}.json so a theme stays self-contained, and a theme string
+ * that is missing falls back to that theme's English, never to the platform files.
  */
 class TranslationService implements TranslatorInterface
 {
@@ -18,8 +22,13 @@ class TranslationService implements TranslatorInterface
     /** @var array<string,mixed> English strings, loaded only when locale !== 'en'. */
     private array $fallback = [];
 
+    /** @var array<string, array{0: array<string,mixed>, 1: array<string,mixed>}> Theme strings and their English, by theme. */
+    private array $themes = [];
+
     /** @var string Separator used to split a path like "sidebar.menu.title" into segments. */
     private string $separator;
+
+    private string $locale;
 
     /**
      * Constructor: reads locales/{locale}.json and decodes it to an associative array.
@@ -27,21 +36,15 @@ class TranslationService implements TranslatorInterface
      */
     public function __construct(string $locale, string $separator = '.')
     {
-        $this->separator = $separator; // Allow custom separators if needed in the future.
-        $path = ROOT_PATH.'/locales/'.$locale.'.json'; // Conventional per-locale resource file.
-        if (file_exists($path)) { // Avoid warnings and allow empty/missing locales gracefully.
-            $json = file_get_contents($path); // Read file once per request; upstream caching can optimize further.
-            $this->translations = json_decode($json, true) ?? []; // Decode to associative array for key access.
-        }
+        $this->separator = $separator;
+        $this->locale = $locale;
+        $this->translations = $this->readJson(ROOT_PATH.'/locales/'.$locale.'.json');
 
         // A missing key must degrade to English for a reader, not to the raw key.
         // Only non-English visitors pay the second read; an en visitor's fallback
         // is the same file already loaded above, so it stays empty here.
         if ($locale !== 'en') {
-            $enPath = ROOT_PATH.'/locales/en.json';
-            if (file_exists($enPath)) {
-                $this->fallback = json_decode(file_get_contents($enPath), true) ?? [];
-            }
+            $this->fallback = $this->readJson(ROOT_PATH.'/locales/en.json');
         }
     }
 
@@ -55,17 +58,24 @@ class TranslationService implements TranslatorInterface
      */
     public function translate(string|array $key, array $params = []): string
     {
-        $value = $this->lookup($this->translations, $key);
+        $fullKey = $key;
+        [$translations, $fallback] = [$this->translations, $this->fallback];
+        if (is_string($key) && str_contains($key, '::')) {
+            [$theme, $key] = explode('::', $key, 2);
+            [$translations, $fallback] = $this->themeStrings($theme);
+        }
+
+        $value = $this->lookup($translations, $key);
 
         // A miss in the active locale degrades to English rather than to the raw
         // key, so a Greek reader never sees "account.changePassword" on the page.
-        if (!is_string($value) && $this->fallback !== []) {
-            $fallbackValue = $this->lookup($this->fallback, $key);
+        if (!is_string($value) && $fallback !== []) {
+            $fallbackValue = $this->lookup($fallback, $key);
             if (is_string($fallbackValue)) {
                 if (env('APP_DEBUG')) {
                     // error_log is the idiom already used in CacheMiddleware; a
                     // logger for one call site would be overkill.
-                    error_log('i18n miss, fell back to en: '.(is_array($key) ? implode($this->separator, $key) : $key));
+                    error_log('i18n miss, fell back to en: '.(is_array($fullKey) ? implode($this->separator, $fullKey) : $fullKey));
                 }
                 $value = $fallbackValue;
             }
@@ -74,7 +84,7 @@ class TranslationService implements TranslatorInterface
         // Only when both the active locale and English miss do we surface the raw
         // key, which keeps a genuinely undefined string visible during development.
         if (!is_string($value)) {
-            $value = is_array($key) ? implode($this->separator, $key) : (string) $key; // Human-friendly fallback.
+            $value = is_array($fullKey) ? implode($this->separator, $fullKey) : $fullKey; // Human-friendly fallback.
         }
 
         // Interpolate {name} style placeholders for simple runtime values.
@@ -83,6 +93,43 @@ class TranslationService implements TranslatorInterface
         }
 
         return $value; // Return the final translated string ready for rendering.
+    }
+
+    /**
+     * A theme's strings for this locale and its English, read once per theme.
+     *
+     * @param  string  $theme  Theme directory name, from the part of the key before "::"
+     * @return array{0: array<string,mixed>, 1: array<string,mixed>} Strings, then the English fallback
+     */
+    private function themeStrings(string $theme): array
+    {
+        // The name becomes part of a file path, so anything but a plain theme slug finds nothing.
+        if (preg_match('/^[a-z0-9-]+$/', $theme) !== 1) {
+            return [[], []];
+        }
+
+        $dir = ROOT_PATH.'/themes/'.$theme.'/locales/';
+
+        return $this->themes[$theme] ??= [
+            $this->readJson($dir.$this->locale.'.json'),
+            $this->locale === 'en' ? [] : $this->readJson($dir.'en.json'),
+        ];
+    }
+
+    /**
+     * Decode a locale file, treating a missing or broken file as empty.
+     *
+     * @param  string  $path  Absolute path to a JSON file
+     * @return array<string,mixed> The decoded strings
+     */
+    private function readJson(string $path): array
+    {
+        if (!is_file($path)) {
+            return [];
+        }
+        $data = json_decode((string) file_get_contents($path), true);
+
+        return is_array($data) ? $data : [];
     }
 
     /**

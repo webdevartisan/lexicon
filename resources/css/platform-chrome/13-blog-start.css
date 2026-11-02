@@ -1,0 +1,197 @@
+/* ---------------------------------------------------------------------------
+   Start your blog (Blog/new, BlogStart/about, BlogStart/look). The three steps
+   open in the site modal or as their own front page, so they live here with
+   the other modal pages and reuse the account form parts.
+   ------------------------------------------------------------------------- */
+.start-wrap { padding-block: var(--lx-space-7); }
+.start-wrap .start-page { margin-inline: auto; }
+/* In the modal the dialog already pads and sizes the page */
+.panel-dialog .start-wrap,
+.panel-dialog .start-page { max-width: none; padding: 0; }
+
+.start-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .35rem;
+  margin-block-end: 1.5rem;
+}
+
+/* Keeps the dots clear of the dialog's close button */
+.panel-dialog .start-head { padding-inline-end: 2.25rem; }
+
+.acct-page .start-title,
+.acct-page .start-count {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-medium);
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+  opacity: .68;
+}
+
+.start-count::before { content: "\00b7\00a0"; }
+
+.start-dots {
+  display: flex;
+  gap: .35rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.start-dots li {
+  width: .4rem;
+  height: .4rem;
+  border-radius: 999px;
+  background: var(--acct-line);
+  transition: width .2s;
+}
+
+.start-dots .is-done { background: var(--acct-accent); opacity: .5; }
+.start-dots .is-current { width: 1.5rem; background: var(--acct-accent); }
+
+.acct-page .start-question {
+  display: block;
+  margin: 0 0 .75rem;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--lx-text-lg);
+  font-weight: var(--lx-weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+
+.acct-page .start-input { font-size: var(--lx-text-md); }
+
+.start-fieldset { min-width: 0; margin: 1.5rem 0 0; padding: 0; border: 0; }
+.start-fieldset:first-child { margin-block-start: 0; }
+
+/* The address the name turns into, with the field to change it folded away */
+.start-address {
+  padding: .75rem 1rem;
+  border-radius: var(--lx-radius-md);
+  background: var(--acct-hover);
+}
+
+.start-address > .acct-hint { margin: 0 0 .25rem; }
+.start-address-url { overflow-wrap: anywhere; }
+.start-address-url strong { font-weight: var(--lx-weight-semibold); opacity: 1; }
+
+.start-address-change > summary {
+  display: inline-block;
+  font-size: var(--lx-text-sm);
+  font-weight: var(--lx-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.start-address-change > summary::-webkit-details-marker { display: none; }
+.start-address-change > summary:focus-visible { outline: none; text-decoration-thickness: 2px; }
+.start-address-change[open] > summary { margin-block-end: .5rem; }
+.start-address-change .acct-field { margin: 0; }
+
+.start-slug { display: flex; }
+
+.start-slug-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 .6rem;
+  border: 1px solid var(--acct-line);
+  border-inline-end: 0;
+  border-start-start-radius: var(--lx-radius-md);
+  border-end-start-radius: var(--lx-radius-md);
+  font-size: var(--lx-text-xs);
+  opacity: .75;
+  white-space: nowrap;
+}
+
+.acct-page .start-slug .acct-input {
+  flex: 1;
+  min-width: 0;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  font-size: var(--lx-text-sm);
+}
+
+/* The live address check (slug-field.js) */
+.start-feedback { margin: .35rem 0 0; }
+.start-feedback.acct-hint { opacity: .8; }
+.start-page { --start-ok: #15803d; --start-notice: var(--chrome-light-warning); }
+.panel-dialog .start-page { --start-ok: #86efac; --start-notice: var(--chrome-dark-warning); }
+[data-mode='light'] .panel-dialog .start-page { --start-ok: #15803d; --start-notice: var(--chrome-light-warning); }
+.start-ok { color: var(--start-ok); }
+.start-notice { color: var(--start-notice); }
+.acct-page .acct-input.is-error { border-color: var(--acct-danger); }
+
+/* Pick a look */
+.start-themes {
+  display: grid;
+  gap: 1rem;
+  margin-block-start: 1rem;
+}
+
+@media (--lx-up-sm) { .start-themes { grid-template-columns: 1fr 1fr; } }
+
+.start-theme { position: relative; display: block; cursor: pointer; }
+
+.start-theme-card {
+  display: block;
+  overflow: hidden;
+  border: 2px solid var(--acct-line);
+  border-radius: var(--lx-radius-lg);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.start-theme:hover .start-theme-card { border-color: color-mix(in srgb, var(--acct-accent) 40%, var(--acct-line)); }
+.start-theme input:checked + .start-theme-card { border-color: var(--acct-accent); }
+.start-theme input:focus-visible + .start-theme-card { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acct-accent) 30%, transparent); }
+
+.start-theme-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--acct-hover);
+}
+
+.start-theme-text { display: block; padding: .75rem; }
+.start-theme-name { display: block; font-weight: var(--lx-weight-semibold); }
+
+.start-theme-check {
+  position: absolute;
+  top: .5rem;
+  inset-inline-end: .5rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--acct-accent);
+  color: var(--acct-on-accent);
+}
+
+.start-theme-check svg { width: 1rem; height: 1rem; }
+.start-theme input:checked ~ .start-theme-check { display: inline-flex; }
+
+/* Each step slides in from the reading direction's end, in the modal and on the page */
+@media (prefers-reduced-motion: no-preference) {
+  .start-step { animation: start-step-in 260ms ease-out both; }
+}
+
+.start-page { --start-step-shift: 24px; }
+[dir='rtl'] .start-page,
+.start-page[dir='rtl'] { --start-step-shift: -24px; }
+
+@keyframes start-step-in {
+  from { opacity: 0; transform: translateX(var(--start-step-shift)); }
+}

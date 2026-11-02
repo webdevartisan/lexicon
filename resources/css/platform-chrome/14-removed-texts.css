@@ -1,0 +1,4 @@
+/* A theme text the owner removed. Themes give their texts their own display, which would beat the plain hidden attribute. */
+[data-edit-text][hidden] {
+    display: none !important;
+}

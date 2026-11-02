@@ -20,7 +20,7 @@
         }, 400);
     }
 
-    document.querySelectorAll('[data-lx-toast]').forEach(function (toast) {
+    function wire(toast) {
         var closeBtn = toast.querySelector('[data-lx-toast-close]');
         if (closeBtn) {
             closeBtn.addEventListener('click', function () {
@@ -34,5 +34,26 @@
                 hide(toast);
             }, delay);
         }
-    });
+    }
+
+    document.querySelectorAll('[data-lx-toast]').forEach(wire);
+
+    // Page scripts show a refusal from the server the same way as a flash. The
+    // page prints the toast's markup in a template, so its look and wording stay there.
+    window.LexiconToast = {
+        show: function (message) {
+            var host = document.querySelector('[data-lx-toast-host]');
+            var template = host && host.querySelector('template[data-lx-toast-template]');
+            if (!template || !message) {
+                return false;
+            }
+
+            var toast = template.content.firstElementChild.cloneNode(true);
+            toast.querySelector('[data-lx-toast-msg]').textContent = message;
+            host.appendChild(toast);
+            wire(toast);
+
+            return true;
+        }
+    };
 })();

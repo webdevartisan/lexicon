@@ -92,7 +92,10 @@ $primaryClass = $primary['variant'] === 'green'
 
     <button type="submit" name="intent" value="<?= e($primary['intent']) ?>"
       data-actionbar-primary
-      data-publish-label="<?= e($primary['label']) ?>"
+      <?php if (isset($primary['later'], $primary['now'])) { ?>
+      data-label-later="<?= e($primary['later']['label']) ?>" data-icon-later="<?= e($primary['later']['icon']) ?>"
+      data-label-now="<?= e($primary['now']['label']) ?>" data-icon-now="<?= e($primary['now']['icon']) ?>"
+      <?php } ?>
       class="inline-flex items-center justify-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium transition-colors focus:ring max-lg:h-11 max-lg:grow <?= $primaryClass ?>">
       <i data-lucide="<?= e($primary['icon']) ?>" class="size-4" aria-hidden="true"></i>
       <span data-primary-label><?= e($primary['label']) ?></span>

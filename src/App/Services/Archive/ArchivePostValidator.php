@@ -128,13 +128,16 @@ final class ArchivePostValidator
         unset($rules['og_image'], $rules['twitter_image']);
 
         $validator = (new Validator($data))->rules($rules);
-        if ($validator->passes()) {
-            return [];
-        }
 
         $errors = [];
-        foreach ($validator->errors() as $field => $messages) {
-            $errors[] = ucfirst(str_replace('_', ' ', $field)).': '.implode(' ', $messages);
+        if (!$validator->passes()) {
+            foreach ($validator->errors() as $field => $messages) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)).': '.implode(' ', $messages);
+            }
+        }
+
+        if (PostFieldRules::missingText((string) $data['status'], $data['content'] ?? null)) {
+            $errors[] = 'Content: only a draft can be left empty.';
         }
 
         return $errors;

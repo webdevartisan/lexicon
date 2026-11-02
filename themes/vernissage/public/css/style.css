@@ -2,6 +2,7 @@
    one wall of viridian. Shared base for every page of the theme. */
 
 :root {
+  --post-accent: var(--viridian);
   --plaster: #f4f1e9;
   --plaster-2: #eae5d9;
   --mat: #faf8f2;
@@ -15,10 +16,10 @@
   --rule: rgba(26, 25, 20, 0.15);
   --rule-strong: rgba(26, 25, 20, 0.45);
 
-  --disp: "Bodoni Moda", "Didot", "Bodoni MT", serif;
-  --sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --text: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --mono: "Fragment Mono", "SFMono-Regular", Consolas, monospace;
+  --disp: "Bodoni Moda", "Noto Naskh Arabic", "Didot", "Bodoni MT", serif;
+  --sans: "Hanken Grotesk", "Noto Naskh Arabic", "Helvetica Neue", Arial, sans-serif;
+  --text: "Source Serif 4", "Noto Naskh Arabic", Georgia, "Times New Roman", serif;
+  --mono: "Fragment Mono", "Noto Naskh Arabic", "SFMono-Regular", Consolas, monospace;
 
   --type-mono: 0.71rem;
   --type-small: 0.95rem;
@@ -405,15 +406,15 @@ a {
   padding: 0.85rem 1.1rem;
   background: var(--mat);
   border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--stone);
+  border-inline-start: 4px solid var(--stone);
   box-shadow: var(--frame-shadow);
   font-size: var(--type-small);
 }
 
-.alert-success { border-left-color: var(--viridian); }
-.alert-danger { border-left-color: #a32c22; }
-.alert-warning { border-left-color: #b98a1c; }
-.alert-info { border-left-color: var(--ink-soft); }
+.alert-success { border-inline-start-color: var(--viridian); }
+.alert-danger { border-inline-start-color: #a32c22; }
+.alert-warning { border-inline-start-color: #b98a1c; }
+.alert-info { border-inline-start-color: var(--ink-soft); }
 
 /* ---------- masthead ---------- */
 
@@ -501,6 +502,7 @@ a {
 }
 
 .nav-pill {
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: var(--type-mono);
   letter-spacing: 0.16em;
@@ -556,8 +558,8 @@ a {
   .nav {
     position: absolute;
     top: 100%;
-    left: 0;
-    right: 0;
+    inset-inline-start: 0;
+    inset-inline-end: 0;
     flex-direction: column;
     align-items: flex-start;
     gap: 0;
@@ -697,83 +699,20 @@ footer.site {
 }
 
 /* ---------- language switcher ---------- */
-/* Shared markup from views/partials/_language_switcher.lex.php. An entry is a
-   link for guests and a form button for signed-in readers, so both are styled. */
 
-.lang-switcher {
-  position: relative;
-  display: inline-block;
+/* ---------- right-to-left ---------- */
+
+/* Joined scripts come apart when letter-spaced, and most labels here set their own tracking */
+:lang(ar) {
+  letter-spacing: normal !important;
 }
 
-.lang-switcher__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.6rem;
-  background: transparent;
-  border: 1px solid rgba(244, 241, 233, 0.32);
-  border-radius: 0;
-  color: rgba(244, 241, 233, 0.78);
-  font-family: var(--mono);
-  font-size: var(--type-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.18s ease, border-color 0.18s ease;
+.arrow:dir(rtl) {
+  scale: -1 1;
 }
 
-.lang-switcher__toggle:hover {
-  color: var(--sage);
-  border-color: var(--sage);
-}
-
-/* Sits in the footer, so it opens upward by default; the script re-measures. */
-.lang-switcher__menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
-  z-index: 40;
-  display: none;
-  min-width: 11rem;
-  margin: 0;
-  padding: 0.25rem;
-  list-style: none;
-  background: var(--viridian-ink);
-  border: 1px solid rgba(244, 241, 233, 0.22);
-  border-radius: 0;
-  box-shadow: 0 14px 30px rgba(12, 39, 28, 0.5);
-}
-
-.lang-switcher__menu.show { display: block; }
-
-.lang-switcher__item {
-  display: block;
-  margin: 0;
-}
-
-.lang-switcher__item a,
-.lang-switcher__item button {
-  display: block;
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  background: transparent;
-  border: 0;
-  border-bottom: 0;
-  border-radius: 0;
-  color: var(--plaster);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.lang-switcher__item a:hover,
-.lang-switcher__item button:hover {
-  background: var(--viridian);
-  color: var(--plaster);
-}
-
-.lang-switcher__item a[aria-current="true"],
-.lang-switcher__item button[aria-current="true"] {
-  color: var(--sage);
+@media (max-width: 800px) {
+  #tour-progress-fill:dir(rtl) {
+    transform-origin: right center;
+  }
 }

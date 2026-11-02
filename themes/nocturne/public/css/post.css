@@ -3,8 +3,8 @@
 .read-progress {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   height: 2px;
   z-index: 120;
   background: transparent;
@@ -88,6 +88,8 @@
 }
 
 .post-content {
+  /* Keeps a wrapped image at the end of the text from spilling into the tags. */
+  display: flow-root;
   grid-column: 3 / span 8;
   font-size: 1.22rem;
   line-height: 1.78;
@@ -98,7 +100,7 @@
   font-family: var(--serif);
   font-size: 3.4em;
   line-height: 0.8;
-  float: left;
+  float: inline-start;
   padding: 0.08em 0.14em 0 0;
   color: var(--brass);
 }
@@ -130,7 +132,7 @@
 .post-content blockquote {
   margin: 2.2em 0;
   padding: 0.4em 0 0.4em 1.6em;
-  border-left: 2px solid var(--brass);
+  border-inline-start: 2px solid var(--brass);
   font-family: var(--serif);
   font-style: italic;
   font-size: 1.35em;
@@ -203,6 +205,7 @@
 .post-engagement {
   grid-column: 3 / span 8;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 0;
@@ -262,7 +265,7 @@
 .share-popover {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 0;
+  inset-inline-start: 0;
   min-width: 210px;
   background: var(--night-2);
   border: 1px solid var(--rule);
@@ -287,7 +290,7 @@
   font-size: var(--type-small);
   text-decoration: none;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: background 0.12s ease;
 }
 
@@ -323,7 +326,7 @@
 }
 
 .post-nav-item.next {
-  text-align: right;
+  text-align: end;
   align-items: flex-end;
 }
 
@@ -457,7 +460,7 @@
 }
 
 .reply-form .reply-cancel {
-  margin-left: 0.85rem;
+  margin-inline-start: 0.85rem;
 }
 
 .comment-form {
@@ -571,7 +574,7 @@
   }
 
   .post-nav-item.next {
-    text-align: left;
+    text-align: start;
     align-items: flex-start;
   }
 }

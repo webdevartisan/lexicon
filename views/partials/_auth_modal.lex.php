@@ -4,6 +4,8 @@
 // so readers never leave the page they were reading. Server endpoints:
 // POST /login/identify, /login, /register/submit, /password/forgot (AJAX/JSON branches).
 // With JS off, every trigger keeps its normal link to the full login page.
+// The script also loads for signed-in readers: after the reload that ends a
+// sign-in, it presses whatever button the reader started with.
 if (!auth()->check()) {
     $authModalReturnTo = (string) ($_SERVER['REQUEST_URI'] ?? '/');
     $authModalMin = password_length_bounds()['min'];
@@ -11,7 +13,7 @@ if (!auth()->check()) {
     // Text the script swaps in as the steps change. Ours, never user input.
     $authModalText = [];
     foreach (['titleLogin', 'titleReply', 'titleComment', 'titleLike', 'titleBookmark', 'intro', 'logIn', 'welcomeBack',
-        'enterPasswordFor', 'createTitle', 'createIntro', 'createSubmit', 'welcomeNew', 'loggedIn', 'resetTitle',
+        'enterPasswordFor', 'createTitle', 'createIntro', 'createSubmit', 'loggedIn', 'resetTitle',
         'resetIntro', 'resetSent', 'invalidEmail', 'passwordRequired', 'passwordTooShort', 'sessionExpired',
         'serverError', 'networkError', 'codeRequired'] as $authModalKey) {
         $authModalText[$authModalKey] = $t('authModal.'.$authModalKey);
@@ -21,7 +23,7 @@ if (!auth()->check()) {
     }
     ?>
 <div class="lex-auth-overlay" id="lex-auth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lex-auth-title"
-     data-return-to="<?= e($authModalReturnTo) ?>" data-nav-url="<?= e(lurl('/auth/nav')) ?>"
+     data-return-to="<?= e($authModalReturnTo) ?>"
      data-identify-url="<?= e(lurl('/login/identify')) ?>" data-login-url="<?= e(lurl('/login')) ?>"
      data-register-url="<?= e(lurl('/register/submit')) ?>" data-forgot-url="<?= e(lurl('/password/forgot')) ?>"
      data-two-factor-url="<?= e(lurl('/login/two-factor')) ?>"
@@ -57,7 +59,7 @@ if (!auth()->check()) {
         </div>
         <input class="acct-input" type="password" id="lex-auth-password" name="password"
                autocomplete="current-password" data-min-length="<?= $authModalMin ?>" required>
-        <p class="acct-hint" data-auth-hint hidden><?= e($t('authModal.minLength', ['min' => $authModalMin])) ?></p>
+        <p class="acct-hint" data-auth-hint hidden><?= e($t(password_hint_key(), ['min' => $authModalMin])) ?></p>
       </div>
       <div class="acct-field" data-auth-register-only hidden>
         <label class="acct-check acct-hint">
@@ -99,6 +101,7 @@ if (!auth()->check()) {
 
     <div data-auth-step="success" hidden>
       <p class="lex-auth-success" data-auth-success-msg><?= e($t('authModal.loggedIn')) ?></p>
+      <button class="acct-btn acct-btn-primary lex-auth-submit" type="button" data-auth-got-it hidden><?= e($t('authModal.gotIt')) ?></button>
     </div>
 
     <p class="lex-auth-foot" data-auth-foot-links>
@@ -118,6 +121,5 @@ if (!auth()->check()) {
     </p>
   </div>
 </div>
-
-<script defer src="<?= e(versioned_asset('/assets/js/auth-modal.js')) ?>"></script>
 <?php } ?>
+<script defer src="<?= e(versioned_asset('/assets/js/auth-modal.js')) ?>"></script>

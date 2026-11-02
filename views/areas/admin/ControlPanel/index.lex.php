@@ -285,8 +285,8 @@ $rows = [
                     <div class="py-2 flex items-center justify-between gap-3 text-sm">
                         <div class="min-w-0">
                             <span class="font-medium text-slate-900 dark:text-zink-50"><?= e((string) ($a['handle'] ?? 'system')) ?></span>
-                            <span class="text-slate-500 dark:text-zink-300"><?= e((string) $a['action']) ?></span>
-                            <span class="text-slate-400 dark:text-zink-300 text-xs"><?= e((string) $a['resource_type']) ?><?= $a['resource_id'] !== null ? ' #'.e((string) $a['resource_id']) : '' ?></span>
+                            <span class="text-slate-500 dark:text-zink-300" title="<?= e((string) $a['action']) ?>"><?= e(\App\Presenters\ActivityPresenter::label((string) $a['action'])) ?></span>
+                            <span class="text-slate-400 dark:text-zink-300 text-xs"><?= e(\App\Presenters\ActivityPresenter::target($a['resource_type'], $a['resource_id'])) ?></span>
                         </div>
                         <span class="shrink-0 text-[11px] text-slate-400 dark:text-zink-300"><?= e(local_datetime($a['created_at'] ?? null, 'M j · g:i a')) ?></span>
                     </div>

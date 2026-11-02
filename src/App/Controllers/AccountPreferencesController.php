@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Helpers\TimezoneHelper;
 use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Services\AccountZone;
 use App\Services\LocaleRegistry;
 use App\Services\SessionLocaleSync;
-use DateTimeZone;
 use Exception;
 use Framework\Core\Response;
 
@@ -29,7 +30,8 @@ final class AccountPreferencesController extends AppController
         private UserPreferencesModel $prefs,
         private PendingEmailChangeModel $pendingEmail,
         private LocaleRegistry $locales,
-        private SessionLocaleSync $localeSync
+        private SessionLocaleSync $localeSync,
+        private AccountZone $zones,
     ) {}
 
     /**
@@ -41,7 +43,8 @@ final class AccountPreferencesController extends AppController
 
         return $this->view('public.Account.preferences', [
             'user' => $this->loadAccount($userId),
-            'timezones' => $this->getGroupedTimezones(),
+            'timezones' => TimezoneHelper::getGroupedTimezones(),
+            'deviceZone' => $this->zones->device(),
             'locales' => $this->localeOptions(),
             'pendingEmail' => $this->pendingEmail->findForUser($userId) ?: null,
         ]);
@@ -55,9 +58,10 @@ final class AccountPreferencesController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $userId = (int) auth()->user()['id'];
+        $automaticZone = $this->request->postParam('timezone') === 'auto';
 
         $validator = $this->validateOrFail([
-            'timezone' => 'timezone',
+            'timezone' => $automaticZone ? 'in:auto' : 'timezone',
             // Built from the registry so adding a locale never means editing this file.
             'locale' => 'in:auto,'.implode(',', $this->locales->supported()),
         ], [
@@ -68,7 +72,8 @@ final class AccountPreferencesController extends AppController
         $validated = $validator->validated();
 
         $this->prefs->upsert($userId, [
-            'timezone' => $validated['timezone'] ?? null,
+            // Automatic is stored as NULL too, so dates follow the device instead of a fixed zone
+            'timezone' => $automaticZone ? null : ($validated['timezone'] ?? null),
             // "auto" is the absence of a preference, stored as NULL so the chrome
             // locale keeps following whatever language the page itself is in.
             'locale' => ($validated['locale'] ?? 'auto') === 'auto' ? null : $validated['locale'],
@@ -89,6 +94,44 @@ final class AccountPreferencesController extends AppController
     }
 
     /**
+     * Save the timezone on its own, leaving the language and every other
+     * preference as they are, then go back to the page it was changed from.
+     */
+    public function updateTimezone(): Response
+    {
+        csrf()->assertValid($this->request->postParam('_token'));
+
+        $back = safe_return_to((string) $this->request->postParam('return_to')) ?? lurl('/dashboard');
+        $zone = TimezoneHelper::currentName((string) $this->request->postParam('timezone'));
+
+        if ($zone === null) {
+            $this->flash('error', chrome_translate('account.flash.zoneUnknown'));
+
+            return $this->redirect($back);
+        }
+
+        $this->prefs->upsert((int) auth()->user()['id'], ['timezone' => $zone]);
+        $this->flash('success', chrome_translate('account.flash.zoneSwitched', ['zone' => TimezoneHelper::label($zone)]));
+
+        return $this->redirect($back);
+    }
+
+    /**
+     * Keep the zone the browser reports, so an account on Automatic reads
+     * dates on this device's clock. Sent by device-zone.js in the background.
+     */
+    public function rememberDeviceZone(): Response
+    {
+        $zone = $this->zones->rememberDevice((string) $this->request->postParam('zone'));
+
+        if ($zone === null) {
+            return $this->json(['error' => chrome_translate('account.flash.zoneUnknown')], 422);
+        }
+
+        return $this->json(['zone' => $zone]);
+    }
+
+    /**
      * Load the sign-in address and interface preferences.
      *
      * @return array<string, mixed>
@@ -104,35 +147,10 @@ final class AccountPreferencesController extends AppController
         $preferences = $this->prefs->findOrCreate($userId) ?: [];
         $merged = array_merge($user, $preferences);
 
-        $merged['timezone'] = $preferences['timezone'] ?? 'UTC';
+        $merged['timezone'] = $this->zones->chosen($userId) ?? 'auto';
         $merged['locale'] = $preferences['locale'] ?? 'auto';
 
         return $merged;
-    }
-
-    /**
-     * Get timezones grouped by region for the select dropdown.
-     *
-     * @return array<string, string[]>
-     */
-    private function getGroupedTimezones(): array
-    {
-        $zones = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
-        $grouped = [];
-
-        foreach ($zones as $zone) {
-            $parts = explode('/', $zone, 2);
-
-            // deprecated zones such as "UTC" have no region prefix
-            if (count($parts) === 1) {
-                $grouped['Other'][] = $zone;
-                continue;
-            }
-
-            $grouped[$parts[0]][] = $zone;
-        }
-
-        return $grouped;
     }
 
     /**

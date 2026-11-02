@@ -634,15 +634,14 @@ try {
                 echo "📝 Configuring site settings...\n\n";
 
                 $siteName = promptInput('Site name', $_ENV['APP_NAME'] ?? 'Lexicon Blog');
-                $siteDescription = promptInput('Site description', 'A modern PHP blog');
 
                 try {
                     $stmt = $pdo->prepare("
                         INSERT INTO settings (name, value)
-                        VALUES ('site_name', ?), ('site_description', ?)
+                        VALUES ('site_name', ?)
                         ON DUPLICATE KEY UPDATE value = VALUES(value)
                     ");
-                    $stmt->execute([$siteName, $siteDescription]);
+                    $stmt->execute([$siteName]);
 
                     echo "✅ Site settings saved\n\n";
                 } catch (PDOException $e) {

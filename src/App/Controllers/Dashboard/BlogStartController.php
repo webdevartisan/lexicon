@@ -62,7 +62,7 @@ final class BlogStartController extends AppController
             }
         }
 
-        return $this->redirect('/dashboard/blog/'.$blog->id().'/start/look');
+        return $this->redirect('/start/'.$blog->id().'/look');
     }
 
     /**
@@ -100,7 +100,7 @@ final class BlogStartController extends AppController
         if (!$this->blogThemes->activate($blog->id(), $key, $userId, $this->request->ip())) {
             $this->flash('error', $this->t('setup.start.look.unknown'));
 
-            return $this->redirect('/dashboard/blog/'.$blog->id().'/start/look');
+            return $this->redirect('/start/'.$blog->id().'/look');
         }
 
         // Picking the default look still counts as choosing one

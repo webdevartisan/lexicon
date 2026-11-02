@@ -1,0 +1,100 @@
+{
+    "comments": {
+        "heading": {
+            "one": "Trail register · {count} entry",
+            "other": "Trail register · {count} entries"
+        },
+        "formLabel": "Add an entry to the register…",
+        "formButton": "Leave an entry",
+        "closed": "The register is closed for this waypoint."
+    },
+    "nav": {
+        "home": "Trailhead",
+        "archive": "Route log",
+        "subscribe": "Dispatches",
+        "primary": "Primary",
+        "openMenu": "Open menu",
+        "homeOf": "{blog}, home",
+        "filterByCategory": "Filter posts by category"
+    },
+    "minutes": "{count} Min",
+    "by": "By {author}",
+    "emailLabel": "Your address",
+    "footer": {
+        "scale": "0 to 5 km · sheet {year} · grid {grid}"
+    },
+    "home": {
+        "est": "Est. {year} · Field atlas",
+        "waypoints": {
+            "one": "{count} Waypoint",
+            "other": "{count} Waypoints"
+        },
+        "trail": "{minutes} Min ≈ {km} km of trail",
+        "youAreHere": "You are here",
+        "subtitle": "Notes from the field, plotted one waypoint at a time.",
+        "fallbackCategory": "Field note",
+        "inset": "Inset W-01 · {category}",
+        "nearest": "W-01 · Nearest",
+        "distance": "0.0 km from here",
+        "walkNearest": "Walk to the nearest post",
+        "routeTitle": "The route.",
+        "routeCount": {
+            "one": "{count} waypoint",
+            "other": "{count} waypoints"
+        },
+        "all": "Full route",
+        "plotted": "Waypoints {shown} of {total} plotted · {blog}",
+        "openAll": "Follow the full route",
+        "inCategory": "{count} waypoints on the {name} leg",
+        "viewAll": "Follow this leg",
+        "legendTitle": "The{br}legend.",
+        "surveyedSinceLine": "Surveyed since",
+        "surveyedSince": "{line} {year}",
+        "keyDot": "One published waypoint",
+        "keyBlaze": "A blaze marks the active leg",
+        "keyDash": "Trail ahead, not yet written",
+        "aboutDefault": "{blog}, surveyed on foot, plotted in words, published waypoint by waypoint.",
+        "sign": "{owner}, surveyor",
+        "fine": "{blog} is set in Besley & Barlow, drawn on chart paper #F3F5EE with one blaze of trail orange, and published on {platform}.",
+        "newsEyebrow": "Field dispatches",
+        "newsHeading": "Every new waypoint, sent from the trail.",
+        "newsText": "One email per post. No tracking, easy unsubscribe.",
+        "subscribe": "Subscribe",
+        "newsFine": "Free. Unsubscribe at any waypoint",
+        "gap": {
+            "sameDay": "Same day",
+            "days": {
+                "one": "{count} day back",
+                "other": "{count} days back"
+            },
+            "months": {
+                "one": "{count} month back",
+                "other": "{count} months back"
+            }
+        }
+    },
+    "archive": {
+        "pageTitle": "Route log · {blog}",
+        "kicker": "The route log · {blog}",
+        "heading": "Every waypoint, plotted.",
+        "dek": "The full survey of {blog}, newest waypoint first.",
+        "back": "← Back to the trailhead",
+        "season": "Season",
+        "empty": "No waypoints plotted yet.",
+        "leg": "Leg {page} / {pages} · waypoints {from} to {to} of {total}",
+        "pagination": "Pagination",
+        "prev": "← Prev leg",
+        "next": "Next leg →"
+    },
+    "post": {
+        "meta": "{minutes} Min ≈ {km} km",
+        "by": "Surveyed by {author}",
+        "backTo": "Back to {blog}",
+        "fig": "Fig. 01 · {title}",
+        "marked": "Marked",
+        "previous": "← Back down the trail",
+        "next": "Onward →",
+        "related": "Nearby on the map",
+        "read": "Walk over"
+    }
+}

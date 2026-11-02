@@ -15,6 +15,8 @@
   if (window.LexiconReport) return;
 
   var DETAILS_MAX = 1000;
+  var script = document.currentScript;
+  var wording = readText(script);
   var reasons = null;
   var dialog = null;
   var parts = {};
@@ -38,34 +40,48 @@
     return reasons;
   }
 
-  function el(tag, attrs, text) {
+  /** The wording the page rendered in the reader's language. */
+  function readText(script) {
+    try {
+      return JSON.parse((script && script.getAttribute('data-text')) || '{}');
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function el(tag, attrs, label) {
     var node = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, attrs[key]); });
-    if (text) node.textContent = text;
+    if (label) node.textContent = label;
     return node;
   }
 
   function build() {
     dialog = el('dialog', { class: 'lex-report', 'aria-labelledby': 'lex-report-title' });
+    // The page is marked with the post's language; the dialog speaks the reader's
+    if (script && script.getAttribute('data-lang')) {
+      dialog.lang = script.getAttribute('data-lang');
+      dialog.dir = script.getAttribute('data-dir') || 'auto';
+    }
 
     var form = el('form', { class: 'lex-report-form', novalidate: '' });
     parts.title = el('h2', { id: 'lex-report-title', class: 'acct-title' });
-    var lede = el('p', { class: 'acct-intro' }, 'A moderator will look at it. The author is not told who reported it.');
+    var lede = el('p', { class: 'acct-intro' }, wording.intro);
 
     parts.list = el('fieldset', { class: 'lex-report-reasons' });
-    parts.list.appendChild(el('legend', { class: 'acct-label' }, 'What is wrong with it?'));
+    parts.list.appendChild(el('legend', { class: 'acct-label' }, wording.reasons));
     parts.options = el('div', { class: 'lex-report-options' });
     parts.list.appendChild(parts.options);
 
-    var detailsLabel = el('label', { for: 'lex-report-details', class: 'acct-label' }, 'Anything a moderator should know? (optional)');
-    parts.details = el('textarea', { id: 'lex-report-details', class: 'acct-input', name: 'details', rows: '3', maxlength: String(DETAILS_MAX) });
+    var detailsLabel = el('label', { for: 'lex-report-details', class: 'acct-label' }, wording.details);
+    parts.details = el('textarea', { id: 'lex-report-details', class: 'acct-input', name: 'details', rows: '3', dir: 'auto', maxlength: String(DETAILS_MAX) });
 
     parts.error = el('p', { class: 'panel-flash is-error', role: 'alert' });
     parts.error.hidden = true;
 
     var actions = el('div', { class: 'acct-actions' });
-    parts.cancel = el('button', { type: 'button', class: 'acct-btn' }, 'Cancel');
-    parts.submit = el('button', { type: 'submit', class: 'acct-btn acct-btn-primary' }, 'Send report');
+    parts.cancel = el('button', { type: 'button', class: 'acct-btn' }, wording.cancel);
+    parts.submit = el('button', { type: 'submit', class: 'acct-btn acct-btn-primary' }, wording.send);
     actions.appendChild(parts.cancel);
     actions.appendChild(parts.submit);
 
@@ -84,7 +100,7 @@
 
     parts.done = el('div', { class: 'lex-report-done', role: 'status' });
     parts.doneText = el('p', {});
-    parts.close = el('button', { type: 'button', class: 'acct-btn acct-btn-primary' }, 'Close');
+    parts.close = el('button', { type: 'button', class: 'acct-btn acct-btn-primary' }, wording.close);
     parts.done.appendChild(parts.doneText);
     parts.done.appendChild(parts.close);
     parts.done.hidden = true;
@@ -120,7 +136,7 @@
 
   function busy(on) {
     parts.submit.disabled = on;
-    parts.submit.textContent = on ? 'Sending...' : 'Send report';
+    parts.submit.textContent = on ? wording.sending : wording.send;
   }
 
   function renderReasons(list) {
@@ -147,7 +163,7 @@
     var picked = parts.options.querySelector('input[name="reason"]:checked');
 
     if (!picked) {
-      showError('Choose what is wrong with it.');
+      showError(wording.pickReason);
       var first = parts.options.querySelector('input[name="reason"]');
       if (first) first.focus();
       return;
@@ -162,7 +178,7 @@
       .then(function (message) {
         parts.form.hidden = true;
         parts.done.hidden = false;
-        parts.doneText.textContent = message || 'Thanks. A moderator will look at it.';
+        parts.doneText.textContent = message || wording.thanks;
         parts.close.focus();
       })
       .catch(function (error) {
@@ -172,7 +188,7 @@
           return;
         }
 
-        showError((error && error.message) || 'That report could not be sent. Please try again.');
+        showError((error && error.message) || wording.failed);
       })
       .finally(function () { busy(false); });
   }
@@ -185,7 +201,7 @@
     if (dialog.open) return;
 
     current = options;
-    parts.title.textContent = 'Report this ' + options.subject;
+    parts.title.textContent = (wording.title || {})[options.subject] || '';
     parts.form.hidden = false;
     parts.done.hidden = true;
     parts.error.hidden = true;
@@ -203,8 +219,8 @@
       })
       .catch(function (error) {
         console.error('Report reasons could not be loaded:', error);
-        showError('The list of reasons could not be loaded. Close this and try again.');
-        parts.submit.textContent = 'Send report';
+        showError(wording.reasonsFailed);
+        parts.submit.textContent = wording.send;
         parts.cancel.focus();
       });
   }

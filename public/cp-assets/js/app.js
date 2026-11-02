@@ -1,51 +1,5 @@
-// const { document } = require("postcss");
-
-/**
- * Global State Variables
- * 
- * We store these at module level to maintain state across function calls.
- */
-var navbarMenuHTML = document.querySelector(".app-menu")?.innerHTML || '';
+/** SimpleBar on the sidebar, created the first time it is expanded and kept from then on. */
 let scrollbarElement = null;
-
-/**
- * Scrollbar Logic State Tracker
- * 
- * We prevent multiple simultaneous innerHTML replacement operations
- * by tracking pending timeouts. This eliminates duplicate icon destruction.
- */
-let scrollbarResetTimeout = null;
-
-/**
- * Remove active state from dropdown menus
- * 
- * @param {HTMLElement} content - Content element to preserve
- */
-function removeActiveMenu(content) {
-    document.querySelector("#scrollbar")?.querySelectorAll('.dropdown-button.show').forEach((aTag) => {
-        if (!Object.is(aTag?.nextElementSibling, content)) {
-            aTag?.classList.remove('show');
-            aTag?.nextElementSibling?.classList.add('opacity-100');
-            aTag?.nextElementSibling?.classList.add('hidden');
-        }
-    });
-}
-
-/**
- * Update parent element active states
- * 
- * We recursively update parent dropdown states when a child is active.
- * 
- * @param {HTMLElement} button - Button element
- */
-function updateParentActive(button) {
-    if (button?.closest(".dropdown-content")) {
-        button.closest(".dropdown-content").classList.remove("hidden");
-        button.closest(".dropdown-content").classList.remove('opacity-100');
-        button.closest(".dropdown-content").previousElementSibling?.classList.add("show");
-        updateParentActive(button.closest(".dropdown-content").previousElementSibling);
-    }
-}
 
 /**
  * Handle hamburger menu click
@@ -64,7 +18,6 @@ function toggleHamburgerMenu() {
     const currentSize = document.documentElement.getAttribute('data-sidebar-size');
     
     // We find elements we need to manipulate
-    const hamburgerIcon = document.querySelector('.hamburger-icon');
     const verticalOverlay = document.getElementById('sidebar-overlay');
     const appMenu = document.querySelector('.app-menu');
     
@@ -72,11 +25,6 @@ function toggleHamburgerMenu() {
     if (category === 'mobile') {
         handleMobileMenuOpen(verticalOverlay, appMenu);
         return; // Stop here, don't continue to desktop logic
-    }
-    
-    // We toggle hamburger icon animation (for desktop/tablet only)
-    if (hamburgerIcon) {
-        hamburgerIcon.classList.toggle('open');
     }
     
     // We calculate NEW size (opposite of current)
@@ -176,7 +124,6 @@ function windowResizeHover() {
     const calculatedSize = SidebarStateManager.calculateSidebarSize();
     
     // We find elements we need
-    const hamburgerIcon = document.querySelector('.hamburger-icon');
     const appMenu = document.querySelector('.app-menu');
     
     // We clean up mobile-specific classes when NOT on mobile
@@ -190,65 +137,16 @@ function windowResizeHover() {
     // We apply the calculated size
     document.documentElement.setAttribute('data-sidebar-size', calculatedSize);
     
-    // We update hamburger icon visual state
-    if (hamburgerIcon) {
-        if (calculatedSize === SidebarStateManager.SIDEBAR_SIZES.SMALL) {
-            hamburgerIcon.classList.add('open');
-        } else {
-            hamburgerIcon.classList.remove('open');
-        }
-    }
-    
     // We update scrollbar - but ONLY after debounced resize settles
     applyScrollbarLogic();
 }
 
 /**
- * Initialize active menu highlighting
- * 
- * We highlight the current page's menu item based on URL path.
- * This provides visual feedback about current location in the app.
- */
-function initActiveMenu() {
-    var currentPath = location.pathname == "/" ? "index.html" : location.pathname.substring(1);
-    currentPath = currentPath.substring(currentPath.lastIndexOf("/") + 1);
-    
-    if (currentPath) {
-        // We find the navbar-nav element
-        var a = document.getElementById("navbar-nav")?.querySelector('[href="' + currentPath + '"]');
-        
-        if (a) {
-            a.classList.add("active");
-            var parentCollapseDiv = a.parentElement.parentElement.parentElement;
-            
-            if (parentCollapseDiv) {
-                if (document.documentElement.getAttribute("data-layout") == "vertical") {
-                    parentCollapseDiv.classList.remove("hidden");
-                }
-                parentCollapseDiv.classList.add("active");
-                parentCollapseDiv.previousElementSibling?.classList.add("active");
-                parentCollapseDiv.previousElementSibling?.classList.add("show");
-                
-                if (document.documentElement.getAttribute("data-layout") == "vertical") {
-                    parentCollapseDiv.previousElementSibling?.parentElement.parentElement.parentElement?.classList.remove("hidden");
-                }
-                parentCollapseDiv.previousElementSibling?.parentElement.parentElement.parentElement?.previousElementSibling?.classList.add("active");
-            }
-            
-            initMenuItemScroll();
-        }
-    }
-}
-
-/**
- * Apply scrollbar logic based on sidebar size
- * 
- * OPTIMIZED VERSION:
- * We initialize SimpleBar for smooth scrolling in expanded mode.
- * We avoid innerHTML replacement entirely to prevent icon destruction.
- * 
- * SECURITY: We don't use innerHTML replacement which could introduce XSS risks.
- * PERFORMANCE: We eliminate unnecessary DOM destruction/recreation.
+ * Give the expanded sidebar its SimpleBar scroller.
+ *
+ * It is never unmounted: unMount() leaves its wrappers behind, so each collapse and
+ * expand nested another scroller inside the last. On the rail, CSS opens the
+ * wrappers up and hides the tracks instead.
  */
 function applyScrollbarLogic() {
     // We only apply scrollbar logic to vertical layouts
@@ -256,7 +154,6 @@ function applyScrollbarLogic() {
         return;
     }
     
-    const currentSize = document.documentElement.getAttribute("data-sidebar-size");
     const scrollbarContainer = document.getElementById("scrollbar");
     
     if (!scrollbarContainer) {
@@ -264,32 +161,13 @@ function applyScrollbarLogic() {
         return;
     }
     
-    // We clear any pending innerHTML replacement timeout
-    if (scrollbarResetTimeout) {
-        clearTimeout(scrollbarResetTimeout);
-        scrollbarResetTimeout = null;
+    if (scrollbarElement || document.documentElement.getAttribute("data-sidebar-size") === "sm") {
+        return;
     }
-    
-    if (currentSize === "sm") {
-        // We destroy SimpleBar instance if it exists (collapsed sidebar doesn't need smooth scrolling)
-        if (scrollbarElement && typeof scrollbarElement.unMount === 'function') {
-            scrollbarElement.unMount();
-            scrollbarElement = null;
-            scrollbarContainer.removeAttribute("data-more-below");
-        }
-        
-        // We reset active menu states without destroying DOM
-        initActiveMenu();
-    } else {
-        // We initialize SimpleBar for smooth scrolling (expanded sidebar)
-        if (!scrollbarElement) {
-            // autoHide off keeps the thumb visible, so touch users can see the list scrolls
-            scrollbarElement = new SimpleBar(scrollbarContainer, { autoHide: false });
-            watchSidebarOverflow(scrollbarContainer, scrollbarElement);
-        }
 
-        initActiveMenu();
-    }
+    // autoHide off keeps the thumb visible, so touch users can see the list scrolls
+    scrollbarElement = new SimpleBar(scrollbarContainer, { autoHide: false });
+    watchSidebarOverflow(scrollbarContainer, scrollbarElement);
 }
 
 /**
@@ -319,47 +197,6 @@ function watchSidebarOverflow(container, bar) {
 }
 
 /**
- * Scroll active menu item into view
- * 
- * We automatically scroll the sidebar to show the active menu item
- * when it's outside the visible area. This improves UX by ensuring
- * users always see their current location in the navigation.
- */
-function initMenuItemScroll() {
-    var sidebarMenu = document.getElementById("navbar-nav");
-    if (!sidebarMenu) return;
-    
-    var currentPath = location.pathname == "/" ? "index.html" : location.pathname.substring(1);
-    currentPath = currentPath.substring(currentPath.lastIndexOf("/") + 1);
-    
-    var activeMenu = document.getElementById("navbar-nav")?.querySelector('[href="' + currentPath + '"]');
-    if (!activeMenu) return;
-    
-    const bodyHeight = (window.innerHeight/2) < 85 ? 85 : window.innerHeight/2;
-    var offsetTopRelativeToBody = 0;
-    
-    // We calculate total offset from top
-    while (activeMenu) {
-        offsetTopRelativeToBody += activeMenu.offsetTop;
-        activeMenu = activeMenu.offsetParent;
-    }
-    
-    // We only scroll if item is far from top
-    if (offsetTopRelativeToBody > 300) {
-        var verticalMenu = document.getElementsByClassName("app-menu") ? document.getElementsByClassName("app-menu")[0] : "";
-        var scrollWrapper = verticalMenu?.querySelector(".simplebar-content-wrapper");
-        
-        if (verticalMenu && scrollWrapper) {
-            var scrollTop = offsetTopRelativeToBody == 330 ? offsetTopRelativeToBody + 85 : offsetTopRelativeToBody - bodyHeight;
-            scrollWrapper.scrollTo({
-                top: scrollTop,
-                behavior: "smooth"
-            });
-        }
-    }
-}
-
-/**
  * Set up window event listeners
  * 
  * We initialize all window-level event listeners for resize,
@@ -373,8 +210,11 @@ function windowLoadContent() {
     });
     
     window.addEventListener("load", function () {
-        initActiveMenu();
         isLoadBodyElement();
+        // Only now may size changes animate: the size set while loading is where the page starts, not a move.
+        requestAnimationFrame(function () {
+            document.documentElement.setAttribute("data-sidebar-motion", "");
+        });
     });
     
     if (document.getElementById("topnav-hamburger-icon")) {
@@ -420,9 +260,6 @@ function initializeSidebarResize() {
 function init() {
     // We set up window event listeners first
     windowLoadContent();
-    
-    // We initialize menu item scrolling
-    initMenuItemScroll();
     
     // We initialize sidebar resize handling
     // NOTE: This calls windowResizeHover() which calls applyScrollbarLogic()

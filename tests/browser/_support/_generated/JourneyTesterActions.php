@@ -1,4 +1,4 @@
-<?php  //[STAMP] b28b579d485e3a18b47f3b33585ce74f
+<?php  //[STAMP] be1ef657762be0f56136e17d5d5c9f6d
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4944,6 +4944,28 @@ trait JourneyTesterActions
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
+     * Look at pages on a 375px phone screen until putThePhoneAway().
+     * @see \Support\Helper\Lexicon::amOnAPhone()
+     */
+    public function amOnAPhone(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Condition('amOnAPhone', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Go back to the run's own screen, which stays the phone when the whole run is on one.
+     * @see \Support\Helper\Lexicon::putThePhoneAway()
+     */
+    public function putThePhoneAway(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('putThePhoneAway', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
      * Reject all cookies if the banner is up, and wait out the reload it causes.
      * @see \Support\Helper\Lexicon::declineCookies()
      */
@@ -4967,12 +4989,35 @@ trait JourneyTesterActions
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
+     * Go to a page from the open settings dialog's menu. On a phone the menu is folded into
+     * one button, so that opens first.
+     * @see \Support\Helper\Lexicon::openSettingsPage()
+     */
+    public function openSettingsPage(string $label): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('openSettingsPage', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
      * Open the media library's upload panel unless it already shows, as it does on an empty library.
      * Upload messages appear inside it, so a closed panel hides them.
      * @see \Support\Helper\Lexicon::openTheMediaUploader()
      */
     public function openTheMediaUploader(): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('openTheMediaUploader', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Write the first words of a new post into its still empty editor.
+     * @see \Support\Helper\Lexicon::writeInTheEmptyEditor()
+     */
+    public function writeInTheEmptyEditor(string $text): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('writeInTheEmptyEditor', func_get_args()));
     }
 
  

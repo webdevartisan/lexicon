@@ -20,6 +20,9 @@ class EmailVerificationService
 {
     public const TOKEN_TTL_HOURS = 24;
 
+    /** Session key for the page a new account signed up from; the link brings them back there. */
+    public const RETURN_SESSION_KEY = 'verify_return';
+
     public function __construct(
         private EmailVerificationModel $links,
         private UserModel $users,

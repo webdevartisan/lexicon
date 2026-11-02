@@ -15,7 +15,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   $hasMore = $postCount > 1 + count($gridPosts);
 
   // Total trail: reading minutes across the landing's posts, and the distance
-  // they'd cover at walking pace (5 km/h) — the atlas measures reading in km.
+  // they'd cover at walking pace (5 km/h). The atlas measures reading in km.
   $totalMinutes = 0;
   foreach (($posts ?? []) as $p) {
       $totalMinutes += reading_time($p['content'] ?? '');
@@ -32,12 +32,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="trailhead" id="top">
   <div class="container">
     <div class="th-meta">
-      <span>Est. <?= e(!empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y')) ?> &middot; Field atlas</span>
-      <span><?= $postCount ?> Waypoint<?= $postCount === 1 ? '' : 's' ?></span>
-      <span><?= $totalMinutes ?> Min &asymp; <?= $totalKm ?> km of trail</span>
+      <?php $estParams = ['year' => e(!empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'))]; ?>
+      <span<?= $wording->attrs('closest::home.est', $estParams) ?>><?= $wording->html('closest::home.est', $estParams) ?></span>
+      <span><?= e(translate_count('closest::home.waypoints', $postCount)) ?></span>
+      <?php $trailParams = ['minutes' => (int) $totalMinutes, 'km' => e((string) $totalKm)]; ?>
+      <span<?= $wording->attrs('closest::home.trail', $trailParams) ?>><?= $wording->html('closest::home.trail', $trailParams) ?></span>
     </div>
 
-    <h1 class="th-name" data-split><?= $blogTitle ?></h1>
+    <h1 class="th-name" data-split dir="auto"><?= $blogTitle ?></h1>
 
     <div class="th-route" aria-hidden="true">
       <svg viewBox="0 0 1200 150" preserveAspectRatio="none" focusable="false">
@@ -47,16 +49,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
       </svg>
       <a class="yah" id="yah" href="#nearest" tabindex="-1">
         <span class="yah-pin"><span></span></span>
-        <span class="yah-label">You are here</span>
+        <span class="yah-label"<?= $wording->attrs('closest::home.youAreHere') ?>><?= $wording->html('closest::home.youAreHere') ?></span>
       </a>
     </div>
 
     <div class="th-bottom">
-      <p class="th-dek reveal">
-        <?= !empty($settings['subtitle']) ? e($settings['subtitle']) : 'Notes from the field, plotted one waypoint at a time.' ?>
-      </p>
-      <?php if (!empty($settings['tagline'])) { ?>
-        <span class="th-blaze reveal"><?= e($settings['tagline']) ?></span>
+      <p class="th-dek reveal"<?= edit_text_attrs('subtitle', $t('closest::home.subtitle')) ?>><?= !empty($settings['subtitle']) ? e($settings['subtitle']) : e($t('closest::home.subtitle')) ?></p>
+      <?php if (!empty($settings['tagline']) || !empty($edit_texts)) { ?>
+        <span class="th-blaze reveal"<?= edit_text_attrs('tagline') ?><?= empty($settings['tagline']) ? ' hidden' : '' ?>><?= e($settings['tagline'] ?? '') ?></span>
       <?php } ?>
     </div>
   </div>
@@ -70,7 +70,7 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
     $fDate = e($fmtDate($featuredPost['published_at'] ?? ''));
-    $fCat = e($featuredPost['category'] ?? 'Field note');
+    $fCat = e($featuredPost['category'] ?? $t('closest::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>
 <section class="nearest" id="nearest">
@@ -78,13 +78,13 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
     <div class="nearest-grid">
       <a href="<?= $fUrl ?>" class="inset nearest-inset reveal" aria-hidden="true" tabindex="-1">
         <span class="inset-img"><img src="<?= $fImg ?>" alt="" loading="eager" /></span>
-        <span class="inset-cap">Inset W-01 &middot; <?= $fCat ?></span>
+        <span class="inset-cap"<?= $wording->attrs('closest::home.inset', ['category' => $fCat]) ?>><?= $wording->html('closest::home.inset', ['category' => $fCat]) ?></span>
       </a>
 
       <div class="nearest-body">
         <div class="nearest-tag reveal">
-          <span class="wp-chip wp-chip--blaze">W-01 &middot; Nearest</span>
-          <span class="eyebrow">0.0 km from here</span>
+          <span class="wp-chip wp-chip--blaze"<?= $wording->attrs('closest::home.nearest') ?>><?= $wording->html('closest::home.nearest') ?></span>
+          <span class="eyebrow"<?= $wording->attrs('closest::home.distance') ?>><?= $wording->html('closest::home.distance') ?></span>
         </div>
 
         <h2 class="nearest-title reveal"><a href="<?= $fUrl ?>"><?= $fTitle ?></a></h2>
@@ -94,14 +94,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
         <?php } ?>
 
         <div class="nearest-byline reveal">
-          <?php if ($fAuthor) { ?><span>By <?= $fAuthor ?></span><?php } ?>
+          <?php if ($fAuthor) { ?><span><?= translate_html('closest::by', ['author' => $fAuthor]) ?></span><?php } ?>
           <?php if ($fDate) { ?><span><?= $fDate ?></span><?php } ?>
-          <span><?= $fMinutes ?> Min</span>
+          <span><?= e($t('closest::minutes', ['count' => $fMinutes])) ?></span>
         </div>
 
         <a href="<?= $fUrl ?>" class="link-arrow reveal">
-          Walk to the nearest post
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          <span<?= $wording->attrs('closest::home.walkNearest') ?>><?= $wording->html('closest::home.walkNearest') ?></span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </a>
       </div>
     </div>
@@ -115,13 +115,14 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 <section class="route" id="route">
   <div class="container">
     <div class="route-head">
-      <h2 class="route-title reveal">The route.</h2>
-      <span class="route-count reveal" id="filter-count"><?= count($gridPosts) ?> waypoint<?= count($gridPosts) === 1 ? '' : 's' ?></span>
+      <h2 class="route-title reveal"<?= $wording->attrs('closest::home.routeTitle') ?>><?= $wording->html('closest::home.routeTitle') ?></h2>
+      <span class="route-count reveal" id="filter-count"><?= e(translate_count('closest::home.routeCount', count($gridPosts))) ?></span>
     </div>
 
-    <ul class="filter-list reveal" role="tablist" aria-label="Filter posts by category">
+    <ul class="filter-list reveal" role="tablist" aria-label="<?= e($t('closest::nav.filterByCategory')) ?>"
+        data-text="<?= e(json_encode(['inCategory' => $t('closest::home.inCategory'), 'count' => ['one' => $t('closest::home.routeCount.one'), 'other' => $t('closest::home.routeCount.other')]], JSON_UNESCAPED_UNICODE)) ?>">
       <?php $allActive = ($activeCategory ?? '') === ''; ?>
-      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>">Full route</a></li>
+      <li class="<?= $allActive ? 'is-active' : '' ?>"><a href="<?= lurl('/blog/'.$blogSlug) ?>" data-filter="" role="tab" aria-selected="<?= $allActive ? 'true' : 'false' ?>"><span<?= $wording->attrs('closest::home.all') ?>><?= $wording->html('closest::home.all') ?></span></a></li>
       <?php foreach (($categories ?? []) as $c) {
           $cSlug = (string) ($c['slug'] ?? '');
           $catActive = ($activeCategory ?? '') === $cSlug;
@@ -139,10 +140,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
 
     <?php $archiveUrl = lurl('/blog/'.$blogSlug.'/archive'); ?>
     <div class="route-footer reveal" id="index-footer" data-archive="<?= $archiveUrl ?>" data-allmore="<?= $hasMore ? '1' : '0' ?>"<?= $hasMore ? '' : ' style="display:none;"' ?>>
-      <span class="route-count" id="index-footer-count">Waypoints <?= sprintf('%02d', 1 + count($gridPosts)) ?> of <?= sprintf('%02d', $postCount) ?> plotted &mdash; <?= $blogTitle ?></span>
+      <?php $plotted = ['shown' => sprintf('%02d', 1 + count($gridPosts)), 'total' => sprintf('%02d', $postCount), 'blog' => $blogTitle]; ?>
+      <span class="route-count"><span id="index-footer-count"<?= $wording->attrs('closest::home.plotted', $plotted) ?>><?= $wording->html('closest::home.plotted', $plotted) ?></span><span id="index-footer-leg" hidden></span></span>
       <a href="<?= $archiveUrl ?>" class="link-arrow" id="index-footer-link">
-        <span id="index-footer-label">Follow the full route</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        <span id="index-footer-label"<?= $wording->attrs('closest::home.openAll') ?>><?= $wording->html('closest::home.openAll') ?></span>
+        <span id="index-footer-leg-label" hidden><?= e($t('closest::home.viewAll')) ?></span>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
   </div>
@@ -153,33 +156,26 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="legend-grid">
       <div class="legend-side">
-        <h2 class="legend-title reveal">The<br />legend.</h2>
+        <?php $legendBreak = ['br' => '<br />']; ?>
+        <h2 class="legend-title reveal"<?= $wording->attrs('closest::home.legendTitle', $legendBreak) ?>><?= $wording->html('closest::home.legendTitle', $legendBreak) ?></h2>
         <?php $estLabel = !empty($settings['founded_year']) ? (string) $settings['founded_year'] : date('Y'); ?>
-        <span class="legend-est reveal">Surveyed since <?= e($estLabel) ?></span>
+        <?php $surveyedLine = '<span'.$wording->attrs('closest::home.surveyedSinceLine').'>'.$wording->html('closest::home.surveyedSinceLine').'</span>'; ?>
+        <span class="legend-est reveal"><?= translate_html('closest::home.surveyedSince', ['line' => $surveyedLine, 'year' => '<span'.edit_text_attrs('founded_year', date('Y')).'>'.e($estLabel).'</span>']) ?></span>
       </div>
 
       <div class="legend-body">
         <ul class="legend-key reveal" aria-hidden="true">
-          <li><span class="key-sym key-sym--dot"></span> One published waypoint</li>
-          <li><span class="key-sym key-sym--blaze"></span> A blaze &mdash; marks the active leg</li>
-          <li><span class="key-sym key-sym--dash"></span> Trail ahead, not yet written</li>
+          <li><span class="key-sym key-sym--dot"></span> <span<?= $wording->attrs('closest::home.keyDot') ?>><?= $wording->html('closest::home.keyDot') ?></span></li>
+          <li><span class="key-sym key-sym--blaze"></span> <span<?= $wording->attrs('closest::home.keyBlaze') ?>><?= $wording->html('closest::home.keyBlaze') ?></span></li>
+          <li><span class="key-sym key-sym--dash"></span> <span<?= $wording->attrs('closest::home.keyDash') ?>><?= $wording->html('closest::home.keyDash') ?></span></li>
         </ul>
 
-        <p class="legend-statement reveal">
-          <?php if (!empty($settings['about_text'])) { ?>
-            <?= e($settings['about_text']) ?>
-          <?php } elseif (!empty($settings['subtitle'])) { ?>
-            <?= e($settings['subtitle']) ?>
-          <?php } else { ?>
-            <?= $blogTitle ?> &mdash; surveyed on foot, plotted in words, published waypoint by waypoint.
-          <?php } ?>
-        </p>
-        <span class="legend-sign reveal">&mdash; <?= $ownerName ?>, surveyor</span>
+        <?php $aboutDefault = !empty($settings['subtitle']) ? e($settings['subtitle']) : translate_html('closest::home.aboutDefault', ['blog' => $blogTitle]); ?>
+        <p class="legend-statement reveal"<?= edit_text_attrs('about_text', $aboutDefault) ?>><?= !empty($settings['about_text']) ? e($settings['about_text']) : $aboutDefault ?></p>
+        <span class="legend-sign reveal"<?= $wording->attrs('closest::home.sign', ['owner' => $ownerName]) ?>><?= $wording->html('closest::home.sign', ['owner' => $ownerName]) ?></span>
 
-        <p class="legend-fine reveal">
-          <?= $blogTitle ?> is set in Besley &amp; Barlow, drawn on chart paper #F3F5EE
-          with one blaze of trail orange, and published on <?= e(env('APP_NAME', 'the web')) ?>.
-        </p>
+        <?php $fineParams = ['blog' => $blogTitle, 'platform' => e(env('APP_NAME', ''))]; ?>
+        <p class="legend-fine reveal"<?= $wording->attrs('closest::home.fine', $fineParams) ?>><?= $wording->html('closest::home.fine', $fineParams) ?></p>
       </div>
     </div>
   </div>
@@ -189,28 +185,29 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
   <div class="container">
     <div class="dispatch-slab">
       <div class="dispatch-copy">
-        <span class="eyebrow reveal">Field dispatches</span>
-        <h2 class="reveal"><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : 'Every new waypoint, sent from the trail.' ?></h2>
-        <p class="reveal"><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : 'One email per post. No tracking, easy unsubscribe.' ?></p>
+        <span class="eyebrow reveal"<?= $wording->attrs('closest::home.newsEyebrow') ?>><?= $wording->html('closest::home.newsEyebrow') ?></span>
+        <h2 class="reveal"<?= edit_text_attrs('newsletter_heading', $t('closest::home.newsHeading')) ?>><?= !empty($settings['newsletter_heading']) ? e($settings['newsletter_heading']) : e($t('closest::home.newsHeading')) ?></h2>
+        <p class="reveal"<?= edit_text_attrs('newsletter_text', $t('closest::home.newsText')) ?>><?= !empty($settings['newsletter_text']) ? e($settings['newsletter_text']) : e($t('closest::home.newsText')) ?></p>
       </div>
 
       <form class="dispatch-form reveal" action="<?= e('/blog/'.rawurlencode((string) $blog['blog_slug']).'/subscribe') ?>" method="post">
         <?= csrf_field_lazy() ?>
-        <label for="email-sub">Your address</label>
+        <label for="email-sub"><span<?= $wording->attrs('closest::emailLabel') ?>><?= $wording->html('closest::emailLabel') ?></span></label>
         <div class="dispatch-input">
           <input id="email-sub" name="email" type="email" placeholder="reader@basecamp.co"
             value="<?= e(auth()->check() ? (string) (auth()->user()['email'] ?? '') : '') ?>"
             autocomplete="email" maxlength="255" required />
           <button type="submit">
-            Subscribe
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <span<?= $wording->attrs('closest::home.subscribe') ?>><?= $wording->html('closest::home.subscribe') ?></span>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
         </div>
-        <span class="dispatch-fine">Free &mdash; unsubscribe at any waypoint</span>
+        <span class="dispatch-fine"<?= $wording->attrs('closest::home.newsFine') ?>><?= $wording->html('closest::home.newsFine') ?></span>
       </form>
     </div>
   </div>
 </section>
+{% include "partials/public/_edit_texts.lex.php" %}
 {% endblock %}
 
 {% block scripts %}

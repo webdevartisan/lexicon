@@ -18,11 +18,9 @@ function updateCharCount(fieldId, limit) {
     counter.className = 'text-xs tabular-nums text-red-600 dark:text-red-400 font-medium';
   }
 
-  if (fieldId === 'meta_title' || fieldId === 'meta_description') {
-    updateSeoPreview();
-  } else {
-    updateSocialPreview();
-  }
+  // The social fields fall back to the search ones, so both previews follow either
+  updateSeoPreview();
+  updateSocialPreview();
 }
 window.updateCharCount = updateCharCount;
 
@@ -48,6 +46,50 @@ function postExcerpt() {
   const el = document.querySelector('[name="excerpt"]');
   const own = el ? el.value.trim() : '';
   return own || contentSummary(160);
+}
+
+// What the published page uses for each field left empty, mirroring BlogController.
+// The placeholders and previews both show these, so an empty field never looks unfilled.
+function searchTitle() {
+  const field = document.getElementById('meta_title');
+  const title = postTitle();
+  if (fieldValue('meta_title')) return fieldValue('meta_title');
+  return title && field ? title + (field.dataset.titleSuffix || '') : title;
+}
+
+function searchDescription() {
+  return fieldValue('meta_description') || postExcerpt();
+}
+
+function socialTitle() {
+  return fieldValue('og_title') || postTitle();
+}
+
+function socialDescription() {
+  return fieldValue('og_description') || searchDescription();
+}
+
+function showFallback(id, text) {
+  const field = document.getElementById(id);
+  if (!field) return;
+  if (field.dataset.emptyPlaceholder === undefined) field.dataset.emptyPlaceholder = field.placeholder;
+  field.placeholder = text || field.dataset.emptyPlaceholder;
+}
+
+function updatePlaceholders() {
+  const title = postTitle();
+  const titleField = document.getElementById('meta_title');
+  const featured = featuredImageUrl() ? 'Uses the featured image' : '';
+
+  showFallback('meta_title', title && titleField ? title + (titleField.dataset.titleSuffix || '') : '');
+  showFallback('meta_description', postExcerpt());
+  showFallback('og_title', title);
+  showFallback('og_description', searchDescription());
+  showFallback('og_image', featured);
+  showFallback('og_image_alt', socialTitle());
+  showFallback('twitter_title', socialTitle());
+  showFallback('twitter_description', socialDescription());
+  showFallback('twitter_image', fieldValue('og_image') ? 'Uses the social image' : featured);
 }
 
 // Mirrors post_excerpt() in helpers.php so the previews show what readers and search engines get.
@@ -77,12 +119,14 @@ function updateSeoPreview() {
   const desc = document.getElementById('seo_preview_desc');
 
   if (title) {
-    title.textContent = fieldValue('meta_title') || postTitle() || 'Your post title will appear here';
+    title.textContent = searchTitle() || 'Your post title will appear here';
   }
   if (desc) {
-    desc.textContent = fieldValue('meta_description') || postExcerpt()
+    desc.textContent = searchDescription()
       || 'Your meta description or excerpt will appear here in search results...';
   }
+
+  updatePlaceholders();
 }
 
 /**
@@ -96,8 +140,8 @@ function updateSocialPreview() {
   const card = document.querySelector('[data-social-card]');
   if (!card) return;
 
-  const ogTitle = fieldValue('og_title') || postTitle() || 'Your post title will appear here';
-  const ogDesc = fieldValue('og_description') || postExcerpt()
+  const ogTitle = socialTitle() || 'Your post title will appear here';
+  const ogDesc = socialDescription()
     || 'Your description will appear here when shared on social media...';
   const ogImage = fieldValue('og_image') || featuredImageUrl();
 
@@ -124,6 +168,7 @@ function updateSocialPreview() {
   });
 
   syncXCardType();
+  updatePlaceholders();
 }
 window.updateSocialPreview = updateSocialPreview;
 
@@ -180,6 +225,8 @@ function initSocialTabs() {
  *
  * The backend decides this the same way, from the date rather than the button,
  * so the label is only there to keep the two from looking like they disagree.
+ * The server sends the button's words for both cases; buttons the date makes
+ * no difference to, like "Save draft", come without them.
  */
 function initScheduleAwareness() {
   const dateField = document.getElementById('published_at');
@@ -189,9 +236,22 @@ function initScheduleAwareness() {
   if (!dateField) return;
 
   const label = primary ? primary.querySelector('[data-primary-label]') : null;
-  const icon = primary ? primary.querySelector('i') : null;
-  const publishLabel = primary ? primary.dataset.publishLabel : '';
-  const publishIntent = primary ? primary.getAttribute('value') : '';
+  const words = primary && primary.dataset.labelLater ? {
+    later: { label: primary.dataset.labelLater, icon: primary.dataset.iconLater },
+    now: { label: primary.dataset.labelNow, icon: primary.dataset.iconNow },
+  } : null;
+
+  // Lucide swaps each <i> for an <svg>, so look the icon up every time and start it over.
+  function showIcon(name) {
+    const current = primary.querySelector('[data-lucide]');
+    if (!current || current.getAttribute('data-lucide') === name) return;
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', name);
+    icon.setAttribute('aria-hidden', 'true');
+    icon.className = 'size-4';
+    current.replaceWith(icon);
+    if (window.lucide) window.lucide.createIcons();
+  }
 
   // A post published before keeps its past date, which holds nothing back,
   // so only a date still ahead turns publishing into scheduling.
@@ -199,7 +259,9 @@ function initScheduleAwareness() {
     const picker = dateField._flatpickr;
     if (!picker) return dateField.value.trim() !== '';
     const picked = picker.selectedDates[0];
-    return picked !== undefined && picked.getTime() > Date.now();
+    const zone = dateField.dataset.timezone;
+    const now = zone && window.ZoneClock ? window.ZoneClock.now(zone) : new Date();
+    return picked !== undefined && picked > now;
   }
 
   function refresh() {
@@ -214,14 +276,11 @@ function initScheduleAwareness() {
         : 'Leave empty to go live as soon as you publish.';
     }
 
-    // Only relabel the buttons that actually publish; "Save draft" and
-    // "Submit for review" mean the same thing whatever the date says.
-    if (!primary || !label) return;
-    if (publishIntent !== 'publish' && publishIntent !== 'schedule') return;
+    if (!words || !label) return;
 
-    label.textContent = scheduling ? 'Schedule' : publishLabel;
-    if (icon) icon.setAttribute('data-lucide', scheduling ? 'calendar-clock' : 'send');
-    if (window.lucide) window.lucide.createIcons();
+    const shown = scheduling ? words.later : words.now;
+    label.textContent = shown.label;
+    showIcon(shown.icon);
   }
 
   dateField.addEventListener('change', refresh);

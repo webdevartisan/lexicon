@@ -47,7 +47,7 @@ $I->assertSame('rgb(255, 255, 255)', $I->executeJS("return $menuBg;"));
 // The Preferences tab has the same choice, and the menu follows it
 $I->click('Settings', '.nav-user-menu');
 $I->waitForElementVisible('[data-panel-dialog] .lx-account-nav', 10);
-$I->click('Preferences', '[data-panel-dialog] .lx-account-nav');
+$I->openSettingsPage('Preferences');
 $I->waitForElementVisible('[data-panel-dialog] .nav-theme-choices.is-labelled', 10);
 $I->see('Device', '[data-panel-dialog] .nav-theme-choices');
 $I->seeElement('[data-panel-dialog] [data-theme-choice="light"][aria-pressed="true"]');

@@ -12,7 +12,7 @@ use InvalidArgumentException;
  */
 class GuidedSetupMarkModel extends AppModel
 {
-    public const MARKS = ['hidden', 'dismissed', 'link_copied', 'look_chosen', 'subscribers_seen', 'profile_saved'];
+    public const MARKS = ['hidden', 'dismissed', 'link_copied', 'look_chosen', 'profile_saved'];
 
     protected ?string $table = 'guided_setup_marks';
 

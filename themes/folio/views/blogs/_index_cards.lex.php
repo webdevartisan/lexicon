@@ -9,7 +9,7 @@ foreach (($cards ?? []) as $i => $post) {
     $img = preg_match($validImg, $cover) ? e($cover) : $asset('img/cover-placeholder.svg');
     $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
     $title = e($post['title'] ?? 'Untitled');
-    $cat = trim((string) ($post['category'] ?? 'Post'));
+    $cat = trim((string) ($post['category'] ?? $t('folio::archive.fallbackCategory')));
     $catSlug = (string) ($post['category_slug'] ?? '');
     $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
     $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
@@ -18,7 +18,7 @@ foreach (($cards ?? []) as $i => $post) {
     ?>
   <article class="article reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-card-link="<?= e($url) ?>">
     <div class="article-meta">
-      <span class="cat"><?= sprintf('%02d', $i + 1) ?> &mdash; <?= e($cat) ?></span>
+      <span class="cat"><?= sprintf('%02d', $i + 1) ?> &middot; <?= e($cat) ?></span>
       <?php if ($date) { ?><span><?= $date ?></span><?php } ?>
     </div>
     <div class="article-image img-mask">
@@ -39,7 +39,7 @@ foreach (($cards ?? []) as $i => $post) {
     <?php } ?>
     <div class="article-byline">
       <span><?= $author ?></span>
-      <span><?= $minutes ?> Min</span>
+      <span><?= e($t('folio::minutes', ['count' => $minutes])) ?></span>
     </div>
   </article>
 <?php } ?>
