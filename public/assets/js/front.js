@@ -596,3 +596,141 @@
         });
     });
 })();
+
+/*
+ * Image loader: a blinking grid sits over a card image until it arrives, then
+ * each cell takes the colour of the picture beneath it, grows to close the
+ * gaps, and fades away to reveal the image. Opt in with data-image-loader on
+ * the element that wraps the <img>; without this script the image just shows.
+ */
+(function () {
+    'use strict';
+
+    var MIN_CELL = 14;
+    var COLUMNS = 24;
+    var BLINK_MS = 600;
+    var FILL_MS = 300;
+    var FADE_MS = 350;
+    var MIN_MS = 250;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    function buildGrid(cols, rows, cell, gap) {
+        var grid = document.createElement('div');
+        var cells = document.createDocumentFragment();
+
+        grid.className = 'lx-loader-grid';
+        grid.setAttribute('aria-hidden', 'true');
+        grid.style.setProperty('--lx-loader-cols', cols);
+        grid.style.setProperty('--lx-loader-cell', cell + 'px');
+        grid.style.setProperty('--lx-loader-gap', gap + 'px');
+        grid.style.setProperty('--lx-loader-blink', BLINK_MS + 'ms');
+        grid.style.setProperty('--lx-loader-fill', FILL_MS + 'ms');
+        grid.style.setProperty('--lx-loader-fade', FADE_MS + 'ms');
+        grid.style.setProperty('--lx-loader-grow', (cell + gap) / cell * 1.05);
+
+        for (var i = 0; i < cols * rows; i++) {
+            var square = document.createElement('span');
+
+            square.style.setProperty('--lx-loader-delay', Math.round(Math.random() * BLINK_MS) + 'ms');
+            cells.appendChild(square);
+        }
+
+        grid.appendChild(cells);
+
+        return grid;
+    }
+
+    // One tiny canvas, one pixel per cell: far cheaper than sampling each region.
+    function sampleColours(img, cols, rows, boxWidth, boxHeight) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (!ctx) {
+            return null;
+        }
+
+        // Crop the source the same way object-fit: cover does, so cells line up with the visible picture.
+        var boxRatio = boxWidth / boxHeight;
+        var sw = img.naturalWidth;
+        var sh = img.naturalHeight;
+
+        if (sw / sh > boxRatio) {
+            sw = sh * boxRatio;
+        } else {
+            sh = sw / boxRatio;
+        }
+
+        canvas.width = cols;
+        canvas.height = rows;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, cols, rows);
+
+        try {
+            return ctx.getImageData(0, 0, cols, rows).data;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function attach(media) {
+        var img = media.querySelector('img');
+
+        if (!img || (img.complete && img.naturalWidth > 0)) {
+            return;
+        }
+
+        var box = media.getBoundingClientRect();
+
+        if (box.width === 0 || box.height === 0) {
+            return;
+        }
+
+        // Big images get bigger cells, so a wide slide doesn't carry thousands of animated nodes.
+        var cell = Math.max(MIN_CELL, Math.round(box.width / COLUMNS));
+        var gap = Math.max(2, Math.round(cell / 7));
+        var step = cell + gap;
+        var cols = Math.ceil((box.width + gap) / step);
+        var rows = Math.ceil((box.height + gap) / step);
+        var grid = buildGrid(cols, rows, cell, gap);
+        var startedAt = Date.now();
+
+        media.classList.add('is-loading');
+        media.appendChild(grid);
+
+        function finish() {
+            grid.remove();
+            media.classList.remove('is-loading');
+        }
+
+        function reveal() {
+            var colours = sampleColours(img, cols, rows, box.width, box.height);
+
+            if (colours) {
+                Array.prototype.forEach.call(grid.children, function (cell, index) {
+                    var at = index * 4;
+
+                    cell.style.backgroundColor = 'rgb(' + colours[at] + ',' + colours[at + 1] + ',' + colours[at + 2] + ')';
+                });
+            }
+
+            grid.classList.add('is-filling');
+
+            setTimeout(function () {
+                media.classList.remove('is-loading');
+                grid.classList.add('is-fading');
+                setTimeout(finish, FADE_MS + BLINK_MS * 0.6 + 50);
+            }, FILL_MS);
+        }
+
+        img.addEventListener('load', function () {
+            setTimeout(reveal, Math.max(0, MIN_MS - (Date.now() - startedAt)));
+        });
+
+        img.addEventListener('error', finish);
+    }
+
+    document.querySelectorAll('[data-image-loader]').forEach(attach);
+})();

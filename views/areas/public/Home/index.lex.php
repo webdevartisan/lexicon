@@ -150,7 +150,7 @@ $excerpt = post_excerpt($post);
 $postTitle = (string) ($post['title'] ?? '');
 ?>
             <li class="lx-cite" data-reveal="<?= (int) $citeIndex ?>">
-                <a href="<?= e($postUrl) ?>" class="lx-cite-media" tabindex="-1" aria-hidden="true">
+                <a href="<?= e($postUrl) ?>" class="lx-cite-media" data-image-loader tabindex="-1" aria-hidden="true">
                     <?php if (!empty($post['featured_image'])) { ?>
                         <img src="<?= e($post['featured_image']) ?>" alt="" loading="lazy" />
                     <?php } else { ?>
