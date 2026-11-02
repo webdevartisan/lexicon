@@ -6,13 +6,16 @@ namespace App\Services;
 
 use Framework\Interfaces\ThemeResolverInterface;
 
+/**
+ * @phpstan-type Theme array{key: string, name: string, description: string, version: string, author: string, screenshot: ?string, editable_texts: string[]}
+ */
 class ThemeService implements ThemeResolverInterface
 {
     private string $themesRoot;
 
     private ?string $activeTheme = null;
 
-    /** @var array<string, array<string, string|null>>|null */
+    /** @var array<string, Theme>|null */
     private ?array $available = null;
 
     public function __construct(string $themesRoot)
@@ -29,7 +32,7 @@ class ThemeService implements ThemeResolverInterface
      * version, author, a screenshot URL (null when the theme ships none) and
      * the theme's own texts an owner may reword.
      *
-     * @return array<string, array{key: string, name: string, description: string, version: string, author: string, screenshot: ?string, editable_texts: string[]}> Sorted by display name
+     * @return array<string, Theme> Sorted by display name
      */
     public function available(): array
     {
