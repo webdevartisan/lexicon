@@ -14,34 +14,35 @@ class MediaModel extends AppModel
 {
     protected ?string $table = 'media';
 
+    private const SORT_COLUMNS = [
+        'date' => 'created_at',
+        'name' => 'COALESCE(original_name, filename)',
+        'size' => 'size_bytes',
+    ];
+
+    private const SORT_ALIASES = [
+        'newest' => ['date', 'desc'],
+        'oldest' => ['date', 'asc'],
+        'largest' => ['size', 'desc'],
+    ];
+
     /**
-     * Browse a blog's media with optional search + filter + sort.
+     * Browse a blog's media with optional search, filter and sort.
      *
-     * Filters supported: q (filename LIKE), type ('image' for now),
-     * source (upload|post_image|branding|backfill), sort (newest|oldest|largest).
-     *
-     * Pagination uses simple limit/offset — fine for the library where
-     * the grid pages 24 at a time.
-     *
-     * @param  array<string, mixed>  $filters  q, source, sort, limit, offset
+     * @param  array<string, mixed>  $filters  q, source, usage, sort (date|name|size or newest|oldest|largest),
+     *                                         dir (asc|desc), limit, offset
      * @return array<int, array<string, mixed>> Media rows for the page
      */
     public function listForBlog(int $blogId, array $filters = []): array
     {
         [$where, $params] = $this->buildFilters($blogId, $filters);
 
-        $order = match ($filters['sort'] ?? 'newest') {
-            'oldest' => 'created_at ASC',
-            'largest' => 'size_bytes DESC',
-            default => 'created_at DESC',
-        };
-
         $limit = max(1, min(100, (int) ($filters['limit'] ?? 24)));
         $offset = max(0, (int) ($filters['offset'] ?? 0));
 
         $sql = 'SELECT * FROM '.$this->getTable()
             .' WHERE '.implode(' AND ', $where)
-            .' ORDER BY '.$order
+            .' ORDER BY '.$this->orderBy($filters)
             .' LIMIT '.$limit.' OFFSET '.$offset;
 
         $stmt = $this->database->query($sql, $params);
@@ -50,16 +51,42 @@ class MediaModel extends AppModel
     }
 
     /**
+     * How many items match the filters and how many bytes they take up together.
+     *
      * @param  array<string, mixed>  $filters  Same q/source/usage filters as listForBlog()
+     * @return array{count: int, bytes: int}
      */
-    public function countForBlog(int $blogId, array $filters = []): int
+    public function totalsForBlog(int $blogId, array $filters = []): array
     {
         [$where, $params] = $this->buildFilters($blogId, $filters);
 
-        $sql = 'SELECT COUNT(*) FROM '.$this->getTable()
+        $sql = 'SELECT COUNT(*) AS count, COALESCE(SUM(size_bytes), 0) AS bytes FROM '.$this->getTable()
             .' WHERE '.implode(' AND ', $where);
 
-        return (int) $this->database->query($sql, $params)->fetchColumn();
+        $row = $this->database->query($sql, $params)->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+        return ['count' => (int) ($row['count'] ?? 0), 'bytes' => (int) ($row['bytes'] ?? 0)];
+    }
+
+    /**
+     * Turn the sort filters into an ORDER BY clause, only ever from the fixed column list.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    private function orderBy(array $filters): string
+    {
+        $sort = (string) ($filters['sort'] ?? 'date');
+        $dir = (string) ($filters['dir'] ?? 'desc');
+
+        if (isset(self::SORT_ALIASES[$sort])) {
+            [$sort, $dir] = self::SORT_ALIASES[$sort];
+        }
+
+        $column = self::SORT_COLUMNS[$sort] ?? self::SORT_COLUMNS['date'];
+        $direction = $dir === 'asc' ? 'ASC' : 'DESC';
+
+        // id breaks ties so offset paging never repeats or skips rows with equal values
+        return $column.' '.$direction.', id '.$direction;
     }
 
     /**
@@ -67,7 +94,7 @@ class MediaModel extends AppModel
      *
      * Supports q (filename/name LIKE), source (enum), and usage='unused' which
      * excludes anything referenced by a post (featured/social/inline) or a branding
-     * slot — a NOT IN over the exact-match columns plus a NOT EXISTS for inline body
+     * slot: a NOT IN over the exact-match columns plus a NOT EXISTS for inline body
      * references.
      *
      * @param  array<string, mixed>  $filters

@@ -1,4 +1,4 @@
-<?php  //[STAMP] be1ef657762be0f56136e17d5d5c9f6d
+<?php  //[STAMP] 5e7b5056900571f5a0c35ef9a284e9ff
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -4966,6 +4966,28 @@ trait JourneyTesterActions
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
+     * Slow uploads to the given bytes per second until backOnAFastConnection().
+     * @see \Support\Helper\Lexicon::onASlowConnection()
+     */
+    public function onASlowConnection(int $bytesPerSecond = 2000): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('onASlowConnection', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Lift the limit onASlowConnection() put on uploads.
+     * @see \Support\Helper\Lexicon::backOnAFastConnection()
+     */
+    public function backOnAFastConnection(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('backOnAFastConnection', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
      * Reject all cookies if the banner is up, and wait out the reload it causes.
      * @see \Support\Helper\Lexicon::declineCookies()
      */
@@ -4995,18 +5017,6 @@ trait JourneyTesterActions
      */
     public function openSettingsPage(string $label): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('openSettingsPage', func_get_args()));
-    }
-
- 
-    /**
-     * [!] Method is generated. Documentation taken from corresponding module.
-     *
-     * Open the media library's upload panel unless it already shows, as it does on an empty library.
-     * Upload messages appear inside it, so a closed panel hides them.
-     * @see \Support\Helper\Lexicon::openTheMediaUploader()
-     */
-    public function openTheMediaUploader(): void {
-        $this->getScenario()->runStep(new \Codeception\Step\Action('openTheMediaUploader', func_get_args()));
     }
 
  

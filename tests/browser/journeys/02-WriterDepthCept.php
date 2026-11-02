@@ -29,8 +29,7 @@ $I->seeThePageLooksRight('20-category-and-tag');
 // An image in the media library
 $inline = $I->makeImage('walk-inline', '#8f5a3b');
 $I->amOnPage("{$blog}/media");
-$I->openTheMediaUploader();
-$I->attachFile('#media-uploader-input', $inline);
+$I->attachFile('#media-file-input', $inline);
 $I->waitForText("{$inline} uploaded", 15);
 $I->dontSee('Upload failed');
 $I->seeThePageLooksRight('21-media-library');

@@ -2584,5 +2584,122 @@
       "tagKicker": "الوسم: {name}",
       "tagDek": "تدوينات موسومة بـ {name}."
     }
-  }
+  },
+    "media": {
+        "page": {
+            "title": "مكتبة الوسائط",
+            "subtitle": "كل صور هذه المدونة في مكان واحد. ارفعها وابحث عنها ونظّمها."
+        },
+        "toolbar": {
+            "files": "الملفات",
+            "searchLabel": "ابحث عن الصور بالاسم",
+            "searchPlaceholder": "ابحث بالاسم",
+            "sourceLabel": "عرض الصور من",
+            "sortLabel": "ترتيب حسب",
+            "viewLabel": "طريقة العرض",
+            "listView": "عرض القائمة",
+            "gridView": "عرض الشبكة",
+            "menuTitle": "مكتبة الوسائط"
+        },
+        "sources": {
+            "all": "كل المصادر",
+            "upload": "مرفوعات المكتبة",
+            "post_image": "صور المقالات",
+            "branding": "الهوية",
+            "backfill": "مستوردة",
+            "unused": "غير المستخدمة فقط"
+        },
+        "sorts": {
+            "date": "تاريخ الإضافة",
+            "name": "الاسم",
+            "size": "الحجم"
+        },
+        "actions": {
+            "rescan": "إعادة البحث عن الصور",
+            "optimize": "تصغير الصور الكبيرة"
+        },
+        "drop": {
+            "title": "أفلت الصور هنا لرفعها",
+            "limits": "{types} · حتى {size} لكل صورة",
+            "select": "اختيار الملفات",
+            "inputLabel": "اختر صورًا لرفعها"
+        },
+        "loadMore": "عرض المزيد",
+        "editor": {
+            "title": "تعديل الصورة",
+            "name": "الاسم",
+            "alt": "النص البديل",
+            "altPlaceholder": "صف الصورة لقارئات الشاشة",
+            "saveDetails": "حفظ التفاصيل",
+            "cropShape": "شكل القص",
+            "free": "حر",
+            "scaleDown": "تصغير",
+            "fullSize": "الحجم الكامل",
+            "customWidth": "عرض مخصص (px)",
+            "customWidthPlaceholder": "تلقائي، والارتفاع يتبع النسبة",
+            "quality": "الجودة",
+            "qualityHint": "القيمة الأقل تعني ملفًا أصغر.",
+            "format": "الصيغة",
+            "keepOriginal": "إبقاء الأصلية",
+            "saveAs": "الحفظ كـ",
+            "newImage": "صورة جديدة",
+            "overwrite": "استبدال",
+            "delete": "حذف",
+            "cancel": "إلغاء",
+            "apply": "تطبيق"
+        },
+        "js": {
+            "total": "الإجمالي: {size}",
+            "sortAsc": "ترتيب تصاعدي",
+            "sortDesc": "ترتيب تنازلي",
+            "edit": "تعديل {name}",
+            "download": "تنزيل {name}",
+            "copy": "نسخ رابط {name}",
+            "copied": "تم نسخ الرابط",
+            "copyFailed": "منع متصفحك النسخ. حاول مرة أخرى.",
+            "delete": "حذف {name}",
+            "emptyTitle": "ابدأ مكتبة صورك",
+            "emptyBody": "أفلت الصور في الأعلى أو اختر ملفات لرفعها.",
+            "noMatchTitle": "لا توجد صور مطابقة",
+            "noMatchBody": "جرّب اسمًا أو مصدرًا آخر.",
+            "uploaded": "تم رفع {name}",
+            "uploadFailed": "{name}: {error}",
+            "wrongType": "الملف {name} ليس بصيغة {types}.",
+            "tooBig": "الملف {name} أكبر من {size}.",
+            "cancelUpload": "إلغاء رفع {name}",
+            "retry": "إعادة المحاولة",
+            "dismiss": "إخفاء",
+            "rescanning": "جارٍ البحث عن صور جديدة",
+            "rescanNone": "كل الصور الموجودة على القرص موجودة بالفعل في المكتبة.",
+            "rescanDone": "الصور المضافة إلى المكتبة: {count}",
+            "optimizeConfirm": "هل تريد تصغير كل صورة أكبر من 2048px وحفظها في مكانها؟ ستبقى الروابط إلى هذه الصور تعمل. لا يمكن التراجع عن ذلك.",
+            "optimizing": "جارٍ تصغير الصور",
+            "optimizeNone": "كل الصور ضمن الحجم المسموح بالفعل.",
+            "optimizeDone": "الصور المصغّرة: {count}. المساحة الموفّرة: {size}.",
+            "deleteConfirm": "هل تريد حذف هذه الصورة؟ لا يمكن التراجع عن ذلك.",
+            "deleteUsed": "هذه الصورة مستخدمة هنا:",
+            "deleteLeaves": "حذفها يترك هذه المواضع بلا صورة.",
+            "deleteInBody": "حيث تظهر داخل نص مقالة، ستظهر كصورة معطلة.",
+            "deleteAnyway": "هل تريد الحذف رغم ذلك؟",
+            "error": "حدث خطأ ما. حاول مرة أخرى.",
+            "output": "الناتج: {width} × {height}",
+            "modeConvert": "تغيير الصيغة يحفظ صورة جديدة، لذا تبقى الروابط الحالية تعمل.",
+            "modeOverwrite": "يستبدل الملف في مكانه. تتحدث المقالات التي تستخدمه تلقائيًا.",
+            "modeNew": "يضيف صورة جديدة إلى المكتبة. تبقى الأصلية كما هي.",
+            "notUsed": "غير مستخدمة في أي مكان بعد",
+            "usedIn": "مواضع الاستخدام: {count}",
+            "nameRequired": "أدخل اسمًا للصورة.",
+            "select": "تحديد {name}",
+            "selection": "{count}/{shown} محدد · {size}",
+            "bulkDeleteConfirm": "هل تريد حذف الصور المحددة ({count})؟ لا يمكن التراجع عن ذلك.",
+            "bulkDeleteUsed": "بعض الصور المحددة مستخدمة هنا:",
+            "bulkDeleted": "الصور المحذوفة: {count}",
+            "tooMany": "حدد {max} صورة كحد أقصى في كل مرة."
+        },
+        "selection": {
+            "selectAll": "تحديد كل الصور المعروضة",
+            "download": "تنزيل المحدد",
+            "delete": "حذف المحدد"
+        }
+    }
 }

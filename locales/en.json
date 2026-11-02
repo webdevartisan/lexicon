@@ -2572,5 +2572,122 @@
             "tagKicker": "Tagged: {name}",
             "tagDek": "Posts tagged {name}."
         }
+    },
+    "media": {
+        "page": {
+            "title": "Media library",
+            "subtitle": "Every image for this blog in one place. Upload, find and tidy up."
+        },
+        "toolbar": {
+            "files": "Files",
+            "searchLabel": "Search images by name",
+            "searchPlaceholder": "Search by name",
+            "sourceLabel": "Show images from",
+            "sortLabel": "Sort by",
+            "viewLabel": "Layout",
+            "listView": "List view",
+            "gridView": "Grid view",
+            "menuTitle": "the media library"
+        },
+        "sources": {
+            "all": "All sources",
+            "upload": "Library uploads",
+            "post_image": "Post images",
+            "branding": "Branding",
+            "backfill": "Imported",
+            "unused": "Unused only"
+        },
+        "sorts": {
+            "date": "Date added",
+            "name": "Name",
+            "size": "Size"
+        },
+        "actions": {
+            "rescan": "Rescan for images",
+            "optimize": "Shrink oversized images"
+        },
+        "drop": {
+            "title": "Drop images to upload",
+            "limits": "{types} · up to {size} each",
+            "select": "Select files",
+            "inputLabel": "Choose images to upload"
+        },
+        "loadMore": "Load more",
+        "editor": {
+            "title": "Edit image",
+            "name": "Name",
+            "alt": "Alt text",
+            "altPlaceholder": "Describe the image for screen readers",
+            "saveDetails": "Save details",
+            "cropShape": "Crop shape",
+            "free": "Free",
+            "scaleDown": "Scale down",
+            "fullSize": "Full size",
+            "customWidth": "Custom width (px)",
+            "customWidthPlaceholder": "Auto, height follows the ratio",
+            "quality": "Quality",
+            "qualityHint": "Lower means a smaller file.",
+            "format": "Format",
+            "keepOriginal": "Keep original",
+            "saveAs": "Save as",
+            "newImage": "New image",
+            "overwrite": "Overwrite",
+            "delete": "Delete",
+            "cancel": "Cancel",
+            "apply": "Apply"
+        },
+        "js": {
+            "total": "Total: {size}",
+            "sortAsc": "Sort ascending",
+            "sortDesc": "Sort descending",
+            "edit": "Edit {name}",
+            "download": "Download {name}",
+            "copy": "Copy link to {name}",
+            "copied": "Link copied",
+            "copyFailed": "Your browser blocked copying. Try again.",
+            "delete": "Delete {name}",
+            "emptyTitle": "Start your image library",
+            "emptyBody": "Drop images above or select files to upload.",
+            "noMatchTitle": "No images match",
+            "noMatchBody": "Try another name or source.",
+            "uploaded": "{name} uploaded",
+            "uploadFailed": "{name}: {error}",
+            "wrongType": "{name} isn't a {types} file.",
+            "tooBig": "{name} is larger than {size}.",
+            "cancelUpload": "Cancel upload of {name}",
+            "retry": "Retry",
+            "dismiss": "Dismiss",
+            "rescanning": "Looking for new images",
+            "rescanNone": "Every image on disk is already in the library.",
+            "rescanDone": "Images added to the library: {count}",
+            "optimizeConfirm": "Shrink every image larger than 2048px and save it in place? Links to these images keep working. This can't be undone.",
+            "optimizing": "Shrinking images",
+            "optimizeNone": "Every image is already within size.",
+            "optimizeDone": "Images shrunk: {count}. Space saved: {size}.",
+            "deleteConfirm": "Delete this image? This can't be undone.",
+            "deleteUsed": "This image is used here:",
+            "deleteLeaves": "Deleting it leaves those spots without an image.",
+            "deleteInBody": "Where it sits inside a post's text, it will show as a broken image.",
+            "deleteAnyway": "Delete anyway?",
+            "error": "Something went wrong. Try again.",
+            "output": "Output: {width} × {height}",
+            "modeConvert": "Converting the format saves a new image, so existing links keep working.",
+            "modeOverwrite": "Replaces the file in place. Posts using it update automatically.",
+            "modeNew": "Adds a new image to the library. The original stays as it is.",
+            "notUsed": "Not used anywhere yet",
+            "usedIn": "Places it's used: {count}",
+            "nameRequired": "Enter a name for the image.",
+            "select": "Select {name}",
+            "selection": "{count}/{shown} selected · {size}",
+            "bulkDeleteConfirm": "Delete the selected images ({count})? This can't be undone.",
+            "bulkDeleteUsed": "Some of the selected images are used here:",
+            "bulkDeleted": "Images deleted: {count}",
+            "tooMany": "Select at most {max} images at a time."
+        },
+        "selection": {
+            "selectAll": "Select all shown images",
+            "download": "Download selected",
+            "delete": "Delete selected"
+        }
     }
 }

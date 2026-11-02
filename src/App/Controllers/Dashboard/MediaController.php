@@ -9,17 +9,13 @@ use App\Gate;
 use App\Models\BlogModel;
 use App\Models\MediaModel;
 use App\Resources\BlogResource;
+use App\Services\MediaBulkActions;
 use App\Services\MediaService;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
- * The per-blog media library.
- *
- * `index` serves the management page; `list` is the JSON feed used by
- * both that page and the picker modal; `store` / `destroy` handle
- * deliberate uploads and deletions. Every action is scoped to the blog
- * in the URL and authorised against it.
+ * The per-blog media library. Every action is scoped to the blog in the URL and authorised against it.
  */
 final class MediaController extends AppController
 {
@@ -27,6 +23,7 @@ final class MediaController extends AppController
         private MediaModel $media,
         private MediaService $mediaService,
         private BlogModel $blogModel,
+        private MediaBulkActions $bulk,
     ) {}
 
     public function index(string $blogId): Response
@@ -47,6 +44,8 @@ final class MediaController extends AppController
             $autoEditId = $row['id'] ?? null;
         }
 
+        $totals = $this->media->totalsForBlog($blog->id());
+
         return $this->view([
             'blog' => $blog->toArray(),
             'autoEditId' => $autoEditId,
@@ -54,7 +53,11 @@ final class MediaController extends AppController
             // so we hand the controller's list to the template under a
             // distinct name.
             'mediaItems' => $this->media->listForBlog($blog->id(), ['limit' => 24]),
-            'total' => $this->media->countForBlog($blog->id()),
+            'total' => $totals['count'],
+            'totalBytes' => $totals['bytes'],
+            'uploadExtensions' => MediaService::UPLOAD_EXTENSIONS,
+            'uploadMaxBytes' => MediaService::UPLOAD_MAX_BYTES,
+            'bulkMax' => MediaBulkActions::MAX_ITEMS,
         ]);
     }
 
@@ -68,7 +71,8 @@ final class MediaController extends AppController
         $filters = [
             'q' => trim((string) ($this->request->get['q'] ?? '')),
             'source' => $source,
-            'sort' => (string) ($this->request->get['sort'] ?? 'newest'),
+            'sort' => (string) ($this->request->get['sort'] ?? 'date'),
+            'dir' => (string) ($this->request->get['dir'] ?? 'desc'),
             'limit' => (int) ($this->request->get['limit'] ?? 24),
             'offset' => (int) ($this->request->get['offset'] ?? 0),
         ];
@@ -79,9 +83,12 @@ final class MediaController extends AppController
             $filters['usage'] = 'unused';
         }
 
+        $totals = $this->media->totalsForBlog($blog->id(), $filters);
+
         return $this->jsonSuccess([
             'items' => $this->media->listForBlog($blog->id(), $filters),
-            'total' => $this->media->countForBlog($blog->id(), $filters),
+            'total' => $totals['count'],
+            'total_bytes' => $totals['bytes'],
         ]);
     }
 
@@ -101,11 +108,6 @@ final class MediaController extends AppController
 
     public function process(string $blogId, string $id): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -125,11 +127,6 @@ final class MediaController extends AppController
 
     public function rescan(string $blogId): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -141,11 +138,6 @@ final class MediaController extends AppController
 
     public function optimize(string $blogId): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -157,11 +149,6 @@ final class MediaController extends AppController
 
     public function saveMeta(string $blogId, string $id): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -219,11 +206,6 @@ final class MediaController extends AppController
 
     public function store(string $blogId): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -245,11 +227,6 @@ final class MediaController extends AppController
 
     public function destroy(string $blogId, string $id): Response
     {
-        $token = $this->request->postParam('_token') ?? ($this->request->headers['x-csrf-token'] ?? null);
-        if (!csrf()->isTokenValid($token)) {
-            return $this->jsonError('Invalid CSRF token.', 419);
-        }
-
         $user = auth()->user();
         $blog = $this->getBlog((int) $blogId);
         Gate::authorize('update', $blog, $user);
@@ -260,6 +237,36 @@ final class MediaController extends AppController
         }
 
         return $this->jsonSuccess(['deleted' => (int) $id]);
+    }
+
+    public function bulkUsages(string $blogId): Response
+    {
+        $user = auth()->user();
+        $blog = $this->getBlog((int) $blogId);
+        Gate::authorize('update', $blog, $user);
+
+        try {
+            $items = $this->bulk->usages((array) ($this->request->get['ids'] ?? []), $blog);
+        } catch (\InvalidArgumentException $e) {
+            return $this->jsonError($e->getMessage(), 400);
+        }
+
+        return $this->jsonSuccess(['items' => $items]);
+    }
+
+    public function bulkDestroy(string $blogId): Response
+    {
+        $user = auth()->user();
+        $blog = $this->getBlog((int) $blogId);
+        Gate::authorize('update', $blog, $user);
+
+        try {
+            $deleted = $this->bulk->delete((array) $this->request->postParam('ids', []), $blog);
+        } catch (\InvalidArgumentException $e) {
+            return $this->jsonError($e->getMessage(), 400);
+        }
+
+        return $this->jsonSuccess(['deleted' => $deleted]);
     }
 
     private function getBlog(int $id): BlogResource

@@ -412,6 +412,8 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/meta', ['controller' => 'MediaController', 'action' => 'saveMeta', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/optimize', ['controller' => 'MediaController', 'action' => 'optimize', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/rescan', ['controller' => 'MediaController', 'action' => 'rescan', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/bulk-usages', ['controller' => 'MediaController', 'action' => 'bulkUsages', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/bulk-destroy', ['controller' => 'MediaController', 'action' => 'bulkDestroy', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 

@@ -63,6 +63,33 @@ class Lexicon extends Module
     }
 
     /**
+     * Slow uploads to the given bytes per second until backOnAFastConnection().
+     */
+    public function onASlowConnection(int $bytesPerSecond = 2000): void
+    {
+        $this->sendToChrome('Network.enable');
+        $this->sendToChrome('Network.emulateNetworkConditions', [
+            'offline' => false,
+            'latency' => 0,
+            'downloadThroughput' => -1,
+            'uploadThroughput' => $bytesPerSecond,
+        ]);
+    }
+
+    /**
+     * Lift the limit onASlowConnection() put on uploads.
+     */
+    public function backOnAFastConnection(): void
+    {
+        $this->sendToChrome('Network.emulateNetworkConditions', [
+            'offline' => false,
+            'latency' => 0,
+            'downloadThroughput' => -1,
+            'uploadThroughput' => -1,
+        ]);
+    }
+
+    /**
      * Reject all cookies if the banner is up, and wait out the reload it causes.
      */
     public function declineCookies(): void
@@ -110,18 +137,6 @@ class Lexicon extends Module
         }
 
         $browser->click($label, "$nav ul");
-    }
-
-    /**
-     * Open the media library's upload panel unless it already shows, as it does on an empty library.
-     * Upload messages appear inside it, so a closed panel hides them.
-     */
-    public function openTheMediaUploader(): void
-    {
-        $browser = $this->browser();
-        if ($browser->executeJS("return document.getElementById('media-upload-panel').classList.contains('hidden')")) {
-            $browser->click('#media-upload-toggle');
-        }
     }
 
     /**
