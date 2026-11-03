@@ -7,7 +7,7 @@
 // Expects $viewer (ViewerContext, a global on every page). Optional:
 // $userMenuClass for the caller's layout classes, $userMenuReturn for where
 // sign-out comes back to, $userMenuHome to add a link to the platform's home
-// page (blog themes, where nothing else leads back to it).
+// page (blog themes and the dashboard, where nothing else leads back to it).
 $umViewer = $viewer ?? [];
 $umUnread = (int) ($umViewer['unread_replies'] ?? 0);
 $umName = (string) ($umViewer['name'] ?? '');

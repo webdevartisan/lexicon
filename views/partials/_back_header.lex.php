@@ -99,7 +99,10 @@
                     {% include "partials/notifications/_bell.lex.php" %}
                     {% endif; %}
 
-                    <?php $userMenuClass = 'is-cp h-header'; ?>
+                    <?php
+                    $userMenuClass = 'is-cp h-header';
+                    $userMenuHome = true;
+                    ?>
                     {% include "partials/_user_menu.lex.php" %}
 
 
