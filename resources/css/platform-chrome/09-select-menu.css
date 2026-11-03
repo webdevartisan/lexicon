@@ -26,6 +26,9 @@
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
+  /* A field class on the select (.acct-input) would otherwise pad it back out to a tappable size. */
+  padding: 0 !important;
+  border: 0 !important;
   opacity: 0 !important;
   pointer-events: none !important;
   overflow: hidden;

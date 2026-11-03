@@ -235,11 +235,10 @@
 .lx-field .lx-field-input {
     width: 100%;
     min-height: 2.75rem;
-    padding: var(--lx-space-2) 0;
-    background: transparent;
-    border: 0;
-    border-bottom: 1px solid var(--lx-field-line);
-    border-radius: 0;
+    padding: var(--lx-space-2) var(--lx-space-3);
+    background: var(--lx-paper-raised);
+    border: 1px solid var(--lx-field-line);
+    border-radius: var(--lx-radius-md);
     font-family: var(--lx-serif);
     font-size: var(--lx-text-md);
     line-height: var(--lx-leading-normal);
@@ -256,21 +255,21 @@
     padding-inline-end: 3.75rem;
 }
 
-/* The underline is the focus indicator, so it thickens to 2px --lx-ink (drawn as a shadow). */
+/* The edge is the focus indicator, so it thickens to 2px --lx-ink (drawn as a shadow). */
 .lx-field .lx-field-input:focus,
 .lx-field .lx-field-input:focus-visible {
     outline: none;
-    border-bottom-color: var(--lx-ink);
-    box-shadow: 0 1px 0 0 var(--lx-ink);
+    border-color: var(--lx-ink);
+    box-shadow: 0 0 0 1px var(--lx-ink);
 }
 
 .lx-field-invalid .lx-field-input {
-    border-bottom-color: var(--lx-danger);
+    border-color: var(--lx-danger);
 }
 
 .lx-field-toggle {
     position: absolute;
-    inset-inline-end: 0;
+    inset-inline-end: var(--lx-space-2);
     bottom: 0.55rem;
     min-height: 0;
     padding: 0.25rem 0.15rem;
@@ -320,33 +319,6 @@
     width: 1px;
     height: 1px;
     overflow: hidden;
-}
-
-/* Page-level flash / status messages. Left rule keeps it close to the bound-book
-   palette; the two variants only change the accent + text colour, not the base. */
-.lx-msg {
-    display: block;
-    margin: 0 0 var(--lx-space-4);
-    padding: var(--lx-space-3) var(--lx-space-4);
-    background: var(--lx-paper-raised);
-    border: 1px solid var(--lx-rule);
-    border-left: 3px solid var(--lx-rule-strong);
-    border-radius: var(--lx-radius);
-    color: var(--lx-ink);
-    font-family: var(--lx-sans);
-    font-size: var(--lx-text-sm);
-    line-height: var(--lx-leading-normal);
-}
-
-.lx-msg-success {
-    border-left-color: var(--lx-gilt-deep);
-}
-
-.lx-msg-error {
-    background: var(--lx-danger-bg);
-    border-color: var(--lx-danger);
-    border-left-color: var(--lx-danger);
-    color: var(--lx-danger);
 }
 
 /* --- Password strength: advisory only; the server enforces password:basic (6 char min). --- */

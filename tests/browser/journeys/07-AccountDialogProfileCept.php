@@ -12,15 +12,25 @@ $I->amOnPage('/en');
 $I->click('.nav-user-btn');
 $I->waitForElementVisible('.nav-user-menu', 5);
 $I->click('Settings', '.nav-user-menu');
-$I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
+$I->waitForElementVisible('[data-panel-dialog] #occupation', 10);
 $I->seeElement('[data-panel-dialog] .acct-avatar');
 
-$I->fillField('[data-panel-dialog] #first_name', 'Walk');
-$I->fillField('[data-panel-dialog] #last_name', 'Reader');
 $I->fillField('[data-panel-dialog] #occupation', 'Walkthrough tester');
 $I->click('Save', '[data-panel-dialog] form[action$="/account/profile/update"]');
 $I->waitForText('updated successfully', 10, '[data-panel-dialog]');
 $I->seeInField('[data-panel-dialog] #occupation', 'Walkthrough tester');
+
+// The name has its own page, which the profile page no longer carries
+$I->dontSeeElement('[data-panel-dialog] #first_name');
+$I->openSettingsPage('Name and tag');
+$I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
+$I->fillField('[data-panel-dialog] #first_name', 'Walk');
+$I->fillField('[data-panel-dialog] #last_name', 'Reader');
+$I->click('Save', '[data-panel-dialog] form[action$="/account/profile/update"]');
+$I->waitForText('updated successfully', 10, '[data-panel-dialog]');
+$I->seeInField('[data-panel-dialog] #first_name', 'Walk');
+$I->openSettingsPage('Profile');
+$I->waitForElementVisible('[data-panel-dialog] .acct-avatar', 10);
 
 // Upload opens the cropper, applying it closes it again
 $I->attachFile('[data-panel-dialog] #avatar-input', $I->makeImage('walk-avatar'));

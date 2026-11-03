@@ -30,7 +30,7 @@
 
         <?php if ($newCodes !== null) { ?>
         <section class="acct-card" aria-labelledby="codes-heading">
-            <h3 class="acct-card-title" id="codes-heading"><?= e($t('account.twoFactor.codesHeading')) ?></h3>
+            <h2 class="acct-card-title" id="codes-heading"><?= e($t('account.twoFactor.codesHeading')) ?></h2>
             <p class="acct-intro"><?= e($t('account.twoFactor.codesIntro')) ?></p>
             <ul class="acct-codes">
                 <?php foreach ($newCodes as $code) { ?>
@@ -42,7 +42,7 @@
 
         <?php if ($enabled) { ?>
         <section class="acct-card">
-            <h3 class="acct-card-title"><?= e($t('account.twoFactor.onHeading')) ?></h3>
+            <h2 class="acct-card-title"><?= e($t('account.twoFactor.onHeading')) ?></h2>
             <p class="acct-intro"><?= e($t('account.twoFactor.onText')) ?></p>
             <p class="acct-intro"><?= e($t('account.twoFactor.codesLeft')) ?>: <strong><?= (int) $codesLeft ?></strong></p>
 
@@ -56,7 +56,7 @@
         </section>
 
         <section class="acct-card">
-            <h3 class="acct-card-title"><?= e($t('account.twoFactor.offHeading')) ?></h3>
+            <h2 class="acct-card-title"><?= e($t('account.twoFactor.offHeading')) ?></h2>
             <?php if ($required) { ?>
             <p class="acct-intro"><?= e($t('account.twoFactor.requiredForRole')) ?></p>
             <?php } else { ?>
@@ -73,7 +73,7 @@
 
         <?php } elseif ($pending) { ?>
         <section class="acct-card">
-            <h3 class="acct-card-title"><?= e($t('account.twoFactor.scanHeading')) ?></h3>
+            <h2 class="acct-card-title"><?= e($t('account.twoFactor.scanHeading')) ?></h2>
             <p class="acct-intro"><?= e($t('account.twoFactor.scanText')) ?></p>
             <div class="acct-qr" role="img" aria-label="<?= e($t('account.twoFactor.qrLabel')) ?>"><?php // Markup from the QR library, built from our own secret and address, never from user input. ?><?= $qr ?></div>
             <p class="acct-intro"><?= e($t('account.twoFactor.manualText')) ?></p>
@@ -93,7 +93,7 @@
 
         <?php } else { ?>
         <section class="acct-card">
-            <h3 class="acct-card-title"><?= e($t('account.twoFactor.offStateHeading')) ?></h3>
+            <h2 class="acct-card-title"><?= e($t('account.twoFactor.offStateHeading')) ?></h2>
             <p class="acct-intro"><?= e($t('account.twoFactor.offStateText')) ?></p>
             <?php if ($required) { ?>
             <p class="acct-intro"><strong><?= e($t('account.twoFactor.requiredToContinue')) ?></strong></p>

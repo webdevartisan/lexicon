@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AccountSecurityController;
+use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
 use App\Services\AccountZone;
@@ -48,6 +49,7 @@ beforeEach(function () {
     $this->throttle = new PasswordConfirmRateLimiter(new RateLimiter(ThrottleTestHelper::fakeCache()));
     $this->controller = new AccountSecurityController(
         $this->users,
+        new PendingEmailChangeModel($this->db),
         new AccountZone(new UserPreferencesModel($this->db), new \Framework\Session()),
         $this->throttle,
         SessionTestHelper::revoker($this->db),

@@ -13,7 +13,6 @@
 
     <div class="acct-page">
         <?php
-        $handle = (string) $user['handle'];
         $hasAvatar = !empty($user['avatar_url']);
         $hasSource = !empty($user['avatar_source_url']);
         ?>
@@ -34,7 +33,7 @@
             </div>
 
             <div class="acct-avatar-side">
-                <h3 class="acct-card-title"><?= e($t('account.profile.avatarHeading')) ?></h3>
+                <h2 class="acct-card-title"><?= e($t('account.profile.avatarHeading')) ?></h2>
 
                 <form id="avatar-form" method="post" action="<?= e(lurl('/account/profile/avatar')) ?>" enctype="multipart/form-data">
                     <?= csrf_field() ?>
@@ -65,7 +64,7 @@
         </section>
 
         <dialog id="avatar-cropper-modal" class="acct-crop" aria-labelledby="avatar-cropper-title">
-            <h3 class="acct-card-title" id="avatar-cropper-title"><?= e($t('account.profile.cropTitle')) ?></h3>
+            <h2 class="acct-card-title" id="avatar-cropper-title"><?= e($t('account.profile.cropTitle')) ?></h2>
             <div class="acct-crop-stage">
                 <img id="avatar-cropper-image" alt="">
             </div>
@@ -79,13 +78,7 @@
             <?= csrf_field() ?>
             <input type="hidden" name="section" value="profile">
 
-            <h3 class="acct-section"><?= e($t('account.profile.nameSection')) ?></h3>
-            <div class="acct-grid">
-                <?php $field('first_name', $t('account.profile.firstName'), 'text', (string) ($user['first_name'] ?? '')); ?>
-                <?php $field('last_name', $t('account.profile.lastName'), 'text', (string) ($user['last_name'] ?? '')); ?>
-            </div>
-
-            <h3 class="acct-section"><?= e($t('account.profile.aboutSection')) ?></h3>
+            <h2 class="acct-section"><?= e($t('account.profile.aboutSection')) ?></h2>
             <div class="acct-grid">
                 <?php $field('occupation', $t('account.profile.occupation'), 'text', (string) ($user['occupation'] ?? ''), $t('account.profile.occupationPlaceholder')); ?>
                 <?php $field('location', $t('account.profile.location'), 'text', (string) ($user['location'] ?? '')); ?>
@@ -98,7 +91,7 @@
         </form>
 
         <section class="acct-card">
-            <h3 class="acct-card-title"><?= e($t('account.profile.activityHeading')) ?></h3>
+            <h2 class="acct-card-title"><?= e($t('account.profile.activityHeading')) ?></h2>
             <dl class="acct-stats">
                 <div>
                     <dd><?= e((string) ($user['post_count'] ?? 0)) ?></dd>

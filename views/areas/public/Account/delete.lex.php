@@ -49,7 +49,7 @@
             <p><strong><?= e($t('account.delete.warningStrong')) ?></strong> <?= e($t('account.delete.warningText')) ?></p>
         </section>
 
-        <h3 class="acct-section"><?= e($t('account.delete.removedHeading')) ?></h3>
+        <h2 class="acct-section"><?= e($t('account.delete.removedHeading')) ?></h2>
         <ul class="acct-list">
             <li><?= e($t('account.delete.removedAccount')) ?></li>
             <li><?= e($t('account.delete.removedTiming', ['days' => erasure_grace_period_days()])) ?></li>

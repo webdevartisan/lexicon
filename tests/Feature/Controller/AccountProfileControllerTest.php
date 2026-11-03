@@ -47,9 +47,10 @@ beforeEach(function () {
     expect(auth()->login($email, $password))->toBeTrue();
 
     $c = \Framework\Core\App::container();
+    $this->profiles = new UserProfileModel($this->db);
     $this->controller = new AccountProfileController(
         $this->userModel,
-        new UserProfileModel($this->db),
+        $this->profiles,
         new UserSocialLinkModel($this->db),
         new UserPreferencesModel($this->db),
         $c->get(UploadService::class),
@@ -113,14 +114,23 @@ test('edit renders the account profile view', function () {
     expect($this->viewer->capturedTemplate)->toBe('public.Account.profile');
 });
 
-test('a profile save persists and redirects back to the profile page', function () {
-    $token = csrf()->getToken();
+test('editName renders the name view', function () {
+    $request = makeRequest('/account/name', 'GET');
+    setupController($this->controller, $request, $this->viewer);
+
+    $response = $this->controller->editName();
+
+    expect($response)->toBeInstanceOf(Response::class);
+    expect($this->viewer->capturedTemplate)->toBe('public.Account.name');
+});
+
+test('a profile save persists the about fields and returns to the profile page', function () {
     $request = makeRequest('/account/profile/update', 'POST', [
-        '_token' => $token,
-        'first_name' => 'Ada',
-        'last_name' => 'Lovelace',
+        '_token' => csrf()->getToken(),
+        'section' => 'profile',
         'bio' => 'Mathematician.',
-        'handle' => 'ada-lovelace',
+        'occupation' => 'Analyst',
+        'location' => 'London',
     ]);
     setupController($this->controller, $request, $this->viewer);
 
@@ -129,7 +139,46 @@ test('a profile save persists and redirects back to the profile page', function 
     expect($response->getStatusCode())->toBe(302);
     expect($response->getHeader('Location'))->toContain('/account/profile');
 
+    $profile = $this->profiles->findOrCreate($this->userId);
+    expect($profile['bio'])->toBe('Mathematician.');
+    expect($profile['occupation'])->toBe('Analyst');
+    expect($profile['location'])->toBe('London');
+});
+
+test('a name save persists the names and the tag and returns to the name page', function () {
+    $request = makeRequest('/account/profile/update', 'POST', [
+        '_token' => csrf()->getToken(),
+        'section' => 'name',
+        'first_name' => 'Ada',
+        'last_name' => 'Lovelace',
+        'handle' => 'ada-lovelace',
+    ]);
+    setupController($this->controller, $request, $this->viewer);
+
+    $response = callController($this->controller, 'update', $request);
+
+    expect($response->getStatusCode())->toBe(302);
+    expect($response->getHeader('Location'))->toContain('/account/name');
+
     $saved = $this->userModel->findById($this->userId);
     expect($saved['first_name'])->toBe('Ada');
     expect($saved['last_name'])->toBe('Lovelace');
+    expect($saved['handle'])->toBe('ada-lovelace');
+});
+
+test('a name save leaves the profile visibility alone', function () {
+    $this->profiles->upsert($this->userId, ['is_public' => 1]);
+
+    $request = makeRequest('/account/profile/update', 'POST', [
+        '_token' => csrf()->getToken(),
+        'section' => 'name',
+        'first_name' => 'Ada',
+        'last_name' => 'Lovelace',
+        'handle' => 'ada-lovelace',
+    ]);
+    setupController($this->controller, $request, $this->viewer);
+
+    callController($this->controller, 'update', $request);
+
+    expect((int) $this->profiles->findOrCreate($this->userId)['is_public'])->toBe(1);
 });

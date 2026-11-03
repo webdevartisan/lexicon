@@ -83,6 +83,8 @@ return (function () {
         const box = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
         if (!box.width || !box.height || cs.visibility === 'hidden' || cs.display === 'none') return;
+        // A control nobody can point at, such as the select behind the select menu, is not a target
+        if (cs.pointerEvents === 'none') return;
         // Links inside running text are exempt under WCAG 2.2 target size
         if (el.tagName === 'A' && getComputedStyle(el).display === 'inline') return;
         // So is a control whose label does the same job at full size

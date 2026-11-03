@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Services\AccountZone;
 use App\Services\LocaleState;
@@ -17,7 +18,9 @@ use Exception;
 use Framework\Core\Response;
 
 /**
- * Account credentials on the front: the password, plus the last-login stamp.
+ * Account credentials on the front: the sign-in address as shown, the password,
+ * two-step sign-in and devices, plus the last-login stamp. Changing the address
+ * is AccountEmailController's job.
  *
  * The current-password check is throttled, so a stolen session is not an
  * unlimited password oracle, and the session id is rotated after a successful
@@ -29,6 +32,7 @@ final class AccountSecurityController extends AppController
 {
     public function __construct(
         private UserModel $users,
+        private PendingEmailChangeModel $pendingEmail,
         private AccountZone $zones,
         private PasswordConfirmRateLimiter $passwordThrottle,
         private SessionRevoker $revoker,
@@ -55,6 +59,7 @@ final class AccountSecurityController extends AppController
 
         return $this->view('public.Account.security', [
             'user' => $user,
+            'pendingEmail' => $this->pendingEmail->findForUser($userId) ?: null,
             'sessions' => $this->sessionList->forOwner($userId, LocaleState::get()->chromeLocale, $zone),
             'needsPassword' => !$this->recentConfirmation->isFresh(),
         ]);

@@ -24,6 +24,9 @@ test('every account page is a rail destination', function () use ($partial) {
     // The rail is data-driven: hrefs live in the $items array and go through
     // lurl() in the loop, so assert on the paths and that lurl() is applied.
     expect($partial)->toContain("'/account/profile'");
+    expect($partial)->toContain("'/account/name'");
+    expect($partial)->toContain("'/account/social'");
+    expect($partial)->not->toContain("'/account/public'");
     expect($partial)->toContain("'/account/preferences'");
     expect($partial)->toContain("'/account/notifications'");
     expect($partial)->toContain("'/account/security'");

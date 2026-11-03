@@ -11,7 +11,7 @@ $I->wantTo('measure type, contrast, tap targets and overflow on the front pages 
 
 $guestPages = ['/en', '/en/discover', '/en/login', '/en/register', '/en/about', '/en/getting-started',
     '/en/contact', '/en/privacy', '/en/terms', '/en/no-such-page'];
-$readerPages = ['/en/account/profile', '/en/account/public', '/en/account/preferences', '/en/account/notifications',
+$readerPages = ['/en/account/profile', '/en/account/name', '/en/account/social', '/en/account/preferences', '/en/account/notifications',
     '/en/account/security', '/en/saved', '/en/subscriptions', '/en/notifications'];
 $script = file_get_contents(codecept_root_dir('_support/design-audit.js'));
 
@@ -61,7 +61,7 @@ $I->executeJS("localStorage.removeItem('theme-pref')");
 
 $setViewport('desktop');
 $I->signInAs('reader');
-$I->amOnPage('/en/account/public');
+$I->amOnPage('/en/account/name');
 $handle = $I->grabValueFrom('handle');
 $measure([...$readerPages, "/en/profile/{$handle}"]);
 

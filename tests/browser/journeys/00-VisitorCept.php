@@ -50,3 +50,18 @@ $I->click('main form button[type=submit]');
 $I->seeInCurrentUrl('/contact');
 $I->seeElementInDOM('main form :invalid');
 $I->seeThePageLooksRight('visitor-contact-empty');
+$I->see('Replies', '.lx-contact-facts');
+
+// A sent message swaps the form for a confirmation, once. The hidden field takes the
+// silent path that answers like a real send without queueing mail.
+$I->fillField('#contact-name', 'Walk Visitor');
+$I->fillField('#contact-email', 'walk-visitor@example.test');
+$I->fillField('#contact-subject', 'Hello there');
+$I->fillField('#contact-message', 'Just checking the contact page.');
+$I->executeJS("document.querySelector('.lx-hp input').value = 'filled';");
+$I->click('main form button[type=submit]');
+$I->waitForText('Message sent', 10, '.lx-contact-sent');
+$I->dontSeeElement('main form[action$="/contact"]');
+$I->seeThePageLooksRight('visitor-contact-sent');
+$I->reloadPage();
+$I->seeElement('main form[action$="/contact"]');

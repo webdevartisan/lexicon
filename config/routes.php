@@ -277,7 +277,7 @@ $router->group([
 // belonging to a blog stays in the dashboard. No namespace key, so these
 // controllers sit at App\Controllers and resolve by auto-discovery like
 // ReaderController. Deletion keeps its own confirm/destroy pair, reached from
-// the foot of Preferences rather than from the rail.
+// the Delete account item in the rail.
 $router->group([
     'prefix' => '/account',
     'middleware' => ['auth', 'panel'],
@@ -285,7 +285,7 @@ $router->group([
     $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
 
     $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/public', ['controller' => 'AccountProfileController', 'action' => 'editPublic', 'method' => 'GET']);
+    $r->add('/name', ['controller' => 'AccountProfileController', 'action' => 'editName', 'method' => 'GET']);
     $r->add('/social', ['controller' => 'AccountProfileController', 'action' => 'editSocial', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);

@@ -17,7 +17,7 @@ $I->amOnPage('/en');
 $I->click('.nav-user-btn');
 $I->waitForElementVisible('.nav-user-menu', 5);
 $I->click('Settings', '.nav-user-menu');
-$I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
+$I->waitForElementVisible('[data-panel-dialog] #occupation', 10);
 
 $I->see('Profile', $toggle);
 $I->dontSeeElement("$nav ul");
@@ -28,14 +28,31 @@ $I->seeElement("$nav ul");
 $I->seeElement("{$toggle}[aria-expanded=\"true\"]");
 $I->makeScreenshot('account-dialog-phone-menu-open');
 
-$I->click('Danger', "$nav ul");
+$I->click('Delete account', "$nav ul");
 $I->waitForElementVisible('[data-panel-dialog] .acct-details summary', 10);
-$I->see('Danger', $toggle);
+$I->see('Delete account', $toggle);
 $I->dontSeeElement("$nav ul");
 
 $I->click($toggle);
 $I->pressKey($toggle, WebDriverKeys::ESCAPE);
 $I->dontSeeElement("$nav ul");
 $I->seeElement('[data-panel-dialog][open]');
+
+// The full settings page folds the same way, so the tabs never fill the first screen
+$page = '.lx-main .lx-account-nav';
+$I->amOnPage('/en/account/security');
+$I->see('Security', "$page [data-panel-menu]");
+$I->dontSeeElement("$page ul");
+$I->makeScreenshot('account-page-phone-menu-closed');
+$I->click("$page [data-panel-menu]");
+$I->seeElement("$page ul");
+$I->makeScreenshot('account-page-phone-menu-open');
+$I->pressKey("$page [data-panel-menu]", WebDriverKeys::ESCAPE);
+$I->dontSeeElement("$page ul");
+$I->click("$page [data-panel-menu]");
+$I->click('Name and tag', "$page ul");
+$I->waitForElementVisible('.lx-main #handle', 10);
+$I->seeInCurrentUrl('/account/name');
+$I->see('Name and tag', "$page [data-panel-menu]");
 
 $I->putThePhoneAway();
