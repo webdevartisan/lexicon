@@ -21,9 +21,10 @@ foreach ([
     'total', 'sortAsc', 'sortDesc', 'edit', 'download', 'copy', 'copied', 'copyFailed', 'delete',
     'emptyTitle', 'emptyBody', 'noMatchTitle', 'noMatchBody', 'uploaded', 'uploadFailed',
     'rescanning', 'rescanNone', 'rescanDone', 'optimizeConfirm', 'optimizing', 'optimizeNone', 'optimizeDone',
-    'deleteConfirm', 'deleteUsed', 'deleteLeaves', 'deleteInBody', 'deleteAnyway', 'error',
+    'deleteConfirm', 'deleteUsed', 'deleteLeaves', 'deleteInBody', 'deleteAnyway', 'deleted', 'error',
+    'detailsSaved', 'imageUpdated', 'imageAdded',
     'wrongType', 'tooBig', 'cancelUpload', 'retry', 'dismiss',
-    'select', 'selection', 'bulkDeleteConfirm', 'bulkDeleteUsed', 'bulkDeleted', 'tooMany',
+    'select', 'options', 'selection', 'bulkDeleteConfirm', 'bulkDeleteUsed', 'bulkDeleted', 'tooMany',
     'output', 'modeConvert', 'modeOverwrite', 'modeNew', 'notUsed', 'usedIn', 'nameRequired',
 ] as $key) {
     $jsText[$key] = $t('media.js.'.$key);
@@ -73,7 +74,7 @@ $mediaRoutes = [
     'destroy' => $mediaUrl('/{id}/destroy'),
 ];
 ?>
-<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto"
+<div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto group/media"
      data-media-library
      data-media-auto-edit="<?= (int) ($autoEditId ?? 0) ?>"
      data-media-types="<?= e($uploadAccept) ?>"
@@ -92,7 +93,7 @@ $mediaRoutes = [
     ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
 
     <section class="card">
-        <div class="card-body space-y-4">
+        <div class="card-body space-y-4 max-sm:pb-24">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-baseline gap-3">
                     <h2 class="text-sm font-medium text-slate-800 dark:text-zink-50">
@@ -102,8 +103,8 @@ $mediaRoutes = [
                     <span class="text-xs text-slate-500 dark:text-zink-300" data-media-bytes></span>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <div class="relative grow sm:grow-0">
+                <div class="flex flex-nowrap sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div class="relative min-w-0 grow sm:grow-0">
                         <label for="media-q" class="sr-only"><?= e($t('media.toolbar.searchLabel')) ?></label>
                         <input type="search" id="media-q" autocomplete="off"
                                placeholder="<?= e($t('media.toolbar.searchPlaceholder')) ?>"
@@ -113,49 +114,68 @@ $mediaRoutes = [
                         </span>
                     </div>
 
-                    <label for="media-source" class="sr-only"><?= e($t('media.toolbar.sourceLabel')) ?></label>
-                    <select id="media-source" class="form-select w-auto <?= $toolClass ?>">
-                        <?php foreach ($mediaSources as $value => $label) { ?>
-                        <option value="<?= e($value) ?>"><?= e($label) ?></option>
-                        <?php } ?>
-                    </select>
+                    <button type="button" data-media-filters-open aria-haspopup="dialog"
+                            aria-label="<?= e($t('media.toolbar.filters')) ?>" title="<?= e($t('media.toolbar.filters')) ?>"
+                            class="sm:hidden <?= $iconButton ?>">
+                        {% cache 'lucide:sliders-horizontal:media' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="size-4" aria-hidden="true"></i>{% endcache %}
+                    </button>
+                    <button type="button" data-media-select-mode
+                            class="sm:hidden h-9 px-3 text-sm font-medium border rounded-md border-slate-200 text-slate-600 bg-white hover:bg-slate-50 dark:bg-zink-700 dark:text-zink-200 dark:border-zink-500 dark:hover:bg-zink-600">
+                        <?= e($t('media.toolbar.select')) ?>
+                    </button>
 
-                    <div class="flex items-center gap-1">
-                        <div class="flex items-center gap-1">
-                            <label for="media-sort" class="sr-only"><?= e($t('media.toolbar.sortLabel')) ?></label>
-                            <select id="media-sort" class="form-select w-auto <?= $toolClass ?>">
-                                <?php foreach (['date', 'name', 'size'] as $sort) { ?>
-                                <option value="<?= e($sort) ?>"><?= e($t('media.sorts.'.$sort)) ?></option>
-                                <?php } ?>
-                            </select>
-                            <button type="button" id="media-sort-dir" data-dir="desc"
-                                    aria-label="<?= e($jsText['sortAsc']) ?>" title="<?= e($jsText['sortAsc']) ?>"
-                                    class="<?= $iconButton ?>">
-                                <span data-dir-icon="desc">{% cache 'lucide:arrow-down-wide-narrow' ttl=31536000 %}<i data-lucide="arrow-down-wide-narrow" class="size-4" aria-hidden="true"></i>{% endcache %}</span>
-                                <span data-dir-icon="asc" class="hidden">{% cache 'lucide:arrow-up-narrow-wide' ttl=31536000 %}<i data-lucide="arrow-up-narrow-wide" class="size-4" aria-hidden="true"></i>{% endcache %}</span>
-                            </button>
+                    <div class="max-sm:hidden">
+                        <div data-media-filters class="flex flex-wrap items-center gap-2">
+                            <div>
+                                <label for="media-source" class="sr-only"><?= e($t('media.toolbar.sourceLabel')) ?></label>
+                                <select id="media-source" class="form-select w-auto <?= $toolClass ?>">
+                                    <?php foreach ($mediaSources as $value => $label) { ?>
+                                    <option value="<?= e($value) ?>"><?= e($label) ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="media-sort" class="sr-only"><?= e($t('media.toolbar.sortLabel')) ?></label>
+                                <div class="flex items-center gap-1">
+                                    <select id="media-sort" class="form-select w-auto <?= $toolClass ?>">
+                                        <?php foreach (['date', 'name', 'size'] as $sort) { ?>
+                                        <option value="<?= e($sort) ?>"><?= e($t('media.sorts.'.$sort)) ?></option>
+                                        <?php } ?>
+                                    </select>
+                                    <button type="button" id="media-sort-dir" data-dir="desc"
+                                            aria-label="<?= e($jsText['sortAsc']) ?>" title="<?= e($jsText['sortAsc']) ?>"
+                                            class="shrink-0 <?= $iconButton ?>">
+                                        <span data-dir-icon="desc">{% cache 'lucide:arrow-down-wide-narrow' ttl=31536000 %}<i data-lucide="arrow-down-wide-narrow" class="size-4" aria-hidden="true"></i>{% endcache %}</span>
+                                        <span data-dir-icon="asc" class="hidden">{% cache 'lucide:arrow-up-narrow-wide' ttl=31536000 %}<i data-lucide="arrow-up-narrow-wide" class="size-4" aria-hidden="true"></i>{% endcache %}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <span id="media-view-label" class="sr-only"><?= e($t('media.toolbar.viewLabel')) ?></span>
+                                <div class="flex items-center gap-1" role="group" aria-labelledby="media-view-label">
+                                    <button type="button" data-media-view="list" aria-pressed="false"
+                                            aria-label="<?= e($t('media.toolbar.listView')) ?>" title="<?= e($t('media.toolbar.listView')) ?>"
+                                            class="<?= $iconButton ?>">
+                                        {% cache 'lucide:list:media' ttl=31536000 %}<i data-lucide="list" class="size-4" aria-hidden="true"></i>{% endcache %}
+                                    </button>
+                                    <button type="button" data-media-view="grid" aria-pressed="true"
+                                            aria-label="<?= e($t('media.toolbar.gridView')) ?>" title="<?= e($t('media.toolbar.gridView')) ?>"
+                                            class="<?= $iconButton ?>">
+                                        {% cache 'lucide:layout-grid:media' ttl=31536000 %}<i data-lucide="layout-grid" class="size-4" aria-hidden="true"></i>{% endcache %}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-
-                        <div class="flex items-center gap-1" role="group" aria-label="<?= e($t('media.toolbar.viewLabel')) ?>">
-                            <button type="button" data-media-view="list" aria-pressed="false"
-                                    aria-label="<?= e($t('media.toolbar.listView')) ?>" title="<?= e($t('media.toolbar.listView')) ?>"
-                                    class="<?= $iconButton ?>">
-                                {% cache 'lucide:list:media' ttl=31536000 %}<i data-lucide="list" class="size-4" aria-hidden="true"></i>{% endcache %}
-                            </button>
-                            <button type="button" data-media-view="grid" aria-pressed="true"
-                                    aria-label="<?= e($t('media.toolbar.gridView')) ?>" title="<?= e($t('media.toolbar.gridView')) ?>"
-                                    class="<?= $iconButton ?>">
-                                {% cache 'lucide:layout-grid:media' ttl=31536000 %}<i data-lucide="layout-grid" class="size-4" aria-hidden="true"></i>{% endcache %}
-                            </button>
-                        </div>
-
-                        {% cmp="row-actions" title="{$libraryTitle}" items="{$libraryActions}" %}
                     </div>
+
+                    {% cmp="row-actions" title="{$libraryTitle}" items="{$libraryActions}" %}
                 </div>
             </div>
 
             <div id="media-drop"
-                 class="flex flex-wrap items-center justify-between gap-3 p-3 border border-dashed rounded-xl border-slate-300 dark:border-zink-500 transition-colors data-[dragging]:border-custom-500 data-[dragging]:bg-custom-50 dark:data-[dragging]:bg-custom-500/10">
+                 class="hidden sm:flex flex-wrap items-center justify-between gap-3 p-3 border border-dashed rounded-xl border-slate-300 dark:border-zink-500 transition-colors data-[dragging]:border-custom-500 data-[dragging]:bg-custom-50 dark:data-[dragging]:bg-custom-500/10">
                 <div class="flex items-center gap-3">
                     <span class="flex items-center justify-center shrink-0 size-9 border rounded-full border-slate-200 bg-white text-slate-500 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-200">
                         {% cache 'lucide:image:media-drop' ttl=31536000 %}<i data-lucide="image" class="size-4" aria-hidden="true"></i>{% endcache %}
@@ -173,26 +193,40 @@ $mediaRoutes = [
                 </label>
             </div>
 
+            <button type="button" data-media-upload aria-label="<?= e($t('media.drop.upload')) ?>"
+                    class="sm:hidden fixed z-[1040] bottom-5 end-5 flex items-center justify-center size-14 rounded-2xl text-white bg-custom-500 shadow-lg hover:bg-custom-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-custom-500 group-data-[selecting]/media:hidden">
+                {% cache 'lucide:plus:media-upload' ttl=31536000 %}<i data-lucide="plus" class="size-6" aria-hidden="true"></i>{% endcache %}
+            </button>
+
             <ul id="media-upload-feedback" class="divide-y divide-slate-100 dark:divide-zink-600 empty:hidden"></ul>
             <p data-upload-announce class="sr-only" aria-live="polite"></p>
-            <p data-media-status role="status" aria-live="polite" class="hidden text-xs"></p>
+            <p data-media-status role="status" aria-live="polite"
+               class="hidden text-xs text-slate-500 dark:text-zink-300 max-sm:fixed max-sm:z-[1040] max-sm:bottom-24 max-sm:inset-x-4 max-sm:px-4 max-sm:py-3 max-sm:text-sm max-sm:rounded-lg max-sm:border max-sm:shadow-lg max-sm:bg-white max-sm:border-slate-200 dark:max-sm:bg-zink-700 dark:max-sm:border-zink-500"></p>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 hidden" data-media-selection>
-                <label class="inline-flex items-center gap-2 text-[13px] cursor-pointer text-slate-600 dark:text-zink-200">
-                    <input type="checkbox" data-media-select-all class="size-4 rounded border-slate-300 accent-custom-500 dark:border-zink-500"
-                           aria-label="<?= e($t('media.selection.selectAll')) ?>">
-                    <span data-media-selection-text></span>
+            <div class="flex items-center justify-between gap-2 hidden max-sm:!hidden max-sm:group-data-[selecting]/media:!flex" data-media-selection>
+                <label class="inline-flex items-center gap-2 py-1 text-[13px] cursor-pointer text-slate-600 dark:text-zink-200">
+                    <input type="checkbox" data-media-select-all class="size-4 rounded border-slate-300 accent-custom-500 dark:border-zink-500">
+                    <span><?= e($t('media.selection.selectAll')) ?></span>
                 </label>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" data-media-download-selected disabled
-                        class="inline-flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium border rounded-md text-slate-700 bg-white border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zink-700 dark:text-zink-100 dark:border-zink-500 dark:hover:bg-zink-600 transition-colors">
-                        {% cache 'lucide:download:media-bulk' ttl=31536000 %}<i data-lucide="download" class="size-4" aria-hidden="true"></i>{% endcache %}
-                        <span><?= e($t('media.selection.download')) ?></span>
+                <button type="button" data-media-select-done
+                        class="sm:hidden h-9 px-3 text-sm font-medium rounded-md text-custom-500 hover:bg-custom-50 dark:hover:bg-custom-500/10">
+                    <?= e($t('media.toolbar.done')) ?>
+                </button>
+            </div>
+
+            <div data-media-bulk-bar class="hidden fixed bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[1040]">
+                <div class="grid grid-cols-2 sm:flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-900 dark:bg-zink-700 text-white rounded-2xl sm:rounded-full shadow-lg border border-slate-700">
+                    <span data-media-selection-text class="col-span-2 text-sm font-medium text-center"></span>
+                    <span class="hidden pr-2 border-r sm:block border-slate-700" aria-hidden="true"></span>
+                    <button type="button" data-media-download-selected
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium rounded-md transition-colors hover:bg-slate-600/50">
+                        {% cache 'lucide:download:media-bulk' ttl=31536000 %}<i data-lucide="download" class="size-3.5" aria-hidden="true"></i>{% endcache %}
+                        <?= e($t('media.selection.download')) ?>
                     </button>
-                    <button type="button" data-media-delete-selected disabled
-                        class="inline-flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium border rounded-md text-red-600 bg-white border-slate-200 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zink-700 dark:text-red-400 dark:border-zink-500 dark:hover:bg-red-500/10 transition-colors">
-                        {% cache 'lucide:trash-2:media-bulk' ttl=31536000 %}<i data-lucide="trash-2" class="size-4" aria-hidden="true"></i>{% endcache %}
-                        <span><?= e($t('media.selection.delete')) ?></span>
+                    <button type="button" data-media-delete-selected
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium rounded-md transition-colors text-red-300 hover:bg-red-500/30 disabled:opacity-40">
+                        {% cache 'lucide:trash-2:media-bulk' ttl=31536000 %}<i data-lucide="trash-2" class="size-3.5" aria-hidden="true"></i>{% endcache %}
+                        <?= e($t('media.selection.delete')) ?>
                     </button>
                 </div>
             </div>
@@ -226,37 +260,46 @@ $cancelLabel = $t('media.editor.cancel');
 $applyLabel = $t('media.editor.apply');
 
 ob_start(); ?>
-<form id="media-editor-form" class="grid md:grid-cols-[1.3fr_1fr]" novalidate>
-    <div class="flex items-center justify-center p-4 bg-slate-100 dark:bg-zink-800">
-        <div class="w-full h-[45vh] md:h-[70vh]">
+<form id="media-editor-form" data-tab="details" novalidate
+      class="grid md:grid-cols-[1.3fr_1fr] md:h-[min(40rem,calc(100dvh-2rem))] group/editor max-sm:overflow-x-clip">
+    <div class="flex items-center justify-center p-4 max-sm:pt-14 bg-slate-100 dark:bg-zink-800">
+        <div class="w-full h-[30vh] sm:h-[45vh] md:h-full">
             <img id="media-editor-image" alt="" class="block max-w-full">
         </div>
     </div>
 
-    <div class="min-w-0 p-6 space-y-4 md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
-        <div class="pe-8">
-            <h2 id="media-editor-heading" class="text-base font-semibold break-all"></h2>
+    <div class="flex flex-col min-w-0 gap-4 p-4 sm:p-6 md:overflow-y-auto">
+        <div class="sm:pe-8">
+            <h2 id="media-editor-heading" class="text-base font-semibold truncate"></h2>
             <p id="media-editor-meta" class="mt-1 <?= $hintClass ?>"></p>
         </div>
 
-        <div>
-            <label for="media-name" class="<?= $labelClass ?>"><?= e($t('media.editor.name')) ?></label>
-            <input type="text" id="media-name" name="name" maxlength="255" class="<?= $fieldClass ?>">
-        </div>
-        <div>
-            <label for="media-alt" class="<?= $labelClass ?>"><?= e($t('media.editor.alt')) ?></label>
-            <textarea id="media-alt" name="alt_text" rows="2" maxlength="255" class="<?= $fieldClass ?>"
-                      placeholder="<?= e($t('media.editor.altPlaceholder')) ?>"></textarea>
-        </div>
-        <div class="flex justify-end">
-            {% cmp="btn" variant="slate" label="{$saveDetailsLabel}" attrs="{$saveDetailsAttrs}" %}
+        <div class="grid grid-cols-2 overflow-hidden text-sm border rounded-md shrink-0 border-slate-200 dark:border-zink-500"
+             role="group" aria-label="<?= e($t('media.editor.sections')) ?>">
+            <button type="button" data-editor-tab="details" aria-pressed="true"
+                    class="py-2 font-medium text-slate-600 dark:text-zink-200 aria-pressed:bg-custom-500 aria-pressed:text-white"><?= e($t('media.editor.detailsTab')) ?></button>
+            <button type="button" data-editor-tab="edit" aria-pressed="false"
+                    class="py-2 font-medium text-slate-600 dark:text-zink-200 aria-pressed:bg-custom-500 aria-pressed:text-white"><?= e($t('media.editor.editTab')) ?></button>
         </div>
 
-        <div id="media-editor-usage" class="p-3 text-sm border rounded-md border-slate-200 dark:border-zink-500 bg-slate-50 dark:bg-zink-700/40"></div>
+        <div class="space-y-4 group-data-[tab=edit]/editor:hidden">
+            <div>
+                <label for="media-name" class="<?= $labelClass ?>"><?= e($t('media.editor.name')) ?></label>
+                <input type="text" id="media-name" name="name" maxlength="255" class="<?= $fieldClass ?>">
+            </div>
+            <div>
+                <label for="media-alt" class="<?= $labelClass ?>"><?= e($t('media.editor.alt')) ?></label>
+                <textarea id="media-alt" name="alt_text" rows="2" maxlength="255" class="<?= $fieldClass ?>"
+                          placeholder="<?= e($t('media.editor.altPlaceholder')) ?>"></textarea>
+            </div>
+            <div class="flex justify-end">
+                {% cmp="btn" variant="slate" label="{$saveDetailsLabel}" attrs="{$saveDetailsAttrs}" %}
+            </div>
 
-        <hr class="border-slate-200 dark:border-zink-500">
+            <div id="media-editor-usage" class="p-3 text-sm border rounded-md border-slate-200 dark:border-zink-500 bg-slate-50 dark:bg-zink-700/40"></div>
+        </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3 group-data-[tab=details]/editor:hidden">
             <p id="media-output" class="text-sm font-medium" aria-live="polite"></p>
             <div><?= $toggleRow('aspect', $t('media.editor.cropShape'), ['free' => $t('media.editor.free'), '1' => '1:1', '1.7778' => '16:9', '1.3333' => '4:3'], 'free') ?></div>
             <div><?= $toggleRow('scale', $t('media.editor.scaleDown'), ['1' => $t('media.editor.fullSize'), '0.75' => '75%', '0.5' => '50%', '0.25' => '25%'], '1') ?></div>
@@ -264,19 +307,21 @@ ob_start(); ?>
                 <label for="media-width" class="<?= $labelClass ?>"><?= e($t('media.editor.customWidth')) ?></label>
                 <input type="number" id="media-width" name="width" min="1" class="<?= $fieldClass ?>" placeholder="<?= e($t('media.editor.customWidthPlaceholder')) ?>">
             </div>
-            <div>
-                <label for="media-quality" class="<?= $labelClass ?>"><?= e($t('media.editor.quality')) ?>: <span id="media-quality-value">82</span></label>
-                <input type="range" id="media-quality" name="quality" min="40" max="100" value="82" class="w-full accent-custom-500">
-                <p class="<?= $hintClass ?>"><?= e($t('media.editor.qualityHint')) ?></p>
-            </div>
-            <div>
-                <label for="media-format" class="<?= $labelClass ?>"><?= e($t('media.editor.format')) ?></label>
-                <select id="media-format" name="format" class="form-select <?= $fieldClass ?>">
-                    <option value=""><?= e($t('media.editor.keepOriginal')) ?></option>
-                    <option value="jpg">JPEG</option>
-                    <option value="webp">WebP</option>
-                    <option value="png">PNG</option>
-                </select>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div>
+                    <label for="media-quality" class="<?= $labelClass ?>"><?= e($t('media.editor.quality')) ?>: <span id="media-quality-value">82</span></label>
+                    <input type="range" id="media-quality" name="quality" min="40" max="100" value="82" class="w-full accent-custom-500">
+                    <p class="<?= $hintClass ?>"><?= e($t('media.editor.qualityHint')) ?></p>
+                </div>
+                <div>
+                    <label for="media-format" class="<?= $labelClass ?>"><?= e($t('media.editor.format')) ?></label>
+                    <select id="media-format" name="format" class="form-select <?= $fieldClass ?>">
+                        <option value=""><?= e($t('media.editor.keepOriginal')) ?></option>
+                        <option value="jpg">JPEG</option>
+                        <option value="webp">WebP</option>
+                        <option value="png">PNG</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <?= $toggleRow('mode', $t('media.editor.saveAs'), ['new' => $t('media.editor.newImage'), 'overwrite' => $t('media.editor.overwrite')], 'new') ?>
@@ -286,7 +331,7 @@ ob_start(); ?>
 
         <p id="media-editor-status" role="alert" class="hidden text-sm text-red-600 dark:text-red-400"></p>
 
-        <div class="flex flex-wrap items-center gap-2 pt-2">
+        <div class="sticky bottom-0 flex flex-wrap items-center gap-2 mt-auto -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 px-4 sm:px-6 py-3 border-t bg-[var(--acct-bg)] border-[var(--acct-line)] group-data-[tab=details]/editor:hidden">
             {% cmp="btn" variant="red" label="{$deleteLabel}" attrs="{$deleteAttrs}" %}
             <span class="flex-1"></span>
             {% cmp="btn" variant="slate" label="{$cancelLabel}" attrs="{$cancelAttrs}" %}
@@ -297,12 +342,49 @@ ob_start(); ?>
 <?php
 $editorBody = ob_get_clean();
 ?>
-{% cmp="modal" id="media-editor" title="{$editorTitle}" size="xl" bare="1" body="{$editorBody}" %}
+{% cmp="modal" id="media-editor" title="{$editorTitle}" size="xl" bare="1" phone="full" body="{$editorBody}" %}
+<?php
+$sheetTitle = $t('media.sheet.title');
+$filtersTitle = $t('media.toolbar.filters');
+$sheetRow = 'flex items-center w-full gap-3 px-1 min-h-12 text-sm font-medium text-start text-slate-700 dark:text-zink-100';
+
+ob_start(); ?>
+<div class="px-4 pt-4 pb-6">
+    <div class="flex items-center gap-3 pe-10 mb-2">
+        <img data-sheet-thumb alt="" class="object-cover rounded shrink-0 size-12 bg-slate-100 dark:bg-zink-600">
+        <div class="min-w-0">
+            <p data-sheet-name class="text-sm font-medium truncate"></p>
+            <p data-sheet-meta class="<?= $hintClass ?>"></p>
+        </div>
+    </div>
+    <ul class="divide-y divide-slate-200 dark:divide-zink-500">
+        <li><button type="button" data-sheet-action="edit" class="<?= $sheetRow ?>">{% cache 'lucide:pencil:media-sheet' ttl=31536000 %}<i data-lucide="pencil" class="size-4" aria-hidden="true"></i>{% endcache %}<?= e($t('media.sheet.edit')) ?></button></li>
+        <li><a href="#" download data-sheet-action="download" class="<?= $sheetRow ?>">{% cache 'lucide:download:media-sheet' ttl=31536000 %}<i data-lucide="download" class="size-4" aria-hidden="true"></i>{% endcache %}<?= e($t('media.sheet.download')) ?></a></li>
+        <li><button type="button" data-sheet-action="copy" class="<?= $sheetRow ?>">{% cache 'lucide:copy:media-sheet' ttl=31536000 %}<i data-lucide="copy" class="size-4" aria-hidden="true"></i>{% endcache %}<?= e($t('media.sheet.copy')) ?></button></li>
+        <li><button type="button" data-sheet-action="delete" class="<?= $sheetRow ?> !text-red-600 dark:!text-red-400">{% cache 'lucide:trash-2:media-sheet' ttl=31536000 %}<i data-lucide="trash-2" class="size-4" aria-hidden="true"></i>{% endcache %}<?= e($t('media.sheet.delete')) ?></button></li>
+    </ul>
+</div>
+<?php
+$sheetBody = ob_get_clean();
+
+ob_start(); ?>
+<div class="px-4 pt-4 pb-6">
+    <h2 class="mb-4 text-base font-semibold pe-10"><?= e($filtersTitle) ?></h2>
+    <div data-media-filters-slot
+         class="[&_[data-media-filters]]:flex-col [&_[data-media-filters]]:items-stretch [&_[data-media-filters]]:gap-4 [&_.select-menu]:flex-1 [&_.select-menu]:w-full [&_.select-menu:not(.select-menu-open)_.select-menu-list]:hidden [&_.sr-only]:not-sr-only [&_.sr-only]:block [&_.sr-only]:mb-1 [&_.sr-only]:text-sm [&_.sr-only]:font-medium"></div>
+</div>
+<?php
+$filtersBody = ob_get_clean();
+?>
+{% cmp="modal" id="media-item-sheet" title="{$sheetTitle}" bare="1" phone="sheet" body="{$sheetBody}" %}
+{% cmp="modal" id="media-filters-sheet" title="{$filtersTitle}" bare="1" phone="sheet" body="{$filtersBody}" %}
 {% endblock %}
 {% block scripts %}
 <script src="/assets/vendor/cropper/cropper.min.js" nonce="<?= csp_nonce() ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-editor.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-upload-queue.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-cards.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/media-item-sheet.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-selection.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-library.js')) ?>" nonce="<?= csp_nonce() ?>"></script>
 {% endblock %}

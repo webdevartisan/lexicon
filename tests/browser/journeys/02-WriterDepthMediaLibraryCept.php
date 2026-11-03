@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Facebook\WebDriver\WebDriverKeys;
 use Support\JourneyTester;
 
 $I = new JourneyTester($scenario);
@@ -91,18 +92,17 @@ $I->assertSame($names(), array_values(array_unique($names())));
 // Ticking files shows how many and how big, select all takes every shown file
 $I->waitForJS("return document.querySelectorAll('#media-items [data-media-id]').length >= 2;", 10);
 $shown = (int) $I->executeJS("return document.querySelectorAll('#media-items [data-media-id]').length;");
-$I->see("0/{$shown} selected", '[data-media-selection]');
-$I->seeElement('[data-media-delete-selected][disabled]');
+$I->dontSeeElement('[data-media-bulk-bar]');
 $I->click('#media-items [data-media-id]:first-child [data-media-select]');
-$I->see("1/{$shown} selected", '[data-media-selection]');
+$I->see("1/{$shown} selected", '[data-media-bulk-bar]');
 $I->seeElement('#media-items [data-media-id][data-selected]');
 $I->assertTrue($I->executeJS("return document.querySelector('[data-media-select-all]').indeterminate;"));
 $I->click('[data-media-select-all]');
-$I->see("{$shown}/{$shown} selected", '[data-media-selection]');
+$I->see("{$shown}/{$shown} selected", '[data-media-bulk-bar]');
 
 // The selection survives a switch of view
 $I->click('[data-media-view="grid"]');
-$I->see("{$shown}/{$shown} selected", '[data-media-selection]');
+$I->see("{$shown}/{$shown} selected", '[data-media-bulk-bar]');
 $I->seeNumberOfElements('#media-items [data-media-select]:checked', $shown);
 $I->seeThePageLooksRight('21-media-library-selected');
 $I->click('[data-media-view="list"]');
@@ -118,9 +118,10 @@ $I->seeNumberOfElements('#media-items [data-media-id]', $shown);
 $I->click('[data-media-delete-selected]');
 $I->waitForElementVisible('#confirmModalDanger', 10);
 $I->click('#confirmModalDanger [data-modal-confirm]');
-$I->waitForText("Images deleted: {$shown}", 15, '[data-media-status]');
+$I->waitForText("Images deleted: {$shown}", 15, '#toast-stack');
 $I->dontSeeElement('#media-items [data-media-id]');
 $I->assertSame($before - $shown, (int) $I->grabTextFrom('[data-media-count]'));
+$I->dontSeeElement('[data-media-bulk-bar]');
 
 // A search with no hits says so
 $I->fillField('#media-q', 'nothing-is-called-this');
@@ -132,15 +133,66 @@ $I->waitForElementNotVisible('#media-empty', 10);
 $I->click('[data-media-library] [data-row-actions-toggle]');
 $I->waitForElementVisible('[data-media-rescan]');
 $I->click('[data-media-rescan]');
-$I->waitForText('already in the library', 15, '[data-media-status]');
+$I->waitForText('already in the library', 15, '#toast-stack');
 
-// Neither view runs off the side of a phone
+// On a phone the images come first, with uploads on the + button
 $I->amOnAPhone();
 $I->amOnPage($library);
 $I->waitForElement('#media-items [data-media-id]', 10);
+$I->dontSeeElement('#media-drop');
+$I->seeElement('[data-media-upload]');
 $I->seeThePageLooksRight('21-media-library-list-phone');
-$I->click('[data-media-view="grid"]');
+
+// A tap opens the image's actions in a sheet
+$first = '#media-items [data-media-id]:first-child [data-media-more]';
+$name = $I->grabTextFrom('#media-items [data-media-id]:first-child [data-media-name]');
+$I->click($first);
+$I->waitForElementVisible('#media-item-sheet [data-sheet-action="edit"]', 10);
+$I->see($name, '#media-item-sheet');
+$I->wait(0.5);
+$I->seeThePageLooksRight('21-media-library-sheet-phone');
+$I->click('#media-item-sheet [data-modal-close]');
+$I->waitForElementNotVisible('#media-item-sheet', 10);
+
+// Sorting, filtering and the layout live in their own sheet
+$I->click('[data-media-filters-open]');
+$I->waitForElementVisible('#media-filters-sheet [data-media-view="grid"]', 10);
+$I->wait(0.5);
+$I->seeThePageLooksRight('21-media-library-filters-phone');
+$I->click('#media-filters-sheet [data-media-view="grid"]');
+$I->click('#media-filters-sheet [data-modal-close]');
+$I->waitForElementNotVisible('#media-filters-sheet', 10);
+$I->seeElement('#media-items ul[data-media-grid]');
+$I->assertTrue($I->executeJS("return !!document.querySelector('[data-media-library] [data-media-filters]');"));
 $I->seeThePageLooksRight('21-media-library-grid-phone');
+
+// Select mode turns a tap into a tick and brings up the bar
+$I->click('[data-media-select-mode]');
+$I->dontSeeElement('[data-media-upload]');
+$I->click($first);
+$I->see('1/', '[data-media-bulk-bar]');
+$I->seeElement('#media-items [data-media-id]:first-child[data-selected]');
+$I->dontSeeElement('#media-item-sheet');
+$I->seeThePageLooksRight('21-media-library-select-phone');
+$I->click('[data-media-select-done]');
+$I->dontSeeElement('[data-media-bulk-bar]');
+$I->dontSeeElement('#media-items [data-media-id][data-selected]');
+
+// The editor fills the screen, with details and image settings on two tabs
+$I->click($first);
+$I->waitForElementVisible('#media-item-sheet [data-sheet-action="edit"]', 10);
+$I->click('#media-item-sheet [data-sheet-action="edit"]');
+$I->waitForElementVisible('#media-name', 10);
+$I->dontSeeElement('#media-editor-apply');
+$I->wait(0.5);
+$I->seeThePageLooksRight('21-media-editor-phone');
+$I->click('[data-editor-tab="edit"]');
+$I->waitForElementVisible('#media-editor-apply', 5);
+$I->dontSeeElement('#media-name');
+$I->wait(0.5);
+$I->seeThePageLooksRight('21-media-editor-phone-edit');
+$I->pressKey('#media-editor-apply', WebDriverKeys::ESCAPE);
+$I->waitForElementNotVisible('#media-editor', 10);
 $I->putThePhoneAway();
 
 // Leave the library as the next walker expects it

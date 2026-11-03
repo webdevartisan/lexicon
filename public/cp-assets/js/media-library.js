@@ -11,6 +11,8 @@
     var text = initial.text || {};
     var sources = initial.sources || {};
     var routes = initial.routes;
+    // Tailwind's sm breakpoint, where the phone layout ends
+    var phone = window.matchMedia('(max-width: 639px)');
 
     function t(key, vars) {
         var phrase = text[key] || key;
@@ -79,20 +81,6 @@
         return ext === 'JPEG' ? 'JPG' : ext;
     }
 
-    var ICONS = {
-        edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
-        download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
-        copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
-        check: '<path d="M20 6 9 17l-5-5"/>',
-        trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
-    };
-
-    function icon(name) {
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
-            + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-icon="' + name + '">'
-            + ICONS[name] + '</svg>';
-    }
-
     var VIEW_KEY = 'lexicon:media-view';
     var pageSize = 24;
     var items = initial.items || [];
@@ -112,81 +100,25 @@
     var statusEl = root.querySelector('[data-media-status]');
     var loadMoreWrap = document.getElementById('media-load-more-wrap');
 
-    var ACTION_CLASS = 'inline-flex items-center justify-center size-8 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-        + ' dark:text-zink-300 dark:hover:text-zink-50 dark:hover:bg-zink-600 transition-colors'
-        + ' focus:outline-none focus-visible:ring-2 focus-visible:ring-custom-500';
-    var DELETE_CLASS = 'inline-flex items-center justify-center size-8 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50'
-        + ' dark:text-red-400 dark:hover:bg-red-500/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500';
-
-    function actionsHtml(item) {
-        var name = displayName(item);
-        var label = function (key) { return esc(t(key, { name: name })); };
-
-        return ''
-            + '<button type="button" data-media-open class="' + ACTION_CLASS + '" aria-label="' + label('edit') + '" title="' + label('edit') + '">' + icon('edit') + '</button>'
-            + '<a href="' + esc(item.url) + '" download="' + esc(name) + '" class="' + ACTION_CLASS + '" aria-label="' + label('download') + '" title="' + label('download') + '">' + icon('download') + '</a>'
-            + '<button type="button" data-media-copy class="' + ACTION_CLASS + '" aria-label="' + label('copy') + '" title="' + label('copy') + '">' + icon('copy') + '</button>'
-            + '<button type="button" data-media-delete class="' + DELETE_CLASS + '" aria-label="' + label('delete') + '" title="' + label('delete') + '">' + icon('trash') + '</button>';
+    function thumbUrl(item) {
+        return versioned(item.url, item.updated_at || item.created_at);
     }
 
-    function thumb(item) {
-        return esc(versioned(item.url, item.updated_at || item.created_at));
-    }
-
-    function gridCard(item) {
-        var name = esc(displayName(item));
-        return ''
-            + '<li class="relative flex flex-col overflow-hidden border rounded-md border-slate-200 bg-white dark:border-zink-500 dark:bg-zink-700'
-            + ' data-[selected]:ring-2 data-[selected]:ring-custom-500" data-media-id="' + esc(item.id) + '">'
-            + '  <label class="absolute z-10 flex items-center justify-center rounded top-2 start-2 size-7 bg-white/90 dark:bg-zink-700/90">'
-            + selection.checkboxHtml(item) + '</label>'
-            + '  <button type="button" data-media-open tabindex="-1" aria-hidden="true" class="block w-full overflow-hidden aspect-[4/3] bg-slate-100 dark:bg-zink-600">'
-            + '    <img src="' + thumb(item) + '" alt="" loading="lazy" decoding="async" class="object-cover w-full h-full transition-transform hover:scale-105">'
-            + '  </button>'
-            + '  <div class="flex flex-col flex-1 gap-0.5 p-2">'
-            + '    <p data-media-name class="text-[13px] font-medium truncate text-slate-800 dark:text-zink-50" title="' + name + '">' + name + '</p>'
-            + '    <p class="text-xs text-slate-500 dark:text-zink-300">' + esc(typeLabel(item)) + ' · ' + esc(humanSize(item.size_bytes)) + '</p>'
-            + '    <div class="flex items-center justify-end gap-0.5 mt-auto pt-1">' + actionsHtml(item) + '</div>'
-            + '  </div>'
-            + '</li>';
-    }
-
-    function listRow(item, largest) {
-        var name = esc(displayName(item));
-        var share = largest > 0 ? Math.max(2, Math.round((item.size_bytes || 0) / largest * 100)) : 0;
-        return ''
-            + '<li class="grid items-center gap-3 px-3 py-2 border-t first:border-t-0 border-slate-200 dark:border-zink-500 hover:bg-slate-50 dark:hover:bg-zink-600/40'
-            + ' data-[selected]:bg-custom-50 dark:data-[selected]:bg-custom-500/10'
-            + ' grid-cols-[1rem_2.5rem_minmax(0,1fr)_auto] sm:grid-cols-[1rem_2.5rem_minmax(0,1fr)_4rem_5rem_auto]" data-media-id="' + esc(item.id) + '">'
-            + '  ' + selection.checkboxHtml(item)
-            + '  <button type="button" data-media-open tabindex="-1" aria-hidden="true" class="block overflow-hidden rounded size-10 bg-slate-100 dark:bg-zink-600">'
-            + '    <img src="' + thumb(item) + '" alt="" loading="lazy" decoding="async" class="object-cover w-full h-full">'
-            + '  </button>'
-            + '  <div class="min-w-0">'
-            + '    <p data-media-name class="text-[13px] font-medium truncate text-slate-800 dark:text-zink-50" title="' + name + '">' + name + '</p>'
-            + '    <p class="text-xs sm:hidden text-slate-500 dark:text-zink-300">' + esc(typeLabel(item)) + ' · ' + esc(humanSize(item.size_bytes)) + '</p>'
-            + '    <div class="hidden sm:block h-1.5 mt-1 overflow-hidden rounded max-w-44 bg-slate-100 dark:bg-zink-600" aria-hidden="true">'
-            + '      <div class="h-full rounded bg-slate-400 dark:bg-zink-300" style="width:' + share + '%"></div>'
-            + '    </div>'
-            + '  </div>'
-            + '  <span class="hidden text-xs sm:block text-slate-500 dark:text-zink-300">' + esc(typeLabel(item)) + '</span>'
-            + '  <span class="hidden text-xs whitespace-nowrap sm:block text-slate-500 dark:text-zink-300">' + esc(humanSize(item.size_bytes)) + '</span>'
-            + '  <div class="grid grid-cols-2 gap-0.5 sm:flex">' + actionsHtml(item) + '</div>'
-            + '</li>';
-    }
+    var cards = createMediaCards({
+        t: t,
+        esc: esc,
+        humanSize: humanSize,
+        displayName: displayName,
+        typeLabel: typeLabel,
+        thumbUrl: thumbUrl,
+        checkbox: function (item) { return selection.checkboxHtml(item); },
+    });
 
     function render() {
-        if (view === 'list') {
-            var largest = items.reduce(function (max, item) { return Math.max(max, item.size_bytes || 0); }, 0);
-            list.innerHTML = items.length === 0 ? '' : ''
-                + '<ul data-media-list class="overflow-hidden border rounded-md border-slate-200 dark:border-zink-500">'
-                + items.map(function (item) { return listRow(item, largest); }).join('')
-                + '</ul>';
+        if (items.length === 0) {
+            list.innerHTML = '';
         } else {
-            list.innerHTML = items.length === 0 ? '' : ''
-                + '<ul data-media-grid class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">'
-                + items.map(gridCard).join('')
-                + '</ul>';
+            list.innerHTML = view === 'list' ? cards.list(items) : cards.grid(items);
         }
         updateMeta();
         selection.sync();
@@ -207,23 +139,17 @@
         view = next;
         try { window.localStorage.setItem(VIEW_KEY, view); } catch (e) {}
         list.setAttribute('data-view', view);
-        root.querySelectorAll('[data-media-view]').forEach(function (button) {
+        viewButtons.forEach(function (button) {
             button.setAttribute('aria-pressed', button.getAttribute('data-media-view') === view ? 'true' : 'false');
         });
         render();
     }
 
-    var statusTimer;
+    // Work in progress stays on the page's own line, results go to a toast
     function showStatus(message, kind) {
-        clearTimeout(statusTimer);
         statusEl.textContent = message;
-        statusEl.classList.remove('hidden', 'text-red-600', 'dark:text-red-400', 'text-emerald-600', 'text-slate-500');
-        statusEl.classList.add.apply(statusEl.classList, kind === 'error'
-            ? ['text-red-600', 'dark:text-red-400']
-            : (kind === 'ok' ? ['text-emerald-600'] : ['text-slate-500']));
-        if (kind !== 'busy') {
-            statusTimer = setTimeout(function () { statusEl.classList.add('hidden'); }, 5000);
-        }
+        statusEl.classList.toggle('hidden', kind !== 'busy');
+        if (kind !== 'busy') cpToast(message, kind === 'error' ? 'error' : 'success');
     }
 
     function indexOf(id) {
@@ -258,7 +184,10 @@
     }
 
     function deleteItem(id) {
-        return api(route('destroy', id), {}).then(function () { removeItems([id]); });
+        return api(route('destroy', id), {}).then(function () {
+            removeItems([id]);
+            showStatus(t('deleted'), 'ok');
+        });
     }
 
     // The server empties banner, logo and featured or social image slots on delete,
@@ -274,13 +203,21 @@
         return cpConfirm(message, { tone: 'danger' });
     }
 
+    function askToDelete(id) {
+        api(route('details', id))
+            .then(function (details) { return confirmDelete(details.usages || []); })
+            .then(function (ok) { if (ok) return deleteItem(id); })
+            .catch(function (error) { showStatus(error.message, 'error'); });
+    }
+
     function copyLink(item, button) {
         var url = new URL(item.url, window.location.origin).href;
         navigator.clipboard.writeText(url)
             .then(function () {
-                button.innerHTML = icon('check');
                 showStatus(t('copied'), 'ok');
-                setTimeout(function () { button.innerHTML = icon('copy'); }, 1500);
+                if (!button) return;
+                button.innerHTML = cards.icon('check');
+                setTimeout(function () { button.innerHTML = cards.icon('copy'); }, 1500);
             })
             .catch(function () { showStatus(t('copyFailed'), 'error'); });
     }
@@ -334,26 +271,38 @@
         reloadItems();
     });
 
-    root.querySelectorAll('[data-media-view]').forEach(function (button) {
+    var viewButtons = root.querySelectorAll('[data-media-view]');
+    viewButtons.forEach(function (button) {
         button.addEventListener('click', function () { setView(button.getAttribute('data-media-view')); });
     });
+
+    var filterControls = root.querySelector('[data-media-filters]');
+    var filterHome = filterControls.parentNode;
+    var filterSheet = document.getElementById('media-filters-sheet');
+    root.querySelector('[data-media-filters-open]').addEventListener('click', function (e) {
+        filterSheet.querySelector('[data-media-filters-slot]').appendChild(filterControls);
+        cpModal.open('media-filters-sheet', e.currentTarget);
+    });
+    filterSheet.addEventListener('modal:close', function () { filterHome.appendChild(filterControls); });
 
     document.getElementById('media-load-more').addEventListener('click', function () {
         loadItems(false).catch(function (error) { showStatus(error.message, 'error'); });
     });
 
+    // Clicks inside a checkbox label tick it natively, so they are left alone here
     list.addEventListener('click', function (e) {
         var row = e.target.closest('[data-media-id]');
-        if (!row) return;
+        if (!row || e.target.closest('label')) return;
         var id = row.getAttribute('data-media-id');
         var item = items[indexOf(id)];
         if (!item) return;
 
-        if (e.target.closest('[data-media-delete]')) {
-            api(route('details', id))
-                .then(function (details) { return confirmDelete(details.usages || []); })
-                .then(function (ok) { if (ok) return deleteItem(id); })
-                .catch(function (error) { showStatus(error.message, 'error'); });
+        if (selection.selecting()) {
+            selection.toggle(id);
+        } else if (phone.matches) {
+            sheet.open(item, row.querySelector('[data-media-more]'));
+        } else if (e.target.closest('[data-media-delete]')) {
+            askToDelete(id);
         } else if (e.target.closest('[data-media-copy]')) {
             copyLink(item, e.target.closest('[data-media-copy]'));
         } else if (e.target.closest('[data-media-open]')) {
@@ -377,9 +326,11 @@
         onUploaded: showCard,
     });
 
+    root.querySelector('[data-media-upload]').addEventListener('click', function () { fileInput.click(); });
     fileInput.addEventListener('change', function () {
         queue.add(fileInput.files);
         fileInput.value = '';
+        if (phone.matches) root.scrollIntoView({ block: 'start' });
     });
     ['dragenter', 'dragover'].forEach(function (type) {
         dropArea.addEventListener(type, function (e) {
@@ -440,6 +391,7 @@
     var selection = createMediaSelection({
         root: root,
         list: list,
+        phone: phone,
         api: api,
         route: route,
         t: t,
@@ -457,7 +409,7 @@
         route: route,
         t: t,
         sources: sources,
-        notify: function (message) { showStatus(message, 'error'); },
+        notify: showStatus,
         esc: esc,
         humanSize: humanSize,
         versioned: versioned,
@@ -465,6 +417,16 @@
         showCard: showCard,
         deleteItem: deleteItem,
         confirmDelete: confirmDelete,
+    });
+
+    var sheet = createMediaItemSheet({
+        id: 'media-item-sheet',
+        thumb: thumbUrl,
+        displayName: displayName,
+        meta: function (item) { return typeLabel(item) + ' · ' + humanSize(item.size_bytes); },
+        onEdit: function (item, trigger) { editor.open(item.id, trigger); },
+        onCopy: function (item) { copyLink(item); },
+        onDelete: function (item) { askToDelete(item.id); },
     });
 
     setView(view);

@@ -201,8 +201,20 @@ window.createMediaEditor = function (deps) {
         output.textContent = '';
         setStatus('');
         syncMode();
+        showTab('details');
         startCropper(item.url);
     }
+
+    function showTab(name) {
+        form.setAttribute('data-tab', name);
+        form.querySelectorAll('[data-editor-tab]').forEach(function (button) {
+            button.setAttribute('aria-pressed', button.getAttribute('data-editor-tab') === name ? 'true' : 'false');
+        });
+    }
+
+    form.querySelectorAll('[data-editor-tab]').forEach(function (button) {
+        button.addEventListener('click', function () { showTab(button.getAttribute('data-editor-tab')); });
+    });
 
     // Ignores clicks while a previous image is still loading its details
     function openEditor(id, trigger) {
@@ -214,7 +226,7 @@ window.createMediaEditor = function (deps) {
                 fill(item);
                 cpModal.open('media-editor', trigger);
             })
-            .catch(function (error) { notify(error.message); })
+            .catch(function (error) { notify(error.message, 'error'); })
             .finally(function () { opening = false; });
     }
 
@@ -269,6 +281,7 @@ window.createMediaEditor = function (deps) {
         whileSaving(detailsButton, api(route('meta', item.id), { name: name, alt_text: altInput.value }).then(function (saved) {
             Object.assign(item, saved);
             showCard(saved);
+            notify(t('detailsSaved'), 'ok');
             if (current !== item) return;
             nameInput.value = displayName(saved);
             altInput.value = saved.alt_text || '';
@@ -299,10 +312,12 @@ window.createMediaEditor = function (deps) {
             format: formatSelect.value || null,
         }, cropFields());
 
-        whileSaving(applyButton, api(route('process', current.id), fields).then(function (item) {
+        var original = current;
+        whileSaving(applyButton, api(route('process', original.id), fields).then(function (item) {
             // An overwrite keeps the URL and the row's old timestamp, so force a fresh thumbnail
             if (mode === 'overwrite') item.updated_at = String(Date.now());
             showCard(item);
+            notify(t(String(item.id) === String(original.id) ? 'imageUpdated' : 'imageAdded'), 'ok');
             cpModal.close('media-editor');
         }));
     });

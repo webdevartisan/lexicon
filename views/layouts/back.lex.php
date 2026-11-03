@@ -131,15 +131,17 @@ $old = old();
 <!-- end main content -->
 
 <!-- Flash toasts, fixed overlay so they never move the page -->
-{% if flash|notempty %}
-<div id="toast-stack" class="fixed top-[calc(theme('spacing.header')_+_1rem)] ltr:right-4 rtl:left-4 z-[1050] flex flex-col gap-3 w-80 max-w-[calc(100vw_-_2rem)] pointer-events-none print:hidden">
+<div id="toast-stack" role="status" aria-live="polite" class="fixed top-[calc(theme('spacing.header')_+_1rem)] ltr:right-4 rtl:left-4 z-[1050] flex flex-col gap-3 w-80 max-w-[calc(100vw_-_2rem)] pointer-events-none print:hidden">
+    {% if flash|notempty %}
     {% foreach ($flash as $type => $messages): %}
         {% foreach ($messages as $msg): %}
             {% cmp="msg" type="{$type}" msg="{$msg}" %}
         {% endforeach %}
     {% endforeach %}
+    {% endif %}
 </div>
-{% endif %}
+<template data-toast-template="success">{% cmp="msg" type="success" msg="" %}</template>
+<template data-toast-template="error">{% cmp="msg" type="error" msg="" %}</template>
 
 <script src="/cp-assets/libs/%40popperjs/core/umd/popper.min.js"></script>
 <script src="/cp-assets/libs/tippy.js/tippy-bundle.umd.min.js"></script>
@@ -154,6 +156,7 @@ $old = old();
 {% cmp="confirm-modal" id="confirmModalWarning" tone="warning" %}
 <script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/confirm.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/toast.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/select-menu.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/bulk-actions.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/blog-switcher.js')) ?>"></script>

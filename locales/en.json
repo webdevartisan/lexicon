@@ -2587,7 +2587,10 @@
             "viewLabel": "Layout",
             "listView": "List view",
             "gridView": "Grid view",
-            "menuTitle": "the media library"
+            "menuTitle": "the media library",
+            "filters": "Sort and filter",
+            "select": "Select",
+            "done": "Done"
         },
         "sources": {
             "all": "All sources",
@@ -2610,7 +2613,8 @@
             "title": "Drop images to upload",
             "limits": "{types} · up to {size} each",
             "select": "Select files",
-            "inputLabel": "Choose images to upload"
+            "inputLabel": "Choose images to upload",
+            "upload": "Upload images"
         },
         "loadMore": "Load more",
         "editor": {
@@ -2634,7 +2638,10 @@
             "overwrite": "Overwrite",
             "delete": "Delete",
             "cancel": "Cancel",
-            "apply": "Apply"
+            "apply": "Apply",
+            "sections": "Editor sections",
+            "detailsTab": "Details",
+            "editTab": "Edit image"
         },
         "js": {
             "total": "Total: {size}",
@@ -2682,12 +2689,24 @@
             "bulkDeleteConfirm": "Delete the selected images ({count})? This can't be undone.",
             "bulkDeleteUsed": "Some of the selected images are used here:",
             "bulkDeleted": "Images deleted: {count}",
-            "tooMany": "Select at most {max} images at a time."
+            "tooMany": "Select at most {max} images at a time.",
+            "options": "Options for {name}",
+            "deleted": "Image deleted",
+            "detailsSaved": "Details saved",
+            "imageUpdated": "Image updated",
+            "imageAdded": "Saved as a new image"
         },
         "selection": {
             "selectAll": "Select all shown images",
-            "download": "Download selected",
-            "delete": "Delete selected"
+            "download": "Download",
+            "delete": "Delete"
+        },
+        "sheet": {
+            "title": "Image options",
+            "edit": "Edit",
+            "download": "Download",
+            "copy": "Copy link",
+            "delete": "Delete"
         }
     }
 }

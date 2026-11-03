@@ -11,6 +11,7 @@
  * - openOnLoad: open as soon as the page loads, e.g. to show validation errors
  * - noConfirm: only the cancel button, for a modal with nothing to confirm
  * - bare: no header or footer bar; the body is the whole dialog, with a floating close button
+ * - phone: "sheet" docks the dialog to the bottom of a phone screen, "full" fills it
  */
 $id = $id ?? 'modal';
 $title = $title ?? 'Modal Title';
@@ -26,12 +27,29 @@ $form = $form ?? null;
 $openOnLoad = !empty($openOnLoad);
 $noConfirm = !empty($noConfirm);
 $bare = !empty($bare);
+$phone = $phone ?? '';
 
 // danger and warning tint the card like the shared confirmation dialog; everything else is the default blue
 $tone = in_array($variant, ['danger', 'warning'], true) ? $variant : 'default';
 $badgeIcon = $icon ?? match ($tone) {
     'default' => 'info',
     default => 'alert-triangle',
+};
+
+// The vendor modal styles set top on the attribute, so only an important utility moves it.
+// A sheet spans the screen and sits at its foot, so its height never depends on the scroll position.
+// Taps around it fall through to the backdrop.
+[$phonePlace, $phoneCard] = match ($phone) {
+    'sheet' => [
+        'max-sm:!top-0 max-sm:bottom-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full'
+            .' max-sm:justify-end max-sm:pointer-events-none',
+        'max-sm:w-full max-sm:!rounded-b-none max-sm:max-h-[85dvh] max-sm:pointer-events-auto',
+    ],
+    'full' => [
+        'max-sm:!top-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full',
+        'max-sm:w-full max-sm:h-[100dvh] max-sm:max-h-none max-sm:!rounded-none',
+    ],
+    default => ['', ''],
 };
 
 $modalWidths = match ($size) {
@@ -45,8 +63,8 @@ $modalWidths = match ($size) {
 
 <div id="<?= e($id) ?>" modal-center role="dialog" aria-modal="true" aria-labelledby="<?= e($id) ?>-title" tabindex="-1"
     <?= $openOnLoad ? 'data-modal-open-on-load' : '' ?>
-    class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show">
-    <div class="confirm-card w-[calc(100vw-2rem)] <?= $modalWidths ?> overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] <?= $bare ? 'relative' : '' ?>" data-tone="<?= e($tone) ?>">
+    class="fixed flex flex-col hidden transition-all duration-300 ease-in-out left-2/4 z-drawer -translate-x-2/4 -translate-y-2/4 show <?= $phonePlace ?>">
+    <div class="confirm-card w-[calc(100vw-2rem)] <?= $modalWidths ?> <?= $phoneCard ?> overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] <?= $bare ? 'relative' : '' ?>" data-tone="<?= e($tone) ?>">
 
         <?php if ($bare) { ?>
         <h5 id="<?= e($id) ?>-title" class="sr-only"><?= e($title) ?></h5>

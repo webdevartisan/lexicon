@@ -48,7 +48,7 @@ $autoClose = $autoClose ?? 10000;
     <!-- Content -->
     <div class="flex-1">
         <span class="font-semibold">{{ type }}:</span>
-        <span class="ml-1">{{ msg }}</span>
+        <span class="ml-1" data-toast-text>{{ msg }}</span>
     </div>
     
     <!-- Close Button -->

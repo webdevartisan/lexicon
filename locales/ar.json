@@ -2599,7 +2599,10 @@
             "viewLabel": "طريقة العرض",
             "listView": "عرض القائمة",
             "gridView": "عرض الشبكة",
-            "menuTitle": "مكتبة الوسائط"
+            "menuTitle": "مكتبة الوسائط",
+            "filters": "الترتيب والتصفية",
+            "select": "تحديد",
+            "done": "تم"
         },
         "sources": {
             "all": "كل المصادر",
@@ -2622,7 +2625,8 @@
             "title": "أفلت الصور هنا لرفعها",
             "limits": "{types} · حتى {size} لكل صورة",
             "select": "اختيار الملفات",
-            "inputLabel": "اختر صورًا لرفعها"
+            "inputLabel": "اختر صورًا لرفعها",
+            "upload": "رفع الصور"
         },
         "loadMore": "عرض المزيد",
         "editor": {
@@ -2646,7 +2650,10 @@
             "overwrite": "استبدال",
             "delete": "حذف",
             "cancel": "إلغاء",
-            "apply": "تطبيق"
+            "apply": "تطبيق",
+            "sections": "أقسام المحرر",
+            "detailsTab": "التفاصيل",
+            "editTab": "تعديل الصورة"
         },
         "js": {
             "total": "الإجمالي: {size}",
@@ -2694,12 +2701,24 @@
             "bulkDeleteConfirm": "هل تريد حذف الصور المحددة ({count})؟ لا يمكن التراجع عن ذلك.",
             "bulkDeleteUsed": "بعض الصور المحددة مستخدمة هنا:",
             "bulkDeleted": "الصور المحذوفة: {count}",
-            "tooMany": "حدد {max} صورة كحد أقصى في كل مرة."
+            "tooMany": "حدد {max} صورة كحد أقصى في كل مرة.",
+            "options": "خيارات {name}",
+            "deleted": "تم حذف الصورة",
+            "detailsSaved": "تم حفظ التفاصيل",
+            "imageUpdated": "تم تحديث الصورة",
+            "imageAdded": "تم الحفظ كصورة جديدة"
         },
         "selection": {
             "selectAll": "تحديد كل الصور المعروضة",
-            "download": "تنزيل المحدد",
-            "delete": "حذف المحدد"
+            "download": "تنزيل",
+            "delete": "حذف"
+        },
+        "sheet": {
+            "title": "خيارات الصورة",
+            "edit": "تعديل",
+            "download": "تنزيل",
+            "copy": "نسخ الرابط",
+            "delete": "حذف"
         }
     }
 }

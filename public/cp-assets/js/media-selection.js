@@ -1,14 +1,20 @@
 /**
  * Checkboxes, select all, and bulk download or delete for the media library.
  *
- * @param {object} deps root, list, api, route, t, esc, humanSize, displayName, items, maxItems, notify, onDeleted
- * @returns {{checkboxHtml: function(object): string, sync: function(): void, clear: function(): void}}
+ * Phones tick through a select mode instead, since a tap there opens the image.
+ *
+ * @param {object} deps root, list, phone, api, route, t, esc, humanSize, displayName, items, maxItems,
+ *                      notify, onDeleted
+ * @returns {{checkboxHtml: function(object): string, sync: function(): void, clear: function(): void,
+ *            selecting: function(): boolean, toggle: function(string): void}}
  */
 window.createMediaSelection = function (deps) {
     var t = deps.t;
     var esc = deps.esc;
-    var bar = deps.root.querySelector('[data-media-selection]');
-    var allBox = bar.querySelector('[data-media-select-all]');
+    var root = deps.root;
+    var row = root.querySelector('[data-media-selection]');
+    var allBox = row.querySelector('[data-media-select-all]');
+    var bar = root.querySelector('[data-media-bulk-bar]');
     var text = bar.querySelector('[data-media-selection-text]');
     var downloadButton = bar.querySelector('[data-media-download-selected]');
     var deleteButton = bar.querySelector('[data-media-delete-selected]');
@@ -33,17 +39,16 @@ window.createMediaSelection = function (deps) {
         var chosen = chosenItems();
         var bytes = chosen.reduce(function (sum, item) { return sum + (item.size_bytes || 0); }, 0);
 
-        bar.classList.toggle('hidden', shown.length === 0);
+        row.classList.toggle('hidden', shown.length === 0);
+        bar.classList.toggle('hidden', chosen.length === 0);
         text.textContent = t('selection', { count: chosen.length, shown: shown.length, size: deps.humanSize(bytes) });
         allBox.checked = chosen.length > 0 && chosen.length === shown.length;
         allBox.indeterminate = chosen.length > 0 && chosen.length < shown.length;
-        downloadButton.disabled = chosen.length === 0;
-        deleteButton.disabled = chosen.length === 0;
 
-        deps.list.querySelectorAll('[data-media-id]').forEach(function (row) {
-            var on = !!selected[row.getAttribute('data-media-id')];
-            row.toggleAttribute('data-selected', on);
-            row.querySelector('[data-media-select]').checked = on;
+        deps.list.querySelectorAll('[data-media-id]').forEach(function (tile) {
+            var on = !!selected[tile.getAttribute('data-media-id')];
+            tile.toggleAttribute('data-selected', on);
+            tile.querySelector('[data-media-select]').checked = on;
         });
     }
 
@@ -51,6 +56,33 @@ window.createMediaSelection = function (deps) {
         selected = {};
         sync();
     }
+
+    function selecting() {
+        return root.hasAttribute('data-selecting');
+    }
+
+    function toggle(id) {
+        if (selected[id]) {
+            delete selected[id];
+        } else {
+            selected[id] = true;
+        }
+        sync();
+    }
+
+    function leaveSelectMode() {
+        root.removeAttribute('data-selecting');
+        clear();
+    }
+
+    root.querySelector('[data-media-select-mode]').addEventListener('click', function () {
+        root.setAttribute('data-selecting', '');
+        allBox.focus();
+    });
+    row.querySelector('[data-media-select-done]').addEventListener('click', leaveSelectMode);
+    deps.phone.addEventListener('change', function () {
+        if (!deps.phone.matches && selecting()) leaveSelectMode();
+    });
 
     deps.list.addEventListener('change', function (e) {
         var box = e.target.closest('[data-media-select]');
@@ -119,12 +151,16 @@ window.createMediaSelection = function (deps) {
                 return deps.api(deps.route('bulkDestroy'), { 'ids[]': ids }).then(function (data) {
                     var deleted = data.deleted || [];
                     deps.onDeleted(deleted);
+                    root.removeAttribute('data-selecting');
                     deps.notify(t('bulkDeleted', { count: deleted.length }), 'ok');
                 });
             })
             .catch(function (error) { deps.notify(error.message, 'error'); })
-            .finally(sync);
+            .finally(function () {
+                deleteButton.disabled = false;
+                sync();
+            });
     });
 
-    return { checkboxHtml: checkboxHtml, sync: sync, clear: clear };
+    return { checkboxHtml: checkboxHtml, sync: sync, clear: clear, selecting: selecting, toggle: toggle };
 };
