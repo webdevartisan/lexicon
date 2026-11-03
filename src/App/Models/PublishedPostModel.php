@@ -505,16 +505,16 @@ class PublishedPostModel extends AppModel
     }
 
     /**
-     * Admin picks for the site front page showcase, newest first.
+     * Admin picks for the front page showcase and the Discover slider, newest first.
      *
-     * The front page is a platform owned surface, so only posts an
-     * administrator explicitly flagged appear here. Returns an empty array
-     * when nothing is picked; the view falls back to its own static cards.
+     * Both are platform owned surfaces, so only posts an administrator
+     * explicitly flagged appear here. Returns an empty array when nothing is
+     * picked; each view decides its own fallback.
      *
-     * @param  int  $limit  Maximum number of showcase posts
+     * @param  int  $limit  Maximum number of posts
      * @return array<int, array<string, mixed>> Post rows with blog name and slug
      */
-    public function findHomeShowcase(int $limit = 6): array
+    public function findPlatformPicks(int $limit = 6): array
     {
         $sql = "SELECT p.*, b.blog_name, b.blog_slug
                 FROM posts p

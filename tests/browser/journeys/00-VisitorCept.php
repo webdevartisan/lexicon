@@ -17,8 +17,24 @@ $I->seeThePageLooksRight('visitor-homepage');
 
 // A visitor finds a blog and reads a post
 $I->amOnPage('/en/discover');
-$I->seeInTitle('Discover');
+$I->seeElement('#discover-heading');
+$I->seeElement('.lx-explore-tab.active[href$="/discover"]');
 $I->seeThePageLooksRight('visitor-discover');
+
+// A search opens straight on the results, with the search box still at the top and nothing featured above it
+$I->fillField('#discover-q', 'a');
+$I->click('.lx-discover-search button[type=submit]');
+$I->seeInCurrentUrl('q=a');
+$I->seeInField('#discover-q', 'a');
+$I->dontSeeElement('[data-slider]');
+$I->seeThePageLooksRight('visitor-discover-search');
+
+// The Blogs tab works the same way, and its search stays on blogs
+$I->click('.lx-explore-tab[href*="tab=blogs"]');
+$I->seeInCurrentUrl('tab=blogs');
+$I->seeInField('#discover-q', 'a');
+$I->dontSeeElement('.lx-discover-featured');
+$I->amOnPage('/en/discover?tab=blogs');
 // The first link to a blog's front page, not to one of its posts
 $I->amOnPage($I->grabAttributeFrom("//main//a[contains(@href, '/blog/') and not(contains(substring-after(@href, '/blog/'), '/'))]", 'href'));
 $I->seeThePageLooksRight('visitor-a-blog');

@@ -175,7 +175,7 @@ it('returns only admin picked posts for the home showcase', function () {
 
     $this->postModel->setFeaturedOnHome($pickedId, true);
 
-    $showcase = $this->publishedPosts->findHomeShowcase(6);
+    $showcase = $this->publishedPosts->findPlatformPicks(6);
 
     expect($showcase)->toHaveCount(1)
         ->and((int) $showcase[0]['id'])->toBe($pickedId)
@@ -210,7 +210,7 @@ it('excludes unpublished and non public posts from the home showcase', function 
     $this->postModel->setFeaturedOnHome($draftId, true);
     $this->postModel->setFeaturedOnHome($privateId, true);
 
-    expect($this->publishedPosts->findHomeShowcase(6))->toHaveCount(0);
+    expect($this->publishedPosts->findPlatformPicks(6))->toHaveCount(0);
 });
 
 /**
@@ -230,8 +230,8 @@ it('removes a post from the showcase when the flag is turned off', function () {
         ->create();
 
     $this->postModel->setFeaturedOnHome($postId, true);
-    expect($this->publishedPosts->findHomeShowcase(6))->toHaveCount(1);
+    expect($this->publishedPosts->findPlatformPicks(6))->toHaveCount(1);
 
     $this->postModel->setFeaturedOnHome($postId, false);
-    expect($this->publishedPosts->findHomeShowcase(6))->toHaveCount(0);
+    expect($this->publishedPosts->findPlatformPicks(6))->toHaveCount(0);
 });

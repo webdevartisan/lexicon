@@ -910,7 +910,8 @@
         "title": "Featured writing",
         "subtitle": "Posts picked by our editors from writers across Lexicon.",
         "emptyTitle": "New here? Start with these guides",
-        "readPost": "Read post"
+        "readPost": "Read post",
+        "moreOnDiscover": "More featured writing on Discover"
     },
     "faq": {
         "title": "Frequently asked questions",
@@ -966,7 +967,15 @@
         "visitBlog": "Visit blog",
         "readMore": "Read more",
         "byLabel": "by",
-        "paginationAria": "Pagination"
+        "paginationAria": "Pagination",
+        "paginationPrev": "Previous page",
+        "paginationNext": "Next page",
+        "featuredPosts": "Featured posts",
+        "fromBlog": "From",
+        "sliderPrev": "Previous featured post",
+        "sliderNext": "Next featured post",
+        "sliderDots": "Choose a featured post",
+        "sliderDot": "Featured post {n} of {total}"
     },
     "reader": {
         "metaSaved": "Saved",

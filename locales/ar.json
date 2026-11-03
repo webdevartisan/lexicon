@@ -922,7 +922,8 @@
     "title": "كتابات مختارة",
     "subtitle": "تدوينات اختارها فريقنا من كتّاب عبر Lexicon.",
     "emptyTitle": "جديد هنا؟ ابدأ بهذه الأدلة",
-    "readPost": "اقرأ التدوينة"
+    "readPost": "اقرأ التدوينة",
+    "moreOnDiscover": "اكتشف المزيد من الكتابات المميزة"
   },
   "faq": {
     "title": "الأسئلة الشائعة",
@@ -978,7 +979,15 @@
     "visitBlog": "زيارة المدونة",
     "readMore": "اقرأ المزيد",
     "byLabel": "بواسطة",
-    "paginationAria": "ترقيم الصفحات"
+    "paginationAria": "ترقيم الصفحات",
+    "paginationPrev": "الصفحة السابقة",
+    "paginationNext": "الصفحة التالية",
+    "featuredPosts": "منشورات مميزة",
+    "fromBlog": "من",
+    "sliderPrev": "المنشور المميز السابق",
+    "sliderNext": "المنشور المميز التالي",
+    "sliderDots": "اختر منشورًا مميزًا",
+    "sliderDot": "المنشور المميز {n} من {total}"
   },
   "reader": {
     "metaSaved": "المحفوظات",

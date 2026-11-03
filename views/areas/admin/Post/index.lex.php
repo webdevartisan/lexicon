@@ -23,7 +23,7 @@ foreach ($visibilityOptions as $opt) {
 
 $featuredChoices = [
     '' => 'Featured: any',
-    'home' => 'On the front page',
+    'home' => 'On the front page and Discover',
     'blog' => 'Featured in its blog',
     'none' => 'Not featured anywhere',
 ];
@@ -83,7 +83,7 @@ $showUrl = '/admin/posts/'.$post['id'].'/show';
 $editUrl = '/admin/posts/'.$post['id'].'/edit';
 $deleteUrl = '/admin/posts/'.$post['id'].'/delete';
 $featuredOnHome = (int) ($post['featured_on_home'] ?? 0) === 1;
-$featureTip = $featuredOnHome ? 'Remove from front page' : 'Feature on front page';
+$featureTip = $featuredOnHome ? 'Remove from front page and Discover' : 'Feature on front page and Discover';
 $commentCount = (int) ($post['comment_count'] ?? 0);
 [$visibilityStatus, $visibilityLabel] = match ((string) ($post['visibility'] ?? 'public')) {
     'private' => ['draft', 'Private'],
@@ -106,7 +106,7 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                         <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50 max-w-xs truncate">
                             <?php if ($featuredOnHome) { ?>
                             {% cache 'lucide:star-fill:row' ttl=31536000 %}<i data-lucide="star" class="size-3.5 fill-current text-amber-500 inline-block align-[-1px] mr-1"></i>{% endcache %}
-                            <span class="sr-only">Featured on the front page. </span>
+                            <span class="sr-only">Featured on the front page and Discover. </span>
                             <?php } ?>
                             <?php if ($publicUrl !== '') { ?>
                                 <a href="<?= e($publicUrl) ?>" target="_blank" rel="noopener"
@@ -147,8 +147,8 @@ $publicUrl = $postSlug !== '' && $blogSlug !== ''
                                         'label' => $featureTip, 'icon' => 'star',
                                         'post' => buildLocalizedUrl('/admin/posts/'.(int) $post['id'].'/feature-home'),
                                         'confirm' => $featuredOnHome
-                                            ? 'Take this post off the front page?'
-                                            : 'Feature this post on the front page?',
+                                            ? 'Take this post off the front page and Discover?'
+                                            : 'Feature this post on the front page and Discover?',
                                         // featureHome() refuses anything not published and public, so
                                         // offering it there would only ever produce an error flash.
                                         'can' => $featuredOnHome || ($postStatus === 'published' && $postVisibility === 'public'),

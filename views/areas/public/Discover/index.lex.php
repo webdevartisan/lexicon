@@ -54,6 +54,8 @@ $discoverRobots = ($searchQuery ?? '') !== '' ? 'noindex, follow' : null;
     </section>
     {% else %}
     <section aria-label="{{ t('discover.tabBlogs') }}">
+        {% include "partials/public/discover/_featured_blogs.lex.php" %}
+
         {% if (empty($items)): %}
             <p>{{ t('discover.noBlogs') }}</p>
         {% else %}

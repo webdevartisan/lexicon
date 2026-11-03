@@ -145,7 +145,7 @@ $homeCtaLabel = (!auth()->check() || $homeViewerIsReader)
         <ul class="lx-cites">
             {% foreach ($showcase as $citeIndex => $post): %}
             <?php
-        $postUrl = '/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']);
+        $postUrl = lurl('/blog/'.rawurlencode($post['blog_slug']).'/'.rawurlencode($post['slug']));
 $excerpt = post_excerpt($post);
 $postTitle = (string) ($post['title'] ?? '');
 ?>
@@ -176,6 +176,10 @@ $postTitle = (string) ($post['title'] ?? '');
             </li>
             {% endforeach; %}
         </ul>
+
+        <p class="lx-cite-more lx-cites-more">
+            <a href="<?= e(lurl('/discover')) ?>">{{ t('showcase.moreOnDiscover') }} <span aria-hidden="true">&rarr;</span></a>
+        </p>
         {% else %}
         <p class="lx-eyebrow"><?= e(site_content('showcase.emptyTitle')) ?></p>
 
