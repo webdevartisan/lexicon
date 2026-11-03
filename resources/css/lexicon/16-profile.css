@@ -295,22 +295,6 @@
     }
 }
 
-.is-textonly .lx-gallery-media {
-    aspect-ratio: 5 / 3;
-}
-
-.lx-gallery-fallback {
-    display: grid;
-    place-items: center;
-    width: 100%;
-    height: 100%;
-    background: var(--lx-bind);
-    color: var(--lx-gilt);
-    font-family: var(--lx-serif);
-    font-size: 2.75rem;
-    line-height: 1;
-}
-
 .lx-gallery-body {
     padding: var(--lx-space-4);
 }

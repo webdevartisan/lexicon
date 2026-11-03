@@ -21,6 +21,17 @@ $I->seeElement('#discover-heading');
 $I->seeElement('.lx-explore-tab.active[href$="/discover"]');
 $I->seeThePageLooksRight('visitor-discover');
 
+// Posts show as a grid until the visitor picks the list, which the browser then remembers
+$I->seeElement('.lx-post-grid .lx-post-card');
+$I->seeElement('[data-post-view-choice="grid"][aria-pressed="true"]');
+$I->click('[data-post-view-choice="list"]');
+$I->seeElement('html[data-post-view="list"]');
+$I->reloadPage();
+$I->seeElement('[data-post-view-choice="list"][aria-pressed="true"]');
+$I->seeThePageLooksRight('visitor-discover-list');
+$I->click('[data-post-view-choice="grid"]');
+$I->executeJS("window.scrollTo({top: 0, behavior: 'instant'});");
+
 // A search opens straight on the results, with the search box still at the top and nothing featured above it
 $I->fillField('#discover-q', 'a');
 $I->click('.lx-discover-search button[type=submit]');

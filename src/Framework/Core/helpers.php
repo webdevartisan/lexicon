@@ -258,9 +258,10 @@ function slugify(string $value): string
  */
 function reading_time(?string $content, int $wpm = 220): int
 {
-    $words = str_word_count(strip_tags((string) $content));
+    // str_word_count only knows ASCII letters, so Greek and Arabic posts always came out at one minute
+    $words = preg_match_all('/[\p{L}\p{N}]+/u', strip_tags(str_replace('<', ' <', (string) $content)));
 
-    return max(1, (int) ceil($words / $wpm));
+    return max(1, (int) ceil((int) $words / $wpm));
 }
 
 if (!function_exists('dd')) {

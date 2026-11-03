@@ -10,6 +10,8 @@ $lxIconPaths = [
     'chevron-left' => '<path d="m15 18-6-6 6-6"/>',
     'chevron-right' => '<path d="m9 18 6-6-6-6"/>',
     'x' => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    'layout-grid' => '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+    'list' => '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
     'search' => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     'map-pin' => '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
     'calendar' => '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',

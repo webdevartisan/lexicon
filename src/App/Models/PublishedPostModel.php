@@ -110,13 +110,16 @@ class PublishedPostModel extends AppModel
         $inClause = implode(',', $placeholders);
         $params[':limit'] = $limit;
 
-        $sql = "SELECT id, blog_id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image, visibility, published_at
+        // Full content because the post cards show a reading time
+        $sql = "SELECT posts.id, posts.blog_id, posts.slug, posts.title, posts.excerpt, posts.content, posts.featured_image,
+                       posts.visibility, posts.published_at, c.name AS category_name
                 FROM posts
-                WHERE author_id = :author_id
-                AND status = 'published'
+                LEFT JOIN categories c ON c.id = posts.category_id
+                WHERE posts.author_id = :author_id
+                AND posts.status = 'published'
                 AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
-                AND visibility IN ($inClause)
-                ORDER BY published_at DESC
+                AND posts.visibility IN ($inClause)
+                ORDER BY posts.published_at DESC
                 LIMIT :limit";
 
         $stmt = $this->database->query($sql, $params);

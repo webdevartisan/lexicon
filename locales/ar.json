@@ -987,7 +987,11 @@
     "sliderPrev": "المنشور المميز السابق",
     "sliderNext": "المنشور المميز التالي",
     "sliderDots": "اختر منشورًا مميزًا",
-    "sliderDot": "المنشور المميز {n} من {total}"
+    "sliderDot": "المنشور المميز {n} من {total}",
+    "minRead": "{n} دقيقة قراءة",
+    "viewLabel": "عرض المنشورات",
+    "viewGrid": "شبكة",
+    "viewList": "قائمة"
   },
   "reader": {
     "metaSaved": "المحفوظات",

@@ -137,7 +137,8 @@ input[type='button']:hover {
 .button:focus-visible,
 .lx-chip a:focus-visible,
 .lx-social a:focus-visible,
-.lx-gallery-body h3 a:focus-visible {
+.lx-gallery-body h3 a:focus-visible,
+.lx-post-card-title a:focus-visible {
     outline: 2px solid var(--lx-btn-ink);
     outline-offset: 2px;
 }

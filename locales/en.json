@@ -975,7 +975,11 @@
         "sliderPrev": "Previous featured post",
         "sliderNext": "Next featured post",
         "sliderDots": "Choose a featured post",
-        "sliderDot": "Featured post {n} of {total}"
+        "sliderDot": "Featured post {n} of {total}",
+        "minRead": "{n} min read",
+        "viewLabel": "Show posts as",
+        "viewGrid": "Grid",
+        "viewList": "List"
     },
     "reader": {
         "metaSaved": "Saved",

@@ -151,38 +151,9 @@ $authorBlogs = array_slice($authorBlogs, 0, 4, true);
   <section id="profile-posts" class="lx-profile-feed" aria-labelledby="profile-posts-heading">
     <header class="lx-section-head"><h2 id="profile-posts-heading">Recent posts</h2></header>
 
-      <div class="lx-gallery">
+      <div class="lx-post-grid">
         <?php foreach ($posts as $post) { ?>
-          <?php
-            $postUrl = lurl('/blog/'.rawurlencode((string) ($post['blog_slug'] ?? $post['blog_id'])).'/'.rawurlencode($post['slug']));
-            $postTitle = $post['title'] ?? 'Untitled';
-            $postExcerpt = post_excerpt($post, 140);
-            $hasImage = !empty($post['featured_image']);
-            ?>
-          <article class="lx-gallery-card<?= $hasImage ? '' : ' is-textonly'; ?>">
-            <a href="<?= e($postUrl); ?>" class="lx-gallery-media" data-image-loader tabindex="-1" aria-hidden="true">
-              <?php if ($hasImage) { ?>
-                <img src="<?= e($post['featured_image']); ?>" alt="" loading="lazy">
-              <?php } else { ?>
-                <span class="lx-gallery-fallback" aria-hidden="true"><?= e(mb_strtoupper(mb_substr(trim($postTitle), 0, 1))); ?></span>
-              <?php } ?>
-            </a>
-
-            <div class="lx-gallery-body">
-              <p class="meta">
-                <?= e($post['blog_name'] ?? 'Blog'); ?>
-                <?php if (!empty($post['published_at'])) { ?>
-                  &middot; <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)); ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())); ?></time>
-                <?php } ?>
-              </p>
-
-              <h3><a href="<?= e($postUrl); ?>"><?= e($postTitle); ?></a></h3>
-
-              <?php if ($postExcerpt !== '') { ?>
-                <p class="lx-gallery-excerpt"><?= e($postExcerpt); ?></p>
-              <?php } ?>
-            </div>
-          </article>
+          {% include "partials/public/_post_card.lex.php" %}
         <?php } ?>
       </div>
   </section>

@@ -87,8 +87,8 @@ class DiscoverController extends AppController
     private function postsData(string $q, int $page): array
     {
         $result = $q !== ''
-            ? $this->publishedPosts->searchPublishedPosts($q, $page, 8)
-            : $this->publishedPosts->getRecentPublishedWithPagination($page, 8);
+            ? $this->publishedPosts->searchPublishedPosts($q, $page, 12)
+            : $this->publishedPosts->getRecentPublishedWithPagination($page, 12);
 
         return [
             'items' => $result['data'],

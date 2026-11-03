@@ -47,6 +47,17 @@ $discoverPlaceholder = $t($tab === 'posts' ? 'discover.searchPlaceholderPosts' :
            class="lx-explore-tab <?= $tab === 'blogs' ? 'active' : '' ?>"
            aria-selected="<?= $tab === 'blogs' ? 'true' : 'false' ?>">{{ t('discover.tabBlogs') }}</a>
     </div>
+    {% if ($tab === 'posts'): %}
+        <script src="<?= e(versioned_asset('/assets/js/post-view.js')) ?>"></script>
+        <div class="lx-view-switch" role="group" aria-label="{{ t('discover.viewLabel') }}" data-post-view-switch hidden>
+            <button type="button" class="lx-view-switch-btn" data-post-view-choice="grid" aria-pressed="true" title="{{ t('discover.viewGrid') }}">
+                {% cmp="lx-icon" name="layout-grid" %}<span class="lx-visually-hidden">{{ t('discover.viewGrid') }}</span>
+            </button>
+            <button type="button" class="lx-view-switch-btn" data-post-view-choice="list" aria-pressed="false" title="{{ t('discover.viewList') }}">
+                {% cmp="lx-icon" name="list" %}<span class="lx-visually-hidden">{{ t('discover.viewList') }}</span>
+            </button>
+        </div>
+    {% endif %}
 </div>
 
 {% if (!empty($searchQuery)): %}
