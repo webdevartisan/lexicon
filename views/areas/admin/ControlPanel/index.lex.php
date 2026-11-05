@@ -13,6 +13,13 @@ $statusBadge = [
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
+    <?php foreach ($pausedModules ?? [] as $paused) { ?>
+    <div class="mb-5 px-4 py-3 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300" role="alert">
+        <?= e($paused['name']) ?> is paused after repeated errors: <?= e($paused['reason']) ?>.
+        Fix it, then switch it back on in <a class="underline" href="<?= e(lurl('/admin/extras')) ?>">Extras</a>.
+    </div>
+    <?php } ?>
+
     <!-- Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-5">
         <a href="<?= e(lurl('/admin/posts')) ?>" class="card hover:ring-1 hover:ring-custom-500 transition-shadow">

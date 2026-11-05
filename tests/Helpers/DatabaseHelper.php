@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Helpers;
 
 use Framework\Database;
+use Framework\Modules\InvalidManifestException;
+use Framework\Modules\ModuleManifest;
 
 /**
  * Database testing utilities.
@@ -24,6 +26,54 @@ class DatabaseHelper
         'roles',
         'scheduled_tasks',
     ];
+
+    /** Folders whose module manifests may add tables to the test database. */
+    private const MODULE_FOLDERS = ['/modules', '/tests/Fixtures/modules'];
+
+    /**
+     * Every table a module manifest declares, real modules and test fixtures alike.
+     *
+     * Read straight from module.json rather than through the registry, so a table
+     * counts whether or not the module is installed at this moment.
+     *
+     * @return list<string>
+     */
+    private static function moduleTables(): array
+    {
+        $tables = [];
+        foreach (self::MODULE_FOLDERS as $folder) {
+            foreach (glob(ROOT_PATH.$folder.'/*/module.json') ?: [] as $file) {
+                try {
+                    $tables = [...$tables, ...ModuleManifest::fromFile($file)->tables];
+                } catch (InvalidManifestException) {
+                    continue;
+                }
+            }
+        }
+
+        return array_values(array_unique($tables));
+    }
+
+    /**
+     * Module tables that exist in the test database right now.
+     *
+     * @param  list<string>  $tables
+     * @return list<string>
+     */
+    private static function existingTables(Database $db, array $tables): array
+    {
+        if ($tables === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($tables), '?'));
+
+        return $db->query(
+            "SELECT table_name FROM information_schema.tables
+             WHERE table_schema = DATABASE() AND table_name IN ({$placeholders})",
+            $tables
+        )->fetchAll(\PDO::FETCH_COLUMN);
+    }
 
     /**
      * Truncate every table a test can write to, leaving the seeded ones in place.
@@ -87,6 +137,7 @@ class DatabaseHelper
             'blog_subscribers',
             'blog_invitations',
             'blog_texts',
+            'blog_modules',
             'blog_settings',
             'blog_users',
             'blogs',
@@ -102,6 +153,7 @@ class DatabaseHelper
             'site_content',
             'mail_queue',
             'scheduled_task_runs',
+            'modules',
 
             // Email layouts and wording customized in the control panel
             'email_contents',
@@ -113,10 +165,15 @@ class DatabaseHelper
             $db->getConnection()->exec("TRUNCATE TABLE {$table}");
         }
 
+        $moduleTables = self::moduleTables();
+        foreach (self::existingTables($db, $moduleTables) as $table) {
+            $db->getConnection()->exec("TRUNCATE TABLE `{$table}`");
+        }
+
         $db->getConnection()->exec('SET FOREIGN_KEY_CHECKS=1');
 
         // Guard: fail loudly if a new migration adds a table not listed above
-        self::assertEveryTableAccountedFor($db, [...$tables, ...self::PRESERVED_TABLES]);
+        self::assertEveryTableAccountedFor($db, [...$tables, ...self::PRESERVED_TABLES, ...$moduleTables]);
     }
 
     /**

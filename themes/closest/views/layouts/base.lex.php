@@ -36,6 +36,7 @@
         <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('closest::nav.home') ?>><?= $wording->html('closest::nav.home') ?></span></a>
         <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('closest::nav.archive') ?>><?= $wording->html('closest::nav.archive') ?></span></a>
         <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('closest::nav.subscribe') ?>><?= $wording->html('closest::nav.subscribe') ?></span></a>
+        {% slot "blog.nav" %}
       </nav>
 
       <div class="masthead-actions">

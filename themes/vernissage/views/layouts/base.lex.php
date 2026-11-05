@@ -36,6 +36,7 @@
         <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('vernissage::nav.home') ?>><?= $wording->html('vernissage::nav.home') ?></span></a>
         <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('vernissage::nav.archive') ?>><?= $wording->html('vernissage::nav.archive') ?></span></a>
         <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('vernissage::nav.subscribe') ?>><?= $wording->html('vernissage::nav.subscribe') ?></span></a>
+        {% slot "blog.nav" %}
       </nav>
 
       <div class="masthead-actions">

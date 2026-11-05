@@ -12,6 +12,7 @@ use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserPreferencesModel;
+use Framework\Modules\ModuleDuties;
 
 /**
  * Deletes a blog, everything written in it, and every file uploaded to it.
@@ -28,6 +29,7 @@ final class BlogDeletionService
         private AnalyticsEventModel $analyticsEvents,
         private AnalyticsVisitModel $analyticsVisits,
         private AnalyticsRollupModel $analyticsRollups,
+        private ModuleDuties $moduleDuties,
     ) {}
 
     /**
@@ -51,6 +53,9 @@ final class BlogDeletionService
         $authorHandles = $this->posts->authorHandlesInBlog($blogId);
 
         $stats = $this->blogs->transaction(function () use ($blogId): array {
+            // Modules go first, while the posts their rows may point at still exist
+            $this->moduleDuties->eraseBlog($blogId);
+
             // Counted first because replies go by cascade with their parent and the delete's own count misses them
             $deletedComments = $this->posts->countCommentsByBlogId($blogId);
             $this->posts->deleteCommentsByBlogId($blogId);

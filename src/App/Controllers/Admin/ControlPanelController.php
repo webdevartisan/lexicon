@@ -11,12 +11,14 @@ use App\Models\AnalyticsStatsModel;
 use App\Models\BlogModel;
 use App\Models\CommentModel;
 use App\Models\ModerationCaseModel;
+use App\Models\ModuleModel;
 use App\Models\PostListingModel;
 use App\Models\UserModel;
 use App\Presenters\ModerationCasePresenter;
 use App\Resources\SystemResource;
 use App\Services\CacheManagementService;
 use Framework\Core\Response;
+use Framework\Modules\ModuleRegistry;
 
 /**
  * Control panel overview: site-wide stats, moderation queue, recent
@@ -36,6 +38,8 @@ class ControlPanelController extends AppController
         private CacheManagementService $cacheService,
         private ModerationCaseModel $cases,
         private AnalyticsStatsModel $analytics,
+        private ModuleModel $modules,
+        private ModuleRegistry $moduleRegistry,
     ) {}
 
     public function index(): Response
@@ -65,8 +69,23 @@ class ControlPanelController extends AppController
             'recentActivity' => $this->activityLog->latestEntries(8),
             'cacheStats' => $this->cacheService->getStats(),
             'health' => $this->systemHealth(),
+            'pausedModules' => $this->pausedModules(),
             'user' => auth()->user(),
         ]);
+    }
+
+    /**
+     * Modules stopped after repeated errors, named as their manifest names them.
+     *
+     * @return list<array{key: string, name: string, reason: string}>
+     */
+    private function pausedModules(): array
+    {
+        return array_map(fn (array $row): array => [
+            'key' => $row['module_key'],
+            'name' => $this->moduleRegistry->find($row['module_key'])?->name ?? $row['module_key'],
+            'reason' => (string) ($row['paused_reason'] ?? ''),
+        ], $this->modules->paused());
     }
 
     /**

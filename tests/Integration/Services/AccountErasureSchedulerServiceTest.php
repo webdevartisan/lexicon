@@ -26,6 +26,7 @@ use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
 use Tests\Helpers\DatabaseHelper;
+use Tests\Helpers\ModuleFixtures;
 use Tests\Helpers\SessionTestHelper;
 
 /**
@@ -56,7 +57,8 @@ beforeEach(function () {
             $cacheInvalidator,
             new AnalyticsEventModel($this->db),
             new AnalyticsVisitModel($this->db),
-            AnalyticsFixture::rollups($this->db)
+            AnalyticsFixture::rollups($this->db),
+            ModuleFixtures::noDuties($this->db)
         ),
         $uploader,
         new MediaUsageResolver($this->db),
@@ -65,7 +67,8 @@ beforeEach(function () {
         new AnalyticsEventModel($this->db),
         new AnalyticsVisitModel($this->db),
         new VisitorIdentity(new AnalyticsSaltModel($this->db), 'test-key'),
-        'deleted-user'
+        'deleted-user',
+        ModuleFixtures::noDuties($this->db)
     );
 
     $this->personId = UserFactory::new($this->users)

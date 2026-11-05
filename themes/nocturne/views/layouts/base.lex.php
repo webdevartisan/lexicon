@@ -35,6 +35,7 @@
         <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('nocturne::nav.home') ?>><?= $wording->html('nocturne::nav.home') ?></span></a>
         <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('nocturne::nav.archive') ?>><?= $wording->html('nocturne::nav.archive') ?></span></a>
         <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('nocturne::nav.subscribe') ?>><?= $wording->html('nocturne::nav.subscribe') ?></span></a>
+        {% slot "blog.nav" %}
       </nav>
 
       <div class="masthead-actions">

@@ -14,6 +14,7 @@ use Framework\View\Traits\TemplateComponentsTrait;
 use Framework\View\Traits\TemplateFunctionsTrait;
 use Framework\View\Traits\TemplateInheritanceTrait;
 use Framework\View\Traits\TemplatePhpDirectivesTrait;
+use Framework\View\Traits\TemplateSlotsTrait;
 use Framework\View\Traits\TemplateVariablesTrait;
 
 class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
@@ -23,6 +24,7 @@ class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
     use TemplateFunctionsTrait;
     use TemplateInheritanceTrait;
     use TemplatePhpDirectivesTrait;
+    use TemplateSlotsTrait;
     use TemplateVariablesTrait;
 
     // ============================================================
@@ -66,12 +68,14 @@ class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
      *                                         Override the default compiled view cache directory.
      *                                         When null, defaults to ROOT_PATH/storage/cache/views.
      *                                         Pass via config/cache.php 'compiled_views_path' for consistency.
+     * @param  ModuleViewPaths|null  $moduleViews  Finds views named key::name inside module folders.
      */
     public function __construct(
         private ThemeResolverInterface $themes,
         private ViewNameResolverInterface $viewResolver,
         private RouteContext $routeContext,
         ?string $compiledViewPath = null,
+        private ?ModuleViewPaths $moduleViews = null,
     ) {
         // Fall back to the conventional path if no override is provided.
         $this->compiledViewPath = $compiledViewPath ?? ROOT_PATH.'/storage/cache/views';
@@ -182,13 +186,27 @@ class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
      */
     private function resolveTemplate(?string $template): string
     {
-        $relativePath = $this->viewResolver->resolveToRelativePath($template, $this->routeContext);
-        $file = $this->themes->resolveView($relativePath);
+        $file = $this->findView($template);
         if (!$file) {
-            throw new NotFoundException("Template '$relativePath' not found.");
+            $shown = $template ?? $this->viewResolver->resolveToRelativePath(null, $this->routeContext);
+            throw new NotFoundException("Template '{$shown}' not found.");
         }
 
         return $file;
+    }
+
+    /**
+     * The file behind a view name: a module view for key::name, otherwise the active theme's file.
+     */
+    private function findView(?string $name): ?string
+    {
+        if ($name !== null && str_contains($name, '::')) {
+            return $this->moduleViews?->resolve($name);
+        }
+
+        $file = $this->themes->resolveView($this->viewResolver->resolveToRelativePath($name, $this->routeContext));
+
+        return $file ?: null;
     }
 
     /**
@@ -244,8 +262,7 @@ class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
 
             foreach ($matches as $match) {
                 $tpl = $match['template'];
-                $relativePath = $this->viewResolver->resolveToRelativePath($tpl, $this->routeContext);
-                $incPath = $this->themes->resolveView($relativePath);
+                $incPath = $this->findView($tpl);
 
                 if (!$incPath) {
                     throw new NotFoundException("Included template '$tpl' not found.");
@@ -281,6 +298,7 @@ class TemplateRenderer implements LayoutSwitchInterface, TemplateViewerInterface
         $code = $this->removeComments($code);
         $code = $this->replaceCacheBlocks($code);
         $code = $this->replaceFunctions($code);
+        $code = $this->replaceSlots($code);
         $code = $this->replaceComponents($code);
         $code = $this->replaceVariables($code);
         $code = $this->replacePHP($code);

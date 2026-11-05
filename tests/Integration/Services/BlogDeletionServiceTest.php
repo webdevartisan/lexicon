@@ -18,6 +18,7 @@ use Tests\Factories\CommentFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
 use Tests\Helpers\AnalyticsFixture;
+use Tests\Helpers\ModuleFixtures;
 
 /**
  * The upload service is a mock: storage/uploads/ is shared with development, so
@@ -38,7 +39,8 @@ beforeEach(function () {
         $this->cacheInvalidator,
         new AnalyticsEventModel($this->db),
         new AnalyticsVisitModel($this->db),
-        AnalyticsFixture::rollups($this->db)
+        AnalyticsFixture::rollups($this->db),
+        ModuleFixtures::noDuties($this->db)
     );
 
     $this->ownerId = UserFactory::new($this->users)->withAttributes(['handle' => 'blog-owner-x'])->create();

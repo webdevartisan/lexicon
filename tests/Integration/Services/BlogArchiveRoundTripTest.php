@@ -24,6 +24,7 @@ use App\Services\PublicCacheInvalidator;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\ModuleFixtures;
 
 /**
  * A blog archive must survive the trip out of one blog and into another, and every
@@ -53,7 +54,8 @@ beforeEach(function () {
     $this->tags = new TagModel($this->db);
     $this->categories = new CategoryModel($this->db);
 
-    $this->exporter = new BlogArchiveExporter($archivePosts, new MediaModel($this->db), $urls, $this->root);
+    $noModules = ModuleFixtures::noDuties($this->db);
+    $this->exporter = new BlogArchiveExporter($archivePosts, new MediaModel($this->db), $urls, $noModules, $this->root);
     $this->reader = new BlogArchiveReader($archivePosts, new ArchivePostValidator($urls), $urls);
     $this->store = new class($this->root) implements ArchiveMediaStoreInterface
     {
@@ -70,7 +72,7 @@ beforeEach(function () {
     };
     $writer = new ArchivePostWriter($archivePosts, $this->tags, $this->categories, new PostContentSanitizer(), $urls);
     $this->importer = new BlogArchiveImporter(
-        $this->db, $this->posts, $this->store, new PublicCacheInvalidator(), $writer
+        $this->db, $this->posts, $this->store, new PublicCacheInvalidator(), $writer, $noModules
     );
 
     $this->image = function (string $url, array $rgb): void {

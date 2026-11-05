@@ -243,11 +243,15 @@ $container->setShared(App\Services\ThemeService::class, function ($c) {
  * views can be cached between render calls.
  */
 $container->setShared(Framework\Interfaces\TemplateViewerInterface::class, function ($c) {
-    return new Framework\View\TemplateRenderer(
+    $renderer = new Framework\View\TemplateRenderer(
         $c->get(App\Services\ThemeService::class),
         $c->get(Framework\View\ViewNameResolverInterface::class),
-        $c->get(Framework\View\RouteContext::class)
+        $c->get(Framework\View\RouteContext::class),
+        moduleViews: new Framework\View\ModuleViewPaths($c->get(Framework\Modules\ModuleRegistry::class))
     );
+    $renderer->setSlotRenderer($c->get(App\Services\Modules\SlotRegistry::class));
+
+    return $renderer;
 });
 
 // Same instance, so a layout switch made by middleware reaches the renderer the controllers use
@@ -492,7 +496,7 @@ $container->setShared(App\Services\MailQueueService::class, function ($c) {
  * the single source avoids a second list quietly drifting out of step.
  */
 $container->setShared(App\Console\Kernel::class, function ($c) {
-    return new App\Console\Kernel($c);
+    return new App\Console\Kernel($c, $c->get(Framework\Modules\ModuleBooter::class));
 });
 
 $container->set(App\Models\ScheduledTaskModel::class, function ($c) {
@@ -1076,6 +1080,40 @@ $container->setShared(App\Services\PostContentSanitizer::class, function ($c) {
     return new App\Services\PostContentSanitizer();
 });
 
+// The state closure only runs when the cache file is missing or rebuilt, so most requests skip the query.
+$container->setShared(Framework\Modules\ModuleRegistry::class, function ($c) {
+    return new Framework\Modules\ModuleRegistry(
+        ROOT_PATH.'/modules',
+        ROOT_PATH.'/storage/cache/modules.php',
+        fn () => $c->get(App\Models\ModuleModel::class)->states()
+    );
+});
+
+$container->setShared(App\Services\Modules\SlotRegistry::class, function ($c) {
+    return new App\Services\Modules\SlotRegistry(
+        $c->get(Framework\Modules\ModuleBooter::class),
+        $c->get(App\Models\BlogModuleModel::class),
+        $c->get(App\Models\ModuleModel::class),
+        $c->get(Framework\Modules\ModuleRegistry::class),
+        $c->get(Framework\Cache\CacheService::class),
+        $c->get(Framework\View\RouteContext::class),
+        (bool) env('APP_DEBUG', false)
+    );
+});
+
+// One instance per module per request, shared by the booter, the installer and the data duties
+$container->setShared(Framework\Modules\ModuleInstances::class, function ($c) {
+    return new Framework\Modules\ModuleInstances($c);
+});
+
+$container->setShared(Framework\Modules\ModuleBooter::class, function ($c) {
+    return new Framework\Modules\ModuleBooter(
+        $c->get(Framework\Modules\ModuleRegistry::class),
+        $c,
+        $c->get(Framework\Modules\ModuleInstances::class)
+    );
+});
+
 $container->setShared(App\Services\LogFileService::class, function ($c) {
     return new App\Services\LogFileService(ROOT_PATH.'/storage/logs');
 });
@@ -1094,7 +1132,8 @@ $container->setShared(App\Services\AccountErasureService::class, function ($c) {
         $c->get(App\Models\AnalyticsEventModel::class),
         $c->get(App\Models\AnalyticsVisitModel::class),
         $c->get(App\Services\Analytics\VisitorIdentity::class),
-        (string) $config['deleted_user_handle']
+        (string) $config['deleted_user_handle'],
+        $c->get(Framework\Modules\ModuleDuties::class)
     );
 });
 

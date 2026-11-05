@@ -80,6 +80,7 @@ class NavGlobalsMiddleware
         private \App\Services\BlogRoleLabels $roleLabels,
         private \App\Models\BlogSettingsModel $blogSettings,
         private \App\Services\NavBadgeCounts $badgeCounts,
+        private \Framework\Modules\ModuleRegistry $modules,
     ) {
         $this->nav = $nav;
         $this->auth = $auth;
@@ -157,6 +158,7 @@ class NavGlobalsMiddleware
             'isReader' => $isReader,
             'isCreator' => !$isReader,
             'workflowEnabled' => $selectedBlog !== null && !empty($this->blogSettings->findByBlogId($selectedBlog->id())['workflow_enabled']),
+            'extrasAvailable' => $this->modules->blogExtras() !== [],
         ]);
         $user = $this->auth->user();
         $canCreateBlog = $user !== null && Gate::allows('create', BlogResource::class, $user);

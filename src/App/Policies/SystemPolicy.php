@@ -57,6 +57,7 @@ class SystemPolicy implements PolicyInterface
         'manageRateLimits' => 'manage_rate_limits',
         'manageMailQueue' => 'manage_mail_queue',
         'manageScheduledTasks' => 'manage_scheduled_tasks',
+        'manageExtras' => 'manage_extras',
         'manageEmailTemplates' => 'manage_email_templates',
         'manageSettings' => 'manage_site_settings',
         'viewPlatformAnalytics' => 'view_platform_analytics',
@@ -294,6 +295,16 @@ class SystemPolicy implements PolicyInterface
     public function manageScheduledTasks(array $user): bool
     {
         return $this->allowsArea($user, 'manageScheduledTasks');
+    }
+
+    /**
+     * Switch optional extras on or off for the whole site and open their control panel pages.
+     *
+     * @param  array<string, mixed>  $user  Authenticated user record
+     */
+    public function manageExtras(array $user): bool
+    {
+        return $this->allowsArea($user, 'manageExtras');
     }
 
     /**

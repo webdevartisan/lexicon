@@ -349,6 +349,33 @@ CREATE TABLE IF NOT EXISTS blog_texts (
 COMMENT='Per-language wording of a blog''s texts';
 
 -- ----------------------------------------------------------------------------
+-- Modules (Extras)
+-- ----------------------------------------------------------------------------
+-- A module's own tables come from its schema folder when it is installed and
+-- are recorded in migrations as module:<key>:<file>. These two tables only say
+-- which modules the platform has and which blogs switched each one on.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS modules (
+    module_key VARCHAR(41) PRIMARY KEY,
+    version INT NOT NULL,
+    state ENUM('on','off','paused') NOT NULL DEFAULT 'on',
+    paused_reason TEXT NULL,
+    installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Optional modules installed on the platform';
+
+CREATE TABLE IF NOT EXISTS blog_modules (
+    blog_id INT NOT NULL,
+    module_key VARCHAR(41) NOT NULL,
+    settings JSON NULL,
+    enabled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (blog_id, module_key),
+    FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
+    FOREIGN KEY (module_key) REFERENCES modules(module_key) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Modules switched on per blog';
+
+-- ----------------------------------------------------------------------------
 -- Blog Users Table (formerly blog_authors)
 -- ----------------------------------------------------------------------------
 -- We track blog membership with roles to enable flexible permission models
@@ -1620,6 +1647,7 @@ INSERT INTO permissions (permission_name, permission_slug, resource, action, des
 ('Manage Cache', 'manage_cache', 'cache', 'manage', 'View cache statistics, prune and clear caches'),
 ('Manage Mail Queue', 'manage_mail_queue', 'mail', 'manage', 'Inspect the outbound mail queue and retry failed sends'),
 ('Manage Scheduled Tasks', 'manage_scheduled_tasks', 'system', 'manage', 'Configure recurring tasks, run them by hand, and read their output'),
+('Manage Extras', 'manage_extras', 'system', 'manage', 'Switch optional extras on or off for the whole site and open their control panel pages'),
 ('Manage Email Templates', 'manage_email_templates', 'mail', 'manage', 'Edit email layouts and the wording of every email the site sends, in every language'),
 ('Handle Reports', 'handle_reports', 'moderation', 'manage', 'Work the reports queue: review cases, dismiss or uphold them, hide content and warn authors'),
 ('View Platform Analytics', 'view_platform_analytics', 'analytics', 'read', 'See traffic across every blog in the control panel'),

@@ -62,6 +62,17 @@ final class ArchiveFormat
     /**
      * File name offered for a blog's archive.
      */
+    /** Most modules one archive may carry rows for. */
+    public const MAX_MODULES = 50;
+
+    /**
+     * Where a module's rows sit inside the archive.
+     */
+    public static function modulePath(string $key): string
+    {
+        return 'modules/'.$key.'.json';
+    }
+
     public static function fileName(string $blogSlug, ?\DateTimeInterface $at = null): string
     {
         $date = ($at ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d');

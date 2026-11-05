@@ -44,6 +44,7 @@ $title = e($post['title'] ?? 'Untitled');
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
+    {% slot "post.header-aside" %}
   </div>
 </section>
 
@@ -62,6 +63,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="work-essay reveal" data-edit-body>
       <?= $post['content'] ?? '' ?>
     </div>
+    {% slot "post.after-content" %}
 
     <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
     <div class="work-tags reveal">

@@ -56,6 +56,17 @@ $outcomes = [
   </div>
 <?php } ?>
 
+<?php foreach (['skipped' => 'modulesSkipped', 'failed' => 'modulesFailed'] as $moduleOutcome => $moduleMessage) { ?>
+  <?php $moduleKeys = $result['modules'][$moduleOutcome] ?? []; ?>
+  <?php if ($moduleKeys === []) { continue; } ?>
+  <div class="card">
+    <div class="card-body flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+      <i data-lucide="puzzle" class="size-4 shrink-0 mt-0.5" aria-hidden="true"></i>
+      <p><?= e($t('archive.result.'.$moduleMessage, ['names' => implode(', ', $moduleKeys)])) ?></p>
+    </div>
+  </div>
+<?php } ?>
+
 <?php if ($result['media']['failed'] !== []) { ?>
   <div class="card">
     <div class="card-body">

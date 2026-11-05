@@ -6,6 +6,7 @@ namespace App\Services\Archive;
 
 use App\Models\PostArchiveModel;
 use App\Resources\BlogResource;
+use Framework\Modules\ModuleManifest;
 
 /**
  * Opens an archive, checks everything in it, and returns the plan for a target blog.
@@ -21,6 +22,9 @@ final class BlogArchiveReader
 
     /** @var array<string, true> Upload URLs the exporter could not find on disk */
     private array $missingAtExport = [];
+
+    /** @var list<string> Modules whose rows the archive carries */
+    private array $modules = [];
 
     public function __construct(
         private PostArchiveModel $posts,
@@ -51,7 +55,28 @@ final class BlogArchiveReader
             $zip->close();
         }
 
-        return new ArchivePlan($source, $posts, $media, $problems, $this->missingAtExport);
+        return new ArchivePlan($source, $posts, $media, $problems, $this->missingAtExport, $this->modules);
+    }
+
+    /**
+     * Module keys the manifest names that also have a rows file. Anything else is ignored,
+     * because archives written before modules existed have no list at all.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<string>
+     */
+    private function moduleKeys(ArchiveZip $zip, array $manifest): array
+    {
+        $listed = is_array($manifest['modules'] ?? null) ? $manifest['modules'] : [];
+        $keys = [];
+        foreach (array_slice($listed, 0, ArchiveFormat::MAX_MODULES) as $key) {
+            $valid = is_string($key) && preg_match(ModuleManifest::KEY_PATTERN, $key);
+            if ($valid && $zip->has(ArchiveFormat::modulePath($key))) {
+                $keys[$key] = true;
+            }
+        }
+
+        return array_keys($keys);
     }
 
     /**
@@ -79,6 +104,7 @@ final class BlogArchiveReader
         }
 
         $source = is_array($manifest['source'] ?? null) ? $manifest['source'] : [];
+        $this->modules = $this->moduleKeys($zip, $manifest);
         $this->missingAtExport = [];
         foreach (is_array($manifest['warnings'] ?? null) ? $manifest['warnings'] : [] as $warning) {
             if (is_array($warning) && ($warning['type'] ?? null) === 'missing_file' && is_string($warning['url'] ?? null)) {

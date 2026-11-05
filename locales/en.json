@@ -29,6 +29,7 @@
         "blogSection": "Manage Blog",
         "editBlogSettings": "Blog Settings",
         "appearanceTheme": "Appearance",
+        "extras": "Extras",
         "collaborators": "Collaborators",
         "team": "Team",
         "subscribers": "Subscribers",
@@ -2164,6 +2165,8 @@
             "failed": "Failed",
             "mediaStored": "Images stored",
             "mediaFailed": "Images that could not be stored",
+            "modulesSkipped": "Some extras in this backup are not installed here, so their data was left out: {names}. Keep the backup file if you want it later.",
+            "modulesFailed": "Some extras could not restore their data from this backup: {names}. Your posts were restored as listed below.",
             "none": "None.",
             "back": "Back to Backup & restore",
             "viewPosts": "View posts"

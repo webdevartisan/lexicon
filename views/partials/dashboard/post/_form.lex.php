@@ -279,6 +279,8 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
           </div>
         </section>
 
+        {% slot "editor.sidebar" %}
+
         <!-- Danger zone -->
         {% if post|notempty %}
         <section class="rounded-lg border border-red-200 bg-red-50/50 dark:border-red-500/30 dark:bg-red-500/5">

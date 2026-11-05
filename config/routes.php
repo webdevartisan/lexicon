@@ -363,6 +363,11 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/appearance/activate', ['controller' => 'AppearanceController', 'action' => 'activate', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/appearance/update', ['controller' => 'AppearanceController', 'action' => 'update', 'method' => 'POST']);
+
+    // Extras: optional modules a blog switches on for itself
+    $r->add('/blog/{blogId:\d+}/extras', ['controller' => 'ExtrasController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/extras/toggle', ['controller' => 'ExtrasController', 'action' => 'toggle', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/extras/purge', ['controller' => 'ExtrasController', 'action' => 'purge', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/texts', ['controller' => 'BlogTextController', 'action' => 'save', 'method' => 'POST']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
@@ -729,6 +734,8 @@ $router->group([
 
     // Recurring tasks. Listed before the id routes so the fixed segments are
     // not swallowed by them.
+    $r->add('/extras', ['controller' => 'ExtrasController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/extras/toggle', ['controller' => 'ExtrasController', 'action' => 'toggle', 'method' => 'POST']);
     $r->add('/scheduled-tasks', ['controller' => 'ScheduledTaskController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/scheduled-tasks/statuses', ['controller' => 'ScheduledTaskController', 'action' => 'statuses', 'method' => 'GET']);
     $r->add('/scheduled-tasks/hint', ['controller' => 'ScheduledTaskController', 'action' => 'hint', 'method' => 'GET']);
@@ -751,6 +758,9 @@ $router->group([
     //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
     // }
 });
+
+// Module routes sit under /m/<key>, so they must be added before the blog's /{postSlug} catch-all below
+\Framework\Core\App::container()->get(\Framework\Modules\ModuleBooter::class)->bootRoutes($router);
 
 // Blog routes under a blog-specific slug with theme middleware
 $router->group([
