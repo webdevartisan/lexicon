@@ -15,13 +15,14 @@ final class ModuleContext
 {
     /**
      * Where each scope mounts its routes: prefix and middleware for front pages and for manage pages.
-     * Blog modules live under a blog; platform modules live on the site and in the control panel,
-     * where manage-extras checks the permission so a module controller cannot forget it.
+     * Blog modules live under a blog; platform modules live on the site and in the control panel.
+     * Manage pages are guarded on the route (manage-blog-extra, manage-extras), so a module
+     * controller that forgets its own check still cannot open them to everyone.
      */
     private const AREAS = [
         'blog' => [
             'front' => ['/blog/{blogSlug:[A-Za-z0-9_-]+}/m/', ['theme']],
-            'manage' => ['/dashboard/blog/{blogId:\d+}/m/', ['auth']],
+            'manage' => ['/dashboard/blog/{blogId:\d+}/m/', ['auth', 'manage-blog-extra']],
         ],
         'platform' => [
             'front' => ['/m/', []],

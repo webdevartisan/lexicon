@@ -161,3 +161,12 @@ test('a platform module mounts its manage route in the control panel behind mana
     expect($route)->toMatchArray(['module' => 'sample-platform'])
         ->and($route['middleware'])->toBe(['auth', 'two-factor', 'manage-extras']);
 });
+
+test('a blog module manage route checks the blog through manage-blog-extra', function () {
+    $booter = booterWith(states: ['sample-extra' => 'on']);
+    $booter->registerAll();
+    $booter->bootRoutes($router = new Router());
+
+    expect($router->match('/dashboard/blog/7/m/sample-extra/notes', 'GET')['middleware'])
+        ->toBe(['auth', 'manage-blog-extra']);
+});
