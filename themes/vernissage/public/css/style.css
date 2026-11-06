@@ -3,6 +3,15 @@
 
 :root {
   --post-accent: var(--viridian);
+  /* Module tokens: the only names optional modules read, so they match every theme. */
+  --module-accent: var(--post-accent);
+  --module-ink: var(--ink);
+  --module-muted: var(--stone);
+  --module-surface: var(--plaster);
+  --module-rule: var(--rule);
+  --module-font: var(--sans);
+  --module-mono: var(--mono);
+  --module-map-flavor: light;
   --plaster: #f4f1e9;
   --plaster-2: #eae5d9;
   --mat: #faf8f2;

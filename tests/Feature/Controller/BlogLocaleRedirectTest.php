@@ -93,13 +93,15 @@ beforeEach(function () {
     // Database is the development connection, while the factories above write to
     // the test database inside a transaction. Same approach as the other feature
     // controller tests.
+    $container = \Framework\Core\App::container();
+    $blogTexts = new \App\Models\BlogTextModel($this->db);
+    $blogCache = $container->get(\App\Services\BlogCacheInvalidator::class);
     $this->makeController = fn (): \App\Controllers\BlogController => new \App\Controllers\BlogController(
         $this->blogModel,
         $this->userModel,
         $this->postModel,
         new \App\Models\PublishedPostModel($this->db),
         new \App\Models\CategoryModel($this->db),
-        $this->settingsModel,
         new \App\Models\TagModel($this->db),
         new \App\Models\PostVoteModel($this->db),
         new \App\Models\PostBookmarkModel($this->db),
@@ -109,8 +111,17 @@ beforeEach(function () {
         new \App\Models\CommentVoteModel($this->db),
         \Framework\Core\App::container()->get(\App\Services\CommentRemovalService::class),
         new \App\Services\ContentLocaleResolver(new \App\Services\LocaleRegistry(ROOT_PATH)),
-        new \App\Services\HeadI18nBuilder(new \App\Services\LocaleRegistry(ROOT_PATH)),
-        new \App\Services\SearchRateLimiter(new \Framework\Helpers\RateLimiter(\Tests\Helpers\ThrottleTestHelper::fakeCache()))
+        new \App\Services\SearchRateLimiter(new \Framework\Helpers\RateLimiter(\Tests\Helpers\ThrottleTestHelper::fakeCache())),
+        new \App\Services\FrontPageTexts($this->settingsModel, $blogTexts, $blogCache),
+        new \App\Services\BlogPageContext(
+            $this->blogModel,
+            $this->userModel,
+            $this->settingsModel,
+            new \App\Models\UserProfileModel($this->db),
+            new \App\Services\BlogLocales(new \App\Models\PostTranslationModel($this->db)),
+            new \App\Services\ThemeWording($blogTexts, $container->get(\App\Services\ThemeService::class), $blogCache),
+            $container->get(\App\Services\ViewerContext::class),
+        )
     );
 
     // Pre-routing has already stripped the prefix by the time a controller runs,

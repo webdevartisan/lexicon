@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\BlogModuleModel;
+use App\Traits\RendersThemedBlogPages;
 use Framework\Exceptions\PageNotFoundException;
 
 /**
@@ -14,6 +15,8 @@ use Framework\Exceptions\PageNotFoundException;
  */
 abstract class ModuleController extends AppController
 {
+    use RendersThemedBlogPages;
+
     public function __construct(protected BlogModuleModel $blogModules)
     {
     }

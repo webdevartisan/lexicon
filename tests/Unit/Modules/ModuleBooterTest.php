@@ -170,3 +170,20 @@ test('a blog module manage route checks the blog through manage-blog-extra', fun
     expect($router->match('/dashboard/blog/7/m/sample-extra/notes', 'GET')['middleware'])
         ->toBe(['auth', 'manage-blog-extra']);
 });
+
+test('a blog module admin route mounts in the control panel behind manage-extras', function () {
+    $booter = booterWith(states: ['sample-extra' => 'on']);
+    $booter->registerAll();
+    $booter->bootRoutes($router = new Router());
+
+    $route = $router->match('/admin/m/sample-extra', 'GET');
+
+    expect($route)->toMatchArray(['module' => 'sample-extra'])
+        ->and($route['middleware'])->toBe(['auth', 'two-factor', 'manage-extras']);
+});
+
+test('a platform module cannot add admin routes', function () {
+    $context = new ModuleContext(ModuleManifest::fromFile(ModuleFixtures::PATH.'/sample-platform/module.json'));
+
+    expect(fn () => $context->adminRoutes(fn (ModuleRoutes $routes) => null))->toThrow(LogicException::class);
+});

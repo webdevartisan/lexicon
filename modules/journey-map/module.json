@@ -1,0 +1,13 @@
+{
+    "key": "journey-map",
+    "name": "Journey map",
+    "description": "Give each post a place and show the whole journey on a map.",
+    "version": 1,
+    "scope": "blog",
+    "requires": [],
+    "class": "Modules\\JourneyMap\\JourneyMapModule",
+    "slots": ["editor.sidebar", "post.header-aside", "post.after-content", "blog.nav"],
+    "tables": ["journey_stops"],
+    "page": true,
+    "admin_page": true
+}

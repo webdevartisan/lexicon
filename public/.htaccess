@@ -18,6 +18,9 @@
     # Header always set Content-Security-Policy "default-src 'self';"
 </IfModule>
 
+# A folder address answers 403 instead of listing the files inside it.
+Options -Indexes
+
 
 # ========================================
 # CACHE CONTROL FOR STATIC ASSETS

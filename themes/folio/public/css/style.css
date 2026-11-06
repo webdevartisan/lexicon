@@ -1,5 +1,14 @@
 :root {
     --post-accent: var(--rubric);
+    /* Module tokens: the only names optional modules read, so they match every theme. */
+    --module-accent: var(--post-accent);
+    --module-ink: var(--ink);
+    --module-muted: var(--muted);
+    --module-surface: var(--bone);
+    --module-rule: var(--rule);
+    --module-font: var(--sans);
+    --module-mono: var(--mono);
+    --module-map-flavor: light;
     --bone: #f7f5f0;
     --bone-deep: #ede9e0;
     --ink: #0a0a0a;

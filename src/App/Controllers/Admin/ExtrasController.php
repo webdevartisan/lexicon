@@ -56,6 +56,7 @@ final class ExtrasController extends AppController
                 'on' => $state === 'on',
                 'status' => self::STATUS_LABELS[$state],
                 'reason' => (string) ($reasons[$key] ?? ''),
+                'settings' => $state === 'on' && $manifest->hasAdminPage ? '/admin/m/'.$key : null,
             ];
         }
 

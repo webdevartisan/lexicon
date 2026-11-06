@@ -1,0 +1,60 @@
+/* The Place panel in the post editor. Classes start with journey-map- so they never meet core styles. */
+
+.journey-map-button {
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgb(var(--sc-custom-500, 59 130 246));
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-button:hover,
+.journey-map-button:focus-visible {
+  background: rgb(var(--sc-custom-500, 59 130 246) / 0.08);
+}
+
+.journey-map-button-quiet {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.journey-map-results {
+  margin-top: 0.375rem;
+  border: 1px solid rgb(148 163 184 / 0.5);
+  border-radius: 0.375rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.journey-map-results button {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  text-align: start;
+  font-size: 0.8125rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-results li + li {
+  border-top: 1px solid rgb(148 163 184 / 0.3);
+}
+
+.journey-map-results button:hover,
+.journey-map-results button:focus-visible {
+  background: rgb(148 163 184 / 0.15);
+}
+
+.journey-map-editor-map {
+  height: 14rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.journey-map-error {
+  color: #dc2626;
+}

@@ -18,7 +18,8 @@
     "dev:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
     "build:front-css": "postcss ./resources/css/lexicon.css -o ./public/assets/css/lexicon.css --no-map --use postcss-import postcss-custom-media cssnano",
     "dev:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media --watch --verbose",
-    "build:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media cssnano"
+    "build:chrome-css": "postcss ./resources/css/platform-chrome.css -o ./public/assets/css/platform-chrome.css --no-map --use postcss-import postcss-custom-media cssnano",
+    "copy:journey-map": "shx mkdir -p modules/journey-map/assets/vendor && shx cp node_modules/maplibre-gl/dist/maplibre-gl-csp.js node_modules/maplibre-gl/dist/maplibre-gl-csp-worker.js node_modules/maplibre-gl/dist/maplibre-gl.css node_modules/pmtiles/dist/pmtiles.js node_modules/@protomaps/basemaps/dist/basemaps.js modules/journey-map/assets/vendor && shx cp node_modules/maplibre-gl/LICENSE.txt modules/journey-map/assets/vendor/maplibre-LICENSE.txt"
   },
   "keywords": [],
   "dependencies": {
@@ -29,8 +30,11 @@
     "tinymce": "^8.2.1"
   },
   "devDependencies": {
+    "@protomaps/basemaps": "^5.7.2",
     "autoprefixer": "^10.4.23",
     "cssnano": "^7.1.9",
+    "maplibre-gl": "^5.24.0",
+    "pmtiles": "^4.5.0",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.1",
     "postcss-custom-media": "^12.0.3",

@@ -22,6 +22,9 @@ final class ModuleFixtures
 {
     public const PATH = ROOT_PATH.'/tests/Fixtures/modules';
 
+    /** The real modules folder, for tests of modules that ship with the platform. */
+    public const REAL = ROOT_PATH.'/modules';
+
     /** @var list<string> */
     private static array $files = [];
 
@@ -122,6 +125,32 @@ final class ModuleFixtures
     public static function dropSamplePlatform(Database $db): void
     {
         self::dropModule($db, 'sample-platform', 'sample_platform_items');
+    }
+
+    /**
+     * Make the journey map classes loadable without installing it.
+     */
+    public static function loadJourneyMap(): void
+    {
+        ModuleClassLoader::register(ModuleManifest::fromFile(self::REAL.'/journey-map/module.json'));
+    }
+
+    /**
+     * Install the journey map with its table, starting from a clean slate.
+     */
+    public static function installJourneyMap(Database $db): void
+    {
+        self::dropJourneyMap($db);
+        self::installer($db, self::REAL)->install('journey-map');
+    }
+
+    /**
+     * Undo installing the journey map: its table, migration rows, assets and modules row.
+     */
+    public static function dropJourneyMap(Database $db): void
+    {
+        self::dropModule($db, 'journey-map', 'journey_stops');
+        $db->execute("DELETE FROM modules WHERE module_key = 'journey-map'");
     }
 
     private static function dropModule(Database $db, string $key, string $table): void

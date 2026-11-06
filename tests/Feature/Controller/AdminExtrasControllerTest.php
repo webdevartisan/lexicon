@@ -132,3 +132,25 @@ test('an unknown module key is a 404', function () {
 test('a user without manage_extras cannot open the page', function () {
     expect(fn () => ($this->controller)()->beforeAction('index'))->toThrow(UnauthorizedException::class);
 });
+
+test('a module with a control panel page gets a Settings link while on', function () {
+    $links = function (): array {
+        $seen = [];
+        $viewer = Mockery::mock(TemplateViewerInterface::class)->shouldIgnoreMissing();
+        $viewer->shouldReceive('render')->andReturnUsing(function ($template, $data) use (&$seen) {
+            $seen = array_column($data['extras'], 'settings', 'key');
+
+            return '';
+        });
+        ($this->controller)([], $viewer)->index();
+
+        return $seen;
+    };
+
+    $on = $links();
+    $this->modules->switchOff('sample-extra');
+    $this->registry->rebuild();
+
+    expect($on)->toBe(['sample-extra' => '/admin/m/sample-extra', 'sample-platform' => null])
+        ->and($links()['sample-extra'])->toBeNull();
+});

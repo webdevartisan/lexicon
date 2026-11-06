@@ -132,6 +132,27 @@ test('the page lists installed extras with whether each is on', function () {
         ->toMatchArray(['key' => 'sample-extra', 'name' => 'Sample extra', 'on' => true, 'hasData' => false]);
 });
 
+test('an extra with its own page links to it only while it is on', function () {
+    $pages = function (): array {
+        $seen = [];
+        $viewer = Mockery::mock(TemplateViewerInterface::class)->shouldIgnoreMissing();
+        $viewer->shouldReceive('render')->andReturnUsing(function ($template, $data) use (&$seen) {
+            $seen = array_column($data['extras'], 'page');
+
+            return '';
+        });
+        ($this->call)('index', viewer: $viewer);
+
+        return $seen;
+    };
+
+    $off = $pages();
+    $this->blogModules->enable($this->blogId, 'sample-extra');
+
+    expect($off)->toBe([null])
+        ->and($pages())->toBe(['/dashboard/blog/'.$this->blogId.'/m/sample-extra']);
+});
+
 test('someone outside the blog cannot toggle', function () {
     ($this->signIn)();
 

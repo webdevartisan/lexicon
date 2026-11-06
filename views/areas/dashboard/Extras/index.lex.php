@@ -36,6 +36,11 @@
                 <?php } ?>
               </form>
 
+              <?php if ($extra['page'] !== null) { ?>
+                <?php $pagePath = $extra['page']; ?>
+                {% cmp="btn" href="{$pagePath}" variant="slate" icon="arrow-right" label="Open" %}
+              <?php } ?>
+
               <?php if ($extra['hasData']) { ?>
                 <form method="post" action="<?= e(lurl($extrasPath.'/purge')) ?>">
                   <?= csrf_field() ?>

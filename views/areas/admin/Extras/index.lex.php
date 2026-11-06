@@ -34,16 +34,23 @@
               <p class="text-xs text-amber-700 dark:text-amber-200">Paused after repeated errors: <?= e($extra['reason']) ?></p>
             <?php } ?>
 
-            <form method="post" action="<?= e(lurl('/admin/extras/toggle')) ?>">
-              <?= csrf_field() ?>
-              <input type="hidden" name="module" value="<?= e($extra['key']) ?>">
-              <input type="hidden" name="enabled" value="<?= $extra['on'] ? '0' : '1' ?>">
-              <?php if ($extra['on']) { ?>
-                {% cmp="btn" type="submit" variant="slate" icon="power" label="Switch off" %}
-              <?php } else { ?>
-                {% cmp="btn" type="submit" variant="blue" icon="power" label="Switch on" %}
+            <div class="flex flex-wrap items-center gap-3">
+              <form method="post" action="<?= e(lurl('/admin/extras/toggle')) ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="module" value="<?= e($extra['key']) ?>">
+                <input type="hidden" name="enabled" value="<?= $extra['on'] ? '0' : '1' ?>">
+                <?php if ($extra['on']) { ?>
+                  {% cmp="btn" type="submit" variant="slate" icon="power" label="Switch off" %}
+                <?php } else { ?>
+                  {% cmp="btn" type="submit" variant="blue" icon="power" label="Switch on" %}
+                <?php } ?>
+              </form>
+
+              <?php if ($extra['settings'] !== null) { ?>
+                <?php $settingsPath = $extra['settings']; ?>
+                {% cmp="btn" href="{$settingsPath}" variant="slate" icon="settings" label="Settings" %}
               <?php } ?>
-            </form>
+            </div>
           </div>
         </section>
       <?php } ?>

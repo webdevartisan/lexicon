@@ -51,6 +51,7 @@ final class ExtrasController extends AppController
                 'description' => $manifest->description,
                 'on' => $on,
                 'hasData' => !$on && $this->hasData($manifest, (int) $blog->id()),
+                'page' => $on && $manifest->hasPage ? '/dashboard/blog/'.(int) $blog->id().'/m/'.$key : null,
             ];
         }
 

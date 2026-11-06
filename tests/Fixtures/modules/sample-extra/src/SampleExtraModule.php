@@ -48,6 +48,7 @@ final class SampleExtraModule implements
 
         $context->frontRoutes(fn (ModuleRoutes $routes) => $routes->add('/note', $route('show')));
         $context->manageRoutes(fn (ModuleRoutes $routes) => $routes->add('/notes', $route('index')));
+        $context->adminRoutes(fn (ModuleRoutes $routes) => $routes->add('/', $route('settings')));
         $context->slot('post.after-content', new NoteSlot());
         $context->commands(['sample-extra:tidy' => TidyCommand::class]);
     }

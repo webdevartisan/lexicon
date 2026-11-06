@@ -18,27 +18,27 @@ use App\Models\PublishedPostModel;
 use App\Models\TagModel;
 use App\Models\UserModel;
 use App\Models\UserProfileModel;
-use App\Services\BlogLocales;
+use App\Services\BlogPageContext;
 use App\Services\BlogWording;
 use App\Services\CommentRemovalService;
 use App\Services\ContentLocaleResolver;
 use App\Services\FrontPageTexts;
-use App\Services\HeadI18nBuilder;
 use App\Services\LocaleState;
 use App\Services\SearchRateLimiter;
-use App\Services\ThemeWording;
+use App\Traits\RendersThemedBlogPages;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
 class BlogController extends AppController
 {
+    use RendersThemedBlogPages;
+
     public function __construct(
         private BlogModel $model,
         private UserModel $userModel,
         private PostModel $postModel,
         private PublishedPostModel $publishedPosts,
         private CategoryModel $categoryModel,
-        private BlogSettingsModel $settings,
         private TagModel $tagModel,
         private PostVoteModel $postVoteModel,
         private PostBookmarkModel $postBookmarkModel,
@@ -48,12 +48,15 @@ class BlogController extends AppController
         private CommentVoteModel $commentVotes,
         private CommentRemovalService $commentRemoval,
         private ContentLocaleResolver $localeResolver,
-        private HeadI18nBuilder $headI18n,
         private SearchRateLimiter $searchThrottle,
-        private BlogLocales $blogLocales,
         private FrontPageTexts $frontTexts,
-        private ThemeWording $themeWording
+        private BlogPageContext $pageContext
     ) {}
+
+    protected function blogPageContext(): BlogPageContext
+    {
+        return $this->pageContext;
+    }
 
     /** @var array<int, array{name: string, handle: string, link_handle: ?string}> Per-request cache, keyed by user id. */
     private array $authorCache = [];
@@ -138,7 +141,7 @@ class BlogController extends AppController
 
     public function showBlog(string $blogSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
         if ($blogId === 0) {
             throw new PageNotFoundException('Blog not found.', 404);
@@ -200,7 +203,7 @@ class BlogController extends AppController
      */
     public function indexFeed(string $blogSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
         if ($blogId === 0) {
             throw new PageNotFoundException('Blog not found.', 404);
@@ -264,7 +267,7 @@ class BlogController extends AppController
 
     public function archiveBlog(string $blogSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
 
         if ($blogId === 0) {
@@ -295,7 +298,7 @@ class BlogController extends AppController
      */
     public function searchBlog(string $blogSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
 
         if ($blogId === 0) {
@@ -354,7 +357,7 @@ class BlogController extends AppController
      */
     public function showCategory(string $blogSlug, string $categorySlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
 
         if ($redirect = $this->blogLocaleRedirect($ctx)) {
@@ -383,7 +386,7 @@ class BlogController extends AppController
      */
     public function showTag(string $blogSlug, string $tagSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
         $blogId = (int) ($ctx['blog']['id'] ?? 0);
 
         if ($redirect = $this->blogLocaleRedirect($ctx)) {
@@ -424,7 +427,7 @@ class BlogController extends AppController
 
     public function showBlogPost(string $blogSlug, string $postSlug): Response
     {
-        $ctx = $this->loadBlogContext($blogSlug);
+        $ctx = $this->themedBlogPage($blogSlug);
 
         // Post. Scoped to the blog because slugs are only unique per blog, and
         // because a blog serves every member's posts, not just the owner's.
@@ -433,7 +436,7 @@ class BlogController extends AppController
             throw new PageNotFoundException('Post not found', 404);
         }
 
-        $canPreview = $this->viewerCanPreview((int) $ctx['blog']['id']);
+        $canPreview = $this->pageContext->viewerCanPreview((int) $ctx['blog']['id']);
 
         // Unlisted posts stay reachable by link; private ones are for collaborators only.
         if (!$canPreview && ($post['status'] !== 'published' || ($post['visibility'] ?? 'public') === 'private')) {
@@ -564,7 +567,7 @@ class BlogController extends AppController
             'og_type' => 'article',
             'og_title' => !empty($post['og_title']) ? $post['og_title'] : ($post['title'] ?? $serpTitle),
             'og_description' => !empty($post['og_description']) ? $post['og_description'] : $serpDescription,
-            'og_image' => $this->absoluteAssetUrl(
+            'og_image' => $this->pageContext->absoluteUrl(
                 !empty($post['og_image']) ? $post['og_image'] : ($post['featured_image'] ?? null)
             ) ?? $ctx['meta']['og_image'],
             'og_image_alt' => $post['og_image_alt'] ?? null,
@@ -573,7 +576,7 @@ class BlogController extends AppController
             // only one an author can address separately. Empty means inherit.
             'twitter_title' => $post['twitter_title'] ?? null,
             'twitter_description' => $post['twitter_description'] ?? null,
-            'twitter_image' => $this->absoluteAssetUrl($post['twitter_image'] ?? null),
+            'twitter_image' => $this->pageContext->absoluteUrl($post['twitter_image'] ?? null),
             'article_published_time' => gmdate('c', strtotime((string) $post['published_at_raw'])),
             'article_modified_time' => !empty($post['updated_at'])
                 ? gmdate('c', strtotime((string) $post['updated_at']))
@@ -724,133 +727,9 @@ class BlogController extends AppController
     }
 
     /**
-     * Turn a stored asset path into an absolute URL for og:image and friends.
-     *
-     * Social crawlers ignore relative URLs, so local paths are prefixed with
-     * the site base URL while full http(s) URLs pass through untouched.
-     */
-    private function absoluteAssetUrl(?string $url): ?string
-    {
-        $url = trim((string) $url);
-        if ($url === '') {
-            return null;
-        }
-
-        if (preg_match('#^https?://#i', $url)) {
-            return $url;
-        }
-
-        return rtrim(base_url(), '/').'/'.ltrim($url, '/');
-    }
-
-    /**
-     * @return array<string, mixed> Blog, owner, settings, and meta context
-     */
-    private function loadBlogContext(string $blogSlug): array
-    {
-        // 1) Blog
-        $blog = $this->model->getBlogBySlug($blogSlug);
-        if (!$blog) {
-            throw new PageNotFoundException('Blog not found', 404);
-        }
-
-        $status = $blog['status'] ?? 'published';
-        $isPreview = $status === 'draft' && $this->viewerCanPreview((int) $blog['id']);
-
-        if ($status !== 'published' && !$isPreview) {
-            throw new PageNotFoundException('Blog not found', 404);
-        }
-
-        // 2) Owner
-        $user = $this->userModel->findById($blog['owner_id']);
-
-        if (!$user) {
-            throw new PageNotFoundException('Blog not found', 404);
-        }
-
-        // 3) Settings + meta defaults
-        $settings = $this->settings->findByBlogId((int) $blog['id']) ?? [];
-
-        // Themes iterate this as platform => URL, so hand them the decoded map
-        $settings['social_links'] = BlogSettingsModel::decodeSocialLinks($settings['social_links'] ?? null);
-
-        $blogUrl = rtrim(base_url(), '/').lurl('/blog/'.rawurlencode((string) ($blog['blog_slug'] ?? '')));
-
-        $meta = [
-            'title' => $settings['meta_title'] ?? ($blog['blog_name'] ?? ($user['display_name_cached']."'s Blog")),
-            'description' => $settings['meta_description'] ?? ($blog['description'] ?? ''),
-            'url' => $blogUrl,
-            'site_name' => (string) ($blog['blog_name'] ?? ''),
-            'og_type' => 'website',
-            'og_title' => null, // themes fall back to title
-            'og_description' => null, // themes fall back to description
-            'og_image' => $this->absoluteAssetUrl($settings['banner_path'] ?? null),
-            'twitter_card' => 'summary_large_image',
-            // The blog home is reachable under any locale prefix that survives the
-            // redirect guard, so name the content-locale URL as the one to index.
-            'canonical' => $blogUrl,
-            // Only an explicit indexable=false opts the blog out; a missing settings row must not.
-            'robots' => $isPreview || (array_key_exists('indexable', $settings) && !$settings['indexable'])
-                ? 'noindex, nofollow'
-                : null,
-        ];
-
-        // 4) Back-compat field some templates expect
-        $user['blog_name'] = $blog['blog_name'] ?? ($user['handle']."'s Blog");
-
-        // Every themed surface renders the owner as the author (the post guard
-        // enforces it), so one lookup covers bylines, cards, and archives
-        $user['public_profile_handle'] = $this->profiles->publicHandleFor((int) $user['id']);
-
-        // 5) Logged-in reader shown in the theme masthead. Full-page cache only
-        // serves guests, so viewer-specific markup never leaks between users.
-        $viewer = app(\App\Services\ViewerContext::class)->current();
-
-        // Every themed page renders these, so the subscribe confirmation (and any
-        // other flash) shows up no matter which blog page the visitor lands back on.
-        $flashes = $this->getFlashMessages();
-
-        // Which languages this blog's own pages exist in. Recorded on LocaleState
-        // so the head globals stop advertising translations that do not exist.
-        $localeSet = $this->blogLocales->for((int) $blog['id'], $settings);
-        LocaleState::setLocaleSet($localeSet);
-        $this->refreshHeadI18n();
-
-        // The theme's texts as this blog words them; every themed page shows some.
-        $wording = $this->themeWording->forPage((int) $blog['id'], isset($settings['theme']) ? (string) $settings['theme'] : null);
-
-        return compact('user', 'blog', 'settings', 'meta', 'viewer', 'flashes', 'localeSet', 'wording');
-    }
-
-    /**
-     * Whether the signed-in viewer belongs to the blog and may see what readers can't yet.
-     */
-    private function viewerCanPreview(int $blogId): bool
-    {
-        return auth()->check() && $this->model->userCanAccessBlog((int) auth()->user()['id'], $blogId);
-    }
-
-    /**
-     * Rebuild the language head globals now that this page's locale set is known.
-     *
-     * HeadI18nGlobals runs before the controller, so it could only assume every
-     * supported locale. Template globals are merged at render time, so this later
-     * call is what the page actually renders with.
-     */
-    private function refreshHeadI18n(): void
-    {
-        $full = $this->request->uri ?? '/';
-
-        $this->viewer->addGlobals($this->headI18n->build(
-            parse_url($full, PHP_URL_PATH) ?: '/',
-            $this->request->get !== [] ? http_build_query($this->request->get) : null
-        ));
-    }
-
-    /**
      * Blog-level redirect guard, for pages whose languages are the blog's.
      *
-     * @param  array<string, mixed>  $ctx  Result of loadBlogContext()
+     * @param  array<string, mixed>  $ctx  Result of themedBlogPage()
      */
     private function blogLocaleRedirect(array $ctx): ?Response
     {
@@ -911,7 +790,7 @@ class BlogController extends AppController
             return null;
         }
 
-        return $this->viewerCanPreview($blogId) ? null : $reader;
+        return $this->pageContext->viewerCanPreview($blogId) ? null : $reader;
     }
 
     private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string

@@ -29,6 +29,8 @@ final class ModuleManifest
         public readonly array $slots,
         public readonly array $tables,
         public readonly array $requires,
+        public readonly bool $hasPage = false,
+        public readonly bool $hasAdminPage = false,
     ) {
     }
 
@@ -90,6 +92,8 @@ final class ModuleManifest
             slots: self::slots($data, $key),
             tables: self::list($data, 'tables'),
             requires: self::requires($data, $key),
+            hasPage: self::flag($data, 'page', $key),
+            hasAdminPage: self::flag($data, 'admin_page', $key),
         );
     }
 
@@ -110,8 +114,11 @@ final class ModuleManifest
             'slots' => $this->slots,
             'tables' => $this->tables,
             'requires' => $this->requires,
+            'page' => $this->hasPage,
+            'admin_page' => $this->hasAdminPage,
         ];
     }
+
 
     private static function key(array $data): string
     {
@@ -160,6 +167,20 @@ final class ModuleManifest
         }
 
         return $requires;
+    }
+
+    /**
+     * A true or false switch that defaults to false: "page" for a page at the root of the manage routes,
+     * which the blog's Extras card links, and "admin_page" for one in the control panel, linked from /admin/extras.
+     */
+    private static function flag(array $data, string $field, string $key): bool
+    {
+        $value = $data[$field] ?? false;
+        if (!is_bool($value)) {
+            throw new InvalidManifestException("Module {$key} must set \"{$field}\" to true or false");
+        }
+
+        return $value;
     }
 
     private static function string(array $data, string $field): string

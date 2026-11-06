@@ -170,6 +170,7 @@ final class ModuleRegistry
         return $manifests;
     }
 
+
     private function writeCache(): void
     {
         $rows = array_map(

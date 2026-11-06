@@ -7,5 +7,7 @@
     "class": "Tests\\Fixtures\\Modules\\SampleExtra\\SampleExtraModule",
     "slots": ["post.after-content"],
     "tables": ["sample_extra_notes"],
-    "requires": []
+    "requires": [],
+    "page": true,
+    "admin_page": true
 }

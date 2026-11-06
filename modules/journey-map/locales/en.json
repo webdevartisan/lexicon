@@ -1,0 +1,78 @@
+{
+    "nav": {
+        "journey": "Journey"
+    },
+    "post": {
+        "nextStop": "Next stop: {title}"
+    },
+    "page": {
+        "title": "Journey",
+        "listHeading": "Every stop, in order",
+        "empty": "No stops on this journey yet.",
+        "readStop": "Read this stop",
+        "stopNumber": "Stop {number}"
+    },
+    "map": {
+        "label": "Map of the journey",
+        "locatorLabel": "Map showing {place}"
+    },
+    "editor": {
+        "title": "Place",
+        "saveFirst": "Save the post first to give it a place.",
+        "searchLabel": "Search for a place",
+        "searchButton": "Search",
+        "pinHint": "Or click the map to drop a pin.",
+        "noMap": "The map is not set up yet, so search for the place instead.",
+        "placeName": "Place name",
+        "lat": "Latitude",
+        "lng": "Longitude",
+        "stopNumber": "Stop number",
+        "stopNumberHint": "Leave empty to follow the publish date.",
+        "precision": "How exact",
+        "precisionExact": "Exact spot",
+        "precisionArea": "Approximate area (about 1 km)",
+        "save": "Save place",
+        "remove": "Remove place",
+        "saved": "Place saved.",
+        "removed": "Place removed.",
+        "noResults": "No places found.",
+        "busy": "Place search is busy. Try again in a moment.",
+        "failed": "Place search is not available right now.",
+        "tooMany": "Too many searches. Wait a minute and try again.",
+        "saveFailed": "The place could not be saved.",
+        "guideLink": "How this works",
+        "searchOff": "Place search is switched off on this site."
+    },
+    "errors": {
+        "placeName": "Give the place a name of up to 160 characters.",
+        "lat": "Latitude must be a number from -90 to 90.",
+        "lng": "Longitude must be a number from -180 to 180.",
+        "precision": "Choose an exact spot or an approximate area.",
+        "stopNumber": "The stop number must be a whole number from 1 to 9999."
+    },
+    "guide": {
+        "title": "Journey map",
+        "subtitle": "Give posts a place and show readers the whole journey.",
+        "howHeading": "How to use it",
+        "step1": "Open a post in the editor. The Place panel is in the side column. A new post needs saving once before it can have a place.",
+        "step2": "Search for the place by name, or click the map to drop a pin.",
+        "step3": "Choose Exact spot, or Approximate area to round the place to about 1 km.",
+        "step4": "Leave the stop number empty to order stops by publish date, or give numbers to set the order yourself.",
+        "step5": "Press Save place. The place saves on its own, without saving the post.",
+        "readersHeading": "What readers see",
+        "readers1": "A small map beside the post with the place name, and a Next stop link after the text.",
+        "readers2": "A Journey link in the blog menu that opens every stop on one map.",
+        "readers3": "Only published, public posts appear. Drafts, scheduled and private posts stay hidden until they go public.",
+        "privacy": "Use Approximate area for places that should stay private, like your home. The exact point is then never stored.",
+        "stopsHeading": "This blog's stops",
+        "noStops": "No post has a place yet.",
+        "openJourney": "Open the Journey page",
+        "post": "Post",
+        "place": "Place",
+        "order": "Stop",
+        "byDate": "By date",
+        "approximate": "approximate",
+        "hidden": "Not shown to readers",
+        "edit": "Edit post"
+    }
+}

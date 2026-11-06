@@ -11,6 +11,7 @@ use Framework\Modules\InvalidManifestException;
 use Framework\Modules\ModuleInstances;
 use Framework\Modules\ModuleManifest;
 use Framework\Modules\ModuleRegistry;
+use Framework\Modules\ModuleUninstaller;
 
 /**
  * Installs and uninstalls modules: their schema files, public assets, state row and the registry cache.
@@ -56,7 +57,7 @@ class ModuleInstaller
     }
 
     /**
-     * Remove a module, its tables and its state.
+     * Remove a module, its tables, its public folder, whatever its own cleanup deletes, and its state.
      *
      * @param string $key The module key
      * @param bool $purge Erase the data instead of refusing when some exists
@@ -73,6 +74,9 @@ class ModuleInstaller
             $this->refuseWhileTablesHaveRows($manifest);
         }
 
+        if ($module instanceof ModuleUninstaller) {
+            $module->uninstall();
+        }
         $this->dropTables($manifest);
         $this->assets->remove($key);
         $this->db->execute('DELETE FROM migrations WHERE filename LIKE ?', ['module:'.$key.':%']);

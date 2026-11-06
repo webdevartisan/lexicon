@@ -15,7 +15,8 @@ final class ModuleContext
 {
     /**
      * Where each scope mounts its routes: prefix and middleware for front pages and for manage pages.
-     * Blog modules live under a blog; platform modules live on the site and in the control panel.
+     * Blog modules live under a blog, with optional control panel pages; platform modules live on the
+     * site and in the control panel.
      * Manage pages are guarded on the route (manage-blog-extra, manage-extras), so a module
      * controller that forgets its own check still cannot open them to everyone.
      */
@@ -23,6 +24,7 @@ final class ModuleContext
         'blog' => [
             'front' => ['/blog/{blogSlug:[A-Za-z0-9_-]+}/m/', ['theme']],
             'manage' => ['/dashboard/blog/{blogId:\d+}/m/', ['auth', 'manage-blog-extra']],
+            'admin' => ['/admin/m/', ['auth', 'two-factor', 'manage-extras']],
         ],
         'platform' => [
             'front' => ['/m/', []],
@@ -35,6 +37,9 @@ final class ModuleContext
 
     /** @var list<Closure> */
     private array $manageRoutes = [];
+
+    /** @var list<Closure> */
+    private array $adminRoutes = [];
 
     /** @var list<array{slot: string, renderer: SlotRenderer}> */
     private array $slots = [];
@@ -76,6 +81,24 @@ final class ModuleContext
     }
 
     /**
+     * Control panel pages of a blog module, at /admin/m/<key> behind the same guard as /admin/extras.
+     * For site wide settings a blog module needs, such as data every blog shares.
+     *
+     * @param Closure(ModuleRoutes): void $define
+     * @throws LogicException For a platform module, whose manage routes already live there
+     */
+    public function adminRoutes(Closure $define): void
+    {
+        if ($this->manifest->scope !== 'blog') {
+            throw new LogicException(
+                "Module {$this->manifest->key}: platform modules put control panel pages in manageRoutes"
+            );
+        }
+
+        $this->adminRoutes[] = $define;
+    }
+
+    /**
      * Draw into a named slot the manifest declared.
      *
      * @throws LogicException When the manifest does not list the slot
@@ -114,6 +137,9 @@ final class ModuleContext
 
         $this->mount($router, $areas['front'], $this->frontRoutes);
         $this->mount($router, $areas['manage'], $this->manageRoutes);
+        if (isset($areas['admin'])) {
+            $this->mount($router, $areas['admin'], $this->adminRoutes);
+        }
     }
 
     /**

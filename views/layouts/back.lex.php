@@ -25,6 +25,7 @@ $old = old();
     {# The notification bell and panel are platform chrome, shared with the front and every theme. #}
     <link rel="stylesheet" href="<?= e(versioned_asset('/assets/css/platform-chrome.css')) ?>">
     {% yield head %}
+    {% slot "head.end" %}
 
 </head>
 
@@ -173,6 +174,7 @@ $old = old();
 <script src="<?= e(versioned_asset('/cp-assets/js/components/alert.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/app.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/lucide.init.js')) ?>"></script>
+{% slot "body.end" %}
 
 </body>
 

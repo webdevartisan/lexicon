@@ -11,6 +11,7 @@ use Framework\Database;
 use Framework\Modules\InvalidManifestException;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\UserFactory;
+use Tests\Fixtures\Modules\SamplePlatform\SamplePlatformModule;
 use Tests\Helpers\ModuleFixtures;
 
 /**
@@ -182,4 +183,29 @@ test('a module switched off can still be uninstalled, and its data still blocks 
     $this->installer->uninstall('sample-extra', true);
 
     expect($modules->states())->not->toHaveKey('sample-extra');
+});
+
+test('uninstall runs the module cleanup and deletes its files folder', function () {
+    $this->installer->install('sample-platform');
+    $folder = ModuleFixtures::publicDir().'/sample-platform/files';
+    mkdir($folder.'/nested', 0775, true);
+    file_put_contents($folder.'/nested/map.bin', 'x');
+    SamplePlatformModule::$uninstalls = 0;
+
+    $this->installer->uninstall('sample-platform', false);
+
+    expect(is_dir($folder))->toBeFalse()
+        ->and(SamplePlatformModule::$uninstalls)->toBe(1);
+});
+
+test('a refused uninstall keeps the files folder and skips the module cleanup', function () {
+    $this->installer->install('sample-platform');
+    $this->db->execute('INSERT INTO sample_platform_items (label) VALUES (?)', ['First item']);
+    $folder = ModuleFixtures::publicDir().'/sample-platform/files';
+    mkdir($folder, 0775, true);
+    SamplePlatformModule::$uninstalls = 0;
+
+    expect(fn () => $this->installer->uninstall('sample-platform', false))->toThrow(ModuleHasDataException::class)
+        ->and(is_dir($folder))->toBeTrue()
+        ->and(SamplePlatformModule::$uninstalls)->toBe(0);
 });

@@ -26,3 +26,23 @@ test('the shared theme partials expose the page slots', function () {
         ->and(file_get_contents(ROOT_PATH.'/views/partials/public/_theme_scripts.lex.php'))
         ->toContain('{% slot "body.end" %}');
 });
+
+test('the dashboard layout has the page slots', function () {
+    $layout = file_get_contents(ROOT_PATH.'/views/layouts/back.lex.php');
+
+    expect(substr_count($layout, '{% slot "head.end" %}'))->toBe(1)
+        ->and(substr_count($layout, '{% slot "body.end" %}'))->toBe(1);
+});
+
+/**
+ * Module styles read only these tokens, so a module looks native in every theme
+ * without a theme ever naming a module.
+ */
+test('every theme defines the module tokens', function (string $theme) {
+    $css = file_get_contents(ROOT_PATH."/themes/{$theme}/public/css/style.css");
+    $tokens = ['accent', 'ink', 'muted', 'surface', 'rule', 'font', 'mono', 'map-flavor'];
+
+    foreach ($tokens as $token) {
+        expect($css)->toContain("--module-{$token}:");
+    }
+})->with(['closest', 'folio', 'nocturne', 'offset', 'vernissage']);

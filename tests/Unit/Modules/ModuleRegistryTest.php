@@ -60,6 +60,31 @@ test('rejects requires that are not empty in v1', function () {
         ->toThrow(InvalidManifestException::class);
 });
 
+test('a manifest says whether the module has its own page', function () {
+    expect(ModuleManifest::fromJson(manifestJson(), '/x')->hasPage)->toBeFalse()
+        ->and(ModuleManifest::fromJson(manifestJson(['page' => true]), '/x')->hasPage)->toBeTrue()
+        ->and(ModuleManifest::fromArray(ModuleManifest::fromJson(manifestJson(['page' => true]), '/x')->toArray(), '/x')
+            ->hasPage)->toBeTrue();
+});
+
+test('rejects a page flag that is not true or false', function () {
+    expect(fn () => ModuleManifest::fromJson(manifestJson(['page' => 'yes']), '/x'))
+        ->toThrow(InvalidManifestException::class);
+});
+
+test('a manifest says whether the module has a control panel page', function () {
+    $flagged = ModuleManifest::fromJson(manifestJson(['admin_page' => true]), '/x');
+
+    expect(ModuleManifest::fromJson(manifestJson(), '/x')->hasAdminPage)->toBeFalse()
+        ->and($flagged->hasAdminPage)->toBeTrue()
+        ->and(ModuleManifest::fromArray($flagged->toArray(), '/x')->hasAdminPage)->toBeTrue();
+});
+
+test('rejects an admin page flag that is not true or false', function () {
+    expect(fn () => ModuleManifest::fromJson(manifestJson(['admin_page' => 1]), '/x'))
+        ->toThrow(InvalidManifestException::class);
+});
+
 test('rejects text that is not json', function () {
     expect(fn () => ModuleManifest::fromJson('{ not json', '/x'))
         ->toThrow(InvalidManifestException::class);
