@@ -9,6 +9,7 @@ use App\Models\TagModel;
 use App\Resources\PostResource;
 use App\ValueObjects\CopyName;
 use App\ValueObjects\PostFieldRules;
+use Framework\Modules\ModuleDuties;
 
 /**
  * Copies a post into a new draft in the same blog.
@@ -16,6 +17,7 @@ use App\ValueObjects\PostFieldRules;
  * The copy keeps what the writer made (text, category, tags, image, SEO and
  * sharing fields) and starts its own history: a draft by whoever copied it,
  * not featured, never published or reviewed, with no comments or views.
+ * Modules that keep rows per post copy theirs too.
  */
 final class PostDuplicator
 {
@@ -30,6 +32,7 @@ final class PostDuplicator
     public function __construct(
         private PostModel $posts,
         private TagModel $tags,
+        private ModuleDuties $moduleDuties,
     ) {}
 
     /**
@@ -68,9 +71,10 @@ final class PostDuplicator
         $tagIds = array_map(static fn (array $tag): int => (int) $tag['id'], $this->posts->tags($post->id()));
 
         // A copy without its tags would look complete but quietly drop out of tag pages.
-        return $this->posts->transaction(function () use ($data, $tagIds): int {
+        return $this->posts->transaction(function () use ($post, $data, $tagIds): int {
             $copyId = $this->posts->create($data);
             $this->tags->syncIdsForPost($copyId, $tagIds);
+            $this->moduleDuties->copyPost($post->id(), $copyId);
 
             return $copyId;
         });

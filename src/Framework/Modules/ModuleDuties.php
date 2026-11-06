@@ -28,6 +28,16 @@ final class ModuleDuties
     }
 
     /**
+     * Hand every module a post that was just copied, so the copy keeps the module's rows.
+     */
+    public function copyPost(int $fromPostId, int $toPostId): void
+    {
+        foreach ($this->modulesImplementing(PostCopyParticipant::class) as $module) {
+            $module->copyPost($fromPostId, $toPostId);
+        }
+    }
+
+    /**
      * Remove every module's rows about an account that is being erased.
      */
     public function eraseUser(int $userId): void
