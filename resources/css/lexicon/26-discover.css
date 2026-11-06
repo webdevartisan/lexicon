@@ -409,7 +409,7 @@
     transition: transform 0.6s var(--lx-ease), opacity 0.3s ease;
 }
 
-.lx-featured-blog-media span {
+.lx-featured-blog-media > span {
     position: absolute;
     inset: 0;
     display: grid;
