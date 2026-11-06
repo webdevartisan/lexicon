@@ -6,7 +6,7 @@
     "scope": "blog",
     "requires": [],
     "class": "Modules\\JourneyMap\\JourneyMapModule",
-    "slots": ["editor.sidebar", "post.header-aside", "post.after-content", "blog.nav"],
+    "slots": ["editor.sidebar", "post.after-content", "blog.nav"],
     "tables": ["journey_stops"],
     "page": true,
     "admin_page": true

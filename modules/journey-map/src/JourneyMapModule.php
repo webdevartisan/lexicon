@@ -147,7 +147,7 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
         });
 
         $context->slot('editor.sidebar', $this->deferred(EditorPanelSlot::class));
-        $context->slot('post.header-aside', $this->deferred(LocatorSlot::class));
+        $context->slot('post.after-content', $this->deferred(LocatorSlot::class));
         $context->slot('post.after-content', $this->deferred(NextStopSlot::class));
         $context->slot('blog.nav', $this->deferred(NavSlot::class));
 

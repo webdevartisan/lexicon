@@ -10,8 +10,13 @@
   background: var(--module-surface);
 }
 
+.journey-map-box.journey-map-post {
+  aspect-ratio: auto;
+  block-size: 14rem;
+}
+
 .journey-map-locator {
-  margin: 0;
+  margin: 2.5rem 0 0;
   font-family: var(--module-font);
   color: var(--module-ink);
 }

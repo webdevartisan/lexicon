@@ -8,7 +8,7 @@ use Framework\Modules\SlotContext;
 use Framework\Modules\SlotRenderer;
 
 /**
- * A small map beside a post's header, pinned on the post's place, with the place name under it.
+ * A short map after a post, pinned on the post's place, with the place name under it.
  */
 final class LocatorSlot implements SlotRenderer
 {

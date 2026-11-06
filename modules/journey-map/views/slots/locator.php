@@ -13,7 +13,7 @@ $place = (string) $stop['place_name'];
 ?>
 <figure class="journey-map-locator">
   <?php if ($map !== null) { ?>
-    <div class="journey-map-box" data-journey-map="locator" role="img"
+    <div class="journey-map-box journey-map-post" data-journey-map="locator" role="img"
       aria-label="<?= e($t('map.locatorLabel', ['place' => $place])) ?>"
       data-map="<?= e(Partial::json($map)) ?>"
       data-view="<?= e(Partial::json($view)) ?>"></div>

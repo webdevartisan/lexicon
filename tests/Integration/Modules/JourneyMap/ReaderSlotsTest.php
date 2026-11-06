@@ -104,7 +104,7 @@ test('a post with a stop shows its place and loads the map scripts', function ()
     ($this->place)($lisbon, 'Lisbon', 1);
     $slots = ($this->slots)();
 
-    expect(($this->draw)($slots, 'post.header-aside', $lisbon))
+    expect(($this->draw)($slots, 'post.after-content', $lisbon))
         ->toContain('Lisbon')
         ->toContain('data-journey-map="locator"')
         ->and(($this->draw)($slots, 'body.end', $lisbon))->toContain('maplibre-gl-csp.js');
@@ -115,7 +115,7 @@ test('the locator has no map box when the map file is missing', function () {
     ($this->place)($lisbon, 'Lisbon', 1);
     $slots = ($this->slots)(sys_get_temp_dir().'/no-map-here');
 
-    expect(($this->draw)($slots, 'post.header-aside', $lisbon))
+    expect(($this->draw)($slots, 'post.after-content', $lisbon))
         ->toContain('Lisbon')
         ->not->toContain('data-journey-map=')
         ->and(($this->draw)($slots, 'body.end', $lisbon))->not->toContain('maplibre');
@@ -139,7 +139,7 @@ test('the last stop shows no next stop', function () {
     $only = ($this->post)('Day one', 'day-one');
     ($this->place)($only, 'Lisbon', 1);
 
-    expect(($this->draw)(($this->slots)(), 'post.after-content', $only))->toBe('');
+    expect(($this->draw)(($this->slots)(), 'post.after-content', $only))->not->toContain('journey-map-next');
 });
 
 test('the nav link shows only once a public stop exists', function () {
@@ -162,7 +162,7 @@ test('nothing renders on a blog that has the module off', function () {
     $this->blogModules->disable((int) $this->blog['id'], 'journey-map');
     $slots = ($this->slots)();
 
-    foreach (['post.header-aside', 'post.after-content', 'blog.nav'] as $slot) {
+    foreach (['post.after-content', 'blog.nav'] as $slot) {
         expect(($this->draw)($slots, $slot, $lisbon))->toBe('');
     }
 });
