@@ -29,3 +29,6 @@ junit.xml
 *.old
 /backup_files/
 /storage/
+
+# Module public folders, copied from each module on install (scripts, plus files/ the module downloads)
+/public/modules/
