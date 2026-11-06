@@ -6,8 +6,8 @@
     "scope": "blog",
     "requires": [],
     "class": "Modules\\JourneyMap\\JourneyMapModule",
-    "slots": ["editor.sidebar", "post.after-content", "blog.nav"],
-    "tables": ["journey_stops"],
+    "slots": ["editor.main", "post.after-content", "blog.nav"],
+    "tables": ["journey_stops", "journey_legs"],
     "page": true,
     "admin_page": true
 }

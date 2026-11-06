@@ -47,11 +47,21 @@ class MapJob
      */
     public function queue(string $kind, MapRequest $request, int $userId): void
     {
+        $this->queueRequest($kind, $request->toArray(), $userId);
+    }
+
+    /**
+     * Queue a job whose request is plain data, such as the road network's region.
+     *
+     * @param array<string, mixed> $request
+     */
+    public function queueRequest(string $kind, array $request, int $userId): void
+    {
         $this->clearCancel();
         $this->write([
             'state' => 'queued',
             'kind' => $kind,
-            'request' => $request->toArray(),
+            'request' => $request,
             'userId' => $userId,
             'queuedAt' => ($this->clock)(),
             'size' => $this->read()['size'] ?? null,

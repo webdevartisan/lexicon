@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\JourneyMap;
 
 /**
- * One post's place on the journey, checked and rounded the same way whether it comes
+ * One place of a post on the journey, checked and rounded the same way whether it comes
  * from the editor or from a backup.
  */
 final class Stop

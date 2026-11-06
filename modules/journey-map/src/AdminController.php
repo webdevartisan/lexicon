@@ -10,7 +10,7 @@ use Closure;
 use Framework\Core\Response;
 
 /**
- * The module's control panel page: the map and its tool, place search, and which blogs use the module.
+ * The module's control panel page: the map and its tool, road routes, place search, and which blogs use it.
  *
  * The route group already lets in only people who manage extras, and the CSRF middleware checks every
  * POST. Each action answers JSON for the page's script.
@@ -27,12 +27,13 @@ final class AdminController extends AppController
         private SearchStatus $searchStatus,
         private StopModel $stops,
         private RangeProbe $probe,
+        private RoutingControl $routing,
         private Auth $auth,
     ) {
     }
 
     /**
-     * The page with its four cards.
+     * The page with its five cards.
      */
     public function show(): Response
     {
@@ -53,7 +54,41 @@ final class AdminController extends AppController
             'outside' => is_array($box) ? $this->stops->outside($box) : [],
             'zooms' => MapRequest::ZOOMS,
             'presets' => array_keys(MapRequest::PRESETS),
+            'routing' => $this->routing->status(),
+            'areas' => $this->routing->areas(),
         ]);
+    }
+
+    /**
+     * Say how much a road network for the chosen area downloads.
+     */
+    public function routingCheck(): Response
+    {
+        return $this->attempt(fn (): string => $this->routing->measure($this->chosenArea()));
+    }
+
+    /**
+     * Build the road network for the chosen area in the background.
+     */
+    public function routingBuild(): Response
+    {
+        return $this->attempt(fn (): string => $this->routing->build($this->chosenArea(), $this->userId()));
+    }
+
+    /**
+     * Stop the running road network build.
+     */
+    public function routingCancel(): Response
+    {
+        return $this->attempt(fn (): string => $this->routing->cancel());
+    }
+
+    /**
+     * Delete the road network.
+     */
+    public function routingRemove(): Response
+    {
+        return $this->attempt(fn (): string => $this->routing->remove());
     }
 
     /**
@@ -194,6 +229,16 @@ final class AdminController extends AppController
         }
 
         return $this->map->request($input);
+    }
+
+    /**
+     * The road network area and port the admin chose.
+     *
+     * @throws InvalidMapRequest
+     */
+    private function chosenArea(): RoutingRequest
+    {
+        return RoutingRequest::fromArray(['region' => $this->field('region'), 'port' => $this->field('port')]);
     }
 
     /**

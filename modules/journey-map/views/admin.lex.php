@@ -1,7 +1,7 @@
 {% extends "back.lex.php" %}
 
 {% block title %}Journey map{% endblock %}
-{% block subtitle %}<span class="hidden sm:inline">The map every blog with the extra shows, place search, and who uses it.</span>{% endblock %}
+{% block subtitle %}<span class="hidden sm:inline">The map every blog with the extra shows, road routes, place search, and who uses it.</span>{% endblock %}
 {% block body %}
 <?php
 /**
@@ -13,6 +13,8 @@
  * @var list<array<string, mixed>> $outside Stops beyond the downloaded area
  * @var list<int> $zooms
  * @var list<string> $presets
+ * @var array<string, mixed> $routing From RoutingControl::status
+ * @var list<array<string, string>> $areas Areas a road network can cover
  */
 $base = '/admin/m/journey-map';
 $muted = 'text-sm text-slate-500 dark:text-zink-300';
@@ -28,6 +30,12 @@ if ($status['lines']['replace'] !== '') {
     $downloadAttrs += ['data-confirm' => $status['lines']['replace'], 'data-confirm-ok' => 'Download'];
 }
 $removeAttrs = $idleOnly;
+$routingIdle = $routing['busy'] ? ['disabled' => 'disabled'] : [];
+$routingBuild = $routingIdle + [
+    'formaction' => lurl($base.'/routing/build'),
+    'data-confirm' => 'Download and build the road network for the chosen area? Check its size first.',
+    'data-confirm-ok' => 'Build',
+];
 $health = $search['health'];
 $when = static fn (?string $time): string => $time === null ? 'never' : str_replace(['T', 'Z'], [' ', ' UTC'], $time);
 ?>
@@ -155,6 +163,60 @@ $when = static fn (?string $time): string => $time === null ? 'never' : str_repl
                 data-confirm-tone="danger" data-confirm-ok="Remove">
             <?= csrf_field() ?>
             {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Remove the map" attrs="{$removeAttrs}" %}
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="card xl:col-span-2">
+      <div class="card-body space-y-4">
+        <h2 class="<?= $heading ?>">Road routes</h2>
+        <p class="<?= $muted ?>">With a road network, the line between two stops follows real roads and the distance is the driving distance. GraphHopper plans the routes on this server, started by the Scheduler only while legs wait, then stopped again.</p>
+        <ul class="text-sm text-slate-700 dark:text-zink-200 space-y-1">
+          <li><?= e($routing['lines']['network']) ?></li>
+          <?php if ($routing['lines']['job'] !== '') { ?><li><?= e($routing['lines']['job']) ?></li><?php } ?>
+          <?php if ($routing['built']) { ?><li><?= e($routing['lines']['legs']) ?></li><?php } ?>
+        </ul>
+        <?php if ($areas === []) { ?>
+          <p class="text-sm text-amber-700 dark:text-amber-200">The list of areas could not be read from Geofabrik. Reload the page to try again.</p>
+        <?php } else { ?>
+          <form method="post" action="<?= e(lurl($base.'/routing/check')) ?>" class="space-y-3" data-journey-map-form>
+            <?= csrf_field() ?>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="md:col-span-2">
+                <label class="<?= $label ?>" for="journey-map-routing-area">Area</label>
+                <select id="journey-map-routing-area" name="region" class="<?= $field ?>">
+                  <?php foreach ($areas as $area) { ?>
+                    <option value="<?= e($area['id']) ?>" <?= $area['id'] === $routing['region'] ? 'selected' : '' ?>>
+                      <?= e($area['name'].($area['parent'] === '' ? '' : ' ('.$area['parent'].')')) ?>
+                    </option>
+                  <?php } ?>
+                </select>
+                <p class="mt-1 text-xs text-red-600" data-error="region" hidden></p>
+              </div>
+              <div>
+                <label class="<?= $label ?>" for="journey-map-routing-port">Local port</label>
+                <input id="journey-map-routing-port" name="port" type="number" min="1024" max="65534" class="<?= $field ?>" value="<?= (int) $routing['port'] ?>">
+                <p class="mt-1 text-xs text-red-600" data-error="port" hidden></p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              {% cmp="btn" type="submit" variant="slate" icon="ruler" label="Check size" attrs="{$routingIdle}" %}
+              {% cmp="btn" type="submit" variant="blue" icon="download" label="Build" attrs="{$routingBuild}" %}
+            </div>
+            <p class="<?= $muted ?>">Pick a country, or a larger area when your journeys cross borders. Building downloads the area's road data, plus Java 25 and GraphHopper when the server lacks them, and keeps each only if it matches its published checksum. Large areas need a lot of memory to build.</p>
+          </form>
+        <?php } ?>
+        <div class="flex flex-wrap gap-3 border-t border-slate-200 pt-4 dark:border-zink-500">
+          <form method="post" action="<?= e(lurl($base.'/routing/cancel')) ?>" data-journey-map-form data-reload>
+            <?= csrf_field() ?>
+            {% cmp="btn" type="submit" variant="slate" icon="square" label="Cancel the build" %}
+          </form>
+          <form method="post" action="<?= e(lurl($base.'/routing/remove')) ?>" data-journey-map-form data-reload
+                data-confirm="Delete the road network, GraphHopper and its Java? Legs are drawn as straight lines until you build it again."
+                data-confirm-tone="danger" data-confirm-ok="Remove">
+            <?= csrf_field() ?>
+            {% cmp="btn" type="submit" variant="red" icon="trash-2" label="Remove road routes" attrs="{$routingIdle}" %}
           </form>
         </div>
       </div>

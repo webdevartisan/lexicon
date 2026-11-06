@@ -84,6 +84,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
   .post-panel[open] .post-panel-chevron { transform: rotate(180deg); }
 </style>
 
+        {% slot "editor.main" %}
         {% include "partials/dashboard/post/_seo_card.lex.php" %}
         {% include "partials/dashboard/post/_social_card.lex.php" %}
 
@@ -278,8 +279,6 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
             </div>
           </div>
         </section>
-
-        {% slot "editor.sidebar" %}
 
         <!-- Danger zone -->
         {% if post|notempty %}

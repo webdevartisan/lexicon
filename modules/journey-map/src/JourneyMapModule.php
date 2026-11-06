@@ -15,12 +15,14 @@ use Framework\Modules\ModuleContext;
 use Framework\Modules\ModuleInterface;
 use Framework\Modules\ModuleRoutes;
 use Framework\Modules\ModuleUninstaller;
+use Framework\Modules\PostCopyParticipant;
 use Framework\Modules\SlotRenderer;
 
 /**
  * Journey map: each post can be a stop with a place, and the blog shows the whole journey on a map.
  */
-final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArchiveParticipant, ModuleUninstaller
+final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArchiveParticipant, ModuleUninstaller,
+    PostCopyParticipant
 {
     private const KEY = 'journey-map';
     private const STORAGE = ROOT_PATH.'/storage/journey-map';
@@ -42,8 +44,18 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
         $this->container = $container;
 
         $container->setShared(StopModel::class, fn (Container $c) => new StopModel($c->get(Database::class)));
+        $container->setShared(
+            Route::class,
+            fn (Container $c) => new Route($c->get(StopModel::class), $c->get(LegModel::class))
+        );
+        $container->setShared(LegModel::class, fn (Container $c) => new LegModel($c->get(Database::class)));
+        $container->setShared(
+            LegSync::class,
+            fn (Container $c) => new LegSync($c->get(StopModel::class), $c->get(LegModel::class))
+        );
         $this->registerMap($container);
         $this->registerSearch($container);
+        RoutingServices::register($container, self::STORAGE, self::userAgent());
     }
 
     /**
@@ -81,13 +93,14 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
     }
 
     /**
-     * Delete the tool, job, place outlines and map note under storage/, and the Scheduler row.
+     * Delete everything under storage/ (map tool, jobs, place outlines, road network) and the Scheduler rows.
      * Core deletes the stops table and public/modules/journey-map/, map included, itself.
      */
     public function uninstall(): void
     {
         Folder::remove(self::STORAGE);
         MapJobStarter::forget($this->db);
+        RoutingServices::forget($this->db);
     }
 
     /**
@@ -144,14 +157,22 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
             }
             $routes->add('/search', $this->route(AdminController::class, 'saveSearch', 'POST'));
             $routes->add('/search/clear', $this->route(AdminController::class, 'clearSearch', 'POST'));
+            foreach (['check', 'build', 'cancel', 'remove'] as $action) {
+                $handler = $this->route(AdminController::class, 'routing'.ucfirst($action), 'POST');
+                $routes->add('/routing/'.$action, $handler);
+            }
         });
 
-        $context->slot('editor.sidebar', $this->deferred(EditorPanelSlot::class));
+        $context->slot('editor.main', $this->deferred(EditorPanelSlot::class));
         $context->slot('post.after-content', $this->deferred(LocatorSlot::class));
         $context->slot('post.after-content', $this->deferred(NextStopSlot::class));
         $context->slot('blog.nav', $this->deferred(NavSlot::class));
 
-        $context->commands(['journey-map:map-data' => MapDataCommand::class]);
+        $context->commands([
+            MapDataCommand::NAME => MapDataCommand::class,
+            RoutingCommand::NAME => RoutingCommand::class,
+            PlanRoutesCommand::NAME => PlanRoutesCommand::class,
+        ]);
     }
 
     /**
@@ -163,11 +184,21 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
     }
 
     /**
-     * Delete every stop of the blog.
+     * Delete every stop of the blog and the legs between them.
      */
     public function eraseBlog(int $blogId): void
     {
+        (new LegModel($this->db))->eraseBlog($blogId);
         $this->stops->eraseBlog($blogId);
+    }
+
+    /**
+     * A copied post keeps its places in order. The stop number stays with the original, so the
+     * copy never claims the same number.
+     */
+    public function copyPost(int $fromPostId, int $toPostId): void
+    {
+        $this->stops->copy($fromPostId, $toPostId);
     }
 
     /**
@@ -179,12 +210,13 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
     }
 
     /**
-     * Restore stops onto the restored posts. Rows go through the same checks as the editor,
-     * so a backup can never store an exact point for an approximate stop.
+     * Restore stops onto the restored posts, each post's places in their saved order. Rows go through the
+     * same checks as the editor, so a backup can never store an exact point for an approximate stop.
+     * Backups from before posts had several places carry no position; each of their posts has one place.
      */
     public function importBlog(int $blogId, int $version, array $rows, array $postIdMap): int
     {
-        $written = 0;
+        $byPost = [];
         foreach ($rows as $row) {
             $postId = is_array($row) ? ($postIdMap[(int) ($row['post_id'] ?? 0)] ?? null) : null;
             if ($postId === null) {
@@ -196,9 +228,15 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
             } catch (InvalidStopException) {
                 continue;
             }
+            $byPost[$postId][(int) ($row['position'] ?? 1)] = $stop;
+        }
 
-            $this->stops->save($blogId, $postId, $stop);
-            $written++;
+        $written = 0;
+        foreach ($byPost as $postId => $stops) {
+            ksort($stops);
+            $stops = array_slice(array_values($stops), 0, StopModel::MAX_PER_POST);
+            $this->stops->replace($blogId, $postId, $stops);
+            $written += count($stops);
         }
 
         return $written;

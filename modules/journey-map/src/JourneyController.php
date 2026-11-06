@@ -10,7 +10,8 @@ use App\Services\BlogPageContext;
 use Framework\Core\Response;
 
 /**
- * The Journey page: every public stop of a blog on one map, with a plain list under it.
+ * The Journey page: every public place of a blog on one map, with a plain list under it. A post with
+ * several places shows as several stops.
  */
 final class JourneyController extends ModuleController
 {
@@ -18,7 +19,7 @@ final class JourneyController extends ModuleController
 
     public function __construct(
         BlogModuleModel $blogModules,
-        private StopModel $stops,
+        private Route $route,
         private MapData $map,
         private BlogPageContext $pageContext,
     ) {
@@ -39,10 +40,40 @@ final class JourneyController extends ModuleController
         $page['meta'] = $this->meta($page['meta'], (string) $page['blog']['blog_slug']);
 
         return $this->view('journey-map::journey', $page + [
-            'stops' => $this->forReaders($this->stops->published((int) $page['blog']['id']), $blogSlug),
+            'stops' => $this->forReaders((int) $page['blog']['id'], $blogSlug),
+            'total' => $this->total((int) $page['blog']['id']),
             'map' => $hasMap ? $this->map->urls() : null,
             'scripts' => $this->scripts($hasMap),
         ]);
+    }
+
+    /**
+     * The whole journey's length, added up the way each post page counts its part: by road where the road is
+     * known, otherwise in a straight line. It is approximate once any step is straight or any place an area.
+     *
+     * @return array{km: float, approximate: bool}
+     */
+    private function total(int $blogId): array
+    {
+        $journey = $this->route->journey($blogId);
+        $roads = $this->route->roads($blogId);
+        $km = 0.0;
+        $approximate = false;
+        foreach ($journey as $index => $stop) {
+            $approximate = $approximate || $stop['place_precision'] === 'area';
+            $previous = $journey[$index - 1] ?? null;
+            $key = $previous === null ? null : Leg::key($previous, $stop);
+            if ($key === null) {
+                continue;
+            }
+
+            $road = $roads[$key] ?? null;
+            $straight = Leg::points($road) === null;
+            $approximate = $approximate || $straight;
+            $km += $straight ? Distance::between($previous, $stop) : (float) $road['km'];
+        }
+
+        return ['km' => $km, 'approximate' => $approximate];
     }
 
     /**
@@ -79,16 +110,35 @@ final class JourneyController extends ModuleController
     }
 
     /**
-     * Each stop with its post address, a cover only when it is a real image path, and a short plain summary.
+     * Each stop with its post address, a cover only when it is a real image path, a short plain summary,
+     * and the road from the stop before it when one was planned.
      *
-     * @param list<array<string, mixed>> $stops
      * @return list<array<string, mixed>>
      */
-    private function forReaders(array $stops, string $blogSlug): array
+    private function forReaders(int $blogId, string $blogSlug): array
     {
         $base = '/blog/'.rawurlencode($blogSlug).'/';
+        $roads = $this->route->roads($blogId);
+        $previous = null;
+        $stops = [];
+        foreach ($this->route->journey($blogId) as $stop) {
+            $key = $previous === null ? null : Leg::key($previous, $stop);
+            $stops[] = $this->forReader($stop, $base) + ['lineIn' => Leg::points($roads[$key ?? ''] ?? null)];
+            $previous = $stop;
+        }
 
-        return array_map(fn (array $stop): array => [
+        return $stops;
+    }
+
+    /**
+     * One stop as the page and its map show it.
+     *
+     * @param array<string, mixed> $stop
+     * @return array<string, mixed>
+     */
+    private function forReader(array $stop, string $base): array
+    {
+        return [
             'post_id' => (int) $stop['post_id'],
             'title' => (string) $stop['title'],
             'url' => lurl($base.rawurlencode((string) $stop['slug'])),
@@ -97,7 +147,7 @@ final class JourneyController extends ModuleController
             'place' => (string) $stop['place_name'],
             'lat' => (float) $stop['lat'],
             'lng' => (float) $stop['lng'],
-        ], $stops);
+        ];
     }
 
     /**
@@ -133,7 +183,7 @@ final class JourneyController extends ModuleController
             return [];
         }
 
-        $files = [...$this->map->assets()['js'], 'map.js'];
+        $files = [...$this->map->assets()['js'], 'map.js', 'replay.js'];
 
         return array_map(static fn (string $file): string => versioned_asset('/modules/journey-map/'.$file), $files);
     }

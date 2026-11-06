@@ -19,7 +19,7 @@ final class ModuleRegistry
         'post.header-aside',
         'post.after-content',
         'blog.nav',
-        'editor.sidebar',
+        'editor.main',
         'head.end',
         'body.end',
     ];

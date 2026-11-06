@@ -83,6 +83,61 @@
   max-block-size: 70vh;
 }
 
+/* The map stays in view while the list scrolls past it, so the route can follow the reader */
+
+.journey-map-stage {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--module-surface);
+}
+
+.journey-map-stage .journey-map-route {
+  aspect-ratio: auto;
+  block-size: 40vh;
+}
+
+.journey-map-stop {
+  border-inline-start: 3px solid transparent;
+  padding-inline-start: 0.875rem;
+  transition: border-color 0.3s ease;
+}
+
+.journey-map-stop.is-current {
+  border-inline-start-color: var(--module-accent);
+}
+
+.journey-map-stop.is-current .journey-map-stop-meta {
+  color: var(--module-accent);
+}
+
+@media (min-width: 64rem) {
+  .journey-map-story {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .journey-map-stage {
+    inset-block-start: 1.5rem;
+  }
+
+  .journey-map-stage .journey-map-route {
+    block-size: calc(100vh - 3rem);
+  }
+
+  .journey-map-stops .journey-map-list-heading {
+    margin-block-start: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-map-stop {
+    transition: none;
+  }
+}
+
 .journey-map-list-heading {
   margin-block: 3rem 1rem;
   font-family: var(--module-mono);
@@ -152,6 +207,27 @@
   block-size: 1rem;
 }
 
+.journey-map-neighbour {
+  display: block;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 2px solid var(--module-accent);
+  border-radius: 50%;
+  background: var(--module-surface);
+}
+
+.journey-map-neighbour-next {
+  inline-size: 1rem;
+  block-size: 1rem;
+  cursor: pointer;
+}
+
+.journey-map-neighbour-next:hover,
+.journey-map-neighbour-next:focus-visible {
+  outline: none;
+  background: var(--module-accent);
+}
+
 .journey-map-marker {
   inline-size: 1.75rem;
   block-size: 1.75rem;
@@ -160,6 +236,11 @@
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.journey-map-marker-more {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
 }
 
 .journey-map-marker:hover,
@@ -206,4 +287,14 @@
     grid-template-columns: 4.5rem 1fr;
     gap: 0.875rem;
   }
+}
+
+.journey-map-head p:has(+ .journey-map-total) {
+  margin-block-end: 0;
+}
+
+.journey-map-head .journey-map-total {
+  margin-block-start: 0.25rem;
+  font-family: var(--module-mono);
+  font-size: 0.875rem;
 }

@@ -15,10 +15,10 @@ test('every theme exposes the inline module slots', function (string $theme) {
         ->and(substr_count($base, '{% slot "blog.nav" %}'))->toBe(1);
 })->with(['closest', 'folio', 'nocturne', 'offset', 'vernissage']);
 
-test('the post editor exposes the sidebar slot', function () {
+test('the post editor exposes the main column slot', function () {
     $form = file_get_contents(ROOT_PATH.'/views/partials/dashboard/post/_form.lex.php');
 
-    expect(substr_count($form, '{% slot "editor.sidebar" %}'))->toBe(1);
+    expect(substr_count($form, '{% slot "editor.main" %}'))->toBe(1);
 });
 
 test('the shared theme partials expose the page slots', function () {

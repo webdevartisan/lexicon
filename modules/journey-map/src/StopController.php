@@ -24,40 +24,59 @@ final class StopController extends ModuleController
         private StopModel $stops,
         private BlogModel $blogs,
         private BlogCacheInvalidator $blogCache,
+        private LegSync $legs,
     ) {
         parent::__construct($blogModules);
     }
 
     /**
-     * Give the post its place, or answer 422 with a message per wrong field.
+     * Give the post its places in the order sent, or answer 422 with the wrong fields of each place.
+     * Every place carries the post's one stop number, so the journey keeps a post's places together.
      */
     public function save(string $blogId, string $postId): Response
     {
         $slug = $this->blogSlugFor((int) $blogId, (int) $postId);
+        $input = $this->request->postParams();
+        $places = $input['stops'] ?? null;
+        if (!is_array($places) || !array_is_list($places) || $places === []
+            || count($places) > StopModel::MAX_PER_POST) {
+            $error = chrome_translate('journey-map::errors.stops', ['max' => StopModel::MAX_PER_POST]);
 
-        try {
-            $stop = Stop::fromInput($this->request->postParams());
-        } catch (InvalidStopException $e) {
-            return $this->json(['errors' => array_map('chrome_translate', $e->errors)], 422);
+            return $this->json(['errors' => ['stops' => $error]], 422);
         }
 
-        $this->stops->save((int) $blogId, (int) $postId, $stop);
+        $stops = [];
+        $errors = [];
+        foreach ($places as $index => $place) {
+            try {
+                $stops[] = Stop::fromInput(['stop_number' => $input['stop_number'] ?? null] + (array) $place);
+            } catch (InvalidStopException $e) {
+                $errors[$index] = array_map('chrome_translate', $e->errors);
+            }
+        }
+        if ($errors !== []) {
+            return $this->json(['errors' => $errors], 422);
+        }
+
+        $this->stops->replace((int) $blogId, (int) $postId, $stops);
+        $this->legs->sync((int) $blogId);
         $this->blogCache->forgetBlog($slug);
 
         return $this->json([
-            'stop' => $stop->toRow(),
+            'stops' => array_map(static fn (Stop $stop): array => $stop->toRow(), $stops),
             'message' => chrome_translate('journey-map::editor.saved'),
         ]);
     }
 
     /**
-     * Take the post's place away.
+     * Take the post's places away.
      */
     public function remove(string $blogId, string $postId): Response
     {
         $slug = $this->blogSlugFor((int) $blogId, (int) $postId);
 
         $this->stops->remove((int) $postId);
+        $this->legs->sync((int) $blogId);
         $this->blogCache->forgetBlog($slug);
 
         return $this->json(['removed' => true, 'message' => chrome_translate('journey-map::editor.removed')]);

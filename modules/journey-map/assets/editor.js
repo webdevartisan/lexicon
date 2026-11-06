@@ -1,7 +1,8 @@
 /**
- * The Place panel in the post editor: search, drop a pin, save or remove the post's place.
+ * The Places section in the post editor: the post's places in order, one chosen at a time to search for,
+ * pin on the map or edit, then all saved together.
  *
- * The panel lives inside the post form, so Enter in its fields must never submit the post.
+ * The section lives inside the post form, so Enter in its fields must never submit the post.
  */
 (function () {
   'use strict';
@@ -12,13 +13,30 @@
   }
 
   var text = JSON.parse(root.querySelector('[data-journey-map-text]').textContent);
+  var places = JSON.parse(root.querySelector('[data-journey-map-places]').textContent) || [];
+  var max = Number(root.dataset.max) || 1;
+  var list = root.querySelector('[data-places]');
   var results = root.querySelector('[data-results]');
   var status = root.querySelector('[data-status]');
+  var addButton = root.querySelector('[data-action="add"]');
+  var placeFields = ['place_name', 'lat', 'lng', 'precision'];
+  var chosen = 0;
   var map = null;
-  var marker = null;
+  var markers = [];
+
+  function blank() {
+    return { place_name: '', lat: '', lng: '', precision: 'exact' };
+  }
 
   function field(name) {
     return root.querySelector('[data-field="' + name + '"]');
+  }
+
+  /** Fill {name} gaps in a translated line. */
+  function words(template, values) {
+    return template.replace(/\{(\w+)\}/g, function (gap, name) {
+      return name in values ? values[name] : gap;
+    });
   }
 
   function say(message, isError) {
@@ -38,54 +56,171 @@
     });
   }
 
-  function showPoint(lat, lng) {
+  function point(place) {
+    var lat = parseFloat(place.lat);
+    var lng = parseFloat(place.lng);
+
+    return isNaN(lat) || isNaN(lng) ? null : [lng, lat];
+  }
+
+  function isBlank(place) {
+    return place.place_name.trim() === '' && point(place) === null;
+  }
+
+  function iconButton(label, symbol, action) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'journey-map-place-tool';
+    button.textContent = symbol;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.addEventListener('click', action);
+
+    return button;
+  }
+
+  function renderList() {
+    list.replaceChildren();
+    places.forEach(function (place, index) {
+      var item = document.createElement('li');
+      item.className = 'journey-map-place' + (index === chosen ? ' is-chosen' : '');
+
+      var pick = document.createElement('button');
+      pick.type = 'button';
+      pick.className = 'journey-map-place-pick';
+      pick.textContent = (index + 1) + '. ' + (place.place_name.trim() || words(text.placeItem, { number: index + 1 }));
+      if (index === chosen) {
+        pick.setAttribute('aria-current', 'true');
+      }
+      pick.addEventListener('click', function () { choose(index); });
+      item.appendChild(pick);
+
+      if (index > 0) {
+        item.appendChild(iconButton(text.moveUp, '↑', function () { move(index, -1); }));
+      }
+      if (index < places.length - 1) {
+        item.appendChild(iconButton(text.moveDown, '↓', function () { move(index, 1); }));
+      }
+      if (places.length > 1) {
+        item.appendChild(iconButton(text.removePlace, '×', function () { drop(index); }));
+      }
+      list.appendChild(item);
+    });
+    addButton.disabled = places.length >= max;
+  }
+
+  function fillFields() {
+    placeFields.forEach(function (name) { field(name).value = places[chosen][name]; });
+  }
+
+  function render() {
+    renderList();
+    fillFields();
+    drawMarkers();
+  }
+
+  function choose(index) {
+    chosen = index;
+    render();
+    var spot = point(places[chosen]);
+    if (map && spot) {
+      map.easeTo({ center: spot, zoom: Math.max(map.getZoom(), 8) });
+    }
+  }
+
+  function move(index, step) {
+    var moved = places.splice(index, 1)[0];
+    places.splice(index + step, 0, moved);
+    chosen = index + step;
+    render();
+  }
+
+  function drop(index) {
+    places.splice(index, 1);
+    chosen = Math.min(chosen, places.length - 1);
+    render();
+  }
+
+  function add() {
+    if (places.length >= max) {
+      return;
+    }
+    places.push(blank());
+    chosen = places.length - 1;
+    render();
+    (field('query') || field('place_name')).focus();
+  }
+
+  /** One marker per placed place; only the chosen one is in the accent colour and can be dragged. */
+  function drawMarkers() {
     if (!map) {
       return;
     }
-    if (!marker) {
-      marker = new window.maplibregl.Marker({
-        color: window.JourneyMap.token(root, '--module-accent', '#2563eb'),
-        draggable: true
-      });
-      marker.on('dragend', function () {
-        var spot = marker.getLngLat();
-        writePoint(spot.lat, spot.lng);
-      });
-    }
-    marker.setLngLat([lng, lat]).addTo(map);
-    map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 8) });
+    markers.forEach(function (marker) { marker.remove(); });
+    markers = [];
+
+    places.forEach(function (place, index) {
+      var spot = point(place);
+      if (!spot) {
+        return;
+      }
+      var isChosen = index === chosen;
+      var marker = new window.maplibregl.Marker({
+        color: isChosen ? window.JourneyMap.token(root, '--module-accent', '#2563eb') : '#94a3b8',
+        draggable: isChosen
+      }).setLngLat(spot).addTo(map);
+      if (isChosen) {
+        marker.on('dragend', function () {
+          var moved = marker.getLngLat();
+          writePoint(moved.lat, moved.lng);
+        });
+      } else {
+        marker.getElement().addEventListener('click', function (event) {
+          event.stopPropagation();
+          choose(index);
+        });
+      }
+      markers.push(marker);
+    });
   }
 
   function writePoint(lat, lng) {
-    field('lat').value = lat.toFixed(6);
-    field('lng').value = lng.toFixed(6);
+    places[chosen].lat = lat.toFixed(6);
+    places[chosen].lng = lng.toFixed(6);
+    field('lat').value = places[chosen].lat;
+    field('lng').value = places[chosen].lng;
   }
 
   function setPoint(lat, lng) {
     writePoint(lat, lng);
-    showPoint(lat, lng);
+    drawMarkers();
+    if (map) {
+      map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 8) });
+    }
   }
 
-  function choose(place) {
-    field('place_name').value = place.name.split(',')[0].trim();
+  function pick(place) {
+    places[chosen].place_name = place.name.split(',')[0].trim();
+    field('place_name').value = places[chosen].place_name;
     setPoint(place.lat, place.lng);
+    renderList();
     results.hidden = true;
   }
 
-  function showResults(places) {
+  function showResults(found) {
     results.replaceChildren();
-    results.hidden = places.length === 0;
-    if (places.length === 0) {
+    results.hidden = found.length === 0;
+    if (found.length === 0) {
       say(text.noResults);
       return;
     }
 
-    places.forEach(function (place) {
+    found.forEach(function (place) {
       var item = document.createElement('li');
       var button = document.createElement('button');
       button.type = 'button';
       button.textContent = place.name;
-      button.addEventListener('click', function () { choose(place); });
+      button.addEventListener('click', function () { pick(place); });
       item.appendChild(button);
       results.appendChild(item);
     });
@@ -109,60 +244,127 @@
       .catch(function () { say(text.failed, true); });
   }
 
+  /** Each wrong place by its number in the list, or the one message about the list as a whole. */
+  function errorText(errors, sent) {
+    if (!errors) {
+      return text.saveFailed;
+    }
+    if (typeof errors.stops === 'string') {
+      return errors.stops;
+    }
+
+    return Object.keys(errors).map(function (index) {
+      var messages = Object.values(errors[index]).join(' ');
+
+      return words(text.errorAt, { number: sent[Number(index)] + 1, message: messages });
+    }).join(' ');
+  }
+
+  /** The first pinned place still without a name, or -1. */
+  function unnamed() {
+    for (var i = 0; i < places.length; i++) {
+      if (point(places[i]) && places[i].place_name.trim() === '') {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
   function save() {
+    var missing = unnamed();
+    if (missing >= 0) {
+      choose(missing);
+      field('place_name').focus();
+      say(words(text.nameNeeded, { number: missing + 1 }), true);
+      return;
+    }
+
     var body = new URLSearchParams();
-    ['place_name', 'lat', 'lng', 'precision', 'stop_number'].forEach(function (name) {
-      body.append(name, field(name).value.trim());
+    var sent = [];
+    body.append('stop_number', field('stop_number').value.trim());
+    places.forEach(function (place, index) {
+      // An empty row the writer added and never filled in is left behind rather than refused.
+      if (isBlank(place) && places.length > 1) {
+        return;
+      }
+      placeFields.forEach(function (name) {
+        body.append('stops[' + sent.length + '][' + name + ']', String(place[name]).trim());
+      });
+      sent.push(index);
     });
 
     send(root.dataset.saveUrl, { method: 'POST', body: body })
       .then(function (result) {
-        if (result.ok) {
-          say(result.body.message);
+        if (!result.ok) {
+          say(errorText(result.body.errors, sent), true);
           return;
         }
-        var errors = result.body.errors ? Object.values(result.body.errors).join(' ') : text.saveFailed;
-        say(errors, true);
+        places = sent.map(function (index) { return places[index]; });
+        chosen = Math.min(chosen, places.length - 1);
+        render();
+        say(result.body.message);
       })
       .catch(function () { say(text.saveFailed, true); });
   }
 
-  function remove() {
+  function removeAll() {
     send(root.dataset.removeUrl, { method: 'POST', body: new URLSearchParams() })
       .then(function (result) {
         say(result.ok ? result.body.message : text.saveFailed, !result.ok);
         if (result.ok) {
-          ['place_name', 'lat', 'lng', 'stop_number'].forEach(function (name) { field(name).value = ''; });
-          if (marker) {
-            marker.remove();
-          }
+          places = [blank()];
+          chosen = 0;
+          field('stop_number').value = '';
+          render();
         }
       })
       .catch(function () { say(text.saveFailed, true); });
   }
 
+  /** Open on every placed place, or on the world when there are none yet. */
   function startMap() {
     var box = root.querySelector('[data-map]');
     if (!box || !window.JourneyMap) {
       return;
     }
 
-    var lat = parseFloat(field('lat').value);
-    var lng = parseFloat(field('lng').value);
-    var placed = !isNaN(lat) && !isNaN(lng);
+    var spots = places.map(point).filter(Boolean);
     map = window.JourneyMap.create(box, JSON.parse(box.dataset.map), {
-      center: placed ? [lng, lat] : [0, 20],
-      zoom: placed ? 8 : 1
+      center: spots[0] || [0, 20],
+      zoom: spots.length > 0 ? 8 : 1
     });
     if (!map) {
       return;
     }
 
     map.on('click', function (event) { setPoint(event.lngLat.lat, event.lngLat.lng); });
-    if (placed) {
-      showPoint(lat, lng);
+    if (spots.length > 1) {
+      var bounds = new window.maplibregl.LngLatBounds(spots[0], spots[0]);
+      spots.forEach(function (spot) { bounds.extend(spot); });
+      map.fitBounds(bounds, { padding: 40, maxZoom: 9, animate: false });
+    }
+    var section = root.closest('details');
+    if (section) {
+      // A map drawn inside a closed section has no size until the section opens.
+      section.addEventListener('toggle', function () {
+        if (section.open) {
+          map.resize();
+        }
+      });
     }
   }
+
+  placeFields.forEach(function (name) {
+    field(name).addEventListener('input', function () {
+      places[chosen][name] = field(name).value;
+      if (name === 'place_name') {
+        renderList();
+      } else {
+        drawMarkers();
+      }
+    });
+  });
 
   root.addEventListener('keydown', function (event) {
     if (event.key !== 'Enter' || event.target.tagName !== 'INPUT') {
@@ -178,7 +380,13 @@
   if (searchButton) {
     searchButton.addEventListener('click', search);
   }
+  addButton.addEventListener('click', add);
   root.querySelector('[data-action="save"]').addEventListener('click', save);
-  root.querySelector('[data-action="remove"]').addEventListener('click', remove);
+  root.querySelector('[data-action="remove"]').addEventListener('click', removeAll);
+
+  if (places.length === 0) {
+    places.push(blank());
+  }
   startMap();
+  render();
 })();

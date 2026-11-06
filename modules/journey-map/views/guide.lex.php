@@ -28,7 +28,7 @@ $heading = 'text-15 font-semibold text-slate-800 dark:text-zink-50';
       <div class="card-body space-y-3">
         <h2 class="<?= $heading ?>"><?= $g('readersHeading') ?></h2>
         <ul class="list-disc ps-5 space-y-2 text-sm text-slate-700 dark:text-zink-200">
-          <?php foreach (['readers1', 'readers2', 'readers3'] as $line) { ?>
+          <?php foreach (['readers1', 'readers2', 'readersReplay', 'readers3'] as $line) { ?>
             <li><?= $g($line) ?></li>
           <?php } ?>
         </ul>

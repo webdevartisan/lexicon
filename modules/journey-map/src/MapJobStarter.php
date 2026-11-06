@@ -9,16 +9,14 @@ use App\Services\ScheduleService;
 use Framework\Database;
 
 /**
- * Starts the map command in the background through the Scheduler's Run now, so the module needs
+ * Starts one of the module's commands in the background through the Scheduler's Run now, so the module needs
  * no process code of its own and two presses can never start two jobs.
  *
- * The module keeps one task row for this. It is switched off, so it only runs when started here,
+ * The module keeps one task row per command. It is switched off, so it only runs when started here,
  * and daily, so an admin who switches it on in the Scheduler gets one refresh a day, not one a minute.
  */
 class MapJobStarter
 {
-    private const COMMAND = 'journey-map:map-data';
-
     /** A world download can take hours; the Scheduler stops a run that outlives this. */
     private const TIMEOUT_SECONDS = 43200;
 
@@ -26,6 +24,8 @@ class MapJobStarter
         private Database $db,
         private ScheduledTaskModel $tasks,
         private ScheduleService $schedule,
+        private string $command = MapDataCommand::NAME,
+        private string $label = 'Journey map download',
     ) {
     }
 
@@ -42,9 +42,9 @@ class MapJobStarter
     /**
      * Delete the module's task row; its run history goes with it.
      */
-    public static function forget(Database $db): void
+    public static function forget(Database $db, string $command = MapDataCommand::NAME): void
     {
-        $db->execute('DELETE FROM scheduled_tasks WHERE command = ?', [self::COMMAND]);
+        $db->execute('DELETE FROM scheduled_tasks WHERE command = ?', [$command]);
     }
 
     /**
@@ -52,15 +52,15 @@ class MapJobStarter
      */
     private function taskId(): int
     {
-        $id = $this->db->query('SELECT id FROM scheduled_tasks WHERE command = ? ORDER BY id LIMIT 1', [self::COMMAND])
+        $id = $this->db->query('SELECT id FROM scheduled_tasks WHERE command = ? ORDER BY id LIMIT 1', [$this->command])
             ->fetchColumn();
         if ($id !== false) {
             return (int) $id;
         }
 
         return $this->tasks->createTask([
-            'label' => 'Journey map download',
-            'command' => self::COMMAND,
+            'label' => $this->label,
+            'command' => $this->command,
             'arguments' => json_encode([]),
             'schedule_type' => 'daily',
             'interval_minutes' => null,

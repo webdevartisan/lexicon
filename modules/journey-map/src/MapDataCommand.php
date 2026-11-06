@@ -19,6 +19,8 @@ use Throwable;
  */
 final class MapDataCommand implements SchedulableCommandInterface
 {
+    public const NAME = 'journey-map:map-data';
+
     private const BUILDS = 'https://build-metadata.protomaps.dev/builds.json';
     private const BUILD_HOST = 'https://build.protomaps.com/';
     private const BUILD_KEY = '/^(\d{4})(\d{2})(\d{2})\.pmtiles$/';

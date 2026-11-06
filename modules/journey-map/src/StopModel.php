@@ -7,50 +7,70 @@ namespace Modules\JourneyMap;
 use Framework\Database;
 
 /**
- * Reads and writes journey_stops: one place per post.
+ * Reads and writes journey_stops: the places of each post, in the order the writer set.
  *
  * Readers only ever see stops on posts that are published and public, so every
  * reader facing list goes through published().
  */
 class StopModel
 {
-    private const EXPORT_COLUMNS = 'post_id, place_name, lat, lng, place_precision, stop_number';
+    /** The most places one post can have. */
+    public const MAX_PER_POST = 20;
+
+    private const EXPORT_COLUMNS = 'post_id, position, place_name, lat, lng, place_precision, stop_number';
 
     public function __construct(private Database $db)
     {
     }
 
     /**
-     * The stop of one post, published or not.
+     * The places of one post in order, published or not.
      *
-     * @return array<string, mixed>|null
+     * @return list<array<string, mixed>>
      */
-    public function find(int $postId): ?array
+    public function ofPost(int $postId): array
     {
-        $row = $this->db->query('SELECT * FROM journey_stops WHERE post_id = ?', [$postId])->fetch(\PDO::FETCH_ASSOC);
-
-        return $row ?: null;
+        return $this->db->query('SELECT * FROM journey_stops WHERE post_id = ? ORDER BY position', [$postId])
+            ->fetchAll(\PDO::FETCH_ASSOC) ?: [];
     }
 
     /**
-     * Give a post its place, replacing any earlier one.
+     * Give a post its places in this order, replacing the earlier ones.
+     *
+     * @param list<Stop> $stops
      */
-    public function save(int $blogId, int $postId, Stop $stop): void
+    public function replace(int $blogId, int $postId, array $stops): void
     {
-        $row = array_values($stop->toRow());
+        $this->db->transaction(function () use ($blogId, $postId, $stops): void {
+            $this->remove($postId);
+            foreach (array_values($stops) as $index => $stop) {
+                $this->db->execute(
+                    'INSERT INTO journey_stops
+                        (post_id, position, blog_id, place_name, lat, lng, place_precision, stop_number)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$postId, $index + 1, $blogId, ...array_values($stop->toRow())]
+                );
+            }
+        });
+    }
 
+    /**
+     * Give another post of the same blog the same places, without the stop number. Copies stay drafts,
+     * so the legs between published places are not touched.
+     */
+    public function copy(int $fromPostId, int $toPostId): void
+    {
         $this->db->execute(
-            'INSERT INTO journey_stops (post_id, blog_id, place_name, lat, lng, place_precision, stop_number)
-             VALUES (?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE blog_id = VALUES(blog_id), place_name = VALUES(place_name),
-                 lat = VALUES(lat), lng = VALUES(lng), place_precision = VALUES(place_precision),
-                 stop_number = VALUES(stop_number)',
-            [$postId, $blogId, ...$row]
+            'INSERT INTO journey_stops
+                (post_id, position, blog_id, place_name, lat, lng, place_precision, stop_number)
+             SELECT ?, position, blog_id, place_name, lat, lng, place_precision, NULL
+             FROM journey_stops WHERE post_id = ? ORDER BY position',
+            [$toPostId, $fromPostId]
         );
     }
 
     /**
-     * Take a post's place away.
+     * Take a post's places away.
      */
     public function remove(int $postId): void
     {
@@ -67,20 +87,21 @@ class StopModel
     }
 
     /**
-     * Every stop readers may see, in journey order: by stop number, then unnumbered stops by publish date.
+     * Every stop readers may see, in journey order: posts by stop number, then unnumbered posts by publish date,
+     * and each post's places in their own order.
      *
      * @return list<array<string, mixed>>
      */
     public function published(int $blogId): array
     {
         return $this->db->query(
-            "SELECT s.post_id, p.title, p.slug, p.excerpt, p.featured_image,
+            "SELECT s.post_id, s.position, p.title, p.slug, p.excerpt, p.featured_image,
                     s.place_name, s.lat, s.lng, s.place_precision, s.stop_number
              FROM journey_stops s
              JOIN posts p ON p.id = s.post_id
              WHERE s.blog_id = ? AND p.blog_id = s.blog_id
                AND p.status = 'published' AND p.visibility = 'public'
-             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at, p.id",
+             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at, p.id, s.position",
             [$blogId]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -99,7 +120,7 @@ class StopModel
              FROM journey_stops s
              JOIN posts p ON p.id = s.post_id
              WHERE s.blog_id = ? AND p.blog_id = s.blog_id
-             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at IS NULL, p.published_at, p.id",
+             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at IS NULL, p.published_at, p.id, s.position",
             [$blogId]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -181,20 +202,6 @@ class StopModel
     }
 
     /**
-     * The public stop that follows this post on the journey, or null for the last one.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function nextAfter(int $blogId, int $postId): ?array
-    {
-        $stops = $this->published($blogId);
-        $ids = array_map('intval', array_column($stops, 'post_id'));
-        $position = array_search($postId, $ids, true);
-
-        return $position === false ? null : ($stops[$position + 1] ?? null);
-    }
-
-    /**
      * Whether the blog has any stop, public or not.
      */
     public function hasBlogData(int $blogId): bool
@@ -219,7 +226,7 @@ class StopModel
     public function exportBlog(int $blogId): array
     {
         return $this->db->query(
-            'SELECT '.self::EXPORT_COLUMNS.' FROM journey_stops WHERE blog_id = ? ORDER BY post_id',
+            'SELECT '.self::EXPORT_COLUMNS.' FROM journey_stops WHERE blog_id = ? ORDER BY post_id, position',
             [$blogId]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
