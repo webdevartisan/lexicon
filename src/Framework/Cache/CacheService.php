@@ -224,13 +224,89 @@ class CacheService
     }
 
     /**
+     * Count and size the stored entries per layer: full pages and template fragments.
+     *
+     * @return array{pages: array{count: int, size_bytes: int}, fragments: array{count: int, size_bytes: int}}
+     */
+    public function layerStats(): array
+    {
+        $layers = [
+            'pages' => ['count' => 0, 'size_bytes' => 0],
+            'fragments' => ['count' => 0, 'size_bytes' => 0],
+        ];
+
+        foreach ($this->entries() as $entry) {
+            $layers[$entry['layer']]['count']++;
+            $layers[$entry['layer']]['size_bytes'] += $entry['size_bytes'];
+        }
+
+        return $layers;
+    }
+
+    /**
+     * List stored entries for browsing, newest expiry first.
+     *
+     * @return array<int, array{key: string, layer: string, size_bytes: int, expires_at: int}>
+     */
+    public function entries(): array
+    {
+        $entries = [];
+
+        foreach ($this->readIndex() as $key => $hash) {
+            $file = $this->cachePath.'/'.$hash.'.cache';
+            $head = is_file($file) ? @file_get_contents($file, false, null, 0, 10) : false;
+            if ($head === false) {
+                continue;
+            }
+
+            $entries[] = [
+                'key' => $key,
+                'layer' => $this->layerOf($key),
+                'size_bytes' => (int) filesize($file),
+                'expires_at' => (int) $head,
+            ];
+        }
+
+        array_multisort(array_column($entries, 'expires_at'), SORT_DESC, $entries);
+
+        return $entries;
+    }
+
+    /**
+     * Delete every entry of one layer, leaving the other untouched.
+     *
+     * @param  string  $layer  'pages' or 'fragments'
+     * @return int Number of deleted entries
+     */
+    public function deleteLayer(string $layer): int
+    {
+        $deleted = 0;
+
+        foreach ($this->readIndex() as $key => $hash) {
+            if ($this->layerOf($key) === $layer && $this->deleteByHash($hash)) {
+                $deleted++;
+            }
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * Full-page entries are keyed by request ("en:GET:/path"); everything else is a template fragment.
+     */
+    private function layerOf(string $key): string
+    {
+        return str_contains($key, ':GET:') ? 'pages' : 'fragments';
+    }
+
+    /**
      * Clear all cache files and rebuild the index.
      *
-     * delete all .cache files and reset the key index.
-     * This is safe to call at any time (atomic file operations prevent corruption).
+     * Deletes all .cache files and resets the key index. Safe to call at any time, since the
+     * file operations are atomic.
      *
-     * and track both successful deletions and failures to provide complete
-     * reporting. Failures might occur due to file permissions or locks.
+     * Successful deletions and failures are counted separately. Failures might occur due to
+     * file permissions or locks.
      *
      * @return array{deleted: int, failed: int, total: int} Deletion statistics
      */

@@ -541,6 +541,15 @@ $router->group([
     $r->add('/cache', ['controller' => 'CacheController', 'action' => 'index']);
     $r->add('/cache/prune', ['controller' => 'CacheController', 'action' => 'prune', 'method' => 'POST']);
     $r->add('/cache/clear', ['controller' => 'CacheController', 'action' => 'clear', 'method' => 'POST']);
+    $r->add('/cache/browse', ['controller' => 'CacheController', 'action' => 'browse', 'method' => 'GET']);
+    $r->add('/cache/delete-selected', ['controller' => 'CacheController', 'action' => 'delete-selected', 'method' => 'POST']);
+    $r->add('/cache/delete-selected-compiled', ['controller' => 'CacheController', 'action' => 'delete-selected-compiled', 'method' => 'POST']);
+    $r->add('/cache/preview', ['controller' => 'CacheController', 'action' => 'preview', 'method' => 'GET']);
+    $r->add('/cache/browse-compiled', ['controller' => 'CacheController', 'action' => 'browse-compiled', 'method' => 'GET']);
+    $r->add('/cache/delete-compiled', ['controller' => 'CacheController', 'action' => 'delete-compiled', 'method' => 'POST']);
+    $r->add('/cache/delete-entry', ['controller' => 'CacheController', 'action' => 'delete-entry', 'method' => 'POST']);
+    $r->add('/cache/rebuild-views', ['controller' => 'CacheController', 'action' => 'rebuild-views', 'method' => 'POST']);
+    $r->add('/cache/clear-layer', ['controller' => 'CacheController', 'action' => 'clear-layer', 'method' => 'POST']);
     $r->add('/cache/delete-pattern', ['controller' => 'CacheController', 'action' => 'delete-pattern', 'method' => 'POST']);
 
     $r->add('/rate-limits', ['controller' => 'RateLimitController', 'action' => 'index', 'method' => 'GET']);
