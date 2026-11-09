@@ -80,7 +80,7 @@
     "frontPage": "الصفحة الرئيسية",
     "pages": "الصفحات",
     "account": "الإعدادات",
-    "overview": "نظرة عامة",
+    "overview": "الرئيسية",
     "reviewQueue": "قائمة المراجعة"
   },
   "breadcrumbs": {
@@ -109,7 +109,7 @@
     "account": "الحساب",
     "security": "الأمان",
     "emailNotifications": "إشعارات البريد الإلكتروني",
-    "overview": "نظرة عامة"
+    "overview": "الرئيسية"
   },
   "dashboard": {
     "blogSelector": {
@@ -296,8 +296,7 @@
       }
     },
     "overview": {
-      "title": "نظرة عامة",
-      "yourRole": "دورك هنا: {role}",
+      "title": "الرئيسية",
       "myDrafts": "مسوداتك",
       "submitted": "مُرسلة للمراجعة",
       "needsRevision": "تحتاج تعديلًا",
@@ -316,7 +315,80 @@
       "allYourPosts": "كل تدويناتك",
       "noDrafts": "لا توجد مسودات قيد العمل.",
       "viewAll": "عرض الكل",
-      "back": "العودة إلى النظرة العامة"
+      "back": "العودة إلى الرئيسية"
+    },
+    "home": {
+      "drafts": {
+        "one": "{count} مسودة",
+        "other": "{count} مسودات"
+      },
+      "scheduled": "المجدولة: {count}",
+      "views": "المشاهدات، 7 أيام",
+      "context": {
+        "publishedMonth": "+{count} هذا الشهر",
+        "publishedNone": "لا شيء هذا الشهر",
+        "commentsWaiting": "{count} في الانتظار",
+        "commentsWeek": "+{count} هذا الأسبوع",
+        "commentsNone": "لا تعليقات جديدة هذا الأسبوع",
+        "subscribersWeek": "+{count} هذا الأسبوع",
+        "subscribersNone": "لا مشتركين جدد هذا الأسبوع",
+        "viewsCompare": "{change} مقارنة بالأيام السبعة السابقة",
+        "viewsNone": "لا زيارات بعد"
+      },
+      "activity": {
+        "title": "النشاط الأخير",
+        "empty": "لم يحدث شيء هنا بعد.",
+        "comment": "علّق {actor} على «{post}»",
+        "commentGuest": "علّق أحدهم على «{post}»",
+        "commentPending": "بانتظار المراجعة",
+        "published": "نُشرت «{post}»",
+        "publishedBy": "بقلم {actor}",
+        "subscriber": "مشترك جديد",
+        "subscriberDetail": "تم التأكيد بالبريد الإلكتروني",
+        "member": "انضم {actor} إلى الفريق",
+        "more": "عرض المزيد",
+        "less": "عرض أقل"
+      },
+      "mostRead": {
+        "title": "الأكثر قراءة، آخر 7 أيام",
+        "views": {
+          "one": "{count} مشاهدة",
+          "other": "{count} مشاهدات"
+        }
+      },
+      "attention": {
+        "clear": "لا شيء يحتاج إلى انتباهك.",
+        "comments": {
+          "one": "{count} تعليق بانتظار المراجعة",
+          "other": "{count} تعليقات بانتظار المراجعة"
+        },
+        "review": {
+          "one": "{count} تدوينة بانتظار المراجعة",
+          "other": "{count} تدوينات بانتظار المراجعة"
+        },
+        "revisit": {
+          "one": "{count} تدوينة أُعيدت للتعديل",
+          "other": "{count} تدوينات أُعيدت للتعديل"
+        }
+      },
+      "rhythm": {
+        "title": "وتيرة النشر",
+        "span": "آخر 12 أسبوعًا",
+        "total": {
+          "one": "{count} تدوينة في آخر 12 أسبوعًا",
+          "other": "{count} تدوينات في آخر 12 أسبوعًا"
+        },
+        "bar": {
+          "one": "{count} تدوينة",
+          "other": "{count} تدوينات"
+        },
+        "upNext": "التالية المجدولة: «{post}»، {when}"
+      },
+      "quickDraft": {
+        "label": "ابدأ مسودة",
+        "placeholder": "عنوان التدوينة",
+        "submit": "اكتب"
+      }
     },
     "reviewQueue": {
       "subtitle": "تدوينات بانتظار مراجع: تولَّها بنفسك أو اتركها لغيرك.",

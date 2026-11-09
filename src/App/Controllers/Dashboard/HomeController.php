@@ -8,14 +8,16 @@ use App\Controllers\AppController;
 use App\Gate;
 use App\Models\BlogModel;
 use App\Models\UserPreferencesModel;
+use App\Presenters\HomePresenter;
 use App\Services\ActiveBlog;
-use App\Services\BlogRoleLabels;
 use App\Services\GuidedSetupService;
-use App\Services\OverviewService;
+use App\Services\HomeService;
+use App\Services\LocaleRegistry;
+use App\Services\LocaleState;
 use Framework\Core\Response;
 
 /**
- * The Overview: one page for every role on the active blog. Each section is
+ * Home: one page for every role on the active blog. Each section is
  * shown by permission, so an author, a reviewer and the owner each see the
  * part of the blog they can act on.
  */
@@ -25,13 +27,13 @@ class HomeController extends AppController
         private BlogModel $blogModel,
         private UserPreferencesModel $preference,
         private ActiveBlog $activeBlog,
-        private OverviewService $overview,
-        private BlogRoleLabels $roleLabels,
+        private HomeService $overview,
         private GuidedSetupService $setup,
+        private LocaleRegistry $locales,
     ) {}
 
     /**
-     * Overview of the active blog.
+     * Home of the active blog.
      */
     public function index(): Response
     {
@@ -47,16 +49,17 @@ class HomeController extends AppController
             return $this->redirect($this->blogModel->listAccessibleBlogs($userId) === [] ? '/?welcome=1' : '/dashboard/blog');
         }
 
-        $isOwner = $blog->ownerId() === $userId;
         breadcrumbs()->clear();
+
+        $overview = $this->overview->for($blog, $user);
+        $presenter = new HomePresenter('chrome_translate', LocaleState::get()->chromeLocale, $this->locales);
 
         return $this->view([
             'blog' => ['id' => $blog->id(), 'name' => $blog->name(), 'slug' => $blog->slug(), 'status' => $blog->status()],
-            'roleLabel' => $isOwner ? null : $this->roleLabels->label((string) $this->blogModel->storedRoleFor($blogId, $userId)),
-            'hideTitle' => true,
             'setup' => $this->setup->forUser($userId, $blog->id()),
             'blogUrl' => base_url().'/blog/'.$blog->slug(),
-        ] + $this->overview->for($blog, $user));
+            'home' => $presenter->present($overview, $blog->id()),
+        ] + $overview);
     }
 
     /**

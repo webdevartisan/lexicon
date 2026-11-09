@@ -269,6 +269,8 @@ final class PostController extends AppController
             'allTags' => $this->tagModel->getByBlogId((int) $blog->id()),
             'postTags' => [],
             'linkEditable' => true,
+            // Home's quick draft field arrives here with the title already typed
+            'prefillTitle' => mb_substr(trim((string) $this->request->getParam('title', '')), 0, 255),
             'workflowEnabled' => $workflowEnabled,
             'canSetVisibility' => $this->canSetVisibility($blog, $userId),
             'actions' => PostActionPresenter::for('draft', $this->workflowService->canPublish($blog, $userId), $workflowEnabled),

@@ -50,7 +50,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
         <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
           <div class="space-y-6 p-4 md:p-5">
 
-            <?php $title = $post['title'] ?? ''; ?>
+            <?php $title = $post['title'] ?? $prefillTitle ?? ''; ?>
             {% cmp="input" type="text" label="title" value="{$title}" %}
 
             <?php if (!empty($linkEditable)) { ?>

@@ -80,7 +80,7 @@
         "frontPage": "Front Page",
         "pages": "Pages",
         "account": "Settings",
-        "overview": "Overview",
+        "overview": "Home",
         "reviewQueue": "Review queue"
     },
     "breadcrumbs": {
@@ -109,7 +109,7 @@
         "account": "Account",
         "security": "Security",
         "emailNotifications": "Email Notifications",
-        "overview": "Overview"
+        "overview": "Home"
     },
     "dashboard": {
         "blogSelector": {
@@ -296,8 +296,7 @@
             }
         },
         "overview": {
-            "title": "Overview",
-            "yourRole": "Your role: {role}",
+            "title": "Home",
             "myDrafts": "Your drafts",
             "submitted": "Submitted",
             "needsRevision": "Needs revision",
@@ -316,7 +315,80 @@
             "allYourPosts": "All your posts",
             "noDrafts": "No drafts in progress.",
             "viewAll": "View all",
-            "back": "Back to overview"
+            "back": "Back to home"
+        },
+        "home": {
+            "drafts": {
+                "one": "{count} draft",
+                "other": "{count} drafts"
+            },
+            "scheduled": "{count} scheduled",
+            "views": "Views, 7 days",
+            "context": {
+                "publishedMonth": "+{count} this month",
+                "publishedNone": "None this month",
+                "commentsWaiting": "{count} waiting",
+                "commentsWeek": "+{count} this week",
+                "commentsNone": "None new this week",
+                "subscribersWeek": "+{count} this week",
+                "subscribersNone": "None new this week",
+                "viewsCompare": "{change} vs previous 7 days",
+                "viewsNone": "No visits yet"
+            },
+            "activity": {
+                "title": "Recent activity",
+                "empty": "Nothing has happened here yet.",
+                "comment": "{actor} commented on {post}",
+                "commentGuest": "Someone commented on {post}",
+                "commentPending": "Waiting for review",
+                "published": "{post} was published",
+                "publishedBy": "By {actor}",
+                "subscriber": "New subscriber",
+                "subscriberDetail": "Confirmed by email",
+                "member": "{actor} joined the team",
+                "more": "Show more",
+                "less": "Show less"
+            },
+            "mostRead": {
+                "title": "Most read, last 7 days",
+                "views": {
+                    "one": "{count} view",
+                    "other": "{count} views"
+                }
+            },
+            "attention": {
+                "clear": "Nothing needs your attention.",
+                "comments": {
+                    "one": "{count} comment waiting for review",
+                    "other": "{count} comments waiting for review"
+                },
+                "review": {
+                    "one": "{count} post awaiting review",
+                    "other": "{count} posts awaiting review"
+                },
+                "revisit": {
+                    "one": "{count} post sent back for changes",
+                    "other": "{count} posts sent back for changes"
+                }
+            },
+            "rhythm": {
+                "title": "Publishing rhythm",
+                "span": "Last 12 weeks",
+                "total": {
+                    "one": "{count} post in the last 12 weeks",
+                    "other": "{count} posts in the last 12 weeks"
+                },
+                "bar": {
+                    "one": "{count} post",
+                    "other": "{count} posts"
+                },
+                "upNext": "Next scheduled: {post}, {when}"
+            },
+            "quickDraft": {
+                "label": "Start a draft",
+                "placeholder": "Post title",
+                "submit": "Write"
+            }
         },
         "reviewQueue": {
             "subtitle": "Posts waiting on a reviewer: yours to claim or pass along.",

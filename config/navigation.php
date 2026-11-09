@@ -34,7 +34,7 @@ return [
         // === GLOBAL ITEMS ===
         // A reader-only account has no blogs, so it sees neither.
         [
-            'label' => 'Overview',
+            'label' => 'Home',
             'href' => '/dashboard',
             'auth' => true,
             'scope' => 'global',
