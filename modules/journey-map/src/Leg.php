@@ -10,12 +10,12 @@ namespace Modules\JourneyMap;
 final class Leg
 {
     /**
-     * @param non-empty-list<array<string, mixed>> $stops The post's own places in order
-     * @param array<string, mixed>|null $previous The public place before the post's first one, null at the start
-     * @param array<string, mixed>|null $next The public place after the post's last one, null at the end
-     * @param int|null $position The post's place among the journey's posts from 1, null while it is not public
-     * @param int $total How many public posts the journey has
-     * @param array<string, array<string, mixed>> $roads Stored legs keyed by key()
+     * @param  non-empty-list<array<string, mixed>>  $stops  The post's own places in order
+     * @param  array<string, mixed>|null  $previous  The public place before the post's first one, null at the start
+     * @param  array<string, mixed>|null  $next  The public place after the post's last one, null at the end
+     * @param  int|null  $position  The post's place among the journey's posts from 1, null while it is not public
+     * @param  int  $total  How many public posts the journey has
+     * @param  array<string, array<string, mixed>>  $roads  Stored legs keyed by key()
      */
     public function __construct(
         public readonly array $stops,
@@ -24,16 +24,15 @@ final class Leg
         public readonly ?int $position = null,
         public readonly int $total = 0,
         private readonly array $roads = [],
-    ) {
-    }
+    ) {}
 
     /**
      * Find the post among the journey's public places. A draft or private post has its own places
      * but no neighbours, since readers never see it on the journey.
      *
-     * @param list<array<string, mixed>> $journey Public places in journey order
-     * @param non-empty-list<array<string, mixed>> $stops The post's own places in order
-     * @param array<string, array<string, mixed>> $roads Stored legs keyed by key()
+     * @param  list<array<string, mixed>>  $journey  Public places in journey order
+     * @param  non-empty-list<array<string, mixed>>  $stops  The post's own places in order
+     * @param  array<string, array<string, mixed>>  $roads  Stored legs keyed by key()
      */
     public static function around(array $journey, int $postId, array $stops, array $roads = []): self
     {
@@ -152,7 +151,7 @@ final class Leg
     /**
      * The fingerprint of a place, so a leg knows when one of its ends has moved.
      *
-     * @param array<string, mixed> $stop
+     * @param  array<string, mixed>  $stop
      */
     public static function placeHash(array $stop): string
     {
@@ -162,8 +161,8 @@ final class Leg
     /**
      * How a stored leg between two places is known, or null when both are the same spot and no road is needed.
      *
-     * @param array<string, mixed> $from
-     * @param array<string, mixed> $to
+     * @param  array<string, mixed>  $from
+     * @param  array<string, mixed>  $to
      */
     public static function key(array $from, array $to): ?string
     {
@@ -176,7 +175,7 @@ final class Leg
     /**
      * The road a stored leg follows as [lng, lat] points, or null while it has none and draws straight.
      *
-     * @param array<string, mixed>|null $road
+     * @param  array<string, mixed>|null  $road
      * @return list<array{0: float, 1: float}>|null
      */
     public static function points(?array $road): ?array
@@ -198,8 +197,8 @@ final class Leg
     }
 
     /**
-     * @param array<string, mixed> $from
-     * @param array<string, mixed> $to
+     * @param  array<string, mixed>  $from
+     * @param  array<string, mixed>  $to
      * @return array<string, mixed>|null
      */
     private function roadBetween(array $from, array $to): ?array

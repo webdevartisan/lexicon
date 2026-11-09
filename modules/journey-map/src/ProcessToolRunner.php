@@ -41,7 +41,7 @@ final class ProcessToolRunner implements ToolRunner
     /**
      * Read new output every half second, until the program ends or a stop is asked for.
      *
-     * @param resource $process
+     * @param  resource  $process
      */
     private function watch($process, string $log, Closure $onOutput, Closure $shouldStop): int
     {

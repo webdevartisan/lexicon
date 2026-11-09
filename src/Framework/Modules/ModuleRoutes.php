@@ -15,15 +15,13 @@ use LogicException;
  */
 final class ModuleRoutes
 {
-    public function __construct(private Router $router, private string $moduleKey)
-    {
-    }
+    public function __construct(private Router $router, private string $moduleKey) {}
 
     /**
      * Add a route under the module prefix.
      *
-     * @param string $path Path below the prefix, such as /stops
-     * @param array<string, mixed> $params Must name controller_class, plus action and method
+     * @param  string  $path  Path below the prefix, such as /stops
+     * @param  array<string, mixed>  $params  Must name controller_class, plus action and method
      */
     public function add(string $path, array $params): void
     {

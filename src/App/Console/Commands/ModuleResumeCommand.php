@@ -15,12 +15,10 @@ use Throwable;
  */
 class ModuleResumeCommand
 {
-    public function __construct(private ModuleModel $modules, private ModuleRegistry $registry)
-    {
-    }
+    public function __construct(private ModuleModel $modules, private ModuleRegistry $registry) {}
 
     /**
-     * @param array<int, string> $arguments The module key
+     * @param  array<int, string>  $arguments  The module key
      * @return int Exit code (0 = running again, 1 = bad input, not paused or a failure)
      */
     public function handle(array $arguments = []): int

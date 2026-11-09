@@ -14,9 +14,9 @@ final class ModuleManifest
     private const SCOPES = ['blog', 'platform'];
 
     /**
-     * @param list<string> $slots
-     * @param list<string> $tables
-     * @param list<string> $requires
+     * @param  list<string>  $slots
+     * @param  list<string>  $tables
+     * @param  list<string>  $requires
      */
     public function __construct(
         public readonly string $key,
@@ -31,14 +31,14 @@ final class ModuleManifest
         public readonly array $requires,
         public readonly bool $hasPage = false,
         public readonly bool $hasAdminPage = false,
-    ) {
-    }
+    ) {}
 
     /**
      * Read and validate a module.json file.
      *
-     * @param string $jsonPath Absolute path to the module.json file
+     * @param  string  $jsonPath  Absolute path to the module.json file
      * @return self The validated manifest
+     *
      * @throws InvalidManifestException When the file is missing or invalid
      */
     public static function fromFile(string $jsonPath): self
@@ -54,9 +54,10 @@ final class ModuleManifest
     /**
      * Build a manifest from JSON text.
      *
-     * @param string $json The module.json contents
-     * @param string $path Absolute path to the module folder
+     * @param  string  $json  The module.json contents
+     * @param  string  $path  Absolute path to the module folder
      * @return self The validated manifest
+     *
      * @throws InvalidManifestException When the JSON breaks a manifest rule
      */
     public static function fromJson(string $json, string $path): self
@@ -72,9 +73,10 @@ final class ModuleManifest
     /**
      * Build a manifest from decoded data, as stored in the registry cache.
      *
-     * @param array<string, mixed> $data The decoded manifest fields
-     * @param string $path Absolute path to the module folder
+     * @param  array<string, mixed>  $data  The decoded manifest fields
+     * @param  string  $path  Absolute path to the module folder
      * @return self The validated manifest
+     *
      * @throws InvalidManifestException When a field breaks a manifest rule
      */
     public static function fromArray(array $data, string $path): self
@@ -119,7 +121,9 @@ final class ModuleManifest
         ];
     }
 
-
+    /**
+     * @param  array<string, mixed>  $data  The decoded module.json
+     */
     private static function key(array $data): string
     {
         $key = self::string($data, 'key');
@@ -130,6 +134,9 @@ final class ModuleManifest
         return $key;
     }
 
+    /**
+     * @param  array<string, mixed>  $data  The decoded module.json
+     */
     private static function scope(array $data, string $key): string
     {
         $scope = self::string($data, 'scope');
@@ -141,6 +148,7 @@ final class ModuleManifest
     }
 
     /**
+     * @param  array<string, mixed>  $data  The decoded module.json
      * @return list<string>
      */
     private static function slots(array $data, string $key): array
@@ -157,6 +165,7 @@ final class ModuleManifest
     /**
      * Dependencies between modules are out of scope for now, so a manifest that needs one cannot load.
      *
+     * @param  array<string, mixed>  $data  The decoded module.json
      * @return list<string>
      */
     private static function requires(array $data, string $key): array
@@ -172,6 +181,8 @@ final class ModuleManifest
     /**
      * A true or false switch that defaults to false: "page" for a page at the root of the manage routes,
      * which the blog's Extras card links, and "admin_page" for one in the control panel, linked from /admin/extras.
+     *
+     * @param  array<string, mixed>  $data  The decoded module.json
      */
     private static function flag(array $data, string $field, string $key): bool
     {
@@ -183,6 +194,9 @@ final class ModuleManifest
         return $value;
     }
 
+    /**
+     * @param  array<string, mixed>  $data  The decoded module.json
+     */
     private static function string(array $data, string $field): string
     {
         $value = $data[$field] ?? null;
@@ -194,6 +208,7 @@ final class ModuleManifest
     }
 
     /**
+     * @param  array<string, mixed>  $data  The decoded module.json
      * @return list<string>
      */
     private static function list(array $data, string $field): array
@@ -211,6 +226,9 @@ final class ModuleManifest
         return $value;
     }
 
+    /**
+     * @param  array<string, mixed>  $data  The decoded module.json
+     */
     private static function version(array $data, string $key): int
     {
         $version = $data['version'] ?? null;

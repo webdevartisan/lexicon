@@ -12,13 +12,14 @@ use App\Models\SettingModel;
 final class SearchSettings
 {
     private const ENABLED = 'journey-map.search_enabled';
+
     private const CONTACT = 'journey-map.search_contact';
+
     private const SERVER = 'journey-map.search_server';
+
     private const SERVER_MAX = 255;
 
-    public function __construct(private SettingModel $settings)
-    {
-    }
+    public function __construct(private SettingModel $settings) {}
 
     /**
      * Whether writers can search for places by name. Off still lets them pin the map or type coordinates.

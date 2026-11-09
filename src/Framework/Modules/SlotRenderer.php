@@ -22,7 +22,9 @@ interface SlotRenderer
     /**
      * Files the page needs when this slot rendered, relative to public/modules/<key>/.
      *
-     * @return array{css: list<string>, js: list<string>}
+     * A kind with no files can be left out.
+     *
+     * @return array{css?: list<string>, js?: list<string>}
      */
     public function assets(): array;
 }

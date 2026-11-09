@@ -15,8 +15,8 @@ use Throwable;
 final class Partial
 {
     /**
-     * @param string $name A file under views/slots/ without .php, always a fixed name from module code
-     * @param array<string, mixed> $vars
+     * @param  string  $name  A file under views/slots/ without .php, always a fixed name from module code
+     * @param  array<string, mixed>  $vars
      */
     public static function render(string $name, array $vars): string
     {
@@ -39,7 +39,7 @@ final class Partial
     /**
      * Data for an HTML attribute or a JSON script block, encoded so it can never close the tag it sits in.
      *
-     * @param array<mixed> $data
+     * @param  array<mixed>  $data
      */
     public static function json(array $data): string
     {

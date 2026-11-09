@@ -16,6 +16,7 @@ use Framework\Interfaces\TemplateViewerInterface;
 use Framework\Security\Csrf;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * Saving texts from the blog's own pages: only the texts sent change, each
@@ -26,10 +27,8 @@ beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
         $this->db->getConnection()->rollBack();
     }
+    // Saving opens its own transaction, which cannot nest in a test one, so rows are committed and cleaned after.
     $this->db = App::container()->get(\Framework\Database::class);
-    if (!$this->db->getConnection()->inTransaction()) {
-        $this->db->getConnection()->beginTransaction();
-    }
 
     $this->signIn = function (): int {
         $_SESSION = [];
@@ -91,6 +90,7 @@ beforeEach(function () {
 afterEach(function () {
     $_SESSION = [];
     auth()->logout();
+    DatabaseHelper::cleanDatabase($this->db);
 });
 
 it('saves a text in the blog language and leaves the others alone', function () {
@@ -200,7 +200,7 @@ it('keeps a removed theme text removed and lets the theme wording take it back',
 it('refuses a theme text the theme keeps fixed', function () {
     $this->settings->updateForBlog($this->blogId, ['theme' => 'nocturne']);
 
-    [$status] = ($this->save)(['wording_locale' => 'en', 'wording' => ['nocturne::nav.home' => 'Start']]);
+    [$status] = ($this->save)(['wording_locale' => 'en', 'wording' => ['nocturne::nav.primary' => 'Start']]);
 
     expect($status)->toBe(422)
         ->and($this->texts->forLocale($this->blogId, 'en'))->toBe([]);

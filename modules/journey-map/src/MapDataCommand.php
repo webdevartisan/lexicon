@@ -22,13 +22,17 @@ final class MapDataCommand implements SchedulableCommandInterface
     public const NAME = 'journey-map:map-data';
 
     private const BUILDS = 'https://build-metadata.protomaps.dev/builds.json';
+
     private const BUILD_HOST = 'https://build.protomaps.com/';
+
     private const BUILD_KEY = '/^(\d{4})(\d{2})(\d{2})\.pmtiles$/';
+
     private const SIZE_LINE = '/archive size of ([\d.]+) ([kMGT]?B)/';
+
     private const UNITS = ['B' => 1, 'kB' => 1e3, 'MB' => 1e6, 'GB' => 1e9, 'TB' => 1e12];
 
     /**
-     * @param Closure(string): ?array $fetchJson The decoded JSON at a URL, or null when the call failed
+     * @param  Closure(string): ?array  $fetchJson  The decoded JSON at a URL, or null when the call failed
      */
     public function __construct(
         private MapJob $job,
@@ -38,8 +42,7 @@ final class MapDataCommand implements SchedulableCommandInterface
         private MapTool $tool,
         private PublicCacheInvalidator $pages,
         private Closure $fetchJson,
-    ) {
-    }
+    ) {}
 
     /**
      * The name on the Scheduler page.
@@ -90,6 +93,7 @@ final class MapDataCommand implements SchedulableCommandInterface
      * The queued job, or a refresh of the installed map, or null when there is neither.
      *
      * @return array{kind: string, request: MapRequest}|null
+     *
      * @throws InvalidMapRequest
      */
     private function nextJob(): ?array
@@ -177,7 +181,7 @@ final class MapDataCommand implements SchedulableCommandInterface
     /**
      * Run one tool step, passing its percentages to the job file.
      *
-     * @param list<string> $argv
+     * @param  list<string>  $argv
      * @return list<string> The last lines it printed
      */
     private function runStep(array $argv, int $index, int $count): array
@@ -205,7 +209,7 @@ final class MapDataCommand implements SchedulableCommandInterface
     /**
      * The archive size from a dry run's last line, such as "4.1 GB", in bytes.
      *
-     * @param list<string> $lines
+     * @param  list<string>  $lines
      */
     private function archiveSize(array $lines): int
     {

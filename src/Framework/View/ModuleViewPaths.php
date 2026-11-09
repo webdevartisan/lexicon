@@ -14,14 +14,12 @@ final class ModuleViewPaths
 {
     private const VIEW_PATTERN = '#^[a-z0-9_-]+(/[a-z0-9_-]+)*$#';
 
-    public function __construct(private ModuleRegistry $registry)
-    {
-    }
+    public function __construct(private ModuleRegistry $registry) {}
 
     /**
      * The file behind a module view name.
      *
-     * @param string $name A name like journey-map::route or journey-map::partials/stop
+     * @param  string  $name  A name like journey-map::route or journey-map::partials/stop
      * @return string|null The absolute file path, or null when the module is not running or the file is missing
      */
     public function resolve(string $name): ?string

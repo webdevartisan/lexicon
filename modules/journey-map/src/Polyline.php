@@ -44,7 +44,7 @@ final class Polyline
     /**
      * Encode [lng, lat] points.
      *
-     * @param list<array{0: float, 1: float}> $points
+     * @param  list<array{0: float, 1: float}>  $points
      */
     public static function encode(array $points): string
     {
@@ -66,7 +66,7 @@ final class Polyline
     /**
      * Drop points that sit within the tolerance of the line around them (Douglas Peucker), keeping both ends.
      *
-     * @param list<array{0: float, 1: float}> $points
+     * @param  list<array{0: float, 1: float}>  $points
      * @return list<array{0: float, 1: float}>
      */
     public static function simplify(array $points, float $tolerance = self::TOLERANCE): array
@@ -96,7 +96,7 @@ final class Polyline
     /**
      * The point between two others that lies farthest from the straight line joining them.
      *
-     * @param list<array{0: float, 1: float}> $points
+     * @param  list<array{0: float, 1: float}>  $points
      * @return array{0: int, 1: float}
      */
     private static function farthest(array $points, int $first, int $last): array
@@ -117,9 +117,9 @@ final class Polyline
     /**
      * How far a point lies from the segment between a and b, in degrees.
      *
-     * @param array{0: float, 1: float} $p
-     * @param array{0: float, 1: float} $a
-     * @param array{0: float, 1: float} $b
+     * @param  array{0: float, 1: float}  $p
+     * @param  array{0: float, 1: float}  $a
+     * @param  array{0: float, 1: float}  $b
      */
     private static function offLine(array $p, array $a, array $b): float
     {
@@ -147,7 +147,7 @@ final class Polyline
                 return null;
             }
             $byte = ord($encoded[$index++]) - 63;
-            $result |= ($byte & 0x1f) << $shift;
+            $result |= ($byte & 0x1F) << $shift;
             $shift += 5;
         } while ($byte >= 0x20);
 
@@ -162,7 +162,7 @@ final class Polyline
         $value = $value < 0 ? ~($value << 1) : ($value << 1);
         $out = '';
         while ($value >= 0x20) {
-            $out .= chr((0x20 | ($value & 0x1f)) + 63);
+            $out .= chr((0x20 | ($value & 0x1F)) + 63);
             $value >>= 5;
         }
 

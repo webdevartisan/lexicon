@@ -25,13 +25,13 @@ final class Stop
         public readonly float $lng,
         public readonly string $precision,
         public readonly ?int $stopNumber,
-    ) {
-    }
+    ) {}
 
     /**
      * Build a stop from untrusted input with the keys place_name, lat, lng, precision and stop_number.
      *
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
+     *
      * @throws InvalidStopException Listing every field that is wrong
      */
     public static function fromInput(array $input): self

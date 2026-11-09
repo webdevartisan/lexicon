@@ -16,7 +16,7 @@ use Tests\Fixtures\Modules\SampleExtra\SampleExtraModule;
 use Tests\Helpers\ModuleFixtures;
 
 /**
- * @param array<string, string> $states
+ * @param  array<string, string>  $states
  */
 function booterWith(array $states): ModuleBooter
 {
@@ -28,7 +28,8 @@ function booterWith(array $states): ModuleBooter
 
 function quietSlot(): SlotRenderer
 {
-    return new class () implements SlotRenderer {
+    return new class() implements SlotRenderer
+    {
         public function shouldRender(SlotContext $context): bool
         {
             return true;

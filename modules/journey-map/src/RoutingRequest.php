@@ -12,14 +12,13 @@ final class RoutingRequest
 {
     public const DEFAULT_PORT = 8989;
 
-    private function __construct(public readonly string $region, public readonly int $port)
-    {
-    }
+    private function __construct(public readonly string $region, public readonly int $port) {}
 
     /**
      * Read the request from the form or the job file.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
+     *
      * @throws InvalidMapRequest When the area id or the port is not one we accept
      */
     public static function fromArray(array $data): self

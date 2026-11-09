@@ -15,14 +15,12 @@ final class RegionStore
     /** How deep the coordinates nest for each shape, down to one point. */
     private const DEPTH = ['Polygon' => 3, 'MultiPolygon' => 4];
 
-    public function __construct(private string $dir)
-    {
-    }
+    public function __construct(private string $dir) {}
 
     /**
      * Write a looked up area as a GeoJSON Feature.
      *
-     * @param array{name: string, bbox: list<float>, outline: array<string, mixed>} $area From PlaceSearch::area
+     * @param  array{name: string, bbox: list<float>, outline: array<string, mixed>}  $area  From PlaceSearch::area
      * @return array{name: string, bbox: list<float>, file: string}|null Null when the shape is not a place on the globe
      */
     public function save(array $area): ?array
@@ -82,7 +80,7 @@ final class RegionStore
     }
 
     /**
-     * @param list<mixed> $point
+     * @param  list<mixed>  $point
      */
     private static function point(array $point): bool
     {

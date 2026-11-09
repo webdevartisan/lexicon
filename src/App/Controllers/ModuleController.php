@@ -17,9 +17,7 @@ abstract class ModuleController extends AppController
 {
     use RendersThemedBlogPages;
 
-    public function __construct(protected BlogModuleModel $blogModules)
-    {
-    }
+    public function __construct(protected BlogModuleModel $blogModules) {}
 
     /**
      * The key of the module this controller belongs to.

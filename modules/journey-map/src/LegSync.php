@@ -10,9 +10,7 @@ namespace Modules\JourneyMap;
  */
 final class LegSync
 {
-    public function __construct(private StopModel $stops, private LegModel $legs)
-    {
-    }
+    public function __construct(private StopModel $stops, private LegModel $legs) {}
 
     /**
      * Bring the blog's legs in line with its journey as readers see it now.

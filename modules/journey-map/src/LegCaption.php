@@ -15,7 +15,7 @@ final class LegCaption
     /**
      * The caption for a leg. A post readers cannot see on the journey gets only its places.
      *
-     * @param Closure(string, array<string, mixed>=): string $t
+     * @param  Closure(string, array<string, mixed>=): string  $t
      */
     public static function text(Leg $leg, Closure $t): string
     {
@@ -43,7 +43,7 @@ final class LegCaption
     /**
      * How far the post travels from the place before it, or that it starts the journey.
      *
-     * @param Closure(string, array<string, mixed>=): string $t
+     * @param  Closure(string, array<string, mixed>=): string  $t
      */
     private static function distance(Leg $leg, Closure $t): string
     {

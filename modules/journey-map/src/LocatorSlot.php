@@ -23,9 +23,7 @@ final class LocatorSlot implements SlotRenderer
     /** @var array<int, Leg|null> Post id => its leg, read once per page */
     private array $found = [];
 
-    public function __construct(private Route $route, private MapData $map)
-    {
-    }
+    public function __construct(private Route $route, private MapData $map) {}
 
     /**
      * Only on posts that have a place.
@@ -98,9 +96,9 @@ final class LocatorSlot implements SlotRenderer
     /**
      * A neighbouring place as the map needs it, marked when it is too far away to frame.
      *
-     * @param array<string, mixed>|null $stop
-     * @param array<string, mixed> $nearest The post's own place next to it
-     * @param list<array{0: float, 1: float}>|null $lineIn The road from the post's last place to this one
+     * @param  array<string, mixed>|null  $stop
+     * @param  array<string, mixed>  $nearest  The post's own place next to it
+     * @param  list<array{0: float, 1: float}>|null  $lineIn  The road from the post's last place to this one
      * @return array<string, mixed>|null
      */
     private function neighbour(?array $stop, array $nearest, string $blogSlug, ?array $lineIn = null): ?array

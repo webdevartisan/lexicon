@@ -15,9 +15,7 @@ final class Route
     /** @var array<int, array<string, array<string, mixed>>> Blog id => stored legs keyed by Leg::key() */
     private array $roads = [];
 
-    public function __construct(private StopModel $stops, private LegModel $legs)
-    {
-    }
+    public function __construct(private StopModel $stops, private LegModel $legs) {}
 
     /**
      * The post's leg, or null when the post has no place.

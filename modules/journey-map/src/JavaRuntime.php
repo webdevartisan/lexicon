@@ -16,20 +16,21 @@ use ZipArchive;
 final class JavaRuntime
 {
     public const VERSION = 25;
+
     private const ASSETS = 'https://api.adoptium.net/v3/assets/latest/'.self::VERSION.'/hotspot';
+
     private const DOWNLOAD_PREFIX = 'https://github.com/adoptium/';
 
     /**
-     * @param Closure(string): ?array $fetchJson
-     * @param Closure(string, string): bool $download
+     * @param  Closure(string): ?array  $fetchJson
+     * @param  Closure(string, string): bool  $download
      */
     public function __construct(
         private RoutingFiles $files,
         private ToolRunner $runner,
         private Closure $fetchJson,
         private Closure $download,
-    ) {
-    }
+    ) {}
 
     /**
      * The java program to use, or null when neither the server nor the routing folder has a new enough one.
@@ -45,6 +46,7 @@ final class JavaRuntime
      * The runtime to download for this server: its address, digest and size.
      *
      * @return array{url: string, sha256: string, size: int}
+     *
      * @throws MapJobFailed When Adoptium has no runtime for this system
      */
     public function package(): array

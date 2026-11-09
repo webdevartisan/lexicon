@@ -16,21 +16,21 @@ use ZipArchive;
 final class MapAssets
 {
     private const ARCHIVE = 'https://github.com/protomaps/basemaps-assets/archive/refs/heads/main.zip';
+
     private const KEEP = [
         'fonts/Noto Sans Regular/',
         'fonts/Noto Sans Medium/',
         'fonts/Noto Sans Italic/',
         'sprites/v4/',
     ];
+
     private const FOLDERS = ['fonts', 'sprites'];
 
     /**
-     * @param string $folder The module's public map folder, where fonts/ and sprites/ go
-     * @param Closure(string, string): bool $download Save a URL to a file path
+     * @param  string  $folder  The module's public map folder, where fonts/ and sprites/ go
+     * @param  Closure(string, string): bool  $download  Save a URL to a file path
      */
-    public function __construct(private string $folder, private Closure $download)
-    {
-    }
+    public function __construct(private string $folder, private Closure $download) {}
 
     /**
      * Whether the fonts or icons still need installing.

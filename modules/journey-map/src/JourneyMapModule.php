@@ -21,10 +21,10 @@ use Framework\Modules\SlotRenderer;
 /**
  * Journey map: each post can be a stop with a place, and the blog shows the whole journey on a map.
  */
-final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArchiveParticipant, ModuleUninstaller,
-    PostCopyParticipant
+final class JourneyMapModule implements BlogArchiveParticipant, BlogDataEraser, ModuleInterface, ModuleUninstaller, PostCopyParticipant
 {
     private const KEY = 'journey-map';
+
     private const STORAGE = ROOT_PATH.'/storage/journey-map';
 
     private StopModel $stops;
@@ -243,7 +243,7 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
     }
 
     /**
-     * @param class-string $controller
+     * @param  class-string  $controller
      * @return array{controller_class: class-string, action: string, method: string}
      */
     private function route(string $controller, string $action, string $method): array
@@ -252,7 +252,7 @@ final class JourneyMapModule implements ModuleInterface, BlogDataEraser, BlogArc
     }
 
     /**
-     * @param class-string<SlotRenderer> $class
+     * @param  class-string<SlotRenderer>  $class
      */
     private function deferred(string $class): DeferredSlot
     {

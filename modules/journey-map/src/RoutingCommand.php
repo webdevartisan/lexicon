@@ -23,8 +23,7 @@ final class RoutingCommand implements SchedulableCommandInterface
         private RoutingFiles $files,
         private RoutePlanSchedule $planSchedule,
         private LegModel $legs,
-    ) {
-    }
+    ) {}
 
     /**
      * The name on the Scheduler page.

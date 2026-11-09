@@ -31,10 +31,9 @@ afterEach(function () {
 
 test('a slot tag hands the slot name and the page variables to the slot renderer', function () {
     $seen = [];
-    $this->renderer->setSlotRenderer(new class ($seen) implements SlotRendererInterface {
-        public function __construct(private array &$seen)
-        {
-        }
+    $this->renderer->setSlotRenderer(new class($seen) implements SlotRendererInterface
+    {
+        public function __construct(private array &$seen) {}
 
         public function render(string $slot, array $vars): string
         {

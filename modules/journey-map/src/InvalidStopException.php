@@ -12,7 +12,7 @@ use InvalidArgumentException;
 final class InvalidStopException extends InvalidArgumentException
 {
     /**
-     * @param array<string, string> $errors Field name => translation key of the problem
+     * @param  array<string, string>  $errors  Field name => translation key of the problem
      */
     public function __construct(public readonly array $errors)
     {

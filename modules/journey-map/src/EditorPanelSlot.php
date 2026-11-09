@@ -28,8 +28,7 @@ final class EditorPanelSlot implements SlotRenderer
         private SearchSettings $searchSettings,
         private Route $route,
         private RoutingFiles $routing,
-    ) {
-    }
+    ) {}
 
     /**
      * Only for people who may change the blog.

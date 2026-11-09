@@ -30,7 +30,7 @@ final class MapRequest
     private const REGION_FILE = '/^[a-f0-9]{40}\.geojson$/';
 
     /**
-     * @param array{name: string, bbox: list<float>}|null $place The region file's name and box, for area place
+     * @param  array{name: string, bbox: list<float>}|null  $place  The region file's name and box, for area place
      */
     private function __construct(
         public readonly int $zoom,
@@ -39,14 +39,14 @@ final class MapRequest
         public readonly bool $overview,
         private readonly string $regionDir,
         private readonly ?array $place,
-    ) {
-    }
+    ) {}
 
     /**
      * Check what the page sent.
      *
-     * @param array<string, mixed> $input zoom, area, region (for area place) and overview
-     * @param string $regionDir Where the page keeps the outlines it looked up
+     * @param  array<string, mixed>  $input  zoom, area, region (for area place) and overview
+     * @param  string  $regionDir  Where the page keeps the outlines it looked up
+     *
      * @throws InvalidMapRequest
      */
     public static function fromInput(array $input, string $regionDir): self
@@ -78,7 +78,8 @@ final class MapRequest
     /**
      * Read a request back from the job file, checking it again as if it were new.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
+     *
      * @throws InvalidMapRequest
      */
     public static function fromArray(array $data, string $regionDir): self

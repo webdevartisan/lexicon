@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Modules;
 
-use Framework\Modules\ModuleManifest;
 use FilesystemIterator;
+use Framework\Modules\ModuleManifest;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
@@ -19,9 +19,7 @@ class ModuleAssets
 {
     private const FILES = 'files';
 
-    public function __construct(private string $publicPath = ROOT_PATH.'/public/modules')
-    {
-    }
+    public function __construct(private string $publicPath = ROOT_PATH.'/public/modules') {}
 
     /**
      * Replace the module's assets with a fresh copy, keeping its files/ folder. A module with no assets gets none.

@@ -168,7 +168,7 @@ final class SlotRegistry implements SlotRendererInterface
     }
 
     /**
-     * @param  list<string>  $names  Paths relative to public/modules/<key>/
+     * @param  array<int, mixed>  $names  Paths relative to public/modules/<key>/; anything that is not a plain path is skipped
      * @return array<string, true> Versioned URL => true, so repeats collapse
      */
     private function assetUrls(string $key, array $names): array

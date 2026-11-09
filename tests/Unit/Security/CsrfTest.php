@@ -344,7 +344,8 @@ test('getToken retrieves existing token from session without regeneration', func
  */
 test('isTokenValid uses timing-safe comparison', function () {
     $storedToken = bin2hex(random_bytes(32));
-    $almostValidToken = substr($storedToken, 0, 63).'a'; // Different last char
+    $lastChar = substr($storedToken, -1) === 'a' ? 'b' : 'a';
+    $almostValidToken = substr($storedToken, 0, 63).$lastChar;
 
     $this->sessionMock->shouldReceive('get')
         ->once()

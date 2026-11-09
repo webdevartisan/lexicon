@@ -51,8 +51,7 @@ final class RoutingControl
         private Database $db,
         private PublicCacheInvalidator $pages,
         private Closure $fetchSize,
-    ) {
-    }
+    ) {}
 
     /**
      * The areas to choose from, empty when Geofabrik's list could not be read.
@@ -162,6 +161,7 @@ final class RoutingControl
      * The area and the bytes a build would download: road data, plus Java and GraphHopper when missing.
      *
      * @return array{0: array{id: string, name: string, parent: string, url: string}, 1: int}
+     *
      * @throws MapActionRefused
      */
     private function downloadSize(RoutingRequest $request): array
@@ -199,7 +199,7 @@ final class RoutingControl
     /**
      * The job as one sentence.
      *
-     * @param array<string, mixed> $job
+     * @param  array<string, mixed>  $job
      */
     private function jobLine(array $job): string
     {

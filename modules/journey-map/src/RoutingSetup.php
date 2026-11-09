@@ -15,10 +15,11 @@ final class RoutingSetup
 {
     public const GRAPHHOPPER_URL = 'https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/'
         .RoutingFiles::GRAPHHOPPER.'/graphhopper-web-'.RoutingFiles::GRAPHHOPPER.'.jar';
+
     private const MIN_HEAP_MB = 2048;
 
     /**
-     * @param Closure(string, string): bool $download Save a URL to a path
+     * @param  Closure(string, string): bool  $download  Save a URL to a path
      */
     public function __construct(
         private RoutingFiles $files,
@@ -26,8 +27,7 @@ final class RoutingSetup
         private JavaRuntime $java,
         private ToolRunner $runner,
         private Closure $download,
-    ) {
-    }
+    ) {}
 
     /**
      * Build the network the request asks for, reporting each step to the job.
@@ -87,7 +87,7 @@ final class RoutingSetup
     /**
      * Download into a part file, compare it with the digest published next to it, then move it in place.
      *
-     * @param string $algo sha1 or md5, also the digest file's extension
+     * @param  string  $algo  sha1 or md5, also the digest file's extension
      */
     private function fetchChecked(string $url, string $path, string $algo, string $reason): void
     {

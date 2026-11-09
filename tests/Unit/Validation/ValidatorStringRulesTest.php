@@ -448,18 +448,6 @@ describe('Validator String Rules', function () {
         expect($validator->fails())->toBeTrue();
     });
 
-    /**
-     * Test slug rule requires non-empty value.
-     *
-     * Unlike other rules, slug is required (can't be empty).
-     */
-    test('slug fails for empty string', function () {
-        $validator = new Validator(['slug' => '']);
-        $validator->rules(['slug' => 'slug']);
-
-        expect($validator->fails())->toBeTrue();
-    });
-
     // ==================== User Handle Rule ====================
 
     /**

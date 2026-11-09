@@ -6,7 +6,6 @@ namespace App\Controllers;
 
 use App\Gate;
 use App\Models\BlogModel;
-use App\Models\BlogSettingsModel;
 use App\Models\CategoryModel;
 use App\Models\CommentModel;
 use App\Models\CommentVoteModel;

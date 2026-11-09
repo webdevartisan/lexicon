@@ -9,9 +9,7 @@ namespace Modules\JourneyMap;
  */
 final class RoutePlanner
 {
-    public function __construct(private LegModel $legs)
-    {
-    }
+    public function __construct(private LegModel $legs) {}
 
     /**
      * Plan up to the limit of waiting legs.
@@ -34,7 +32,7 @@ final class RoutePlanner
     /**
      * Save one answer: a failure counts an attempt, the rest are final until a place moves.
      *
-     * @param array<string, mixed> $leg The waiting leg's row
+     * @param  array<string, mixed>  $leg  The waiting leg's row
      */
     private function store(array $leg, RouteAnswer $answer): void
     {

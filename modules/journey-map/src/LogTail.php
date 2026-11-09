@@ -17,11 +17,9 @@ final class LogTail
     private string $partial = '';
 
     /**
-     * @param Closure(string): void $onLine
+     * @param  Closure(string): void  $onLine
      */
-    public function __construct(private string $file, private Closure $onLine)
-    {
-    }
+    public function __construct(private string $file, private Closure $onLine) {}
 
     /**
      * Pass on every line written since the last read. A line still being written waits for the next read.

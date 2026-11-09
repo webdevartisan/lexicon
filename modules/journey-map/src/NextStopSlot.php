@@ -17,9 +17,7 @@ final class NextStopSlot implements SlotRenderer
     /** @var array<int, array<string, mixed>|null> Post id => the stop after it worth linking, read once per page */
     private array $next = [];
 
-    public function __construct(private Route $route, private PublishedPostModel $posts)
-    {
-    }
+    public function __construct(private Route $route, private PublishedPostModel $posts) {}
 
     /**
      * Only when another public stop follows this post and it is not the next post by date.

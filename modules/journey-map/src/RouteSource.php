@@ -17,8 +17,8 @@ interface RouteSource
     /**
      * The road route from one place to another.
      *
-     * @param array{lat: float, lng: float} $from
-     * @param array{lat: float, lng: float} $to
+     * @param  array{lat: float, lng: float}  $from
+     * @param  array{lat: float, lng: float}  $to
      */
     public function route(array $from, array $to): RouteAnswer;
 

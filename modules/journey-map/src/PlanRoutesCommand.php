@@ -17,10 +17,11 @@ use App\Services\PublicCacheInvalidator;
 final class PlanRoutesCommand implements SchedulableCommandInterface
 {
     public const NAME = 'journey-map:plan-routes';
+
     private const BATCH = 200;
 
     /**
-     * @param MapJob $buildJob The road network job, so no run plans while the network is being rebuilt
+     * @param  MapJob  $buildJob  The road network job, so no run plans while the network is being rebuilt
      */
     public function __construct(
         private BlogModuleModel $blogModules,
@@ -31,8 +32,7 @@ final class PlanRoutesCommand implements SchedulableCommandInterface
         private RoutePlanner $planner,
         private MapJob $buildJob,
         private PublicCacheInvalidator $pages,
-    ) {
-    }
+    ) {}
 
     /**
      * The name on the Scheduler page.

@@ -47,9 +47,7 @@ final class ModuleContext
     /** @var array<string, class-string> */
     private array $commands = [];
 
-    public function __construct(private ModuleManifest $manifest)
-    {
-    }
+    public function __construct(private ModuleManifest $manifest) {}
 
     /**
      * The module key.
@@ -62,7 +60,7 @@ final class ModuleContext
     /**
      * Public pages: /blog/{blogSlug}/m/<key> for a blog module, /m/<key> for a platform module.
      *
-     * @param Closure(ModuleRoutes): void $define
+     * @param  Closure(ModuleRoutes): void  $define
      */
     public function frontRoutes(Closure $define): void
     {
@@ -73,7 +71,7 @@ final class ModuleContext
      * Management pages: /dashboard/blog/{blogId}/m/<key> for a blog module,
      * /admin/m/<key> in the control panel for a platform module.
      *
-     * @param Closure(ModuleRoutes): void $define
+     * @param  Closure(ModuleRoutes): void  $define
      */
     public function manageRoutes(Closure $define): void
     {
@@ -84,7 +82,8 @@ final class ModuleContext
      * Control panel pages of a blog module, at /admin/m/<key> behind the same guard as /admin/extras.
      * For site wide settings a blog module needs, such as data every blog shares.
      *
-     * @param Closure(ModuleRoutes): void $define
+     * @param  Closure(ModuleRoutes): void  $define
+     *
      * @throws LogicException For a platform module, whose manage routes already live there
      */
     public function adminRoutes(Closure $define): void
@@ -115,7 +114,8 @@ final class ModuleContext
     /**
      * Console commands, each named <key>:<something> so they never shadow core commands.
      *
-     * @param array<string, class-string> $map Command name => command class
+     * @param  array<string, class-string>  $map  Command name => command class
+     *
      * @throws LogicException When a name lacks the module key prefix
      */
     public function commands(array $map): void
@@ -143,8 +143,8 @@ final class ModuleContext
     }
 
     /**
-     * @param array{0: string, 1: list<string>} $area Prefix up to the module key, and the group middleware
-     * @param list<Closure> $definitions
+     * @param  array{0: string, 1: list<string>}  $area  Prefix up to the module key, and the group middleware
+     * @param  list<Closure>  $definitions
      */
     private function mount(Router $router, array $area, array $definitions): void
     {
@@ -158,7 +158,7 @@ final class ModuleContext
     }
 
     /**
-     * @param list<Closure> $definitions
+     * @param  list<Closure>  $definitions
      */
     private function define(array $definitions, ModuleRoutes $routes): void
     {

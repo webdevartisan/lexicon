@@ -38,7 +38,7 @@ final class ModuleFixtures
     /**
      * A registry over the fixture modules with the given install states.
      *
-     * @param array<string, string> $states Module key => installed or paused
+     * @param  array<string, string>  $states  Module key => installed or paused
      */
     public static function registry(array $states = [], string $path = self::PATH): ModuleRegistry
     {

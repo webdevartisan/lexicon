@@ -17,16 +17,15 @@ class MapData
     private const FILE = 'journey-map.pmtiles';
 
     /**
-     * @param string $folder The module's public folder, which may not exist before the first download
-     * @param string $stateDir The module's folder under storage/, where map.json lives
-     * @param string $folderUrl The public folder's web address
+     * @param  string  $folder  The module's public folder, which may not exist before the first download
+     * @param  string  $stateDir  The module's folder under storage/, where map.json lives
+     * @param  string  $folderUrl  The public folder's web address
      */
     public function __construct(
         private string $folder,
         private string $stateDir = ROOT_PATH.'/storage/journey-map',
         private string $folderUrl = '',
-    ) {
-    }
+    ) {}
 
     /**
      * Whether the map file is in place.
@@ -60,7 +59,7 @@ class MapData
     /**
      * Replace the live file with a finished download in one rename, and note what it holds.
      *
-     * @param array{build: string, request: array<string, mixed>} $about
+     * @param  array{build: string, request: array<string, mixed>}  $about
      */
     public function swapIn(string $part, array $about): void
     {

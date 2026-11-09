@@ -95,7 +95,7 @@ final class JourneyController extends ModuleController
     /**
      * The blog's meta with this page's own title and address.
      *
-     * @param array<string, mixed> $meta
+     * @param  array<string, mixed>  $meta
      * @return array<string, mixed>
      */
     private function meta(array $meta, string $blogSlug): array
@@ -133,7 +133,7 @@ final class JourneyController extends ModuleController
     /**
      * One stop as the page and its map show it.
      *
-     * @param array<string, mixed> $stop
+     * @param  array<string, mixed>  $stop
      * @return array<string, mixed>
      */
     private function forReader(array $stop, string $base): array

@@ -18,20 +18,13 @@ use RuntimeException;
 /**
  * The smallest module the module system tests can install, boot and erase.
  */
-final class SampleExtraModule implements
-    ModuleInterface,
-    BlogDataEraser,
-    PersonalDataEraser,
-    PersonalDataExporter,
-    BlogArchiveParticipant
+final class SampleExtraModule implements BlogArchiveParticipant, BlogDataEraser, ModuleInterface, PersonalDataEraser, PersonalDataExporter
 {
     public static bool $registered = false;
 
     public static bool $failErase = false;
 
-    public function __construct(private Database $db)
-    {
-    }
+    public function __construct(private Database $db) {}
 
     public function register(Container $container): void
     {

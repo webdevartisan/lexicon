@@ -12,9 +12,7 @@ use Framework\Modules\SlotRenderer;
  */
 final class NavSlot implements SlotRenderer
 {
-    public function __construct(private StopModel $stops)
-    {
-    }
+    public function __construct(private StopModel $stops) {}
 
     /**
      * Only once readers have a public stop to see.

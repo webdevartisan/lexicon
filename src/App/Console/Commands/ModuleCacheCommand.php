@@ -14,12 +14,10 @@ use Throwable;
  */
 class ModuleCacheCommand
 {
-    public function __construct(private ModuleRegistry $registry)
-    {
-    }
+    public function __construct(private ModuleRegistry $registry) {}
 
     /**
-     * @param array<int, string> $arguments Unused
+     * @param  array<int, string>  $arguments  Unused
      * @return int Exit code (0 = rebuilt, 1 = failure)
      */
     public function handle(array $arguments = []): int

@@ -23,7 +23,7 @@ trait TemplateSlotsTrait
     /**
      * Called from compiled templates.
      *
-     * @param array<string, mixed> $vars
+     * @param  array<string, mixed>  $vars
      */
     public function renderSlot(string $slot, array $vars): string
     {

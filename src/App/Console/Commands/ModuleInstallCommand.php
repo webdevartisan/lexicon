@@ -14,12 +14,10 @@ use Throwable;
  */
 class ModuleInstallCommand
 {
-    public function __construct(private ModuleInstaller $installer)
-    {
-    }
+    public function __construct(private ModuleInstaller $installer) {}
 
     /**
-     * @param array<int, string> $arguments The module key
+     * @param  array<int, string>  $arguments  The module key
      * @return int Exit code (0 = installed, 1 = bad input or a failed install)
      */
     public function handle(array $arguments = []): int

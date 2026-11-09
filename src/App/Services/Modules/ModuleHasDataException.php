@@ -19,7 +19,7 @@ final class ModuleHasDataException extends RuntimeException
     /**
      * A blog module whose data some blogs still hold.
      *
-     * @param list<int> $blogIds
+     * @param  list<int>  $blogIds
      */
     public static function inBlogs(string $key, array $blogIds): self
     {
@@ -29,7 +29,7 @@ final class ModuleHasDataException extends RuntimeException
     /**
      * A module whose declared tables still have rows.
      *
-     * @param list<string> $tables
+     * @param  list<string>  $tables
      */
     public static function inTables(string $key, array $tables): self
     {

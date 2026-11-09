@@ -180,7 +180,7 @@ final class AccountProfileController extends AppController
     /**
      * Save first and last name, the tag, and whether readers see the name beside it.
      *
-     * @param  array<string, mixed>  $user       The signed-in user row
+     * @param  array<string, mixed>  $user  The signed-in user row
      * @param  array<string, mixed>  $validated
      * @return bool Whether the tag, and so the public address, changed
      */

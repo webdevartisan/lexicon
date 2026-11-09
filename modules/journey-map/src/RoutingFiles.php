@@ -16,9 +16,7 @@ final class RoutingFiles
 {
     public const GRAPHHOPPER = '11.1';
 
-    public function __construct(private string $root)
-    {
-    }
+    public function __construct(private string $root) {}
 
     /**
      * The routing folder.
@@ -100,7 +98,7 @@ final class RoutingFiles
     /**
      * Note what the network covers, once it is built.
      *
-     * @param array<string, mixed> $info
+     * @param  array<string, mixed>  $info
      */
     public function saveInfo(array $info): void
     {

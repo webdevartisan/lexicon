@@ -13,9 +13,7 @@ namespace Framework\Modules;
  */
 final class ModuleDuties
 {
-    public function __construct(private ModuleRegistry $registry, private ModuleInstances $instances)
-    {
-    }
+    public function __construct(private ModuleRegistry $registry, private ModuleInstances $instances) {}
 
     /**
      * Remove every module's rows for a blog that is being deleted.
@@ -87,8 +85,8 @@ final class ModuleDuties
      * Hand each module its rows from a backup. Never throws: a module that is missing
      * here is skipped, and one that fails is logged and reported.
      *
-     * @param array<string, array{version: int, rows: list<mixed>}> $data Module key => rows from the backup
-     * @param array<int, int> $postIdMap Post id in the backup => id of the restored post
+     * @param  array<string, array{version: int, rows: list<mixed>}>  $data  Module key => rows from the backup
+     * @param  array<int, int>  $postIdMap  Post id in the backup => id of the restored post
      * @return array{imported: array<string, int>, skipped: list<string>, failed: list<string>}
      */
     public function importBlog(int $blogId, array $data, array $postIdMap): array
@@ -120,7 +118,8 @@ final class ModuleDuties
 
     /**
      * @template T of object
-     * @param class-string<T> $interface
+     *
+     * @param  class-string<T>  $interface
      * @return array<string, T> Keyed by module key
      */
     private function modulesImplementing(string $interface): array

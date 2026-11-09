@@ -17,7 +17,7 @@ const MODULE_VIEW_PATTERN = '/(?:render|view)\(\s*["\'][a-z][a-z0-9-]+::[a-z]|\{
 /**
  * Files under the given folders that name a module, skipping the module system itself.
  *
- * @param list<string> $dirs
+ * @param  list<string>  $dirs
  * @return list<string>
  */
 function moduleOffenders(array $dirs): array

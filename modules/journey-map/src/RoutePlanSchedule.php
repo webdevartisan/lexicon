@@ -16,9 +16,7 @@ final class RoutePlanSchedule
     /** Starting the planner and a full batch of legs fits well inside this. */
     private const TIMEOUT_SECONDS = 600;
 
-    public function __construct(private Database $db, private ScheduledTaskModel $tasks)
-    {
-    }
+    public function __construct(private Database $db, private ScheduledTaskModel $tasks) {}
 
     /**
      * Add the row once.

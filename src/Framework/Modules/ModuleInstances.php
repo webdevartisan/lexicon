@@ -17,9 +17,7 @@ final class ModuleInstances
     /** @var array<string, object> */
     private array $instances = [];
 
-    public function __construct(private Container $container)
-    {
-    }
+    public function __construct(private Container $container) {}
 
     /**
      * The module's main class, built but not booted.

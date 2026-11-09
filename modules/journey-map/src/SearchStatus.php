@@ -14,11 +14,10 @@ use Framework\Cache\CacheService;
 final class SearchStatus
 {
     private const KEY = 'journey-map:search-status';
+
     private const KEEP_SECONDS = 2592000;
 
-    public function __construct(private CacheService $cache)
-    {
-    }
+    public function __construct(private CacheService $cache) {}
 
     /**
      * A search got an answer.
@@ -63,7 +62,7 @@ final class SearchStatus
     }
 
     /**
-     * @param array<string, string|int> $changes
+     * @param  array<string, string|int>  $changes
      */
     private function write(array $changes): void
     {

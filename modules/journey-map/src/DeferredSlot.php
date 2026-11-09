@@ -19,11 +19,9 @@ final class DeferredSlot implements SlotRenderer
     private ?SlotRenderer $slot = null;
 
     /**
-     * @param Closure(): SlotRenderer $make
+     * @param  Closure(): SlotRenderer  $make
      */
-    public function __construct(private Closure $make)
-    {
-    }
+    public function __construct(private Closure $make) {}
 
     /**
      * Ask the real slot, building it on first use.

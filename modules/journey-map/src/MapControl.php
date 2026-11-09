@@ -45,13 +45,13 @@ final class MapControl
         private MapJobStarter $starter,
         private PublicCacheInvalidator $pages,
         private RegionStore $regions,
-    ) {
-    }
+    ) {}
 
     /**
      * Check the admin's choice of detail and area.
      *
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
+     *
      * @throws InvalidMapRequest
      */
     public function request(array $input): MapRequest
@@ -134,8 +134,9 @@ final class MapControl
     /**
      * Keep a looked up outline for the area choice.
      *
-     * @param array{name: string, bbox: list<float>, outline: array<string, mixed>} $area
+     * @param  array{name: string, bbox: list<float>, outline: array<string, mixed>}  $area
      * @return array{name: string, bbox: list<float>, file: string}
+     *
      * @throws MapActionRefused When the outline is not a usable area
      */
     public function saveRegion(array $area): array
@@ -262,7 +263,7 @@ final class MapControl
     /**
      * The job for the page: its state, progress and one sentence about it.
      *
-     * @param array<string, mixed> $job
+     * @param  array<string, mixed>  $job
      * @return array{state: string, kind: string, percent: int, line: string}
      */
     private function describeJob(array $job): array
@@ -309,7 +310,7 @@ final class MapControl
     /**
      * The last measured size and the free space, in one sentence.
      *
-     * @param array<string, mixed>|null $job
+     * @param  array<string, mixed>|null  $job
      */
     private function sizeLine(?array $job): string
     {
@@ -325,7 +326,7 @@ final class MapControl
     /**
      * A stored choice in words.
      *
-     * @param array<string, mixed> $request
+     * @param  array<string, mixed>  $request
      */
     private function label(array $request): string
     {
@@ -335,7 +336,7 @@ final class MapControl
     /**
      * A stored choice, or null when it no longer passes the checks (a region file was removed).
      *
-     * @param array<string, mixed> $request
+     * @param  array<string, mixed>  $request
      */
     private function requestOf(array $request): ?MapRequest
     {

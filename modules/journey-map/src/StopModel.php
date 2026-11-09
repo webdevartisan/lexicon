@@ -19,9 +19,7 @@ class StopModel
 
     private const EXPORT_COLUMNS = 'post_id, position, place_name, lat, lng, place_precision, stop_number';
 
-    public function __construct(private Database $db)
-    {
-    }
+    public function __construct(private Database $db) {}
 
     /**
      * The places of one post in order, published or not.
@@ -37,7 +35,7 @@ class StopModel
     /**
      * Give a post its places in this order, replacing the earlier ones.
      *
-     * @param list<Stop> $stops
+     * @param  list<Stop>  $stops
      */
     public function replace(int $blogId, int $postId, array $stops): void
     {
@@ -115,12 +113,12 @@ class StopModel
     public function forBlog(int $blogId): array
     {
         return $this->db->query(
-            "SELECT s.post_id, p.title, p.status, p.visibility,
+            'SELECT s.post_id, p.title, p.status, p.visibility,
                     s.place_name, s.place_precision, s.stop_number
              FROM journey_stops s
              JOIN posts p ON p.id = s.post_id
              WHERE s.blog_id = ? AND p.blog_id = s.blog_id
-             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at IS NULL, p.published_at, p.id, s.position",
+             ORDER BY s.stop_number IS NULL, s.stop_number, p.published_at IS NULL, p.published_at, p.id, s.position',
             [$blogId]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -160,7 +158,7 @@ class StopModel
      * Stops of blogs with the module on that lie outside a box (west, south, east, north), so the admin
      * knows which places a limited map shows only in the overview.
      *
-     * @param list<float> $bbox
+     * @param  list<float>  $bbox
      * @return list<array{post_id: int, title: string, blog_name: string, place_name: string}>
      */
     public function outside(array $bbox): array

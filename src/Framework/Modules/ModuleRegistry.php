@@ -31,16 +31,15 @@ final class ModuleRegistry
     private array $states = [];
 
     /**
-     * @param string $modulesPath Folder holding one subfolder per module
-     * @param string $cacheFile Where the compiled registry is written
-     * @param Closure(): array<string, string> $installedStates Reads module key to state from the database
+     * @param  string  $modulesPath  Folder holding one subfolder per module
+     * @param  string  $cacheFile  Where the compiled registry is written
+     * @param  Closure(): array<string, string>  $installedStates  Reads module key to state from the database
      */
     public function __construct(
         private readonly string $modulesPath,
         private readonly string $cacheFile,
         private readonly Closure $installedStates,
-    ) {
-    }
+    ) {}
 
     /**
      * Every module with a valid manifest, installed or not.
@@ -87,7 +86,7 @@ final class ModuleRegistry
     /**
      * A module's site wide state.
      *
-     * @param string $key The module key
+     * @param  string  $key  The module key
      * @return string|null 'on', 'off' or 'paused', or null when the module is not installed
      */
     public function state(string $key): ?string
@@ -100,7 +99,7 @@ final class ModuleRegistry
     /**
      * Find a module by key.
      *
-     * @param string $key The module key
+     * @param  string  $key  The module key
      * @return ModuleManifest|null The manifest, or null when no valid module has that key
      */
     public function find(string $key): ?ModuleManifest
@@ -119,7 +118,7 @@ final class ModuleRegistry
     }
 
     /**
-     * @param list<string> $states
+     * @param  list<string>  $states
      * @return array<string, ModuleManifest>
      */
     private function withState(array $states): array
@@ -141,6 +140,7 @@ final class ModuleRegistry
         $cached = is_file($this->cacheFile) ? include $this->cacheFile : null;
         if (!is_array($cached) || !isset($cached['manifests'], $cached['states'])) {
             $this->rebuild();
+
             return;
         }
 
@@ -169,7 +169,6 @@ final class ModuleRegistry
 
         return $manifests;
     }
-
 
     private function writeCache(): void
     {

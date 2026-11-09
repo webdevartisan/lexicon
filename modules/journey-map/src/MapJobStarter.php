@@ -26,8 +26,7 @@ class MapJobStarter
         private ScheduleService $schedule,
         private string $command = MapDataCommand::NAME,
         private string $label = 'Journey map download',
-    ) {
-    }
+    ) {}
 
     /**
      * Start the command now.

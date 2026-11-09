@@ -23,8 +23,8 @@ class MapJob
     private $lock = null;
 
     /**
-     * @param string $dir The module's folder under storage/, outside public/
-     * @param Closure(): int|null $clock The current time, for tests
+     * @param  string  $dir  The module's folder under storage/, outside public/
+     * @param  Closure(): int|null  $clock  The current time, for tests
      */
     public function __construct(private string $dir, ?Closure $clock = null)
     {
@@ -42,8 +42,8 @@ class MapJob
     /**
      * Ask for a size check or a download. The last measured size is kept for the download check.
      *
-     * @param string $kind size or download
-     * @param int $userId Who asked, 0 for the scheduler
+     * @param  string  $kind  size or download
+     * @param  int  $userId  Who asked, 0 for the scheduler
      */
     public function queue(string $kind, MapRequest $request, int $userId): void
     {
@@ -53,7 +53,7 @@ class MapJob
     /**
      * Queue a job whose request is plain data, such as the road network's region.
      *
-     * @param array<string, mixed> $request
+     * @param  array<string, mixed>  $request
      */
     public function queueRequest(string $kind, array $request, int $userId): void
     {
@@ -112,7 +112,7 @@ class MapJob
     /**
      * The job stopped without a result.
      *
-     * @param string $reason One word the page turns into a sentence
+     * @param  string  $reason  One word the page turns into a sentence
      */
     public function fail(string $reason): void
     {
@@ -210,7 +210,7 @@ class MapJob
     }
 
     /**
-     * @param array<string, mixed> $job
+     * @param  array<string, mixed>  $job
      */
     private function active(array $job): bool
     {
@@ -218,7 +218,7 @@ class MapJob
     }
 
     /**
-     * @param array<string, mixed> $changes
+     * @param  array<string, mixed>  $changes
      */
     private function update(array $changes): void
     {
@@ -239,7 +239,7 @@ class MapJob
     /**
      * Write through a temporary file and a rename, so the page never reads half a file.
      *
-     * @param array<string, mixed> $job
+     * @param  array<string, mixed>  $job
      */
     private function write(array $job): void
     {

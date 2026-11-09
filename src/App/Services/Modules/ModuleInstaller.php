@@ -26,14 +26,14 @@ class ModuleInstaller
         private Database $db,
         private ModuleInstances $instances,
         private ModuleAssets $assets,
-    ) {
-    }
+    ) {}
 
     /**
      * Apply a module's new schema files and mark it installed.
      *
-     * @param string $key The module key
+     * @param  string  $key  The module key
      * @return list<string> Schema files applied on this run, empty when all were applied before
+     *
      * @throws InvalidManifestException When the module is missing or breaks the data rules
      */
     public function install(string $key): array
@@ -59,8 +59,9 @@ class ModuleInstaller
     /**
      * Remove a module, its tables, its public folder, whatever its own cleanup deletes, and its state.
      *
-     * @param string $key The module key
-     * @param bool $purge Erase the data instead of refusing when some exists
+     * @param  string  $key  The module key
+     * @param  bool  $purge  Erase the data instead of refusing when some exists
+     *
      * @throws ModuleHasDataException When the module still holds data and $purge is false
      */
     public function uninstall(string $key, bool $purge): void

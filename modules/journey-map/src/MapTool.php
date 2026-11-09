@@ -18,8 +18,11 @@ use ZipArchive;
 final class MapTool
 {
     private const RELEASE_API = 'https://api.github.com/repos/protomaps/go-pmtiles/releases/latest';
+
     private const DOWNLOAD_PREFIX = 'https://github.com/protomaps/go-pmtiles/releases/download/';
+
     private const SYSTEMS = ['Linux' => 'Linux', 'Darwin' => 'Darwin', 'Windows' => 'Windows'];
+
     private const CHIPS = [
         'x86_64' => 'x86_64', 'amd64' => 'x86_64', 'AMD64' => 'x86_64',
         'arm64' => 'arm64', 'aarch64' => 'arm64', 'ARM64' => 'arm64',
@@ -28,9 +31,9 @@ final class MapTool
     private string $arch;
 
     /**
-     * @param Closure(string): ?array $fetchJson The decoded JSON at a URL, or null when the call failed
-     * @param Closure(string, string): bool $download Save a URL to a file path
-     * @param string|null $arch The chip name, php_uname('m') when not given
+     * @param  Closure(string): ?array  $fetchJson  The decoded JSON at a URL, or null when the call failed
+     * @param  Closure(string, string): bool  $download  Save a URL to a file path
+     * @param  string|null  $arch  The chip name, php_uname('m') when not given
      */
     public function __construct(
         private string $binDir,
@@ -91,6 +94,7 @@ final class MapTool
      * Download, check and install the newest release.
      *
      * @return string The installed release tag
+     *
      * @throws MapToolException With the reason the page shows
      */
     public function install(): string
@@ -146,7 +150,7 @@ final class MapTool
      * Save a file from GitHub to disk. GitHub answers with a redirect to its file host, so redirects
      * are followed, over HTTPS only.
      *
-     * @param int $timeout Seconds the whole download may take
+     * @param  int  $timeout  Seconds the whole download may take
      * @return Closure(string, string): bool
      */
     public static function curlDownload(string $userAgent, int $timeout): Closure
@@ -179,7 +183,7 @@ final class MapTool
     /**
      * The release file for this system, from the official download address, with its digest.
      *
-     * @param array<string, mixed> $release
+     * @param  array<string, mixed>  $release
      * @return array{url: string, sha256: string}
      */
     private function asset(array $release, string $suffix): array
@@ -206,7 +210,7 @@ final class MapTool
     /**
      * Download the release file and keep it only when its digest matches.
      *
-     * @param array{url: string, sha256: string} $asset
+     * @param  array{url: string, sha256: string}  $asset
      * @return string Path of the checked archive
      */
     private function fetchArchive(array $asset, string $suffix): string

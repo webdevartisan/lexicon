@@ -61,7 +61,7 @@ final class GuideController extends ModuleController
     /**
      * Each stop as the guide's table shows it, flagged when readers cannot see its post.
      *
-     * @param list<array<string, mixed>> $stops
+     * @param  list<array<string, mixed>>  $stops
      * @return list<array<string, mixed>>
      */
     private function forOwner(array $stops): array

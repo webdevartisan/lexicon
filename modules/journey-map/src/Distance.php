@@ -29,8 +29,8 @@ final class Distance
     /**
      * Kilometres between two stop rows.
      *
-     * @param array<string, mixed> $from
-     * @param array<string, mixed> $to
+     * @param  array<string, mixed>  $from
+     * @param  array<string, mixed>  $to
      */
     public static function between(array $from, array $to): float
     {

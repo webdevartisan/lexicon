@@ -18,9 +18,7 @@ final class LegModel
 
     private const ONE_LEG = 'WHERE blog_id = ? AND from_hash = ? AND to_hash = ?';
 
-    public function __construct(private Database $db)
-    {
-    }
+    public function __construct(private Database $db) {}
 
     /**
      * Every leg of a blog, keyed by Leg::key().
@@ -45,8 +43,8 @@ final class LegModel
     /**
      * A new leg between two places, waiting for its road route.
      *
-     * @param array<string, mixed> $from
-     * @param array<string, mixed> $to
+     * @param  array<string, mixed>  $from
+     * @param  array<string, mixed>  $to
      */
     public function add(int $blogId, array $from, array $to): void
     {

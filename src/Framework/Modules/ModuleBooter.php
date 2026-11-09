@@ -26,8 +26,7 @@ final class ModuleBooter
         private ModuleRegistry $registry,
         private Container $container,
         private ModuleInstances $instances,
-    ) {
-    }
+    ) {}
 
     /**
      * Load and register every module that is switched on.
@@ -39,6 +38,7 @@ final class ModuleBooter
         } catch (Throwable $e) {
             // The modules table may not exist yet on a fresh database; the site runs without modules then.
             error_log('Modules not loaded: '.$e->getMessage());
+
             return;
         }
 

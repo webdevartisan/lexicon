@@ -10,20 +10,19 @@ namespace Modules\JourneyMap;
 final class RouteAnswer
 {
     /**
-     * @param string $kind road, none or failed
-     * @param list<array{0: float, 1: float}> $points
+     * @param  string  $kind  road, none or failed
+     * @param  list<array{0: float, 1: float}>  $points
      */
     private function __construct(
         public readonly string $kind,
         public readonly ?float $km,
         public readonly array $points,
-    ) {
-    }
+    ) {}
 
     /**
      * A road joins the two places.
      *
-     * @param list<array{0: float, 1: float}> $points
+     * @param  list<array{0: float, 1: float}>  $points
      */
     public static function road(float $km, array $points): self
     {

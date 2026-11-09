@@ -18,9 +18,7 @@ final class SamplePlatformModule implements ModuleInterface, ModuleUninstaller
 {
     public static int $uninstalls = 0;
 
-    public function register(Container $container): void
-    {
-    }
+    public function register(Container $container): void {}
 
     public function boot(ModuleContext $context): void
     {

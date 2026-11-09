@@ -32,8 +32,8 @@ class BlogPageContext
     /**
      * The page context for a blog address.
      *
-     * @return array{user: array, blog: array, settings: array, meta: array, viewer: mixed,
-     *     localeSet: mixed, wording: mixed}
+     * @return array{user: array<string, mixed>, blog: array<string, mixed>, settings: array<string, mixed>,
+     *     meta: array<string, mixed>, viewer: mixed, localeSet: mixed, wording: mixed}
      *
      * @throws PageNotFoundException When the blog or its owner is missing, or it is a draft the viewer may not see
      */
@@ -88,7 +88,7 @@ class BlogPageContext
     /**
      * The blog's owner, with the fields every themed page shows for the author.
      *
-     * @param array<string, mixed> $blog
+     * @param  array<string, mixed>  $blog
      * @return array<string, mixed>
      *
      * @throws PageNotFoundException When the owner account is gone
@@ -136,9 +136,9 @@ class BlogPageContext
     }
 
     /**
-     * @param array<string, mixed> $blog
-     * @param array<string, mixed> $user
-     * @param array<string, mixed> $settings
+     * @param  array<string, mixed>  $blog
+     * @param  array<string, mixed>  $user
+     * @param  array<string, mixed>  $settings
      * @return array<string, mixed>
      */
     private function meta(array $blog, array $user, array $settings, bool $isPreview): array

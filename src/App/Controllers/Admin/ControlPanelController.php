@@ -83,7 +83,7 @@ class ControlPanelController extends AppController
     {
         return array_map(fn (array $row): array => [
             'key' => $row['module_key'],
-            'name' => $this->moduleRegistry->find($row['module_key'])?->name ?? $row['module_key'],
+            'name' => $this->moduleRegistry->find($row['module_key'])->name ?? $row['module_key'],
             'reason' => (string) ($row['paused_reason'] ?? ''),
         ], $this->modules->paused());
     }

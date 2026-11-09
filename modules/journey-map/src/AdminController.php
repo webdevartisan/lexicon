@@ -18,6 +18,7 @@ use Framework\Core\Response;
 final class AdminController extends AppController
 {
     private const AREA_NAME_MIN = 3;
+
     private const AREA_NAME_MAX = 120;
 
     public function __construct(
@@ -29,8 +30,7 @@ final class AdminController extends AppController
         private RangeProbe $probe,
         private RoutingControl $routing,
         private Auth $auth,
-    ) {
-    }
+    ) {}
 
     /**
      * The page with its five cards.
@@ -201,7 +201,7 @@ final class AdminController extends AppController
     /**
      * Run an action and answer with its message or data, or with why it was refused.
      *
-     * @param Closure(): (string|array<string, mixed>) $action
+     * @param  Closure(): (string|array<string, mixed>)  $action
      */
     private function attempt(Closure $action): Response
     {

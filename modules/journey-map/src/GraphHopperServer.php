@@ -11,14 +11,13 @@ namespace Modules\JourneyMap;
 final class GraphHopperServer implements RouteSource
 {
     private const START_SECONDS = 60;
+
     private const NONE_MESSAGES = ['Cannot find point', 'Connection between locations not found', 'out of bounds'];
 
     /** @var resource|null */
     private $process = null;
 
-    public function __construct(private RoutingFiles $files, private JavaRuntime $java)
-    {
-    }
+    public function __construct(private RoutingFiles $files, private JavaRuntime $java) {}
 
     /**
      * Start the server and wait until it answers its health check.
@@ -117,7 +116,7 @@ final class GraphHopperServer implements RouteSource
     }
 
     /**
-     * @param array{lat: float, lng: float} $place
+     * @param  array{lat: float, lng: float}  $place
      */
     private function point(array $place): string
     {

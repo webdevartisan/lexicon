@@ -30,10 +30,10 @@ class PlaceSearch
     private const OUTLINE_DETAIL = 0.01;
 
     /**
-     * @param Closure(string): ?string $fetch Returns the response body, or null when the call failed
-     * @param string $throttleFile Holds the time of the last call, shared by every request
-     * @param string $endpoint The public service, or a self hosted one that sets its own limits
-     * @param string $contact Sent as the email parameter so the service can reach the site
+     * @param  Closure(string): ?string  $fetch  Returns the response body, or null when the call failed
+     * @param  string  $throttleFile  Holds the time of the last call, shared by every request
+     * @param  string  $endpoint  The public service, or a self hosted one that sets its own limits
+     * @param  string  $contact  Sent as the email parameter so the service can reach the site
      */
     public function __construct(
         private Closure $fetch,
@@ -42,8 +42,7 @@ class PlaceSearch
         private string $endpoint = self::PUBLIC_ENDPOINT,
         private string $contact = '',
         private ?SearchStatus $status = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Up to five places matching the text, named in the given language where OpenStreetMap has it.
@@ -107,6 +106,7 @@ class PlaceSearch
     {
         return $this->cache->deletePattern('journey-map:place:*');
     }
+
     /**
      * The default way to call the search service: curl with short timeouts and a User-Agent naming the site.
      *
@@ -167,7 +167,7 @@ class PlaceSearch
      * One call to the service: the site wide turn on the public service, then the answer as a list.
      * Every outcome is recorded for the admin page.
      *
-     * @param array<string, string|int|float> $params
+     * @param  array<string, string|int|float>  $params
      * @return list<mixed>
      *
      * @throws PlaceSearchUnavailable "busy" or "failed"
@@ -218,7 +218,7 @@ class PlaceSearch
     }
 
     /**
-     * @param array<mixed> $item
+     * @param  array<mixed>  $item
      * @return array{name: string, bbox: list<float>, outline: array<string, mixed>}|null
      */
     private function areaOf(array $item): ?array
@@ -248,7 +248,7 @@ class PlaceSearch
     }
 
     /**
-     * @param list<mixed> $items
+     * @param  list<mixed>  $items
      * @return list<array{name: string, lat: float, lng: float}>
      */
     private function places(array $items): array
@@ -265,7 +265,7 @@ class PlaceSearch
     }
 
     /**
-     * @param array<mixed> $item
+     * @param  array<mixed>  $item
      * @return array{name: string, lat: float, lng: float}|null
      */
     private function place(array $item): ?array

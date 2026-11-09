@@ -13,17 +13,17 @@ use Closure;
 final class CountryIndex
 {
     private const INDEX = 'https://download.geofabrik.de/index-v1-nogeom.json';
+
     private const HOST = 'https://download.geofabrik.de/';
+
     private const KEEP_SECONDS = 86400;
 
     /**
-     * @param Closure(string): ?array $fetchJson The decoded JSON at a URL, or null when the call failed
-     * @param Closure(string): ?int $fetchSize The size a URL reports, or null when it did not answer
-     * @param string $cacheFile Where the area list is kept between requests
+     * @param  Closure(string): ?array  $fetchJson  The decoded JSON at a URL, or null when the call failed
+     * @param  Closure(string): ?int  $fetchSize  The size a URL reports, or null when it did not answer
+     * @param  string  $cacheFile  Where the area list is kept between requests
      */
-    public function __construct(private Closure $fetchJson, private Closure $fetchSize, private string $cacheFile)
-    {
-    }
+    public function __construct(private Closure $fetchJson, private Closure $fetchSize, private string $cacheFile) {}
 
     /**
      * Every area with a road data file, sorted by name.
@@ -117,7 +117,7 @@ final class CountryIndex
     /**
      * The areas from Geofabrik's index whose file sits on Geofabrik's own download host.
      *
-     * @param array<string, mixed>|null $index
+     * @param  array<string, mixed>|null  $index
      * @return list<array{id: string, name: string, parent: string, url: string}>
      */
     private function fromIndex(?array $index): array

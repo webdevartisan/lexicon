@@ -12,7 +12,7 @@ final class GraphHopperConfig
     /**
      * Write config.yml for building from a road data file, or for serving an already built network.
      *
-     * @param string|null $roadData The .osm.pbf file to build from, or null when only serving
+     * @param  string|null  $roadData  The .osm.pbf file to build from, or null when only serving
      */
     public static function write(RoutingFiles $files, string $network, int $port, ?string $roadData = null): void
     {
