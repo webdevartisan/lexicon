@@ -2,6 +2,8 @@
 $flash = flash();
 $errors = errors();
 $old = old();
+$inControlPanel = str_starts_with((string) ($current_path ?? ''), '/admin');
+$titleSuffix = $inControlPanel ? 'Lexicon CP' : (string) site_setting('site_name', 'Lexicon');
 ?>
 <!DOCTYPE html>
 <html lang="{{ chromeLang }}" class="dark scrollbar-gutter-stable scroll-smooth group" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-mode="dark" data-topbar="dark" dir="{{ chromeDir }}">
@@ -9,7 +11,7 @@ $old = old();
 <head>
 
     <meta charset="utf-8">
-    <title>{% yield title %} | Lexicon CP</title>
+    <title>{% yield title %} | <?= e($titleSuffix) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     {% include "partials/_favicons.lex.php" %}
     {% include "partials/_device_zone.lex.php" %}

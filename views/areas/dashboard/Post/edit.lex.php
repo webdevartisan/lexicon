@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Edit Post · {{ post.title }}{% endblock %}
+{% block title %}{{ t('breadcrumbs.editPost') }} · {{ post.title }}{% endblock %}
 {% block subtitle %}Update details, content, localization, SEO, and workflow state for this post.{% endblock %}
 
 {% block head %}

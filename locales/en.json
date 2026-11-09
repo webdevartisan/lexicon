@@ -728,6 +728,12 @@
             "pageTitle": "Edit Blog Settings",
             "pageSubtitle": "Update details, localization, theme, SEO, and comments settings."
         },
+        "delete": {
+            "pageTitle": "Delete Blog"
+        },
+        "invitation": {
+            "pageTitle": "Blog Invitation"
+        },
         "settings": {
             "pageTitle": "Blog Settings",
             "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic."

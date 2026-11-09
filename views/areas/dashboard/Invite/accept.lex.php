@@ -1,5 +1,5 @@
 {% extends "back.lex.php" %}
-{% block title %}Blog Invitation{% endblock %}
+{% block title %}{{ t('blog.invitation.pageTitle') }}{% endblock %}
 {% block subtitle %}Join a blog as a collaborator.{% endblock %}
 {% block body %}
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">

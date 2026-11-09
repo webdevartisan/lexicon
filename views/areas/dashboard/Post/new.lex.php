@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Creating New Post{% endblock %}
+{% block title %}{{ t('dashboard.actions.newPost') }}{% endblock %}
 {% block subtitle %}Fill in details to create your new post.{% endblock %}
 
 {% block head %}

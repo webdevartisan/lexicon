@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Extras{% endblock %}
+{% block title %}{{ t('navigation.extras') }}{% endblock %}
 {% block subtitle %}<span class="hidden sm:inline">Optional features you can switch on for this blog.</span>{% endblock %}
 {% block body %}
 <?php $extrasPath = '/dashboard/blog/'.(int) $blog['id'].'/extras'; ?>
