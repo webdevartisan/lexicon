@@ -706,6 +706,19 @@ class PostModel extends AppModel
     }
 
     /**
+     * Approved comments left on a blog's posts during the last few days.
+     */
+    public function countApprovedCommentsSince(int $blogId, int $days): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM comments c
+                INNER JOIN {$this->getTable()} p ON c.post_id = p.id
+                WHERE p.blog_id = ? AND c.status = 'approved' AND c.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
+        $result = $this->database->query($sql, [$blogId, $days])->fetch();
+
+        return (int) ($result['count'] ?? 0);
+    }
+
+    /**
      * Ids of every post one person wrote in one blog, whatever its status.
      *
      * @return list<int>
