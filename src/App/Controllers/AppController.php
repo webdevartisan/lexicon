@@ -430,6 +430,31 @@ abstract class AppController extends BaseController implements SessionAwareInter
         return referer_path($this->request->header('Referer')) ?? '/';
     }
 
+    /**
+     * Whether a list shows as cards or a compact table. An explicit `?view=` wins
+     * and is remembered in a cookie, so the next visit opens the way they left it.
+     *
+     * @param  string  $cookie  Cookie that remembers the choice, one per list
+     * @return string `cards` or `list`
+     */
+    protected function rememberedListView(string $cookie): string
+    {
+        $requested = (string) $this->request->getParam('view', '');
+        $remembered = (string) ($this->request->cookie[$cookie] ?? 'cards');
+        $view = ($requested !== '' ? $requested : $remembered) === 'list' ? 'list' : 'cards';
+
+        if ($requested !== '' && $view !== $remembered) {
+            setcookie($cookie, $view, [
+                'expires' => time() + 31536000,
+                'path' => '/',
+                'secure' => isset($this->request->server['HTTPS']) && $this->request->server['HTTPS'] !== 'off',
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        return $view;
+    }
+
     // ============== Error Response Helpers ==============
 
     /**

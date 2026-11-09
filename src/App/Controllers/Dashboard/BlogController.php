@@ -16,10 +16,12 @@ use App\Presenters\BlogActionPresenter;
 use App\Presenters\VisibilityPresenter;
 use App\Resources\BlogResource;
 use App\Services\BlogDeletionService;
+use App\Services\BlogListing;
 use App\Services\BlogRoleLabels;
 use App\Services\DisplayNameService;
 use App\Services\LocaleRegistry;
 use App\Services\WorkflowService;
+use App\ValueObjects\TableSort;
 use Framework\Core\Response;
 use Framework\Exceptions\PageNotFoundException;
 
@@ -31,6 +33,14 @@ use Framework\Exceptions\PageNotFoundException;
  */
 final class BlogController extends AppController
 {
+    /** Sort menu choice => [column key, direction]. */
+    private const NAMED_SORTS = [
+        'updated' => ['updated', 'desc'],
+        'created' => ['created', 'desc'],
+        'posts' => ['posts', 'desc'],
+        'name' => ['name', 'asc'],
+    ];
+
     public function __construct(
         private BlogModel $blogModel,
         private PostModel $post,
@@ -41,11 +51,12 @@ final class BlogController extends AppController
         private WorkflowService $workflowService,
         private BlogRoleLabels $roleLabels,
         private DisplayNameService $displayNames,
+        private BlogListing $listing,
     ) {}
 
     /**
-     * Every blog the user works in, owned first, then shared, with the role
-     * they hold on each. Opening one makes it the active blog.
+     * Every blog the user works in, with the role they hold on each, filtered,
+     * sorted and paged. Opening one makes it the active blog.
      */
     public function index(): Response
     {
@@ -59,59 +70,64 @@ final class BlogController extends AppController
             return $this->redirect('/?welcome=1');
         }
 
-        $q = trim((string) $this->request->getParam('q', ''));
-        $status = trim((string) $this->request->getParam('status', ''));
-        $sort = (string) $this->request->getParam('sort', 'updated');
-        if (!in_array($sort, ['updated', 'created', 'posts', 'name'], true)) {
-            $sort = 'updated';
-        }
-
-        $blogs = $this->filterAndSort($accessible, $q, $status, $sort);
+        $filters = $this->listFilters();
+        $tableSort = $this->blogSort();
+        $page = $this->listing->page($accessible, $filters, $tableSort, (int) $this->request->getParam('page', 1));
         $activeBlogId = (int) ($this->preference->getDefaultBlogId($userId) ?? 0);
 
-        $groups = ['owned' => [], 'shared' => []];
-        foreach ($blogs as $blog) {
-            $groups[$blog['user_role'] === 'owner' ? 'owned' : 'shared'][] = $this->blogCard($blog, $activeBlogId);
-        }
-
-        return $this->view([
-            'groups' => $groups,
-            'hasOwned' => in_array('owner', array_column($accessible, 'user_role'), true),
-            'hasShared' => array_filter($accessible, static fn (array $b): bool => $b['user_role'] !== 'owner') !== [],
-            'q' => $q,
-            'status' => $status,
-            'sort' => $sort,
+        return $this->view($filters + [
+            'blogs' => $this->blogCards($page['rows'], $activeBlogId),
+            'pagination' => $page['pagination'],
+            'counts' => $page['counts'],
+            'hasShared' => $page['hasShared'],
+            'tableSort' => $tableSort,
+            'sortChoice' => $tableSort->choice(),
+            'sortExplicit' => $tableSort->wasRequested(),
+            'listView' => $this->rememberedListView('blogs_view'),
             'can_create_blog' => Gate::allows('create', BlogResource::class, $user),
         ]);
     }
 
     /**
-     * The user's blogs are few, so filtering and sorting happen here rather than in SQL.
+     * What the toolbar asked for: search text, a status and a role. The listing ignores
+     * values it does not know, so nothing is validated here.
      *
-     * @param  array<int, array<string, mixed>>  $blogs
+     * @return array{q: string, status: string, role: string}
+     */
+    private function listFilters(): array
+    {
+        return [
+            'q' => trim((string) $this->request->getParam('q', '')),
+            'status' => trim((string) $this->request->getParam('status', '')),
+            'role' => (string) $this->request->getParam('role', ''),
+        ];
+    }
+
+    /**
+     * The order the Blogs list is in: a column header, or one of the sort menu's names.
+     */
+    private function blogSort(): TableSort
+    {
+        return TableSort::fromRequest(
+            $this->request,
+            BlogListing::SORT_FIELDS,
+            defaultKey: 'updated',
+            named: self::NAMED_SORTS
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows  One page of getAccessibleBlogs() rows
      * @return array<int, array<string, mixed>>
      */
-    private function filterAndSort(array $blogs, string $q, string $status, string $sort): array
+    private function blogCards(array $rows, int $activeBlogId): array
     {
-        if ($q !== '') {
-            $needle = mb_strtolower($q);
-            $blogs = array_filter($blogs, static fn (array $b): bool => str_contains(mb_strtolower((string) $b['blog_name']), $needle)
-                || str_contains(mb_strtolower((string) $b['blog_slug']), $needle)
-                || str_contains(mb_strtolower((string) ($b['description'] ?? '')), $needle));
+        $cards = [];
+        foreach ($rows as $row) {
+            $cards[] = $this->blogCard($row, $activeBlogId);
         }
 
-        if (in_array($status, ['draft', 'published', 'archived'], true)) {
-            $blogs = array_filter($blogs, static fn (array $b): bool => $b['status'] === $status);
-        }
-
-        usort($blogs, static fn (array $a, array $b): int => match ($sort) {
-            'created' => strcmp((string) $b['created_at'], (string) $a['created_at']),
-            'posts' => (int) $b['post_count'] <=> (int) $a['post_count'],
-            'name' => strcasecmp((string) $a['blog_name'], (string) $b['blog_name']),
-            default => strcmp((string) $b['updated_at'], (string) $a['updated_at']),
-        });
-
-        return $blogs;
+        return $cards;
     }
 
     /**

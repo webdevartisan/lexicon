@@ -162,20 +162,43 @@
                 "shared": "Shared"
             },
             "search": "Search blogs",
-            "anyStatus": "Any status",
             "sort": {
                 "updated": "Last updated",
                 "created": "Date created",
                 "posts": "Most posts",
-                "name": "Name (A to Z)"
+                "name": "Name (A to Z)",
+                "label": "Sort"
             },
             "create": "Create a blog",
             "clearFilters": "Clear filters",
+            "filters": {
+                "title": "Filters",
+                "all": "All",
+                "status": "Status",
+                "role": "Role",
+                "apply": "Apply"
+            },
+            "view": {
+                "label": "View",
+                "cards": "Cards",
+                "compact": "Compact list"
+            },
+            "col": {
+                "name": "Blog",
+                "role": "Role",
+                "status": "Status",
+                "posts": "Posts",
+                "team": "Collaborators",
+                "updated": "Updated",
+                "actions": "Actions"
+            },
+            "item": {
+                "one": "blog",
+                "other": "blogs"
+            },
             "empty": {
                 "filteredTitle": "No blogs match your filters",
-                "filteredText": "Try a different search or another status.",
-                "noOwned": "You don't own a blog yet. Start one whenever you like.",
-                "groupFiltered": "None of these match your filters."
+                "filteredText": "Try a different search or another status."
             },
             "active": "Active",
             "open": "Open",
@@ -415,7 +438,7 @@
         },
         "paginator": {
             "ariaLabels": {
-                "pagination": "Posts pagination",
+                "pagination": "Pagination",
                 "previousPage": "Go to previous page",
                 "previousUnavailable": "Previous page unavailable",
                 "nextPage": "Go to next page",

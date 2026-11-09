@@ -85,21 +85,52 @@ foreach ($tabs as $tab) {
     $statusOptions[(string) $tab['key']] = $tab['label'].' ('.(int) $tab['count'].')';
 }
 $selectedStatusKey = (string) $status;
-$statusLabel = $t('dashboard.posts.filters.status');
-$searchLabel = $t('dashboard.posts.filters.search');
-$searchPlaceholder = $t('dashboard.posts.filters.searchPlaceholder');
-$categoryLabel = $t('dashboard.posts.filters.category');
-$tagLabel = $t('dashboard.posts.filters.tag');
-$applyLabel = $t('dashboard.posts.filters.apply');
-$sortLabel = $t('dashboard.posts.sort.label');
-$filtersLabel = $t('dashboard.posts.filters.title');
-$clearLabel = $t('dashboard.posts.filters.clear');
-$activeFilters = ($status !== '' ? 1 : 0) + ($categoryId ? 1 : 0) + ($tagId ? 1 : 0);
-$clearFiltersHref = lurl('/dashboard/post'.$makeQuery(['status' => '', 'category' => null, 'tag' => null, 'page' => null]));
-$viewLabel = $t('dashboard.posts.view.label');
 $viewChoices = [
-    'cards' => ['layout-grid', $t('dashboard.posts.view.cards')],
-    'list' => ['list', $t('dashboard.posts.view.compact')],
+    'cards' => ['icon' => 'layout-grid', 'label' => $t('dashboard.posts.view.cards')],
+    'list' => ['icon' => 'list', 'label' => $t('dashboard.posts.view.compact')],
+];
+foreach ($viewChoices as $viewKey => $choice) {
+    $viewChoices[$viewKey]['href'] = lurl('/dashboard/post'.$makeQuery(['view' => $viewKey, 'page' => null]));
+}
+$keepSort = null;
+if ($sortChoice === '' && $sortExplicit) {
+    $keepSort = ['sort' => $tableSort->key(), 'dir' => $tableSort->direction()];
+}
+$clearQuery = $makeQuery(['status' => '', 'category' => null, 'tag' => null, 'page' => null]);
+$toolbar = [
+    'action' => $listBase,
+    'q' => $q,
+    'searchPlaceholder' => $t('dashboard.posts.filters.searchPlaceholder'),
+    'filters' => [
+        [
+            'label' => $t('dashboard.posts.filters.status'),
+            'name' => 'status',
+            'options' => $statusOptions,
+            'selected' => $selectedStatusKey,
+        ],
+        [
+            'label' => $t('dashboard.posts.filters.category'),
+            'name' => 'category',
+            'options' => $categoryOptions,
+            'selected' => $selectedCategoryKey,
+        ],
+        [
+            'label' => $t('dashboard.posts.filters.tag'),
+            'name' => 'tag',
+            'options' => $tagOptions,
+            'selected' => $selectedTagKey,
+        ],
+    ],
+    'filtersLabel' => $t('dashboard.posts.filters.title'),
+    'applyLabel' => $t('dashboard.posts.filters.apply'),
+    'clearLabel' => $t('dashboard.posts.filters.clear'),
+    'clearHref' => lurl('/dashboard/post'.$clearQuery),
+    'view' => ['current' => $listView, 'label' => $t('dashboard.posts.view.label'), 'choices' => $viewChoices],
+    'sort' => [
+        'options' => $sortOptions,
+        'selected' => $selectedSortKey,
+        'keep' => $keepSort,
+    ],
 ];
 ?>
 
@@ -111,51 +142,7 @@ $viewChoices = [
     </div>
     <?php } ?>
 
-    <form method="GET" action="<?= e(lurl('/dashboard/post')) ?>" class="grid grid-cols-2 gap-3 mb-3 md:flex md:flex-wrap md:items-center">
-        <div class="col-span-2 md:col-span-1 md:grow md:max-w-sm">
-            {% cmp="input" type="search" name="q" value="{$q}" placeholder="{$searchPlaceholder}" %}
-        </div>
-        <details class="relative col-span-2 md:col-span-1" data-popover>
-            <summary class="inline-flex w-full md:w-auto justify-center items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border cursor-pointer select-none list-none bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-zink-700 dark:border-zink-500 dark:text-zink-100 dark:hover:bg-zink-600">
-                {% cache 'lucide:sliders-horizontal' ttl=31536000 %}<i data-lucide="sliders-horizontal" class="size-4"></i>{% endcache %} <?= e($filtersLabel) ?>
-                <?php if ($activeFilters > 0) { ?><span class="pill bg-slate-900 text-white dark:bg-zink-100 dark:text-zink-800"><?= $activeFilters ?></span><?php } ?>
-            </summary>
-            <div class="absolute z-20 mt-2 card shadow-lg ltr:left-0 rtl:right-0 w-[min(22rem,calc(100vw-2rem))]">
-                <div class="card-body grid grid-cols-1 gap-3">
-                    {% cmp="select" label="{$statusLabel}" name="status" options="{$statusOptions}" selectedKey="{$selectedStatusKey}" %}
-                    {% cmp="select" label="{$categoryLabel}" name="category" options="{$categoryOptions}" selectedKey="{$selectedCategoryKey}" %}
-                    {% cmp="select" label="{$tagLabel}" name="tag" options="{$tagOptions}" selectedKey="{$selectedTagKey}" %}
-                    <div class="flex gap-2">
-                        {% cmp="btn" type="submit" variant="blue" icon="filter" label="{$applyLabel}" %}
-                        <?php if ($activeFilters > 0) { ?>
-                        {% cmp="btn" href="{$clearFiltersHref}" variant="slate" icon="x" label="{$clearLabel}" %}
-                        <?php } ?>
-                    </div>
-                </div>
-            </div>
-        </details>
-        <?php if ($listView === 'list') { ?><input type="hidden" name="view" value="list"><?php } ?>
-        <div class="col-span-2 flex items-center justify-between gap-3 md:contents">
-            <div class="inline-flex rounded-lg border border-slate-200 p-0.5 md:ml-auto dark:border-zink-500" role="group" aria-label="<?= e($viewLabel) ?>">
-                <?php foreach ($viewChoices as $viewKey => [$viewIcon, $viewText]) { ?>
-                <a href="<?= e(lurl('/dashboard/post'.$makeQuery(['view' => $viewKey, 'page' => null]))) ?>"
-                   aria-pressed="<?= $listView === $viewKey ? 'true' : 'false' ?>"
-                   title="<?= e($viewText) ?>"
-                   class="inline-flex items-center justify-center size-8 rounded-md transition-colors <?= $listView === $viewKey
-                       ? 'bg-slate-900 text-white dark:bg-zink-100 dark:text-zink-800'
-                       : 'text-slate-500 hover:bg-slate-100 dark:text-zink-300 dark:hover:bg-zink-600' ?>">
-                    {% cache 'lucide:view:' . $viewIcon ttl=31536000 %}<i data-lucide="<?= e($viewIcon) ?>" class="size-4" aria-hidden="true"></i>{% endcache %}
-                    <span class="sr-only"><?= e($viewText) ?></span>
-                </a>
-                <?php } ?>
-            </div>
-            {% cmp="select" name="sort" options="{$sortOptions}" selectedKey="{$selectedSortKey}" onchange="this.form.submit()" %}
-        </div>
-        <?php if ($sortChoice === '' && $sortExplicit) { ?>
-        <input type="hidden" name="sort" value="<?= e($tableSort->key()) ?>">
-        <input type="hidden" name="dir" value="<?= e($tableSort->direction()) ?>">
-        <?php } ?>
-    </form>
+    {% cmp="list-toolbar" toolbar="{$toolbar}" %}
 
     <?php if (!empty($activeTag)) { ?>
     <div class="flex items-center gap-2 mb-4 text-sm">

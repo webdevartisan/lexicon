@@ -113,16 +113,6 @@ final class PostController extends AppController
         }
 
         // The cards view keeps its named sort menu; each name is just a column plus a direction.
-        $namedSorts = [
-            'newest' => ['published', 'desc'],
-            'oldest' => ['published', 'asc'],
-            'title_asc' => ['title', 'asc'],
-            'title_desc' => ['title', 'desc'],
-        ];
-        $requestedSort = $this->request->get['sort'] ?? '';
-        if (is_string($requestedSort) && isset($namedSorts[$requestedSort])) {
-            [$this->request->get['sort'], $this->request->get['dir']] = $namedSorts[$requestedSort];
-        }
         $tableSort = TableSort::fromRequest($this->request, [
             'title' => 'p.title',
             'author' => 'au.handle',
@@ -131,22 +121,16 @@ final class PostController extends AppController
             'comments' => 'comment_count',
             'published' => 'p.published_at',
             'updated' => 'p.updated_at',
-        ], defaultKey: 'published', defaultDirection: 'desc', tiebreaker: 'p.id DESC');
-        $sortChoice = array_search([$tableSort->key(), $tableSort->direction()], $namedSorts, true);
-        $sortChoice = $sortChoice === false ? '' : $sortChoice;
-        $sortExplicit = isset($this->request->get['sort']) && $tableSort->has((string) $this->request->get['sort']);
+        ], defaultKey: 'published', defaultDirection: 'desc', tiebreaker: 'p.id DESC', named: [
+            'newest' => ['published', 'desc'],
+            'oldest' => ['published', 'asc'],
+            'title_asc' => ['title', 'asc'],
+            'title_desc' => ['title', 'desc'],
+        ]);
+        $sortChoice = $tableSort->choice();
+        $sortExplicit = $tableSort->wasRequested();
 
-        $requestedView = $this->request->getParam('view', '');
-        $remembered = (string) ($this->request->cookie['posts_view'] ?? 'cards');
-        $listView = ($requestedView !== '' ? $requestedView : $remembered) === 'list' ? 'list' : 'cards';
-        if ($requestedView !== '' && $listView !== $remembered) {
-            setcookie('posts_view', $listView, [
-                'expires' => time() + 31536000,
-                'path' => '/',
-                'secure' => isset($this->request->server['HTTPS']) && $this->request->server['HTTPS'] !== 'off',
-                'samesite' => 'Lax',
-            ]);
-        }
+        $listView = $this->rememberedListView('posts_view');
 
         // Categories and tags belong to one blog; ids from another blog are dropped.
         $rawCat = (int) $this->request->getParam('category', 0);
