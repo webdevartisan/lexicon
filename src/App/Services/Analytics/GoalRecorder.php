@@ -62,14 +62,14 @@ class GoalRecorder
             throw new \InvalidArgumentException("Unknown goal '{$goal}'.");
         }
 
-        $local = new \DateTimeImmutable('now', new \DateTimeZone(blog_timezone($blogId)));
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
 
         $this->events->recordInVisit([
             'name' => $goal,
             'blog_id' => $blogId,
             'post_id' => $postId,
-            'local_date' => $local->format('Y-m-d'),
-            'local_hour' => (int) $local->format('G'),
+            'local_date' => $now->format('Y-m-d'),
+            'local_hour' => (int) $now->format('G'),
         ], $this->finder->open($request, $viewer), $this->registry->oncePerVisit($goal));
     }
 

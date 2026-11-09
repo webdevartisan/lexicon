@@ -147,7 +147,8 @@ $I->amOnPage("/en/dashboard/blog/{$blogId}/settings");
 $I->click('summary[title="More actions"]');
 $I->click('Unpublish');
 $I->waitForText('Blog updated');
-$I->see('Your blog is offline.', '[data-visibility-line]');
+$I->amOnPage('/en/dashboard');
+$I->see('Draft');
 $I->seeThePageLooksRight('07-blog-offline');
 $I->amOnPage($postEditUrl);
 $I->fillField('title', 'Hello again from the walkthrough');
@@ -157,7 +158,7 @@ $I->see('so only you and your team can see this post', '[data-visibility-line]')
 $I->seeThePageLooksRight('08-post-updated');
 $I->amOnAPhone();
 $I->seeThePageLooksRight('08-post-updated-phone');
-// The docked bar grows with the visibility line, so the form's last field must still clear it
+// The form's last field must still clear the docked bar
 $clearance = $I->executeJS(<<<'JS'
     window.scrollTo(0, document.documentElement.scrollHeight);
     const grid = document.querySelector('form[data-dropzone-form] .grid');
@@ -178,8 +179,9 @@ $I->loadSessionSnapshot('writer');
 $I->amOnPage($postUrl);
 $I->dontSeeInTitle('Page not found');
 
-// Back online from the editor's line, guests can read it again
+// Back online from the editor's menu, guests can read it again
 $I->amOnPage($postEditUrl);
+$I->click('summary[title="More actions"]');
 $I->click('Put your blog online');
 $I->waitForText('Anyone can read your published posts.');
 $I->see('Anyone can read this post.', '[data-visibility-line]');

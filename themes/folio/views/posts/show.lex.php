@@ -8,7 +8,7 @@
 {% block content %}
 <?php
 $title = e($post['title'] ?? 'Untitled');
-  $date = e($post['published_at'] ?? '');
+  $date = reader_date($post['published_at_raw'] ?? null, 'jS M Y');
   $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;

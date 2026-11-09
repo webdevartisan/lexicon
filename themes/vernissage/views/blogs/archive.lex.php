@@ -79,12 +79,12 @@ $blogTitle = e($blog['blog_name'] ?? 'Vernissage');
           $url = lurl('/blog/'.$blogSlug.'/'.urlencode($post['slug'] ?? ''));
           $title = e($post['title'] ?? 'Untitled');
           $cat = trim((string) ($post['category'] ?? $t('vernissage::home.fallbackCategory')));
-          $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
+          $date = reader_date($post['published_at'] ?? null, 'j M Y');
           $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
           $minutes = reading_time($post['content'] ?? '');
           $n = $first + $i;
 
-          $year = local_datetime($post['published_at'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)));
+          $year = local_datetime($post['published_at'] ?? null, 'Y', 'UTC');
           ?>
         <?php if ($year !== '' && $year !== $lastYear) {
             $lastYear = $year;

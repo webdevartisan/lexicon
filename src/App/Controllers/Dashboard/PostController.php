@@ -1040,7 +1040,7 @@ final class PostController extends AppController
         $blogId = (int) $blog->id();
         $lifetime = $this->analyticsStats->lifetimeForPosts($blogId, [$postId])[$postId]
             ?? ['views' => 0, 'visitors' => 0];
-        $today = new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId)));
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
         [$from, $to] = [$today->modify('-6 days')->format('Y-m-d'), $today->format('Y-m-d')];
         $scope = AnalyticsScope::post($blogId, $postId);
         $week = $this->analyticsStats->totals($scope, $from, $to);

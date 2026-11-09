@@ -119,7 +119,7 @@ class AnalyticsNotifyCommand implements SchedulableCommandInterface
             }
 
             $scope = AnalyticsScope::blog($blogId);
-            $today = (new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId))))->format('Y-m-d');
+            $today = (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d');
             $pace = $this->stats->pace($scope, $today, AnalyticsReportService::USUAL_DAYS);
 
             if (!AnalyticsReportService::isSpike($pace['today'], $pace['usual']) || !$this->notices->claimSpike($blogId, $today)) {

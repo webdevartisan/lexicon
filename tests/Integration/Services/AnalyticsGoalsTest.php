@@ -51,7 +51,7 @@ beforeEach(function () {
         '/posts/1/vote', 'POST', [], [], [], [], ['REMOTE_ADDR' => '203.0.113.5'],
         array_change_key_case($headers + ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0) Chrome/129.0 Safari/537.36'])
     );
-    $this->today = (new DateTimeImmutable('now', new DateTimeZone(blog_timezone($this->blogId))))->format('Y-m-d');
+    $this->today = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d');
     $this->rollUp = fn () => AnalyticsFixture::rollups($this->db)->rebuildFrom(gmdate('Y-m-d', strtotime('-2 days')), 30, 10);
 });
 

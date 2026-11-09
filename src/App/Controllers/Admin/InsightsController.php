@@ -26,7 +26,7 @@ use Framework\Exceptions\PageNotFoundException;
  * except Sign-ups, which has its own controller. Most pages switch between the
  * whole site and the platform's own pages with ?scope=platform.
  *
- * Days are UTC here. Each blog's own row uses the blog's timezone.
+ * Days are UTC here, as they are on every blog's own Insights.
  */
 class InsightsController extends AppController
 {

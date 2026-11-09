@@ -131,7 +131,7 @@ final class OverviewService
         $scope = Gate::allows('viewAllAnalytics', $blog, $user)
             ? AnalyticsScope::blog($blogId)
             : AnalyticsScope::authorPosts($blogId, $userId, $this->posts->idsByBlogAndAuthor($blogId, $userId));
-        $range = AnalyticsRange::fromQuery(['range' => '7d'], blog_timezone($blogId));
+        $range = AnalyticsRange::fromQuery(['range' => '7d'], 'UTC');
         $report = $this->analytics->report($scope, $range);
 
         return ['metrics' => $report['metrics'], 'topPost' => $report['topPosts'][0] ?? null, 'range' => $range];

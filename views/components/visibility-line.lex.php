@@ -7,14 +7,13 @@
  *
  * Attributes:
  * - line: VisibilityPresenter output; nothing renders when it is empty
- * - formId: id of a go-live-form elsewhere on the page. Set it when the line
- *   sits inside another form, so the button submits that form instead of
- *   nesting one. Without it the line carries its own small form.
  * - returnTo: dashboard path to come back to after going live
+ * - quiet: smaller text and no action, for pages whose action bar menu or
+ *   header already offers it
  */
 $line = is_array($line ?? null) ? $line : [];
-$formId = (string) ($formId ?? '');
 $returnTo = (string) ($returnTo ?? '');
+$quiet = !empty($quiet);
 
 $dots = [
     'live' => 'bg-emerald-500',
@@ -24,10 +23,10 @@ $dots = [
     'private' => 'bg-slate-400 dark:bg-zink-300',
 ];
 $linkClass = 'font-medium text-custom-500 underline-offset-2 hover:underline focus:underline focus:decoration-2 focus:outline-none';
-$action = $line['action'] ?? null;
+$action = $quiet ? null : ($line['action'] ?? null);
 ?>
 <?php if ($line !== []) { ?>
-<div role="status" data-visibility-line="<?= e($line['tone']) ?>" class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-slate-600 dark:text-zink-200">
+<div role="status" data-visibility-line="<?= e($line['tone']) ?>" class="flex flex-wrap items-baseline gap-x-2 gap-y-1 <?= $quiet ? 'text-xs text-slate-500 dark:text-zink-300' : 'text-sm text-slate-600 dark:text-zink-200' ?>">
   <span class="relative top-[-1px] inline-block size-2 shrink-0 self-center rounded-full <?= $dots[$line['tone']] ?? $dots['draft'] ?>" aria-hidden="true"></span>
   <span>
     <strong class="font-semibold text-slate-800 dark:text-zink-50"><?= e($t($line['key'].'.lead')) ?></strong>
@@ -35,8 +34,6 @@ $action = $line['action'] ?? null;
   </span>
   <?php if ($action !== null && $action['method'] === 'GET') { ?>
   <a href="<?= e(base_url().$action['url']) ?>" target="_blank" rel="noopener" class="<?= $linkClass ?>"><?= e($t($action['labelKey'])) ?></a>
-  <?php } elseif ($action !== null && $formId !== '') { ?>
-  <button type="submit" form="<?= e($formId) ?>" class="<?= $linkClass ?>"><?= e($t($action['labelKey'])) ?></button>
   <?php } elseif ($action !== null) { ?>
   <form method="post" action="<?= e(lurl($action['url'])) ?>" class="inline">
     <?= csrf_field() ?>

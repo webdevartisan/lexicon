@@ -296,7 +296,6 @@ CREATE TABLE IF NOT EXISTS blog_settings (
     blog_id INT PRIMARY KEY,
     theme VARCHAR(64) DEFAULT NULL,
     default_locale VARCHAR(5) NOT NULL DEFAULT 'en',
-    timezone VARCHAR(64) DEFAULT NULL COMMENT 'IANA timezone for scheduling posts',
     meta_title VARCHAR(70) DEFAULT NULL COMMENT 'SEO meta title override',
     meta_description VARCHAR(160) DEFAULT NULL COMMENT 'SEO meta description',
     tagline VARCHAR(160) DEFAULT NULL COMMENT 'Short hero tagline shown in the theme header area',

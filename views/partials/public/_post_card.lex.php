@@ -28,7 +28,7 @@ $cardMinutes = reading_time($post['content'] ?? '');
         <p class="lx-post-card-meta">
             <span>
                 {% if post.published_at %}
-                    <time datetime="<?= e(iso_datetime($post['published_at'] ?? null)) ?>"><?= e(local_datetime($post['published_at'] ?? null, 'M j, Y', site_timezone())) ?></time>
+                    <?= reader_date($post['published_at'] ?? null, 'M j, Y') ?>
                     &middot;
                 {% endif %}
                 <?= e($t('discover.minRead', ['n' => $cardMinutes])) ?>

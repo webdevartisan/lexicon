@@ -9,7 +9,7 @@ use App\Services\BlogCacheInvalidator;
 /**
  * BlogSettingsModel
  *
- * Manages blog-specific configuration including theme, locale, timezone,
+ * Manages blog-specific configuration including theme, locale,
  * SEO settings, and visual assets. Each blog has one settings record
  * with sensible defaults applied on creation.
  */
@@ -86,7 +86,7 @@ class BlogSettingsModel extends AppModel
         $cacheKey = 'blog-settings:'.$blogId;
 
         $loadSettings = function () use ($blogId): ?array {
-            $sql = 'SELECT blog_id, theme, default_locale, timezone,
+            $sql = 'SELECT blog_id, theme, default_locale,
                             meta_title, meta_description, indexable,
                             tagline, subtitle, about_text, founded_year,
                             newsletter_heading, newsletter_text, social_links,
@@ -127,7 +127,7 @@ class BlogSettingsModel extends AppModel
     /**
      * Create default settings for a new blog.
      *
-     * Applies sensible defaults for theme, locale, timezone, and features.
+     * Applies sensible defaults for theme, locale, and features.
      * Comments are enabled by default unless explicitly disabled.
      *
      * @param  int  $blogId  Blog identifier
@@ -137,11 +137,11 @@ class BlogSettingsModel extends AppModel
     public function createDefaultForBlog(int $blogId, array $data): bool
     {
         $sql = 'INSERT INTO blog_settings
-                  (blog_id, theme, default_locale, timezone, meta_title, 
-                  meta_description, indexable, banner_path, logo_path, 
+                  (blog_id, theme, default_locale, meta_title,
+                  meta_description, indexable, banner_path, logo_path,
                   favicon_path, comments_enabled, comments_auto_publish, replies_auto_publish)
                 VALUES
-                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         // Default: comments enabled unless explicitly disabled
         $commentsEnabled = array_key_exists('comments_enabled', $data)
@@ -152,7 +152,6 @@ class BlogSettingsModel extends AppModel
             $blogId,
             $data['theme'] ?? 'folio',
             $data['default_locale'] ?? 'en',
-            $data['timezone'] ?? 'UTC',
             $data['meta_title'] ?? '',
             $data['meta_description'] ?? '',
             !empty($data['indexable']) ? 1 : 0,
@@ -185,7 +184,6 @@ class BlogSettingsModel extends AppModel
         $allowed = [
             'theme',
             'default_locale',
-            'timezone',
             'meta_title',
             'meta_description',
             'tagline',

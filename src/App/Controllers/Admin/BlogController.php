@@ -264,7 +264,6 @@ class BlogController extends AppController
     public function edit(string $id): Response
     {
         $blog = $this->getBlog($id);
-        $timezones = \DateTimeZone::listIdentifiers();
 
         return $this->view('blog.edit', [
             'blog' => $blog,
@@ -273,7 +272,6 @@ class BlogController extends AppController
             'members' => $this->blogModel->getBlogUsers((int) $id),
             'themeChoices' => array_map(static fn (array $meta): string => (string) $meta['name'], $this->themes->available()),
             'localeChoices' => LocaleRegistry::instance()->names(),
-            'timezoneChoices' => array_combine($timezones, $timezones),
             'statusChoices' => array_combine(BlogModel::STATUSES, array_map('ucfirst', BlogModel::STATUSES)),
         ]);
     }
@@ -309,7 +307,7 @@ class BlogController extends AppController
     /**
      * Save the blog's identity, status and the settings an admin may change.
      *
-     * Theme, language and timezone only take values the site actually offers, so a
+     * Theme and language only take values the site actually offers, so a
      * tampered form cannot leave a blog on something that cannot render.
      */
     public function update(string $id): Response
@@ -364,13 +362,11 @@ class BlogController extends AppController
 
         $current = $this->settings->findByBlogId($blogId) ?? [];
         $theme = (string) ($post['theme'] ?? '');
-        $timezone = (string) ($post['timezone'] ?? '');
         $submitted = [
             'theme' => $this->themes->isValidKey($theme) ? $theme : ($current['theme'] ?? 'folio'),
             'tagline' => $validated['tagline'] ?? '',
             'default_locale' => LocaleRegistry::instance()->normalize($post['default_locale'] ?? null)
                 ?? ($current['default_locale'] ?? LocaleRegistry::instance()->default()),
-            'timezone' => in_array($timezone, \DateTimeZone::listIdentifiers(), true) ? $timezone : ($current['timezone'] ?? 'UTC'),
             'meta_title' => $validated['meta_title'] ?? '',
             'meta_description' => $validated['meta_description'] ?? '',
             'indexable' => !empty($post['indexable']) ? 1 : 0,

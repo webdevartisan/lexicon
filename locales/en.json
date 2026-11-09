@@ -658,17 +658,7 @@
         },
         "settings": {
             "pageTitle": "Blog Settings",
-            "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic.",
-            "tabs": {
-                "general": "General",
-                "appearance": "Appearance",
-                "seo": "SEO",
-                "discussion": "Discussion & Workflow"
-            },
-            "address": {
-                "label": "Blog address",
-                "help": "Readers can open this link once the blog is published. The address is fixed after creation."
-            }
+            "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic."
         },
         "themes": {
             "pageTitle": "Themes",
@@ -699,7 +689,7 @@
                 },
                 "localization": {
                     "title": "Localization",
-                    "description": "Default language and time zone."
+                    "description": "Default language and translations."
                 },
                 "seo": {
                     "title": "SEO",
@@ -746,9 +736,6 @@
                 },
                 "locale": {
                     "label": "Language"
-                },
-                "timezone": {
-                    "label": "Time zone"
                 },
                 "metaTitle": {
                     "label": "Meta Title",
@@ -2325,7 +2312,7 @@
                 "text": "Readers can't see this blog."
             },
             "actions": {
-                "openPost": "Open it",
+                "openPost": "Open post",
                 "goLive": "Put your blog online",
                 "openBlog": "Open blog"
             },

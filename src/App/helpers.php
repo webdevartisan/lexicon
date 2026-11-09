@@ -10,7 +10,6 @@ declare(strict_types=1);
  */
 
 use App\Helpers\TimezoneHelper;
-use App\Models\BlogSettingsModel;
 use App\Models\SettingModel;
 use App\Models\SiteContentModel;
 use App\Services\AccountZone;
@@ -274,7 +273,7 @@ function password_hint_key(): string
 /**
  * Timezone configured for the site as a whole.
  *
- * Last resort for both of the resolvers below, so it never returns something
+ * Last resort for viewer_timezone() below, so it never returns something
  * DateTimeZone will reject.
  *
  * @return string A valid timezone identifier
@@ -308,36 +307,6 @@ function viewer_timezone(): string
     $user = auth()->user();
 
     return $zone = $user ? app(AccountZone::class)->resolve((int) $user['id']) : site_timezone();
-}
-
-/**
- * Timezone a blog publishes in.
- *
- * Public pages are full page cached, so they render on the blog's clock
- * instead of the reader's. Rendering per reader would store one visitor's
- * timezone in the cache and serve it to the next.
- *
- * @param  int|null  $blogId  Blog identifier, null falls back to the site zone
- * @return string A valid timezone identifier
- */
-function blog_timezone(?int $blogId): string
-{
-    if ($blogId === null) {
-        return site_timezone();
-    }
-
-    static $zones = [];
-
-    if (!array_key_exists($blogId, $zones)) {
-        // findByBlogId is fragment cached, so this costs nothing on a page that
-        // already loaded the blog's settings.
-        $settings = app(BlogSettingsModel::class)->findByBlogId($blogId);
-        $candidate = $settings['timezone'] ?? null;
-
-        $zones[$blogId] = TimezoneHelper::isValid($candidate) ? $candidate : site_timezone();
-    }
-
-    return $zones[$blogId];
 }
 
 /**
@@ -439,6 +408,41 @@ function localized_date_format(DateTimeImmutable $when, string $format, string $
 function iso_datetime(?string $utc): string
 {
     return local_datetime($utc, 'c', 'UTC');
+}
+
+/**
+ * A public date on the reader's own day.
+ *
+ * Signed-in readers are never page cached, so their zone is applied here.
+ * Guests share one cached copy written in UTC, which also carries the day
+ * before and after so local-dates.js can switch to the reader's day without
+ * formatting anything itself. Only whole days move, so the format must not
+ * show a time.
+ *
+ * @param  string|null  $utc  Datetime as stored, 'Y-m-d H:i:s'
+ * @param  string  $format  A date() format with no time in it
+ * @return string A <time> element, or '' when there is nothing to show
+ */
+function reader_date(?string $utc, string $format): string
+{
+    $iso = iso_datetime($utc);
+
+    if ($iso === '') {
+        return '';
+    }
+
+    if (auth()->check()) {
+        return '<time datetime="'.e($iso).'">'.e(local_datetime($utc, $format, viewer_timezone())).'</time>';
+    }
+
+    $moment = new DateTimeImmutable($utc, new DateTimeZone('UTC'));
+    $before = $moment->modify('-1 day')->format('Y-m-d H:i:s');
+    $after = $moment->modify('+1 day')->format('Y-m-d H:i:s');
+
+    return '<time datetime="'.e($iso).'" data-day="'.e($moment->format('Y-m-d')).'"'
+        .' data-day-before="'.e(local_datetime($before, $format, 'UTC')).'"'
+        .' data-day-after="'.e(local_datetime($after, $format, 'UTC')).'">'
+        .e(local_datetime($utc, $format, 'UTC')).'</time>';
 }
 
 /**

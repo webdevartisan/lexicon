@@ -6,7 +6,6 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\AppController;
 use App\Gate;
-use App\Helpers\TimezoneHelper;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
@@ -287,8 +286,8 @@ final class BlogController extends AppController
     /**
      * Show blog settings grouped into sections.
      *
-     * Sections: General, Appearance, SEO, Discussion & Workflow. All sections
-     * post to the same update action, so saving from any tab is safe.
+     * One page with identity, localization, discussion, workflow and SEO
+     * sections, all posting to the same update action.
      *
      * @param  string  $id  Blog ID
      */
@@ -306,7 +305,6 @@ final class BlogController extends AppController
             'meta_title' => '',
             'meta_description' => '',
             'indexable' => 1,
-            'timezone' => 'UTC',
             'comments_enabled' => 1,
             'comments_auto_publish' => 1,
             'replies_auto_publish' => 1,
@@ -315,20 +313,18 @@ final class BlogController extends AppController
 
         return $this->view([
             'blog' => $blog->toArray(),
-            'blogUrl' => base_url().'/blog/'.$blog->slug(),
             'actions' => BlogActionPresenter::for($blog->status()),
             'visibility' => $this->settingsVisibility($blog, (int) $user['id']),
             'backUrl' => '/dashboard',
             'settings' => $settings,
             'locales' => LocaleRegistry::instance()->names(),
             'current_locale' => $settings['default_locale'],
-            'timezones' => TimezoneHelper::getGroupedTimezones(),
         ]);
     }
 
     /**
-     * The settings page already has a Publish button, so its line keeps only
-     * the "Open blog" link.
+     * The settings page already has a Publish button, so the action bar menu
+     * keeps only the "Open blog" link.
      *
      * @return array<string, mixed>
      */
@@ -388,7 +384,6 @@ final class BlogController extends AppController
             'name' => 'required|title|min:2|max:50',
             'description' => 'max:1000',
             'locale' => 'max:10',
-            'timezone' => 'max:100',
             'meta_title' => 'max:200',
             'meta_description' => 'max:500',
             'allow_indexing' => 'boolean',
@@ -445,7 +440,6 @@ final class BlogController extends AppController
         $settingsData = [
             // Only a language the site offers, so a tampered form cannot strand the blog on one.
             'default_locale' => LocaleRegistry::instance()->normalize($validated['locale'] ?? null) ?? LocaleRegistry::instance()->default(),
-            'timezone' => $validated['timezone'] ?? 'UTC',
             'theme' => $currentSettings['theme'] ?? 'folio',
             'meta_title' => $validated['meta_title'] ?? '',
             'meta_description' => $validated['meta_description'] ?? '',
@@ -490,11 +484,7 @@ final class BlogController extends AppController
 
         $this->flash('success', 'Blog updated successfully.');
 
-        // Land back on the tab the user saved from
-        $section = (string) $this->request->postParam('active_section');
-        $anchor = in_array($section, ['general', 'seo', 'discussion'], true) ? '#'.$section : '';
-
-        return $this->redirect('/dashboard/blog/'.$blogId.'/settings'.$anchor);
+        return $this->redirect('/dashboard/blog/'.$blogId.'/settings');
     }
 
     /**

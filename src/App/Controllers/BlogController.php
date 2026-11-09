@@ -467,12 +467,6 @@ class BlogController extends AppController
         $rawTs = $post['published_at'] ?? $post['created_at'] ?? gmdate('Y-m-d H:i:s');
         $post['published_at_raw'] = $rawTs;
 
-        // Pretty date with ordinal suffix like "5th Nov 2025", read on the
-        // blog's clock. These pages are full page cached, so the date cannot
-        // follow whoever happens to be reading.
-        $dt = new \DateTime($post['published_at_raw'], new \DateTimeZone('UTC'));
-        $post['published_at'] = $this->formatDateWithOrdinal($dt, blog_timezone((int) ($ctx['blog']['id'] ?? 0)));
-
         // Enrich display fields. The byline follows the post's own author, not the blog owner.
         $author = $this->resolveAuthor((int) $post['author_id']);
         $post['author_name'] = $author['name'];
@@ -790,11 +784,5 @@ class BlogController extends AppController
         }
 
         return $this->pageContext->viewerCanPreview($blogId) ? null : $reader;
-    }
-
-    private function formatDateWithOrdinal(\DateTimeInterface $dt, string $tz = 'UTC'): string
-    {
-        // e.g. 5th Nov 2025, and in the reader's own words and order on a Greek or Arabic page
-        return local_datetime(gmdate('Y-m-d H:i:s', $dt->getTimestamp()), 'jS M Y', $tz);
     }
 }

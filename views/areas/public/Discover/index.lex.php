@@ -52,7 +52,7 @@ $discoverRobots = ($searchQuery ?? '') !== '' ? 'noindex, follow' : null;
                     {% if blog.last_post_at %}
                         <p class="meta">
                             {{ t('discover.lastPostLabel') }}:
-                            <time datetime="<?= e(iso_datetime($blog['last_post_at'] ?? null)) ?>"><?= e(local_datetime($blog['last_post_at'] ?? null, 'M j, Y', blog_timezone((int) ($blog['id'] ?? 0)))) ?></time>
+                            <?= reader_date($blog['last_post_at'] ?? null, 'M j, Y') ?>
                         </p>
                     {% endif %}
                     <div class="lx-form-actions lx-blog-card-actions">

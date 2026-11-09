@@ -77,7 +77,7 @@ test('the first run only notes milestones already passed, and later ones are sen
 });
 
 test('a blog far busier than usual tells its owner once that day', function () {
-    $today = new DateTimeImmutable('today', new DateTimeZone(blog_timezone($this->blogId)));
+    $today = new DateTimeImmutable('today', new DateTimeZone('UTC'));
     for ($i = 1; $i <= 28; $i++) {
         ($this->day)($today->modify("-{$i} days")->format('Y-m-d'), 0, 10);
     }

@@ -27,7 +27,7 @@
                     {{ t('discover.fromBlog') }} <a href="<?= e($featuredBlogUrl) ?>">{{ featuredPost.blog_name }}</a>
                     {% if featuredPost.published_at %}
                         <span aria-hidden="true">&middot;</span>
-                        <time datetime="<?= e(iso_datetime($featuredPost['published_at'])) ?>"><?= e(local_datetime($featuredPost['published_at'], 'M j, Y', site_timezone())) ?></time>
+                        <?= reader_date($featuredPost['published_at'], 'M j, Y') ?>
                     {% endif %}
                 </p>
                 <a href="<?= e($featuredUrl) ?>" class="lx-btn lx-btn-gilt lx-feature-cta">{{ t('showcase.readPost') }}</a>

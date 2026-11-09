@@ -21,7 +21,6 @@ $suspended = ($blog['status'] ?? '') === 'suspended';
 $theme = old('theme', $settings['theme'] ?? 'folio');
 $tagline = old('tagline', $settings['tagline'] ?? '');
 $locale = old('default_locale', $settings['default_locale'] ?? '');
-$timezone = old('timezone', $settings['timezone'] ?? 'UTC');
 $metaTitle = old('meta_title', $settings['meta_title'] ?? '');
 $metaDescription = old('meta_description', $settings['meta_description'] ?? '');
 
@@ -140,13 +139,11 @@ $tabs = [
                 <section data-panel="appearance" class="card" hidden>
                     <div class="card-body">
                         <h3 class="<?= $sectionTitle ?>">Appearance</h3>
-                        <p class="<?= $sectionHint ?>">The theme, tagline, language and timezone the blog uses.</p>
+                        <p class="<?= $sectionHint ?>">The theme, tagline and language the blog uses.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {% cmp="select" label="Theme" name="theme" options="{$themeChoices}" selectedKey="{$theme}" %}
                             {% cmp="input" type="text" label="Tagline" name="tagline" value="{$tagline}" %}
-                            {% cmp="select" label="Language" name="default_locale" options="{$localeChoices}" selectedKey="{$locale}" %}
-                            {% cmp="searchable-select" name="timezone" label="Timezone" options="{$timezoneChoices}" selectedKey="{$timezone}" placeholder="Search timezones..." %}
-                        </div>
+                            {% cmp="select" label="Language" name="default_locale" options="{$localeChoices}" selectedKey="{$locale}" %}                        </div>
                         <?= $saveBar('appearance') ?>
                     </div>
                 </section>

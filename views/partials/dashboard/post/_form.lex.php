@@ -18,6 +18,12 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     <?php $showAutosave = true; ?>
     {% include "partials/dashboard/_action_bar.lex.php" %}
 
+    <?php if (!empty($visibility)) { ?>
+    <div class="px-1 -mt-1">
+      {% cmp="visibility-line" line="{$visibility}" quiet="true" %}
+    </div>
+    <?php } ?>
+
     <?php /* Most fields render no inline error, so a rejected save used to say only "correct the errors". */ ?>
     <?php if (!empty($errors)) { ?>
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10" role="alert">
@@ -37,7 +43,7 @@ $showScheduling = !in_array($postStatus, ['published', 'archived'], true);
     </div>
     <?php } ?>
 
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] <?= empty($visibility) ? 'max-lg:pb-24' : 'max-lg:pb-40' ?>">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] max-lg:pb-24">
 
       <main class="min-w-0 space-y-6">
 

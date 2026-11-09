@@ -385,18 +385,17 @@ test('signing in joins the guest visit to the account only with analytics consen
         ->and((new AnalyticsEventModel($this->db))->countRecent($this->blogId, 30))->toBe(1);
 });
 
-test('a reader going from one post to another is noted as coming from the first, in the blog\'s hour', function () {
+test('a reader going from one post to another is noted as coming from the first, in the UTC hour', function () {
     PostFactory::new(new PostModel($this->db))
         ->withAttributes(['blog_id' => $this->blogId, 'author_id' => $this->ownerId, 'slug' => 'second-post'])
         ->published()->create();
-    $this->blogSettings->updateForBlog($this->blogId, ['timezone' => 'Asia/Tokyo']);
 
     $this->recorder->record(beacon(), pageView("/en/blog/{$this->slug}/second-post", base_url()."/en/blog/{$this->slug}/first-post"), null, false, null);
     $row = $this->db->query("SELECT from_post_id, local_hour, created_at FROM analytics_events WHERE name = 'page_view'")->fetch(PDO::FETCH_ASSOC);
-    $tokyoHour = (int) (new DateTimeImmutable((string) $row['created_at'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Asia/Tokyo'))->format('G');
+    $utcHour = (int) (new DateTimeImmutable((string) $row['created_at'], new DateTimeZone('UTC')))->format('G');
 
     expect((int) $row['from_post_id'])->toBe($this->postId)
-        ->and((int) $row['local_hour'])->toBe($tokyoHour);
+        ->and((int) $row['local_hour'])->toBe($utcHour);
 });
 
 test('only Discover keeps what was searched, folded to one spelling', function () {
