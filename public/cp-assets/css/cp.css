@@ -2086,6 +2086,9 @@ video {
 .mr-2 {
   margin-right: 0.5rem;
 }
+.mr-3 {
+  margin-right: 0.75rem;
+}
 .ms-1 {
   margin-inline-start: 0.25rem;
 }
@@ -2363,9 +2366,6 @@ video {
 .w-4 {
   width: 1rem;
 }
-.w-40 {
-  width: 10rem;
-}
 .w-48 {
   width: 12rem;
 }
@@ -2442,8 +2442,14 @@ video {
 .max-w-\[16rem\] {
   max-width: 16rem;
 }
+.max-w-\[18rem\] {
+  max-width: 18rem;
+}
 .max-w-\[55\%\] {
   max-width: 55%;
+}
+.max-w-\[7rem\] {
+  max-width: 7rem;
 }
 .max-w-\[8\.5rem\] {
   max-width: 8.5rem;
@@ -2715,9 +2721,6 @@ video {
 .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
   --tw-divide-opacity: 1;
   border-color: rgb(226 232 240 / var(--tw-divide-opacity, 1));
-}
-.self-start {
-  align-self: flex-start;
 }
 .self-center {
   align-self: center;
@@ -3409,11 +3412,11 @@ video {
 .pr-2 {
   padding-right: 0.5rem;
 }
+.pr-3 {
+  padding-right: 0.75rem;
+}
 .pr-4 {
   padding-right: 1rem;
-}
-.pr-7 {
-  padding-right: 1.75rem;
 }
 .ps-3 {
   padding-inline-start: 0.75rem;
@@ -3554,9 +3557,6 @@ video {
 .capitalize {
   text-transform: capitalize;
 }
-.normal-case {
-  text-transform: none;
-}
 .italic {
   font-style: italic;
 }
@@ -3578,9 +3578,6 @@ video {
 }
 .leading-snug {
   line-height: 1.375;
-}
-.tracking-normal {
-  letter-spacing: 0em;
 }
 .tracking-wide {
   letter-spacing: 0.025em;
@@ -5219,6 +5216,9 @@ video {
   .sm\:flex {
     display: flex;
   }
+  .sm\:table-cell {
+    display: table-cell;
+  }
   .sm\:hidden {
     display: none;
   }
@@ -5255,6 +5255,9 @@ video {
   }
   .sm\:max-w-\[14rem\] {
     max-width: 14rem;
+  }
+  .sm\:max-w-\[16rem\] {
+    max-width: 16rem;
   }
   .sm\:max-w-\[calc\(100vw-2rem\)\] {
     max-width: calc(100vw - 2rem);
@@ -5322,6 +5325,10 @@ video {
   }
   .sm\:p-6 {
     padding: 1.5rem;
+  }
+  .sm\:px-3\.5 {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
   }
   .sm\:px-4 {
     padding-left: 1rem;
@@ -5572,9 +5579,6 @@ video {
   }
   .lg\:items-start {
     align-items: flex-start;
-  }
-  .lg\:items-end {
-    align-items: flex-end;
   }
   .lg\:items-center {
     align-items: center;
@@ -6696,6 +6700,11 @@ video {
 }
 .\[\&\:not\(\:first-child\)\]\:border-s:not(:first-child) {
   border-inline-start-width: 1px;
+}
+@media not all and (min-width: 640px) {
+  .max-sm\:\[\&\>span\]\:hidden>span {
+    display: none;
+  }
 }
 .\[\&_\.select-menu\:not\(\.select-menu-open\)_\.select-menu-list\]\:hidden .select-menu:not(.select-menu-open) .select-menu-list {
   display: none;

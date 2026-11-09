@@ -10,7 +10,6 @@ use App\Models\BlogInvitationModel;
 use App\Models\BlogModel;
 use App\Models\BlogSettingsModel;
 use App\Models\PostListingModel;
-use App\Models\PostReviewerModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
 use App\Services\BlogOwnershipService;
@@ -36,7 +35,6 @@ final class CollaboratorController extends AppController
         private readonly UserModel $userModel,
         private readonly NotificationService $notifications,
         private readonly PostListingModel $postListing,
-        private readonly PostReviewerModel $postReviewerModel,
         private readonly BlogSettingsModel $blogSettingsModel,
         private readonly BlogOwnershipService $ownership,
         private readonly PasswordConfirmRateLimiter $passwordThrottle,
@@ -46,9 +44,9 @@ final class CollaboratorController extends AppController
     /**
      * Show the team management page (owner only).
      *
-     * Renders three concerns: the roster, the invite form (plus pending/expired
-     * invites), and a per-blog workflow health snapshot so the owner sees in
-     * one place what's queued, returned, or approved-not-published.
+     * Renders the roster together with pending and expired invitations. When the
+     * review workflow is on it also reports how many posts in review have no
+     * reviewer, so the page can point the owner at the review queue.
      *
      * @param  string  $blogId  Blog ID
      */
@@ -59,57 +57,45 @@ final class CollaboratorController extends AppController
 
         $blogIdInt = (int) $blog->id();
         $user = auth()->user();
-        $isAdmin = auth()->hasRole('administrator');
 
-        // Workflow health only makes sense for blogs that opted into the review pipeline.
-        // Skip the count queries entirely otherwise. The stats would all be zero and just clutter the page.
+        // Only blogs that opted into the review pipeline can have posts waiting for a reviewer.
         $settings = $this->blogSettingsModel->findByBlogId($blogIdInt);
         $workflowEnabled = !empty($settings['workflow_enabled']);
-
-        $workflowHealth = null;
-        if ($workflowEnabled) {
-            $inReviewTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'in_review');
-            $inReviewUnassigned = $this->postListing->countInReviewUnassigned($blogIdInt);
-            $needsChangesTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'needs_changes');
-            $approvedTotal = $this->postListing->countByBlogAndWorkflow($blogIdInt, 'approved');
-
-            $inReviewRecent = $this->postReviewerModel->findInReviewForSupervisor(
-                userId: (int) $user['id'],
-                isAdmin: $isAdmin,
-                blogId: $blogIdInt,
-            );
-
-            $workflowHealth = [
-                'in_review_total' => $inReviewTotal,
-                'in_review_unassigned' => $inReviewUnassigned,
-                'in_review_assigned' => max(0, $inReviewTotal - $inReviewUnassigned),
-                'needs_changes' => $needsChangesTotal,
-                'approved' => $approvedTotal,
-                'recent' => $inReviewRecent,
-            ];
-        }
+        $unassignedInReview = $workflowEnabled ? $this->postListing->countInReviewUnassigned($blogIdInt) : 0;
 
         // With the workflow off the reviewer role has nothing to do, so don't offer it on the invite form.
         // Custom blog-scope roles created in the control panel are offered too.
         $availableRoles = $this->blogModel->availableCollaboratorRoles($workflowEnabled);
         $members = $blog->users();
 
-        $roleLabels = [];
-        foreach (['owner', ...$availableRoles, ...array_column($members, 'role')] as $role) {
-            $roleLabels[$role] ??= $this->roleLabels->label((string) $role);
-        }
-
         return $this->view('blog.team', [
             'blog' => $blog->toArray(),
             'members' => $members,
-            'roleLabels' => $roleLabels,
+            'roleLabels' => $this->roleLabelsFor($availableRoles, $members),
             'pendingInvites' => $this->invitationModel->getPendingForBlog($blogIdInt),
             'expiredInvites' => $this->invitationModel->getExpiredForBlog($blogIdInt),
             'roles' => $availableRoles,
             'workflowEnabled' => $workflowEnabled,
-            'workflowHealth' => $workflowHealth,
+            'unassignedInReview' => $unassignedInReview,
             'canTransfer' => Gate::allows('transferOwnership', $blog, $user),
         ]);
+    }
+
+    /**
+     * Display label for every role the team page can show.
+     *
+     * @param  array<int, string>  $availableRoles  Roles offered for new collaborators
+     * @param  array<int, array<string, mixed>>  $members  Current collaborators
+     * @return array<string, string> Role slug => label
+     */
+    private function roleLabelsFor(array $availableRoles, array $members): array
+    {
+        $labels = [];
+        foreach (['owner', ...$availableRoles, ...array_column($members, 'role')] as $role) {
+            $labels[$role] ??= $this->roleLabels->label((string) $role);
+        }
+
+        return $labels;
     }
 
     /**

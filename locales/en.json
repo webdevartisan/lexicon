@@ -342,41 +342,49 @@
         },
         "team": {
             "subtitle": "Invite collaborators and manage who can write, review, and publish for this blog.",
-            "workflowOff": "Editorial workflow is off for this blog, so reviewer-related controls (review queue, reviewer role, workflow health) are hidden.",
+            "workflowOff": "Editorial workflow is off for this blog, so the Reviewer role and the review queue are hidden.",
             "workflowOffTurnOn": "Turn it on in {link} if you want submissions to go through a review pipeline before publishing.",
             "health": {
-                "title": "Workflow health",
-                "assigned": "In review, assigned",
-                "unassigned": "In review, unassigned",
-                "needsChanges": "Needs changes",
-                "approved": "Approved, not published",
-                "inReviewNow": "In review now",
-                "byLine": "by {author} · reviewed by {reviewer}"
+                "alert": "Posts in review without a reviewer: {count}"
+            },
+            "columns": {
+                "member": "Member",
+                "role": "Role",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "status": {
+                "active": "Active",
+                "invited": "Invited",
+                "expired": "Expired"
+            },
+            "modal": {
+                "cancel": "Cancel",
+                "close": "Close"
             },
             "members": {
-                "title": "Active collaborators",
-                "empty": "No collaborators yet. Invite someone using the form to start working together.",
-                "role": "Role",
+                "empty": "No collaborators yet. Use Invite to start working together.",
+                "changeRole": "Change role",
+                "saveRole": "Save role",
                 "remove": "Remove",
                 "removeConfirm": "Remove {handle} from this blog? They will need a new invitation to rejoin."
             },
             "invite": {
+                "open": "Invite",
                 "title": "Invite by email",
                 "email": "Email",
                 "role": "Role",
                 "send": "Send invite",
-                "pending": "Pending invitations",
-                "expires": "{role} · expires {when}",
-                "cancel": "Cancel",
-                "expiredTitle": "Expired (resend to retry)",
-                "expired": "{role} · expired {date}",
-                "resend": "Resend",
-                "drop": "Drop"
+                "expires": "Expires {when}",
+                "cancel": "Cancel invite",
+                "expired": "Expired {date}",
+                "resend": "Resend invite",
+                "drop": "Remove invite"
             },
             "transfer": {
                 "title": "Transfer ownership",
                 "text": "Hand this blog to one of its collaborators. They get full control, including deleting it, and you stay on as an editor.",
-                "confirm": "Transfer ownership of this blog? You cannot undo this yourself.",
+                "confirm": "You cannot undo this yourself.",
                 "newOwner": "New owner",
                 "password": "Your password"
             },

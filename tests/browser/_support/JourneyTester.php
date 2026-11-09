@@ -38,6 +38,30 @@ class JourneyTester extends \Codeception\Actor
     }
 
     /**
+     * Invite someone from the team page: open the invite dialog, fill it in and send it.
+     */
+    public function inviteToTeam(string $email, string $role): void
+    {
+        $this->click('[data-modal-target="teamInviteModal"]');
+        $this->waitForElementVisible('#teamInviteForm', 3);
+        $this->fillField('#teamInviteForm input[type=email][name=email]', $email);
+        $this->selectOption('#invite-role', $role);
+        $this->click('Send invite');
+    }
+
+    /**
+     * Change the only collaborator's role on the team page, through the row menu and its dialog.
+     */
+    public function changeTeamRole(string $role): void
+    {
+        $this->click('//tr//button[@data-row-actions-toggle]');
+        $this->click('Change role', '//tr//*[@data-row-actions-menu]');
+        $this->waitForElementVisible('#teamRoleForm', 3);
+        $this->selectOption('#member-role', $role);
+        $this->click('Save role');
+    }
+
+    /**
      * Press OK in the confirmation dialog, or in a native popup on pages that still use one.
      */
     public function acceptConfirm(?string $expectedText = null): void

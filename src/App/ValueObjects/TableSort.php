@@ -19,6 +19,7 @@ final class TableSort
     /**
      * @param  array<string, string>  $columns  key => SQL expression
      * @param  array<string, mixed>  $query  current query string, for building links
+     * @param  array<string, array{0: string, 1: string}>  $named  sort menu choices, name => [column key, direction]
      */
     private function __construct(
         private readonly string $key,
@@ -41,8 +42,8 @@ final class TableSort
      * @param  string  $pinned  SQL put before the sort column, for rows that should
      *                          stay at the top whatever the table is sorted by
      * @param  array<string, array{0: string, 1: string}>  $named  Sort menu choices, each a name for a
-     *                          column plus a direction. A column header link always carries `dir`, so a
-     *                          key that is also a column and comes with a direction is the column.
+     *                                                             column plus a direction. A column header link always carries `dir`, so a
+     *                                                             key that is also a column and comes with a direction is the column.
      */
     public static function fromRequest(
         Request $request,

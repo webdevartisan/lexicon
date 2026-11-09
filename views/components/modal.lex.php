@@ -9,7 +9,8 @@
  *         fields; the caller is responsible for escaping everything in it
  * - form: id of the form the confirm button submits
  * - openOnLoad: open as soon as the page loads, e.g. to show validation errors
- * - noConfirm: only the cancel button, for a modal with nothing to confirm
+ * - noConfirm: only the cancel button, for a modal with nothing to confirm; that button takes focus on open,
+ *               so a link far down a long body cannot scroll the dialog
  * - bare: no header or footer bar; the body is the whole dialog, with a floating close button
  * - phone: "sheet" docks the dialog to the bottom of a phone screen, "full" fills it
  */
@@ -93,7 +94,7 @@ $modalWidths = match ($size) {
         </div>
 
         <div class="confirm-actions grid <?= $noConfirm ? 'grid-cols-1' : 'grid-cols-2' ?> mt-auto">
-            <button type="button" data-modal-close="<?= e($id) ?>"
+            <button type="button" data-modal-close="<?= e($id) ?>" <?= $noConfirm ? 'data-autofocus' : '' ?>
                 class="confirm-button h-12 text-sm font-medium transition-colors"><?= e($cancelText) ?></button>
             <?php if (!$noConfirm) { ?>
             <button type="<?= $form ? 'submit' : 'button' ?>"

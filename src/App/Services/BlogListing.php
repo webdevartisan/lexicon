@@ -35,7 +35,7 @@ final class BlogListing
      *
      * @param  array<int, array<string, mixed>>  $blogs  Rows from BlogModel::getAccessibleBlogs()
      * @param  array{q: string, status: string, role: string}  $filters  Search text, a status, and
-     *                          `owned`, `shared` or empty for the role; empty means no filter
+     *                                                                   `owned`, `shared` or empty for the role; empty means no filter
      * @return array{rows: array<int, array<string, mixed>>, pagination: array<string, mixed>,
      *               counts: array<string, int>, hasShared: bool}
      */
